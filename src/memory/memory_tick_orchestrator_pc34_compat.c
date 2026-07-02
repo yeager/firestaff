@@ -2047,6 +2047,20 @@ static int orch_cmd_attack_has_legacy_marker_compat(
         ((input->reserved2 & CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID) != 0u);
 }
 
+static int orch_cmd_attack_target_direction_compat(
+    const struct GameWorld_Compat* world,
+    const struct TickInput_Compat* input)
+{
+    int direction = world ? (world->party.direction & 3) : 0;
+    if (input &&
+        ((input->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID) != 0u)) {
+        direction = (int)((input->reserved2 &
+                           CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
+                          CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) & 3;
+    }
+    return direction;
+}
+
 static int orch_cmd_attack_action_hand_is_empty_compat(
     const struct GameWorld_Compat* world,
     int championIndex)
@@ -2188,6 +2202,7 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
 
 static void orch_cmd_attack_target_square_compat(
     const struct GameWorld_Compat* world,
+    int direction,
     int* outMapIndex,
     int* outMapX,
     int* outMapY)
@@ -2199,7 +2214,7 @@ static void orch_cmd_attack_target_square_compat(
         mapIndex = world->party.mapIndex;
         mapX = world->party.mapX;
         mapY = world->party.mapY;
-        switch (world->party.direction & 3) {
+        switch (direction & 3) {
             case DIR_NORTH: mapY--; break;
             case DIR_EAST:  mapX++; break;
             case DIR_SOUTH: mapY++; break;
@@ -2215,6 +2230,7 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
     const struct CombatantCreatureSnapshot_Compat* creature,
+    int targetDirection,
     int outcome)
 {
     struct TimelineEvent_Compat reaction;
@@ -2225,7 +2241,8 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
     if (!world || groupIndex < 0) return;
     if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) return;
 
-    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
     memset(&reaction, 0, sizeof(reaction));
     reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
     reaction.fireAtTick = world->gameTick + 1u;
@@ -2241,6 +2258,7 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
 static void orch_cmd_attack_apply_group_kill_side_effects_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
+    int targetDirection,
     int outcome)
 {
     int mapIndex;
@@ -2250,7 +2268,8 @@ static void orch_cmd_attack_apply_group_kill_side_effects_compat(
     if (!world || !world->things || groupIndex < 0) return;
     if (outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) return;
 
-    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
     (void)orch_unlink_thing_from_square_compat(
         world, mapIndex, mapX, mapY,
         orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
@@ -2275,6 +2294,7 @@ static void orch_cmd_attack_create_f0190_death_smoke_compat(
     struct GameWorld_Compat* world,
     const struct CombatantCreatureSnapshot_Compat* creature,
     int killedCell,
+    int targetDirection,
     int outcome)
 {
     struct ExplosionCreateInput_Compat create;
@@ -2290,7 +2310,8 @@ static void orch_cmd_attack_create_f0190_death_smoke_compat(
         return;
     }
 
-    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
     memset(&create, 0, sizeof(create));
     create.explosionType = C040_EXPLOSION_SMOKE;
     create.attack = orch_cmd_attack_f0190_smoke_attack_compat(creature);
@@ -2413,7 +2434,8 @@ static int orch_cmd_attack_first_living_creature_compat(
 static int orch_cmd_attack_f0177_creature_slot_compat(
     const struct GameWorld_Compat* world,
     int championIndex,
-    int groupIndex)
+    int groupIndex,
+    int targetDirection)
 {
     const struct DungeonGroup_Compat* group;
     DM1_CreatureGroup combatGroup;
@@ -2445,13 +2467,14 @@ static int orch_cmd_attack_f0177_creature_slot_compat(
     return dm1_get_melee_target(
         &combatGroup,
         (int)(world->party.champions[championIndex].cell & 3),
-        world->party.direction,
+        targetDirection,
         (int)group->direction);
 }
 
 static int orch_cmd_attack_champion_reach_blocked_f0407_compat(
     const struct GameWorld_Compat* world,
-    int championIndex)
+    int championIndex,
+    int targetDirection)
 {
     const struct ChampionState_Compat* champion;
     int relativeCell;
@@ -2463,8 +2486,7 @@ static int orch_cmd_attack_champion_reach_blocked_f0407_compat(
     champion = &world->party.champions[championIndex];
     if (!champion->present || champion->hp.current == 0) return 0;
 
-    relativeCell = ((int)(champion->cell & 3) + 4 -
-                    (int)(world->party.direction & 3)) & 3;
+    relativeCell = ((int)(champion->cell & 3) + 4 - (targetDirection & 3)) & 3;
     if (relativeCell == 2) {
         blockingCell = ((int)(champion->cell & 3) + 3) & 3;
     } else if (relativeCell == 3) {
@@ -2542,8 +2564,9 @@ static int orch_cmd_attack_resolve_target_compat(
         int dy = 0;
         int targetMapX;
         int targetMapY;
+        int targetDirection = orch_cmd_attack_target_direction_compat(world, input);
         F0701_MOVEMENT_GetStepDelta_Compat(
-            world->party.direction, MOVE_FORWARD, &dx, &dy);
+            targetDirection, MOVE_FORWARD, &dx, &dy);
         targetMapX = world->party.mapX + dx;
         targetMapY = world->party.mapY + dy;
         if (!orch_cmd_attack_find_group_on_square_compat(
@@ -2559,7 +2582,8 @@ static int orch_cmd_attack_resolve_target_compat(
     }
     if (input->reserved == CMD_ATTACK_CREATURE_AUTO_PC34) {
         creatureIndex = orch_cmd_attack_f0177_creature_slot_compat(
-            world, (int)input->commandArg1, groupIndex);
+            world, (int)input->commandArg1, groupIndex,
+            orch_cmd_attack_target_direction_compat(world, input));
         if (creatureIndex < 0 ||
             creatureIndex > (int)world->things->groups[groupIndex].count) {
             creatureIndex = orch_cmd_attack_first_living_creature_compat(
@@ -2764,6 +2788,7 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     int squareByte;
     int doorIndex = -1;
     int attack;
+    int targetDirection;
 
     if (!world || !input || !weaponInfo || !world->dungeon ||
         !world->dungeon->tiles || !world->dungeon->maps) {
@@ -2773,7 +2798,9 @@ static int orch_cmd_attack_f0407_closed_door_compat(
         return 0;
     }
 
-    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    targetDirection = orch_cmd_attack_target_direction_compat(world, input);
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
     if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
         return 0;
     }
@@ -4766,6 +4793,7 @@ static void orch_cmd_attack_apply_f0190_possession_drops_compat(
     struct DungeonGroup_Compat* group,
     const struct CombatantCreatureSnapshot_Compat* creature,
     int killedCell,
+    int targetDirection,
     int outcome)
 {
     int mapIndex;
@@ -4778,7 +4806,8 @@ static void orch_cmd_attack_apply_f0190_possession_drops_compat(
         return;
     }
 
-    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
     if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
         /* ReDMCSB: GROUP.C F0190 lines ~824-829 calls F0188 before
          * F0189 for a not-moving single-creature group. F0188 drops
@@ -4909,6 +4938,7 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
     int groupIndex,
     int killedCreatureIndex,
     int originalGroupCount,
+    int targetDirection,
     int outcome)
 {
     int mapIndex;
@@ -4918,7 +4948,8 @@ static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
     if (!world || !group || !creature) return 0;
     if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES) return 0;
 
-    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    orch_cmd_attack_target_square_compat(
+        world, targetDirection, &mapIndex, &mapX, &mapY);
     if (group->behavior == DM1_BEHAVIOR_ATTACK) {
         orch_cmd_attack_cleanup_f0190_creature_events_compat(
             world, mapIndex, mapX, mapY, killedCreatureIndex);
@@ -6023,6 +6054,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             int killedCell = EXPLOSION_CELL_CENTERED;
             int originalGroupCount = -1;
             int fearTriggered = 0;
+            int targetDirection =
+                orch_cmd_attack_target_direction_compat(world, input);
             int targetResolved;
             int championSnapshotReady = 0;
             int creatureSnapshotReady = 0;
@@ -6068,7 +6101,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             }
             if (targetResolved &&
                 orch_cmd_attack_champion_reach_blocked_f0407_compat(
-                    world, (int)input->commandArg1)) {
+                    world, (int)input->commandArg1, targetDirection)) {
                 emit(result, EMIT_DAMAGE_DEALT,
                      input->commandArg1, groupIndex, 0, COMBAT_OUTCOME_INVALID);
                 return 1;
@@ -6138,16 +6171,19 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             creatureIndex, &applyOutcome);
                         orch_cmd_attack_apply_f0190_possession_drops_compat(
                             world, &world->things->groups[groupIndex],
-                            &creatureSnapshot, killedCell, applyOutcome);
+                            &creatureSnapshot, killedCell, targetDirection,
+                            applyOutcome);
                         orch_cmd_attack_create_f0190_death_smoke_compat(
-                            world, &creatureSnapshot, killedCell, applyOutcome);
+                            world, &creatureSnapshot, killedCell,
+                            targetDirection, applyOutcome);
                         fearTriggered =
                             orch_cmd_attack_apply_f0190_killed_some_state_compat(
                                 world, &world->things->groups[groupIndex],
                                 &creatureSnapshot, groupIndex, creatureIndex,
-                                originalGroupCount, applyOutcome);
+                                originalGroupCount, targetDirection,
+                                applyOutcome);
                         orch_cmd_attack_apply_group_kill_side_effects_compat(
-                            world, groupIndex, applyOutcome);
+                            world, groupIndex, targetDirection, applyOutcome);
                         /* ReDMCSB GROUP.C:F0190 lines 892-917 compacts or
                          * unlinks the damaged group after F0231/F0738 melee
                          * damage.  Keep the raw DUNGEON.DAT group record
@@ -6163,6 +6199,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     if (!fearTriggered) {
                         orch_cmd_attack_schedule_f0231_reaction_compat(
                             world, groupIndex, &creatureSnapshot,
+                            targetDirection,
                             (applyOutcome != COMBAT_OUTCOME_INVALID)
                                 ? applyOutcome
                                 : combatResult.outcome);
