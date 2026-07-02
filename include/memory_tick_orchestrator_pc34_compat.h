@@ -188,6 +188,15 @@ struct TickResult_Compat {
     struct TickEmission_Compat emissions[TICK_EMISSION_CAPACITY];
 };
 
+struct DungeonViewLight_Compat {
+    int totalLightAmount;
+    int paletteIndex; /* 0 = brightest, 5 = darkest */
+    int torchLightPower[8];
+    int litTorchCount;
+    int refreshPaletteRequested;
+    int forcedBrightMap;
+};
+
 struct TickStreamRecord_Compat {
     struct TickInput_Compat input;
     uint32_t worldHashPost;
@@ -354,6 +363,10 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
 void F0890_ORCH_ApplyPeriodicEffects_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
+
+int F0890b_ORCH_ComputeDungeonViewLight_Compat(
+    const struct GameWorld_Compat* world,
+    struct DungeonViewLight_Compat* outLight);
 
 int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     struct DungeonGroup_Compat* group,

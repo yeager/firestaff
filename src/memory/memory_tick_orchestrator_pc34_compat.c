@@ -33,6 +33,14 @@ enum {
     ORCH_BLACK_FLAME_MAX_HEALTH_PC34 = 1000
 };
 
+static const int s_orch_light_power_to_amount_pc34[16] = {
+    0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100
+};
+
+static const int s_orch_palette_index_to_light_amount_pc34[6] = {
+    99, 75, 50, 25, 1, 0
+};
+
 static const unsigned char s_orch_thing_data_byte_count[16] = {
     /* DUNGEON.DAT raw Thing strides; keep aligned with
      * memory_dungeon_dat_pc34_compat.c decode_* offsets and native export. */
@@ -1232,6 +1240,89 @@ static int orch_decrease_torches_light_power_f0338_compat(
         }
     }
     return changed;
+}
+
+int F0890b_ORCH_ComputeDungeonViewLight_Compat(
+    const struct GameWorld_Compat* world,
+    struct DungeonViewLight_Compat* outLight)
+{
+    int i, j;
+    int multiplier = 6;
+    int totalLight = 0;
+    if (!outLight) return 0;
+    memset(outLight, 0, sizeof(*outLight));
+    outLight->paletteIndex = 5;
+    if (!world) return 0;
+
+    if (world->dungeon &&
+        world->party.mapIndex >= 0 &&
+        world->party.mapIndex < (int)world->dungeon->header.mapCount &&
+        world->dungeon->maps[world->party.mapIndex].difficulty == 0) {
+        /* ReDMCSB: PANEL.C F0337 lines 367-372 forces maps with
+         * Difficulty == 0 to the brightest dungeon-view palette. */
+        outLight->paletteIndex = 0;
+        outLight->refreshPaletteRequested = 1;
+        outLight->forcedBrightMap = 1;
+        return 1;
+    }
+
+    /* ReDMCSB: PANEL.C F0337 lines 373-386 inspects two hand slots for
+     * all four champion records, even when fewer party members are live. */
+    for (i = 0; i < CHAMPION_MAX_PARTY; i++) {
+        static const int handSlots[2] = {
+            CHAMPION_SLOT_ACTION_HAND,
+            CHAMPION_SLOT_HAND_LEFT
+        };
+        const struct ChampionState_Compat* champion =
+            &world->party.champions[i];
+        for (j = 0; j < 2; j++) {
+            int slotOrdinal = (i * 2) + j;
+            int weaponIndex = orch_get_lit_torch_weapon_index_compat(
+                world->things, champion->inventory[handSlots[j]]);
+            if (weaponIndex >= 0) {
+                int power = world->things->weapons[weaponIndex].chargeCount;
+                if (power < 0) power = 0;
+                if (power > 15) power = 15;
+                outLight->torchLightPower[slotOrdinal] = power;
+                if (power > 0) outLight->litTorchCount++;
+            }
+        }
+    }
+
+    /* ReDMCSB: PANEL.C F0337 lines 388-404 selection-sorts only the
+     * first four entries; the fifth summed torch may be any lower slot. */
+    for (i = 0; i < 4; i++) {
+        for (j = i + 1; j < 8; j++) {
+            if (outLight->torchLightPower[j] > outLight->torchLightPower[i]) {
+                int tmp = outLight->torchLightPower[j];
+                outLight->torchLightPower[j] = outLight->torchLightPower[i];
+                outLight->torchLightPower[i] = tmp;
+            }
+        }
+    }
+
+    for (i = 0; i < 5; i++) {
+        int power = outLight->torchLightPower[i];
+        if (power > 0) {
+            totalLight += (s_orch_light_power_to_amount_pc34[power] << multiplier) >> 6;
+            if (multiplier > 0) multiplier--;
+        }
+    }
+    totalLight += world->magic.magicalLightAmount;
+    outLight->totalLightAmount = totalLight;
+
+    if (totalLight > 0) {
+        int paletteIndex = 0;
+        while (paletteIndex < 5 &&
+               s_orch_palette_index_to_light_amount_pc34[paletteIndex] > totalLight) {
+            paletteIndex++;
+        }
+        outLight->paletteIndex = paletteIndex;
+    } else {
+        outLight->paletteIndex = 5;
+    }
+    outLight->refreshPaletteRequested = 1;
+    return 1;
 }
 
 static void orch_write_raw_armour_compat(
