@@ -594,6 +594,7 @@ static void test_mouse_positive_control_dispatches_without_overlay(void)
 
 static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void)
 {
+    M11_GameViewState state;
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat map;
@@ -603,7 +604,12 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     unsigned short squareFirstThings[1];
     unsigned char projectileRaw[8];
     unsigned char explosionRaw[8];
+    int projectileCount = -1;
+    int explosionCount = -1;
+    int firstProjectileGfx = -2;
+    int firstExplosionType = -2;
 
+    seed_active_view(&state);
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&map, 0, sizeof(map));
@@ -642,6 +648,27 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     ASSERT_EQ(M11_GameView_CountCellExplosions(&world, 0, 0, 0), 0,
               "static dungeon explosion thing is not a visible fireball");
 
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 0;
+    state.world.party.direction = 0;
+    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
+                  &state, 0, 0, NULL, NULL, NULL,
+                  &projectileCount, &explosionCount,
+                  &firstProjectileGfx, &firstExplosionType),
+              1,
+              "viewport artifact probe samples synthetic square");
+    ASSERT_EQ(projectileCount, 0,
+              "viewport sample suppresses static projectile count");
+    ASSERT_EQ(explosionCount, 0,
+              "viewport sample suppresses static explosion count");
+    ASSERT_EQ(firstProjectileGfx, -1,
+              "viewport sample exposes no drawable static projectile");
+    ASSERT_EQ(firstExplosionType, -1,
+              "viewport sample exposes no drawable static explosion");
+
     world.projectiles.count = 1;
     world.projectiles.entries[0].slotIndex = 0;
     world.projectiles.entries[0].mapIndex = 0;
@@ -659,6 +686,38 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
 
     ASSERT_EQ(M11_GameView_CountCellExplosions(&world, 0, 0, 0), 1,
               "runtime explosion remains visible in viewport summary");
+
+    state.world.projectiles.count = 1;
+    state.world.projectiles.entries[0].slotIndex = 0;
+    state.world.projectiles.entries[0].mapIndex = 0;
+    state.world.projectiles.entries[0].mapX = 0;
+    state.world.projectiles.entries[0].mapY = 0;
+    state.world.projectiles.entries[0].projectileSubtype =
+        PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    state.world.explosions.count = 1;
+    state.world.explosions.entries[0].slotIndex = 0;
+    state.world.explosions.entries[0].mapIndex = 0;
+    state.world.explosions.entries[0].mapX = 0;
+    state.world.explosions.entries[0].mapY = 0;
+    state.world.explosions.entries[0].explosionType = -1;
+    projectileCount = -1;
+    explosionCount = -1;
+    firstProjectileGfx = -2;
+    firstExplosionType = -2;
+    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
+                  &state, 0, 0, NULL, NULL, NULL,
+                  &projectileCount, &explosionCount,
+                  &firstProjectileGfx, &firstExplosionType),
+              1,
+              "viewport artifact probe samples runtime effects");
+    ASSERT_EQ(projectileCount, 1,
+              "runtime projectile with resolved graphic remains visible");
+    ASSERT_EQ(firstProjectileGfx >= 0, 1,
+              "runtime projectile exposes drawable graphic");
+    ASSERT_EQ(explosionCount, 0,
+              "runtime explosion without drawable type is suppressed");
+    ASSERT_EQ(firstExplosionType, -1,
+              "invalid runtime explosion type is not drawable");
 }
 
 int main(void)

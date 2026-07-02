@@ -403,6 +403,7 @@ typedef struct {
     unsigned char actionDisabledTicks[CHAMPION_MAX_PARTY];
     unsigned char actionDisabledIndex[CHAMPION_MAX_PARTY];
     unsigned char actionEnableSlotOrdinal[CHAMPION_MAX_PARTY];
+    unsigned char pendingShootReadyHandRefill[CHAMPION_MAX_PARTY];
 
     /* DM1 V1 VBlank-based timing state.
      * Simulates the PAL 50Hz VBlank interrupt handler (VBLANK.C:F0577)
