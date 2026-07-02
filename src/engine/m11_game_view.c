@@ -12219,7 +12219,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                                 int w,
                                 int h,
                                 const M11_ViewportCell* cell,
-                                int depthIndex) {
+                                int depthIndex,
+                                int sourceZoneRow) {
     int cx = x + w / 2;
     int cy = y + h / 2;
     if (!cell) {
@@ -12236,7 +12237,7 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                                         cell->firstProjectileRelDir,
                                         cell->firstProjectileCell,
                                         cell->firstProjectileFlipFlags,
-                                        -1)) {
+                                        sourceZoneRow)) {
             /* Fallback: cyan crosshair */
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                            cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
@@ -14532,10 +14533,14 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
     int faceY = rect->y + inset / 2;
     int faceW = rect->w - inset * 2;
     int faceH = rect->h - inset;
+    int sourceZoneRow;
 
     if (!cell || !m11_viewport_cell_is_open(cell) || faceW < 8 || faceH < 8) {
         return;
     }
+
+    sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward,
+                                                  cell->relSide);
 
     /* ── DM1-faithful Z-order: floor ornaments → floor items → creatures → projectiles ──
      * ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF
@@ -14569,8 +14574,6 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         cell->elementType != DUNGEON_ELEMENT_WALL) {
         int ii;
         int itemsToShow = cell->floorItemCount;
-        int sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward,
-                                                          cell->relSide);
         for (ii = 0; ii < itemsToShow; ++ii) {
             if (cell->floorItemTypes[ii] < 0) continue;
             if (!g_drawState ||
@@ -14710,7 +14713,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
     /* Layer 3: Projectiles and explosions (in flight, topmost) */
     m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
                         faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell,
-                        depthIndex);
+                        depthIndex, sourceZoneRow);
 }
 
 /* Known GRAPHICS.DAT indices for rendering assets in CSB PC 3.4. */
@@ -18894,6 +18897,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     int paneW;
     int paneY = inner->y + 3;
     int paneH = inner->h - 6;
+    int sourceZoneRow;
     unsigned char accent;
 
     if (!cell || !cell->valid || paneH <= 4) {
@@ -18910,6 +18914,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     if (paneW <= 4) {
         return;
     }
+    sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward,
+                                                  cell->relSide);
 
     accent = m11_feature_accent_color(cell);
     if (m11_viewport_cell_is_open(cell)) {
@@ -19005,7 +19011,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                           cell->floorItemSubtypes[ii],
                                           cell->floorItemCells[ii], ii,
                                           depthIndex + 1,
-                                          -1)) {
+                                          sourceZoneRow)) {
                     if (ii == 0) {
                         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                       paneX + paneW / 2 - 2, paneY + paneH - 4,
@@ -19129,7 +19135,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                             cell->firstProjectileRelDir,
                                             cell->firstProjectileCell,
                                             cell->firstProjectileFlipFlags,
-                                            -1)) {
+                                            sourceZoneRow)) {
                 int pcx = paneX + paneW / 2;
                 int pcy = paneY + paneH / 2;
                 m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
@@ -25245,6 +25251,19 @@ int M11_GameView_GetC2900ProjectileRawZonePoint(int rowIndex,
                                                 int* outX,
                                                 int* outY) {
     return m11_c2900_projectile_raw_zone_point(rowIndex, relativeCell, outX, outY);
+}
+
+int M11_GameView_GetProjectileRawZonePointForRel(int relForward,
+                                                 int relSide,
+                                                 int relativeCell,
+                                                 int* outX,
+                                                 int* outY) {
+    int rowIndex = m11_dm1_f0115_c2500_c2900_row(relForward, relSide);
+    if (rowIndex < 0) {
+        return 0;
+    }
+    return m11_c2900_projectile_raw_zone_point(rowIndex, relativeCell,
+                                               outX, outY);
 }
 
 int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex) {
