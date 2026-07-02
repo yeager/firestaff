@@ -820,6 +820,11 @@ static void m11_ax_emit_endgame_zones(const M11_GameViewState* state) {
     FS_AX_Element* e;
 
     if (!state) return;
+    /* ReDMCSB ENDGAME.C F0446 lines 939-961 waits after the victory
+     * text before F0444_STARTEND_Endgame(C1_TRUE). During that
+     * non-blocking wait the broad state is still endgame, but the final
+     * THE END / champion-summary zones are not on screen yet. */
+    if (!M11_GameView_GetEndgameFinalPresentationReady(state)) return;
 
     /* Endgame "THE END" plaque - ReDMCSB ENDGAME.C:455-456
      * G0012_ai_Graphic562_Box_Endgame_TheEnd = (120,199,95,108).
