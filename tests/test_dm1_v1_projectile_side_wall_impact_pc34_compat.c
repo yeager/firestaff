@@ -873,6 +873,45 @@ static void test_f0820_harm_non_material_wall_impact_creates_cell_explosion(void
                "wall impact has no door side effect");
 }
 
+static void test_f0820_fireball_black_flame_heal_skips_explosion(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0820_fireball_black_flame_heal_skips_explosion\n");
+
+    make_magical_fireball(&p, 0 /* N */, 2, 5, 5);
+    make_wall_digest(&d, 5, 5, 5, 4);
+    d.destSquareType = PROJECTILE_ELEMENT_CORRIDOR;
+    d.destHasCreatureGroup = 1;
+    d.destCreatureType = 11; /* ReDMCSB C11_CREATURE_BLACK_FLAME */
+    d.destCreatureCellMask = 1 << (p.cell & 3);
+
+    memset(&r, 0, sizeof(r));
+    expect_int("f0820.black_flame.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &p, &d, PROJECTILE_RESULT_HIT_CREATURE, 869u,
+                   NULL, &r),
+               1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 527-531 Fireball feeds Black Flame");
+    expect_int("f0820.black_flame.kind", r.resultKind,
+               PROJECTILE_RESULT_HIT_CREATURE,
+               "Black Flame fireball impact still consumes the projectile");
+    expect_int("f0820.black_flame.despawn", r.despawn, 1,
+               "F0217 T0217044 then deletes the projectile");
+    expect_int("f0820.black_flame.combat", r.emittedCombatAction, 1,
+               "Firestaff carries the ReDMCSB heal amount through the creature impact action");
+    expect_int("f0820.black_flame.attack", r.outAction.rawAttackValue, p.attack,
+               "F0217 lines 529-531 heals by F0216 impact attack without defense scaling");
+    expect_int("f0820.black_flame.explosion", r.emittedExplosion, 0,
+               "F0217 jumps to T0217044 and skips the normal Fireball explosion");
+    expect_int("f0820.black_flame.sound_request", r.emittedSoundRequest, 0,
+               "F0217 Black Flame feed branch skips fallback impact sound");
+    expect_int("f0820.black_flame.sound", r.emittedSoundCode, 0,
+               "F0217 Black Flame feed branch emits no thud/spell sound");
+}
+
 static void test_f0820_slime_wall_impact_emits_wooden_thud_without_explosion(void)
 {
     struct ProjectileInstance_Compat p;
@@ -1326,6 +1365,7 @@ int main(void)
     test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_sound();
     test_f0820_lightning_wall_impact_creates_cell_explosion();
     test_f0820_harm_non_material_wall_impact_creates_cell_explosion();
+    test_f0820_fireball_black_flame_heal_skips_explosion();
     test_f0820_slime_wall_impact_emits_wooden_thud_without_explosion();
     test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound();
     test_f0820_poison_bolt_wall_impact_creates_centered_cloud();

@@ -782,7 +782,11 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
         projectile_build_hit_creature_action_with_rng(
             in, digest, impactAttack, rng, &outResult->outAction);
         outResult->emittedCombatAction = 1;
-        if (createsExplosion) {
+        if (createsExplosion
+            && !projectile_is_fireball_black_flame_impact(in, digest)) {
+            /* ReDMCSB PROJEXPL.C:F0217 lines 527-531 heals Black Flame
+             * on Fireball impact and jumps to T0217044, skipping the
+             * normal explosion/sound side effects before projectile delete. */
             outResult->emittedExplosion = populate_explosion_on_impact(
                 in, digest, &outResult->outExplosion);
         }
