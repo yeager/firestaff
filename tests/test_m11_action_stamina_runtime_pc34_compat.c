@@ -7505,6 +7505,7 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     int artifactProjectileGfx = -1;
     int artifactExplosionType = -1;
     int i;
+    uint32_t gameTickAtWin;
 
     seed_state(&state, 100, 41);
     memset(&dungeon, 0, sizeof(dungeon));
@@ -7768,6 +7769,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete records F0446 final delay ticks");
     ASSERT_EQ(state.endgameFuseSequenceDelayTicks, 2160,
               "FUSE complete records total F0446 text plus final delay ticks");
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2160,
+              "FUSE complete arms non-blocking F0446 delay countdown");
     ASSERT_EQ(state.endgameRestartAllowed,
               DM1_Endgame_GetEndingParams()->restartAllowedAfterWin,
               "FUSE complete records F0446 restart disallow gate");
@@ -7782,6 +7785,22 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete sets M11 input/render game-won gate");
     ASSERT_EQ((int)M11_GameView_GetGameWonTick(&state), 41,
               "FUSE complete stores current game tick as game-won tick");
+    gameTickAtWin = state.world.gameTick;
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "FUSE complete endgame delay countdown requests redraw");
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2159,
+              "FUSE complete endgame delay counts down one wait tick");
+    ASSERT_EQ(state.world.gameTick, gameTickAtWin,
+              "FUSE complete endgame delay does not advance source game time");
+    for (i = 0; i < 2159; ++i) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 0,
+              "FUSE complete endgame delay countdown drains exactly");
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_IGNORED,
+              "FUSE complete completed endgame delay blocks idle gameplay ticks");
+    ASSERT_EQ(state.world.gameTick, gameTickAtWin,
+              "FUSE complete completed endgame still holds source game time");
     ASSERT_EQ(M11_GameView_GetMessageLogCount(&state), 3,
               "FUSE complete keeps status, final log, and source endgame text message");
     ASSERT_STR_EQ(M11_GameView_GetMessageLogEntry(&state, 2), "\nSECOND",

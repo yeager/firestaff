@@ -8727,7 +8727,14 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         return M11_GAME_INPUT_IGNORED;
     }
     mouthRedraw = m11_tick_v1_mouth_animation(state);
-    /* No idle ticks during overlays, endgame, or dialog. */
+    /* ReDMCSB ENDGAME.C F0446 lines 946-959 uses F0022_MAIN_Delay()
+     * after source F0445 updates.  Count that wait down without advancing
+     * G0313/world.gameTick or gameplay systems. */
+    if (state->gameWon && state->endgameFuseSequenceDelayRemainingTicks > 0) {
+        state->endgameFuseSequenceDelayRemainingTicks--;
+        return M11_GAME_INPUT_REDRAW;
+    }
+    /* No idle gameplay ticks during overlays, completed endgame, or dialog. */
     if (state->gameWon || state->dialogOverlayActive ||
         state->mapOverlayActive || state->inventoryPanelActive) {
         return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -22276,6 +22283,8 @@ static void m11_apply_fuse_final_endgame_params_f0446(M11_GameViewState* state) 
      * in the presentation follow-up. */
     state->endgameFinalDelayTicks = params->finalDelayTicks;
     state->endgameFuseSequenceDelayTicks += params->finalDelayTicks;
+    state->endgameFuseSequenceDelayRemainingTicks =
+        state->endgameFuseSequenceDelayTicks;
     state->endgameRestartAllowed = params->restartAllowedAfterWin;
     state->endgameCalledWithTrue = params->endgameCalledWithTrue;
     if (params->victoryMusicId >= 0) {
