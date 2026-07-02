@@ -3724,6 +3724,51 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_csbgraphics_dat_lzw_boundary.c"
+       AND NOT TARGET test_csb_v1_csbgraphics_dat_lzw_boundary)
+        add_executable(test_csb_v1_csbgraphics_dat_lzw_boundary
+            tests/test_csb_v1_csbgraphics_dat_lzw_boundary.c
+            src/csb/csb_v1_csbgraphics_dat_classify.c
+            src/csb/csb_v1_csbgraphics_dat_lzw_boundary.c
+            src/dm1/dm1_v1_graphics_loader_pc34_compat.c)
+        target_include_directories(test_csb_v1_csbgraphics_dat_lzw_boundary PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(NOT MSVC)
+            target_compile_options(test_csb_v1_csbgraphics_dat_lzw_boundary PRIVATE -std=c11 -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME csb_v1_csbgraphics_dat_lzw_boundary_unit
+            COMMAND test_csb_v1_csbgraphics_dat_lzw_boundary)
+        set_tests_properties(csb_v1_csbgraphics_dat_lzw_boundary_unit PROPERTIES
+            LABELS "tier2;csb;csbwin_custom_resource;data_free")
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/csb/firestaff_csb_v1_csbgraphics_dat_lzw_boundary_probe.c"
+       AND NOT TARGET firestaff_csb_v1_csbgraphics_dat_lzw_boundary_probe)
+        add_executable(firestaff_csb_v1_csbgraphics_dat_lzw_boundary_probe
+            probes/csb/firestaff_csb_v1_csbgraphics_dat_lzw_boundary_probe.c
+            src/csb/csb_v1_csbgraphics_dat_classify.c
+            src/csb/csb_v1_csbgraphics_dat_lzw_boundary.c
+            src/csb/csb_v1_csbgraphics_dat_real_scan.c
+            src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+            src/shared/asset_find_by_hash.c
+            src/shared/fs_portable_compat.c)
+        target_include_directories(firestaff_csb_v1_csbgraphics_dat_lzw_boundary_probe PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_link_libraries(firestaff_csb_v1_csbgraphics_dat_lzw_boundary_probe PRIVATE firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(firestaff_csb_v1_csbgraphics_dat_lzw_boundary_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME csb_v1_csbgraphics_dat_lzw_boundary
+            COMMAND firestaff_csb_v1_csbgraphics_dat_lzw_boundary_probe)
+        set_tests_properties(csb_v1_csbgraphics_dat_lzw_boundary PROPERTIES
+            LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
+            TIMEOUT 120)
+    endif()
+endif()
+
+if(BUILD_TESTING)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_x68k_media_receipt.c"
        AND NOT TARGET test_firestaff_x68k_media_receipt)
         add_executable(test_firestaff_x68k_media_receipt
