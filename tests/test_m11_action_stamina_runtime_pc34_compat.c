@@ -7756,6 +7756,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete records F0446 nested Chaos/Order switch count");
     ASSERT_EQ(state.endgameFuseSequenceUpdateTicks, 24,
               "FUSE complete records F0446 nested fuse-update cadence");
+    ASSERT_EQ(state.endgameFuseSequenceTotalUpdateTicks, 45,
+              "FUSE complete records all F0445 update calls plus text messages");
     ASSERT_EQ(state.audioState.lastMusicTrackId,
               DM1_Endgame_GetEndingParams()->victoryMusicId,
               "FUSE complete requests F0446 game-won music track");
