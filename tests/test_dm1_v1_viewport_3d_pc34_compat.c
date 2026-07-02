@@ -1955,6 +1955,22 @@ static void test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate(void)
     check_int("d2l2_d2r2_gate.d2l2_native_bottom_edge",
               viewport[90 * DM1_VIEWPORT_WIDTH + 5], 0x55);
 
+    /* Raw DUNGEON.DAT bytes use M034_SQUARE_TYPE(raw >> 5).  A wall with
+     * MASK0x0010_THING_LIST_PRESENT must still draw as a wall, while a raw
+     * corridor byte (0x20) must not alias to C00_ELEMENT_WALL. */
+    memset(viewport, 0xee, sizeof(viewport));
+    grid[1 * 4 + 1] = 0x10;
+    d2l2_bitmap[0 * 36 + 31] = 0x44;
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2L2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.raw_wall_thing_list_draws",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 1], 0x44);
+    memset(viewport, 0xee, sizeof(viewport));
+    grid[1 * 4 + 1] = 0x20;
+    dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2L2, 0, 1, 1);
+    check_int("d2l2_d2r2_gate.raw_corridor_does_not_draw_wall",
+              viewport[20 * DM1_VIEWPORT_WIDTH + 1], 0xee);
+    grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
+
     /* D2R2 native: F0679 chooses C05_WALL_D2R2 and C708_ZONE_WALL_D2R2. */
     memset(viewport, 0xee, sizeof(viewport));
     d2r2_bitmap[0 * 36 + 0] = 10;
@@ -2153,6 +2169,21 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
               viewport[73 * DM1_VIEWPORT_WIDTH + 7], 0x55);
     check_int("d3l2_d3r2_gate.d3l2_native_row_after_frame",
               viewport[74 * DM1_VIEWPORT_WIDTH + 7], 0xee);
+
+    /* Raw wall bytes with thing lists are still WALL; raw corridor bytes are
+     * not WALL.  This protects the F0676/F0677 M034_SQUARE_TYPE source lock. */
+    memset(viewport, 0xee, sizeof(viewport));
+    grid[1 * 4 + 1] = 0x10;
+    d3l2_bitmap[0 * 8 + 1] = 0x47;
+    dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+    check_int("d3l2_d3r2_gate.raw_wall_thing_list_draws",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0x47);
+    memset(viewport, 0xee, sizeof(viewport));
+    grid[1 * 4 + 1] = 0x20;
+    dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+    check_int("d3l2_d3r2_gate.raw_corridor_does_not_draw_wall",
+              viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0xee);
+    grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
 
     /* D3R2 native: F0677 chooses C10_WALL_D3R2 and C703_ZONE_WALL_D3R2. */
     memset(viewport, 0xee, sizeof(viewport));

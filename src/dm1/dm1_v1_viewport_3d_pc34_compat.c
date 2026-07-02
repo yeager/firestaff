@@ -12,6 +12,7 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_dungeon_square_structs_pc34_compat.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -533,6 +534,20 @@ static const uint8_t *dm1_viewport_3d_selected_wall_bitmap(const DM1_Viewport3DS
      * original wall.  Source: DUNVIEW.C:6254-6260,6321-6327,6849-6889;
      * F0128 restores G3071 only after the whole draw in lines 8577-8579. */
     return bm_base + (int)state->wall_set_native[selected_wall] * DM1_VIEWPORT_BYTE_WIDTH;
+}
+
+static int dm1_viewport_3d_classify_grid_cell(int cell, int direction)
+{
+    /* ReDMCSB: DEFS.H M034_SQUARE_TYPE is square >> 5; DUNGEON.C F0172
+     * derives closed fakewalls/door-stair orientation from that raw byte.
+     * Some legacy Firestaff callers pass normalized element IDs 0..6, so
+     * keep those stable while making raw DUNGEON.DAT bytes render correctly.
+     * The grid must not pass F0172 extended aspects 16..19; 0x10 is a valid
+     * raw wall byte carrying MASK0x0010_THING_LIST_PRESENT. */
+    if (cell >= DM1_VP_ELEMENT_WALL && cell <= DM1_VP_ELEMENT_FAKEWALL) {
+        return cell;
+    }
+    return dm1_classify_square_aspect_element((uint8_t)cell, direction);
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -2008,8 +2023,8 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
 {
     if (!state) return;
 
-    int element = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
-    int raw_element = element & 0x1F; /* M034_SQUARE_TYPE */
+    int cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
+    int element = dm1_viewport_3d_classify_grid_cell(cell, direction);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
     if (!bm_base) return;
@@ -2039,7 +2054,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * Uses G2107_WallSet[parity ? parity_wall : native_wall] bitmap.
      * Then calls F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF
      * for the appropriate wall ornament position. */
-    if (raw_element == 0) { /* C00_ELEMENT_WALL */
+    if (element == DM1_VP_ELEMENT_WALL) { /* C00_ELEMENT_WALL */
         bool flip_h = state->parity_flip;
         DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
         const uint8_t *wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
@@ -2062,7 +2077,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * ReDMCSB F0676 line 6290 / F0677 line 6356.
      * F0113_DUNGEONVIEW_DrawField draws the teleporter swirl effect
      * at the wall zone. */
-    if (raw_element == 5) { /* C05_ELEMENT_TELEPORTER */
+    if (element == DM1_VP_ELEMENT_TELEPORTER) { /* C05_ELEMENT_TELEPORTER */
         dm1_viewport_3d_draw_field(state, wall_zone, 0x1C); /* cyan field */
         return;
     }
@@ -2102,7 +2117,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
          * examining bit 10 of the original cell (not available here).
          * As a heuristic: if the stairs_indices are populated, assume it's
          * a valid stairs position. */
-        if (raw_element == 3 && state->stairs_indices[0] != 0) {
+        if (element == DM1_VP_ELEMENT_STAIRS && state->stairs_indices[0] != 0) {
             /* STAIRS_FRONT detected — draw stairs bitmap.
              * Uses dm1_viewport_3d_draw_wall with the stairs bitmap
              * from stairs_indices[0..3] at the appropriate zone.
@@ -2122,7 +2137,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * TODO (pass603): check M554 from aspect array, then draw pit bitmap
      * using zone C850 (D3L2) or C851 (D3R2) if visible.
      * Source: DUNVIEW.C:6275-6278 (F0676) · DUNVIEW.C:6342-6345 (F0677) */
-    if (raw_element == 2) { /* C02_ELEMENT_PIT */
+    if (element == DM1_VP_ELEMENT_PIT) { /* C02_ELEMENT_PIT */
         /* PIT drawing — TODO (pass603): requires M554 check and pit bitmap */
         /* Pit falls through to TELEPORTER/CORRIDOR common path below */
     }
@@ -2167,7 +2182,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
 
         /* Teleporter field effect — only for TELEPORTER element.
          * Source: DUNVIEW.C:6288-6289 (F0676) · DUNVIEW.C:6355-6356 (F0677) */
-        if (raw_element == 5) { /* TELEPORTER */
+        if (element == DM1_VP_ELEMENT_TELEPORTER) { /* TELEPORTER */
             dm1_viewport_3d_draw_field(state, wall_zone, 0x1C);
         }
     }
@@ -2213,8 +2228,8 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
     (void)direction; /* unused — parity comes from viewport state */
     if (!state) return;
 
-    int element = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
-    int raw_element = element & 0x1F; /* M034_SQUARE_TYPE */
+    int cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
+    int element = dm1_viewport_3d_classify_grid_cell(cell, direction);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
     if (!bm_base) return;
@@ -2244,7 +2259,7 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
      * For D2L2/D2R2, the wall zone is C707/C708 and the bitmap
      * comes from G2107_WallSet[C06_WALL_D2L2] or C05_WALL_D2R2
      * with optional horizontal flip for parity. */
-    if (raw_element == 0) { /* C00_ELEMENT_WALL */
+    if (element == DM1_VP_ELEMENT_WALL) { /* C00_ELEMENT_WALL */
         bool flip_h = state->parity_flip;
         DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
         const uint8_t *wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
@@ -2261,7 +2276,7 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
      * ReDMCSB F0678 lines 6863-6865 / F0679 lines 6894-6896.
      * F0113_DUNGEONVIEW_DrawField draws the teleporter field at
      * zone C707 (D2L2) or C708 (D2R2). */
-    if (raw_element == 5) { /* C05_ELEMENT_TELEPORTER */
+    if (element == DM1_VP_ELEMENT_TELEPORTER) { /* C05_ELEMENT_TELEPORTER */
         dm1_viewport_3d_draw_field(state, wall_zone, 0x1C); /* cyan field */
         return;
     }
