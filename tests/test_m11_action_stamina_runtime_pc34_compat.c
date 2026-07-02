@@ -6534,7 +6534,7 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
     state.world.party.mapX = 2;
     state.world.party.mapY = 2;
     state.world.party.direction = 0; /* north: target is (2,1). */
-    state.world.party.champions[0].direction = 3;
+    state.world.party.champions[0].direction = 0;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_FLUXCAGE),
@@ -6588,6 +6588,53 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
               "C24 remove-fluxcage event despawns the fluxcage");
 }
 
+static void test_fluxcage_uses_pref0406_champion_target_square(void) {
+    M11_GameViewState state;
+    int removeIndex = -1;
+    int slot = -1;
+    int i;
+
+    seed_state(&state, 100, 41);
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 2;
+    state.world.party.mapY = 2;
+    state.world.party.direction = 0; /* party north. */
+    state.world.party.champions[0].direction = 3; /* champion west. */
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FLUXCAGE),
+              1,
+              "FLUXCAGE performs with a pre-F0406 champion-facing target");
+    ASSERT_EQ(state.world.party.champions[0].direction, 0,
+              "FLUXCAGE still mirrors F0406 champion direction afterward");
+    ASSERT_EQ(state.world.explosions.count, 1,
+              "pre-F0406 FLUXCAGE creates one live explosion");
+
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind ==
+            TIMELINE_EVENT_REMOVE_FLUXCAGE) {
+            removeIndex = i;
+            break;
+        }
+    }
+    ASSERT_EQ(removeIndex >= 0, 1,
+              "pre-F0406 FLUXCAGE schedules the remove event");
+    if (removeIndex < 0) return;
+
+    slot = state.world.timeline.events[removeIndex].aux0;
+    ASSERT_EQ(state.world.timeline.events[removeIndex].mapX, 1,
+              "pre-F0406 FLUXCAGE remove event uses champion-facing x");
+    ASSERT_EQ(state.world.timeline.events[removeIndex].mapY, 2,
+              "pre-F0406 FLUXCAGE remove event uses champion-facing y");
+    ASSERT_EQ(slot >= 0, 1,
+              "pre-F0406 FLUXCAGE remove event stores explosion slot");
+    ASSERT_EQ(state.world.explosions.entries[slot].mapX, 1,
+              "pre-F0406 FLUXCAGE explosion uses champion-facing x");
+    ASSERT_EQ(state.world.explosions.entries[slot].mapY, 2,
+              "pre-F0406 FLUXCAGE explosion uses champion-facing y");
+}
+
 static void test_fluxcage_wall_target_keeps_f0407_tail_without_cage(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -6623,7 +6670,7 @@ static void test_fluxcage_wall_target_keeps_f0407_tail_without_cage(void) {
     state.world.party.mapX = 1;
     state.world.party.mapY = 1;
     state.world.party.direction = 0; /* north: wall target at (1,0). */
-    state.world.party.champions[0].direction = 2;
+    state.world.party.champions[0].direction = 0;
 
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_FLUXCAGE, &route), 1,
               "FLUXCAGE has a source G0496/G0497 route");
@@ -6707,6 +6754,7 @@ static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     state.world.party.mapX = 2;
     state.world.party.mapY = 3;
     state.world.party.direction = 0; /* north: new cage at (2,2). */
+    state.world.party.champions[0].direction = 0;
 
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
@@ -7370,6 +7418,7 @@ int main(void) {
     test_action_defense_serializes_outside_v1_champion_blob();
     test_action_stamina_underflow_clamps_and_damages();
     test_fluxcage_schedules_f0224_remove_event();
+    test_fluxcage_uses_pref0406_champion_target_square();
     test_fluxcage_wall_target_keeps_f0407_tail_without_cage();
     test_fluxcage_third_cage_schedules_lord_chaos_danger();
     test_fuse_incomplete_fluxcage_moves_lord_chaos_escape();
