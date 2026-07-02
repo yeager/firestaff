@@ -2658,6 +2658,15 @@ static int m11_compute_floor_ornament_ordinal(
     ornSeed = state->world.dungeon->header.ornamentRandomSeed;
     randomFloorOrnCount = (int)map->randomFloorOrnamentCount;
 
+    if (mapIndex == 0) {
+        /* ReDMCSB REVIVE.C F0280 owns Hall of Champions candidate/mirror
+         * control data.  The stock HoC runtime should not surface floor
+         * ornaments in quiet non-wall cells; random/sensor floor ornament
+         * ordinals here select unrelated GRAPHICS.DAT art such as
+         * fireball-looking floor blobs. */
+        return 0;
+    }
+
     /* Random floor ornament from square byte bit 3 (MASK0x0008) */
     randomAllowed = (square & 0x08) != 0;
     if (randomAllowed && randomFloorOrnCount > 0) {
@@ -2671,7 +2680,6 @@ static int m11_compute_floor_ornament_ordinal(
             ordinal = idx + 1; /* 1-based */
         }
     }
-
     /* Sensor-placed floor ornaments override random ones.
      * Scan for sensor things with ornamentOrdinal on this square.
      * Ref: ReDMCSB F0172 — C0_SENSOR_FLOOR_ORNAMENT_ORDINAL path. */
