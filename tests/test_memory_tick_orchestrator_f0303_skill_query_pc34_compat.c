@@ -11,6 +11,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
@@ -125,6 +126,7 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
     struct TickResult_Compat result;
     int skillLevel;
     int sawSpellEffect;
+    int spellXp;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -168,6 +170,11 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
             EMIT_SPELL_EFFECT_UNPACK_POWER(result.emissions[i].payload[3]) == 1 &&
             EMIT_SPELL_EFFECT_UNPACK_SKILL(result.emissions[i].payload[3]) ==
                 DM1_SKILL_IDX_AIR) {
+            spellXp = EMIT_SPELL_EFFECT_UNPACK_XP(result.emissions[i].payload[3]);
+            assert(spellXp >= (int)dm1_spell_experience(
+                       1, spell.baseRequiredSkillLevel, 0));
+            assert(spellXp <= (int)dm1_spell_experience(
+                       1, spell.baseRequiredSkillLevel, 7));
             sawSpellEffect = 1;
         }
     }
@@ -217,6 +224,7 @@ static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int sawSpellEffect = 0;
+    int spellXp;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -261,6 +269,9 @@ static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
             EMIT_SPELL_EFFECT_UNPACK_POWER(result.emissions[i].payload[3]) == 1 &&
             EMIT_SPELL_EFFECT_UNPACK_SKILL(result.emissions[i].payload[3]) ==
                 DM1_SKILL_IDX_HEAL) {
+            spellXp = EMIT_SPELL_EFFECT_UNPACK_XP(result.emissions[i].payload[3]);
+            assert(spellXp >= (int)dm1_spell_experience(1, 2, 0));
+            assert(spellXp <= (int)dm1_spell_experience(1, 2, 7));
             sawSpellEffect = 1;
         }
     }

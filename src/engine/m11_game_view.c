@@ -48,6 +48,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
@@ -5726,6 +5727,8 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     int tableIndex = -1;
     int manaCost = 0;
     int failureReason = 0;
+    int spellPowerOrdinal = 1;
+    int spellExperience = 0;
     char champName[16];
 
     if (!state || !state->active || state->partyDead) return 0;
@@ -5823,13 +5826,21 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     req.gameTimeTicksLow = (int)(state->world.gameTick & 0x7FFFFFFF);
     req.spellTableIndex = tableIndex;
     req.rawSymbolsPacked = (int)packed;
+    spellPowerOrdinal = state->spellBuffer.runes[0] > 0
+                            ? (state->spellBuffer.runes[0] - 0x60) / 6 + 1
+                            : 1;
+    /* ReDMCSB: MENU.C F0412 lines 1824-1826 draws RANDOM(8)
+     * before the missing-skill practice loop, then uses it in
+     * L1273_ui_Experience for both success and failure XP. */
+    spellExperience = (int)dm1_spell_experience(
+        spellPowerOrdinal,
+        spell.baseRequiredSkillLevel,
+        F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 8));
 
     /* Validate the cast */
     memset(&effect, 0, sizeof(effect));
     if (!F0754_MAGIC_ValidateCastRequest_Compat(&req, &spell,
-                                                 state->spellBuffer.runes[0] > 0
-                                                     ? (state->spellBuffer.runes[0] - 0x60) / 6 + 1
-                                                     : 1,
+                                                 spellPowerOrdinal,
                                                  &state->world.masterRng,
                                                  &failureReason)) {
         const char* failMsg = "NEEDS MORE PRACTICE";
@@ -5857,14 +5868,17 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         input.command = CMD_CAST_SPELL;
         input.commandArg1 = (uint8_t)state->world.party.activeChampionIndex;
         input.commandArg2 = (uint8_t)tableIndex;
-        input.reserved = (uint8_t)(state->spellBuffer.runes[0] > 0
-                                       ? (state->spellBuffer.runes[0] - 0x60) / 6 + 1
-                                       : 1);
+        input.reserved = (uint8_t)spellPowerOrdinal;
+        input.reserved2 =
+            CMD_CAST_SPELL_RESERVED2_HAS_SPELL_XP |
+            (((uint32_t)spellExperience <<
+              CMD_CAST_SPELL_RESERVED2_SPELL_XP_SHIFT) &
+             CMD_CAST_SPELL_RESERVED2_SPELL_XP_MASK);
         if (spell.kind == C1_SPELL_KIND_POTION_COMPAT) {
             int flaskSlot = m11_find_empty_flask_in_hand_f0411(
                 state, state->world.party.activeChampionIndex);
             if (flaskSlot >= 0) {
-                input.reserved2 =
+                input.reserved2 |=
                     CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK |
                     (((uint32_t)flaskSlot <<
                       CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_SHIFT) &
@@ -6992,7 +7006,7 @@ static void m11_award_combat_xp(M11_GameViewState* state,
 static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
-                               int power) {
+                               int experience) {
     struct ChampionLifecycleState_Compat* lc;
     struct LevelUpMarker_Compat marker;
     int levelBefore = 0;
@@ -7008,7 +7022,7 @@ static void m11_award_magic_xp(M11_GameViewState* state,
 
     lc = &state->world.lifecycle.champions[championIndex];
     memset(&marker, 0, sizeof(marker));
-    xpAmount = power > 0 ? power : 1;
+    xpAmount = experience > 0 ? experience : 1;
 
     if (F0849_LIFECYCLE_AddSkillExperience_Compat(
             lc, skillIndex, xpAmount,
@@ -7565,6 +7579,7 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 int sType = (int)e->payload[2];
                 int sPow  = (int)EMIT_SPELL_EFFECT_UNPACK_POWER(e->payload[3]);
                 int sSkill = (int)EMIT_SPELL_EFFECT_UNPACK_SKILL(e->payload[3]);
+                int sXp = (int)EMIT_SPELL_EFFECT_UNPACK_XP(e->payload[3]);
                 const char* kindStr = "SPELL";
                 int launchedProjectile = 0;
                 if (sKind == C2_SPELL_KIND_PROJECTILE_COMPAT) kindStr = "PROJECTILE";
@@ -7632,7 +7647,7 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                  * experience from G0487 Spell.SkillIndex, then lines
                  * 2034-2039 award it once and disable the caster after
                  * the spell effect succeeds. */
-                m11_award_magic_xp(state, sChamp, sSkill, sPow);
+                m11_award_magic_xp(state, sChamp, sSkill, sXp);
                 break;
             }
             case EMIT_GAME_WON:

@@ -117,8 +117,11 @@
 
 /* CMD_CAST_SPELL reserved2 encoding. */
 #define CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK        0x00000001u
+#define CMD_CAST_SPELL_RESERVED2_HAS_SPELL_XP           0x00000002u
 #define CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_SHIFT 8u
 #define CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_MASK  0x0000FF00u
+#define CMD_CAST_SPELL_RESERVED2_SPELL_XP_SHIFT         16u
+#define CMD_CAST_SPELL_RESERVED2_SPELL_XP_MASK          0xFFFF0000u
 
 /* ================================================================
  *  Emission kinds (TickEmission.kind)
@@ -139,16 +142,21 @@
 #define EMIT_SENSOR_EFFECT    0x0D  /* pass-37: party enter/leave sensor effects */
 
 /* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
- * low byte and the ReDMCSB G0487 Spell.SkillIndex in the next byte. */
+ * low byte, ReDMCSB G0487 Spell.SkillIndex in the next byte, and the
+ * source F0412 spell XP amount in the high 16 bits. */
 #define EMIT_SPELL_EFFECT_POWER_MASK        0x000000FF
 #define EMIT_SPELL_EFFECT_SKILL_SHIFT       8
-#define EMIT_SPELL_EFFECT_PACK_POWER_SKILL(powerOrdinal, skillIndex) \
+#define EMIT_SPELL_EFFECT_XP_SHIFT          16
+#define EMIT_SPELL_EFFECT_PACK_POWER_SKILL_XP(powerOrdinal, skillIndex, experience) \
+    ((((int32_t)(experience) & 0xFFFF) << EMIT_SPELL_EFFECT_XP_SHIFT) | \
     ((((int32_t)(skillIndex) & 0xFF) << EMIT_SPELL_EFFECT_SKILL_SHIFT) | \
-     ((int32_t)(powerOrdinal) & EMIT_SPELL_EFFECT_POWER_MASK))
+     ((int32_t)(powerOrdinal) & EMIT_SPELL_EFFECT_POWER_MASK)))
 #define EMIT_SPELL_EFFECT_UNPACK_POWER(payload3) \
     ((int32_t)(payload3) & EMIT_SPELL_EFFECT_POWER_MASK)
 #define EMIT_SPELL_EFFECT_UNPACK_SKILL(payload3) \
     (((int32_t)(payload3) >> EMIT_SPELL_EFFECT_SKILL_SHIFT) & 0xFF)
+#define EMIT_SPELL_EFFECT_UNPACK_XP(payload3) \
+    (((int32_t)(payload3) >> EMIT_SPELL_EFFECT_XP_SHIFT) & 0xFFFF)
 
 /* ================================================================
  *  Capacities

@@ -5959,6 +5959,7 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
     int swingXpBefore;
     int priestXpBefore;
     int healXpBefore;
+    int spellXp;
     int i;
 
     seed_state(&state, 100, 41);
@@ -5994,6 +5995,7 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
                          .skills20[DM1_SKILL_IDX_PRIEST].experience;
     healXpBefore = state.world.lifecycle.champions[0]
                        .skills20[DM1_SKILL_IDX_HEAL].experience;
+    spellXp = 0;
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1,
               "potion spell opens spell panel");
@@ -6021,6 +6023,8 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
             EMIT_SPELL_EFFECT_UNPACK_SKILL(
                 state.lastTickResult.emissions[i].payload[3]) ==
                 DM1_SKILL_IDX_HEAL) {
+            spellXp = EMIT_SPELL_EFFECT_UNPACK_XP(
+                state.lastTickResult.emissions[i].payload[3]);
             sawSpellEffect = 1;
         }
     }
@@ -6035,13 +6039,13 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
               fighterXpBefore,
               "potion cast does not propagate pre-emission Fighter XP");
     ASSERT_EQ(state.world.lifecycle.champions[0]
-                  .skills20[DM1_SKILL_IDX_HEAL].experience > healXpBefore,
-              1,
-              "potion cast keeps committed Heal spell XP");
+                  .skills20[DM1_SKILL_IDX_HEAL].experience,
+              healXpBefore + spellXp,
+              "potion cast applies exact F0412 Heal spell XP");
     ASSERT_EQ(state.world.lifecycle.champions[0]
-                  .skills20[DM1_SKILL_IDX_PRIEST].experience > priestXpBefore,
-              1,
-              "potion cast propagates committed Priest spell XP");
+                  .skills20[DM1_SKILL_IDX_PRIEST].experience,
+              priestXpBefore + spellXp,
+              "potion cast propagates exact F0412 Priest spell XP");
 }
 
 static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
@@ -6054,6 +6058,7 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
     int swingXpBefore;
     int wizardXpBefore;
     int fireXpBefore;
+    int spellXp;
     int i;
 
     seed_state(&state, 100, 43);
@@ -6086,6 +6091,7 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
                          .skills20[DM1_SKILL_IDX_WIZARD].experience;
     fireXpBefore = state.world.lifecycle.champions[0]
                        .skills20[DM1_SKILL_IDX_FIRE].experience;
+    spellXp = 0;
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1,
               "Zokathra opens spell panel");
@@ -6124,6 +6130,8 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
             EMIT_SPELL_EFFECT_UNPACK_SKILL(
                 state.lastTickResult.emissions[i].payload[3]) ==
                 DM1_SKILL_IDX_WIZARD) {
+            spellXp = EMIT_SPELL_EFFECT_UNPACK_XP(
+                state.lastTickResult.emissions[i].payload[3]);
             sawSpellEffect = 1;
         }
     }
@@ -6142,9 +6150,9 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
               fireXpBefore,
               "Zokathra cast does not reroute G0487 Wizard XP to Fire");
     ASSERT_EQ(state.world.lifecycle.champions[0]
-                  .skills20[DM1_SKILL_IDX_WIZARD].experience > wizardXpBefore,
-              1,
-              "Zokathra cast propagates committed Wizard spell XP");
+                  .skills20[DM1_SKILL_IDX_WIZARD].experience,
+              wizardXpBefore + spellXp,
+              "Zokathra cast applies exact F0412 Wizard spell XP");
 }
 
 static void test_spellshield_low_mana_halves_disable_and_quarters_xp(void) {
