@@ -16589,17 +16589,19 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable) {
         return;
     }
+    (void)cells;
     flipWalls = m11_dm1_use_flipped_walls(state);
     for (i = 0; i < sizeof(kSideBlits) / sizeof(kSideBlits[0]); ++i) {
         M11_ViewportCell cell;
         if (kSideBlits[i].relForward > maxVisibleForward) {
             continue;
         }
-        if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                                  kSideBlits[i].relForward,
-                                                  kSideBlits[i].relSide)) {
-            continue;
-        }
+        /* ReDMCSB DUNVIEW.C F0128 lines 8478-8533 draws side wall
+         * squares far-to-near without testing nearer side-lane occupancy;
+         * nearer D1/D2 side walls overpaint the farther D2/D3 panels.  Do
+         * not reuse the thing/projectile lane guard here, or visible
+         * D2L/D2R and D3L2/D3R2 wall slivers disappear until the party
+         * steps forward. */
         if (!m11_sample_viewport_cell(state,
                                       kSideBlits[i].relForward,
                                       kSideBlits[i].relSide,
@@ -24667,6 +24669,41 @@ int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
     if (outEffectiveElementType) *outEffectiveElementType = effectiveElement;
     if (outIsWallLike) *outIsWallLike = m11_viewport_cell_is_wall_like(&cell);
     if (outIsOpen) *outIsOpen = m11_viewport_cell_is_open(&cell);
+    return 1;
+}
+
+int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
+                                              int relForward,
+                                              int relSide,
+                                              int* outLegacyLaneClear,
+                                              int* outDrawsWithSourceOrder) {
+    M11_ViewportCell cells[3][3];
+    M11_ViewportCell cell;
+    int depth;
+    int side;
+    int maxVisibleForward;
+    int laneClear;
+    int draws;
+    if (!state || !state->active || relSide == 0 || relForward < 0) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        for (side = 0; side < 3; ++side) {
+            memset(&cells[depth][side], 0, sizeof(cells[depth][side]));
+            (void)m11_sample_viewport_cell(state, depth + 1, side - 1,
+                                           &cells[depth][side]);
+        }
+    }
+    maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    laneClear = m11_dm1_side_lane_clear_for_rel(cells, relForward, relSide);
+    draws = relForward <= maxVisibleForward &&
+            m11_viewport_cell_is_wall_like(&cell);
+    if (outLegacyLaneClear) *outLegacyLaneClear = laneClear;
+    if (outDrawsWithSourceOrder) *outDrawsWithSourceOrder = draws;
     return 1;
 }
 
