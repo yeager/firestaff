@@ -883,6 +883,7 @@ static void test_empty_hand_war_cry_frightens_front_group(void) {
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
     state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
 
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         THING_NONE;
@@ -938,6 +939,79 @@ static void test_empty_hand_war_cry_frightens_front_group(void) {
               "F0391 clears acting champion after WAR CRY");
 }
 
+static void test_war_cry_targets_pref0407_champion_direction(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(1 * 3) + 2] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1; /* party east: no group on that square. */
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 2; /* champion south. */
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 2; /* Giggler: fear resistance 0. */
+    groups[0].count = 0;
+    groups[0].health[0] = 25;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 1;
+    state.world.creatureAI[0].groupMapY = 2;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 8), 1,
+              "WAR CRY targets the pre-F0407 champion-facing square");
+    ASSERT_EQ(state.world.party.champions[0].direction, 2,
+              "WAR CRY does not run F0406 direction sync");
+    ASSERT_EQ(groups[0].behavior, DM1_BEHAVIOR_FLEE,
+              "champion-facing WAR CRY switches the south group to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
+              "champion-facing WAR CRY switches the active south group");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              12,
+              "champion-facing WAR CRY awards full F0401 Influence XP");
+}
+
 static void test_blow_horn_frightens_front_group_with_f0401_values(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -974,6 +1048,7 @@ static void test_blow_horn_frightens_front_group_with_f0401_values(void) {
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
     state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
 
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
@@ -1048,6 +1123,7 @@ static void test_calm_frightens_front_group_with_f0401_values(void) {
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
     state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
 
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
@@ -1122,6 +1198,7 @@ static void test_brandish_frightens_front_group_with_f0401_values(void) {
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
     state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
 
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
@@ -1198,6 +1275,7 @@ static void test_confuse_decrements_charges_and_frightens_front_group(void) {
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
     state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
 
     weapons[0].type = 1;
     weapons[0].chargeCount = 2;
@@ -1280,6 +1358,7 @@ static void test_war_cry_resistance_halves_xp_without_flee(void) {
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
     state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
 
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         THING_NONE;
@@ -1356,6 +1435,7 @@ static void test_blow_horn_immune_halves_xp_without_flee(void) {
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
     state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
 
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
@@ -1431,6 +1511,7 @@ static void test_blow_horn_uses_f0304_influence_xp_semantics(void) {
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
     state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
 
     state.world.lifecycle.champions[0]
         .skills20[DM1_SKILL_IDX_PRIEST].experience = 490;
@@ -7434,6 +7515,7 @@ int main(void) {
     test_direct_non_melee_respects_candidate_panel_gate();
     test_empty_hand_punch_action_row_uses_live_melee();
     test_empty_hand_war_cry_frightens_front_group();
+    test_war_cry_targets_pref0407_champion_direction();
     test_blow_horn_frightens_front_group_with_f0401_values();
     test_calm_frightens_front_group_with_f0401_values();
     test_brandish_frightens_front_group_with_f0401_values();

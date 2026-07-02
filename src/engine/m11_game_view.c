@@ -22690,8 +22690,10 @@ static int m11_add_influence_experience(M11_GameViewState* state,
 
 static int m11_perform_f0401_frighten_action(M11_GameViewState* state,
                                              int championIndex,
-                                             unsigned char actionIndex) {
-    int mapIndex, mapX, mapY;
+                                             unsigned char actionIndex,
+                                             int mapIndex,
+                                             int mapX,
+                                             int mapY) {
     unsigned short groupThing;
     int groupIndex;
     struct DungeonGroup_Compat* group;
@@ -22704,7 +22706,6 @@ static int m11_perform_f0401_frighten_action(M11_GameViewState* state,
     int activeIndex = -1;
 
     if (!state || !state->world.things || !state->world.things->groups) return 0;
-    if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
 
     groupThing = m11_find_group_on_square(&state->world, mapIndex, mapX, mapY);
     if (groupThing == THING_NONE || groupThing == THING_ENDOFLIST) {
@@ -22722,9 +22723,11 @@ static int m11_perform_f0401_frighten_action(M11_GameViewState* state,
     profile = CREATURE_GetProfile_Compat(group->creatureType);
     if (!profile) return 0;
 
-    /* ReDMCSB MENU.C F0401 lines 943-989: action-specific fright amount
-     * plus F0303(INFLUENCE), resistance/immune halves XP, success switches
-     * the group to FLEE and sets DelayFleeingFromTarget. */
+    /* ReDMCSB MENU.C F0401 lines 913-989 receives P0771/P0772 from
+     * F0407's L1251/L1252 target, which MENU.C lines 1262-1266 compute from
+     * Champion.Direction before the action switch.  The action-specific
+     * fright amount then adds F0303(INFLUENCE), resistance/immune halves XP,
+     * and success switches the group to FLEE with DelayFleeingFromTarget. */
     frightAmount = m11_f0401_fright_amount_for_action(actionIndex, &experience);
     influenceLevel = M11_GameView_GetSkillLevel(
         state, championIndex, DM1_SKILL_IDX_INFLUENCE);
@@ -24900,9 +24903,14 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         case 41: /* BRANDISH */
         case 22: /* CONFUSE */ {
             /* F0407 routes these through F0401_MENUS_IsGroupFrightenedByAction
-             * against the creature group in front of the party. */
+             * against L1251/L1252, the precomputed champion-facing target. */
             const char* verb;
             int frightened;
+            int mapIndex, mapX, mapY;
+            if (!m11_party_front_square_for_direction(
+                    state, champ->direction, &mapIndex, &mapX, &mapY)) {
+                return 0;
+            }
             switch (chosen) {
                 case 8:  verb = "LETS OUT A WAR CRY"; break;
                 case 4:  verb = "BLOWS THE HORN"; break;
@@ -24936,7 +24944,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 m11_decrement_action_hand_charges_f0405(state, championIndex);
             }
             frightened = m11_perform_f0401_frighten_action(
-                state, championIndex, chosen);
+                state, championIndex, chosen, mapIndex, mapX, mapY);
             if (frightened) {
                 m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                               "T%u: THE GROUP FLEES",
