@@ -831,8 +831,12 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
             outResult->outNextTick.aux4       = in->ownerKind;
             outResult->emittedDoorToggleEvent = 1;
         } else {
+            /* ReDMCSB PROJEXPL.C:F0217 line 506 calls
+             * F0232_GROUP_IsDoorDestroyedByAttack with
+             * F0216_PROJECTILE_GetImpactAttack(...) + 1. */
             F0819_PROJECTILE_BuildDoorDestructionEvent_Compat(
-                in, digest, impactAttack, currentTick, rng, &outResult->outNextTick);
+                in, digest, impactAttack + 1, currentTick, rng,
+                &outResult->outNextTick);
             outResult->emittedDoorDestructionEvent = 1;
             if (createsExplosion) {
                 outResult->emittedExplosion = populate_explosion_on_impact(
@@ -956,6 +960,7 @@ int F0811_PROJECTILE_Advance_Compat(
     int newCell;
     int blocker = PROJECTILE_BLOCKER_OPEN;
     int dispatch = -1;
+    int decrementedBeforeImpact = 0;
 
     if (in == NULL || digest == NULL || outNewState == NULL || outResult == NULL) {
         return 0;
@@ -1038,6 +1043,7 @@ int F0811_PROJECTILE_Advance_Compat(
         int attackDec = (in->attack < in->stepEnergy) ? in->attack : in->stepEnergy;
         outNewState->attack -= attackDec;
     }
+    decrementedBeforeImpact = 1;
 
 MOTION_STEP:
     /* (5) Cross-cell vs intra-square flip.
@@ -1080,7 +1086,7 @@ MOTION_STEP:
         case PROJECTILE_BLOCKER_CLOSED_DOOR: {
             int passesDoor = 0;
             F0816_PROJECTILE_DoesPassThroughDoor_Compat(
-                in, digest, rng, &passesDoor);
+                outNewState, digest, rng, &passesDoor);
             if (!passesDoor) {
                 dispatch = PROJECTILE_RESULT_HIT_DOOR;
                 goto RESOLVE;
@@ -1146,7 +1152,7 @@ MOTION_STEP:
             && digest->destDoorState >= PROJECTILE_DOOR_STATE_CLOSED_HALF) {
             int passesDoor = 0;
             F0816_PROJECTILE_DoesPassThroughDoor_Compat(
-                in, digest, rng, &passesDoor);
+                outNewState, digest, rng, &passesDoor);
             if (!passesDoor) {
                 dispatch = PROJECTILE_RESULT_HIT_DOOR;
                 goto RESOLVE;
@@ -1188,17 +1194,22 @@ RESOLVE:
          * move. F0217 lines 509-558 then receives the impact cell for
          * champion damage; preserve wall/door blocker behavior by only
          * forwarding the parity-adjusted cell for champion/creature hits. */
-        if ((dispatch == PROJECTILE_RESULT_HIT_CHAMPION
-             || dispatch == PROJECTILE_RESULT_HIT_CREATURE)
-            && (outNewState->cell != in->cell
-                || outNewState->mapIndex != in->mapIndex
-                || outNewState->mapX != in->mapX
-                || outNewState->mapY != in->mapY)) {
-            resolveState = *in;
-            resolveState.cell     = outNewState->cell;
-            resolveState.mapIndex = outNewState->mapIndex;
-            resolveState.mapX     = outNewState->mapX;
-            resolveState.mapY     = outNewState->mapY;
+        if ((dispatch == PROJECTILE_RESULT_HIT_DOOR && decrementedBeforeImpact) ||
+            ((dispatch == PROJECTILE_RESULT_HIT_CHAMPION
+              || dispatch == PROJECTILE_RESULT_HIT_CREATURE)
+             && (outNewState->cell != in->cell
+                 || outNewState->mapIndex != in->mapIndex
+                 || outNewState->mapX != in->mapX
+                 || outNewState->mapY != in->mapY))) {
+            resolveState = (dispatch == PROJECTILE_RESULT_HIT_DOOR)
+                           ? *outNewState : *in;
+            if (dispatch == PROJECTILE_RESULT_HIT_CHAMPION
+                || dispatch == PROJECTILE_RESULT_HIT_CREATURE) {
+                resolveState.cell     = outNewState->cell;
+                resolveState.mapIndex = outNewState->mapIndex;
+                resolveState.mapX     = outNewState->mapX;
+                resolveState.mapY     = outNewState->mapY;
+            }
             resolveIn = &resolveState;
         }
 

@@ -365,6 +365,47 @@ static void test_f0811_thrown_dagger_advances_through_grate(void)
                "F0825 reschedule carries projectile slot");
 }
 
+static void test_f0811_uses_decremented_attack_for_grate_pass_roll(void)
+{
+    int passes = -1;
+    struct ProjectileInstance_Compat in;
+    struct ProjectileInstance_Compat out;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0811_uses_decremented_attack_for_grate_pass_roll\n");
+
+    make_thrown_dagger(&in);
+    make_closed_portcullis_grate_digest(&d);
+    in.attack = in.stepEnergy;
+    memset(&out, 0, sizeof(out));
+    memset(&r, 0, sizeof(r));
+
+    expect_int("f0816.predecrement.rc",
+               F0816_PROJECTILE_DoesPassThroughDoor_Compat(&in, &d, NULL,
+                                                            &passes),
+               1, PORTCULLIS_F0816_ANCHOR);
+    expect_int("f0816.predecrement.passes", passes, 1,
+               "Direct F0816 sees attack=stepEnergy before F0219 decrement");
+    expect_int("f0811.decremented_attack.rc",
+               F0811_PROJECTILE_Advance_Compat(&in, &d, 712u, NULL,
+                                                &out, &r),
+               1, PORTCULLIS_REDMCSB_F0219_ANCHOR);
+    expect_int("f0811.decremented_attack.result", r.resultKind,
+               PROJECTILE_RESULT_HIT_DOOR,
+               "PROJEXPL.C:F0219 lines 707-715 decrements attack before F0217");
+    expect_int("f0811.decremented_attack.despawn", r.despawn, 1,
+               "F0217 sees attack=0 and treats closed portcullis as impact");
+    expect_int("f0811.decremented_attack.new_attack", r.newAttack, 0,
+               "F0219 lines 711-714 clamps attack to zero before door check");
+    expect_int("f0811.decremented_attack.door_event",
+               r.emittedDoorDestructionEvent, 1,
+               "Failed pass-through falls into F0232/F0819 door attack path");
+    expect_int("f0811.decremented_attack.event_attack",
+               r.outNextTick.aux0, 1,
+               "F0217 line 506 adds one to F0216 impact attack");
+}
+
 /* ---- (4) F0820 - direct dispatch with passes=1 returns FLEW ---- */
 
 static void test_f0820_direct_pass_through_returns_flew(void)
@@ -476,6 +517,7 @@ int main(void)
     test_f0816_kinetic_without_allowed_slots_hits_grate();
     test_f0816_key_icon_cannot_pass_closed_grate();
     test_f0811_thrown_dagger_advances_through_grate();
+    test_f0811_uses_decremented_attack_for_grate_pass_roll();
     test_f0820_direct_pass_through_returns_flew();
     test_source_evidence_string();
 
