@@ -6127,6 +6127,78 @@ static void test_spellshield_low_mana_halves_disable_and_quarters_xp(void) {
               "F0304 propagates quartered SPELLSHIELD XP to base skill");
 }
 
+static void test_fireshield_low_mana_schedules_c78_failure_tail(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+    unsigned short chargedThing;
+    int expectedActionXp;
+    int expiryIndex = -1;
+    int i;
+
+    seed_state(&state, 100, 12);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    chargedThing = make_thing(THING_TYPE_WEAPON, 0);
+    weapons[0].chargeCount = 3;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        chargedThing;
+    state.world.party.champions[0].mana.current = 2;
+    state.world.party.champions[0].mana.maximum = 10;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_FIRESHIELD, &route), 1,
+              "FIRESHIELD has a source G0496/G0497 route");
+    if (!route.valid) return;
+    expectedActionXp = route.experienceGain >> 2;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FIRESHIELD),
+              0,
+              "low-mana FIRESHIELD returns false through F0403/F0407");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 0,
+              "low-mana FIRESHIELD consumes remaining mana through F0403");
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 0,
+              "FIRESHIELD does not modify spell shield defense on failure");
+    ASSERT_EQ(state.world.magic.fireShieldDefense, 4,
+              "low-mana FIRESHIELD still adds half-tick F0403 defense");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+            state.world.timeline.events[i].aux0 == LIFECYCLE_STATUS_FIRE_SHIELD) {
+            expiryIndex = i;
+            break;
+        }
+    }
+    ASSERT_EQ(expiryIndex >= 0, 1,
+              "low-mana FIRESHIELD schedules C78 shield expiry event");
+    if (expiryIndex >= 0) {
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].fireAtTick, 12 + 140,
+                  "low-mana C78 expiry uses half of the 280-tick source duration");
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].aux1, 4,
+                  "low-mana C78 expiry carries half-duration defense");
+    }
+    ASSERT_EQ(weapons[0].chargeCount, 3,
+              "failed FIRESHIELD does not decrement action-hand charges");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_FIRESHIELD) >> 1,
+              "F0407 halves FIRESHIELD disabled ticks when F0403 fails");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_FIRESHIELD,
+              "failed FIRESHIELD still records disabled action index");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedActionXp,
+              "F0407 quarters FIRESHIELD G0497 XP when F0403 fails");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedActionXp,
+              "F0304 propagates quartered FIRESHIELD XP to base skill");
+}
+
 static void test_spellshield_success_consumes_mana_charges_and_full_xp(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -8047,6 +8119,7 @@ int main(void) {
     test_cast_potion_spell_mutates_empty_flask();
     test_cast_zokathra_spell_materializes_ready_hand_junk();
     test_spellshield_low_mana_halves_disable_and_quarters_xp();
+    test_fireshield_low_mana_schedules_c78_failure_tail();
     test_spellshield_success_consumes_mana_charges_and_full_xp();
     test_fireshield_success_schedules_c78_and_expires();
     test_spellshield_high_defense_quarters_new_event_defense();
