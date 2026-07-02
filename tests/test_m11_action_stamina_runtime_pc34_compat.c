@@ -7831,6 +7831,43 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete accepts BACK after final endgame presentation");
 }
 
+static void test_endgame_restart_controls_respect_restart_allowed(void) {
+    M11_GameViewState state;
+    unsigned char fbBlocked[320 * 200];
+    unsigned char fbAllowed[320 * 200];
+    int restartX = 0, restartY = 0;
+    int quitX = 0, quitY = 0;
+
+    M11_GameView_Init(&state);
+    state.active = 1;
+    state.assetsAvailable = 1;
+    state.gameWon = 1;
+    state.endgameFinalHandoffReady = 1;
+    state.endgameCalledWithTrue = 1;
+    state.endgameRestartAllowed = 0;
+    memset(fbBlocked, 0, sizeof(fbBlocked));
+    M11_GameView_Draw(&state, fbBlocked, 320, 200);
+
+    state.endgameRestartAllowed = 1;
+    memset(fbAllowed, 0, sizeof(fbAllowed));
+    M11_GameView_Draw(&state, fbAllowed, 320, 200);
+
+    (void)M11_GameView_GetV1EndgameRestartBox(1,
+                                              &restartX, &restartY,
+                                              NULL, NULL);
+    (void)M11_GameView_GetV1EndgameQuitBox(1,
+                                           &quitX, &quitY,
+                                           NULL, NULL);
+    ASSERT_EQ(fbBlocked[restartY * 320 + restartX] !=
+                  fbAllowed[restartY * 320 + restartX],
+              1,
+              "F0444 restart inner box is hidden when restart disallowed");
+    ASSERT_EQ(fbBlocked[quitY * 320 + quitX] !=
+                  fbAllowed[quitY * 320 + quitX],
+              1,
+              "F0444 quit inner box is hidden when restart disallowed");
+}
+
 int main(void) {
     printf("=== M11 Action Stamina Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
@@ -7912,6 +7949,7 @@ int main(void) {
     test_fuse_without_lord_chaos_keeps_action_performed_tail();
     test_fuse_out_of_bounds_keeps_action_performed_without_explosion();
     test_fuse_complete_fluxcage_sets_m11_game_won_gate();
+    test_endgame_restart_controls_respect_restart_allowed();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_targets_pref0407_champion_direction();
     test_melee_action_row_closed_door_targets_pref0407_champion_direction();

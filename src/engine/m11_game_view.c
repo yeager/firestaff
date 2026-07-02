@@ -32310,7 +32310,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                      theEndY,
                                      -1);
             }
-            {
+            /* ReDMCSB ENDGAME.C lines 485-549 draws and installs the
+             * restart/quit controls only when G0524_B_RestartGameAllowed
+             * is true. F0446 line 960 clears that flag before the winning
+             * Endgame(TRUE) handoff. */
+            if (state->endgameRestartAllowed) {
                 int outerX, outerY, outerW, outerH;
                 int innerX, innerY, innerW, innerH;
                 (void)M11_GameView_GetV1EndgameRestartBox(0,
