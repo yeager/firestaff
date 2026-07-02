@@ -23183,6 +23183,102 @@ static int m11_maybe_consume_thrown_potion_on_impact(
     return 1;
 }
 
+static int m11_link_projectile_thing_to_square_tail(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short thing) {
+    int base;
+    const struct DungeonMapDesc_Compat* map;
+    int squareIndex;
+    unsigned short current;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings) {
+        return 0;
+    }
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 ||
+        mapX >= (int)map->width || mapY >= (int)map->height) {
+        return 0;
+    }
+    base = m11_map_square_base(world->dungeon, mapIndex);
+    if (base < 0) return 0;
+    squareIndex = base + mapX * (int)map->height + mapY;
+    if (squareIndex < 0 ||
+        squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    m11_set_object_drop_next(world->things, thing, THING_ENDOFLIST);
+    m11_set_next_thing(world->things, thing, THING_ENDOFLIST);
+    current = world->things->squareFirstThings[squareIndex];
+    if (current == THING_NONE || current == THING_ENDOFLIST) {
+        world->things->squareFirstThings[squareIndex] = thing;
+        m11_set_object_drop_next(world->things, thing, THING_ENDOFLIST);
+        m11_set_next_thing(world->things, thing, THING_ENDOFLIST);
+        return 1;
+    }
+    while (current != THING_NONE && current != THING_ENDOFLIST &&
+           safety++ < 64) {
+        unsigned short next = m11_get_raw_next_thing(world->things, current);
+        if (next == THING_NONE || next == THING_ENDOFLIST) {
+            next = m11_get_decoded_next_thing(world->things, current);
+        }
+        if (next == THING_NONE || next == THING_ENDOFLIST) {
+            m11_set_next_thing(world->things, current, thing);
+            m11_set_object_drop_next(world->things, thing, THING_ENDOFLIST);
+            m11_set_next_thing(world->things, thing, THING_ENDOFLIST);
+            return 1;
+        }
+        current = next;
+    }
+    return 0;
+}
+
+static int m11_materialize_projectile_associated_thing(
+    M11_GameViewState* state,
+    const struct ProjectileInstance_Compat* projectile,
+    int associatedThingMovedToGroup) {
+    unsigned short associatedThing;
+    unsigned short droppedThing;
+    if (!state || !projectile || associatedThingMovedToGroup) return 1;
+    if (!state->world.things || !state->world.dungeon) return 1;
+    if ((projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0) {
+        return 1;
+    }
+    associatedThing = (unsigned short)projectile->reserved1;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) {
+        return 1;
+    }
+    if (THING_GET_TYPE(associatedThing) == THING_TYPE_EXPLOSION) {
+        return 1;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0215 lines 248-259 materializes
+     * Projectile.Slot on the projectile's stored square when F0217 does not
+     * delete a potion or pass GROUP.Slot for kept sharp weapons.  F0219
+     * lines 717-725 resolves wall/door blockers before committing the
+     * destination move, so use the projectile source square and cell. */
+    droppedThing = m11_thing_with_cell((int)THING_GET_TYPE(associatedThing),
+                                       (int)THING_GET_INDEX(associatedThing),
+                                       projectile->cell & 3);
+    if (!m11_link_projectile_thing_to_square_tail(
+            &state->world, projectile->mapIndex, projectile->mapX,
+            projectile->mapY, droppedThing)) {
+        return 0;
+    }
+    m11_set_object_drop_next(state->world.things, associatedThing,
+                             THING_ENDOFLIST);
+    m11_set_next_thing(state->world.things, associatedThing, THING_ENDOFLIST);
+    return 1;
+}
+
 static int m11_maybe_heal_black_flame_from_fireball(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
@@ -23406,6 +23502,7 @@ static void m11_projectile_apply_impact(
     const struct ProjectileTickResult_Compat* r) {
     const char* name = m11_projectile_subtype_name(p->projectileSubtype);
     int sourceSoundIndex = m11_projectile_impact_source_sound_index(p, r);
+    int associatedThingMovedToGroup = 0;
     if (sourceSoundIndex >= 0) {
         m11_audio_emit_source_sound(state, sourceSoundIndex,
                                     M11_Audio_FallbackMarkerForSoundIndex(sourceSoundIndex));
@@ -23516,7 +23613,8 @@ static void m11_projectile_apply_impact(
                             m11_schedule_projectile_hit_creature_reaction(
                                 state, gIdx, g, impactMap, impactX, impactY);
                         }
-                        (void)m11_maybe_attach_thrown_sharp_weapon_to_group(
+                        associatedThingMovedToGroup =
+                            m11_maybe_attach_thrown_sharp_weapon_to_group(
                             state, g, p, outcome);
                         break;
                     }
@@ -23529,12 +23627,15 @@ static void m11_projectile_apply_impact(
                 /* Check if the group is dead after projectile damage */
                 (void)m11_check_group_death_and_drop(
                     state, groupThing, impactMap, impactX, impactY);
+                (void)m11_materialize_projectile_associated_thing(
+                    state, p, associatedThingMovedToGroup);
                 return;
             }
         }
         m11_log_event(state, M11_COLOR_LIGHT_RED,
                       "T%u: %s STRIKES CREATURE",
                       (unsigned int)state->world.gameTick, name);
+        (void)m11_materialize_projectile_associated_thing(state, p, 0);
         return;
     }
 
@@ -23567,6 +23668,7 @@ static void m11_projectile_apply_impact(
                           "T%u: %s HITS PARTY",
                           (unsigned int)state->world.gameTick, name);
         }
+        (void)m11_materialize_projectile_associated_thing(state, p, 0);
         return;
     }
 
@@ -23604,6 +23706,7 @@ static void m11_projectile_apply_impact(
         default:
             break;
     }
+    (void)m11_materialize_projectile_associated_thing(state, p, 0);
 }
 
 /* Public per-tick advance: iterate live projectiles, drive F0811

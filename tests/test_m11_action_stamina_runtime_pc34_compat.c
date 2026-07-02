@@ -3806,6 +3806,106 @@ static void test_thrown_potion_wall_impact_consumes_potion_thing(void) {
               "thrown potion impact preserves raw potion type byte");
 }
 
+static void test_thrown_weapon_wall_impact_materializes_source_square(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[1];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeaponData[4];
+    unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
+    int thingCounts[DUNGEON_THING_TYPE_COUNT];
+    struct ProjectileInstance_Compat* projectile;
+    unsigned short thrownThing;
+    unsigned short materializedThing;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    memset(rawThingData, 0, sizeof(rawThingData));
+    memset(thingCounts, 0, sizeof(thingCounts));
+
+    squareData[0] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    squareFirstThings[0] = THING_ENDOFLIST;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 1;
+    maps[0].height = 1;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 1;
+
+    weapons[0].type = 8; /* ReDMCSB C08_WEAPON_DAGGER. */
+    weapons[0].next = THING_NONE;
+    rawWeaponData[0] = (unsigned char)(THING_NONE & 0xFFu);
+    rawWeaponData[1] = (unsigned char)((THING_NONE >> 8) & 0xFFu);
+    rawWeaponData[2] = 8;
+    rawWeaponData[3] = 0;
+    rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    thingCounts[THING_TYPE_WEAPON] = 1;
+
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
+    memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 0;
+    state.world.party.direction = 1;
+
+    thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    materializedThing = (unsigned short)(((1 & 0x03) << 14) | thrownThing);
+    ASSERT_EQ(squareFirstThings[0], THING_ENDOFLIST,
+              "test fixture starts with an empty source square chain");
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 0;
+    projectile->mapY = 0;
+    projectile->cell = 1;
+    projectile->direction = 1;
+    projectile->kineticEnergy = 12;
+    projectile->attack = 5;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = thrownThing;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "thrown dagger wall impact despawns projectile");
+    ASSERT_EQ(squareFirstThings[0], materializedThing,
+              "thrown dagger wall impact materializes on projectile source square");
+    ASSERT_EQ(THING_GET_CELL(squareFirstThings[0]), 1,
+              "materialized thrown dagger preserves projectile source cell");
+}
+
 static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -7069,6 +7169,7 @@ int main(void) {
     test_projectile_champion_hit_applies_poison_dose();
     test_projectile_champion_hit_can_kill_party();
     test_thrown_potion_wall_impact_consumes_potion_thing();
+    test_thrown_weapon_wall_impact_materializes_source_square();
     test_leader_hand_throw_uses_f0328_temporary_action_hand();
     test_leader_hand_throw_full_projectile_list_accepts_f0328();
     test_leader_hand_throw_waterskin_uses_f0140_charge_weight();
