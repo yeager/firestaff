@@ -23789,6 +23789,7 @@ static int m11_link_projectile_thing_to_square_tail(
     int base;
     const struct DungeonMapDesc_Compat* map;
     int squareIndex;
+    unsigned short baseThing;
     unsigned short current;
     int safety = 0;
 
@@ -23812,13 +23813,14 @@ static int m11_link_projectile_thing_to_square_tail(
         return 0;
     }
 
-    m11_set_object_drop_next(world->things, thing, THING_ENDOFLIST);
-    m11_set_next_thing(world->things, thing, THING_ENDOFLIST);
+    baseThing = (unsigned short)(thing & 0x3FFFu);
+    m11_set_object_drop_next(world->things, baseThing, THING_ENDOFLIST);
+    m11_set_next_thing(world->things, baseThing, THING_ENDOFLIST);
     current = world->things->squareFirstThings[squareIndex];
     if (current == THING_NONE || current == THING_ENDOFLIST) {
         world->things->squareFirstThings[squareIndex] = thing;
-        m11_set_object_drop_next(world->things, thing, THING_ENDOFLIST);
-        m11_set_next_thing(world->things, thing, THING_ENDOFLIST);
+        m11_set_object_drop_next(world->things, baseThing, THING_ENDOFLIST);
+        m11_set_next_thing(world->things, baseThing, THING_ENDOFLIST);
         return 1;
     }
     while (current != THING_NONE && current != THING_ENDOFLIST &&
@@ -23829,8 +23831,8 @@ static int m11_link_projectile_thing_to_square_tail(
         }
         if (next == THING_NONE || next == THING_ENDOFLIST) {
             m11_set_next_thing(world->things, current, thing);
-            m11_set_object_drop_next(world->things, thing, THING_ENDOFLIST);
-            m11_set_next_thing(world->things, thing, THING_ENDOFLIST);
+            m11_set_object_drop_next(world->things, baseThing, THING_ENDOFLIST);
+            m11_set_next_thing(world->things, baseThing, THING_ENDOFLIST);
             return 1;
         }
         current = next;
@@ -24552,7 +24554,12 @@ static void m11_projectile_apply_impact(
 
     if (r->resultKind == PROJECTILE_RESULT_HIT_CHAMPION
             && r->emittedCombatAction) {
+        struct ProjectileInstance_Compat impactProjectile = *p;
         int ci = r->outAction.defenderSlotOrCreatureIndex;
+        impactProjectile.mapIndex = r->newMapIndex;
+        impactProjectile.mapX = r->newMapX;
+        impactProjectile.mapY = r->newMapY;
+        impactProjectile.cell = r->newCell;
         if (ci >= 0 && ci < CHAMPION_MAX_PARTY
                 && state->world.party.champions[ci].present) {
             struct CombatantChampionSnapshot_Compat defender;
@@ -24606,7 +24613,10 @@ static void m11_projectile_apply_impact(
                           "T%u: %s HITS PARTY",
                           (unsigned int)state->world.gameTick, name);
         }
-        (void)m11_materialize_projectile_associated_thing(state, p, 0);
+        /* ReDMCSB PROJEXPL.C:F0219 commits a cross-cell champion hit to
+         * the resolved projectile square before F0217 reaches F0215. */
+        (void)m11_materialize_projectile_associated_thing(
+            state, &impactProjectile, 0);
         return;
     }
 
@@ -24672,7 +24682,7 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
         struct ProjectileTickResult_Compat result;
         struct CellContentDigest_Compat digest;
 
-        if (p->slotIndex < 0) continue;
+        if (p->slotIndex < 0 || p->reserved3 == 0) continue;
         if ((uint32_t)p->scheduledAtTick > now) continue;
 
         if (!m11_build_projectile_digest(&state->world, p, i, &digest)) {

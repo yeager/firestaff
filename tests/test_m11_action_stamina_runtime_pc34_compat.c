@@ -4285,7 +4285,15 @@ static void test_projectile_champion_hit_can_kill_party(void) {
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
     unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeaponData[4];
+    unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
+    int thingCounts[DUNGEON_THING_TYPE_COUNT];
     struct ProjectileInstance_Compat* projectile;
+    unsigned short thrownThing;
+    unsigned short materializedThing;
     int i;
 
     seed_state(&state, 100, 100);
@@ -4293,6 +4301,12 @@ static void test_projectile_champion_hit_can_kill_party(void) {
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
     memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    memset(rawThingData, 0, sizeof(rawThingData));
+    memset(thingCounts, 0, sizeof(thingCounts));
     for (i = 0; i < 6; ++i) {
         squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
     }
@@ -4306,7 +4320,26 @@ static void test_projectile_champion_hit_can_kill_party(void) {
     tiles[0].squareData = squareData;
     tiles[0].squareCount = 6;
 
+    thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    materializedThing = (unsigned short)(((1 & 0x03) << 14) | thrownThing);
+    weapons[0].type = 27; /* ReDMCSB C27_WEAPON_ARROW. */
+    weapons[0].next = THING_NONE;
+    rawWeaponData[0] = (unsigned char)(THING_NONE & 0xFFu);
+    rawWeaponData[1] = (unsigned char)((THING_NONE >> 8) & 0xFFu);
+    rawWeaponData[2] = 27;
+    rawWeaponData[3] = 0;
+    rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    thingCounts[THING_TYPE_WEAPON] = 1;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
+    memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
+
     state.world.dungeon = &dungeon;
+    state.world.things = &things;
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
     state.world.party.mapX = 0;
@@ -4344,9 +4377,13 @@ static void test_projectile_champion_hit_can_kill_party(void) {
     projectile->firstMoveGraceFlag = 0;
     projectile->launchedAtTick = 99;
     projectile->scheduledAtTick = 100;
-    projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+    projectile->reserved1 = thrownThing;
     projectile->reserved3 = 1;
 
+    ASSERT_EQ(weapons[0].next, THING_NONE,
+              "test fixture starts with stale decoded thrown weapon next");
+    ASSERT_EQ(read_u16_le_for_test(rawWeaponData + 0), THING_NONE,
+              "test fixture starts with stale raw thrown weapon next");
     M11_GameView_AdvanceProjectilesOnce(&state);
 
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
@@ -4357,6 +4394,12 @@ static void test_projectile_champion_hit_can_kill_party(void) {
               "lethal projectile champion impact sets M11 party-dead gate");
     ASSERT_EQ(state.world.partyDead, 1,
               "lethal projectile champion impact mirrors M10 party-dead flag");
+    ASSERT_EQ(squareFirstThings[0], materializedThing,
+              "F0215 materializes cross-cell champion-hit thrown weapon on impact square");
+    ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
+              "F0215 clears decoded thrown weapon next after champion impact");
+    ASSERT_EQ(read_u16_le_for_test(rawWeaponData + 0), THING_ENDOFLIST,
+              "F0215 clears raw thrown weapon next after champion impact");
 }
 
 static void test_thrown_potion_wall_impact_consumes_potion_thing(void) {
