@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.20  (2026-07-02)",
+    "  - Packages the post-v3.0.19 mainline gates for DM1 projectile/explosion and spell handling, CSB title/import and champion-panel coverage, and DM2/Nexus/Theron launch/media boundaries.",
+    "  - DM1 V1 source-locked combat coverage now includes projectile pass-through, door impact, black-flame impact, weak-miss, spell XP, shield timing, scent-window, kept-thrown-weapon, and render-slot guards.",
+    "  - Release verification: local CMake build plus version, Phase A, audio, CSB title/import, and M11 overlay command-queue gates pass before tagging.",
+    "",
     "V3.0.19  (2026-07-02)",
     "  - Packages the post-v3.0.18 DM1 MacBook Pro smoke follow-up commits now green on current main.",
     "  - DM1 HoC visual-artifact coverage adds hand-slot refresh bridging plus side-door, alcove, far-object, and damage-overdraw pixel gates.",
@@ -359,5 +364,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.19";
+    return "3.0.20";
 }

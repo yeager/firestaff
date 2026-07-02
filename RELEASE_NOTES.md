@@ -1,6 +1,45 @@
 
 # Unreleased
 
+# Firestaff v3.0.20
+
+Firestaff v3.0.20 packages the current post-v3.0.19 `main` state. The release
+keeps DM1 V1 moving forward with tighter projectile, explosion, spell, and
+champion-panel coverage, while adding new source-locked runtime gates for CSB,
+DM2, Nexus, and Theron's Quest.
+
+## Highlights since v3.0.19
+
+- **DM1 V1 combat and presentation guards are broader**: the tag includes the
+  latest source-locked projectile pass-through, door impact, black-flame impact,
+  weak-miss, spell XP, shield timing, scent-window, kept-thrown-weapon, and
+  projectile/explosion render-slot guards. The recent HoC and side-wall artifact
+  gates are also included.
+
+- **CSB runtime gates expanded**: CSB now has additional gates for mechanics
+  runtime coverage, graphics LZW boundaries, M11 binding readiness, champion
+  panel behavior, save export/import, hint-oracle UI panels, and title/import
+  boot handoff through the verified runtime profile.
+
+- **Other game profiles gained launch and media coverage**: DM2 adds launcher
+  handoff, ISO required-cache, and real-data/media classification boundaries;
+  Nexus adds BPK/S2D surface and glyph decode gates; Theron's Quest adds V2 HUD
+  and media-layout classification coverage.
+
+- **Archive-backed required-file materialization remains covered**: the release
+  keeps the scanner/cache path guarded for archive-backed game data before
+  runtime launch.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Main CI for `pass646 dm1 guard m11 explosion render slots` completed
+  successfully before this release-prep commit.
+- Local release-prep verification rebuilt Firestaff and re-ran the focused
+  version, Phase A, audio, CSB title/import, and M11 overlay command-queue
+  gates before the release tag was created.
+
 # Firestaff v3.0.19
 
 Firestaff v3.0.19 is a focused MacBook Pro release-smoke follow-up to v3.0.18.
