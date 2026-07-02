@@ -5941,6 +5941,7 @@ static void test_orch_periodic_effects_decrement_torches_f0338(void) {
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonJunk_Compat junks[2];
     struct TickResult_Compat result;
+    struct DungeonViewLight_Compat light;
     struct ChampionState_Compat* champion;
     unsigned char rawWeaponData[8];
 
@@ -5952,12 +5953,12 @@ static void test_orch_periodic_effects_decrement_torches_f0338(void) {
     weapons[0].next = THING_ENDOFLIST;
     weapons[0].type = 2; /* ReDMCSB DEFS.H line 1403: C02_WEAPON_TORCH. */
     weapons[0].doNotDiscard = 1;
-    weapons[0].chargeCount = 2;
+    weapons[0].chargeCount = 4;
     weapons[0].lit = 1;
     write_u16_le_for_test(rawWeaponData + 0, THING_ENDOFLIST);
     write_u16_le_for_test(rawWeaponData + 2,
                           (unsigned short)(2u | (1u << 7) |
-                                           (2u << 10) | (1u << 15)));
+                                           (4u << 10) | (1u << 15)));
 
     weapons[1].next = THING_ENDOFLIST;
     weapons[1].type = 2;
@@ -5974,25 +5975,46 @@ static void test_orch_periodic_effects_decrement_torches_f0338(void) {
     champion->inventory[CHAMPION_SLOT_HAND_LEFT] =
         make_thing(THING_TYPE_WEAPON, 1);
 
+    memset(&light, 0, sizeof(light));
+    assert(F0890b_ORCH_ComputeDungeonViewLight_Compat(&world, &light) == 1);
+    assert(light.totalLightAmount == 33);
+    assert(light.paletteIndex == 3);
+
     memset(&result, 0, sizeof(result));
     world.gameTick = 512;
     F0890_ORCH_ApplyPeriodicEffects_Compat(&world, &result);
-    assert(weapons[0].chargeCount == 1);
+    assert(weapons[0].chargeCount == 3);
     assert(weapons[0].doNotDiscard == 1);
-    assert(((read_u16_le_for_test(rawWeaponData + 2) >> 10) & 0x0Fu) == 1);
+    assert(((read_u16_le_for_test(rawWeaponData + 2) >> 10) & 0x0Fu) == 3);
     assert(weapons[1].chargeCount == 7);
     assert(((read_u16_le_for_test(rawWeaponData + 6) >> 10) & 0x0Fu) == 7);
+    memset(&light, 0, sizeof(light));
+    assert(F0890b_ORCH_ComputeDungeonViewLight_Compat(&world, &light) == 1);
+    assert(light.totalLightAmount == 24);
+    assert(light.paletteIndex == 4);
 
     world.gameTick = 513;
     F0890_ORCH_ApplyPeriodicEffects_Compat(&world, &result);
-    assert(weapons[0].chargeCount == 1);
+    assert(weapons[0].chargeCount == 3);
 
     world.gameTick = 1024;
+    F0890_ORCH_ApplyPeriodicEffects_Compat(&world, &result);
+    assert(weapons[0].chargeCount == 2);
+
+    world.gameTick = 1536;
+    F0890_ORCH_ApplyPeriodicEffects_Compat(&world, &result);
+    assert(weapons[0].chargeCount == 1);
+
+    world.gameTick = 2048;
     F0890_ORCH_ApplyPeriodicEffects_Compat(&world, &result);
     assert(weapons[0].chargeCount == 0);
     assert(weapons[0].doNotDiscard == 0);
     assert(((read_u16_le_for_test(rawWeaponData + 2) >> 10) & 0x0Fu) == 0);
     assert(((read_u16_le_for_test(rawWeaponData + 2) >> 7) & 0x01u) == 0);
+    memset(&light, 0, sizeof(light));
+    assert(F0890b_ORCH_ComputeDungeonViewLight_Compat(&world, &light) == 1);
+    assert(light.totalLightAmount == 0);
+    assert(light.paletteIndex == 5);
 }
 
 int main(void) {

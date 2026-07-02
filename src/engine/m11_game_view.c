@@ -19418,91 +19418,13 @@ static void m11_draw_focus_card(unsigned char* framebuffer,
 /* ILLUMULET junk sub-type index in s_junkTypeNames[] */
 #define M11_JUNK_SUBTYPE_ILLUMULET  4
 
-static int m11_torch_charge_to_light_power(int chargeCount, int fuel, int initialFuel) {
-    int power = chargeCount & 0x0F;
-    if (power <= 0 && fuel > 0 && initialFuel > 0) {
-        power = (fuel * 15 + initialFuel - 1) / initialFuel;
-    }
-    if (power < 0) power = 0;
-    if (power > 15) power = 15;
-    return power;
-}
-
 static int m11_compute_dungeon_palette_index(const M11_GameViewState* state) {
-    static const int kLightPowerToAmount[16] = {
-        0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100
-    };
-    static const int kPaletteIndexToLightAmount[6] = { 99, 75, 50, 25, 1, 0 };
-    int powers[8] = {0,0,0,0,0,0,0,0};
-    int powerCount = 0;
-    int totalLight;
-    int multiplier = 6;
-    int i, j;
-
+    struct DungeonViewLight_Compat light;
     if (!state) {
         return 5;
     }
-    if (state->world.dungeon &&
-        state->world.party.mapIndex >= 0 &&
-        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount &&
-        state->world.dungeon->maps[state->world.party.mapIndex].difficulty == 0) {
-        return 0;
-    }
-
-    for (i = 0; i < CHAMPION_MAX_PARTY && powerCount < 8; ++i) {
-        const struct ChampionState_Compat* champ = &state->world.party.champions[i];
-        int slot;
-        if (!champ->present) {
-            powerCount += 2;
-            continue;
-        }
-        for (slot = CHAMPION_SLOT_HAND_LEFT; slot <= CHAMPION_SLOT_HAND_RIGHT && powerCount < 8; ++slot) {
-            unsigned short thing = champ->inventory[slot];
-            int thingType, thingIndex;
-            if (thing == THING_NONE || thing == THING_ENDOFLIST) {
-                ++powerCount;
-                continue;
-            }
-            thingType = THING_GET_TYPE(thing);
-            thingIndex = THING_GET_INDEX(thing);
-            if (thingType == THING_TYPE_WEAPON &&
-                state->world.things &&
-                thingIndex >= 0 && thingIndex < state->world.things->weaponCount) {
-                const struct DungeonWeapon_Compat* w = &state->world.things->weapons[thingIndex];
-                if (w->type == M11_WEAPON_SUBTYPE_TORCH && w->lit) {
-                    int fuel = (thingIndex >= 0 && thingIndex < M11_TORCH_FUEL_CAPACITY)
-                               ? state->torchFuel[thingIndex] : M11_TORCH_INITIAL_FUEL;
-                    powers[powerCount] = m11_torch_charge_to_light_power(w->chargeCount, fuel, M11_TORCH_INITIAL_FUEL);
-                }
-            }
-            ++powerCount;
-        }
-    }
-
-    for (i = 0; i < 4; ++i) {
-        for (j = i + 1; j < 8; ++j) {
-            if (powers[j] > powers[i]) {
-                int tmp = powers[i];
-                powers[i] = powers[j];
-                powers[j] = tmp;
-            }
-        }
-    }
-
-    totalLight = state->world.magic.magicalLightAmount;
-    for (i = 0; i < 5; ++i) {
-        int power = powers[i];
-        if (power > 0) {
-            totalLight += (kLightPowerToAmount[power] << multiplier) >> 6;
-            if (multiplier > 0) --multiplier;
-        }
-    }
-    if (totalLight > 0) {
-        int paletteIndex = 0;
-        while (paletteIndex < 5 && kPaletteIndexToLightAmount[paletteIndex] > totalLight) {
-            ++paletteIndex;
-        }
-        return paletteIndex;
+    if (F0890b_ORCH_ComputeDungeonViewLight_Compat(&state->world, &light)) {
+        return light.paletteIndex;
     }
     return 5;
 }
