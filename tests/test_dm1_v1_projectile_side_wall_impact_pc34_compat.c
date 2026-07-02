@@ -529,8 +529,9 @@ static void test_f0811_thrown_item_side_cell_blockers(void)
                            "F0819 door destruction event uses blocked side-cell Y");
                 expect_int(c->label, r.outNextTick.cell, p.cell,
                            "F0819 door destruction event keeps the projectile impact lane");
-                expect_int(c->label, r.outNextTick.aux0, p.attack,
-                           "F0819 door destruction event carries deterministic impact attack when rng=NULL");
+                expect_int(c->label, r.outNextTick.aux0,
+                           (p.attack - p.stepEnergy) + 1,
+                           "F0219 decrements attack before F0217 line 506 adds one for the deterministic door attack");
                 expect_int(c->label, r.outNextTick.aux1, p.projectileSubtype,
                            "F0819 door destruction event records projectile subtype");
                 expect_int(c->label, r.outNextTick.aux2, p.ownerIndex,
