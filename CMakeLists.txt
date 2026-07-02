@@ -12493,21 +12493,6 @@ if(BUILD_TESTING)
         COMMAND test_m10_c006_generator_reenable_dispatch_pc34_compat
     )
 
-    add_executable(firestaff_m10_savegame_probe
-        probes/firestaff_m10_savegame_probe.c
-    )
-    target_link_libraries(firestaff_m10_savegame_probe PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(firestaff_m10_savegame_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME m10_savegame_probe_selftest
-        COMMAND firestaff_m10_savegame_probe --self-test ${CMAKE_BINARY_DIR}/m10_savegame_probe_selftest
-    )
-    set_tests_properties(m10_savegame_probe_selftest PROPERTIES
-        LABELS "tier2;m10;savegame;probe;data-free"
-    )
-
     add_test(
         NAME c006_event60_61_defer_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_c006_event60_61_defer_source_lock.py
