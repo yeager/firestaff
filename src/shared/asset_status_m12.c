@@ -1376,8 +1376,8 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
     }
 }
 
-static void m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
-                                                   int gameIndex) {
+static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
+                                                  int gameIndex) {
     const char* gameId;
     char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1385,12 +1385,12 @@ static void m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     size_t i;
     int hasVirtualRequired = 0;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
-        return;
+        return 1;
     }
     gameId = g_games[gameIndex].gameId;
     if (!m12_game_uses_flat_dat_runtime(gameId) ||
         !M12_AssetStatus_GameAvailable(status, gameId)) {
-        return;
+        return 1;
     }
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         if (m12_path_is_virtual_asset(status->requiredFiles[gameIndex][i].matchedPath)) {
@@ -1399,29 +1399,30 @@ static void m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         }
     }
     if (!hasVirtualRequired) {
-        return;
+        return 1;
     }
     if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache") ||
         !FSP_JoinPath(gameCacheDir, sizeof(gameCacheDir), cacheRoot, gameId) ||
         !FSP_CreateDirectoryRecursive(gameCacheDir)) {
-        return;
+        return 0;
     }
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         M12_AssetRequiredFileStatus* fileStatus = &status->requiredFiles[gameIndex][i];
         char outPath[M12_ASSET_DATA_DIR_CAPACITY];
         if (!fileStatus->matched || !fileStatus->label ||
             !FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, fileStatus->label)) {
-            return;
+            return 0;
         }
         if (!m12_materialize_required_file(fileStatus, outPath)) {
-            return;
+            return 0;
         }
         m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), outPath);
     }
     m12_copy_string(status->runtimeDataDirs[gameIndex],
                     sizeof(status->runtimeDataDirs[gameIndex]),
                     cacheRoot);
+    return 1;
 }
 
 static void m12_refresh_v22_modern_asset_status(M12_AssetStatus* status) {
@@ -1761,7 +1762,9 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
                 }
             }
         }
-        m12_materialize_runtime_cache_for_game(status, i);
+        if (!m12_materialize_runtime_cache_for_game(status, i)) {
+            m12_apply_required_game_availability(status, i, 0);
+        }
     }
 
     m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
