@@ -4302,8 +4302,8 @@ static void test_projectile_champion_hit_uses_f0321_defense_scale(void) {
               "shielded projectile champion impact despawns projectile");
     ASSERT_EQ(state.world.party.champions[1].hp.current, 86,
               "shielded lightning champion impact uses F0321 defense scaling instead of raw attack");
-    ASSERT_EQ(state.world.party.champions[1].wounds, COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO,
-              "shielded projectile champion impact applies source wound mask when damage lands");
+    ASSERT_EQ(state.world.party.champions[1].wounds, 0,
+              "shielded projectile champion impact uses F0321 wound RNG, not the full allowed mask");
     ASSERT_EQ(state.partyDead, 0,
               "shielded projectile champion impact does not trip party-dead gate");
 }

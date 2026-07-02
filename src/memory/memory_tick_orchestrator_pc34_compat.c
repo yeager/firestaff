@@ -4408,6 +4408,7 @@ static int orch_apply_projectile_champion_action_compat(
     struct ChampionState_Compat* champion;
     int championIndex;
     int scaledAttack = 0;
+    int selectedWounds = 0;
     int killed = 0;
 
     if (!world || !action) return 0;
@@ -4434,12 +4435,21 @@ static int orch_apply_projectile_champion_action_compat(
     if (scaledAttack <= 0) {
         return 1;
     }
+    if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+            scaledAttack,
+            action->allowedWounds,
+            &defender,
+            &world->masterRng,
+            &selectedWounds,
+            NULL)) {
+        return 0;
+    }
     damage.damageApplied = scaledAttack;
-    damage.woundMaskAdded = action->allowedWounds;
+    damage.woundMaskAdded = selectedWounds;
 
     /* ReDMCSB PROJEXPL.C:F0217 lines 513-558 computes champion
-     * projectile impact damage, adds HEAD|TORSO pending wounds through
-     * F0321, then deletes the projectile. */
+     * projectile impact damage, lets CHAMPION.C:F0321 select any pending
+     * wounds through its vitality/RNG loop, then deletes the projectile. */
     if (!F0737_COMBAT_ApplyDamageToChampion_Compat(
             &damage, champion, &killed)) {
         return 0;
@@ -4977,6 +4987,7 @@ static int orch_apply_explosion_party_action_compat(
         int killed = 0;
         int randomizedAttack;
         int scaledAttack = 0;
+        int selectedWounds = 0;
         struct ChampionState_Compat* champion = &world->party.champions[i];
         if (!champion->present || champion->hp.current == 0) continue;
 
@@ -4993,10 +5004,15 @@ static int orch_apply_explosion_party_action_compat(
             scaledAttack <= 0) {
             continue;
         }
+        if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+                scaledAttack, action->allowedWounds, &defender,
+                &world->masterRng, &selectedWounds, NULL)) {
+            continue;
+        }
 
         memset(&damage, 0, sizeof(damage));
         damage.damageApplied = scaledAttack;
-        damage.woundMaskAdded = action->allowedWounds;
+        damage.woundMaskAdded = selectedWounds;
         if (F0737_COMBAT_ApplyDamageToChampion_Compat(
                 &damage, champion, &killed)) {
             applied++;

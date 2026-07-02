@@ -290,6 +290,14 @@ int F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
     int* outDamage,
     int* outRngCallCount);
 
+int F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+    int scaledAttack,
+    int allowedWounds,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    int* outWoundMask,
+    int* outRngCallCount);
+
 /* ==========================================================
  * Group C — Resolvers (F0735–F0736).
  * Pure except for the RNG advance, recorded in out->rngCallCount.

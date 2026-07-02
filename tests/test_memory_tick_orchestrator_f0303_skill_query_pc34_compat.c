@@ -900,6 +900,22 @@ static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
      * accumulated F0313 final shift: (64 + (8 >> 1)) >> 1. */
     assert(defense == 34);
     assert(rngCalls == 1);
+
+    memset(&champ, 0, sizeof(champ));
+    champ.statisticVitality = 64;
+    assert(F0730_COMBAT_RngInit_Compat(&rng, 2u) == 1);
+    defense = -1;
+    rngCalls = -1;
+    assert(F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+        80, COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO,
+        &champ, &rng, &defense, &rngCalls) == 1);
+    /* ReDMCSB CHAMPION.C F0321 lines 1900-1907 draws RANDOM(128)+10,
+     * then repeats RANDOM(8)&AllowedWounds while attack exceeds the doubled
+     * vitality threshold.  Seed 2 selects HEAD, skips a disallowed slot, then
+     * selects TORSO. */
+    assert(defense == (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO));
+    assert(rngCalls == 4);
+    assert(rng.seed == 0xb2721a4eu);
 }
 
 static void test_orch_turn_rotates_champion_cell_and_direction(void) {
@@ -3088,11 +3104,14 @@ static void test_orch_projectile_champion_hit_applies_damage(void) {
     /* ReDMCSB PROJEXPL.C F0216 lines 283-296 defaults kinetic
      * projectile impact type to C3 blunt.  F0217 then sends the impact
      * through CHAMPION.C F0321, whose zero-defense body scale is
-     * (attack * 130) >> 6, so raw 30 becomes 60. */
+     * (attack * 130) >> 6, so raw 30 becomes 60.  The later F0321
+     * wound-selection loop can draw disallowed RANDOM(8) slots; in this
+     * seed-0/vitality-0 fixture it skips one disallowed slot and then adds
+     * only TORSO, not the full allowed mask. */
     assert(world.party.champions[1].hp.current == 40);
     assert((world.party.champions[1].wounds &
             (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO)) ==
-           (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO));
+           COMBAT_WOUND_TORSO);
     assert(result.emissionCount == 0);
 }
 
@@ -3530,13 +3549,14 @@ static void test_orch_projectile_champion_hit_uses_f0321_magic_scale(void) {
     memset(&result, 0, sizeof(result));
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
     assert(world.projectiles.count == 0);
-    /* ReDMCSB CHAMPION.C F0321 lines 1878-1888: C5 magic uses
+    /* ReDMCSB CHAMPION.C F0321 lines 1878-1907: C5 magic uses
      * antimagic F0307 scaling and skips the armor-defense body scale.
-     * raw 64 with antimagic 170 becomes 8, not the old raw 64. */
+     * raw 64 with antimagic 170 becomes 8, not the old raw 64; the later
+     * vitality wound threshold is higher than 8 in this seeded fixture. */
     assert(world.party.champions[1].hp.current == 92);
     assert((world.party.champions[1].wounds &
             (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO)) ==
-           (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO));
+           0);
 }
 
 static void test_orch_projectile_champion_hit_uses_f0313_rng_scale(void) {
@@ -3612,14 +3632,16 @@ static void test_orch_projectile_champion_hit_uses_f0313_rng_scale(void) {
     memset(&result, 0, sizeof(result));
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
     assert(world.projectiles.count == 0);
-    /* ReDMCSB CHAMPION.C F0321 calls F0313 for HEAD and TORSO.  With
-     * seed 1 and vitality 64, Firestaff's deterministic RNG draws 8 then 7
-     * for RANDOM((64 >> 3) + 1), leaving the champion at 37 HP. */
+    /* ReDMCSB CHAMPION.C F0321 calls F0313 for HEAD and TORSO, then runs
+     * the separate wound-selection loop.  With seed 1 and vitality 64,
+     * Firestaff's deterministic RNG draws 8 and 7 for F0313, leaving the
+     * champion at 37 HP; the later RANDOM(8) wound draws hit disallowed
+     * slots, so no wound bit is added. */
     assert(world.party.champions[1].hp.current == 37);
-    assert(world.masterRng.seed == 0x967eb0e7u);
+    assert(world.masterRng.seed == 0x95fb7483u);
     assert((world.party.champions[1].wounds &
             (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO)) ==
-           (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO));
+           0);
 }
 
 static void test_orch_projectile_group_hit_applies_damage(void) {
@@ -4669,10 +4691,13 @@ static void test_orch_explosion_advance_applies_party_damage(void) {
     assert(world.timeline.count == 0);
     assert(world.party.champions[0].hp.current < 100);
     assert(world.party.champions[0].hp.current > 0);
+    /* ReDMCSB CHAMPION.C F0321 does not add all allowed party-fireball
+     * wounds.  It selects actual bits through the post-damage vitality/RNG
+     * loop instead of blindly OR-ing the full allowed mask. */
     assert((world.party.champions[0].wounds &
             (COMBAT_WOUND_READY_HAND | COMBAT_WOUND_ACTION_HAND |
              COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO |
-             COMBAT_WOUND_LEGS | COMBAT_WOUND_FEET)) ==
+             COMBAT_WOUND_LEGS | COMBAT_WOUND_FEET)) !=
            (COMBAT_WOUND_READY_HAND | COMBAT_WOUND_ACTION_HAND |
             COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO |
             COMBAT_WOUND_LEGS | COMBAT_WOUND_FEET));
