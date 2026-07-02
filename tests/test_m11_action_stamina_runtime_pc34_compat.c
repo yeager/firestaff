@@ -6588,6 +6588,84 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
               "C24 remove-fluxcage event despawns the fluxcage");
 }
 
+static void test_fluxcage_wall_target_keeps_f0407_tail_without_cage(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    DM1_ActionXpRoute route;
+    int removeIndex = -1;
+    int expectedXp;
+    int i;
+
+    seed_state(&state, 100, 43);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 9; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(1 * 3) + 0] = square_for_test(DUNGEON_ELEMENT_WALL, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 0; /* north: wall target at (1,0). */
+    state.world.party.champions[0].direction = 2;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_FLUXCAGE, &route), 1,
+              "FLUXCAGE has a source G0496/G0497 route");
+    if (!route.valid) return;
+    expectedXp = route.experienceGain;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FLUXCAGE),
+              1,
+              "wall-target FLUXCAGE keeps F0407 action-performed state");
+    ASSERT_EQ(state.world.party.champions[0].direction, 0,
+              "wall-target FLUXCAGE still mirrors F0406 champion direction");
+    ASSERT_EQ(state.world.explosions.count, 0,
+              "wall-target F0224 creates no fluxcage explosion");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind ==
+            TIMELINE_EVENT_REMOVE_FLUXCAGE) {
+            removeIndex = i;
+            break;
+        }
+    }
+    ASSERT_EQ(removeIndex, -1,
+              "wall-target F0224 schedules no remove-fluxcage event");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_FLUXCAGE),
+              "wall-target FLUXCAGE keeps the common G0491 disabled tail");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_FLUXCAGE,
+              "wall-target FLUXCAGE records the disabled action index");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedXp,
+              "wall-target FLUXCAGE still awards full G0497 action XP");
+    if (route.baseSkillIndex != route.skillIndex) {
+        ASSERT_EQ(state.world.lifecycle.champions[0]
+                      .skills20[route.baseSkillIndex].experience,
+                  expectedXp,
+                  "wall-target FLUXCAGE propagates full XP to the base skill");
+    }
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "wall-target FLUXCAGE clears acting champion through F0391");
+}
+
 static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -7292,6 +7370,7 @@ int main(void) {
     test_action_defense_serializes_outside_v1_champion_blob();
     test_action_stamina_underflow_clamps_and_damages();
     test_fluxcage_schedules_f0224_remove_event();
+    test_fluxcage_wall_target_keeps_f0407_tail_without_cage();
     test_fluxcage_third_cage_schedules_lord_chaos_danger();
     test_fuse_incomplete_fluxcage_moves_lord_chaos_escape();
     test_fuse_without_lord_chaos_keeps_action_performed_tail();
