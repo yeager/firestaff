@@ -4616,6 +4616,119 @@ static void test_thrown_weapon_wall_impact_materializes_source_square(void) {
               "materialized thrown dagger preserves projectile source cell");
 }
 
+static void test_thrown_weapon_wall_impact_appends_source_square_raw_tail(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[1];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    unsigned char rawWeaponData[8];
+    unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
+    int thingCounts[DUNGEON_THING_TYPE_COUNT];
+    struct ProjectileInstance_Compat* projectile;
+    unsigned short thrownThing;
+    unsigned short existingThing;
+    unsigned short materializedThing;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    memset(rawThingData, 0, sizeof(rawThingData));
+    memset(thingCounts, 0, sizeof(thingCounts));
+
+    squareData[0] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    existingThing = make_thing(THING_TYPE_WEAPON, 1);
+    thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    materializedThing = (unsigned short)(((1 & 0x03) << 14) | thrownThing);
+    squareFirstThings[0] = existingThing;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 1;
+    maps[0].height = 1;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 1;
+
+    weapons[0].type = 27; /* ReDMCSB C27_WEAPON_ARROW. */
+    weapons[0].next = THING_NONE;
+    weapons[1].type = 8;  /* ReDMCSB C08_WEAPON_DAGGER. */
+    weapons[1].next = THING_ENDOFLIST;
+    rawWeaponData[0] = (unsigned char)(THING_NONE & 0xFFu);
+    rawWeaponData[1] = (unsigned char)((THING_NONE >> 8) & 0xFFu);
+    rawWeaponData[2] = 27;
+    rawWeaponData[4] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawWeaponData[5] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawWeaponData[6] = 8;
+    rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    thingCounts[THING_TYPE_WEAPON] = 2;
+
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 2;
+    memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
+    memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 0;
+    state.world.party.direction = 1;
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 0;
+    projectile->mapY = 0;
+    projectile->cell = 1;
+    projectile->direction = 1;
+    projectile->kineticEnergy = 12;
+    projectile->attack = 5;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = thrownThing;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    /* ReDMCSB PROJEXPL.C F0215 lines 248-259 delegates the
+     * Projectile.Slot move to F0163 thing-list linking. Existing source-square
+     * chains keep their head and append the thrown object at the tail. */
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "thrown dagger wall impact despawns projectile for tail append");
+    ASSERT_EQ(squareFirstThings[0], existingThing,
+              "existing source-square chain keeps its head");
+    ASSERT_EQ(weapons[1].next, materializedThing,
+              "decoded existing source-square tail points at thrown dagger");
+    ASSERT_EQ(rawWeaponData[4] | (rawWeaponData[5] << 8), materializedThing,
+              "raw existing source-square tail points at thrown dagger");
+    ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
+              "decoded thrown dagger next is cleared after materialization");
+    ASSERT_EQ(rawWeaponData[0] | (rawWeaponData[1] << 8), THING_ENDOFLIST,
+              "raw thrown dagger next is cleared after materialization");
+}
+
 static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -8608,6 +8721,7 @@ int main(void) {
     test_projectile_champion_hit_can_kill_party();
     test_thrown_potion_wall_impact_consumes_potion_thing();
     test_thrown_weapon_wall_impact_materializes_source_square();
+    test_thrown_weapon_wall_impact_appends_source_square_raw_tail();
     test_leader_hand_throw_uses_f0328_temporary_action_hand();
     test_leader_hand_throw_full_projectile_list_accepts_f0328();
     test_leader_hand_throw_waterskin_uses_f0140_charge_weight();
