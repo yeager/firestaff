@@ -1089,6 +1089,117 @@ static void test_orch_projectile_wall_impact_materializes_associated_weapon(void
     assert(world.timeline.count == 0);
 }
 
+static void test_orch_projectile_wall_impact_appends_associated_weapon_raw_tail(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    unsigned short squareFirstThings[1];
+    unsigned char rawWeaponData[8];
+    struct ProjectileCreateInput_Compat createIn;
+    struct TimelineEvent_Compat firstMove;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    unsigned short existingThing;
+    unsigned short materializedThing;
+    int slot = -1;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[(1 * 3) + 1] =
+        square_for_test(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareData[(2 * 3) + 1] = square_for_test(DUNGEON_ELEMENT_WALL, 0);
+
+    existingThing = make_thing(THING_TYPE_WEAPON, 1);
+    materializedThing =
+        (unsigned short)(make_thing(THING_TYPE_WEAPON, 0) | (2u << 14));
+    squareFirstThings[0] = existingThing;
+    weapons[0].type = 27; /* ReDMCSB C27_WEAPON_ARROW. */
+    weapons[0].next = THING_NONE;
+    weapons[1].type = 8;  /* ReDMCSB C08_WEAPON_DAGGER. */
+    weapons[1].next = THING_ENDOFLIST;
+    rawWeaponData[0] = (unsigned char)(THING_NONE & 0xFFu);
+    rawWeaponData[1] = (unsigned char)((THING_NONE >> 8) & 0xFFu);
+    rawWeaponData[2] = 27;
+    rawWeaponData[4] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawWeaponData[5] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawWeaponData[6] = 8;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    things.thingCounts[THING_TYPE_WEAPON] = 2;
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.champions[0].hp.current = 100;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+
+    memset(&createIn, 0, sizeof(createIn));
+    createIn.category = PROJECTILE_CATEGORY_KINETIC;
+    createIn.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    createIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    createIn.ownerIndex = 0;
+    createIn.mapIndex = 0;
+    createIn.mapX = 1;
+    createIn.mapY = 1;
+    createIn.cell = 2;
+    createIn.direction = 1;
+    createIn.kineticEnergy = 80;
+    createIn.attack = 40;
+    createIn.stepEnergy = 10;
+    createIn.currentTick = 100;
+    createIn.firstMoveGraceFlag = 1;
+    createIn.associatedThing = make_thing(THING_TYPE_WEAPON, 0);
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot, &firstMove) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+
+    /* ReDMCSB PROJEXPL.C F0215 lines 248-259 delegates the
+     * Projectile.Slot move to the normal Thing-list machinery, so an
+     * existing square chain must keep its first Thing and link the thrown
+     * object at the tail in both decoded state and raw thing bytes. */
+    assert(world.projectiles.count == 0);
+    assert(squareFirstThings[0] == existingThing);
+    assert(weapons[1].next == materializedThing);
+    assert((unsigned short)(rawWeaponData[4] |
+                            ((unsigned short)rawWeaponData[5] << 8)) ==
+           materializedThing);
+    assert(weapons[0].next == THING_ENDOFLIST);
+    assert((unsigned short)(rawWeaponData[0] |
+                            ((unsigned short)rawWeaponData[1] << 8)) ==
+           THING_ENDOFLIST);
+    assert(world.timeline.count == 0);
+}
+
 static void test_orch_slime_wall_impact_emits_wooden_thud_without_explosion(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -5790,6 +5901,7 @@ int main(void) {
     test_orch_magical_wall_impact_nonzero_adjusted_explosion_spawns();
     test_orch_projectile_wall_impact_emits_non_explosion_sound();
     test_orch_projectile_wall_impact_materializes_associated_weapon();
+    test_orch_projectile_wall_impact_appends_associated_weapon_raw_tail();
     test_orch_slime_wall_impact_emits_wooden_thud_without_explosion();
     test_orch_projectile_closed_door_impact_destroys_door();
     test_orch_non_weapon_door_impact_emits_wooden_thud();

@@ -32,7 +32,9 @@ enum {
 };
 
 static const unsigned char s_orch_thing_data_byte_count[16] = {
-    4, 4, 6, 0, 8, 16, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
+    /* DUNGEON.DAT raw Thing strides; keep aligned with
+     * memory_dungeon_dat_pc34_compat.c decode_* offsets and native export. */
+    4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
 };
 
 static unsigned short orch_make_thing_ref_compat(int type, int index);
@@ -3038,54 +3040,67 @@ static int orch_set_next_thing_compat(
         case THING_TYPE_DOOR:
             if (index >= things->doorCount || !things->doors) return 0;
             things->doors[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_TELEPORTER:
             if (index >= things->teleporterCount || !things->teleporters) return 0;
             things->teleporters[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_TEXTSTRING:
             if (index >= things->textStringCount || !things->textStrings) return 0;
             things->textStrings[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_SENSOR:
             if (index >= things->sensorCount || !things->sensors) return 0;
             things->sensors[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_GROUP:
             if (index >= things->groupCount || !things->groups) return 0;
             things->groups[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_WEAPON:
             if (index >= things->weaponCount || !things->weapons) return 0;
             things->weapons[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_ARMOUR:
             if (index >= things->armourCount || !things->armours) return 0;
             things->armours[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_SCROLL:
             if (index >= things->scrollCount || !things->scrolls) return 0;
             things->scrolls[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_POTION:
             if (index >= things->potionCount || !things->potions) return 0;
             things->potions[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_CONTAINER:
             if (index >= things->containerCount || !things->containers) return 0;
             things->containers[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_JUNK:
             if (index >= things->junkCount || !things->junks) return 0;
             things->junks[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_PROJECTILE:
             if (index >= things->projectileCount || !things->projectiles) return 0;
             things->projectiles[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         case THING_TYPE_EXPLOSION:
             if (index >= things->explosionCount || !things->explosions) return 0;
             things->explosions[index].next = nextThing;
+            orch_write_raw_next_compat(things, thing);
             return 1;
         default:
             return 0;
