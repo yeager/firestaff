@@ -3310,6 +3310,7 @@ set_tests_properties(firestaff_m11_session_timer_forced_pause_input_gating_probe
 # against the same layout geometry.
 add_executable(firestaff_dm1_v1_return_confirm_font_scale_fit_probe
     probes/m11/firestaff_dm1_v1_return_confirm_font_scale_fit_probe.c
+    src/engine/ui_scale_m11.c
     src/audio/ambient_layer_m11.c)
 target_link_libraries(firestaff_dm1_v1_return_confirm_font_scale_fit_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
 if(NOT MSVC)
