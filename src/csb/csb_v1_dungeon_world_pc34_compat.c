@@ -538,6 +538,30 @@ int csb_bugfix_lord_chaos_teleport_dir(int random4(void)) {
     return 0;
 }
 
+/*
+ * csb_bugfix_lord_chaos_teleport_dirs -- CHANGE7_19_FIX pair helper.
+ *
+ * ReDMCSB GROUP.C:2208-2210 assigns both direction variables in one
+ * expression:
+ *   G0363_i_SecondaryDirectionToOrFromParty =
+ *       M017_NEXT(L0454_i_PrimaryDirectionToOrFromParty = M004_RANDOM(4));
+ * M017_NEXT is defined in DEFS.H:458/461 as (value + 1) & 3.
+ */
+int csb_bugfix_lord_chaos_teleport_dirs(int random4(void),
+                                        int *primaryDir,
+                                        int *secondaryDir) {
+    int primary;
+
+    if (!primaryDir || !secondaryDir) {
+        return -1;
+    }
+
+    primary = csb_bugfix_lord_chaos_teleport_dir(random4);
+    *primaryDir = primary;
+    *secondaryDir = (primary + 1) & 3;
+    return 0;
+}
+
 /* ================================================================
  *  Core dungeon world API
  * ================================================================ */
