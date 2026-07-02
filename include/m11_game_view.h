@@ -712,6 +712,9 @@ uint32_t M11_GameView_GetGameWonTick(const M11_GameViewState* state);
 /* Return 1 when F0446 has reached the source endgame fluxcage-hide gate. */
 int M11_GameView_GetEndgameDoNotDrawFluxcages(const M11_GameViewState* state);
 
+/* Return 1 when F0446 delay playback has reached the final Endgame(TRUE) gate. */
+int M11_GameView_GetEndgameFinalHandoffReady(const M11_GameViewState* state);
+
 /* Return 1 if a dialog overlay is currently displayed. */
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state);
 

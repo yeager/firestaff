@@ -32890,6 +32890,10 @@ int M11_GameView_GetEndgameDoNotDrawFluxcages(const M11_GameViewState* state) {
     return state ? state->endgameDoNotDrawFluxcages : 0;
 }
 
+int M11_GameView_GetEndgameFinalHandoffReady(const M11_GameViewState* state) {
+    return state ? state->endgameFinalHandoffReady : 0;
+}
+
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state) {
     return state ? state->dialogOverlayActive : 0;
 }
