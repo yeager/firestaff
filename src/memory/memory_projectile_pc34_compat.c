@@ -525,6 +525,14 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
     if (in->projectileCategory == PROJECTILE_CATEGORY_KINETIC
         && in->launcherStrength > 0
         && digest->destDoorState != PROJECTILE_DOOR_STATE_DESTROYED) {
+        if (in->reserved0 >= PROJECTILE_ASSOCIATED_ICON_IRON_KEY &&
+            in->reserved0 <= PROJECTILE_ASSOCIATED_ICON_MASTER_KEY) {
+            /* ReDMCSB PROJEXPL.C:F0217 lines 496-501, PC 3.4
+             * CHANGE2_04: required keys (C176..C191) cannot pass through a
+             * closed door even when the door allows projectile pass-through. */
+            *outPasses = 0;
+            return 1;
+        }
         unsigned int roll = F0732_COMBAT_RngRandom_Compat(rng, 100);
         if (roll < (unsigned int)in->launcherStrength) {
             *outPasses = 1;

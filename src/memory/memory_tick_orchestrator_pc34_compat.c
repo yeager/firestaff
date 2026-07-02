@@ -3985,12 +3985,41 @@ static int orch_materialize_projectile_associated_thing_compat(
         projectile->mapY, droppedThing);
 }
 
+static int orch_projectile_associated_icon_index_compat(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing)
+{
+    int type;
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return -1;
+    }
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+    if (index < 0) return -1;
+
+    /* ReDMCSB PROJEXPL.C:F0217 lines 496-501 calls
+     * F0033_OBJECT_GetIconIndex for the PC 3.4 key-through-door fix.  The
+     * orchestrator only needs the decoded icon/type value before F0811; the
+     * projectile save blob keeps using reserved0 as transient scratch. */
+    if (type == THING_TYPE_WEAPON) {
+        if (!things->weapons || index >= things->weaponCount) return -1;
+        return (int)things->weapons[index].type;
+    }
+    if (type == THING_TYPE_JUNK) {
+        if (!things->junks || index >= things->junkCount) return -1;
+        return (int)things->junks[index].type;
+    }
+    return -1;
+}
+
 static int orch_handle_projectile_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* event,
     struct TickResult_Compat* result)
 {
     struct ProjectileInstance_Compat* projectile;
+    struct ProjectileInstance_Compat projectileForAdvance;
     struct ProjectileInstance_Compat newState;
     struct ProjectileTickResult_Compat tickResult;
     struct CellContentDigest_Compat digest;
@@ -4006,9 +4035,13 @@ static int orch_handle_projectile_move_event_compat(
             world, projectile, projectileIndex, &digest)) {
         return 0;
     }
+    projectileForAdvance = *projectile;
+    projectileForAdvance.reserved0 =
+        orch_projectile_associated_icon_index_compat(
+            world->things, (unsigned short)projectile->reserved1);
 
     if (!F0811_PROJECTILE_Advance_Compat(
-            projectile, &digest, world->gameTick, &world->masterRng,
+            &projectileForAdvance, &digest, world->gameTick, &world->masterRng,
             &newState, &tickResult)) {
         F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
         return 1;
