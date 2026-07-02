@@ -270,6 +270,7 @@ typedef struct {
     int endgameChaosOrderSwitchCount;
     int endgameFuseSequenceUpdateTicks;
     int endgameFuseSequenceTotalUpdateTicks;
+    int endgameTextMessageDelayTicks;
     int endgameBuzzRequestCount;
 
     /* Dialog box overlay for text-plaque inspection.
