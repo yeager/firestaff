@@ -6,7 +6,8 @@
  * C015 damage-to-champion banner active, ticks the per-champion damage
  * timer down to zero, then redraws into the same framebuffer. The gate
  * proves the real M11 V1 draw stack both shows the GRAPHICS.DAT damage
- * feedback while active and clears stale banner pixels when the timer
+ * feedback while active, draws 1/2/3-digit damage numbers at the PC34
+ * F0320 MEDIA009 origins, and clears stale banner pixels when the timer
  * expires. It does not claim original DOS screenshot parity.
  *
  * Source evidence:
@@ -36,7 +37,8 @@ enum {
     PROBE_FB_H = 200,
     PROBE_CHAMPION_COUNT = 1,
     PROBE_SLOT = 0,
-    PROBE_DAMAGE_AMOUNT = 37
+    PROBE_DAMAGE_AMOUNT = 37,
+    PROBE_COLOR_WHITE = 15
 };
 
 static unsigned char px_index(const unsigned char* fb, int width, int x, int y) {
@@ -49,6 +51,15 @@ static int expect_true(const char* label, int ok) {
         return 0;
     }
     printf("PASS %s\n", label);
+    return 1;
+}
+
+static int expect_int(const char* label, int got, int want) {
+    if (got != want) {
+        fprintf(stderr, "FAIL %s got=%d want=%d\n", label, got, want);
+        return 0;
+    }
+    printf("PASS %s got=%d\n", label, got);
     return 1;
 }
 
@@ -153,6 +164,84 @@ static int check_damage_banner_active(const M11_GameViewState* game,
     return ok;
 }
 
+static int count_white_pixels(const unsigned char* fb,
+                              int x,
+                              int y,
+                              int w,
+                              int h) {
+    int count = 0;
+    int yy;
+    for (yy = 0; yy < h; ++yy) {
+        int xx;
+        for (xx = 0; xx < w; ++xx) {
+            if (px_index(fb, PROBE_FB_W, x + xx, y + yy) == PROBE_COLOR_WHITE) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
+static int check_pc34_damage_number_origin(M11_GameViewState* game,
+                                           unsigned char* fb,
+                                           int amount,
+                                           int expectedX,
+                                           int expectedY) {
+    int x = 0;
+    int y = 0;
+    int ok = 1;
+    int oldAssetsAvailable = game->assetsAvailable;
+    char label[160];
+
+    game->assetsAvailable = 0;
+    game->championDamageTimer[PROBE_SLOT] = 5;
+    game->championDamageAmount[PROBE_SLOT] = amount;
+    memset(fb, 0, PROBE_FB_W * PROBE_FB_H);
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    game->assetsAvailable = oldAssetsAvailable;
+
+    snprintf(label, sizeof(label), "damage %d PC34 origin helper", amount);
+    ok &= expect_true(label,
+                      M11_GameView_GetV1DamageNumberOriginPc34(
+                          PROBE_SLOT, amount, 0, &x, &y));
+    snprintf(label, sizeof(label), "damage %d PC34 origin x", amount);
+    ok &= expect_int(label, x, expectedX);
+    snprintf(label, sizeof(label), "damage %d PC34 origin y", amount);
+    ok &= expect_int(label, y, expectedY);
+    snprintf(label, sizeof(label), "damage %d white text at PC34 origin", amount);
+    ok &= expect_true(label, count_white_pixels(fb, x, y, 18, 7) > 0);
+    return ok;
+}
+
+static int check_pc34_damage_number_origins(M11_GameViewState* game,
+                                            unsigned char* fb) {
+    int ok = 1;
+    int x = 0;
+    int y = 0;
+    ok &= check_pc34_damage_number_origin(game, fb, 7, 19, 5);
+    ok &= check_pc34_damage_number_origin(game, fb, 37, 16, 5);
+    ok &= check_pc34_damage_number_origin(game, fb, 137, 13, 5);
+    ok &= expect_true("inventory damage 7 PC34 origin helper",
+                      M11_GameView_GetV1DamageNumberOriginPc34(
+                          PROBE_SLOT, 7, 1, &x, &y));
+    ok &= expect_int("inventory damage 7 PC34 origin x", x, 21);
+    ok &= expect_int("inventory damage 7 PC34 origin y", y, 16);
+    ok &= expect_true("inventory damage 37 PC34 origin helper",
+                      M11_GameView_GetV1DamageNumberOriginPc34(
+                          PROBE_SLOT, 37, 1, &x, &y));
+    ok &= expect_int("inventory damage 37 PC34 origin x", x, 18);
+    ok &= expect_int("inventory damage 37 PC34 origin y", y, 16);
+    ok &= expect_true("inventory damage 137 PC34 origin helper",
+                      M11_GameView_GetV1DamageNumberOriginPc34(
+                          PROBE_SLOT, 137, 1, &x, &y));
+    ok &= expect_int("inventory damage 137 PC34 origin x", x, 15);
+    ok &= expect_int("inventory damage 137 PC34 origin y", y, 16);
+    ok &= expect_true("invalid zero damage PC34 origin rejected",
+                      !M11_GameView_GetV1DamageNumberOriginPc34(
+                          PROBE_SLOT, 0, 0, &x, &y));
+    return ok;
+}
+
 static int check_damage_banner_cleared(const M11_GameViewState* game,
                                        const unsigned char* fb,
                                        int activeMatched) {
@@ -220,6 +309,7 @@ int main(int argc, char** argv) {
     ok &= check_damage_banner_active(&game, fb);
     (void)damage_asset_match_count(&game, fb, PROBE_SLOT,
                                    &expected, &activeMatched);
+    ok &= check_pc34_damage_number_origins(&game, fb);
 
     ok &= expect_true("tick animation expires champion damage timer",
                       tick_damage_timer_to_zero(&game));
