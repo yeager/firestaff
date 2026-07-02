@@ -7192,6 +7192,7 @@ if(BUILD_TESTING)
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
     )
     target_link_libraries(test_dm1_pc34_archive_media_receipt PRIVATE
         firestaff_v2
