@@ -2074,6 +2074,27 @@ if(NOT MSVC)
     target_compile_options(firestaff_theron_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Theron V2 HUD target-size audit probe. Headless: no game data.
+# Verifies source-locked TQR chrome zones against V2 canvas sizes.
+add_executable(firestaff_theron_v2_hud_target_size_probe
+    probes/firestaff_theron_v2_hud_target_size_probe.c
+    src/theron/theron_v2_hud_target_size_pc34.c
+    src/theron/theron_v2_presentation_mode_pc34.c)
+target_include_directories(firestaff_theron_v2_hud_target_size_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v2_hud_target_size_probe
+    PRIVATE firestaff_theron firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_hud_target_size_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME theron_v2_hud_target_size_probe
+        COMMAND firestaff_theron_v2_hud_target_size_probe
+    )
+endif()
+
 # Theron V2 Phase 6 touch/controller runtime probe. Headless: no game data.
 # Verifies V2-gated translation, Theron HUD chrome touch exclusion, controller
 # bypass of framebuffer coordinate gates, and deterministic command mapping.
@@ -10965,6 +10986,25 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
     target_link_libraries(test_theron_v2_smooth_movement_pc34 PRIVATE firestaff_m10 m)
+    add_executable(test_theron_v2_hud_target_size_pc34
+        tests/test_theron_v2_hud_target_size_pc34.c
+        src/theron/theron_v2_hud_target_size_pc34.c
+        src/theron/theron_v2_presentation_mode_pc34.c
+    )
+    target_include_directories(test_theron_v2_hud_target_size_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_link_libraries(test_theron_v2_hud_target_size_pc34 PRIVATE
+        firestaff_theron firestaff_v2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v2_hud_target_size_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v2_hud_target_size_pc34
+        COMMAND test_theron_v2_hud_target_size_pc34
+    )
     add_executable(test_theron_v2_touch_controller_affordance
         tests/test_theron_v2_touch_controller_affordance.c
         src/theron/theron_v2_touch_runtime.c
