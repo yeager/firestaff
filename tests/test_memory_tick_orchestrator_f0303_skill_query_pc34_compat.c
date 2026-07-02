@@ -231,8 +231,10 @@ static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
     world.magic.event73CountThievesEye = 1;
     world.magic.event79CountFootprints = 1;
     world.magic.magicFootprintsActive = 1;
+    world.magic.spellShieldDefense = 11;
     world.magic.partyShieldDefense = 12;
     world.magic.fireShieldDefense = 9;
+    world.lifecycle.status.partySpellShieldDefense = 11;
 
     memset(&ev, 0, sizeof(ev));
     ev.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
@@ -244,6 +246,15 @@ static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
     assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
 
     ev.aux0 = TIMELINE_AUX_FOOTPRINTS;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    /* F0763 stores SpellShield defense in aux2; runtime must map it to
+     * ReDMCSB TIMELINE.C C77 EVENT.B.Defense on expiry. */
+    ev.aux0 = TIMELINE_AUX_SPELL_SHIELD;
+    ev.aux1 = 0;
+    ev.aux2 = 4;
+    ev.aux3 = 0;
+    ev.aux4 = 0;
     assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
 
     /* F0763 stores party-shield defense in aux4 because aux1 is reserved
@@ -269,6 +280,8 @@ static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
     assert(world.magic.event73CountThievesEye == 0);
     assert(world.magic.event79CountFootprints == 0);
     assert(world.magic.magicFootprintsActive == 0);
+    assert(world.magic.spellShieldDefense == 7);
+    assert(world.lifecycle.status.partySpellShieldDefense == 7);
     assert(world.magic.partyShieldDefense == 7);
     assert(world.magic.fireShieldDefense == 6);
     assert(world.timeline.count == 0);
