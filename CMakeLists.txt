@@ -7596,6 +7596,35 @@ if(BUILD_TESTING)
         COMMAND test_csb_archive_required_split
     )
 
+    # -- Asset scanner + cache: DM2 ISO required-file launch gate -------
+    # Synthesizes an ISO 9660 image containing GRAPHICS.DAT + DUNGEON.DAT,
+    # then proves both required hashes report virtual paths and are
+    # materialized into ordinary asset-cache files before DM2 can launch.
+    add_executable(test_asset_status_dm2_iso_required_cache_gate
+        tests/test_asset_status_dm2_iso_required_cache_gate.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
+    )
+    target_link_libraries(test_asset_status_dm2_iso_required_cache_gate PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_asset_status_dm2_iso_required_cache_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_asset_status_dm2_iso_required_cache_gate PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    firestaff_link_zlib(test_asset_status_dm2_iso_required_cache_gate PRIVATE)
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_dm2_iso_required_cache_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_dm2_iso_required_cache_gate
+        COMMAND test_asset_status_dm2_iso_required_cache_gate
+    )
+
     add_executable(test_dm1_pc34_multilanguage_required_gate
         tests/test_dm1_pc34_multilanguage_required_gate.c
         src/shared/asset_status_m12.c

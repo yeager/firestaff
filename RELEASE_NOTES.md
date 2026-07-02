@@ -348,6 +348,11 @@ need real-asset proof.
 
 - **M11 high-contrast helper safety**: the existing in-game high-contrast overlay helpers now clip apply/preserve rectangles with overflow-safe widened arithmetic, with data-free coverage for extreme synthetic inputs. The accessibility scope is unchanged: M11 chrome can remap when high contrast is active, while V1 dungeon viewport pixels stay preserved.
 
+- **DM2 ISO required-file cache gate**: a new synthetic M12 scanner test verifies
+  DM2 `GRAPHICS.DAT` and `DUNGEON.DAT` can be found inside an ISO as virtual
+  paths, materialized into ordinary `asset-cache/dm2/` files before launch, and
+  blocked if the cache handoff fails.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
