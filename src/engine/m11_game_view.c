@@ -9134,6 +9134,39 @@ static int m11_last_attack_tick_emitted_damage(const M11_GameViewState* state) {
     return 0;
 }
 
+static int m11_last_attack_tick_performed_closed_door_f0407(
+    const M11_GameViewState* state,
+    unsigned char actionIndex,
+    int firstTimelineIndex)
+{
+    int i;
+    if (!state) return 0;
+    switch (actionIndex) {
+        case DM1_ACTION_CHOP:
+        case DM1_ACTION_KICK:
+        case DM1_ACTION_SWING:
+        case DM1_ACTION_HACK:
+        case DM1_ACTION_BERZERK:
+        case DM1_ACTION_BASH:
+            break;
+        default:
+            return 0;
+    }
+    if (firstTimelineIndex < 0) firstTimelineIndex = 0;
+    for (i = firstTimelineIndex; i < state->world.timeline.count; ++i) {
+        const struct TimelineEvent_Compat* event =
+            &state->world.timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_DOOR_DESTRUCTION) {
+            return 1;
+        }
+        if (event->kind == TIMELINE_EVENT_PLAY_SOUND &&
+            event->aux0 == DM1_SND_WOODEN_THUD) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void m11_set_candidate_attack_marker_for_tick(M11_GameViewState* state,
                                                      int* oldEnabled,
                                                      int* oldGroupIndex,
@@ -25458,12 +25491,21 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     }
     if (m11_action_is_melee_contact(chosen)) {
         unsigned char disabledTicks = m11_action_disabled_ticks_f0407(chosen);
+        int timelineCountBeforeAttack = state->world.timeline.count;
         /* Advance one tick with CMD_ATTACK while preserving F0391's chosen
          * F0407 action index.  M10 owns front-square group/creature
          * selection through its ReDMCSB F0177/F0229 auto-target bridge. */
         (void)m11_apply_tick_with_attack_action(
             state, CMD_ATTACK, "ATTACK", (int)chosen);
         performed = m11_last_attack_tick_emitted_damage(state);
+        if (!performed) {
+            /* ReDMCSB MENU.C F0407 lines 1308-1317 treats the closed-door
+             * BASH/HACK/BERZERK/KICK/SWING/CHOP branch as performed before
+             * F0402.  F0232 may schedule only door state/sound work, so no
+             * EMIT_DAMAGE_DEALT is expected on this route. */
+            performed = m11_last_attack_tick_performed_closed_door_f0407(
+                state, chosen, timelineCountBeforeAttack);
+        }
         if (!performed) {
             /* ReDMCSB MENU.C F0407 lines 1331-1337 halves the disabled-tick
              * budget and G0497 experience when F0402 returns false before

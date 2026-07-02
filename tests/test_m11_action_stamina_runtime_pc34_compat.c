@@ -381,6 +381,134 @@ static void test_melee_action_row_targets_pref0407_champion_direction(void) {
               "melee action preserves champion direction");
 }
 
+static void test_melee_action_row_closed_door_targets_pref0407_champion_direction(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonDoor_Compat doors[1];
+    unsigned char actions[3];
+    int swingRow = -1;
+    int sawDestruction = 0;
+    int sawThud = 0;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(doors, 0, sizeof(doors));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    maps[0].doorSet0 = 1; /* Wooden door, defense 42 in G0254. */
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(1 * 3) + 2] =
+        square_for_test(DUNGEON_ELEMENT_DOOR,
+                        DUNGEON_SQUARE_MASK_THING_LIST | 4);
+    squareFirstThings[0] = make_thing(THING_TYPE_DOOR, 0);
+
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1; /* Party east: no door in front. */
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 2; /* Champion south. */
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIGHTER].experience = 500;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_SWING].experience = 500;
+
+    weapons[0].type = 2; /* ActionSet 5: SWING. */
+    doors[0].next = THING_ENDOFLIST;
+    doors[0].type = 0;
+    doors[0].meleeDestructible = 1;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.doors = doors;
+    things.doorCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "champion-facing door fixture opens action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "champion-facing door fixture resolves source action rows");
+    for (i = 0; i < 3; ++i) {
+        if (actions[i] == DM1_ACTION_SWING) {
+            swingRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(swingRow >= 0, 1,
+              "champion-facing door fixture exposes SWING row");
+    if (swingRow < 0) return;
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, swingRow), 1,
+              "SWING row uses champion-facing F0407 door target");
+
+    /* ReDMCSB MENU.C F0407 lines 1266-1275 computes L1251/L1252 from
+     * Champion.Direction, then lines 1308-1317 route SWING against a
+     * closed door through F0232. */
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        const struct TimelineEvent_Compat* event = &state.world.timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_DOOR_DESTRUCTION &&
+            event->mapX == 1 && event->mapY == 2 &&
+            (int)event->fireAtTick == 9) {
+            sawDestruction = 1;
+        }
+        if (event->kind == TIMELINE_EVENT_PLAY_SOUND &&
+            event->mapX == 1 && event->mapY == 2 &&
+            (int)event->fireAtTick == 8) {
+            sawThud = 1;
+        }
+    }
+    ASSERT_EQ(sawDestruction, 1,
+              "champion-facing SWING schedules south door destruction");
+    ASSERT_EQ(sawThud, 1,
+              "champion-facing SWING schedules south door thud");
+    ASSERT_EQ((squareData[(1 * 3) + 2] & 0x07), 4,
+              "F0232 door destruction remains scheduled before dispatch");
+
+    {
+        struct TickResult_Compat dispatchResult;
+        memset(&dispatchResult, 0, sizeof(dispatchResult));
+        state.world.gameTick = 9;
+        ASSERT_EQ(F0887_ORCH_DispatchTimelineEvents_Compat(
+                      &state.world, &dispatchResult),
+                  2,
+                  "scheduled champion-facing door thud and destruction dispatch");
+        ASSERT_EQ((squareData[(1 * 3) + 2] & 0x07), 5,
+                  "scheduled champion-facing door destruction hits south door");
+    }
+    ASSERT_EQ(state.world.party.direction, 1,
+              "door melee action does not rewrite party direction");
+    ASSERT_EQ(state.world.party.champions[0].direction, 2,
+              "door melee action preserves champion direction");
+}
+
 static void test_melee_action_row_halves_disable_ticks_when_f0402_fails(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -7613,6 +7741,7 @@ int main(void) {
     test_fuse_complete_fluxcage_sets_m11_game_won_gate();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_targets_pref0407_champion_direction();
+    test_melee_action_row_closed_door_targets_pref0407_champion_direction();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
     test_melee_action_row_respects_live_candidate_no_action();
     test_disrupt_action_row_rejects_material_creature();
