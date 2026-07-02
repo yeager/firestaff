@@ -7,8 +7,9 @@ static const char s_source_evidence[] =
     "pass765 contract_only=1; CHAMPION.C F0297:243-298, F0298:270-298, "
     "F0300:511-515, F0301:606-614, F0302:662-714, F0302:677-684; "
     "CHAMDRAW.C F0291:632-673, F0292:771-895; "
-    "DEFS.H:2088 C30/C033/C034/C035/M070/M516 requested anchor; "
-    "C30/G0425/G0426/M516 status-hand rotation, C037/C038/C039 borders.";
+    "DEFS.H:810 C30_SLOT_CHEST_1, DEFS.H:2193-2195 C033/C034/C035, "
+    "DEFS.H:1878 M070_HAND_SLOT_INDEX, DEFS.H:873 M516_CHAMPIONS anchors; "
+    "C30/G0425/G0426/M516 status-hand rotation chain.";
 
 static uint32_t mix_u32(uint32_t hash, uint32_t value)
 {
