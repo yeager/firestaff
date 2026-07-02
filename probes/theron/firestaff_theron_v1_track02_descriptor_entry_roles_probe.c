@@ -351,15 +351,13 @@ static void probe_synthetic_descriptor_mid_window(void) {
      * (0x1420..0x1820) because 0x1594 is between 0x1420 and 0x1820.
      * So descriptor-window entry index is still 5. */
     const size_t mid_descriptor_offset = 0x1594u;
-    /* First nonzero before descriptor: 0x1420 (a `60` RTS).
-     * Byte just before descriptor: 0x60 (RTS). */
+    /* Byte just before descriptor: 0x60 (RTS). */
 
     memset(track, 0, sizeof(track));
     memcpy(track + mid_descriptor_offset,
            g_canonical_descriptor,
            sizeof(g_canonical_descriptor));
-    track[0x1420u] = 0x60u; /* first nonzero before descriptor */
-    track[0x1421u] = 0x60u; /* extra code before descriptor */
+    track[mid_descriptor_offset - 1u] = 0x60u;
     /* Byte after the descriptor: non-zero (this is what makes
      * all_zero_after_descriptor flip to 0). */
     track[mid_descriptor_offset + DESCRIPTOR_BYTE_COUNT] = 0xccu;
@@ -416,9 +414,10 @@ static void probe_synthetic_all_zero_track02(void) {
 
     memset(track, 0, sizeof(track));
     /* The descriptor bytes themselves are non-zero; the byte immediately
-     * before the descriptor is also zero (descriptor sits at the head of
-     * the descriptor-window).  Place descriptor at 0x1420 (window 5 start). */
-    memcpy(track + 0x1420u,
+     * before the descriptor is zero. Keep the descriptor at the canonical
+     * source-locked offset so the window binder can derive the US ISO
+     * base offset. */
+    memcpy(track + 0x1584u,
            g_canonical_descriptor,
            sizeof(g_canonical_descriptor));
 
@@ -432,13 +431,13 @@ static void probe_synthetic_all_zero_track02(void) {
     status = theron_v1_track02_bind_descriptor_entry_roles(
         track,
         sizeof(track),
-        0x1420u,
+        0x1584u,
         &table,
         entries);
     check_int("all-zero bind status", status, THERON_TRACK02_TABLE_DECODE_OK);
 
-    /* Descriptor-window is now entry 5 (descriptor at window head).
-     * Byte immediately before descriptor (0x141f) is zero, so
+    /* Descriptor-window is entry 5 at the canonical source-locked offset.
+     * Byte immediately before descriptor (0x1583) is zero, so
      * byte_before_descriptor_is_rts is 0. */
     check_int("all-zero descriptor-window entry index",
               entries[5].is_descriptor_window,
