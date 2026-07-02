@@ -88,6 +88,7 @@
 #include <sys/types.h>
 
 #if defined(_WIN32)
+#include <direct.h>
 #include <io.h>
 #define MKDIR(p) _mkdir(p)
 #else
