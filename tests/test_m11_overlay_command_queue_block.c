@@ -592,7 +592,7 @@ static void test_mouse_positive_control_dispatches_without_overlay(void)
               "mouse strafe does NOT turn the party");
 }
 
-static void test_static_dungeon_projectile_does_not_render_as_viewport_fireball(void)
+static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void)
 {
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
@@ -602,6 +602,7 @@ static void test_static_dungeon_projectile_does_not_render_as_viewport_fireball(
     unsigned char squareData[1];
     unsigned short squareFirstThings[1];
     unsigned char projectileRaw[8];
+    unsigned char explosionRaw[8];
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -609,11 +610,14 @@ static void test_static_dungeon_projectile_does_not_render_as_viewport_fireball(
     memset(&tiles, 0, sizeof(tiles));
     memset(&things, 0, sizeof(things));
     memset(projectileRaw, 0, sizeof(projectileRaw));
+    memset(explosionRaw, 0, sizeof(explosionRaw));
 
     squareData[0] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
     squareFirstThings[0] = make_thing(THING_TYPE_PROJECTILE, 0);
     projectileRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     projectileRaw[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
+    explosionRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    explosionRaw[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
 
     map.width = 1;
     map.height = 1;
@@ -627,11 +631,16 @@ static void test_static_dungeon_projectile_does_not_render_as_viewport_fireball(
     things.squareFirstThingCount = 1;
     things.rawThingData[THING_TYPE_PROJECTILE] = projectileRaw;
     things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.rawThingData[THING_TYPE_EXPLOSION] = explosionRaw;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
     world.dungeon = &dungeon;
     world.things = &things;
 
     ASSERT_EQ(M11_GameView_CountCellProjectiles(&world, 0, 0, 0), 0,
               "static dungeon projectile thing is not a visible fireball");
+    squareFirstThings[0] = make_thing(THING_TYPE_EXPLOSION, 0);
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&world, 0, 0, 0), 0,
+              "static dungeon explosion thing is not a visible fireball");
 
     world.projectiles.count = 1;
     world.projectiles.entries[0].slotIndex = 0;
@@ -641,6 +650,15 @@ static void test_static_dungeon_projectile_does_not_render_as_viewport_fireball(
 
     ASSERT_EQ(M11_GameView_CountCellProjectiles(&world, 0, 0, 0), 1,
               "runtime projectile remains visible in viewport summary");
+
+    world.explosions.count = 1;
+    world.explosions.entries[0].slotIndex = 0;
+    world.explosions.entries[0].mapIndex = 0;
+    world.explosions.entries[0].mapX = 0;
+    world.explosions.entries[0].mapY = 0;
+
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&world, 0, 0, 0), 1,
+              "runtime explosion remains visible in viewport summary");
 }
 
 int main(void)
@@ -664,7 +682,7 @@ int main(void)
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
-    test_static_dungeon_projectile_does_not_render_as_viewport_fireball();
+    test_static_dungeon_effects_do_not_render_as_viewport_fireballs();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
