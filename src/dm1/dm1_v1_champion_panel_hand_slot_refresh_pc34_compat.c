@@ -3,7 +3,7 @@
  *
  * Source-lock anchors (ReDMCSB WIP 20210206):
  *  - CHAMDRAW.C F0295_CHAMPION_HasObjectIconInSlotBoxChanged:1153-1182
- *  - CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1262
+ *  - CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1267
  *  - OBJECT.C   F0033_OBJECT_GetIconIndex
  *  - OBJECT.C   F0038_OBJECT_DrawIconInSlotBox
  *  - OBJECT.C   F0036_OBJECT_ExtractIconFromBitmap
@@ -101,7 +101,7 @@ enum {
  * C1_TRUE. The mutable icon guard is the OBJECT.C anchor for which
  * icons are "live" enough to be redrawn on icon change.
  *
- * CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1262 walks
+ * CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1267 walks
  * slotbox indices 0..(G0305_ui_PartyChampionCount << 1)-1. The
  * walk has the following structure:
  *
@@ -380,9 +380,9 @@ static int source_anchors_present(void)
 {
     return strstr(s_source_evidence,
                   "CHAMDRAW.C F0295_CHAMPION_HasObjectIconInSlotBoxChanged:1153-1182") !=
-               NULL &&
+           NULL &&
            strstr(s_source_evidence,
-                  "CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1262") !=
+                  "CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1267") !=
                NULL &&
            strstr(s_source_evidence, "F0033_OBJECT_GetIconIndex") != NULL &&
            strstr(s_source_evidence, "F0038_OBJECT_DrawIconInSlotBox") != NULL &&

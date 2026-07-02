@@ -73,7 +73,7 @@ static void test_evidence(void)
     check_true(e != NULL, "evidence accessor", "hand_slot_refresh");
     check_contains(e->walkF0295Anchor, "1153-1182",
                    "F0295 anchor", e->walkF0295Anchor);
-    check_contains(e->walkF0296Anchor, "1184-1262",
+    check_contains(e->walkF0296Anchor, "1184-1267",
                    "F0296 anchor", e->walkF0296Anchor);
     check_contains(e->walkF0033Anchor, "F0033_OBJECT_GetIconIndex",
                    "F0033 anchor", e->walkF0033Anchor);
@@ -110,7 +110,7 @@ static void test_evidence(void)
 
     check_contains(text, "CHAMDRAW.C F0295_CHAMPION_HasObjectIconInSlotBoxChanged:1153-1182",
                    "F0295 source text", text);
-    check_contains(text, "CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1262",
+    check_contains(text, "CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1267",
                    "F0296 source text", text);
     check_contains(text, "G0299_ui_CandidateChampionOrdinal",
                    "G0299 candidate ordinal source text", text);

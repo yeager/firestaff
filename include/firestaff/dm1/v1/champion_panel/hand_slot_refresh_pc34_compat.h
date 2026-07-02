@@ -11,7 +11,7 @@
  * `champion_panel_hand_slot_refresh_gate`.
  *
  * ReDMCSB anchors (PC 3.4 EN, ReDMCSB WIP 20210206):
- * - CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1262 walks
+ * - CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1267 walks
  *   slotbox indices 0..(G0305_ui_PartyChampionCount << 1)-1 with
  *   L0885_i_ChampionIndex = slotBoxIndex >> 1 and
  *   M070_HAND_SLOT_INDEX(slotBoxIndex) == C01_SLOT_ACTION_HAND.
