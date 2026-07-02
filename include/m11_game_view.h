@@ -634,6 +634,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state);
  * depth dimming and exposed for probe-level verification. */
 int M11_GameView_GetLightLevel(const M11_GameViewState* state);
 
+/* Compute the source dungeon-view palette index (0=brightest, 5=darkest).
+ * This is the same F0337-backed value the V1 viewport renderer applies. */
+int M11_GameView_GetDungeonPaletteIndex(const M11_GameViewState* state);
+
 /* Torch fuel constants.  INITIAL is the starting fuel for a freshly-lit
  * torch (approximately 1500 game ticks).  Each tick burns 1 unit. */
 #define M11_TORCH_INITIAL_FUEL  1500
