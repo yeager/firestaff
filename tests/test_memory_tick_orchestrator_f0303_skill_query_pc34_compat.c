@@ -468,6 +468,54 @@ static void test_orch_fire_shield_spell_mirrors_lifecycle_defense(void) {
     assert(world.timeline.count == 0);
 }
 
+static void test_orch_footprints_spell_mirrors_lifecycle_counter_and_scent(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    uint32_t expiryTick;
+
+    init_world(&world, &things, weapons, junks);
+    world.gameTick = 450;
+    world.magic.scentCount = 23;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.party.champions[0].mana.current = 100;
+    world.party.champions[0].mana.maximum = 100;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    input.command = CMD_CAST_SPELL;
+    input.commandArg1 = 0;
+    input.commandArg2 = 1; /* Ya Bro Ros: Magic Footprints. */
+    input.reserved = 2;   /* Weak cast: LastScentIndex = FirstScentIndex. */
+
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.event79CountFootprints == 1);
+    assert(world.lifecycle.status.footprintsCount == 1);
+    assert(world.magic.magicFootprintsActive == 1);
+    assert(world.magic.firstScentIndex == 23);
+    assert(world.magic.lastScentIndex == 23);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
+    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_FOOTPRINTS);
+    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(expiryTick > world.gameTick);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = expiryTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.event79CountFootprints == 0);
+    assert(world.lifecycle.status.footprintsCount == 0);
+    assert(world.magic.magicFootprintsActive == 0);
+    assert(world.timeline.count == 0);
+}
+
 static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -6936,6 +6984,7 @@ int main(void) {
     test_orch_invisibility_spell_mirrors_lifecycle_counter();
     test_orch_party_shield_spell_mirrors_lifecycle_defense();
     test_orch_fire_shield_spell_mirrors_lifecycle_defense();
+    test_orch_footprints_spell_mirrors_lifecycle_counter_and_scent();
     test_orch_potion_spell_mutates_empty_flask_in_hand();
     test_orch_zokathra_spell_materializes_in_ready_hand();
     test_orch_zokathra_spell_falls_back_to_party_square();
