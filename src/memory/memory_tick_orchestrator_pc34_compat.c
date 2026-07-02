@@ -3741,7 +3741,12 @@ static int orch_build_projectile_digest_compat(
         if (i == projectileIndex || other->slotIndex < 0) continue;
         if (other->mapIndex == projectile->mapIndex &&
             other->mapX == projectile->mapX &&
-            other->mapY == projectile->mapY) {
+            other->mapY == projectile->mapY &&
+            other->cell == projectile->cell) {
+            /* ReDMCSB PROJEXPL.C F0219/F0217 carries M011_CELL through
+             * projectile impact checks; another projectile on the same
+             * dungeon square but in a different cell is not the current
+             * cell impact. */
             out->sourceHasOtherProjectile = 1;
             break;
         }
@@ -3820,8 +3825,19 @@ static int orch_build_projectile_digest_compat(
         if (i == projectileIndex || other->slotIndex < 0) continue;
         if (other->mapIndex == projectile->mapIndex &&
             other->mapX == destX && other->mapY == destY) {
-            out->destHasOtherProjectile = 1;
-            break;
+            int newCell;
+            if ((projectile->direction & 1) == (projectile->cell & 1)) {
+                newCell = (projectile->cell - 1) & 3;
+            } else {
+                newCell = (projectile->cell + 1) & 3;
+            }
+            if (other->cell == newCell) {
+                /* ReDMCSB F0219 lines 721-725 applies the parity cell step
+                 * before relinking the projectile.  Only a projectile in that
+                 * landing cell is a same-cell projectile collision. */
+                out->destHasOtherProjectile = 1;
+                break;
+            }
         }
     }
     return 1;
