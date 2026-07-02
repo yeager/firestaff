@@ -3723,6 +3723,119 @@ if(BUILD_TESTING)
     endif()
 endif()
 
+if(BUILD_TESTING)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_x68k_media_receipt.c"
+       AND NOT TARGET test_firestaff_x68k_media_receipt)
+        add_executable(test_firestaff_x68k_media_receipt
+            tests/test_firestaff_x68k_media_receipt.c
+            src/shared/firestaff_x68k_media_receipt.c
+            src/shared/firestaff_x68k_media_classify.c
+            src/shared/firestaff_ftl_container.c
+            src/shared/asset_find_by_hash.c
+            src/shared/fs_portable_compat.c
+        )
+        target_include_directories(test_firestaff_x68k_media_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(NOT MSVC)
+            target_compile_options(test_firestaff_x68k_media_receipt PRIVATE -std=c11 -Wall -Wextra -O2)
+        endif()
+        add_test(NAME firestaff_x68k_media_receipt_unit COMMAND test_firestaff_x68k_media_receipt)
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_x68k_media_receipt_probe.c"
+       AND NOT TARGET firestaff_x68k_media_receipt_probe)
+        add_executable(firestaff_x68k_media_receipt_probe
+            probes/firestaff_x68k_media_receipt_probe.c
+            src/shared/firestaff_x68k_media_receipt.c
+            src/shared/firestaff_x68k_media_classify.c
+            src/shared/firestaff_ftl_container.c
+            src/shared/asset_find_by_hash.c
+            src/shared/fs_portable_compat.c
+        )
+        target_include_directories(firestaff_x68k_media_receipt_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_link_libraries(firestaff_x68k_media_receipt_probe PRIVATE firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(firestaff_x68k_media_receipt_probe PRIVATE -std=c11 -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME firestaff_x68k_media_receipt
+            COMMAND firestaff_x68k_media_receipt_probe
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_srm_real_artifact_readiness_probe.c"
+       AND TARGET firestaff_theron
+       AND NOT TARGET firestaff_theron_v1_srm_real_artifact_readiness_probe)
+        add_executable(firestaff_theron_v1_srm_real_artifact_readiness_probe
+            probes/theron/firestaff_theron_v1_srm_real_artifact_readiness_probe.c)
+        target_link_libraries(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE firestaff_theron)
+        target_include_directories(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(NOT MSVC)
+            target_compile_options(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME theron_v1_srm_real_artifact_readiness_probe
+            COMMAND firestaff_theron_v1_srm_real_artifact_readiness_probe
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c"
+       AND TARGET firestaff_theron
+       AND NOT TARGET firestaff_theron_v1_startup_real_asset_receipt_probe)
+        add_executable(firestaff_theron_v1_startup_real_asset_receipt_probe
+            probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c)
+        target_link_libraries(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE firestaff_theron)
+        target_include_directories(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(TARGET firestaff_m12)
+            target_link_libraries(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE firestaff_m12)
+        endif()
+        if(NOT MSVC)
+            target_compile_options(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME theron_v1_startup_real_asset_receipt
+            COMMAND firestaff_theron_v1_startup_real_asset_receipt_probe
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_csb_v22_finished_art_material_gate_probe.c"
+       AND NOT TARGET firestaff_csb_v22_finished_art_material_gate_probe)
+        add_executable(firestaff_csb_v22_finished_art_material_gate_probe
+            probes/firestaff_csb_v22_finished_art_material_gate_probe.c
+            src/csb/csb_v22_finished_art_material_gate_pc34.c
+            src/shared/fs_portable_compat.c)
+        target_include_directories(firestaff_csb_v22_finished_art_material_gate_probe PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        target_link_libraries(firestaff_csb_v22_finished_art_material_gate_probe PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+        if(NOT MSVC)
+            target_compile_options(firestaff_csb_v22_finished_art_material_gate_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME csb_v22_finished_art_material_gate_probe
+            COMMAND firestaff_csb_v22_finished_art_material_gate_probe
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v22_finished_art_material_gate_pc34.c"
+       AND NOT TARGET test_csb_v22_finished_art_material_gate_pc34)
+        add_executable(test_csb_v22_finished_art_material_gate_pc34
+            tests/test_csb_v22_finished_art_material_gate_pc34.c
+            src/csb/csb_v22_finished_art_material_gate_pc34.c
+            src/shared/fs_portable_compat.c)
+        target_include_directories(test_csb_v22_finished_art_material_gate_pc34 PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        target_link_libraries(test_csb_v22_finished_art_material_gate_pc34 PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m12 firestaff_m10 m)
+        if(NOT MSVC)
+            target_compile_options(test_csb_v22_finished_art_material_gate_pc34 PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME csb_v22_finished_art_material_gate_pc34
+            COMMAND test_csb_v22_finished_art_material_gate_pc34
+        )
+    endif()
+endif()
+
 # DM1 V1 Hall of Champions portrait ordinal 16 — south_return /
 # portrait_rect_position runtime probe.  Source-locked to:
 #   DUNGEON.C:2573 maps M011_CELL(sensor) against view dir.
