@@ -3833,6 +3833,9 @@ static void test_orch_projectile_group_hit_keeps_thrown_sharp_weapon(void) {
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
     unsigned char squareData[12];
+    unsigned char rawGroupData[16];
+    unsigned char rawWeaponData[8];
+    unsigned char rawJunkData[8];
     unsigned short squareFirstThings[1];
     struct DungeonGroup_Compat groups[1];
     struct ProjectileCreateInput_Compat createIn;
@@ -3847,6 +3850,9 @@ static void test_orch_projectile_group_hit_keeps_thrown_sharp_weapon(void) {
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
     memset(groups, 0, sizeof(groups));
+    memset(rawGroupData, 0, sizeof(rawGroupData));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    memset(rawJunkData, 0, sizeof(rawJunkData));
     memset(squareFirstThings, 0, sizeof(squareFirstThings));
     for (i = 0; i < 12; ++i) {
         squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
@@ -3879,6 +3885,12 @@ static void test_orch_projectile_group_hit_keeps_thrown_sharp_weapon(void) {
     things.squareFirstThingCount = 1;
     things.groups = groups;
     things.groupCount = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.thingCounts[THING_TYPE_WEAPON] = 2;
+    things.thingCounts[THING_TYPE_JUNK] = 2;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroupData;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunkData;
     weapons[0].type = 27; /* ReDMCSB C27_WEAPON_ARROW. */
     weapons[0].next = THING_ENDOFLIST;
     junks[0].next = THING_ENDOFLIST;
@@ -3888,6 +3900,11 @@ static void test_orch_projectile_group_hit_keeps_thrown_sharp_weapon(void) {
     groups[0].count = 0;
     groups[0].health[0] = 100;
     groups[0].cells = 0xFFu;
+    write_u16_le_for_test(rawGroupData + 0, groups[0].next);
+    write_u16_le_for_test(rawGroupData + 2, groups[0].slot);
+    write_u16_le_for_test(rawWeaponData + 0, weapons[0].next);
+    write_u16_le_for_test(rawWeaponData + 2, (unsigned short)weapons[0].type);
+    write_u16_le_for_test(rawJunkData + 0, junks[0].next);
     world.creatureAICount = 1;
     world.creatureAI[0].stateKind = AI_STATE_WANDER;
     world.creatureAI[0].creatureType = groups[0].creatureType;
@@ -3923,9 +3940,15 @@ static void test_orch_projectile_group_hit_keeps_thrown_sharp_weapon(void) {
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
     assert(world.projectiles.count == 0);
     assert(groups[0].health[0] > 0);
-    assert(groups[0].slot == make_thing(THING_TYPE_WEAPON, 0));
-    assert(weapons[0].next == make_thing(THING_TYPE_JUNK, 0));
-    assert(junks[0].next == THING_ENDOFLIST);
+    assert(groups[0].slot == make_thing(THING_TYPE_JUNK, 0));
+    assert(junks[0].next == make_thing(THING_TYPE_WEAPON, 0));
+    assert(weapons[0].next == THING_ENDOFLIST);
+    assert(read_u16_le_for_test(rawGroupData + 2) == groups[0].slot);
+    assert(read_u16_le_for_test(rawGroupData + 2) ==
+           make_thing(THING_TYPE_JUNK, 0));
+    assert(read_u16_le_for_test(rawJunkData + 0) ==
+           make_thing(THING_TYPE_WEAPON, 0));
+    assert(read_u16_le_for_test(rawWeaponData + 0) == THING_ENDOFLIST);
     assert(world.timeline.count == 1);
     assert(world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_REACTION);
     assert(world.timeline.events[0].aux1 == CREATURE_TYPE_WIZARD_EYE);
@@ -4030,9 +4053,9 @@ static void test_orch_f0266_group_move_precheck_keeps_thrown_sharp_weapon(void) 
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
     assert(groups[0].health[0] > 0);
     assert(groups[0].health[0] < 100);
-    assert(groups[0].slot == make_thing(THING_TYPE_WEAPON, 0));
-    assert(weapons[0].next == make_thing(THING_TYPE_JUNK, 0));
-    assert(junks[0].next == THING_ENDOFLIST);
+    assert(groups[0].slot == make_thing(THING_TYPE_JUNK, 0));
+    assert(junks[0].next == make_thing(THING_TYPE_WEAPON, 0));
+    assert(weapons[0].next == THING_ENDOFLIST);
     assert(dungeonProjectiles[0].next == THING_NONE);
     assert(dungeonProjectiles[0].eventIndex == 0xFFFFu);
     assert(squareFirstThings[0] == THING_ENDOFLIST);

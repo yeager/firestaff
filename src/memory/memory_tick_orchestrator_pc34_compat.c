@@ -4500,11 +4500,40 @@ static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
 
     /* ReDMCSB PROJEXPL.C:F0217 lines 540-553 selects GROUP.Slot as the
      * projectile-delete target for non-exploding sharp weapon projectiles
-     * that survive impact against KEEP_THROWN_SHARP_WEAPONS creatures. */
-    if (!orch_set_next_thing_compat(world->things, associatedThing, group->slot)) {
-        return 0;
+     * that survive impact against KEEP_THROWN_SHARP_WEAPONS creatures.
+     * F0215 lines 248-256 then uses DUNGEON.C:F0163 lines 1798-1837:
+     * empty possession lists get the thrown weapon as head; existing lists
+     * keep their head and append the thrown weapon at the tail. */
+    if (group->slot == THING_ENDOFLIST) {
+        if (!orch_set_next_thing_compat(
+                world->things, associatedThing, THING_ENDOFLIST)) {
+            return 0;
+        }
+        group->slot = associatedThing;
+    } else {
+        unsigned short tail = group->slot;
+        int safety = 0;
+        int linked = 0;
+        while (tail != THING_NONE && tail != THING_ENDOFLIST && safety++ < 64) {
+            unsigned short next = orch_next_thing_compat(world->things, tail);
+            if (next == THING_ENDOFLIST) {
+                if (!orch_set_next_thing_compat(
+                        world->things, associatedThing, THING_ENDOFLIST)) {
+                    return 0;
+                }
+                if (!orch_set_next_thing_compat(
+                        world->things, tail, associatedThing)) {
+                    return 0;
+                }
+                linked = 1;
+                break;
+            }
+            tail = next;
+        }
+        if (!linked) {
+            return 0;
+        }
     }
-    group->slot = associatedThing;
     return 1;
 }
 
