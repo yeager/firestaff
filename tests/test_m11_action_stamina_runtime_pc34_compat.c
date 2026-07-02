@@ -7802,6 +7802,9 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete public handoff query stays false while waiting");
     ASSERT_EQ(M11_GameView_GetEndgameFinalPresentationReady(&state), 0,
               "FUSE complete final presentation query stays false while waiting");
+    ASSERT_EQ(M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK),
+              M11_GAME_INPUT_IGNORED,
+              "FUSE complete ignores BACK before final endgame presentation");
     ASSERT_EQ(state.world.gameTick, gameTickAtWin,
               "FUSE complete endgame delay does not advance source game time");
     for (i = 0; i < 2159; ++i) {
@@ -7823,6 +7826,9 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete keeps status, final log, and source endgame text message");
     ASSERT_STR_EQ(M11_GameView_GetMessageLogEntry(&state, 2), "\nSECOND",
                   "FUSE complete prints F0446 text strings in A/B order without sort key");
+    ASSERT_EQ(M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK),
+              M11_GAME_INPUT_RETURN_TO_MENU,
+              "FUSE complete accepts BACK after final endgame presentation");
 }
 
 int main(void) {

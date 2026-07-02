@@ -10099,9 +10099,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    /* Endgame: only ESC (return to menu) and quickload accepted. */
+    /* Endgame: only ESC (return to menu) once the final endgame screen
+     * exists. ReDMCSB ENDGAME.C F0446 lines 939-961 blocks in its
+     * victory-text/final delay before F0444 installs the final endgame
+     * presentation path, so complete-FUSE delay playback ignores input. */
     if (state->gameWon) {
-        if (input == M12_MENU_INPUT_BACK) {
+        if (M11_GameView_GetEndgameFinalPresentationReady(state) &&
+            input == M12_MENU_INPUT_BACK) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
