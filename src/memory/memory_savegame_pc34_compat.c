@@ -31,7 +31,7 @@ _Static_assert(COMBAT_RESULT_SERIALIZED_SIZE == 56,
                "COMBAT_RESULT_SERIALIZED_SIZE drifted");
 _Static_assert(WEAPON_PROFILE_SERIALIZED_SIZE == 32,
                "WEAPON_PROFILE_SERIALIZED_SIZE drifted");
-_Static_assert(MAGIC_STATE_SERIALIZED_SIZE == 72,
+_Static_assert(MAGIC_STATE_SERIALIZED_SIZE == 84,
                "MAGIC_STATE_SERIALIZED_SIZE drifted");
 _Static_assert(DUNGEON_MUTATION_LIST_SERIALIZED_SIZE == 49156,
                "DUNGEON_MUTATION_LIST_SERIALIZED_SIZE arithmetic broken");

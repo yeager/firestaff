@@ -42,7 +42,7 @@ _Static_assert(SPELL_CAST_REQUEST_SERIALIZED_SIZE == 64,
     "SPELL_CAST_REQUEST_SERIALIZED_SIZE drift");
 _Static_assert(SPELL_EFFECT_SERIALIZED_SIZE == 84,
     "SPELL_EFFECT_SERIALIZED_SIZE drift");
-_Static_assert(MAGIC_STATE_SERIALIZED_SIZE == 72,
+_Static_assert(MAGIC_STATE_SERIALIZED_SIZE == 84,
     "MAGIC_STATE_SERIALIZED_SIZE drift");
 _Static_assert(SPELL_TABLE_SIZE == 25,
     "SPELL_TABLE_SIZE locked to DM1 25 entries");
@@ -925,6 +925,15 @@ int F0760_MAGIC_ApplyStateDelta_Compat(
         case C6_SPELL_TYPE_OTHER_FOOTPRINTS_COMPAT:
             inOutMagic->event79CountFootprints += effect->magicStateDelta[5];
             if (effect->magicStateDelta[5] > 0) {
+                /* ReDMCSB: MENU.C F0412 lines 1979-1986.  Footprints
+                 * starts at the current party scent count; weak casts keep
+                 * the window pinned to that one index, stronger casts wrap
+                 * the tail to 0. */
+                inOutMagic->firstScentIndex = inOutMagic->scentCount;
+                inOutMagic->lastScentIndex =
+                    (effect->powerOrdinal < 3)
+                        ? inOutMagic->firstScentIndex
+                        : 0;
                 inOutMagic->magicFootprintsActive = 1;
             }
             break;
@@ -1223,6 +1232,9 @@ int F0768a_MAGIC_MagicStateSerialize_Compat(
     write_i32_le(outBuf + 60, magic->curseMask);
     write_i32_le(outBuf + 64, magic->reserved0);
     write_i32_le(outBuf + 68, magic->reserved1);
+    write_i32_le(outBuf + 72, magic->scentCount);
+    write_i32_le(outBuf + 76, magic->firstScentIndex);
+    write_i32_le(outBuf + 80, magic->lastScentIndex);
     return 1;
 }
 
@@ -1251,6 +1263,9 @@ int F0768b_MAGIC_MagicStateDeserialize_Compat(
     magic->curseMask                = read_i32_le(buf + 60);
     magic->reserved0                = read_i32_le(buf + 64);
     magic->reserved1                = read_i32_le(buf + 68);
+    magic->scentCount               = read_i32_le(buf + 72);
+    magic->firstScentIndex          = read_i32_le(buf + 76);
+    magic->lastScentIndex           = read_i32_le(buf + 80);
     return 1;
 }
 
