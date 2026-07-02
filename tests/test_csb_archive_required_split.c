@@ -7,6 +7,7 @@
 
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,19 +79,6 @@ static int join_path(char* out, size_t outSize,
     return rc > 0 && (size_t)rc < outSize;
 }
 
-static int write_plain_file(const char* path, const char* payload) {
-    FILE* fp = fopen(path, "wb");
-    size_t size = strlen(payload);
-    if (!fp) {
-        return 0;
-    }
-    if (fwrite(payload, 1U, size, fp) != size) {
-        fclose(fp);
-        return 0;
-    }
-    return fclose(fp) == 0;
-}
-
 static void put16(unsigned char* p, unsigned int v) {
     p[0] = (unsigned char)(v & 0xffU);
     p[1] = (unsigned char)((v >> 8U) & 0xffU);
@@ -153,6 +141,94 @@ static int write_stored_zip_file(const char* path, const char* entryName,
     return fclose(fp) == 0;
 }
 
+static int write_iso_dir_record(unsigned char* dir, int offset,
+                                unsigned int lba, unsigned int size,
+                                int isDir, const unsigned char* name,
+                                int nameLen) {
+    int recLen = 33 + nameLen + ((nameLen & 1) ? 1 : 0);
+    if (offset + recLen > 2048) {
+        return 0;
+    }
+    memset(dir + offset, 0, (size_t)recLen);
+    dir[offset] = (unsigned char)recLen;
+    put32(dir + offset + 2, lba);
+    put32(dir + offset + 6, lba);
+    put32(dir + offset + 10, size);
+    put32(dir + offset + 14, size);
+    dir[offset + 25] = isDir ? 0x02 : 0x00;
+    dir[offset + 28] = 1;
+    dir[offset + 32] = (unsigned char)nameLen;
+    memcpy(dir + offset + 33, name, (size_t)nameLen);
+    return recLen;
+}
+
+static int write_single_entry_iso_file(const char* path,
+                                       const char* entryName,
+                                       const char* payload) {
+    FILE* fp = fopen(path, "wb");
+    unsigned char zero[2048] = {0};
+    unsigned char pvd[2048] = {0};
+    unsigned char dir[2048] = {0};
+    unsigned char fileSector[2048] = {0};
+    unsigned char dot = 0;
+    unsigned char dotdot = 1;
+    unsigned int payloadSize = (unsigned int)strlen(payload);
+    int recLen;
+    int offset;
+    if (!fp || payloadSize > sizeof(fileSector)) {
+        if (fp) {
+            fclose(fp);
+        }
+        return 0;
+    }
+    for (int i = 0; i < 16; ++i) {
+        if (fwrite(zero, 1U, sizeof(zero), fp) != sizeof(zero)) {
+            fclose(fp);
+            return 0;
+        }
+    }
+    pvd[0] = 1;
+    memcpy(pvd + 1, "CD001", 5);
+    pvd[6] = 1;
+    recLen = write_iso_dir_record(pvd, 156, 20U, 2048U, 1, &dot, 1);
+    if (!recLen || fwrite(pvd, 1U, sizeof(pvd), fp) != sizeof(pvd)) {
+        fclose(fp);
+        return 0;
+    }
+    for (int i = 17; i < 20; ++i) {
+        if (fwrite(zero, 1U, sizeof(zero), fp) != sizeof(zero)) {
+            fclose(fp);
+            return 0;
+        }
+    }
+    offset = 0;
+    recLen = write_iso_dir_record(dir, offset, 20U, 2048U, 1, &dot, 1);
+    if (!recLen) {
+        fclose(fp);
+        return 0;
+    }
+    offset += recLen;
+    recLen = write_iso_dir_record(dir, offset, 20U, 2048U, 1, &dotdot, 1);
+    if (!recLen) {
+        fclose(fp);
+        return 0;
+    }
+    offset += recLen;
+    recLen = write_iso_dir_record(dir, offset, 21U, payloadSize, 0,
+                                  (const unsigned char*)entryName,
+                                  (int)strlen(entryName));
+    if (!recLen || fwrite(dir, 1U, sizeof(dir), fp) != sizeof(dir)) {
+        fclose(fp);
+        return 0;
+    }
+    memcpy(fileSector, payload, payloadSize);
+    if (fwrite(fileSector, 1U, sizeof(fileSector), fp) != sizeof(fileSector)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int file_matches_payload(const char* path, const char* payload) {
     char buf[128];
     FILE* fp = fopen(path, "rb");
@@ -188,18 +264,28 @@ static int path_has_virtual_entry(const char* path,
            strstr(path, entry);
 }
 
-static int path_has_asset_cache_for_csb(const char* path) {
-    return path && strstr(path, "asset-cache") && strstr(path, "csb");
-}
-
 static int path_has_asset_cache(const char* path) {
     return path && strstr(path, "asset-cache");
 }
 
-static void check_csb_zip_graphics_plain_dungeon_materializes(
+static int path_has_runtime_cache_leaf(const char* path,
+                                       const char* runtimeDir,
+                                       const char* leaf) {
+    char gameDir[512];
+    char expected[512];
+    return path && runtimeDir && leaf &&
+           FSP_JoinPath(gameDir, sizeof(gameDir), runtimeDir, "csb") &&
+           FSP_JoinPath(expected, sizeof(expected), gameDir, leaf) &&
+           strcmp(path, expected) == 0 &&
+           strstr(path, "asset-cache") &&
+           strstr(path, "csb") &&
+           !strstr(path, "::");
+}
+
+static void check_csb_zip_graphics_iso_dungeon_materializes(
     const char* root) {
     char zipPath[512];
-    char dungeonPath[512];
+    char isoPath[512];
     char foundPath[ASSET_PATH_MAX];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
@@ -209,14 +295,14 @@ static void check_csb_zip_graphics_plain_dungeon_materializes(
 
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
-    check_int(join_path(dungeonPath, sizeof(dungeonPath), root,
-                        "renamed-csb-dungeon.asset"),
-              "positive DUNGEON path should fit");
+    check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
+              "positive ISO path should fit");
     check_int(write_stored_zip_file(zipPath, "archive/GRAPHICS.DAT",
                                     kCsbGraphicsPayload),
               "synthetic CSB GRAPHICS ZIP fixture should be written");
-    check_int(write_plain_file(dungeonPath, kCsbDungeonPayload),
-              "synthetic CSB DUNGEON plain fixture should be written");
+    check_int(write_single_entry_iso_file(isoPath, "dungeon.dat;1",
+                                          kCsbDungeonPayload),
+              "synthetic CSB DUNGEON ISO fixture should be written");
 
     memset(foundPath, 0, sizeof(foundPath));
     check_int(asset_find_by_md5(root, kCsbGraphicsMd5,
@@ -227,9 +313,9 @@ static void check_csb_zip_graphics_plain_dungeon_materializes(
     memset(foundPath, 0, sizeof(foundPath));
     check_int(asset_find_by_md5(root, kCsbDungeonMd5,
                                 foundPath, (int)sizeof(foundPath), 32) &&
-                  strstr(foundPath, "renamed-csb-dungeon.asset") &&
-                  !strstr(foundPath, "::"),
-              "CSB DUNGEON hash should be found as a plain file");
+                  path_has_virtual_entry(foundPath, "csb_required.iso",
+                                         "dungeon.dat"),
+              "CSB DUNGEON hash should be found through an ISO virtual path");
 
     M12_AssetStatus_TestSetCsbSyntheticHashes(kCsbGraphicsMd5, kCsbDungeonMd5);
     M12_AssetStatus_Scan(&status, root);
@@ -253,26 +339,30 @@ static void check_csb_zip_graphics_plain_dungeon_materializes(
     check_int(dungeon && dungeon->matched && dungeon->label &&
                   strcmp(dungeon->label, "DUNGEON.DAT") == 0,
               "CSB required DUNGEON should be matched");
-    check_int(graphics && !strstr(graphics->matchedPath, "::") &&
-                  path_has_asset_cache_for_csb(graphics->matchedPath),
-              "archive-backed CSB GRAPHICS should be materialized to asset-cache/csb");
-    check_int(dungeon && !strstr(dungeon->matchedPath, "::") &&
-                  path_has_asset_cache_for_csb(dungeon->matchedPath),
-              "plain CSB DUNGEON should be copied beside the materialized archive file");
+    runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, "csb");
+    check_int(path_has_asset_cache(runtimeDir),
+              "CSB runtime data dir should point at the asset cache when a required file was virtual");
+    check_int(graphics &&
+                  path_has_runtime_cache_leaf(graphics->matchedPath,
+                                              runtimeDir,
+                                              "GRAPHICS.DAT"),
+              "ZIP-backed CSB GRAPHICS should be materialized to runtimeDataDir/csb/GRAPHICS.DAT");
+    check_int(dungeon &&
+                  path_has_runtime_cache_leaf(dungeon->matchedPath,
+                                              runtimeDir,
+                                              "DUNGEON.DAT"),
+              "ISO-backed CSB DUNGEON should be materialized to runtimeDataDir/csb/DUNGEON.DAT");
     check_int(graphics && file_matches_payload(graphics->matchedPath,
                                                kCsbGraphicsPayload),
               "materialized CSB GRAPHICS should match the ZIP payload");
     check_int(dungeon && file_matches_payload(dungeon->matchedPath,
                                               kCsbDungeonPayload),
-              "materialized CSB DUNGEON should match the plain payload");
-    runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, "csb");
-    check_int(path_has_asset_cache(runtimeDir),
-              "CSB runtime data dir should point at the asset cache when a required file was virtual");
+              "materialized CSB DUNGEON should match the ISO payload");
 }
 
 static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
     char zipPath[512];
-    char dungeonPath[512];
+    char isoPath[512];
     char foundPath[ASSET_PATH_MAX];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
@@ -281,14 +371,14 @@ static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
 
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_wrong_graphics.zip"),
               "negative ZIP path should fit");
-    check_int(join_path(dungeonPath, sizeof(dungeonPath), root,
-                        "renamed-csb-dungeon.asset"),
-              "negative DUNGEON path should fit");
+    check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
+              "negative ISO path should fit");
     check_int(write_stored_zip_file(zipPath, "archive/GRAPHICS.DAT",
                                     kCsbWrongGraphicsPayload),
               "wrong CSB GRAPHICS ZIP fixture should be written");
-    check_int(write_plain_file(dungeonPath, kCsbDungeonPayload),
-              "negative CSB DUNGEON plain fixture should be written");
+    check_int(write_single_entry_iso_file(isoPath, "dungeon.dat;1",
+                                          kCsbDungeonPayload),
+              "negative CSB DUNGEON ISO fixture should be written");
 
     memset(foundPath, 0, sizeof(foundPath));
     check_int(!asset_find_by_md5(root, kCsbGraphicsMd5,
@@ -314,9 +404,11 @@ static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
     check_int(graphics && !graphics->matched,
               "CSB required GRAPHICS should remain missing for the wrong archive");
     check_int(dungeon && dungeon->matched &&
-                  strstr(dungeon->matchedPath, "renamed-csb-dungeon.asset") &&
+                  path_has_virtual_entry(dungeon->matchedPath,
+                                         "csb_required.iso",
+                                         "dungeon.dat") &&
                   !strstr(dungeon->matchedPath, "asset-cache"),
-              "plain CSB DUNGEON may match, but should not materialize when CSB is unavailable");
+              "ISO CSB DUNGEON may match, but should not materialize when CSB is unavailable");
 }
 
 int main(void) {
@@ -336,7 +428,7 @@ int main(void) {
 
     check_int(test_setenv("FIRESTAFF_DATA", positiveRoot),
               "positive FIRESTAFF_DATA should be set");
-    check_csb_zip_graphics_plain_dungeon_materializes(positiveRoot);
+    check_csb_zip_graphics_iso_dungeon_materializes(positiveRoot);
 
     check_int(test_setenv("FIRESTAFF_DATA", negativeRoot),
               "negative FIRESTAFF_DATA should be set");
@@ -347,6 +439,6 @@ int main(void) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
     }
-    puts("ok: CSB required-file discovery handles split archive/plain sources and blocks wrong archive payloads");
+    puts("ok: CSB required-file discovery materializes ZIP/ISO archive sources and blocks wrong archive payloads");
     return 0;
 }
