@@ -7920,8 +7920,8 @@ static void test_endgame_restart_controls_respect_restart_allowed(void) {
                                          restartX + restartW / 2,
                                          restartY + restartH / 2,
                                          1),
-              M11_GAME_INPUT_REDRAW,
-              "F0444 restart click latches the source restart request");
+              M11_GAME_INPUT_RESTART_GAME,
+              "F0444 restart click requests the main-loop restart handoff");
     ASSERT_EQ(M11_GameView_GetEndgameRestartRequested(&state), 1,
               "F0444 restart click mirrors G0523_B_RestartGameRequested");
     ASSERT_EQ(M11_GameView_HandlePointer(&state,

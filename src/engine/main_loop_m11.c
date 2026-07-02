@@ -1371,6 +1371,24 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     return 0;
 }
 
+static int m11_restart_current_launch(M11_GameViewState* gameView,
+                                      M12_StartupMenuState* menuState,
+                                      uint32_t* idleAccumulatorMs,
+                                      const char* dataDir) {
+    if (!gameView || !menuState) {
+        return 0;
+    }
+    /* ReDMCSB ENDGAME.C F0444 lines 568-590 observes
+     * G0523_B_RestartGameRequested after queue processing and returns to
+     * the top-level load/start path.  Firestaff mirrors that as a full
+     * teardown followed by the same selected-entry launch handoff used by
+     * the modern launcher. */
+    M11_GameView_Shutdown(gameView);
+    M11_GameView_Init(gameView);
+    menuState->launchRequested = 1;
+    return m11_open_requested_launch(gameView, menuState, idleAccumulatorMs, dataDir);
+}
+
 static int m11_prepare_direct_launch(M12_StartupMenuState* menuState,
                                      const char* gameId) {
     int i;
@@ -2892,9 +2910,27 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (pointerResult == M11_GAME_INPUT_RETURN_TO_MENU) {
                 M11_GameView_Shutdown(&gameView);
                 M11_GameView_Init(&gameView);
+                pendingDm1V1MotionHead = 0;
+                pendingDm1V1MotionCount = 0;
                 idleAccumulatorMs = 0;
                 M11_ApplyStartupMenuRuntime(&menuState);
                 m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+            } else if (pointerResult == M11_GAME_INPUT_RESTART_GAME) {
+                pendingDm1V1MotionHead = 0;
+                pendingDm1V1MotionCount = 0;
+                if (m11_restart_current_launch(&gameView,
+                                                &menuState,
+                                                &idleAccumulatorMs,
+                                                o->dataDir) &&
+                    gameView.active) {
+                    launchedEver = 1;
+                    if (exitAfterLaunch) {
+                        break;
+                    }
+                } else {
+                    M11_ApplyStartupMenuRuntime(&menuState);
+                    m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+                }
             } else if (pointerResult == M11_GAME_INPUT_REDRAW) {
                 M11_GameView_Draw(&gameView,
                                   M11_Render_GetFramebuffer(),
@@ -2949,6 +2985,22 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     idleAccumulatorMs = 0;
                     M11_ApplyStartupMenuRuntime(&menuState);
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+                } else if (result == M11_GAME_INPUT_RESTART_GAME) {
+                    pendingDm1V1MotionHead = 0;
+                    pendingDm1V1MotionCount = 0;
+                    if (m11_restart_current_launch(&gameView,
+                                                    &menuState,
+                                                    &idleAccumulatorMs,
+                                                    o->dataDir) &&
+                        gameView.active) {
+                        launchedEver = 1;
+                        if (exitAfterLaunch) {
+                            break;
+                        }
+                    } else {
+                        M11_ApplyStartupMenuRuntime(&menuState);
+                        m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
+                    }
                 } else if (result == M11_GAME_INPUT_REDRAW) {
                     int redrawWasAfterViewportDirty =
                         gameView.lastDm1V1MovementPipelineResult.viewportDirty;

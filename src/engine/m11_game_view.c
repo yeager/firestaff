@@ -10543,7 +10543,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * 485-559 installs G0446_as_Graphic561_PrimaryMouseInput_RestartGame
      * only after the final screen is drawn and only when
      * G0524_B_RestartGameAllowed is true.  Clicking restart latches the
-     * G0523_B_RestartGameRequested mirror; quit returns to the launcher. */
+     * G0523_B_RestartGameRequested mirror; ENDGAME.C lines 568-590 then
+     * observes that latch while processing the queue before restarting.
+     * Quit returns to the launcher. */
     if (state->gameWon) {
         int boxX, boxY, boxW, boxH;
         if (!M11_GameView_GetEndgameFinalPresentationReady(state) ||
@@ -10554,7 +10556,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (m11_point_in_rect(x, y, boxX, boxY, boxW, boxH)) {
             state->endgameRestartRequested = 1;
             m11_set_status(state, "ENDGAME", "RESTART REQUESTED");
-            return M11_GAME_INPUT_REDRAW;
+            return M11_GAME_INPUT_RESTART_GAME;
         }
         (void)M11_GameView_GetV1EndgameQuitBox(0, &boxX, &boxY, &boxW, &boxH);
         if (m11_point_in_rect(x, y, boxX, boxY, boxW, boxH)) {
