@@ -65,7 +65,7 @@
       "id": "firestaff_m12_launch_guard_supports_csb",
       "role": "firestaff_positive",
       "path": "/Users/bosse/Documents/Firestaff/src/ui/menu_startup_m12.c",
-      "lines": "2442-2450",
+      "lines": "2669-2677",
       "needles": [
         "All five catalogued games now have runtime launch boundaries",
         "strcmp(gameId, \"csb\") == 0"
@@ -77,12 +77,12 @@
       "id": "firestaff_m12_launch_intent_accepts_available_csb",
       "role": "firestaff_positive",
       "path": "/Users/bosse/Documents/Firestaff/src/ui/menu_startup_m12.c",
-      "lines": "7841-7914",
+      "lines": "8221-8293",
       "needles": [
         "M12_StartupMenu_GetLaunchIntent",
         "m12_game_supported(intent.gameId)",
         "M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)",
-        "version && version->matched ? 1 : 0"
+        "version && version->matched"
       ],
       "missing": [],
       "ok": true
@@ -91,7 +91,7 @@
       "id": "firestaff_m11_csb_handoff_to_game_loop",
       "role": "firestaff_positive",
       "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c",
-      "lines": "7116-7146",
+      "lines": "7872-7901",
       "needles": [
         "FS_GAME_CSB path in firestaff_game_loop.c",
         "CSB READY (FS LOOP)",

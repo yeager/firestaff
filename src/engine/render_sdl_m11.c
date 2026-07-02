@@ -1260,6 +1260,9 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     int destY = 0;
     int destW = 0;
     int destH = 0;
+    int uploadW;
+    int uploadH;
+    int cpuNearestPresent = 0;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     SDL_FRect sourceRect;
     SDL_FRect destRect;
@@ -1280,13 +1283,29 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     if (targetWidth == logicalWidth && targetHeight == logicalHeight) {
         return M11_Render_PresentIndexed(framebuffer, logicalWidth, logicalHeight);
     }
-    if (m11_recreate_texture_if_needed(targetWidth, targetHeight) != M11_RENDER_OK) {
-        return M11_RENDER_ERR_TEXTURE;
-    }
     g_state.contentW = targetWidth;
     g_state.contentH = targetHeight;
-    g_state.presentedW = targetWidth;
-    g_state.presentedH = targetHeight;
+    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+    uploadW = targetWidth;
+    uploadH = targetHeight;
+    /* Same V1 clarity guard as M11_Render_PresentIndexed(): when nearest
+     * filtering is active and SDL would still stretch the texture to the
+     * current drawable, CPU-resample to the exact destination size and render
+     * 1:1. This keeps ReDMCSB's hard 8x8 wall-inscription glyphs readable on
+     * HiDPI/non-integer window sizes that use the explicit-resolution path. */
+    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+        !m11_has_active_v2_filters() &&
+        destW > 0 && destH > 0 &&
+        (destW != targetWidth || destH != targetHeight)) {
+        uploadW = destW;
+        uploadH = destH;
+        cpuNearestPresent = 1;
+    }
+    if (m11_recreate_texture_if_needed(uploadW, uploadH) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.presentedW = uploadW;
+    g_state.presentedH = uploadH;
     if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
@@ -1296,33 +1315,32 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
         m11_framebuffer_to_rgba_resampled(v2DitherScratch,
                                           logicalWidth,
                                           logicalHeight,
-                                          targetWidth,
-                                          targetHeight);
+                                          uploadW,
+                                          uploadH);
     } else {
         m11_framebuffer_to_rgba_resampled(framebuffer,
                                           logicalWidth,
                                           logicalHeight,
-                                          targetWidth,
-                                          targetHeight);
+                                          uploadW,
+                                          uploadH);
     }
-    m11_apply_v2_filters_rgba_post(targetWidth, targetHeight);
-    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+    m11_apply_v2_filters_rgba_post(uploadW, uploadH);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
     sourceRect.y = 0.0f;
-    sourceRect.w = (float)targetWidth;
-    sourceRect.h = (float)targetHeight;
+    sourceRect.w = (float)uploadW;
+    sourceRect.h = (float)uploadH;
     {
         SDL_Rect updateRect;
         updateRect.x = 0;
         updateRect.y = 0;
-        updateRect.w = targetWidth;
-        updateRect.h = targetHeight;
+        updateRect.w = uploadW;
+        updateRect.h = uploadH;
         if (!SDL_UpdateTexture(g_state.texture,
                                &updateRect,
                                g_state.presentBuffer,
-                               targetWidth * 4)) {
+                               uploadW * 4)) {
             return M11_RENDER_ERR_TEXTURE;
         }
     }
@@ -1333,6 +1351,10 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     destRect.y = (float)destY;
     destRect.w = (float)destW;
     destRect.h = (float)destH;
+    if (cpuNearestPresent) {
+        destRect.w = (float)uploadW;
+        destRect.h = (float)uploadH;
+    }
     if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1344,12 +1366,12 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
 #else
     sourceRect.x = 0;
     sourceRect.y = 0;
-    sourceRect.w = targetWidth;
-    sourceRect.h = targetHeight;
+    sourceRect.w = uploadW;
+    sourceRect.h = uploadH;
     if (SDL_UpdateTexture(g_state.texture,
                           &sourceRect,
                           g_state.presentBuffer,
-                          targetWidth * 4) != 0) {
+                          uploadW * 4) != 0) {
         return M11_RENDER_ERR_TEXTURE;
     }
     if (SDL_RenderClear(g_state.renderer) != 0) {
@@ -1359,6 +1381,10 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     destRect.y = destY;
     destRect.w = destW;
     destRect.h = destH;
+    if (cpuNearestPresent) {
+        destRect.w = uploadW;
+        destRect.h = uploadH;
+    }
     if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }

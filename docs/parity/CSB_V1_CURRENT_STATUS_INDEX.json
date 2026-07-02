@@ -35,7 +35,7 @@
       "id": "csb_v1_runtime_playability",
       "priority": "P1",
       "status": "ACTIVE_BLOCKER",
-      "summary": "Launch/profile routing, PC real-asset boot/tick evidence, quickplay dungeon-handle survival, first viewport-frame render entry, a one-move Utility-to-runtime route with bounded save-prefix roundtrip, and a CSB-owned runtime spine are proven, but full CSB playability is not proven.",
+      "summary": "Launch/profile routing, PC real-asset boot/tick evidence, quickplay dungeon-handle survival, first viewport-frame render entry, a bounded multi-step Utility-to-runtime movement route with wall-blocked step and save-prefix roundtrip, and a CSB-owned runtime spine are proven, but full CSB playability is not proven.",
       "latestEvidence": [
         "docs/parity/PARITY_MATRIX_CSB_V1.md",
         "TODO.md",
@@ -51,7 +51,7 @@
         "CTest csb_v1_boot_runtime_handoff",
         "CTest csb_v1_runtime_route_first_frame_movement_utility_gate"
       ],
-      "nextAction": "Extend the fast CTest-wired one-move route into a wider CSB route: repeated adventuring input, CSBGAME.DAT save/reload or Utility/new-adventure persistence, viewport capture, and original/Firestaff comparison."
+      "nextAction": "Extend the fast CTest-wired bounded route into a wider CSB route: real-data adventuring input, interactions beyond movement, CSBGAME.DAT save/reload or Utility/new-adventure persistence, viewport capture, and original/Firestaff comparison."
     },
     {
       "id": "csb_v1_viewport_hud_original_overlay",
@@ -194,7 +194,7 @@
     {
       "criterion": "core_input_movement",
       "currentStatus": "RUNTIME_SLICE_VERIFIED_PARTIAL",
-      "requiredForFullSupport": "CTest now covers CSB-owned boot-to-runtime handoff, PC real-asset launch/tick, quickplay dungeon-handle survival, Utility NEW_GAME-to-runtime one-move route with bounded save-prefix roundtrip, input queue binding, queued movement, rotation between movement steps, runtime ticks, champion/inventory handoff, and MOVE/ATTACK/CAST command-chain semantics. Full support still needs a wider real-data CSB adventuring route through launch, interaction, CSBGAME.DAT save/reload, and capture proof."
+      "requiredForFullSupport": "CTest now covers CSB-owned boot-to-runtime handoff, PC real-asset launch/tick, quickplay dungeon-handle survival, Utility NEW_GAME-to-runtime bounded multi-step movement route with wall-blocked step and save-prefix roundtrip, input queue binding, queued movement, rotation between movement steps, runtime ticks, champion/inventory handoff, and MOVE/ATTACK/CAST command-chain semantics. Full support still needs a wider real-data CSB adventuring route through launch, interaction, CSBGAME.DAT save/reload, and capture proof."
     },
     {
       "criterion": "viewport_ui_render",

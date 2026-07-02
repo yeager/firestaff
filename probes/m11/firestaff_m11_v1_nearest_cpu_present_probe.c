@@ -114,6 +114,33 @@ int main(void) {
         check_true("adjacent source pixels remain distinct, not blended", adjacent_diff);
     }
 
+    rc = M11_Render_PresentIndexedToResolution(fb, M11_FB_WIDTH, M11_FB_HEIGHT, 640, 400);
+    check_true("present indexed-to-resolution nearest", rc == M11_RENDER_OK);
+    rgba = M11_Render_GetPresentedRGBA(&w, &h);
+    check_true("to-resolution presented width is CPU-upscaled 3x", w == 960);
+    check_true("to-resolution presented height is CPU-upscaled 3x", h == 600);
+
+    if (rgba && w == 960 && h == 600) {
+        int solid = 1;
+        int adjacent_diff = 0;
+        for (sy = 35; sy < 64; sy += 7) {
+            for (sx = 96; sx < 128; sx += 8) {
+                if (!block_is_solid(rgba, w, sx * 3, sy * 3)) {
+                    solid = 0;
+                }
+                if (sx + 1 < M11_FB_WIDTH) {
+                    const unsigned char* a = rgba + (((sy * 3) * w + sx * 3) * 4);
+                    const unsigned char* b = rgba + (((sy * 3) * w + (sx + 1) * 3) * 4);
+                    if (!same_rgba(a, b)) {
+                        adjacent_diff = 1;
+                    }
+                }
+            }
+        }
+        check_true("to-resolution source pixels become solid 3x3 blocks", solid);
+        check_true("to-resolution adjacent pixels remain distinct, not blended", adjacent_diff);
+    }
+
     memset(fb, 0, M11_FB_BYTES);
     for (y = 0; y < M11_FB_HEIGHT; ++y) {
         for (x = 0; x < M11_FB_WIDTH; ++x) {

@@ -84,10 +84,10 @@ Current truth:
   `csb_v1_runtime_route_first_frame_movement_utility_gate`. It proves
   skip-safe PC real-asset scan/boot/tick, dungeon-handle survival and rescan
   cleanup, first M11 viewport-frame render entry, the composed
-  runtime/Utility handoff, and one Utility `NEW_GAME` -> runtime -> queued
-  movement -> post-movement viewport render -> bounded save-prefix roundtrip
-  route. It is still not full playability, full save compatibility, original
-  capture, or pixel parity.
+  runtime/Utility handoff, and one Utility `NEW_GAME` -> runtime -> repeated
+  queued movement route with a wall-blocked forward step, post-route viewport
+  render, and bounded save-prefix roundtrip. It is still not full playability,
+  full save compatibility, original capture, or pixel parity.
 - Therefore the next CSB work should not reopen old functional gap docs by
   default. It should add runtime evidence from CSB state.
 
@@ -95,9 +95,9 @@ Next CSB pass:
 
 1. Run the current CSB completion/readiness verifiers and record any actual
    failing gate.
-2. Extend the fast CTest-wired one-move runtime/viewport route into a wider
+2. Extend the fast CTest-wired bounded runtime/viewport route into a wider
    real-data fixture from CSB state: launch -> CSB-owned runtime -> repeated
-   movement/input interactions -> CSBGAME.DAT save/reload or
+   movement/input interactions beyond the synthetic route -> CSBGAME.DAT save/reload or
    Utility/new-adventure persistence boundary -> viewport capture.
 3. Keep every claim CSB-specific. Do not inherit DM1 runtime evidence unless the
    verifier explicitly says the CSB rule is inherited from ReDMCSB.

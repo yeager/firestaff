@@ -23,9 +23,9 @@ ANCHORS = [
     {"id": "redmcsb_atari_csb_payload_names", "role": "primary_source", "path": REDMCSB / "HINTLOAD.C", "lines": "11-18", "needles": ["0HCSB.HTC", "0HCSB.DAT", "1CSBGAME.DAT", "1CSBGAME.BAK"]},
     {"id": "redmcsb_make_new_adventure_runtime_gate", "role": "primary_source", "path": REDMCSB / "CEDTINCH.C", "lines": "5-63", "needles": ["F7086_IsReadyToMakeNewAdventure", "GameLoaded", "G7114_LoadedChampionCount", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C13_DUNGEON_CSB_GAME"]},
     {"id": "redmcsb_csb_dungeon_validation_switch", "role": "primary_source", "path": REDMCSB / "CEDTINCU.C", "lines": "5-77", "needles": ["F7272_IsDungeonValid", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C12_DUNGEON_CSB_PRISON", "C13_DUNGEON_CSB_GAME"]},
-    {"id": "firestaff_m12_launch_guard_supports_csb", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "2442-2450", "needles": ["All five catalogued games now have runtime launch boundaries", "strcmp(gameId, \"csb\") == 0"]},
-    {"id": "firestaff_m12_launch_intent_accepts_available_csb", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "7841-7914", "needles": ["M12_StartupMenu_GetLaunchIntent", "m12_game_supported(intent.gameId)", "M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)", "version && version->matched ? 1 : 0"]},
-    {"id": "firestaff_m11_csb_handoff_to_game_loop", "role": "firestaff_positive", "path": ROOT / "src/engine/m11_game_view.c", "lines": "7116-7146", "needles": ["FS_GAME_CSB path in firestaff_game_loop.c", "CSB READY (FS LOOP)", "CSB READY: gameId=csb dataDir=%s"]},
+    {"id": "firestaff_m12_launch_guard_supports_csb", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "2669-2677", "needles": ["All five catalogued games now have runtime launch boundaries", "strcmp(gameId, \"csb\") == 0"]},
+    {"id": "firestaff_m12_launch_intent_accepts_available_csb", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "8221-8293", "needles": ["M12_StartupMenu_GetLaunchIntent", "m12_game_supported(intent.gameId)", "M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)", "version && version->matched"]},
+    {"id": "firestaff_m11_csb_handoff_to_game_loop", "role": "firestaff_positive", "path": ROOT / "src/engine/m11_game_view.c", "lines": "7872-7901", "needles": ["FS_GAME_CSB path in firestaff_game_loop.c", "CSB READY (FS LOOP)", "CSB READY: gameId=csb dataDir=%s"]},
     {"id": "firestaff_csb_game_loop_boot_profile", "role": "firestaff_positive", "path": ROOT / "src/engine/firestaff_game_loop.c", "lines": "420-436", "needles": ["FS_GAME_CSB", "csb_v1_boot_scan_assets", "csb_v1_boot_enter_game"]},
     {"id": "firestaff_pc_csb_real_asset_probe", "role": "firestaff_positive", "path": ROOT / "probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c", "lines": "1-130", "needles": ["PC-first CSB V1 real-data launch gate", "PC CSB assets scan by hash", "csb_v1_boot_enter_game", "csb_v1_runtime_tick"]},
 ]
@@ -98,7 +98,7 @@ def main() -> int:
     doc_text = DOC.read_text(encoding="utf-8") if DOC.exists() else ""
     doc_checks = {
         "matrix_names_readiness_gate": "pass547_csb_v1_runtime_readiness_backfill" in matrix_text,
-        "matrix_keeps_non_claim_boundary": "original-overlay parity still require their own gates" in matrix_text,
+        "matrix_keeps_non_claim_boundary": "original-overlay parity, and pixel parity still require their own gates" in matrix_text,
         "evidence_doc_names_retirement": "pass547 is now a retired blocker gate" in doc_text,
         "evidence_doc_names_non_claims": "No CSB original capture parity or pixel parity is claimed." in doc_text,
     }
