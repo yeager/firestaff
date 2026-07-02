@@ -22001,6 +22001,7 @@ static int m11_print_endgame_text_messages_f0446(M11_GameViewState* state,
                 /* ReDMCSB: ENDGAME.C F0446 lines 946-947 runs F0445 once
                  * after each printed message, then Delay(780). */
                 state->endgameTextMessageDelayTicks += 780;
+                state->endgameFuseSequenceDelayTicks += 780;
                 ++printed;
                 ++expected;
                 break;
@@ -22274,6 +22275,7 @@ static void m11_apply_fuse_final_endgame_params_f0446(M11_GameViewState* state) 
      * explicitly while the actual timed credits/palette sequence remains
      * in the presentation follow-up. */
     state->endgameFinalDelayTicks = params->finalDelayTicks;
+    state->endgameFuseSequenceDelayTicks += params->finalDelayTicks;
     state->endgameRestartAllowed = params->restartAllowedAfterWin;
     state->endgameCalledWithTrue = params->endgameCalledWithTrue;
     if (params->victoryMusicId >= 0) {
