@@ -20,6 +20,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
@@ -6155,6 +6156,71 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
               "Zokathra cast applies exact F0412 Wizard spell XP");
 }
 
+static void test_failed_practice_spell_awards_shifted_f0412_xp(void) {
+    M11_GameViewState state;
+    struct RngState_Compat expectedRng;
+    unsigned int seed = 9u;
+    int fireXpBefore;
+    int wizardXpBefore;
+    int manaBefore;
+    int liveFireLevel;
+    int missingSkillLevels;
+    int rng8;
+    int expectedXp;
+
+    seed_state(&state, 100, 47);
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, seed);
+    (void)F0730_COMBAT_RngInit_Compat(&expectedRng, seed);
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].mana.current = 100;
+    state.world.party.champions[0].mana.maximum = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 0;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    fireXpBefore = state.world.lifecycle.champions[0]
+                       .skills20[DM1_SKILL_IDX_FIRE].experience;
+    wizardXpBefore = state.world.lifecycle.champions[0]
+                         .skills20[DM1_SKILL_IDX_WIZARD].experience;
+    manaBefore = state.world.party.champions[0].mana.current;
+    liveFireLevel =
+        M11_GameView_GetSkillLevel(&state, 0, DM1_SKILL_IDX_FIRE);
+    missingSkillLevels = 3 + (DM1_POWER_ON + 1) - liveFireLevel;
+    rng8 = F0732_COMBAT_RngRandom_Compat(&expectedRng, 8);
+    expectedXp = (int)dm1_spell_experience(
+                     DM1_POWER_ON + 1, 3, rng8) >> missingSkillLevels;
+
+    ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1,
+              "failed Fireball opens spell panel");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, DM1_POWER_ON), 1,
+              "failed Fireball enters On power rune");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, DM1_ELEM_FUL), 1,
+              "failed Fireball enters Ful element rune");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, DM1_CLASS_IR), 1,
+              "failed Fireball enters Ir class rune");
+    ASSERT_EQ(M11_GameView_CastSpell(&state), 1,
+              "failed Fireball handles practice failure");
+
+    ASSERT_STR_EQ(state.inspectTitle, "SPELL FAILED",
+                  "practice failure reports spell failure");
+    ASSERT_STR_EQ(state.inspectDetail, "NEEDS MORE PRACTICE",
+                  "practice failure reports source failure reason");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, manaBefore,
+              "practice failure does not spend spell mana");
+    ASSERT_EQ(state.world.projectiles.count, 0,
+              "practice failure does not create a projectile");
+    ASSERT_EQ(state.lastTickResult.emissionCount, 0,
+              "practice failure does not dispatch CMD_CAST_SPELL");
+    ASSERT_EQ(state.spellBuffer.runeCount, 0,
+              "practice failure clears spell symbols");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_FIRE].experience,
+              fireXpBefore + expectedXp,
+              "practice failure awards shifted F0412 Fire spell XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_WIZARD].experience,
+              wizardXpBefore + expectedXp,
+              "practice failure propagates shifted Fire spell XP to Wizard");
+}
+
 static void test_spellshield_low_mana_halves_disable_and_quarters_xp(void) {
     M11_GameViewState state;
     DM1_ActionXpRoute route;
@@ -8353,6 +8419,7 @@ int main(void) {
     test_invoke_projectile_create_failure_halves_action_xp();
     test_cast_potion_spell_mutates_empty_flask();
     test_cast_zokathra_spell_materializes_ready_hand_junk();
+    test_failed_practice_spell_awards_shifted_f0412_xp();
     test_spellshield_low_mana_halves_disable_and_quarters_xp();
     test_fireshield_low_mana_schedules_c78_failure_tail();
     test_spellshield_success_consumes_mana_charges_and_full_xp();

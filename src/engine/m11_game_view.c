@@ -82,6 +82,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
                                     const char* verifiedMd5);
+static void m11_award_magic_xp(M11_GameViewState* state,
+                               int championIndex,
+                               int skillIndex,
+                               int experience);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -5826,8 +5830,10 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     req.gameTimeTicksLow = (int)(state->world.gameTick & 0x7FFFFFFF);
     req.spellTableIndex = tableIndex;
     req.rawSymbolsPacked = (int)packed;
+    /* ReDMCSB: MENU.C F0412 line 1824 uses Symbols[0] - '_',
+     * yielding Lo..Mon power ordinals 1..6 from encoded bytes 96..101. */
     spellPowerOrdinal = state->spellBuffer.runes[0] > 0
-                            ? (state->spellBuffer.runes[0] - 0x60) / 6 + 1
+                            ? state->spellBuffer.runes[0] - 0x5F
                             : 1;
     /* ReDMCSB: MENU.C F0412 lines 1824-1826 draws RANDOM(8)
      * before the missing-skill practice loop, then uses it in
@@ -5844,6 +5850,22 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
                                                  &state->world.masterRng,
                                                  &failureReason)) {
         const char* failMsg = "NEEDS MORE PRACTICE";
+        if (failureReason == SPELL_FAILURE_NEEDS_MORE_PRACTICE) {
+            int requiredSkillLevel =
+                spell.baseRequiredSkillLevel + spellPowerOrdinal;
+            int missingSkillLevels =
+                requiredSkillLevel - req.skillLevelForSpell;
+            if (missingSkillLevels > 0) {
+                /* ReDMCSB: MENU.C F0412 lines 1834-1841 awards
+                 * L1273_ui_Experience shifted by the full missing
+                 * skill delta when the practice RNG check fails. */
+                m11_award_magic_xp(
+                    state,
+                    state->world.party.activeChampionIndex,
+                    spell.skillIndex,
+                    spellExperience >> missingSkillLevels);
+            }
+        }
         if (failureReason == SPELL_FAILURE_MEANINGLESS_SPELL) failMsg = "MEANINGLESS SPELL";
         else if (failureReason == SPELL_FAILURE_NEEDS_FLASK_IN_HAND) failMsg = "NEED FLASK";
         else if (failureReason == SPELL_FAILURE_NEEDS_MAGIC_MAP) failMsg = "NEED MAGIC MAP";
