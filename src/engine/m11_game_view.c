@@ -8733,6 +8733,22 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
      * without advancing G0313/world.gameTick or gameplay systems. */
     if (state->gameWon &&
         state->endgameFuseSequenceFrameReplayRemainingTicks > 0) {
+        if (state->endgameFuseSequenceReplayCursor <
+            state->endgameFuseSequenceReplayEventCount) {
+            int cursor = state->endgameFuseSequenceReplayCursor;
+            state->endgameFuseSequenceCurrentReplayType =
+                state->endgameFuseSequenceReplayTypes[cursor];
+            state->endgameFuseSequenceCurrentReplayAttack =
+                state->endgameFuseSequenceReplayAttacks[cursor];
+            state->endgameFuseSequenceCurrentReplayCreatureType =
+                state->endgameFuseSequenceReplayCreatureTypes[cursor];
+            state->endgameFuseSequenceReplayCursor++;
+        } else {
+            state->endgameFuseSequenceCurrentReplayType =
+                M11_ENDGAME_F0445_EVENT_NONE;
+            state->endgameFuseSequenceCurrentReplayAttack = 0;
+            state->endgameFuseSequenceCurrentReplayCreatureType = 0;
+        }
         state->endgameFuseSequenceFrameReplayRemainingTicks--;
         if (state->endgameFuseSequenceFrameReplayRemainingTicks == 0 &&
             state->endgameFuseSequenceDelayRemainingTicks <= 0) {
@@ -21997,7 +22013,10 @@ static void m11_clear_message_log_for_source_message_area(M11_GameViewState* sta
     memset(&state->messageLog, 0, sizeof(state->messageLog));
 }
 
-static void m11_record_fuse_sequence_update_f0445(M11_GameViewState* state);
+static void m11_record_fuse_sequence_update_f0445(M11_GameViewState* state,
+                                                  int replayType,
+                                                  int attack,
+                                                  int creatureType);
 
 static int m11_print_endgame_text_messages_f0446(M11_GameViewState* state,
                                                  int mapIndex) {
@@ -22043,9 +22062,10 @@ static int m11_print_endgame_text_messages_f0446(M11_GameViewState* state,
                 m11_clear_message_log_for_source_message_area(state);
                 M11_MessageLog_Push(&state->messageLog, &decoded[1],
                                     M11_COLOR_WHITE);
-                m11_record_fuse_sequence_update_f0445(state);
                 /* ReDMCSB: ENDGAME.C F0446 lines 946-947 runs F0445 once
                  * after each printed message, then Delay(780). */
+                m11_record_fuse_sequence_update_f0445(
+                    state, M11_ENDGAME_F0445_EVENT_TEXT_MESSAGE, 0, 0);
                 state->endgameTextMessageDelayTicks += 780;
                 state->endgameFuseSequenceDelayTicks += 780;
                 ++printed;
@@ -22142,15 +22162,26 @@ static void m11_spawn_fuse_final_explosions_f0446(M11_GameViewState* state,
         state, C003_EXPLOSION_HARM_NON_MATERIAL, 255, mapIndex, mapX, mapY);
 }
 
-static void m11_record_fuse_sequence_update_f0445(M11_GameViewState* state) {
+static void m11_record_fuse_sequence_update_f0445(M11_GameViewState* state,
+                                                  int replayType,
+                                                  int attack,
+                                                  int creatureType) {
     if (!state) return;
     /* ReDMCSB: ENDGAME.C F0445 lines 742-759 processes timeline,
      * redraws the dungeon view, plays pending sound, then advances
-     * G0313.  M11's F0446 path is non-blocking, so this records and
-     * queues each source-cadence presentation frame for idle replay. */
+     * G0313.  M11's F0446 path is non-blocking, so this records each
+     * source-cadence presentation frame plus the mutation that should be
+     * visible when idle replay redraws that frame. */
     state->endgameFuseSequenceTotalUpdateTicks += 1;
     state->endgameFuseSequenceFrameReplayTicks += 1;
     state->endgameFuseSequenceFrameReplayRemainingTicks += 1;
+    if (state->endgameFuseSequenceReplayEventCount <
+        M11_ENDGAME_F0445_REPLAY_CAPACITY) {
+        int index = state->endgameFuseSequenceReplayEventCount++;
+        state->endgameFuseSequenceReplayTypes[index] = replayType;
+        state->endgameFuseSequenceReplayAttacks[index] = attack;
+        state->endgameFuseSequenceReplayCreatureTypes[index] = creatureType;
+    }
 }
 
 static void m11_run_fuse_chaos_order_cycle_f0446(M11_GameViewState* state,
@@ -22172,13 +22203,18 @@ static void m11_run_fuse_chaos_order_cycle_f0446(M11_GameViewState* state,
                                         M11_AUDIO_MARKER_CREATURE);
             state->endgameBuzzRequestCount += 1;
             state->endgameChaosOrderSwitchCount += 1;
-            state->endgameFuseSequenceUpdateTicks += cycleCount;
-            state->endgameFuseSequenceTotalUpdateTicks += cycleCount;
-            state->endgameFuseSequenceFrameReplayTicks += cycleCount;
-            state->endgameFuseSequenceFrameReplayRemainingTicks += cycleCount;
             m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                          creatureType,
                                          state->world.party.direction);
+            {
+                int updateCount;
+                for (updateCount = 0; updateCount < cycleCount; ++updateCount) {
+                    state->endgameFuseSequenceUpdateTicks += 1;
+                    m11_record_fuse_sequence_update_f0445(
+                        state, M11_ENDGAME_F0445_EVENT_CHAOS_ORDER_SWITCH,
+                        0, creatureType);
+                }
+            }
         }
     }
 }
@@ -22410,13 +22446,17 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
                                          state->world.party.mapX,
                                          state->world.party.mapY);
     m11_remove_fluxcages_on_square_f0446(state, mapIndex, mapX, mapY);
-    m11_record_fuse_sequence_update_f0445(state);
-    m11_record_fuse_sequence_update_f0445(state);
+    m11_record_fuse_sequence_update_f0445(
+        state, M11_ENDGAME_F0445_EVENT_SETUP, 0, 0);
+    m11_record_fuse_sequence_update_f0445(
+        state, M11_ENDGAME_F0445_EVENT_SETUP, 0, 0);
     m11_spawn_fuse_fireball_burst_f0446(state, mapIndex, mapX, mapY);
     {
         int attack;
         for (attack = 55; attack <= 255; attack += 40) {
-            m11_record_fuse_sequence_update_f0445(state);
+            m11_record_fuse_sequence_update_f0445(
+                state, M11_ENDGAME_F0445_EVENT_FIREBALL_BURST,
+                attack, 0);
         }
     }
     m11_audio_emit_source_sound(state, DM1_SND_BUZZ, M11_AUDIO_MARKER_CREATURE);
@@ -22424,21 +22464,28 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_LORD_ORDER_ID,
                                  state->world.party.direction);
-    m11_record_fuse_sequence_update_f0445(state);
+    m11_record_fuse_sequence_update_f0445(
+        state, M11_ENDGAME_F0445_EVENT_LORD_ORDER, 0,
+        DM1_CREATURE_LORD_ORDER_ID);
     m11_spawn_fuse_harm_burst_f0446(state, mapIndex, mapX, mapY);
     {
         int attack;
         for (attack = 55; attack <= 255; attack += 40) {
-            m11_record_fuse_sequence_update_f0445(state);
+            m11_record_fuse_sequence_update_f0445(
+                state, M11_ENDGAME_F0445_EVENT_HARM_BURST,
+                attack, 0);
         }
     }
     m11_run_fuse_chaos_order_cycle_f0446(state, mapIndex, mapX, mapY);
     m11_spawn_fuse_final_explosions_f0446(state, mapIndex, mapX, mapY);
-    m11_record_fuse_sequence_update_f0445(state);
+    m11_record_fuse_sequence_update_f0445(
+        state, M11_ENDGAME_F0445_EVENT_FINAL_EXPLOSIONS, 255, 0);
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_GREY_LORD_ID,
                                  state->world.party.direction);
-    m11_record_fuse_sequence_update_f0445(state);
+    m11_record_fuse_sequence_update_f0445(
+        state, M11_ENDGAME_F0445_EVENT_GREY_LORD, 0,
+        DM1_CREATURE_GREY_LORD_ID);
     /* ReDMCSB: ENDGAME.C F0446 lines 805-812 marks the game won, sets
      * MagicalLightAmount to 200, then sets FireShieldDefense,
      * SpellShieldDefense, and ShieldDefense to 100 before the fuse
@@ -22452,9 +22499,11 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
      * endgame cleanup.  Keep the live C50 entries for timing/accounting,
      * but suppress them from M11 viewport sampling from this point on. */
     state->endgameDoNotDrawFluxcages = 1;
-    m11_record_fuse_sequence_update_f0445(state);
+    m11_record_fuse_sequence_update_f0445(
+        state, M11_ENDGAME_F0445_EVENT_FLUXCAGE_HIDE, 0, 0);
     m11_delete_other_groups_for_endgame_f0446(state, mapIndex, mapX, mapY);
-    m11_record_fuse_sequence_update_f0445(state);
+    m11_record_fuse_sequence_update_f0445(
+        state, M11_ENDGAME_F0445_EVENT_GROUP_CLEANUP, 0, 0);
     (void)m11_print_endgame_text_messages_f0446(state, mapIndex);
     m11_apply_fuse_final_endgame_params_f0446(state);
     m11_mark_game_won_from_fuse_f0446(state);
@@ -32964,6 +33013,28 @@ int M11_GameView_GetEndgameFinalPresentationReady(const M11_GameViewState* state
 
 int M11_GameView_GetEndgameRestartRequested(const M11_GameViewState* state) {
     return state ? state->endgameRestartRequested : 0;
+}
+
+int M11_GameView_GetEndgameFuseReplayCursor(const M11_GameViewState* state) {
+    return state ? state->endgameFuseSequenceReplayCursor : 0;
+}
+
+int M11_GameView_GetEndgameFuseReplayEventCount(const M11_GameViewState* state) {
+    return state ? state->endgameFuseSequenceReplayEventCount : 0;
+}
+
+int M11_GameView_GetEndgameFuseReplayCurrentEvent(const M11_GameViewState* state,
+                                                  int* outType,
+                                                  int* outAttack,
+                                                  int* outCreatureType) {
+    if (!state) return 0;
+    if (outType) *outType = state->endgameFuseSequenceCurrentReplayType;
+    if (outAttack) *outAttack = state->endgameFuseSequenceCurrentReplayAttack;
+    if (outCreatureType) {
+        *outCreatureType = state->endgameFuseSequenceCurrentReplayCreatureType;
+    }
+    return state->endgameFuseSequenceCurrentReplayType !=
+           M11_ENDGAME_F0445_EVENT_NONE;
 }
 
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state) {
