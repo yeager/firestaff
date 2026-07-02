@@ -66,6 +66,7 @@
 #include <string.h>
 
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "memory_magic_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"  /* F0770_SAVEGAME_CRC32_Compat */
 
@@ -1027,12 +1028,74 @@ static int pc34_event_type_from_timeline_kind(int kind, int aux0)
         return DM1_EVENT_DOOR;
     case TIMELINE_EVENT_STATUS_TIMEOUT:
     case TIMELINE_EVENT_SPELL_TICK:
+        /* ReDMCSB TIMELINE.C C71/C73/C74/C77/C78/C79 lines
+         * 1953-1999 dispatches these as native EVENT type bytes.
+         * Firestaff F0412/F0763 keeps richer spell-family tags in
+         * aux0 until runtime expiry, so native PC34 export must fold
+         * them back to the source event ids instead of falling through
+         * to C72 champion shield. */
+        switch (aux0) {
+        case TIMELINE_AUX_INVISIBILITY:
+            return DM1_EVENT_INVISIBILITY;
+        case TIMELINE_AUX_THIEVES_EYE:
+            return DM1_EVENT_THIEVES_EYE;
+        case TIMELINE_AUX_PARTY_SHIELD:
+            return DM1_EVENT_PARTY_SHIELD;
+        case TIMELINE_AUX_SPELL_SHIELD:
+            return DM1_EVENT_SPELLSHIELD;
+        case TIMELINE_AUX_FIRESHIELD:
+            return DM1_EVENT_FIRESHIELD;
+        case TIMELINE_AUX_FOOTPRINTS:
+            return DM1_EVENT_FOOTPRINTS;
+        default:
+            break;
+        }
         if (aux0 >= DM1_EVENT_LIGHT && aux0 <= DM1_EVENT_FOOTPRINTS) {
             return aux0;
         }
         return DM1_EVENT_CHAMPION_SHIELD;
     default:
         return DM1_EVENT_NONE;
+    }
+}
+
+static int pc34_event_type_is_status_timeout(int type)
+{
+    return type == DM1_EVENT_INVISIBILITY ||
+           type == DM1_EVENT_CHAMPION_SHIELD ||
+           type == DM1_EVENT_THIEVES_EYE ||
+           type == DM1_EVENT_PARTY_SHIELD ||
+           type == DM1_EVENT_POISON_CHAMPION ||
+           type == DM1_EVENT_SPELLSHIELD ||
+           type == DM1_EVENT_FIRESHIELD ||
+           type == DM1_EVENT_FOOTPRINTS;
+}
+
+static int pc34_status_event_defense_from_timeline(
+    const struct TimelineEvent_Compat* src,
+    int type)
+{
+    if (!src) {
+        return 0;
+    }
+    switch (type) {
+    case DM1_EVENT_PARTY_SHIELD:
+        if (src->aux0 == TIMELINE_AUX_PARTY_SHIELD) {
+            return src->aux4;
+        }
+        return src->aux1;
+    case DM1_EVENT_SPELLSHIELD:
+        if (src->aux0 == TIMELINE_AUX_SPELL_SHIELD) {
+            return src->aux2;
+        }
+        return src->aux1;
+    case DM1_EVENT_FIRESHIELD:
+        if (src->aux0 == TIMELINE_AUX_FIRESHIELD) {
+            return src->aux3;
+        }
+        return src->aux1;
+    default:
+        return src->aux1;
     }
 }
 
@@ -1179,8 +1242,13 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
                      (src->fireAtTick & 0x00ffffffu));
         dst[4] = (uint8_t)type;
         dst[5] = (uint8_t)(src->aux4 & 0xff);
-        dst[6] = (uint8_t)(src->mapX & 0xff);
-        dst[7] = (uint8_t)(src->mapY & 0xff);
+        if (pc34_event_type_is_status_timeout(type)) {
+            int defense = pc34_status_event_defense_from_timeline(src, type);
+            write_u16_le(dst + 6u, (uint16_t)(defense & 0xffff));
+        } else {
+            dst[6] = (uint8_t)(src->mapX & 0xff);
+            dst[7] = (uint8_t)(src->mapY & 0xff);
+        }
         dst[8] = (uint8_t)(src->cell & 0xff);
         dst[9] = (uint8_t)(src->aux1 & 0xff);
         write_u16_le(timeline + (size_t)count * 2u, (uint16_t)count);
@@ -1245,11 +1313,17 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
         dst->kind = kind;
         dst->fireAtTick = mapTime & 0x00ffffffu;
         dst->mapIndex = (int)((mapTime >> 24) & 0xffu);
-        dst->mapX = src[6u];
-        dst->mapY = src[7u];
+        if (pc34_event_type_is_status_timeout(src[4u])) {
+            dst->mapX = 0;
+            dst->mapY = 0;
+            dst->aux1 = (int)read_u16_le(src + 6u);
+        } else {
+            dst->mapX = src[6u];
+            dst->mapY = src[7u];
+            dst->aux1 = src[9u];
+        }
         dst->cell = src[8u];
         dst->aux0 = src[4u];
-        dst->aux1 = src[9u];
         dst->aux4 = src[5u];
     }
 }
