@@ -5849,11 +5849,6 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     /* Deduct mana */
     champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
 
-    /* ReDMCSB CHAMPION.C F0304: award spell casting XP.
-     * Priest spells award Priest skill XP, Wizard spells award Wizard XP.
-     * We use manaCost as XP amount (higher cost = more XP). */
-    m11_award_combat_xp(state, state->world.party.activeChampionIndex, manaCost);
-
     /* Issue CMD_CAST_SPELL through the tick system */
     {
         struct TickInput_Compat input;
@@ -7635,7 +7630,9 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                               (unsigned int)state->world.gameTick,
                               kindStr, sType, sPow,
                               launchedProjectile ? ", LAUNCHED" : "");
-                /* Award magic XP to the casting champion */
+                /* ReDMCSB: MENU.C F0412 lines 1826-1839 computes spell
+                 * experience, then lines 2034-2039 award it once and
+                 * disable the caster after the spell effect succeeds. */
                 m11_award_magic_xp(state, sChamp, sKind, sPow);
                 break;
             }

@@ -5955,6 +5955,10 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
     struct DungeonPotion_Compat potions[1];
     unsigned char rawPotionData[4];
     int sawSpellEffect;
+    int fighterXpBefore;
+    int swingXpBefore;
+    int priestXpBefore;
+    int healXpBefore;
     int i;
 
     seed_state(&state, 100, 41);
@@ -5982,6 +5986,14 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
     state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 100;
     state.world.lifecycle.champions[0]
         .skills20[DM1_SKILL_IDX_HEAL].experience = 10000;
+    fighterXpBefore = state.world.lifecycle.champions[0]
+                          .skills20[DM1_SKILL_IDX_FIGHTER].experience;
+    swingXpBefore = state.world.lifecycle.champions[0]
+                        .skills20[DM1_SKILL_IDX_SWING].experience;
+    priestXpBefore = state.world.lifecycle.champions[0]
+                         .skills20[DM1_SKILL_IDX_PRIEST].experience;
+    healXpBefore = state.world.lifecycle.champions[0]
+                       .skills20[DM1_SKILL_IDX_HEAL].experience;
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1,
               "potion spell opens spell panel");
@@ -6011,6 +6023,22 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
     }
     ASSERT_EQ(sawSpellEffect, 1,
               "potion spell emits committed potion spell effect");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_SWING].experience,
+              swingXpBefore,
+              "potion cast does not award pre-emission Swing XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_FIGHTER].experience,
+              fighterXpBefore,
+              "potion cast does not propagate pre-emission Fighter XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_HEAL].experience > healXpBefore,
+              1,
+              "potion cast keeps committed Heal spell XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_PRIEST].experience > priestXpBefore,
+              1,
+              "potion cast propagates committed Priest spell XP");
 }
 
 static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
@@ -6019,6 +6047,10 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
     struct DungeonJunk_Compat junks[1];
     unsigned char rawJunkData[4];
     int sawSpellEffect;
+    int fighterXpBefore;
+    int swingXpBefore;
+    int wizardXpBefore;
+    int fireXpBefore;
     int i;
 
     seed_state(&state, 100, 43);
@@ -6043,6 +6075,14 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
     state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 100;
     state.world.lifecycle.champions[0]
         .skills20[DM1_SKILL_IDX_WIZARD].experience = 10000;
+    fighterXpBefore = state.world.lifecycle.champions[0]
+                          .skills20[DM1_SKILL_IDX_FIGHTER].experience;
+    swingXpBefore = state.world.lifecycle.champions[0]
+                        .skills20[DM1_SKILL_IDX_SWING].experience;
+    wizardXpBefore = state.world.lifecycle.champions[0]
+                         .skills20[DM1_SKILL_IDX_WIZARD].experience;
+    fireXpBefore = state.world.lifecycle.champions[0]
+                       .skills20[DM1_SKILL_IDX_FIRE].experience;
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1,
               "Zokathra opens spell panel");
@@ -6083,6 +6123,22 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
     }
     ASSERT_EQ(sawSpellEffect, 1,
               "Zokathra emits committed other-spell effect");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_SWING].experience,
+              swingXpBefore,
+              "Zokathra cast does not award pre-emission Swing XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_FIGHTER].experience,
+              fighterXpBefore,
+              "Zokathra cast does not propagate pre-emission Fighter XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_FIRE].experience > fireXpBefore,
+              1,
+              "Zokathra cast keeps committed magic subskill XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_WIZARD].experience > wizardXpBefore,
+              1,
+              "Zokathra cast propagates committed Wizard spell XP");
 }
 
 static void test_spellshield_low_mana_halves_disable_and_quarters_xp(void) {
