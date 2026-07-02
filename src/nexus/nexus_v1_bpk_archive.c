@@ -79,7 +79,9 @@ int nexus_v1_bpk_archive_get_entry(const uint8_t *data,
     }
 
     if (next_offset <= offset) return -1;
-    has_prs3 = (rd32_be(data + offset + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES) ==
+    has_prs3 = (next_offset - offset >=
+                NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + 4U) &&
+               (rd32_be(data + offset + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES) ==
                 NEXUS_V1_BPK_MAGIC_PRS3);
     payload_offset = offset + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES +
                      (has_prs3 ? 4U : 0U);
@@ -307,7 +309,7 @@ int nexus_v1_bpk_archive_surface_estimate(
     uint32_t trailer_skip = 0U;
     uint32_t unknown_skip = 0U;
     uint32_t with_surface = 0U;
-    uint32_t used = 0U;
+    uint32_t written = 0U;
     uint32_t truncated = 0U;
     uint64_t total_bytes = 0U;
 
@@ -343,8 +345,8 @@ int nexus_v1_bpk_archive_surface_estimate(
         rowstride = (uint32_t)prefix.width * bpp;
         surface_bytes = rowstride * (uint32_t)prefix.height;
 
-        if (out_entries && used < entry_capacity) {
-            Nexus_V1_BpkSurfaceEntry *row = &out_entries[used];
+        if (out_entries && written < entry_capacity) {
+            Nexus_V1_BpkSurfaceEntry *row = &out_entries[written];
             row->entry_index = i;
             row->mode = prefix.mode;
             row->width = prefix.width;
@@ -356,15 +358,15 @@ int nexus_v1_bpk_archive_surface_estimate(
             row->layout.surface_bytes = surface_bytes;
             row->layout.surface_class =
                 nexus_v1_bpk_mode_to_surface_class(prefix.mode);
-        } else if (out_entries && used >= entry_capacity) {
+            ++written;
+        } else if (out_entries && written >= entry_capacity) {
             truncated = 1U;
         }
-        ++used;
         ++with_surface;
         total_bytes += surface_bytes;
     }
 
-    out_summary->used = used;
+    out_summary->used = written;
     out_summary->total_with_surface = with_surface;
     out_summary->total_surface_bytes = total_bytes;
     out_summary->trailer_skipped = trailer_skip;

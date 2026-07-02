@@ -216,6 +216,45 @@ static void test_synthetic_surface_estimate(void) {
            "synthetic archive total surface bytes = 98");
 }
 
+static void test_surface_estimate_capacity_boundary(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkSurfaceEntry entries[1];
+    Nexus_V1_BpkSurfaceEstimate summary;
+    int rc;
+
+    memset(entries, 0xCD, sizeof(entries));
+    memset(&summary, 0, sizeof(summary));
+    make_synthetic_4entry_bpk(data, sizeof(data));
+
+    rc = nexus_v1_bpk_archive_surface_estimate(data, sizeof(data),
+                                                entries, 1U, &summary);
+    expect(rc == 0, "capacity-1 surface_estimate returns 0");
+    expect(summary.total_with_surface == 3U,
+           "capacity-1 summary still counts all 3 surface entries");
+    expect(summary.total_surface_bytes == 98U,
+           "capacity-1 summary still totals all surface bytes");
+    expect(summary.trailer_skipped == 1U,
+           "capacity-1 summary still counts the trailer skip");
+    expect(summary.used == 1U,
+           "capacity-1 summary reports only 1 row written");
+    expect(summary.truncated == 1,
+           "capacity-1 summary marks the output rows truncated");
+    expect(entries[0].entry_index == 1U &&
+               entries[0].layout.surface_bytes == 16U,
+           "capacity-1 output row is the first surface entry");
+
+    memset(&summary, 0, sizeof(summary));
+    rc = nexus_v1_bpk_archive_surface_estimate(data, sizeof(data),
+                                                NULL, 0U, &summary);
+    expect(rc == 0, "summary-only surface_estimate accepts NULL rows");
+    expect(summary.total_with_surface == 3U,
+           "summary-only surface_estimate counts all surface entries");
+    expect(summary.used == 0U,
+           "summary-only surface_estimate reports 0 rows written");
+    expect(summary.truncated == 0,
+           "summary-only surface_estimate does not claim row truncation");
+}
+
 /* ---- Synthetic BPX3 directory-trailer entry ---- */
 
 static void test_bpx3_trailer_entry(void) {
@@ -492,6 +531,7 @@ int main(void) {
     test_mode_to_surface_class();
     test_mode_to_bpp();
     test_synthetic_surface_estimate();
+    test_surface_estimate_capacity_boundary();
     test_bpx3_trailer_entry();
     test_bpx3_trailer_rejections();
     test_bpx3_prs3_span_rejections();

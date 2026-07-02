@@ -95,6 +95,40 @@ static void test_rejections(void) {
            "truncated entry prefix rejected");
 }
 
+static void test_exact_prefix_raw_entry(void) {
+    uint8_t data[116];
+    Nexus_V1_BpkArchiveInfo info;
+    Nexus_V1_BpkEntry entry;
+
+    memset(data, 0, sizeof(data));
+    memcpy(data + 0, "BPPK", 4);
+    wr32_be(data + 4, (uint32_t)sizeof(data));
+    memcpy(data + 12, "BMPD", 4);
+    wr32_be(data + 16, (uint32_t)(sizeof(data) - 20U));
+    wr32_be(data + 20, 2U);
+    wr32_be(data + 24, 64U);
+    wr32_be(data + 28, 96U);
+    memcpy(data + 64U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, "PRS3", 4);
+
+    expect(nexus_v1_bpk_archive_parse(data, sizeof(data), &info) == 0,
+           "exact-prefix raw entry archive parses");
+    expect(info.prs3_payload_count == 1U,
+           "exact-prefix archive counts one PRS3 entry");
+    expect(info.raw_payload_count == 1U,
+           "exact-prefix archive counts one raw entry");
+
+    expect(nexus_v1_bpk_archive_get_entry(data, sizeof(data), 1U,
+                                          &entry) == 0,
+           "exact-prefix raw entry is readable");
+    expect(entry.stored_size == NEXUS_V1_BPK_ENTRY_PREFIX_BYTES,
+           "exact-prefix raw entry stored size is 20");
+    expect(entry.has_prs3 == 0,
+           "exact-prefix raw entry has no PRS3 marker");
+    expect(entry.payload_offset == entry.next_offset &&
+               entry.payload_size == 0U,
+           "exact-prefix raw entry has empty payload span");
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     FILE *fp = fopen(path, "rb");
     long size;
@@ -289,6 +323,7 @@ static void test_prefix_prs3_rejections(void) {
 int main(void) {
     test_synthetic_parse();
     test_rejections();
+    test_exact_prefix_raw_entry();
     test_prefix_prs3_rejections();
     test_optional_local_menu_bpk();
 

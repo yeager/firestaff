@@ -330,11 +330,62 @@ static void test_optional_real_menumenu_bpk(void) {
     free(data);
 }
 
+static void test_synthetic_surface_capacity(void) {
+    uint8_t data[256];
+    Nexus_V1_BpkSurfaceEntry row;
+    Nexus_V1_BpkSurfaceEstimate summary;
+    int rc;
+
+    printf("\n--- synthetic BPPK surface_estimate capacity boundary ---\n");
+
+    memset(data, 0, sizeof(data));
+    memcpy(data + 0, "BPPK", 4);
+    wb32(data + 4, (uint32_t)sizeof(data));
+    memcpy(data + 12, "BMPD", 4);
+    wb32(data + 16, (uint32_t)sizeof(data) - 20U);
+    wb32(data + 20, 3U);
+    wb32(data + 24, 64U);
+    wb32(data + 28, 96U);
+    wb32(data + 32, 128U);
+
+    data[64U + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] =
+        NEXUS_V1_BPK_MODE_TRAILER;
+
+    wb16(data + 96U + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 4U);
+    data[96U + NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 4U;
+    data[96U + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] = NEXUS_V1_BPK_MODE_8BPP;
+    memcpy(data + 96U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, "PRS3", 4);
+    wb32(data + 96U + 24U, 1U);
+    wb32(data + 96U + 28U, 16U);
+
+    wb16(data + 128U + NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET, 8U);
+    data[128U + NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET] = 4U;
+    data[128U + NEXUS_V1_BPK_PREFIX_MODE_OFFSET] = NEXUS_V1_BPK_MODE_16BPP;
+    memcpy(data + 128U + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES, "PRS3", 4);
+    wb32(data + 128U + 24U, 1U);
+    wb32(data + 128U + 28U, 32U);
+
+    memset(&row, 0, sizeof(row));
+    memset(&summary, 0, sizeof(summary));
+    rc = nexus_v1_bpk_archive_surface_estimate(data, sizeof(data),
+                                                &row, 1U, &summary);
+    CHECK(rc == 0, "capacity-1 surface_estimate returns ok");
+    CHECK(summary.total_with_surface == 2U,
+          "capacity-1 summary counts both PRS3 surface entries");
+    CHECK(summary.used == 1U,
+          "capacity-1 summary reports one row written");
+    CHECK(summary.truncated == 1,
+          "capacity-1 summary reports truncation");
+    CHECK(row.entry_index == 1U && row.layout.surface_bytes == 16U,
+          "capacity-1 row is the first decoded surface estimate");
+}
+
 int main(void) {
     printf("=== Nexus V1 MENU.BPK surface-class probe (pass1083) ===\n");
 
     test_mode_lookup_apis();
     test_synthetic_bpx3_trailer();
+    test_synthetic_surface_capacity();
     test_optional_real_menumenu_bpk();
 
     printf("\n# summary: %d passed, %d failed\n", g_pass, g_fail);
