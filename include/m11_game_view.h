@@ -1178,6 +1178,11 @@ int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
 int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
                                              const char* name);
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
+int M11_GameView_CsbF0282ChampionPanelGateActive(
+    const M11_GameViewState* state,
+    int* outFrontMirrorOrdinal,
+    int* outCandidateOrdinal,
+    int* outCandidatePartyIndex);
 /* D1C wall-mirror zone (DUNVIEW.C G0205 graphic 558 set index 12,
  * coordSet-indexed).  Returns the wall ornament destination box
  * in viewport coordinates.  Used by
