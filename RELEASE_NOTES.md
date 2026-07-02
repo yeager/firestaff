@@ -1,6 +1,45 @@
 
 # Unreleased
 
+# Firestaff v3.0.19
+
+Firestaff v3.0.19 is a focused MacBook Pro release-smoke follow-up to v3.0.18.
+It publishes the current `main` state after the DM1 title-palette, Q/E turn, and
+Hall of Champions artifact gates were re-run green against the external-disk
+build.
+
+## Highlights since v3.0.18
+
+- **DM1 HoC artifact coverage is broader**: post-v3.0.18 commits add hand-slot
+  refresh bridging plus side-door, D2C alcove, D4R far-object, and damage-status
+  overdraw pixel gates, keeping the false floating/floor item report covered by
+  the current regression set.
+
+- **DM1 release-smoke gates are still green on current main**: the focused HoC
+  false projectile/floor artifact probes, Q/E turn input tests, M11 queue tests,
+  and title-palette probes all pass locally before this release-prep bump.
+
+- **DM1 endgame work remains bounded**: the F0444/F0445/F0446 commits after
+  v3.0.18 advance restart handoff and fuse-sequence replay metadata; they are
+  included here but do not broaden public completion claims for final endgame
+  presentation.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Latest public GitHub release before this prep was `v3.0.18`, targeting
+  `2b54dcd`, while current `main` is `04ee482c`; this release closes that
+  package-vs-main gap.
+- Local verification on
+  `/Volumes/Extern-disk/firestaff-builds/build-dm1-mbp-smoke-current-main`
+  passed `hoc_no_false_projectile_artifacts`, `hoc_floor_runtime_no_false_items`,
+  `m11_overlay_command_queue_block`, `dm1_v1_turn_step_timing_gate_pc34_compat`,
+  `dm_title_palette_regression`, `dm_title_palette_silicon`,
+  `dm_title_swoosh_handoff_palette`, and `m11_input_queue_pc34_compat`.
+- Main CI for `pass622 dm1 f0445 replay events` completed successfully before
+  this release-prep commit.
+
 # Firestaff v3.0.18
 
 Firestaff v3.0.18 is a focused follow-up to v3.0.17 for the DM1 V1 MacBook Pro
