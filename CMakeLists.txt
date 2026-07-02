@@ -3028,6 +3028,27 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 F0282 live champion-panel gate
+# Real CSBGAME save champion -> M11 front C127 champion-mirror sensor
+# -> live C040 resurrect/reincarnate panel -> F0282 C162/C160
+# cancel/confirm behavior. Skip-safe: hosts without a user-staged
+# CSB Utility Disk / CSBWin CSBGAME save exit 0 after data-free gate
+# sanity checks. Source: ReDMCSB REVIVE.C F0280/F0282,
+# PANEL.C F0346, COMMAND.C F0359.
+add_executable(firestaff_csb_v1_f0282_live_champion_panel_probe
+    probes/csb/firestaff_csb_v1_f0282_live_champion_panel_probe.c
+    src/csb/csb_v1_save_import_path_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_f0282_live_champion_panel_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_f0282_live_champion_panel_probe
+    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_f0282_live_champion_panel_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Hint Oracle UI/runtime binding probe
 # Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
 # surface. The probe exercises the diagnostic/oracle report,
@@ -17810,6 +17831,16 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_csbwin_save_loader_boundary PROPERTIES
             LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+    if(TARGET firestaff_csb_v1_f0282_live_champion_panel_probe)
+        add_test(
+            NAME csb_v1_f0282_live_champion_panel
+            COMMAND firestaff_csb_v1_f0282_live_champion_panel_probe
+        )
+        set_tests_properties(csb_v1_f0282_live_champion_panel PROPERTIES
+            LABELS "tier2;csb;champions;real_data;skip_safe;f0282;c040;m11"
             TIMEOUT 120
         )
     endif()
