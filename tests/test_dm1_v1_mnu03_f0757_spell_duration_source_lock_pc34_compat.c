@@ -18,11 +18,11 @@
  *                 lightPower = (spellPower >> 1) - 1, clamped [0..5]
  *  T2  C1_DARKNESS: ticks = 98
  *                    lightPower = spellPower >> 2, clamped [0..5]
- *  T3  C3_INVISIBILITY: ticks = spellPower * 40
- *  T4  C4_SHIELD: ticks = spellPower * 40 (or source-specific)
+ *  T3  C3_INVISIBILITY: ticks = spellPower << 3
+ *  T4  C4_SHIELD: ticks = spellPower^2
  *  T5  C5_TORCH: ticks = (10000 + ((spellPower - 8) << 9)) / 2
  *                 (Fire Shield style)
- *  T6  C6_FOOTPRINTS: ticks = spellPower * 40
+ *  T6  C6_FOOTPRINTS: ticks = spellPower^2
  *                     magicStateDelta[5] = 1
  *  T7  C7_ZOKATHRA: ticks = 0, followupEventKind = TIMELINE_EVENT_INVALID
  *  T8  C8_FIRESHIELD: raw ticks = spellPower^2 + 100
@@ -149,11 +149,11 @@ int main(void) {
     }
 
     /* T3: C3_INVISIBILITY (MENU.C:1970-1982): spellPower <<= 3,
-     * then ticks = spellPower * 40. */
+     * then T0412033 schedules that value directly. */
     spell.type = C3_SPELL_TYPE_OTHER_INVISIBILITY_COMPAT;
     for (i = 1; i <= 6; ++i) {
         int spellPower = kF0757_SpellPowerFor(i) << 3;
-        int ticks = spellPower * 40;
+        int ticks = spellPower;
         memset(&out, 0, sizeof(out));
         rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, i, &magic, &out);
         char buf[96];
@@ -168,7 +168,7 @@ int main(void) {
     memset(&magic, 0, sizeof(magic));
     for (i = 1; i <= 6; ++i) {
         int spellPower = kF0757_SpellPowerFor(i);
-        int ticks = spellPower * 40;
+        int ticks = spellPower * spellPower;
         memset(&out, 0, sizeof(out));
         rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, i, &magic, &out);
         char buf[96];
@@ -192,7 +192,7 @@ int main(void) {
     memset(&magic, 0, sizeof(magic));
     for (i = 1; i <= 6; ++i) {
         int spellPower = kF0757_SpellPowerFor(i);
-        int ticks = spellPower * 40;
+        int ticks = spellPower * spellPower;
         memset(&out, 0, sizeof(out));
         rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, i, &magic, &out);
         char buf[96];

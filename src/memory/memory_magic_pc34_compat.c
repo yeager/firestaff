@@ -23,7 +23,6 @@
  */
 
 #include <string.h>
-#include <stdlib.h>
 
 #include "memory_magic_pc34_compat.h"
 
@@ -494,39 +493,6 @@ static int phase14_bounded_value(int lo, int value, int hi) {
     return value;
 }
 
-/* MNU-02 (audit, v2.7.x) — F0757 Thieves Eye duration opt-in.
- *
- * The original PC 3.4 source (ReDMCSB MENU.C:1945-1963) is
- * broken by an uninitialised stack residue (L1267_ui_Ticks). In a
- * clean process that residue is 0, so the duration structurally
- * collapses. The source-locked default is therefore 0 ticks (the
- * spell silently does nothing, which is what the original DM 3.4
- * PC actually shipped).
- *
- * The defensive envelope (`spellPower * 40`, yielding 64-224 s)
- * is preserved as a build-time opt-in so playtest builds can opt
- * in via either:
- *   -DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1  (build flag, sticky)
- *   FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1    (env, runtime)
- *
- * Default = 0 ticks (source-locked, matches original).
- */
-static int phase14_thieves_eye_use_legacy_envelope(void) {
-#if defined(FIRESTAFF_PC34_LEGACY_THIEVES_EYE) && FIRESTAFF_PC34_LEGACY_THIEVES_EYE
-    /* Build-time opt-in always wins. */
-    return 1;
-#else
-    static int s_checked = 0;
-    static int s_enabled = 0;
-    if (!s_checked) {
-        const char* env = getenv("FIRESTAFF_DM1_THIEVES_EYE_LEGACY");
-        s_enabled = (env != NULL && env[0] != '\0' && env[0] != '0');
-        s_checked = 1;
-    }
-    return s_enabled;
-#endif
-}
-
 int F0756_MAGIC_ProduceProjectileEffect_Compat(
     const struct SpellDefinition_Compat* spell,
     int powerOrdinal,
@@ -631,60 +597,37 @@ int F0757_MAGIC_ProduceOtherEffect_Compat(
 
         case C2_SPELL_TYPE_OTHER_THIEVES_EYE_COMPAT:
             /* ReDMCSB MENU.C:1945..1963 (F0412 C2_THIEVES_EYE branch).
-             * Original PC 3.4 (MEDIA128) source-locked path:
-             *   AL1267_ui_SpellPower >>= 1; goto T0412032;
-             *   T0412032: AL1267_ui_Ticks *= AL1267_ui_SpellPower;
-             *             AL1267_ui_Ticks <<= 1; goto T0412033;
-             *
-             * spellPower = (powerOrdinal+1) << 1  [after the >>1]
-             * durationTicks = (baseTicks * spellPower) << 1
-             *
-             * baseTicks is the uninitialised L1267_ui_Multiple stack
-             * residue in the original C code; in the v1 runtime this
-             * resolves to 0 deterministically (init to 0 at function
-             * entry), so the duration collapses. The DM1 playtest
-             * duration of ~2–3 minutes of game time at power ordinals
-             * 1..6 is faithfully reproduced by the conservative
-             * envelope `spellPower * 40`, which yields 160..560 ticks
-             * (≈ 64..224 s at 0.4 s per tick). Event-kind matching is
-             * the enforced Phase 14 invariant; the duration scalar is
-             * structural and tested for monotonicity only.
-             *
-             * MNU-02 (audit, v2.7.x) — flipped to source-locked default:
-             *   - Default: 0 ticks (matches original PC 3.4).
-             *   - Opt-in legacy envelope (`spellPower * 40`, 64-224 s):
-             *       build flag: -DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1
-             *       or env:     FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1
-             *     preserved for playtest / regression use.
+             * Source aliases AL1267_ui_Ticks, AL1267_ui_SpellPower and
+             * AL1267_ui_Multiple all map to L1267. T0412032 therefore
+             * squares the shifted spellPower before T0412033 schedules
+             * the C73 timeout.
              */
             spellPower >>= 1;
-            if (phase14_thieves_eye_use_legacy_envelope()) {
-                out->durationTicks = spellPower * 40;
-            } else {
-                out->durationTicks = 0;
-            }
+            out->durationTicks = spellPower * spellPower;
             out->magicStateDelta[5] = 1;
             out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
             out->followupEventAux0 = TIMELINE_AUX_THIEVES_EYE;
             break;
 
         case C3_SPELL_TYPE_OTHER_INVISIBILITY_COMPAT:
-            /* MENU.C:1970..1982 (MEDIA720 path: spellPower <<= 3) */
+            /* ReDMCSB MENU.C:1970..1982 (F0412): spellPower <<= 3,
+             * then T0412033 schedules the C71 timeout directly. */
             spellPower <<= 3;
-            out->durationTicks = spellPower * 40;
+            out->durationTicks = spellPower;
             out->magicStateDelta[5] = 1;
             out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
             out->followupEventAux0 = TIMELINE_AUX_INVISIBILITY;
             break;
 
         case C4_SPELL_TYPE_OTHER_PARTY_SHIELD_COMPAT:
-            /* MENU.C:1988..1996 */
+            /* ReDMCSB MENU.C:1988..1996 (F0412): after defense delta,
+             * T0412032 squares spellPower for the C74 timeout. */
             defense = spellPower;
             if (magic->partyShieldDefense > 50) {
                 defense >>= 2;
             }
             out->magicStateDelta[2] = defense;
-            out->durationTicks = spellPower * 40;
+            out->durationTicks = spellPower * spellPower;
             out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
             out->followupEventAux0 = TIMELINE_AUX_PARTY_SHIELD;
             break;
@@ -702,8 +645,9 @@ int F0757_MAGIC_ProduceOtherEffect_Compat(
             break;
 
         case C6_SPELL_TYPE_OTHER_FOOTPRINTS_COMPAT:
-            /* MENU.C:2001..2009 */
-            out->durationTicks = spellPower * 40;
+            /* ReDMCSB MENU.C:2001..2009 (F0412): footprints enters
+             * T0412032 after count/scent setup, so timeout = power^2. */
+            out->durationTicks = spellPower * spellPower;
             out->magicStateDelta[5] = 1;
             out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
             out->followupEventAux0 = TIMELINE_AUX_FOOTPRINTS;
@@ -1310,16 +1254,4 @@ int F0769b_MAGIC_SpellDefinitionDeserialize_Compat(
     spell->type                   = read_i32_le(buf + 20);
     spell->disabledTicks          = read_i32_le(buf + 24);
     return 1;
-}
-
-/* ==========================================================
- *  MNU-02 (audit, v2.7.x) — public query for F0757 mode.
- *
- *  Exposed so the regression test can assert whichever path the
- *  build is in without poking at internals. Implementation
- *  delegates to the existing static predicate so the env-var +
- *  build-flag precedence stays single-sourced.
- * ========================================================== */
-int F0757_MAGIC_ThievesEyeLegacyEnvelopeActive_Compat(void) {
-    return phase14_thieves_eye_use_legacy_envelope();
 }

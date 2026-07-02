@@ -405,13 +405,14 @@ static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
     assert(world.timeline.count == 0);
 }
 
-static void test_orch_thieves_eye_zero_duration_expires_same_tick(void) {
+static void test_orch_thieves_eye_spell_uses_f0412_square_duration(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonJunk_Compat junks[2];
     struct TickInput_Compat input;
     struct TickResult_Compat result;
+    uint32_t expiryTick;
     int sawSpellEffect = 0;
     int i;
 
@@ -443,10 +444,23 @@ static void test_orch_thieves_eye_zero_duration_expires_same_tick(void) {
     }
 
     assert(sawSpellEffect == 1);
+    assert(world.magic.event73CountThievesEye == 1);
+    assert(world.lifecycle.status.thievesEyeCount == 1);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
+    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_THIEVES_EYE);
+    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(expiryTick == 139);
+    assert(world.gameTick == 124);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = expiryTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
     assert(world.magic.event73CountThievesEye == 0);
     assert(world.lifecycle.status.thievesEyeCount == 0);
     assert(world.timeline.count == 0);
-    assert(world.gameTick == 124);
 }
 
 static void test_orch_invisibility_spell_mirrors_lifecycle_counter(void) {
@@ -7125,7 +7139,7 @@ int main(void) {
     test_orch_darkness_spell_decays_back_to_zero_without_clamp();
     test_orch_magic_torch_spell_decays_back_to_zero();
     test_orch_spell_status_timeout_aux_tags_expire_magic_state();
-    test_orch_thieves_eye_zero_duration_expires_same_tick();
+    test_orch_thieves_eye_spell_uses_f0412_square_duration();
     test_orch_invisibility_spell_mirrors_lifecycle_counter();
     test_orch_party_shield_spell_mirrors_lifecycle_defense();
     test_orch_fire_shield_spell_mirrors_lifecycle_defense();
