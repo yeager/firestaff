@@ -1461,8 +1461,12 @@ static void test_world_pc34_export_writes_dungeon_tail(void) {
     unsigned char doorRaw[4] = { 0x22u, 0x11u, 0x44u, 0x33u };
     unsigned char weaponRaw[4] = { 0x66u, 0x55u, 0x88u, 0x77u };
     unsigned char exportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char firstExportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char roundTripExportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
     const unsigned char* tail;
     int written = 0;
+    int firstWritten = 0;
+    int roundTripWritten = 0;
     int tailStart;
     int cursor;
     int rc;
@@ -1527,12 +1531,15 @@ static void test_world_pc34_export_writes_dungeon_tail(void) {
 
     world.dungeon = &dungeon;
     world.things = &things;
+    fill_pc34_export_test_timeline(&world.timeline);
     imported.party = &importedParty;
 
     rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
         &world, 0x12344321u, exportBuf, (int)sizeof(exportBuf), &written);
     CHECK(rc == SAVEGAME_PC34_OK,
           "pc34 dungeon tail: world export rc == OK");
+    memcpy(firstExportBuf, exportBuf, (size_t)written);
+    firstWritten = written;
 
     tailStart = skip_pc34_parts_and_portraits(exportBuf, written);
     tail = exportBuf + tailStart;
@@ -1648,6 +1655,25 @@ static void test_world_pc34_export_writes_dungeon_tail(void) {
     CHECK(importedWorld.things->weaponCount == 1 &&
           importedWorld.things->weapons[0].next == 0x5566u,
           "pc34 dungeon tail: materialized decoded weapon");
+    CHECK(importedWorld.timeline.count == 2 &&
+          importedWorld.timeline.events[0].kind == TIMELINE_EVENT_DOOR_ANIMATE &&
+          importedWorld.timeline.events[1].kind == TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
+          "pc34 dungeon tail: handoff materializes runtime timeline");
+
+    memset(roundTripExportBuf, 0, sizeof(roundTripExportBuf));
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &importedWorld, 0x12344321u,
+        roundTripExportBuf, (int)sizeof(roundTripExportBuf),
+        &roundTripWritten);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "pc34 dungeon tail: handoff world re-export rc == OK");
+    CHECK(roundTripWritten == firstWritten,
+          "pc34 dungeon tail: handoff world re-export size stable");
+    CHECK(memcmp(firstExportBuf + SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+                 roundTripExportBuf + SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+                 (size_t)(firstWritten -
+                          SAVEGAME_PC34_DM_SAVE_HEADER_SIZE)) == 0,
+          "pc34 dungeon tail: ReDMCSB save parts and dungeon tail byte-stable after handoff");
 
     importedWorld.things->doors[0].next = 0x7777u;
     CHECK(rd16le(importedWorld.things->rawThingData[THING_TYPE_DOOR]) ==

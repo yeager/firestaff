@@ -383,6 +383,134 @@ static int import_original_pc34_timeline_part(
     return SAVEGAME_PC34_OK;
 }
 
+static int timeline_kind_from_original_pc34_event_type(int type)
+{
+    switch (type) {
+    case DM1_EVENT_DOOR_ANIMATION:
+        return TIMELINE_EVENT_DOOR_ANIMATE;
+    case DM1_EVENT_DOOR_DESTRUCTION:
+        return TIMELINE_EVENT_DOOR_DESTRUCTION;
+    case DM1_EVENT_MOVE_PROJECTILE:
+    case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
+        return TIMELINE_EVENT_PROJECTILE_MOVE;
+    case DM1_EVENT_EXPLOSION:
+        return TIMELINE_EVENT_EXPLOSION_ADVANCE;
+    case DM1_EVENT_LIGHT:
+        return TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
+    case DM1_EVENT_ENABLE_GROUP_GENERATOR:
+        return TIMELINE_EVENT_GROUP_GENERATOR;
+    case DM1_EVENT_REMOVE_FLUXCAGE:
+        return TIMELINE_EVENT_REMOVE_FLUXCAGE;
+    case DM1_EVENT_PLAY_SOUND:
+        return TIMELINE_EVENT_PLAY_SOUND;
+    case DM1_EVENT_WATCHDOG:
+        return TIMELINE_EVENT_WATCHDOG;
+    case DM1_EVENT_MOVE_GROUP_SILENT:
+        return TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    case DM1_EVENT_MOVE_GROUP_AUDIBLE:
+        return TIMELINE_EVENT_MOVE_GROUP_AUDIBLE;
+    case DM1_EVENT_CORRIDOR:
+    case DM1_EVENT_WALL:
+    case DM1_EVENT_FAKEWALL:
+    case DM1_EVENT_TELEPORTER:
+    case DM1_EVENT_PIT:
+    case DM1_EVENT_DOOR:
+        return TIMELINE_EVENT_SQUARE_STATE;
+    case DM1_EVENT_INVISIBILITY:
+    case DM1_EVENT_CHAMPION_SHIELD:
+    case DM1_EVENT_THIEVES_EYE:
+    case DM1_EVENT_PARTY_SHIELD:
+    case DM1_EVENT_POISON_CHAMPION:
+    case DM1_EVENT_SPELLSHIELD:
+    case DM1_EVENT_FIRESHIELD:
+    case DM1_EVENT_FOOTPRINTS:
+        return TIMELINE_EVENT_STATUS_TIMEOUT;
+    default:
+        return TIMELINE_EVENT_INVALID;
+    }
+}
+
+static int original_pc34_event_type_is_status_timeout(int type)
+{
+    return type == DM1_EVENT_INVISIBILITY ||
+           type == DM1_EVENT_CHAMPION_SHIELD ||
+           type == DM1_EVENT_THIEVES_EYE ||
+           type == DM1_EVENT_PARTY_SHIELD ||
+           type == DM1_EVENT_POISON_CHAMPION ||
+           type == DM1_EVENT_SPELLSHIELD ||
+           type == DM1_EVENT_FIRESHIELD ||
+           type == DM1_EVENT_FOOTPRINTS;
+}
+
+static int materialize_original_pc34_timeline(
+    const DM1OriginalSavePC34HandoffReport *report,
+    struct TimelineQueue_Compat *timeline)
+{
+    int i;
+
+    if (!report || !timeline) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    if (report->original_event_count < 0 ||
+        report->original_event_count > DM1_EVENT_MAX_COUNT ||
+        report->original_event_count > TIMELINE_QUEUE_CAPACITY ||
+        report->original_event_count > report->decoded_event_count ||
+        report->original_event_count > report->decoded_timeline_index_count) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 lines 2780-2800 loads the EVENT array
+     * and timeline heap immediately after PARTY, then initializes the
+     * optimized timeline management. Mirror that runtime handoff here:
+     * the report preserves the raw source EVENT/TIMELINE bytes, while
+     * GameWorld_Compat needs the equivalent M10 TimelineQueue. */
+    (void)F0720_TIMELINE_Init_Compat(timeline, report->original_game_time);
+    for (i = 0; i < report->original_event_count; ++i) {
+        uint16_t source_index = report->timeline_indices[i];
+        const struct DM1_Event_V1 *src;
+        struct TimelineEvent_Compat ev;
+        int kind;
+        if (source_index >= (uint16_t)report->decoded_event_count) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+        src = &report->events[source_index];
+        kind = timeline_kind_from_original_pc34_event_type(src->type);
+        if (kind == TIMELINE_EVENT_INVALID) {
+            continue;
+        }
+        memset(&ev, 0, sizeof(ev));
+        ev.kind = kind;
+        ev.fireAtTick = src->map_time & 0x00ffffffu;
+        ev.mapIndex = (int)((src->map_time >> 24) & 0xffu);
+        ev.aux0 = src->type;
+        ev.aux4 = src->priority;
+        if (original_pc34_event_type_is_status_timeout(src->type)) {
+            ev.aux1 = (int)read_u16_le(&src->b_mapX);
+            ev.cell = src->c_cell;
+        } else if (src->type == DM1_EVENT_REMOVE_FLUXCAGE) {
+            uint16_t thing = read_u16_le(&src->c_cell);
+            ev.mapX = src->b_mapX;
+            ev.mapY = src->b_mapY;
+            ev.cell = EXPLOSION_CELL_CENTERED;
+            ev.aux0 =
+                (((thing >> DM1_PC34_THING_TYPE_SHIFT) &
+                  DM1_PC34_THING_TYPE_MASK) == THING_TYPE_EXPLOSION)
+                    ? (int)(thing & DM1_PC34_THING_INDEX_MASK)
+                    : (int)thing;
+            ev.aux1 = C050_EXPLOSION_FLUXCAGE;
+        } else {
+            ev.mapX = src->b_mapX;
+            ev.mapY = src->b_mapY;
+            ev.cell = src->c_cell;
+            ev.aux1 = src->c_effect;
+        }
+        if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static size_t import_original_pc34_external_portraits(
     const uint8_t *bytes,
     size_t size,
@@ -1103,6 +1231,10 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     result = dm1_v1_original_save_pc34_handoff_apply_active_groups(
         report, world);
     if (result < 0) {
+        return result;
+    }
+    result = materialize_original_pc34_timeline(report, &world->timeline);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
     }
     if (event_queue) {
