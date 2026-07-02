@@ -19,6 +19,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"        /* DM1_SND_BUZZ for C006 generator audio */
@@ -1441,6 +1442,30 @@ static int orch_cmd_cast_spell_empty_flask_slot_compat(
     return (int)((input->reserved2 &
                   CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_MASK) >>
                  CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_SHIFT);
+}
+
+static int orch_cmd_cast_spell_xp_compat(
+    const struct TickInput_Compat* input,
+    const struct SpellDefinition_Compat* spell,
+    int powerOrdinal,
+    struct RngState_Compat* rng)
+{
+    if (input &&
+        (input->reserved2 & CMD_CAST_SPELL_RESERVED2_HAS_SPELL_XP) != 0u) {
+        return (int)((input->reserved2 &
+                      CMD_CAST_SPELL_RESERVED2_SPELL_XP_MASK) >>
+                     CMD_CAST_SPELL_RESERVED2_SPELL_XP_SHIFT);
+    }
+    if (!spell) {
+        return powerOrdinal > 0 ? powerOrdinal : 1;
+    }
+    /* ReDMCSB: MENU.C F0412 line 1826 draws RANDOM(8) before
+     * computing L1273_ui_Experience. Direct M10 callers without the
+     * M11 prevalidation handoff draw it here. */
+    return (int)dm1_spell_experience(
+        powerOrdinal,
+        spell->baseRequiredSkillLevel,
+        F0732_COMBAT_RngRandom_Compat(rng, 8));
 }
 
 static int orch_cmd_cast_spell_mutate_empty_flask_f0411_compat(
@@ -6631,6 +6656,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         int champIdx = (int)input->commandArg1;
         int powerOrd = (int)input->reserved;
         int emptyFlaskSlot = orch_cmd_cast_spell_empty_flask_slot_compat(input);
+        int spellExperience = 0;
 
         (void)F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
         emit(result, EMIT_SOUND_REQUEST, tableIdx,
@@ -6678,6 +6704,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
 
             /* Apply magic state deltas (light, shields, footprints, etc.) */
             F0760_MAGIC_ApplyStateDelta_Compat(&effect, &world->magic);
+            spellExperience = orch_cmd_cast_spell_xp_compat(
+                input, &spell, effect.powerOrdinal, &world->masterRng);
 
             /* Schedule follow-up timeline event if applicable */
             if (effect.followupEventKind != TIMELINE_EVENT_INVALID &&
@@ -6695,11 +6723,12 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
              *   payload[0] = champIdx
              *   payload[1] = spellKind
              *   payload[2] = spellType
-             *   payload[3] = packed powerOrdinal + G0487 SkillIndex */
+             *   payload[3] = packed powerOrdinal + G0487 SkillIndex + XP */
             emit(result, EMIT_SPELL_EFFECT, champIdx,
                  effect.spellKind, effect.spellType,
-                 EMIT_SPELL_EFFECT_PACK_POWER_SKILL(effect.powerOrdinal,
-                                                    spell.skillIndex));
+                 EMIT_SPELL_EFFECT_PACK_POWER_SKILL_XP(effect.powerOrdinal,
+                                                       spell.skillIndex,
+                                                       spellExperience));
         }
 
         return 1;
