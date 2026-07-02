@@ -23333,6 +23333,278 @@ static int m11_maybe_heal_black_flame_from_fireball(
     return 1;
 }
 
+struct M11ArmourInfoPc34 {
+    unsigned char weight;
+    unsigned char defense;
+    unsigned char attributes;
+};
+
+static const struct M11ArmourInfoPc34 s_m11_dm1_armour_info_pc34[58] = {
+    /* ReDMCSB DUNGEON.C G0239 lines 309-369: { Weight, Defense,
+     * Attributes, Unreferenced }.  F0313 shield defense also asks F0312
+     * for hand strength, and F0312 depends on held-object weight. */
+    {   3,   5, 0x01 }, {   4,  10, 0x01 }, {   3,   4, 0x01 }, {   6,   5, 0x02 },
+    {  16,  25, 0x04 }, {   4,   5, 0x00 }, {   4,   5, 0x00 }, {   3,   7, 0x01 },
+    {   3,   7, 0x01 }, {   4,   6, 0x01 }, {   2,   4, 0x00 }, {   4,   5, 0x01 },
+    {   5,   7, 0x01 }, {   3,  11, 0x02 }, {   3,  13, 0x02 }, {   4,  13, 0x02 },
+    {   6,  17, 0x03 }, {   8,  20, 0x03 }, {  14,  20, 0x03 }, {   6,  12, 0x02 },
+    {   5,   9, 0x01 }, {   5,   8, 0x01 }, {   5,   9, 0x01 }, {   4,   1, 0x04 },
+    {   6,   5, 0x04 }, {  11,  12, 0x05 }, {  14,  17, 0x05 }, {  15,  20, 0x05 },
+    {  11,  22, 0x85 }, {  10,  16, 0x82 }, {  14,  20, 0x83 }, {  21,  35, 0x84 },
+    {  65,  35, 0x05 }, {  53,  35, 0x05 }, {  52,  70, 0x07 }, {  41,  55, 0x07 },
+    {  16,  25, 0x06 }, {  16,  30, 0x06 }, {  19,  40, 0x07 }, { 120,  65, 0x04 },
+    {  80,  56, 0x04 }, {  28,  37, 0x05 }, {  34,  56, 0x84 }, {  17,  62, 0x05 },
+    { 108, 125, 0x04 }, {  72,  90, 0x04 }, {  24,  50, 0x05 }, {  30,  85, 0x84 },
+    {  35,  76, 0x04 }, { 141, 160, 0x04 }, {  90, 101, 0x04 }, {  31,  60, 0x05 },
+    {  40, 100, 0x84 }, {  14,  54, 0x06 }, {  57,  60, 0x07 }, {  81,  88, 0x04 },
+    {   3,  16, 0x02 }, {   2,   3, 0x03 }
+};
+
+static int m11_dm1_armour_defense_f0143(int armourType,
+                                        int useSharpDefense,
+                                        int* outDefense,
+                                        int* outIsShield,
+                                        int* outWeight)
+{
+    int defense;
+    int attributes;
+    if (!outDefense) return 0;
+    *outDefense = 0;
+    if (outIsShield) *outIsShield = 0;
+    if (outWeight) *outWeight = 0;
+    if (armourType < 0 ||
+        armourType >= (int)(sizeof(s_m11_dm1_armour_info_pc34) /
+                            sizeof(s_m11_dm1_armour_info_pc34[0]))) {
+        return 0;
+    }
+    defense = (int)s_m11_dm1_armour_info_pc34[armourType].defense;
+    attributes = (int)s_m11_dm1_armour_info_pc34[armourType].attributes;
+    if (useSharpDefense) {
+        /* ReDMCSB DUNGEON.C F0143 lines 1240-1244:
+         * F0030_MAIN_GetScaledProduct(Defense, 3, sharp + 4). */
+        defense = (defense * ((attributes & 0x07) + 4)) >> 3;
+    }
+    *outDefense = defense;
+    if (outIsShield) *outIsShield = (attributes & 0x80) ? 1 : 0;
+    if (outWeight) *outWeight = (int)s_m11_dm1_armour_info_pc34[armourType].weight;
+    return 1;
+}
+
+static int m11_defender_inventory_slot_for_wound_index(int woundIndex)
+{
+    switch (woundIndex) {
+    case 0: return CHAMPION_SLOT_HAND_LEFT;
+    case 1: return CHAMPION_SLOT_HEAD;
+    case 2: return CHAMPION_SLOT_TORSO;
+    case 3: return CHAMPION_SLOT_ACTION_HAND;
+    case 4: return CHAMPION_SLOT_LEGS;
+    case 5: return CHAMPION_SLOT_FEET;
+    default: return -1;
+    }
+}
+
+static int m11_defender_armour_defense_for_thing(
+    const struct GameWorld_Compat* world,
+    unsigned short thing,
+    int useSharpDefense,
+    int* outDefense,
+    int* outIsShield,
+    int* outWeight)
+{
+    int thingIndex;
+    int armourType;
+
+    if (outDefense) *outDefense = 0;
+    if (outIsShield) *outIsShield = 0;
+    if (outWeight) *outWeight = 0;
+    if (!world || !world->things || !world->things->armours ||
+        !outDefense) {
+        return 0;
+    }
+    if (thing == THING_NONE || thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(thing) != THING_TYPE_ARMOUR) {
+        return 0;
+    }
+    thingIndex = (int)THING_GET_INDEX(thing);
+    if (thingIndex < 0 || thingIndex >= world->things->armourCount) {
+        return 0;
+    }
+    armourType = (int)world->things->armours[thingIndex].type;
+    return m11_dm1_armour_defense_f0143(
+        armourType, useSharpDefense, outDefense, outIsShield, outWeight);
+}
+
+static int m11_f0312_stamina_adjusted_value(
+    const struct ChampionState_Compat* champion,
+    int value)
+{
+    int currentStamina;
+    int halfMaximumStamina;
+    int halfValue;
+
+    if (!champion) return value;
+    currentStamina = (int)champion->stamina.current;
+    halfMaximumStamina = (int)champion->stamina.maximum >> 1;
+    if (halfMaximumStamina > 0 && currentStamina < halfMaximumStamina) {
+        /* ReDMCSB CHAMPION.C F0306 lines 1094-1095: the first operand
+         * halves P0641 before the second operand reuses that halved value. */
+        halfValue = value >> 1;
+        value = halfValue + (int)(((long)halfValue * (long)currentStamina) /
+                                  (long)halfMaximumStamina);
+    }
+    return value;
+}
+
+static int m11_f0312_hand_strength_baseline(
+    const struct ChampionState_Compat* champion,
+    int handWoundIndex,
+    int objectWeight)
+{
+    int strength;
+    int maxLoad;
+    int oneSixteenthMaximumLoad;
+    int loadThreshold;
+
+    if (!champion) return 0;
+
+    /* ReDMCSB CHAMPION.C F0312 lines 1264-1306 starts with RANDOM(16)
+     * plus current strength, adjusts for held-object weight, stamina, and
+     * hand wounds, then returns bounded strength >> 1.  M11 projectile
+     * defender snapshots keep the same non-random baseline as M10. */
+    strength = (int)champion->attributes[CHAMPION_ATTR_STRENGTH];
+    maxLoad = (int)champion->maxLoad;
+    if (maxLoad <= 0) {
+        maxLoad = (strength << 3) + 100;
+    }
+    oneSixteenthMaximumLoad = maxLoad >> 4;
+    if (objectWeight <= oneSixteenthMaximumLoad) {
+        strength += objectWeight - 12;
+    } else {
+        loadThreshold =
+            oneSixteenthMaximumLoad + ((oneSixteenthMaximumLoad - 12) >> 1);
+        if (objectWeight <= loadThreshold) {
+            strength += (objectWeight - oneSixteenthMaximumLoad) >> 1;
+        } else {
+            strength -= (objectWeight - loadThreshold) << 1;
+        }
+    }
+    strength = m11_f0312_stamina_adjusted_value(champion, strength);
+    if ((champion->wounds & (1u << handWoundIndex)) != 0) {
+        strength >>= 1;
+    }
+    strength >>= 1;
+    if (strength < 0) return 0;
+    if (strength > 100) return 100;
+    return strength;
+}
+
+static void m11_fill_defender_wound_defense_baseline(
+    const struct GameWorld_Compat* world,
+    const struct ChampionState_Compat* champion,
+    int useSharpDefense,
+    struct CombatantChampionSnapshot_Compat* outChampion)
+{
+    static const int s_woundDefenseFactor[6] = { 5, 5, 4, 6, 3, 1 };
+    int woundIndex;
+
+    if (!world || !champion || !outChampion) return;
+
+    for (woundIndex = 0; woundIndex < 6; ++woundIndex) {
+        int inventorySlot;
+        int bodyDefense = 0;
+        int ignoredShield = 0;
+        int baseline = 0;
+
+        /* ReDMCSB CHAMPION.C F0313 lines 1336-1346: shields in
+         * ready/action hands contribute F0312 hand strength plus armour
+         * defense, weighted by the target wound slot. */
+        {
+            static const int s_handSlots[2] = {
+                CHAMPION_SLOT_HAND_LEFT,
+                CHAMPION_SLOT_ACTION_HAND
+            };
+            static const int s_handWoundIndexes[2] = { 0, 3 };
+            int hand;
+            for (hand = 0; hand < 2; ++hand) {
+                int shieldDefense = 0;
+                int isShield = 0;
+                int shieldWeight = 0;
+                if (m11_defender_armour_defense_for_thing(
+                        world, champion->inventory[s_handSlots[hand]],
+                        useSharpDefense,
+                        &shieldDefense, &isShield, &shieldWeight) &&
+                    isShield) {
+                    int handStrength =
+                        m11_f0312_hand_strength_baseline(
+                            champion, s_handWoundIndexes[hand], shieldWeight);
+                    baseline +=
+                        ((handStrength + shieldDefense) *
+                         s_woundDefenseFactor[woundIndex]) >>
+                        ((s_handWoundIndexes[hand] == woundIndex) ? 4 : 5);
+                }
+            }
+        }
+
+        inventorySlot =
+            m11_defender_inventory_slot_for_wound_index(woundIndex);
+        if (inventorySlot >= 0 && inventorySlot < CHAMPION_SLOT_COUNT &&
+            woundIndex != 0 && woundIndex != 3 &&
+            m11_defender_armour_defense_for_thing(
+                world, champion->inventory[inventorySlot], useSharpDefense,
+                &bodyDefense, &ignoredShield, NULL)) {
+            /* ReDMCSB CHAMPION.C F0313 lines 1355-1361 adds body-slot
+             * armour defense for wound slots past the two hand slots. */
+            baseline += bodyDefense;
+        }
+        outChampion->woundDefense[woundIndex] = baseline;
+    }
+}
+
+static int m11_build_projectile_defender_champion_snapshot(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    int attackType,
+    struct CombatantChampionSnapshot_Compat* outChampion)
+{
+    const struct ChampionState_Compat* champion;
+
+    if (!world || !outChampion) return 0;
+    memset(outChampion, 0, sizeof(*outChampion));
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present || champion->hp.current == 0) return 0;
+
+    outChampion->championIndex = championIndex;
+    outChampion->currentHealth = champion->hp.current;
+    outChampion->dexterity = champion->attributes[CHAMPION_ATTR_DEXTERITY];
+    outChampion->statisticVitality = champion->attributes[CHAMPION_ATTR_VITALITY];
+    outChampion->statisticAntifire = champion->attributes[CHAMPION_ATTR_ANTIFIRE];
+    outChampion->statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
+    outChampion->statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
+    outChampion->wounds = champion->wounds;
+    m11_fill_defender_wound_defense_baseline(
+        world, champion, attackType == COMBAT_ATTACK_SHARP, outChampion);
+    outChampion->isResting =
+        world->partyIsResting || world->lifecycle.rest.isResting;
+
+    /* ReDMCSB CHAMPION.C F0321 lines 1878-1888 subtracts the
+     * attack-specific party spell/fire shield before the common
+     * F0313 body-defense scale.  For physical/lightning projectile
+     * paths, fold action defense plus lifecycle/party shield defense into
+     * the F0313 snapshot, matching the M10 dispatcher. */
+    if (attackType == COMBAT_ATTACK_MAGIC) {
+        outChampion->partyShieldDefense = world->magic.spellShieldDefense;
+    } else if (attackType == COMBAT_ATTACK_FIRE) {
+        outChampion->partyShieldDefense = world->magic.fireShieldDefense;
+    } else {
+        outChampion->partyShieldDefense =
+            champion->actionDefense +
+            world->lifecycle.champions[championIndex].shieldDefense +
+            world->magic.partyShieldDefense;
+    }
+    return 1;
+}
+
 static int m11_dm1_behavior_from_ai_state(int stateKind)
 {
     switch (stateKind) {
@@ -23644,25 +23916,52 @@ static void m11_projectile_apply_impact(
         int ci = r->outAction.defenderSlotOrCreatureIndex;
         if (ci >= 0 && ci < CHAMPION_MAX_PARTY
                 && state->world.party.champions[ci].present) {
-            int hp = (int)state->world.party.champions[ci].hp.current;
-            int dmg = r->outAction.rawAttackValue;
-            if (dmg < 0) dmg = 0;
-            if (dmg > hp) dmg = hp;
-            state->world.party.champions[ci].hp.current =
-                (unsigned short)(hp - dmg);
+            struct CombatantChampionSnapshot_Compat defender;
+            struct CombatResult_Compat damage;
+            int scaledAttack = 0;
+            int killed = 0;
+
+            memset(&damage, 0, sizeof(damage));
             /* ReDMCSB PROJEXPL.C F0217 lines 513-558 routes champion
-             * projectile impact through F0321.  CHAMPION.C lines
-             * 1659-1667 sets G0303_B_PartyDead when the final party
-             * champion reaches zero HP; mirror that M11 gate here for
-             * direct F0811 projectile advances that bypass F0884. */
+             * projectile impact through F0321, which applies attack-type
+             * defense, wounds, shields, armour, and vitality before HP is
+             * changed; CHAMPION.C F0321 lines 1842-1900 contains the
+             * scaling path. */
+            if (m11_build_projectile_defender_champion_snapshot(
+                    &state->world, ci, r->outAction.attackTypeCode,
+                    &defender)) {
+                (void)F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
+                    r->outAction.attackTypeCode,
+                    r->outAction.rawAttackValue,
+                    r->outAction.allowedWounds,
+                    &defender,
+                    &state->world.masterRng,
+                    &scaledAttack,
+                    NULL);
+                if (scaledAttack > 0) {
+                    damage.damageApplied = scaledAttack;
+                    damage.woundMaskAdded = r->outAction.allowedWounds;
+                    (void)F0737_COMBAT_ApplyDamageToChampion_Compat(
+                        &damage,
+                        &state->world.party.champions[ci],
+                        &killed);
+                }
+            }
+            /* ReDMCSB PROJEXPL.C F0217 lines 545-556 applies poison only
+             * after F0321 returns applied damage and the source random gate
+             * passes. */
             (void)m11_maybe_apply_projectile_poison_to_champion(
-                state, ci, &state->world.party.champions[ci], p, dmg);
-            if (state->world.party.champions[ci].hp.current == 0) {
+                state, ci, &state->world.party.champions[ci], p, scaledAttack);
+            /* CHAMPION.C lines 1659-1667 sets G0303_B_PartyDead when the
+             * final party champion reaches zero HP; mirror that M11 gate
+             * for direct F0811 projectile advances that bypass F0884. */
+            if (killed || state->world.party.champions[ci].hp.current == 0) {
                 m11_check_party_death(state);
             }
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HITS PARTY FOR %d",
-                          (unsigned int)state->world.gameTick, name, dmg);
+                          (unsigned int)state->world.gameTick, name,
+                          scaledAttack);
         } else {
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HITS PARTY",
