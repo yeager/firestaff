@@ -3497,6 +3497,12 @@ static int orch_projectile_landing_cell_f0219_compat(
     return (projectile->cell + 1) & 3;
 }
 
+static int orch_projectile_instance_active_compat(
+    const struct ProjectileInstance_Compat* projectile)
+{
+    return projectile && projectile->slotIndex >= 0 && projectile->reserved3 != 0;
+}
+
 static int orch_find_projectile_collision_peer_compat(
     const struct GameWorld_Compat* world,
     const struct ProjectileInstance_Compat* projectile,
@@ -3510,7 +3516,7 @@ static int orch_find_projectile_collision_peer_compat(
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
-        if (i == projectileIndex || other->slotIndex < 0) continue;
+        if (i == projectileIndex || !orch_projectile_instance_active_compat(other)) continue;
         if (other->mapIndex == projectile->mapIndex &&
             other->mapX == projectile->mapX &&
             other->mapY == projectile->mapY &&
@@ -3524,7 +3530,7 @@ static int orch_find_projectile_collision_peer_compat(
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
-        if (i == projectileIndex || other->slotIndex < 0) continue;
+        if (i == projectileIndex || !orch_projectile_instance_active_compat(other)) continue;
         if (other->mapIndex == digest->destMapIndex &&
             other->mapX == digest->destMapX &&
             other->mapY == digest->destMapY &&
@@ -3843,7 +3849,7 @@ static int orch_build_projectile_digest_compat(
                 i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
-        if (i == projectileIndex || other->slotIndex < 0) continue;
+        if (i == projectileIndex || !orch_projectile_instance_active_compat(other)) continue;
         if (other->mapIndex == projectile->mapIndex &&
             other->mapX == projectile->mapX &&
             other->mapY == projectile->mapY &&
@@ -3938,7 +3944,7 @@ static int orch_build_projectile_digest_compat(
                 i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
-        if (i == projectileIndex || other->slotIndex < 0) continue;
+        if (i == projectileIndex || !orch_projectile_instance_active_compat(other)) continue;
         if (other->mapIndex == projectile->mapIndex &&
             other->mapX == destX && other->mapY == destY) {
             int newCell;
