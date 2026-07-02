@@ -75,7 +75,10 @@ int main(void)
     expect_contains("source.f0302", source, "F0302:662-714", "CHAMPION.C");
     expect_contains("source.f0291", source, "F0291:632-673", "CHAMDRAW.C");
     expect_contains("source.f0292", source, "F0292:771-895", "CHAMDRAW.C");
-    expect_contains("source.defs", source, "DEFS.H:2088 C30/C033/C034/C035/M070/M516", "DEFS.H");
+    expect_contains("source.defs", source, "DEFS.H:810 C30_SLOT_CHEST_1", "DEFS.H");
+    expect_contains("source.defs.c033", source, "DEFS.H:2193-2195 C033/C034/C035", "DEFS.H");
+    expect_contains("source.defs.m070", source, "DEFS.H:1878 M070_HAND_SLOT_INDEX", "DEFS.H");
+    expect_contains("source.defs.m516", source, "DEFS.H:873 M516_CHAMPIONS", "DEFS.H");
 
     for (i = 0; i < DM1_V1_CP_STATUS_HAND_ROTATION_CHAMPION_COUNT_PC34; ++i) {
         const dm1_v1_champion_panel_status_hand_rotation_frame_t *f = &model.frames[i];
