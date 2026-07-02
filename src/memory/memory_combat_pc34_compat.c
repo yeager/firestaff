@@ -787,8 +787,13 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
             r = F0732_COMBAT_RngRandom_Compat(rng, 4);
             out->rngCallCount++;
             if (r == 0) {
+                /* ReDMCSB: PROJEXPL.C F0231 lines 1504-1505 jump to
+                 * T0231015 when the weak-damage recovery roll is zero.
+                 * That is the same miss tail used by a failed hit gate, not
+                 * a successful hit with zero damage. */
+                out->hitLanded = 0;
                 out->damageApplied = 0;
-                out->outcome = COMBAT_OUTCOME_HIT_NO_DAMAGE;
+                out->outcome = COMBAT_OUTCOME_MISS;
                 goto done;
             }
             baseDamage = r + 1;
@@ -835,8 +840,12 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
         if (attacker->actionHandIcon == COMBAT_ICON_VORPAL_BLADE && !nonMaterial) {
             baseDamage >>= 1;
             if (baseDamage == 0) {
+                /* ReDMCSB: PROJEXPL.C F0231 lines 1530-1531 send a
+                 * material-creature Vorpal zero-damage half hit to the same
+                 * T0231015 miss tail. */
+                out->hitLanded = 0;
                 out->damageApplied = 0;
-                out->outcome = COMBAT_OUTCOME_HIT_NO_DAMAGE;
+                out->outcome = COMBAT_OUTCOME_MISS;
                 goto done;
             }
         }
