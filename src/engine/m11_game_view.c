@@ -23835,6 +23835,24 @@ static int m11_materialize_projectile_associated_thing(
     return 1;
 }
 
+static int m11_find_group_creature_index_for_cell(
+    const struct DungeonGroup_Compat* group,
+    int targetCell)
+{
+    int i;
+    if (!group) return -1;
+    if (group->count == 0 || group->cells == DM1_SINGLE_CENTERED_CREATURE_CELL) {
+        return group->health[0] ? 0 : -1;
+    }
+    for (i = 0; i <= (int)group->count && i < 4; ++i) {
+        int cell;
+        if (group->health[i] == 0) continue;
+        cell = (int)((group->cells >> (i * 2)) & 0x03u);
+        if (cell == (targetCell & 3)) return i;
+    }
+    return -1;
+}
+
 static int m11_maybe_heal_black_flame_from_fireball(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
@@ -23868,13 +23886,9 @@ static int m11_maybe_heal_black_flame_from_fireball(
     group = &state->world.things->groups[groupIndex];
     if (group->creatureType != CREATURE_TYPE_BLACK_FLAME) return 0;
 
-    slotIndex = result->outAction.defenderSlotOrCreatureIndex;
-    if (slotIndex < 0 || slotIndex >= 4 || group->health[slotIndex] <= 0) {
-        for (slotIndex = 0; slotIndex < 4; ++slotIndex) {
-            if (group->health[slotIndex] > 0) break;
-        }
-        if (slotIndex >= 4) return 0;
-    }
+    slotIndex = m11_find_group_creature_index_for_cell(
+        group, result->outAction.targetCell);
+    if (slotIndex < 0) return 0;
 
     /* ReDMCSB PROJEXPL.C F0217 lines 529-531 heals Black Flame on
      * fireball impact up to 1000 HP, then jumps directly to projectile
@@ -24393,13 +24407,10 @@ static void m11_projectile_apply_impact(
     }
 
     /* Apply damage on HIT_CREATURE to the DungeonGroup at the impact
-     * cell.  We find the group thing at (destMap, destX, destY), use
-     * F0738_COMBAT_ApplyDamageToGroup_Compat on creature slot 0 with
-     * the impact attack as damage.  DM1's group damage scatters hits
-     * across live sub-cells; v1 settles for slot 0 so projectiles
-     * that reach a creature square visibly chip or kill the creature
-     * rather than vanishing silently.  F0738 is a pure M10 mutator
-     * and is not modified here. */
+     * cell. ReDMCSB PROJEXPL.C:F0217 lines 515-523 resolves the concrete
+     * creature with F0176_GROUP_GetCreatureOrdinalInCell before applying
+     * F0190 damage, so M11 must use the F0811 target cell rather than a
+     * first-living-creature fallback. */
     if (r->resultKind == PROJECTILE_RESULT_HIT_CREATURE
             && r->emittedCombatAction) {
         int impactMap = r->newMapIndex;
@@ -24420,8 +24431,9 @@ static void m11_projectile_apply_impact(
                 int slotI;
                 memset(&res, 0, sizeof(res));
                 res.damageApplied = r->outAction.rawAttackValue;
-                for (slotI = 0; slotI < 4; ++slotI) {
-                    if (g->health[slotI] > 0) {
+                slotI = m11_find_group_creature_index_for_cell(
+                    g, r->outAction.targetCell);
+                if (slotI >= 0) {
                         int originalCreatureType = (int)g->creatureType;
                         int originalCells = (int)g->cells;
                         int originalGroupCount = (int)g->count;
@@ -24468,8 +24480,6 @@ static void m11_projectile_apply_impact(
                         associatedThingMovedToGroup =
                             m11_maybe_attach_thrown_sharp_weapon_to_group(
                             state, g, p, outcome);
-                        break;
-                    }
                 }
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s HITS %s",
