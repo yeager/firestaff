@@ -59,6 +59,10 @@ static unsigned short make_thing(int type, int index) {
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
 }
 
+static unsigned short read_u16_le_for_test(const unsigned char* raw) {
+    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+}
+
 static unsigned short pack_text3(int a, int b, int c) {
     return (unsigned short)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
 }
@@ -3605,6 +3609,9 @@ static void test_projectile_fireball_heals_black_flame_without_explosion(void) {
     unsigned short squareFirstThings[6];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
+    unsigned char rawGroupData[16];
+    unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
+    int thingCounts[DUNGEON_THING_TYPE_COUNT];
     struct ProjectileInstance_Compat* projectile;
     int i;
 
@@ -3616,6 +3623,9 @@ static void test_projectile_fireball_heals_black_flame_without_explosion(void) {
     memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
+    memset(rawGroupData, 0, sizeof(rawGroupData));
+    memset(rawThingData, 0, sizeof(rawThingData));
+    memset(thingCounts, 0, sizeof(thingCounts));
     for (i = 0; i < 6; ++i) {
         squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
     }
@@ -3637,11 +3647,23 @@ static void test_projectile_fireball_heals_black_flame_without_explosion(void) {
     groups[0].cells = 0x0F;
     groups[0].count = 0;
     groups[0].health[0] = 990;
+    rawGroupData[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawGroupData[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawGroupData[2] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawGroupData[3] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawGroupData[4] = CREATURE_TYPE_BLACK_FLAME;
+    rawGroupData[5] = 0x0F;
+    rawGroupData[6] = 0xDEu;
+    rawGroupData[7] = 0xADu;
+    rawThingData[THING_TYPE_GROUP] = rawGroupData;
+    thingCounts[THING_TYPE_GROUP] = 1;
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 6;
     things.groups = groups;
     things.groupCount = 1;
+    memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
+    memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
 
     state.world.dungeon = &dungeon;
     state.world.things = &things;
@@ -3687,6 +3709,8 @@ static void test_projectile_fireball_heals_black_flame_without_explosion(void) {
               "fireball black-flame impact despawns projectile");
     ASSERT_EQ(groups[0].health[0], 1000,
               "fireball black-flame impact heals up to source cap");
+    ASSERT_EQ(read_u16_le_for_test(rawGroupData + 6), groups[0].health[0],
+              "fireball black-flame impact mirrors healed HP to raw group record");
     ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 0, 0), 0,
               "fireball black-flame impact skips normal explosion spawn");
 }

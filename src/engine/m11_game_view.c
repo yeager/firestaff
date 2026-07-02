@@ -4771,6 +4771,47 @@ static void m11_set_raw_next_thing(struct DungeonThings_Compat* things,
     raw[1] = (unsigned char)((newNext >> 8) & 0xFFu);
 }
 
+static void m11_write_u16_le(unsigned char* raw, unsigned short value) {
+    if (!raw) return;
+    raw[0] = (unsigned char)(value & 0xFFu);
+    raw[1] = (unsigned char)((value >> 8) & 0xFFu);
+}
+
+static void m11_write_raw_group_record(struct DungeonThings_Compat* things,
+                                       int groupIndex) {
+    struct DungeonGroup_Compat* group;
+    unsigned char* raw;
+    unsigned short bitfield;
+
+    if (!things || !things->groups || groupIndex < 0 ||
+        groupIndex >= things->groupCount ||
+        groupIndex >= things->thingCounts[THING_TYPE_GROUP] ||
+        !things->rawThingData[THING_TYPE_GROUP] ||
+        s_thingDataByteCount[THING_TYPE_GROUP] < 16) {
+        return;
+    }
+
+    group = &things->groups[groupIndex];
+    raw = things->rawThingData[THING_TYPE_GROUP] +
+        (groupIndex * s_thingDataByteCount[THING_TYPE_GROUP]);
+    bitfield = (unsigned short)(raw[14] | ((unsigned short)raw[15] << 8));
+    bitfield = (unsigned short)((bitfield & 0xf890u) |
+                                ((unsigned short)(group->behavior & 0x0Fu)) |
+                                ((unsigned short)(group->count & 0x03u) << 5) |
+                                ((unsigned short)(group->direction & 0x03u) << 8) |
+                                ((unsigned short)(group->doNotDiscard & 0x01u) << 10));
+
+    m11_write_u16_le(raw + 0, group->next);
+    m11_write_u16_le(raw + 2, group->slot);
+    raw[4] = group->creatureType;
+    raw[5] = group->cells;
+    m11_write_u16_le(raw + 6, group->health[0]);
+    m11_write_u16_le(raw + 8, group->health[1]);
+    m11_write_u16_le(raw + 10, group->health[2]);
+    m11_write_u16_le(raw + 12, group->health[3]);
+    m11_write_u16_le(raw + 14, bitfield);
+}
+
 static void m11_set_decoded_next_thing(struct DungeonThings_Compat* things,
                                        unsigned short thingId,
                                        unsigned short newNext) {
@@ -23896,6 +23937,7 @@ static int m11_maybe_heal_black_flame_from_fireball(
     healed = (int)group->health[slotIndex] + result->outAction.rawAttackValue;
     if (healed > 1000) healed = 1000;
     group->health[slotIndex] = (unsigned short)healed;
+    m11_write_raw_group_record(state->world.things, groupIndex);
     m11_log_event(state, M11_COLOR_ORANGE,
                   "T%u: FIREBALL FEEDS %s",
                   (unsigned int)state->world.gameTick,
