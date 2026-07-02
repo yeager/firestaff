@@ -4764,6 +4764,7 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
     struct DungeonWeapon_Compat weapons[1];
     unsigned short thrownThing;
     unsigned short actionHandThing;
+    uint32_t tickBefore;
 
     seed_state(&state, 100, 100);
     memset(&things, 0, sizeof(things));
@@ -4785,6 +4786,7 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
         actionHandThing;
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, thrownThing), 1,
               "leader hand accepts throw object");
+    tickBefore = state.world.gameTick;
 
     /* ReDMCSB viewport origin is x=0,y=33.  Local x=120 selects the
      * right-side F0329/F0328 throw route; local y=20 is the upper
@@ -4818,14 +4820,16 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
               "leader-hand throw passes F0328 step energy to projectile create");
     ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
               "leader-hand throw preserves Thing identity on projectile");
-    ASSERT_EQ(state.world.projectileDisabledMovementTicks, 4,
-              "leader-hand throw sets source movement-disable ticks without action-row tick decrement");
+    ASSERT_EQ(state.world.gameTick, tickBefore + 1u,
+              "leader-hand throw consumes the PC34 stop-wait source tick");
+    ASSERT_EQ(state.world.projectileDisabledMovementTicks, 3,
+              "leader-hand throw ages F0328 movement-disable ticks on the consumed source tick");
     ASSERT_EQ(state.world.lastProjectileDisabledMovementDirection, 1,
               "leader-hand throw records source movement-disable direction");
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
               "leader-hand throw requests the F0328 M563 combat sound");
-    ASSERT_EQ(state.actionDisabledTicks[0], 4,
-              "leader-hand throw applies F0328/F0330 four-tick action disable");
+    ASSERT_EQ(state.actionDisabledTicks[0], 3,
+              "leader-hand throw ages the F0328/F0330 action disable on the consumed source tick");
     ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
               "leader-hand throw has no F0407 action index override");
     ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
@@ -4838,6 +4842,7 @@ static void test_leader_hand_throw_full_projectile_list_accepts_f0328(void) {
     struct DungeonWeapon_Compat weapons[1];
     unsigned short thrownThing;
     unsigned short actionHandThing;
+    uint32_t tickBefore;
 
     seed_state(&state, 100, 100);
     memset(&things, 0, sizeof(things));
@@ -4860,6 +4865,7 @@ static void test_leader_hand_throw_full_projectile_list_accepts_f0328(void) {
         actionHandThing;
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, thrownThing), 1,
               "leader hand accepts full-list throw object");
+    tickBefore = state.world.gameTick;
 
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 120, 53, 1),
               M11_GAME_INPUT_REDRAW,
@@ -4879,12 +4885,14 @@ static void test_leader_hand_throw_full_projectile_list_accepts_f0328(void) {
                   .skills20[LIFECYCLE_SKILL_THROW].experience,
               16,
               "full-list leader-hand throw awards F0328 Throw XP");
+    ASSERT_EQ(state.world.gameTick, tickBefore + 1u,
+              "full-list accepted leader-hand throw still consumes the PC34 stop-wait tick");
     ASSERT_EQ(state.world.projectileDisabledMovementTicks, 0,
               "dropped full-list leader-hand throw creates no movement lockout");
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
               "full-list leader-hand throw still requests F0328 M563 sound");
-    ASSERT_EQ(state.actionDisabledTicks[0], 4,
-              "full-list leader-hand throw applies F0328/F0330 disable");
+    ASSERT_EQ(state.actionDisabledTicks[0], 3,
+              "full-list leader-hand throw ages F0328/F0330 disable on the consumed source tick");
     ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
               "full-list leader-hand throw has no F0407 action index override");
     ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
