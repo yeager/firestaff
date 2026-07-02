@@ -13726,6 +13726,15 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         M11_GameView_ClearV1LeaderHandObject(state);
         m11_set_status(state, "THROW",
                         throwSide ? "THROWN RIGHT" : "THROWN LEFT");
+        /* ReDMCSB CLIKVIEW.C F0375 lines 243-285 (PC34 CHANGE8_11_FIX)
+         * sets G0321_B_StopWaitingForPlayerInput after an accepted
+         * F0329/F0328 leader-hand throw.  Mirror that by consuming a real
+         * source tick immediately; this advances the first C48/C49
+         * projectile move and ages the F0328 cooldowns just like other
+         * meaningful player actions. */
+        (void)m11_apply_tick(state, CMD_NONE, "THROW");
+        m11_set_status(state, "THROW",
+                        throwSide ? "THROWN RIGHT" : "THROWN LEFT");
         m11_refresh_hash(state);
         return M11_GAME_INPUT_REDRAW;
     }
