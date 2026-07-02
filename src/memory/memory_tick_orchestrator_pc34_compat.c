@@ -122,8 +122,7 @@ static void set_party_direction_redmcsb_compat(struct PartyState_Compat* party, 
     /* ReDMCSB CHAMPION.C:117-130, F0284_CHAMPION_SetPartyDirection:
      * if direction changes, delta = new - old normalized to [0..3], then
      * every party champion Cell and Direction are rotated by delta before
-     * G0308_i_PartyDirection is updated. Compat currently stores champion
-     * Direction (not Cell), so keep it source-aligned here. */
+     * G0308_i_PartyDirection is updated. */
     delta = newDirection - oldDirection;
     if (delta < 0) delta += 4;
     for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {

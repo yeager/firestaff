@@ -188,10 +188,9 @@
 
 ### MOV-05 — F0279 / F0280 / F0281 / F0282 / F0283 / F0284 / F0285 champion candidate add / resurrect / ViAltar logic
 - **ReDMCSB reference:** `REVIVE.C:F0279_CHAMPION_GetDecodedValue`, `F0280_CHAMPION_AddCandidateChampionToParty` (the candidate-portrait click on the floor alcove path), `F0281_CHAMPION_Rename`, `F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel`, `F0283_CHAMPION_ViAltarRebirth`, `F0284_CHAMPION_SetPartyDirection`, `F0285_CHAMPION_GetIndexInCell`.
-- **Firestaff state:** The new compat layer has `F0860..F0866` (revive) and `F0284_CHAMPION_SetPartyDirection` (in tick orchestrator). F0279/F0280/F0281/F0282/F0283/F0285 are amalgam-only.
-- **Functional impact:** V1 resurrection and ViAltar rebirth work in the amalgam path. The new path uses `F0860..F0866` which are source-locked from the ReDMCSB comments at `dm1_v1_resurrection_pc34_compat.c:30-300`. The `set_party_direction_redmcsb_compat` function in `memory_tick_orchestrator_pc34_compat.c:97-115` correctly rotates every party champion's direction by the delta, but does **not** rotate Cell (it notes *"Compat currently stores champion Direction (not Cell)"* — see line 109).
-- **Functional impact:** The new path's `set_party_direction_redmcsb_compat` is **incomplete**: it rotates Direction but not Cell. F0284 in ReDMCSB rotates both. The cell rotation affects display ordering in the inventory panel; the inventory panel may not refresh correctly when the party turns direction while a candidate is present.
-- **Severity:** Major (cell rotation missing — could cause inventory panel mis-rendering when turning with a candidate present)
+- **Firestaff state:** The new compat layer has `F0860..F0866` (revive) and `F0284_CHAMPION_SetPartyDirection` in the tick orchestrator plus the public `F0284_CHAMPION_SetPartyDirection_Compat` wrapper. F0279/F0280/F0281/F0282/F0283/F0285 are still amalgam-only.
+- **Functional impact:** V1 resurrection and ViAltar rebirth work in the amalgam path. The new path uses `F0860..F0866` which are source-locked from the ReDMCSB comments at `dm1_v1_resurrection_pc34_compat.c:30-300`. F0284 now stores per-champion `Cell` and rotates both `Cell` and `Direction` by the party-direction delta without reordering champion array slots, matching ReDMCSB `CHAMPION.C:117-130`.
+- **Severity:** Minor (F0284 Cell/Direction rotation is covered; remaining divergence is the broader revive/rename/get-index split)
 
 ### MOV-06 — F0316 / F0317 scent primitives are amalgam-only
 - **ReDMCSB reference:** `MOVESENS.C:F0316_CHAMPION_DeleteScent`, `F0317_CHAMPION_AddScentStrength`.
@@ -537,12 +536,11 @@ Note: 68 findings, of which 18 are explicit non-duplications of the prior `DM1_V
 
 1. **REV-01 (Major)** — F0281 `CHAMPION_Rename` UI is silently missing. Resurrected/reincarnated champions do not prompt for a new name.
 2. **LSV-01 (Major)** — Save/load is not compatible with original PC 3.4 saves. F0433 / F0434 / F0435 / F0436 / F0437 / F0438 are amalgam-only and not invoked by the new runtime. Firestaff uses its own native save format.
-3. **MOV-05 (Major)** — `set_party_direction_redmcsb_compat` rotates Direction but not Cell. F0284 in ReDMCSB rotates both. Inventory panel may mis-render when turning with a candidate present.
-4. **GRP-02 (Major)** — F0192 creature poison resistance adjustment is not implemented. Creature poison applies raw `poisonAttack` regardless of creature type.
-5. **GRP-03 (Major)** — F0202/F0203/F0204 Lord Chaos / Lord Order double-move is not implemented. Archenemy behavior is wrong in V2.
-6. **MNU-02 (Major)** — F0757 Thieves Eye duration is `spellPower * 40` (64-224s) instead of the original's structurally-0 (broken by uninitialised stack). Spell lasts much longer in Firestaff.
-7. **CHM-01 (Major)** — F0307 BUG0_41 (Megamax compiler bug) is intentionally fixed. Antifire / Antimagic / Vitality-poison now participate. Gameplay balance differs from original.
-8. **DUN-05 (Major)** — F0163 BUG0_08 overfill is silently dropped, not crashed. Defensive behavior.
+3. **GRP-02 (Major)** — F0192 creature poison resistance adjustment is not implemented. Creature poison applies raw `poisonAttack` regardless of creature type.
+4. **GRP-03 (Major)** — F0202/F0203/F0204 Lord Chaos / Lord Order double-move is not implemented. Archenemy behavior is wrong in V2.
+5. **MNU-02 (Major)** — F0757 Thieves Eye duration is `spellPower * 40` (64-224s) instead of the original's structurally-0 (broken by uninitialised stack). Spell lasts much longer in Firestaff.
+6. **CHM-01 (Major)** — F0307 BUG0_41 (Megamax compiler bug) is intentionally fixed. Antifire / Antimagic / Vitality-poison now participate. Gameplay balance differs from original.
+7. **DUN-05 (Major)** — F0163 BUG0_08 overfill is silently dropped, not crashed. Defensive behavior.
 9. **PJE-05 (Major)** — F0220 BUG0_16 projectile-list overfill is silently dropped, not crashed. Defensive behavior.
 10. **CMD-01 (Minor)** — F0377 / F0378 click dispatchers are amalgam-only. The new M11 click routing is independent and inline. Two parallel implementations of the same dispatch logic; long-term maintenance risk.
 
