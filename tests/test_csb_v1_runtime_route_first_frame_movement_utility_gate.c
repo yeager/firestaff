@@ -297,6 +297,50 @@ static int route_wall_probe(const CSB_V1_RuntimeProfile *profile,
     return square < 0 || square == 1;
 }
 
+static void enqueue_and_process_route_command(
+    CSB_V1_RuntimeProfile *runtime,
+    struct Dm1V1InputCommandQueuePc34Compat *queue,
+    int command,
+    void *wall_context,
+    int expected_applied,
+    int expected_blocked,
+    int expected_x,
+    int expected_y,
+    const char *label)
+{
+    CSB_V1_MovementCommandStepRuntimeResultPc34Compat result;
+
+    CHECK_EQ(DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+                 queue, command, 0, 0),
+             1,
+             label);
+    CHECK_EQ(csb_v1_movement_command_step_runtime_process_queue_pc34_compat(
+                 runtime,
+                 queue,
+                 0,
+                 0,
+                 0,
+                 route_wall_probe,
+                 wall_context,
+                 &result),
+             1,
+             label);
+    CHECK_EQ(result.step_applied, expected_applied,
+             label);
+    CHECK_EQ(result.blocked_by_wall, expected_blocked,
+             label);
+    CHECK_EQ(runtime->party_x, expected_x,
+             label);
+    CHECK_EQ(runtime->party_y, expected_y,
+             label);
+    CHECK_EQ(runtime->party_state.PartyMapX, expected_x,
+             label);
+    CHECK_EQ(runtime->party_state.PartyMapY, expected_y,
+             label);
+    CHECK_EQ(queue->count, 0,
+             label);
+}
+
 int main(void)
 {
     const char *tmp_dir = "/tmp/firestaff-csb-v1-runtime-route-gate";
@@ -307,7 +351,6 @@ int main(void)
     CSB_V1_BootProfile boot;
     CSB_V1_PartyState party;
     struct Dm1V1InputCommandQueuePc34Compat queue;
-    CSB_V1_MovementCommandStepRuntimeResultPc34Compat move_result;
     CSB_V1_SaveHeader save_header;
     CSB_V1_SaveHeader loaded_header;
     CSB_V1_RouteSavePrefix saved_route;
@@ -315,8 +358,10 @@ int main(void)
     uint16_t route_game_id;
     unsigned char fb_before[ROUTE_FB_WIDTH * ROUTE_FB_HEIGHT];
     unsigned char fb_after[ROUTE_FB_WIDTH * ROUTE_FB_HEIGHT];
+    unsigned char fb_final[ROUTE_FB_WIDTH * ROUTE_FB_HEIGHT];
     int before_touched = 0;
     int after_touched = 0;
+    int final_touched = 0;
 
     printf("=== CSB V1 runtime route first-frame/movement/Utility gate ===\n\n");
 
@@ -373,33 +418,15 @@ int main(void)
           "first viewport frame touches the viewport band");
 
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
-    CHECK_EQ(DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
-                 &queue, DM1_V1_COMMAND_MOVE_FORWARD, 0, 0),
-             1,
-             "route queues one forward movement command");
-    CHECK_EQ(csb_v1_movement_command_step_runtime_process_queue_pc34_compat(
-                 &boot.runtime,
-                 &queue,
-                 0,
-                 0,
-                 0,
-                 route_wall_probe,
-                 boot.runtime.dungeon_handle,
-                 &move_result),
-             1,
-             "route processes one queued movement command");
-    CHECK_EQ(move_result.step_applied, 1,
-             "route movement applies");
-    CHECK_EQ(move_result.blocked_by_wall, 0,
-             "route movement is not wall-blocked");
-    CHECK_EQ(boot.runtime.party_x, CSB_V1_START_PARTY_X,
-             "north movement keeps x");
-    CHECK_EQ(boot.runtime.party_y, CSB_V1_START_PARTY_Y - 1,
-             "north movement advances y by one cell");
-    CHECK_EQ(boot.runtime.party_state.PartyMapY, CSB_V1_START_PARTY_Y - 1,
-             "runtime party snapshot follows movement");
-    CHECK_EQ(queue.count, 0,
-             "movement command queue is empty after route dispatch");
+    enqueue_and_process_route_command(&boot.runtime,
+                                      &queue,
+                                      DM1_V1_COMMAND_MOVE_FORWARD,
+                                      boot.runtime.dungeon_handle,
+                                      1,
+                                      0,
+                                      CSB_V1_START_PARTY_X,
+                                      CSB_V1_START_PARTY_Y - 1,
+                                      "route processes first forward movement");
 
     CHECK(render_route_frame(&boot.runtime, fb_after, &after_touched),
           "post-movement viewport frame renders without panel bleed");
@@ -407,6 +434,48 @@ int main(void)
           "post-movement viewport frame touches the viewport band");
     CHECK(count_non_baseline(fb_before, 0x07) == before_touched,
           "first frame evidence remains stable after movement dispatch");
+
+    enqueue_and_process_route_command(&boot.runtime,
+                                      &queue,
+                                      DM1_V1_COMMAND_MOVE_FORWARD,
+                                      boot.runtime.dungeon_handle,
+                                      0,
+                                      1,
+                                      CSB_V1_START_PARTY_X,
+                                      CSB_V1_START_PARTY_Y - 1,
+                                      "route preserves position on wall-blocked forward");
+    enqueue_and_process_route_command(&boot.runtime,
+                                      &queue,
+                                      DM1_V1_COMMAND_MOVE_RIGHT,
+                                      boot.runtime.dungeon_handle,
+                                      1,
+                                      0,
+                                      CSB_V1_START_PARTY_X + 1,
+                                      CSB_V1_START_PARTY_Y - 1,
+                                      "route processes right strafe after blocked move");
+    enqueue_and_process_route_command(&boot.runtime,
+                                      &queue,
+                                      DM1_V1_COMMAND_MOVE_BACKWARD,
+                                      boot.runtime.dungeon_handle,
+                                      1,
+                                      0,
+                                      CSB_V1_START_PARTY_X + 1,
+                                      CSB_V1_START_PARTY_Y,
+                                      "route processes backward move");
+    enqueue_and_process_route_command(&boot.runtime,
+                                      &queue,
+                                      DM1_V1_COMMAND_MOVE_LEFT,
+                                      boot.runtime.dungeon_handle,
+                                      1,
+                                      0,
+                                      CSB_V1_START_PARTY_X,
+                                      CSB_V1_START_PARTY_Y,
+                                      "route returns to the starting cell");
+
+    CHECK(render_route_frame(&boot.runtime, fb_final, &final_touched),
+          "final viewport frame renders after multi-step route");
+    CHECK(final_touched > 0,
+          "final viewport frame touches the viewport band");
 
     memset(&saved_route, 0, sizeof(saved_route));
     memset(&loaded_route, 0, sizeof(loaded_route));
@@ -439,7 +508,7 @@ int main(void)
                               sizeof(saved_route),
                               &save_header),
              CSB_V1_SAVE_OK,
-             "bounded save prefix writes moved route state");
+             "bounded save prefix writes multi-step route state");
     CHECK_EQ(csb_v1_save_verify_compatible(route_save_path,
                                            CSB_V1_SAVE_MAGIC_CSB,
                                            route_game_id),
@@ -450,13 +519,13 @@ int main(void)
                               sizeof(loaded_route),
                               &loaded_header),
              CSB_V1_LOAD_OK,
-             "bounded save prefix reloads moved route state");
+             "bounded save prefix reloads multi-step route state");
     CHECK_EQ(loaded_route.route_magic, saved_route.route_magic,
              "bounded save prefix route magic survives reload");
     CHECK_EQ(loaded_route.party_x, boot.runtime.party_x,
-             "bounded save prefix reload preserves moved x");
+             "bounded save prefix reload preserves final x");
     CHECK_EQ(loaded_route.party_y, boot.runtime.party_y,
-             "bounded save prefix reload preserves moved y");
+             "bounded save prefix reload preserves final y");
     CHECK_EQ(loaded_route.party_dir, boot.runtime.party_dir,
              "bounded save prefix reload preserves facing");
     CHECK_EQ(loaded_route.champion_count, boot.runtime.champion_count,
@@ -468,7 +537,7 @@ int main(void)
     CHECK_EQ(loaded_header.GameID, route_game_id,
              "bounded save prefix header keeps game id");
     CHECK_EQ(loaded_header.PartyMapY, boot.runtime.party_y,
-             "bounded save prefix header follows moved y");
+             "bounded save prefix header follows final y");
     CHECK_EQ(loaded_header.ChampionCount, boot.runtime.champion_count,
              "bounded save prefix header follows imported champion count");
 
@@ -479,7 +548,7 @@ int main(void)
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
-        puts("ok: CSB V1 bounded route joins Utility NEW_GAME, runtime boot, first viewport frame, queued movement, post-move render, and bounded save-prefix roundtrip");
+        puts("ok: CSB V1 bounded route joins Utility NEW_GAME, runtime boot, first viewport frame, repeated queued movement with a blocked wall step, post-route render, and bounded save-prefix roundtrip");
         puts("nonClaim=not full CSB playability, full save compatibility, original capture, or pixel parity");
     }
     return failed == 0 ? 0 : 1;

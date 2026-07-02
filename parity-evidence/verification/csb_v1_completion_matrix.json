@@ -68,7 +68,7 @@
     "forbidden_cmake_needles": [],
     "missing_test_needles": [],
     "missing_route_test_needles": [],
-    "non_claim": "Fast PC/synthetic boot/runtime/viewport/one-move route gate plus bounded save-prefix roundtrip only; not full CSB playability, original capture, full save compatibility, or pixel parity."
+    "non_claim": "Fast PC/synthetic boot/runtime/viewport/bounded multi-step route gate plus save-prefix roundtrip only; not full CSB playability, original capture, full save compatibility, or pixel parity."
   },
   "source_anchors": [
     {
