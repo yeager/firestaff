@@ -24,6 +24,10 @@ static unsigned short make_thing(int type, int index) {
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
 }
 
+static unsigned short read_u16_le_for_test(const unsigned char* raw) {
+    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+}
+
 static void init_world(struct GameWorld_Compat* world,
                        struct DungeonThings_Compat* things,
                        struct DungeonWeapon_Compat* weapons,
@@ -2995,6 +2999,9 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     struct DungeonWeapon_Compat weapons[8];
     struct DungeonArmour_Compat armours[8];
     struct DungeonJunk_Compat junks[8];
+    unsigned char rawWeaponData[32];
+    unsigned char rawArmourData[32];
+    unsigned char rawJunkData[32];
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
@@ -3018,15 +3025,35 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     memset(weapons, 0, sizeof(weapons));
     memset(armours, 0, sizeof(armours));
     memset(junks, 0, sizeof(junks));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    memset(rawArmourData, 0, sizeof(rawArmourData));
+    memset(rawJunkData, 0, sizeof(rawJunkData));
     for (i = 1; i < 8; ++i) weapons[i].next = THING_NONE;
     for (i = 0; i < 8; ++i) armours[i].next = THING_NONE;
     for (i = 0; i < 8; ++i) junks[i].next = THING_NONE;
+    for (i = 0; i < 8; ++i) {
+        rawWeaponData[(i * 4) + 0] = (unsigned char)(THING_NONE & 0xffu);
+        rawWeaponData[(i * 4) + 1] = (unsigned char)(THING_NONE >> 8);
+        rawWeaponData[(i * 4) + 2] = 0x7eu;
+        rawArmourData[(i * 4) + 0] = (unsigned char)(THING_NONE & 0xffu);
+        rawArmourData[(i * 4) + 1] = (unsigned char)(THING_NONE >> 8);
+        rawArmourData[(i * 4) + 2] = 0x7du;
+        rawJunkData[(i * 4) + 0] = (unsigned char)(THING_NONE & 0xffu);
+        rawJunkData[(i * 4) + 1] = (unsigned char)(THING_NONE >> 8);
+        rawJunkData[(i * 4) + 2] = 0x7cu;
+    }
     things.weapons = weapons;
     things.weaponCount = 8;
     things.armours = armours;
     things.armourCount = 8;
     things.junks = junks;
     things.junkCount = 8;
+    things.thingCounts[THING_TYPE_WEAPON] = 8;
+    things.thingCounts[THING_TYPE_ARMOUR] = 8;
+    things.thingCounts[THING_TYPE_JUNK] = 8;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    things.rawThingData[THING_TYPE_ARMOUR] = rawArmourData;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunkData;
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
@@ -3137,6 +3164,12 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     assert(weapons[1].cursed == 1);
     assert(weapons[2].type == 10);
     assert(weapons[2].cursed == 1);
+    assert(read_u16_le_for_test(rawArmourData + 0) == armours[0].next);
+    assert(read_u16_le_for_test(rawArmourData + 2) == 0x0129u);
+    assert(read_u16_le_for_test(rawWeaponData + 4) == weapons[1].next);
+    assert(read_u16_le_for_test(rawWeaponData + 6) == 0x010au);
+    assert(read_u16_le_for_test(rawWeaponData + 8) == weapons[2].next);
+    assert(read_u16_le_for_test(rawWeaponData + 10) == 0x010au);
 
     for (i = 0; i < result.emissionCount; ++i) {
         if (result.emissions[i].kind == EMIT_KILL_NOTIFY &&
