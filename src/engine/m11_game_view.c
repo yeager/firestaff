@@ -24575,6 +24575,7 @@ static void m11_projectile_apply_impact(
             struct CombatantChampionSnapshot_Compat defender;
             struct CombatResult_Compat damage;
             int scaledAttack = 0;
+            int selectedWounds = 0;
             int killed = 0;
 
             memset(&damage, 0, sizeof(damage));
@@ -24595,8 +24596,17 @@ static void m11_projectile_apply_impact(
                     &scaledAttack,
                     NULL);
                 if (scaledAttack > 0) {
+                    if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+                            scaledAttack,
+                            r->outAction.allowedWounds,
+                            &defender,
+                            &state->world.masterRng,
+                            &selectedWounds,
+                            NULL)) {
+                        selectedWounds = 0;
+                    }
                     damage.damageApplied = scaledAttack;
-                    damage.woundMaskAdded = r->outAction.allowedWounds;
+                    damage.woundMaskAdded = selectedWounds;
                     (void)F0737_COMBAT_ApplyDamageToChampion_Compat(
                         &damage,
                         &state->world.party.champions[ci],

@@ -647,6 +647,55 @@ int F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
     return 1;
 }
 
+int F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+    int scaledAttack,
+    int allowedWounds,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    int* outWoundMask,
+    int* outRngCallCount)
+{
+    int adjustedAttack;
+    int vitalityAttack;
+    int woundMask = 0;
+    int rngCalls = 0;
+
+    if (!defender || !rng || !outWoundMask) return 0;
+    *outWoundMask = 0;
+    if (outRngCallCount) *outRngCallCount = 0;
+    if (scaledAttack <= 0 || allowedWounds == 0) return 1;
+
+    /* ReDMCSB CHAMPION.C F0321 lines 1900-1907: after attack scaling,
+     * draw M003_RANDOM(128)+10, adjust it through F0307(VITALITY), then
+     * repeatedly OR `1 << RANDOM(8)` filtered by AllowedWounds while the
+     * scaled attack remains above the doubled threshold.  The random wound
+     * can legitimately hit a disallowed slot and add no wound. */
+    vitalityAttack = F0732_COMBAT_RngRandom_Compat(rng, 128) + 10;
+    rngCalls++;
+    if (!F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
+            defender->statisticVitality,
+            defender->statisticVitality,
+            vitalityAttack,
+            &adjustedAttack)) {
+        return 0;
+    }
+    if (scaledAttack > adjustedAttack) {
+        do {
+            woundMask |=
+                (1 << F0732_COMBAT_RngRandom_Compat(rng, 8)) &
+                allowedWounds;
+            rngCalls++;
+            adjustedAttack <<= 1;
+        } while (scaledAttack > adjustedAttack && adjustedAttack);
+    }
+
+    *outWoundMask = woundMask;
+    if (outRngCallCount) {
+        *outRngCallCount = rngCalls;
+    }
+    return 1;
+}
+
 /* ==========================================================
  *  Group C — Resolvers (F0735 champion→creature, F0736 creature→champion)
  * ========================================================== */
