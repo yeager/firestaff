@@ -23,12 +23,13 @@
  *  T13 Invisibility count bump (C3): event71CountInvisibility
  *  T14 Party Shield count bump (C4): event74CountPartyShield
  *  T15 Footprints count bump (C6): event79CountFootprints +
- *      magicFootprintsActive=1
+ *      magicFootprintsActive=1, first/last scent window from ScentCount
  *  T16 Returns 1 on success
  *  T17 Out-of-range spellType: no count bump (defensive)
  *  T18 Multiple delta slots at once
  *
- * Source-locked to ReDMCSB MENU.C:1945-2030.
+ * Source-locked to ReDMCSB MENU.C:1945-2030, especially F0412
+ * lines 1979-1986 for footprints first/last scent index handling.
  */
 
 #include "memory_magic_pc34_compat.h"
@@ -160,10 +161,24 @@ int main(void) {
     memset(&effect, 0, sizeof(effect));
     memset(&magic, 0, sizeof(magic));
     effect.spellType = C6_SPELL_TYPE_OTHER_FOOTPRINTS_COMPAT;
+    effect.powerOrdinal = 2;
     effect.magicStateDelta[5] = 1;
+    magic.scentCount = 9;
     F0760_MAGIC_ApplyStateDelta_Compat(&effect, &magic);
     CHECK(magic.event79CountFootprints == 1, "T15a: footprints count = 1");
     CHECK(magic.magicFootprintsActive == 1, "T15b: magicFootprintsActive = 1");
+    CHECK(magic.firstScentIndex == 9, "T15c: weak footprints firstScentIndex = ScentCount");
+    CHECK(magic.lastScentIndex == 9, "T15d: weak footprints lastScentIndex = first");
+
+    memset(&effect, 0, sizeof(effect));
+    memset(&magic, 0, sizeof(magic));
+    effect.spellType = C6_SPELL_TYPE_OTHER_FOOTPRINTS_COMPAT;
+    effect.powerOrdinal = 3;
+    effect.magicStateDelta[5] = 1;
+    magic.scentCount = 12;
+    F0760_MAGIC_ApplyStateDelta_Compat(&effect, &magic);
+    CHECK(magic.firstScentIndex == 12, "T15e: strong footprints firstScentIndex = ScentCount");
+    CHECK(magic.lastScentIndex == 0, "T15f: strong footprints lastScentIndex = 0");
 
     /* T16: Returns 1 on success. */
     memset(&effect, 0, sizeof(effect));

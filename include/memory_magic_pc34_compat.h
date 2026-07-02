@@ -36,7 +36,7 @@
 #define SPELL_DEFINITION_SERIALIZED_SIZE     28  /*  7 int32 */
 #define SPELL_CAST_REQUEST_SERIALIZED_SIZE   64  /* 16 int32 */
 #define SPELL_EFFECT_SERIALIZED_SIZE         84  /* 21 int32 */
-#define MAGIC_STATE_SERIALIZED_SIZE          72  /* 18 int32 */
+#define MAGIC_STATE_SERIALIZED_SIZE          84  /* 21 int32 */
 
 /* Spell-table size fixed to DM1 (25 entries); CSB magic-map extras
  * are OUT OF SCOPE for Phase 14 v1 — see §1 of PHASE14_PLAN.md. */
@@ -215,6 +215,9 @@ struct MagicState_Compat {
     int curseMask;
     int reserved0;
     int reserved1;
+    int scentCount;
+    int firstScentIndex;
+    int lastScentIndex;
 };
 
 /* ==========================================================
