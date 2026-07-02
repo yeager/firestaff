@@ -161,6 +161,13 @@
 #define PROJECTILE_FLAG_CREATES_EXPLOSION        0x0002
 #define PROJECTILE_FLAG_IGNORE_DOOR_PASS_THROUGH 0x0004
 
+/* Transient ProjectileInstance_Compat.reserved0 payload.  ReDMCSB PC 3.4's
+ * PROJEXPL.C:F0217 keys-through-door fix calls F0033_OBJECT_GetIconIndex on
+ * the projectile-associated thing and blocks C176..C191 key icons from
+ * passing through a closed projectile-passable door. */
+#define PROJECTILE_ASSOCIATED_ICON_IRON_KEY       176
+#define PROJECTILE_ASSOCIATED_ICON_MASTER_KEY     191
+
 /* ==========================================================
  *  Door state values used in the digest. -1 means "no door".
  * ========================================================== */

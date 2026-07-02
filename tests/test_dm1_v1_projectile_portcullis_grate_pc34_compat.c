@@ -245,6 +245,26 @@ static void test_f0816_kinetic_launcher_strength_passes_grate(void)
                "PROJEXPL.C:490-500 F0816 kinetic pass-through roll");
 }
 
+static void test_f0816_key_icon_cannot_pass_closed_grate(void)
+{
+    int passes = -1;
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat d;
+
+    printf("test_f0816_key_icon_cannot_pass_closed_grate\n");
+
+    make_thrown_dagger(&p);
+    make_closed_portcullis_grate_digest(&d);
+    p.reserved0 = PROJECTILE_ASSOCIATED_ICON_IRON_KEY;
+    expect_int("f0816.key.rc",
+               F0816_PROJECTILE_DoesPassThroughDoor_Compat(&p, &d, NULL,
+                                                            &passes),
+               1, "ReDMCSB PROJEXPL.C:F0217 lines 496-501");
+    expect_int("f0816.key.passes", passes, 0,
+               "PROJEXPL.C:F0217 lines 496-501 PC34 CHANGE2_04: "
+               "C176..C191 key icons cannot pass through a closed door");
+}
+
 /* ---- (3) F0811 - cross-cell advance keeps projectile flying ----- */
 
 static void test_f0811_thrown_dagger_advances_through_grate(void)
@@ -376,6 +396,8 @@ static void test_source_evidence_string(void)
         "ReDMCSB PROJEXPL.C:F0217 lines 485-505 four-part "
         "pass-through door predicate. ReDMCSB PROJEXPL.C:490-500 "
         "F0816 kinetic launcherStrength random roll. ReDMCSB "
+        "PROJEXPL.C:F0217 lines 496-501 PC34 CHANGE2_04 blocks "
+        "C176..C191 key icons from closed-door pass-through. ReDMCSB "
         "PROJEXPL.C:F0219 lines 717-725 F0811 cross-cell mirror. "
         "ReDMCSB PROJEXPL.C:721-725 cell parity rule (cell-1)&3. "
         "ReDMCSB DUNGEON.C:560-565 and 796-801 G0254_as_Graphic559_"
@@ -397,6 +419,9 @@ static void test_source_evidence_string(void)
     expect_contains("evidence.f0816", kEvidence,
                     "F0816 kinetic launcherStrength",
                     "F0816 source evidence");
+    expect_contains("evidence.keys", kEvidence,
+                    "C176..C191 key icons",
+                    "PC34 key-through-door fix source evidence");
     expect_contains("evidence.f0219", kEvidence,
                     "PROJEXPL.C:F0219 lines 717-725",
                     "F0219 source evidence");
@@ -427,6 +452,7 @@ int main(void)
 {
     test_f0814_portcullis_grate_classified_as_closed_door();
     test_f0816_kinetic_launcher_strength_passes_grate();
+    test_f0816_key_icon_cannot_pass_closed_grate();
     test_f0811_thrown_dagger_advances_through_grate();
     test_f0820_direct_pass_through_returns_flew();
     test_source_evidence_string();
