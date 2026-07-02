@@ -21602,17 +21602,27 @@ static void m11_set_champion_direction_to_party_f0406(
 }
 
 
-static int m11_party_front_square(const M11_GameViewState* state,
-                                  int* outMapIndex,
-                                  int* outX,
-                                  int* outY) {
+static int m11_party_front_square_for_direction(const M11_GameViewState* state,
+                                                int direction,
+                                                int* outMapIndex,
+                                                int* outX,
+                                                int* outY) {
     int dx = 0, dy = 0;
     if (!state || !outMapIndex || !outX || !outY) return 0;
-    m11_creature_step_for_dir(state->world.party.direction, &dx, &dy);
+    m11_creature_step_for_dir(direction, &dx, &dy);
     *outMapIndex = state->world.party.mapIndex;
     *outX = state->world.party.mapX + dx;
     *outY = state->world.party.mapY + dy;
     return 1;
+}
+
+static int m11_party_front_square(const M11_GameViewState* state,
+                                  int* outMapIndex,
+                                  int* outX,
+                                  int* outY) {
+    return m11_party_front_square_for_direction(
+        state, state ? state->world.party.direction : 0,
+        outMapIndex, outX, outY);
 }
 
 static int m11_spawn_centered_explosion(M11_GameViewState* state,
@@ -22321,9 +22331,11 @@ static int m11_move_group_thing_f0225(M11_GameViewState* state,
 }
 
 static int m11_perform_fluxcage_action(M11_GameViewState* state,
-                                       const char* champName) {
-    int mapIndex, mapX, mapY;
-    if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
+                                       const char* champName,
+                                       int mapIndex,
+                                       int mapX,
+                                       int mapY) {
+    if (!state) return 0;
     if (!m11_spawn_fluxcage_f0224(state, mapIndex, mapX, mapY)) {
         /* ReDMCSB: MENU.C F0407 lines 1488-1497 leaves
          * AL1245_B_ActionPerformed TRUE around the void F0224 call.
@@ -25104,8 +25116,20 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             return spawned;
         }
         case 35: /* FLUXCAGE */
+        {
+            int mapIndex, mapX, mapY;
+            /* ReDMCSB MENU.C F0407 lines 1262-1266 computes L1251/L1252
+             * from Champion.Direction before case C035 calls F0406 at
+             * lines 1494-1497; unlike FUSE, it does not recompute the target
+             * from G0308_i_PartyDirection after F0406. */
+            if (!m11_party_front_square_for_direction(
+                    state, champ->direction, &mapIndex, &mapX, &mapY)) {
+                return 0;
+            }
             m11_set_champion_direction_to_party_f0406(state, champ);
-            return m11_perform_fluxcage_action(state, champName);
+            return m11_perform_fluxcage_action(
+                state, champName, mapIndex, mapX, mapY);
+        }
         case 43: /* FUSE */
             m11_set_champion_direction_to_party_f0406(state, champ);
             return m11_perform_fuse_action(state, champName);
