@@ -6928,10 +6928,9 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
 /* ================================================================
  * XP award and level-up processing
  *
- * When EMIT_DAMAGE_DEALT fires, the active champion earns combat XP
- * through the M10 lifecycle layer.  If the accumulated experience
- * crosses a level threshold, F0850 applies stat boosts and we log
- * the level-up.
+ * Helper for local M11 bonus/legacy XP paths. Source-locked F0231
+ * damage XP is applied by M10 when the hit is resolved; tick emission
+ * processing must stay presentation-only for that damage.
  * ================================================================ */
 static void m11_award_combat_xp(M11_GameViewState* state,
                                 int championIndex,
@@ -7484,9 +7483,12 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                               "T%u: DAMAGE %d DEALT",
                               (unsigned int)state->world.gameTick,
                               dmgDealt);
-                /* Award combat XP to the active champion */
-                m11_award_combat_xp(state, champIdx, dmgDealt);
-                /* Trigger GRAPHICS.DAT graphic 14 viewport overlay */
+                (void)champIdx;
+                /* ReDMCSB: PROJEXPL.C F0231 lines 1534-1536 awards
+                 * damage XP/stamina at hit resolution, and MENU.C F0407
+                 * lines 1620-1628 separately applies the action tail XP.
+                 * M10 owns those source effects; M11 only presents the
+                 * positive EMIT_DAMAGE_DEALT feedback. */
                 M11_GameView_NotifyCreatureHit(state, dmgDealt);
                 break;
             }
