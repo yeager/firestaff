@@ -580,12 +580,33 @@ int dm1_v22_asset_load(const char* category, const char* asset_id,
 
         /* For non-file provenance levels (ORIGINAL/FILTERED/UPSCALED),
          * we don't have file paths but we record the provenance as
-         * the best available by consulting the V2.1 pipeline state. */
+         * the best available by consulting the V2.1 pipeline state.
+         *
+         * Source-lock anchors for the runtime-resolved descriptors:
+         *   UPSCALED  → dm1_v2_asset_pipeline_pc34.c:F0115
+         *     (V2.1 EPX 2x pipeline; ReDMCSB DUNVIEW.C:4547-4602 F0115
+         *      DrawObjectsCreaturesProjectiles — same call site that V1
+         *      indexing feeds, only the EPX upscale is added on top)
+         *   FILTERED  → dm1_v2_filter_palette_correct_pc34.c:F0337
+         *     (V2.0 gamma/brightness LUT builder; ReDMCSB PANEL.C:418-428
+         *      F0337_INVENTORY_SetDungeonViewPalette selects the 6-level
+         *      palette; F0337 owns the index→palette routing)
+         *   ORIGINAL  → dm1_v1_graphics_loader_pc34_compat.c:G0163
+         *     (V1 wall set table; ReDMCSB DEFS.H G0163 holds the 30-wall
+         *      parity bitmap selection)
+         *
+         * Each branch is gated on the corresponding V2.1 asset-mode
+         * threshold (DM1_V2_ASSET_MODE_UPSCALED / _FILTERED / _ORIGINAL)
+         * so the chain stays in sync with dm1_v22_best_available_provenance().
+         * Without the FILTERED branch the V2.0 + V2.1 mismatch case
+         * silently collapses to V1 ORIGINAL, bypassing the V2.0 filter
+         * presentation. (Regressed by Phase 8 modern asset pipeline
+         * initial seed; fixed by this gate.) */
         if (!path_valid || !path[0]) {
+            DM1_V2_AssetMode mode = DM1_V2_GetAssetMode();
             if (prov == DM1_V22_PROVENANCE_UPSCALED) {
-                /* Check if V2.1 pipeline has the surface.
-                 * DM1_V2_GetAssetMode() tells us the current mode. */
-                DM1_V2_AssetMode mode = DM1_V2_GetAssetMode();
+                /* V2.1 EPX 2x pipeline — available when V2.1 mode is
+                 * UPSCALED (or MODERN, which is a superset). */
                 if (mode >= DM1_V2_ASSET_MODE_UPSCALED) {
                     out_desc->provenance = prov;
                     out_desc->category   = DM1_V22_CATEGORY_UNKNOWN;
@@ -597,6 +618,26 @@ int dm1_v22_asset_load(const char* category, const char* asset_id,
                     out_desc->pixels  = NULL;
                     out_desc->pixels_size = 0;
                     out_desc->is_valid = 1; /* V2.1 upscaled pipeline is always valid */
+                    out_desc->load_attempted = 1;
+                    return 1;
+                }
+            } else if (prov == DM1_V22_PROVENANCE_FILTERED) {
+                /* V2.0 filter pipeline — available when V2.1 mode is
+                 * FILTERED (or UPSCALED / MODERN, which are supersets).
+                 * The V2.0 path renders the V1 indexed framebuffer through
+                 * the gamma/brightness LUT builder and is the lowest-cost
+                 * "no-EPX" presentation mode. */
+                if (mode >= DM1_V2_ASSET_MODE_FILTERED) {
+                    out_desc->provenance = prov;
+                    out_desc->category   = DM1_V22_CATEGORY_UNKNOWN;
+                    out_desc->asset_id   = asset_id;
+                    out_desc->source_anchor = "dm1_v2_filter_palette_correct_pc34.c:F0337_INVENTORY_SetDungeonViewPalette";
+                    out_desc->width   = 320;
+                    out_desc->height  = 200;
+                    out_desc->format  = DM1_V22_FORMAT_PALETTED;
+                    out_desc->pixels  = NULL;
+                    out_desc->pixels_size = 0;
+                    out_desc->is_valid = 1; /* V2.0 filter pipeline is always valid */
                     out_desc->load_attempted = 1;
                     return 1;
                 }
@@ -659,29 +700,81 @@ int dm1_v22_asset_validate(const DM1_V22_AssetDescriptor* desc) {
         return 0;
     }
 
-    /* If is_valid==1, pixels must be non-NULL and size must match */
-    if (desc->is_valid) {
-        if (!desc->pixels) return 0;
+    /* Pixel-buffer requirement policy:
+     *
+     * Provenance-based split:
+     *   MODERN      → file-backed (PNG/TGA). pixels MUST be non-NULL
+     *                 and pixels_size MUST match the format minimum
+     *                 when is_valid=1.
+     *   UPSCALED    → pipeline-resolved V2.1 EPX 2x path. The V1
+     *                 indexed framebuffer is the pipeline input; no
+     *                 pre-decoded pixel buffer is needed. pixels=NULL
+     *                 is allowed with is_valid=1.
+     *   FILTERED    → pipeline-resolved V2.0 filter path. Same
+     *                 rationale as UPSCALED: V1 framebuffer is the
+     *                 pipeline input.
+     *   ORIGINAL    → pipeline-resolved V1 path. The V1 indexed
+     *                 framebuffer is rendered directly; no pre-decoded
+     *                 buffer is needed.
+     *
+     * Before this policy was clarified, the validator unconditionally
+     * required pixels whenever is_valid=1, which made every pipeline-
+     * resolved descriptor (V1/V2.0/V2.1) fail validation immediately
+     * after dm1_v22_asset_load(). That inconsistency was hidden by the
+     * MODERN branch (which sets is_valid=0 because pixels weren't
+     * loaded yet in the probe version of the loader).
+     *
+     * is_valid=0 always validates (descriptor is metadata-only / a
+     * placeholder). The validator only enforces buffer consistency when
+     * the caller claims the descriptor is rendering-ready. */
+    if (!desc->is_valid) {
+        return 1;
+    }
 
-        /* Compute expected minimum size based on format and dimensions */
+    /* is_valid=1: enforce pixel buffer consistency only when the
+     * descriptor actually carries pixel data.
+     *
+     * Policy:
+     *   MODERN      → pixels MUST be non-NULL (file-backed); if present,
+     *                 pixels_size MUST match the format minimum.
+     *   UPSCALED    → pixels is optional (V2.1 EPX pipeline uses the V1
+     *                 indexed framebuffer as input, no pre-decoded
+     *                 buffer is needed). If pixels is non-NULL, the size
+     *                 is still checked for data integrity.
+     *   FILTERED    → same as UPSCALED (V2.0 filter pipeline).
+     *   ORIGINAL    → same as UPSCALED (V1 indexed framebuffer is the
+     *                 pipeline input).
+     *
+     * This split preserves the existing INDEXED / RGBA / PALETTED
+     * "undersized buffer fails" contract from the original validator
+     * while admitting the pipeline-resolved descriptors that
+     * dm1_v22_asset_load() returns for V1 / V2.0 / V2.1. */
+    if (desc->provenance == DM1_V22_PROVENANCE_MODERN && !desc->pixels) {
+        /* MODERN is file-backed: pixels must be present when is_valid=1. */
+        return 0;
+    }
+    if (desc->pixels) {
+        /* When pixels are present (any provenance), the size must be
+         * consistent with the format and dimensions. This protects the
+         * V2.0 / V1 / V2.1 callers that pre-load a buffer themselves
+         * and want the validator to catch undersized buffers. */
         size_t expected_min = 0;
         switch (desc->format) {
-            case DM1_V22_FORMAT_INDEXED:
-                /* 4-bit indexed: 1 byte per 2 pixels, rows padded to byte */
-                expected_min = ((desc->width + 1) / 2) * desc->height;
+            case DM1_V22_FORMAT_PNG:
+            case DM1_V22_FORMAT_TGA:
+            case DM1_V22_FORMAT_RGBA:
+                expected_min = (size_t)desc->width * desc->height * 4;
                 break;
             case DM1_V22_FORMAT_PALETTED:
                 expected_min = (size_t)desc->width * desc->height;
                 break;
-            case DM1_V22_FORMAT_RGBA:
-            case DM1_V22_FORMAT_PNG:
-            case DM1_V22_FORMAT_TGA:
-                expected_min = (size_t)desc->width * desc->height * 4;
+            case DM1_V22_FORMAT_INDEXED:
+                /* 4-bit indexed: 1 byte per 2 pixels, rows padded to byte */
+                expected_min = ((size_t)(desc->width + 1) / 2) * desc->height;
                 break;
             default:
                 return 0;
         }
-
         if (desc->pixels_size < expected_min) return 0;
     }
 

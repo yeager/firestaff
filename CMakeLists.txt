@@ -10747,6 +10747,11 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v22_asset_pipeline.c
     )
     target_link_libraries(test_dm1_v22_asset_pipeline PRIVATE firestaff_v2)
+    add_executable(test_dm1_v22_upscaled_asset_selection_pc34
+        tests/test_dm1_v22_upscaled_asset_selection_pc34.c
+        src/dm1v2/dm1_v22_asset_pipeline.c
+    )
+    target_link_libraries(test_dm1_v22_upscaled_asset_selection_pc34 PRIVATE firestaff_v2)
     add_executable(test_dm1_v22_verification
         tests/test_dm1_v22_verification.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
@@ -11008,6 +11013,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_viewport_materials_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_per_mode_material_signatures_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v22_real_asset_material_gate_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v22_upscaled_asset_selection_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v22_finished_art_material_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v22_finished_art_material_gate_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v22_finished_pack_receipt_pc34 PRIVATE -Wall -Wextra -O2)
@@ -11377,6 +11383,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v22_asset_pipeline
         COMMAND test_dm1_v22_asset_pipeline
+    )
+    add_test(
+        NAME dm1_v22_upscaled_asset_selection_pc34
+        COMMAND test_dm1_v22_upscaled_asset_selection_pc34
     )
     add_test(
         NAME dm1_v2_viewport_materials_pc34
