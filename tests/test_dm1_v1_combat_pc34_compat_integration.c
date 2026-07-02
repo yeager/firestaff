@@ -23,6 +23,7 @@ static int g_fail = 0;
 /* Forward declarations for tests defined after main(). */
 static void test_champion_is_lucky(void);
 static void test_f0735_lucky_hit_enters_damage_path(void);
+static void test_f0735_dex_hit_short_circuits_random4_luck(void);
 static void test_f0735_zero_luck_f0308_uses_pc34_rng_count(void);
 static void test_f0735_non_material_gate_skips_luck(void);
 static void test_f0735_dexterity_255_skips_hit_branch(void);
@@ -855,6 +856,7 @@ int main(void) {
     test_ranged_shoot_sling_ammunition();
     test_champion_is_lucky();
     test_f0735_lucky_hit_enters_damage_path();
+    test_f0735_dex_hit_short_circuits_random4_luck();
     test_f0735_zero_luck_f0308_uses_pc34_rng_count();
     test_f0735_non_material_gate_skips_luck();
     test_f0735_dexterity_255_skips_hit_branch();
@@ -989,6 +991,61 @@ static void test_f0735_lucky_hit_enters_damage_path(void) {
     }
 
     FAIL("no deterministic seed reached the F0308 lucky-hit branch");
+}
+
+/* -- Test: F0231 dexterity hit short-circuits random4/luck ----------- */
+static void test_f0735_dex_hit_short_circuits_random4_luck(void) {
+    TEST(f0735_dex_hit_short_circuits_random4_luck);
+
+    {
+        struct CombatantChampionSnapshot_Compat attacker;
+        struct CombatantCreatureSnapshot_Compat defender;
+        struct WeaponProfile_Compat weapon;
+        struct CombatResult_Compat out;
+        struct RngState_Compat rng;
+
+        memset(&attacker, 0, sizeof(attacker));
+        memset(&defender, 0, sizeof(defender));
+        memset(&weapon, 0, sizeof(weapon));
+        memset(&out, 0, sizeof(out));
+        CHECK(F0730_COMBAT_RngInit_Compat(&rng, 0x630u) == 1,
+              "rng init should accept dex-hit fixture seed");
+
+        attacker.championIndex = 0;
+        attacker.currentHealth = 100;
+        attacker.dexterity = 255;
+        attacker.strengthActionHand = 120;
+        attacker.skillLevelAction = 0;
+        attacker.statisticLuck = 40;
+        attacker.statisticLuckMax = 100;
+        attacker.statisticLuckMin = 0;
+
+        defender.creatureType = CREATURE_TYPE_GIANT_SCORPION;
+        defender.defense = 0;
+        defender.dexterity = 0;
+        defender.attributes = 0;
+        defender.doubledMapDifficulty = 0;
+        defender.healthBefore = 200;
+
+        weapon.hitProbability = 0;
+        weapon.damageFactor = 32;
+
+        CHECK(F0735_COMBAT_ResolveChampionMelee_Compat(
+                  &attacker, &weapon, &defender, &rng, &out) == 1,
+              "F0735 should resolve dex-hit fixture");
+        CHECK(out.hitLanded == 1,
+              "high-dexterity fixture must hit through the first F0231 gate");
+        CHECK(out.luckyHit == 0,
+              "dexterity hit must not enter F0308 luck branch");
+        CHECK(attacker.statisticLuck == 40,
+              "dexterity hit must leave Luck unchanged");
+        CHECK(out.rngCallCount == 9,
+              "ReDMCSB F0231 dexterity hit consumes rand32 plus damage RNG only");
+        CHECK(out.damageApplied > 0,
+              "strong dex-hit fixture should stay on the non-weak damage path");
+    }
+
+    PASS();
 }
 
 /* -- Test: F0231 zero-Luck F0308 branch uses PC34 RNG count ----------- */
