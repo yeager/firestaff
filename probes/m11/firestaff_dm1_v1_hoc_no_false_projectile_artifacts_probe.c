@@ -39,7 +39,12 @@ enum {
     D1C_DEBUG_MARKER_Y = 94,
     D1C_DEBUG_MARKER_W = 9,
     D1C_DEBUG_MARKER_H = 9,
-    DM_PC_VGA_TAN_ORANGE = 10
+    DM_PC_VGA_TAN_ORANGE = 10,
+    D1C_HOT_BLOB_X = 72,
+    D1C_HOT_BLOB_Y = 52,
+    D1C_HOT_BLOB_W = 104,
+    D1C_HOT_BLOB_H = 72,
+    D1C_HOT_BLOB_FAIL_PIXELS = 180
 };
 
 static int g_pass;
@@ -215,6 +220,32 @@ static int has_d1c_debug_sensor_marker(const unsigned char* fb) {
                       ((D1C_DEBUG_MARKER_H - 2) * 2));
 }
 
+static int is_fire_effect_color(unsigned char px) {
+    return px == 8U ||  /* red */
+           px == 9U ||  /* orange/gold */
+           px == 10U || /* tan/skin, old cue/leaked transparency */
+           px == 11U;   /* yellow */
+}
+
+static int d1c_fire_effect_pixel_count(const unsigned char* fb) {
+    int x;
+    int y;
+    int count = 0;
+    if (!fb) {
+        return 0;
+    }
+    for (y = 0; y < D1C_HOT_BLOB_H; ++y) {
+        for (x = 0; x < D1C_HOT_BLOB_W; ++x) {
+            unsigned char px = fb[(D1C_HOT_BLOB_Y + y) * FB_W +
+                                  (D1C_HOT_BLOB_X + x)];
+            if (is_fire_effect_color(px)) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 int main(int argc, char** argv) {
     const char* root = argc > 1 ? argv[1] : getenv("FIRESTAFF_DATA");
     const char* dataDir;
@@ -230,6 +261,8 @@ int main(int argc, char** argv) {
     int viewportLeaks = 0;
     int firstGfxLeaks = 0;
     int normalHudSensorMarkerLeaks = 0;
+    int normalHudFireBlobSamples = 0;
+    int normalHudFireBlobLeaks = 0;
     unsigned char framebuffer[FB_W * FB_H];
     int px;
     int py;
@@ -295,6 +328,38 @@ int main(int argc, char** argv) {
                 M11_GameView_Draw(&state, framebuffer, FB_W, FB_H);
                 if (has_d1c_debug_sensor_marker(framebuffer)) {
                     ++normalHudSensorMarkerLeaks;
+                }
+                {
+                    int d1cMapX = -1;
+                    int d1cMapY = -1;
+                    int d1cElementType = -1;
+                    int d1cProjectiles = -1;
+                    int d1cExplosions = -1;
+                    int d1cFirstProjectileGfx = -1;
+                    int d1cFirstExplosionType = -1;
+                    int d1cFloorItems = -1;
+                    int d1cSummaryItems = -1;
+                    if (M11_GameView_ProbeViewportArtifactCounts(
+                            &state, 1, 0,
+                            &d1cMapX, &d1cMapY, &d1cElementType,
+                            &d1cProjectiles, &d1cExplosions,
+                            &d1cFirstProjectileGfx, &d1cFirstExplosionType) &&
+                        M11_GameView_ProbeViewportFloorItemCounts(
+                            &state, 1, 0,
+                            NULL, NULL, NULL,
+                            &d1cFloorItems, &d1cSummaryItems) &&
+                        d1cElementType != DUNGEON_ELEMENT_WALL &&
+                        d1cProjectiles == 0 && d1cExplosions == 0 &&
+                        d1cFirstProjectileGfx < 0 && d1cFirstExplosionType < 0 &&
+                        d1cFloorItems == 0 && d1cSummaryItems == 0) {
+                        int hotPixels = d1c_fire_effect_pixel_count(framebuffer);
+                        ++normalHudFireBlobSamples;
+                        if (hotPixels >= D1C_HOT_BLOB_FAIL_PIXELS) {
+                            printf("LEAK party=(%d,%d,%d) d1c=(%d,%d) hotFirePixels=%d\n",
+                                   px, py, dir, d1cMapX, d1cMapY, hotPixels);
+                            ++normalHudFireBlobLeaks;
+                        }
+                    }
                 }
                 for (relForward = 1; relForward <= 3; ++relForward) {
                     int relSide;
@@ -370,10 +435,17 @@ int main(int argc, char** argv) {
     CHECK(normalHudSensorMarkerLeaks == 0,
           "normal V1 tan/orange D1C debug sensor-marker leaks=%d",
           normalHudSensorMarkerLeaks);
+    CHECK(normalHudFireBlobSamples > 0,
+          "normal V1 HoC quiet D1C fire-blob samples=%d",
+          normalHudFireBlobSamples);
+    CHECK(normalHudFireBlobLeaks == 0,
+          "normal V1 HoC quiet D1C fire/explosion blob leaks=%d",
+          normalHudFireBlobLeaks);
 
     M11_GameView_Shutdown(&state);
-    printf("summary=%d passed %d failed sampled=%d denseFalse=%d compactP=%d compactE=%d markerLeaks=%d\n",
+    printf("summary=%d passed %d failed sampled=%d denseFalse=%d compactP=%d compactE=%d markerLeaks=%d fireBlobLeaks=%d\n",
            g_pass, g_fail, sampled, denseFalsePositiveSamples,
-           compactProjectiles, compactExplosions, normalHudSensorMarkerLeaks);
+           compactProjectiles, compactExplosions, normalHudSensorMarkerLeaks,
+           normalHudFireBlobLeaks);
     return g_fail == 0 ? 0 : 1;
 }
