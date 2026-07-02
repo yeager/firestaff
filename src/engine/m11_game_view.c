@@ -4840,6 +4840,35 @@ static void m11_set_next_thing(struct DungeonThings_Compat* things,
     m11_set_raw_next_thing(things, thingId, newNext);
 }
 
+static int m11_append_thing_to_chain_tail(struct DungeonThings_Compat* things,
+                                          unsigned short* head,
+                                          unsigned short thing) {
+    unsigned short current;
+    int safety = 0;
+    if (!things || !head || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    m11_set_next_thing(things, thing, THING_ENDOFLIST);
+    if (*head == THING_NONE || *head == THING_ENDOFLIST) {
+        *head = thing;
+        return 1;
+    }
+    current = *head;
+    while (current != THING_NONE && current != THING_ENDOFLIST &&
+           safety++ < 64) {
+        unsigned short next = m11_get_raw_next_thing(things, current);
+        if (next == THING_NONE || next == THING_ENDOFLIST) {
+            next = m11_get_decoded_next_thing(things, current);
+        }
+        if (next == THING_NONE || next == THING_ENDOFLIST) {
+            m11_set_next_thing(things, current, thing);
+            return 1;
+        }
+        current = next;
+    }
+    return 0;
+}
+
 /* Remove a specific thing from a square's chain. Returns 1 if removed. */
 static int m11_unlink_thing_from_square(struct GameWorld_Compat* world,
                                         int mapIndex,
@@ -23672,14 +23701,12 @@ static int m11_maybe_attach_thrown_sharp_weapon_to_group(
         return 0;
     }
 
-    /* ReDMCSB PROJEXPL.C F0217 lines 540-553 selects GROUP.Slot as the
-     * projectile-delete target for surviving creatures with
-     * KEEP_THROWN_SHARP_WEAPONS.  M11 has no separate projectile thing
-     * list for thrown object ownership, so prepend the associated weapon
-     * Thing to the group's possession chain directly. */
-    m11_set_object_drop_next(state->world.things, associatedThing, group->slot);
-    group->slot = associatedThing;
-    return 1;
+    /* ReDMCSB PROJEXPL.C:F0217 lines 540-553 selects GROUP.Slot as the
+     * projectile-delete target. F0215 lines 248-256 then delegates existing
+     * possession lists to DUNGEON.C:F0163 lines 1798-1837, which appends at
+     * the tail instead of replacing the head. */
+    return m11_append_thing_to_chain_tail(
+        state->world.things, &group->slot, associatedThing);
 }
 
 static int m11_maybe_consume_thrown_potion_on_impact(
