@@ -3233,6 +3233,11 @@ static int m11_dm1_hall_candidate_payload_item(const M11_GameViewState* state,
     return 0;
 }
 
+static int m11_projectile_instance_active(
+    const struct ProjectileInstance_Compat* p) {
+    return p && p->slotIndex >= 0 && p->reserved3 != 0;
+}
+
 static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                                         int mapIndex,
                                         int mapX,
@@ -3301,7 +3306,7 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                     && i < PROJECTILE_LIST_CAPACITY; ++i) {
             const struct ProjectileInstance_Compat* p =
                 &world->projectiles.entries[i];
-            if (p->slotIndex < 0) continue;
+            if (!m11_projectile_instance_active(p)) continue;
             if (p->mapIndex == mapIndex && p->mapX == mapX
                     && p->mapY == mapY) {
                 ++summary.projectiles;
@@ -13256,7 +13261,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         for (pi = 0; pi < state->world.projectiles.count; ++pi) {
             const struct ProjectileInstance_Compat* rp =
                 &state->world.projectiles.entries[pi];
-            if (rp->slotIndex < 0) continue;
+            if (!m11_projectile_instance_active(rp)) continue;
             if (rp->mapIndex != state->world.party.mapIndex) continue;
             if (rp->mapX != mapX || rp->mapY != mapY) continue;
             cell.firstProjectileSubtype = rp->projectileSubtype;
@@ -13279,7 +13284,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         int partyDir = state->world.party.direction;
         for (pi = 0; pi < state->world.projectiles.count; ++pi) {
             const struct ProjectileInstance_Compat* rp = &state->world.projectiles.entries[pi];
-            if (rp->slotIndex < 0) continue;
+            if (!m11_projectile_instance_active(rp)) continue;
             if (rp->mapIndex == partyMap && rp->mapX == mapX && rp->mapY == mapY) {
                 cell.firstProjectileRelDir = (rp->direction - partyDir) & 3;
                 if (cell.firstProjectileSubtype >= 0) {
@@ -23362,7 +23367,7 @@ static int m11_build_projectile_digest(
     for (i = 0; i < world->projectiles.count; ++i) {
         const struct ProjectileInstance_Compat* q = &world->projectiles.entries[i];
         if (i == otherProjectileIndex) continue;
-        if (q->slotIndex < 0) continue;
+        if (!m11_projectile_instance_active(q)) continue;
         if (q->mapIndex == p->mapIndex && q->mapX == p->mapX
                 && q->mapY == p->mapY && q->cell == p->cell) {
             /* ReDMCSB PROJEXPL.C F0219/F0217 keeps projectile impact
@@ -23517,7 +23522,7 @@ static int m11_build_projectile_digest(
     for (i = 0; i < world->projectiles.count; ++i) {
         const struct ProjectileInstance_Compat* q = &world->projectiles.entries[i];
         if (i == otherProjectileIndex) continue;
-        if (q->slotIndex < 0) continue;
+        if (!m11_projectile_instance_active(q)) continue;
         if (q->mapIndex == p->mapIndex && q->mapX == destX
                 && q->mapY == destY) {
             int newCell;
@@ -23560,7 +23565,7 @@ static int m11_find_projectile_collision_peer(
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* q =
             &world->projectiles.entries[i];
-        if (i == projectileIndex || q->slotIndex < 0) continue;
+        if (i == projectileIndex || !m11_projectile_instance_active(q)) continue;
         if (q->mapIndex == p->mapIndex && q->mapX == p->mapX &&
             q->mapY == p->mapY && q->cell == p->cell) {
             return i;
@@ -23572,7 +23577,7 @@ static int m11_find_projectile_collision_peer(
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* q =
             &world->projectiles.entries[i];
-        if (i == projectileIndex || q->slotIndex < 0) continue;
+        if (i == projectileIndex || !m11_projectile_instance_active(q)) continue;
         if (q->mapIndex == digest->destMapIndex &&
             q->mapX == digest->destMapX &&
             q->mapY == digest->destMapY &&
@@ -24682,7 +24687,7 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
         struct ProjectileTickResult_Compat result;
         struct CellContentDigest_Compat digest;
 
-        if (p->slotIndex < 0 || p->reserved3 == 0) continue;
+        if (!m11_projectile_instance_active(p)) continue;
         if ((uint32_t)p->scheduledAtTick > now) continue;
 
         if (!m11_build_projectile_digest(&state->world, p, i, &digest)) {
