@@ -8732,6 +8732,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
      * G0313/world.gameTick or gameplay systems. */
     if (state->gameWon && state->endgameFuseSequenceDelayRemainingTicks > 0) {
         state->endgameFuseSequenceDelayRemainingTicks--;
+        if (state->endgameFuseSequenceDelayRemainingTicks == 0) {
+            state->endgameFinalHandoffReady = 1;
+        }
         return M11_GAME_INPUT_REDRAW;
     }
     /* No idle gameplay ticks during overlays, completed endgame, or dialog. */
@@ -22285,6 +22288,8 @@ static void m11_apply_fuse_final_endgame_params_f0446(M11_GameViewState* state) 
     state->endgameFuseSequenceDelayTicks += params->finalDelayTicks;
     state->endgameFuseSequenceDelayRemainingTicks =
         state->endgameFuseSequenceDelayTicks;
+    state->endgameFinalHandoffReady =
+        (state->endgameFuseSequenceDelayRemainingTicks <= 0) ? 1 : 0;
     state->endgameRestartAllowed = params->restartAllowedAfterWin;
     state->endgameCalledWithTrue = params->endgameCalledWithTrue;
     if (params->victoryMusicId >= 0) {
