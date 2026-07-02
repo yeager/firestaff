@@ -48,14 +48,12 @@
 #include <direct.h>
 #include <io.h>
 #include <process.h>
+#include <sys/utime.h>
 #define unlink(path) _unlink(path)
 #define rmdir(path) _rmdir(path)
-typedef struct _utimbuf {
-    time_t actime;
-    time_t modtime;
-} firestaff_utimbuf;
+typedef struct _utimbuf firestaff_utimbuf;
 static int portable_utime(const char* path, firestaff_utimbuf* t) {
-    return _utime(path, (struct _utimbuf*)t);
+    return _utime(path, t);
 }
 #else
 #include <unistd.h>
@@ -81,7 +79,7 @@ static int portable_mkdtemp(char* templ) {
 #ifdef _WIN32
     char* marker = strstr(templ, "XXXXXX");
     int i;
-    if (!marker) return NULL;
+    if (!marker) return 0;
     for (i = 0; i < 1000; ++i) {
         snprintf(marker, 7, "%06ld", ((long)_getpid() + i) % 1000000L);
         if (_mkdir(templ) == 0) return 1;
