@@ -6695,9 +6695,11 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
              *   payload[0] = champIdx
              *   payload[1] = spellKind
              *   payload[2] = spellType
-             *   payload[3] = powerOrdinal */
+             *   payload[3] = packed powerOrdinal + G0487 SkillIndex */
             emit(result, EMIT_SPELL_EFFECT, champIdx,
-                 effect.spellKind, effect.spellType, effect.powerOrdinal);
+                 effect.spellKind, effect.spellType,
+                 EMIT_SPELL_EFFECT_PACK_POWER_SKILL(effect.powerOrdinal,
+                                                    spell.skillIndex));
         }
 
         return 1;

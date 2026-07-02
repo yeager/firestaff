@@ -6017,7 +6017,10 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
         if (state.lastTickResult.emissions[i].kind == EMIT_SPELL_EFFECT &&
             state.lastTickResult.emissions[i].payload[1] ==
                 C1_SPELL_KIND_POTION_COMPAT &&
-            state.lastTickResult.emissions[i].payload[2] == 11) {
+            state.lastTickResult.emissions[i].payload[2] == 11 &&
+            EMIT_SPELL_EFFECT_UNPACK_SKILL(
+                state.lastTickResult.emissions[i].payload[3]) ==
+                DM1_SKILL_IDX_HEAL) {
             sawSpellEffect = 1;
         }
     }
@@ -6117,7 +6120,10 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
             state.lastTickResult.emissions[i].payload[1] ==
                 C3_SPELL_KIND_OTHER_COMPAT &&
             state.lastTickResult.emissions[i].payload[2] ==
-                C7_SPELL_TYPE_OTHER_ZOKATHRA_COMPAT) {
+                C7_SPELL_TYPE_OTHER_ZOKATHRA_COMPAT &&
+            EMIT_SPELL_EFFECT_UNPACK_SKILL(
+                state.lastTickResult.emissions[i].payload[3]) ==
+                DM1_SKILL_IDX_WIZARD) {
             sawSpellEffect = 1;
         }
     }
@@ -6132,9 +6138,9 @@ static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
               fighterXpBefore,
               "Zokathra cast does not propagate pre-emission Fighter XP");
     ASSERT_EQ(state.world.lifecycle.champions[0]
-                  .skills20[DM1_SKILL_IDX_FIRE].experience > fireXpBefore,
-              1,
-              "Zokathra cast keeps committed magic subskill XP");
+                  .skills20[DM1_SKILL_IDX_FIRE].experience,
+              fireXpBefore,
+              "Zokathra cast does not reroute G0487 Wizard XP to Fire");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_WIZARD].experience > wizardXpBefore,
               1,

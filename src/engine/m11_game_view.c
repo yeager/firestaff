@@ -6991,45 +6991,41 @@ static void m11_award_combat_xp(M11_GameViewState* state,
 
 static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
-                               int spellKind,
+                               int skillIndex,
                                int power) {
     struct ChampionLifecycleState_Compat* lc;
     struct LevelUpMarker_Compat marker;
-    int skillIndex;
+    int levelBefore = 0;
+    int levelAfter = 0;
+    int baseIdx;
+    int xpAmount;
     char name[16];
 
     if (!state) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
     if (!state->world.party.champions[championIndex].present) return;
+    if (skillIndex < 0 || skillIndex >= LIFECYCLE_SKILL_COUNT) return;
 
     lc = &state->world.lifecycle.champions[championIndex];
     memset(&marker, 0, sizeof(marker));
+    xpAmount = power > 0 ? power : 1;
 
-    /* Map spell kind to lifecycle sub-skill: Heal (13) for potions,
-     * Fire (16) for projectile/combat magic. */
-    if (spellKind == C1_SPELL_KIND_POTION_COMPAT) {
-        skillIndex = LIFECYCLE_SKILL_HEAL;
-    } else {
-        skillIndex = LIFECYCLE_SKILL_FIRE;
-    }
-
-    if (F0852_LIFECYCLE_AwardMagicXP_Compat(
-            lc, championIndex, skillIndex, power > 0 ? power : 1,
+    if (F0849_LIFECYCLE_AddSkillExperience_Compat(
+            lc, skillIndex, xpAmount,
             state->world.party.mapIndex,
             state->world.gameTick,
             state->world.lifecycle.lastCreatureAttackTime,
-            &state->world.masterRng,
-            &marker)) {
-        int baseIdx = (skillIndex - LIFECYCLE_HIDDEN_SKILL_FIRST) >> 2;
+            &levelBefore, &levelAfter)) {
+        baseIdx = dm1_skill_get_base_index(skillIndex);
         if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT) {
-            int newLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-                lc, baseIdx, 0);
-            if (newLevel > 0) {
+            if (levelAfter > 0) {
                 state->world.party.champions[championIndex].skillLevels[baseIdx] =
-                    (unsigned short)newLevel;
+                    (unsigned short)levelAfter;
             }
         }
-        if (marker.newLevel > marker.previousLevel && marker.newLevel > 0) {
+        if (levelAfter > levelBefore && levelAfter > 0) {
+            (void)F0850_LIFECYCLE_ApplyLevelUp_Compat(
+                lc, baseIdx, levelAfter, &state->world.masterRng, &marker);
             m11_format_champion_name(
                 state->world.party.champions[championIndex].name,
                 name, sizeof(name));
@@ -7040,7 +7036,7 @@ static void m11_award_magic_xp(M11_GameViewState* state,
                           (baseIdx == LIFECYCLE_SKILL_PRIEST)  ? "PRIEST"  :
                           (baseIdx == LIFECYCLE_SKILL_WIZARD)  ? "WIZARD"  :
                           "SKILL",
-                          marker.previousLevel, marker.newLevel);
+                          levelBefore, levelAfter);
         }
     }
 }
@@ -7317,7 +7313,7 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
             /* Award priest XP for drinking a potion */
             m11_award_magic_xp(state,
                                state->world.party.activeChampionIndex,
-                               C1_SPELL_KIND_POTION_COMPAT,
+                               LIFECYCLE_SKILL_HEAL,
                                potPower > 0 ? potPower / 10 + 1 : 1);
 
             /* Consume: if doNotDiscard, convert to empty flask;
@@ -7562,11 +7558,13 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                               (unsigned int)state->world.gameTick);
                 break;
             case EMIT_SPELL_EFFECT: {
-                /* payload[0]=champIdx, [1]=spellKind, [2]=spellType, [3]=power */
+                /* payload[0]=champIdx, [1]=spellKind, [2]=spellType,
+                 * [3]=packed power ordinal + G0487 SkillIndex */
                 int sChamp = (int)e->payload[0];
                 int sKind = (int)e->payload[1];
                 int sType = (int)e->payload[2];
-                int sPow  = (int)e->payload[3];
+                int sPow  = (int)EMIT_SPELL_EFFECT_UNPACK_POWER(e->payload[3]);
+                int sSkill = (int)EMIT_SPELL_EFFECT_UNPACK_SKILL(e->payload[3]);
                 const char* kindStr = "SPELL";
                 int launchedProjectile = 0;
                 if (sKind == C2_SPELL_KIND_PROJECTILE_COMPAT) kindStr = "PROJECTILE";
@@ -7631,9 +7629,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                               kindStr, sType, sPow,
                               launchedProjectile ? ", LAUNCHED" : "");
                 /* ReDMCSB: MENU.C F0412 lines 1826-1839 computes spell
-                 * experience, then lines 2034-2039 award it once and
-                 * disable the caster after the spell effect succeeds. */
-                m11_award_magic_xp(state, sChamp, sKind, sPow);
+                 * experience from G0487 Spell.SkillIndex, then lines
+                 * 2034-2039 award it once and disable the caster after
+                 * the spell effect succeeds. */
+                m11_award_magic_xp(state, sChamp, sSkill, sPow);
                 break;
             }
             case EMIT_GAME_WON:

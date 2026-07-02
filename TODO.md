@@ -2,7 +2,7 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
-- 🔧 2026-07-02 DM1 V1 F0412 spell-XP parity follow-up: current `main` now removes M11's incorrect pre-emission Swing/Fighter XP from successful spell casts, leaving committed spell effects to drive magic XP. Remaining work is full ReDMCSB `MENU.C F0412` parity for spell XP amount, per-row `G0487` `SkillIndex` routing, failure XP, disabled ticks, and all spell kinds; do not treat the bounded pre-emission guard as full spell-casting parity.
+- 🔧 2026-07-02 DM1 V1 F0412 spell-XP parity follow-up: current `main` now removes M11's incorrect pre-emission Swing/Fighter XP from successful spell casts and routes committed `EMIT_SPELL_EFFECT` XP through the ReDMCSB `G0487` `Spell.SkillIndex`. Remaining work is full `MENU.C F0412` parity for exact spell XP amount, failure XP, disabled ticks, and a complete spell-row sweep; do not treat the bounded skill-routing guard as full spell-casting parity.
 
 - 🔧 2026-07-02 DM1 V1 F0231 residual parity follow-up: current `main` now suppresses M11's duplicate synthetic positive-damage Swing XP from `EMIT_DAMAGE_DEALT`, after M10 applies the source F0231 damage XP and F0407 applies the separate action-tail XP. Remaining work is F0231 writeback/render evidence and original-pixel proof, not the bounded M11 damage-emission XP path.
 
