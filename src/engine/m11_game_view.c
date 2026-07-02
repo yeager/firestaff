@@ -7471,6 +7471,15 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
             case EMIT_DAMAGE_DEALT: {
                 int champIdx = state->world.party.activeChampionIndex;
                 int dmgDealt = (int)e->payload[2];
+                if (dmgDealt <= 0) {
+                    /* ReDMCSB: MENU.C F0402 lines 1053-1056 treats
+                     * F0231 as an action performed when a target exists even
+                     * if PROJEXPL.C F0231 lines 1514-1517 return zero damage.
+                     * Zero-damage F0231 emissions keep action timing/reaction
+                     * semantics, but they do not draw G0513 damage text,
+                     * award damage XP, or show C014 creature-hit feedback. */
+                    break;
+                }
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: DAMAGE %d DEALT",
                               (unsigned int)state->world.gameTick,
@@ -19325,12 +19334,28 @@ static int m11_tick_has_emission_kind(const struct TickResult_Compat* tick,
     return 0;
 }
 
+static int m11_tick_has_positive_damage_emission(
+    const struct TickResult_Compat* tick)
+{
+    int i;
+    if (!tick) {
+        return 0;
+    }
+    for (i = 0; i < tick->emissionCount; ++i) {
+        if (tick->emissions[i].kind == EMIT_DAMAGE_DEALT &&
+            tick->emissions[i].payload[2] > 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static unsigned char m11_feedback_color(const M11_GameViewState* state,
                                         const M11_ViewportCell* aheadCell) {
     if (!state) {
         return M11_COLOR_LIGHT_CYAN;
     }
-    if (m11_tick_has_emission_kind(&state->lastTickResult, EMIT_DAMAGE_DEALT)) {
+    if (m11_tick_has_positive_damage_emission(&state->lastTickResult)) {
         return M11_COLOR_LIGHT_RED;
     }
     if (m11_tick_has_emission_kind(&state->lastTickResult, EMIT_DOOR_STATE)) {
@@ -19374,7 +19399,10 @@ static void m11_build_feedback_summary(const M11_GameViewState* state,
         chunk[0] = '\0';
         switch (emission->kind) {
             case EMIT_DAMAGE_DEALT:
-                snprintf(chunk, sizeof(chunk), "HIT %d", (int)emission->payload[2]);
+                if (emission->payload[2] > 0) {
+                    snprintf(chunk, sizeof(chunk), "HIT %d",
+                             (int)emission->payload[2]);
+                }
                 break;
             case EMIT_PARTY_MOVED:
                 if (state->lastAction[0] != '\0' && strstr(state->lastAction, "TURN") != NULL) {

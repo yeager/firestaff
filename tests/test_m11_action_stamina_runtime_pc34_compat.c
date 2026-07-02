@@ -8160,6 +8160,38 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     ASSERT_EQ(height, 71, "D2R runtime blit uses G0163 inclusive height");
 }
 
+static void test_f0231_zero_damage_emission_skips_hit_feedback(void) {
+    M11_GameViewState state;
+    int xpBefore;
+    int logBefore;
+
+    seed_state(&state, 100, 7);
+    state.world.party.activeChampionIndex = 0;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_SWING].experience = 500;
+    xpBefore = state.world.lifecycle.champions[0]
+                   .skills20[DM1_SKILL_IDX_SWING].experience;
+    logBefore = M11_GameView_GetMessageLogCount(&state);
+
+    state.lastTickResult.emissionCount = 1;
+    state.lastTickResult.emissions[0].kind = EMIT_DAMAGE_DEALT;
+    state.lastTickResult.emissions[0].payload[0] = 0; /* champion */
+    state.lastTickResult.emissions[0].payload[1] = 0; /* group */
+    state.lastTickResult.emissions[0].payload[2] = 0; /* F0231 damage */
+    state.lastTickResult.emissions[0].payload[3] = COMBAT_OUTCOME_MISS;
+
+    M11_GameView_ProcessTickEmissions(&state);
+
+    ASSERT_EQ(M11_GameView_GetMessageLogCount(&state), logBefore,
+              "zero-damage F0231 emission does not log DAMAGE 0 DEALT");
+    ASSERT_EQ(M11_GameView_GetCreatureHitOverlayTimer(&state), 0,
+              "zero-damage F0231 emission does not show C014 hit overlay");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_SWING].experience,
+              xpBefore,
+              "zero-damage F0231 emission does not award synthetic damage XP");
+}
+
 int main(void) {
     printf("=== M11 Action Stamina Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
@@ -8244,6 +8276,7 @@ int main(void) {
     test_fuse_complete_fluxcage_sets_m11_game_won_gate();
     test_endgame_restart_controls_respect_restart_allowed();
     test_dm1_d2_side_walls_sample_and_use_source_rects();
+    test_f0231_zero_damage_emission_skips_hit_feedback();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_targets_pref0407_champion_direction();
     test_melee_action_row_closed_door_targets_pref0407_champion_direction();
