@@ -295,6 +295,10 @@ static void test_melee_action_row_targets_pref0407_champion_direction(void) {
     unsigned char actions[3];
     int meleeRow = -1;
     int damageEmission = -1;
+    int logBefore;
+    int logAfter;
+    int damageLogSeen = 0;
+    int damageDealt = 0;
     int i;
 
     seed_state(&state, 100, 7);
@@ -364,12 +368,14 @@ static void test_melee_action_row_targets_pref0407_champion_direction(void) {
     ASSERT_EQ(meleeRow >= 0, 1,
               "champion-facing fixture exposes a melee row");
     if (meleeRow < 0) return;
+    logBefore = M11_GameView_GetMessageLogCount(&state);
     ASSERT_EQ(M11_GameView_TriggerActionRow(&state, meleeRow), 1,
               "melee action row uses champion-facing F0407 target");
 
     for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
         if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
             damageEmission = i;
+            damageDealt = state.lastTickResult.emissions[i].payload[2];
             break;
         }
     }
@@ -378,9 +384,32 @@ static void test_melee_action_row_targets_pref0407_champion_direction(void) {
     if (damageEmission >= 0) {
         ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[1], 0,
                   "champion-facing melee row targets the south group");
+        ASSERT_EQ(damageDealt > 0, 1,
+                  "live F0231 emission carries positive damage");
     }
     ASSERT_EQ(groups[0].health[0] < 200, 1,
               "champion-facing melee row damages the south group");
+    ASSERT_EQ(200 - groups[0].health[0], damageDealt,
+              "live F0231 damage emission matches group HP writeback");
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1531-1536 writes creature damage
+     * before returning the positive damage value; MENU.C F0390 lines
+     * 779-783 draws G0513 action damage through F0385 on the next action
+     * area refresh.  M11 presents that same positive tick emission as the
+     * DAMAGE log plus C014 creature-hit overlay. */
+    logAfter = M11_GameView_GetMessageLogCount(&state);
+    ASSERT_EQ(logAfter >= logBefore + 2, 1,
+              "live F0407/F0231 action writes action cue and damage feedback");
+    for (i = 0; i < logAfter - logBefore; ++i) {
+        const char* entry = M11_GameView_GetMessageLogEntry(&state, i);
+        if (entry && strstr(entry, "DAMAGE ") && strstr(entry, " DEALT")) {
+            damageLogSeen = 1;
+            break;
+        }
+    }
+    ASSERT_EQ(damageLogSeen, 1,
+              "live F0231 positive damage reaches the M11 DAMAGE feedback log");
+    ASSERT_EQ(M11_GameView_GetCreatureHitOverlayTimer(&state) > 0, 1,
+              "live F0231 positive damage arms the C014 hit overlay");
     ASSERT_EQ(state.world.party.direction, 1,
               "melee action does not rewrite party direction");
     ASSERT_EQ(state.world.party.champions[0].direction, 2,
