@@ -19495,6 +19495,10 @@ int M11_GameView_GetLightLevel(const M11_GameViewState* state) {
     return m11_compute_light_level(state);
 }
 
+int M11_GameView_GetDungeonPaletteIndex(const M11_GameViewState* state) {
+    return m11_compute_dungeon_palette_index(state);
+}
+
 /* ================================================================
  * Torch fuel burn-down
  * ================================================================ */

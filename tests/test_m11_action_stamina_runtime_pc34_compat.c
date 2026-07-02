@@ -4889,6 +4889,8 @@ static void test_light_decrements_action_hand_charges(void) {
               "LIGHT performs F0407 magical light effect");
     ASSERT_EQ(state.world.magic.magicalLightAmount, 12,
               "LIGHT adds Graphic562 power-2 light amount");
+    ASSERT_EQ(M11_GameView_GetDungeonPaletteIndex(&state), 4,
+              "LIGHT refreshes M11 dungeon palette through F0337");
     ASSERT_EQ(weapons[0].chargeCount, 2,
               "LIGHT decrements action-hand charges through F0405");
     ASSERT_EQ(state.world.timeline.count, 1,
@@ -4915,6 +4917,8 @@ static void test_light_decrements_action_hand_charges(void) {
     }
     ASSERT_EQ(state.world.magic.magicalLightAmount, 5,
               "first LIGHT decay removes power-2 to power-1 delta");
+    ASSERT_EQ(M11_GameView_GetDungeonPaletteIndex(&state), 4,
+              "first LIGHT decay keeps the source F0337 dim palette");
     ASSERT_EQ(state.world.timeline.count, 1,
               "first LIGHT decay schedules weaker follow-up");
     ASSERT_EQ(state.world.timeline.events[0].kind,
@@ -4931,6 +4935,8 @@ static void test_light_decrements_action_hand_charges(void) {
     }
     ASSERT_EQ(state.world.magic.magicalLightAmount, 0,
               "final LIGHT decay removes remaining power-1 light");
+    ASSERT_EQ(M11_GameView_GetDungeonPaletteIndex(&state), 5,
+              "final LIGHT decay returns the M11 dungeon palette to darkest");
     for (i = 0; i < state.world.timeline.count; ++i) {
         ASSERT_EQ(state.world.timeline.events[i].kind !=
                       TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
