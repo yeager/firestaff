@@ -585,7 +585,10 @@ static void test_orch_projectile_move_event_advances_and_reschedules(void) {
     world.partyMapIndex = 0;
     world.party.mapX = 0;
     world.party.mapY = 0;
+    world.party.championCount = 1;
+    world.party.champions[0].present = 1;
     world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
 
     memset(&createIn, 0, sizeof(createIn));
     createIn.category = PROJECTILE_CATEGORY_KINETIC;
@@ -632,6 +635,109 @@ static void test_orch_projectile_move_event_advances_and_reschedules(void) {
     assert(world.timeline.count == 1);
     assert(world.timeline.events[0].fireAtTick == 103);
     assert(world.timeline.events[0].aux0 == 0);
+}
+
+static void test_orch_projectile_ignores_same_square_different_cell_projectile(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    struct ProjectileCreateInput_Compat createIn;
+    struct TimelineEvent_Compat moveEvent;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int slot0 = -1;
+    int slot1 = -1;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.championCount = 1;
+    world.party.champions[0].present = 1;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+
+    memset(&createIn, 0, sizeof(createIn));
+    createIn.category = PROJECTILE_CATEGORY_KINETIC;
+    createIn.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    createIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    createIn.ownerIndex = 0;
+    createIn.mapIndex = 0;
+    createIn.mapX = 1;
+    createIn.mapY = 1;
+    createIn.cell = 2;
+    createIn.direction = 1;
+    createIn.kineticEnergy = 82;
+    createIn.attack = 40;
+    createIn.stepEnergy = 10;
+    createIn.currentTick = 100;
+    createIn.firstMoveGraceFlag = 0;
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot0, &moveEvent) == 1);
+    assert(slot0 == 0);
+
+    createIn.cell = 0;
+    createIn.direction = 3;
+    createIn.currentTick = 200;
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot1, &moveEvent) == 1);
+    assert(slot1 == 1);
+    world.projectiles.entries[slot1].scheduledAtTick = 500;
+
+    memset(&moveEvent, 0, sizeof(moveEvent));
+    moveEvent.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    moveEvent.fireAtTick = 101;
+    moveEvent.mapIndex = 0;
+    moveEvent.mapX = 1;
+    moveEvent.mapY = 1;
+    moveEvent.cell = 2;
+    moveEvent.aux0 = slot0;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &moveEvent) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+
+    /* ReDMCSB PROJEXPL.C F0219/F0217 carries M011_CELL through impact
+     * checks. A projectile sharing the dungeon square in a different cell
+     * must not trip the "other projectile" impact path. */
+    assert(world.projectiles.count == 2);
+    assert(world.projectiles.entries[slot0].slotIndex == slot0);
+    assert(world.projectiles.entries[slot0].mapX == 2);
+    assert(world.projectiles.entries[slot0].mapY == 1);
+    assert(world.projectiles.entries[slot0].cell == 3);
+    assert(world.projectiles.entries[slot0].kineticEnergy == 72);
+    assert(world.projectiles.entries[slot0].attack == 30);
+    assert(world.projectiles.entries[slot1].slotIndex == slot1);
+    assert(world.projectiles.entries[slot1].mapX == 1);
+    assert(world.projectiles.entries[slot1].mapY == 1);
+    assert(world.projectiles.entries[slot1].cell == 0);
 }
 
 static void test_orch_projectile_wall_impact_creates_explosion(void) {
@@ -6030,6 +6136,7 @@ int main(void) {
     test_orch_turn_rotates_champion_cell_and_direction();
     test_orch_projectile_create_preserves_associated_thing();
     test_orch_projectile_move_event_advances_and_reschedules();
+    test_orch_projectile_ignores_same_square_different_cell_projectile();
     test_orch_projectile_wall_impact_creates_explosion();
     test_orch_magical_wall_impact_zero_adjusted_explosion_skips_spawn_and_sound();
     test_orch_magical_wall_impact_nonzero_adjusted_explosion_spawns();

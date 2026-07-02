@@ -22928,7 +22928,10 @@ static int m11_build_projectile_digest(
         if (i == otherProjectileIndex) continue;
         if (q->slotIndex < 0) continue;
         if (q->mapIndex == p->mapIndex && q->mapX == p->mapX
-                && q->mapY == p->mapY) {
+                && q->mapY == p->mapY && q->cell == p->cell) {
+            /* ReDMCSB PROJEXPL.C F0219/F0217 keeps projectile impact
+             * tests cell-specific through M011_CELL; same square is not
+             * enough to collide. */
             out->sourceHasOtherProjectile = 1;
             break;
         }
@@ -23081,8 +23084,19 @@ static int m11_build_projectile_digest(
         if (q->slotIndex < 0) continue;
         if (q->mapIndex == p->mapIndex && q->mapX == destX
                 && q->mapY == destY) {
-            out->destHasOtherProjectile = 1;
-            break;
+            int newCell;
+            if ((p->direction & 1) == (p->cell & 1)) {
+                newCell = (p->cell - 1) & 3;
+            } else {
+                newCell = (p->cell + 1) & 3;
+            }
+            if (q->cell == newCell) {
+                /* ReDMCSB F0219 lines 721-725 applies the parity cell step
+                 * before the projectile is relinked; only that landing cell
+                 * can collide with another projectile. */
+                out->destHasOtherProjectile = 1;
+                break;
+            }
         }
     }
 
