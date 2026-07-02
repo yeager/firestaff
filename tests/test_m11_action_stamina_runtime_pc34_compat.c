@@ -7761,6 +7761,10 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete records F0446 nested fuse-update cadence");
     ASSERT_EQ(state.endgameFuseSequenceTotalUpdateTicks, 45,
               "FUSE complete records all F0445 update calls plus text messages");
+    ASSERT_EQ(state.endgameFuseSequenceFrameReplayTicks, 45,
+              "FUSE complete queues every F0445 update for presentation replay");
+    ASSERT_EQ(state.endgameFuseSequenceFrameReplayRemainingTicks, 45,
+              "FUSE complete starts with all F0445 replay frames pending");
     ASSERT_EQ(state.endgameTextMessageDelayTicks, 1560,
               "FUSE complete records F0446 780-tick delay per text message");
     ASSERT_EQ(state.audioState.lastMusicTrackId,
@@ -7799,20 +7803,35 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete stores current game tick as game-won tick");
     gameTickAtWin = state.world.gameTick;
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
-              "FUSE complete endgame delay countdown requests redraw");
-    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2159,
-              "FUSE complete endgame delay counts down one wait tick");
+              "FUSE complete first F0445 replay frame requests redraw");
+    ASSERT_EQ(state.endgameFuseSequenceFrameReplayRemainingTicks, 44,
+              "FUSE complete first idle tick consumes one F0445 replay frame");
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2160,
+              "FUSE complete waits to start delay countdown until F0445 frames replay");
     ASSERT_EQ(state.endgameFinalHandoffReady, 0,
-              "FUSE complete first wait tick does not mark final handoff ready");
+              "FUSE complete first replay tick does not mark final handoff ready");
     ASSERT_EQ(M11_GameView_GetEndgameFinalHandoffReady(&state), 0,
-              "FUSE complete public handoff query stays false while waiting");
+              "FUSE complete public handoff query stays false while replaying");
     ASSERT_EQ(M11_GameView_GetEndgameFinalPresentationReady(&state), 0,
-              "FUSE complete final presentation query stays false while waiting");
+              "FUSE complete final presentation query stays false while replaying");
     ASSERT_EQ(M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK),
               M11_GAME_INPUT_IGNORED,
               "FUSE complete ignores BACK before final endgame presentation");
     ASSERT_EQ(state.world.gameTick, gameTickAtWin,
-              "FUSE complete endgame delay does not advance source game time");
+              "FUSE complete F0445 replay does not advance source game time");
+    for (i = 0; i < 44; ++i) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.endgameFuseSequenceFrameReplayRemainingTicks, 0,
+              "FUSE complete drains all F0445 replay frames before delay");
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2160,
+              "FUSE complete still has full delay after frame replay drains");
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "FUSE complete first delay countdown tick requests redraw");
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2159,
+              "FUSE complete starts delay countdown after replay frames");
+    ASSERT_EQ(state.world.gameTick, gameTickAtWin,
+              "FUSE complete delay countdown still does not advance source game time");
     for (i = 0; i < 2159; ++i) {
         (void)M11_GameView_AdvanceIdleTick(&state);
     }

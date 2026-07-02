@@ -8727,9 +8727,19 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         return M11_GAME_INPUT_IGNORED;
     }
     mouthRedraw = m11_tick_v1_mouth_animation(state);
-    /* ReDMCSB ENDGAME.C F0446 lines 946-959 uses F0022_MAIN_Delay()
-     * after source F0445 updates.  Count that wait down without advancing
-     * G0313/world.gameTick or gameplay systems. */
+    /* ReDMCSB ENDGAME.C F0445 lines 742-759 redraws one fuse-sequence
+     * frame before the blocking delay phases in F0446.  Replay those
+     * presentation frames first, then count down F0022_MAIN_Delay()
+     * without advancing G0313/world.gameTick or gameplay systems. */
+    if (state->gameWon &&
+        state->endgameFuseSequenceFrameReplayRemainingTicks > 0) {
+        state->endgameFuseSequenceFrameReplayRemainingTicks--;
+        if (state->endgameFuseSequenceFrameReplayRemainingTicks == 0 &&
+            state->endgameFuseSequenceDelayRemainingTicks <= 0) {
+            state->endgameFinalHandoffReady = 1;
+        }
+        return M11_GAME_INPUT_REDRAW;
+    }
     if (state->gameWon && state->endgameFuseSequenceDelayRemainingTicks > 0) {
         state->endgameFuseSequenceDelayRemainingTicks--;
         if (state->endgameFuseSequenceDelayRemainingTicks == 0) {
@@ -22114,10 +22124,11 @@ static void m11_record_fuse_sequence_update_f0445(M11_GameViewState* state) {
     if (!state) return;
     /* ReDMCSB: ENDGAME.C F0445 lines 742-759 processes timeline,
      * redraws the dungeon view, plays pending sound, then advances
-     * G0313.  M11's F0446 path is currently non-blocking, but this
-     * records each source-cadence update so the later timed presentation
-     * can replay the exact frame schedule. */
+     * G0313.  M11's F0446 path is non-blocking, so this records and
+     * queues each source-cadence presentation frame for idle replay. */
     state->endgameFuseSequenceTotalUpdateTicks += 1;
+    state->endgameFuseSequenceFrameReplayTicks += 1;
+    state->endgameFuseSequenceFrameReplayRemainingTicks += 1;
 }
 
 static void m11_run_fuse_chaos_order_cycle_f0446(M11_GameViewState* state,
@@ -22141,6 +22152,8 @@ static void m11_run_fuse_chaos_order_cycle_f0446(M11_GameViewState* state,
             state->endgameChaosOrderSwitchCount += 1;
             state->endgameFuseSequenceUpdateTicks += cycleCount;
             state->endgameFuseSequenceTotalUpdateTicks += cycleCount;
+            state->endgameFuseSequenceFrameReplayTicks += cycleCount;
+            state->endgameFuseSequenceFrameReplayRemainingTicks += cycleCount;
             m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                          creatureType,
                                          state->world.party.direction);
@@ -22293,7 +22306,8 @@ static void m11_apply_fuse_final_endgame_params_f0446(M11_GameViewState* state) 
     state->endgameFuseSequenceDelayRemainingTicks =
         state->endgameFuseSequenceDelayTicks;
     state->endgameFinalHandoffReady =
-        (state->endgameFuseSequenceDelayRemainingTicks <= 0) ? 1 : 0;
+        (state->endgameFuseSequenceFrameReplayRemainingTicks <= 0 &&
+         state->endgameFuseSequenceDelayRemainingTicks <= 0) ? 1 : 0;
     state->endgameRestartAllowed = params->restartAllowedAfterWin;
     state->endgameCalledWithTrue = params->endgameCalledWithTrue;
     if (params->victoryMusicId >= 0) {
