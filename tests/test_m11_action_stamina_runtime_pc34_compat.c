@@ -3602,12 +3602,13 @@ static void test_projectile_creature_impact_keeps_thrown_sharp_weapon(void) {
     unsigned short squareFirstThings[6];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
-    struct DungeonWeapon_Compat weapons[1];
-    unsigned char rawWeaponData[4];
+    struct DungeonWeapon_Compat weapons[2];
+    unsigned char rawWeaponData[8];
     unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
     int thingCounts[DUNGEON_THING_TYPE_COUNT];
     struct ProjectileInstance_Compat* projectile;
     unsigned short daggerThing;
+    unsigned short existingThing;
     int i;
 
     seed_state(&state, 100, 100);
@@ -3639,19 +3640,25 @@ static void test_projectile_creature_impact_keeps_thrown_sharp_weapon(void) {
     squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
 
     groups[0].next = THING_ENDOFLIST;
-    groups[0].slot = THING_NONE;
+    groups[0].slot = make_thing(THING_TYPE_WEAPON, 1);
     groups[0].creatureType = 3; /* Wizard Eye keeps thrown sharp weapons. */
     groups[0].cells = 0x0F;
     groups[0].count = 0;
     groups[0].health[0] = 100;
     weapons[0].next = THING_ENDOFLIST;
     weapons[0].type = 8; /* Dagger. */
+    weapons[1].next = THING_ENDOFLIST;
+    weapons[1].type = 27; /* Arrow already kept by the group. */
     rawWeaponData[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
     rawWeaponData[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
     rawWeaponData[2] = 8;
     rawWeaponData[3] = 0;
+    rawWeaponData[4] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawWeaponData[5] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawWeaponData[6] = 27;
+    rawWeaponData[7] = 0;
     rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
-    thingCounts[THING_TYPE_WEAPON] = 1;
+    thingCounts[THING_TYPE_WEAPON] = 2;
 
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
@@ -3659,7 +3666,7 @@ static void test_projectile_creature_impact_keeps_thrown_sharp_weapon(void) {
     things.groups = groups;
     things.groupCount = 1;
     things.weapons = weapons;
-    things.weaponCount = 1;
+    things.weaponCount = 2;
     memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
     memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
 
@@ -3680,6 +3687,7 @@ static void test_projectile_creature_impact_keeps_thrown_sharp_weapon(void) {
     state.world.gameTick = 100;
 
     daggerThing = make_thing(THING_TYPE_WEAPON, 0);
+    existingThing = make_thing(THING_TYPE_WEAPON, 1);
     state.world.projectiles.count = 1;
     projectile = &state.world.projectiles.entries[0];
     memset(projectile, 0, sizeof(*projectile));
@@ -3708,11 +3716,15 @@ static void test_projectile_creature_impact_keeps_thrown_sharp_weapon(void) {
               "kept thrown sharp weapon impact despawns projectile");
     ASSERT_EQ(groups[0].health[0], 15,
               "kept thrown sharp weapon impact applies defense-scaled damage");
-    ASSERT_EQ(groups[0].slot, daggerThing,
-              "surviving keep-sharp creature stores thrown dagger in group slot");
-    ASSERT_EQ(weapons[0].next, THING_NONE,
+    ASSERT_EQ(groups[0].slot, existingThing,
+              "surviving keep-sharp creature preserves group slot head");
+    ASSERT_EQ(weapons[1].next, daggerThing,
+              "surviving keep-sharp creature appends thrown dagger to chain tail");
+    ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
               "kept dagger terminates group possession chain");
-    ASSERT_EQ(rawWeaponData[0] | (rawWeaponData[1] << 8), THING_NONE,
+    ASSERT_EQ(rawWeaponData[4] | (rawWeaponData[5] << 8), daggerThing,
+              "existing possession raw next points to kept dagger");
+    ASSERT_EQ(rawWeaponData[0] | (rawWeaponData[1] << 8), THING_ENDOFLIST,
               "kept dagger raw next mirrors decoded possession chain");
 }
 
