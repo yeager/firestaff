@@ -6813,9 +6813,15 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             spellExperience = orch_cmd_cast_spell_xp_compat(
                 input, &spell, effect.powerOrdinal, &world->masterRng);
 
-            /* Schedule follow-up timeline event if applicable */
+            /* Schedule follow-up timeline event if applicable.
+             * ReDMCSB MENU.C F0412 T0412033 always adds the status
+             * EVENT after T0412032, even when the source-duration scalar
+             * has collapsed to zero (notably PC34 Thieves Eye).  The
+             * same-tick dispatcher then expires it instead of leaving the
+             * party counter permanently raised. */
             if (effect.followupEventKind != TIMELINE_EVENT_INVALID &&
-                effect.durationTicks > 0) {
+                (effect.durationTicks > 0 ||
+                 effect.followupEventKind == TIMELINE_EVENT_STATUS_TIMEOUT)) {
                 struct TimelineEvent_Compat tlEv;
                 if (F0763_MAGIC_BuildTimelineEvent_Compat(
                         &effect, world->party.mapIndex,

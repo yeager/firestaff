@@ -271,6 +271,49 @@ static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
     assert(world.timeline.count == 0);
 }
 
+static void test_orch_thieves_eye_zero_duration_expires_same_tick(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int sawSpellEffect = 0;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    world.gameTick = 123;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.party.champions[0].mana.current = 100;
+    world.party.champions[0].mana.maximum = 100;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    input.command = CMD_CAST_SPELL;
+    input.commandArg1 = 0;
+    input.commandArg2 = 4; /* Oh Ew Ra: Thieves Eye. */
+    input.reserved = 1;   /* Lo power ordinal. */
+
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+
+    for (i = 0; i < result.emissionCount; ++i) {
+        if (result.emissions[i].kind == EMIT_SPELL_EFFECT &&
+            result.emissions[i].payload[0] == 0 &&
+            result.emissions[i].payload[1] == C3_SPELL_KIND_OTHER_COMPAT &&
+            result.emissions[i].payload[2] ==
+                C2_SPELL_TYPE_OTHER_THIEVES_EYE_COMPAT) {
+            sawSpellEffect = 1;
+        }
+    }
+
+    assert(sawSpellEffect == 1);
+    assert(world.magic.event73CountThievesEye == 0);
+    assert(world.timeline.count == 0);
+    assert(world.gameTick == 124);
+}
+
 static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -6735,6 +6778,7 @@ int main(void) {
     test_orch_projectile_spell_uses_hidden_skill_query_value();
     test_orch_light_spell_uses_source_light_amount_and_party_map();
     test_orch_spell_status_timeout_aux_tags_expire_magic_state();
+    test_orch_thieves_eye_zero_duration_expires_same_tick();
     test_orch_potion_spell_mutates_empty_flask_in_hand();
     test_orch_zokathra_spell_materializes_in_ready_hand();
     test_orch_zokathra_spell_falls_back_to_party_square();
