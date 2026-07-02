@@ -16579,6 +16579,31 @@ if(BUILD_TESTING)
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
+    # CSB V1 CSBgraphics.dat M11 binding-readiness contract. This is
+    # data-free and consumes only a trusted decoded-bitmap shape plus
+    # the existing payload-span handoff. It proves the future decoder
+    # can feed M11 viewport-derived graphics (#73..#74/#351..#359)
+    # and HUD graphics (C017 inventory, C040 resurrect panel) without
+    # adding a runtime override hook here.
+    add_executable(test_csb_v1_csbgraphics_m11_binding_readiness
+        tests/test_csb_v1_csbgraphics_m11_binding_readiness.c
+        src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
+    )
+    target_include_directories(test_csb_v1_csbgraphics_m11_binding_readiness PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbgraphics_m11_binding_readiness PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbgraphics_m11_binding_readiness
+        COMMAND test_csb_v1_csbgraphics_m11_binding_readiness
+    )
+    set_tests_properties(csb_v1_csbgraphics_m11_binding_readiness PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;m11;data_free"
+    )
+
     # CSB V1 CSBgraphics.dat shape + inventory walker — data-free
     # contract tests for the on-disk shape classifier and the
     # inventory walker. Shape classifier distinguishes CSBgraphics
