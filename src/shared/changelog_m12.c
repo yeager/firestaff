@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.18  (2026-07-02)",
+    "  - Packages the DM1 V1 Q/E/Home/End/KP4/KP6 turn-key priority guard added after v3.0.17.",
+    "  - DM1 V1 now resolves those turn scancodes before persisted M11 keymaps, preventing stale pre-v2.8 bindings from routing Q/E into cooldown-gated strafe.",
+    "  - Release verification keeps the v3.0.17 MacBook Pro symptom gates and adds the green pass617 CI run before tagging.",
+    "",
     "V3.0.17  (2026-07-02)",
     "  - Packages the post-v3.0.16 DM1 MacBook Pro smoke fixes and gates currently green on main.",
     "  - DM1 title/swoosh palette, immediate Q/E/Home/End/keypad turning, and Hall of Champions false projectile/floor artifacts are verified on current-main probes.",
@@ -348,5 +353,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.17";
+    return "3.0.18";
 }

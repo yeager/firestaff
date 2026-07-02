@@ -1,6 +1,40 @@
 
 # Unreleased
 
+# Firestaff v3.0.18
+
+Firestaff v3.0.18 is a focused follow-up to v3.0.17 for the DM1 V1 MacBook Pro
+release-smoke input report. It includes the post-v3.0.17 Q/E turn-key priority
+guard on top of the same title-palette and Hall of Champions artifact gates.
+
+## Highlights since v3.0.17
+
+- **DM1 Q/E turn input is hardened against stale keymaps**: DM1 V1 now resolves
+  Q/E, Home/End, and keypad 4/6 scancodes to turn-left/turn-right before
+  persisted M11 keymaps are read, and applies the same priority during held-key
+  polling. This prevents older local keybinding files from routing Q/E into
+  cooldown-gated strafe commands.
+
+- **MacBook Pro smoke scope is explicit**: the release keeps the focused
+  v3.0.17 gates for title/swoosh palette readback and Hall of Champions false
+  projectile/floor artifacts, while adding the Q/E stale-keymap guard that was
+  not present in the v3.0.17 tag.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Local verification on
+  `/Volumes/Extern-disk/firestaff-builds/build-dm1-mbp-smoke-current-main`
+  passed `firestaff` rebuild, `firestaff_dm1_v1_hoc_no_false_projectile_artifacts_probe`,
+  `firestaff_dm1_v1_hoc_floor_runtime_no_false_items_probe`,
+  `test_m11_overlay_command_queue_block`,
+  `test_dm1_v1_turn_step_timing_gate_pc34_compat`,
+  `firestaff_v1_dm_title_swoosh_handoff_palette_probe`,
+  `test_m11_input_queue_pc34_compat`, and `firestaff_m11_phase_a_probe`.
+- Main CI for `pass617 dm1 qe turn key priority` completed successfully before
+  this release-prep commit.
+
 # Firestaff v3.0.17
 
 Firestaff v3.0.17 packages the post-v3.0.16 `main` fixes and gates for the
