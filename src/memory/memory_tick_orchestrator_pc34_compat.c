@@ -4448,6 +4448,22 @@ static int orch_apply_projectile_group_action_compat(
     creatureSnapshotReady = F0888_ORCH_GetCreatureSnapshot_Compat(
         world, groupIndex, creatureIndex, 0, &creatureSnapshot);
 
+    if (projectile &&
+        projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
+        group->creatureType == ORCH_CREATURE_BLACK_FLAME_PC34) {
+        int healed;
+        /* ReDMCSB PROJEXPL.C:F0217 lines 527-531 heals Black Flame on
+         * Fireball impact up to 1000 HP and jumps to T0217044, so no
+         * normal F0190 damage, C30 reaction, explosion, or thud follows. */
+        healed = (int)group->health[creatureIndex] + action->rawAttackValue;
+        if (healed > ORCH_BLACK_FLAME_MAX_HEALTH_PC34) {
+            healed = ORCH_BLACK_FLAME_MAX_HEALTH_PC34;
+        }
+        group->health[creatureIndex] = (unsigned short)healed;
+        orch_write_raw_group_compat(world->things, groupIndex);
+        return 1;
+    }
+
     memset(&damage, 0, sizeof(damage));
     damage.damageApplied = action->rawAttackValue;
 
