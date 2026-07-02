@@ -24522,6 +24522,12 @@ static void m11_projectile_apply_impact(
                         associatedThingMovedToGroup =
                             m11_maybe_attach_thrown_sharp_weapon_to_group(
                             state, g, p, outcome);
+                        /* ReDMCSB PROJEXPL.C:F0217 lines 515-539 reaches
+                         * GROUP.C:F0190 for creature projectile damage. Keep
+                         * M11's raw DUNGEON.DAT group record in step with
+                         * decoded HP/cells/count/slot mutations before any
+                         * later viewport/save/export path can resample it. */
+                        m11_write_raw_group_record(state->world.things, gIdx);
                 }
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s HITS %s",
@@ -24531,6 +24537,7 @@ static void m11_projectile_apply_impact(
                 /* Check if the group is dead after projectile damage */
                 (void)m11_check_group_death_and_drop(
                     state, groupThing, impactMap, impactX, impactY);
+                m11_write_raw_group_record(state->world.things, gIdx);
                 (void)m11_materialize_projectile_associated_thing(
                     state, p, associatedThingMovedToGroup);
                 return;
