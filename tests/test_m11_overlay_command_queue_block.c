@@ -800,6 +800,73 @@ static void test_m11_runtime_samples_d2_d3_side_walls(void)
     }
 }
 
+static void test_m11_runtime_draws_far_side_wall_with_near_side_blocker(void)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squareData[49];
+    struct {
+        int relForward;
+        int relSide;
+        int nearMapX;
+        int nearMapY;
+        int farMapX;
+        int farMapY;
+        const char* label;
+    } cases[] = {
+        {2, -1, 2, 3, 2, 2, "D2L behind D1L wall"},
+        {2,  1, 4, 3, 4, 2, "D2R behind D1R wall"},
+        {3, -2, 2, 3, 1, 1, "D3L2 behind D1L wall"},
+        {3,  2, 4, 3, 5, 1, "D3R2 behind D1R wall"}
+    };
+    size_t i;
+
+    seed_active_view(&state);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(squareData, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+           sizeof(squareData));
+
+    map.width = 7;
+    map.height = 7;
+    tiles.squareData = squareData;
+    tiles.squareCount = (int)sizeof(squareData);
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 3;
+    state.world.party.mapY = 4;
+    state.world.party.direction = 0;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        int legacyLaneClear = -1;
+        int drawsWithSourceOrder = 0;
+        squareData[cases[i].nearMapX * (int)map.height + cases[i].nearMapY] =
+            DUNGEON_SQUARE_MASK_THING_LIST;
+        squareData[cases[i].farMapX * (int)map.height + cases[i].farMapY] =
+            DUNGEON_SQUARE_MASK_THING_LIST;
+
+        ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+                      &state, cases[i].relForward, cases[i].relSide,
+                      &legacyLaneClear, &drawsWithSourceOrder),
+                  1, cases[i].label);
+        ASSERT_EQ(legacyLaneClear, 0, cases[i].label);
+        ASSERT_EQ(drawsWithSourceOrder, 1, cases[i].label);
+
+        squareData[cases[i].nearMapX * (int)map.height + cases[i].nearMapY] =
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareData[cases[i].farMapX * (int)map.height + cases[i].farMapY] =
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    }
+}
+
 int main(void)
 {
     printf("=== M11 Overlay Command Queue Block Regression ===\n");
@@ -823,6 +890,7 @@ int main(void)
     test_mouse_positive_control_dispatches_without_overlay();
     test_static_dungeon_effects_do_not_render_as_viewport_fireballs();
     test_m11_runtime_samples_d2_d3_side_walls();
+    test_m11_runtime_draws_far_side_wall_with_near_side_blocker();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
