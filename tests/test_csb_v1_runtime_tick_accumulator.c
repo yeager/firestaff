@@ -631,6 +631,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     uint16_t type_data;
     uint16_t group_flags;
     uint32_t c38_dispatch_time;
+    int c33_event_index;
     int c38_event_index;
     int expected_c38_damage;
     int expected_c38_wounds;
@@ -779,8 +780,29 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
               profile.party_state.Champions[1].PoisonEventCount == 0,
           "bounded non-poison C38 attack leaves poison state clear");
     CHECK(profile.timeline_queue.eventCount == 1,
-          "bounded C38 attack event requeues the next attack cadence");
-    c38_event_index = profile.timeline_queue.timeline[0];
+          "bounded C38 attack event queues the source C33 aspect wrapper");
+    c33_event_index =
+        find_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_0);
+    CHECK(c33_event_index >= 0 &&
+              DM1_MAP_TIME_TIME(
+                  profile.timeline_queue.events[c33_event_index].map_time) ==
+                  c38_dispatch_time + 1U &&
+              profile.timeline_queue.events[c33_event_index].priority ==
+                  (uint8_t)(255 - 21) &&
+              profile.timeline_queue.events[c33_event_index].c_effect == 13u,
+          "bounded C38 schedules C33 aspect update with F0208 remaining ticks");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "next tick dispatches the bounded C33 aspect wrapper");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
+              dispatch.count == 1 &&
+              dispatch.records[0].eventType ==
+                  DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
+              dispatch.records[0].effect == 13,
+          "bounded C33 aspect dispatch carries remaining C38 ticks");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "bounded C33 aspect dispatch expands into the next C38 cadence");
+    c38_event_index =
+        find_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0);
     CHECK(profile.timeline_queue.events[c38_event_index].type ==
               DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
               DM1_MAP_TIME_TIME(
