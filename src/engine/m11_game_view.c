@@ -10244,8 +10244,8 @@ static void m11_apply_reincarnation_to_candidate(M11_GameViewState* state,
     }
 }
 
-int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
-    int mirrorOrdinal;
+static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
+                                                  int mirrorOrdinal) {
     int previousPartyCount;
     char mirrorName[16];
     char mirrorTitle[32];
@@ -10253,7 +10253,6 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
     mirrorName[0] = '\0';
     mirrorTitle[0] = '\0';
     if (!state || !state->active) return 0;
-    mirrorOrdinal = m11_front_cell_mirror_ordinal(state);
     if (mirrorOrdinal < 0) return 0;
     if (state->world.party.championCount >= CHAMPION_MAX_PARTY) {
         m11_set_status(state, "MIRROR", "PARTY FULL");
@@ -10298,6 +10297,11 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
              mirrorTitle[0] ? ", " : "",
              mirrorTitle[0] ? mirrorTitle : "");
     return 1;
+}
+
+int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
+    return m11_select_mirror_candidate_by_ordinal(
+        state, m11_front_cell_mirror_ordinal(state));
 }
 
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
@@ -14161,6 +14165,25 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                             const struct SensorTriggerResult_Compat* tr =
                                 &trigResults.results[ri];
                             if (!tr->triggered) continue;
+                            if (tr->effectKind == SENSOR_EFFECT_CHAMPION &&
+                                tr->sensorIndex >= 0 &&
+                                tr->sensorIndex < state->world.things->sensorCount) {
+                                int mirrorOrdinal =
+                                    (int)state->world.things->sensors[tr->sensorIndex].sensorData;
+                                /* ReDMCSB MOVESENS.C F0275 lines 1501-1503
+                                 * handles C127 inside the wall-click sensor
+                                 * loop by calling REVIVE.C F0280 with the
+                                 * sensor data.  The D1C portrait fast-path
+                                 * above covers visible portrait clicks; this
+                                 * branch keeps the source wall-sensor route
+                                 * working for the same C127 sensor result
+                                 * instead of treating it as a remote toggle. */
+                                if (m11_select_mirror_candidate_by_ordinal(
+                                        state, mirrorOrdinal)) {
+                                    return M11_GAME_INPUT_REDRAW;
+                                }
+                                continue;
+                            }
                             effects.effects[effects.count].kind =
                                 SENSOR_EFFECT_TOGGLE_REMOTE;
                             effects.effects[effects.count].destMapX = tr->targetMapX;
