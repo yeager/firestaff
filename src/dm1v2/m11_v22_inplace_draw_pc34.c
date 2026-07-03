@@ -478,14 +478,16 @@ static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
             int sx = (x * src_w) / dst_w;
             if (sx >= src_w) sx = src_w - 1;
             uint32_t px = rgba[sy * src_w + sx];
-            /* Extract RGB from RGBA. Alpha is ignored for now
-             * (opaque-only assumption; alpha-blend is a follow-up). */
+            int px_x = dst_x + x;
+            if (px == 0U) continue;
+            if (px_x < 0 || px_x >= fbW) continue;
+            /* Extract RGB from the cache's legacy 0x00RRGGBB pixels.
+             * A fully zero pixel is transparent/no-write so modern art
+             * cutouts do not erase the source V1 dungeon underneath. */
             unsigned char r = (unsigned char)((px >> 16) & 0xFFu);
             unsigned char g = (unsigned char)((px >>  8) & 0xFFu);
             unsigned char b = (unsigned char)((px      ) & 0xFFu);
             unsigned char idx = rgb_to_ega_index(r, g, b);
-            int px_x = dst_x + x;
-            if (px_x < 0 || px_x >= fbW) continue;
             framebuffer[py * fbW + px_x] = idx;
         }
     }

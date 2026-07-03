@@ -88,8 +88,9 @@ const char* m11_v22_inplace_get_cell_asset_id(int depth, int lateral);
  * This is the V22 in-place equivalent of m11_v22_render_overlay:
  * the caller (typically the M11 game view) invokes this AFTER V1
  * rendering, so the V22 art replaces the V1 sprite at the same
- * Z-order. The bitmap's color_tint-tinted average is mapped to the
- * nearest EGA palette index for the indexed framebuffer.
+ * Z-order. Cache pixels are mapped to the nearest EGA palette index
+ * for the indexed framebuffer. A fully zero cache pixel is transparent
+ * and leaves the source V1 framebuffer pixel intact.
  *
  * Returns the number of cells painted. */
 int m11_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH);

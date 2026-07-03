@@ -83,10 +83,52 @@ static void put_cache_entry(unsigned char* entry,
     put_u32(entry + 20, rgba_offset);
 }
 
-static int write_minimal_dm1_v22_cache(const char* cache_path) {
+static int write_dm1_v22_cache_fixture(const char* cache_path,
+                                       const ProbeCacheEntry* fixtures,
+                                       size_t fixture_count) {
     FILE* fp;
     unsigned char header[32];
     unsigned char entries[5][32];
+    size_t i;
+    uint32_t data_offset;
+
+    if (!cache_path || !fixtures || fixture_count == 0 ||
+        fixture_count > sizeof(entries) / sizeof(entries[0])) {
+        return 0;
+    }
+
+    memset(header, 0, sizeof(header));
+    memset(entries, 0, sizeof(entries));
+    memcpy(header, "FSV22C\0\0", 8);
+    put_u32(header + 8, 1u);
+    put_u32(header + 12, (uint32_t)fixture_count);
+    data_offset = (uint32_t)(sizeof(header) +
+                             (fixture_count * sizeof(entries[0])));
+    for (i = 0; i < fixture_count; ++i) {
+        put_cache_entry(entries[i],
+                        &fixtures[i],
+                        data_offset + (uint32_t)(i * sizeof(fixtures[i].rgba)));
+    }
+
+    fp = fopen(cache_path, "wb");
+    if (!fp) return 0;
+    if (fwrite(header, 1, sizeof(header), fp) != sizeof(header) ||
+        fwrite(entries, 1, fixture_count * sizeof(entries[0]), fp) !=
+            fixture_count * sizeof(entries[0])) {
+        fclose(fp);
+        return 0;
+    }
+    for (i = 0; i < fixture_count; ++i) {
+        if (fwrite(fixtures[i].rgba, 1, sizeof(fixtures[i].rgba), fp) !=
+            sizeof(fixtures[i].rgba)) {
+            fclose(fp);
+            return 0;
+        }
+    }
+    return fclose(fp) == 0;
+}
+
+static int write_minimal_dm1_v22_cache(const char* cache_path) {
     const ProbeCacheEntry fixtures[5] = {
         {
             "wall_shapes",
@@ -114,36 +156,42 @@ static int write_minimal_dm1_v22_cache(const char* cache_path) {
             { 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu }
         }
     };
-    size_t i;
-    uint32_t data_offset;
+    return write_dm1_v22_cache_fixture(cache_path,
+                                       fixtures,
+                                       sizeof(fixtures) / sizeof(fixtures[0]));
+}
 
-    memset(header, 0, sizeof(header));
-    memset(entries, 0, sizeof(entries));
-    memcpy(header, "FSV22C\0\0", 8);
-    put_u32(header + 8, 1u);
-    put_u32(header + 12, (uint32_t)(sizeof(fixtures) / sizeof(fixtures[0])));
-    data_offset = (uint32_t)(sizeof(header) + sizeof(entries));
-    for (i = 0; i < sizeof(fixtures) / sizeof(fixtures[0]); ++i) {
-        put_cache_entry(entries[i],
-                        &fixtures[i],
-                        data_offset + (uint32_t)(i * sizeof(fixtures[i].rgba)));
-    }
-
-    fp = fopen(cache_path, "wb");
-    if (!fp) return 0;
-    if (fwrite(header, 1, sizeof(header), fp) != sizeof(header) ||
-        fwrite(entries, 1, sizeof(entries), fp) != sizeof(entries)) {
-        fclose(fp);
-        return 0;
-    }
-    for (i = 0; i < sizeof(fixtures) / sizeof(fixtures[0]); ++i) {
-        if (fwrite(fixtures[i].rgba, 1, sizeof(fixtures[i].rgba), fp) !=
-            sizeof(fixtures[i].rgba)) {
-            fclose(fp);
-            return 0;
+static int write_transparent_wall_dm1_v22_cache(const char* cache_path) {
+    const ProbeCacheEntry fixtures[5] = {
+        {
+            "wall_shapes",
+            "wall_d3_carved_01",
+            { 0x00000000u, 0x00ff0000u, 0x00ff0000u, 0x00ff0000u }
+        },
+        {
+            "floor_shapes",
+            "floor_plain_01",
+            { 0x0000ff00u, 0x0000ff00u, 0x0000ff00u, 0x0000ff00u }
+        },
+        {
+            "floor_shapes",
+            "floor_pit_01",
+            { 0x000000ffu, 0x000000ffu, 0x000000ffu, 0x000000ffu }
+        },
+        {
+            "floor_shapes",
+            "floor_stairs_down_01",
+            { 0x00ffff00u, 0x00ffff00u, 0x00ffff00u, 0x00ffff00u }
+        },
+        {
+            "field_shapes",
+            "field_teleporter_01",
+            { 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu }
         }
-    }
-    return fclose(fp) == 0;
+    };
+    return write_dm1_v22_cache_fixture(cache_path,
+                                       fixtures,
+                                       sizeof(fixtures) / sizeof(fixtures[0]));
 }
 
 static int setup_probe_home(char* out_cache_path, size_t out_size) {
@@ -330,6 +378,23 @@ int main(void) {
     probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_DETERMINISTIC_SELECTION",
                  sweep_routes_ok && sweep_frame_sig_ok,
                  "wall/floor/pit/stairs/field stay deterministic across directions");
+
+    probe_record(&stats, "DM1_V22_TRANSPARENT_CACHE_FIXTURE",
+                 write_transparent_wall_dm1_v22_cache(cache_path),
+                 "temporary cache rewritten with transparent wall cutout pixel");
+    m11_v22_inplace_draw_shutdown();
+    probe_record(&stats, "DM1_V22_TRANSPARENT_CACHE_REINIT",
+                 m11_v22_inplace_draw_init() && m11_v22_inplace_draw_active(),
+                 "in-place cache reloads transparent wall fixture");
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
+    memset(fb, 0xAA, sizeof(fb));
+    painted = m11_v22_inplace_render_pass(fb, 320, 200);
+    probe_record(&stats, "DM1_V22_TRANSPARENT_PIXEL_PRESERVES_V1",
+                 painted == 9 &&
+                 fb[(103 * 320) + 8] == 0xAA &&
+                 fb[(103 * 320) + 43] == 0x30,
+                 "zero cache pixel leaves V1 framebuffer intact while opaque neighbor paints");
 
     {
         const char* ev = m11_v22_inplace_draw_source_evidence();
