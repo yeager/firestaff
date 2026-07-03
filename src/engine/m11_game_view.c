@@ -3962,6 +3962,8 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
 static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                            M12_MenuInput input,
                                            const char* actionLabel);
+static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
+                                            const char* actionLabel);
 static void m11_check_party_death(M11_GameViewState* state);
 static int m11_build_projectile_defender_champion_snapshot(
     const struct GameWorld_Compat* world,
@@ -9496,6 +9498,15 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         state->nexusState.party_dir    = state->nexusEngine->game.party_dir;
         return M11_GAME_INPUT_REDRAW;
     }
+    if (strcmp(state->sourceId, "dm1") == 0 &&
+        state->dm1V1MovementPipeline.commandQueue.count > 0u) {
+        /* ReDMCSB COMMAND.C F0380 processes already queued keyboard/mouse
+         * movement once GAMELOOP.C has aged G0310/G0311.  Do this from the
+         * idle tick as well as the immediate input path so a movement key
+         * pressed during cooldown materializes without requiring a second
+         * physical key press. */
+        return m11_process_dm1_v1_pipeline_tick(state, "MOVE QUEUE");
+    }
     if (!m11_apply_tick(state, CMD_NONE, "WAIT")) {
         return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
@@ -9555,7 +9566,6 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                            M12_MenuInput input,
                                            const char* actionLabel) {
     int command;
-    struct PartyState_Compat beforeParty;
     if (!state || !state->active) {
         return 0;
     }
@@ -9563,10 +9573,6 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     if (command == DM1_V1_COMMAND_NONE) {
         return 0;
     }
-
-    beforeParty = state->world.party;
-    memset(&state->lastDm1V1MovementPipelineResult, 0,
-           sizeof(state->lastDm1V1MovementPipelineResult));
 
     /* Pass345 live bridge: main_loop_m11.c maps route tokens to M12 inputs;
      * this queues the corresponding ReDMCSB command id directly into the
@@ -9579,6 +9585,20 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
         m11_set_status(state, actionLabel, "QUEUE FULL");
         return 0;
     }
+
+    return m11_process_dm1_v1_pipeline_tick(state, actionLabel);
+}
+
+static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
+                                            const char* actionLabel) {
+    struct PartyState_Compat beforeParty;
+    if (!state || !state->active) {
+        return 0;
+    }
+
+    beforeParty = state->world.party;
+    memset(&state->lastDm1V1MovementPipelineResult, 0,
+           sizeof(state->lastDm1V1MovementPipelineResult));
 
     /* ReDMCSB GAMELOOP.C:124-155 advances game time and decrements
      * G0310/G0311 before entering the input/command wait loop at
