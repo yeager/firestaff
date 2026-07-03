@@ -2210,6 +2210,117 @@ static void csb_v1_runtime_unlink_group_thing_from_square(
     }
 }
 
+static int csb_v1_runtime_append_thing_to_square_tail(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    int level,
+    int map_x,
+    int map_y)
+{
+    uint8_t *first_ptr;
+    uint8_t *record;
+    uint16_t current;
+    uint16_t next_thing;
+    int thing_type;
+    int thing_size;
+    int guard;
+
+    if (!dungeon || thing == 0xFFFEu || thing == 0xFFFFu) return 0;
+    first_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon,
+        level,
+        map_x,
+        map_y);
+    if (!first_ptr) return 0;
+
+    record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        &thing_size);
+    if (!record || thing_size < 2) return 0;
+    csb_v1_runtime_write_u16(record, 0xFFFEu);
+
+    current = csb_v1_runtime_read_u16(first_ptr);
+    if (current == 0xFFFEu || current == 0xFFFFu) {
+        csb_v1_runtime_write_u16(first_ptr, thing);
+        return 1;
+    }
+    for (guard = 0; guard < 128; ++guard) {
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            current,
+            &thing_type,
+            &thing_size);
+        if (!record || thing_size < 2) return 0;
+        next_thing = csb_v1_runtime_read_u16(record);
+        if (next_thing == 0xFFFEu || next_thing == 0xFFFFu) {
+            csb_v1_runtime_write_u16(record, thing);
+            return 1;
+        }
+        current = next_thing;
+    }
+    return 0;
+}
+
+static void csb_v1_runtime_drop_group_slot_possessions(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y)
+{
+    struct RngState_Compat rng;
+    uint16_t thing;
+    int guard;
+
+    if (!profile || !dungeon || !group_record) return;
+    thing = csb_v1_runtime_read_u16(group_record + 2);
+    if (thing == 0xFFFEu || thing == 0xFFFFu) return;
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)map_x << 8) ^
+            ((uint32_t)map_y << 16) ^
+            0xF0188u);
+
+    /* ReDMCSB GROUP.C F0188 lines 724-731 walks GROUP.Slot, rewrites each
+     * carried thing with a random floor cell, and moves it onto the group
+     * square before F0189 deletes the group.  Fixed possession allocation and
+     * sound mode are separate CSB runtime slices. */
+    for (guard = 0; guard < 64 && thing != 0xFFFEu && thing != 0xFFFFu;
+         ++guard) {
+        uint8_t *record;
+        uint16_t next_thing;
+        uint16_t dropped_thing;
+        int thing_type;
+        int thing_size;
+
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            thing,
+            &thing_type,
+            &thing_size);
+        if (!record || thing_size < 2) break;
+        next_thing = csb_v1_runtime_read_u16(record);
+        dropped_thing = (uint16_t)((thing & 0x3FFFu) |
+                                   (uint16_t)(F0732_COMBAT_RngRandom_Compat(
+                                                  &rng,
+                                                  4) << 14));
+        if (!csb_v1_runtime_append_thing_to_square_tail(
+                dungeon,
+                dropped_thing,
+                level,
+                map_x,
+                map_y)) {
+            break;
+        }
+        thing = next_thing;
+    }
+    csb_v1_runtime_write_u16(group_record + 2, 0xFFFEu);
+}
+
 static void csb_v1_runtime_rewrite_group_events_after_creature_death(
     CSB_V1_RuntimeProfile *profile,
     int map_index,
@@ -2363,9 +2474,16 @@ static void csb_v1_runtime_pack_dead_group_creature(
     if (creature_count <= 1) {
         /* ReDMCSB GROUP.C F0190 lines 831-840 calls F0189_GROUP_Delete
          * when the last creature dies.  This bounded CSB bridge removes the
-         * C04 thing from the square chain and marks the real-format record
-         * unused; fixed possessions, sounds, and active-group side state are
-         * later slices. */
+         * C04 thing from the square chain, drops the carried Slot chain, and
+         * marks the real-format record unused; fixed possessions, sounds, and
+         * active-group side state are later slices. */
+        csb_v1_runtime_drop_group_slot_possessions(
+            profile,
+            dungeon,
+            group_record,
+            level,
+            map_x,
+            map_y);
         csb_v1_runtime_unlink_group_thing_from_square(
             dungeon,
             group_thing,
