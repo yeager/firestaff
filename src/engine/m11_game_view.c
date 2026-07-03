@@ -16703,36 +16703,50 @@ static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
     return 1;
 }
 
-static void m11_draw_dm1_front_wall_inscription_patch(unsigned char* framebuffer,
+static void m11_draw_dm1_front_wall_inscription_patch(const M11_GameViewState* state,
+                                                      unsigned char* framebuffer,
                                                       int fbW,
                                                       int fbH,
                                                       int textX,
                                                       int textY,
                                                       int textWidth) {
-    int patchX;
-    int patchY;
-    int patchW;
-    int patchH;
-    if (!framebuffer || textWidth <= 0) {
+    const M11_AssetSlot* wallSlot;
+    int srcX;
+    int srcY;
+    if (!state || !state->assetsAvailable || !framebuffer || textWidth <= 0) {
         return;
     }
-    patchX = textX - 3;
-    patchY = textY - 2;
-    patchW = textWidth + 6;
-    patchH = DM1_V1_INSCRIPTION_GLYPH_HEIGHT + 4;
-    /* ReDMCSB: DUNVIEW.C F0107 lines 3679-3682 patches the readable
-     * D1C inscription wall via M712_NEGGRAPHIC_/C735 before lines
-     * 3697-3706 blit M648 glyph cells.  Keep Firestaff's M648 glyph path,
-     * but restore the clean wall patch so HoC inscriptions are not drawn
-     * directly over noisy Hall stone. */
-    m11_fill_rect(framebuffer, fbW, fbH,
-                  patchX, patchY, patchW, patchH,
-                  M11_COLOR_BLACK);
-    if (patchW > 2 && patchH > 2) {
-        m11_fill_rect(framebuffer, fbW, fbH,
-                      patchX + 1, patchY + 1, patchW - 2, patchH - 2,
-                      M11_COLOR_DARK_GRAY);
+    wallSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    M11_GFX_WALLSET0_D1C);
+    if (!wallSlot || !wallSlot->loaded || !wallSlot->pixels ||
+        wallSlot->width < 160 || wallSlot->height < 111) {
+        return;
     }
+    srcX = (textX - M11_VIEWPORT_X) - 32;
+    srcY = (textY - M11_VIEWPORT_Y) - 9;
+    if (srcX < 0 || srcY < 0 ||
+        srcX + textWidth > (int)wallSlot->width ||
+        srcY + DM1_V1_INSCRIPTION_GLYPH_HEIGHT > (int)wallSlot->height) {
+        return;
+    }
+    /* ReDMCSB STARTUP2.C:656 binds M712_NEGGRAPHIC_ to the current
+     * D1C wall bitmap; DUNVIEW.C:3682 restores that wall patch before
+     * DUNVIEW.C:3697-3706 blits M648 glyph cells with C10 transparency.
+     * Firestaff previously painted a synthetic black/dark-gray text box,
+     * which made HoC inscriptions look unlike the source path and could
+     * mute low-index glyph strokes.  Restore the source D1C wall pixels
+     * under each 8-pixel glyph row instead. */
+    M11_AssetLoader_BlitRegion(wallSlot,
+                               srcX,
+                               srcY,
+                               textWidth,
+                               DM1_V1_INSCRIPTION_GLYPH_HEIGHT,
+                               framebuffer,
+                               fbW,
+                               fbH,
+                               textX,
+                               textY,
+                               -1);
 }
 
 static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
@@ -16761,7 +16775,7 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
             int textX = M11_VIEWPORT_X + DM1_V1_InscriptionTextX(charCount);
             int textY = M11_VIEWPORT_Y + kLineBottomY[line] - 7;
             if (m11_dm1_inscription_font_slot_for_line(state, cursor, NULL)) {
-                m11_draw_dm1_front_wall_inscription_patch(framebuffer, fbW, fbH,
+                m11_draw_dm1_front_wall_inscription_patch(state, framebuffer, fbW, fbH,
                                                           textX, textY, textWidth);
                 (void)m11_draw_dm1_inscription_font_line(state, framebuffer, fbW, fbH,
                                                          textX, textY, cursor);
