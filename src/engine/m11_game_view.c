@@ -7,8 +7,10 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_viewport_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v2_runtime.h"
@@ -96,6 +98,90 @@ static void m11_award_magic_xp(M11_GameViewState* state,
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
+
+static int m11_csb_build_viewport_grid(uint8_t grid[32 * 32])
+{
+    const CSB_V1_DungeonData *dungeon = csb_v1_dungeon_get_current();
+    int level;
+    int width;
+    int height;
+    int max_w;
+    int max_h;
+    int x;
+    int y;
+
+    if (!grid) {
+        return 0;
+    }
+    memset(grid, 0, 32 * 32);
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) {
+        return 0;
+    }
+
+    level = csb_v1_dungeon_get_current_level();
+    if (level < 0 || level >= dungeon->level_count) {
+        level = 0;
+    }
+    width = dungeon->level_widths[level];
+    height = dungeon->level_heights[level];
+    if (width <= 0 || height <= 0) {
+        return 0;
+    }
+    max_w = width < 32 ? width : 32;
+    max_h = height < 32 ? height : 32;
+
+    /* ReDMCSB DUNGEON.C F0151 stores CSB/DM1 squares column-major;
+     * the loader accessor exposes only the low square-type bits that
+     * DUNVIEW.C F0128 needs for wall/door/pit routing. */
+    for (y = 0; y < max_h; ++y) {
+        for (x = 0; x < max_w; ++x) {
+            int square_type = csb_v1_dungeon_get_square_type(dungeon, level, x, y);
+            grid[y * 32 + x] = (square_type >= 0) ? (uint8_t)square_type : 0U;
+        }
+    }
+    return 1;
+}
+
+static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
+                                        unsigned char *framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight)
+{
+    CSB_V1_BootProfile *profile;
+    CSB_V1_ViewportConfig cfg;
+    uint8_t dungeon_grid[32 * 32];
+
+    if (!state || !state->csbBootProfile || !framebuffer) {
+        return 0;
+    }
+    if (framebufferWidth < 320 || framebufferHeight < 200) {
+        return 0;
+    }
+
+    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
+    if (!profile->runtime.dungeon_handle) {
+        return 0;
+    }
+
+    (void)m11_csb_build_viewport_grid(dungeon_grid);
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.viewport_pixels = framebuffer;
+    cfg.viewport_stride = framebufferWidth;
+    cfg.dungeon_grid = dungeon_grid;
+    cfg.dungeon_width = 32;
+    cfg.dungeon_height = 32;
+    cfg.wall_set_index = 0;
+
+    /* Source-lock: ReDMCSB DUNVIEW.C F0128 is the CSB viewport draw
+     * boundary; CSBWin Viewport.cpp keeps the same party pose contract.
+     * The CSB adapter shares DM1's 320x200 indexed framebuffer layout,
+     * with the 224x136 view rectangle anchored at y=33. */
+    csb_v1_viewport_render_frame(&cfg,
+                                  profile->runtime.party_dir,
+                                  profile->runtime.party_x,
+                                  profile->runtime.party_y);
+    return 1;
+}
 
 static void m11_theron_render_v2_hud(const M11_GameViewState* state,
                                      const Theron_V1_World* world,
@@ -32857,14 +32943,18 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        const char *boot_status = state->lastOutcome[0]
-            ? state->lastOutcome
-            : "CSB BOOT READY (M11 HAND-OFF)";
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 18, "CHAOS STRIKES BACK",
-                      &g_text_title);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 36, boot_status, &g_text_shadow);
+        if (!m11_render_csb_boot_viewport(state, framebuffer,
+                                          framebufferWidth,
+                                          framebufferHeight)) {
+            const char *boot_status = state->lastOutcome[0]
+                ? state->lastOutcome
+                : "CSB RUNTIME NOT READY";
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 18, "CHAOS STRIKES BACK",
+                          &g_text_title);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 36, boot_status, &g_text_shadow);
+        }
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;

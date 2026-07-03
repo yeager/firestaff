@@ -12,8 +12,10 @@
  */
 
 #include "csb_v1_boot.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_viewport_pc34_compat.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -52,6 +54,105 @@ static void expect_true(int condition, const char* message) {
         fprintf(stderr, "FAIL: %s\n", message);
         ++g_failures;
     }
+}
+
+static int count_nonzero_rect(const unsigned char* fb,
+                              int stride,
+                              int x,
+                              int y,
+                              int w,
+                              int h) {
+    int count = 0;
+    int px;
+    int py;
+    if (!fb || stride <= 0 || w <= 0 || h <= 0) {
+        return 0;
+    }
+    for (py = y; py < y + h; ++py) {
+        for (px = x; px < x + w; ++px) {
+            if (fb[py * stride + px] != 0U) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
+static int count_diff_rect(const unsigned char* expected,
+                           const unsigned char* actual,
+                           int stride,
+                           int x,
+                           int y,
+                           int w,
+                           int h) {
+    int count = 0;
+    int px;
+    int py;
+    if (!expected || !actual || stride <= 0 || w <= 0 || h <= 0) {
+        return 0;
+    }
+    for (py = y; py < y + h; ++py) {
+        for (px = x; px < x + w; ++px) {
+            int offset = py * stride + px;
+            if (expected[offset] != actual[offset]) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
+static void snapshot_current_csb_grid(uint8_t grid[32 * 32]) {
+    const CSB_V1_DungeonData* dungeon = csb_v1_dungeon_get_current();
+    int level;
+    int width;
+    int height;
+    int max_w;
+    int max_h;
+    int x;
+    int y;
+
+    memset(grid, 0, 32 * 32);
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) {
+        return;
+    }
+    level = csb_v1_dungeon_get_current_level();
+    if (level < 0 || level >= dungeon->level_count) {
+        level = 0;
+    }
+    width = dungeon->level_widths[level];
+    height = dungeon->level_heights[level];
+    max_w = width < 32 ? width : 32;
+    max_h = height < 32 ? height : 32;
+    if (max_w <= 0 || max_h <= 0) {
+        return;
+    }
+    for (y = 0; y < max_h; ++y) {
+        for (x = 0; x < max_w; ++x) {
+            int square_type = csb_v1_dungeon_get_square_type(dungeon, level, x, y);
+            grid[y * 32 + x] = (square_type >= 0) ? (uint8_t)square_type : 0U;
+        }
+    }
+}
+
+static void render_expected_csb_viewport(const CSB_V1_RuntimeProfile* runtime,
+                                         unsigned char fb[320 * 200]) {
+    CSB_V1_ViewportConfig cfg;
+    uint8_t grid[32 * 32];
+
+    memset(fb, 0, 320 * 200);
+    snapshot_current_csb_grid(grid);
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.viewport_pixels = fb;
+    cfg.viewport_stride = 320;
+    cfg.dungeon_grid = grid;
+    cfg.dungeon_width = 32;
+    cfg.dungeon_height = 32;
+    cfg.wall_set_index = 0;
+    csb_v1_viewport_render_frame(&cfg,
+                                  runtime->party_dir,
+                                  runtime->party_x,
+                                  runtime->party_y);
 }
 
 static int write_tiny_file(const char* path, const char* bytes) {
@@ -314,6 +415,22 @@ int main(void) {
                     "CSB runtime restored magic caster from savePath");
         expect_true(profile->runtime.game_time == expected.game_time,
                     "CSB runtime restored game time from savePath");
+    }
+
+    {
+        unsigned char fb[320 * 200];
+        unsigned char expected_fb[320 * 200];
+        memset(fb, 0, sizeof(fb));
+        if (profile) {
+            render_expected_csb_viewport(&profile->runtime, expected_fb);
+        } else {
+            memset(expected_fb, 0, sizeof(expected_fb));
+        }
+        M11_GameView_Draw(&view, fb, 320, 200);
+        expect_true(count_diff_rect(expected_fb, fb, 320, 0, 33, 224, 136) == 0,
+                    "M11 CSB draw matches the direct source viewport frame");
+        expect_true(count_nonzero_rect(fb, 320, 18, 18, 160, 12) == 0,
+                    "M11 CSB draw no longer uses the boot handoff text path");
     }
 
     expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
