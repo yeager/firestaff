@@ -39,6 +39,14 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_failures;
 
+static int test_setenv(const char* name, const char* value) {
+#ifdef _WIN32
+    return _putenv_s(name, value);
+#else
+    return setenv(name, value, 1);
+#endif
+}
+
 static void expect_true(int condition, const char* message) {
     if (!condition) {
         fprintf(stderr, "FAIL: %s\n", message);
@@ -203,10 +211,13 @@ static int build_runtime_resume_save(const char* data_dir,
 int main(void) {
     char fallback[512];
     char save_tmpl[] = "/tmp/firestaff_csb_m11_resume_XXXXXX";
+    char quick_save_tmpl[] = "/tmp/firestaff_csb_m11_quicksave_XXXXXX";
     char save_path[560];
+    char quick_save_path[560];
     const char* data_dir = csb_data_dir(fallback);
     CSB_V1_BootProfile preflight;
     CSB_V1_RuntimeProfile expected;
+    CSB_V1_RuntimeProfile quick_loaded;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     CSB_V1_BootProfile* profile;
@@ -237,6 +248,8 @@ int main(void) {
 
 #ifdef _WIN32
     snprintf(save_path, sizeof(save_path), ".\\firestaff-csb-m11-resume.sav");
+    snprintf(quick_save_path, sizeof(quick_save_path),
+             ".\\firestaff-csb-m11-quicksave.sav");
 #else
     {
         int fd = mkstemp(save_tmpl);
@@ -247,6 +260,17 @@ int main(void) {
         close(fd);
         snprintf(save_path, sizeof(save_path), "%s.sav", save_tmpl);
         remove(save_tmpl);
+    }
+    {
+        int fd = mkstemp(quick_save_tmpl);
+        if (fd < 0) {
+            fprintf(stderr, "FAIL: could not create temporary quicksave path\n");
+            return 1;
+        }
+        close(fd);
+        snprintf(quick_save_path, sizeof(quick_save_path), "%s.sav",
+                 quick_save_tmpl);
+        remove(quick_save_tmpl);
     }
 #endif
 
@@ -297,10 +321,29 @@ int main(void) {
     expect_true(view.csbState.tick_count == (int)expected.tick_count + 1,
                 "CSB M11 mirror tick advances once");
 
+    expect_true(test_setenv("FIRESTAFF_QUICKSAVE_PATH", quick_save_path) == 0,
+                "test fixture sets explicit CSB quicksave path");
+    expect_true(M11_GameView_QuickSave(&view),
+                "M11 CSB quicksave writes a CSB runtime save");
+    memset(&quick_loaded, 0, sizeof(quick_loaded));
+    csb_v1_runtime_init(&quick_loaded, NULL);
+    expect_true(csb_v1_runtime_load_game_from_path(&quick_loaded,
+                                                   quick_save_path) ==
+                    CSB_V1_LOAD_OK,
+                "M11 CSB quicksave reloads through the CSB runtime loader");
+    expect_true(quick_loaded.party_x == view.csbState.party_x &&
+                quick_loaded.party_y == view.csbState.party_y &&
+                quick_loaded.party_dir == view.csbState.party_dir,
+                "M11 CSB quicksave preserves mirrored party pose");
+    expect_true(quick_loaded.tick_count == (uint32_t)view.csbState.tick_count,
+                "M11 CSB quicksave preserves mirrored tick count");
+    csb_v1_runtime_cleanup(&quick_loaded);
+
     M11_GameView_Shutdown(&view);
     expect_true(view.csbBootProfile == NULL,
                 "M11 shutdown clears CSB boot ownership");
     remove(save_path);
+    remove(quick_save_path);
 
     if (g_failures) {
         fprintf(stderr, "CSB V1 M11 startup/resume gate FAILED (%d failures)\n",

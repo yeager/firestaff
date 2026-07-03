@@ -8897,6 +8897,39 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         m11_set_status(state, "SAVE", "SAVE PATH TOO LONG");
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile*)state->csbBootProfile;
+        if (!profile) {
+            m11_set_status(state, "SAVE", "CSB PROFILE MISSING");
+            return 0;
+        }
+        /* ReDMCSB LOADSAVE.C F0433 writes CSB GLOBAL_DATA, party state,
+         * event queues, and timeline so F0435 can resume the live game.
+         * Firestaff's CSB runtime snapshot is the current bounded owner of
+         * that state; asset paths and loaded DUNGEON.DAT stay in the boot
+         * profile and are reconstructed before load. */
+        if (csb_v1_runtime_save_game_to_path(&profile->runtime, path) !=
+            CSB_V1_SAVE_OK) {
+            m11_set_status(state, "SAVE", "CSB WRITE FAILED");
+            return 0;
+        }
+        state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
+        state->csbState.party_x = profile->runtime.party_x;
+        state->csbState.party_y = profile->runtime.party_y;
+        state->csbState.party_dir = profile->runtime.party_dir;
+        state->csbState.tick_count = (int)profile->runtime.tick_count;
+        state->lastSaveTick = profile->runtime.game_time;
+        m11_set_status(state, "SAVE", "CSB QUICKSAVE WRITTEN");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "CSB SAVE SLOT READY");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "RESUME TICK %u FROM %s",
+                 (unsigned int)profile->runtime.game_time,
+                 path);
+        M12_Config_SetLastSavePath(path);
+        return 1;
+    }
 
     /* ReDMCSB LOADSAVE.C:2721-2731 restores the party position and facing.
      * Firestaff keeps the explored-cell presentation state in a sidecar so
