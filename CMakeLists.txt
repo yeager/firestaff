@@ -3004,6 +3004,7 @@ endif()
 add_executable(firestaff_csb_v1_csbwin_save_loader_boundary_probe
     probes/csb/firestaff_csb_v1_csbwin_save_loader_boundary_probe.c
     src/csb/csb_v1_csbwin_save_loader_boundary_pc34_compat.c
+    src/csb/csb_v1_csbwin_512_xor_pad_classify.c
     src/csb/csb_v1_save_import_path_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
 )
@@ -17142,6 +17143,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_csbwin_save_loader_boundary_pc34_compat
         tests/test_csb_v1_csbwin_save_loader_boundary_pc34_compat.c
         src/csb/csb_v1_csbwin_save_loader_boundary_pc34_compat.c
+        src/csb/csb_v1_csbwin_512_xor_pad_classify.c
         src/csb/csb_v1_save_import_path_pc34_compat.c
         src/csb/csb_v1_character_pc34_compat.c
     )

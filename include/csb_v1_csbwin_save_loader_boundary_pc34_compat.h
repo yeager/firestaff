@@ -32,10 +32,10 @@
  *     evidence-only verdict the launcher / M11 can quote when a
  *     user drops a CSBWin export into ~/.firestaff/data/.
  *
- * The module does not import a save, does not decode an
- * obfuscated CSBWin 512-byte header, and does not bind into
- * M11/M12. It only feeds synthetic / real byte buffers into
- * csb_v1_import_csb_save_buffer() and reports the contract match.
+ * The module does not import a full CSBWin 512-byte save body and
+ * does not bind into M11/M12. It only feeds synthetic / real byte
+ * buffers into csb_v1_import_csb_save_buffer(), and for GAMEBLOCK1
+ * bytes surfaces the read-only XOR-pad header verdict.
  *
  * Source references:
  *   - ReDMCSB CEDTINC8.C:101-118 (DMSAVE / CSBGAME.DAT routing)
@@ -51,10 +51,9 @@
  *
  * Scope (non-claims):
  *   - No file I/O. Callers feed bytes; the module reports.
- *   - No LZW / RLE / XOR obfuscation decoding. The CSBWin
- *     512-byte shape is documented as loader-reject here; a
- *     separate CSBWin obfuscation-key decoder remains tracked
- *     under docs/FIRESTAFF_GAP_LIST.md as OPEN-LARGE.
+ *   - No LZW / RLE body-section decoding. The CSBWin 512-byte
+ *     body remains documented as loader-reject here even when
+ *     the GAMEBLOCK1 XOR-pad header validates.
  *   - No runtime binding. Callers (a future launcher import
  *     button) decide what to do with the verdict.
  *   - No real CSBWin save bytes are vendored; fixtures are
@@ -68,6 +67,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_csbwin_512_xor_pad_classify.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 
 #ifdef __cplusplus
@@ -86,7 +86,7 @@ extern "C" {
  *
  * The list is intentionally narrow: it covers the shapes the
  * existing CSB V1 importer + ReDMCSB / CSBWin source files
- * actually recognise today. Future work (CSBWin 512-byte XOR
+ * actually recognise today. Future work (CSBWin 512-byte body
  * decode, DM1 raw→CSB conversion) will extend it.
  */
 typedef enum {
@@ -106,8 +106,9 @@ typedef enum {
      * extractor. */
     CSB_V1_CSBWIN_SHAPE_CSBGAME_CDSA = 3,
     /* "CSB\1" / "DM\0\1" / "CEDT" (CSBWin 512-byte obfuscated
-     * header) — reject (BAD_MAGIC). The per-disk XOR pad is not
-     * yet reproduced; OPEN-LARGE. */
+     * header) — reject (BAD_MAGIC). The GAMEBLOCK1 XOR-pad
+     * classifier can identify valid headers, but the full body
+     * import remains open. */
     CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CSB1 = 4,
     CSB_V1_CSBWIN_SHAPE_CSBWIN_512_DM01 = 5,
     CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CEDT = 6,
@@ -188,6 +189,8 @@ typedef struct {
     CSB_V1_CSBWinSaveShape    shape;       /* byte-shape classifier verdict */
     int                       should_attempt_import; /* 1 only for recognised name + accepted loader contract */
     CSB_V1_CSBWinLoaderBoundaryResult loader; /* bounded importer verdict */
+    int                       xor512_valid; /* 1 when GAMEBLOCK1 validates with CSB/DM key */
+    CSB_V1_CSBWin512Report    xor512_report; /* read-only header verdict; no body import */
     const char               *file_kind_label;
     const char               *decision_label;
 } CSB_V1_CSBWinSaveDiscoveryResult;
@@ -259,8 +262,11 @@ csb_v1_csbwin_save_loader_boundary_file_kind(const char *path_hint);
 /* Bounded discovery/classification gate for a staged CSBWin save. It
  * combines basename discovery (`csbgame.dat`, `csbgame.bak`,
  * `dmsave.dat`, `dmsave.bak`) with the byte-shape classifier and the
- * existing loader-boundary verdict. It does not allocate, decode the
- * CSBWin 512-byte obfuscation header, or import into a persistent party. */
+ * existing loader-boundary verdict. For CSBWin 512-byte GAMEBLOCK1
+ * shapes it also runs the read-only XOR-pad header classifier so
+ * startup can distinguish a valid CSBWin header from plain bad magic.
+ * It does not allocate, decode body blocks, or import into a persistent
+ * party. */
 int csb_v1_csbwin_save_loader_boundary_classify(
     const char *path_hint,
     const uint8_t *bytes,

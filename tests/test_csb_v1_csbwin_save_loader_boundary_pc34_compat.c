@@ -24,9 +24,9 @@
  *
  * Non-claims:
  *   - No real CSBWin / DM1 save bytes are loaded.
- *   - No CSBWin 512-byte obfuscation-key decoder is added; the
- *     test merely asserts the documented contract that the
- *     CSBWIN_512_* shapes are loader-rejected.
+ *   - The CSBWin 512-byte GAMEBLOCK1 decoder is read-only here:
+ *     the test asserts that valid headers are surfaced while the
+ *     full body remains loader-rejected.
  *   - No M11/M12 wiring. The launcher / engine uses the verdict
  *     when (and only when) it decides to expose an import
  *     button for CSBWin saves.
@@ -47,6 +47,70 @@ static int g_fail = 0;
     if (cond) { ++g_pass; printf("  PASS: %s\n", msg); }                      \
     else      { ++g_fail; printf("  FAIL: %s\n", msg); }                      \
 } while (0)
+
+static uint16_t test_read_le16(const uint8_t *b, size_t off)
+{
+    return (uint16_t)(((uint16_t)b[off]) |
+                      ((uint16_t)b[off + 1u] << 8));
+}
+
+static void test_write_le16(uint8_t *b, size_t off, uint16_t v)
+{
+    b[off] = (uint8_t)(v & 0xFFu);
+    b[off + 1u] = (uint8_t)((v >> 8) & 0xFFu);
+}
+
+static void test_write_le32(uint8_t *b, size_t off, uint32_t v)
+{
+    b[off + 0u] = (uint8_t)(v & 0xFFu);
+    b[off + 1u] = (uint8_t)((v >> 8) & 0xFFu);
+    b[off + 2u] = (uint8_t)((v >> 16) & 0xFFu);
+    b[off + 3u] = (uint8_t)((v >> 24) & 0xFFu);
+}
+
+static void test_scramble_block(uint8_t *buf, uint16_t initial_hash,
+                                uint16_t numword)
+{
+    uint16_t d7 = initial_hash;
+    uint16_t d6 = numword;
+    size_t i;
+    for (i = 0u; i < numword; ++i) {
+        size_t off = i * 2u;
+        uint16_t w = test_read_le16(buf, off);
+        w = (uint16_t)(w ^ d7);
+        buf[off + 0u] = (uint8_t)(w & 0xFFu);
+        buf[off + 1u] = (uint8_t)((w >> 8) & 0xFFu);
+        d7 = (uint16_t)(d7 + d6);
+        d6 = (uint16_t)(d6 - 1u);
+    }
+}
+
+static void build_valid_csbwin_512_header(uint8_t *buf)
+{
+    uint8_t public_bytes[256];
+    uint16_t d5 = 0u;
+    size_t i;
+
+    memset(buf, 0, CSB_V1_CSBWIN_BLOCK1_BYTES);
+    memset(public_bytes, 0, sizeof(public_bytes));
+    public_bytes[CSB_V1_CSBWIN_512_OFF_USELESS] = 1u;
+    public_bytes[CSB_V1_CSBWIN_512_OFF_FORMAT_ID] =
+        (uint8_t)CSB_V1_FORMAT_DM_AMIGA_36_PC_CSB;
+    public_bytes[CSB_V1_CSBWIN_512_OFF_SAVE_AND_PLAY] = 1u;
+    test_write_le32(public_bytes, CSB_V1_CSBWIN_512_OFF_GAME_ID,
+                    0x13572468u);
+    test_write_le16(public_bytes, CSB_V1_CSBWIN_512_OFF_KEYS, 0x0029u);
+    test_write_le16(public_bytes, CSB_V1_CSBWIN_512_OFF_CHECKSUMS, 0x1234u);
+    test_write_le16(public_bytes, CSB_V1_CSBWIN_512_OFF_PLATFORM, 0x0007u);
+    test_write_le16(public_bytes, CSB_V1_CSBWIN_512_OFF_DUNGEON_ID, 0x0005u);
+
+    memcpy(buf + 256u, public_bytes, sizeof(public_bytes));
+    for (i = 0u; i < 128u; ++i) {
+        d5 = (uint16_t)(d5 + test_read_le16(buf + 256u, i * 2u));
+    }
+    test_write_le16(buf, 254u, d5);
+    test_scramble_block(buf + 256u, 0u, 128u);
+}
 
 int main(void)
 {
@@ -318,6 +382,25 @@ int main(void)
         CHECK(strcmp(disc.decision_label,
                      "reject_csbwin_512_needs_decoder") == 0,
               "classify DMSAVE.BAK CSBWin 512 decision label");
+
+        build_valid_csbwin_512_header(scratch);
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/DMSAVE.DAT", scratch, CSB_V1_CSBWIN_BLOCK1_BYTES, &disc);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_BAD_MAGIC,
+              "classify valid CSBWin 512 header still returns loader BAD_MAGIC");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CSB1,
+              "classify valid CSBWin 512 header shape via XOR decoder");
+        CHECK(disc.xor512_valid == 1,
+              "classify valid CSBWin 512 header marks xor512_valid");
+        CHECK(disc.xor512_report.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB,
+              "classify valid CSBWin 512 header reports CSB key verdict");
+        CHECK(disc.xor512_report.public_fields.game_id == 0x13572468u,
+              "classify valid CSBWin 512 header exposes public GameID");
+        CHECK(disc.should_attempt_import == 0,
+              "classify valid CSBWin 512 header is not import-ready yet");
+        CHECK(strcmp(disc.decision_label,
+                     "reject_csbwin_512_header_valid_import_pending") == 0,
+              "classify valid CSBWin 512 header decision label");
 
         s = csb_v1_csbwin_save_loader_boundary_build_fixture(
             CSB_V1_CSBWIN_SHAPE_CSBGAME_V20, scratch, sizeof(scratch));
