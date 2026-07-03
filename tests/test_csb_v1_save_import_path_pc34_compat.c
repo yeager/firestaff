@@ -16,6 +16,8 @@
  */
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
+#include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -249,6 +251,67 @@ int main(void) {
         CHECK(csb_v1_import_csb_save("firestaff-no-such.csb")
                   == CSB_SAVE_IMPORT_ERR_IO,
               "nonexistent path -> ERR_IO");
+    }
+
+    /* ── Runtime handoff from raw CSBGAME roster ── */
+    {
+        CSB_V1_PartyState src;
+        CSB_V1_RuntimeProfile runtime;
+        unsigned char buf[CSB_SAVE_HEADER_SIZE + 3 * CSB_SAVE_CHAMP_SIZE + 16];
+        long blen;
+        const char* path = "firestaff-csb-runtime-import.csb";
+        FILE* f;
+
+        csb_v1_character_init_default(&src);
+        make_champion(&src.Champions[0], "RUNEA", 70, 0);
+        make_champion(&src.Champions[1], "RUNEB", 80, 0);
+        make_champion(&src.Champions[2], "RUNEC", 90, 0);
+        src.ChampionCount = 3;
+
+        blen = csb_v1_build_csb_save_buffer(&src, CSB_SAVE_VERSION_V21,
+                                            buf, (long)sizeof(buf));
+        CHECK(blen > 0, "build 3-champion CSBGAME runtime import buffer");
+        f = fopen(path, "wb");
+        CHECK(f != NULL, "temp CSBGAME runtime import file created");
+        if (f) { fwrite(buf, 1, (size_t)blen, f); fclose(f); }
+
+        csb_v1_runtime_init(&runtime, NULL);
+        runtime.party_x = 11;
+        runtime.party_y = 7;
+        runtime.party_z = 0;
+        runtime.party_dir = 2;
+        runtime.current_level = 4;
+        runtime.game_time = 1234;
+        CHECK(csb_v1_runtime_import_csbgame_roster_from_path(&runtime, path)
+                  == CSB_V1_LOAD_OK,
+              "runtime imports raw CSBGAME roster file");
+        CHECK(runtime.champion_count == 3,
+              "runtime CSBGAME import sets champion count");
+        CHECK(strncmp(runtime.party_state.Champions[2].Name, "RUNEC", 5) == 0,
+              "runtime CSBGAME import maps champion names");
+        CHECK(runtime.party_x == 11 && runtime.party_y == 7 &&
+              runtime.party_dir == 2 && runtime.current_level == 4,
+              "runtime CSBGAME import preserves booted dungeon pose");
+        CHECK(runtime.party_state.PartyMapX == 11 &&
+              runtime.party_state.PartyMapY == 7 &&
+              runtime.party_state.PartyDirection == 2,
+              "runtime CSBGAME import reanchors party snapshot to runtime pose");
+        CHECK(runtime.difficulty == CSB_V1_DIFFICULTY_HARD,
+              "runtime CSBGAME import recalculates difficulty for 3 champions");
+
+        csb_v1_runtime_init(&runtime, NULL);
+        runtime.party_x = 6;
+        runtime.party_y = 6;
+        runtime.party_dir = 1;
+        CHECK(csb_v1_runtime_load_game_from_path(&runtime, path)
+                  == CSB_V1_LOAD_OK,
+              "runtime load falls back to raw CSBGAME roster import");
+        CHECK(runtime.champion_count == 3,
+              "runtime load fallback sets champion count");
+        CHECK(runtime.party_x == 6 && runtime.party_y == 6 &&
+              runtime.party_dir == 1,
+              "runtime load fallback preserves booted pose");
+        remove(path);
     }
 
     /* NULL safety. */

@@ -532,6 +532,9 @@ int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
                                      const char *path);
 int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
                                        const char *path);
+int csb_v1_runtime_import_csbgame_roster_from_path(
+    CSB_V1_RuntimeProfile *profile,
+    const char *path);
 
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *csb_v1_runtime_source_evidence(void);
