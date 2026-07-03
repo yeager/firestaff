@@ -531,7 +531,7 @@ static int m11_is_dm1_source_kind(M11_GameSourceKind kind)
            kind == M11_GAME_SOURCE_DIRECT_DUNGEON;
 }
 
-static void m11_seed_dm1_v2_visible_effects_from_viewport(
+static int m11_seed_dm1_v2_visible_effects_from_viewport(
     const M11_GameViewState* state);
 
 static void m11_draw_dm1_v2_enhanced_effects_framepath(
@@ -567,7 +567,7 @@ static void m11_draw_dm1_v2_enhanced_effects_framepath(
      * rendered DM1 frame after the source viewport draw and behind the
      * DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION gate. */
     if (gate.v2PresentationEnabled) {
-        m11_seed_dm1_v2_visible_effects_from_viewport(state);
+        (void)m11_seed_dm1_v2_visible_effects_from_viewport(state);
     }
     (void)dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 1.0f / 60.0f);
     (void)dm1_v2_enhanced_effects_runtime_render_indexed(
@@ -11990,7 +11990,17 @@ static void m11_dm1_v2_effect_point_for_cell(const M11_ViewportCell* cell,
     *outY = y;
 }
 
-static void m11_seed_dm1_v2_visible_effect_particle(
+static int m11_dm1_v2_cell_would_seed_visible_effect(
+    const M11_ViewportCell* cell)
+{
+    return cell && cell->valid &&
+           (m11_viewport_cell_has_renderable_projectile(cell) ||
+            m11_viewport_cell_has_renderable_explosion(cell) ||
+            (cell->summary.teleporters > 0 &&
+             cell->elementType == DUNGEON_ELEMENT_TELEPORTER));
+}
+
+static int m11_seed_dm1_v2_visible_effect_particle(
     const M11_ViewportCell* cell)
 {
     float x = 0.0f;
@@ -11998,14 +12008,8 @@ static void m11_seed_dm1_v2_visible_effect_particle(
     float life = 0.12f;
     float size = 2.0f;
     uint32_t color = 0xffff00ffu;
-    if (!cell || !cell->valid) {
-        return;
-    }
-    if (!m11_viewport_cell_has_renderable_projectile(cell) &&
-        !m11_viewport_cell_has_renderable_explosion(cell) &&
-        !(cell->summary.teleporters > 0 &&
-          cell->elementType == DUNGEON_ELEMENT_TELEPORTER)) {
-        return;
+    if (!m11_dm1_v2_cell_would_seed_visible_effect(cell)) {
+        return 0;
     }
 
     if (m11_viewport_cell_has_renderable_projectile(cell)) {
@@ -12043,25 +12047,49 @@ static void m11_seed_dm1_v2_visible_effect_particle(
     }
 
     m11_dm1_v2_effect_point_for_cell(cell, &x, &y);
-    (void)v2_particle_add_direct(x, y, life, size, 0.0f, color);
+    return v2_particle_add_direct(x, y, life, size, 0.0f, color) >= 0;
 }
 
-static void m11_seed_dm1_v2_visible_effects_from_viewport(
+static int m11_count_dm1_v2_visible_effect_seeds_from_viewport(
     const M11_GameViewState* state)
 {
+    int count = 0;
     int depth;
     if (!state || !state->active) {
-        return;
+        return 0;
     }
     for (depth = 1; depth <= 3; ++depth) {
         int side;
         for (side = -1; side <= 1; ++side) {
             M11_ViewportCell cell;
             if (m11_sample_viewport_cell(state, depth, side, &cell)) {
-                m11_seed_dm1_v2_visible_effect_particle(&cell);
+                if (m11_dm1_v2_cell_would_seed_visible_effect(&cell)) {
+                    ++count;
+                }
             }
         }
     }
+    return count;
+}
+
+static int m11_seed_dm1_v2_visible_effects_from_viewport(
+    const M11_GameViewState* state)
+{
+    int count = 0;
+    int depth;
+    if (!state || !state->active) {
+        return 0;
+    }
+    for (depth = 1; depth <= 3; ++depth) {
+        int side;
+        for (side = -1; side <= 1; ++side) {
+            M11_ViewportCell cell;
+            if (m11_sample_viewport_cell(state, depth, side, &cell)) {
+                count += m11_seed_dm1_v2_visible_effect_particle(&cell);
+            }
+        }
+    }
+    return count;
 }
 
 static void m11_draw_creature_cue(unsigned char* framebuffer,
@@ -25645,6 +25673,12 @@ int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
     if (outFirstProjectileGfx) *outFirstProjectileGfx = cell.firstProjectileGfxIndex;
     if (outFirstExplosionType) *outFirstExplosionType = cell.firstExplosionType;
     return 1;
+}
+
+int M11_GameView_ProbeDm1V2LiveEffectSeedCount(
+    const M11_GameViewState* state)
+{
+    return m11_count_dm1_v2_visible_effect_seeds_from_viewport(state);
 }
 
 int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
