@@ -44,6 +44,12 @@ int v2_particle_blit_indexed(unsigned char* framebuffer,
                              unsigned char palette_index);
 void v2_particle_clear(void);
 void v2_particle_set_seed(uint32_t seed);
+int v2_particle_add_direct(float x,
+                           float y,
+                           float life,
+                           float size,
+                           float gravity,
+                           uint32_t color);
 
 /* Create an emitter and return its index, or -1 on failure.
  * Use v2_emitter_preset_get() + this function for preset-based creation.
