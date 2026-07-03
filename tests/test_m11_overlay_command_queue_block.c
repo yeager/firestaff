@@ -30,6 +30,10 @@ static unsigned short make_thing(int type, int index)
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
 } while (0)
 
+#define DM_PC_COLOR_BLACK 0
+#define DM_PC_COLOR_CYAN 4
+#define DM_PC_COLOR_WHITE 15
+
 static void seed_active_view(M11_GameViewState* state)
 {
     struct ChampionState_Compat* champion;
@@ -617,6 +621,74 @@ static void test_keyboard_positive_control_dispatches_turn_without_overlay(void)
               "keyboard positive turn control changes direction");
 }
 
+static unsigned char framebuffer_pixel(const unsigned char* framebuffer,
+                                       int x,
+                                       int y)
+{
+    return framebuffer[y * 320 + x];
+}
+
+static void draw_and_expect_arrow_feedback(M11_GameViewState* state,
+                                           int arrowIndex,
+                                           const char* label)
+{
+    unsigned char framebuffer[320 * 200];
+    int x = 0, y = 0, w = 0, h = 0;
+    (void)w;
+    (void)h;
+    memset(framebuffer, 0x7f, sizeof(framebuffer));
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    ASSERT_EQ(M11_GameView_GetV1MovementArrowZone(arrowIndex,
+                                                  &x, &y, &w, &h),
+              1, label);
+    ASSERT_EQ(framebuffer_pixel(framebuffer, x, y), DM_PC_COLOR_WHITE,
+              label);
+    ASSERT_EQ(framebuffer_pixel(framebuffer, x + 1, y + 1),
+              DM_PC_COLOR_CYAN, label);
+}
+
+static void test_keyboard_navigation_visually_marks_screen_arrows(void)
+{
+    unsigned char framebuffer[320 * 200];
+    M11_GameViewState state;
+    M11_GameInputResult result;
+    int x = 0, y = 0, w = 0, h = 0;
+
+    seed_active_view(&state);
+    ASSERT_EQ(M11_GameView_GetV1MovementArrowZone(2, &x, &y, &w, &h),
+              1, "forward arrow zone exists");
+    memset(framebuffer, 0x7f, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_EQ(framebuffer_pixel(framebuffer, x, y), DM_PC_COLOR_BLACK,
+              "inactive V1 forward arrow has no keyboard feedback");
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "keyboard up redraws for visual arrow feedback");
+    draw_and_expect_arrow_feedback(&state, 2,
+                                   "keyboard up marks C070 forward arrow");
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_STRAFE_LEFT);
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "keyboard left-arrow/WASD strafe redraws feedback");
+    draw_and_expect_arrow_feedback(&state, 5,
+                                   "keyboard strafe-left marks C073 left arrow");
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_LEFT);
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "keyboard Q/Home turn redraws feedback");
+    draw_and_expect_arrow_feedback(&state, 0,
+                                   "keyboard turn-left marks C068 turn arrow");
+
+    while (state.v1MovementArrowVisualTicks > 0) {
+        M11_GameView_TickAnimation(&state);
+    }
+    memset(framebuffer, 0x7f, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_EQ(framebuffer_pixel(framebuffer, x, y), DM_PC_COLOR_BLACK,
+              "V1 movement arrow feedback clears after tick countdown");
+}
+
 static void test_mouse_positive_control_dispatches_without_overlay(void)
 {
     /* v2.8.x: the menu arrow-click LEFT button (handled by
@@ -1089,6 +1161,7 @@ int main(void)
     test_candidate_panel_hides_stale_action_rows();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
+    test_keyboard_navigation_visually_marks_screen_arrows();
     test_mouse_positive_control_dispatches_without_overlay();
     test_static_dungeon_effects_do_not_render_as_viewport_fireballs();
     test_runtime_projectiles_use_f0115_c2900_raw_rows();
