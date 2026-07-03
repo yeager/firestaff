@@ -191,6 +191,10 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     profile->csbgraphics_plan_result =
         CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_CACHE;
+    profile->csbgraphics_skin_def_loaded = 0;
+    profile->csbgraphics_skin_def_word_count = 0u;
+    memset(profile->csbgraphics_skin_def_words, 0,
+           sizeof(profile->csbgraphics_skin_def_words));
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
     csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
     csb_v1_character_init_default(&profile->imported_party);
@@ -211,6 +215,10 @@ static void csb_v1_boot_reset_csbgraphics(CSB_V1_BootProfile *profile)
         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     profile->csbgraphics_plan_result =
         CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_CACHE;
+    profile->csbgraphics_skin_def_loaded = 0;
+    profile->csbgraphics_skin_def_word_count = 0u;
+    memset(profile->csbgraphics_skin_def_words, 0,
+           sizeof(profile->csbgraphics_skin_def_words));
 }
 
 int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
@@ -235,6 +243,30 @@ int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
         csb_v1_csbgraphics_m11_runtime_plan_build_from_cache(
             &profile->csbgraphics_cache,
             &profile->csbgraphics_m11_plan);
+    {
+        size_t skin_def_word_count = 0u;
+        int skin_rc =
+            csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def(
+                &profile->csbgraphics_cache,
+                profile->csbgraphics_skin_def_words,
+                CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS,
+                &skin_def_word_count);
+        if (skin_rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+            int add_rc;
+            profile->csbgraphics_skin_def_loaded = 1;
+            profile->csbgraphics_skin_def_word_count = skin_def_word_count;
+            add_rc =
+                csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+                    &profile->csbgraphics_cache,
+                    profile->csbgraphics_skin_def_words,
+                    profile->csbgraphics_skin_def_word_count,
+                    &profile->csbgraphics_m11_plan);
+            if (add_rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+                profile->csbgraphics_plan_result =
+                    CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+            }
+        }
+    }
     return profile->csbgraphics_plan_result;
 }
 
@@ -248,6 +280,23 @@ const CSB_V1_CSBGraphicsDatRealCache *
 csb_v1_boot_csbgraphics_cache(const CSB_V1_BootProfile *profile)
 {
     return profile ? &profile->csbgraphics_cache : NULL;
+}
+
+const uint16_t *
+csb_v1_boot_csbgraphics_skin_def_words(const CSB_V1_BootProfile *profile,
+                                       size_t *out_word_count)
+{
+    if (out_word_count) {
+        *out_word_count = 0u;
+    }
+    if (!profile || !profile->csbgraphics_skin_def_loaded ||
+        profile->csbgraphics_skin_def_word_count == 0u) {
+        return NULL;
+    }
+    if (out_word_count) {
+        *out_word_count = profile->csbgraphics_skin_def_word_count;
+    }
+    return profile->csbgraphics_skin_def_words;
 }
 
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,

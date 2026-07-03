@@ -524,6 +524,56 @@ static void test_unknown_geometry_is_honest(void)
     free(bytes);
 }
 
+static void test_custom_background_skin_def_decode(void)
+{
+    uint8_t skin_def_decoded[18u];
+    static const uint16_t expected_words[] = {
+        1u, 108u, 102u, 0u, 104u, 110u, 106u, 0u, 0u
+    };
+    CompressedEntryFixture entries[1];
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    uint16_t words[CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS];
+    size_t word_count = 0u;
+    uint8_t *bytes;
+    size_t size = 0u;
+    size_t i;
+
+    memset(skin_def_decoded, 0, sizeof(skin_def_decoded));
+    for (i = 0u; i < sizeof(expected_words) / sizeof(expected_words[0]); ++i) {
+        write_le16(skin_def_decoded, i * 2u, expected_words[i]);
+    }
+    entries[0].entry_index = 1u;
+    entries[0].decoded = skin_def_decoded;
+    entries[0].decoded_size = sizeof(skin_def_decoded);
+
+    bytes = build_csbgraphics_entries_compressed(entries,
+                                                 sizeof(entries) / sizeof(entries[0]),
+                                                 &size);
+    check_true("custom_bg_skin_def_decode.fixture", bytes != NULL);
+    if (!bytes) {
+        return;
+    }
+
+    cache_from_bytes(&cache, bytes, size);
+    memset(words, 0, sizeof(words));
+    check_int("custom_bg_skin_def_decode.rc",
+              csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def(
+                  &cache,
+                  words,
+                  sizeof(words) / sizeof(words[0]),
+                  &word_count),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("custom_bg_skin_def_decode.count", (int)word_count,
+              (int)(sizeof(expected_words) / sizeof(expected_words[0])));
+    check_int("custom_bg_skin_def_decode.word0", (int)words[0], 1);
+    check_int("custom_bg_skin_def_decode.near_bitmap", (int)words[1], 108);
+    check_int("custom_bg_skin_def_decode.middle_mask", (int)words[6], 106);
+
+    cache.file_buffer = NULL;
+    csb_v1_csbgraphics_dat_real_cache_free(&cache);
+    free(bytes);
+}
+
 static void test_custom_background_skin_def_pairs_are_deferred(void)
 {
     static const uint16_t entry_ids[] = {
@@ -941,6 +991,7 @@ int main(void)
     test_build_known_c040_plan();
     test_explicit_geometry_apply();
     test_unknown_geometry_is_honest();
+    test_custom_background_skin_def_decode();
     test_custom_background_skin_def_pairs_are_deferred();
     test_custom_background_aligned_mask_apply();
     test_custom_background_room_layer_apply();

@@ -6,6 +6,9 @@
 #include <string.h>
 
 enum {
+    CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF = 1,
+    CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF_GRAPHIC_ID = 1,
+    CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES = 18,
     CSB_GRAPHIC_INVENTORY = 17,
     CSB_GRAPHIC_PANEL_RESURRECT_REINCARNATE = 40,
     CSB_GRAPHIC_FIELD_MIN = 73,
@@ -375,6 +378,68 @@ static uint16_t *decode_entry_words16(
         *out_word_count = count;
     }
     return words;
+}
+
+int csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint16_t *out_skin_def_words,
+    size_t out_skin_def_word_capacity,
+    size_t *out_skin_def_word_count)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    uint16_t *words = NULL;
+    size_t word_count = 0u;
+    size_t i;
+    int rc;
+
+    if (out_skin_def_word_count) {
+        *out_skin_def_word_count = 0u;
+    }
+    if (!cache_ready(cache) || !out_skin_def_words ||
+        out_skin_def_word_capacity == 0u) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+
+    rc = csb_v1_csbgraphics_dat_entry_span(
+        cache->file_buffer,
+        cache->file_size,
+        CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF,
+        &span);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        span.compressed_size == 0u ||
+        span.decompressed_size <
+            CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES ||
+        (span.decompressed_size & 1u) != 0u) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    word_count = (size_t)span.decompressed_size / 2u;
+    if (word_count > out_skin_def_word_capacity) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
+    }
+
+    words = decode_entry_words16(cache,
+                                 CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF,
+                                 span.decompressed_size,
+                                 &word_count);
+    if (!words) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+    if (word_count == 0u ||
+        words[0] !=
+            (uint16_t)CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF_GRAPHIC_ID) {
+        free(words);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    for (i = 0u; i < word_count; ++i) {
+        out_skin_def_words[i] = words[i];
+    }
+    free(words);
+    if (out_skin_def_word_count) {
+        *out_skin_def_word_count = word_count;
+    }
+    return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
 }
 
 int csb_v1_csbgraphics_m11_runtime_plan_add_explicit_entry(

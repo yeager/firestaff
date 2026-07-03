@@ -32,6 +32,8 @@ static int write_synthetic_dungeon_fixture(const char *path)
 static void test_defaults(void)
 {
     CSB_V1_BootProfile p;
+    size_t skin_def_word_count = 123u;
+
     csb_v1_boot_profile_init(&p);
     CHECK(strcmp(p.game_id, "csb") == 0, "game id is csb");
     CHECK(p.state == CSB_V1_BOOT_STATE_PROFILE_READY, "default state is PROFILE_READY");
@@ -41,6 +43,13 @@ static void test_defaults(void)
     CHECK(p.default_party_x == CSB_V1_START_PARTY_X, "default party x follows CSB runtime profile");
     CHECK(p.default_party_y == CSB_V1_START_PARTY_Y, "default party y follows CSB runtime profile");
     CHECK(p.default_party_dir == CSB_V1_START_PARTY_DIR, "default party dir follows CSB runtime profile");
+    CHECK(p.csbgraphics_skin_def_loaded == 0 &&
+          p.csbgraphics_skin_def_word_count == 0u,
+          "CSBgraphics skin-def ownership starts empty");
+    CHECK(csb_v1_boot_csbgraphics_skin_def_words(&p,
+                                                 &skin_def_word_count) == NULL &&
+          skin_def_word_count == 0u,
+          "CSBgraphics skin-def accessor rejects an empty boot profile");
 }
 
 static void test_scan_missing_data(void)
