@@ -2805,6 +2805,99 @@ static int csb_v1_runtime_projectile_result_places_associated_object(
     }
 }
 
+static int csb_v1_runtime_apply_object_teleporter_at_square(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t *inout_thing,
+    int source_map_x,
+    int *inout_map_index,
+    int *inout_map_x,
+    int *inout_map_y)
+{
+    int moved_count = 0;
+    int chain_guard;
+
+    if (!dungeon || !inout_thing || !inout_map_index ||
+        !inout_map_x || !inout_map_y) {
+        return 0;
+    }
+    for (chain_guard = 0; chain_guard < 100; ++chain_guard) {
+        CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
+        CSB_V1_TeleporterRotationRuntimeObjectResultPc34 result;
+        int raw_square;
+        int scope = 0;
+        int self_target;
+
+        if (*inout_map_index < 0 ||
+            *inout_map_index >= dungeon->level_count) {
+            break;
+        }
+        raw_square = csb_v1_dungeon_get_raw_square(
+            dungeon,
+            *inout_map_index,
+            *inout_map_x,
+            *inout_map_y);
+        if (raw_square < 0 ||
+            ((dungeon->square_bytes == 1)
+                 ? ((raw_square >> 5) & 0x07)
+                 : (raw_square & 0x1F)) != PROJECTILE_ELEMENT_TELEPORTER ||
+            (raw_square & 0x08) == 0) {
+            break;
+        }
+        if (csb_v1_runtime_decode_group_teleporter_at_square(
+                dungeon,
+                *inout_map_index,
+                *inout_map_x,
+                *inout_map_y,
+                raw_square,
+                &teleporter,
+                &scope) <= 0 ||
+            scope == 0x01 ||
+            teleporter.target_map_index != *inout_map_index) {
+            break;
+        }
+        if (csb_v1_teleporter_rotation_apply_object_cell_pc34_compat(
+                &teleporter,
+                *inout_thing,
+                source_map_x,
+                &result) != 0) {
+            break;
+        }
+        self_target = teleporter.target_map_index == *inout_map_index &&
+                      teleporter.target_map_x == *inout_map_x &&
+                      teleporter.target_map_y == *inout_map_y;
+        if (!csb_v1_runtime_unlink_thing_from_square(
+                dungeon,
+                *inout_thing,
+                *inout_map_index,
+                *inout_map_x,
+                *inout_map_y)) {
+            break;
+        }
+        *inout_thing = result.thing;
+        *inout_map_index = teleporter.target_map_index;
+        *inout_map_x = teleporter.target_map_x;
+        *inout_map_y = teleporter.target_map_y;
+        if (!csb_v1_runtime_append_thing_to_square_tail(
+                dungeon,
+                *inout_thing,
+                *inout_map_index,
+                *inout_map_x,
+                *inout_map_y)) {
+            break;
+        }
+        moved_count++;
+        if (self_target) break;
+    }
+    /* ReDMCSB MOVESENS.C F0267 lines 450-530 lets non-party, non-group
+     * objects use object/party-capable teleporters, rejects creature-only
+     * teleporters, applies the PC34 100-step chain cap, and rotates object
+     * cells only for relative teleporters unless the object came from the
+     * CM2 projectile-associated-object path.  This CSB bridge is bounded to
+     * same-map raw dungeon records; cross-map object movement, buzz audio,
+     * sensors, and pit consequences remain separate runtime work. */
+    return moved_count;
+}
+
 static int csb_v1_runtime_materialize_projectile_associated_object(
     CSB_V1_RuntimeProfile *profile,
     const struct ProjectileInstance_Compat *projectile,
@@ -2858,7 +2951,14 @@ static int csb_v1_runtime_materialize_projectile_associated_object(
         placed_thing,
         map_index,
         map_x,
-        map_y);
+        map_y) &&
+        (csb_v1_runtime_apply_object_teleporter_at_square(
+             dungeon,
+             &placed_thing,
+             CSB_V1_TELEPORTER_ROTATION_SOURCE_PROJECTILE_ASSOCIATED_OBJECT_PC34,
+             &map_index,
+             &map_x,
+             &map_y) >= 0);
 }
 
 static int csb_v1_runtime_collect_square_launcher_things(
