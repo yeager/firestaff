@@ -1,17 +1,20 @@
 /*
  * test_csb_v1_input_command_queue_binding.c
  *
- * Focused CSB V1 input-command runtime binding gate.  This proves one
- * command boundary reaches CSB runtime state: a queued C002 turn-right
- * command is dequeued through the shared V1 queue and applied to the CSB
- * party snapshot via the source-locked F0284 direction rotation.  It does
- * not claim movement, inventory, action-area, or broader playability.
+ * Focused CSB V1 input-command runtime binding gate.  This proves queued
+ * C002 turn and C003 movement commands are dequeued through the shared V1
+ * queue and applied to the bounded CSB runtime state: F0284 direction
+ * rotation for turns and one-cell F0366 movement for open movement.  It
+ * does not claim sensors, stairs, inventory, action-area, or broader
+ * playability.
  *
  * Source-lock:
  *   ReDMCSB COMMAND.C F0380 lines 2045-2156 dispatches C001/C002 to
  *   F0365_COMMAND_ProcessTypes1To2_TurnParty.
  *   ReDMCSB CHAMPION.C F0284 lines 117-130 applies the turn delta to every
  *   champion Cell and Direction before writing G0308_i_PartyDirection.
+ *   ReDMCSB CLIKMENU.C F0366 lines 224-351 plus DUNGEON.C F0150 lines
+ *   1389-1391 apply one movement coordinate step.
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
@@ -129,15 +132,61 @@ static void test_movement_gate_keeps_command_queued(void)
           "movement command remains queued for a later runtime boundary");
 }
 
+static void test_forward_command_applies_open_runtime_step(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_PartyState party;
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+
+    csb_v1_runtime_init(&profile, NULL);
+    make_party(&party);
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "open-step fixture party enters runtime profile");
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
+              &queue,
+              (struct Dm1V1InputEventPc34Compat){
+                  DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }) == 1,
+          "PC-34 forward key queues one open-step movement command");
+
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes one open-step movement command");
+    CHECK(result.queue_result.command == DM1_V1_COMMAND_MOVE_FORWARD,
+          "open-step command is C003 move-forward");
+    CHECK(result.queue_result.dispatchedMove == 1,
+          "shared V1 queue marks the command as a move dispatch");
+    CHECK(result.unsupported_runtime_command == 0,
+          "move-forward is a supported bounded CSB runtime binding");
+    CHECK(result.runtime_state_changed == 1,
+          "CSB runtime reports a coordinate state mutation");
+    CHECK(profile.party_x == CSB_V1_START_PARTY_X,
+          "northward open step leaves x unchanged");
+    CHECK(profile.party_y == CSB_V1_START_PARTY_Y - 1,
+          "northward open step decrements y");
+    CHECK(profile.party_dir == CSB_V1_DIR_NORTH,
+          "open step preserves party direction");
+    CHECK(profile.party_state.PartyMapY == CSB_V1_START_PARTY_Y - 1,
+          "party snapshot mirrors the open step");
+    CHECK(profile.party_state.Champions[0].Cell == 0 &&
+          profile.party_state.Champions[1].Cell == 1,
+          "open step leaves champion cells unchanged");
+    CHECK(queue.count == 0u,
+          "input queue is empty after the consumed open step");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Input Command Queue Binding Gate ===\n\n");
     test_turn_right_command_reaches_csb_runtime_state();
     test_movement_gate_keeps_command_queued();
+    test_forward_command_applies_open_runtime_step();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
-        puts("ok: one queued CSB V1 turn command reaches CSB runtime party state without claiming movement or full playability");
-        puts("sourceEvidence=ReDMCSB COMMAND.C F0380 lines 2045-2156; CHAMPION.C F0284 lines 117-130");
+        puts("ok: queued CSB V1 turn and bounded movement commands reach CSB runtime party state");
+        puts("sourceEvidence=ReDMCSB COMMAND.C F0380 lines 2045-2156; CLIKMENU.C F0366 lines 224-351; DUNGEON.C F0150 lines 1389-1391; CHAMPION.C F0284 lines 117-130");
     }
     return failed == 0 ? 0 : 1;
 }
