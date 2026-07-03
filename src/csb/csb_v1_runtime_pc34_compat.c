@@ -1431,6 +1431,102 @@ static uint8_t *csb_v1_runtime_square_first_thing_ptr(
     return dungeon->raw_data + thing_offset;
 }
 
+static uint8_t *csb_v1_runtime_create_square_first_thing_ptr(
+    CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y,
+    uint16_t first_thing)
+{
+    int i;
+    int global_column_index = 0;
+    int total_columns = 0;
+    int column_counts_base;
+    int insertion_index;
+    int square_offset;
+    int insert_offset;
+    int last_offset;
+    int move_bytes;
+
+    if (!dungeon || !dungeon->raw_data || dungeon->square_bytes != 1) return NULL;
+    if (level < 0 || level >= dungeon->level_count) return NULL;
+    if (map_x < 0 || map_x >= dungeon->level_widths[level] ||
+        map_y < 0 || map_y >= dungeon->level_heights[level]) {
+        return NULL;
+    }
+    if (dungeon->square_first_thing_count <= 0) return NULL;
+    if (dungeon->square_first_thing_base < 0 ||
+        dungeon->square_first_thing_base +
+            dungeon->square_first_thing_count * 2 > dungeon->raw_size) {
+        return NULL;
+    }
+
+    square_offset = dungeon->level_offsets[level] +
+                    map_x * dungeon->level_heights[level] +
+                    map_y;
+    if (square_offset < 0 || square_offset >= dungeon->raw_size) return NULL;
+    if ((dungeon->raw_data[square_offset] & 0x10u) != 0u) {
+        return csb_v1_runtime_square_first_thing_ptr(
+            dungeon,
+            level,
+            map_x,
+            map_y);
+    }
+
+    last_offset = dungeon->square_first_thing_base +
+                  (dungeon->square_first_thing_count - 1) * 2;
+    if (csb_v1_runtime_read_u16(dungeon->raw_data + last_offset) != 0xFFFFu) {
+        return NULL;
+    }
+
+    for (i = 0; i < dungeon->level_count; ++i) {
+        if (i < level) global_column_index += dungeon->level_widths[i];
+        total_columns += dungeon->level_widths[i];
+    }
+    global_column_index += map_x;
+    column_counts_base = 44 + dungeon->level_count * 16;
+    if (column_counts_base + total_columns * 2 > dungeon->raw_size) {
+        return NULL;
+    }
+
+    insertion_index = (int)csb_v1_runtime_read_u16(
+        dungeon->raw_data + column_counts_base + global_column_index * 2);
+    for (i = 0; i < map_y; ++i) {
+        if (dungeon->raw_data[dungeon->level_offsets[level] +
+                              map_x * dungeon->level_heights[level] + i] &
+            0x10u) {
+            insertion_index++;
+        }
+    }
+    if (insertion_index < 0 ||
+        insertion_index >= dungeon->square_first_thing_count) {
+        return NULL;
+    }
+
+    insert_offset = dungeon->square_first_thing_base + insertion_index * 2;
+    move_bytes = (dungeon->square_first_thing_count -
+                  insertion_index - 1) * 2;
+    if (move_bytes > 0) {
+        memmove(dungeon->raw_data + insert_offset + 2,
+                dungeon->raw_data + insert_offset,
+                (size_t)move_bytes);
+    }
+    csb_v1_runtime_write_u16(dungeon->raw_data + insert_offset, first_thing);
+    dungeon->raw_data[square_offset] |= 0x10u;
+    for (i = global_column_index + 1; i < total_columns; ++i) {
+        uint8_t *count_ptr = dungeon->raw_data + column_counts_base + i * 2;
+        uint16_t count = csb_v1_runtime_read_u16(count_ptr);
+        csb_v1_runtime_write_u16(count_ptr, (uint16_t)(count + 1u));
+    }
+    /* ReDMCSB DUNGEON.C F0163 lines 1790-1829 creates a new square
+     * first-thing slot by setting MASK0x0010_THING_LIST_PRESENT, inserting
+     * into G0283_pT_SquareFirstThings, and incrementing later cumulative
+     * column counters.  The original relies on preallocated free slots and
+     * BUG0_08 if none remain; this bridge refuses insertion unless the last
+     * slot is THING_NONE. */
+    return dungeon->raw_data + insert_offset;
+}
+
 static int csb_v1_runtime_find_unused_group_record(
     CSB_V1_DungeonData *dungeon,
     uint8_t **out_record,
@@ -2359,7 +2455,6 @@ static int csb_v1_runtime_append_thing_to_square_tail(
         level,
         map_x,
         map_y);
-    if (!first_ptr) return 0;
 
     record = csb_v1_runtime_mutable_thing_record(
         dungeon,
@@ -2368,6 +2463,15 @@ static int csb_v1_runtime_append_thing_to_square_tail(
         &thing_size);
     if (!record || thing_size < 2) return 0;
     csb_v1_runtime_write_u16(record, 0xFFFEu);
+    if (!first_ptr) {
+        first_ptr = csb_v1_runtime_create_square_first_thing_ptr(
+            dungeon,
+            level,
+            map_x,
+            map_y,
+            thing);
+        return first_ptr ? 1 : 0;
+    }
 
     current = csb_v1_runtime_read_u16(first_ptr);
     if (current == 0xFFFEu || current == 0xFFFFu) {
