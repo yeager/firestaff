@@ -1472,6 +1472,11 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
 
                 movement_ticks = csb_v1_runtime_creature_movement_ticks(
                     (int)thing_record[4]);
+                if (distance_x + distance_y <= 1) {
+                    flags = (uint16_t)((flags & 0xFFF0u) | 6u);
+                    csb_v1_runtime_write_u16(thing_record + 14, flags);
+                    return;
+                }
                 if (distance_y > 0) {
                     target_y += (profile->party_y > record->mapY) ? 1 : -1;
                 } else if (distance_x > 0) {
