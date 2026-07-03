@@ -7449,6 +7449,7 @@ if(BUILD_TESTING)
         tests/test_csb_v1_teleporter_rotation_runtime_pc34_compat.c
         src/csb/csb_v1_teleporter_rotation_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_teleporter_rotation_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

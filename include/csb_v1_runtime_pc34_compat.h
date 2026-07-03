@@ -310,6 +310,15 @@ typedef struct {
     int stair_up;
     int pit_fall_applied;
     int pit_open;
+    int teleporter_transition_applied;
+    int teleporter_open;
+    int teleporter_scope;
+    int teleporter_absolute_rotation;
+    int teleporter_rotation;
+    int teleporter_audible;
+    int teleporter_target_x;
+    int teleporter_target_y;
+    int teleporter_target_level;
     int old_party_level;
     int new_party_level;
 } CSB_V1_InputCommandRuntimeResult;

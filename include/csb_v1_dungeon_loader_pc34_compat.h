@@ -38,6 +38,8 @@ typedef struct {
     int raw_map_data_base;
     int square_first_thing_base;
     int square_first_thing_count;
+    int thing_data_bases[16];
+    int thing_type_counts[16];
     uint8_t *raw_data;
     int raw_size;
     /* DSA scripts */
@@ -94,6 +96,20 @@ int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x
  * ReDMCSB: DUNGEON.C F0151 (column-major, 2-byte records)
  */
 int csb_v1_dungeon_get_raw_square(const CSB_V1_DungeonData *d, int level, int x, int y);
+
+/* Return a read-only pointer to a decoded dungeon thing record.
+ * Returns NULL if the thing handle is invalid, the type has no records, or
+ * the record would exceed raw_data bounds.  out_type/out_index/out_size are
+ * optional.
+ *
+ * ReDMCSB: DEFS.H M012_TYPE/M013_INDEX and DUNGEON.C
+ * F0156_DUNGEON_GetThingData. */
+const uint8_t *csb_v1_dungeon_get_thing_record(
+    const CSB_V1_DungeonData *d,
+    uint16_t thing,
+    int *out_type,
+    int *out_index,
+    int *out_size);
 
 /* ── Tile decoding ─────────────────────────────────────────────────── */
 
