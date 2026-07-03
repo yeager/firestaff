@@ -1279,6 +1279,66 @@ static int csb_v1_runtime_creature_movement_ticks(int creature_type)
     return (int)movement_ticks[creature_type];
 }
 
+static void csb_v1_runtime_apply_group_behavior_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    CSB_V1_DungeonData *dungeon;
+    int thing;
+    int guard;
+    int distance_x;
+    int distance_y;
+
+    if (!profile || !record || !profile->dungeon_handle) return;
+    if (profile->champion_count <= 0) return;
+    if (record->mapIndex != profile->current_level) return;
+    distance_x = abs(profile->party_x - record->mapX);
+    distance_y = abs(profile->party_y - record->mapY);
+    if (distance_x != 0 && distance_y != 0) return;
+
+    dungeon = profile->dungeon_handle;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        record->mapIndex,
+        record->mapX,
+        record->mapY);
+    if (thing < 0) return;
+
+    /* ReDMCSB GROUP.C F0209 lines 2098-2139 processes C37.  A wandering
+     * group that sees the party switches to C6 attack when in same-row/column
+     * attack range, otherwise to C7 approach and queues the next C37.  This
+     * CSB bridge applies the real-format group behavior byte mutation first;
+     * follow-up movement/attack event expansion remains in the source-locked
+     * creature-AI layer. */
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
+        uint8_t *thing_record;
+        uint16_t flags;
+        int thing_type;
+        int thing_size;
+        int behavior;
+        int next_behavior;
+
+        thing_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!thing_record) break;
+        if (thing_type == 4 && thing_size >= 16) {
+            flags = csb_v1_runtime_read_u16(thing_record + 14);
+            behavior = (int)(flags & 0x000Fu);
+            if (behavior == 0 || behavior == 2 || behavior == 3) {
+                next_behavior = (distance_x + distance_y <= 1) ? 6 : 7;
+                flags = (uint16_t)((flags & 0xFFF0u) |
+                                   (uint16_t)(next_behavior & 0x0F));
+                csb_v1_runtime_write_u16(thing_record + 14, flags);
+            }
+            return;
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+}
+
 static void csb_v1_runtime_trigger_floor_sensor_event(
     CSB_V1_RuntimeProfile *profile,
     int sensor_effect,
@@ -2078,6 +2138,11 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             break;
         case DM1_EVENT_ENABLE_GROUP_GENERATOR:
             csb_v1_runtime_apply_enable_group_generator_record(
+                profile,
+                record);
+            break;
+        case DM1_EVENT_UPDATE_BEHAVIOR_GROUP:
+            csb_v1_runtime_apply_group_behavior_timeline_record(
                 profile,
                 record);
             break;

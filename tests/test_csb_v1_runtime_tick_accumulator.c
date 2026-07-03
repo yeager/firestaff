@@ -413,6 +413,10 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 2;
+    profile.champion_count = 1;
 
     queue_square_event(
         &profile,
@@ -455,6 +459,9 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "generated group C37 dispatch keeps source square and creature-AI kind");
     CHECK(dispatch.records[0].aux0 == (255 - 21),
           "generated group C37 priority follows 255 - creature movement ticks");
+    group_flags = (uint16_t)(raw[94] | ((uint16_t)raw[95] << 8));
+    CHECK((group_flags & 0x000fu) == 7u,
+          "generated group C37 mutates visible wander behavior to approach");
     CHECK(profile.timeline_queue.eventCount == 1,
           "C65 remains queued before the source ticks delay expires");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
