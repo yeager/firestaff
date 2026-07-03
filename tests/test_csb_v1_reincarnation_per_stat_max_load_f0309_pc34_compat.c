@@ -77,6 +77,7 @@
  */
 
 #include "csb_v1_character_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -147,9 +148,10 @@ static lcg_forecast_t forecast_lcg(int random_points)
 /* F0306 / F0309 closed-form prediction (mirrors
  * csb_v1_champion_stamina_adjusted_value + csb_v1_champion_get_maximum_load
  * exactly so the fixture breaks on any drift in either formula). */
-static unsigned int predict_max_load(int16_t str_cur,
-                                     int16_t sta_cur,
-                                     int16_t sta_max)
+static unsigned int predict_max_load_with_wounds(int16_t str_cur,
+                                                 int16_t sta_cur,
+                                                 int16_t sta_max,
+                                                 uint16_t wounds)
 {
     int32_t base = ((int32_t)str_cur << 3) + 100;       /* F0309 line 1 */
     int16_t half_max = (int16_t)(sta_max >> 1);
@@ -159,9 +161,20 @@ static unsigned int predict_max_load(int16_t str_cur,
         base = (int32_t)half_val + scaled;
     }
     if (base < 0) base = 0;
+    if (wounds) {
+        base -= base >> ((wounds & COMBAT_WOUND_LEGS) ? 2 : 3);
+    }
     base += 9;                                          /* F0309 round-up */
     base -= base % 10;
     return (unsigned int)base;
+}
+
+static unsigned int predict_max_load(int16_t str_cur,
+                                     int16_t sta_cur,
+                                     int16_t sta_max)
+{
+    return predict_max_load_with_wounds(str_cur, sta_cur, sta_max,
+                                        COMBAT_WOUND_NONE);
 }
 
 /* Build a dead champion ready for `csb_v1_champion_reincarnate()`.
@@ -561,7 +574,68 @@ static void test_f0306_half_stamina_interaction(void)
 }
 
 /* ──────────────────────────────────────────────────────────────────
- * Test 7 — Before/after max-load delta:
+ * Test 7 — F0309 / F0310 wound effects.  Wounds live in the champion
+ * struct, so C38 combat writeback must feed the same field that load
+ * and movement read:
+ *   - leg wounds reduce max load by 1/4 before round-up;
+ *   - non-leg wounds reduce max load by 1/8 before round-up;
+ *   - feet wounds add +1 movement tick in the light branch, +2 in the
+ *     Load >= MaxLoad BUG0_72 branch.
+ * ────────────────────────────────────────────────────────────────── */
+static void test_wounds_drive_max_load_and_movement_ticks(void)
+{
+    CSB_V1_Champion c;
+    printf("\n-- Test 7: wounds drive F0309 max-load and F0310 movement ticks --\n");
+
+    build_dead_champion_with_str(&c,
+                                 100, 100,
+                                  80,  80,
+                                  60,  60,
+                                  60,  60,
+                                  60,  60,
+                                  50,  50,
+                                  12,
+                                  8);
+
+    c.Wounds = COMBAT_WOUND_NONE;
+    c.Load = 300;
+    CHECK_EQ(csb_v1_champion_get_maximum_load(&c), 580u,
+             "unwounded F0309 max_load baseline remains 580");
+    CHECK_EQ(csb_v1_champion_get_movement_ticks(&c), 2u,
+             "unwounded light-load F0310 movement ticks = 2");
+
+    c.Wounds = COMBAT_WOUND_LEGS;
+    CHECK_EQ(csb_v1_champion_get_maximum_load(&c),
+             predict_max_load_with_wounds(60, 80, 80, COMBAT_WOUND_LEGS),
+             "leg wounds reduce F0309 max_load by one quarter before round-up");
+    CHECK_EQ(csb_v1_champion_get_maximum_load(&c), 440u,
+             "leg-wounded STR=60 full-stamina F0309 max_load = 440");
+
+    c.Wounds = COMBAT_WOUND_TORSO;
+    CHECK_EQ(csb_v1_champion_get_maximum_load(&c),
+             predict_max_load_with_wounds(60, 80, 80, COMBAT_WOUND_TORSO),
+             "non-leg wounds reduce F0309 max_load by one eighth before round-up");
+    CHECK_EQ(csb_v1_champion_get_maximum_load(&c), 510u,
+             "torso-wounded STR=60 full-stamina F0309 max_load = 510");
+
+    c.Wounds = COMBAT_WOUND_FEET;
+    c.Load = 300;
+    CHECK_EQ(csb_v1_champion_get_maximum_load(&c), 510u,
+             "feet wounds use the non-leg F0309 max-load penalty");
+    CHECK_EQ(csb_v1_champion_get_movement_ticks(&c), 3u,
+             "feet wounds add one F0310 tick in the light-load branch");
+
+    c.Load = 400;
+    CHECK_EQ(csb_v1_champion_get_movement_ticks(&c), 4u,
+             "feet wounds add one F0310 tick in the near-capacity light branch");
+
+    c.Load = 510;
+    CHECK_EQ(csb_v1_champion_get_movement_ticks(&c), 6u,
+             "feet wounds add two F0310 ticks in the BUG0_72 equal-load branch");
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Test 8 — Before/after max-load delta:
  *   post_max_load < pre_max_load for every randomPoints > 0 because
  *   the per-stat penalty dominates any random +1 boosts on STR in
  *   the spec-default seeded LCG (Test 2's str_hits=1 vs the
@@ -574,7 +648,7 @@ static void test_max_load_regression_post_reincarnation(void)
     CSB_V1_Champion c;
     unsigned int pre, post;
     int str_hits_default;
-    printf("\n-- Test 7: post-reincarnation max-load regression vs pre-reincarnation --\n");
+    printf("\n-- Test 8: post-reincarnation max-load regression vs pre-reincarnation --\n");
 
     /* Pre baseline ─────────────────────────────────────────────── */
     build_dead_champion_with_str(&c,
@@ -622,7 +696,7 @@ static void test_max_load_regression_post_reincarnation(void)
 }
 
 /* ──────────────────────────────────────────────────────────────────
- * Test 8 — Source-evidence + NULL safety contract.  Mirrors the
+ * Test 9 — Source-evidence + NULL safety contract.  Mirrors the
  * companion per-stat fixture's evidence contract so probes that
  * grep for "CSB" / "REVIVE" / "Character.cpp" / "F0309" can rely on
  * the same surface.
@@ -630,7 +704,7 @@ static void test_max_load_regression_post_reincarnation(void)
 static void test_source_evidence_and_null_safety(void)
 {
     const char *e;
-    printf("\n-- Test 8: source-evidence + NULL safety --\n");
+    printf("\n-- Test 9: source-evidence + NULL safety --\n");
 
     /* NULL safety on the F0309 helper (revive path lives separately). */
     CHECK_EQ(csb_v1_champion_get_maximum_load(NULL), 0u,
@@ -660,6 +734,7 @@ int main(void)
     test_stat_penalty_divisor_drives_max_load();
     test_random_points_spec_max_drives_max_load();
     test_f0306_half_stamina_interaction();
+    test_wounds_drive_max_load_and_movement_ticks();
     test_max_load_regression_post_reincarnation();
     test_source_evidence_and_null_safety();
 

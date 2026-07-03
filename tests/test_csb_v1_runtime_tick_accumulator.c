@@ -269,7 +269,8 @@ static int expected_c38_shared_combat_damage(
     int map_x,
     int map_y,
     int creature_type,
-    int creature_index)
+    int creature_index,
+    int *out_wounds)
 {
     const struct CreatureBehaviorProfile_Compat *profile;
     struct CombatantCreatureSnapshot_Compat attacker;
@@ -279,6 +280,7 @@ static int expected_c38_shared_combat_damage(
     int parry_level;
 
     profile = CREATURE_GetProfile_Compat(creature_type);
+    if (out_wounds) *out_wounds = 0;
     if (!champion || !profile) return -1;
 
     memset(&attacker, 0, sizeof(attacker));
@@ -334,6 +336,7 @@ static int expected_c38_shared_combat_damage(
             &result)) {
         return -1;
     }
+    if (out_wounds) *out_wounds = result.woundMaskAdded;
     return (result.outcome == COMBAT_OUTCOME_HIT_DAMAGE &&
             result.damageApplied > 0)
         ? result.damageApplied
@@ -509,6 +512,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     uint32_t c38_dispatch_time;
     int c38_event_index;
     int expected_c38_damage;
+    int expected_c38_wounds;
     int i;
 
     make_real_format_corridor_text_generator_dungeon(
@@ -626,7 +630,8 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
         1,
         1,
         9,
-        0);
+        0,
+        &expected_c38_wounds);
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "next tick dispatches the bounded C38 attack event");
     CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
@@ -643,6 +648,10 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
               profile.party_state.Champions[1].CurrentHealth ==
                   200 - expected_c38_damage,
           "bounded C38 attack event uses shared combat damage with imported PARRY level");
+    CHECK(expected_c38_wounds != 0 &&
+              profile.party_state.Champions[1].Wounds ==
+              (uint16_t)expected_c38_wounds,
+          "bounded C38 attack event applies shared combat wound mask");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event requeues the next attack cadence");
     c38_event_index = profile.timeline_queue.timeline[0];
