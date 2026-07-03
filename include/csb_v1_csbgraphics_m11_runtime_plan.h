@@ -25,6 +25,7 @@
 
 #include "csb_v1_csbgraphics_dat_real_scan.h"
 #include "csb_v1_csbgraphics_m11_binding_readiness.h"
+#include "csb_v1_viewport_pc34_compat.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -112,6 +113,15 @@ int csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
     int framebuffer_height,
     int framebuffer_stride,
     CSB_V1_CSBGraphicsM11Binding *out_binding);
+
+int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t entry_index,
+    const CSB_V1_ViewportCustomBackgroundMask *mask_geometry,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels);
 
 const CSB_V1_CSBGraphicsM11RuntimePlanEntry *
 csb_v1_csbgraphics_m11_runtime_plan_find_entry(

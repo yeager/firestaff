@@ -2,6 +2,7 @@
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 enum {
@@ -152,9 +153,6 @@ static int append_custom_background_pair(
         mask_span->decompressed_size == 0u) {
         return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
     }
-    if (bitmap_span->decompressed_size != mask_span->decompressed_size) {
-        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
-    }
     if (find_pair(plan, bitmap_span->entry_index, mask_span->entry_index)) {
         return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
     }
@@ -198,6 +196,127 @@ static void copy_cache_metadata(const CSB_V1_CSBGraphicsDatRealCache *cache,
               cache->matched_md5);
     copy_text(plan->source_label, sizeof(plan->source_label),
               cache->matched_label);
+}
+
+static uint16_t read_le16_bytes(const uint8_t *bytes)
+{
+    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
+static uint32_t read_le32_bytes(const uint8_t *bytes)
+{
+    return (uint32_t)bytes[0] |
+           ((uint32_t)bytes[1] << 8) |
+           ((uint32_t)bytes[2] << 16) |
+           ((uint32_t)bytes[3] << 24);
+}
+
+static int decode_entry_bytes(const CSB_V1_CSBGraphicsDatRealCache *cache,
+                              uint32_t entry_index,
+                              uint16_t expected_size,
+                              uint8_t **out_bytes)
+{
+    uint8_t *bytes;
+    size_t written = 0u;
+    int rc;
+
+    if (!cache_ready(cache) || !out_bytes || expected_size == 0u) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+    *out_bytes = NULL;
+    bytes = (uint8_t *)malloc((size_t)expected_size);
+    if (!bytes) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+    rc = csb_v1_csbgraphics_dat_decode_entry(cache->file_buffer,
+                                             cache->file_size,
+                                             entry_index,
+                                             bytes,
+                                             (size_t)expected_size,
+                                             &written);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        written != (size_t)expected_size) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+    *out_bytes = bytes;
+    return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+}
+
+static uint32_t *decode_entry_words32(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t entry_index,
+    uint16_t expected_size,
+    size_t *out_word_count)
+{
+    uint8_t *bytes = NULL;
+    uint32_t *words;
+    size_t count;
+    size_t i;
+    int rc;
+
+    if (out_word_count) {
+        *out_word_count = 0u;
+    }
+    if (expected_size == 0u || (expected_size & 3u) != 0u) {
+        return NULL;
+    }
+    rc = decode_entry_bytes(cache, entry_index, expected_size, &bytes);
+    if (rc != CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK || !bytes) {
+        return NULL;
+    }
+    count = (size_t)expected_size / 4u;
+    words = (uint32_t *)malloc(count * sizeof(uint32_t));
+    if (!words) {
+        free(bytes);
+        return NULL;
+    }
+    for (i = 0u; i < count; ++i) {
+        words[i] = read_le32_bytes(bytes + i * 4u);
+    }
+    free(bytes);
+    if (out_word_count) {
+        *out_word_count = count;
+    }
+    return words;
+}
+
+static uint16_t *decode_entry_words16(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t entry_index,
+    uint16_t expected_size,
+    size_t *out_word_count)
+{
+    uint8_t *bytes = NULL;
+    uint16_t *words;
+    size_t count;
+    size_t i;
+    int rc;
+
+    if (out_word_count) {
+        *out_word_count = 0u;
+    }
+    if (expected_size == 0u || (expected_size & 1u) != 0u) {
+        return NULL;
+    }
+    rc = decode_entry_bytes(cache, entry_index, expected_size, &bytes);
+    if (rc != CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK || !bytes) {
+        return NULL;
+    }
+    count = (size_t)expected_size / 2u;
+    words = (uint16_t *)malloc(count * sizeof(uint16_t));
+    if (!words) {
+        free(bytes);
+        return NULL;
+    }
+    for (i = 0u; i < count; ++i) {
+        words[i] = read_le16_bytes(bytes + i * 2u);
+    }
+    free(bytes);
+    if (out_word_count) {
+        *out_word_count = count;
+    }
+    return words;
 }
 
 int csb_v1_csbgraphics_m11_runtime_plan_add_explicit_entry(
@@ -482,6 +601,69 @@ int csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
         out_binding);
     return applied ? CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK
                    : CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+}
+
+int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t entry_index,
+    const CSB_V1_ViewportCustomBackgroundMask *mask_geometry,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels)
+{
+    const CSB_V1_CSBGraphicsM11RuntimePlanEntry *entry;
+    CSB_V1_ViewportCustomBackgroundMask mask;
+    uint32_t *bitmap_words = NULL;
+    uint16_t *mask_words = NULL;
+    size_t bitmap_word_count = 0u;
+    size_t mask_word_count = 0u;
+    int copied;
+
+    if (!plan || !plan->ready || !cache_ready(cache) ||
+        !mask_geometry || !viewport_words) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+    entry = csb_v1_csbgraphics_m11_runtime_plan_find_entry(plan,
+                                                           entry_index);
+    if (!entry ||
+        entry->route != CSB_V1_CSBGRAPHICS_M11_ROUTE_VIEWPORT_CUSTOM_BACKGROUND ||
+        entry->mask_entry_index == 0u) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    bitmap_words = decode_entry_words32(cache,
+                                        entry->entry_index,
+                                        entry->decompressed_size,
+                                        &bitmap_word_count);
+    mask_words = decode_entry_words16(cache,
+                                      entry->mask_entry_index,
+                                      entry->mask_decompressed_size,
+                                      &mask_word_count);
+    if (!bitmap_words || !mask_words) {
+        free(bitmap_words);
+        free(mask_words);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+
+    mask = *mask_geometry;
+    mask.mask_words = mask_words;
+    mask.mask_word_count = mask_word_count;
+    copied = csb_v1_viewport_custom_background_apply_aligned_mask_pc34(
+        &mask,
+        bitmap_words,
+        bitmap_word_count,
+        viewport_words,
+        viewport_word_count,
+        viewport_width_pixels);
+    free(bitmap_words);
+    free(mask_words);
+    if (copied <= 0) {
+        return copied == -2
+            ? CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_DEFERRED_COMPOSITE
+            : CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+    return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
 }
 
 const char *csb_v1_csbgraphics_m11_runtime_plan_result_name(int result)
