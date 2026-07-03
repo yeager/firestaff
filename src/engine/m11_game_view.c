@@ -16496,21 +16496,27 @@ static int m11_decode_visible_wall_text(const M11_GameViewState* state,
         if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING) {
             int textIdx = THING_GET_INDEX(thing);
             if (textIdx >= 0 && textIdx < state->world.things->textStringCount) {
-                const struct DungeonTextString_Compat* textThing =
-                    &state->world.things->textStrings[textIdx];
-                if (textThing->visible &&
-                    F0507_DUNGEON_DecodeTextAtOffset_Compat(state->world.things->textData,
-                                                            state->world.things->textDataWordCount,
-                                                            textThing->textDataWordOffset,
-                                                            outText,
-                                                            (int)outTextSize) >= 0 &&
+                if (F0508_DUNGEON_DecodeTextStringThing_Compat(
+                        state->world.things,
+                        textIdx,
+                        DUNGEON_TEXT_TYPE_INSCRIPTION,
+                        outText,
+                        (int)outTextSize) >= 0 &&
                     outText[0] != '\0') {
-                    /* Normalize 0x80 inscription separator (DUNGEON_TEXT_TYPE_INSCRIPTION
-                     * uses 0x80 as line-break per ReDMCSB DUNGEON.C:2329) to \n so that
-                     * m11_dm1_decoded_inscription_line_count and m11_draw_text see
-                     * proper line boundaries. */
+                    /* ReDMCSB DUNVIEW.C:3592 calls F0168 with
+                     * C0_TEXT_TYPE_INSCRIPTION before the M648 renderer.
+                     * DUNGEON.C:2329/2350 emits 0x80 line separators and
+                     * 0x81 terminator bytes for that path.  Normalize only
+                     * those control bytes for Firestaff's line loop; keep
+                     * glyph bytes on the source-font path below. */
                     for (char* p = outText; *p; ++p) {
-                        if (*p == (char)0x80) *p = '\n';
+                        unsigned char ch = (unsigned char)*p;
+                        if (ch == 0x80U) {
+                            *p = '\n';
+                        } else if (ch == 0x81U) {
+                            *p = '\0';
+                            break;
+                        }
                     }
                     return 1;
                 }
@@ -16580,6 +16586,42 @@ static int m11_dm1_unreadable_inscription_box_height(int relForward,
     return (int)kUnreadableBoxHeight[row][lineCount - 1];
 }
 
+static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_line(const M11_GameViewState* state,
+                                                                   const char* text,
+                                                                   int* outLen) {
+    const M11_AssetSlot* fontSlot;
+    int i;
+    int len;
+    if (outLen) {
+        *outLen = 0;
+    }
+    if (!state || !text || !*text) {
+        return NULL;
+    }
+    if (!M11_AssetLoader_IsReady(&state->assetLoader)) {
+        return NULL;
+    }
+    fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
+        fontSlot->width < DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        fontSlot->height < DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+        return NULL;
+    }
+    len = (int)strlen(text);
+    for (i = 0; i < len; ++i) {
+        int glyph = DM1_V1_InscriptionGlyphIndexFromAscii((unsigned char)text[i]);
+        if (glyph < 0 ||
+            (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontSlot->width) {
+            return NULL;
+        }
+    }
+    if (outLen) {
+        *outLen = len;
+    }
+    return fontSlot;
+}
+
 static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
                                               unsigned char* framebuffer,
                                               int fbW,
@@ -16590,26 +16632,12 @@ static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
     const M11_AssetSlot* fontSlot;
     int i;
     int len;
-    if (!state || !framebuffer || !text || !*text) {
+    if (!framebuffer) {
         return 0;
     }
-    if (!M11_AssetLoader_IsReady(&state->assetLoader)) {
+    fontSlot = m11_dm1_inscription_font_slot_for_line(state, text, &len);
+    if (!fontSlot) {
         return 0;
-    }
-    fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
-    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
-        fontSlot->width < DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
-        fontSlot->height < DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
-        return 0;
-    }
-    len = (int)strlen(text);
-    for (i = 0; i < len; ++i) {
-        int glyph = DM1_V1_InscriptionGlyphIndexFromAscii((unsigned char)text[i]);
-        if (glyph < 0 ||
-            (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontSlot->width) {
-            return 0;
-        }
     }
     /* ReDMCSB DUNVIEW.C:3619-3638 uses M648_GRAPHIC_INSCRIPTION_FONT
      * and blits one 8x8 source cell per decoded glyph with C10 transparent. */
@@ -16671,21 +16699,6 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
     char decoded[128];
     char* cursor;
     int line = 0;
-    /* BUG-DNY-DM1-2026-06-16 wall inscriptions are 'otydliga' (blurry)
-     * for the user.  When the dedicated 8x8 inscription font
-     * (M648_GRAPHIC_INSCRIPTION_FONT / DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34=258)
-     * is not loaded, the fallback path was using g_text_shadow
-     * which double-draws the 5x7 g_font[] bitmap at (+1,+1) shadow
-     * + (0,0) main, producing 2px-thick overlapping glyphs that look
-     * blurry/double-exposed on a 320x200 DM1 screen.  Use a
-     * no-shadow text style for the fallback so each glyph is drawn
-     * once at its true 5x7 pixel position, matching the original
-     * ReDMCSB DUNVIEW.C:3619-3638 (no shadow on M648_GRAPHIC_INSCRIPTION_FONT). */
-    M11_TextStyle inscriptionStyle = g_text_small;
-    inscriptionStyle.color = M11_COLOR_LIGHT_GRAY;
-    inscriptionStyle.shadowDx = 0;
-    inscriptionStyle.shadowDy = 0;
-    inscriptionStyle.shadowColor = M11_COLOR_BLACK;
     if (!m11_decode_visible_wall_text(state, cell, decoded, sizeof(decoded))) {
         return;
     }
@@ -16702,16 +16715,11 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
             int textWidth = DM1_V1_InscriptionTextWidth(charCount);
             int textX = M11_VIEWPORT_X + DM1_V1_InscriptionTextX(charCount);
             int textY = M11_VIEWPORT_Y + kLineBottomY[line] - 7;
-            m11_draw_dm1_front_wall_inscription_patch(framebuffer, fbW, fbH,
-                                                      textX, textY, textWidth);
-            if (!m11_draw_dm1_inscription_font_line(state, framebuffer, fbW, fbH,
-                                                    textX, textY, cursor)) {
-                int textW = m11_measure_text_pixels(cursor, &inscriptionStyle);
-                textX = M11_VIEWPORT_X + 112 - (textW / 2);
-                m11_draw_text(framebuffer, fbW, fbH,
-                              textX, textY,
-                              cursor,
-                              &inscriptionStyle);
+            if (m11_dm1_inscription_font_slot_for_line(state, cursor, NULL)) {
+                m11_draw_dm1_front_wall_inscription_patch(framebuffer, fbW, fbH,
+                                                          textX, textY, textWidth);
+                (void)m11_draw_dm1_inscription_font_line(state, framebuffer, fbW, fbH,
+                                                         textX, textY, cursor);
             }
         }
         if (!next) break;

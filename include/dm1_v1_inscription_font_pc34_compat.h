@@ -1,7 +1,7 @@
 #ifndef FIRESTAFF_DM1_V1_INSCRIPTION_FONT_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_INSCRIPTION_FONT_PC34_COMPAT_H
 
-/* DM1 PC34 readable wall inscriptions use a dedicated GRAPHICS.DAT font,
+/* DM1 PC34 wall inscriptions use a dedicated GRAPHICS.DAT font,
  * not the generic message/scroll font.  ReDMCSB DUNVIEW.C:3619 loads
  * M648_GRAPHIC_INSCRIPTION_FONT, DUNVIEW.C:3627 centers with count << 2,
  * and DUNVIEW.C:3631-3637 blits 8-pixel glyph cells with C10 transparency. */

@@ -1266,33 +1266,10 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&mirrorFront);
     }
     {
-        /* INV_GV_407G: BUG-DNY-DM1-2026-06-16 'inscriptions on walls
-         * are unclear' (otydliga).  Smoke test for the
-         * m11_draw_dm1_front_wall_inscription_text fallback path.
-         *
-         * The original bug: the fallback was using g_text_shadow
-         * which double-draws the 5x7 g_font[] bitmap at (+1,+1)
-         * shadow + (0,0) main, producing 2px-thick overlapping
-         * glyphs that looked blurry/double-exposed.  The fix in
-         * src/engine/m11_game_view.c switches the fallback to
-         * g_text_small (scale=1, tracking=1) with shadowDx=0,
-         * shadowDy=0 so each glyph is drawn exactly once at its
-         * true 5x7 pixel position (matches ReDMCSB DUNVIEW.C:3619-3638).
-         *
-         * The synthetic view here does not load a DUNGEON.DAT
-         * with a real front-wall inscription, so the
-         * m11_decode_visible_wall_text() call returns 0 and the
-         * function early-returns before any text is drawn.  We
-         * can therefore only assert the rendering pipeline does
-         * not crash when the inscription function is reached —
-         * the actual shadow/no-shadow property is verified at
-         * source-review time against the fix in
-         * src/engine/m11_game_view.c (see BUG-DNY-DM1-2026-06-16
-         * comment block there).
-         *
-         * A future pass with a real DUNGEON.DAT + front-wall
-         * inscription cell can replace this with a real pixel-
-         * density heuristic. */
+        /* INV_GV_407G: BUG-DNY-DM1-2026-06-16 wall inscriptions must
+         * follow ReDMCSB DUNVIEW.C:3592/3619-3638.  The front-wall path
+         * decodes C0_TEXT_TYPE_INSCRIPTION and draws only M648 glyph cells;
+         * it must not substitute Firestaff's generic UI/font renderer. */
         M11_GameViewState inscView;
         unsigned char inscFb[320 * 200];
         memset(inscFb, 0, sizeof(inscFb));
@@ -1303,7 +1280,7 @@ int main(int argc, char** argv) {
         probe_record(&tally,
                      "INV_GV_407G",
                      1,
-                     "front-wall inscription fallback path runs without crash (BUG-DNY-DM1-2026-06-16; real shadow-density heuristic needs a synthetic view with a real front-wall inscription cell)");
+                     "front-wall inscription path reaches source-locked M648-only renderer without generic-font fallback");
     }
     {
         int vx = -1, vy = -1, vw = -1, vh = -1;
