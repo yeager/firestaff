@@ -2174,6 +2174,74 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;
     dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[1] = 68;
+    dungeon.thing_type_counts[1] = 1;
+    raw[real_format_square_offset(1, 0)] =
+        (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(1u << 10));
+    test_put_le16(raw, 68, 0xfffeu);
+    test_put_le16(raw, 70,
+                  (uint16_t)(2u | (2u << 5) | (1u << 10) |
+                             (1u << 13)));
+    test_put_le16(raw, 72, 0u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        struct ProjectileCreateInput_Compat projectile_input;
+        struct TimelineEvent_Compat first_move;
+        int projectile_slot = -1;
+        memset(&projectile_input, 0, sizeof(projectile_input));
+        memset(&first_move, 0, sizeof(first_move));
+        projectile_input.category = PROJECTILE_CATEGORY_KINETIC;
+        projectile_input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        projectile_input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        projectile_input.ownerIndex = 6;
+        projectile_input.mapIndex = 0;
+        projectile_input.mapX = 1;
+        projectile_input.mapY = 1;
+        projectile_input.cell = 0;
+        projectile_input.direction = 0;
+        projectile_input.kineticEnergy = 20;
+        projectile_input.attack = 20;
+        projectile_input.launcherStrength = 20;
+        projectile_input.stepEnergy = 1;
+        projectile_input.currentTick = (int)profile.game_time;
+        projectile_input.associatedThing = (int)(5u << 10);
+        CHECK(F0810_PROJECTILE_Create_Compat(
+                  &projectile_input,
+                  &profile.projectiles,
+                  &projectile_slot,
+                  &first_move) == 1 &&
+                  projectile_slot == 0,
+              "C49 projectile teleporter fixture creates a kinetic projectile");
+        queue_projectile_move_event(&profile, &first_move);
+    }
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 projectile teleporter fixture advances to first move tick");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 projectile teleporter event dispatches");
+    CHECK(profile.projectiles.count == 1,
+          "C49 projectile teleporter keeps the projectile alive");
+    CHECK(profile.projectiles.entries[0].mapX == 2 &&
+              profile.projectiles.entries[0].mapY == 2 &&
+              profile.projectiles.entries[0].direction == 1 &&
+              profile.projectiles.entries[0].cell == 0,
+          "C49 projectile teleporter applies target, relative direction, and relative cell rotation");
+    {
+        int event_index = find_queued_event_type(&profile,
+                                                 DM1_EVENT_MOVE_PROJECTILE);
+        CHECK(event_index >= 0 &&
+                  profile.timeline_queue.events[event_index].b_mapX == 2 &&
+                  profile.timeline_queue.events[event_index].b_mapY == 2 &&
+                  profile.timeline_queue.events[event_index].c_cell == 0,
+              "C49 projectile teleporter requeues movement from the teleported state");
+    }
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
     dungeon.thing_data_bases[4] = 82;
     dungeon.thing_type_counts[4] = 1;
     dungeon.thing_data_bases[5] = 98;
