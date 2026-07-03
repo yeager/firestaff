@@ -294,6 +294,13 @@ typedef struct {
     int new_party_dir;
     int runtime_state_changed;
     int unsupported_runtime_command;
+    int movement_command_handled;
+    int movement_step_attempted;
+    int movement_step_applied;
+    int movement_blocked_by_wall;
+    int movement_destination_x;
+    int movement_destination_y;
+    int disabled_movement_ticks_after;
 } CSB_V1_InputCommandRuntimeResult;
 
 /* ── Runtime profile API ─────────────────────────────────────────────── */

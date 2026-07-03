@@ -304,6 +304,21 @@ static void test_forward_move_applies_open_step(void)
              "UP bridge reports the runtime coordinate mutation");
     CHECK_EQ(result.runtime_result.unsupported_runtime_command, 0,
              "UP bridge is now a supported bounded movement binding");
+    CHECK_EQ(result.runtime_result.movement_command_handled, 1,
+             "UP bridge forwards handled movement command result");
+    CHECK_EQ(result.runtime_result.movement_step_attempted, 1,
+             "UP bridge forwards attempted movement step result");
+    CHECK_EQ(result.runtime_result.movement_step_applied, 1,
+             "UP bridge forwards applied movement step result");
+    CHECK_EQ(result.runtime_result.movement_blocked_by_wall, 0,
+             "UP bridge forwards open movement wall result");
+    CHECK_EQ(result.runtime_result.movement_destination_x, CSB_V1_START_PARTY_X,
+             "UP bridge forwards movement destination x");
+    CHECK_EQ(result.runtime_result.movement_destination_y,
+             CSB_V1_START_PARTY_Y - 1,
+             "UP bridge forwards movement destination y");
+    CHECK_EQ(result.runtime_result.disabled_movement_ticks_after, 1,
+             "UP bridge forwards movement cooldown result");
     CHECK_EQ(profile.party_dir, CSB_V1_DIR_NORTH,
              "UP bridge leaves party_dir unchanged");
     CHECK_EQ(profile.party_x, CSB_V1_START_PARTY_X,
