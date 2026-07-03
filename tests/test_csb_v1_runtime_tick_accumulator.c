@@ -1729,6 +1729,77 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 final group pit drop clears the real-format group Slot chain");
     CHECK(test_get_le16(raw, 132) == 0xfffeu,
           "C25 final group pit drop terminates the fallen carried thing chain");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.level_count = 2;
+    dungeon.level_widths[1] = 3;
+    dungeon.level_heights[1] = 3;
+    dungeon.level_offsets[1] = 9;
+    dungeon.square_first_thing_base = 100;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[4] = 116;
+    dungeon.thing_type_counts[4] = 1;
+    dungeon.thing_data_bases[5] = 132;
+    dungeon.thing_type_counts[5] = 1;
+    raw[dungeon.level_offsets[0] + real_format_square_offset(1, 1)] =
+        (uint8_t)((3u << 5) | 0x10u); /* stairs down, NS oriented */
+    raw[dungeon.level_offsets[1] + real_format_square_offset(1, 1)] =
+        (uint8_t)(3u << 5); /* lower stairs; east side is open */
+    raw[dungeon.level_offsets[1] + real_format_square_offset(2, 1)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 1 * 2, 0);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 5 * 2, 1);
+    test_put_le16(raw, 100, (uint16_t)(4u << 10));
+    test_put_le16(raw, 102, 0xfffeu);
+    test_put_le16(raw, 116, 0xfffeu);
+    test_put_le16(raw, 118, (uint16_t)(5u << 10)); /* carried weapon slot */
+    raw[120] = 9u;
+    raw[121] = 0xffu;
+    test_put_le16(raw, 122, 1u);
+    test_put_le16(raw, 130, 0u);
+    test_put_le16(raw, 132, 0xfffeu);
+    test_put_le16(raw, 134, 27u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_seed = 0xC5B1073Au;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 160;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    slot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 final-creature stairs-drop fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 final-creature stairs-drop reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 final-creature stairs-drop dispatches through the explosion handler");
+    CHECK(test_get_le16(raw, 100) == 0xfffeu,
+          "C25 final group stairs drop leaves the source stairs thing-list empty");
+    CHECK((test_get_le16(raw, 102) & 0x3fffu) == (uint16_t)(5u << 10),
+          "C25 final group stairs drop moves carried slot thing to the lower exit square");
+    CHECK(test_get_le16(raw, 116) == 0xffffu,
+          "C25 final group stairs drop marks the real-format group record unused");
+    CHECK(test_get_le16(raw, 118) == 0xfffeu,
+          "C25 final group stairs drop clears the real-format group Slot chain");
+    CHECK(test_get_le16(raw, 132) == 0xfffeu,
+          "C25 final group stairs drop terminates the moved carried thing chain");
 }
 
 static void test_explosion_c25_door_destruction_writeback(void)

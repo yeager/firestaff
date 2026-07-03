@@ -2805,6 +2805,51 @@ static int csb_v1_runtime_projectile_result_places_associated_object(
     }
 }
 
+static int csb_v1_runtime_stairs_exit_direction(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y)
+{
+    static const int step_east[4] = { 0, 1, 0, -1 };
+    static const int step_north[4] = { -1, 0, 1, 0 };
+    int raw_square;
+    int north_south;
+    int check_x;
+    int check_y;
+    int check_raw;
+    int check_type = 1;
+    int blocked = 0;
+
+    if (!dungeon || level < 0 || level >= dungeon->level_count) return 0;
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        level,
+        map_x,
+        map_y);
+    if (raw_square < 0) return 0;
+
+    north_south = (raw_square & 0x08) ? 0 : 1;
+    check_x = map_x + step_east[north_south ? 1 : 0];
+    check_y = map_y + step_north[north_south ? 1 : 0];
+    check_raw = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        level,
+        check_x,
+        check_y);
+    if (check_raw >= 0) {
+        check_type = (dungeon->square_bytes == 1)
+            ? ((check_raw >> 5) & 0x07)
+            : (check_raw & 0x1F);
+        blocked = (check_type == 0 || check_type == 3) ? 1 : 0;
+    }
+    /* ReDMCSB DUNGEON.C F0155 lines 1560-1582: stairs without the
+     * north/south orientation bit check EAST and return EAST/WEST; stairs
+     * with the bit check NORTH and return NORTH/SOUTH depending on whether
+     * that neighbor is wall/stairs. */
+    return (blocked << 1) + north_south;
+}
+
 static int csb_v1_runtime_apply_object_consequences_at_square(
     CSB_V1_DungeonData *dungeon,
     uint16_t *inout_thing,
@@ -2848,28 +2893,73 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
             int old_level;
             int old_x;
             int old_y;
+            uint16_t old_thing;
 
-            if (square_type != 2 ||
-                (raw_square & 0x08) == 0 ||
-                (raw_square & 0x01) != 0) {
-                break;
-            }
-            target_level = *inout_map_index + 1;
-            if (target_level < 0 || target_level >= dungeon->level_count) {
-                break;
-            }
             old_level = *inout_map_index;
             old_x = *inout_map_x;
             old_y = *inout_map_y;
-            if (!csb_v1_runtime_unlink_thing_from_square(
+            old_thing = *inout_thing;
+            if (square_type == 2) {
+                if ((raw_square & 0x08) == 0 ||
+                    (raw_square & 0x01) != 0) {
+                    break;
+                }
+                target_level = *inout_map_index + 1;
+                if (target_level < 0 ||
+                    target_level >= dungeon->level_count) {
+                    break;
+                }
+                if (!csb_v1_runtime_unlink_thing_from_square(
+                        dungeon,
+                        *inout_thing,
+                        old_level,
+                        old_x,
+                        old_y)) {
+                    break;
+                }
+                *inout_map_index = target_level;
+            } else if (square_type == 3) {
+                static const int step_east[4] = { 0, 1, 0, -1 };
+                static const int step_north[4] = { -1, 0, 1, 0 };
+                uint16_t moved_thing;
+                int direction;
+                int cell;
+
+                if ((raw_square & 0x04) == 0) {
+                    target_level = *inout_map_index + 1;
+                    if (target_level < 0 ||
+                        target_level >= dungeon->level_count) {
+                        break;
+                    }
+                    *inout_map_index = target_level;
+                }
+                direction = csb_v1_runtime_stairs_exit_direction(
                     dungeon,
-                    *inout_thing,
-                    old_level,
-                    old_x,
-                    old_y)) {
+                    *inout_map_index,
+                    *inout_map_x,
+                    *inout_map_y);
+                cell = (*inout_thing >> 14) & 0x03;
+                cell = (((cell - direction + 1) & 0x02) >> 1) + direction;
+                cell &= 0x03;
+                moved_thing = (uint16_t)((*inout_thing & 0x3FFFu) |
+                                         (uint16_t)(cell << 14));
+                *inout_map_x += step_east[direction];
+                *inout_map_y += step_north[direction];
+                if (!csb_v1_runtime_unlink_thing_from_square(
+                        dungeon,
+                        *inout_thing,
+                        old_level,
+                        old_x,
+                        old_y)) {
+                    *inout_map_index = old_level;
+                    *inout_map_x = old_x;
+                    *inout_map_y = old_y;
+                    break;
+                }
+                *inout_thing = moved_thing;
+            } else {
                 break;
             }
-            *inout_map_index = target_level;
             if (!csb_v1_runtime_append_thing_to_square_tail(
                     dungeon,
                     *inout_thing,
@@ -2877,9 +2967,12 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                     *inout_map_x,
                     *inout_map_y)) {
                 *inout_map_index = old_level;
+                *inout_map_x = old_x;
+                *inout_map_y = old_y;
+                *inout_thing = old_thing;
                 (void)csb_v1_runtime_append_thing_to_square_tail(
                     dungeon,
-                    *inout_thing,
+                    old_thing,
                     old_level,
                     old_x,
                     old_y);
@@ -2938,10 +3031,11 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
      * objects use object/party-capable teleporters, rejects creature-only
      * teleporters, rotates object cells only for relative teleporters unless
      * the object came from the CM2 projectile-associated-object path, and
-     * continues into open non-imaginary pits in the same PC34 100-step chain.
-     * This CSB bridge keeps pit level transitions bounded to adjacent maps;
-     * full F0154 coordinate pairing, cross-map teleporters, buzz audio, and
-     * object sensors remain separate runtime work. */
+     * continues into open non-imaginary pits and non-projectile stairs in the
+     * same PC34 100-step chain. This CSB bridge keeps level transitions
+     * bounded to adjacent maps; full F0154 coordinate pairing, cross-map
+     * teleporters, buzz audio, and object sensors remain separate runtime
+     * work. */
     return moved_count;
 }
 
