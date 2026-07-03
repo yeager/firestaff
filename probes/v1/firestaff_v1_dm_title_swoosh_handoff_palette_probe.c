@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
 
     printf("probe=firestaff_v1_dm_title_swoosh_handoff_palette\n");
     printf("graphicsDat=%s\n", graphicsPath);
-    printf("sourceEvidence=SWSH.C F2255; STARTUP1.C:143; TITLE.C:362-367,385-387; DRAWVIEW.C G8160/G8161\n");
+    printf("sourceEvidence=SWSH.C F2255; STARTUP1.C:143; TITLE.C:362-367,385-387; VIDEODRV.C C25_VGA G8160/G8161\n");
 
     graphicsFile = fopen(graphicsPath, "rb");
     if (!graphicsFile) {

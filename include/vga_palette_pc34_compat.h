@@ -42,12 +42,12 @@ extern const unsigned char G9010_auc_VgaPaletteAll_Compat[6][16][3];
 /* Special 16-colour VGA palettes from VIDEODRV.C / DRAWVIEW.C.
    These are used by original DM PC 3.4 for full-screen credits and
    entrance-door presentation paths, independent of dungeon brightness.
-   The TITLE and TITLE_PRESENTS slots are the F20E PC 3.4 DUNGEON+MASTER
+   The TITLE and TITLE_PRESENTS slots are the PC 3.4 VGA DUNGEON+MASTER
    and PRESENTS palettes merged from the C12_PRESENTS, C13_DUNGEON and
-   C14_MASTER COLOR_DEF tables in DRAWVIEW.C.  ReDMCSB TITLE.C F0437
+   C14_MASTER COLOR_DEF tables in VIDEODRV.C.  ReDMCSB TITLE.C F0437
    switches between them in source order: PRESENTS first (white text on
-   black), then a fade-to-black curtain, then DUNGEON+MASTER rows over LIGHT0 for the
-   "DUNGEON" zoom and "STRIKES BACK" reveal. */
+   black), then a fade-to-black curtain, then DUNGEON+MASTER rows over
+   LIGHT0 for the "DUNGEON" zoom and "STRIKES BACK" reveal. */
 extern const unsigned char G9011_auc_VgaPaletteCredits_Compat[16][3];
 extern const unsigned char G9012_auc_VgaPaletteEntrance_Compat[16][3];
 extern const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT][16][3];

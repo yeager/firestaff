@@ -5,13 +5,13 @@
  *   - TITLE.C:319-324 blits "PRESENTS" from source y=137 to 0,90..105
  *     with F1012_PALETTE_SetCurtain(C0_BLACK_PALETTE) and
  *     F0694_SetMultipleColorsInPalette(C12_PRESENTS), which sets
- *     only 0x0F to white.  ReDMCSB DRAWVIEW.C F20E G8159_PRESENTS is
+ *     only 0x0F to white.  ReDMCSB VIDEODRV.C C25_VGA G8159_PRESENTS is
  *     the source of truth.
  *   - TITLE.C:340-402 builds 18 shrinked 320x80 title bitmaps and
  *     blits them in reverse order, then waits two VBlanks and blits
  *     MASTER / STRIKES BACK at y=118..174.  The DUNGEON MASTER zoom
  *     and the STRIKES BACK reveal both use the merged
- *     C13_DUNGEON + C14_MASTER palette from DRAWVIEW.C F20E G8160
+ *     C13_DUNGEON + C14_MASTER palette from VIDEODRV.C C25_VGA G8160
  *     and G8161.  In RGB8 that is VGA_PALETTE_PC34_SPECIAL_TITLE.
  *
  * v2.7.4 release regression: the previous runtime applied
@@ -87,16 +87,16 @@ static void check_rgb(unsigned int palette,
 
 int main(void) {
     static const unsigned char expectedPresents[16][3] = {
-        {0, 0, 0}, {109, 109, 109}, {146, 146, 146}, {109, 36, 0},
-        {0, 219, 219}, {146, 73, 0}, {0, 146, 0}, {0, 219, 0},
-        {255, 0, 0}, {255, 182, 0}, {219, 146, 109}, {255, 255, 0},
-        {73, 73, 73}, {182, 182, 182}, {0, 0, 255}, {255, 255, 255}
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
+        {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {255, 255, 255}
     };
     static const unsigned char expectedDungeonMaster[16][3] = {
         {0, 0, 0}, {109, 109, 109}, {146, 146, 146}, {188, 156, 60},
         {156, 92, 60}, {220, 188, 60}, {188, 92, 60}, {220, 220, 92},
         {255, 255, 60}, {255, 182, 0}, {219, 146, 109}, {124, 60, 28},
-        {255, 0, 0}, {182, 182, 182}, {0, 0, 255}, {255, 0, 0}
+        {255, 0, 0}, {182, 182, 182}, {0, 0, 255}, {255, 255, 255}
     };
 
     /* The helper must always succeed and never write a negative or
@@ -192,8 +192,8 @@ int main(void) {
                 "PRESENTS and DUNGEON+MASTER palette slots are distinct");
 
     /* The two palettes must be visually distinct: the PRESENTS phase
-     * keeps LIGHT0 while DUNGEON+MASTER overrides colors 3..8, 0x0B,
-     * 0x0C, 0x0F.  Sample color 4 to prove the palettes are not the
+     * blanks indices 0..14 while DUNGEON+MASTER overrides colors 3..8,
+     * 0x0B, 0x0C, 0x0F.  Sample color 4 to prove the palettes are not the
      * same row. */
     const unsigned char* presentsColor4 =
         F9011_VGA_GetSpecialColorRgb_Compat(4, VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS);
@@ -201,23 +201,28 @@ int main(void) {
         F9011_VGA_GetSpecialColorRgb_Compat(4, VGA_PALETTE_PC34_SPECIAL_TITLE);
     ASSERT_TRUE(presentsColor4 && titleColor4,
                 "color 4 must resolve in both PRESENTS and DUNGEON+MASTER palettes");
-    ASSERT_TRUE(presentsColor4[0] == 0u && presentsColor4[1] == 219u && presentsColor4[2] == 219u,
-                "PRESENTS color 4 remains LIGHT0 cyan while C12_PRESENTS only changes 0x0F");
+    ASSERT_TRUE(presentsColor4[0] == 0u && presentsColor4[1] == 0u && presentsColor4[2] == 0u,
+                "PRESENTS color 4 is black in the PC34 VGA C12_PRESENTS row");
     ASSERT_TRUE(!(titleColor4[0] == 0u && titleColor4[1] == 0u && titleColor4[2] == 0u),
                 "DUNGEON+MASTER color 4 is not black (C13_DUNGEON lights 0x03..0x08, 0x0B, 0x0C)");
 
-    /* Sample color 0x0F to prove the master "MASTER" / "STRIKES BACK"
+    /* Sample color 0x0C to prove the master "MASTER" / "STRIKES BACK"
      * red is wired into the DUNGEON+MASTER palette and is not the
      * v2.7.4 wrong-palette gold (170, 119, 0). */
+    const unsigned char* titleColor12 =
+        F9011_VGA_GetSpecialColorRgb_Compat(12, VGA_PALETTE_PC34_SPECIAL_TITLE);
     const unsigned char* titleColor15 =
         F9011_VGA_GetSpecialColorRgb_Compat(15, VGA_PALETTE_PC34_SPECIAL_TITLE);
-    ASSERT_TRUE(titleColor15 && titleColor15[0] == 255u && titleColor15[1] == 0u && titleColor15[2] == 0u,
-                "DUNGEON+MASTER color 0x0F is bright red (C14_MASTER 0x3F,0x00,0x00)");
+    ASSERT_TRUE(titleColor12 && titleColor12[0] == 255u && titleColor12[1] == 0u && titleColor12[2] == 0u,
+                "DUNGEON+MASTER color 0x0C is bright red (C14_MASTER 0x3F,0x00,0x00)");
+    ASSERT_TRUE(titleColor15 && titleColor15[0] == 255u && titleColor15[1] == 255u && titleColor15[2] == 255u,
+                "DUNGEON+MASTER color 0x0F remains white in the PC34 VGA C13_DUNGEON row");
 
-    /* Full ReDMCSB DRAWVIEW.C F20E palette lock:
-     *   G8159_PRESENTS rows 273-290: only 0x0F is white.
-     *   G8160_DUNGEON rows 291-300: colors 0x03..0x08, 0x0B, 0x0C.
-     *   G8161_MASTER rows 301-303: color 0x0F bright red.
+    /* Full ReDMCSB VIDEODRV.C C25_VGA palette lock:
+     *   VIDEODRV.C G8159_PRESENTS rows 549-566: only 0x0F is white.
+     *   VIDEODRV.C G8160_DUNGEON rows 568-593: colors 0x03..0x08,
+     *     0x0B, 0x0C, and 0x0F.
+     *   VIDEODRV.C G8161_MASTER rows 600-603: color 0x0C bright red.
      * The constants are VGA 6-bit DAC values converted with
      * rgb8 = (vga6 << 2) | (vga6 >> 4), except C12 0x3F white keeps
      * the existing PC34 compatibility row's 255 endpoint. */
@@ -227,13 +232,13 @@ int main(void) {
                   expectedPresents[color][0],
                   expectedPresents[color][1],
                   expectedPresents[color][2],
-                  "DRAWVIEW.C G8159_PRESENTS full palette");
+                  "VIDEODRV.C G8159_PRESENTS full palette");
         check_rgb(VGA_PALETTE_PC34_SPECIAL_TITLE,
                   color,
                   expectedDungeonMaster[color][0],
                   expectedDungeonMaster[color][1],
                   expectedDungeonMaster[color][2],
-                  "DRAWVIEW.C G8160_DUNGEON + G8161_MASTER full palette");
+                  "VIDEODRV.C G8160_DUNGEON + G8161_MASTER full palette");
     }
 
     printf("# summary: %d/%d invariants passed\n", g_pass, g_pass + g_fail);

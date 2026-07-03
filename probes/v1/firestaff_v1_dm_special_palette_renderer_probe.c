@@ -12,7 +12,8 @@
  *
  * Source anchors:
  *   - ReDMCSB TITLE.C F0437 lines 319-324 uses C12_PRESENTS.
- *   - ReDMCSB TITLE.C F0437 lines 340-402 uses C13_DUNGEON+C14_MASTER.
+ *   - ReDMCSB TITLE.C F0437 lines 340-402 uses the PC34 VGA
+ *     C13_DUNGEON+C14_MASTER rows from VIDEODRV.C C25_VGA.
  *   - ReDMCSB ENTRANCE.C lines 426-595 switches to the entrance palette.
  */
 
@@ -79,10 +80,11 @@ int main(void) {
         unsigned char colorIndex;
     } kCases[] = {
         { "TITLE_PRESENTS_WHITE", VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS, 0x0Fu },
+        { "TITLE_MASTER_RED",     VGA_PALETTE_PC34_SPECIAL_TITLE,          0x0Cu },
         { "TITLE_MASTER_WHITE",   VGA_PALETTE_PC34_SPECIAL_TITLE,          0x0Fu },
         { "ENTRANCE_WHITE",       VGA_PALETTE_PC34_SPECIAL_ENTRANCE,       0x0Fu },
         { "CREDITS_WHITE",        VGA_PALETTE_PC34_SPECIAL_CREDITS,        0x0Fu },
-        { "TITLE_MASTER_GOLD",    VGA_PALETTE_PC34_SPECIAL_TITLE,          0x0Eu },
+        { "TITLE_MASTER_BLUE",    VGA_PALETTE_PC34_SPECIAL_TITLE,          0x0Eu },
     };
     ProbeStats stats;
     unsigned char* framebuffer;
