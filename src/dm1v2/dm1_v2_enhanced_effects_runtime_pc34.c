@@ -47,7 +47,7 @@ int dm1_v2_enhanced_effects_runtime_render_indexed(
     int viewportY)
 {
     DM1_V2_PhaseGateDecision decision;
-    unsigned char effectIndex = 12u;
+    unsigned char effectIndex = 15u;
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return 0;
     }

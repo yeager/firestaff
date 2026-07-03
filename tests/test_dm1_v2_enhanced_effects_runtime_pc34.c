@@ -101,6 +101,35 @@ static void test_indexed_render_gate_paints_particles(void) {
     CHECK(framebuffer[(5 + 12) * 64 + (4 + 10)] != 0);
 }
 
+static void test_direct_particle_seed_is_bounded_and_visible(void) {
+    unsigned char framebuffer[32 * 32];
+    int i;
+
+    v2_particle_init();
+    memset(framebuffer, 0, sizeof(framebuffer));
+    CHECK(v2_particle_add_direct(4.0f, 5.0f, 0.25f, 1.0f, 0.0f,
+                                 0x00ff00ffu) == 0);
+    CHECK(v2_particle_active_count() == 1);
+    CHECK(v2_particle_blit_indexed(framebuffer, 32, 32, 2, 3, 12u) > 0);
+    CHECK(framebuffer[(3 + 5) * 32 + (2 + 4)] == 12u);
+
+    v2_particle_init();
+    for (i = 0; i < M11_V2_MAX_PARTICLES; ++i) {
+        CHECK(v2_particle_add_direct((float)i, 1.0f, 0.25f, 1.0f, 0.0f,
+                                     0x00ff00ffu) == i);
+    }
+    CHECK(v2_particle_add_direct(1.0f, 1.0f, 0.25f, 1.0f, 0.0f,
+                                 0x00ff00ffu) == -1);
+    CHECK(v2_particle_active_count() == M11_V2_MAX_PARTICLES);
+
+    v2_particle_init();
+    CHECK(v2_particle_add_direct(1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+                                 0x00ff00ffu) == -1);
+    CHECK(v2_particle_add_direct(1.0f, 1.0f, 0.25f, 0.0f, 0.0f,
+                                 0x00ff00ffu) == -1);
+    CHECK(v2_particle_active_count() == 0);
+}
+
 static void test_null_inputs_fail_safe(void) {
     DM1_V2_PhaseGateConfig gate;
     float beforeLight;
@@ -130,6 +159,7 @@ int main(void) {
     test_presentation_gate_ticks_particles_without_lighting();
     test_presentation_gate_and_dynamic_lighting_tick_light_map();
     test_indexed_render_gate_paints_particles();
+    test_direct_particle_seed_is_bounded_and_visible();
     test_null_inputs_fail_safe();
 
     if (failures) {

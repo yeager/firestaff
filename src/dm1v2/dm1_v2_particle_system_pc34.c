@@ -88,6 +88,33 @@ void v2_particle_emit(int emitter_idx, float x, float y) {
     }
 }
 
+int v2_particle_add_direct(float x,
+                           float y,
+                           float life,
+                           float size,
+                           float gravity,
+                           uint32_t color)
+{
+    M11_V2_Particle *p;
+    if (g_particle_count >= M11_V2_MAX_PARTICLES) {
+        return -1;
+    }
+    if (!(life > 0.0f) || !(size > 0.0f)) {
+        return -1;
+    }
+    p = &g_particles[g_particle_count++];
+    p->x = x;
+    p->y = y;
+    p->vx = 0.0f;
+    p->vy = 0.0f;
+    p->life = life;
+    p->color = color;
+    p->size = size;
+    p->alpha = 1.0f;
+    p->gravity = gravity;
+    return g_particle_count - 1;
+}
+
 void v2_particle_update(float dt) {
     int i, write_idx = 0;
     for (i = 0; i < g_particle_count; i++) {
