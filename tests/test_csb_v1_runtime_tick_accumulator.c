@@ -381,6 +381,8 @@ static void make_real_format_corridor_text_generator_dungeon(
     dungeon->thing_type_counts[2] = 1;
     dungeon->thing_data_bases[3] = 72;
     dungeon->thing_type_counts[3] = 1;
+    dungeon->thing_data_bases[4] = 80;
+    dungeon->thing_type_counts[4] = 1;
 
     raw[real_format_square_offset(1, 0)] = (uint8_t)((1u << 5) | 0x10u);
     test_put_le16(raw, 60 + 1 * 2, 0);
@@ -389,17 +391,19 @@ static void make_real_format_corridor_text_generator_dungeon(
     test_put_le16(raw, 70, 0x0000u);
     test_put_le16(raw, 72, 0xfffeu);
     test_put_le16(raw, 74, (uint16_t)((9u << 7) | 6u));
-    test_put_le16(raw, 76, (uint16_t)((2u << 7) | (1u << 6)));
+    test_put_le16(raw, 76, (uint16_t)((1u << 7) | (1u << 6)));
     test_put_le16(raw, 78, (uint16_t)((3u << 4) | 5u));
+    test_put_le16(raw, 80, 0xffffu);
 }
 
 static void test_timeline_corridor_text_and_generator_mutations(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
-    uint8_t raw[96];
+    uint8_t raw[112];
     uint16_t text_word;
     uint16_t type_data;
+    uint16_t group_flags;
 
     make_real_format_corridor_text_generator_dungeon(
         &dungeon,
@@ -423,6 +427,19 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     type_data = (uint16_t)(raw[74] | ((uint16_t)raw[75] << 8));
     CHECK((type_data & 0x007fu) == 0u && (type_data >> 7) == 9u,
           "C05 C006 generator disables sensor while preserving creature data");
+    CHECK((uint16_t)(raw[66] | ((uint16_t)raw[67] << 8)) == (uint16_t)(4u << 10),
+          "C05 C006 generator links the materialized group at the square head");
+    CHECK((uint16_t)(raw[80] | ((uint16_t)raw[81] << 8)) == (uint16_t)(2u << 10),
+          "materialized group preserves the previous textstring chain as Next");
+    CHECK(raw[84] == 9u,
+          "materialized group writes creature type from sensor data");
+    CHECK(raw[85] == 0xffu,
+          "single generated creature uses the source centered group cell marker");
+    CHECK((uint16_t)(raw[86] | ((uint16_t)raw[87] << 8)) > 0u,
+          "materialized group writes generated creature health");
+    group_flags = (uint16_t)(raw[94] | ((uint16_t)raw[95] << 8));
+    CHECK(((group_flags >> 5) & 0x03u) == 0u,
+          "materialized single-creature group stores source 0-based count");
     CHECK(profile.timeline_queue.eventCount == 1,
           "C05 C006 generator schedules one delayed C65 re-enable event");
 

@@ -22,6 +22,7 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "memory_runtime_dynamics_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -1197,6 +1198,76 @@ static uint8_t *csb_v1_runtime_mutable_thing_record(
     return dungeon->raw_data + (record - (const uint8_t *)dungeon->raw_data);
 }
 
+static uint8_t *csb_v1_runtime_square_first_thing_ptr(
+    CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y)
+{
+    int i;
+    int column_index = 0;
+    int column_counts_base;
+    int thing_index;
+    int thing_offset;
+    int square_offset;
+
+    if (!dungeon || !dungeon->raw_data || dungeon->square_bytes != 1) return NULL;
+    if (level < 0 || level >= dungeon->level_count) return NULL;
+    if (map_x < 0 || map_x >= dungeon->level_widths[level] ||
+        map_y < 0 || map_y >= dungeon->level_heights[level]) {
+        return NULL;
+    }
+    square_offset = dungeon->level_offsets[level] +
+                    map_x * dungeon->level_heights[level] +
+                    map_y;
+    if (square_offset < 0 || square_offset >= dungeon->raw_size) return NULL;
+    if ((dungeon->raw_data[square_offset] & 0x10u) == 0u) return NULL;
+
+    column_counts_base = 44 + dungeon->level_count * 16;
+    for (i = 0; i < level; ++i) {
+        column_index += dungeon->level_widths[i];
+    }
+    column_counts_base += (column_index + map_x) * 2;
+    if (column_counts_base + 2 > dungeon->raw_size) return NULL;
+    thing_index = (int)csb_v1_runtime_read_u16(
+        dungeon->raw_data + column_counts_base);
+    for (i = 0; i < map_y; ++i) {
+        if (dungeon->raw_data[dungeon->level_offsets[level] +
+                              map_x * dungeon->level_heights[level] + i] &
+            0x10u) {
+            thing_index++;
+        }
+    }
+    if (thing_index < 0 || thing_index >= dungeon->square_first_thing_count) {
+        return NULL;
+    }
+    thing_offset = dungeon->square_first_thing_base + thing_index * 2;
+    if (thing_offset + 2 > dungeon->raw_size) return NULL;
+    return dungeon->raw_data + thing_offset;
+}
+
+static int csb_v1_runtime_find_unused_group_record(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t **out_record,
+    int *out_index)
+{
+    int i;
+
+    if (out_record) *out_record = NULL;
+    if (out_index) *out_index = -1;
+    if (!dungeon || !dungeon->raw_data) return 0;
+    for (i = 0; i < dungeon->thing_type_counts[4]; ++i) {
+        int offset = dungeon->thing_data_bases[4] + i * 16;
+        if (offset < 0 || offset + 16 > dungeon->raw_size) return 0;
+        if (csb_v1_runtime_read_u16(dungeon->raw_data + offset) == 0xFFFFu) {
+            if (out_record) *out_record = dungeon->raw_data + offset;
+            if (out_index) *out_index = i;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void csb_v1_runtime_trigger_floor_sensor_event(
     CSB_V1_RuntimeProfile *profile,
     int sensor_effect,
@@ -1590,6 +1661,95 @@ static void csb_v1_runtime_schedule_enable_group_generator_record(
     (void)dm1v1_event_add(&profile->timeline_queue, &event);
 }
 
+static void csb_v1_runtime_materialize_corridor_generator_group(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    int sensor_data,
+    uint16_t flags_word,
+    uint16_t local_word)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *group_record;
+    uint8_t *first_thing_ptr;
+    struct GeneratorContext_Compat ctx;
+    struct GeneratorResult_Compat result;
+    struct RngState_Compat rng;
+    uint16_t previous_first;
+    uint16_t group_thing;
+    uint16_t group_flags;
+    int group_index;
+    int i;
+
+    if (!profile || !record || !profile->dungeon_handle) return;
+    dungeon = profile->dungeon_handle;
+    if (!csb_v1_runtime_find_unused_group_record(
+            dungeon,
+            &group_record,
+            &group_index)) {
+        return;
+    }
+    first_thing_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon,
+        record->mapIndex,
+        record->mapX,
+        record->mapY);
+    if (!first_thing_ptr) return;
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&result, 0, sizeof(result));
+    ctx.mapIndex = record->mapIndex;
+    ctx.mapX = record->mapX;
+    ctx.mapY = record->mapY;
+    ctx.creatureType = sensor_data;
+    ctx.creatureCountRaw = (int)((flags_word >> 7) & 0x0Fu);
+    ctx.randomizeCount = (ctx.creatureCountRaw & 0x08) ? 1 : 0;
+    ctx.healthMultiplier = (int)(local_word & 0x000Fu);
+    ctx.ticksRaw = (int)(local_word >> 4);
+    ctx.onceOnly = (int)((flags_word >> 2) & 0x01u);
+    ctx.audible = (int)((flags_word >> 6) & 0x01u);
+    ctx.mapDifficulty = 1;
+    ctx.isOnPartyMap = (record->mapIndex == profile->current_level) ? 1 : 0;
+    ctx.currentActiveGroupCount = 0;
+    ctx.maxActiveGroupCount = 60;
+
+    /* ReDMCSB TIMELINE.C F0245 lines 970-978 calls GROUP.C F0185 with
+     * sensor data, health multiplier, count, random direction, and square
+     * coordinates.  Firestaff's M10 F0860 owns the source-locked
+     * count/random/health/cell calculation; this bridge binds its result to
+     * CSB real-format C04 group slots and square-first-thing linkage. */
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)record->mapX << 8) ^ ((uint32_t)record->mapY << 16));
+    if (!F0860_RUNTIME_HandleGroupGenerator_Compat(
+            &ctx,
+            &rng,
+            profile->game_time,
+            &result) ||
+        !result.spawned) {
+        return;
+    }
+
+    previous_first = csb_v1_runtime_read_u16(first_thing_ptr);
+    group_thing = (uint16_t)((4u << 10) | (uint16_t)(group_index & 0x03FF));
+    csb_v1_runtime_write_u16(group_record + 0, previous_first);
+    csb_v1_runtime_write_u16(group_record + 2, 0xFFFEu);
+    group_record[4] = (uint8_t)(result.spawnedCreatureType & 0xFF);
+    group_record[5] = (uint8_t)(result.spawnedGroupCells & 0xFF);
+    for (i = 0; i < 4; ++i) {
+        int hp = result.spawnedGroupHealth[i];
+        if (hp < 0) hp = 0;
+        if (hp > 0xFFFF) hp = 0xFFFF;
+        csb_v1_runtime_write_u16(
+            group_record + 6 + i * 2,
+            (uint16_t)hp);
+    }
+    group_flags = (uint16_t)(((result.spawnedCreatureCount & 0x03) << 5) |
+                             ((result.spawnedDirection & 0x03) << 8));
+    csb_v1_runtime_write_u16(group_record + 14, group_flags);
+    csb_v1_runtime_write_u16(first_thing_ptr, group_thing);
+}
+
 static void csb_v1_runtime_apply_corridor_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -1638,10 +1798,17 @@ static void csb_v1_runtime_apply_corridor_timeline_record(
             uint16_t flags_word = csb_v1_runtime_read_u16(thing_record + 4);
             uint16_t local_word = csb_v1_runtime_read_u16(thing_record + 6);
             int sensor_type = (int)(type_data & 0x007Fu);
+            int sensor_data = (int)(type_data >> 7);
             int once_only = (int)((flags_word >> 2) & 0x01u);
             uint32_t ticks = (uint32_t)(local_word >> 4);
 
             if (sensor_type == 6) {
+                csb_v1_runtime_materialize_corridor_generator_group(
+                    profile,
+                    record,
+                    sensor_data,
+                    flags_word,
+                    local_word);
                 if (once_only) {
                     type_data &= 0xFF80u;
                     csb_v1_runtime_write_u16(thing_record + 2, type_data);
