@@ -113,6 +113,51 @@ static unsigned char v22_overlay_apply_source_palette_shadow(
     return (unsigned char)((unsigned int)color - darken);
 }
 
+static unsigned char v22_overlay_material_index_for_shape(
+    const DM1_V2_ShapeRuntimeResult* r)
+{
+    if (!r || !r->active) {
+        return M11_V22_OVERLAY_PLACEHOLDER_INDEX;
+    }
+    switch (r->params.type) {
+        case M11_V22_SHAPE_WALL_STRAIGHT:
+        case M11_V22_SHAPE_WALL_CORNER_INNER:
+        case M11_V22_SHAPE_WALL_CORNER_OUTER:
+        case M11_V22_SHAPE_WALL_DOORWAY:
+        case M11_V22_SHAPE_WALL_ALCOVE:
+        case M11_V22_SHAPE_WALL_INSCRIPTION:
+            return 0x70u;
+        case M11_V22_SHAPE_FLOOR_PLAIN:
+        case M11_V22_SHAPE_FLOOR_CRACKED:
+        case M11_V22_SHAPE_FLOOR_MOSSY:
+        case M11_V22_SHAPE_FLOOR_DOOR:
+        case M11_V22_SHAPE_CEILING_PLAIN:
+        case M11_V22_SHAPE_CEILING_VAULTED:
+            return 0x50u;
+        case M11_V22_SHAPE_FLOOR_PIT:
+            return 0x18u;
+        case M11_V22_SHAPE_FLOOR_STAIRS_UP:
+        case M11_V22_SHAPE_FLOOR_STAIRS_DOWN:
+            return 0x90u;
+        case M11_V22_SHAPE_FIELD_TELEPORTER:
+        case M11_V22_SHAPE_FIELD_FLUXCAGE:
+        case M11_V22_SHAPE_FIELD_EXPLOSION:
+            return 0xc0u;
+        case M11_V22_SHAPE_CREATURE:
+        case M11_V22_SHAPE_CREATURE_PROJECTILE:
+            return 0xe0u;
+        case M11_V22_SHAPE_ITEM:
+        case M11_V22_SHAPE_ITEM_FLOOR:
+        case M11_V22_SHAPE_ITEM_PROJECTILE:
+            return 0xa8u;
+        default:
+            break;
+    }
+    return (unsigned char)((r->params.color_tint[0] +
+                            r->params.color_tint[1] +
+                            r->params.color_tint[2]) / 3);
+}
+
 int m11_v22_render_overlay_with_palette(unsigned char* framebuffer,
                                         int fbW,
                                         int fbH,
@@ -128,14 +173,11 @@ int m11_v22_render_overlay_with_palette(unsigned char* framebuffer,
             if (!r || !r->active) continue;
             {
                 const M11_V22_CellRect* rect = &kV22CellRects[depth][lateral + 1];
-                /* Placeholder fill: derive a "modern art" color from the
-                 * V22 shape's color_tint. Convert RGB to a single
-                 * palette index by taking the average. This is a
-                 * stand-in for the real modern asset pack. */
-                unsigned char placeholder =
-                    (unsigned char)((r->params.color_tint[0] +
-                                     r->params.color_tint[1] +
-                                     r->params.color_tint[2]) / 3);
+                /* Placeholder fill: derive a stable material category from
+                 * the V22 shape type. This keeps the no-asset fallback bound
+                 * to the same source square/material classification as the
+                 * real in-place V22 asset route. */
+                unsigned char placeholder = v22_overlay_material_index_for_shape(r);
                 if (placeholder == 0) placeholder = M11_V22_OVERLAY_PLACEHOLDER_INDEX;
                 placeholder = v22_overlay_apply_source_palette_shadow(
                     placeholder, sourcePaletteIndex);
@@ -159,7 +201,7 @@ const char* m11_v22_render_overlay_source_evidence(void) {
         "  Second half of the V2.2 data flow: m11_v22_shape_cache_update populates\n"
         "  the per-frame cache, m11_v22_render_overlay paints a placeholder over\n"
         "  each V22-active cell. The placeholder is a filled rectangle using a\n"
-        "  palette index derived from the V22 shape's color_tint, source-palette\n"
+        "  palette index derived from the V22 shape/material category, source-palette\n"
         "  shadowed through PANEL.C:F0337/DATA.C:359-360, with a 1-pixel\n"
         "  border. The real V22 modern art (PBR textures, normal maps, etc.)\n"
         "  is a follow-up; this overlay proves the data flow end-to-end.\n"
