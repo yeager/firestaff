@@ -6,7 +6,10 @@
  * CSBgraphics.dat LZW payloads and does not install a runtime
  * override. It only defines the narrow, bounds-checked shape a
  * trusted decoded override must satisfy before the M11 viewport or
- * HUD lanes may consume it.
+ * HUD lanes may consume it. The companion apply helper copies an
+ * already trusted indexed bitmap into the M11 320x200 framebuffer
+ * according to that binding decision; it still does not discover or
+ * interpret CSBgraphics.dat by itself.
  */
 
 #ifndef FIRESTAFF_CSB_V1_CSBGRAPHICS_M11_BINDING_READINESS_H
@@ -78,6 +81,14 @@ int csb_v1_csbgraphics_m11_prepare_binding(
     const CSB_V1_CSBGraphicsEntrySpan *span,
     const CSB_V1_CSBGraphicsDecodedBitmap *decoded,
     CSB_V1_CSBGraphicsM11Binding *out_binding);
+
+int csb_v1_csbgraphics_m11_apply_binding(
+    const CSB_V1_CSBGraphicsM11Binding *binding,
+    const CSB_V1_CSBGraphicsDecodedBitmap *decoded,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride);
 
 const char *csb_v1_csbgraphics_m11_route_name(
     CSB_V1_CSBGraphicsM11Route route);
