@@ -5980,6 +5980,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_m11_startup_profile_gate
     )
 
+    add_executable(test_csb_v1_m11_startup_resume_gate
+        tests/test_csb_v1_m11_startup_resume_gate.c
+    )
+    target_include_directories(test_csb_v1_m11_startup_resume_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_m11_startup_resume_gate
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_m11_startup_resume_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_m11_startup_resume_gate
+        COMMAND test_csb_v1_m11_startup_resume_gate
+    )
+
     add_executable(test_dm2_v1_dungeon_loader_first_map_gate
         tests/test_dm2_v1_dungeon_loader_first_map_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
