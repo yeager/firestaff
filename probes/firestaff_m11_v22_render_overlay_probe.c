@@ -91,6 +91,24 @@ static void p_border(void) {
     check(fb[cidx] != 0x00, "D1L center filled (non-zero)");
 }
 
+static void p_source_palette_shadow(void) {
+    unsigned char bright[320 * 200];
+    unsigned char dark[320 * 200];
+    int center = (103 + 15) * 320 + (8 + 35);
+    memset(bright, 0x00, sizeof(bright));
+    memset(dark, 0x00, sizeof(dark));
+    dm1_v2_presentation_mode_reset();
+    dm1_v2_presentation_mode_set_modern_pack_available(1);
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    m11_v22_shape_cache_update(0, (const unsigned char[3][3]){0});
+    check(m11_v22_render_overlay_with_palette(bright, 320, 200, 0) == 9,
+          "palette shadow: bright source paints 9 cells");
+    check(m11_v22_render_overlay_with_palette(dark, 320, 200, 5) == 9,
+          "palette shadow: dark source paints 9 cells");
+    check(dark[center] < bright[center],
+          "palette shadow: source palette 5 darkens D1L center");
+}
+
 static void p_evidence(void) {
     const char* ev = m11_v22_render_overlay_source_evidence();
     check(ev != NULL && strlen(ev) > 50, "ev non-trivial");
@@ -105,6 +123,7 @@ int main(void) {
     p_v22_transition();
     p_null_safe();
     p_border();
+    p_source_palette_shadow();
     p_evidence();
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);
     return g_failed == 0 ? 0 : 1;

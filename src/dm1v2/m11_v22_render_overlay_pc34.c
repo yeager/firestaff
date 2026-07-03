@@ -17,6 +17,7 @@
  * (PBR textures, normal maps, etc.) is a follow-up.
  */
 #include "m11_v22_render_overlay_pc34.h"
+#include "dm1_v2_lighting_dynamic_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
 
 #include <string.h>
@@ -99,7 +100,23 @@ static void v22_overlay_fill_rect(unsigned char* framebuffer,
     v22_overlay_vline(framebuffer, fbW, fbH, x + w - 1, y, h, border);
 }
 
-int m11_v22_render_overlay(unsigned char* framebuffer, int fbW, int fbH) {
+static unsigned char v22_overlay_apply_source_palette_shadow(
+    unsigned char color,
+    int sourcePaletteIndex)
+{
+    M11_V2_SourcePaletteLighting lighting =
+        v2_light_build_source_palette_lighting(sourcePaletteIndex, 1);
+    unsigned int darken = ((unsigned int)lighting.shadow_alpha * 3u) / 8u;
+    if (darken >= (unsigned int)color) {
+        return 1u;
+    }
+    return (unsigned char)((unsigned int)color - darken);
+}
+
+int m11_v22_render_overlay_with_palette(unsigned char* framebuffer,
+                                        int fbW,
+                                        int fbH,
+                                        int sourcePaletteIndex) {
     int depth, lateral;
     int cells_painted = 0;
     if (!framebuffer || fbW <= 0 || fbH <= 0) return 0;
@@ -120,6 +137,8 @@ int m11_v22_render_overlay(unsigned char* framebuffer, int fbW, int fbH) {
                                      r->params.color_tint[1] +
                                      r->params.color_tint[2]) / 3);
                 if (placeholder == 0) placeholder = M11_V22_OVERLAY_PLACEHOLDER_INDEX;
+                placeholder = v22_overlay_apply_source_palette_shadow(
+                    placeholder, sourcePaletteIndex);
                 v22_overlay_fill_rect(framebuffer, fbW, fbH,
                                        rect->x, rect->y, rect->w, rect->h,
                                        placeholder, M11_V22_OVERLAY_PLACEHOLDER_INDEX);
@@ -130,13 +149,18 @@ int m11_v22_render_overlay(unsigned char* framebuffer, int fbW, int fbH) {
     return cells_painted;
 }
 
+int m11_v22_render_overlay(unsigned char* framebuffer, int fbW, int fbH) {
+    return m11_v22_render_overlay_with_palette(framebuffer, fbW, fbH, 0);
+}
+
 const char* m11_v22_render_overlay_source_evidence(void) {
     return
         "DM1 V2.2 GPU render path: V22 modern-art overlay (m11_v22_render_overlay).\n"
         "  Second half of the V2.2 data flow: m11_v22_shape_cache_update populates\n"
         "  the per-frame cache, m11_v22_render_overlay paints a placeholder over\n"
         "  each V22-active cell. The placeholder is a filled rectangle using a\n"
-        "  palette index derived from the V22 shape's color_tint, with a 1-pixel\n"
+        "  palette index derived from the V22 shape's color_tint, source-palette\n"
+        "  shadowed through PANEL.C:F0337/DATA.C:359-360, with a 1-pixel\n"
         "  border. The real V22 modern art (PBR textures, normal maps, etc.)\n"
         "  is a follow-up; this overlay proves the data flow end-to-end.\n"
         "  Source: include/m11_v22_shape_cache_pc34.h + ReDMCSB DUNVIEW.C:6697-6816.\n";
