@@ -1282,6 +1282,17 @@ static int csb_v1_runtime_creature_movement_ticks(int creature_type)
     return (int)movement_ticks[creature_type];
 }
 
+static int csb_v1_runtime_creature_attack_ticks(int creature_type)
+{
+    static const unsigned char attack_ticks[27] = {
+        20, 32, 5, 21, 8, 18, 10, 15, 16,
+        14, 12, 8, 7, 10, 20, 19, 8, 16,
+        6, 18, 25, 15, 14, 22, 28, 22, 22
+    };
+    if (creature_type < 0 || creature_type >= 27) return 1;
+    return (int)attack_ticks[creature_type];
+}
+
 static void csb_v1_runtime_schedule_c37_group_event(
     CSB_V1_RuntimeProfile *profile,
     int map_index,
@@ -1300,6 +1311,35 @@ static void csb_v1_runtime_schedule_c37_group_event(
         map_index,
         profile->game_time + delay_ticks);
     event.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    event.priority = (uint8_t)(255 - movement_ticks);
+    event.b_mapX = (uint8_t)map_x;
+    event.b_mapY = (uint8_t)map_y;
+    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
+static void csb_v1_runtime_schedule_c38_attack_event(
+    CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y,
+    int creature_type,
+    int creature_index,
+    uint32_t delay_ticks)
+{
+    struct DM1_Event_V1 event;
+    int movement_ticks;
+
+    if (!profile || delay_ticks == 0u || creature_index < 0 ||
+        creature_index > 3) {
+        return;
+    }
+    movement_ticks = csb_v1_runtime_creature_movement_ticks(creature_type);
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(
+        map_index,
+        profile->game_time + delay_ticks);
+    event.type = (uint8_t)(DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 +
+                           creature_index);
     event.priority = (uint8_t)(255 - movement_ticks);
     event.b_mapX = (uint8_t)map_x;
     event.b_mapY = (uint8_t)map_y;
@@ -1645,6 +1685,22 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                                   .Champions[champion_index]
                                   .CurrentHealth -
                               damage);
+            }
+            if (!profile->game_over) {
+                /* ReDMCSB GROUP.C F0209 lines 2343-2422 computes the next
+                 * C38 attack time from CreatureInfo.AttackTicks plus random
+                 * jitter after an attack decision.  This bounded CSB bridge
+                 * requeues the same creature with the source AttackTicks base;
+                 * RNG jitter and aspect-event timing remain later slices. */
+                csb_v1_runtime_schedule_c38_attack_event(
+                    profile,
+                    record->mapIndex,
+                    record->mapX,
+                    record->mapY,
+                    (int)thing_record[4],
+                    creature_index,
+                    (uint32_t)csb_v1_runtime_creature_attack_ticks(
+                        (int)thing_record[4]));
             }
             return;
         }
