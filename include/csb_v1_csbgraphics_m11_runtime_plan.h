@@ -111,6 +111,13 @@ int csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def(
     size_t out_skin_def_word_capacity,
     size_t *out_skin_def_word_count);
 
+int csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def_for_skin(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t skin_num,
+    uint16_t *out_skin_def_words,
+    size_t out_skin_def_word_capacity,
+    size_t *out_skin_def_word_count);
+
 int csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
     const CSB_V1_CSBGraphicsM11RuntimePlan *plan,
     const CSB_V1_CSBGraphicsDatRealCache *cache,

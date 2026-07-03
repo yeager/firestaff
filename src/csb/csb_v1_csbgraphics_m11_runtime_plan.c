@@ -387,8 +387,82 @@ int csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def(
     size_t *out_skin_def_word_count)
 {
     CSB_V1_CSBGraphicsEntrySpan span;
-    uint16_t *words = NULL;
-    size_t word_count = 0u;
+    uint8_t *bytes = NULL;
+    uint32_t skin_num;
+    uint32_t skin_count;
+    int rc;
+
+    if (out_skin_def_word_count) {
+        *out_skin_def_word_count = 0u;
+    }
+    if (!cache_ready(cache) || !out_skin_def_words ||
+        out_skin_def_word_capacity == 0u) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+
+    rc = csb_v1_csbgraphics_dat_entry_span(
+        cache->file_buffer,
+        cache->file_size,
+        CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF,
+        &span);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        span.compressed_size == 0u ||
+        span.decompressed_size <
+            CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES ||
+        (span.decompressed_size & 1u) != 0u) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    rc = decode_entry_bytes(cache,
+                            CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF,
+                            span.decompressed_size,
+                            &bytes);
+    if (rc != CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK || !bytes) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+
+    skin_count = read_le16_bytes(bytes);
+    for (skin_num = 0u; skin_num < skin_count; ++skin_num) {
+        uint32_t offset_index = skin_num + 1u;
+        uint32_t skin_def_offset;
+        if ((size_t)(offset_index + 1u) * 2u > (size_t)span.decompressed_size) {
+            break;
+        }
+        skin_def_offset = read_le16_bytes(bytes + (size_t)offset_index * 2u);
+        if (skin_def_offset == 0u ||
+            (skin_def_offset & 1u) != 0u ||
+            skin_def_offset +
+                (uint32_t)CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES >
+                span.decompressed_size) {
+            continue;
+        }
+        free(bytes);
+        return csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def_for_skin(
+            cache,
+            skin_num,
+            out_skin_def_words,
+            out_skin_def_word_capacity,
+            out_skin_def_word_count);
+    }
+
+    free(bytes);
+    return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+}
+
+int csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def_for_skin(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t skin_num,
+    uint16_t *out_skin_def_words,
+    size_t out_skin_def_word_capacity,
+    size_t *out_skin_def_word_count)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    uint8_t *bytes = NULL;
+    uint32_t skin_count;
+    uint32_t skin_def_offset;
+    uint32_t next_skin_def_offset = 0u;
+    size_t skin_def_bytes;
+    size_t word_count;
     size_t i;
     int rc;
 
@@ -413,29 +487,61 @@ int csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def(
         return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
     }
 
-    word_count = (size_t)span.decompressed_size / 2u;
-    if (word_count > out_skin_def_word_capacity) {
-        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
-    }
-
-    words = decode_entry_words16(cache,
-                                 CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF,
-                                 span.decompressed_size,
-                                 &word_count);
-    if (!words) {
+    rc = decode_entry_bytes(cache,
+                            CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF,
+                            span.decompressed_size,
+                            &bytes);
+    if (rc != CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK || !bytes) {
         return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
     }
-    if (word_count == 0u ||
-        words[0] !=
-            (uint16_t)CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF_GRAPHIC_ID) {
-        free(words);
+
+    /* CSBWin Viewport.cpp:5662-5690 GetSkinDef() treats CSBgraphics entry 1
+     * as a skin index: word 0 is the skin count, word skin+1 is the byte
+     * offset to that skin's pSkinDef table. */
+    skin_count = read_le16_bytes(bytes);
+    if (skin_num >= skin_count ||
+        (size_t)(skin_num + 2u) * 2u > (size_t)span.decompressed_size) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+    skin_def_offset = read_le16_bytes(bytes + (size_t)(skin_num + 1u) * 2u);
+    if (skin_def_offset == 0u ||
+        (skin_def_offset & 1u) != 0u ||
+        skin_def_offset +
+            (uint32_t)CSB_GRAPHIC_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES >
+            span.decompressed_size) {
+        free(bytes);
         return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
     }
 
-    for (i = 0u; i < word_count; ++i) {
-        out_skin_def_words[i] = words[i];
+    for (i = (size_t)skin_num + 1u; i < (size_t)skin_count; ++i) {
+        uint32_t candidate;
+        if ((i + 2u) * 2u > (size_t)span.decompressed_size) {
+            break;
+        }
+        candidate = read_le16_bytes(bytes + (i + 1u) * 2u);
+        if (candidate > skin_def_offset &&
+            candidate <= span.decompressed_size &&
+            (candidate & 1u) == 0u &&
+            (next_skin_def_offset == 0u || candidate < next_skin_def_offset)) {
+            next_skin_def_offset = candidate;
+        }
     }
-    free(words);
+    skin_def_bytes =
+        (size_t)(next_skin_def_offset ? next_skin_def_offset
+                                      : span.decompressed_size) -
+        (size_t)skin_def_offset;
+    word_count = skin_def_bytes / 2u;
+    if (word_count > out_skin_def_word_capacity) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
+    }
+
+    for (i = 0u; i < word_count; ++i) {
+        out_skin_def_words[i] =
+            read_le16_bytes(bytes + (size_t)skin_def_offset + i * 2u);
+    }
+    free(bytes);
     if (out_skin_def_word_count) {
         *out_skin_def_word_count = word_count;
     }

@@ -526,9 +526,12 @@ static void test_unknown_geometry_is_honest(void)
 
 static void test_custom_background_skin_def_decode(void)
 {
-    uint8_t skin_def_decoded[18u];
+    uint8_t skin_def_decoded[42u];
     static const uint16_t expected_words[] = {
-        1u, 108u, 102u, 0u, 104u, 110u, 106u, 0u, 0u
+        100u, 108u, 102u, 0u, 104u, 110u, 106u, 0u, 0u
+    };
+    static const uint16_t expected_words_skin1[] = {
+        120u, 128u, 122u, 0u, 124u, 130u, 126u, 0u, 0u
     };
     CompressedEntryFixture entries[1];
     CSB_V1_CSBGraphicsDatRealCache cache;
@@ -539,8 +542,12 @@ static void test_custom_background_skin_def_decode(void)
     size_t i;
 
     memset(skin_def_decoded, 0, sizeof(skin_def_decoded));
+    write_le16(skin_def_decoded, 0u, 2u);
+    write_le16(skin_def_decoded, 2u, 6u);
+    write_le16(skin_def_decoded, 4u, 24u);
     for (i = 0u; i < sizeof(expected_words) / sizeof(expected_words[0]); ++i) {
-        write_le16(skin_def_decoded, i * 2u, expected_words[i]);
+        write_le16(skin_def_decoded, 6u + i * 2u, expected_words[i]);
+        write_le16(skin_def_decoded, 24u + i * 2u, expected_words_skin1[i]);
     }
     entries[0].entry_index = 1u;
     entries[0].decoded = skin_def_decoded;
@@ -565,9 +572,23 @@ static void test_custom_background_skin_def_decode(void)
               CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
     check_int("custom_bg_skin_def_decode.count", (int)word_count,
               (int)(sizeof(expected_words) / sizeof(expected_words[0])));
-    check_int("custom_bg_skin_def_decode.word0", (int)words[0], 1);
+    check_int("custom_bg_skin_def_decode.word0", (int)words[0], 100);
     check_int("custom_bg_skin_def_decode.near_bitmap", (int)words[1], 108);
     check_int("custom_bg_skin_def_decode.middle_mask", (int)words[6], 106);
+    memset(words, 0, sizeof(words));
+    word_count = 0u;
+    check_int("custom_bg_skin_def_decode.skin1_rc",
+              csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def_for_skin(
+                  &cache,
+                  1u,
+                  words,
+                  sizeof(words) / sizeof(words[0]),
+                  &word_count),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("custom_bg_skin_def_decode.skin1_large_bitmap",
+              (int)words[0], 120);
+    check_int("custom_bg_skin_def_decode.skin1_middle_mask",
+              (int)words[6], 126);
 
     cache.file_buffer = NULL;
     csb_v1_csbgraphics_dat_real_cache_free(&cache);
