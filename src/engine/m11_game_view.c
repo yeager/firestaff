@@ -189,6 +189,9 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     if (plan && plan->ready && cache && cache->loaded) {
         for (i = 0u; i < plan->planned_count; ++i) {
             CSB_V1_CSBGraphicsM11Binding binding;
+            if (plan->entries[i].deferred_masked_composite) {
+                continue;
+            }
             (void)csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
                 plan,
                 cache,

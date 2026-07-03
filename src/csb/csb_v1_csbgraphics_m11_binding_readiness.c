@@ -344,6 +344,8 @@ const char *csb_v1_csbgraphics_m11_route_name(
         return "hud-inventory";
     case CSB_V1_CSBGRAPHICS_M11_ROUTE_HUD_RESURRECT_PANEL:
         return "hud-resurrect-panel";
+    case CSB_V1_CSBGRAPHICS_M11_ROUTE_VIEWPORT_CUSTOM_BACKGROUND:
+        return "viewport-custom-background";
     default:
         return "unknown";
     }
