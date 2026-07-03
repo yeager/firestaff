@@ -376,24 +376,26 @@ static void make_real_format_corridor_text_generator_dungeon(
     dungeon->raw_data = raw;
     dungeon->raw_size = (int)raw_size;
     dungeon->square_first_thing_base = 66;
-    dungeon->square_first_thing_count = 1;
-    dungeon->thing_data_bases[2] = 68;
+    dungeon->square_first_thing_count = 2;
+    dungeon->thing_data_bases[2] = 70;
     dungeon->thing_type_counts[2] = 1;
-    dungeon->thing_data_bases[3] = 72;
+    dungeon->thing_data_bases[3] = 74;
     dungeon->thing_type_counts[3] = 1;
-    dungeon->thing_data_bases[4] = 80;
+    dungeon->thing_data_bases[4] = 82;
     dungeon->thing_type_counts[4] = 1;
 
     raw[real_format_square_offset(1, 0)] = (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
     test_put_le16(raw, 60 + 1 * 2, 0);
     test_put_le16(raw, 66, (uint16_t)(2u << 10));
-    test_put_le16(raw, 68, (uint16_t)(3u << 10));
-    test_put_le16(raw, 70, 0x0000u);
-    test_put_le16(raw, 72, 0xfffeu);
-    test_put_le16(raw, 74, (uint16_t)((9u << 7) | 6u));
-    test_put_le16(raw, 76, (uint16_t)((1u << 7) | (1u << 6)));
-    test_put_le16(raw, 78, (uint16_t)((3u << 4) | 5u));
-    test_put_le16(raw, 80, 0xffffu);
+    test_put_le16(raw, 68, 0xfffeu);
+    test_put_le16(raw, 70, (uint16_t)(3u << 10));
+    test_put_le16(raw, 72, 0x0000u);
+    test_put_le16(raw, 74, 0xfffeu);
+    test_put_le16(raw, 76, (uint16_t)((9u << 7) | 6u));
+    test_put_le16(raw, 78, (uint16_t)((1u << 7) | (1u << 6)));
+    test_put_le16(raw, 80, (uint16_t)((3u << 4) | 5u));
+    test_put_le16(raw, 82, 0xffffu);
 }
 
 static void test_timeline_corridor_text_and_generator_mutations(void)
@@ -426,23 +428,23 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
         0);
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "C05 corridor event fires on the current tick");
-    text_word = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    text_word = (uint16_t)(raw[72] | ((uint16_t)raw[73] << 8));
     CHECK((text_word & 0x0001u) == 0x0001u,
           "C05 corridor SET marks textstring visible");
-    type_data = (uint16_t)(raw[74] | ((uint16_t)raw[75] << 8));
+    type_data = (uint16_t)(raw[76] | ((uint16_t)raw[77] << 8));
     CHECK((type_data & 0x007fu) == 0u && (type_data >> 7) == 9u,
           "C05 C006 generator disables sensor while preserving creature data");
     CHECK((uint16_t)(raw[66] | ((uint16_t)raw[67] << 8)) == (uint16_t)(4u << 10),
           "C05 C006 generator links the materialized group at the square head");
-    CHECK((uint16_t)(raw[80] | ((uint16_t)raw[81] << 8)) == (uint16_t)(2u << 10),
+    CHECK((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) == (uint16_t)(2u << 10),
           "materialized group preserves the previous textstring chain as Next");
-    CHECK(raw[84] == 9u,
+    CHECK(raw[86] == 9u,
           "materialized group writes creature type from sensor data");
-    CHECK(raw[85] == 0xffu,
+    CHECK(raw[87] == 0xffu,
           "single generated creature uses the source centered group cell marker");
-    CHECK((uint16_t)(raw[86] | ((uint16_t)raw[87] << 8)) > 0u,
+    CHECK((uint16_t)(raw[88] | ((uint16_t)raw[89] << 8)) > 0u,
           "materialized group writes generated creature health");
-    group_flags = (uint16_t)(raw[94] | ((uint16_t)raw[95] << 8));
+    group_flags = (uint16_t)(raw[96] | ((uint16_t)raw[97] << 8));
     CHECK(((group_flags >> 5) & 0x03u) == 0u,
           "materialized single-creature group stores source 0-based count");
     CHECK(profile.timeline_queue.eventCount == 2,
@@ -459,22 +461,28 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "generated group C37 dispatch keeps source square and creature-AI kind");
     CHECK(dispatch.records[0].aux0 == (255 - 21),
           "generated group C37 priority follows 255 - creature movement ticks");
-    group_flags = (uint16_t)(raw[94] | ((uint16_t)raw[95] << 8));
+    group_flags = (uint16_t)(raw[96] | ((uint16_t)raw[97] << 8));
     CHECK((group_flags & 0x000fu) == 7u,
           "generated group C37 mutates visible wander behavior to approach");
     CHECK(profile.timeline_queue.eventCount == 2,
           "C37 approach behavior queues the next group behavior tick beside C65");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "second post-generator tick dispatches the queued approach C37");
-    CHECK(profile.timeline_queue.eventCount == 1,
-          "C65 remains queued after the approach C37 consumes itself");
+    CHECK((uint16_t)(raw[66] | ((uint16_t)raw[67] << 8)) == (uint16_t)(2u << 10),
+          "approach C37 unlinks the group from the source corridor square");
+    CHECK((uint16_t)(raw[68] | ((uint16_t)raw[69] << 8)) == (uint16_t)(4u << 10),
+          "approach C37 links the group at the next square toward the party");
+    CHECK((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) == 0xfffeu,
+          "moved group preserves the destination's previous thing chain");
+    CHECK(profile.timeline_queue.eventCount == 2,
+          "C65 and the future approach C37 remain queued after movement");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "third post-generator tick reaches the delayed C65 boundary");
-    type_data = (uint16_t)(raw[74] | ((uint16_t)raw[75] << 8));
+    type_data = (uint16_t)(raw[76] | ((uint16_t)raw[77] << 8));
     CHECK((type_data & 0x007fu) == 6u && (type_data >> 7) == 9u,
           "delayed C65 re-enables the generator sensor and preserves data");
-    CHECK(profile.timeline_queue.eventCount == 0,
-          "delayed C65 consumes the pending re-enable event");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "delayed C65 consumes itself while the future C37 remains queued");
 }
 
 static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
