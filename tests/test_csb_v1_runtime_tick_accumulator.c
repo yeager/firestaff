@@ -419,13 +419,17 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     profile.current_level = 0;
     profile.party_x = 1;
     profile.party_y = 2;
-    profile.champion_count = 1;
+    profile.champion_count = 2;
     profile.party_state_valid = 1;
-    profile.party_state.ChampionCount = 1;
+    profile.party_state.ChampionCount = 2;
     profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
     profile.party_state.Champions[0].CurrentHealth = 20;
     profile.party_state.Champions[0].MaximumHealth = 20;
     profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[1].CurrentHealth = 20;
+    profile.party_state.Champions[1].MaximumHealth = 20;
+    profile.party_state.Champions[1].Attributes = 0;
 
     queue_square_event(
         &profile,
@@ -516,6 +520,23 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded C38 attack event applies deterministic champion HP damage");
     CHECK(profile.timeline_queue.eventCount == 0,
           "bounded C38 attack event consumes the generated attack queue");
+    profile.party_state.Champions[0].CurrentHealth = 2;
+    queue_square_event(
+        &profile,
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+        DM1_EFFECT_SET,
+        1,
+        1);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "bounded C38 lethal follow-up dispatches on the adjacent group square");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 0 &&
+              (profile.party_state.Champions[0].Attributes &
+               CSB_V1_CHAMPION_ATTRIBUTE_DEAD),
+          "bounded lethal C38 marks the damaged champion dead");
+    CHECK(profile.party_state.LeaderIndex == 1 && profile.leader_index == 1,
+          "bounded lethal C38 moves leadership to the next living champion");
+    CHECK(profile.party_state.Champions[1].CurrentHealth == 20,
+          "bounded lethal C38 leaves the next living champion undamaged");
 }
 
 static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
