@@ -63,10 +63,12 @@
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
+#include "dm1_v2_enhanced_effects_runtime_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
 #include "m11_v22_inplace_draw_pc34.h"
 #include "m11_v22_render_overlay_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
+#include "dm1_v2_settings_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_settings_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
@@ -99,6 +101,45 @@ static void m11_award_magic_xp(M11_GameViewState* state,
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
+
+static int m11_is_dm1_source_kind(M11_GameSourceKind kind)
+{
+    return kind == M11_GAME_SOURCE_BUILTIN_CATALOG ||
+           kind == M11_GAME_SOURCE_CUSTOM_DUNGEON ||
+           kind == M11_GAME_SOURCE_DIRECT_DUNGEON;
+}
+
+static void m11_tick_dm1_v2_enhanced_effects_framepath(
+    const M11_GameViewState* state)
+{
+    DM1_V2_PhaseGateConfig gate;
+    DM1_V2_Settings settings;
+
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind)) {
+        return;
+    }
+
+    dm1_v2_phase_gate_defaults(&gate);
+    gate.v2PresentationEnabled =
+        (state->presentationMode != M12_PRESENTATION_V1_ORIGINAL) ? 1 : 0;
+    gate.v2ConfigPersistenceEnabled = 1;
+
+    dm1_v2_settings_defaults(&settings);
+    if (state->presentationMode == M12_PRESENTATION_V20_FILTERED) {
+        v2_settings_apply_v20_defaults(&settings);
+    } else if (state->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
+        v2_settings_apply_v21_defaults(&settings);
+    } else if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+        v2_settings_apply_v22_defaults(&settings);
+    }
+
+    /* ReDMCSB keeps field/projectile visuals in the viewport redraw path
+     * (DUNVIEW.C F0128/F0115; PROJEXPL.C F0213/F0220). Firestaff's V2
+     * effect modules are presentation-only, so M11 advances them once per
+     * rendered DM1 frame after the source viewport draw and behind the
+     * DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION gate. */
+    (void)dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 1.0f / 60.0f);
+}
 
 static int m11_csb_build_viewport_grid(uint8_t grid[32 * 32])
 {
@@ -33380,6 +33421,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                   M11_VIEWPORT_X, M11_VIEWPORT_Y,
                   M11_VIEWPORT_W, M11_VIEWPORT_H, M11_COLOR_BLACK);
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
+    m11_tick_dm1_v2_enhanced_effects_framepath(state);
 
     /* Old Firestaff frame-strip assets are debug-only now; in normal
      * V1 they overdraw the source viewport/floor/ceiling composition. */

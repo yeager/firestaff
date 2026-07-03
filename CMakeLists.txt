@@ -3276,6 +3276,25 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
 endif()
 
+# DM1 V2 Phase 4 M11 framepath wire-up probe. Data-free: proves the
+# presentation-only enhanced-effects runtime ticks from M11_GameView_Draw
+# only when DM1 V2 presentation is active.
+add_executable(firestaff_m11_dm1_v2_effects_framepath_probe
+    probes/m11/firestaff_m11_dm1_v2_effects_framepath_probe.c)
+target_link_libraries(firestaff_m11_dm1_v2_effects_framepath_probe
+    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_dm1_v2_effects_framepath_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_m11_dm1_v2_effects_framepath_probe
+    COMMAND firestaff_m11_dm1_v2_effects_framepath_probe
+)
+set_tests_properties(firestaff_m11_dm1_v2_effects_framepath_probe PROPERTIES
+    LABELS "dm1;v2;phase4;m11;effects;framepath"
+)
+
 add_executable(firestaff_dm1_v1_inventory_damage_indicator_zone_probe
     probes/m11/firestaff_dm1_v1_inventory_damage_indicator_zone_probe.c)
 target_link_libraries(firestaff_dm1_v1_inventory_damage_indicator_zone_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
