@@ -137,6 +137,7 @@ static int check_title_handoff(void) {
     printf("sourceTimingFile=%s\n", timing.sourceFile);
     printf("sourceTimingFunction=%s\n", timing.sourceFunction);
     printf("sourceZoomStepCount=%u\n", timing.zoomStepCount);
+    printf("sourcePresentsHoldVblankCount=%u\n", timing.presentsHoldVblankCount);
     printf("sourceVblankBeforeEachZoomStep=%u\n", timing.vblankBeforeEachZoomStep);
     printf("sourcePostZoomVblankCount=%u\n", timing.postZoomVblankCount);
     printf("sourceFinalFadeGuardVblankCount=%u\n", timing.finalFadeGuardVblankCount);
@@ -144,6 +145,7 @@ static int check_title_handoff(void) {
     printf("sourceTimingAnimationStepCount=%u\n", timing.sourceAnimationStepCount);
     printf("sourceTimingEvidence=%s\n", timing.evidenceNote);
     if (timing.zoomStepCount != 18u) ok = 0;
+    if (timing.presentsHoldVblankCount != V1_TITLE_DAT_FRAME_MAX - 23u) ok = 0;
     if (timing.vblankBeforeEachZoomStep != 1u) ok = 0;
     if (timing.postZoomVblankCount != 2u) ok = 0;
     if (timing.finalFadeGuardVblankCount != 1u) ok = 0;

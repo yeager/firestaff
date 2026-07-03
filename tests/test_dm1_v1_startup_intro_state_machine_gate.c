@@ -132,6 +132,9 @@ static void check_title_to_menu_boundary(void) {
      * frame bank must not make the menu eligible before frame 53 is held.
      */
     expect_u("TITLE source step count", titleTiming.sourceAnimationStepCount, 23u);
+    expect_u("TITLE PRESENTS hold uses C001 preparation budget",
+             titleTiming.presentsHoldVblankCount,
+             V1_TITLE_DAT_FRAME_MAX - 23u);
     expect_u("TITLE first menu-eligible step",
              titleTiming.firstMenuEligibleStep,
              V1_TITLE_DAT_FRAME_MAX + 1u);

@@ -194,6 +194,12 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     V1_TitleFrontendSourceTiming timing;
     memset(&timing, 0, sizeof(timing));
     timing.zoomStepCount = 18u;
+    /* ReDMCSB TITLE.C F0437 draws PRESENTS before it builds the 18
+     * shrinked title bitmaps. On original hardware that build/fade work
+     * leaves PRESENTS visible; Firestaff models it with the same 30-step
+     * C001 cadence budget that previously sat after the final guard. */
+    timing.presentsHoldVblankCount = V1_TITLE_DAT_FRAME_MAX -
+                                     V1_TitleFrontend_GetSourceAnimationStepCount();
     timing.vblankBeforeEachZoomStep = 1u;
     timing.postZoomVblankCount = 2u;
     timing.finalFadeGuardVblankCount = 1u;
@@ -202,7 +208,7 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     timing.frameBankEquivalentStepCount = V1_TITLE_DAT_FRAME_MAX;
     timing.sourceFile = "ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C";
     timing.sourceFunction = "F0437_STARTEND_DrawTitle";
-    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition. Firestaff uses the canonical V1 55 ms tick for these runtime waits and pads the GRAPHICS.DAT C001 path to the existing 53-step TITLE-bank cadence so TITLE does not replay as a short 23-step burst on fast machines.";
+    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, source-side shrink-bitmap preparation while PRESENTS remains visible, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition. Firestaff uses the canonical V1 55 ms tick for these runtime waits and places the GRAPHICS.DAT C001 pad budget on the PRESENTS hold so the word does not flash by on fast machines.";
     return timing;
 }
 
@@ -214,6 +220,16 @@ unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourc
         return (unsigned int)V1_TICK_MS;
     }
     return 50u;
+}
+
+unsigned int V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(const V1_TitleFrontendSourceTiming* timing) {
+    if (!timing) {
+        return 0u;
+    }
+    if (timing->presentsHoldVblankCount > 0xffffffffu / (unsigned int)V1_TICK_MS) {
+        return 0xffffffffu;
+    }
+    return timing->presentsHoldVblankCount * (unsigned int)V1_TICK_MS;
 }
 
 V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
@@ -325,6 +341,10 @@ unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFron
     }
     missingSteps = timing->frameBankEquivalentStepCount -
                    timing->sourceAnimationStepCount;
+    if (missingSteps <= timing->presentsHoldVblankCount) {
+        return 0u;
+    }
+    missingSteps -= timing->presentsHoldVblankCount;
     if (missingSteps > 0xffffffffu / (unsigned int)V1_TICK_MS) {
         return 0xffffffffu;
     }

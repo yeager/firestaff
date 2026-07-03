@@ -67,6 +67,7 @@ typedef struct V1_TitleFrontendSourceAnimationStep {
 
 typedef struct V1_TitleFrontendSourceTiming {
     unsigned int zoomStepCount;
+    unsigned int presentsHoldVblankCount;
     unsigned int vblankBeforeEachZoomStep;
     unsigned int postZoomVblankCount;
     unsigned int finalFadeGuardVblankCount;
@@ -108,6 +109,7 @@ V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned in
 
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void);
 unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourceTiming* timing);
+unsigned int V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(const V1_TitleFrontendSourceTiming* timing);
 unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing);
 unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFrontendSourceTiming* timing);
 
@@ -128,11 +130,11 @@ V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
 /*
  * ReDMCSB TITLE.C source animation event schedule for the PC/F20 path.
  * This is separate from the decoded 53-frame TITLE.DAT bank: TITLE.C builds
- * 18 shrinked title bitmaps from 320x80 down to 48x12, then presents them
- * in reverse order (small -> full) with one M526_WaitVerticalBlank() before
- * each blit. It then waits two more VBlanks, blits the Master/Strikes Back
- * strip at y=118..174, fades, waits the BUG0_71 guard VBlank, and only then
- * the caller may enter the next surface.
+ * 18 shrinked title bitmaps from 320x80 down to 48x12 while PRESENTS remains
+ * visible, then presents them in reverse order (small -> full) with one
+ * M526_WaitVerticalBlank() before each blit. It then waits two more VBlanks,
+ * blits the Master/Strikes Back strip at y=118..174, fades, waits the BUG0_71
+ * guard VBlank, and only then the caller may enter the next surface.
  */
 unsigned int V1_TitleFrontend_GetSourceAnimationStepCount(void);
 int V1_TitleFrontend_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
