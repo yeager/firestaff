@@ -13,6 +13,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 
@@ -1022,6 +1023,35 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
     CHECK((type_data & 0x0001u) == 0x0001u,
           "C06 wall text TOGGLE flips same-cell visibility");
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        0,
+        0,
+        (uint8_t)(0u << 5),
+        (uint16_t)DM1_SENSOR_WALL_END_GAME,
+        (uint16_t)(3u << 7),
+        0);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_CLEAR,
+        0,
+        0,
+        3);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall C018 endgame event fires on the current tick");
+    CHECK(profile.victory == 1,
+          "C06 wall C018 marks the CSB runtime as victorious");
+    CHECK(profile.game_over == 0,
+          "C06 wall C018 victory does not mark party-death game_over");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 0,
+          "victorious CSB runtime blocks later V1 ticks");
 }
 
 static void seed_two_champion_party(CSB_V1_PartyState *party)
