@@ -109,6 +109,29 @@ static void seed_runtime_fireball_ahead(M11_GameViewState* state)
         PROJECTILE_SUBTYPE_FIREBALL;
 }
 
+static void seed_runtime_explosion_ahead(M11_GameViewState* state)
+{
+    attach_two_cell_corridor(state);
+    state->world.explosions.count = 1;
+    state->world.explosions.entries[0].reserved0 = 1;
+    state->world.explosions.entries[0].slotIndex = 0;
+    state->world.explosions.entries[0].mapIndex = 0;
+    state->world.explosions.entries[0].mapX = 0;
+    state->world.explosions.entries[0].mapY = 0;
+    state->world.explosions.entries[0].cell = EXPLOSION_CELL_CENTERED;
+    state->world.explosions.entries[0].centered = 1;
+    state->world.explosions.entries[0].explosionType =
+        C000_EXPLOSION_FIREBALL;
+    state->world.explosions.entries[0].attack = 80;
+    state->world.explosions.entries[0].maxFrames = 3;
+}
+
+static void seed_invalid_runtime_explosion_ahead(M11_GameViewState* state)
+{
+    seed_runtime_explosion_ahead(state);
+    state->world.explosions.entries[0].explosionType = -1;
+}
+
 static void draw_once(M11_GameViewState* state, unsigned char* framebuffer)
 {
     memset(framebuffer, 0, 320 * 200);
@@ -197,6 +220,27 @@ int main(void)
     draw_once(&state, framebuffer);
     CHECK(count_particle_region_diff(baseline, framebuffer) > 0,
           "V2.2 draw paints visible particle overlay into viewport");
+
+    init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
+    seed_runtime_fireball_ahead(&state);
+    v2_particle_init();
+    CHECK(M11_GameView_ProbeDm1V2LiveEffectSeedCount(&state) == 1,
+          "V2 live-effect seed probe accepts active drawable projectile");
+    CHECK(v2_particle_active_count() == 0,
+          "V2 live-effect seed probe does not mutate particle runtime");
+
+    init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
+    seed_runtime_explosion_ahead(&state);
+    v2_particle_init();
+    CHECK(M11_GameView_ProbeDm1V2LiveEffectSeedCount(&state) == 1,
+          "V2 live-effect seed probe accepts active drawable explosion");
+    CHECK(v2_particle_active_count() == 0,
+          "V2 live-effect explosion probe does not mutate particle runtime");
+
+    init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
+    seed_invalid_runtime_explosion_ahead(&state);
+    CHECK(M11_GameView_ProbeDm1V2LiveEffectSeedCount(&state) == 0,
+          "V2 live-effect seed probe rejects invalid explosion payloads");
 
     init_dm1_state(&state, M12_PRESENTATION_V1_ORIGINAL);
     seed_runtime_fireball_ahead(&state);
