@@ -1,6 +1,42 @@
 
 # Unreleased
 
+# Firestaff v3.0.23
+
+Firestaff v3.0.23 packages the current post-v3.0.22 `main` state. The release
+keeps the public status conservative while publishing the latest CSB save and
+floor-sensor movement gates, the current CSB graphics-plan work, plus DM1
+title, Hall of Champions, and inscription-wall presentation fixes that landed
+after v3.0.22.
+
+## Highlights since v3.0.22
+
+- **CSB V1 handoff coverage moved forward**: the tag includes stronger staged
+  CSBWin save classification, party floor-sensor movement through the input
+  command queue, and the current CSB graphics M11 runtime-plan path, including
+  binding, boot-preparation, and room-background handoff coverage.
+
+- **DM1 V1 presentation fidelity is tighter**: post-v3.0.22 commits restore the
+  source wall under DM1 inscriptions, correct special-palette handling, and keep
+  title/menu cadence covered by focused runtime probes.
+
+- **Hall of Champions routing is better guarded**: the release includes the
+  latest candidate routing for HoC C127 clicks and wall-coordinate gates, keeping
+  launcher-to-game presentation regressions easier to catch before packaging.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Main CI for `pass703 add csb party floor sensor movement` completed
+  successfully before this release-prep commit.
+- Local release-prep verification rebuilt the Debug tree and re-ran the focused
+  version/changelog, Phase A, audio, CSB graphics runtime-plan, CSB save-loader,
+  CSB input command queue, title cadence, special-palette, HoC wall-coordinate,
+  and inscription readability gates.
+- The GitHub release workflow is expected to build and package macOS, Windows,
+  Linux x86_64, and Linux arm64 artifacts from the `v3.0.23` release tag.
+
 # Firestaff v3.0.22
 
 Firestaff v3.0.22 packages the current post-v3.0.21 `main` state. The release
