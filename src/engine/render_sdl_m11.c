@@ -752,17 +752,6 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     g_state.v2_movement_active = 0;
 }
 
-static int m11_has_active_v2_filters(void) {
-    return g_state.v2_crt_enabled ||
-           g_state.v2_palette_enabled ||
-           g_state.v2_dither_enabled ||
-           g_state.v2_palette_interp_enabled ||
-           g_state.v2_sharpen_enabled ||
-           g_state.v2_phosphor_enabled ||
-           g_state.v2_color_preset > 0 ||
-           g_state.v2_motion_blur_enabled;
-}
-
 /* Pixel-grid overlay: draw thin darkening lines at every scaled-pixel
  * boundary in the destination rect.  Called after SDL_RenderTexture
  * (so the upscale is already on the back buffer) but before
@@ -1142,6 +1131,9 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
                                     int scale) {
     int scaledWidth;
     int scaledHeight;
+    int uploadW;
+    int uploadH;
+    int cpuNearestPresent = 0;
     int destX = 0;
     int destY = 0;
     int destW = 0;
@@ -1168,42 +1160,73 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
     }
     scaledWidth = logicalWidth * scale;
     scaledHeight = logicalHeight * scale;
-    if (m11_recreate_texture_if_needed(scaledWidth, scaledHeight) != M11_RENDER_OK) {
-        return M11_RENDER_ERR_TEXTURE;
-    }
     g_state.contentW = scaledWidth;
     g_state.contentH = scaledHeight;
-    g_state.presentedW = scaledWidth;
-    g_state.presentedH = scaledHeight;
+    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+    uploadW = scaledWidth;
+    uploadH = scaledHeight;
+    /* ReDMCSB DUNVIEW.C F0115 draws DM1 wall inscriptions as hard M648
+     * 8x8 cells before presentation.  V2.0 reaches this scaled path
+     * (320x200 -> 640x400) and may still be stretched again by SDL to a
+     * Retina/non-integer drawable.  Build that final nearest image on the
+     * CPU so Metal/SDL cannot soften inscription strokes during the last
+     * presentation stretch. */
+    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+        destW > 0 && destH > 0 &&
+        (destW != scaledWidth || destH != scaledHeight)) {
+        uploadW = destW;
+        uploadH = destH;
+        cpuNearestPresent = 1;
+    }
+    if (m11_recreate_texture_if_needed(uploadW, uploadH) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.presentedW = uploadW;
+    g_state.presentedH = uploadH;
     if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
         static unsigned char v2DitherScratch[M11_FB_BYTES];
         memcpy(v2DitherScratch, framebuffer, (size_t)M11_FB_BYTES);
         m11_apply_v2_filters_indexed_pre(v2DitherScratch, logicalWidth, logicalHeight);
-        m11_framebuffer_to_rgba_scaled(v2DitherScratch, logicalWidth, logicalHeight, scale);
+        if (cpuNearestPresent) {
+            m11_framebuffer_to_rgba_resampled(v2DitherScratch,
+                                              logicalWidth,
+                                              logicalHeight,
+                                              uploadW,
+                                              uploadH);
+        } else {
+            m11_framebuffer_to_rgba_scaled(v2DitherScratch, logicalWidth, logicalHeight, scale);
+        }
     } else {
-        m11_framebuffer_to_rgba_scaled(framebuffer, logicalWidth, logicalHeight, scale);
+        if (cpuNearestPresent) {
+            m11_framebuffer_to_rgba_resampled(framebuffer,
+                                              logicalWidth,
+                                              logicalHeight,
+                                              uploadW,
+                                              uploadH);
+        } else {
+            m11_framebuffer_to_rgba_scaled(framebuffer, logicalWidth, logicalHeight, scale);
+        }
     }
-    m11_apply_v2_filters_rgba_post(scaledWidth, scaledHeight);
-    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+    m11_apply_v2_filters_rgba_post(uploadW, uploadH);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
     sourceRect.y = 0.0f;
-    sourceRect.w = (float)scaledWidth;
-    sourceRect.h = (float)scaledHeight;
+    sourceRect.w = (float)uploadW;
+    sourceRect.h = (float)uploadH;
     {
         SDL_Rect updateRect;
         updateRect.x = 0;
         updateRect.y = 0;
-        updateRect.w = scaledWidth;
-        updateRect.h = scaledHeight;
+        updateRect.w = uploadW;
+        updateRect.h = uploadH;
         if (!SDL_UpdateTexture(
                 g_state.texture,
                 &updateRect,
                 g_state.presentBuffer,
-                scaledWidth * 4)) {
+                uploadW * 4)) {
             return M11_RENDER_ERR_TEXTURE;
         }
     }
@@ -1214,6 +1237,10 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
     destRect.y = (float)destY;
     destRect.w = (float)destW;
     destRect.h = (float)destH;
+    if (cpuNearestPresent) {
+        destRect.w = (float)uploadW;
+        destRect.h = (float)uploadH;
+    }
     if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1225,13 +1252,13 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
 #else
     sourceRect.x = 0;
     sourceRect.y = 0;
-    sourceRect.w = scaledWidth;
-    sourceRect.h = scaledHeight;
+    sourceRect.w = uploadW;
+    sourceRect.h = uploadH;
     if (SDL_UpdateTexture(
             g_state.texture,
             &sourceRect,
             g_state.presentBuffer,
-            scaledWidth * 4) != 0) {
+            uploadW * 4) != 0) {
         return M11_RENDER_ERR_TEXTURE;
     }
     if (SDL_RenderClear(g_state.renderer) != 0) {
@@ -1241,6 +1268,10 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
     destRect.y = destY;
     destRect.w = destW;
     destRect.h = destH;
+    if (cpuNearestPresent) {
+        destRect.w = uploadW;
+        destRect.h = uploadH;
+    }
     if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1294,7 +1325,6 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
      * 1:1. This keeps ReDMCSB's hard 8x8 wall-inscription glyphs readable on
      * HiDPI/non-integer window sizes that use the explicit-resolution path. */
     if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
-        !m11_has_active_v2_filters() &&
         destW > 0 && destH > 0 &&
         (destW != targetWidth || destH != targetHeight)) {
         uploadW = destW;
@@ -1432,7 +1462,6 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
      * active V2 post-processing, build the stretched RGBA frame ourselves with
      * integer nearest sampling, then ask SDL to render that texture 1:1. */
     if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
-        !m11_has_active_v2_filters() &&
         destW > 0 && destH > 0 &&
         (destW != logicalWidth || destH != logicalHeight)) {
         uploadW = destW;
