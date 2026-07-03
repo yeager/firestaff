@@ -1350,6 +1350,12 @@ static int csb_v1_runtime_sensor_type_is_explosion_launcher(int sensor_type)
            sensor_type == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION;
 }
 
+static int csb_v1_runtime_sensor_type_is_square_object_launcher(int sensor_type)
+{
+    return sensor_type == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ ||
+           sensor_type == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ;
+}
+
 static uint8_t *csb_v1_runtime_mutable_thing_record(
     CSB_V1_DungeonData *dungeon,
     uint16_t thing,
@@ -2377,6 +2383,104 @@ static int csb_v1_runtime_append_thing_to_square_tail(
         current = next_thing;
     }
     return 0;
+}
+
+static int csb_v1_runtime_unlink_thing_from_square(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t target_thing,
+    int level,
+    int map_x,
+    int map_y)
+{
+    uint8_t *first_ptr;
+    uint8_t *record;
+    uint8_t *previous_record;
+    uint16_t thing;
+    uint16_t next_thing;
+    int thing_type;
+    int thing_size;
+    int guard;
+
+    if (!dungeon || target_thing == 0xFFFEu || target_thing == 0xFFFFu) {
+        return 0;
+    }
+    first_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon,
+        level,
+        map_x,
+        map_y);
+    if (!first_ptr) return 0;
+
+    previous_record = NULL;
+    thing = csb_v1_runtime_read_u16(first_ptr);
+    for (guard = 0; guard < 128 && thing != 0xFFFEu && thing != 0xFFFFu;
+         ++guard) {
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            thing,
+            &thing_type,
+            &thing_size);
+        if (!record || thing_size < 2) return 0;
+        next_thing = csb_v1_runtime_read_u16(record);
+        if ((thing & 0x3FFFu) == (target_thing & 0x3FFFu)) {
+            if (previous_record) {
+                csb_v1_runtime_write_u16(previous_record, next_thing);
+            } else {
+                csb_v1_runtime_write_u16(first_ptr, next_thing);
+            }
+            csb_v1_runtime_write_u16(record, 0xFFFEu);
+            return 1;
+        }
+        previous_record = record;
+        thing = next_thing;
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_collect_square_launcher_things(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y,
+    struct ProjectileLauncherSquareThing_Compat *out,
+    int out_capacity)
+{
+    int thing;
+    int count = 0;
+    int guard;
+
+    if (!dungeon || !out || out_capacity <= 0) return 0;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        level,
+        map_x,
+        map_y);
+    if (thing < 0) return 0;
+
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        const uint8_t *record;
+        int thing_type;
+        int thing_size;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            NULL,
+            &thing_size);
+        if (!record || thing_size < 2) break;
+        if (count < out_capacity) {
+            out[count].thing = (unsigned short)thing;
+            out[count].cell =
+                csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                    (uint16_t)thing);
+            out[count].thingType = thing_type;
+            ++count;
+        }
+        thing = (int)csb_v1_runtime_read_u16(record);
+    }
+    return count;
 }
 
 static uint16_t csb_v1_runtime_thing_with_cell(
@@ -4478,11 +4582,18 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     profile->victory = 1;
                 }
             } else if (csb_v1_runtime_sensor_type_is_explosion_launcher(
+                           sensor_type) ||
+                       csb_v1_runtime_sensor_type_is_square_object_launcher(
                            sensor_type)) {
                 struct DungeonSensor_Compat decoded_sensor;
                 struct ProjectileLauncherContext_Compat launcher_ctx;
                 struct ProjectileLauncherResult_Compat launcher_result;
+                struct ProjectileLauncherSquareThing_Compat square_things[64];
+                int square_thing_count = 0;
                 int launch_index;
+                int is_square_object_launcher =
+                    csb_v1_runtime_sensor_type_is_square_object_launcher(
+                        sensor_type);
 
                 csb_v1_runtime_decode_sensor_words(
                     next_word,
@@ -4497,6 +4608,19 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                            ((uint32_t)record->mapY << 8)) & 1u);
                 launcher_ctx.newObjectThings[0] = 0xFFFFu;
                 launcher_ctx.newObjectThings[1] = 0xFFFFu;
+                if (is_square_object_launcher) {
+                    square_thing_count =
+                        csb_v1_runtime_collect_square_launcher_things(
+                            dungeon,
+                            record->mapIndex,
+                            record->mapX,
+                            record->mapY,
+                            square_things,
+                            (int)(sizeof(square_things) /
+                                  sizeof(square_things[0])));
+                    launcher_ctx.squareThings = square_things;
+                    launcher_ctx.squareThingCount = square_thing_count;
+                }
                 memset(&launcher_result, 0, sizeof(launcher_result));
                 if (F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
                         &decoded_sensor,
@@ -4511,6 +4635,24 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     if (launcher_result.sensorDisabled) {
                         type_data = (uint16_t)(type_data & 0xFF80u);
                         csb_v1_runtime_write_u16(sensor + 2, type_data);
+                    }
+                    if (is_square_object_launcher) {
+                        int unlink_index;
+                        /* ReDMCSB TIMELINE.C F0247 lines 1079-1100 finds
+                         * same/next-cell square objects, then unlinks them
+                         * through F0164 before F0212 creates launcher
+                         * projectiles.  Sensor effects are intentionally not
+                         * triggered by this ownership transfer. */
+                        for (unlink_index = 0;
+                             unlink_index < launcher_result.unlinkCount;
+                             ++unlink_index) {
+                            (void)csb_v1_runtime_unlink_thing_from_square(
+                                dungeon,
+                                launcher_result.unlinkThings[unlink_index],
+                                record->mapIndex,
+                                record->mapX,
+                                record->mapY);
+                        }
                     }
                     for (launch_index = 0;
                          launch_index < launcher_result.launchCount;
@@ -4528,8 +4670,12 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                                 launch->associatedThing);
                         memset(&input, 0, sizeof(input));
                         memset(&first_move, 0, sizeof(first_move));
-                        input.category = PROJECTILE_CATEGORY_MAGICAL;
-                        input.subtype = subtype;
+                        input.category = is_square_object_launcher
+                            ? PROJECTILE_CATEGORY_KINETIC
+                            : PROJECTILE_CATEGORY_MAGICAL;
+                        input.subtype = is_square_object_launcher
+                            ? PROJECTILE_SUBTYPE_KINETIC_ARROW
+                            : subtype;
                         input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
                         input.ownerIndex = -1;
                         input.mapIndex = record->mapIndex;
@@ -4542,13 +4688,15 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                         input.launcherStrength = launch->attack;
                         input.stepEnergy = launch->stepEnergy;
                         input.currentTick = (int)profile->game_time;
-                        input.poisonAttack =
-                            (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
-                                ? launch->attack
-                                : 0;
-                        input.attackTypeCode =
-                            csb_v1_runtime_projectile_attack_type_from_subtype(
-                                subtype);
+                        input.poisonAttack = (!is_square_object_launcher &&
+                                              subtype ==
+                                                  PROJECTILE_SUBTYPE_POISON_CLOUD)
+                            ? launch->attack
+                            : 0;
+                        input.attackTypeCode = is_square_object_launcher
+                            ? COMBAT_ATTACK_BLUNT
+                            : csb_v1_runtime_projectile_attack_type_from_subtype(
+                                  subtype);
                         input.associatedThing = (int)launch->associatedThing;
                         input.firstMoveGraceFlag = 0;
                         if (F0810_PROJECTILE_Create_Compat(
