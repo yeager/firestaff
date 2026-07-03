@@ -1635,6 +1635,32 @@ static int csb_v1_runtime_stat_or_default(
     return (value > 0) ? value : 30;
 }
 
+static int csb_v1_runtime_imported_skill_level(
+    const CSB_V1_Champion *champion,
+    int skill_index)
+{
+    int level;
+
+    if (!champion ||
+        skill_index < 0 ||
+        skill_index >= CSB_V1_SKILL_COUNT) {
+        return 1;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0230 line 1390 subtracts
+     * F0303_CHAMPION_GetSkillLevel(C07_SKILL_PARRY) << 1 from creature
+     * attack.  CSB's current imported champion block carries the compact
+     * 16-byte DM1/CSB skill row rather than Firestaff M10's full 20-skill
+     * XP/lifecycle state, so this bounded bridge treats the stored byte as
+     * an imported source skill level and clamps it to the F0303 level range.
+     * Full CSB skill-XP reconstruction belongs with the original-save body
+     * importer, not in the C38 attack dispatcher. */
+    level = (int)champion->Skills[skill_index];
+    if (level < 1) level = 1;
+    if (level > 16) level = 16;
+    return level;
+}
+
 static int csb_v1_runtime_fill_creature_combat_snapshot(
     int creature_type,
     int creature_index,
@@ -1687,16 +1713,17 @@ static int csb_v1_runtime_fill_defender_combat_snapshot(
 
     /* ReDMCSB CHAMPION.C F0321 consumes a snapshot of current champion
      * statistics, wounds, defenses, and party shields.  CSB V1's imported
-     * champion block currently carries the source statistics but not yet the
-     * full DM1 armor/wound/rest/shield side state, so those fields stay at
-     * bounded zero until the shared inventory/lifecycle bridge is attached. */
+     * champion block currently carries the source statistics and compact
+     * skill row but not yet the full DM1 armor/wound/rest/shield side state,
+     * so those fields stay at bounded zero until the shared inventory/
+     * lifecycle bridge is attached. */
     out->championIndex = champion_index;
     out->currentHealth = champion->CurrentHealth;
     out->dexterity = csb_v1_runtime_stat_or_default(
         champion,
         CSB_V1_STAT_DEX,
         CSB_V1_STAT_CUR);
-    out->skillLevelParry = 0;
+    out->skillLevelParry = csb_v1_runtime_imported_skill_level(champion, 7);
     out->statisticVitality = csb_v1_runtime_stat_or_default(
         champion,
         CSB_V1_STAT_VIT,
