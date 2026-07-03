@@ -181,10 +181,12 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
                                       i * CSB_DUNGEON_MAP_DESC_SIZE;
             int level_id = 0;
             uint16_t raw_bit_a = rd16(map_desc + 8);
-            (void)level_id;
             csb_decode_map_bitfield_a(raw_bit_a, &level_id,
                                       &out->level_widths[i],
                                       &out->level_heights[i]);
+            out->map_levels[i] = level_id;
+            out->map_offset_x[i] = (int)map_desc[4];
+            out->map_offset_y[i] = (int)map_desc[5];
             if (out->level_widths[i] < 1 ||
                 out->level_widths[i] > CSB_V1_MAX_SQUARE_SIZE ||
                 out->level_heights[i] < 1 ||
@@ -269,6 +271,9 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         out->level_widths[i] = width;
         out->level_heights[i] = height;
         out->level_offsets[i] = (int)lvl_offset;
+        out->map_levels[i] = i;
+        out->map_offset_x[i] = 0;
+        out->map_offset_y[i] = 0;
         offset += 6;
     }
 

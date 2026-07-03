@@ -2850,6 +2850,89 @@ static int csb_v1_runtime_stairs_exit_direction(
     return (blocked << 1) + north_south;
 }
 
+static int csb_v1_runtime_has_map_location_metadata(
+    const CSB_V1_DungeonData *dungeon)
+{
+    int i;
+
+    if (!dungeon) return 0;
+    for (i = 0; i < dungeon->level_count; ++i) {
+        if (dungeon->map_levels[i] != 0 ||
+            dungeon->map_offset_x[i] != 0 ||
+            dungeon->map_offset_y[i] != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_map_source_level(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index)
+{
+    if (!dungeon ||
+        map_index < 0 ||
+        map_index >= dungeon->level_count ||
+        !csb_v1_runtime_has_map_location_metadata(dungeon)) {
+        return map_index;
+    }
+    return dungeon->map_levels[map_index];
+}
+
+static int csb_v1_runtime_location_after_level_change(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index,
+    int level_delta,
+    int *inout_map_x,
+    int *inout_map_y,
+    int *out_map_index)
+{
+    int source_level;
+    int target_source_level;
+    int global_x;
+    int global_y;
+    int i;
+
+    if (out_map_index) *out_map_index = -1;
+    if (!dungeon || !inout_map_x || !inout_map_y || !out_map_index ||
+        map_index < 0 || map_index >= dungeon->level_count) {
+        return 0;
+    }
+    if (!csb_v1_runtime_has_map_location_metadata(dungeon)) {
+        int target = map_index + level_delta;
+        if (target < 0 || target >= dungeon->level_count) return 0;
+        *out_map_index = target;
+        return 1;
+    }
+
+    /* ReDMCSB DUNGEON.C F0154 lines 1508-1554: level changes convert
+     * local map coordinates to global OffsetMapX/Y coordinates, add the
+     * level delta to MAP.A.Level, then choose the map on that source level
+     * whose offset/width/height contains the same global coordinate. */
+    source_level = csb_v1_runtime_map_source_level(dungeon, map_index);
+    target_source_level = source_level + level_delta;
+    global_x = dungeon->map_offset_x[map_index] + *inout_map_x;
+    global_y = dungeon->map_offset_y[map_index] + *inout_map_y;
+    for (i = 0; i < dungeon->level_count; ++i) {
+        int min_x = dungeon->map_offset_x[i];
+        int min_y = dungeon->map_offset_y[i];
+        int max_x = min_x + dungeon->level_widths[i] - 1;
+        int max_y = min_y + dungeon->level_heights[i] - 1;
+
+        if (csb_v1_runtime_map_source_level(dungeon, i) !=
+                target_source_level ||
+            global_x < min_x || global_x > max_x ||
+            global_y < min_y || global_y > max_y) {
+            continue;
+        }
+        *inout_map_x = global_x - min_x;
+        *inout_map_y = global_y - min_y;
+        *out_map_index = i;
+        return 1;
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_apply_object_consequences_at_square(
     CSB_V1_DungeonData *dungeon,
     uint16_t *inout_thing,
@@ -2900,13 +2983,19 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
             old_y = *inout_map_y;
             old_thing = *inout_thing;
             if (square_type == 2) {
+                int target_x = *inout_map_x;
+                int target_y = *inout_map_y;
                 if ((raw_square & 0x08) == 0 ||
                     (raw_square & 0x01) != 0) {
                     break;
                 }
-                target_level = *inout_map_index + 1;
-                if (target_level < 0 ||
-                    target_level >= dungeon->level_count) {
+                if (!csb_v1_runtime_location_after_level_change(
+                        dungeon,
+                        *inout_map_index,
+                        1,
+                        &target_x,
+                        &target_y,
+                        &target_level)) {
                     break;
                 }
                 if (!csb_v1_runtime_unlink_thing_from_square(
@@ -2918,6 +3007,8 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                     break;
                 }
                 *inout_map_index = target_level;
+                *inout_map_x = target_x;
+                *inout_map_y = target_y;
             } else if (square_type == 3) {
                 static const int step_east[4] = { 0, 1, 0, -1 };
                 static const int step_north[4] = { -1, 0, 1, 0 };
@@ -2926,12 +3017,20 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                 int cell;
 
                 if ((raw_square & 0x04) == 0) {
-                    target_level = *inout_map_index + 1;
-                    if (target_level < 0 ||
-                        target_level >= dungeon->level_count) {
+                    int target_x = *inout_map_x;
+                    int target_y = *inout_map_y;
+                    if (!csb_v1_runtime_location_after_level_change(
+                            dungeon,
+                            *inout_map_index,
+                            1,
+                            &target_x,
+                            &target_y,
+                            &target_level)) {
                         break;
                     }
                     *inout_map_index = target_level;
+                    *inout_map_x = target_x;
+                    *inout_map_y = target_y;
                 }
                 direction = csb_v1_runtime_stairs_exit_direction(
                     dungeon,
