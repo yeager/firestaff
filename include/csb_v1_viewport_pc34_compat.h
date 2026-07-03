@@ -6,6 +6,17 @@
 
 #include "memory_projectile_pc34_compat.h"
 
+typedef struct {
+    int src_x;
+    int src_y;
+    int dst_x;
+    int dst_y;
+    int width;
+    int height;
+    const uint16_t *mask_words;
+    size_t mask_word_count;
+} CSB_V1_ViewportCustomBackgroundMask;
+
 /* CSB V1 Viewport — CSB-specific rendering differences
  *
  * CSB shares the DM1 viewport engine but has:
@@ -42,6 +53,19 @@ typedef struct {
      * the viewport treats NULL as "no live projectile/explosion overlay". */
     const struct ProjectileList_Compat *runtime_projectiles;
     const struct ExplosionList_Compat *runtime_explosions;
+
+    /* Optional CSBgraphics.dat CustomBackgrounds bridge. The CSB boot layer
+     * owns the plan/cache/skin-def bytes; the viewport applies only caller-
+     * supplied aligned mask geometries so unsupported real geometry remains
+     * explicit instead of guessed. */
+    const void *csbgraphics_plan;
+    const void *csbgraphics_cache;
+    const uint16_t *custom_background_skin_def_words;
+    size_t custom_background_skin_def_word_count;
+    int custom_background_room_num;
+    CSB_V1_ViewportCustomBackgroundMask custom_background_layer_masks[3];
+    uint8_t custom_background_layer_mask_valid[3];
+    int custom_background_applied_count;
 } CSB_V1_ViewportConfig;
 
 typedef struct {
@@ -129,17 +153,6 @@ typedef struct {
     int mask_min_bytes;
     int applies_to_room;
 } CSB_V1_ViewportCustomBackgroundLayerPlan;
-
-typedef struct {
-    int src_x;
-    int src_y;
-    int dst_x;
-    int dst_y;
-    int width;
-    int height;
-    const uint16_t *mask_words;
-    size_t mask_word_count;
-} CSB_V1_ViewportCustomBackgroundMask;
 
 typedef struct {
     int view_square;

@@ -21,7 +21,9 @@
  */
 
 #include "csb_v1_viewport_pc34_compat.h"
+#include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include <stdlib.h>
 #include <string.h>
 
 enum {
@@ -1165,6 +1167,7 @@ void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg) {
     cfg->dungeon_grid = NULL;
     cfg->dungeon_width = 0;
     cfg->dungeon_height = 0;
+    cfg->custom_background_room_num = -1;
 }
 
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set) {
@@ -1361,6 +1364,116 @@ void csb_v1_viewport_set_dungeon_grid(CSB_V1_ViewportConfig *cfg,
     cfg->dungeon_height = height;
 }
 
+static uint32_t csb_v1_viewport_pack_4bpp_word(const uint8_t *row)
+{
+    uint32_t word = 0u;
+    int pair;
+
+    for (pair = 0; pair < 4; ++pair) {
+        uint8_t packed = (uint8_t)(((row[pair * 2] & 0x0fu) << 4) |
+                                   (row[pair * 2 + 1] & 0x0fu));
+        word |= (uint32_t)packed << (pair * 8);
+    }
+    return word;
+}
+
+static void csb_v1_viewport_unpack_4bpp_word(uint32_t word, uint8_t *row)
+{
+    int pair;
+
+    for (pair = 0; pair < 4; ++pair) {
+        uint8_t packed = (uint8_t)((word >> (pair * 8)) & 0xffu);
+        row[pair * 2] = (uint8_t)((packed >> 4) & 0x0fu);
+        row[pair * 2 + 1] = (uint8_t)(packed & 0x0fu);
+    }
+}
+
+static int csb_v1_viewport_apply_configured_custom_backgrounds(
+    CSB_V1_ViewportConfig *cfg)
+{
+    const int viewport_word_stride = DM1_VIEWPORT_WIDTH / 8;
+    const size_t viewport_word_count =
+        (size_t)viewport_word_stride * (size_t)DM1_VIEWPORT_HEIGHT;
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
+    const CSB_V1_CSBGraphicsDatRealCache *cache;
+    uint32_t *viewport_words;
+    int layer;
+    int applied = 0;
+
+    if (!cfg || !cfg->viewport_pixels ||
+        !cfg->csbgraphics_plan || !cfg->csbgraphics_cache ||
+        !cfg->custom_background_skin_def_words ||
+        cfg->custom_background_skin_def_word_count == 0u ||
+        cfg->custom_background_room_num < 0) {
+        if (cfg) cfg->custom_background_applied_count = 0;
+        return 0;
+    }
+    plan = (const CSB_V1_CSBGraphicsM11RuntimePlan *)cfg->csbgraphics_plan;
+    cache = (const CSB_V1_CSBGraphicsDatRealCache *)cfg->csbgraphics_cache;
+
+    viewport_words = (uint32_t *)calloc(viewport_word_count,
+                                        sizeof(*viewport_words));
+    if (!viewport_words) {
+        cfg->custom_background_applied_count = 0;
+        return 0;
+    }
+
+    for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+        uint8_t *row = cfg->viewport_pixels +
+            (DM1_VIEWPORT_SCREEN_Y + y) *
+                (cfg->viewport_stride > 0 ? cfg->viewport_stride : 320) +
+            DM1_VIEWPORT_SCREEN_X;
+        for (int x = 0; x < DM1_VIEWPORT_WIDTH; x += 8) {
+            viewport_words[(size_t)y * (size_t)viewport_word_stride +
+                           (size_t)(x / 8)] =
+                csb_v1_viewport_pack_4bpp_word(row + x);
+        }
+    }
+
+    /* CSB-lineage Viewport.cpp:6599-6619 applies room pSkinDef layers in
+     * large, middle, then near order. This bridge executes only masks whose
+     * geometry was supplied by the caller; unaligned or missing real geometry
+     * remains deferred instead of guessed. */
+    for (layer = 0; layer < 3; ++layer) {
+        int rc;
+        if (!cfg->custom_background_layer_mask_valid[layer]) {
+            continue;
+        }
+        rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
+            plan,
+            cache,
+            cfg->custom_background_room_num,
+            (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
+            cfg->custom_background_skin_def_words,
+            cfg->custom_background_skin_def_word_count,
+            &cfg->custom_background_layer_masks[layer],
+            viewport_words,
+            viewport_word_count,
+            DM1_VIEWPORT_WIDTH);
+        if (rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+            ++applied;
+        }
+    }
+
+    if (applied > 0) {
+        for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+            uint8_t *row = cfg->viewport_pixels +
+                (DM1_VIEWPORT_SCREEN_Y + y) *
+                    (cfg->viewport_stride > 0 ? cfg->viewport_stride : 320) +
+                DM1_VIEWPORT_SCREEN_X;
+            for (int x = 0; x < DM1_VIEWPORT_WIDTH; x += 8) {
+                csb_v1_viewport_unpack_4bpp_word(
+                    viewport_words[(size_t)y * (size_t)viewport_word_stride +
+                                   (size_t)(x / 8)],
+                    row + x);
+            }
+        }
+    }
+    free(viewport_words);
+    cfg->custom_background_applied_count = applied;
+    return applied;
+}
+
 /* csb_v1_viewport_render_frame — integration entry point
  *
  * Renders the CSB dungeon view by delegating to the shared DM1 V1 viewport
@@ -1422,17 +1535,9 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * The CSB-specific elements (back-walls D3L2/D3R2, near-walls D2L2/D2R2)
      * are handled by dm1_viewport_3d_draw_csb_back_wall and
      * dm1_viewport_3d_draw_csb_near_wall, which are invoked from the
-     * dm1_viewport_3d_draw_frame wall loop for D3L2/D3R2/D2L2/D2R2 positions.
-     *
-     * Custom background rendering — TODO (pass604).
-     * ReDMCSB DUNVIEW.C F0128 lines 8337-8339 draws the standard
-     * floor/ceiling backdrop through F0098 before square rendering begins;
-     * CSBWin Viewport.cpp lines 6567-6615 and 6919-7140 add the CSB-only
-     * CustomBackgrounds room-slot overlays before individual cell draws.
-     * The source-locked slot metadata is exposed by
-     * csb_v1_viewport_get_custom_background_slot_spec*(). */
-
+     * dm1_viewport_3d_draw_frame wall loop for D3L2/D3R2/D2L2/D2R2 positions. */
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
+    (void)csb_v1_viewport_apply_configured_custom_backgrounds(cfg);
     csb_v1_viewport_draw_runtime_projectile_overlays(
         cfg, party_dir, party_x, party_y);
     csb_v1_viewport_draw_runtime_explosion_overlays(

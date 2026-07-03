@@ -836,6 +836,106 @@ static void test_custom_background_room_layer_apply(void)
     free(bytes);
 }
 
+static void test_viewport_render_applies_configured_custom_background_layer(void)
+{
+    enum { VIEWPORT_WORD_STRIDE = 224 / 8, VIEWPORT_WORD_COUNT = (224 / 8) * 136 };
+    uint8_t *bitmap_decoded;
+    uint8_t mask_decoded[2u];
+    static const uint16_t skin_def_words[] = {
+        0u, 108u, 0u, 0u, 0u, 110u, 0u
+    };
+    CompressedEntryFixture entries[2];
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    CSB_V1_CSBGraphicsM11RuntimePlan plan;
+    CSB_V1_ViewportConfig cfg;
+    uint8_t framebuffer[320 * 200];
+    uint8_t *bytes;
+    size_t size = 0u;
+
+    bitmap_decoded = (uint8_t *)calloc((size_t)(1 + VIEWPORT_WORD_COUNT),
+                                       sizeof(uint32_t));
+    check_true("viewport_custom_bg.fixture_bitmap_alloc",
+               bitmap_decoded != NULL);
+    if (!bitmap_decoded) {
+        return;
+    }
+    write_le32(bitmap_decoded, 0u, 224u);
+    write_le32(bitmap_decoded, 4u, 0x11111111u);
+    write_le32(bitmap_decoded, 8u, 0x22222222u);
+    write_le16(mask_decoded, 0u, 0xffffu);
+
+    entries[0].entry_index = 108u;
+    entries[0].decoded = bitmap_decoded;
+    entries[0].decoded_size =
+        (size_t)(1 + VIEWPORT_WORD_COUNT) * sizeof(uint32_t);
+    entries[1].entry_index = 110u;
+    entries[1].decoded = mask_decoded;
+    entries[1].decoded_size = sizeof(mask_decoded);
+
+    bytes = build_csbgraphics_entries_compressed(entries,
+                                                 sizeof(entries) / sizeof(entries[0]),
+                                                 &size);
+    check_true("viewport_custom_bg.fixture_csbgraphics", bytes != NULL);
+    if (!bytes) {
+        free(bitmap_decoded);
+        return;
+    }
+
+    cache_from_bytes(&cache, bytes, size);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&plan);
+    check_int("viewport_custom_bg.add_skin_def",
+              csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+                  &cache,
+                  skin_def_words,
+                  sizeof(skin_def_words) / sizeof(skin_def_words[0]),
+                  &plan),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("viewport_custom_bg.pairs",
+              (int)plan.custom_background_pair_count, 1);
+
+    memset(framebuffer, 0x09, sizeof(framebuffer));
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = framebuffer;
+    cfg.viewport_stride = 320;
+    cfg.csbgraphics_plan = &plan;
+    cfg.csbgraphics_cache = &cache;
+    cfg.custom_background_skin_def_words = skin_def_words;
+    cfg.custom_background_skin_def_word_count =
+        sizeof(skin_def_words) / sizeof(skin_def_words[0]);
+    cfg.custom_background_room_num = 4;
+    cfg.custom_background_layer_masks
+        [CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR].src_x = 0;
+    cfg.custom_background_layer_masks
+        [CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR].src_y = 0;
+    cfg.custom_background_layer_masks
+        [CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR].dst_x = 0;
+    cfg.custom_background_layer_masks
+        [CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR].dst_y = 0;
+    cfg.custom_background_layer_masks
+        [CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR].width = 16;
+    cfg.custom_background_layer_masks
+        [CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR].height = 1;
+    cfg.custom_background_layer_mask_valid
+        [CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR] = 1u;
+
+    csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+    check_int("viewport_custom_bg.applied_count",
+              cfg.custom_background_applied_count, 1);
+    check_int("viewport_custom_bg.first_pixel",
+              framebuffer[33 * 320 + 0], 1);
+    check_int("viewport_custom_bg.eighth_pixel",
+              framebuffer[33 * 320 + 7], 1);
+    check_int("viewport_custom_bg.ninth_pixel",
+              framebuffer[33 * 320 + 8], 2);
+    check_int("viewport_custom_bg.sixteenth_pixel",
+              framebuffer[33 * 320 + 15], 2);
+
+    cache.file_buffer = NULL;
+    csb_v1_csbgraphics_dat_real_cache_free(&cache);
+    free(bytes);
+    free(bitmap_decoded);
+}
+
 int main(void)
 {
     test_build_known_c040_plan();
@@ -844,6 +944,7 @@ int main(void)
     test_custom_background_skin_def_pairs_are_deferred();
     test_custom_background_aligned_mask_apply();
     test_custom_background_room_layer_apply();
+    test_viewport_render_applies_configured_custom_background_layer();
     check_true("result_name",
                strcmp(csb_v1_csbgraphics_m11_runtime_plan_result_name(
                           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY),
