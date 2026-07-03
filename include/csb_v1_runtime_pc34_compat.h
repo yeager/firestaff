@@ -319,6 +319,10 @@ typedef struct {
     int teleporter_target_x;
     int teleporter_target_y;
     int teleporter_target_level;
+    int chained_move_count;
+    int chained_move_limit_hit;
+    int teleporter_chain_count;
+    int pit_chain_count;
     int old_party_level;
     int new_party_level;
 } CSB_V1_InputCommandRuntimeResult;

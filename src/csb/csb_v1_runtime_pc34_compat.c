@@ -882,6 +882,7 @@ static void csb_v1_runtime_apply_destination_stairs(
 
     if (!profile || !result || !result->movement_step_applied ||
         result->teleporter_transition_applied ||
+        result->pit_fall_applied ||
         result->stair_transition_applied) {
         return;
     }
@@ -955,6 +956,114 @@ static void csb_v1_runtime_apply_destination_pit(
     csb_v1_dungeon_set_current_level(target_level);
     result->new_party_level = target_level;
     result->pit_fall_applied = 1;
+}
+
+static void csb_v1_runtime_copy_first_teleporter_result(
+    CSB_V1_InputCommandRuntimeResult *result,
+    const CSB_V1_InputCommandRuntimeResult *step)
+{
+    if (!result || !step) return;
+    if (!result->teleporter_transition_applied) {
+        result->teleporter_open = step->teleporter_open;
+        result->teleporter_scope = step->teleporter_scope;
+        result->teleporter_absolute_rotation = step->teleporter_absolute_rotation;
+        result->teleporter_rotation = step->teleporter_rotation;
+        result->teleporter_audible = step->teleporter_audible;
+        result->teleporter_target_x = step->teleporter_target_x;
+        result->teleporter_target_y = step->teleporter_target_y;
+        result->teleporter_target_level = step->teleporter_target_level;
+    }
+    result->teleporter_transition_applied = 1;
+    result->teleporter_chain_count++;
+}
+
+static void csb_v1_runtime_copy_first_pit_result(
+    CSB_V1_InputCommandRuntimeResult *result,
+    const CSB_V1_InputCommandRuntimeResult *step)
+{
+    if (!result || !step) return;
+    if (!result->pit_fall_applied) {
+        result->pit_open = step->pit_open;
+    }
+    result->pit_fall_applied = 1;
+    result->pit_chain_count++;
+}
+
+static void csb_v1_runtime_apply_destination_chain(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    int i;
+
+    if (!profile || !result || !result->movement_step_applied) return;
+
+    /* ReDMCSB: MOVESENS.C F0267 lines 468-574 repeats teleporter/pit
+     * consequences in one move result.  PC34/I34E MEDIA529 caps chained
+     * moves at 100, covering teleporter-to-teleporter and pit-series
+     * routes while avoiding infinite self-feeding dungeon setups.  This
+     * party-only runtime bridge keeps object/group/projectile movement,
+     * audio, fall damage, rope, and redraw timing as separate work. */
+    for (i = 0; i < 100; ++i) {
+        CSB_V1_InputCommandRuntimeResult step;
+        int before_x;
+        int before_y;
+        int before_level;
+        int self_target_teleporter;
+
+        memset(&step, 0, sizeof(step));
+        step.movement_step_attempted = 1;
+        step.movement_step_applied = 1;
+        step.movement_destination_x = profile->party_x;
+        step.movement_destination_y = profile->party_y;
+        step.old_party_level = profile->current_level;
+        step.new_party_level = profile->current_level;
+        if (csb_v1_runtime_sample_destination_square(profile, &step) < 0) {
+            break;
+        }
+
+        before_x = profile->party_x;
+        before_y = profile->party_y;
+        before_level = profile->current_level;
+        if (step.movement_destination_square_type == 5) {
+            csb_v1_runtime_apply_destination_teleporter(profile, &step);
+            if (!step.teleporter_transition_applied) {
+                if (!result->teleporter_open) {
+                    result->teleporter_open = step.teleporter_open;
+                }
+                break;
+            }
+            self_target_teleporter =
+                step.teleporter_target_x == before_x &&
+                step.teleporter_target_y == before_y &&
+                step.teleporter_target_level == before_level;
+            csb_v1_runtime_copy_first_teleporter_result(result, &step);
+            result->chained_move_count++;
+            result->new_party_level = profile->current_level;
+            if (self_target_teleporter) {
+                break;
+            }
+            continue;
+        }
+
+        if (step.movement_destination_square_type == 2) {
+            csb_v1_runtime_apply_destination_pit(profile, &step);
+            if (!step.pit_fall_applied) {
+                if (!result->pit_open) {
+                    result->pit_open = step.pit_open;
+                }
+                break;
+            }
+            csb_v1_runtime_copy_first_pit_result(result, &step);
+            result->chained_move_count++;
+            result->new_party_level = profile->current_level;
+            continue;
+        }
+
+        break;
+    }
+    if (i >= 100) {
+        result->chained_move_limit_hit = 1;
+    }
 }
 
 /* ── Runtime profile API ────────────────────────────────────────────── */
@@ -1304,9 +1413,8 @@ int csb_v1_runtime_process_input_queue(
                     local_result.movement_blocked_by_fakewall = 1;
                 }
             }
-            csb_v1_runtime_apply_destination_teleporter(profile, &local_result);
+            csb_v1_runtime_apply_destination_chain(profile, &local_result);
             csb_v1_runtime_apply_destination_stairs(profile, &local_result);
-            csb_v1_runtime_apply_destination_pit(profile, &local_result);
         }
         break;
     default:
