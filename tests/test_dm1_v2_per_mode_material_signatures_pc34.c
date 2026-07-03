@@ -70,8 +70,8 @@ static void put_cache_entry(unsigned char* entry,
 static int write_minimal_dm1_v22_cache(const char* cache_path) {
     FILE* fp;
     unsigned char header[32];
-    unsigned char entries[4][32];
-    const ProbeCacheEntry fixtures[4] = {
+    unsigned char entries[5][32];
+    const ProbeCacheEntry fixtures[5] = {
         {
             "wall_shapes",
             "wall_d3_carved_01",
@@ -91,6 +91,11 @@ static int write_minimal_dm1_v22_cache(const char* cache_path) {
             "floor_shapes",
             "floor_stairs_down_01",
             { 0x00ffff00u, 0x00ffff00u, 0x00ffff00u, 0x00ffff00u }
+        },
+        {
+            "field_shapes",
+            "field_teleporter_01",
+            { 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu }
         }
     };
     size_t i;
@@ -287,19 +292,19 @@ static void test_v22_inplace_material_signature(uint32_t* out_signature) {
     CHECK(strcmp(m11_v22_inplace_get_cell_asset_id(2, -1),
                  "floor_stairs_down_01") == 0);
     asset_id = m11_v22_inplace_get_cell_asset_id(2, 1);
-    CHECK(asset_id == NULL);
+    CHECK(asset_id != NULL && strcmp(asset_id, "field_teleporter_01") == 0);
 
     memset(fb, 0, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
-    CHECK(painted == 8);
+    CHECK(painted == 9);
     CHECK(cell_center_pixel(fb, 320, 1, -1) == 0x30);
     CHECK(cell_center_pixel(fb, 320, 1, 0) == 0x0c);
     CHECK(cell_center_pixel(fb, 320, 1, 1) == 0x03);
     CHECK(cell_center_pixel(fb, 320, 2, -1) == 0x3c);
-    CHECK(cell_center_pixel(fb, 320, 2, 1) == 0x00);
+    CHECK(cell_center_pixel(fb, 320, 2, 1) == 0x33);
 
     *out_signature = fnv1a_bytes(fb, sizeof(fb));
-    CHECK_EQ_U32(*out_signature, 0x30894af5u);
+    CHECK_EQ_U32(*out_signature, 0xbe1c77fdu);
     m11_v22_inplace_draw_shutdown();
 }
 

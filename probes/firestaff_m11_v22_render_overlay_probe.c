@@ -109,6 +109,36 @@ static void p_source_palette_shadow(void) {
           "palette shadow: source palette 5 darkens D1L center");
 }
 
+static void p_material_categories(void) {
+    unsigned char fb[320 * 200];
+    unsigned char raw_cells[3][3] = {
+        { 0x00, 0x20, 0x40 },
+        { 0x60, 0x80, 0xa0 },
+        { 0x00, 0x20, 0x40 }
+    };
+    unsigned char wall;
+    unsigned char floor;
+    unsigned char pit;
+    unsigned char stairs;
+    unsigned char field;
+    memset(fb, 0x00, sizeof(fb));
+    dm1_v2_presentation_mode_reset();
+    dm1_v2_presentation_mode_set_modern_pack_available(1);
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
+    check(m11_v22_render_overlay_with_palette(fb, 320, 200, 0) == 9,
+          "material categories: paints 9 cells");
+    wall = fb[(103 + 15) * 320 + (8 + 35)];
+    floor = fb[(103 + 15) * 320 + (78 + 30)];
+    pit = fb[(103 + 15) * 320 + (139 + 35)];
+    stairs = fb[(72 + 15) * 320 + (8 + 35)];
+    field = fb[(72 + 15) * 320 + (139 + 35)];
+    check(wall != floor, "material categories: wall differs from floor");
+    check(floor != pit, "material categories: floor differs from pit");
+    check(stairs != floor, "material categories: stairs differs from floor");
+    check(field != floor, "material categories: field differs from floor");
+}
+
 static void p_evidence(void) {
     const char* ev = m11_v22_render_overlay_source_evidence();
     check(ev != NULL && strlen(ev) > 50, "ev non-trivial");
@@ -124,6 +154,7 @@ int main(void) {
     p_null_safe();
     p_border();
     p_source_palette_shadow();
+    p_material_categories();
     p_evidence();
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);
     return g_failed == 0 ? 0 : 1;
