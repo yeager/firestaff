@@ -338,6 +338,29 @@ int main(void) {
     expect_true(quick_loaded.tick_count == (uint32_t)view.csbState.tick_count,
                 "M11 CSB quicksave preserves mirrored tick count");
     csb_v1_runtime_cleanup(&quick_loaded);
+    if (profile) {
+        int saved_x = view.csbState.party_x;
+        int saved_y = view.csbState.party_y;
+        int saved_dir = view.csbState.party_dir;
+        int saved_tick = view.csbState.tick_count;
+        profile->runtime.party_x = saved_x + 1;
+        profile->runtime.party_y = saved_y + 1;
+        profile->runtime.party_dir = (saved_dir + 1) & 3;
+        profile->runtime.tick_count += 9U;
+        profile->runtime.game_time += 9U;
+        view.csbState.party_x = profile->runtime.party_x;
+        view.csbState.party_y = profile->runtime.party_y;
+        view.csbState.party_dir = profile->runtime.party_dir;
+        view.csbState.tick_count = (int)profile->runtime.tick_count;
+        expect_true(M11_GameView_QuickLoad(&view),
+                    "M11 CSB quickload restores the CSB runtime save");
+        expect_true(view.csbState.party_x == saved_x &&
+                    view.csbState.party_y == saved_y &&
+                    view.csbState.party_dir == saved_dir,
+                    "M11 CSB quickload restores saved party pose");
+        expect_true(view.csbState.tick_count == saved_tick,
+                    "M11 CSB quickload restores saved tick count");
+    }
 
     M11_GameView_Shutdown(&view);
     expect_true(view.csbBootProfile == NULL,
