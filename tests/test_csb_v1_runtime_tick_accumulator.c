@@ -537,6 +537,24 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded lethal C38 moves leadership to the next living champion");
     CHECK(profile.party_state.Champions[1].CurrentHealth == 20,
           "bounded lethal C38 leaves the next living champion undamaged");
+    profile.party_state.Champions[1].CurrentHealth = 2;
+    queue_square_event(
+        &profile,
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+        DM1_EFFECT_SET,
+        1,
+        1);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "bounded C38 final knockout dispatches before game-over gating");
+    CHECK(profile.party_state.Champions[1].CurrentHealth == 0 &&
+              (profile.party_state.Champions[1].Attributes &
+               CSB_V1_CHAMPION_ATTRIBUTE_DEAD),
+          "bounded final C38 marks the last living champion dead");
+    CHECK(profile.party_state.LeaderIndex == -1 && profile.leader_index == -1 &&
+              profile.game_over == 1,
+          "bounded final C38 clears leadership and marks CSB runtime game over");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 0,
+          "game-over CSB runtime blocks further V1 ticks after final knockout");
 }
 
 static void test_timeline_wall_gate_and_generator_sensor_mutations(void)

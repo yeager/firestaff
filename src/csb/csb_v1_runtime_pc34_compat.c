@@ -1632,6 +1632,12 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                             &profile->party_state);
                     profile->party_state.LeaderIndex = next_leader;
                     profile->leader_index = next_leader;
+                    if (next_leader < 0) {
+                        /* ReDMCSB CHAMPION.C F0319 lines 1662-1668 sets
+                         * G0303_B_PartyDead when no champion still has
+                         * CurrentHealth after damage application. */
+                        profile->game_over = 1;
+                    }
                 }
             } else {
                 profile->party_state.Champions[champion_index].CurrentHealth =
