@@ -3089,8 +3089,7 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                 raw_square,
                 &teleporter,
                 &scope) <= 0 ||
-            scope == 0x01 ||
-            teleporter.target_map_index != *inout_map_index) {
+            scope == 0x01) {
             break;
         }
         if (csb_v1_teleporter_rotation_apply_object_cell_pc34_compat(
@@ -3131,10 +3130,8 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
      * teleporters, rotates object cells only for relative teleporters unless
      * the object came from the CM2 projectile-associated-object path, and
      * continues into open non-imaginary pits and non-projectile stairs in the
-     * same PC34 100-step chain. This CSB bridge keeps level transitions
-     * bounded to adjacent maps; full F0154 coordinate pairing, cross-map
-     * teleporters, buzz audio, and object sensors remain separate runtime
-     * work. */
+     * same PC34 100-step chain. This CSB bridge keeps buzz audio and object
+     * sensors as separate runtime work. */
     return moved_count;
 }
 
