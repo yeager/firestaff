@@ -499,3 +499,22 @@ SWSH_CompatSourceTiming SWSH_Compat_GetSourceTimingEvidence(void) {
 const char* SWSH_Compat_GetSourceAnimationEvidence(void) {
         return "ReDMCSB SWSH.C PC path: T0901006 expands the FTL logo bitmap to Physbase using SWSHGDAT.C, then T0901000 starts Dosound(), applies the V0901006 palette command sequence with Setcolor()/Vsync, and hands off to START.PRG via Pexec after the zero terminator.";
 }
+
+unsigned int SWSH_Compat_GetRuntimeDelayMsForVblankCount(unsigned int vblankCount) {
+        if (vblankCount > 0xffffffffu / SWSH_COMPAT_RUNTIME_VBLANK_MS) {
+                return 0xffffffffu;
+        }
+        return vblankCount * SWSH_COMPAT_RUNTIME_VBLANK_MS;
+}
+
+unsigned int SWSH_Compat_GetRuntimeInitialLogoHoldMs(void) {
+        /* ReDMCSB SWSH.C:3010 F0022_MAIN_SwooshDelay(20). */
+        return SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                SWSH_COMPAT_SOURCE_INITIAL_LOGO_HOLD_VBLANKS);
+}
+
+unsigned int SWSH_Compat_GetRuntimeFinalHoldMs(void) {
+        /* ReDMCSB SWSH.C:3036-3037 I34E F0022_MAIN_SwooshDelay(120). */
+        return SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                SWSH_COMPAT_SOURCE_FINAL_HOLD_VBLANKS);
+}

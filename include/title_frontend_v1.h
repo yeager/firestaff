@@ -72,6 +72,7 @@ typedef struct V1_TitleFrontendSourceTiming {
     unsigned int finalFadeGuardVblankCount;
     unsigned int firstMenuEligibleStep;
     unsigned int sourceAnimationStepCount;
+    unsigned int frameBankEquivalentStepCount;
     const char* sourceFile;
     const char* sourceFunction;
     const char* evidenceNote;
@@ -108,6 +109,7 @@ V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned in
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void);
 unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourceTiming* timing);
 unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing);
+unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFrontendSourceTiming* timing);
 
 /*
  * Select the runtime source for the DM1 V1 TITLE animation.  The original

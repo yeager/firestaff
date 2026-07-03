@@ -199,9 +199,10 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     timing.finalFadeGuardVblankCount = 1u;
     timing.firstMenuEligibleStep = V1_TITLE_DAT_FRAME_MAX + 1u;
     timing.sourceAnimationStepCount = V1_TitleFrontend_GetSourceAnimationStepCount();
+    timing.frameBankEquivalentStepCount = V1_TITLE_DAT_FRAME_MAX;
     timing.sourceFile = "ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C";
     timing.sourceFunction = "F0437_STARTEND_DrawTitle";
-    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition. Firestaff uses the canonical V1 55 ms tick for these runtime waits so TITLE does not replay at display-refresh speed.";
+    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition. Firestaff uses the canonical V1 55 ms tick for these runtime waits and pads the GRAPHICS.DAT C001 path to the existing 53-step TITLE-bank cadence so TITLE does not replay as a short 23-step burst on fast machines.";
     return timing;
 }
 
@@ -314,6 +315,20 @@ unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontend
         return 0u;
     }
     return (timing->postZoomVblankCount + timing->finalFadeGuardVblankCount) * (unsigned int)V1_TICK_MS;
+}
+
+unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFrontendSourceTiming* timing) {
+    unsigned int missingSteps;
+    if (!timing ||
+        timing->frameBankEquivalentStepCount <= timing->sourceAnimationStepCount) {
+        return 0u;
+    }
+    missingSteps = timing->frameBankEquivalentStepCount -
+                   timing->sourceAnimationStepCount;
+    if (missingSteps > 0xffffffffu / (unsigned int)V1_TICK_MS) {
+        return 0xffffffffu;
+    }
+    return missingSteps * (unsigned int)V1_TICK_MS;
 }
 
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,

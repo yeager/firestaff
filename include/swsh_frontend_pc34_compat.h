@@ -52,6 +52,9 @@ int SWSH_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                                        SWSH_CompatSourceAnimationStep* outStep);
 SWSH_CompatSourceTiming SWSH_Compat_GetSourceTimingEvidence(void);
 const char* SWSH_Compat_GetSourceAnimationEvidence(void);
+unsigned int SWSH_Compat_GetRuntimeDelayMsForVblankCount(unsigned int vblankCount);
+unsigned int SWSH_Compat_GetRuntimeInitialLogoHoldMs(void);
+unsigned int SWSH_Compat_GetRuntimeFinalHoldMs(void);
 
 #define SWSH_COMPAT_SOURCE_PALETTE_COMMAND_COUNT 26u
 #define SWSH_COMPAT_SOURCE_PALETTE_COLOR_SET_COUNT 17u
@@ -60,5 +63,8 @@ const char* SWSH_Compat_GetSourceAnimationEvidence(void);
 #define SWSH_COMPAT_SOURCE_SOUND_REGISTER_WRITE_COUNT 17u
 #define SWSH_COMPAT_SOURCE_SOUND_WAIT_COMMAND_COUNT 10u
 #define SWSH_COMPAT_SOURCE_SOUND_WAIT_VBLANK_COUNT 20u
+#define SWSH_COMPAT_RUNTIME_VBLANK_MS 20u
+#define SWSH_COMPAT_SOURCE_INITIAL_LOGO_HOLD_VBLANKS 20u
+#define SWSH_COMPAT_SOURCE_FINAL_HOLD_VBLANKS 120u
 
 #endif
