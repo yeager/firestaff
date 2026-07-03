@@ -159,14 +159,17 @@ typedef struct {
     int16_t  EnableActionEventIndex;                  /* 3879 */
     int16_t  HideDamageReceivedEventIndex;            /* 3881 */
     uint16_t Attributes;                               /* 3883  bit flags (icon, dead, ...) */
-    uint16_t Wounds;                                   /* 3885  ReDMCSB CHAMPION.Wounds bits */
-    int16_t  Food;                                     /* 3887 */
-    int16_t  Water;                                    /* 3889 */
-    uint16_t Load;                                     /* 3891 */
-    uint8_t  Padding1[2];                              /* 3893  alignment padding */
+    uint16_t Wounds;                                   /* ReDMCSB CHAMPION.Wounds bits */
+    uint16_t PoisonDose;                               /* bounded F0322 accumulated poison payload */
+    uint8_t  PoisonEventCount;                         /* ReDMCSB CHAMPION.PoisonEventCount */
+    uint8_t  PaddingPoison;                            /* alignment padding */
+    int16_t  Food;
+    int16_t  Water;
+    uint16_t Load;
+    uint8_t  Padding1[2];                              /* alignment padding */
 
     /* ── Additional state (from ReDMCSB) ── */
-    int16_t  EventIndex;                              /* 3895 */
+    int16_t  EventIndex;
     /* ── Reincarnation scaling (CHANGE7_24 globals — per-champion) ── */
     uint8_t  reincarnateAttributePenalty;  /* default 2, max 16 — attribute tier loss */
     uint8_t  reincarnateStatPenalty;      /* default 8, max 16 — stat point loss denominator */

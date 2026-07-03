@@ -1775,6 +1775,139 @@ static uint32_t csb_v1_runtime_creature_attack_seed(
     return (seed != 0u) ? seed : 1u;
 }
 
+static void csb_v1_runtime_mark_champion_dead(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index)
+{
+    int next_leader;
+
+    if (!profile ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return;
+    }
+    (void)csb_v1_champion_kill(
+        &profile->party_state.Champions[champion_index]);
+    if (profile->party_state.LeaderIndex == champion_index ||
+        profile->leader_index == champion_index) {
+        next_leader = csb_v1_runtime_first_living_champion(
+            &profile->party_state);
+        profile->party_state.LeaderIndex = next_leader;
+        profile->leader_index = next_leader;
+        if (next_leader < 0) {
+            /* ReDMCSB CHAMPION.C F0319 lines 1662-1668 sets
+             * G0303_B_PartyDead when no champion still has CurrentHealth
+             * after damage application. */
+            profile->game_over = 1;
+        }
+    }
+}
+
+static void csb_v1_runtime_schedule_poison_champion_event(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int poison_attack)
+{
+    struct DM1_Event_V1 event;
+
+    if (!profile || champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        poison_attack <= 0) {
+        return;
+    }
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(
+        profile->current_level,
+        profile->game_time + 36u);
+    event.type = DM1_EVENT_POISON_CHAMPION;
+    event.priority = (uint8_t)champion_index;
+    event.b_mapX = (uint8_t)profile->party_x;
+    event.b_mapY = (uint8_t)profile->party_y;
+    event.c_effect = (uint8_t)(poison_attack & 0xff);
+    if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0 &&
+        profile->party_state.Champions[champion_index].PoisonEventCount <
+            255u) {
+        profile->party_state.Champions[champion_index].PoisonEventCount++;
+    }
+}
+
+static void csb_v1_runtime_apply_poison_attack_to_champion(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int poison_attack)
+{
+    CSB_V1_Champion *champion;
+    int poison_damage;
+    int next_attack;
+    unsigned int dose;
+
+    if (!profile ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        poison_attack <= 0) {
+        return;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+    if (champion->CurrentHealth <= 0 ||
+        (champion->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0) {
+        return;
+    }
+
+    /* ReDMCSB CHAMPION.C F0322 lines 1949-1960 applies immediate
+     * max(1, Attack >> 6) damage, increments PoisonEventCount when
+     * rescheduling C75, and stores Attack-1 in EVENT.B.Attack.  The
+     * bounded CSB event bridge stores that 8-bit attack in c_effect. */
+    poison_damage = poison_attack >> 6;
+    if (poison_damage < 1) poison_damage = 1;
+    if (poison_damage >= champion->CurrentHealth) {
+        champion->CurrentHealth = 0;
+        csb_v1_runtime_mark_champion_dead(profile, champion_index);
+        return;
+    }
+    champion->CurrentHealth = (int16_t)(champion->CurrentHealth -
+                                        poison_damage);
+
+    dose = (unsigned int)champion->PoisonDose +
+           (unsigned int)poison_attack;
+    if (dose > 0xffffu) dose = 0xffffu;
+    champion->PoisonDose = (uint16_t)dose;
+
+    next_attack = poison_attack - 1;
+    if (next_attack > 0) {
+        csb_v1_runtime_schedule_poison_champion_event(
+            profile,
+            champion_index,
+            next_attack);
+    }
+}
+
+static void csb_v1_runtime_apply_poison_event_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    int champion_index;
+
+    if (!profile || !record) return;
+    champion_index = record->aux0;
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return;
+    }
+    /* ReDMCSB TIMELINE.C C75 lines 1991-1993 decrements the current
+     * poison event count before F0322 reschedules Attack-1. */
+    if (profile->party_state.Champions[champion_index].PoisonEventCount >
+        0u) {
+        profile->party_state.Champions[champion_index].PoisonEventCount--;
+    }
+    csb_v1_runtime_apply_poison_attack_to_champion(
+        profile,
+        champion_index,
+        record->effect);
+}
+
 static void csb_v1_runtime_apply_creature_attack_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -1895,22 +2028,7 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                                    .Champions[champion_index]
                                    .Wounds |
                                (uint16_t)combat.woundMaskAdded);
-                (void)csb_v1_champion_kill(
-                    &profile->party_state.Champions[champion_index]);
-                if (profile->party_state.LeaderIndex == champion_index ||
-                    profile->leader_index == champion_index) {
-                    int next_leader =
-                        csb_v1_runtime_first_living_champion(
-                            &profile->party_state);
-                    profile->party_state.LeaderIndex = next_leader;
-                    profile->leader_index = next_leader;
-                    if (next_leader < 0) {
-                        /* ReDMCSB CHAMPION.C F0319 lines 1662-1668 sets
-                         * G0303_B_PartyDead when no champion still has
-                         * CurrentHealth after damage application. */
-                        profile->game_over = 1;
-                    }
-                }
+                csb_v1_runtime_mark_champion_dead(profile, champion_index);
             } else {
                 profile->party_state.Champions[champion_index].Wounds =
                     (uint16_t)(profile->party_state
@@ -1922,6 +2040,12 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                                   .Champions[champion_index]
                                   .CurrentHealth -
                               damage);
+                if (combat.poisonAttackPending > 0) {
+                    csb_v1_runtime_apply_poison_attack_to_champion(
+                        profile,
+                        champion_index,
+                        combat.poisonAttackPending);
+                }
             }
             if (!profile->game_over) {
                 /* ReDMCSB GROUP.C F0209 lines 2343-2422 computes the next
@@ -2751,6 +2875,9 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             csb_v1_runtime_apply_creature_attack_timeline_record(
                 profile,
                 record);
+            break;
+        case DM1_EVENT_POISON_CHAMPION:
+            csb_v1_runtime_apply_poison_event_record(profile, record);
             break;
         default:
             break;
