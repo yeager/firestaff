@@ -159,6 +159,28 @@ static void test_modern_assets_available(void) {
      * m11_v22_set_manifest_path before calling — see cases below) */
     CHECK_EQ(m11_v22_modern_assets_available(), 0,
              "no manifest set → 0");
+    CHECK_STREQ(m11_v22_get_modern_asset_root(), "",
+                "no manifest set -> empty modern asset root");
+
+    /* Case 1b: data/dm1 root maps to sibling assets/dm1/modern root. */
+    {
+        char* firestaff_root = scratch_path("root_contract");
+        char* data = scratch_path("root_contract/data");
+        char* dm1 = scratch_path("root_contract/data/dm1");
+        char* expected = scratch_path("root_contract/assets/dm1/modern");
+        if (firestaff_root && data && dm1 && expected) {
+            make_dir(firestaff_root);
+            make_dir(data);
+            make_dir(dm1);
+            m11_v22_set_manifest_path(dm1);
+            CHECK_STREQ(m11_v22_get_modern_asset_root(), expected,
+                        "manifest path exposes sibling modern asset root");
+        }
+        free(firestaff_root);
+        free(data);
+        free(dm1);
+        free(expected);
+    }
 
     /* Case 2: dir exists but manifest does not → 0 */
     {

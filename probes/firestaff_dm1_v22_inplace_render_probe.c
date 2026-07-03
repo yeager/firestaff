@@ -14,6 +14,7 @@
  */
 
 #include "dm1_v2_presentation_mode_pc34.h"
+#include "dm1_v2_asset_pipeline_pc34.h"
 #include "fs_portable_compat.h"
 #include "m11_v22_inplace_draw_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
@@ -146,14 +147,20 @@ static int write_minimal_dm1_v22_cache(const char* cache_path) {
 }
 
 static int setup_probe_home(char* out_cache_path, size_t out_size) {
+    char data_dir[FSP_PATH_MAX];
     char modern_dir[FSP_PATH_MAX];
     int n;
 
+    n = snprintf(data_dir, sizeof(data_dir),
+                 "firestaff-dm1-v22-probe-home/.firestaff/data/dm1");
+    if (n <= 0 || (size_t)n >= sizeof(data_dir)) return 0;
+    if (!FSP_CreateDirectoryRecursive(data_dir)) return 0;
     n = snprintf(modern_dir, sizeof(modern_dir),
                  "firestaff-dm1-v22-probe-home/.firestaff/assets/dm1/modern");
     if (n <= 0 || (size_t)n >= sizeof(modern_dir)) return 0;
     if (!FSP_CreateDirectoryRecursive(modern_dir)) return 0;
     if (FSP_SetEnv("HOME", "firestaff-dm1-v22-probe-home", 1) != 0) return 0;
+    m11_v22_set_manifest_path(data_dir);
 
     n = snprintf(out_cache_path, out_size, "%s/v22_inplace_cache.bin", modern_dir);
     return n > 0 && (size_t)n < out_size;
@@ -236,6 +243,10 @@ int main(void) {
                  setup_probe_home(cache_path, sizeof(cache_path)) &&
                  write_minimal_dm1_v22_cache(cache_path),
                  "temporary DM1 v22_inplace_cache.bin written");
+    probe_record(&stats, "DM1_V22_MODERN_ROOT_CONTRACT",
+                 strcmp(m11_v22_get_modern_asset_root(),
+                        "firestaff-dm1-v22-probe-home/.firestaff/assets/dm1/modern") == 0,
+                 "in-place init root follows m11_v22_set_manifest_path data-dir contract");
 
     dm1_v2_presentation_mode_reset();
     dm1_v2_presentation_mode_set_modern_pack_available(1);
