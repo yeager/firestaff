@@ -3197,6 +3197,17 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
             if (record && thing_size >= 2) {
                 csb_v1_runtime_write_u16(record, 0xFFFFu);
             }
+        } else {
+            int drop_level = level;
+            int drop_x = map_x;
+            int drop_y = map_y;
+            (void)csb_v1_runtime_apply_object_teleporter_at_square(
+                dungeon,
+                &thing,
+                -1,
+                &drop_level,
+                &drop_x,
+                &drop_y);
         }
     }
 }
@@ -3253,6 +3264,18 @@ static void csb_v1_runtime_drop_group_slot_possessions(
                 map_x,
                 map_y)) {
             break;
+        }
+        {
+            int drop_level = level;
+            int drop_x = map_x;
+            int drop_y = map_y;
+            (void)csb_v1_runtime_apply_object_teleporter_at_square(
+                dungeon,
+                &dropped_thing,
+                -1,
+                &drop_level,
+                &drop_x,
+                &drop_y);
         }
         thing = next_thing;
     }
