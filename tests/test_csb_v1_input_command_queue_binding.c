@@ -213,6 +213,32 @@ static void make_legacy_wall_dungeon(CSB_V1_DungeonData *dungeon,
     raw[(1 * 3 + 0) * 2] = 1; /* north of center: legacy fixture wall */
 }
 
+static void make_real_format_stair_dungeon(CSB_V1_DungeonData *dungeon,
+                                           uint8_t *raw,
+                                           size_t raw_size)
+{
+    size_t i;
+
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 2;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->level_widths[1] = 3;
+    dungeon->level_heights[1] = 3;
+    dungeon->level_offsets[1] = 9;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+
+    for (i = 0; i < raw_size; ++i) {
+        raw[i] = (uint8_t)(1u << 5); /* C01_ELEMENT_CORRIDOR */
+    }
+    raw[1 * 3 + 0] = (uint8_t)(3u << 5);       /* level 0: stairs down */
+    raw[9 + 1 * 3 + 0] = (uint8_t)((3u << 5) | 0x04u); /* level 1: up */
+}
+
 static void test_forward_command_blocks_legacy_wall_destination(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -271,6 +297,79 @@ static void test_forward_command_blocks_legacy_wall_destination(void)
           "input queue is empty after the consumed wall-blocked command");
 }
 
+static void test_forward_command_applies_real_format_stairs(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_PartyState party;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[18];
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+
+    csb_v1_runtime_init(&profile, NULL);
+    make_party(&party);
+    party.PartyMapX = 1;
+    party.PartyMapY = 1;
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "stair fixture party enters runtime profile");
+    profile.party_x = 1;
+    profile.party_y = 1;
+    profile.party_state.PartyMapX = 1;
+    profile.party_state.PartyMapY = 1;
+    make_real_format_stair_dungeon(&dungeon, raw, sizeof(raw));
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    csb_v1_dungeon_set_current_level(0);
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
+              &queue,
+              (struct Dm1V1InputEventPc34Compat){
+                  DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }) == 1,
+          "PC-34 forward key queues a stair-down movement command");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the stair-down movement command");
+    CHECK(result.movement_step_applied == 1,
+          "stair-down movement still applies coordinate step");
+    CHECK(result.movement_destination_square_type == 3,
+          "stair-down result exposes destination stair square type");
+    CHECK(result.movement_destination_raw_square == (3 << 5),
+          "stair-down result exposes raw real-format square byte");
+    CHECK(result.stair_transition_applied == 1,
+          "stair-down result reports level transition");
+    CHECK(result.stair_up == 0,
+          "stair-down result reports downward direction");
+    CHECK(result.old_party_level == 0 && result.new_party_level == 1,
+          "stair-down movement changes runtime level 0 to 1");
+    CHECK(profile.current_level == 1 && csb_v1_dungeon_get_current_level() == 1,
+          "stair-down movement updates profile and dungeon current level");
+
+    profile.party_x = 1;
+    profile.party_y = 1;
+    profile.party_state.PartyMapX = 1;
+    profile.party_state.PartyMapY = 1;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
+              &queue,
+              (struct Dm1V1InputEventPc34Compat){
+                  DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }) == 1,
+          "PC-34 forward key queues a stair-up movement command");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the stair-up movement command");
+    CHECK(result.movement_destination_square_type == 3,
+          "stair-up result exposes destination stair square type");
+    CHECK(result.stair_transition_applied == 1,
+          "stair-up result reports level transition");
+    CHECK(result.stair_up == 1,
+          "stair-up result reports upward direction");
+    CHECK(result.old_party_level == 1 && result.new_party_level == 0,
+          "stair-up movement changes runtime level 1 to 0");
+    CHECK(profile.current_level == 0 && csb_v1_dungeon_get_current_level() == 0,
+          "stair-up movement updates profile and dungeon current level");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Input Command Queue Binding Gate ===\n\n");
@@ -278,6 +377,7 @@ int main(void)
     test_movement_gate_keeps_command_queued();
     test_forward_command_applies_open_runtime_step();
     test_forward_command_blocks_legacy_wall_destination();
+    test_forward_command_applies_real_format_stairs();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: queued CSB V1 turn and bounded movement commands reach CSB runtime party state");

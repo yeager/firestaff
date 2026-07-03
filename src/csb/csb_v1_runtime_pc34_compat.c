@@ -689,6 +689,63 @@ static int csb_v1_runtime_default_wall_probe(
     return square_type == 1;
 }
 
+static void csb_v1_runtime_apply_destination_stairs(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int raw_square;
+    int square_type;
+    int stair_up;
+    int target_level;
+
+    if (!profile || !result || !result->movement_step_applied) return;
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) return;
+
+    level = profile->current_level;
+    if (level < 0 || level >= dungeon->level_count) {
+        level = csb_v1_dungeon_get_current_level();
+    }
+    if (level < 0 || level >= dungeon->level_count) {
+        level = 0;
+    }
+
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        level,
+        result->movement_destination_x,
+        result->movement_destination_y);
+    if (raw_square < 0) return;
+
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    result->movement_destination_raw_square = raw_square;
+    result->movement_destination_square_type = square_type;
+    if (square_type != 3) return;
+
+    /* ReDMCSB: CLIKMENU.C F0366 lines ~230-236 reaches C03_ELEMENT_STAIRS
+     * and asks DUNGEON.C F0150 for the stair destination; DEFS.H defines
+     * MASK0x0004 as the stairs-up flag.  This bounded CSB runtime handoff
+     * only mirrors the map-index transition; full stair coordinate pairing,
+     * sensors, and timing remain separate movement-consequence work. */
+    stair_up = (raw_square & 0x04) ? 1 : 0;
+    target_level = level + (stair_up ? -1 : 1);
+    result->stair_up = stair_up;
+    result->old_party_level = profile->current_level;
+    result->new_party_level = profile->current_level;
+    if (target_level < 0 || target_level >= dungeon->level_count) return;
+
+    profile->current_level = target_level;
+    csb_v1_dungeon_set_current_level(target_level);
+    result->new_party_level = target_level;
+    result->stair_transition_applied = 1;
+}
+
 /* ── Runtime profile API ────────────────────────────────────────────── */
 
 void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
@@ -965,6 +1022,8 @@ int csb_v1_runtime_process_input_queue(
     local_result.new_party_x = profile->party_x;
     local_result.new_party_y = profile->party_y;
     local_result.new_party_dir = profile->party_dir & 3;
+    local_result.old_party_level = profile->current_level;
+    local_result.new_party_level = profile->current_level;
 
     /* Source: ReDMCSB COMMAND.C F0380 lines 2045-2156 owns the command
      * queue dequeue/gate/dispatch boundary.  The shared V1 queue helper
@@ -1026,6 +1085,7 @@ int csb_v1_runtime_process_input_queue(
             local_result.movement_destination_y = step_result.destination_y;
             local_result.disabled_movement_ticks_after =
                 step_result.disabled_movement_ticks_after;
+            csb_v1_runtime_apply_destination_stairs(profile, &local_result);
         }
         break;
     default:
@@ -1039,7 +1099,8 @@ int csb_v1_runtime_process_input_queue(
     local_result.runtime_state_changed =
         (local_result.old_party_x != local_result.new_party_x) ||
         (local_result.old_party_y != local_result.new_party_y) ||
-        (local_result.old_party_dir != local_result.new_party_dir);
+        (local_result.old_party_dir != local_result.new_party_dir) ||
+        (local_result.stair_transition_applied != 0);
 
     if (out_result) *out_result = local_result;
     return 1;
