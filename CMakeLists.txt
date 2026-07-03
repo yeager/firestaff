@@ -17034,6 +17034,34 @@ if(BUILD_TESTING)
         LABELS "tier2;csb;csbwin_custom_resource;m11;data_free"
     )
 
+    # CSB V1 CSBgraphics.dat M11 runtime plan. This is the startup-facing
+    # manifest layer between the hash-owned real-scan cache and the
+    # decode/apply handoff: it records which CSBgraphics.dat entries have
+    # known or caller-supplied M11 geometry before runtime tries to blit them.
+    add_executable(test_csb_v1_csbgraphics_m11_runtime_plan
+        tests/test_csb_v1_csbgraphics_m11_runtime_plan.c
+        src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+        src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
+        src/csb/csb_v1_csbgraphics_dat_real_scan.c
+        src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_csbgraphics_m11_runtime_plan PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbgraphics_m11_runtime_plan PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbgraphics_m11_runtime_plan
+        COMMAND test_csb_v1_csbgraphics_m11_runtime_plan
+    )
+    set_tests_properties(csb_v1_csbgraphics_m11_runtime_plan PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;m11;startup;data_free"
+    )
+
     # CSB V1 CSBgraphics.dat shape + inventory walker — data-free
     # contract tests for the on-disk shape classifier and the
     # inventory walker. Shape classifier distinguishes CSBgraphics
