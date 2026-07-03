@@ -462,12 +462,12 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     group_flags = (uint16_t)(raw[94] | ((uint16_t)raw[95] << 8));
     CHECK((group_flags & 0x000fu) == 7u,
           "generated group C37 mutates visible wander behavior to approach");
-    CHECK(profile.timeline_queue.eventCount == 1,
-          "C65 remains queued before the source ticks delay expires");
+    CHECK(profile.timeline_queue.eventCount == 2,
+          "C37 approach behavior queues the next group behavior tick beside C65");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
-          "second post-generator tick is still before the delayed C65 boundary");
+          "second post-generator tick dispatches the queued approach C37");
     CHECK(profile.timeline_queue.eventCount == 1,
-          "C65 remains queued until the source pre-increment tick reaches the delay");
+          "C65 remains queued after the approach C37 consumes itself");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "third post-generator tick reaches the delayed C65 boundary");
     type_data = (uint16_t)(raw[74] | ((uint16_t)raw[75] << 8));
