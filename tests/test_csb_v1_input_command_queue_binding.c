@@ -5,8 +5,10 @@
  * C002 turn and C003 movement commands are dequeued through the shared V1
  * queue and applied to the bounded CSB runtime state: F0284 direction
  * rotation for turns and one-cell F0366 movement for open movement.  It
- * does not claim sensors, stairs, inventory, action-area, or broader
- * playability.
+ * now also covers bounded movement consequences for real-format stairs,
+ * pits, teleporters, doors/fake walls, and party floor sensors. It does not
+ * claim wall-click sensors, object/group/projectile sensors, inventory,
+ * action-area, or broader playability.
  *
  * Source-lock:
  *   ReDMCSB COMMAND.C F0380 lines 2045-2156 dispatches C001/C002 to
@@ -365,6 +367,44 @@ static int load_real_format_chained_teleporter_dungeon(
     buf[raw_map + 1 * 3 + 0] = (uint8_t)((5u << 5) | 0x10u | 0x08u);
     buf[raw_map + 9 + 1 * 3 + 1] =
         (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    return csb_v1_dungeon_load(dungeon, buf, (int)sizeof(buf));
+}
+
+static int load_real_format_floor_sensor_dungeon(CSB_V1_DungeonData *dungeon)
+{
+    uint8_t buf[85];
+    const int level_count = 1;
+    const int map0_desc = 44;
+    const int column_counts = 60;
+    const int square_first_things = 66;
+    const int sensor_record = 68;
+    const int raw_map = 76;
+    const uint16_t map0_bits =
+        (uint16_t)(0u | ((3u - 1u) << 6) | ((3u - 1u) << 11));
+    const uint16_t sensor_type_data =
+        (uint16_t)3u; /* C003_SENSOR_FLOOR_PARTY, data=0 */
+    const uint16_t sensor_flags =
+        (uint16_t)((3u << 3) | (1u << 6)); /* HOLD + audible */
+    const uint16_t sensor_target =
+        (uint16_t)((1u << 6) | (0u << 11)); /* target x=1,y=0,cell=0 */
+
+    memset(buf, 0, sizeof(buf));
+    buf[4] = (uint8_t)level_count;
+    put_le16(buf, 10, 1);          /* square-first-thing entries */
+    put_le16(buf, 12 + 3 * 2, 1);  /* one C03_THING_TYPE_SENSOR record */
+    put_le16(buf, map0_desc + 0, 0);
+    put_le16(buf, map0_desc + 8, map0_bits);
+
+    put_le16(buf, column_counts + 2, 0); /* level 0, x=1 -> SFT 0 */
+    put_le16(buf, square_first_things, (uint16_t)(3u << 10));
+
+    put_le16(buf, sensor_record + 0, 0xfffeu);
+    put_le16(buf, sensor_record + 2, sensor_type_data);
+    put_le16(buf, sensor_record + 4, sensor_flags);
+    put_le16(buf, sensor_record + 6, sensor_target);
+
+    memset(buf + raw_map, (uint8_t)(1u << 5), 9);
+    buf[raw_map + 1 * 3 + 0] = (uint8_t)((1u << 5) | 0x10u);
     return csb_v1_dungeon_load(dungeon, buf, (int)sizeof(buf));
 }
 
@@ -730,6 +770,58 @@ static void test_forward_command_chains_real_format_teleporters(void)
     csb_v1_dungeon_free(&dungeon);
 }
 
+static void test_forward_command_triggers_real_format_party_floor_sensor(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    CHECK(load_real_format_floor_sensor_dungeon(&dungeon) == 0,
+          "real-format floor-sensor fixture loads through CSB loader");
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    seed_center_party(&profile);
+    queue_forward_or_fail(&queue, "PC-34 forward key queues floor-sensor move");
+
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the floor-sensor movement command");
+    CHECK(result.movement_step_applied == 1,
+          "floor-sensor movement applies the coordinate step");
+    CHECK(result.sensor_source_remove_checked == 1,
+          "floor-sensor movement checks source-square removal sensors");
+    CHECK(result.sensor_destination_add_checked == 1,
+          "floor-sensor movement checks destination-square addition sensors");
+    CHECK(result.sensor_trigger_count == 1,
+          "destination C003 floor-party sensor triggers once");
+    CHECK(result.sensor_event_count == 1,
+          "floor-party sensor queues one F0268-style square event");
+    CHECK(result.sensor_audible_count == 1,
+          "floor-party sensor preserves the audible switch flag");
+    CHECK(result.sensor_last_type == 3 && result.sensor_last_data == 0,
+          "floor-party sensor exposes C003/data=0 metadata");
+    CHECK(result.sensor_last_effect == DM1_EFFECT_SET,
+          "HOLD floor-party add resolves to SET");
+    CHECK(result.sensor_last_target_x == 1 &&
+          result.sensor_last_target_y == 0 &&
+          result.sensor_last_target_cell == 0,
+          "floor-party sensor exposes remote target");
+    CHECK(result.sensor_last_event_type == DM1_EVENT_CORRIDOR,
+          "floor-party sensor maps corridor target to C05 event");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "CSB runtime timeline owns the queued sensor event");
+    CHECK(profile.timeline_queue.events[0].type == DM1_EVENT_CORRIDOR &&
+          profile.timeline_queue.events[0].b_mapX == 1 &&
+          profile.timeline_queue.events[0].b_mapY == 0 &&
+          profile.timeline_queue.events[0].c_effect == DM1_EFFECT_SET,
+          "queued sensor event carries target square and SET effect");
+    CHECK(profile.party_x == 1 && profile.party_y == 0,
+          "floor-sensor movement leaves party on the destination square");
+    csb_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Input Command Queue Binding Gate ===\n\n");
@@ -742,6 +834,7 @@ int main(void)
     test_forward_command_applies_real_format_teleporter();
     test_forward_command_chains_real_format_pits();
     test_forward_command_chains_real_format_teleporters();
+    test_forward_command_triggers_real_format_party_floor_sensor();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: queued CSB V1 turn and bounded movement commands reach CSB runtime party state");

@@ -1126,6 +1126,251 @@ static void csb_v1_runtime_apply_destination_chain(
     }
 }
 
+static int csb_v1_runtime_square_event_type_for_sensor_target(int square_type)
+{
+    static const int event_type_by_square_type[7] = {
+        DM1_EVENT_WALL,
+        DM1_EVENT_CORRIDOR,
+        DM1_EVENT_PIT,
+        DM1_EVENT_NONE,
+        DM1_EVENT_DOOR,
+        DM1_EVENT_TELEPORTER,
+        DM1_EVENT_FAKEWALL
+    };
+    if (square_type < 0 || square_type >= 7) return DM1_EVENT_NONE;
+    return event_type_by_square_type[square_type];
+}
+
+static int csb_v1_runtime_sensor_next_thing(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing)
+{
+    const uint8_t *record;
+    int thing_type;
+    int thing_size;
+
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &thing_size);
+    if (!record || thing_size < 2) return 0xFFFE;
+    return (int)((uint16_t)record[0] | ((uint16_t)record[1] << 8));
+}
+
+static void csb_v1_runtime_trigger_floor_sensor_event(
+    CSB_V1_RuntimeProfile *profile,
+    int sensor_effect,
+    int target_x,
+    int target_y,
+    int target_cell,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    const CSB_V1_DungeonData *dungeon;
+    struct DM1_Event_V1 event;
+    int raw_square;
+    int square_type;
+    int event_type;
+
+    if (!profile || !result) return;
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data) return;
+
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        profile->current_level,
+        target_x,
+        target_y);
+    if (raw_square < 0) return;
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
+    if (event_type == DM1_EVENT_NONE) return;
+
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(
+        profile->current_level,
+        profile->game_time);
+    event.type = (uint8_t)event_type;
+    event.b_mapX = (uint8_t)target_x;
+    event.b_mapY = (uint8_t)target_y;
+    event.c_cell = (uint8_t)target_cell;
+    event.c_effect = (uint8_t)sensor_effect;
+    if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0) {
+        result->sensor_event_count++;
+        result->sensor_last_event_type = event_type;
+    }
+}
+
+static void csb_v1_runtime_process_party_floor_sensors_at(
+    CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    int add_party,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int first_thing;
+    int thing;
+    int guard;
+
+    if (!profile || !result) return;
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data) return;
+    if (map_x < 0 || map_y < 0) return;
+
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        profile->current_level,
+        map_x,
+        map_y);
+    if (first_thing < 0 || first_thing == 0xFFFE) return;
+
+    /* ReDMCSB: MOVESENS.C F0267 lines 800-822 calls
+     * F0276_SENSOR_ProcessThingAdditionOrRemoval when the party leaves and
+     * enters a square.  F0276 lines 1658-1785 walks C03 sensor things until
+     * the first non-sensor, checks floor sensor types C003/C005/C009 for the
+     * party, resolves HOLD into SET/CLEAR, then calls F0272/F0268 to enqueue
+     * the square-effect event.  This CSB runtime slice covers party floor
+     * sensors only; wall clicks, possessions, objects, groups, launchers, and
+     * sensor rotation remain separate runtime work. */
+    thing = first_thing;
+    for (guard = 0; guard < 128 && thing != 0xFFFE; ++guard) {
+        const uint8_t *record;
+        int thing_type;
+        int thing_size;
+        uint16_t type_data;
+        uint16_t flags_word;
+        uint16_t target_word;
+        int sensor_type;
+        int sensor_data;
+        int sensor_effect;
+        int trigger;
+        int target_x;
+        int target_y;
+        int target_cell;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            NULL,
+            &thing_size);
+        if (!record) break;
+        if (thing_type >= 4) break;
+        if (thing_type != 3 || thing_size < 8) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
+        type_data = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+        flags_word = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+        target_word = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
+        sensor_type = (int)(type_data & 0x007Fu);
+        sensor_data = (int)(type_data >> 7);
+        if (sensor_type == 0) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
+        trigger = add_party ? 1 : 0;
+        switch (sensor_type) {
+        case 3: /* C003_SENSOR_FLOOR_PARTY */
+            if (profile->champion_count <= 0) {
+                trigger = 0;
+            } else if (sensor_data != 0) {
+                trigger = add_party &&
+                    (sensor_data == ((profile->party_dir & 3) + 1));
+            }
+            break;
+        case 5: /* C005_SENSOR_FLOOR_PARTY_ON_STAIRS */
+            {
+                int raw_square = csb_v1_dungeon_get_raw_square(
+                    dungeon,
+                    profile->current_level,
+                    map_x,
+                    map_y);
+                int square_type = (raw_square < 0) ? -1 :
+                    ((dungeon->square_bytes == 1)
+                        ? ((raw_square >> 5) & 0x07)
+                        : (raw_square & 0x1F));
+                trigger = (square_type == 3) ? trigger : 0;
+            }
+            break;
+        case 9: /* C009_SENSOR_FLOOR_VERSION_CHECKER, PC34 engine <= 34 */
+            trigger = add_party && (sensor_data <= 34);
+            break;
+        default:
+            trigger = 0;
+            break;
+        }
+
+        sensor_effect = (int)((flags_word >> 3) & 0x03u);
+        if ((flags_word >> 5) & 0x01u) {
+            trigger ^= 1;
+        }
+        if (sensor_effect == DM1_EFFECT_HOLD) {
+            sensor_effect = trigger ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
+        } else if (!trigger) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
+        target_cell = (int)((target_word >> 4) & 0x03u);
+        target_x = (int)((target_word >> 6) & 0x1Fu);
+        target_y = (int)((target_word >> 11) & 0x1Fu);
+        if ((flags_word >> 6) & 0x01u) {
+            result->sensor_audible_count++;
+        }
+        result->sensor_trigger_count++;
+        result->sensor_last_type = sensor_type;
+        result->sensor_last_data = sensor_data;
+        result->sensor_last_effect = sensor_effect;
+        result->sensor_last_target_x = target_x;
+        result->sensor_last_target_y = target_y;
+        result->sensor_last_target_cell = target_cell;
+        csb_v1_runtime_trigger_floor_sensor_event(
+            profile,
+            sensor_effect,
+            target_x,
+            target_y,
+            target_cell,
+            result);
+
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+}
+
+static void csb_v1_runtime_apply_party_floor_sensor_consequences(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    if (!profile || !result || !result->movement_step_applied) return;
+
+    result->sensor_source_remove_checked = 1;
+    csb_v1_runtime_process_party_floor_sensors_at(
+        profile,
+        result->old_party_x,
+        result->old_party_y,
+        0,
+        result);
+    if (result->new_party_level == result->old_party_level) {
+        result->sensor_destination_add_checked = 1;
+        csb_v1_runtime_process_party_floor_sensors_at(
+            profile,
+            profile->party_x,
+            profile->party_y,
+            1,
+            result);
+    }
+}
+
 /* ── Runtime profile API ────────────────────────────────────────────── */
 
 void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
@@ -1475,6 +1720,9 @@ int csb_v1_runtime_process_input_queue(
             }
             csb_v1_runtime_apply_destination_chain(profile, &local_result);
             csb_v1_runtime_apply_destination_stairs(profile, &local_result);
+            csb_v1_runtime_apply_party_floor_sensor_consequences(
+                profile,
+                &local_result);
         }
         break;
     default:
@@ -1491,7 +1739,8 @@ int csb_v1_runtime_process_input_queue(
         (local_result.old_party_dir != local_result.new_party_dir) ||
         (local_result.teleporter_transition_applied != 0) ||
         (local_result.stair_transition_applied != 0) ||
-        (local_result.pit_fall_applied != 0);
+        (local_result.pit_fall_applied != 0) ||
+        (local_result.sensor_event_count != 0);
 
     if (out_result) *out_result = local_result;
     return 1;
