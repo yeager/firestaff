@@ -168,6 +168,7 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         long thing_data_total = 0;
         uint16_t text_word_count = rd16(decoded + 6);
         uint16_t square_first_thing_count = rd16(decoded + 10);
+        int thing_data_base;
         long raw_map_data_base;
 
         levels = decoded[4];
@@ -195,18 +196,21 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
             total_columns += out->level_widths[i];
         }
 
-        for (i = 0; i < CSB_THING_TYPE_COUNT; i++) {
-            thing_data_total += (long)rd16(decoded + 12 + i * 2) *
-                                (long)csb_thing_data_byte_count[i];
-        }
-
         out->square_first_thing_base = CSB_DUNGEON_HEADER_SIZE +
                                        levels * CSB_DUNGEON_MAP_DESC_SIZE +
                                        total_columns * 2;
-        out->raw_map_data_base = out->square_first_thing_base +
-                                 (int)square_first_thing_count * 2 +
-                                 (int)text_word_count * 2 +
-                                 (int)thing_data_total;
+        thing_data_base = out->square_first_thing_base +
+                          (int)square_first_thing_count * 2 +
+                          (int)text_word_count * 2;
+        for (i = 0; i < CSB_THING_TYPE_COUNT; i++) {
+            int count = (int)rd16(decoded + 12 + i * 2);
+            int byte_count = (int)csb_thing_data_byte_count[i];
+            out->thing_data_bases[i] = thing_data_base + (int)thing_data_total;
+            out->thing_type_counts[i] = count;
+            thing_data_total += (long)count * (long)byte_count;
+        }
+
+        out->raw_map_data_base = thing_data_base + (int)thing_data_total;
         raw_map_data_base = out->raw_map_data_base;
 
         if (raw_map_data_base < 0 || raw_map_data_base >= decoded_size) {
@@ -372,6 +376,41 @@ int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x
         return (int)rd16(d->raw_data + thing_offset);
     }
     return ((v >> 5) & 0x3FF);
+}
+
+const uint8_t *csb_v1_dungeon_get_thing_record(
+    const CSB_V1_DungeonData *d,
+    uint16_t thing,
+    int *out_type,
+    int *out_index,
+    int *out_size)
+{
+    int type;
+    int index;
+    int byte_count;
+    int offset;
+
+    if (out_type) *out_type = -1;
+    if (out_index) *out_index = -1;
+    if (out_size) *out_size = 0;
+    if (!d || !d->raw_data) return NULL;
+
+    /* ReDMCSB: DEFS.H lines 394-402 encodes THING as cell/type/index;
+     * DUNGEON.C F0156 indexes G0284_apuc_ThingData[M012_TYPE(thing)] by
+     * M013_INDEX(thing). */
+    type = (int)((thing & 0x3C00u) >> 10);
+    index = (int)(thing & 0x03FFu);
+    if (type < 0 || type >= CSB_THING_TYPE_COUNT) return NULL;
+    byte_count = (int)csb_thing_data_byte_count[type];
+    if (byte_count <= 0) return NULL;
+    if (index < 0 || index >= d->thing_type_counts[type]) return NULL;
+
+    offset = d->thing_data_bases[type] + index * byte_count;
+    if (offset < 0 || offset + byte_count > d->raw_size) return NULL;
+    if (out_type) *out_type = type;
+    if (out_index) *out_index = index;
+    if (out_size) *out_size = byte_count;
+    return d->raw_data + offset;
 }
 
 /* ── Square decoding ─────────────────────────────────────────────────── */

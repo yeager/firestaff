@@ -18,6 +18,7 @@
 
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
+#include "csb_v1_teleporter_rotation_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include <stdio.h>
@@ -756,6 +757,118 @@ static int csb_v1_runtime_sample_destination_square(
     return level;
 }
 
+static int csb_v1_runtime_decode_destination_teleporter(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    const CSB_V1_InputCommandRuntimeResult *result,
+    CSB_V1_TeleporterRotationRuntimeTeleporterPc34 *out_teleporter,
+    int *out_scope)
+{
+    int first_thing;
+    int thing_type;
+    int thing_size;
+    uint16_t word;
+    uint16_t target_word;
+    const uint8_t *record;
+
+    if (out_scope) *out_scope = 0;
+    if (!dungeon || !result || !out_teleporter) return -1;
+    if (result->movement_destination_square_type != 5) return -1;
+    if (!(result->movement_destination_raw_square & 0x08)) return 0;
+
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        level,
+        result->movement_destination_x,
+        result->movement_destination_y);
+    if (first_thing < 0) return 0;
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        (uint16_t)first_thing,
+        &thing_type,
+        NULL,
+        &thing_size);
+    if (!record || thing_type != 1 || thing_size < 6) return 0;
+
+    /* ReDMCSB: DEFS.H TELEPORTER for PC/I34E stores Next, then a packed
+     * word with TargetMapX/Y, Rotation, AbsoluteRotation, Scope, Audible,
+     * followed by Unreferenced and TargetMapIndex bytes. */
+    word = (uint16_t)record[2] | (uint16_t)((uint16_t)record[3] << 8);
+    target_word = (uint16_t)record[4] | (uint16_t)((uint16_t)record[5] << 8);
+    memset(out_teleporter, 0, sizeof(*out_teleporter));
+    out_teleporter->target_map_x = (int)(word & 0x1Fu);
+    out_teleporter->target_map_y = (int)((word >> 5) & 0x1Fu);
+    out_teleporter->rotation = (int)((word >> 10) & 0x03u);
+    out_teleporter->absolute_rotation = (word & 0x1000u) ? 1 : 0;
+    if (out_scope) *out_scope = (int)((word >> 13) & 0x03u);
+    out_teleporter->audible = (word & 0x8000u) ? 1 : 0;
+    out_teleporter->target_map_index = (int)((target_word >> 8) & 0xFFu);
+    return 1;
+}
+
+static void csb_v1_runtime_apply_destination_teleporter(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    const CSB_V1_DungeonData *dungeon;
+    CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
+    CSB_V1_TeleporterRotationRuntimePartyResultPc34 teleporter_result;
+    int level;
+    int scope = 0;
+    int decoded;
+
+    if (!profile || !result || !result->movement_step_applied) return;
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) return;
+
+    level = csb_v1_runtime_sample_destination_square(profile, result);
+    if (level < 0) return;
+    if (result->movement_destination_square_type != 5) return;
+    result->teleporter_open =
+        (result->movement_destination_raw_square & 0x08) ? 1 : 0;
+    if (!result->teleporter_open) return;
+
+    decoded = csb_v1_runtime_decode_destination_teleporter(
+        dungeon,
+        level,
+        result,
+        &teleporter,
+        &scope);
+    if (decoded <= 0) return;
+    result->teleporter_scope = scope;
+    result->teleporter_rotation = teleporter.rotation;
+    result->teleporter_absolute_rotation = teleporter.absolute_rotation;
+    result->teleporter_audible = teleporter.audible;
+    result->teleporter_target_x = teleporter.target_map_x;
+    result->teleporter_target_y = teleporter.target_map_y;
+    result->teleporter_target_level = teleporter.target_map_index;
+    if (!(scope & 0x02)) return;
+    if (teleporter.target_map_index < 0 ||
+        teleporter.target_map_index >= dungeon->level_count) {
+        return;
+    }
+
+    /* ReDMCSB: MOVESENS.C F0267 lines 475-518 enters an open
+     * C05_ELEMENT_TELEPORTER, requires object/party scope for the party,
+     * moves to TargetMapX/Y/TargetMapIndex, and applies teleporter rotation
+     * through CHAMPION.C F0284.  This bounded runtime handoff applies one
+     * party teleporter only; chained teleporters, sounds, redraw timing, and
+     * object/group/projectile teleportation remain separate work. */
+    result->old_party_level = profile->current_level;
+    result->new_party_level = profile->current_level;
+    if (csb_v1_teleporter_rotation_apply_party_pc34_compat(
+            profile,
+            &teleporter,
+            &teleporter_result) != 0) {
+        return;
+    }
+    csb_v1_dungeon_set_current_level(profile->current_level);
+    result->new_party_level = profile->current_level;
+    result->teleporter_transition_applied = 1;
+}
+
 static void csb_v1_runtime_apply_destination_stairs(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_InputCommandRuntimeResult *result)
@@ -768,6 +881,7 @@ static void csb_v1_runtime_apply_destination_stairs(
     int target_level;
 
     if (!profile || !result || !result->movement_step_applied ||
+        result->teleporter_transition_applied ||
         result->stair_transition_applied) {
         return;
     }
@@ -810,6 +924,7 @@ static void csb_v1_runtime_apply_destination_pit(
     int target_level;
 
     if (!profile || !result || !result->movement_step_applied ||
+        result->teleporter_transition_applied ||
         result->stair_transition_applied) {
         return;
     }
@@ -1189,6 +1304,7 @@ int csb_v1_runtime_process_input_queue(
                     local_result.movement_blocked_by_fakewall = 1;
                 }
             }
+            csb_v1_runtime_apply_destination_teleporter(profile, &local_result);
             csb_v1_runtime_apply_destination_stairs(profile, &local_result);
             csb_v1_runtime_apply_destination_pit(profile, &local_result);
         }
@@ -1205,6 +1321,7 @@ int csb_v1_runtime_process_input_queue(
         (local_result.old_party_x != local_result.new_party_x) ||
         (local_result.old_party_y != local_result.new_party_y) ||
         (local_result.old_party_dir != local_result.new_party_dir) ||
+        (local_result.teleporter_transition_applied != 0) ||
         (local_result.stair_transition_applied != 0) ||
         (local_result.pit_fall_applied != 0);
 
