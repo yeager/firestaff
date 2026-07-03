@@ -1139,6 +1139,62 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 group fireball writes damage into real-format GROUP.Health");
 }
 
+static void test_explosion_c25_door_destruction_writeback(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[9];
+    struct ExplosionCreateInput_Compat input;
+    struct TimelineEvent_Compat first_advance;
+    int slot = -1;
+
+    printf("\n-- CSB C25 door destruction writeback --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((4u << 5) | 4u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 200;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 door fireball fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 door fireball reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 door fireball dispatches through the explosion handler");
+    CHECK(profile.explosions.count == 0,
+          "C25 door fireball despawns after one-shot advance");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_DOOR_DESTRUCTION) == 1,
+          "C25 door fireball queues a C02 door destruction event");
+    CHECK((raw[real_format_square_offset(1, 1)] & 0x07u) == 4u,
+          "C25 door fireball leaves the closed door unchanged before C02");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C02 door destruction event dispatches on the next tick");
+    CHECK((raw[real_format_square_offset(1, 1)] & 0x07u) == 5u,
+          "C02 door destruction mutates the real-format door state to destroyed");
+}
+
 static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -1614,6 +1670,7 @@ int main(void)
     test_explosion_c25_persistent_smoke_requeues_until_depleted();
     test_runtime_save_roundtrips_projectiles_and_explosions();
     test_explosion_c25_party_damage_and_group_hp_writeback();
+    test_explosion_c25_door_destruction_writeback();
     test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
