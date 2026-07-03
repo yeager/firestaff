@@ -262,6 +262,25 @@ static int find_queued_event_type(const CSB_V1_RuntimeProfile *profile,
     return -1;
 }
 
+static int count_queued_event_type(const CSB_V1_RuntimeProfile *profile,
+                                   int event_type)
+{
+    int i;
+    int count = 0;
+
+    if (!profile) return 0;
+    for (i = 0; i < profile->timeline_queue.eventCount; ++i) {
+        int event_index = profile->timeline_queue.timeline[i];
+        if (event_index >= 0 &&
+            event_index < DM1_EVENT_MAX_COUNT &&
+            profile->timeline_queue.events[event_index].type ==
+                (uint8_t)event_type) {
+            count++;
+        }
+    }
+    return count;
+}
+
 static uint32_t expected_c38_seed(uint32_t game_time,
                                   int map_x,
                                   int map_y,
@@ -1071,6 +1090,51 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
               profile.projectiles.entries[0].stepEnergy == 9 &&
               profile.projectiles.entries[0].attack == 100,
           "C06 launcher carries kinetic, step, and attack values into F0810 state");
+    CHECK(profile.projectiles.entries[0].firstMoveGraceFlag == 0 &&
+              profile.projectiles.entries[1].firstMoveGraceFlag == 0,
+          "C06 launcher projectiles use C49 immediate-impact movement");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_MOVE_PROJECTILE) == 2,
+          "C06 launcher schedules one C49 movement event per projectile");
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        1,
+        1,
+        (uint8_t)(0u << 5),
+        (uint16_t)((2u << 7) |
+                   DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION),
+        (uint16_t)(1u << 2),
+        (uint16_t)(20u | (2u << 8)));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_SET,
+        1,
+        1,
+        0);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 high-energy launcher event fires on the current tick");
+    CHECK(profile.projectiles.count == 2 &&
+              count_queued_event_type(&profile, DM1_EVENT_MOVE_PROJECTILE) == 2,
+          "C06 high-energy launcher creates and queues two projectile moves");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 launcher projectile move events dispatch on the next tick");
+    CHECK(profile.projectiles.count == 2,
+          "C49 open-square projectile movement keeps live projectiles active");
+    CHECK(profile.projectiles.entries[0].cell == 1 &&
+              profile.projectiles.entries[1].cell == 0,
+          "C49 movement applies the ReDMCSB parity cell step to launcher projectiles");
+    CHECK(profile.projectiles.entries[0].kineticEnergy == 18 &&
+              profile.projectiles.entries[0].attack == 98 &&
+              profile.projectiles.entries[0].firstMoveGraceFlag == 0,
+          "C49 movement decrements kinetic/attack energy without first-move grace");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_MOVE_PROJECTILE) == 2,
+          "C49 movement requeues live launcher projectiles for the following tick");
 
     make_real_format_sensor_dungeon(
         &dungeon,

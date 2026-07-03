@@ -2421,6 +2421,274 @@ static uint8_t *csb_v1_runtime_square_byte_ptr(
     return &dungeon->raw_data[offset];
 }
 
+static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy)
+{
+    int dx = 0;
+    int dy = 0;
+    switch (direction & 3) {
+    case 0: dy = -1; break;
+    case 1: dx = 1; break;
+    case 2: dy = 1; break;
+    case 3: dx = -1; break;
+    default: break;
+    }
+    if (out_dx) *out_dx = dx;
+    if (out_dy) *out_dy = dy;
+}
+
+static void csb_v1_runtime_schedule_projectile_move_event(
+    CSB_V1_RuntimeProfile *profile,
+    const struct TimelineEvent_Compat *event)
+{
+    struct DM1_Event_V1 dm1_event;
+
+    if (!profile || !event) return;
+    if (event->kind != TIMELINE_EVENT_PROJECTILE_MOVE) return;
+    if (event->aux0 < 0 || event->aux0 > 255) return;
+
+    memset(&dm1_event, 0, sizeof(dm1_event));
+    dm1_event.map_time = DM1_MAP_TIME_MAKE(
+        event->mapIndex,
+        event->fireAtTick);
+    dm1_event.type = DM1_EVENT_MOVE_PROJECTILE;
+    dm1_event.priority = (uint8_t)event->aux0;
+    dm1_event.b_mapX = (uint8_t)event->mapX;
+    dm1_event.b_mapY = (uint8_t)event->mapY;
+    dm1_event.c_cell = (uint8_t)(event->cell & 3);
+    dm1_event.c_effect = (uint8_t)(event->aux3 & 0xFF);
+    (void)dm1v1_event_add(&profile->timeline_queue, &dm1_event);
+}
+
+static int csb_v1_runtime_projectile_instance_active(
+    const struct ProjectileInstance_Compat *projectile)
+{
+    return projectile &&
+           projectile->slotIndex >= 0 &&
+           projectile->reserved3 != 0;
+}
+
+static int csb_v1_runtime_build_projectile_digest(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct ProjectileInstance_Compat *projectile,
+    int projectile_index,
+    struct CellContentDigest_Compat *out)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int raw_square;
+    int dest_raw_square;
+    int dx;
+    int dy;
+    int dest_x;
+    int dest_y;
+    int i;
+
+    if (!profile || !projectile || !out || !profile->dungeon_handle) return 0;
+    dungeon = profile->dungeon_handle;
+    if (!dungeon->raw_data ||
+        projectile->mapIndex < 0 ||
+        projectile->mapIndex >= dungeon->level_count) {
+        return 0;
+    }
+
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        projectile->mapIndex,
+        projectile->mapX,
+        projectile->mapY);
+    if (raw_square < 0) return 0;
+
+    csb_v1_runtime_projectile_step(projectile->direction, &dx, &dy);
+    dest_x = projectile->mapX + dx;
+    dest_y = projectile->mapY + dy;
+
+    memset(out, 0, sizeof(*out));
+    out->sourceMapIndex = projectile->mapIndex;
+    out->sourceMapX = projectile->mapX;
+    out->sourceMapY = projectile->mapY;
+    out->sourceSquareType = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    out->destTeleporterNewDirection = -1;
+    out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat *other =
+            &profile->projectiles.entries[i];
+        if (i == projectile_index ||
+            !csb_v1_runtime_projectile_instance_active(other)) {
+            continue;
+        }
+        if (other->mapIndex == projectile->mapIndex &&
+            other->mapX == projectile->mapX &&
+            other->mapY == projectile->mapY &&
+            other->cell == projectile->cell) {
+            out->sourceHasOtherProjectile = 1;
+            break;
+        }
+    }
+
+    out->destMapIndex = projectile->mapIndex;
+    out->destMapX = dest_x;
+    out->destMapY = dest_y;
+    dest_raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        projectile->mapIndex,
+        dest_x,
+        dest_y);
+    if (dest_raw_square < 0) {
+        out->destIsMapBoundary = 1;
+        out->destSquareType = PROJECTILE_ELEMENT_WALL;
+        return 1;
+    }
+
+    out->destSquareType = (dungeon->square_bytes == 1)
+        ? ((dest_raw_square >> 5) & 0x07)
+        : (dest_raw_square & 0x1F);
+    if (out->destSquareType == PROJECTILE_ELEMENT_FAKEWALL) {
+        out->destFakeWallIsImaginaryOrOpen =
+            (dest_raw_square & 0x05) ? 1 : 0;
+    }
+    if (out->destSquareType == PROJECTILE_ELEMENT_DOOR) {
+        int door_state = dest_raw_square & 0x07;
+        if (door_state == 0) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_OPEN;
+        } else if (door_state <= 4) {
+            out->destDoorState = door_state;
+        } else if (door_state == 5) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
+        }
+        out->destDoorAllowsProjectilePassThrough = 0;
+    }
+    if (profile->current_level == projectile->mapIndex &&
+        profile->party_x == dest_x &&
+        profile->party_y == dest_y) {
+        out->destHasChampion = 1;
+        out->destPartyDirection = profile->party_dir & 3;
+        out->destChampionCellMask = 0x0F;
+    }
+    {
+        int first_thing = csb_v1_dungeon_get_first_thing(
+            dungeon,
+            projectile->mapIndex,
+            dest_x,
+            dest_y);
+        if (first_thing >= 0 &&
+            ((first_thing >> 10) & 0x0F) == 4) {
+            int thing_type = -1;
+            int thing_index = -1;
+            int thing_size = 0;
+            const uint8_t *group = csb_v1_dungeon_get_thing_record(
+                dungeon,
+                first_thing,
+                &thing_type,
+                &thing_index,
+                &thing_size);
+            out->destHasCreatureGroup = 1;
+            out->destCreatureType =
+                (group && thing_type == 4 && thing_size > 4) ? group[4] : 0;
+            out->destCreatureCellMask = 0x0F;
+            (void)thing_index;
+        }
+    }
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat *other =
+            &profile->projectiles.entries[i];
+        int new_cell;
+        if (i == projectile_index ||
+            !csb_v1_runtime_projectile_instance_active(other)) {
+            continue;
+        }
+        if (other->mapIndex != projectile->mapIndex ||
+            other->mapX != dest_x ||
+            other->mapY != dest_y) {
+            continue;
+        }
+        if ((projectile->direction & 1) == (projectile->cell & 1)) {
+            new_cell = (projectile->cell - 1) & 3;
+        } else {
+            new_cell = (projectile->cell + 1) & 3;
+        }
+        if (other->cell == new_cell) {
+            out->destHasOtherProjectile = 1;
+            break;
+        }
+    }
+    return 1;
+}
+
+static void csb_v1_runtime_apply_projectile_move_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    struct ProjectileInstance_Compat *projectile;
+    struct ProjectileInstance_Compat new_state;
+    struct ProjectileTickResult_Compat tick_result;
+    struct CellContentDigest_Compat digest;
+    struct RngState_Compat rng;
+    int slot;
+
+    if (!profile || !record) return;
+    slot = record->aux0;
+    if (slot < 0 || slot >= PROJECTILE_LIST_CAPACITY) return;
+    projectile = &profile->projectiles.entries[slot];
+    if (!csb_v1_runtime_projectile_instance_active(projectile)) return;
+    if (!csb_v1_runtime_build_projectile_digest(
+            profile,
+            projectile,
+            slot,
+            &digest)) {
+        (void)F0813_PROJECTILE_Despawn_Compat(&profile->projectiles, slot);
+        return;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0219 is dispatched from TIMELINE.C F0261 C48/C49.
+     * CSB's bounded runtime delegates the source projectile motion math to
+     * M10 F0811, then owns only CSB real-format byte-map digesting and event
+     * requeueing. */
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)projectile->mapX << 8) ^
+            ((uint32_t)projectile->mapY << 16) ^
+            (uint32_t)(slot << 24));
+    if (!F0811_PROJECTILE_Advance_Compat(
+            projectile,
+            &digest,
+            profile->game_time,
+            &rng,
+            &new_state,
+            &tick_result)) {
+        (void)F0813_PROJECTILE_Despawn_Compat(&profile->projectiles, slot);
+        return;
+    }
+    if (tick_result.despawn) {
+        (void)F0813_PROJECTILE_Despawn_Compat(&profile->projectiles, slot);
+        return;
+    }
+    *projectile = new_state;
+    if (tick_result.resultKind == PROJECTILE_RESULT_FLEW) {
+        csb_v1_runtime_schedule_projectile_move_event(
+            profile,
+            &tick_result.outNextTick);
+    }
+    if (tick_result.emittedDoorDestructionEvent ||
+        tick_result.emittedDoorToggleEvent) {
+        struct DM1_Event_V1 door_event;
+        memset(&door_event, 0, sizeof(door_event));
+        door_event.map_time = DM1_MAP_TIME_MAKE(
+            tick_result.outNextTick.mapIndex,
+            tick_result.outNextTick.fireAtTick);
+        door_event.type = tick_result.emittedDoorDestructionEvent
+            ? DM1_EVENT_DOOR_DESTRUCTION
+            : DM1_EVENT_DOOR;
+        door_event.b_mapX = (uint8_t)tick_result.outNextTick.mapX;
+        door_event.b_mapY = (uint8_t)tick_result.outNextTick.mapY;
+        door_event.c_cell = (uint8_t)(tick_result.outNextTick.cell & 3);
+        door_event.c_effect = (uint8_t)tick_result.outNextTick.aux0;
+        (void)dm1v1_event_add(&profile->timeline_queue, &door_event);
+    }
+}
+
 static void csb_v1_runtime_schedule_door_animation_followup(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
@@ -2962,12 +3230,16 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                             csb_v1_runtime_projectile_attack_type_from_subtype(
                                 subtype);
                         input.associatedThing = (int)launch->associatedThing;
-                        input.firstMoveGraceFlag = 1;
-                        (void)F0810_PROJECTILE_Create_Compat(
-                            &input,
-                            &profile->projectiles,
-                            &slot,
-                            &first_move);
+                        input.firstMoveGraceFlag = 0;
+                        if (F0810_PROJECTILE_Create_Compat(
+                                &input,
+                                &profile->projectiles,
+                                &slot,
+                                &first_move)) {
+                            csb_v1_runtime_schedule_projectile_move_event(
+                                profile,
+                                &first_move);
+                        }
                     }
                 }
             }
@@ -3008,6 +3280,12 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             break;
         case DM1_EVENT_WALL:
             csb_v1_runtime_apply_wall_sensor_timeline_record(profile, record);
+            break;
+        case DM1_EVENT_MOVE_PROJECTILE:
+        case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
+            csb_v1_runtime_apply_projectile_move_timeline_record(
+                profile,
+                record);
             break;
         case DM1_EVENT_DOOR:
         case DM1_EVENT_DOOR_ANIMATION:
