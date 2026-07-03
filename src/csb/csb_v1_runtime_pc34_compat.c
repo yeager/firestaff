@@ -2805,7 +2805,7 @@ static int csb_v1_runtime_projectile_result_places_associated_object(
     }
 }
 
-static int csb_v1_runtime_apply_object_teleporter_at_square(
+static int csb_v1_runtime_apply_object_consequences_at_square(
     CSB_V1_DungeonData *dungeon,
     uint16_t *inout_thing,
     int source_map_x,
@@ -2824,6 +2824,7 @@ static int csb_v1_runtime_apply_object_teleporter_at_square(
         CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
         CSB_V1_TeleporterRotationRuntimeObjectResultPc34 result;
         int raw_square;
+        int square_type;
         int scope = 0;
         int self_target;
 
@@ -2836,13 +2837,58 @@ static int csb_v1_runtime_apply_object_teleporter_at_square(
             *inout_map_index,
             *inout_map_x,
             *inout_map_y);
-        if (raw_square < 0 ||
-            ((dungeon->square_bytes == 1)
-                 ? ((raw_square >> 5) & 0x07)
-                 : (raw_square & 0x1F)) != PROJECTILE_ELEMENT_TELEPORTER ||
-            (raw_square & 0x08) == 0) {
+        if (raw_square < 0) {
             break;
         }
+        square_type = (dungeon->square_bytes == 1)
+            ? ((raw_square >> 5) & 0x07)
+            : (raw_square & 0x1F);
+        if (square_type != PROJECTILE_ELEMENT_TELEPORTER) {
+            int target_level;
+            int old_level;
+            int old_x;
+            int old_y;
+
+            if (square_type != 2 ||
+                (raw_square & 0x08) == 0 ||
+                (raw_square & 0x01) != 0) {
+                break;
+            }
+            target_level = *inout_map_index + 1;
+            if (target_level < 0 || target_level >= dungeon->level_count) {
+                break;
+            }
+            old_level = *inout_map_index;
+            old_x = *inout_map_x;
+            old_y = *inout_map_y;
+            if (!csb_v1_runtime_unlink_thing_from_square(
+                    dungeon,
+                    *inout_thing,
+                    old_level,
+                    old_x,
+                    old_y)) {
+                break;
+            }
+            *inout_map_index = target_level;
+            if (!csb_v1_runtime_append_thing_to_square_tail(
+                    dungeon,
+                    *inout_thing,
+                    *inout_map_index,
+                    *inout_map_x,
+                    *inout_map_y)) {
+                *inout_map_index = old_level;
+                (void)csb_v1_runtime_append_thing_to_square_tail(
+                    dungeon,
+                    *inout_thing,
+                    old_level,
+                    old_x,
+                    old_y);
+                break;
+            }
+            moved_count++;
+            continue;
+        }
+        if ((raw_square & 0x08) == 0) break;
         if (csb_v1_runtime_decode_group_teleporter_at_square(
                 dungeon,
                 *inout_map_index,
@@ -2890,11 +2936,12 @@ static int csb_v1_runtime_apply_object_teleporter_at_square(
     }
     /* ReDMCSB MOVESENS.C F0267 lines 450-530 lets non-party, non-group
      * objects use object/party-capable teleporters, rejects creature-only
-     * teleporters, applies the PC34 100-step chain cap, and rotates object
-     * cells only for relative teleporters unless the object came from the
-     * CM2 projectile-associated-object path.  This CSB bridge is bounded to
-     * same-map raw dungeon records; cross-map object movement, buzz audio,
-     * sensors, and pit consequences remain separate runtime work. */
+     * teleporters, rotates object cells only for relative teleporters unless
+     * the object came from the CM2 projectile-associated-object path, and
+     * continues into open non-imaginary pits in the same PC34 100-step chain.
+     * This CSB bridge keeps pit level transitions bounded to adjacent maps;
+     * full F0154 coordinate pairing, cross-map teleporters, buzz audio, and
+     * object sensors remain separate runtime work. */
     return moved_count;
 }
 
@@ -2952,7 +2999,7 @@ static int csb_v1_runtime_materialize_projectile_associated_object(
         map_index,
         map_x,
         map_y) &&
-        (csb_v1_runtime_apply_object_teleporter_at_square(
+        (csb_v1_runtime_apply_object_consequences_at_square(
              dungeon,
              &placed_thing,
              CSB_V1_TELEPORTER_ROTATION_SOURCE_PROJECTILE_ASSOCIATED_OBJECT_PC34,
@@ -3201,7 +3248,7 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
             int drop_level = level;
             int drop_x = map_x;
             int drop_y = map_y;
-            (void)csb_v1_runtime_apply_object_teleporter_at_square(
+            (void)csb_v1_runtime_apply_object_consequences_at_square(
                 dungeon,
                 &thing,
                 -1,
@@ -3269,7 +3316,7 @@ static void csb_v1_runtime_drop_group_slot_possessions(
             int drop_level = level;
             int drop_x = map_x;
             int drop_y = map_y;
-            (void)csb_v1_runtime_apply_object_teleporter_at_square(
+            (void)csb_v1_runtime_apply_object_consequences_at_square(
                 dungeon,
                 &dropped_thing,
                 -1,
