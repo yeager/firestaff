@@ -1303,6 +1303,40 @@ static void csb_v1_runtime_schedule_c37_group_event(
     (void)dm1v1_event_add(&profile->timeline_queue, &event);
 }
 
+static void csb_v1_runtime_schedule_c38_attack_events(
+    CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y,
+    int creature_type,
+    uint16_t group_flags)
+{
+    int count_index;
+    int movement_ticks;
+
+    if (!profile) return;
+    movement_ticks = csb_v1_runtime_creature_movement_ticks(creature_type);
+    count_index = (int)((group_flags >> 5) & 0x03u);
+    for (; count_index >= 0; --count_index) {
+        struct DM1_Event_V1 event;
+
+        /* ReDMCSB GROUP.C F0209 lines 2108-2127 switches to C6 attack
+         * and queues C38_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + creature index
+         * for each creature in the group, reusing the group event priority
+         * initialized as 255 - MovementTicks.  This bounded CSB bridge only
+         * schedules those per-creature attack events; the C38 damage/evasion
+         * body remains a later runtime slice. */
+        memset(&event, 0, sizeof(event));
+        event.map_time = DM1_MAP_TIME_MAKE(map_index, profile->game_time + 1u);
+        event.type = (uint8_t)(DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 +
+                               count_index);
+        event.priority = (uint8_t)(255 - movement_ticks);
+        event.b_mapX = (uint8_t)map_x;
+        event.b_mapY = (uint8_t)map_y;
+        (void)dm1v1_event_add(&profile->timeline_queue, &event);
+    }
+}
+
 static int csb_v1_runtime_group_destination_is_blocked(
     const CSB_V1_DungeonData *dungeon,
     int level,
@@ -1450,6 +1484,15 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 flags = (uint16_t)((flags & 0xFFF0u) |
                                    (uint16_t)(next_behavior & 0x0F));
                 csb_v1_runtime_write_u16(thing_record + 14, flags);
+                if (next_behavior == 6) {
+                    csb_v1_runtime_schedule_c38_attack_events(
+                        profile,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        (int)thing_record[4],
+                        flags);
+                }
                 if (next_behavior == 7) {
                     /* ReDMCSB GROUP.C F0209 lines 2135-2140 sets behavior
                      * C7 approach and increments the next C37 time by one
@@ -1475,6 +1518,13 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 if (distance_x + distance_y <= 1) {
                     flags = (uint16_t)((flags & 0xFFF0u) | 6u);
                     csb_v1_runtime_write_u16(thing_record + 14, flags);
+                    csb_v1_runtime_schedule_c38_attack_events(
+                        profile,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        (int)thing_record[4],
+                        flags);
                     return;
                 }
                 if (distance_y > 0) {

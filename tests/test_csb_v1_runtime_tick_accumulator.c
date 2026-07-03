@@ -493,8 +493,21 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "adjacent C7 approach C37 mutates the generated group to attack");
     CHECK((uint16_t)(raw[68] | ((uint16_t)raw[69] << 8)) == (uint16_t)(4u << 10),
           "adjacent attack transition does not move the group onto the party square");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "adjacent attack transition queues one C38 creature attack event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "next tick dispatches the bounded C38 attack event");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
+              dispatch.count == 1 &&
+              dispatch.records[0].eventType == DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+              dispatch.records[0].dispatchKind == DM1_DISPATCH_CREATURE_AI &&
+              dispatch.records[0].mapX == 1 &&
+              dispatch.records[0].mapY == 1,
+          "bounded C38 attack event keeps the adjacent group square");
+    CHECK(dispatch.records[0].aux0 == (255 - 21),
+          "bounded C38 attack event priority follows 255 - creature movement ticks");
     CHECK(profile.timeline_queue.eventCount == 0,
-          "adjacent attack transition consumes the bounded C37 queue");
+          "bounded C38 attack event consumes the generated attack queue");
 }
 
 static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
