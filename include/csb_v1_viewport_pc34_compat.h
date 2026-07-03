@@ -55,13 +55,20 @@ typedef struct {
     const struct ExplosionList_Compat *runtime_explosions;
 
     /* Optional CSBgraphics.dat CustomBackgrounds bridge. The CSB boot layer
-     * owns the plan/cache/skin-def bytes; the viewport applies only caller-
-     * supplied aligned mask geometries so unsupported real geometry remains
-     * explicit instead of guessed. */
+     * owns the plan/cache/skin-def bytes; the viewport can select a
+     * cell/default skin, decode CSBWin room mask geometry, and still prefer
+     * caller-supplied synthetic masks for focused tests. */
     const void *csbgraphics_plan;
     const void *csbgraphics_cache;
     const uint16_t *custom_background_skin_def_words;
     size_t custom_background_skin_def_word_count;
+    const uint8_t *custom_background_cell_skins;
+    int custom_background_cell_skin_width;
+    int custom_background_cell_skin_height;
+    int custom_background_loaded_level;
+    int custom_background_default_skin;
+    int custom_background_selected_skin_num;
+    int custom_background_used_default_skin;
     int custom_background_room_num;
     CSB_V1_ViewportCustomBackgroundMask custom_background_layer_masks[3];
     uint8_t custom_background_layer_mask_valid[3];

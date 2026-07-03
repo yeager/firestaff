@@ -177,6 +177,14 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     cfg.wall_set_index = 0;
     cfg.runtime_projectiles = &profile->runtime.projectiles;
     cfg.runtime_explosions = &profile->runtime.explosions;
+    plan = csb_v1_boot_csbgraphics_m11_plan(profile);
+    cache = csb_v1_boot_csbgraphics_cache(profile);
+    cfg.csbgraphics_plan = plan;
+    cfg.csbgraphics_cache = cache;
+    cfg.custom_background_skin_def_words =
+        csb_v1_boot_csbgraphics_skin_def_words(
+            profile,
+            &cfg.custom_background_skin_def_word_count);
 
     /* Source-lock: ReDMCSB DUNVIEW.C F0128 is the CSB viewport draw
      * boundary; CSBWin Viewport.cpp keeps the same party pose contract.
@@ -186,14 +194,6 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                   profile->runtime.party_dir,
                                   profile->runtime.party_x,
                                   profile->runtime.party_y);
-    plan = csb_v1_boot_csbgraphics_m11_plan(profile);
-    cache = csb_v1_boot_csbgraphics_cache(profile);
-    cfg.csbgraphics_plan = plan;
-    cfg.csbgraphics_cache = cache;
-    cfg.custom_background_skin_def_words =
-        csb_v1_boot_csbgraphics_skin_def_words(
-            profile,
-            &cfg.custom_background_skin_def_word_count);
     if (plan && plan->ready && cache && cache->loaded) {
         for (i = 0u; i < plan->planned_count; ++i) {
             CSB_V1_CSBGraphicsM11Binding binding;
