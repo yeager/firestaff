@@ -1317,6 +1317,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
         int thing_size;
         int behavior;
         int next_behavior;
+        int movement_ticks;
 
         thing_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -1332,6 +1333,25 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 flags = (uint16_t)((flags & 0xFFF0u) |
                                    (uint16_t)(next_behavior & 0x0F));
                 csb_v1_runtime_write_u16(thing_record + 14, flags);
+                if (next_behavior == 7) {
+                    struct DM1_Event_V1 event;
+                    movement_ticks = csb_v1_runtime_creature_movement_ticks(
+                        (int)thing_record[4]);
+
+                    /* ReDMCSB GROUP.C F0209 lines 2135-2140 sets behavior
+                     * C7 approach and increments the next C37 time by one
+                     * tick; lines 2450-2463 then add C37 through F0208 with
+                     * the existing movement-tick priority. */
+                    memset(&event, 0, sizeof(event));
+                    event.map_time = DM1_MAP_TIME_MAKE(
+                        record->mapIndex,
+                        profile->game_time + 1u);
+                    event.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+                    event.priority = (uint8_t)(255 - movement_ticks);
+                    event.b_mapX = (uint8_t)record->mapX;
+                    event.b_mapY = (uint8_t)record->mapY;
+                    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+                }
             }
             return;
         }
