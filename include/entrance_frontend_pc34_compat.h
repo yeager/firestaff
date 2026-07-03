@@ -41,6 +41,21 @@ typedef struct EntranceCompatSourceAnimationStep {
     const char* sourceLineEvidence;
 } EntranceCompatSourceAnimationStep;
 
+typedef struct EntranceCompatCompositePixels {
+    const unsigned char* entranceScreen;
+    unsigned int entranceWidth;
+    unsigned int entranceHeight;
+    const unsigned char* dungeonFrame;
+    unsigned int dungeonFrameWidth;
+    unsigned int dungeonFrameHeight;
+    const unsigned char* leftDoor;
+    unsigned int leftDoorWidth;
+    unsigned int leftDoorHeight;
+    const unsigned char* rightDoor;
+    unsigned int rightDoorWidth;
+    unsigned int rightDoorHeight;
+} EntranceCompatCompositePixels;
+
 unsigned int ENTRANCE_Compat_GetDoorAnimationStepCount(void);
 int ENTRANCE_Compat_GetDoorAnimationStep(unsigned int animationStep,
                                          EntranceCompatDoorStep* outStep);
@@ -49,5 +64,10 @@ int ENTRANCE_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                                            EntranceCompatSourceAnimationStep* outStep);
 unsigned int ENTRANCE_Compat_GetRuntimeDelayMs(const EntranceCompatSourceAnimationStep* step);
 const char* ENTRANCE_Compat_GetSourceAnimationEvidence(void);
+int ENTRANCE_Compat_CompositeDoorOpeningFrame(unsigned char* framebuffer,
+                                              unsigned int framebufferWidth,
+                                              unsigned int framebufferHeight,
+                                              const EntranceCompatCompositePixels* pixels,
+                                              const EntranceCompatDoorStep* door);
 
 #endif

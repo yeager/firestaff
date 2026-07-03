@@ -508,42 +508,39 @@ static int m11_draw_entrance_closed_doors_asset(M11_GameViewState* gameView,
 
 static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
                                                  unsigned char* framebuffer,
+                                                 const unsigned char* dungeonFrame,
                                                  const EntranceCompatDoorStep* door) {
+    const M11_AssetSlot* entranceScreen;
     const M11_AssetSlot* leftDoor;
     const M11_AssetSlot* rightDoor;
-    int drew = 0;
-    if (!gameView || !framebuffer || !door || !gameView->assetsAvailable) {
+    EntranceCompatCompositePixels pixels;
+    if (!gameView || !framebuffer || !dungeonFrame || !door || !gameView->assetsAvailable) {
         return 0;
     }
+    entranceScreen = M11_AssetLoader_Load(&gameView->assetLoader, 4U);
     leftDoor = M11_AssetLoader_Load(&gameView->assetLoader, 2U);
     rightDoor = M11_AssetLoader_Load(&gameView->assetLoader, 3U);
-    if (!leftDoor || !rightDoor) {
+    if (!entranceScreen || !leftDoor || !rightDoor) {
         return 0;
     }
-    /* ReDMCSB ENTRANCE.C:189-231 blits source door strips from the
-     * precomputed C002/C003 animation-step bitmaps using the DATA.C opening
-     * boxes.  The compat schedule already exposes those boxes/source X values. */
-    if (door->leftBoxW > 0U && leftDoor->height >= door->leftBoxH &&
-        leftDoor->width >= door->leftSourceX + door->leftBoxW) {
-        M11_AssetLoader_BlitRegion(leftDoor,
-                                   (int)door->leftSourceX, 0,
-                                   (int)door->leftBoxW, (int)door->leftBoxH,
-                                   framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                                   (int)door->leftBoxX, 28 + (int)door->leftBoxY,
-                                   -1);
-        drew = 1;
-    }
-    if (door->rightBoxW > 0U && rightDoor->height >= door->rightBoxH &&
-        rightDoor->width >= door->rightSourceX + door->rightBoxW) {
-        M11_AssetLoader_BlitRegion(rightDoor,
-                                   (int)door->rightSourceX, 0,
-                                   (int)door->rightBoxW, (int)door->rightBoxH,
-                                   framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                                   (int)door->rightBoxX, 28 + (int)door->rightBoxY,
-                                   -1);
-        drew = 1;
-    }
-    return drew;
+    memset(&pixels, 0, sizeof(pixels));
+    pixels.entranceScreen = entranceScreen->pixels;
+    pixels.entranceWidth = entranceScreen->width;
+    pixels.entranceHeight = entranceScreen->height;
+    pixels.dungeonFrame = dungeonFrame;
+    pixels.dungeonFrameWidth = M11_FB_WIDTH;
+    pixels.dungeonFrameHeight = M11_FB_HEIGHT;
+    pixels.leftDoor = leftDoor->pixels;
+    pixels.leftDoorWidth = leftDoor->width;
+    pixels.leftDoorHeight = leftDoor->height;
+    pixels.rightDoor = rightDoor->pixels;
+    pixels.rightDoorWidth = rightDoor->width;
+    pixels.rightDoorHeight = rightDoor->height;
+    return ENTRANCE_Compat_CompositeDoorOpeningFrame(framebuffer,
+                                                     M11_FB_WIDTH,
+                                                     M11_FB_HEIGHT,
+                                                     &pixels,
+                                                     door);
 }
 
 static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
@@ -688,9 +685,9 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
             }
         } else if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP) {
             EntranceCompatDoorStep door;
-            memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
             if (ENTRANCE_Compat_GetDoorAnimationStep(sourceStep - 6U, &door)) {
-                if (!m11_draw_entrance_opening_doors_asset(gameView, framebuffer, &door)) {
+                if (!m11_draw_entrance_opening_doors_asset(gameView, framebuffer, dungeonFrame, &door)) {
+                    memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
                     if (door.leftBoxW > 0U) {
                         m11_draw_entrance_door_panel(framebuffer,
                                                      (int)door.leftBoxX,
