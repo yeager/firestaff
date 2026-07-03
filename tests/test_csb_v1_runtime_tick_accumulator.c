@@ -407,6 +407,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     uint16_t text_word;
     uint16_t type_data;
     uint16_t group_flags;
+    int i;
 
     make_real_format_corridor_text_generator_dungeon(
         &dungeon,
@@ -483,6 +484,17 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "delayed C65 re-enables the generator sensor and preserves data");
     CHECK(profile.timeline_queue.eventCount == 1,
           "delayed C65 consumes itself while the future C37 remains queued");
+    for (i = 0; i < 20; ++i) {
+        CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+              "advance toward the future adjacent approach C37 boundary");
+    }
+    group_flags = (uint16_t)(raw[96] | ((uint16_t)raw[97] << 8));
+    CHECK((group_flags & 0x000fu) == 6u,
+          "adjacent C7 approach C37 mutates the generated group to attack");
+    CHECK((uint16_t)(raw[68] | ((uint16_t)raw[69] << 8)) == (uint16_t)(4u << 10),
+          "adjacent attack transition does not move the group onto the party square");
+    CHECK(profile.timeline_queue.eventCount == 0,
+          "adjacent attack transition consumes the bounded C37 queue");
 }
 
 static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
