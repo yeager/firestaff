@@ -1874,6 +1874,7 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm1_v2_source_owned_screenshot_probe PROPERTIES
         LABELS "tier2;dm1;v2;screenshot;source-owned;deterministic"
+        ENVIRONMENT "FIRESTAFF_PROBE_OUTPUT_ROOT=${CMAKE_CURRENT_BINARY_DIR}"
     )
 endif()
 
@@ -1891,6 +1892,7 @@ add_test(
 )
 set_tests_properties(dm1_v2_source_owned_screenshot_receipts PROPERTIES
     LABELS "tier2;dm1;v2;screenshot;source-owned;deterministic"
+    ENVIRONMENT "FIRESTAFF_PROBE_OUTPUT_ROOT=${CMAKE_CURRENT_BINARY_DIR}"
 )
 
 # DM1 V2 side-by-side presentation-disabled seed probe. Headless: no game data.
@@ -3853,6 +3855,10 @@ if(BUILD_TESTING)
             target_compile_options(firestaff_dm1_v2_source_owned_route_screenshot_probe PRIVATE -Wall -Wextra -O2)
         endif()
         add_test(NAME dm1_v2_source_owned_route_screenshot_probe COMMAND firestaff_dm1_v2_source_owned_route_screenshot_probe)
+        set_tests_properties(dm1_v2_source_owned_route_screenshot_probe PROPERTIES
+            LABELS "tier2;dm1;v2;screenshot;source-owned;route"
+            ENVIRONMENT "FIRESTAFF_PROBE_OUTPUT_ROOT=${CMAKE_CURRENT_BINARY_DIR}"
+        )
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dialog_choice_overlay_fit_pc34_compat.c")
@@ -5456,6 +5462,7 @@ if(BUILD_TESTING)
         )
         set_tests_properties(dm1_v2_actual_render_screenshot_probe PROPERTIES
             LABELS "dm1;v2;screenshot;presentation;headless"
+            ENVIRONMENT "FIRESTAFF_PROBE_OUTPUT_ROOT=${CMAKE_CURRENT_BINARY_DIR}"
         )
     endif()
     if(TARGET firestaff_dm1_v2_side_by_side_presentation_seed_probe)
