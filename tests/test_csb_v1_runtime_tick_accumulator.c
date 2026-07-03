@@ -1148,6 +1148,12 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
           "C49 wall impact preserves launcher lightning explosion type");
     CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 2,
           "C49 wall impact schedules C25 explosion advance events");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 launcher impact explosion events dispatch on the next tick");
+    CHECK(profile.explosions.count == 0,
+          "C25 one-shot launcher impact explosions despawn after advance");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 0,
+          "C25 one-shot launcher impact explosions do not requeue");
 
     make_real_format_sensor_dungeon(
         &dungeon,
