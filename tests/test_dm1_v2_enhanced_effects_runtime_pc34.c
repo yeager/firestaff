@@ -81,6 +81,26 @@ static void test_presentation_gate_and_dynamic_lighting_tick_light_map(void) {
     CHECK(approxf(v22_light_get(6, 6), 0.52f));
 }
 
+static void test_indexed_render_gate_paints_particles(void) {
+    DM1_V2_PhaseGateConfig gate;
+    DM1_V2_Settings settings;
+    unsigned char framebuffer[64 * 64];
+
+    dm1_v2_phase_gate_defaults(&gate);
+    dm1_v2_settings_defaults(&settings);
+    memset(framebuffer, 0, sizeof(framebuffer));
+    init_particle_with_short_life();
+
+    CHECK(dm1_v2_enhanced_effects_runtime_render_indexed(
+              &gate, &settings, framebuffer, 64, 64, 4, 5) == 0);
+    CHECK(framebuffer[(5 + 12) * 64 + (4 + 10)] == 0);
+
+    gate.v2PresentationEnabled = 1;
+    CHECK(dm1_v2_enhanced_effects_runtime_render_indexed(
+              &gate, &settings, framebuffer, 64, 64, 4, 5) > 0);
+    CHECK(framebuffer[(5 + 12) * 64 + (4 + 10)] != 0);
+}
+
 static void test_null_inputs_fail_safe(void) {
     DM1_V2_PhaseGateConfig gate;
     float beforeLight;
@@ -109,6 +129,7 @@ int main(void) {
     test_default_gate_is_noop();
     test_presentation_gate_ticks_particles_without_lighting();
     test_presentation_gate_and_dynamic_lighting_tick_light_map();
+    test_indexed_render_gate_paints_particles();
     test_null_inputs_fail_safe();
 
     if (failures) {

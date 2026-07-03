@@ -53,6 +53,7 @@ int v2_particle_emitter_create(float x, float y, float rate,
     g_emitters[idx].active_count = 0;
     g_emitters[idx].particle_template.life = life;
     g_emitters[idx].particle_template.size = size;
+    g_emitters[idx].particle_template.alpha = 1.0f;
     g_emitters[idx].particle_template.gravity = gravity;
     g_emitters[idx].particle_template.color = color;
     return idx;
@@ -109,6 +110,44 @@ void v2_particle_draw_all(void) {
         (void)g_particles[i].x;
         (void)g_particles[i].y;
     }
+}
+
+int v2_particle_blit_indexed(unsigned char* framebuffer,
+                             int framebuffer_width,
+                             int framebuffer_height,
+                             int origin_x,
+                             int origin_y,
+                             unsigned char palette_index)
+{
+    int i;
+    int painted = 0;
+    if (!framebuffer || framebuffer_width <= 0 || framebuffer_height <= 0) {
+        return 0;
+    }
+    for (i = 0; i < g_particle_count; i++) {
+        const M11_V2_Particle* p = &g_particles[i];
+        int radius = (int)(p->size + 0.5f);
+        int cx = origin_x + (int)(p->x + 0.5f);
+        int cy = origin_y + (int)(p->y + 0.5f);
+        int y;
+        if (radius < 1) {
+            radius = 1;
+        }
+        for (y = cy - radius + 1; y <= cy + radius - 1; y++) {
+            int x;
+            if (y < 0 || y >= framebuffer_height) {
+                continue;
+            }
+            for (x = cx - radius + 1; x <= cx + radius - 1; x++) {
+                if (x < 0 || x >= framebuffer_width) {
+                    continue;
+                }
+                framebuffer[y * framebuffer_width + x] = palette_index;
+                painted++;
+            }
+        }
+    }
+    return painted;
 }
 
 /*
