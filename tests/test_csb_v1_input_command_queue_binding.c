@@ -239,6 +239,33 @@ static void make_real_format_stair_dungeon(CSB_V1_DungeonData *dungeon,
     raw[9 + 1 * 3 + 0] = (uint8_t)((3u << 5) | 0x04u); /* level 1: up */
 }
 
+static void make_real_format_consequence_dungeon(CSB_V1_DungeonData *dungeon,
+                                                 uint8_t *raw,
+                                                 size_t raw_size)
+{
+    size_t i;
+
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 3;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->level_widths[1] = 3;
+    dungeon->level_heights[1] = 3;
+    dungeon->level_offsets[1] = 9;
+    dungeon->level_widths[2] = 3;
+    dungeon->level_heights[2] = 3;
+    dungeon->level_offsets[2] = 18;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+
+    for (i = 0; i < raw_size; ++i) {
+        raw[i] = (uint8_t)(1u << 5); /* C01_ELEMENT_CORRIDOR */
+    }
+}
+
 static void test_forward_command_blocks_legacy_wall_destination(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -370,6 +397,103 @@ static void test_forward_command_applies_real_format_stairs(void)
           "stair-up movement updates profile and dungeon current level");
 }
 
+static void queue_forward_or_fail(struct Dm1V1InputCommandQueuePc34Compat *queue,
+                                  const char *message)
+{
+    DM1_V1_InputCommandQueue_InitPc34Compat(queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
+              queue,
+              (struct Dm1V1InputEventPc34Compat){
+                  DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }) == 1,
+          message);
+}
+
+static void seed_center_party(CSB_V1_RuntimeProfile *profile)
+{
+    CSB_V1_PartyState party;
+
+    make_party(&party);
+    party.PartyMapX = 1;
+    party.PartyMapY = 1;
+    CHECK(csb_v1_runtime_set_party_state(profile, &party) == 0,
+          "movement consequence fixture party enters runtime profile");
+    profile->party_x = 1;
+    profile->party_y = 1;
+    profile->party_state.PartyMapX = 1;
+    profile->party_state.PartyMapY = 1;
+    profile->current_level = 0;
+    csb_v1_dungeon_set_current_level(0);
+}
+
+static void test_forward_command_handles_real_format_door_fakewall_and_pit(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[27];
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+    const int north_of_center = 1 * 3 + 0;
+
+    csb_v1_runtime_init(&profile, NULL);
+    make_real_format_consequence_dungeon(&dungeon, raw, sizeof(raw));
+    profile.dungeon_handle = &dungeon;
+
+    raw[north_of_center] = (uint8_t)((4u << 5) | 4u); /* closed door */
+    seed_center_party(&profile);
+    queue_forward_or_fail(&queue, "PC-34 forward key queues closed-door move");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the closed-door movement command");
+    CHECK(result.movement_step_applied == 0,
+          "closed-door movement does not apply coordinate step");
+    CHECK(result.movement_blocked_by_wall == 1,
+          "closed-door movement is blocked by the movement probe");
+    CHECK(result.movement_blocked_by_door == 1,
+          "closed-door movement reports door block cause");
+    CHECK(result.movement_destination_square_type == 4,
+          "closed-door movement exposes destination door type");
+    CHECK(result.movement_destination_door_state == 4,
+          "closed-door movement exposes C4 closed state");
+    CHECK(profile.party_x == 1 && profile.party_y == 1,
+          "closed-door block preserves party coordinates");
+
+    raw[north_of_center] = (uint8_t)(6u << 5); /* closed real fakewall */
+    seed_center_party(&profile);
+    queue_forward_or_fail(&queue, "PC-34 forward key queues closed-fakewall move");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the closed-fakewall movement command");
+    CHECK(result.movement_step_applied == 0,
+          "closed-fakewall movement does not apply coordinate step");
+    CHECK(result.movement_blocked_by_fakewall == 1,
+          "closed-fakewall movement reports fakewall block cause");
+    CHECK(result.movement_destination_square_type == 6,
+          "closed-fakewall movement exposes destination fakewall type");
+    CHECK(profile.party_x == 1 && profile.party_y == 1,
+          "closed-fakewall block preserves party coordinates");
+
+    raw[north_of_center] = (uint8_t)((2u << 5) | 0x08u); /* open pit */
+    seed_center_party(&profile);
+    queue_forward_or_fail(&queue, "PC-34 forward key queues open-pit move");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the open-pit movement command");
+    CHECK(result.movement_step_applied == 1,
+          "open-pit movement applies coordinate step before falling");
+    CHECK(result.movement_destination_square_type == 2,
+          "open-pit movement exposes destination pit type");
+    CHECK(result.pit_open == 1,
+          "open-pit movement reports open pit bit");
+    CHECK(result.pit_fall_applied == 1,
+          "open-pit movement applies bounded level fall");
+    CHECK(result.old_party_level == 0 && result.new_party_level == 1,
+          "open-pit movement changes runtime level 0 to 1");
+    CHECK(profile.current_level == 1 && csb_v1_dungeon_get_current_level() == 1,
+          "open-pit movement updates profile and dungeon current level");
+    CHECK(profile.party_x == 1 && profile.party_y == 0,
+          "open-pit movement keeps destination coordinates on new level");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Input Command Queue Binding Gate ===\n\n");
@@ -378,6 +502,7 @@ int main(void)
     test_forward_command_applies_open_runtime_step();
     test_forward_command_blocks_legacy_wall_destination();
     test_forward_command_applies_real_format_stairs();
+    test_forward_command_handles_real_format_door_fakewall_and_pit();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: queued CSB V1 turn and bounded movement commands reach CSB runtime party state");

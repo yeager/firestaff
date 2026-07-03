@@ -298,13 +298,18 @@ typedef struct {
     int movement_step_attempted;
     int movement_step_applied;
     int movement_blocked_by_wall;
+    int movement_blocked_by_door;
+    int movement_blocked_by_fakewall;
     int movement_destination_x;
     int movement_destination_y;
     int movement_destination_square_type;
     int movement_destination_raw_square;
+    int movement_destination_door_state;
     int disabled_movement_ticks_after;
     int stair_transition_applied;
     int stair_up;
+    int pit_fall_applied;
+    int pit_open;
     int old_party_level;
     int new_party_level;
 } CSB_V1_InputCommandRuntimeResult;

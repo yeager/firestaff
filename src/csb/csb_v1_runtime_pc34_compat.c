@@ -668,7 +668,9 @@ static int csb_v1_runtime_default_wall_probe(
 {
     const CSB_V1_DungeonData *dungeon;
     int level;
+    int raw_square;
     int square_type;
+    int door_state;
 
     (void)context;
     dungeon = (profile && profile->dungeon_handle)
@@ -681,15 +683,39 @@ static int csb_v1_runtime_default_wall_probe(
     if (level < 0 || level >= dungeon->level_count) {
         level = 0;
     }
-    square_type = csb_v1_dungeon_get_square_type(dungeon, level, map_x, map_y);
-    if (square_type < 0) return 1;
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y);
+    if (raw_square < 0) return 1;
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
     if (dungeon->square_bytes == 1) {
-        return square_type == 0;
+        if (square_type == 0) return 1;
+        if (square_type == 4) {
+            /* ReDMCSB: CLIKMENU.C F0366 lines 282-286 blocks doors
+             * unless M036_DOOR_STATE is open, one-fourth closed, or
+             * destroyed.  DEFS.H lines 1039-1046 define states 0,1,5. */
+            door_state = raw_square & 0x07;
+            return door_state != 0 && door_state != 1 && door_state != 5;
+        }
+        if (square_type == 6) {
+            /* ReDMCSB: CLIKMENU.C F0366 lines 287-290 blocks fake walls
+             * unless MASK0x0004_FAKEWALL_OPEN or
+             * MASK0x0001_FAKEWALL_IMAGINARY is set. */
+            return !(raw_square & 0x04) && !(raw_square & 0x01);
+        }
+        return 0;
+    }
+    if (square_type == 4) {
+        door_state = raw_square & 0x07;
+        return door_state != 0 && door_state != 1 && door_state != 5;
+    }
+    if (square_type == 6) {
+        return !(raw_square & 0x04) && !(raw_square & 0x01);
     }
     return square_type == 1;
 }
 
-static void csb_v1_runtime_apply_destination_stairs(
+static int csb_v1_runtime_sample_destination_square(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_InputCommandRuntimeResult *result)
 {
@@ -697,14 +723,12 @@ static void csb_v1_runtime_apply_destination_stairs(
     int level;
     int raw_square;
     int square_type;
-    int stair_up;
-    int target_level;
 
-    if (!profile || !result || !result->movement_step_applied) return;
+    if (!profile || !result || !result->movement_step_attempted) return -1;
     dungeon = (profile->dungeon_handle)
         ? (const CSB_V1_DungeonData *)profile->dungeon_handle
         : csb_v1_dungeon_get_current();
-    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) return;
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) return -1;
 
     level = profile->current_level;
     if (level < 0 || level >= dungeon->level_count) {
@@ -719,13 +743,43 @@ static void csb_v1_runtime_apply_destination_stairs(
         level,
         result->movement_destination_x,
         result->movement_destination_y);
-    if (raw_square < 0) return;
+    if (raw_square < 0) return -1;
 
     square_type = (dungeon->square_bytes == 1)
         ? ((raw_square >> 5) & 0x07)
         : (raw_square & 0x1F);
     result->movement_destination_raw_square = raw_square;
     result->movement_destination_square_type = square_type;
+    if (square_type == 4) {
+        result->movement_destination_door_state = raw_square & 0x07;
+    }
+    return level;
+}
+
+static void csb_v1_runtime_apply_destination_stairs(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int raw_square;
+    int square_type;
+    int stair_up;
+    int target_level;
+
+    if (!profile || !result || !result->movement_step_applied ||
+        result->stair_transition_applied) {
+        return;
+    }
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) return;
+
+    level = csb_v1_runtime_sample_destination_square(profile, result);
+    if (level < 0) return;
+    raw_square = result->movement_destination_raw_square;
+    square_type = result->movement_destination_square_type;
     if (square_type != 3) return;
 
     /* ReDMCSB: CLIKMENU.C F0366 lines ~230-236 reaches C03_ELEMENT_STAIRS
@@ -744,6 +798,48 @@ static void csb_v1_runtime_apply_destination_stairs(
     csb_v1_dungeon_set_current_level(target_level);
     result->new_party_level = target_level;
     result->stair_transition_applied = 1;
+}
+
+static void csb_v1_runtime_apply_destination_pit(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int raw_square;
+    int target_level;
+
+    if (!profile || !result || !result->movement_step_applied ||
+        result->stair_transition_applied) {
+        return;
+    }
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) return;
+
+    level = csb_v1_runtime_sample_destination_square(profile, result);
+    if (level < 0) return;
+    raw_square = result->movement_destination_raw_square;
+    if (result->movement_destination_square_type != 2) return;
+    result->pit_open = (raw_square & 0x08) ? 1 : 0;
+    if (!result->pit_open || (raw_square & 0x01)) return;
+
+    /* ReDMCSB: MOVESENS.C F0267 lines 538-574 handles an open,
+     * non-imaginary C02_ELEMENT_PIT by calling DUNGEON.C F0154 for a
+     * downward map transition, then sets the current map and party
+     * coordinates.  This bounded CSB runtime slice mirrors only the
+     * adjacent level-index fall; full F0154 coordinate pairing, fall damage,
+     * sounds, rope, chained pits, and view redraw timing stay separate. */
+    target_level = level + 1;
+    result->old_party_level = profile->current_level;
+    result->new_party_level = profile->current_level;
+    if (target_level < 0 || target_level >= dungeon->level_count) return;
+
+    profile->current_level = target_level;
+    csb_v1_dungeon_set_current_level(target_level);
+    result->new_party_level = target_level;
+    result->pit_fall_applied = 1;
 }
 
 /* ── Runtime profile API ────────────────────────────────────────────── */
@@ -1085,7 +1181,16 @@ int csb_v1_runtime_process_input_queue(
             local_result.movement_destination_y = step_result.destination_y;
             local_result.disabled_movement_ticks_after =
                 step_result.disabled_movement_ticks_after;
+            csb_v1_runtime_sample_destination_square(profile, &local_result);
+            if (local_result.movement_blocked_by_wall) {
+                if (local_result.movement_destination_square_type == 4) {
+                    local_result.movement_blocked_by_door = 1;
+                } else if (local_result.movement_destination_square_type == 6) {
+                    local_result.movement_blocked_by_fakewall = 1;
+                }
+            }
             csb_v1_runtime_apply_destination_stairs(profile, &local_result);
+            csb_v1_runtime_apply_destination_pit(profile, &local_result);
         }
         break;
     default:
@@ -1100,7 +1205,8 @@ int csb_v1_runtime_process_input_queue(
         (local_result.old_party_x != local_result.new_party_x) ||
         (local_result.old_party_y != local_result.new_party_y) ||
         (local_result.old_party_dir != local_result.new_party_dir) ||
-        (local_result.stair_transition_applied != 0);
+        (local_result.stair_transition_applied != 0) ||
+        (local_result.pit_fall_applied != 0);
 
     if (out_result) *out_result = local_result;
     return 1;
