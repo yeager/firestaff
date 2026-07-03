@@ -1062,6 +1062,8 @@ int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_
     int viewport_width_pixels)
 {
     const CSB_V1_CSBGraphicsM11RuntimePlanEntry *entry = NULL;
+    CSB_V1_CSBGraphicsEntrySpan bitmap_span;
+    CSB_V1_CSBGraphicsEntrySpan mask_span;
     CSB_V1_ViewportCustomBackgroundMask mask;
     uint32_t bitmap_entry_index;
     uint32_t mask_entry_index;
@@ -1098,17 +1100,39 @@ int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_
                                                  bitmap_entry_index,
                                                  mask_entry_index,
                                                  layer);
-    if (!entry) {
-        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    if (entry) {
+        bitmap_span.entry_index = entry->entry_index;
+        bitmap_span.decompressed_size = entry->decompressed_size;
+        mask_span.entry_index = entry->mask_entry_index;
+        mask_span.decompressed_size = entry->mask_decompressed_size;
+    } else {
+        rc = csb_v1_csbgraphics_dat_entry_span(cache->file_buffer,
+                                               cache->file_size,
+                                               bitmap_entry_index,
+                                               &bitmap_span);
+        if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+            bitmap_span.compressed_size == 0u ||
+            bitmap_span.decompressed_size == 0u) {
+            return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+        }
+        rc = csb_v1_csbgraphics_dat_entry_span(cache->file_buffer,
+                                               cache->file_size,
+                                               mask_entry_index,
+                                               &mask_span);
+        if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+            mask_span.compressed_size == 0u ||
+            mask_span.decompressed_size == 0u) {
+            return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+        }
     }
 
     bitmap_words = decode_entry_words32(cache,
-                                        entry->entry_index,
-                                        entry->decompressed_size,
+                                        bitmap_span.entry_index,
+                                        bitmap_span.decompressed_size,
                                         &bitmap_word_count);
     rc = decode_custom_background_mask_for_room(cache,
-                                                entry->mask_entry_index,
-                                                entry->mask_decompressed_size,
+                                                mask_span.entry_index,
+                                                mask_span.decompressed_size,
                                                 room_num,
                                                 &mask,
                                                 &mask_words);

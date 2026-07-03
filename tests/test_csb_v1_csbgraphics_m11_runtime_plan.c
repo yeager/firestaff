@@ -1198,6 +1198,131 @@ static void test_viewport_render_applies_auto_mask_custom_background_layer(void)
     free(bitmap_decoded);
 }
 
+static void test_viewport_render_selects_cell_skin_custom_background_layer(void)
+{
+    enum { VIEWPORT_WORD_STRIDE = 224 / 8, VIEWPORT_WORD_COUNT = (224 / 8) * 136 };
+    uint8_t skin_index_decoded[42u];
+    uint8_t *bitmap_skin0;
+    uint8_t *bitmap_skin1;
+    uint8_t mask_skin0[4u + 16u * 4u + 12u + 2u];
+    uint8_t mask_skin1[4u + 16u * 4u + 12u + 2u];
+    static const uint16_t skin0_words[] = {
+        100u, 0u, 0u, 0u, 104u, 0u, 0u, 0u, 0u
+    };
+    static const uint16_t skin1_words[] = {
+        120u, 0u, 0u, 0u, 124u, 0u, 0u, 0u, 0u
+    };
+    CompressedEntryFixture entries[5];
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    CSB_V1_CSBGraphicsM11RuntimePlan plan;
+    CSB_V1_ViewportConfig cfg;
+    uint8_t framebuffer[320 * 200];
+    uint8_t cell_skins[4 * 4];
+    uint8_t *bytes;
+    size_t size = 0u;
+    size_t i;
+
+    bitmap_skin0 = (uint8_t *)calloc((size_t)(1 + VIEWPORT_WORD_COUNT),
+                                     sizeof(uint32_t));
+    bitmap_skin1 = (uint8_t *)calloc((size_t)(1 + VIEWPORT_WORD_COUNT),
+                                     sizeof(uint32_t));
+    check_true("viewport_custom_bg_cell.fixture_bitmap0", bitmap_skin0 != NULL);
+    check_true("viewport_custom_bg_cell.fixture_bitmap1", bitmap_skin1 != NULL);
+    if (!bitmap_skin0 || !bitmap_skin1) {
+        free(bitmap_skin0);
+        free(bitmap_skin1);
+        return;
+    }
+
+    memset(skin_index_decoded, 0, sizeof(skin_index_decoded));
+    write_le16(skin_index_decoded, 0u, 2u);
+    write_le16(skin_index_decoded, 2u, 6u);
+    write_le16(skin_index_decoded, 4u, 24u);
+    for (i = 0u; i < sizeof(skin0_words) / sizeof(skin0_words[0]); ++i) {
+        write_le16(skin_index_decoded, 6u + i * 2u, skin0_words[i]);
+        write_le16(skin_index_decoded, 24u + i * 2u, skin1_words[i]);
+    }
+
+    write_le32(bitmap_skin0, 0u, 224u);
+    write_le32(bitmap_skin0, (1u + 30u) * 4u, 0x11111111u);
+    write_le32(bitmap_skin0, (1u + 31u) * 4u, 0x22222222u);
+    write_le32(bitmap_skin1, 0u, 224u);
+    write_le32(bitmap_skin1, (1u + 30u) * 4u, 0x33333333u);
+    write_le32(bitmap_skin1, (1u + 31u) * 4u, 0x44444444u);
+    write_background_mask_fixture(mask_skin0, sizeof(mask_skin0), 4u, 0xffffu);
+    write_background_mask_fixture(mask_skin1, sizeof(mask_skin1), 4u, 0xffffu);
+
+    entries[0].entry_index = 1u;
+    entries[0].decoded = skin_index_decoded;
+    entries[0].decoded_size = sizeof(skin_index_decoded);
+    entries[1].entry_index = 100u;
+    entries[1].decoded = bitmap_skin0;
+    entries[1].decoded_size = (size_t)(1 + VIEWPORT_WORD_COUNT) * sizeof(uint32_t);
+    entries[2].entry_index = 104u;
+    entries[2].decoded = mask_skin0;
+    entries[2].decoded_size = sizeof(mask_skin0);
+    entries[3].entry_index = 120u;
+    entries[3].decoded = bitmap_skin1;
+    entries[3].decoded_size = (size_t)(1 + VIEWPORT_WORD_COUNT) * sizeof(uint32_t);
+    entries[4].entry_index = 124u;
+    entries[4].decoded = mask_skin1;
+    entries[4].decoded_size = sizeof(mask_skin1);
+
+    bytes = build_csbgraphics_entries_compressed(entries,
+                                                 sizeof(entries) / sizeof(entries[0]),
+                                                 &size);
+    check_true("viewport_custom_bg_cell.fixture_csbgraphics", bytes != NULL);
+    if (!bytes) {
+        free(bitmap_skin0);
+        free(bitmap_skin1);
+        return;
+    }
+
+    cache_from_bytes(&cache, bytes, size);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&plan);
+    check_int("viewport_custom_bg_cell.add_skin0",
+              csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+                  &cache,
+                  skin0_words,
+                  sizeof(skin0_words) / sizeof(skin0_words[0]),
+                  &plan),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+
+    memset(framebuffer, 0x09, sizeof(framebuffer));
+    memset(cell_skins, 0, sizeof(cell_skins));
+    cell_skins[1u * 4u + 1u] = 1u;
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = framebuffer;
+    cfg.viewport_stride = 320;
+    cfg.csbgraphics_plan = &plan;
+    cfg.csbgraphics_cache = &cache;
+    cfg.custom_background_skin_def_words = skin0_words;
+    cfg.custom_background_skin_def_word_count =
+        sizeof(skin0_words) / sizeof(skin0_words[0]);
+    cfg.custom_background_room_num = 4;
+    cfg.custom_background_cell_skins = cell_skins;
+    cfg.custom_background_cell_skin_width = 4;
+    cfg.custom_background_cell_skin_height = 4;
+
+    csb_v1_viewport_render_frame(&cfg, 0, 1, 4);
+    check_int("viewport_custom_bg_cell.selected_skin",
+              cfg.custom_background_selected_skin_num, 1);
+    check_int("viewport_custom_bg_cell.used_default",
+              cfg.custom_background_used_default_skin, 0);
+    check_int("viewport_custom_bg_cell.applied_count",
+              cfg.custom_background_applied_count, 1);
+    check_int("viewport_custom_bg_cell.first_pixel",
+              framebuffer[34 * 320 + 16], 3);
+    check_int("viewport_custom_bg_cell.ninth_pixel",
+              framebuffer[34 * 320 + 24], 4);
+
+    cache.file_buffer = NULL;
+    csb_v1_csbgraphics_dat_real_cache_free(&cache);
+    free(bytes);
+    free(bitmap_skin0);
+    free(bitmap_skin1);
+}
+
 int main(void)
 {
     test_build_known_c040_plan();
@@ -1210,6 +1335,7 @@ int main(void)
     test_custom_background_room_layer_auto_mask_apply();
     test_viewport_render_applies_configured_custom_background_layer();
     test_viewport_render_applies_auto_mask_custom_background_layer();
+    test_viewport_render_selects_cell_skin_custom_background_layer();
     check_true("result_name",
                strcmp(csb_v1_csbgraphics_m11_runtime_plan_result_name(
                           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY),

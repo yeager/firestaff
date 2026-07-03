@@ -22,6 +22,7 @@
 
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
+#include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
@@ -1167,6 +1168,7 @@ void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg) {
     cfg->dungeon_grid = NULL;
     cfg->dungeon_width = 0;
     cfg->dungeon_height = 0;
+    cfg->custom_background_loaded_level = -1;
     cfg->custom_background_room_num = -1;
 }
 
@@ -1389,7 +1391,10 @@ static void csb_v1_viewport_unpack_4bpp_word(uint32_t word, uint8_t *row)
 }
 
 static int csb_v1_viewport_apply_configured_custom_backgrounds(
-    CSB_V1_ViewportConfig *cfg)
+    CSB_V1_ViewportConfig *cfg,
+    int party_dir,
+    int party_x,
+    int party_y)
 {
     const int viewport_word_stride = DM1_VIEWPORT_WIDTH / 8;
     const size_t viewport_word_count =
@@ -1397,19 +1402,62 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
     const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
     const CSB_V1_CSBGraphicsDatRealCache *cache;
     uint32_t *viewport_words;
+    uint16_t selected_skin_def_words[CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS];
+    const uint16_t *skin_def_words;
+    size_t skin_def_word_count;
     int layer;
     int applied = 0;
 
     if (!cfg || !cfg->viewport_pixels ||
         !cfg->csbgraphics_plan || !cfg->csbgraphics_cache ||
-        !cfg->custom_background_skin_def_words ||
-        cfg->custom_background_skin_def_word_count == 0u ||
         cfg->custom_background_room_num < 0) {
         if (cfg) cfg->custom_background_applied_count = 0;
         return 0;
     }
     plan = (const CSB_V1_CSBGraphicsM11RuntimePlan *)cfg->csbgraphics_plan;
     cache = (const CSB_V1_CSBGraphicsDatRealCache *)cfg->csbgraphics_cache;
+    skin_def_words = cfg->custom_background_skin_def_words;
+    skin_def_word_count = cfg->custom_background_skin_def_word_count;
+    cfg->custom_background_selected_skin_num = 0;
+    cfg->custom_background_used_default_skin = 0;
+
+    if ((cfg->custom_background_cell_skins &&
+         cfg->custom_background_cell_skin_width > 0 &&
+         cfg->custom_background_cell_skin_height > 0) ||
+        cfg->custom_background_default_skin > 0) {
+        CSB_V1_CustomBackgroundsRoomSlotSelection selection;
+        if (csb_v1_viewport_custom_backgrounds_room_slot_select_pc34(
+                cfg->custom_background_cell_skins,
+                cfg->custom_background_cell_skin_width,
+                cfg->custom_background_cell_skin_height,
+                cfg->custom_background_loaded_level,
+                party_x,
+                party_y,
+                party_dir,
+                cfg->custom_background_room_num,
+                cfg->custom_background_default_skin,
+                &selection) &&
+            selection.has_custom_background_entry) {
+            size_t selected_word_count = 0u;
+            int rc = csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def_for_skin(
+                cache,
+                (uint32_t)selection.selected_skin,
+                selected_skin_def_words,
+                CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS,
+                &selected_word_count);
+            cfg->custom_background_selected_skin_num = selection.selected_skin;
+            cfg->custom_background_used_default_skin = selection.used_default_skin;
+            if (rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK &&
+                selected_word_count > 0u) {
+                skin_def_words = selected_skin_def_words;
+                skin_def_word_count = selected_word_count;
+            }
+        }
+    }
+    if (!skin_def_words || skin_def_word_count == 0u) {
+        cfg->custom_background_applied_count = 0;
+        return 0;
+    }
 
     viewport_words = (uint32_t *)calloc(viewport_word_count,
                                         sizeof(*viewport_words));
@@ -1442,8 +1490,8 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
                 cache,
                 cfg->custom_background_room_num,
                 (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
-                cfg->custom_background_skin_def_words,
-                cfg->custom_background_skin_def_word_count,
+                skin_def_words,
+                skin_def_word_count,
                 &cfg->custom_background_layer_masks[layer],
                 viewport_words,
                 viewport_word_count,
@@ -1454,8 +1502,8 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
                 cache,
                 cfg->custom_background_room_num,
                 (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
-                cfg->custom_background_skin_def_words,
-                cfg->custom_background_skin_def_word_count,
+                skin_def_words,
+                skin_def_word_count,
                 viewport_words,
                 viewport_word_count,
                 DM1_VIEWPORT_WIDTH);
@@ -1547,7 +1595,8 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * dm1_viewport_3d_draw_csb_near_wall, which are invoked from the
      * dm1_viewport_3d_draw_frame wall loop for D3L2/D3R2/D2L2/D2R2 positions. */
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
-    (void)csb_v1_viewport_apply_configured_custom_backgrounds(cfg);
+    (void)csb_v1_viewport_apply_configured_custom_backgrounds(
+        cfg, party_dir, party_x, party_y);
     csb_v1_viewport_draw_runtime_projectile_overlays(
         cfg, party_dir, party_x, party_y);
     csb_v1_viewport_draw_runtime_explosion_overlays(
