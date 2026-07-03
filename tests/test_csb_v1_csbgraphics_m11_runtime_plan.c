@@ -250,6 +250,48 @@ static uint8_t *build_header_only_entry(uint32_t entry_index,
     return buf;
 }
 
+static uint8_t *build_header_only_entries(const uint16_t *entry_ids,
+                                          size_t entry_count,
+                                          uint16_t comp_size,
+                                          uint16_t deco_size,
+                                          size_t *out_size)
+{
+    uint32_t max_entry = 0u;
+    uint32_t count;
+    size_t header_size;
+    size_t payload_cursor;
+    size_t i;
+    uint8_t *buf;
+
+    if (!entry_ids || entry_count == 0u || !out_size || comp_size == 0u) {
+        return NULL;
+    }
+    for (i = 0u; i < entry_count; ++i) {
+        if (entry_ids[i] > max_entry) {
+            max_entry = entry_ids[i];
+        }
+    }
+    count = max_entry + 1u;
+    header_size = 2u + (size_t)count * 4u;
+    buf = (uint8_t *)calloc(1u,
+                            header_size + (size_t)comp_size * entry_count);
+    if (!buf) {
+        return NULL;
+    }
+    write_be16(buf, 0u, (uint16_t)count);
+    payload_cursor = header_size;
+    for (i = 0u; i < entry_count; ++i) {
+        uint16_t id = entry_ids[i];
+        write_be16(buf, 2u + (size_t)id * 2u, comp_size);
+        write_be16(buf, 2u + (size_t)count * 2u + (size_t)id * 2u,
+                   deco_size);
+        buf[payload_cursor] = (uint8_t)(0x80u + i);
+        payload_cursor += comp_size;
+    }
+    *out_size = header_size + (size_t)comp_size * entry_count;
+    return buf;
+}
+
 static void test_build_known_c040_plan(void)
 {
     CSB_V1_CSBGraphicsDatRealCache cache;
@@ -381,11 +423,103 @@ static void test_unknown_geometry_is_honest(void)
     free(bytes);
 }
 
+static void test_custom_background_skin_def_pairs_are_deferred(void)
+{
+    static const uint16_t entry_ids[] = {
+        100u, 101u, 102u, 104u, 105u, 106u
+    };
+    static const uint16_t skin_def_words[] = {
+        100u, 101u, 102u, 0u, 104u, 105u, 106u
+    };
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    CSB_V1_CSBGraphicsM11RuntimePlan plan;
+    CSB_V1_CSBGraphicsM11Binding binding;
+    const CSB_V1_CSBGraphicsM11RuntimePlanEntry *large;
+    const CSB_V1_CSBGraphicsM11RuntimePlanEntry *middle;
+    const CSB_V1_CSBGraphicsM11RuntimePlanEntry *near;
+    uint8_t framebuffer[CSB_V1_CSBGRAPHICS_M11_SOURCE_W *
+                        CSB_V1_CSBGRAPHICS_M11_SOURCE_H];
+    uint8_t *bytes;
+    size_t size = 0u;
+
+    bytes = build_header_only_entries(entry_ids,
+                                      sizeof(entry_ids) / sizeof(entry_ids[0]),
+                                      1u, 64u, &size);
+    check_true("custom_bg.fixture", bytes != NULL);
+    if (!bytes) {
+        return;
+    }
+    cache_from_bytes(&cache, bytes, size);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&plan);
+    check_int("custom_bg.add_skin_def",
+              csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+                  &cache,
+                  skin_def_words,
+                  sizeof(skin_def_words) / sizeof(skin_def_words[0]),
+                  &plan),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("custom_bg.ready", plan.ready, 1);
+    check_int("custom_bg.planned_count", (int)plan.planned_count, 3);
+    check_int("custom_bg.pair_count",
+              (int)plan.custom_background_pair_count, 3);
+    check_int("custom_bg.supported_present",
+              (int)plan.supported_present_count, 3);
+
+    large = csb_v1_csbgraphics_m11_runtime_plan_find_entry(&plan, 100u);
+    middle = csb_v1_csbgraphics_m11_runtime_plan_find_entry(&plan, 102u);
+    near = csb_v1_csbgraphics_m11_runtime_plan_find_entry(&plan, 101u);
+    check_true("custom_bg.large.find", large != NULL);
+    check_true("custom_bg.middle.find", middle != NULL);
+    check_true("custom_bg.near.find", near != NULL);
+    if (large) {
+        check_int("custom_bg.large.mask", (int)large->mask_entry_index, 104);
+        check_int("custom_bg.large.route", large->route,
+                  CSB_V1_CSBGRAPHICS_M11_ROUTE_VIEWPORT_CUSTOM_BACKGROUND);
+        check_int("custom_bg.large.deferred",
+                  large->deferred_masked_composite, 1);
+        check_int("custom_bg.large.layer",
+                  large->custom_background_layer,
+                  CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_LARGE);
+    }
+    if (middle) {
+        check_int("custom_bg.middle.mask", (int)middle->mask_entry_index, 106);
+        check_int("custom_bg.middle.layer",
+                  middle->custom_background_layer,
+                  CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_MIDDLE);
+    }
+    if (near) {
+        check_int("custom_bg.near.mask", (int)near->mask_entry_index, 105);
+        check_int("custom_bg.near.layer",
+                  near->custom_background_layer,
+                  CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_NEAR);
+    }
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&binding, 0, sizeof(binding));
+    check_int("custom_bg.apply_deferred",
+              csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
+                  &plan, &cache, 100u, framebuffer,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  &binding),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_DEFERRED_COMPOSITE);
+    check_true("custom_bg.route_name",
+               strstr(csb_v1_csbgraphics_m11_route_name(
+                          CSB_V1_CSBGRAPHICS_M11_ROUTE_VIEWPORT_CUSTOM_BACKGROUND),
+                      "custom-background") != NULL);
+
+    cache.file_buffer = NULL;
+    csb_v1_csbgraphics_dat_real_cache_free(&cache);
+    free(bytes);
+}
+
 int main(void)
 {
     test_build_known_c040_plan();
     test_explicit_geometry_apply();
     test_unknown_geometry_is_honest();
+    test_custom_background_skin_def_pairs_are_deferred();
     check_true("result_name",
                strcmp(csb_v1_csbgraphics_m11_runtime_plan_result_name(
                           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY),
