@@ -18,6 +18,7 @@
 
 #include "csb_v1_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -150,6 +151,53 @@ _Static_assert(CSB_V1_VARIANT_ST_F20E == CSB_V1_VARIANT_COUNT - 1,
 static char g_csb_save_dir_buf[512];
 static char g_csb_save_path_buf[512];
 static int  g_save_dir_init = 0;
+
+#define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
+#define CSB_V1_RUNTIME_SAVE_VERSION 1u
+
+typedef struct {
+    uint32_t magic;
+    uint32_t version;
+    uint32_t byte_size;
+    int32_t variant_id;
+    int32_t difficulty;
+    uint32_t dungeon_seed;
+    uint16_t dungeon_game_id;
+    uint16_t reserved0;
+    int32_t current_level;
+    int32_t current_world;
+    int32_t level_count;
+    int32_t world_count;
+    int32_t party_x;
+    int32_t party_y;
+    int32_t party_z;
+    int32_t party_dir;
+    int32_t champion_count;
+    int32_t leader_index;
+    int32_t magic_caster_index;
+    int32_t party_state_valid;
+    int32_t state;
+    int32_t paused;
+    int32_t victory;
+    int32_t game_over;
+    uint32_t entrance_map_index;
+    uint32_t start_map_index;
+    uint64_t game_ticks;
+    uint32_t game_time;
+    uint64_t total_play_ms;
+    uint32_t tick_count;
+    struct DM1_EventQueue_V1 timeline_queue;
+    struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
+    uint32_t timeline_dispatch_count;
+    struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
+    struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
+    uint32_t input_dispatch_count;
+    CSB_V1_ChaosMagicState chaos_magic;
+    CSB_V1_PartyState party_state;
+} CSB_V1_RuntimeSaveImageV1;
+
+static int csb_v1_runtime_first_living_champion(
+    const CSB_V1_PartyState *party);
 
 static void csb_v1_init_save_dir(void)
 {
@@ -402,6 +450,179 @@ const char *csb_v1_runtime_save_path(int slot)
              "%s%ccsb_save_%d.fsav",
              g_csb_save_dir_buf, CSB_PATH_SEP, slot);
     return g_csb_save_path_buf;
+}
+
+static uint16_t csb_v1_runtime_effective_game_id(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    if (profile && profile->dungeon_game_id) {
+        return profile->dungeon_game_id;
+    }
+    return 0x1234u;
+}
+
+static void csb_v1_runtime_capture_save_image(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_RuntimeSaveImageV1 *image)
+{
+    memset(image, 0, sizeof(*image));
+    image->magic = CSB_V1_RUNTIME_SAVE_MAGIC;
+    image->version = CSB_V1_RUNTIME_SAVE_VERSION;
+    image->byte_size = (uint32_t)sizeof(*image);
+    image->variant_id = (int32_t)profile->variant_id;
+    image->difficulty = (int32_t)profile->difficulty;
+    image->dungeon_seed = profile->dungeon_seed;
+    image->dungeon_game_id = csb_v1_runtime_effective_game_id(profile);
+    image->current_level = profile->current_level;
+    image->current_world = profile->current_world;
+    image->level_count = profile->level_count;
+    image->world_count = profile->world_count;
+    image->party_x = profile->party_x;
+    image->party_y = profile->party_y;
+    image->party_z = profile->party_z;
+    image->party_dir = profile->party_dir;
+    image->champion_count = profile->champion_count;
+    image->leader_index = profile->leader_index;
+    image->magic_caster_index = profile->magic_caster_index;
+    image->party_state_valid = profile->party_state_valid;
+    image->state = profile->state;
+    image->paused = profile->paused;
+    image->victory = profile->victory;
+    image->game_over = profile->game_over;
+    image->entrance_map_index = profile->entrance_map_index;
+    image->start_map_index = profile->start_map_index;
+    image->game_ticks = profile->game_ticks;
+    image->game_time = profile->game_time;
+    image->total_play_ms = profile->total_play_ms;
+    image->tick_count = profile->tick_count;
+    image->timeline_queue = profile->timeline_queue;
+    image->last_timeline_dispatch = profile->last_timeline_dispatch;
+    image->timeline_dispatch_count = profile->timeline_dispatch_count;
+    image->input_command_queue = profile->input_command_queue;
+    image->last_input_dispatch = profile->last_input_dispatch;
+    image->input_dispatch_count = profile->input_dispatch_count;
+    image->chaos_magic = profile->chaos_magic;
+    image->party_state = profile->party_state;
+}
+
+static int csb_v1_runtime_apply_save_image(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeSaveImageV1 *image,
+    const CSB_V1_SaveHeader *header)
+{
+    int leader;
+    if (!profile || !image || !header) return -1;
+    if (image->magic != CSB_V1_RUNTIME_SAVE_MAGIC ||
+        image->version != CSB_V1_RUNTIME_SAVE_VERSION ||
+        image->byte_size != sizeof(*image)) {
+        return -1;
+    }
+    if (header->Magic != CSB_V1_SAVE_MAGIC_CSB ||
+        header->GameID != image->dungeon_game_id) {
+        return -1;
+    }
+    if (image->champion_count < 0 ||
+        image->champion_count > CSB_V1_MAX_CHAMPIONS ||
+        image->party_state.ChampionCount < 0 ||
+        image->party_state.ChampionCount > CSB_V1_MAX_CHAMPIONS ||
+        image->party_dir < 0 || image->party_dir > 3) {
+        return -1;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 lines 2721-2800 restores GLOBAL_DATA,
+     * PARTY, EVENTS, and TIMELINE into live globals before play resumes.
+     * Firestaff's CSB profile currently owns those boundaries directly in
+     * this POD runtime image; asset paths and the loaded dungeon handle stay
+     * with the caller's already booted profile. */
+    profile->variant_id = (CSB_V1_VariantId)image->variant_id;
+    profile->difficulty = (CSB_V1_Difficulty)image->difficulty;
+    profile->dungeon_seed = image->dungeon_seed;
+    profile->dungeon_game_id = image->dungeon_game_id;
+    profile->current_level = image->current_level;
+    profile->current_world = image->current_world;
+    profile->level_count = image->level_count;
+    profile->world_count = image->world_count;
+    profile->party_x = image->party_x;
+    profile->party_y = image->party_y;
+    profile->party_z = image->party_z;
+    profile->party_dir = image->party_dir & 3;
+    profile->champion_count = image->champion_count;
+    profile->leader_index = image->leader_index;
+    profile->magic_caster_index = image->magic_caster_index;
+    profile->party_state_valid = image->party_state_valid ? 1 : 0;
+    profile->state = image->state;
+    profile->paused = image->paused;
+    profile->victory = image->victory;
+    profile->game_over = image->game_over;
+    profile->entrance_map_index = image->entrance_map_index;
+    profile->start_map_index = image->start_map_index;
+    profile->game_ticks = image->game_ticks;
+    profile->game_time = image->game_time;
+    profile->total_play_ms = image->total_play_ms;
+    profile->tick_count = image->tick_count;
+    profile->timeline_queue = image->timeline_queue;
+    profile->last_timeline_dispatch = image->last_timeline_dispatch;
+    profile->timeline_dispatch_count = image->timeline_dispatch_count;
+    profile->input_command_queue = image->input_command_queue;
+    profile->last_input_dispatch = image->last_input_dispatch;
+    profile->input_dispatch_count = image->input_dispatch_count;
+    profile->chaos_magic = image->chaos_magic;
+    profile->party_state = image->party_state;
+
+    profile->party_state.PartyMapX = profile->party_x;
+    profile->party_state.PartyMapY = profile->party_y;
+    profile->party_state.PartyDirection = (uint8_t)(profile->party_dir & 3);
+    profile->party_state.MagicCasterIndex = profile->magic_caster_index;
+    leader = profile->leader_index;
+    if (leader < -1 || leader >= profile->party_state.ChampionCount) {
+        leader = csb_v1_runtime_first_living_champion(&profile->party_state);
+    }
+    profile->leader_index = leader;
+    profile->party_state.LeaderIndex = leader;
+    profile->timeline_queue.gameTick = profile->game_time;
+    return 0;
+}
+
+int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
+                                     const char *path)
+{
+    CSB_V1_RuntimeSaveImageV1 image;
+    CSB_V1_SaveHeader header;
+    uint16_t game_id;
+
+    if (!profile || !path) return -1;
+    game_id = csb_v1_runtime_effective_game_id(profile);
+    csb_v1_runtime_capture_save_image(profile, &image);
+    memset(&header, 0, sizeof(header));
+    if (csb_v1_save_header_build(&header,
+                                  CSB_V1_SAVE_MAGIC_CSB,
+                                  game_id,
+                                  profile->dungeon_seed,
+                                  profile->party_x,
+                                  profile->party_y,
+                                  profile->party_z,
+                                  profile->party_dir,
+                                  profile->champion_count,
+                                  profile->game_time,
+                                  (uint32_t)profile->total_play_ms) != 0) {
+        return -1;
+    }
+    return csb_v1_save_game(path, &image, (int)sizeof(image), &header);
+}
+
+int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
+                                       const char *path)
+{
+    CSB_V1_RuntimeSaveImageV1 image;
+    CSB_V1_SaveHeader header;
+    int result;
+
+    if (!profile || !path) return -1;
+    memset(&image, 0, sizeof(image));
+    memset(&header, 0, sizeof(header));
+    result = csb_v1_load_game(path, &image, (int)sizeof(image), &header);
+    if (result != CSB_V1_LOAD_OK) return result;
+    return csb_v1_runtime_apply_save_image(profile, &image, &header);
 }
 
 /* ── Internal tick helper ─────────────────────────────────────────────── */

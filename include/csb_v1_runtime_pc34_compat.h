@@ -486,6 +486,16 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
 const char *csb_v1_runtime_save_dir(void);
 const char *csb_v1_runtime_save_path(int slot);
 
+/* Save/reload the current CSB runtime profile through the CSB save header
+ * path.  The loaded profile must already be initialized/booted enough to
+ * own its asset paths/dungeon handle; the save payload restores the live
+ * runtime state that ReDMCSB LOADSAVE.C F0435 copies from GLOBAL_DATA,
+ * PARTY, EVENTS, and TIMELINE into the running game. */
+int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
+                                     const char *path);
+int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
+                                       const char *path);
+
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *csb_v1_runtime_source_evidence(void);
 

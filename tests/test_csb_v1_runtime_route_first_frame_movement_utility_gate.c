@@ -43,18 +43,6 @@
 static int passed;
 static int failed;
 
-typedef struct CSB_V1_RouteSavePrefix {
-    int32_t party_x;
-    int32_t party_y;
-    int32_t party_z;
-    int32_t party_dir;
-    int32_t champion_count;
-    int32_t leader_index;
-    uint32_t game_time;
-    uint32_t total_play_ms;
-    uint32_t route_magic;
-} CSB_V1_RouteSavePrefix;
-
 #define CHECK(cond, msg) do { \
     if (cond) { ++passed; printf("  PASS: %s\n", msg); } \
     else { ++failed; printf("  FAIL: %s\n", msg); } \
@@ -349,19 +337,19 @@ int main(void)
     char dm1_save_path[ROUTE_PATH_MAX];
     char route_save_path[ROUTE_PATH_MAX];
     CSB_V1_BootProfile boot;
+    CSB_V1_BootProfile loaded_boot;
     CSB_V1_PartyState party;
     struct Dm1V1InputCommandQueuePc34Compat queue;
-    CSB_V1_SaveHeader save_header;
     CSB_V1_SaveHeader loaded_header;
-    CSB_V1_RouteSavePrefix saved_route;
-    CSB_V1_RouteSavePrefix loaded_route;
     uint16_t route_game_id;
     unsigned char fb_before[ROUTE_FB_WIDTH * ROUTE_FB_HEIGHT];
     unsigned char fb_after[ROUTE_FB_WIDTH * ROUTE_FB_HEIGHT];
     unsigned char fb_final[ROUTE_FB_WIDTH * ROUTE_FB_HEIGHT];
+    unsigned char fb_reloaded[ROUTE_FB_WIDTH * ROUTE_FB_HEIGHT];
     int before_touched = 0;
     int after_touched = 0;
     int final_touched = 0;
+    int reloaded_touched = 0;
 
     printf("=== CSB V1 runtime route first-frame/movement/Utility gate ===\n\n");
 
@@ -476,71 +464,98 @@ int main(void)
           "final viewport frame renders after multi-step route");
     CHECK(final_touched > 0,
           "final viewport frame touches the viewport band");
+    boot.runtime.magic_caster_index = 1;
+    boot.runtime.party_state.MagicCasterIndex = 1;
+    csb_v1_runtime_tick(&boot.runtime, CSB_V1_TICK_MS_NOMINAL * 2u);
+    CHECK_EQ(boot.runtime.game_time, 2,
+             "route advances runtime game time before save");
 
-    memset(&saved_route, 0, sizeof(saved_route));
-    memset(&loaded_route, 0, sizeof(loaded_route));
-    memset(&save_header, 0, sizeof(save_header));
+    memset(&loaded_boot, 0, sizeof(loaded_boot));
     memset(&loaded_header, 0, sizeof(loaded_header));
     route_game_id = boot.runtime.dungeon_game_id ?
                     boot.runtime.dungeon_game_id : 0x1234u;
-    saved_route.party_x = boot.runtime.party_x;
-    saved_route.party_y = boot.runtime.party_y;
-    saved_route.party_z = boot.runtime.party_z;
-    saved_route.party_dir = boot.runtime.party_dir;
-    saved_route.champion_count = boot.runtime.champion_count;
-    saved_route.leader_index = boot.runtime.leader_index;
-    saved_route.game_time = boot.runtime.game_time;
-    saved_route.total_play_ms = (uint32_t)boot.runtime.total_play_ms;
-    saved_route.route_magic = 0x43534252u; /* CSBR */
-    csb_v1_save_header_build(&save_header,
-                             CSB_V1_SAVE_MAGIC_CSB,
-                             route_game_id,
-                             boot.runtime.dungeon_seed,
-                             boot.runtime.party_x,
-                             boot.runtime.party_y,
-                             boot.runtime.party_z,
-                             boot.runtime.party_dir,
-                             boot.runtime.champion_count,
-                             boot.runtime.game_time,
-                             (uint32_t)boot.runtime.total_play_ms);
-    CHECK_EQ(csb_v1_save_game(route_save_path,
-                              &saved_route,
-                              sizeof(saved_route),
-                              &save_header),
+    CHECK_EQ(csb_v1_runtime_save_game_to_path(&boot.runtime,
+                                              route_save_path),
              CSB_V1_SAVE_OK,
-             "bounded save prefix writes multi-step route state");
+             "runtime save writes multi-step route state through CSB save path");
     CHECK_EQ(csb_v1_save_verify_compatible(route_save_path,
                                            CSB_V1_SAVE_MAGIC_CSB,
                                            route_game_id),
              CSB_V1_LOAD_OK,
-             "bounded save prefix verifies CSB magic/game id");
+             "runtime save verifies CSB magic/game id");
     CHECK_EQ(csb_v1_load_game(route_save_path,
-                              &loaded_route,
-                              sizeof(loaded_route),
+                              NULL,
+                              0,
                               &loaded_header),
              CSB_V1_LOAD_OK,
-             "bounded save prefix reloads multi-step route state");
-    CHECK_EQ(loaded_route.route_magic, saved_route.route_magic,
-             "bounded save prefix route magic survives reload");
-    CHECK_EQ(loaded_route.party_x, boot.runtime.party_x,
-             "bounded save prefix reload preserves final x");
-    CHECK_EQ(loaded_route.party_y, boot.runtime.party_y,
-             "bounded save prefix reload preserves final y");
-    CHECK_EQ(loaded_route.party_dir, boot.runtime.party_dir,
-             "bounded save prefix reload preserves facing");
-    CHECK_EQ(loaded_route.champion_count, boot.runtime.champion_count,
-             "bounded save prefix reload preserves champion count");
-    CHECK_EQ(loaded_route.leader_index, boot.runtime.leader_index,
-             "bounded save prefix reload preserves leader index");
+             "runtime save supports header-only CSB load");
     CHECK_EQ(loaded_header.Magic, CSB_V1_SAVE_MAGIC_CSB,
-             "bounded save prefix header keeps CSB magic");
+             "runtime save header keeps CSB magic");
     CHECK_EQ(loaded_header.GameID, route_game_id,
-             "bounded save prefix header keeps game id");
+             "runtime save header keeps game id");
     CHECK_EQ(loaded_header.PartyMapY, boot.runtime.party_y,
-             "bounded save prefix header follows final y");
+             "runtime save header follows final y");
     CHECK_EQ(loaded_header.ChampionCount, boot.runtime.champion_count,
-             "bounded save prefix header follows imported champion count");
+             "runtime save header follows imported champion count");
 
+    csb_v1_boot_profile_init(&loaded_boot);
+    snprintf(loaded_boot.asset_root, sizeof(loaded_boot.asset_root), "%s", tmp_dir);
+    snprintf(loaded_boot.dungeon_path, sizeof(loaded_boot.dungeon_path), "%s", dungeon_path);
+    snprintf(loaded_boot.graphics_path, sizeof(loaded_boot.graphics_path), "%s", graphics_path);
+    snprintf(loaded_boot.dungeon_md5, sizeof(loaded_boot.dungeon_md5),
+             "6695d2acebce49f95db1d8f3a5c733de");
+    snprintf(loaded_boot.graphics_md5, sizeof(loaded_boot.graphics_md5),
+             "61fbfd56887c94adc26888a9491c6611");
+    loaded_boot.dungeon_verified = 1;
+    loaded_boot.graphics_verified = 1;
+    loaded_boot.assets_verified = 1;
+    loaded_boot.variant_id = CSB_V1_VARIANT_PC34_EN;
+    loaded_boot.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+    loaded_boot.entrance_map_index = 255U;
+    loaded_boot.start_map_index = 0U;
+
+    CHECK_EQ(csb_v1_boot_enter_game(&loaded_boot), 0,
+             "fresh verified profile enters CSB runtime before reload");
+    CHECK_EQ(csb_v1_runtime_load_game_from_path(&loaded_boot.runtime,
+                                                route_save_path),
+             CSB_V1_LOAD_OK,
+             "runtime save reloads into a fresh CSB runtime profile");
+    CHECK_EQ(loaded_boot.runtime.party_x, boot.runtime.party_x,
+             "runtime reload preserves final x");
+    CHECK_EQ(loaded_boot.runtime.party_y, boot.runtime.party_y,
+             "runtime reload preserves final y");
+    CHECK_EQ(loaded_boot.runtime.party_dir, boot.runtime.party_dir,
+             "runtime reload preserves facing");
+    CHECK_EQ(loaded_boot.runtime.champion_count, boot.runtime.champion_count,
+             "runtime reload preserves champion count");
+    CHECK_EQ(loaded_boot.runtime.leader_index, boot.runtime.leader_index,
+             "runtime reload preserves leader index");
+    CHECK_EQ(loaded_boot.runtime.magic_caster_index,
+             boot.runtime.magic_caster_index,
+             "runtime reload preserves magic caster index");
+    CHECK_EQ(loaded_boot.runtime.game_time, boot.runtime.game_time,
+             "runtime reload preserves game time");
+    CHECK_EQ((uint32_t)loaded_boot.runtime.total_play_ms,
+             (uint32_t)boot.runtime.total_play_ms,
+             "runtime reload preserves total play time");
+    CHECK_EQ(loaded_boot.runtime.party_state.PartyMapX, boot.runtime.party_x,
+             "runtime reload reanchors party-state x");
+    CHECK_EQ(loaded_boot.runtime.party_state.PartyMapY, boot.runtime.party_y,
+             "runtime reload reanchors party-state y");
+    CHECK_EQ(loaded_boot.runtime.party_state.PartyDirection,
+             boot.runtime.party_dir,
+             "runtime reload reanchors party-state direction");
+    CHECK_EQ(loaded_boot.runtime.party_state.MagicCasterIndex,
+             boot.runtime.magic_caster_index,
+             "runtime reload reanchors party-state caster index");
+    CHECK(render_route_frame(&loaded_boot.runtime,
+                             fb_reloaded,
+                             &reloaded_touched),
+          "reloaded runtime viewport frame renders");
+    CHECK(reloaded_touched > 0,
+          "reloaded runtime viewport frame touches the viewport band");
+
+    csb_v1_boot_cleanup(&loaded_boot);
     csb_v1_boot_cleanup(&boot);
     CHECK(csb_v1_dungeon_get_current() == NULL,
           "route cleanup clears current dungeon");
@@ -548,7 +563,7 @@ int main(void)
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
-        puts("ok: CSB V1 bounded route joins Utility NEW_GAME, runtime boot, first viewport frame, repeated queued movement with a blocked wall step, post-route render, and bounded save-prefix roundtrip");
+        puts("ok: CSB V1 bounded route joins Utility NEW_GAME, runtime boot, first viewport frame, repeated queued movement with a blocked wall step, post-route render, runtime save/reload, and reloaded render");
         puts("nonClaim=not full CSB playability, full save compatibility, original capture, or pixel parity");
     }
     return failed == 0 ? 0 : 1;
