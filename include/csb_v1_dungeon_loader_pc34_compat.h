@@ -2,6 +2,7 @@
 #ifndef FIRESTAFF_CSB_V1_DUNGEON_LOADER_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_DUNGEON_LOADER_PC34_COMPAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* CSB dungeon.dat shares the DM1 format with extensions:
@@ -113,6 +114,25 @@ const uint8_t *csb_v1_dungeon_get_thing_record(
     int *out_type,
     int *out_index,
     int *out_size);
+
+/* Locate a CSBWin Expool record in DB11. Returns 1 when found and fills
+ * out_bytes/out_size with the record payload bytes, or 0 when the pool is
+ * absent, malformed, or the key is missing.
+ *
+ * Source: CSBWin data.cpp EXPOOL::Locate lines 1575-1599. */
+int csb_v1_dungeon_expool_locate_record(
+    const CSB_V1_DungeonData *d,
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+
+/* Adapter matching CSB_V1_SkinCacheRecordLookup. Pass CSB_V1_DungeonData*
+ * as user. */
+int csb_v1_dungeon_skin_cache_record_lookup(
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size,
+    void *user);
 
 /* ── Tile decoding ─────────────────────────────────────────────────── */
 
