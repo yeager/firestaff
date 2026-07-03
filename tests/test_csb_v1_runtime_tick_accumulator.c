@@ -1867,6 +1867,66 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
         &dungeon,
         raw,
         sizeof(raw),
+        1,
+        0,
+        (uint8_t)(1u << 5),
+        (uint16_t)((51u << 7) |
+                   DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ),
+        (uint16_t)(1u << 2),
+        (uint16_t)(6u | (8u << 8)));
+    dungeon.thing_data_bases[5] = 82;
+    dungeon.thing_type_counts[5] = 2;
+    test_put_le16(raw, 66, (uint16_t)((1u << 14) | (3u << 10)));
+    test_put_le16(raw, 82, 0xffffu);
+    test_put_le16(raw, 86, 0xffffu);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_SET,
+        1,
+        0,
+        1);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall C009 new-object launcher event fires on the current tick");
+    type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((type_data & 0x007fu) == 0u,
+          "C06 new-object once-only launcher disables the source sensor type");
+    CHECK(profile.projectiles.count == 2,
+          "C06 new-object launcher creates two CSB runtime projectiles");
+    CHECK(profile.projectiles.entries[0].projectileCategory ==
+              PROJECTILE_CATEGORY_KINETIC &&
+              profile.projectiles.entries[1].projectileCategory ==
+                  PROJECTILE_CATEGORY_KINETIC,
+          "C06 new-object launcher creates kinetic projectiles");
+    CHECK((uint16_t)profile.projectiles.entries[0].reserved1 ==
+              (uint16_t)(5u << 10) &&
+              (uint16_t)profile.projectiles.entries[1].reserved1 ==
+                  (uint16_t)((5u << 10) | 1u),
+          "C06 new-object launcher preserves allocated associated things");
+    CHECK(test_get_le16(raw, 82) == 0xfffeu &&
+              test_get_le16(raw, 84) == 27u &&
+              test_get_le16(raw, 86) == 0xfffeu &&
+              test_get_le16(raw, 88) == 27u,
+          "C06 new-object launcher materializes two arrow weapon records");
+    CHECK(profile.projectiles.entries[0].mapX == 2 &&
+              profile.projectiles.entries[0].mapY == 0 &&
+              profile.projectiles.entries[0].cell == 3 &&
+              profile.projectiles.entries[1].cell == 0,
+          "C06 new-object launcher starts one square ahead with opposite/next cells");
+    CHECK(profile.projectiles.entries[0].kineticEnergy == 6 &&
+              profile.projectiles.entries[0].stepEnergy == 8 &&
+              profile.projectiles.entries[0].attack == 100,
+          "C06 new-object launcher carries kinetic, step, and source attack values");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_MOVE_PROJECTILE) == 2,
+          "C06 new-object launcher schedules one C49 movement event per projectile");
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
         0,
         1,
         (uint8_t)(0u << 5),
