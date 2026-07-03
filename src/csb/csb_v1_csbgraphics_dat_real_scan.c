@@ -9,7 +9,8 @@
  * The implementation is deliberately small and stays close to the
  * existing HCSB.HTC real-scan template (csb_hint_oracle_htc_real_scan.c):
  *
- *   - known MD5 list is the only source of "what we accept"
+ *   - known MD5 rows, including the optional data-root manifest,
+ *     are the only source of "what we accept"
  *   - asset_find_by_md5_list() does the recursive, virtual-aware
  *     discovery (it already handles ZIP/ISO entries)
  *   - asset_extract_virtual_path() materializes a virtual path
@@ -62,6 +63,17 @@ static const CSB_V1_CSBGraphicsDatRealKnownHash g_known_hashes[] = {
      */
     { "", "", 0u }, /* sentinel — never matched */
 };
+
+enum {
+    CSBGRAPHICS_HASH_MANIFEST_MAX_ROWS = 24,
+    CSBGRAPHICS_HASH_MANIFEST_LINE_CAP = 512
+};
+
+typedef struct {
+    char label[CSB_V1_CSBGRAPHICS_DAT_REAL_LABEL_CAP];
+    char md5[CSB_V1_CSBGRAPHICS_DAT_REAL_MD5_CAP];
+    size_t size_bytes;
+} CSBGraphicsResolvedHash;
 
 const CSB_V1_CSBGraphicsDatRealKnownHash *
 csb_v1_csbgraphics_dat_real_known_hashes(size_t *out_count)
@@ -191,6 +203,193 @@ static int read_whole_file(const char *path,
     return 1;
 }
 
+static int is_space_char(char c)
+{
+    return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+}
+
+static int is_hex_char(char c)
+{
+    return (c >= '0' && c <= '9') ||
+           (c >= 'a' && c <= 'f') ||
+           (c >= 'A' && c <= 'F');
+}
+
+static char lower_hex_char(char c)
+{
+    if (c >= 'A' && c <= 'F') {
+        return (char)(c - 'A' + 'a');
+    }
+    return c;
+}
+
+static char *skip_spaces(char *p)
+{
+    while (p && *p && is_space_char(*p)) {
+        ++p;
+    }
+    return p;
+}
+
+static void trim_right(char *s)
+{
+    size_t len;
+    if (!s) {
+        return;
+    }
+    len = strlen(s);
+    while (len > 0u && is_space_char(s[len - 1u])) {
+        s[--len] = '\0';
+    }
+}
+
+static int parse_size_token(const char *token, size_t *out_size)
+{
+    unsigned long value = 0ul;
+    const char *p;
+    if (!token || !out_size || token[0] == '\0') {
+        return 0;
+    }
+    for (p = token; *p; ++p) {
+        if (*p < '0' || *p > '9') {
+            return 0;
+        }
+        value = value * 10ul + (unsigned long)(*p - '0');
+    }
+    if (value == 0ul) {
+        return 0;
+    }
+    *out_size = (size_t)value;
+    return 1;
+}
+
+static int append_resolved_hash(CSBGraphicsResolvedHash *rows,
+                                size_t *count,
+                                const char *md5,
+                                size_t size_bytes,
+                                const char *label)
+{
+    size_t i;
+    if (!rows || !count || !md5 || !label ||
+        md5[0] == '\0' || label[0] == '\0' || size_bytes == 0u ||
+        *count >= CSBGRAPHICS_HASH_MANIFEST_MAX_ROWS) {
+        return 0;
+    }
+    for (i = 0u; i < 32u; ++i) {
+        if (!is_hex_char(md5[i])) {
+            return 0;
+        }
+        rows[*count].md5[i] = lower_hex_char(md5[i]);
+    }
+    if (md5[32] != '\0') {
+        return 0;
+    }
+    rows[*count].md5[32] = '\0';
+    rows[*count].size_bytes = size_bytes;
+    if (!copy_string(rows[*count].label, sizeof(rows[*count].label),
+                     label)) {
+        return 0;
+    }
+    ++(*count);
+    return 1;
+}
+
+static int parse_manifest_line(char *line,
+                               CSBGraphicsResolvedHash *rows,
+                               size_t *count)
+{
+    char *p;
+    char *md5;
+    char *size_token;
+    char *label;
+    char *end;
+    size_t size_bytes = 0u;
+
+    if (!line) {
+        return 0;
+    }
+    trim_right(line);
+    p = skip_spaces(line);
+    if (!p || p[0] == '\0' || p[0] == '#') {
+        return 1;
+    }
+
+    md5 = p;
+    while (*p && !is_space_char(*p)) {
+        ++p;
+    }
+    if (*p) {
+        *p++ = '\0';
+    }
+    size_token = skip_spaces(p);
+    if (!size_token || size_token[0] == '\0') {
+        return 0;
+    }
+    end = size_token;
+    while (*end && !is_space_char(*end)) {
+        ++end;
+    }
+    if (*end) {
+        *end++ = '\0';
+    }
+    label = skip_spaces(end);
+    if (!label || label[0] == '\0') {
+        return 0;
+    }
+    if (!parse_size_token(size_token, &size_bytes)) {
+        return 0;
+    }
+    trim_right(label);
+    return append_resolved_hash(rows, count, md5, size_bytes, label);
+}
+
+static void load_manifest_hashes(const char *data_dir,
+                                 CSBGraphicsResolvedHash *rows,
+                                 size_t *count)
+{
+    char manifest_path[ASSET_PATH_MAX];
+    FILE *fp;
+    char line[CSBGRAPHICS_HASH_MANIFEST_LINE_CAP];
+
+    if (!data_dir || !rows || !count ||
+        *count >= CSBGRAPHICS_HASH_MANIFEST_MAX_ROWS ||
+        !FSP_JoinPath(manifest_path, sizeof(manifest_path),
+                      data_dir, "csbgraphics.hashes")) {
+        return;
+    }
+    fp = fopen(manifest_path, "rb");
+    if (!fp) {
+        return;
+    }
+    while (fgets(line, sizeof(line), fp) != NULL &&
+           *count < CSBGRAPHICS_HASH_MANIFEST_MAX_ROWS) {
+        (void)parse_manifest_line(line, rows, count);
+    }
+    fclose(fp);
+}
+
+static size_t build_resolved_hashes(const char *data_dir,
+                                    CSBGraphicsResolvedHash *rows)
+{
+    const CSB_V1_CSBGraphicsDatRealKnownHash *known;
+    size_t known_count = 0u;
+    size_t count = 0u;
+    size_t i;
+
+    if (!rows) {
+        return 0u;
+    }
+    known = csb_v1_csbgraphics_dat_real_known_hashes(&known_count);
+    for (i = 0u; i < known_count; ++i) {
+        (void)append_resolved_hash(rows, &count,
+                                   known[i].md5,
+                                   known[i].size_bytes,
+                                   known[i].label);
+    }
+    load_manifest_hashes(data_dir, rows, &count);
+    return count;
+}
+
 /* Materialize a virtual container path into a concrete file under
  * `cache_dir` (or the FSP default user-data asset-cache/csbwingraphics
  * subtree when no explicit cache_dir is given). Returns 1 on
@@ -270,29 +469,14 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
     size_t buf_size = 0u;
     int match_index = -1;
     int parse_rc;
-    size_t known_count;
-    const CSB_V1_CSBGraphicsDatRealKnownHash *known;
-    const char *md5_list[8];
+    CSBGraphicsResolvedHash resolved_hashes[CSBGRAPHICS_HASH_MANIFEST_MAX_ROWS];
+    size_t resolved_hash_count;
+    const char *md5_list[CSBGRAPHICS_HASH_MANIFEST_MAX_ROWS + 1u];
     size_t i;
 
     if (!cache) {
         return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_ARGUMENT;
     }
-
-    /* Build the md5 list (NULL-terminated) for the scanner. */
-    known = csb_v1_csbgraphics_dat_real_known_hashes(&known_count);
-    if (known_count == 0u) {
-        /* Empty list = no canonical hash known yet. Treat as
-         * "not found" so probes SKIP cleanly rather than fail. */
-        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
-    }
-    if (known_count + 1u > sizeof(md5_list) / sizeof(md5_list[0])) {
-        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_ARGUMENT;
-    }
-    for (i = 0u; i < known_count; ++i) {
-        md5_list[i] = known[i].md5;
-    }
-    md5_list[known_count] = NULL;
 
     /* Resolve data_dir. */
     if (data_dir && data_dir[0] != '\0') {
@@ -307,6 +491,19 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
     } else {
         return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NO_DATA_DIR;
     }
+
+    /* Build the md5 list (NULL-terminated) for the scanner after
+     * resolving data_dir so a user-staged csbgraphics.hashes manifest
+     * can contribute rows without weakening the hash-only discovery
+     * model. */
+    resolved_hash_count = build_resolved_hashes(search_root, resolved_hashes);
+    if (resolved_hash_count == 0u) {
+        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
+    }
+    for (i = 0u; i < resolved_hash_count; ++i) {
+        md5_list[i] = resolved_hashes[i].md5;
+    }
+    md5_list[resolved_hash_count] = NULL;
 
     /* Resolve cache_dir (only used to materialize virtual paths). */
     if (cache_dir && cache_dir[0] != '\0') {
@@ -326,7 +523,7 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
         return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     }
 
-    if (match_index < 0 || (size_t)match_index >= known_count) {
+    if (match_index < 0 || (size_t)match_index >= resolved_hash_count) {
         return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
     }
 
@@ -337,10 +534,10 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
                         sizeof(cache->original_path), match_path);
             copy_string(cache->matched_md5,
                         sizeof(cache->matched_md5),
-                        known[match_index].md5);
+                        resolved_hashes[match_index].md5);
             copy_string(cache->matched_label,
                         sizeof(cache->matched_label),
-                        known[match_index].label);
+                        resolved_hashes[match_index].label);
             return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_READ;
         }
         copy_string(cache->original_path,
@@ -354,12 +551,17 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
                     sizeof(cache->resolved_path), match_path);
     }
     copy_string(cache->matched_md5, sizeof(cache->matched_md5),
-                known[match_index].md5);
+                resolved_hashes[match_index].md5);
     copy_string(cache->matched_label, sizeof(cache->matched_label),
-                known[match_index].label);
+                resolved_hashes[match_index].label);
 
     read_path = cache->resolved_path;
     if (!read_whole_file(read_path, &buf, &buf_size)) {
+        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_READ;
+    }
+    if (resolved_hashes[match_index].size_bytes != 0u &&
+        buf_size != resolved_hashes[match_index].size_bytes) {
+        free(buf);
         return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_READ;
     }
 
