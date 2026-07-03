@@ -1288,17 +1288,21 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     dungeon.square_first_thing_count = 1;
     dungeon.thing_data_bases[4] = 82;
     dungeon.thing_type_counts[4] = 1;
+    dungeon.thing_data_bases[5] = 98;
+    dungeon.thing_type_counts[5] = 1;
     raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
     test_put_le16(raw, 60 + 1 * 2, 0);
     test_put_le16(raw, 66, (uint16_t)(4u << 10));
     test_put_le16(raw, 82, 0xfffeu);
-    test_put_le16(raw, 84, 0xfffeu);
+    test_put_le16(raw, 84, (uint16_t)(5u << 10)); /* carried weapon slot */
     raw[86] = 9u;
     raw[87] = 0xffu;
     test_put_le16(raw, 88, 1u);
     test_put_le16(raw, 96, 0u);
+    test_put_le16(raw, 98, 0xfffeu);
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_seed = 0xC5B10738u;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
 
@@ -1327,10 +1331,15 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 final-creature group reaches the scheduled boundary");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "C25 final-creature group dispatches through the explosion handler");
-    CHECK((uint16_t)(raw[66] | ((uint16_t)raw[67] << 8)) == 0xfffeu,
-          "C25 final group kill unlinks the group thing from the square head");
+    CHECK(((uint16_t)(raw[66] | ((uint16_t)raw[67] << 8)) & 0x3fffu) ==
+              (uint16_t)(5u << 10),
+          "C25 final group kill drops carried slot thing onto the square head");
     CHECK((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) == 0xffffu,
           "C25 final group kill marks the real-format group record unused");
+    CHECK((uint16_t)(raw[84] | ((uint16_t)raw[85] << 8)) == 0xfffeu,
+          "C25 final group kill clears the real-format group Slot chain");
+    CHECK((uint16_t)(raw[98] | ((uint16_t)raw[99] << 8)) == 0xfffeu,
+          "C25 final group kill terminates the dropped carried thing chain");
     slot = find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE);
     CHECK(slot >= 0 &&
               profile.explosions.entries[slot].attack == 255 &&
