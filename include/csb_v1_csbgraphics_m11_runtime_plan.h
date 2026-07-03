@@ -123,6 +123,18 @@ int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
     size_t viewport_word_count,
     int viewport_width_pixels);
 
+int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    int room_num,
+    CSB_V1_CSBGraphicsM11CustomBackgroundLayer layer,
+    const uint16_t *skin_def_words,
+    size_t skin_def_word_count,
+    const CSB_V1_ViewportCustomBackgroundMask *mask_geometry,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels);
+
 const CSB_V1_CSBGraphicsM11RuntimePlanEntry *
 csb_v1_csbgraphics_m11_runtime_plan_find_entry(
     const CSB_V1_CSBGraphicsM11RuntimePlan *plan,

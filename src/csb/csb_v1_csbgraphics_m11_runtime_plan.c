@@ -65,6 +65,64 @@ static int find_pair(const CSB_V1_CSBGraphicsM11RuntimePlan *plan,
     return 0;
 }
 
+static const CSB_V1_CSBGraphicsM11RuntimePlanEntry *
+find_custom_background_entry_by_pair(
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    uint32_t bitmap_entry_index,
+    uint32_t mask_entry_index,
+    CSB_V1_CSBGraphicsM11CustomBackgroundLayer layer)
+{
+    uint32_t i;
+    if (!plan) {
+        return NULL;
+    }
+    for (i = 0u; i < plan->planned_count; ++i) {
+        const CSB_V1_CSBGraphicsM11RuntimePlanEntry *entry = &plan->entries[i];
+        if (entry->entry_index == bitmap_entry_index &&
+            entry->mask_entry_index == mask_entry_index &&
+            entry->route == CSB_V1_CSBGRAPHICS_M11_ROUTE_VIEWPORT_CUSTOM_BACKGROUND &&
+            entry->custom_background_layer == layer) {
+            return entry;
+        }
+    }
+    return NULL;
+}
+
+static int custom_background_layer_skin_def_indices(
+    int room_num,
+    CSB_V1_CSBGraphicsM11CustomBackgroundLayer layer,
+    int *out_bitmap_index,
+    int *out_mask_index)
+{
+    const CSB_V1_CustomBackgroundsRoomSlotContract *contract =
+        csb_v1_viewport_custom_backgrounds_room_slot_contract_pc34();
+
+    if (!contract || !out_bitmap_index || !out_mask_index ||
+        room_num < 0 || room_num >= contract->room_slot_count) {
+        return 0;
+    }
+
+    switch (layer) {
+    case CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_LARGE:
+        *out_bitmap_index = contract->large_bitmap_skin_def_index;
+        *out_mask_index = contract->large_mask_skin_def_index;
+        return 1;
+    case CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_MIDDLE:
+        *out_bitmap_index = contract->middle_bitmap_skin_def_index;
+        *out_mask_index = contract->middle_mask_skin_def_index;
+        return 1;
+    case CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_NEAR:
+        if (room_num >= contract->near_layer_room_num_limit) {
+            return 0;
+        }
+        *out_bitmap_index = contract->near_bitmap_skin_def_index;
+        *out_mask_index = contract->near_mask_skin_def_index;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static int known_geometry_for_entry(uint32_t entry_index,
                                     uint16_t decompressed_size,
                                     uint16_t *out_w,
@@ -664,6 +722,68 @@ int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
             : CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
     }
     return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+}
+
+int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    int room_num,
+    CSB_V1_CSBGraphicsM11CustomBackgroundLayer layer,
+    const uint16_t *skin_def_words,
+    size_t skin_def_word_count,
+    const CSB_V1_ViewportCustomBackgroundMask *mask_geometry,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels)
+{
+    const CSB_V1_CSBGraphicsM11RuntimePlanEntry *entry = NULL;
+    uint32_t bitmap_entry_index;
+    uint32_t mask_entry_index;
+    int bitmap_skin_def_index = -1;
+    int mask_skin_def_index = -1;
+
+    if (!plan || !plan->ready || !cache_ready(cache) ||
+        !skin_def_words || !mask_geometry || !viewport_words) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+
+    if (!custom_background_layer_skin_def_indices(room_num,
+                                                  layer,
+                                                  &bitmap_skin_def_index,
+                                                  &mask_skin_def_index)) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+    if ((size_t)bitmap_skin_def_index >= skin_def_word_count ||
+        (size_t)mask_skin_def_index >= skin_def_word_count) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    bitmap_entry_index = (uint32_t)skin_def_words[bitmap_skin_def_index];
+    mask_entry_index = (uint32_t)skin_def_words[mask_skin_def_index];
+    if (bitmap_entry_index == 0u || mask_entry_index == 0u) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    entry = find_custom_background_entry_by_pair(plan,
+                                                 bitmap_entry_index,
+                                                 mask_entry_index,
+                                                 layer);
+
+    if (!entry) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    /* CSB-lineage Viewport.cpp:6599-6619 chooses the pSkinDef bitmap/mask
+     * pair for this room layer. The shared entry helper owns the actual
+     * CSBgraphics.dat decode and ApplyBackground aligned-mask composite. */
+    return csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
+        plan,
+        cache,
+        entry->entry_index,
+        mask_geometry,
+        viewport_words,
+        viewport_word_count,
+        viewport_width_pixels);
 }
 
 const char *csb_v1_csbgraphics_m11_runtime_plan_result_name(int result)
