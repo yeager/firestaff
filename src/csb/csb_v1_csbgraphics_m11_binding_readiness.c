@@ -222,6 +222,30 @@ int csb_v1_csbgraphics_m11_apply_binding(
     return 1;
 }
 
+int csb_v1_csbgraphics_m11_prepare_and_apply(
+    const CSB_V1_CSBGraphicsEntrySpan *span,
+    const CSB_V1_CSBGraphicsDecodedBitmap *decoded,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride,
+    CSB_V1_CSBGraphicsM11Binding *out_binding)
+{
+    CSB_V1_CSBGraphicsM11Binding local_binding;
+    CSB_V1_CSBGraphicsM11Binding *binding =
+        out_binding ? out_binding : &local_binding;
+
+    if (!csb_v1_csbgraphics_m11_prepare_binding(span, decoded, binding)) {
+        return 0;
+    }
+    return csb_v1_csbgraphics_m11_apply_binding(binding,
+                                                decoded,
+                                                framebuffer,
+                                                framebuffer_width,
+                                                framebuffer_height,
+                                                framebuffer_stride);
+}
+
 const char *csb_v1_csbgraphics_m11_route_name(
     CSB_V1_CSBGraphicsM11Route route)
 {

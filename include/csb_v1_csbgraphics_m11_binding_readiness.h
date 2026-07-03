@@ -90,6 +90,15 @@ int csb_v1_csbgraphics_m11_apply_binding(
     int framebuffer_height,
     int framebuffer_stride);
 
+int csb_v1_csbgraphics_m11_prepare_and_apply(
+    const CSB_V1_CSBGraphicsEntrySpan *span,
+    const CSB_V1_CSBGraphicsDecodedBitmap *decoded,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride,
+    CSB_V1_CSBGraphicsM11Binding *out_binding);
+
 const char *csb_v1_csbgraphics_m11_route_name(
     CSB_V1_CSBGraphicsM11Route route);
 

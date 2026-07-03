@@ -131,6 +131,8 @@ static void test_viewport_override_binding(void)
     uint8_t pixels[64 * 40];
     uint8_t framebuffer[CSB_V1_CSBGRAPHICS_M11_SOURCE_W *
                         CSB_V1_CSBGRAPHICS_M11_SOURCE_H];
+    uint8_t combined_framebuffer[CSB_V1_CSBGRAPHICS_M11_SOURCE_W *
+                                 CSB_V1_CSBGRAPHICS_M11_SOURCE_H];
     CSB_V1_CSBGraphicsEntrySpan span = span_for(73u);
     CSB_V1_CSBGraphicsDecodedBitmap decoded =
         decoded_for(73u, 64u, 40u, 15u, pixels, sizeof(pixels));
@@ -138,6 +140,7 @@ static void test_viewport_override_binding(void)
 
     memset(pixels, 3, sizeof(pixels));
     memset(framebuffer, 0, sizeof(framebuffer));
+    memset(combined_framebuffer, 0, sizeof(combined_framebuffer));
     check_int("viewport.prepare",
               csb_v1_csbgraphics_m11_prepare_binding(&span, &decoded, &binding),
               1, "trusted decoded viewport graphic");
@@ -174,6 +177,19 @@ static void test_viewport_override_binding(void)
               framebuffer[(CSB_V1_CSBGRAPHICS_M11_VIEWPORT_Y - 1) *
                           CSB_V1_CSBGRAPHICS_M11_SOURCE_W],
               0, "CSBgraphics viewport override does not write before viewport");
+    check_int("viewport.prepare_apply",
+              csb_v1_csbgraphics_m11_prepare_and_apply(
+                  &span, &decoded, combined_framebuffer,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  &binding),
+              1, "single-call CSBgraphics M11 handoff");
+    check_int("viewport.prepare_apply.top_left",
+              combined_framebuffer[CSB_V1_CSBGRAPHICS_M11_VIEWPORT_Y *
+                                   CSB_V1_CSBGRAPHICS_M11_SOURCE_W +
+                                   CSB_V1_CSBGRAPHICS_M11_VIEWPORT_X],
+              3, "single-call CSBgraphics handoff copies viewport payload");
 }
 
 static void test_hud_inventory_binding(void)
@@ -329,6 +345,14 @@ static void test_fallbacks_are_explicit(void)
                   CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
                   CSB_V1_CSBGRAPHICS_M11_SOURCE_W),
               0, "fallback bindings do not mutate M11 framebuffer");
+    check_int("fallback.prepare_apply.rejected",
+              csb_v1_csbgraphics_m11_prepare_and_apply(
+                  &span, &decoded, framebuffer,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  &binding),
+              0, "single-call handoff rejects fallback bindings");
 }
 
 int main(void)
