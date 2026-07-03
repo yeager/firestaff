@@ -11,18 +11,10 @@
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "dm1_v22_shapes.h"
 #include "dm1_v2_shape_runtime_pc34.h"
+#include "m11_v22_shape_cache_pc34.h"
 
 #include <stdio.h>
 #include <string.h>
-
-/* Forward declare the cache API. It is in m11_game_view.c but the
- * tests link against m11_game_view (which is in libfirestaff_m11). */
-extern void m11_v22_shape_cache_update(int direction,
-                                       const unsigned char raw_squares[3][3]);
-extern const DM1_V2_ShapeRuntimeResult* m11_v22_shape_cache_get(int depth,
-                                                                int lateral);
-extern int m11_v22_shape_cache_active(int depth, int lateral);
-extern const char* m11_v22_shape_cache_source_evidence(void);
 
 static int g_failed = 0;
 static int g_total = 0;
@@ -39,7 +31,9 @@ static void t_v1_default(void) {
         { 0x00, 0x00, 0x00 }
     };
     dm1_v2_presentation_mode_reset();
+    m11_v22_shape_cache_reset();
     m11_v22_shape_cache_update(0, squares);
+    check(m11_v22_shape_cache_populated() == 1, "V1: cache populated after update");
     /* V1 path: all 9 cells active=0. */
     check(m11_v22_shape_cache_active(1, 0) == 0, "V1: D1L active=0");
     check(m11_v22_shape_cache_active(2, 1) == 0, "V1: D2C active=0");
@@ -55,6 +49,7 @@ static void t_v22_active(void) {
         { 0x00, 0x00, 0x00 }
     };
     dm1_v2_presentation_mode_reset();
+    m11_v22_shape_cache_reset();
     dm1_v2_presentation_mode_set_modern_pack_available(1);
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, squares);
@@ -76,6 +71,7 @@ static void t_v1_to_v22_to_v1_transition(void) {
     };
     /* V1: cells inactive. */
     dm1_v2_presentation_mode_reset();
+    m11_v22_shape_cache_reset();
     m11_v22_shape_cache_update(0, squares);
     check(m11_v22_shape_cache_active(2, 0) == 0, "V1->V1: D2C inactive");
     /* Switch to V22: cells active. */
@@ -100,6 +96,23 @@ static void t_oob(void) {
     check(m11_v22_shape_cache_active(4, 0) == 0, "D4 active=0 (OOB)");
 }
 
+static void t_reset_unpopulated(void) {
+    unsigned char squares[3][3] = { { 0 } };
+    dm1_v2_presentation_mode_reset();
+    dm1_v2_presentation_mode_set_modern_pack_available(1);
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    m11_v22_shape_cache_update(0, squares);
+    check(m11_v22_shape_cache_populated() == 1,
+          "reset: cache starts populated after update");
+    m11_v22_shape_cache_reset();
+    check(m11_v22_shape_cache_populated() == 0,
+          "reset: cache returns to unpopulated state");
+    check(m11_v22_shape_cache_get(1, 0) == NULL,
+          "reset: cache_get returns NULL before next update");
+    check(m11_v22_shape_cache_active(1, 0) == 0,
+          "reset: active returns 0 before next update");
+}
+
 static void t_evidence(void) {
     const char* ev = m11_v22_shape_cache_source_evidence();
     check(ev != NULL && strlen(ev) > 50, "ev non-trivial");
@@ -119,6 +132,7 @@ int main(void) {
     t_v22_active();
     t_v1_to_v22_to_v1_transition();
     t_oob();
+    t_reset_unpopulated();
     t_evidence();
     t_null_safe();
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);

@@ -73,6 +73,11 @@ int m11_v22_shape_cache_populated(void) {
     return s_v22_shape_cache_populated;
 }
 
+void m11_v22_shape_cache_reset(void) {
+    memset(s_v22_shape_cache, 0, sizeof(s_v22_shape_cache));
+    s_v22_shape_cache_populated = 0;
+}
+
 const char* m11_v22_shape_cache_source_evidence(void) {
     return
         "V2.2 GPU render path: per-frame V22 shape cache (m11_v22_shape_cache).\n"
