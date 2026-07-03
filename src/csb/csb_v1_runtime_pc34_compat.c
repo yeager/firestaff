@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stddef.h>
 #include <sys/stat.h>
 
 /* ── Known CSB hashes ──────────────────────────────────────────────────── */
@@ -163,7 +164,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 1u
+#define CSB_V1_RUNTIME_SAVE_VERSION 2u
 
 typedef struct {
     uint32_t magic;
@@ -204,7 +205,12 @@ typedef struct {
     uint32_t input_dispatch_count;
     CSB_V1_ChaosMagicState chaos_magic;
     CSB_V1_PartyState party_state;
+    struct ProjectileList_Compat projectiles;
+    struct ExplosionList_Compat explosions;
 } CSB_V1_RuntimeSaveImageV1;
+
+#define CSB_V1_RUNTIME_SAVE_V1_SIZE \
+    ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, projectiles))
 
 static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
@@ -518,6 +524,60 @@ static void csb_v1_runtime_capture_save_image(
     image->input_dispatch_count = profile->input_dispatch_count;
     image->chaos_magic = profile->chaos_magic;
     image->party_state = profile->party_state;
+    image->projectiles = profile->projectiles;
+    image->explosions = profile->explosions;
+}
+
+static int csb_v1_runtime_validate_projectile_list(
+    const struct ProjectileList_Compat *list)
+{
+    int i;
+    int active_count = 0;
+
+    if (!list) return 0;
+    if (list->count < 0 || list->count > PROJECTILE_LIST_CAPACITY) return 0;
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat *projectile =
+            &list->entries[i];
+        if (projectile->reserved3 == 0) {
+            continue;
+        }
+        if (projectile->slotIndex != i ||
+            projectile->mapIndex < 0 ||
+            projectile->cell < 0 ||
+            projectile->cell > 3 ||
+            projectile->direction < 0 ||
+            projectile->direction > 3) {
+            return 0;
+        }
+        active_count++;
+    }
+    return active_count == list->count;
+}
+
+static int csb_v1_runtime_validate_explosion_list(
+    const struct ExplosionList_Compat *list)
+{
+    int i;
+    int active_count = 0;
+
+    if (!list) return 0;
+    if (list->count < 0 || list->count > EXPLOSION_LIST_CAPACITY) return 0;
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        const struct ExplosionInstance_Compat *explosion =
+            &list->entries[i];
+        if (explosion->reserved0 == 0) {
+            continue;
+        }
+        if (explosion->slotIndex != i ||
+            explosion->mapIndex < 0 ||
+            explosion->cell < 0 ||
+            explosion->cell > EXPLOSION_CELL_CENTERED) {
+            return 0;
+        }
+        active_count++;
+    }
+    return active_count == list->count;
 }
 
 static int csb_v1_runtime_apply_save_image(
@@ -527,9 +587,13 @@ static int csb_v1_runtime_apply_save_image(
 {
     int leader;
     if (!profile || !image || !header) return -1;
-    if (image->magic != CSB_V1_RUNTIME_SAVE_MAGIC ||
-        image->version != CSB_V1_RUNTIME_SAVE_VERSION ||
-        image->byte_size != sizeof(*image)) {
+    if (image->magic != CSB_V1_RUNTIME_SAVE_MAGIC) {
+        return -1;
+    }
+    if (!((image->version == 1u &&
+           image->byte_size == CSB_V1_RUNTIME_SAVE_V1_SIZE) ||
+          (image->version == CSB_V1_RUNTIME_SAVE_VERSION &&
+           image->byte_size == sizeof(*image)))) {
         return -1;
     }
     if (header->Magic != CSB_V1_SAVE_MAGIC_CSB ||
@@ -578,8 +642,17 @@ static int csb_v1_runtime_apply_save_image(
     profile->timeline_queue = image->timeline_queue;
     profile->last_timeline_dispatch = image->last_timeline_dispatch;
     profile->timeline_dispatch_count = image->timeline_dispatch_count;
-    memset(&profile->projectiles, 0, sizeof(profile->projectiles));
-    memset(&profile->explosions, 0, sizeof(profile->explosions));
+    if (image->byte_size >= sizeof(*image)) {
+        if (!csb_v1_runtime_validate_projectile_list(&image->projectiles) ||
+            !csb_v1_runtime_validate_explosion_list(&image->explosions)) {
+            return -1;
+        }
+        profile->projectiles = image->projectiles;
+        profile->explosions = image->explosions;
+    } else {
+        memset(&profile->projectiles, 0, sizeof(profile->projectiles));
+        memset(&profile->explosions, 0, sizeof(profile->explosions));
+    }
     profile->input_command_queue = image->input_command_queue;
     profile->last_input_dispatch = image->last_input_dispatch;
     profile->input_dispatch_count = image->input_dispatch_count;
