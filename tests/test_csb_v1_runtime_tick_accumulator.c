@@ -1148,6 +1148,96 @@ static void test_c38_giggler_steals_hand_slots_into_group_slot_chain(void)
           "C38 Giggler theft search stays within the bounded regression window");
 }
 
+static void test_c37_group_approach_teleporter_rotation(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[160];
+    struct DM1_Event_V1 ev;
+    int event_index;
+    uint16_t flags;
+
+    printf("\n-- CSB C37 group teleporter movement --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 3;
+    dungeon.thing_data_bases[1] = 82;
+    dungeon.thing_type_counts[1] = 1;
+    dungeon.thing_data_bases[4] = 90;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(0, 1)] =
+        (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    raw[real_format_square_offset(1, 1)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 60 + 1 * 2, 2);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 68, (uint16_t)(1u << 10));
+    test_put_le16(raw, 70, 0xfffeu);
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84,
+                  (uint16_t)(1u | (1u << 5) | (1u << 10) |
+                             (1u << 13)));
+    test_put_le16(raw, 86, 0u);
+    test_put_le16(raw, 90, 0xfffeu);
+    test_put_le16(raw, 92, 0xfffeu);
+    raw[94] = 9u;
+    raw[95] = 0u;
+    test_put_le16(raw, 96, 40u);
+    test_put_le16(raw, 98, 0u);
+    test_put_le16(raw, 100, 0u);
+    test_put_le16(raw, 102, 0u);
+    test_put_le16(raw, 104, 7u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 0;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    ev.priority = 234u;
+    ev.b_mapX = 0;
+    ev.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "C37 group teleporter fixture queues the approach event");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C37 group teleporter fixture dispatches the approach event");
+    CHECK(test_get_le16(raw, 66) == 0xfffeu,
+          "C37 group teleporter removes the group from the source square");
+    CHECK(test_get_le16(raw, 68) == (uint16_t)(1u << 10),
+          "C37 group teleporter leaves the C05 teleporter thing in place");
+    CHECK(test_get_le16(raw, 70) == (uint16_t)(4u << 10),
+          "C37 group teleporter links the group at the teleporter target");
+    CHECK(test_get_le16(raw, 90) == 0xfffeu,
+          "C37 group teleporter terminates the moved group chain");
+    flags = test_get_le16(raw, 104);
+    CHECK(raw[95] == 1u && ((flags >> 8) & 0x03u) == 1u,
+          "C37 group teleporter applies F0262 relative cell and direction rotation");
+    event_index = find_queued_event_type(&profile,
+                                         DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
+    CHECK(event_index >= 0 &&
+              profile.timeline_queue.events[event_index].b_mapX == 1 &&
+              profile.timeline_queue.events[event_index].b_mapY == 1,
+          "C37 group teleporter requeues behavior from the target square");
+}
+
 static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -2517,6 +2607,7 @@ int main(void)
     test_timeline_corridor_text_and_generator_mutations();
     test_c38_poison_followup_and_c75_tick();
     test_c38_giggler_steals_hand_slots_into_group_slot_chain();
+    test_c37_group_approach_teleporter_rotation();
     test_explosion_c25_persistent_smoke_requeues_until_depleted();
     test_runtime_save_roundtrips_projectiles_and_explosions();
     test_explosion_c25_party_damage_and_group_hp_writeback();
