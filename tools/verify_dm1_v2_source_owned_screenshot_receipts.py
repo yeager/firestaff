@@ -28,14 +28,16 @@ Source-lock:
 from __future__ import annotations
 
 import json
+import os
 import struct
 import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+OUTPUT_ROOT = Path(os.environ.get("FIRESTAFF_PROBE_OUTPUT_ROOT") or Path.home())
 DEFAULT_RECEIPTS_PATH = (
-    Path.home() / ".firestaff-probe-dm1-v2-source-owned"
+    OUTPUT_ROOT / ".firestaff-probe-dm1-v2-source-owned"
     / "source_owned_screenshot_receipts.json"
 )
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / "dm1_v2_source_owned_screenshot_receipts"
