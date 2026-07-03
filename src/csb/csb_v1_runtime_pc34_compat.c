@@ -579,6 +579,7 @@ static int csb_v1_runtime_apply_save_image(
     profile->last_timeline_dispatch = image->last_timeline_dispatch;
     profile->timeline_dispatch_count = image->timeline_dispatch_count;
     memset(&profile->projectiles, 0, sizeof(profile->projectiles));
+    memset(&profile->explosions, 0, sizeof(profile->explosions));
     profile->input_command_queue = image->input_command_queue;
     profile->last_input_dispatch = image->last_input_dispatch;
     profile->input_dispatch_count = image->input_dispatch_count;
@@ -2459,6 +2460,29 @@ static void csb_v1_runtime_schedule_projectile_move_event(
     (void)dm1v1_event_add(&profile->timeline_queue, &dm1_event);
 }
 
+static void csb_v1_runtime_schedule_explosion_advance_event(
+    CSB_V1_RuntimeProfile *profile,
+    const struct TimelineEvent_Compat *event)
+{
+    struct DM1_Event_V1 dm1_event;
+
+    if (!profile || !event) return;
+    if (event->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE) return;
+    if (event->aux0 < 0 || event->aux0 > 255) return;
+
+    memset(&dm1_event, 0, sizeof(dm1_event));
+    dm1_event.map_time = DM1_MAP_TIME_MAKE(
+        event->mapIndex,
+        event->fireAtTick);
+    dm1_event.type = DM1_EVENT_EXPLOSION;
+    dm1_event.priority = (uint8_t)event->aux0;
+    dm1_event.b_mapX = (uint8_t)event->mapX;
+    dm1_event.b_mapY = (uint8_t)event->mapY;
+    dm1_event.c_cell = (uint8_t)(event->cell & 0xFF);
+    dm1_event.c_effect = (uint8_t)(event->aux1 & 0xFF);
+    (void)dm1v1_event_add(&profile->timeline_queue, &dm1_event);
+}
+
 static int csb_v1_runtime_projectile_instance_active(
     const struct ProjectileInstance_Compat *projectile)
 {
@@ -2660,6 +2684,35 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
             &tick_result)) {
         (void)F0813_PROJECTILE_Despawn_Compat(&profile->projectiles, slot);
         return;
+    }
+    if (tick_result.emittedExplosion) {
+        struct ExplosionCreateInput_Compat explosion_input;
+        struct TimelineEvent_Compat first_advance;
+        int explosion_slot = -1;
+        memset(&explosion_input, 0, sizeof(explosion_input));
+        memset(&first_advance, 0, sizeof(first_advance));
+        explosion_input.explosionType = tick_result.outExplosion.explosionType;
+        explosion_input.attack = tick_result.outExplosion.attack;
+        explosion_input.mapIndex = tick_result.outExplosion.mapIndex;
+        explosion_input.mapX = tick_result.outExplosion.mapX;
+        explosion_input.mapY = tick_result.outExplosion.mapY;
+        explosion_input.cell = tick_result.outExplosion.cell;
+        explosion_input.centered = tick_result.outExplosion.centered;
+        explosion_input.poisonAttack = tick_result.outExplosion.poisonAttack;
+        explosion_input.currentTick = (int)profile->game_time;
+        explosion_input.ownerKind = tick_result.outExplosion.ownerKind;
+        explosion_input.ownerIndex = tick_result.outExplosion.ownerIndex;
+        explosion_input.creatorProjectileSlot =
+            tick_result.outExplosion.creatorProjectileSlot;
+        if (F0821_EXPLOSION_Create_Compat(
+                &explosion_input,
+                &profile->explosions,
+                &explosion_slot,
+                &first_advance)) {
+            csb_v1_runtime_schedule_explosion_advance_event(
+                profile,
+                &first_advance);
+        }
     }
     if (tick_result.despawn) {
         (void)F0813_PROJECTILE_Despawn_Compat(&profile->projectiles, slot);

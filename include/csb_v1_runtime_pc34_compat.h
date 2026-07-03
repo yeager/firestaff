@@ -253,6 +253,7 @@ typedef struct {
     struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
     uint32_t                timeline_dispatch_count;
     struct ProjectileList_Compat projectiles;
+    struct ExplosionList_Compat explosions;
     struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
     struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
     uint32_t                input_dispatch_count;
