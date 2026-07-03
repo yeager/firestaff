@@ -292,6 +292,107 @@ static uint8_t *build_header_only_entries(const uint16_t *entry_ids,
     return buf;
 }
 
+typedef struct {
+    uint16_t entry_index;
+    const uint8_t *decoded;
+    size_t decoded_size;
+} CompressedEntryFixture;
+
+static uint8_t *build_csbgraphics_entries_compressed(
+    const CompressedEntryFixture *entries,
+    size_t entry_count,
+    size_t *out_size)
+{
+    uint16_t max_entry = 0u;
+    uint32_t count;
+    size_t header_size;
+    size_t payload_size = 0u;
+    size_t payload_cursor;
+    size_t i;
+    uint8_t **compressed = NULL;
+    size_t *compressed_sizes = NULL;
+    uint8_t *buf = NULL;
+
+    if (!entries || entry_count == 0u || !out_size) {
+        return NULL;
+    }
+    for (i = 0u; i < entry_count; ++i) {
+        if (entries[i].entry_index > max_entry) {
+            max_entry = entries[i].entry_index;
+        }
+    }
+    compressed = (uint8_t **)calloc(entry_count, sizeof(compressed[0]));
+    compressed_sizes = (size_t *)calloc(entry_count, sizeof(compressed_sizes[0]));
+    if (!compressed || !compressed_sizes) {
+        free(compressed);
+        free(compressed_sizes);
+        return NULL;
+    }
+    for (i = 0u; i < entry_count; ++i) {
+        if (!entries[i].decoded || entries[i].decoded_size == 0u ||
+            entries[i].decoded_size > 65535u ||
+            ref_lzw_encode(entries[i].decoded,
+                           entries[i].decoded_size,
+                           &compressed[i],
+                           &compressed_sizes[i]) != 0 ||
+            !compressed[i] ||
+            compressed_sizes[i] == 0u ||
+            compressed_sizes[i] > 65535u) {
+            goto cleanup;
+        }
+        payload_size += compressed_sizes[i];
+    }
+
+    count = (uint32_t)max_entry + 1u;
+    header_size = 2u + (size_t)count * 4u;
+    buf = (uint8_t *)calloc(1u, header_size + payload_size);
+    if (!buf) {
+        goto cleanup;
+    }
+    write_be16(buf, 0u, (uint16_t)count);
+    for (i = 0u; i < entry_count; ++i) {
+        uint16_t id = entries[i].entry_index;
+        write_be16(buf, 2u + (size_t)id * 2u,
+                   (uint16_t)compressed_sizes[i]);
+        write_be16(buf, 2u + (size_t)count * 2u + (size_t)id * 2u,
+                   (uint16_t)entries[i].decoded_size);
+    }
+    payload_cursor = header_size;
+    for (uint32_t id = 0u; id < count; ++id) {
+        for (i = 0u; i < entry_count; ++i) {
+            if (entries[i].entry_index == id) {
+                memcpy(buf + payload_cursor, compressed[i], compressed_sizes[i]);
+                payload_cursor += compressed_sizes[i];
+            }
+        }
+    }
+    *out_size = header_size + payload_size;
+
+cleanup:
+    if (compressed) {
+        for (i = 0u; i < entry_count; ++i) {
+            free(compressed[i]);
+        }
+    }
+    free(compressed);
+    free(compressed_sizes);
+    return buf;
+}
+
+static void write_le16(uint8_t *buf, size_t off, uint16_t value)
+{
+    buf[off] = (uint8_t)(value & 0xffu);
+    buf[off + 1u] = (uint8_t)((value >> 8) & 0xffu);
+}
+
+static void write_le32(uint8_t *buf, size_t off, uint32_t value)
+{
+    buf[off] = (uint8_t)(value & 0xffu);
+    buf[off + 1u] = (uint8_t)((value >> 8) & 0xffu);
+    buf[off + 2u] = (uint8_t)((value >> 16) & 0xffu);
+    buf[off + 3u] = (uint8_t)((value >> 24) & 0xffu);
+}
+
 static void test_build_known_c040_plan(void)
 {
     CSB_V1_CSBGraphicsDatRealCache cache;
@@ -514,12 +615,106 @@ static void test_custom_background_skin_def_pairs_are_deferred(void)
     free(bytes);
 }
 
+static void test_custom_background_aligned_mask_apply(void)
+{
+    uint8_t bitmap_decoded[9u * 4u];
+    uint8_t mask_decoded[2u];
+    static const uint16_t skin_def_words[] = {
+        100u, 0u, 0u, 0u, 104u, 0u, 0u
+    };
+    CompressedEntryFixture entries[2];
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    CSB_V1_CSBGraphicsM11RuntimePlan plan;
+    CSB_V1_ViewportCustomBackgroundMask mask;
+    uint32_t viewport[56];
+    uint8_t *bytes;
+    size_t size = 0u;
+    size_t i;
+
+    memset(bitmap_decoded, 0, sizeof(bitmap_decoded));
+    write_le32(bitmap_decoded, 0u, 32u);
+    write_le32(bitmap_decoded, 7u * 4u, 0x12345678u);
+    write_le32(bitmap_decoded, 8u * 4u, 0x87654321u);
+    write_le16(mask_decoded, 0u, 0x00ffu);
+
+    entries[0].entry_index = 100u;
+    entries[0].decoded = bitmap_decoded;
+    entries[0].decoded_size = sizeof(bitmap_decoded);
+    entries[1].entry_index = 104u;
+    entries[1].decoded = mask_decoded;
+    entries[1].decoded_size = sizeof(mask_decoded);
+
+    bytes = build_csbgraphics_entries_compressed(entries,
+                                                 sizeof(entries) / sizeof(entries[0]),
+                                                 &size);
+    check_true("custom_bg_apply.fixture", bytes != NULL);
+    if (!bytes) {
+        return;
+    }
+    cache_from_bytes(&cache, bytes, size);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&plan);
+    check_int("custom_bg_apply.add_skin_def",
+              csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+                  &cache,
+                  skin_def_words,
+                  sizeof(skin_def_words) / sizeof(skin_def_words[0]),
+                  &plan),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("custom_bg_apply.planned_count", (int)plan.planned_count, 1);
+    check_int("custom_bg_apply.mask_size",
+              (int)plan.entries[0].mask_decompressed_size,
+              (int)sizeof(mask_decoded));
+
+    for (i = 0u; i < sizeof(viewport) / sizeof(viewport[0]); ++i) {
+        viewport[i] = 0xccccccccu;
+    }
+    viewport[30] = 0xaaaaaaaau;
+    viewport[31] = 0xbbbbbbbbu;
+    memset(&mask, 0, sizeof(mask));
+    mask.src_x = 16;
+    mask.src_y = 1;
+    mask.dst_x = 16;
+    mask.dst_y = 1;
+    mask.width = 16;
+    mask.height = 1;
+
+    check_int("custom_bg_apply.apply",
+              csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
+                  &plan,
+                  &cache,
+                  100u,
+                  &mask,
+                  viewport,
+                  sizeof(viewport) / sizeof(viewport[0]),
+                  224),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("custom_bg_apply.word0", (int)viewport[30], (int)0xaa34aa78u);
+    check_int("custom_bg_apply.word1", (int)viewport[31], (int)0xbb65bb21u);
+
+    mask.src_x = 8;
+    check_int("custom_bg_apply.unaligned_deferred",
+              csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
+                  &plan,
+                  &cache,
+                  100u,
+                  &mask,
+                  viewport,
+                  sizeof(viewport) / sizeof(viewport[0]),
+                  224),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_DEFERRED_COMPOSITE);
+
+    cache.file_buffer = NULL;
+    csb_v1_csbgraphics_dat_real_cache_free(&cache);
+    free(bytes);
+}
+
 int main(void)
 {
     test_build_known_c040_plan();
     test_explicit_geometry_apply();
     test_unknown_geometry_is_honest();
     test_custom_background_skin_def_pairs_are_deferred();
+    test_custom_background_aligned_mask_apply();
     check_true("result_name",
                strcmp(csb_v1_csbgraphics_m11_runtime_plan_result_name(
                           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY),
