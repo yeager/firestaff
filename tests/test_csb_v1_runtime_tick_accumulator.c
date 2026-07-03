@@ -411,6 +411,31 @@ static int count_queued_event_type(const CSB_V1_RuntimeProfile *profile,
     return count;
 }
 
+static int count_queued_c37_at(const CSB_V1_RuntimeProfile *profile,
+                               int map_index,
+                               int map_x,
+                               int map_y)
+{
+    int i;
+    int count = 0;
+
+    if (!profile) return 0;
+    for (i = 0; i < profile->timeline_queue.eventCount; ++i) {
+        int event_index = profile->timeline_queue.timeline[i];
+        const struct DM1_Event_V1 *event;
+
+        if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) continue;
+        event = &profile->timeline_queue.events[event_index];
+        if (event->type == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+            DM1_MAP_TIME_MAP(event->map_time) == (uint32_t)map_index &&
+            event->b_mapX == (uint8_t)map_x &&
+            event->b_mapY == (uint8_t)map_y) {
+            count++;
+        }
+    }
+    return count;
+}
+
 static int find_live_explosion_type(const CSB_V1_RuntimeProfile *profile,
                                     int explosion_type)
 {
@@ -1395,6 +1420,8 @@ static void test_c37_group_approach_teleporter_rotation(void)
           "C37 group pit-fall links the group on the lower map target");
     CHECK(test_get_le16(raw, 152) == 0xfffeu,
           "C37 group pit-fall terminates the moved group chain");
+    CHECK(test_get_le16(raw, 158) > 0 && test_get_le16(raw, 158) < 40u,
+          "C37 group pit-fall applies bounded F0191 fall damage to survivors");
     event_index = find_queued_event_type(&profile,
                                          DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
     CHECK(event_index >= 0 &&
@@ -1403,6 +1430,69 @@ static void test_c37_group_approach_teleporter_rotation(void)
               profile.timeline_queue.events[event_index].b_mapX == 0 &&
               profile.timeline_queue.events[event_index].b_mapY == 1,
           "C37 group pit-fall requeues behavior from the lower map target");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.level_count = 2;
+    dungeon.level_widths[1] = 3;
+    dungeon.level_heights[1] = 3;
+    dungeon.level_offsets[1] = 9;
+    dungeon.square_first_thing_base = 120;
+    dungeon.square_first_thing_count = 3;
+    dungeon.thing_data_bases[4] = 152;
+    dungeon.thing_type_counts[4] = 1;
+    raw[dungeon.level_offsets[0] + real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[dungeon.level_offsets[0] + real_format_square_offset(0, 1)] =
+        (uint8_t)((2u << 5) | 0x10u | 0x08u);
+    raw[dungeon.level_offsets[1] + real_format_square_offset(0, 1)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 0 * 2, 0);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 3 * 2, 2);
+    test_put_le16(raw, 120, (uint16_t)(4u << 10));
+    test_put_le16(raw, 122, 0xfffeu);
+    test_put_le16(raw, 124, 0xfffeu);
+    test_put_le16(raw, 152, 0xfffeu);
+    test_put_le16(raw, 154, 0u);
+    raw[156] = 9u;
+    raw[157] = 0u;
+    test_put_le16(raw, 158, 1u);
+    test_put_le16(raw, 160, 0u);
+    test_put_le16(raw, 162, 0u);
+    test_put_le16(raw, 164, 0u);
+    test_put_le16(raw, 166, 7u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 3;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 0;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    ev.priority = 234u;
+    ev.b_mapX = 0;
+    ev.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "C37 lethal group pit-fall fixture queues the approach event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C37 lethal group pit-fall fixture dispatches the approach event");
+    CHECK(test_get_le16(raw, 124) == 0xfffeu,
+          "C37 lethal group pit-fall leaves no group on the lower map target");
+    CHECK(test_get_le16(raw, 152) == 0xffffu,
+          "C37 lethal group pit-fall marks the real-format group record unused");
+    CHECK(count_queued_c37_at(&profile, 1, 0, 1) == 0,
+          "C37 lethal group pit-fall does not requeue behavior after F0191 kill");
 }
 
 static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)
