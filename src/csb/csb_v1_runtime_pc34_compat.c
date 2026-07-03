@@ -22,6 +22,7 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
@@ -1185,6 +1186,31 @@ static void csb_v1_runtime_write_u16(uint8_t *p, uint16_t value)
     if (!p) return;
     p[0] = (uint8_t)(value & 0xFFu);
     p[1] = (uint8_t)((value >> 8) & 0xFFu);
+}
+
+static void csb_v1_runtime_decode_sensor_words(
+    uint16_t next_word,
+    uint16_t type_data,
+    uint16_t flags_word,
+    uint16_t target_word,
+    struct DungeonSensor_Compat *out_sensor)
+{
+    if (!out_sensor) return;
+    memset(out_sensor, 0, sizeof(*out_sensor));
+    out_sensor->next = next_word;
+    out_sensor->sensorType = (unsigned char)(type_data & 0x007Fu);
+    out_sensor->sensorData = (unsigned short)(type_data >> 7);
+    out_sensor->onceOnly = (unsigned char)((flags_word >> 2) & 0x01u);
+    out_sensor->effect = (unsigned char)((flags_word >> 3) & 0x03u);
+    out_sensor->revertEffect = (unsigned char)((flags_word >> 5) & 0x01u);
+    out_sensor->audible = (unsigned char)((flags_word >> 6) & 0x01u);
+    out_sensor->value = (unsigned char)((flags_word >> 7) & 0x0Fu);
+    out_sensor->localEffect = (unsigned char)((flags_word >> 11) & 0x01u);
+    out_sensor->ornamentOrdinal = (unsigned char)((flags_word >> 12) & 0x0Fu);
+    out_sensor->targetCell = (unsigned char)((target_word >> 4) & 0x03u);
+    out_sensor->targetMapX = (unsigned char)((target_word >> 6) & 0x1Fu);
+    out_sensor->targetMapY = (unsigned char)((target_word >> 11) & 0x1Fu);
+    out_sensor->localMultiple = (unsigned short)(target_word & 0x0FFFu);
 }
 
 static uint8_t *csb_v1_runtime_mutable_thing_record(
@@ -2705,12 +2731,13 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
      * TextString visibility, then lines 1198-1308 handles wall C006
      * countdown and C005 AND/OR gate sensors by mutating M040_DATA and
      * feeding matching remote effects back through F0272_SENSOR_TriggerEffect.
-     * Projectile launchers, endgame, and rotation side effects remain
-     * separate runtime work. */
+     * Lines 1317-1339 handle C018 endgame sensors. Projectile launchers and
+     * rotation side effects remain separate runtime work. */
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
         uint8_t *sensor;
         int thing_type;
         int thing_size;
+        uint16_t next_word;
         uint16_t type_data;
         uint16_t flags_word;
         uint16_t target_word;
@@ -2743,6 +2770,7 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             }
             csb_v1_runtime_write_u16(sensor + 2, text_word);
         } else if (thing_type == 3 && thing_size >= 8) {
+            next_word = csb_v1_runtime_read_u16(sensor + 0);
             type_data = csb_v1_runtime_read_u16(sensor + 2);
             flags_word = csb_v1_runtime_read_u16(sensor + 4);
             target_word = csb_v1_runtime_read_u16(sensor + 6);
@@ -2791,6 +2819,27 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     trigger = 1;
                 } else {
                     trigger_effect = sensor_effect;
+                }
+            } else if (sensor_type == DM1_SENSOR_WALL_END_GAME) {
+                struct DungeonSensor_Compat decoded_sensor;
+                struct SensorTriggerResult_Compat endgame_result;
+                csb_v1_runtime_decode_sensor_words(
+                    next_word,
+                    type_data,
+                    flags_word,
+                    target_word,
+                    &decoded_sensor);
+                memset(&endgame_result, 0, sizeof(endgame_result));
+                if (F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
+                        &decoded_sensor,
+                        csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                            (uint16_t)thing),
+                        record->effect,
+                        record->cell,
+                        &endgame_result) &&
+                    endgame_result.triggered &&
+                    endgame_result.endGameGameWon) {
+                    profile->victory = 1;
                 }
             }
 
