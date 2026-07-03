@@ -2,7 +2,7 @@
  * firestaff_m11_inscription_font_probe.c
  *
  * DM1 V1 wall-inscription regression.  ReDMCSB DUNVIEW.C:3619 loads the
- * dedicated M648_GRAPHIC_INSCRIPTION_FONT for readable D1C inscriptions;
+ * dedicated M648_GRAPHIC_INSCRIPTION_FONT for D1C inscriptions;
  * DUNVIEW.C:3627 centers with 112 - (characterCount << 2); and
  * DUNVIEW.C:3631-3637 blits 8x8 glyph cells with C10 transparency.
  *
@@ -104,6 +104,6 @@ int main(void) {
         printf("\nFAIL: %d assertion(s)\n", g_failures);
         return 1;
     }
-    printf("\nPASS: DM1 V1 wall inscriptions use source font 258 with 8-pixel centering\n");
+    printf("\nPASS: DM1 V1 wall inscriptions use source font 258 with 8-pixel centering and no generic font\n");
     return 0;
 }
