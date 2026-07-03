@@ -175,6 +175,8 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     cfg.dungeon_width = 32;
     cfg.dungeon_height = 32;
     cfg.wall_set_index = 0;
+    cfg.runtime_projectiles = &profile->runtime.projectiles;
+    cfg.runtime_explosions = &profile->runtime.explosions;
 
     /* Source-lock: ReDMCSB DUNVIEW.C F0128 is the CSB viewport draw
      * boundary; CSBWin Viewport.cpp keeps the same party pose contract.

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "memory_projectile_pc34_compat.h"
+
 /* CSB V1 Viewport — CSB-specific rendering differences
  *
  * CSB shares the DM1 viewport engine but has:
@@ -35,6 +37,11 @@ typedef struct {
     const uint8_t *dungeon_grid;
     int dungeon_width;
     int dungeon_height;
+
+    /* Optional live runtime overlays.  CSB V1 runtime owns these lists;
+     * the viewport treats NULL as "no live projectile/explosion overlay". */
+    const struct ProjectileList_Compat *runtime_projectiles;
+    const struct ExplosionList_Compat *runtime_explosions;
 } CSB_V1_ViewportConfig;
 
 typedef struct {

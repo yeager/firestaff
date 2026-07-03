@@ -146,6 +146,179 @@ enum {
     CSB_V1_CUSTOM_BACKGROUND_NEAR_ROOM_LIMIT = 5
 };
 
+static void csb_v1_viewport_runtime_relative_position(
+    int party_dir,
+    int party_x,
+    int party_y,
+    int map_x,
+    int map_y,
+    int *out_forward,
+    int *out_side)
+{
+    int dx = map_x - party_x;
+    int dy = map_y - party_y;
+    int forward = 0;
+    int side = 0;
+
+    switch (party_dir & 3) {
+    case 0:
+        forward = -dy;
+        side = dx;
+        break;
+    case 1:
+        forward = dx;
+        side = dy;
+        break;
+    case 2:
+        forward = dy;
+        side = -dx;
+        break;
+    default:
+        forward = -dx;
+        side = -dy;
+        break;
+    }
+    if (out_forward) *out_forward = forward;
+    if (out_side) *out_side = side;
+}
+
+static void csb_v1_viewport_plot_runtime_overlay_pixel(
+    CSB_V1_ViewportConfig *cfg,
+    int viewport_x,
+    int viewport_y,
+    uint8_t color)
+{
+    int screen_x;
+    int screen_y;
+    int stride;
+
+    if (!cfg || !cfg->viewport_pixels) return;
+    if (viewport_x < 0 || viewport_x >= DM1_VIEWPORT_WIDTH ||
+        viewport_y < 0 || viewport_y >= DM1_VIEWPORT_HEIGHT) {
+        return;
+    }
+    stride = cfg->viewport_stride > 0 ? cfg->viewport_stride : 320;
+    screen_x = DM1_VIEWPORT_SCREEN_X + viewport_x;
+    screen_y = DM1_VIEWPORT_SCREEN_Y + viewport_y;
+    cfg->viewport_pixels[screen_y * stride + screen_x] = color;
+}
+
+static void csb_v1_viewport_draw_runtime_overlay_cross(
+    CSB_V1_ViewportConfig *cfg,
+    int viewport_x,
+    int viewport_y,
+    uint8_t color,
+    int radius)
+{
+    int d;
+
+    csb_v1_viewport_plot_runtime_overlay_pixel(
+        cfg, viewport_x, viewport_y, color);
+    for (d = 1; d <= radius; ++d) {
+        csb_v1_viewport_plot_runtime_overlay_pixel(
+            cfg, viewport_x - d, viewport_y, color);
+        csb_v1_viewport_plot_runtime_overlay_pixel(
+            cfg, viewport_x + d, viewport_y, color);
+        csb_v1_viewport_plot_runtime_overlay_pixel(
+            cfg, viewport_x, viewport_y - d, color);
+        csb_v1_viewport_plot_runtime_overlay_pixel(
+            cfg, viewport_x, viewport_y + d, color);
+    }
+}
+
+static int csb_v1_viewport_runtime_overlay_position(
+    int party_dir,
+    int party_x,
+    int party_y,
+    int map_x,
+    int map_y,
+    int *out_x,
+    int *out_y)
+{
+    int forward;
+    int side;
+
+    csb_v1_viewport_runtime_relative_position(
+        party_dir, party_x, party_y, map_x, map_y, &forward, &side);
+    if (forward < 0 || forward > 4 || side < -2 || side > 2) {
+        return 0;
+    }
+    if (out_x) *out_x = (DM1_VIEWPORT_WIDTH / 2) + side * 42;
+    if (out_y) *out_y = 106 - forward * 18;
+    return 1;
+}
+
+static void csb_v1_viewport_draw_runtime_projectile_overlays(
+    CSB_V1_ViewportConfig *cfg,
+    int party_dir,
+    int party_x,
+    int party_y)
+{
+    int i;
+
+    if (!cfg || !cfg->runtime_projectiles) return;
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat *projectile =
+            &cfg->runtime_projectiles->entries[i];
+        int x;
+        int y;
+
+        if (projectile->reserved3 == 0 || projectile->slotIndex < 0) {
+            continue;
+        }
+        if (!csb_v1_viewport_runtime_overlay_position(
+                party_dir,
+                party_x,
+                party_y,
+                projectile->mapX,
+                projectile->mapY,
+                &x,
+                &y)) {
+            continue;
+        }
+        /* ReDMCSB DUNVIEW.C F0115 lines 5645-5913 draws projectiles
+         * before restarting the thing list for explosions.  This bounded
+         * CSB runtime bridge marks live projectile state until the full
+         * CSBgraphics/F0791 sprite path is wired. */
+        csb_v1_viewport_draw_runtime_overlay_cross(cfg, x, y, 0x0Eu, 1);
+    }
+}
+
+static void csb_v1_viewport_draw_runtime_explosion_overlays(
+    CSB_V1_ViewportConfig *cfg,
+    int party_dir,
+    int party_x,
+    int party_y)
+{
+    int i;
+
+    if (!cfg || !cfg->runtime_explosions) return;
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        const struct ExplosionInstance_Compat *explosion =
+            &cfg->runtime_explosions->entries[i];
+        int x;
+        int y;
+
+        if (explosion->reserved0 == 0 || explosion->slotIndex < 0) {
+            continue;
+        }
+        if (!csb_v1_viewport_runtime_overlay_position(
+                party_dir,
+                party_x,
+                party_y,
+                explosion->mapX,
+                explosion->mapY,
+                &x,
+                &y)) {
+            continue;
+        }
+        /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions
+         * after projectiles.  Use a larger marker so a live explosion
+         * visibly wins over a projectile in the same viewport cell. */
+        csb_v1_viewport_draw_runtime_overlay_cross(cfg, x, y, 0x0Cu, 2);
+    }
+}
+
 /* ReDMCSB: DUNVIEW.C F0128 lines 8337-8339 draws the ordinary
  * floor/ceiling backdrop before the square pass sequence, with F0098 lines
  * 2995-3002 consuming G2109/G2108 and clearing the redraw request.  CSBWin
@@ -1260,6 +1433,10 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * csb_v1_viewport_get_custom_background_slot_spec*(). */
 
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
+    csb_v1_viewport_draw_runtime_projectile_overlays(
+        cfg, party_dir, party_x, party_y);
+    csb_v1_viewport_draw_runtime_explosion_overlays(
+        cfg, party_dir, party_x, party_y);
 }
 
 /* ReDMCSB: DUNVIEW.C F0678 lines 6848-6862 and F0679 lines

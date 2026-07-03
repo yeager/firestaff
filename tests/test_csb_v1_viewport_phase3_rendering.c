@@ -71,6 +71,56 @@ static void test_null_framebuffer_render_is_noop(void)
     check_true("noop.viewport_pixels_still_null", cfg.viewport_pixels == NULL);
 }
 
+static void test_runtime_projectile_and_explosion_overlays(void)
+{
+    CSB_V1_ViewportConfig cfg;
+    struct ProjectileList_Compat projectiles;
+    struct ExplosionList_Compat explosions;
+    uint8_t framebuffer[320 * 200];
+    int center_offset;
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&projectiles, 0, sizeof(projectiles));
+    memset(&explosions, 0, sizeof(explosions));
+
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = framebuffer;
+    cfg.viewport_stride = 320;
+    cfg.runtime_projectiles = &projectiles;
+    cfg.runtime_explosions = NULL;
+
+    projectiles.count = 1;
+    projectiles.entries[0].slotIndex = 0;
+    projectiles.entries[0].reserved3 = 1;
+    projectiles.entries[0].mapIndex = 0;
+    projectiles.entries[0].mapX = 1;
+    projectiles.entries[0].mapY = 1;
+    projectiles.entries[0].cell = 2;
+    projectiles.entries[0].direction = 0;
+
+    csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+    center_offset = (DM1_VIEWPORT_SCREEN_Y + 88) * 320 + 112;
+    check_int("runtime.projectile_overlay.center",
+              framebuffer[center_offset], 0x0E);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    cfg.runtime_explosions = &explosions;
+    explosions.count = 1;
+    explosions.entries[0].slotIndex = 0;
+    explosions.entries[0].reserved0 = 1;
+    explosions.entries[0].mapIndex = 0;
+    explosions.entries[0].mapX = 1;
+    explosions.entries[0].mapY = 1;
+    explosions.entries[0].cell = EXPLOSION_CELL_CENTERED;
+    explosions.entries[0].explosionType = C040_EXPLOSION_SMOKE;
+
+    csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+    check_int("runtime.explosion_overlay.after_projectile",
+              framebuffer[center_offset], 0x0C);
+    check_int("runtime.explosion_overlay.radius",
+              framebuffer[center_offset - 2], 0x0C);
+}
+
 static void test_csb_custom_background_slot_contracts(void)
 {
     static const struct {
@@ -2108,6 +2158,7 @@ int main(void)
 {
     test_config_defaults_and_setters();
     test_null_framebuffer_render_is_noop();
+    test_runtime_projectile_and_explosion_overlays();
     test_csb_custom_background_slot_contracts();
     test_csb_custom_background_bitmap_application_contracts();
     test_csb_only_draw_order_and_coordinates();
