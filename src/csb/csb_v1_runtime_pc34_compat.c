@@ -2136,6 +2136,142 @@ static int csb_v1_runtime_apply_explosion_party_action(
     return applied;
 }
 
+static int csb_v1_runtime_group_cell_value(int cells, int index)
+{
+    if (cells == 0xFF) return 0xFF;
+    if (index < 0 || index > 3) return 0;
+    return (cells >> (index * 2)) & 0x03;
+}
+
+static int csb_v1_runtime_group_cells_set_value(
+    int cells,
+    int index,
+    int value)
+{
+    int shift;
+
+    if (cells == 0xFF) return cells;
+    if (index < 0 || index > 3) return cells;
+    shift = index * 2;
+    cells &= ~(0x03 << shift);
+    cells |= (value & 0x03) << shift;
+    return cells & 0xFF;
+}
+
+static void csb_v1_runtime_unlink_group_thing_from_square(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y)
+{
+    uint8_t *first_ptr;
+    uint8_t *record;
+    uint8_t *previous_record;
+    uint16_t thing;
+    uint16_t next_thing;
+    int thing_type;
+    int thing_size;
+    int guard;
+
+    if (!dungeon) return;
+    first_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon,
+        level,
+        map_x,
+        map_y);
+    if (!first_ptr) return;
+
+    previous_record = NULL;
+    thing = csb_v1_runtime_read_u16(first_ptr);
+    for (guard = 0; guard < 128 && thing != 0xFFFEu && thing != 0xFFFFu;
+         ++guard) {
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            thing,
+            &thing_type,
+            &thing_size);
+        if (!record || thing_size < 2) return;
+        next_thing = csb_v1_runtime_read_u16(record);
+        if (thing == group_thing && thing_type == 4) {
+            if (previous_record) {
+                csb_v1_runtime_write_u16(previous_record, next_thing);
+            } else {
+                csb_v1_runtime_write_u16(first_ptr, next_thing);
+            }
+            return;
+        }
+        previous_record = record;
+        thing = next_thing;
+    }
+}
+
+static void csb_v1_runtime_pack_dead_group_creature(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *group_record,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int creature_index)
+{
+    uint16_t flags;
+    int raw_count;
+    int creature_count;
+    int cells;
+    int i;
+
+    if (!dungeon || !group_record ||
+        creature_index < 0 || creature_index > 3) {
+        return;
+    }
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    raw_count = (int)((flags >> 5) & 0x03u);
+    creature_count = raw_count + 1;
+    if (creature_count < 1) creature_count = 1;
+    if (creature_count > 4) creature_count = 4;
+    if (creature_index >= creature_count) return;
+
+    if (creature_count <= 1) {
+        /* ReDMCSB GROUP.C F0190 lines 831-840 calls F0189_GROUP_Delete
+         * when the last creature dies.  This bounded CSB bridge removes the
+         * C04 thing from the square chain and marks the real-format record
+         * unused; fixed possessions, sounds, and active-group side state are
+         * later slices. */
+        csb_v1_runtime_unlink_group_thing_from_square(
+            dungeon,
+            group_thing,
+            level,
+            map_x,
+            map_y);
+        memset(group_record, 0, 16);
+        csb_v1_runtime_write_u16(group_record + 0, 0xFFFFu);
+        csb_v1_runtime_write_u16(group_record + 2, 0xFFFEu);
+        return;
+    }
+
+    cells = group_record[5];
+    /* ReDMCSB GROUP.C F0190 lines 892-905 compacts Health, directions,
+     * cells, active aspect, then decrements GROUP.Count.  CSB's bounded
+     * real-format bridge owns Health and Cells here; directions/aspect event
+     * rewriting remain with the wider active-group runtime work. */
+    for (i = creature_index; i < creature_count - 1; ++i) {
+        uint16_t next_hp =
+            csb_v1_runtime_read_u16(group_record + 6 + (i + 1) * 2);
+        int next_cell = csb_v1_runtime_group_cell_value(cells, i + 1);
+        csb_v1_runtime_write_u16(group_record + 6 + i * 2, next_hp);
+        cells = csb_v1_runtime_group_cells_set_value(cells, i, next_cell);
+    }
+    csb_v1_runtime_write_u16(group_record + 6 + (creature_count - 1) * 2, 0);
+    if (cells != 0xFF) {
+        cells &= (1 << ((creature_count - 1) * 2)) - 1;
+    }
+    group_record[5] = (uint8_t)(cells & 0xFF);
+    flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 5)) |
+                       (uint16_t)(((raw_count - 1) & 0x03) << 5));
+    csb_v1_runtime_write_u16(group_record + 14, flags);
+}
+
 static int csb_v1_runtime_apply_explosion_group_action(
     CSB_V1_RuntimeProfile *profile,
     const struct CombatAction_Compat *action,
@@ -2193,20 +2329,36 @@ static int csb_v1_runtime_apply_explosion_group_action(
              * impacts in PROJEXPL.C F0213/F0220.  This real-format bridge
              * mutates GROUP.Health[4]; active-group aspect cleanup, drops,
              * and fixed possessions remain later CSB runtime slices. */
-            for (i = 0; i < creature_count; ++i) {
+            for (i = 0; i < creature_count; ) {
                 uint8_t *hp_ptr = thing_record + 6 + i * 2;
                 uint16_t hp = csb_v1_runtime_read_u16(hp_ptr);
                 int damage;
-                if (hp == 0) continue;
+                if (hp == 0) {
+                    i++;
+                    continue;
+                }
                 damage = base_attack +
                     F0732_COMBAT_RngRandom_Compat(rng, random_window);
                 if (damage < 1) damage = 1;
                 if (damage >= (int)hp) {
-                    csb_v1_runtime_write_u16(hp_ptr, 0);
+                    csb_v1_runtime_pack_dead_group_creature(
+                        dungeon,
+                        thing_record,
+                        (uint16_t)thing,
+                        action->targetMapIndex,
+                        action->targetMapX,
+                        action->targetMapY,
+                        i);
+                    creature_count--;
+                    if (creature_count <= 0) {
+                        applied++;
+                        return applied;
+                    }
                 } else {
                     csb_v1_runtime_write_u16(
                         hp_ptr,
                         (uint16_t)((int)hp - damage));
+                    i++;
                 }
                 applied++;
             }
