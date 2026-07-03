@@ -1356,6 +1356,12 @@ static int csb_v1_runtime_sensor_type_is_square_object_launcher(int sensor_type)
            sensor_type == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ;
 }
 
+static int csb_v1_runtime_sensor_type_is_new_object_launcher(int sensor_type)
+{
+    return sensor_type == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_NEW_OBJ ||
+           sensor_type == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ;
+}
+
 static uint8_t *csb_v1_runtime_mutable_thing_record(
     CSB_V1_DungeonData *dungeon,
     uint16_t thing,
@@ -2548,6 +2554,67 @@ static uint16_t csb_v1_runtime_allocate_fixed_possession_thing(
         drop->thingType,
         index,
         drop->cell);
+}
+
+static int csb_v1_runtime_new_object_launcher_icon_to_object(
+    int icon_index,
+    int *out_thing_type,
+    int *out_item_type)
+{
+    int thing_type = DM1_DROP_THING_TYPE_WEAPON;
+    int item_type;
+
+    /* ReDMCSB DUNGEON.C F0167 lines 2140-2200 maps object-generator and
+     * projectile-launcher icon indices to object thing types.  This bounded
+     * CSB runtime bridge covers the launcher objects used by original-style
+     * traps and leaves the full object-info table for the broader item DB. */
+    if (icon_index >= 4 && icon_index <= 7) icon_index = 4;
+    switch (icon_index) {
+    case 4:   item_type = 2; break;   /* C004 torch -> C02 weapon torch */
+    case 32:  item_type = 8; break;   /* C032 dagger */
+    case 51:  item_type = 27; break;  /* C051 arrow */
+    case 52:  item_type = 28; break;  /* C052 slayer */
+    case 54:  item_type = 30; break;  /* C054 rock */
+    case 55:  item_type = 31; break;  /* C055 poison dart */
+    case 56:  item_type = 32; break;  /* C056 throwing star */
+    case 128:
+        item_type = 25;               /* C128 boulder */
+        thing_type = DM1_DROP_THING_TYPE_JUNK;
+        break;
+    default:
+        return 0;
+    }
+    if (out_thing_type) *out_thing_type = thing_type;
+    if (out_item_type) *out_item_type = item_type;
+    return 1;
+}
+
+static uint16_t csb_v1_runtime_allocate_new_object_launcher_thing(
+    CSB_V1_DungeonData *dungeon,
+    int icon_index)
+{
+    uint8_t *record;
+    int thing_type;
+    int item_type;
+    int index;
+
+    if (!dungeon ||
+        !csb_v1_runtime_new_object_launcher_icon_to_object(
+            icon_index,
+            &thing_type,
+            &item_type)) {
+        return 0xFFFFu;
+    }
+    if (!csb_v1_runtime_find_unused_object_record(
+            dungeon,
+            thing_type,
+            &record,
+            &index)) {
+        return 0xFFFFu;
+    }
+    csb_v1_runtime_write_u16(record + 0, 0xFFFEu);
+    csb_v1_runtime_write_u16(record + 2, (uint16_t)(item_type & 0x7Fu));
+    return csb_v1_runtime_thing_with_cell(thing_type, index, 0);
 }
 
 static void csb_v1_runtime_drop_creature_fixed_possessions(
@@ -4583,6 +4650,8 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                 }
             } else if (csb_v1_runtime_sensor_type_is_explosion_launcher(
                            sensor_type) ||
+                       csb_v1_runtime_sensor_type_is_new_object_launcher(
+                           sensor_type) ||
                        csb_v1_runtime_sensor_type_is_square_object_launcher(
                            sensor_type)) {
                 struct DungeonSensor_Compat decoded_sensor;
@@ -4593,6 +4662,9 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                 int launch_index;
                 int is_square_object_launcher =
                     csb_v1_runtime_sensor_type_is_square_object_launcher(
+                        sensor_type);
+                int is_new_object_launcher =
+                    csb_v1_runtime_sensor_type_is_new_object_launcher(
                         sensor_type);
 
                 csb_v1_runtime_decode_sensor_words(
@@ -4608,6 +4680,19 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                            ((uint32_t)record->mapY << 8)) & 1u);
                 launcher_ctx.newObjectThings[0] = 0xFFFFu;
                 launcher_ctx.newObjectThings[1] = 0xFFFFu;
+                if (is_new_object_launcher) {
+                    launcher_ctx.newObjectThings[0] =
+                        csb_v1_runtime_allocate_new_object_launcher_thing(
+                            dungeon,
+                            sensor_data);
+                    if (sensor_type ==
+                        DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ) {
+                        launcher_ctx.newObjectThings[1] =
+                            csb_v1_runtime_allocate_new_object_launcher_thing(
+                                dungeon,
+                                sensor_data);
+                    }
+                }
                 if (is_square_object_launcher) {
                     square_thing_count =
                         csb_v1_runtime_collect_square_launcher_things(
@@ -4670,10 +4755,12 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                                 launch->associatedThing);
                         memset(&input, 0, sizeof(input));
                         memset(&first_move, 0, sizeof(first_move));
-                        input.category = is_square_object_launcher
+                        input.category = (is_square_object_launcher ||
+                                          is_new_object_launcher)
                             ? PROJECTILE_CATEGORY_KINETIC
                             : PROJECTILE_CATEGORY_MAGICAL;
-                        input.subtype = is_square_object_launcher
+                        input.subtype = (is_square_object_launcher ||
+                                         is_new_object_launcher)
                             ? PROJECTILE_SUBTYPE_KINETIC_ARROW
                             : subtype;
                         input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
@@ -4689,11 +4776,13 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                         input.stepEnergy = launch->stepEnergy;
                         input.currentTick = (int)profile->game_time;
                         input.poisonAttack = (!is_square_object_launcher &&
+                                              !is_new_object_launcher &&
                                               subtype ==
                                                   PROJECTILE_SUBTYPE_POISON_CLOUD)
                             ? launch->attack
                             : 0;
-                        input.attackTypeCode = is_square_object_launcher
+                        input.attackTypeCode = (is_square_object_launcher ||
+                                                is_new_object_launcher)
                             ? COMBAT_ATTACK_BLUNT
                             : csb_v1_runtime_projectile_attack_type_from_subtype(
                                   subtype);
