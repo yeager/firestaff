@@ -1247,6 +1247,89 @@ static void test_c37_group_approach_teleporter_rotation(void)
               profile.timeline_queue.events[event_index].b_mapX == 2 &&
               profile.timeline_queue.events[event_index].b_mapY == 1,
           "C37 group chained teleporter requeues behavior from the final target");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.level_count = 2;
+    dungeon.level_widths[1] = 3;
+    dungeon.level_heights[1] = 3;
+    dungeon.level_offsets[1] = 9;
+    dungeon.square_first_thing_base = 120;
+    dungeon.square_first_thing_count = 3;
+    dungeon.thing_data_bases[1] = 136;
+    dungeon.thing_type_counts[1] = 1;
+    dungeon.thing_data_bases[4] = 152;
+    dungeon.thing_type_counts[4] = 1;
+    raw[dungeon.level_offsets[0] + real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[dungeon.level_offsets[0] + real_format_square_offset(0, 1)] =
+        (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    raw[dungeon.level_offsets[1] + real_format_square_offset(1, 1)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 0 * 2, 0);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 4 * 2, 2);
+    test_put_le16(raw, 120, (uint16_t)(4u << 10));
+    test_put_le16(raw, 122, (uint16_t)(1u << 10));
+    test_put_le16(raw, 124, 0xfffeu);
+    test_put_le16(raw, 136, 0xfffeu);
+    test_put_le16(raw, 138,
+                  (uint16_t)(1u | (1u << 5) | (1u << 10) |
+                             (1u << 13)));
+    test_put_le16(raw, 140, (uint16_t)(1u << 8));
+    test_put_le16(raw, 152, 0xfffeu);
+    test_put_le16(raw, 154, 0u);
+    raw[156] = 9u;
+    raw[157] = 0u;
+    test_put_le16(raw, 158, 40u);
+    test_put_le16(raw, 160, 0u);
+    test_put_le16(raw, 162, 0u);
+    test_put_le16(raw, 164, 0u);
+    test_put_le16(raw, 166, 7u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 0;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    ev.priority = 234u;
+    ev.b_mapX = 0;
+    ev.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "C37 cross-map group teleporter fixture queues the approach event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C37 cross-map group teleporter fixture dispatches the approach event");
+    CHECK(test_get_le16(raw, 120) == 0xfffeu,
+          "C37 cross-map group teleporter removes the group from map 0 source");
+    CHECK(test_get_le16(raw, 122) == (uint16_t)(1u << 10),
+          "C37 cross-map group teleporter leaves the source C05 in place");
+    CHECK(test_get_le16(raw, 124) == (uint16_t)(4u << 10),
+          "C37 cross-map group teleporter links the group at map 1 target");
+    CHECK(test_get_le16(raw, 152) == 0xfffeu,
+          "C37 cross-map group teleporter terminates the moved group chain");
+    flags = test_get_le16(raw, 166);
+    CHECK(raw[157] == 1u && ((flags >> 8) & 0x03u) == 1u,
+          "C37 cross-map group teleporter applies F0262 relative rotation");
+    event_index = find_queued_event_type(&profile,
+                                         DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
+    CHECK(event_index >= 0 &&
+              DM1_MAP_TIME_MAP(
+                  profile.timeline_queue.events[event_index].map_time) == 1 &&
+              profile.timeline_queue.events[event_index].b_mapX == 1 &&
+              profile.timeline_queue.events[event_index].b_mapY == 1,
+          "C37 cross-map group teleporter requeues behavior from map 1 target");
 }
 
 static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)
