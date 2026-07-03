@@ -429,9 +429,11 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     profile.party_state.Champions[0].CurrentHealth = 20;
     profile.party_state.Champions[0].MaximumHealth = 20;
     profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 2;
     profile.party_state.Champions[1].CurrentHealth = 20;
     profile.party_state.Champions[1].MaximumHealth = 20;
     profile.party_state.Champions[1].Attributes = 0;
+    profile.party_state.Champions[1].Cell = 0;
 
     queue_square_event(
         &profile,
@@ -519,8 +521,9 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded C38 attack event keeps the adjacent group square");
     CHECK(dispatch.records[0].aux0 == (255 - 21),
           "bounded C38 attack event priority follows 255 - creature movement ticks");
-    CHECK(profile.party_state.Champions[0].CurrentHealth == 18,
-          "bounded C38 attack event applies deterministic champion HP damage");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 20 &&
+              profile.party_state.Champions[1].CurrentHealth == 18,
+          "bounded C38 attack event targets the source-ordered champion cell");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event requeues the next attack cadence");
     c38_event_index = profile.timeline_queue.timeline[0];
@@ -532,7 +535,10 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
               profile.timeline_queue.events[c38_event_index].priority ==
                   (uint8_t)(255 - 21),
           "bounded C38 requeue uses C09 AttackTicks and movement priority");
+    profile.party_state.Champions[0].Cell = 0;
+    profile.party_state.Champions[1].Cell = 2;
     profile.party_state.Champions[0].CurrentHealth = 2;
+    profile.party_state.Champions[1].CurrentHealth = 20;
     queue_square_event(
         &profile,
         DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
