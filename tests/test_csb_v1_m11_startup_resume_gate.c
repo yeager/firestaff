@@ -17,6 +17,7 @@
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
+#include "dm1_v1_graphics_loader_pc34_compat.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -42,6 +43,19 @@ unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_failures;
 
+typedef struct {
+    unsigned char *buf;
+    size_t cap;
+    size_t bit_pos;
+} TestBitWriter;
+
+typedef struct {
+    unsigned char dict_first[4096];
+    unsigned short dict_prefix[4096];
+    int dict_count;
+    int code_bits;
+} TestLZW;
+
 static int test_setenv(const char* name, const char* value) {
 #ifdef _WIN32
     return _putenv_s(name, value);
@@ -55,6 +69,168 @@ static void expect_true(int condition, const char* message) {
         fprintf(stderr, "FAIL: %s\n", message);
         ++g_failures;
     }
+}
+
+static void write_be16(unsigned char *buf, size_t off, unsigned short value) {
+    buf[off] = (unsigned char)((value >> 8) & 0xffu);
+    buf[off + 1u] = (unsigned char)(value & 0xffu);
+}
+
+static void test_bw_init(TestBitWriter *bw) {
+    bw->cap = 1024u;
+    bw->buf = (unsigned char*)calloc(1u, bw->cap);
+    bw->bit_pos = 0u;
+}
+
+static int test_bw_grow(TestBitWriter *bw) {
+    size_t old_cap = bw->cap;
+    size_t new_cap = bw->cap * 2u;
+    unsigned char *new_buf = (unsigned char*)realloc(bw->buf, new_cap);
+    if (!new_buf) {
+        free(bw->buf);
+        bw->buf = NULL;
+        bw->cap = 0u;
+        return 0;
+    }
+    memset(new_buf + old_cap, 0, new_cap - old_cap);
+    bw->buf = new_buf;
+    bw->cap = new_cap;
+    return 1;
+}
+
+static int test_bw_write_bits(TestBitWriter *bw, unsigned int value, int n_bits) {
+    int i;
+    for (i = 0; i < n_bits; ++i) {
+        size_t bp = bw->bit_pos++;
+        size_t byte_idx;
+        int bit_in_byte;
+        if ((bp >> 3) >= bw->cap && !test_bw_grow(bw)) {
+            return 0;
+        }
+        byte_idx = bp >> 3;
+        bit_in_byte = (int)(bp & 7u);
+        if (value & (1u << (unsigned int)i)) {
+            bw->buf[byte_idx] |= (unsigned char)(1u << (unsigned int)bit_in_byte);
+        }
+    }
+    return 1;
+}
+
+static void test_lzw_init(TestLZW *e) {
+    int i;
+    e->dict_count = DM1_GFX_LZW_FIRST_CODE;
+    e->code_bits = 9;
+    for (i = 0; i < 256; ++i) {
+        e->dict_first[i] = (unsigned char)i;
+        e->dict_prefix[i] = 0xffffu;
+    }
+}
+
+static int test_lzw_find_or_add(TestLZW *e,
+                                unsigned short prefix,
+                                unsigned char append) {
+    int i;
+    for (i = DM1_GFX_LZW_FIRST_CODE; i < e->dict_count; ++i) {
+        if (e->dict_prefix[i] == prefix && e->dict_first[i] == append) {
+            return i;
+        }
+    }
+    if (e->dict_count >= DM1_GFX_LZW_MAX_CODE) {
+        return -1;
+    }
+    e->dict_prefix[e->dict_count] = prefix;
+    e->dict_first[e->dict_count] = append;
+    ++e->dict_count;
+    return -1;
+}
+
+static void test_lzw_maybe_grow(TestLZW *e) {
+    if (e->dict_count > ((1 << e->code_bits) - 1) && e->code_bits < 12) {
+        ++e->code_bits;
+    }
+}
+
+static int test_lzw_encode(const unsigned char *input,
+                           size_t in_size,
+                           unsigned char **out_buf,
+                           size_t *out_size) {
+    TestBitWriter bw;
+    TestLZW e;
+    unsigned short prefix_code;
+    size_t i;
+
+    if (!input || in_size == 0u || !out_buf || !out_size) {
+        return -1;
+    }
+    *out_buf = NULL;
+    *out_size = 0u;
+    test_bw_init(&bw);
+    if (!bw.buf) {
+        return -1;
+    }
+    test_lzw_init(&e);
+    if (!test_bw_write_bits(&bw, DM1_GFX_LZW_CLEAR_CODE, e.code_bits)) {
+        free(bw.buf);
+        return -1;
+    }
+    prefix_code = input[0];
+    for (i = 1u; i < in_size; ++i) {
+        unsigned char next_byte = input[i];
+        int existing = test_lzw_find_or_add(&e, prefix_code, next_byte);
+        if (existing >= 0) {
+            prefix_code = (unsigned short)existing;
+        } else {
+            if (!test_bw_write_bits(&bw, prefix_code, e.code_bits)) {
+                free(bw.buf);
+                return -1;
+            }
+            test_lzw_maybe_grow(&e);
+            prefix_code = next_byte;
+        }
+    }
+    if (!test_bw_write_bits(&bw, prefix_code, e.code_bits) ||
+        !test_bw_write_bits(&bw, DM1_GFX_LZW_END_CODE, e.code_bits)) {
+        free(bw.buf);
+        return -1;
+    }
+    *out_buf = bw.buf;
+    *out_size = (bw.bit_pos + 7u) / 8u;
+    return 0;
+}
+
+static unsigned char *build_csbgraphics_single_entry(
+    unsigned int entry_index,
+    const unsigned char *decoded,
+    size_t decoded_size,
+    size_t *out_size) {
+    unsigned char *compressed = NULL;
+    size_t compressed_size = 0u;
+    unsigned int count = entry_index + 1u;
+    size_t header_size = 2u + (size_t)count * 4u;
+    unsigned char *buf;
+
+    if (!out_size || !decoded || decoded_size == 0u ||
+        decoded_size > 65535u ||
+        test_lzw_encode(decoded, decoded_size,
+                        &compressed, &compressed_size) != 0 ||
+        !compressed || compressed_size == 0u || compressed_size > 65535u) {
+        free(compressed);
+        return NULL;
+    }
+    buf = (unsigned char*)calloc(1u, header_size + compressed_size);
+    if (!buf) {
+        free(compressed);
+        return NULL;
+    }
+    write_be16(buf, 0u, (unsigned short)count);
+    write_be16(buf, 2u + (size_t)entry_index * 2u,
+               (unsigned short)compressed_size);
+    write_be16(buf, 2u + (size_t)count * 2u + (size_t)entry_index * 2u,
+               (unsigned short)decoded_size);
+    memcpy(buf + header_size, compressed, compressed_size);
+    *out_size = header_size + compressed_size;
+    free(compressed);
+    return buf;
 }
 
 static int count_nonzero_rect(const unsigned char* fb,
@@ -154,6 +330,62 @@ static void render_expected_csb_viewport(const CSB_V1_RuntimeProfile* runtime,
                                   runtime->party_dir,
                                   runtime->party_x,
                                   runtime->party_y);
+}
+
+static int inject_synthetic_csbgraphics_viewport_override(
+    CSB_V1_BootProfile *profile,
+    unsigned char expected_pixels[8 * 8]) {
+    unsigned char *bytes;
+    size_t size = 0u;
+    int i;
+
+    if (!profile || !expected_pixels) {
+        return 0;
+    }
+    for (i = 0; i < 8 * 8; ++i) {
+        expected_pixels[i] = (unsigned char)((i % 15) + 1);
+    }
+    bytes = build_csbgraphics_single_entry(73u,
+                                           expected_pixels,
+                                           8u * 8u,
+                                           &size);
+    if (!bytes) {
+        return 0;
+    }
+
+    csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
+    csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    profile->csbgraphics_cache.file_buffer = bytes;
+    profile->csbgraphics_cache.file_size = size;
+    profile->csbgraphics_cache.loaded = 1;
+    snprintf(profile->csbgraphics_cache.resolved_path,
+             sizeof(profile->csbgraphics_cache.resolved_path),
+             "/synthetic/CSBgraphics.dat");
+    snprintf(profile->csbgraphics_cache.matched_md5,
+             sizeof(profile->csbgraphics_cache.matched_md5),
+             "00000000000000000000000000000000");
+    snprintf(profile->csbgraphics_cache.matched_label,
+             sizeof(profile->csbgraphics_cache.matched_label),
+             "synthetic-m11-draw");
+    if (csb_v1_csbgraphics_dat_classify(
+            profile->csbgraphics_cache.file_buffer,
+            profile->csbgraphics_cache.file_size,
+            &profile->csbgraphics_cache.index) !=
+        CSB_V1_CSBGRAPHICS_CLASSIFY_OK) {
+        return 0;
+    }
+    profile->csbgraphics_scan_attempted = 1;
+    profile->csbgraphics_scan_result = CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
+    profile->csbgraphics_plan_result =
+        csb_v1_csbgraphics_m11_runtime_plan_add_explicit_entry(
+            &profile->csbgraphics_cache,
+            73u,
+            8u,
+            8u,
+            &profile->csbgraphics_m11_plan);
+    return profile->csbgraphics_plan_result ==
+           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
 }
 
 static int write_tiny_file(const char* path, const char* bytes) {
@@ -523,6 +755,7 @@ int main(void) {
     {
         unsigned char fb[320 * 200];
         unsigned char expected_fb[320 * 200];
+        unsigned char override_pixels[8 * 8];
         memset(fb, 0, sizeof(fb));
         if (profile) {
             render_expected_csb_viewport(&profile->runtime, expected_fb);
@@ -534,6 +767,17 @@ int main(void) {
                     "M11 CSB draw matches the direct source viewport frame");
         expect_true(count_nonzero_rect(fb, 320, 18, 18, 160, 12) == 0,
                     "M11 CSB draw no longer uses the boot handoff text path");
+        if (profile) {
+            expect_true(inject_synthetic_csbgraphics_viewport_override(
+                            profile, override_pixels),
+                        "test injects a planned CSBgraphics viewport override");
+            memset(fb, 0, sizeof(fb));
+            M11_GameView_Draw(&view, fb, 320, 200);
+            expect_true(fb[33 * 320] == override_pixels[0],
+                        "M11 CSB draw applies ready CSBgraphics plan entries");
+            expect_true(fb[32 * 320] == 0,
+                        "M11 CSBgraphics draw preserves pixels outside route");
+        }
     }
 
     if (profile) {
