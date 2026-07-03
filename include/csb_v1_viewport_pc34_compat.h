@@ -70,6 +70,8 @@ typedef struct {
     int custom_background_selected_skin_num;
     int custom_background_used_default_skin;
     int custom_background_room_num;
+    int custom_background_last_room_num;
+    uint32_t custom_background_applied_room_mask;
     CSB_V1_ViewportCustomBackgroundMask custom_background_layer_masks[3];
     uint8_t custom_background_layer_mask_valid[3];
     int custom_background_applied_count;

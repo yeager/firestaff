@@ -1405,28 +1405,66 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
     uint16_t selected_skin_def_words[CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS];
     const uint16_t *skin_def_words;
     size_t skin_def_word_count;
+    const CSB_V1_CustomBackgroundsRoomSlotContract *room_contract;
+    int first_room;
+    int last_room;
+    int room_index;
     int layer;
     int applied = 0;
 
     if (!cfg || !cfg->viewport_pixels ||
-        !cfg->csbgraphics_plan || !cfg->csbgraphics_cache ||
-        cfg->custom_background_room_num < 0) {
-        if (cfg) cfg->custom_background_applied_count = 0;
+        !cfg->csbgraphics_plan || !cfg->csbgraphics_cache) {
+        if (cfg) {
+            cfg->custom_background_applied_count = 0;
+            cfg->custom_background_applied_room_mask = 0u;
+            cfg->custom_background_last_room_num = -1;
+        }
         return 0;
     }
     plan = (const CSB_V1_CSBGraphicsM11RuntimePlan *)cfg->csbgraphics_plan;
     cache = (const CSB_V1_CSBGraphicsDatRealCache *)cfg->csbgraphics_cache;
-    skin_def_words = cfg->custom_background_skin_def_words;
-    skin_def_word_count = cfg->custom_background_skin_def_word_count;
     cfg->custom_background_selected_skin_num = 0;
     cfg->custom_background_used_default_skin = 0;
+    cfg->custom_background_applied_room_mask = 0u;
+    cfg->custom_background_last_room_num = -1;
 
-    if ((cfg->custom_background_cell_skins &&
-         cfg->custom_background_cell_skin_width > 0 &&
-         cfg->custom_background_cell_skin_height > 0) ||
-        cfg->custom_background_default_skin > 0) {
+    room_contract = csb_v1_viewport_custom_backgrounds_room_slot_contract_pc34();
+    if (cfg->custom_background_room_num >= 0) {
+        first_room = cfg->custom_background_room_num;
+        last_room = cfg->custom_background_room_num;
+    } else if (((cfg->custom_background_cell_skins &&
+                 cfg->custom_background_cell_skin_width > 0 &&
+                 cfg->custom_background_cell_skin_height > 0) ||
+                cfg->custom_background_default_skin > 0) &&
+               room_contract && room_contract->room_slot_count > 0) {
+        first_room = 0;
+        last_room = room_contract->room_slot_count - 1;
+    } else {
+        cfg->custom_background_applied_count = 0;
+        return 0;
+    }
+
+    for (room_index = first_room; room_index <= last_room; ++room_index) {
+        int room_num = room_index;
+        int room_applied = 0;
+        skin_def_words = cfg->custom_background_skin_def_words;
+        skin_def_word_count = cfg->custom_background_skin_def_word_count;
+        if (cfg->custom_background_room_num < 0) {
+            const CSB_V1_CustomBackgroundsRoomSlotSpec *slot =
+                csb_v1_viewport_custom_backgrounds_room_slot_spec_pc34(
+                    (size_t)room_index);
+            if (!slot) {
+                continue;
+            }
+            room_num = slot->room_num;
+        }
+
         CSB_V1_CustomBackgroundsRoomSlotSelection selection;
-        if (csb_v1_viewport_custom_backgrounds_room_slot_select_pc34(
+        if (((cfg->custom_background_cell_skins &&
+              cfg->custom_background_cell_skin_width > 0 &&
+              cfg->custom_background_cell_skin_height > 0) ||
+             cfg->custom_background_default_skin > 0) &&
+            csb_v1_viewport_custom_backgrounds_room_slot_select_pc34(
                 cfg->custom_background_cell_skins,
                 cfg->custom_background_cell_skin_width,
                 cfg->custom_background_cell_skin_height,
@@ -1434,7 +1472,7 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
                 party_x,
                 party_y,
                 party_dir,
-                cfg->custom_background_room_num,
+                room_num,
                 cfg->custom_background_default_skin,
                 &selection) &&
             selection.has_custom_background_entry) {
@@ -1453,81 +1491,86 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
                 skin_def_word_count = selected_word_count;
             }
         }
-    }
-    if (!skin_def_words || skin_def_word_count == 0u) {
-        cfg->custom_background_applied_count = 0;
-        return 0;
-    }
-
-    viewport_words = (uint32_t *)calloc(viewport_word_count,
-                                        sizeof(*viewport_words));
-    if (!viewport_words) {
-        cfg->custom_background_applied_count = 0;
-        return 0;
-    }
-
-    for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
-        uint8_t *row = cfg->viewport_pixels +
-            (DM1_VIEWPORT_SCREEN_Y + y) *
-                (cfg->viewport_stride > 0 ? cfg->viewport_stride : 320) +
-            DM1_VIEWPORT_SCREEN_X;
-        for (int x = 0; x < DM1_VIEWPORT_WIDTH; x += 8) {
-            viewport_words[(size_t)y * (size_t)viewport_word_stride +
-                           (size_t)(x / 8)] =
-                csb_v1_viewport_pack_4bpp_word(row + x);
+        if (!skin_def_words || skin_def_word_count == 0u) {
+            continue;
         }
-    }
 
-    /* CSB-lineage Viewport.cpp:5367-5381 and 6599-6619 apply room
-     * pSkinDef layers in large, middle, then near order. Prefer caller-
-     * supplied geometry for synthetic gates; otherwise decode the CSBWin
-     * BACKGROUND_MASK for this room from the mask graphic entry itself. */
-    for (layer = 0; layer < 3; ++layer) {
-        int rc;
-        if (cfg->custom_background_layer_mask_valid[layer]) {
-            rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
-                plan,
-                cache,
-                cfg->custom_background_room_num,
-                (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
-                skin_def_words,
-                skin_def_word_count,
-                &cfg->custom_background_layer_masks[layer],
-                viewport_words,
-                viewport_word_count,
-                DM1_VIEWPORT_WIDTH);
-        } else {
-            rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_mask(
-                plan,
-                cache,
-                cfg->custom_background_room_num,
-                (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
-                skin_def_words,
-                skin_def_word_count,
-                viewport_words,
-                viewport_word_count,
-                DM1_VIEWPORT_WIDTH);
+        viewport_words = (uint32_t *)calloc(viewport_word_count,
+                                            sizeof(*viewport_words));
+        if (!viewport_words) {
+            cfg->custom_background_applied_count = applied;
+            return applied;
         }
-        if (rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
-            ++applied;
-        }
-    }
 
-    if (applied > 0) {
         for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
             uint8_t *row = cfg->viewport_pixels +
                 (DM1_VIEWPORT_SCREEN_Y + y) *
                     (cfg->viewport_stride > 0 ? cfg->viewport_stride : 320) +
                 DM1_VIEWPORT_SCREEN_X;
             for (int x = 0; x < DM1_VIEWPORT_WIDTH; x += 8) {
-                csb_v1_viewport_unpack_4bpp_word(
-                    viewport_words[(size_t)y * (size_t)viewport_word_stride +
-                                   (size_t)(x / 8)],
-                    row + x);
+                viewport_words[(size_t)y * (size_t)viewport_word_stride +
+                               (size_t)(x / 8)] =
+                    csb_v1_viewport_pack_4bpp_word(row + x);
             }
         }
+
+        /* CSB-lineage Viewport.cpp:5367-5381 and 6599-6619 apply room
+         * pSkinDef layers in large, middle, then near order. Prefer caller-
+         * supplied geometry for synthetic gates; otherwise decode the CSBWin
+         * BACKGROUND_MASK for this room from the mask graphic entry itself. */
+        for (layer = 0; layer < 3; ++layer) {
+            int rc;
+            if (cfg->custom_background_layer_mask_valid[layer]) {
+                rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
+                    plan,
+                    cache,
+                    room_num,
+                    (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
+                    skin_def_words,
+                    skin_def_word_count,
+                    &cfg->custom_background_layer_masks[layer],
+                    viewport_words,
+                    viewport_word_count,
+                    DM1_VIEWPORT_WIDTH);
+            } else {
+                rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_mask(
+                    plan,
+                    cache,
+                    room_num,
+                    (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
+                    skin_def_words,
+                    skin_def_word_count,
+                    viewport_words,
+                    viewport_word_count,
+                    DM1_VIEWPORT_WIDTH);
+            }
+            if (rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+                ++applied;
+                ++room_applied;
+            }
+        }
+
+        if (room_applied > 0) {
+            cfg->custom_background_last_room_num = room_num;
+            if (room_num >= 0 && room_num < 32) {
+                cfg->custom_background_applied_room_mask |=
+                    (uint32_t)1u << (uint32_t)room_num;
+            }
+            for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+                uint8_t *row = cfg->viewport_pixels +
+                    (DM1_VIEWPORT_SCREEN_Y + y) *
+                        (cfg->viewport_stride > 0 ? cfg->viewport_stride : 320) +
+                    DM1_VIEWPORT_SCREEN_X;
+                for (int x = 0; x < DM1_VIEWPORT_WIDTH; x += 8) {
+                    csb_v1_viewport_unpack_4bpp_word(
+                        viewport_words[(size_t)y * (size_t)viewport_word_stride +
+                                       (size_t)(x / 8)],
+                        row + x);
+                }
+            }
+        }
+        free(viewport_words);
     }
-    free(viewport_words);
     cfg->custom_background_applied_count = applied;
     return applied;
 }
