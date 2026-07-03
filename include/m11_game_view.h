@@ -263,6 +263,13 @@ typedef struct {
      * Ref: ReDMCSB MELEE.C — C014_GRAPHIC_DAMAGE_TO_CREATURE. */
     int creatureHitOverlayTimer;
     int creatureHitDamageAmount;
+    /* Transient visual echo for the source movement-arrow panel.  Keyboard
+     * movement keys (arrows, WASD, Home/End, Q/E) enter M11 as the same
+     * M12_MENU_INPUT_* tokens as mouse/touch arrow clicks, so this stores
+     * the C068..C073 arrow zone mask that should be highlighted on the next
+     * V1 chrome redraw.  Presentation-only; not part of any save format. */
+    int v1MovementArrowVisualMask;
+    int v1MovementArrowVisualTicks;
 
     /* ── Full-screen overlay state ── */
     int mapOverlayActive;        /* 1 when full-screen map is displayed */

@@ -332,6 +332,16 @@ enum {
     M11_COLOR_SILVER = 13       /* DM PC VGA slot 13 — Silver         */
 };
 
+enum {
+    M11_V1_ARROW_VIS_TURN_LEFT    = 1 << 0, /* C068 */
+    M11_V1_ARROW_VIS_TURN_RIGHT   = 1 << 1, /* C069 */
+    M11_V1_ARROW_VIS_FORWARD      = 1 << 2, /* C070 */
+    M11_V1_ARROW_VIS_RIGHT        = 1 << 3, /* C071 */
+    M11_V1_ARROW_VIS_BACKWARD     = 1 << 4, /* C072 */
+    M11_V1_ARROW_VIS_LEFT         = 1 << 5, /* C073 */
+    M11_V1_ARROW_VIS_TICKS        = 4
+};
+
 /*
  * Pass 40 — source-anchored DM1 viewport constants (documentation-only).
  *
@@ -10557,6 +10567,41 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
 static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* state,
                                                           M12_MenuInput input);
 
+static int m11_v1_movement_arrow_visual_mask_for_input(M12_MenuInput input) {
+    switch (input) {
+        case M12_MENU_INPUT_LEFT:
+        case M12_MENU_INPUT_TURN_LEFT:
+            return M11_V1_ARROW_VIS_TURN_LEFT;
+        case M12_MENU_INPUT_RIGHT:
+        case M12_MENU_INPUT_TURN_RIGHT:
+            return M11_V1_ARROW_VIS_TURN_RIGHT;
+        case M12_MENU_INPUT_UP:
+            return M11_V1_ARROW_VIS_FORWARD;
+        case M12_MENU_INPUT_DOWN:
+            return M11_V1_ARROW_VIS_BACKWARD;
+        case M12_MENU_INPUT_STRAFE_LEFT:
+            return M11_V1_ARROW_VIS_LEFT;
+        case M12_MENU_INPUT_STRAFE_RIGHT:
+            return M11_V1_ARROW_VIS_RIGHT;
+        default:
+            return 0;
+    }
+}
+
+static void m11_mark_v1_movement_arrow_visual(M11_GameViewState* state,
+                                               M12_MenuInput input) {
+    int mask;
+    if (!state) {
+        return;
+    }
+    mask = m11_v1_movement_arrow_visual_mask_for_input(input);
+    if (!mask) {
+        return;
+    }
+    state->v1MovementArrowVisualMask = mask;
+    state->v1MovementArrowVisualTicks = M11_V1_ARROW_VIS_TICKS;
+}
+
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
     uint8_t command = CMD_NONE;
@@ -10654,6 +10699,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         input != M12_MENU_INPUT_NONE) {
         M11_GameView_AcknowledgeSessionTimerReminder(state);
         return M11_GAME_INPUT_REDRAW;
+    }
+
+    if (!state->gameWon && !state->mapOverlayActive &&
+        !state->inventoryPanelActive) {
+        m11_mark_v1_movement_arrow_visual(state, input);
     }
 
     if (m11_source_is_csb(state)) {
@@ -20152,8 +20202,11 @@ static void m11_draw_control_button(unsigned char* framebuffer,
 static void m11_draw_control_strip(unsigned char* framebuffer,
                                    int framebufferWidth,
                                    int framebufferHeight,
-                                   const M11_ViewportCell* aheadCell) {
+                                   const M11_ViewportCell* aheadCell,
+                                   const M11_GameViewState* state) {
     unsigned char accent = m11_focus_color(aheadCell);
+    int mask = (state && state->v1MovementArrowVisualTicks > 0)
+        ? state->v1MovementArrowVisualMask : 0;
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   M11_CONTROL_STRIP_X, M11_CONTROL_STRIP_Y,
                   M11_CONTROL_STRIP_W, M11_CONTROL_STRIP_H, M11_COLOR_BLACK);
@@ -20162,16 +20215,24 @@ static void m11_draw_control_strip(unsigned char* framebuffer,
                   M11_CONTROL_STRIP_W, M11_CONTROL_STRIP_H, accent);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             18, 167, 15, 10, "", DIR_WEST,
-                            M11_COLOR_YELLOW, M11_COLOR_BLACK);
+                            M11_COLOR_YELLOW,
+                            (mask & M11_V1_ARROW_VIS_LEFT)
+                                ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             35, 167, 15, 10, "", DIR_NORTH,
-                            M11_COLOR_LIGHT_CYAN, M11_COLOR_BLACK);
+                            M11_COLOR_LIGHT_CYAN,
+                            (mask & M11_V1_ARROW_VIS_FORWARD)
+                                ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             52, 167, 15, 10, "", DIR_EAST,
-                            M11_COLOR_YELLOW, M11_COLOR_BLACK);
+                            M11_COLOR_YELLOW,
+                            (mask & M11_V1_ARROW_VIS_RIGHT)
+                                ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             69, 167, 15, 10, "", DIR_SOUTH,
-                            M11_COLOR_LIGHT_CYAN, M11_COLOR_BLACK);
+                            M11_COLOR_LIGHT_CYAN,
+                            (mask & M11_V1_ARROW_VIS_BACKWARD)
+                                ? M11_COLOR_DARK_GRAY : M11_COLOR_BLACK);
     m11_draw_control_button(framebuffer, framebufferWidth, framebufferHeight,
                             86, 167, 12, 10, "", -1,
                             accent, M11_COLOR_BLACK);
@@ -26813,6 +26874,49 @@ int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
     return 1;
 }
 
+static void m11_draw_v1_movement_arrow_visual_feedback(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight) {
+    static const int kArrowMasks[6] = {
+        M11_V1_ARROW_VIS_TURN_LEFT,
+        M11_V1_ARROW_VIS_TURN_RIGHT,
+        M11_V1_ARROW_VIS_FORWARD,
+        M11_V1_ARROW_VIS_RIGHT,
+        M11_V1_ARROW_VIS_BACKWARD,
+        M11_V1_ARROW_VIS_LEFT
+    };
+    int i;
+    if (!state || !framebuffer ||
+        state->v1MovementArrowVisualTicks <= 0 ||
+        state->v1MovementArrowVisualMask == 0) {
+        return;
+    }
+
+    /* ReDMCSB COMMAND.C G0448 defines the source hit rectangles
+     * C068..C073.  Firestaff's keyboard layer routes arrows/WASD and
+     * Home/End/Q/E through the same M12_MENU_INPUT_* tokens as mouse
+     * clicks, then this presentation bridge echoes the active source
+     * zone without changing the command pipeline. */
+    for (i = 0; i < 6; ++i) {
+        int x = 0, y = 0, w = 0, h = 0;
+        if ((state->v1MovementArrowVisualMask & kArrowMasks[i]) == 0) {
+            continue;
+        }
+        if (!M11_GameView_GetV1MovementArrowZone(i, &x, &y, &w, &h)) {
+            continue;
+        }
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      x, y, w, h, M11_COLOR_WHITE);
+        if (w > 4 && h > 4) {
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x + 1, y + 1, w - 2, h - 2,
+                          M11_COLOR_LIGHT_CYAN);
+        }
+    }
+}
+
 int M11_GameView_GetV1ScreenZoneId(void) {
     /* Source layout-696 C002_ZONE_SCREEN. */
     return 2;
@@ -30209,6 +30313,8 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)M11_GameView_GetV1MovementArrowsGraphicId(),
         arrowW, arrowH, arrowX, arrowY);
+    m11_draw_v1_movement_arrow_visual_feedback(
+        state, framebuffer, framebufferWidth, framebufferHeight);
 }
 
 static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
@@ -33262,7 +33368,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * look like a debug build.  Keep all of that behind showDebugHUD until
      * each real DM1 message surface is source-bound. */
     if (state->showDebugHUD && !m11_v1_chrome_mode_enabled()) {
-        m11_draw_control_strip(framebuffer, framebufferWidth, framebufferHeight, &aheadCell);
+        m11_draw_control_strip(framebuffer, framebufferWidth,
+                               framebufferHeight, &aheadCell, state);
     }
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth, framebufferHeight);
@@ -34021,6 +34128,12 @@ void M11_GameView_TickAnimation(M11_GameViewState* state) {
     if (state->damageFlashTimer > 0) state->damageFlashTimer--;
     if (state->attackCueTimer > 0)   state->attackCueTimer--;
     if (state->creatureHitOverlayTimer > 0) state->creatureHitOverlayTimer--;
+    if (state->v1MovementArrowVisualTicks > 0) {
+        state->v1MovementArrowVisualTicks--;
+        if (state->v1MovementArrowVisualTicks <= 0) {
+            state->v1MovementArrowVisualMask = 0;
+        }
+    }
     { int ci; for (ci = 0; ci < 4; ++ci) {
         if (state->championDamageTimer[ci] > 0) state->championDamageTimer[ci]--;
     }}
