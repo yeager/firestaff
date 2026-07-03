@@ -39,7 +39,7 @@ def main() -> int:
         "F0104/F0105",
         "C10_COLOR_FLESH as the transparent color",
         "m11_draw_dm1_wall_blit_with_transparency",
-        "&kSideBlits[i],\n                                                               10);",
+        "&kM11_DM1SideWallBlits[i],\n                                                               10);",
         "&swapped,\n                                                     10);",
         "partner = i ^ 1",
     ]

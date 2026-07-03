@@ -40,6 +40,26 @@ def find_function(text: str, name: str) -> tuple[int, int, str]:
     raise AssertionError(f'missing function body for {name}')
 
 
+def find_static_array(text: str, name: str) -> tuple[int, int, str]:
+    needle = name + '[]'
+    start = text.find(needle)
+    if start < 0:
+        raise AssertionError(f'missing static array for {name}')
+    brace = text.find('{', start)
+    if brace < 0:
+        raise AssertionError(f'missing initializer for {name}')
+    depth = 0
+    for i in range(brace, len(text)):
+        if text[i] == '{':
+            depth += 1
+        elif text[i] == '}':
+            depth -= 1
+            if depth == 0:
+                line_start = text.rfind('\n', 0, start) + 1
+                return line_start, i + 1, text[line_start:i + 1]
+    raise AssertionError(f'unterminated static array for {name}')
+
+
 def find_redmcsb_region(text: str, name: str) -> tuple[int, int, str]:
     pattern = re.compile(r'(?m)^(?:STATICFUNCTION\s+void|void)\s+' + re.escape(name) + r'\s*\(')
     next_pattern = re.compile(r'(?m)^\s*(?:STATICFUNCTION\s+void|void)\s+F\d{4}_')
@@ -138,29 +158,38 @@ def main() -> int:
             ('near side-wall guard', '!m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)'),
             ('item draw section', 'if (cell->floorItemCount > 0)'),
             ('creature draw section', 'if (cell->creatureGroupCount > 0)'),
-            ('projectile draw section', 'if (cell->summary.projectiles > 0)'),
+            ('projectile draw section', 'if (m11_viewport_cell_has_renderable_projectile(cell))'),
         ],
         'Firestaff side contents same-lane near-wall guard before drawing',
     )
     ok.append(f'Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:{line_no(text, contents_start)}')
 
-    side_walls_start, _side_walls_end, side_walls = find_function(text, 'm11_draw_dm1_side_walls')
+    side_table_start, _side_table_end, side_table = find_static_array(text, 'kM11_DM1SideWallBlits')
     require_in_order(
-        side_walls,
+        side_table,
         [
             ('D3L2 side wall first', '{3, 3, -2, M11_GFX_WALLSET0_D3L2'),
             ('D2L2 side wall after D3', '{2, 2, -2, M11_GFX_WALLSET0_D2L2'),
             ('D1L side wall after D2', '{1, 1, -1, M11_GFX_WALLSET0_D1L'),
             ('D0L side wall nearest', '{0, 0, -1, M11_GFX_WALLSET0_D0L'),
+        ],
+        'Firestaff side wall far-to-near table',
+    )
+    side_walls_start, _side_walls_end, side_walls = find_function(text, 'm11_draw_dm1_side_walls')
+    require_in_order(
+        side_walls,
+        [
+            ('max-visible guard', 'relForward > maxVisibleForward'),
+            ('same-lane guard', 'm11_dm1_side_lane_clear_for_rel(cells,'),
             ('C10-keyed wall blit', 'm11_draw_dm1_wall_blit_with_transparency'),
         ],
-        'Firestaff side wall far-to-near C10-keyed blits',
+        'Firestaff side wall occlusion guards and C10-keyed blits',
     )
     if '10);' not in side_walls:
         raise AssertionError('Firestaff side wall blit does not pass C10 transparency key')
     if 'm11_dm1_side_lane_clear_for_rel(cells,' not in side_walls:
         raise AssertionError('Firestaff side-wall panels are not guarded by same-lane near-wall occlusion')
-    ok.append(f'Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:{line_no(text, side_walls_start)}')
+    ok.append(f'Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:{line_no(text, side_table_start)}, {line_no(text, side_walls_start)}')
 
     ornaments_start, _ornaments_end, ornaments = find_function(text, 'm11_draw_dm1_wall_ornaments')
     require_in_order(
