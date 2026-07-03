@@ -484,6 +484,34 @@ static uint16_t make_sensor_target(int x, int y, int cell)
                       ((y & 0x1f) << 11));
 }
 
+static void make_real_format_wall_text_dungeon(CSB_V1_DungeonData *dungeon,
+                                               uint8_t *raw,
+                                               size_t raw_size,
+                                               int text_cell,
+                                               uint16_t text_word)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[2] = 68;
+    dungeon->thing_type_counts[2] = 1;
+
+    raw[real_format_square_offset(0, 0)] = (uint8_t)((0u << 5) | 0x10u);
+    test_put_le16(raw, 60, 0);
+    test_put_le16(raw, 66,
+                  (uint16_t)(((text_cell & 3) << 14) | (2u << 10)));
+    test_put_le16(raw, 68, 0xfffeu);
+    test_put_le16(raw, 70, text_word);
+}
+
 static void make_real_format_corridor_text_generator_dungeon(
     CSB_V1_DungeonData *dungeon,
     uint8_t *raw,
@@ -933,6 +961,67 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
           "remote wall-gate square effect fires on the next tick");
     CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 3u,
           "remote wall-gate effect reaches the target door and starts opening");
+
+    make_real_format_wall_text_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        2,
+        0x0000u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_SET,
+        0,
+        0,
+        2);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall text SET event fires on the current tick");
+    type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((type_data & 0x0001u) == 0x0001u,
+          "C06 wall text SET marks same-cell textstring visible");
+
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_CLEAR,
+        0,
+        0,
+        2);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall text CLEAR event fires on the current tick");
+    type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((type_data & 0x0001u) == 0u,
+          "C06 wall text CLEAR hides same-cell textstring");
+
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_TOGGLE,
+        0,
+        0,
+        1);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall text wrong-cell TOGGLE event fires on the current tick");
+    type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((type_data & 0x0001u) == 0u,
+          "C06 wall text ignores textstrings on other wall cells");
+
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_TOGGLE,
+        0,
+        0,
+        2);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall text same-cell TOGGLE event fires on the current tick");
+    type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((type_data & 0x0001u) == 0x0001u,
+          "C06 wall text TOGGLE flips same-cell visibility");
 }
 
 static void seed_two_champion_party(CSB_V1_PartyState *party)

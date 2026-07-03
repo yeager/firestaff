@@ -2701,10 +2701,11 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
         record->mapY);
     if (thing < 0) return;
 
-    /* ReDMCSB TIMELINE.C F0248 lines 1198-1308 handles wall C006 countdown
-     * and C005 AND/OR gate sensors by mutating M040_DATA and feeding matching
-     * remote effects back through F0272_SENSOR_TriggerEffect.  Projectile
-     * launchers, endgame, text visibility, and rotation side effects remain
+    /* ReDMCSB TIMELINE.C F0248 lines 1175-1195 toggles same-cell wall
+     * TextString visibility, then lines 1198-1308 handles wall C006
+     * countdown and C005 AND/OR gate sensors by mutating M040_DATA and
+     * feeding matching remote effects back through F0272_SENSOR_TriggerEffect.
+     * Projectile launchers, endgame, and rotation side effects remain
      * separate runtime work. */
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
         uint8_t *sensor;
@@ -2729,7 +2730,19 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             &thing_type,
             &thing_size);
         if (!sensor) break;
-        if (thing_type == 3 && thing_size >= 8) {
+        if (thing_type == 2 && thing_size >= 4 &&
+            csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                (uint16_t)thing) == (record->cell & 3)) {
+            uint16_t text_word = csb_v1_runtime_read_u16(sensor + 2);
+            if (record->effect == DM1_EFFECT_TOGGLE) {
+                text_word ^= 0x0001u;
+            } else if (record->effect == DM1_EFFECT_SET) {
+                text_word |= 0x0001u;
+            } else {
+                text_word &= (uint16_t)~0x0001u;
+            }
+            csb_v1_runtime_write_u16(sensor + 2, text_word);
+        } else if (thing_type == 3 && thing_size >= 8) {
             type_data = csb_v1_runtime_read_u16(sensor + 2);
             flags_word = csb_v1_runtime_read_u16(sensor + 4);
             target_word = csb_v1_runtime_read_u16(sensor + 6);
