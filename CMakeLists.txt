@@ -17016,6 +17016,8 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_csbgraphics_m11_binding_readiness
         tests/test_csb_v1_csbgraphics_m11_binding_readiness.c
         src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
+        src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     )
     target_include_directories(test_csb_v1_csbgraphics_m11_binding_readiness PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

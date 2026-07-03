@@ -8,8 +8,11 @@
  * trusted decoded override must satisfy before the M11 viewport or
  * HUD lanes may consume it. The companion apply helper copies an
  * already trusted indexed bitmap into the M11 320x200 framebuffer
- * according to that binding decision; it still does not discover or
- * interpret CSBgraphics.dat by itself.
+ * according to that binding decision. The decode-entry helper can
+ * also bridge one caller-selected CSBgraphics.dat entry through the
+ * existing LZW decoder when the caller supplies the expected indexed
+ * bitmap dimensions; discovery and route selection still live
+ * outside this module.
  */
 
 #ifndef FIRESTAFF_CSB_V1_CSBGRAPHICS_M11_BINDING_READINESS_H
@@ -93,6 +96,18 @@ int csb_v1_csbgraphics_m11_apply_binding(
 int csb_v1_csbgraphics_m11_prepare_and_apply(
     const CSB_V1_CSBGraphicsEntrySpan *span,
     const CSB_V1_CSBGraphicsDecodedBitmap *decoded,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride,
+    CSB_V1_CSBGraphicsM11Binding *out_binding);
+
+int csb_v1_csbgraphics_m11_decode_entry_and_apply(
+    const uint8_t *csbgraphics_bytes,
+    size_t csbgraphics_size,
+    uint32_t entry_index,
+    uint16_t decoded_width,
+    uint16_t decoded_height,
     uint8_t *framebuffer,
     int framebuffer_width,
     int framebuffer_height,
