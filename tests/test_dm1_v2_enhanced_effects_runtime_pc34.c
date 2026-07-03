@@ -101,6 +101,38 @@ static void test_indexed_render_gate_paints_particles(void) {
     CHECK(framebuffer[(5 + 12) * 64 + (4 + 10)] != 0);
 }
 
+static void test_indexed_render_gate_paints_dynamic_lights(void) {
+    DM1_V2_PhaseGateConfig gate;
+    DM1_V2_Settings settings;
+    unsigned char framebuffer[240 * 160];
+    int lightX = (1 * 224) / M11_V2_LIGHT_MAP_SIZE;
+    int lightY = (1 * 136) / M11_V2_LIGHT_MAP_SIZE;
+
+    dm1_v2_phase_gate_defaults(&gate);
+    dm1_v2_settings_defaults(&settings);
+    settings.dynamicLightingEnabled = 1;
+    v2_particle_init();
+    v2_light_init();
+    memset(framebuffer, 0, sizeof(framebuffer));
+    CHECK(v2_light_add_source(1.0f, 1.0f, 2.0f, 255, 255, 190, 64) == 0);
+    v2_light_compute_map();
+
+    CHECK(dm1_v2_enhanced_effects_runtime_render_indexed(
+              &gate, &settings, framebuffer, 240, 160, 0, 0) == 0);
+    CHECK(framebuffer[lightY * 240 + lightX] == 0);
+
+    gate.v2PresentationEnabled = 1;
+    CHECK(dm1_v2_enhanced_effects_runtime_render_indexed(
+              &gate, &settings, framebuffer, 240, 160, 0, 0) > 0);
+    CHECK(framebuffer[lightY * 240 + lightX] != 0);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    settings.dynamicLightingEnabled = 0;
+    CHECK(dm1_v2_enhanced_effects_runtime_render_indexed(
+              &gate, &settings, framebuffer, 240, 160, 0, 0) == 0);
+    CHECK(framebuffer[lightY * 240 + lightX] == 0);
+}
+
 static void test_direct_particle_seed_is_bounded_and_visible(void) {
     unsigned char framebuffer[32 * 32];
     int i;
@@ -159,6 +191,7 @@ int main(void) {
     test_presentation_gate_ticks_particles_without_lighting();
     test_presentation_gate_and_dynamic_lighting_tick_light_map();
     test_indexed_render_gate_paints_particles();
+    test_indexed_render_gate_paints_dynamic_lights();
     test_direct_particle_seed_is_bounded_and_visible();
     test_null_inputs_fail_safe();
 

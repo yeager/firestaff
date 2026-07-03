@@ -66,6 +66,17 @@ void v2_light_init(void) {
     g_source_count = 0;
 }
 
+void v2_light_clear_sources(void) {
+    memset(g_light_map.r, 0, sizeof(g_light_map.r));
+    memset(g_light_map.g, 0, sizeof(g_light_map.g));
+    memset(g_light_map.b, 0, sizeof(g_light_map.b));
+    g_source_count = 0;
+}
+
+int v2_light_source_count(void) {
+    return g_source_count;
+}
+
 int v2_light_add_source(float x, float y, float radius, uint8_t intensity,
                          uint8_t r, uint8_t g, uint8_t b) {
     int idx;
@@ -253,6 +264,7 @@ float v22_light_get(int x, int y) {
 
 void v22_light_set_ambient(float a) { g_ambient = a < 0 ? 0 : (a > 1 ? 1 : a); }
 void v22_light_clear(void) { g_light_count = 0; }
+int v22_light_source_count(void) { return g_light_count; }
 
 /* V22 per-frame tick — updates light map with current flicker state.
  * Called from v22_runtime_enhanced_tick each frame when V2.2 is active.

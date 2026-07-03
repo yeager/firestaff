@@ -44,6 +44,7 @@ int main(void) {
     CHECK(r == 0 && g == 0 && b == 0);
 
     CHECK(v2_light_add_source(16.0f, 16.0f, 4.0f, 255, 100, 50, 25) == 0);
+    CHECK(v2_light_source_count() == 1);
     v2_light_compute_map();
     get_rgb(16, 16, &r, &g, &b);
     CHECK(r == 100 && g == 50 && b == 25);
@@ -58,6 +59,7 @@ int main(void) {
     CHECK(r == 255 && g == 255 && b == 255); /* additive overlay clamps */
 
     v2_light_remove_source(1);
+    CHECK(v2_light_source_count() == 1);
     v2_light_compute_map();
     get_rgb(16, 16, &r, &g, &b);
     CHECK(r == 100 && g == 50 && b == 25);
@@ -66,7 +68,20 @@ int main(void) {
     for (int i = 0; i < M11_V2_LIGHT_MAX_SOURCES; ++i) {
         CHECK(v2_light_add_source(0.0f, 0.0f, 1.0f, 1, 1, 1, 1) == i);
     }
+    CHECK(v2_light_source_count() == M11_V2_LIGHT_MAX_SOURCES);
     CHECK(v2_light_add_source(0.0f, 0.0f, 1.0f, 1, 1, 1, 1) == -1);
+    v2_light_clear_sources();
+    CHECK(v2_light_source_count() == 0);
+    v2_light_compute_map();
+    get_rgb(0, 0, &r, &g, &b);
+    CHECK(r == 0 && g == 0 && b == 0);
+
+    v22_light_clear();
+    CHECK(v22_light_source_count() == 0);
+    CHECK(v22_light_add(4, 5, 1.0f, 3.0f, 0xffaa00ffu, 1) == 0);
+    CHECK(v22_light_source_count() == 1);
+    v22_light_clear();
+    CHECK(v22_light_source_count() == 0);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
