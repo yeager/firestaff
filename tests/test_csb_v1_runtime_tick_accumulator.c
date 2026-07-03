@@ -337,6 +337,25 @@ static void queue_explosion_advance_event(CSB_V1_RuntimeProfile *profile,
           "CSB runtime accepts a queued C25 explosion event");
 }
 
+static void queue_projectile_move_event(CSB_V1_RuntimeProfile *profile,
+                                        const struct TimelineEvent_Compat *timeline_event)
+{
+    struct DM1_Event_V1 ev;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_MOVE_PROJECTILE;
+    ev.map_time = DM1_MAP_TIME_MAKE(
+        timeline_event ? timeline_event->mapIndex : 0,
+        timeline_event ? timeline_event->fireAtTick : 0);
+    ev.priority = (uint8_t)(timeline_event ? timeline_event->aux0 : 0);
+    ev.b_mapX = (uint8_t)(timeline_event ? timeline_event->mapX : 0);
+    ev.b_mapY = (uint8_t)(timeline_event ? timeline_event->mapY : 0);
+    ev.c_cell = (uint8_t)(timeline_event ? timeline_event->cell : 0);
+    ev.c_effect = (uint8_t)(timeline_event ? timeline_event->aux3 : 0);
+    CHECK(csb_v1_runtime_add_timeline_event(profile, &ev) >= 0,
+          "CSB runtime accepts a queued C49 projectile event");
+}
+
 static void queue_future_creature_event(CSB_V1_RuntimeProfile *profile,
                                         int event_type,
                                         int x,
@@ -2041,6 +2060,60 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
           "C25 one-shot launcher impact explosions despawn after advance");
     CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 0,
           "C25 one-shot launcher impact explosions do not requeue");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[5] = 82;
+    dungeon.thing_type_counts[5] = 1;
+    raw[real_format_square_offset(1, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, 0xfffeu);
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, 27u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        struct ProjectileCreateInput_Compat projectile_input;
+        struct TimelineEvent_Compat first_move;
+        int projectile_slot = -1;
+        memset(&projectile_input, 0, sizeof(projectile_input));
+        memset(&first_move, 0, sizeof(first_move));
+        projectile_input.category = PROJECTILE_CATEGORY_KINETIC;
+        projectile_input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        projectile_input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        projectile_input.ownerIndex = 3;
+        projectile_input.mapIndex = 0;
+        projectile_input.mapX = 1;
+        projectile_input.mapY = 0;
+        projectile_input.cell = 0;
+        projectile_input.direction = 0;
+        projectile_input.kineticEnergy = 10;
+        projectile_input.attack = 20;
+        projectile_input.launcherStrength = 20;
+        projectile_input.stepEnergy = 1;
+        projectile_input.currentTick = (int)profile.game_time;
+        projectile_input.associatedThing = (int)(5u << 10);
+        CHECK(F0810_PROJECTILE_Create_Compat(
+                  &projectile_input,
+                  &profile.projectiles,
+                  &projectile_slot,
+                  &first_move) == 1 &&
+                  projectile_slot == 0,
+              "C49 associated-object fixture creates a kinetic projectile");
+        queue_projectile_move_event(&profile, &first_move);
+    }
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 associated-object fixture advances to first move tick");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 associated-object wall-impact event dispatches");
+    CHECK(profile.projectiles.count == 0,
+          "C49 kinetic wall impact despawns the object projectile");
+    CHECK(test_get_le16(raw, 66) == (uint16_t)(5u << 10) &&
+              test_get_le16(raw, 82) == 0xfffeu,
+          "C49 kinetic wall impact materializes the associated object on the source square");
 
     make_real_format_sensor_dungeon(
         &dungeon,

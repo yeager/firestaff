@@ -2443,6 +2443,77 @@ static int csb_v1_runtime_unlink_thing_from_square(
     return 0;
 }
 
+static int csb_v1_runtime_projectile_result_places_associated_object(
+    int result_kind)
+{
+    switch (result_kind) {
+    case PROJECTILE_RESULT_DESPAWN_ENERGY:
+    case PROJECTILE_RESULT_HIT_CHAMPION:
+    case PROJECTILE_RESULT_HIT_DOOR:
+    case PROJECTILE_RESULT_HIT_WALL:
+    case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int csb_v1_runtime_materialize_projectile_associated_object(
+    CSB_V1_RuntimeProfile *profile,
+    const struct ProjectileInstance_Compat *projectile,
+    const struct ProjectileTickResult_Compat *tick_result)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint16_t associated_thing;
+    uint16_t placed_thing;
+    int thing_type;
+    int map_index;
+    int map_x;
+    int map_y;
+    int cell;
+
+    if (!profile || !projectile || !tick_result) return 0;
+    if (!tick_result->despawn ||
+        !csb_v1_runtime_projectile_result_places_associated_object(
+            tick_result->resultKind)) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    if (!dungeon) return 0;
+
+    associated_thing = (uint16_t)projectile->reserved1;
+    if (associated_thing == 0u ||
+        associated_thing == 0xFFFEu ||
+        associated_thing == 0xFFFFu) {
+        return 0;
+    }
+    thing_type = (associated_thing >> 10) & 0x0F;
+    if (thing_type == 14 || associated_thing >= DM1_THING_FIRST_EXPLOSION) {
+        return 0;
+    }
+
+    map_index = tick_result->newMapIndex;
+    map_x = tick_result->newMapX;
+    map_y = tick_result->newMapY;
+    cell = tick_result->newCell & 3;
+    if (map_index < 0 || map_x < 0 || map_y < 0) return 0;
+
+    placed_thing = (uint16_t)((associated_thing & 0x3FFFu) |
+                              (uint16_t)(cell << 14));
+    /* ReDMCSB PROJEXPL.C F0215 lines 239-259: deleting a projectile whose
+     * Projectile.Slot is not an explosion moves that associated object to
+     * the projectile square via F0267_MOVE_GetMoveResult_CPSCE. This CSB
+     * bridge performs the real-format thing-list writeback for squares whose
+     * first-thing slot already exists; first-thing table expansion remains a
+     * later full F0267 integration slice. */
+    return csb_v1_runtime_append_thing_to_square_tail(
+        dungeon,
+        placed_thing,
+        map_index,
+        map_x,
+        map_y);
+}
+
 static int csb_v1_runtime_collect_square_launcher_things(
     const CSB_V1_DungeonData *dungeon,
     int level,
@@ -4068,6 +4139,10 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
         }
     }
     if (tick_result.despawn) {
+        (void)csb_v1_runtime_materialize_projectile_associated_object(
+            profile,
+            projectile,
+            &tick_result);
         (void)F0813_PROJECTILE_Despawn_Compat(&profile->projectiles, slot);
         return;
     }
