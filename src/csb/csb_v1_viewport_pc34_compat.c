@@ -1430,26 +1430,36 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
         }
     }
 
-    /* CSB-lineage Viewport.cpp:6599-6619 applies room pSkinDef layers in
-     * large, middle, then near order. This bridge executes only masks whose
-     * geometry was supplied by the caller; unaligned or missing real geometry
-     * remains deferred instead of guessed. */
+    /* CSB-lineage Viewport.cpp:5367-5381 and 6599-6619 apply room
+     * pSkinDef layers in large, middle, then near order. Prefer caller-
+     * supplied geometry for synthetic gates; otherwise decode the CSBWin
+     * BACKGROUND_MASK for this room from the mask graphic entry itself. */
     for (layer = 0; layer < 3; ++layer) {
         int rc;
-        if (!cfg->custom_background_layer_mask_valid[layer]) {
-            continue;
+        if (cfg->custom_background_layer_mask_valid[layer]) {
+            rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
+                plan,
+                cache,
+                cfg->custom_background_room_num,
+                (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
+                cfg->custom_background_skin_def_words,
+                cfg->custom_background_skin_def_word_count,
+                &cfg->custom_background_layer_masks[layer],
+                viewport_words,
+                viewport_word_count,
+                DM1_VIEWPORT_WIDTH);
+        } else {
+            rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_mask(
+                plan,
+                cache,
+                cfg->custom_background_room_num,
+                (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
+                cfg->custom_background_skin_def_words,
+                cfg->custom_background_skin_def_word_count,
+                viewport_words,
+                viewport_word_count,
+                DM1_VIEWPORT_WIDTH);
         }
-        rc = csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
-            plan,
-            cache,
-            cfg->custom_background_room_num,
-            (CSB_V1_CSBGraphicsM11CustomBackgroundLayer)layer,
-            cfg->custom_background_skin_def_words,
-            cfg->custom_background_skin_def_word_count,
-            &cfg->custom_background_layer_masks[layer],
-            viewport_words,
-            viewport_word_count,
-            DM1_VIEWPORT_WIDTH);
         if (rc == CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
             ++applied;
         }

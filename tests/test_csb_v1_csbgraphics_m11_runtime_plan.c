@@ -907,6 +907,113 @@ static void test_custom_background_room_layer_apply(void)
     free(bytes);
 }
 
+static void write_background_mask_fixture(uint8_t *buf,
+                                          size_t size,
+                                          uint32_t room_num,
+                                          uint16_t mask_word)
+{
+    size_t mask_offset;
+
+    memset(buf, 0, size);
+    write_le32(buf, 0u, 16u);
+    mask_offset = 4u + 16u * 4u;
+    write_le32(buf, 4u + (size_t)room_num * 4u, (uint32_t)mask_offset);
+    write_le16(buf, mask_offset + 0u, 16u);
+    write_le16(buf, mask_offset + 2u, 1u);
+    write_le16(buf, mask_offset + 4u, 16u);
+    write_le16(buf, mask_offset + 6u, 1u);
+    write_le16(buf, mask_offset + 8u, 16u);
+    write_le16(buf, mask_offset + 10u, 1u);
+    write_le16(buf, mask_offset + 12u, mask_word);
+}
+
+static void test_custom_background_room_layer_auto_mask_apply(void)
+{
+    uint8_t bitmap_decoded[9u * 4u];
+    uint8_t mask_decoded[4u + 16u * 4u + 12u + 2u];
+    static const uint16_t skin_def_words[] = {
+        100u, 0u, 0u, 0u, 104u, 0u, 0u
+    };
+    CompressedEntryFixture entries[2];
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    CSB_V1_CSBGraphicsM11RuntimePlan plan;
+    uint32_t viewport[56];
+    uint8_t *bytes;
+    size_t size = 0u;
+    size_t i;
+
+    memset(bitmap_decoded, 0, sizeof(bitmap_decoded));
+    write_le32(bitmap_decoded, 0u, 32u);
+    write_le32(bitmap_decoded, 7u * 4u, 0x12345678u);
+    write_le32(bitmap_decoded, 8u * 4u, 0x87654321u);
+    write_background_mask_fixture(mask_decoded, sizeof(mask_decoded), 4u, 0x00ffu);
+
+    entries[0].entry_index = 100u;
+    entries[0].decoded = bitmap_decoded;
+    entries[0].decoded_size = sizeof(bitmap_decoded);
+    entries[1].entry_index = 104u;
+    entries[1].decoded = mask_decoded;
+    entries[1].decoded_size = sizeof(mask_decoded);
+
+    bytes = build_csbgraphics_entries_compressed(entries,
+                                                 sizeof(entries) / sizeof(entries[0]),
+                                                 &size);
+    check_true("custom_bg_auto_mask.fixture", bytes != NULL);
+    if (!bytes) {
+        return;
+    }
+    cache_from_bytes(&cache, bytes, size);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&plan);
+    check_int("custom_bg_auto_mask.add_skin_def",
+              csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+                  &cache,
+                  skin_def_words,
+                  sizeof(skin_def_words) / sizeof(skin_def_words[0]),
+                  &plan),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("custom_bg_auto_mask.mask_size",
+              (int)plan.entries[0].mask_decompressed_size,
+              (int)sizeof(mask_decoded));
+
+    for (i = 0u; i < sizeof(viewport) / sizeof(viewport[0]); ++i) {
+        viewport[i] = 0xccccccccu;
+    }
+    viewport[30] = 0xaaaaaaaau;
+    viewport[31] = 0xbbbbbbbbu;
+
+    check_int("custom_bg_auto_mask.apply",
+              csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_mask(
+                  &plan,
+                  &cache,
+                  4,
+                  CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_LARGE,
+                  skin_def_words,
+                  sizeof(skin_def_words) / sizeof(skin_def_words[0]),
+                  viewport,
+                  sizeof(viewport) / sizeof(viewport[0]),
+                  224),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("custom_bg_auto_mask.word0", (int)viewport[30], (int)0xaa34aa78u);
+    check_int("custom_bg_auto_mask.word1", (int)viewport[31], (int)0xbb65bb21u);
+
+    check_int("custom_bg_auto_mask.missing_room",
+              csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_mask(
+                  &plan,
+                  &cache,
+                  3,
+                  CSB_V1_CSBGRAPHICS_M11_CUSTOM_BACKGROUND_LAYER_LARGE,
+                  skin_def_words,
+                  sizeof(skin_def_words) / sizeof(skin_def_words[0]),
+                  viewport,
+                  sizeof(viewport) / sizeof(viewport[0]),
+                  224),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES);
+
+    cache.file_buffer = NULL;
+    csb_v1_csbgraphics_dat_real_cache_free(&cache);
+    free(bytes);
+}
+
 static void test_viewport_render_applies_configured_custom_background_layer(void)
 {
     enum { VIEWPORT_WORD_STRIDE = 224 / 8, VIEWPORT_WORD_COUNT = (224 / 8) * 136 };
@@ -1007,6 +1114,90 @@ static void test_viewport_render_applies_configured_custom_background_layer(void
     free(bitmap_decoded);
 }
 
+static void test_viewport_render_applies_auto_mask_custom_background_layer(void)
+{
+    enum { VIEWPORT_WORD_STRIDE = 224 / 8, VIEWPORT_WORD_COUNT = (224 / 8) * 136 };
+    uint8_t *bitmap_decoded;
+    uint8_t mask_decoded[4u + 16u * 4u + 12u + 2u];
+    static const uint16_t skin_def_words[] = {
+        0u, 108u, 0u, 0u, 0u, 110u, 0u
+    };
+    CompressedEntryFixture entries[2];
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    CSB_V1_CSBGraphicsM11RuntimePlan plan;
+    CSB_V1_ViewportConfig cfg;
+    uint8_t framebuffer[320 * 200];
+    uint8_t *bytes;
+    size_t size = 0u;
+
+    bitmap_decoded = (uint8_t *)calloc((size_t)(1 + VIEWPORT_WORD_COUNT),
+                                       sizeof(uint32_t));
+    check_true("viewport_custom_bg_auto.fixture_bitmap_alloc",
+               bitmap_decoded != NULL);
+    if (!bitmap_decoded) {
+        return;
+    }
+    write_le32(bitmap_decoded, 0u, 224u);
+    write_le32(bitmap_decoded, (1u + 30u) * 4u, 0x11111111u);
+    write_le32(bitmap_decoded, (1u + 31u) * 4u, 0x22222222u);
+    write_background_mask_fixture(mask_decoded, sizeof(mask_decoded), 4u, 0xffffu);
+
+    entries[0].entry_index = 108u;
+    entries[0].decoded = bitmap_decoded;
+    entries[0].decoded_size =
+        (size_t)(1 + VIEWPORT_WORD_COUNT) * sizeof(uint32_t);
+    entries[1].entry_index = 110u;
+    entries[1].decoded = mask_decoded;
+    entries[1].decoded_size = sizeof(mask_decoded);
+
+    bytes = build_csbgraphics_entries_compressed(entries,
+                                                 sizeof(entries) / sizeof(entries[0]),
+                                                 &size);
+    check_true("viewport_custom_bg_auto.fixture_csbgraphics", bytes != NULL);
+    if (!bytes) {
+        free(bitmap_decoded);
+        return;
+    }
+
+    cache_from_bytes(&cache, bytes, size);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&plan);
+    check_int("viewport_custom_bg_auto.add_skin_def",
+              csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+                  &cache,
+                  skin_def_words,
+                  sizeof(skin_def_words) / sizeof(skin_def_words[0]),
+                  &plan),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+
+    memset(framebuffer, 0x09, sizeof(framebuffer));
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = framebuffer;
+    cfg.viewport_stride = 320;
+    cfg.csbgraphics_plan = &plan;
+    cfg.csbgraphics_cache = &cache;
+    cfg.custom_background_skin_def_words = skin_def_words;
+    cfg.custom_background_skin_def_word_count =
+        sizeof(skin_def_words) / sizeof(skin_def_words[0]);
+    cfg.custom_background_room_num = 4;
+
+    csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+    check_int("viewport_custom_bg_auto.applied_count",
+              cfg.custom_background_applied_count, 1);
+    check_int("viewport_custom_bg_auto.first_pixel",
+              framebuffer[34 * 320 + 16], 1);
+    check_int("viewport_custom_bg_auto.eighth_pixel",
+              framebuffer[34 * 320 + 23], 1);
+    check_int("viewport_custom_bg_auto.ninth_pixel",
+              framebuffer[34 * 320 + 24], 2);
+    check_int("viewport_custom_bg_auto.sixteenth_pixel",
+              framebuffer[34 * 320 + 31], 2);
+
+    cache.file_buffer = NULL;
+    csb_v1_csbgraphics_dat_real_cache_free(&cache);
+    free(bytes);
+    free(bitmap_decoded);
+}
+
 int main(void)
 {
     test_build_known_c040_plan();
@@ -1016,7 +1207,9 @@ int main(void)
     test_custom_background_skin_def_pairs_are_deferred();
     test_custom_background_aligned_mask_apply();
     test_custom_background_room_layer_apply();
+    test_custom_background_room_layer_auto_mask_apply();
     test_viewport_render_applies_configured_custom_background_layer();
+    test_viewport_render_applies_auto_mask_custom_background_layer();
     check_true("result_name",
                strcmp(csb_v1_csbgraphics_m11_runtime_plan_result_name(
                           CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY),
