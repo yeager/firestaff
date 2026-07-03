@@ -272,6 +272,11 @@ static uint32_t read_le32_bytes(const uint8_t *bytes)
            ((uint32_t)bytes[3] << 24);
 }
 
+static int16_t read_le16s_bytes(const uint8_t *bytes)
+{
+    return (int16_t)read_le16_bytes(bytes);
+}
+
 static int decode_entry_bytes(const CSB_V1_CSBGraphicsDatRealCache *cache,
                               uint32_t entry_index,
                               uint16_t expected_size,
@@ -378,6 +383,94 @@ static uint16_t *decode_entry_words16(
         *out_word_count = count;
     }
     return words;
+}
+
+static int decode_custom_background_mask_for_room(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    uint32_t mask_entry_index,
+    uint16_t expected_size,
+    int room_num,
+    CSB_V1_ViewportCustomBackgroundMask *out_mask,
+    uint16_t **out_mask_words)
+{
+    uint8_t *bytes = NULL;
+    const uint8_t *mask_bytes;
+    uint32_t mask_count;
+    uint32_t mask_offset;
+    size_t mask_word_count;
+    size_t mask_word_offset;
+    size_t i;
+    int rc;
+
+    if (!out_mask || !out_mask_words) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+    memset(out_mask, 0, sizeof(*out_mask));
+    *out_mask_words = NULL;
+    if (!cache_ready(cache) || expected_size == 0u || room_num < 0) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+
+    rc = decode_entry_bytes(cache, mask_entry_index, expected_size, &bytes);
+    if (rc != CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK || !bytes) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+
+    /* CSBWin Viewport.cpp:5367-5381 GetMask(): decoded mask graphics start
+     * with a uint32 count followed by uint32 offsets; each offset points to
+     * BACKGROUND_MASK from CSB.h:330-338. */
+    if (expected_size < 8u) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
+    }
+    mask_count = read_le32_bytes(bytes);
+    if ((uint32_t)room_num >= mask_count ||
+        ((size_t)room_num + 2u) * 4u > (size_t)expected_size) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+    mask_offset = read_le32_bytes(bytes + ((size_t)room_num + 1u) * 4u);
+    if (mask_offset == 0u ||
+        mask_offset + 12u > (uint32_t)expected_size) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    mask_bytes = bytes + mask_offset;
+    out_mask->src_x = (int)read_le16_bytes(mask_bytes + 0u);
+    out_mask->src_y = (int)read_le16_bytes(mask_bytes + 2u);
+    out_mask->dst_x = (int)read_le16s_bytes(mask_bytes + 4u);
+    out_mask->dst_y = (int)read_le16_bytes(mask_bytes + 6u);
+    out_mask->width = (int)read_le16_bytes(mask_bytes + 8u);
+    out_mask->height = (int)read_le16_bytes(mask_bytes + 10u);
+    if (out_mask->width <= 0 || out_mask->height <= 0) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
+    }
+
+    mask_word_count =
+        ((size_t)out_mask->width / 16u) * (size_t)out_mask->height;
+    mask_word_offset = (size_t)mask_offset + 12u;
+    if ((out_mask->width & 15) != 0 ||
+        mask_word_count == 0u ||
+        mask_word_offset + mask_word_count * 2u > (size_t)expected_size) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_GEOMETRY;
+    }
+
+    *out_mask_words = (uint16_t *)malloc(mask_word_count * sizeof(uint16_t));
+    if (!*out_mask_words) {
+        free(bytes);
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+    for (i = 0u; i < mask_word_count; ++i) {
+        (*out_mask_words)[i] =
+            read_le16_bytes(bytes + mask_word_offset + i * 2u);
+    }
+    out_mask->mask_words = *out_mask_words;
+    out_mask->mask_word_count = mask_word_count;
+    free(bytes);
+    return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
 }
 
 int csb_v1_csbgraphics_m11_runtime_plan_decode_custom_background_skin_def(
@@ -955,6 +1048,94 @@ int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer(
         viewport_words,
         viewport_word_count,
         viewport_width_pixels);
+}
+
+int csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_room_layer_auto_mask(
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    int room_num,
+    CSB_V1_CSBGraphicsM11CustomBackgroundLayer layer,
+    const uint16_t *skin_def_words,
+    size_t skin_def_word_count,
+    uint32_t *viewport_words,
+    size_t viewport_word_count,
+    int viewport_width_pixels)
+{
+    const CSB_V1_CSBGraphicsM11RuntimePlanEntry *entry = NULL;
+    CSB_V1_ViewportCustomBackgroundMask mask;
+    uint32_t bitmap_entry_index;
+    uint32_t mask_entry_index;
+    uint32_t *bitmap_words = NULL;
+    uint16_t *mask_words = NULL;
+    size_t bitmap_word_count = 0u;
+    int bitmap_skin_def_index = -1;
+    int mask_skin_def_index = -1;
+    int copied;
+    int rc;
+
+    if (!plan || !plan->ready || !cache_ready(cache) ||
+        !skin_def_words || !viewport_words) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_ARGUMENT;
+    }
+    if (!custom_background_layer_skin_def_indices(room_num,
+                                                  layer,
+                                                  &bitmap_skin_def_index,
+                                                  &mask_skin_def_index)) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+    if ((size_t)bitmap_skin_def_index >= skin_def_word_count ||
+        (size_t)mask_skin_def_index >= skin_def_word_count) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    bitmap_entry_index = (uint32_t)skin_def_words[bitmap_skin_def_index];
+    mask_entry_index = (uint32_t)skin_def_words[mask_skin_def_index];
+    if (bitmap_entry_index == 0u || mask_entry_index == 0u) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    entry = find_custom_background_entry_by_pair(plan,
+                                                 bitmap_entry_index,
+                                                 mask_entry_index,
+                                                 layer);
+    if (!entry) {
+        return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_SUPPORTED_ENTRIES;
+    }
+
+    bitmap_words = decode_entry_words32(cache,
+                                        entry->entry_index,
+                                        entry->decompressed_size,
+                                        &bitmap_word_count);
+    rc = decode_custom_background_mask_for_room(cache,
+                                                entry->mask_entry_index,
+                                                entry->mask_decompressed_size,
+                                                room_num,
+                                                &mask,
+                                                &mask_words);
+    if (!bitmap_words ||
+        rc != CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK ||
+        !mask_words) {
+        free(bitmap_words);
+        free(mask_words);
+        return bitmap_words ? rc
+                            : CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+
+    copied = csb_v1_viewport_custom_background_apply_aligned_mask_pc34(
+        &mask,
+        bitmap_words,
+        bitmap_word_count,
+        viewport_words,
+        viewport_word_count,
+        viewport_width_pixels);
+    free(bitmap_words);
+    free(mask_words);
+    if (copied <= 0) {
+        return copied == -2
+            ? CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_DEFERRED_COMPOSITE
+            : CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_APPLY;
+    }
+    return CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
 }
 
 const char *csb_v1_csbgraphics_m11_runtime_plan_result_name(int result)
