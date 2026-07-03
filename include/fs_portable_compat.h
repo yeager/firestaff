@@ -97,9 +97,9 @@ int FSP_GetUserDataDir(char* out, size_t outSize);
 int FSP_GetUserConfigDir(char* out, size_t outSize);
 
 /*
- * Get the default originals directory for retail game files.
- *   macOS/Linux: ~/.firestaff/originals
- *   Windows:     <installation-directory>\originals
+ * Get the default game-data directory for retail game files.
+ *   macOS/Linux: ~/.firestaff/data
+ *   Windows:     %USERPROFILE%\.firestaff\data
  * Returns 1 on success, 0 on error.
  */
 int FSP_GetDefaultOriginalsDir(char* out, size_t outSize);
@@ -109,7 +109,7 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize);
  *   1. `requestedDir` if non-NULL and non-empty
  *   2. FIRESTAFF_DATA environment variable
  *   3. macOS/Linux: ~/.firestaff/data
- *   4. Windows: <installation-directory>\data
+ *   4. Windows: %USERPROFILE%\.firestaff\data
  *   5. Current directory "./data"
  * Returns 1 on success, 0 on error.
  */

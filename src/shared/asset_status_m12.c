@@ -1497,7 +1497,8 @@ static void m12_refresh_v22_modern_asset_status(M12_AssetStatus* status) {
 }
 
 static int m12_scan_direct_theron_request(M12_AssetStatus* status,
-                                          const char* requestedDataDir) {
+                                          const char* requestedDataDir,
+                                          const char* configuredDataDir) {
     char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
     char matchedMd5[M12_ASSET_MD5_CAPACITY];
     char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1519,7 +1520,11 @@ static int m12_scan_direct_theron_request(M12_AssetStatus* status,
 
     memset(status, 0, sizeof(*status));
     FirestaffTheronMedia_Init(&status->theronMedia);
-    m12_copy_string(status->dataDir, sizeof(status->dataDir), runtimeRoot);
+    m12_copy_string(status->dataDir,
+                    sizeof(status->dataDir),
+                    (configuredDataDir && configuredDataDir[0] != '\0')
+                        ? configuredDataDir
+                        : runtimeRoot);
     if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL)) {
         m12_copy_string(status->legacyFallbackDir,
                         sizeof(status->legacyFallbackDir),
@@ -1740,7 +1745,7 @@ static int m12_scan_theron_child_dir(M12_AssetStatus* status,
     if (!FSP_DirExists(candidate)) {
         return 0;
     }
-    return m12_scan_direct_theron_request(status, candidate);
+    return m12_scan_direct_theron_request(status, candidate, requestedDataDir);
 }
 
 static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
@@ -1748,7 +1753,7 @@ static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
     if (!status) {
         return 0;
     }
-    if (m12_scan_direct_theron_request(status, requestedDataDir)) {
+    if (m12_scan_direct_theron_request(status, requestedDataDir, NULL)) {
         return 1;
     }
     if (!requestedDataDir || requestedDataDir[0] == '\0' ||
@@ -1784,7 +1789,7 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
     if (m12_reuse_verified_theron_refresh(status, requestedDataDir)) {
         return;
     }
-    if (m12_scan_direct_theron_request(status, requestedDataDir)) {
+    if (m12_scan_direct_theron_request(status, requestedDataDir, NULL)) {
         return;
     }
     if (m12_scan_explicit_file_request(status, requestedDataDir)) {
