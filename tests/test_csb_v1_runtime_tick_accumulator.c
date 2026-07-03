@@ -201,9 +201,83 @@ static void test_put_le16(uint8_t *buf, int offset, uint16_t value)
     buf[offset + 1] = (uint8_t)((value >> 8) & 0xffu);
 }
 
+static uint16_t test_get_le16(const uint8_t *buf, int offset)
+{
+    return (uint16_t)(buf[offset + 0] | ((uint16_t)buf[offset + 1] << 8));
+}
+
 static int real_format_square_offset(int x, int y)
 {
     return x * 3 + y;
+}
+
+static void make_c38_giggler_steal_fixture(CSB_V1_RuntimeProfile *profile,
+                                           CSB_V1_DungeonData *dungeon,
+                                           uint8_t *raw,
+                                           size_t raw_size,
+                                           uint32_t game_time)
+{
+    struct DM1_Event_V1 ev;
+    int i;
+
+    make_real_format_square_event_dungeon(dungeon, raw, raw_size);
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[4] = 82;
+    dungeon->thing_type_counts[4] = 1;
+    dungeon->thing_data_bases[5] = 98;
+    dungeon->thing_type_counts[5] = 2;
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, 0xfffeu);
+    raw[86] = 2u;     /* C02 Giggler */
+    raw[87] = 0xffu;  /* single centered creature */
+    test_put_le16(raw, 88, 39u);
+    test_put_le16(raw, 96, 6u); /* C6 attack, one creature */
+    test_put_le16(raw, 98, 0xfffeu);
+    test_put_le16(raw, 102, 0xfffeu);
+
+    csb_v1_runtime_init(profile, NULL);
+    profile->chaos_magic.magic_initialized = 1;
+    profile->dungeon_seed = 0xC5B10742u;
+    profile->dungeon_handle = dungeon;
+    profile->current_level = 0;
+    profile->party_x = 1;
+    profile->party_y = 2;
+    profile->game_time = game_time;
+    profile->timeline_queue.gameTick = game_time;
+    profile->champion_count = 1;
+    profile->party_state_valid = 1;
+    profile->party_state.ChampionCount = 1;
+    profile->party_state.LeaderIndex = 0;
+    profile->leader_index = 0;
+    profile->party_state.Champions[0].CurrentHealth = 500;
+    profile->party_state.Champions[0].MaximumHealth = 500;
+    profile->party_state.Champions[0].Attributes = 0;
+    profile->party_state.Champions[0].Cell = 0;
+    for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
+        profile->party_state.Champions[0].Statistics[i][CSB_V1_STAT_MIN] = 30;
+        profile->party_state.Champions[0].Statistics[i][CSB_V1_STAT_CUR] = 30;
+        profile->party_state.Champions[0].Statistics[i][CSB_V1_STAT_MAX] = 30;
+    }
+    profile->party_state.Champions[0]
+        .Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] = 1;
+    for (i = 0; i < CSB_V1_SLOT_COUNT; ++i) {
+        profile->party_state.Champions[0].Slots[i] = 0xffffu;
+    }
+    profile->party_state.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] =
+        (uint16_t)(5u << 10);
+    profile->party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+        (uint16_t)((5u << 10) | 1u);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, game_time);
+    ev.b_mapX = 1;
+    ev.b_mapY = 1;
+    (void)csb_v1_runtime_add_timeline_event(profile, &ev);
 }
 
 static void queue_square_event(CSB_V1_RuntimeProfile *profile,
@@ -989,6 +1063,70 @@ static void test_c38_poison_followup_and_c75_tick(void)
     CHECK(profile.party_state.Champions[0].PoisonEventCount == 1u &&
               find_queued_event_type(&profile, DM1_EVENT_POISON_CHAMPION) >= 0,
           "C75 decrements the consumed event then reschedules Attack-1");
+}
+
+static int test_csb_giggler_group_slot_chain_contains(const uint8_t *raw,
+                                                      uint16_t wanted_thing)
+{
+    uint16_t thing = test_get_le16(raw, 84);
+    int guard;
+
+    for (guard = 0; guard < 4 && thing != 0xfffeu && thing != 0xffffu;
+         ++guard) {
+        int type = (int)((thing & 0x3c00u) >> 10);
+        int index = (int)(thing & 0x03ffu);
+
+        if ((thing & 0x3fffu) == wanted_thing) return 1;
+        if (type != 5 || index < 0 || index >= 2) break;
+        thing = test_get_le16(raw, 98 + index * 4);
+    }
+    return 0;
+}
+
+static void test_c38_giggler_steals_hand_slots_into_group_slot_chain(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[160];
+    const uint16_t ready_thing = (uint16_t)(5u << 10);
+    const uint16_t action_thing = (uint16_t)((5u << 10) | 1u);
+    int found = 0;
+    uint32_t found_time = 0;
+    uint32_t t;
+
+    printf("\n-- CSB C38 Giggler hand-slot theft --\n");
+
+    for (t = 0; t < 512u && !found; ++t) {
+        make_c38_giggler_steal_fixture(
+            &profile,
+            &dungeon,
+            raw,
+            sizeof(raw),
+            t);
+        (void)csb_v1_runtime_tick_v1(&profile);
+        if (profile.party_state.Champions[0]
+                    .Slots[CSB_V1_SLOT_READY_HAND] == 0xffffu &&
+            profile.party_state.Champions[0]
+                    .Slots[CSB_V1_SLOT_ACTION_HAND] == 0xffffu &&
+            test_csb_giggler_group_slot_chain_contains(raw, ready_thing) &&
+            test_csb_giggler_group_slot_chain_contains(raw, action_thing)) {
+            found = 1;
+            found_time = t;
+        }
+    }
+
+    CHECK(found,
+          "C38 Giggler fixture finds a deterministic seed that steals both hand slots");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 500,
+          "C38 Giggler theft does not also apply normal melee damage");
+    CHECK(test_get_le16(raw, 84) != 0xfffeu &&
+              test_get_le16(raw, 84) != 0xffffu,
+          "C38 Giggler theft writes a carried object into GROUP.Slot");
+    CHECK(test_csb_giggler_group_slot_chain_contains(raw, ready_thing) &&
+              test_csb_giggler_group_slot_chain_contains(raw, action_thing),
+          "C38 Giggler theft links both stolen hand objects into the group slot chain");
+    CHECK(found_time < 512u,
+          "C38 Giggler theft search stays within the bounded regression window");
 }
 
 static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)
@@ -1918,6 +2056,7 @@ int main(void)
     test_timeline_square_events_mutate_real_format_map_bytes();
     test_timeline_corridor_text_and_generator_mutations();
     test_c38_poison_followup_and_c75_tick();
+    test_c38_giggler_steals_hand_slots_into_group_slot_chain();
     test_explosion_c25_persistent_smoke_requeues_until_depleted();
     test_runtime_save_roundtrips_projectiles_and_explosions();
     test_explosion_c25_party_damage_and_group_hp_writeback();

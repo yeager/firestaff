@@ -49,6 +49,16 @@ static const char *const g_csb_dungeon_hashes[] = {
 static void csb_v1_runtime_schedule_explosion_advance_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event);
+static int csb_v1_runtime_stat_or_default(
+    const CSB_V1_Champion *champion,
+    int stat_index,
+    int stat_kind);
+static uint32_t csb_v1_runtime_creature_attack_seed(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    int creature_type,
+    int creature_index,
+    int champion_index);
 
 /* GRAPHICS.DAT (or CSB.DAT / CSBGRAPH.DAT) MD5 hashes for all known
  * CSB variants — mirrors g_csb_boot_graphics_hashes in csb_v1_boot.c
@@ -2560,6 +2570,158 @@ static void csb_v1_runtime_drop_group_slot_possessions(
     csb_v1_runtime_write_u16(group_record + 2, 0xFFFEu);
 }
 
+static const unsigned char g_csb_v1_giggler_steal_slots_pc34[8] = {
+    CSB_V1_SLOT_ACTION_HAND,
+    CSB_V1_SLOT_READY_HAND,
+    CSB_V1_SLOT_READY_HAND,
+    CSB_V1_SLOT_READY_HAND,
+    CSB_V1_SLOT_READY_HAND,
+    CSB_V1_SLOT_READY_HAND,
+    CSB_V1_SLOT_READY_HAND,
+    CSB_V1_SLOT_READY_HAND
+};
+
+static uint32_t csb_v1_runtime_champion_occupied_slot_mask(
+    const CSB_V1_Champion *champion)
+{
+    uint32_t mask = 0u;
+    int i;
+
+    if (!champion) return 0u;
+    for (i = 0; i < CSB_V1_SLOT_COUNT && i < 32; ++i) {
+        uint16_t thing = champion->Slots[i];
+        if (thing != 0xFFFFu && thing != 0xFFFEu) {
+            mask |= (uint32_t)(1u << i);
+        }
+    }
+    return mask;
+}
+
+static int csb_v1_runtime_link_stolen_thing_to_group_slot(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *group_record,
+    uint16_t stolen_thing)
+{
+    uint16_t group_slot;
+
+    if (!dungeon || !group_record ||
+        stolen_thing == 0xFFFFu ||
+        stolen_thing == 0xFFFEu) {
+        return 0;
+    }
+
+    group_slot = csb_v1_runtime_read_u16(group_record + 2);
+    if (group_slot != 0xFFFFu && group_slot != 0xFFFEu) {
+        uint8_t *stolen_record;
+        int thing_type;
+        int thing_size;
+
+        stolen_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            stolen_thing,
+            &thing_type,
+            &thing_size);
+        if (!stolen_record || thing_size < 2) return 0;
+        csb_v1_runtime_write_u16(stolen_record, group_slot);
+    }
+    /* ReDMCSB GROUP.C F0193 lines 1041-1054 links a stolen object into
+     * GROUP.Slot.  It intentionally preserves BUG0_12 for an empty Giggler:
+     * the first stolen object's Next word is not cleared before becoming the
+     * group slot head. */
+    csb_v1_runtime_write_u16(group_record + 2, stolen_thing);
+    return 1;
+}
+
+static int csb_v1_runtime_apply_giggler_steal_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *group_record,
+    const struct DM1_DispatchRecord_V1 *record,
+    int creature_index,
+    int champion_index)
+{
+    CSB_V1_Champion *champion;
+    struct DM1GigglerStealResult_Compat steal;
+    struct RngState_Compat rng;
+    uint32_t remaining_mask;
+    uint16_t flags;
+    int dexterity;
+    int attempt;
+
+    if (!profile || !dungeon || !group_record || !record ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount) {
+        return 0;
+    }
+
+    champion = &profile->party_state.Champions[champion_index];
+    dexterity = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_DEX,
+        CSB_V1_STAT_CUR);
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        csb_v1_runtime_creature_attack_seed(
+            profile,
+            record,
+            DM1_CREATURE_TYPE_GIGGLER,
+            creature_index,
+            champion_index));
+    if (!F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
+            dexterity,
+            csb_v1_runtime_champion_occupied_slot_mask(champion),
+            0,
+            &rng,
+            &steal)) {
+        return 0;
+    }
+
+    remaining_mask = steal.stolenSlotMask;
+    for (attempt = 0; attempt < 8 && remaining_mask != 0u; ++attempt) {
+        int slot = g_csb_v1_giggler_steal_slots_pc34[
+            (steal.initialCounter + attempt) & 7];
+        uint32_t slot_mask = (uint32_t)(1u << slot);
+        uint16_t stolen_thing;
+
+        if ((remaining_mask & slot_mask) == 0u) continue;
+        remaining_mask &= ~slot_mask;
+        stolen_thing = champion->Slots[slot];
+        if (csb_v1_runtime_link_stolen_thing_to_group_slot(
+                dungeon,
+                group_record,
+                stolen_thing)) {
+            champion->Slots[slot] = 0xFFFFu;
+        }
+    }
+
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    if (steal.shouldFlee) {
+        flags = (uint16_t)((flags & 0xFFF0u) |
+                           (uint16_t)(steal.newBehavior & 0x0F));
+        csb_v1_runtime_write_u16(group_record + 14, flags);
+        csb_v1_runtime_schedule_c37_group_event(
+            profile,
+            record->mapIndex,
+            record->mapX,
+            record->mapY,
+            DM1_CREATURE_TYPE_GIGGLER,
+            (uint32_t)((steal.fleeDelayTicks > 0) ?
+                           steal.fleeDelayTicks :
+                           1));
+    } else if (!profile->game_over) {
+        csb_v1_runtime_schedule_c38_followup_event(
+            profile,
+            record->mapIndex,
+            record->mapX,
+            record->mapY,
+            DM1_CREATURE_TYPE_GIGGLER,
+            creature_index,
+            (uint32_t)csb_v1_runtime_creature_attack_ticks(
+                DM1_CREATURE_TYPE_GIGGLER));
+    }
+    return 1;
+}
+
 static void csb_v1_runtime_rewrite_group_events_after_creature_death(
     CSB_V1_RuntimeProfile *profile,
     int map_index,
@@ -2938,6 +3100,16 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     csb_v1_runtime_first_living_champion(&profile->party_state);
             }
             if (champion_index < 0) return;
+            if ((int)thing_record[4] == DM1_CREATURE_TYPE_GIGGLER) {
+                (void)csb_v1_runtime_apply_giggler_steal_timeline_record(
+                    profile,
+                    dungeon,
+                    thing_record,
+                    record,
+                    creature_index,
+                    champion_index);
+                return;
+            }
             memset(&combat, 0, sizeof(combat));
             if (!csb_v1_runtime_fill_creature_combat_snapshot(
                     (int)thing_record[4],
