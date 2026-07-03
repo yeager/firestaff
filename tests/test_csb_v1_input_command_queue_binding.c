@@ -311,6 +311,63 @@ static int load_real_format_teleporter_dungeon(CSB_V1_DungeonData *dungeon)
     return csb_v1_dungeon_load(dungeon, buf, (int)sizeof(buf));
 }
 
+static int load_real_format_chained_teleporter_dungeon(
+    CSB_V1_DungeonData *dungeon)
+{
+    uint8_t buf[153];
+    const int level_count = 3;
+    const int map0_desc = 44;
+    const int map1_desc = 60;
+    const int map2_desc = 76;
+    const int column_counts = 92;
+    const int square_first_things = 110;
+    const int teleporter0_record = 114;
+    const int teleporter1_record = 120;
+    const int raw_map = 126;
+    const uint16_t map0_bits =
+        (uint16_t)(0u | ((3u - 1u) << 6) | ((3u - 1u) << 11));
+    const uint16_t map1_bits =
+        (uint16_t)(1u | ((3u - 1u) << 6) | ((3u - 1u) << 11));
+    const uint16_t map2_bits =
+        (uint16_t)(2u | ((3u - 1u) << 6) | ((3u - 1u) << 11));
+    uint16_t teleporter_word;
+
+    memset(buf, 0, sizeof(buf));
+    buf[4] = (uint8_t)level_count;
+    put_le16(buf, 10, 2);          /* square-first-thing entries */
+    put_le16(buf, 12 + 1 * 2, 2);  /* two C01_THING_TYPE_TELEPORTER records */
+    put_le16(buf, map0_desc + 0, 0);
+    put_le16(buf, map0_desc + 8, map0_bits);
+    put_le16(buf, map1_desc + 0, 9);
+    put_le16(buf, map1_desc + 8, map1_bits);
+    put_le16(buf, map2_desc + 0, 18);
+    put_le16(buf, map2_desc + 8, map2_bits);
+
+    put_le16(buf, column_counts + 2, 0);  /* level 0, x=1 -> SFT 0 */
+    put_le16(buf, column_counts + 8, 1);  /* level 1, x=1 -> SFT 1 */
+    put_le16(buf, square_first_things + 0, (uint16_t)(1u << 10));
+    put_le16(buf, square_first_things + 2, (uint16_t)((1u << 10) | 1u));
+
+    put_le16(buf, teleporter0_record + 0, 0xffffu);
+    teleporter_word =
+        (uint16_t)(1u | (1u << 5) | (1u << 10) | (2u << 13) | 0x8000u);
+    put_le16(buf, teleporter0_record + 2, teleporter_word);
+    put_le16(buf, teleporter0_record + 4, (uint16_t)(1u << 8));
+
+    put_le16(buf, teleporter1_record + 0, 0xffffu);
+    teleporter_word =
+        (uint16_t)(2u | (2u << 5) | (3u << 10) |
+                   (1u << 12) | (2u << 13));
+    put_le16(buf, teleporter1_record + 2, teleporter_word);
+    put_le16(buf, teleporter1_record + 4, (uint16_t)(2u << 8));
+
+    memset(buf + raw_map, (uint8_t)(1u << 5), 27);
+    buf[raw_map + 1 * 3 + 0] = (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    buf[raw_map + 9 + 1 * 3 + 1] =
+        (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    return csb_v1_dungeon_load(dungeon, buf, (int)sizeof(buf));
+}
+
 static void test_forward_command_blocks_legacy_wall_destination(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -531,6 +588,8 @@ static void test_forward_command_handles_real_format_door_fakewall_and_pit(void)
           "open-pit movement reports open pit bit");
     CHECK(result.pit_fall_applied == 1,
           "open-pit movement applies bounded level fall");
+    CHECK(result.chained_move_count == 1 && result.pit_chain_count == 1,
+          "open-pit movement reports one chained pit move");
     CHECK(result.old_party_level == 0 && result.new_party_level == 1,
           "open-pit movement changes runtime level 0 to 1");
     CHECK(profile.current_level == 1 && csb_v1_dungeon_get_current_level() == 1,
@@ -567,6 +626,9 @@ static void test_forward_command_applies_real_format_teleporter(void)
           "open-teleporter movement reports objects-or-party scope");
     CHECK(result.teleporter_transition_applied == 1,
           "open-teleporter movement applies party teleporter transition");
+    CHECK(result.chained_move_count == 1 &&
+          result.teleporter_chain_count == 1,
+          "open-teleporter movement reports one chained teleporter move");
     CHECK(result.teleporter_target_x == 2 && result.teleporter_target_y == 2,
           "open-teleporter movement exposes target coordinates");
     CHECK(result.teleporter_target_level == 1,
@@ -589,6 +651,85 @@ static void test_forward_command_applies_real_format_teleporter(void)
     csb_v1_dungeon_free(&dungeon);
 }
 
+static void test_forward_command_chains_real_format_pits(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[27];
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+    const int north_of_center = 1 * 3 + 0;
+
+    csb_v1_runtime_init(&profile, NULL);
+    make_real_format_consequence_dungeon(&dungeon, raw, sizeof(raw));
+    profile.dungeon_handle = &dungeon;
+    raw[north_of_center] = (uint8_t)((2u << 5) | 0x08u);
+    raw[9 + north_of_center] = (uint8_t)((2u << 5) | 0x08u);
+    seed_center_party(&profile);
+    queue_forward_or_fail(&queue, "PC-34 forward key queues chained-pit move");
+
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the chained-pit movement command");
+    CHECK(result.movement_step_applied == 1,
+          "chained-pit movement applies the initial coordinate step");
+    CHECK(result.pit_fall_applied == 1,
+          "chained-pit movement applies at least one pit fall");
+    CHECK(result.chained_move_count == 2 && result.pit_chain_count == 2,
+          "chained-pit movement follows both open pits");
+    CHECK(result.chained_move_limit_hit == 0,
+          "chained-pit movement stops before the F0267 chain limit");
+    CHECK(result.old_party_level == 0 && result.new_party_level == 2,
+          "chained-pit movement changes runtime level 0 to 2");
+    CHECK(profile.current_level == 2 && csb_v1_dungeon_get_current_level() == 2,
+          "chained-pit movement updates profile and dungeon to final level");
+    CHECK(profile.party_x == 1 && profile.party_y == 0,
+          "chained-pit movement keeps the falling coordinates");
+}
+
+static void test_forward_command_chains_real_format_teleporters(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    CHECK(load_real_format_chained_teleporter_dungeon(&dungeon) == 0,
+          "real-format chained-teleporter fixture loads through CSB loader");
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    seed_center_party(&profile);
+    queue_forward_or_fail(&queue,
+                          "PC-34 forward key queues chained-teleporter move");
+
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the chained-teleporter movement command");
+    CHECK(result.movement_step_applied == 1,
+          "chained-teleporter movement applies initial coordinate step");
+    CHECK(result.teleporter_transition_applied == 1,
+          "chained-teleporter movement applies teleporter transition");
+    CHECK(result.chained_move_count == 2 &&
+          result.teleporter_chain_count == 2,
+          "chained-teleporter movement follows both teleporters");
+    CHECK(result.chained_move_limit_hit == 0,
+          "chained-teleporter movement stops before the F0267 chain limit");
+    CHECK(result.teleporter_target_x == 1 &&
+          result.teleporter_target_y == 1 &&
+          result.teleporter_target_level == 1,
+          "chained-teleporter result preserves first teleporter metadata");
+    CHECK(result.old_party_level == 0 && result.new_party_level == 2,
+          "chained-teleporter movement changes runtime level 0 to 2");
+    CHECK(profile.party_x == 2 && profile.party_y == 2,
+          "chained-teleporter movement reaches final target coordinates");
+    CHECK(profile.current_level == 2 && csb_v1_dungeon_get_current_level() == 2,
+          "chained-teleporter movement updates profile and dungeon level");
+    CHECK(profile.party_dir == CSB_V1_DIR_WEST,
+          "chained-teleporter absolute rotation from second teleporter wins");
+    csb_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Input Command Queue Binding Gate ===\n\n");
@@ -599,6 +740,8 @@ int main(void)
     test_forward_command_applies_real_format_stairs();
     test_forward_command_handles_real_format_door_fakewall_and_pit();
     test_forward_command_applies_real_format_teleporter();
+    test_forward_command_chains_real_format_pits();
+    test_forward_command_chains_real_format_teleporters();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: queued CSB V1 turn and bounded movement commands reach CSB runtime party state");
