@@ -1572,6 +1572,96 @@ static void csb_v1_runtime_apply_square_flag_timeline_record(
     }
 }
 
+static void csb_v1_runtime_schedule_enable_group_generator_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    uint32_t ticks)
+{
+    struct DM1_Event_V1 event;
+
+    if (!profile || !record || ticks == 0u) return;
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(
+        record->mapIndex,
+        profile->game_time + ticks);
+    event.type = DM1_EVENT_ENABLE_GROUP_GENERATOR;
+    event.b_mapX = (uint8_t)record->mapX;
+    event.b_mapY = (uint8_t)record->mapY;
+    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
+static void csb_v1_runtime_apply_corridor_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    CSB_V1_DungeonData *dungeon;
+    int thing;
+    int guard;
+
+    if (!profile || !record || !profile->dungeon_handle) return;
+    dungeon = profile->dungeon_handle;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        record->mapIndex,
+        record->mapX,
+        record->mapY);
+    if (thing < 0) return;
+
+    /* ReDMCSB TIMELINE.C F0245 lines 944-1001 walks C05 corridor square
+     * things.  C02 textstrings toggle/set/clear Visible, while C006 floor
+     * group generators disable once-only sensors or disable-and-schedule C65
+     * after M046_TICKS.  Group materialization via GROUP.C F0185 remains a
+     * separate CSB runtime binding because it needs live group-slot state. */
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
+        uint8_t *thing_record;
+        int thing_type;
+        int thing_size;
+
+        thing_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!thing_record) break;
+        if (thing_type == 2 && thing_size >= 4) {
+            uint16_t text_word = csb_v1_runtime_read_u16(thing_record + 2);
+            if (record->effect == DM1_EFFECT_TOGGLE) {
+                text_word ^= 0x0001u;
+            } else if (record->effect == DM1_EFFECT_SET) {
+                text_word |= 0x0001u;
+            } else {
+                text_word &= (uint16_t)~0x0001u;
+            }
+            csb_v1_runtime_write_u16(thing_record + 2, text_word);
+        } else if (thing_type == 3 && thing_size >= 8) {
+            uint16_t type_data = csb_v1_runtime_read_u16(thing_record + 2);
+            uint16_t flags_word = csb_v1_runtime_read_u16(thing_record + 4);
+            uint16_t local_word = csb_v1_runtime_read_u16(thing_record + 6);
+            int sensor_type = (int)(type_data & 0x007Fu);
+            int once_only = (int)((flags_word >> 2) & 0x01u);
+            uint32_t ticks = (uint32_t)(local_word >> 4);
+
+            if (sensor_type == 6) {
+                if (once_only) {
+                    type_data &= 0xFF80u;
+                    csb_v1_runtime_write_u16(thing_record + 2, type_data);
+                } else if (ticks != 0u) {
+                    if (ticks > 127u) {
+                        ticks = (ticks - 126u) << 6;
+                    }
+                    type_data &= 0xFF80u;
+                    csb_v1_runtime_write_u16(thing_record + 2, type_data);
+                    csb_v1_runtime_schedule_enable_group_generator_record(
+                        profile,
+                        record,
+                        ticks);
+                }
+            }
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+}
+
 static void csb_v1_runtime_apply_enable_group_generator_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -1744,6 +1834,9 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
         const struct DM1_DispatchRecord_V1 *record =
             &profile->last_timeline_dispatch.records[i];
         switch (record->eventType) {
+        case DM1_EVENT_CORRIDOR:
+            csb_v1_runtime_apply_corridor_timeline_record(profile, record);
+            break;
         case DM1_EVENT_WALL:
             csb_v1_runtime_apply_wall_sensor_timeline_record(profile, record);
             break;
