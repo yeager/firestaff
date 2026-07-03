@@ -22,6 +22,7 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
@@ -2263,6 +2264,139 @@ static int csb_v1_runtime_append_thing_to_square_tail(
     return 0;
 }
 
+static uint16_t csb_v1_runtime_thing_with_cell(
+    int thing_type,
+    int thing_index,
+    int cell)
+{
+    return (uint16_t)(((cell & 0x03) << 14) |
+                      ((thing_type & 0x0F) << 10) |
+                      (thing_index & 0x03FF));
+}
+
+static int csb_v1_runtime_find_unused_object_record(
+    CSB_V1_DungeonData *dungeon,
+    int thing_type,
+    uint8_t **out_record,
+    int *out_index)
+{
+    int i;
+    int byte_count = 4;
+
+    if (out_record) *out_record = NULL;
+    if (out_index) *out_index = -1;
+    if (!dungeon || !dungeon->raw_data ||
+        (thing_type != DM1_DROP_THING_TYPE_WEAPON &&
+         thing_type != DM1_DROP_THING_TYPE_ARMOUR &&
+         thing_type != DM1_DROP_THING_TYPE_JUNK)) {
+        return 0;
+    }
+
+    for (i = 0; i < dungeon->thing_type_counts[thing_type]; ++i) {
+        int offset = dungeon->thing_data_bases[thing_type] + i * byte_count;
+        if (offset < 0 || offset + byte_count > dungeon->raw_size) return 0;
+        if (csb_v1_runtime_read_u16(dungeon->raw_data + offset) == 0xFFFFu) {
+            if (out_record) *out_record = dungeon->raw_data + offset;
+            if (out_index) *out_index = i;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static uint16_t csb_v1_runtime_allocate_fixed_possession_thing(
+    CSB_V1_DungeonData *dungeon,
+    const struct DM1FixedPossessionDrop_Compat *drop)
+{
+    uint8_t *record;
+    uint16_t item_bits;
+    int index;
+
+    if (!dungeon || !drop) return 0xFFFFu;
+    if (!csb_v1_runtime_find_unused_object_record(
+            dungeon,
+            drop->thingType,
+            &record,
+            &index)) {
+        return 0xFFFFu;
+    }
+
+    item_bits = (uint16_t)(drop->itemType & 0x7F);
+    if (drop->cursed) item_bits |= 0x0100u;
+    csb_v1_runtime_write_u16(record + 0, 0xFFFEu);
+    csb_v1_runtime_write_u16(record + 2, item_bits);
+    return csb_v1_runtime_thing_with_cell(
+        drop->thingType,
+        index,
+        drop->cell);
+}
+
+static void csb_v1_runtime_drop_creature_fixed_possessions(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    int creature_type,
+    int source_cell,
+    int level,
+    int map_x,
+    int map_y)
+{
+    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
+    struct RngState_Compat rng;
+    int drop_count = 0;
+    int weapon_dropped = 0;
+    int i;
+
+    if (!profile || !dungeon) return;
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)map_x << 8) ^
+            ((uint32_t)map_y << 16) ^
+            ((uint32_t)creature_type << 24) ^
+            0xF0186u);
+    if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+            creature_type,
+            source_cell,
+            &rng,
+            drops,
+            DM1_MAX_FIXED_POSSESSION_DROPS,
+            &drop_count,
+            &weapon_dropped)) {
+        return;
+    }
+    (void)weapon_dropped;
+
+    /* ReDMCSB GROUP.C F0186 lines 580-645 resolves fixed creature
+     * possessions, allocates unused C05/C06/C10 records, stores item type
+     * plus cursed bit, assigns a floor cell, and moves the thing to the
+     * source square through F0267.  This CSB bridge materializes the raw
+     * object records and square thing-list append; sounds remain later. */
+    for (i = 0; i < drop_count; ++i) {
+        uint16_t thing = csb_v1_runtime_allocate_fixed_possession_thing(
+            dungeon,
+            &drops[i]);
+        if (thing == 0xFFFFu) continue;
+        if (!csb_v1_runtime_append_thing_to_square_tail(
+                dungeon,
+                thing,
+                level,
+                map_x,
+                map_y)) {
+            uint8_t *record;
+            int thing_type;
+            int thing_size;
+            record = csb_v1_runtime_mutable_thing_record(
+                dungeon,
+                thing,
+                &thing_type,
+                &thing_size);
+            if (record && thing_size >= 2) {
+                csb_v1_runtime_write_u16(record, 0xFFFFu);
+            }
+        }
+    }
+}
+
 static void csb_v1_runtime_drop_group_slot_possessions(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
@@ -2465,6 +2599,14 @@ static void csb_v1_runtime_pack_dead_group_creature(
     creature_type = group_record[4];
     csb_v1_runtime_spawn_f0190_death_smoke(
         profile,
+        creature_type,
+        killed_cell,
+        level,
+        map_x,
+        map_y);
+    csb_v1_runtime_drop_creature_fixed_possessions(
+        profile,
+        dungeon,
         creature_type,
         killed_cell,
         level,
