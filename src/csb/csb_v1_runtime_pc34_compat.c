@@ -1906,6 +1906,14 @@ static int csb_v1_runtime_move_group_thing_to_square(
     return 0;
 }
 
+static int csb_v1_runtime_location_after_level_change(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index,
+    int level_delta,
+    int *inout_map_x,
+    int *inout_map_y,
+    int *out_map_index);
+
 static uint16_t csb_v1_runtime_repeated_group_direction_pack(int direction)
 {
     int d = direction & 3;
@@ -1965,7 +1973,7 @@ static int csb_v1_runtime_decode_group_teleporter_at_square(
     return 0;
 }
 
-static int csb_v1_runtime_apply_group_teleporter_at_square(
+static int csb_v1_runtime_apply_group_consequences_at_square(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
     int *inout_map_index,
@@ -1988,6 +1996,7 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
         uint8_t *group_record;
         const struct CreatureBehaviorProfile_Compat *creature_profile;
         int raw_square;
+        int square_type;
         int scope = 0;
         int thing_type = -1;
         int thing_size = 0;
@@ -2006,11 +2015,44 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
             current_map_index,
             *inout_map_x,
             *inout_map_y);
-        if (raw_square < 0 ||
-            ((raw_square >> 5) & 0x07) != 5 ||
-            (raw_square & 0x08) == 0) {
+        if (raw_square < 0) {
             break;
         }
+        square_type = (raw_square >> 5) & 0x07;
+        if (square_type == 2) {
+            int target_map_index;
+            int target_x = *inout_map_x;
+            int target_y = *inout_map_y;
+
+            if ((raw_square & 0x08) == 0 ||
+                (raw_square & 0x01) != 0 ||
+                !csb_v1_runtime_location_after_level_change(
+                    dungeon,
+                    current_map_index,
+                    1,
+                    &target_x,
+                    &target_y,
+                    &target_map_index)) {
+                break;
+            }
+            if (!csb_v1_runtime_move_group_thing_to_square(
+                    dungeon,
+                    group_thing,
+                    current_map_index,
+                    *inout_map_x,
+                    *inout_map_y,
+                    target_map_index,
+                    target_x,
+                    target_y)) {
+                break;
+            }
+            *inout_map_index = target_map_index;
+            *inout_map_x = target_x;
+            *inout_map_y = target_y;
+            moved_count++;
+            continue;
+        }
+        if (square_type != 5 || (raw_square & 0x08) == 0) break;
         if (csb_v1_runtime_decode_group_teleporter_at_square(
                 dungeon,
                 current_map_index,
@@ -2096,12 +2138,13 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
         *inout_map_y = teleporter.target_map_y;
         moved_count++;
     }
-    /* ReDMCSB MOVESENS.C F0267 lines 493-530 moves C04 groups through
-     * creature-scope teleporters, applies the PC34 100-step chained movement
-     * cap, and calls F0262 for direction/cell rotation.  This bounded CSB
-     * runtime bridge handles generated groups with raw C04 records;
-     * ActiveGroup side state, buzz audio, and chained group pit routes remain
-     * separate work. */
+    /* ReDMCSB MOVESENS.C F0267 lines 493-617 moves C04 groups through
+     * creature-scope teleporters and open pits in the same PC34 100-step
+     * chain. Teleporters call F0262 for direction/cell rotation; pits call
+     * DUNGEON.C F0154 to resolve the lower target map/coordinate. This
+     * bounded CSB runtime bridge handles generated groups with raw C04
+     * records; ActiveGroup side state, buzz audio, and full F0191 fall-damage
+     * aftermath remain separate work. */
     return moved_count;
 }
 
@@ -2225,7 +2268,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                         target_x,
                         target_y);
                     if (moved) {
-                        (void)csb_v1_runtime_apply_group_teleporter_at_square(
+                        (void)csb_v1_runtime_apply_group_consequences_at_square(
                             profile,
                             group_thing,
                             &target_map_index,
