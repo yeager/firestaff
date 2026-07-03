@@ -45,6 +45,10 @@ static const char *const g_csb_dungeon_hashes[] = {
     NULL
 };
 
+static void csb_v1_runtime_schedule_explosion_advance_event(
+    CSB_V1_RuntimeProfile *profile,
+    const struct TimelineEvent_Compat *event);
+
 /* GRAPHICS.DAT (or CSB.DAT / CSBGRAPH.DAT) MD5 hashes for all known
  * CSB variants — mirrors g_csb_boot_graphics_hashes in csb_v1_boot.c
  * so the runtime path-finder matches the same set of files that the
@@ -2266,6 +2270,55 @@ static void csb_v1_runtime_rewrite_group_events_after_creature_death(
     }
 }
 
+static int csb_v1_runtime_f0190_smoke_attack_for_creature(int creature_type)
+{
+    const struct CreatureBehaviorProfile_Compat *creature_profile;
+    int size;
+
+    creature_profile = CREATURE_GetProfile_Compat(creature_type);
+    size = creature_profile ? (creature_profile->attributes & 0x0003) : 0;
+    if (size == 0) return 110;
+    if (size == 1) return 190;
+    return 255;
+}
+
+static void csb_v1_runtime_spawn_f0190_death_smoke(
+    CSB_V1_RuntimeProfile *profile,
+    int creature_type,
+    int killed_cell,
+    int map_index,
+    int map_x,
+    int map_y)
+{
+    struct ExplosionCreateInput_Compat input;
+    struct TimelineEvent_Compat first_advance;
+    int slot = -1;
+
+    if (!profile) return;
+    memset(&input, 0, sizeof(input));
+    /* ReDMCSB GROUP.C F0190 lines 907-917 creates C040 smoke at the
+     * killed creature cell, with attack 110/190/255 by creature size. */
+    input.explosionType = C040_EXPLOSION_SMOKE;
+    input.attack = csb_v1_runtime_f0190_smoke_attack_for_creature(creature_type);
+    input.mapIndex = map_index;
+    input.mapX = map_x;
+    input.mapY = map_y;
+    input.cell = (killed_cell == EXPLOSION_CELL_CENTERED)
+        ? EXPLOSION_CELL_CENTERED : (killed_cell & 3);
+    input.centered = (input.cell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
+    input.currentTick = (int)profile->game_time;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    if (F0821_EXPLOSION_Create_Compat(
+            &input,
+            &profile->explosions,
+            &slot,
+            &first_advance)) {
+        csb_v1_runtime_schedule_explosion_advance_event(profile, &first_advance);
+    }
+}
+
 static void csb_v1_runtime_pack_dead_group_creature(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
@@ -2280,6 +2333,8 @@ static void csb_v1_runtime_pack_dead_group_creature(
     int raw_count;
     int creature_count;
     int cells;
+    int killed_cell;
+    int creature_type;
     int i;
 
     if (!dungeon || !group_record ||
@@ -2292,6 +2347,18 @@ static void csb_v1_runtime_pack_dead_group_creature(
     if (creature_count < 1) creature_count = 1;
     if (creature_count > 4) creature_count = 4;
     if (creature_index >= creature_count) return;
+    cells = group_record[5];
+    killed_cell = (cells == 0xFF)
+        ? EXPLOSION_CELL_CENTERED
+        : csb_v1_runtime_group_cell_value(cells, creature_index);
+    creature_type = group_record[4];
+    csb_v1_runtime_spawn_f0190_death_smoke(
+        profile,
+        creature_type,
+        killed_cell,
+        level,
+        map_x,
+        map_y);
 
     if (creature_count <= 1) {
         /* ReDMCSB GROUP.C F0190 lines 831-840 calls F0189_GROUP_Delete
@@ -2320,7 +2387,6 @@ static void csb_v1_runtime_pack_dead_group_creature(
             creature_index);
     }
 
-    cells = group_record[5];
     /* ReDMCSB GROUP.C F0190 lines 892-905 compacts Health, directions,
      * cells, active aspect, then decrements GROUP.Count.  CSB's bounded
      * real-format bridge owns Health and Cells here; directions/aspect event

@@ -318,6 +318,21 @@ static int count_queued_event_type(const CSB_V1_RuntimeProfile *profile,
     return count;
 }
 
+static int find_live_explosion_type(const CSB_V1_RuntimeProfile *profile,
+                                    int explosion_type)
+{
+    int i;
+
+    if (!profile) return -1;
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        if (profile->explosions.entries[i].reserved0 != 0 &&
+            profile->explosions.entries[i].explosionType == explosion_type) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static uint32_t expected_c38_seed(uint32_t game_time,
                                   int map_x,
                                   int map_y,
@@ -1240,6 +1255,15 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 group kill packs surviving Health down to slot 0");
     CHECK((raw[87] & 0x03u) == 1u,
           "C25 group kill packs surviving cell down to slot 0");
+    slot = find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE);
+    CHECK(slot >= 0 &&
+              profile.explosions.entries[slot].attack == 255 &&
+              profile.explosions.entries[slot].mapX == 1 &&
+              profile.explosions.entries[slot].mapY == 1 &&
+              profile.explosions.entries[slot].cell == 0,
+          "C25 group kill creates F0190 death smoke at killed creature cell");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 1,
+          "C25 group kill schedules the F0190 smoke advance event");
     CHECK(count_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_0) == 1 &&
               count_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_1) == 0 &&
               count_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0) == 1 &&
@@ -1307,6 +1331,13 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 final group kill unlinks the group thing from the square head");
     CHECK((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) == 0xffffu,
           "C25 final group kill marks the real-format group record unused");
+    slot = find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE);
+    CHECK(slot >= 0 &&
+              profile.explosions.entries[slot].attack == 255 &&
+              profile.explosions.entries[slot].cell == EXPLOSION_CELL_CENTERED,
+          "C25 final group kill creates centered F0190 death smoke");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 1,
+          "C25 final group kill schedules the centered death-smoke advance");
 }
 
 static void test_explosion_c25_door_destruction_writeback(void)
