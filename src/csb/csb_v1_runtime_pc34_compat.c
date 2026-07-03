@@ -1279,6 +1279,121 @@ static int csb_v1_runtime_creature_movement_ticks(int creature_type)
     return (int)movement_ticks[creature_type];
 }
 
+static void csb_v1_runtime_schedule_c37_group_event(
+    CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y,
+    int creature_type,
+    uint32_t delay_ticks)
+{
+    struct DM1_Event_V1 event;
+    int movement_ticks;
+
+    if (!profile || delay_ticks == 0u) return;
+    movement_ticks = csb_v1_runtime_creature_movement_ticks(creature_type);
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(
+        map_index,
+        profile->game_time + delay_ticks);
+    event.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    event.priority = (uint8_t)(255 - movement_ticks);
+    event.b_mapX = (uint8_t)map_x;
+    event.b_mapY = (uint8_t)map_y;
+    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
+static int csb_v1_runtime_group_destination_is_blocked(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y)
+{
+    int raw_square;
+    int square_type;
+    int door_state;
+
+    if (!dungeon || !dungeon->raw_data || level < 0 ||
+        level >= dungeon->level_count) {
+        return 1;
+    }
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y);
+    if (raw_square < 0) return 1;
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    if (square_type == 0) return 1;
+    if (square_type == 4) {
+        door_state = raw_square & 0x07;
+        return door_state != 0 && door_state != 1 && door_state != 5;
+    }
+    if (square_type == 6) {
+        return !(raw_square & 0x04) && !(raw_square & 0x01);
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_move_group_thing_to_square(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int level,
+    int old_x,
+    int old_y,
+    int new_x,
+    int new_y)
+{
+    uint8_t *source_first_ptr;
+    uint8_t *dest_first_ptr;
+    uint8_t *group_record;
+    uint8_t *previous_record;
+    uint16_t thing;
+    uint16_t next_thing;
+    int thing_type;
+    int thing_size;
+    int guard;
+
+    if (!dungeon || (old_x == new_x && old_y == new_y)) return 0;
+    source_first_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon,
+        level,
+        old_x,
+        old_y);
+    dest_first_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon,
+        level,
+        new_x,
+        new_y);
+    if (!source_first_ptr || !dest_first_ptr) return 0;
+
+    previous_record = NULL;
+    thing = csb_v1_runtime_read_u16(source_first_ptr);
+    for (guard = 0; guard < 128 && thing != 0xFFFEu && thing != 0xFFFFu;
+         ++guard) {
+        group_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            thing,
+            &thing_type,
+            &thing_size);
+        if (!group_record || thing_size < 2) return 0;
+        next_thing = csb_v1_runtime_read_u16(group_record);
+        if (thing == group_thing && thing_type == 4 && thing_size >= 16) {
+            if (previous_record) {
+                csb_v1_runtime_write_u16(previous_record, next_thing);
+            } else {
+                csb_v1_runtime_write_u16(source_first_ptr, next_thing);
+            }
+            csb_v1_runtime_write_u16(
+                group_record,
+                csb_v1_runtime_read_u16(dest_first_ptr));
+            csb_v1_runtime_write_u16(dest_first_ptr, group_thing);
+            return 1;
+        }
+        previous_record = group_record;
+        thing = next_thing;
+    }
+    return 0;
+}
+
 static void csb_v1_runtime_apply_group_behavior_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -1318,6 +1433,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
         int behavior;
         int next_behavior;
         int movement_ticks;
+        uint16_t group_thing;
 
         thing_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -1328,30 +1444,67 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
         if (thing_type == 4 && thing_size >= 16) {
             flags = csb_v1_runtime_read_u16(thing_record + 14);
             behavior = (int)(flags & 0x000Fu);
+            group_thing = (uint16_t)thing;
             if (behavior == 0 || behavior == 2 || behavior == 3) {
                 next_behavior = (distance_x + distance_y <= 1) ? 6 : 7;
                 flags = (uint16_t)((flags & 0xFFF0u) |
                                    (uint16_t)(next_behavior & 0x0F));
                 csb_v1_runtime_write_u16(thing_record + 14, flags);
                 if (next_behavior == 7) {
-                    struct DM1_Event_V1 event;
-                    movement_ticks = csb_v1_runtime_creature_movement_ticks(
-                        (int)thing_record[4]);
-
                     /* ReDMCSB GROUP.C F0209 lines 2135-2140 sets behavior
                      * C7 approach and increments the next C37 time by one
                      * tick; lines 2450-2463 then add C37 through F0208 with
                      * the existing movement-tick priority. */
-                    memset(&event, 0, sizeof(event));
-                    event.map_time = DM1_MAP_TIME_MAKE(
+                    csb_v1_runtime_schedule_c37_group_event(
+                        profile,
                         record->mapIndex,
-                        profile->game_time + 1u);
-                    event.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
-                    event.priority = (uint8_t)(255 - movement_ticks);
-                    event.b_mapX = (uint8_t)record->mapX;
-                    event.b_mapY = (uint8_t)record->mapY;
-                    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+                        record->mapX,
+                        record->mapY,
+                        (int)thing_record[4],
+                        1u);
                 }
+                return;
+            }
+            if (behavior == 7) {
+                int target_x = record->mapX;
+                int target_y = record->mapY;
+                int moved = 0;
+
+                movement_ticks = csb_v1_runtime_creature_movement_ticks(
+                    (int)thing_record[4]);
+                if (distance_y > 0) {
+                    target_y += (profile->party_y > record->mapY) ? 1 : -1;
+                } else if (distance_x > 0) {
+                    target_x += (profile->party_x > record->mapX) ? 1 : -1;
+                }
+                if (!csb_v1_runtime_group_destination_is_blocked(
+                        dungeon,
+                        record->mapIndex,
+                        target_x,
+                        target_y)) {
+                    moved = csb_v1_runtime_move_group_thing_to_square(
+                        dungeon,
+                        group_thing,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        target_x,
+                        target_y);
+                }
+                /* ReDMCSB GROUP.C F0209 lines 2228-2272 walks C7 approach
+                 * toward the target using F0202 movement checks, then lines
+                 * 2450-2463 schedule the next C37.  This bounded bridge only
+                 * relinks a real-format C04 group when the destination square
+                 * already has a thing-list slot; full F0202 occupancy,
+                 * active-group side state, sounds, and attack expansion remain
+                 * separate work. */
+                csb_v1_runtime_schedule_c37_group_event(
+                    profile,
+                    record->mapIndex,
+                    moved ? target_x : record->mapX,
+                    moved ? target_y : record->mapY,
+                    (int)thing_record[4],
+                    (uint32_t)((movement_ticks > 1) ? movement_ticks : 1));
             }
             return;
         }
@@ -1839,24 +1992,16 @@ static void csb_v1_runtime_materialize_corridor_generator_group(
                              ((result.spawnedDirection & 0x03) << 8));
     csb_v1_runtime_write_u16(group_record + 14, group_flags);
     csb_v1_runtime_write_u16(first_thing_ptr, group_thing);
-    {
-        struct DM1_Event_V1 event;
-        int movement_ticks = csb_v1_runtime_creature_movement_ticks(
-            result.spawnedCreatureType);
-
-        /* ReDMCSB GROUP.C F0180 lines 311-340 starts wandering by
-         * scheduling C37 at game_time + 1 and prioritizes faster
-         * creatures as 255 - MovementTicks. */
-        memset(&event, 0, sizeof(event));
-        event.map_time = DM1_MAP_TIME_MAKE(
-            record->mapIndex,
-            profile->game_time + 1u);
-        event.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
-        event.priority = (uint8_t)(255 - movement_ticks);
-        event.b_mapX = (uint8_t)record->mapX;
-        event.b_mapY = (uint8_t)record->mapY;
-        (void)dm1v1_event_add(&profile->timeline_queue, &event);
-    }
+    /* ReDMCSB GROUP.C F0180 lines 311-340 starts wandering by scheduling
+     * C37 at game_time + 1 and prioritizes faster creatures as
+     * 255 - MovementTicks. */
+    csb_v1_runtime_schedule_c37_group_event(
+        profile,
+        record->mapIndex,
+        record->mapX,
+        record->mapY,
+        result.spawnedCreatureType,
+        1u);
 }
 
 static void csb_v1_runtime_apply_corridor_timeline_record(
