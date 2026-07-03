@@ -85,6 +85,33 @@ static const HocExpectedPose kExpectedPoses[] = {
     {1, 19, DIR_NORTH,14, "LEYLA",   1}
 };
 
+static const HocExpectedPose kPlayerRouteMirrorSweep[] = {
+    {2,  1, DIR_EAST,  8, "IAIDO",   1},
+    {2,  1, DIR_SOUTH, 4, "LEIF",    1},
+    {1,  2, DIR_NORTH, 1, "HALK",    1},
+    {1,  3, DIR_EAST, 18, "SONJA",   1},
+    {1,  3, DIR_SOUTH,10, "GANDO",   0},
+    {2,  3, DIR_EAST, 19, "HAWK",    1},
+    {2,  4, DIR_EAST,  6, "SYRA",    1},
+    {2,  4, DIR_SOUTH,15, "MOPHUS",  1},
+    {1,  5, DIR_SOUTH,13, "WUUF",    0},
+    {3,  6, DIR_NORTH,11, "STAMM",   1},
+    {3,  6, DIR_WEST, 22, "GOTHMOG", 1},
+    {2,  7, DIR_SOUTH,16, "CHANI",   1},
+    {3,  7, DIR_SOUTH, 3, "AZIZI",   1},
+    {2,  8, DIR_WEST,  0, "DAROOU",  1},
+    {1, 10, DIR_NORTH, 9, "ZED",     1},
+    {2, 10, DIR_NORTH,12, "LINFLAS", 1},
+    {3, 10, DIR_NORTH,21, "HISSSSA", 1},
+    {3, 11, DIR_SOUTH,20, "ALEX",    1},
+    {2, 13, DIR_NORTH,17, "BORIS",   0},
+    {1, 14, DIR_SOUTH, 2, "WU TSE",  0},
+    {1, 16, DIR_WEST, 23, "NABI",    0},
+    {2, 16, DIR_NORTH, 5, "ELIJA",   1},
+    {2, 17, DIR_SOUTH, 7, "TIGGY",   1},
+    {1, 19, DIR_NORTH,14, "LEYLA",   1}
+};
+
 static int g_pass = 0;
 static int g_fail = 0;
 
@@ -117,6 +144,23 @@ static void set_pose(M11_GameViewState* state, int x, int y, int dir) {
     state->candidateMirrorPanelActive = 0;
     state->candidateMirrorOrdinal = -1;
     state->candidateMirrorPartyIndex = -1;
+}
+
+static void clear_candidate_and_party(M11_GameViewState* state) {
+    if (!state) {
+        return;
+    }
+    state->candidateMirrorPanelActive = 0;
+    state->candidateMirrorOrdinal = -1;
+    state->candidateMirrorPartyIndex = -1;
+    state->candidateMirrorRenameActive = 0;
+    memset(&state->candidateMirrorRename, 0,
+           sizeof(state->candidateMirrorRename));
+    memset(state->world.party.champions, 0,
+           sizeof(state->world.party.champions));
+    state->world.party.championCount = 0;
+    state->world.party.activeChampionIndex = -1;
+    state->inventoryPanelActive = 0;
 }
 
 static const HocExpectedPose* expected_pose_for(int x, int y, int dir) {
@@ -469,6 +513,96 @@ static int check_negative_redraws(M11_GameViewState* state,
     return ok;
 }
 
+static int check_player_route_mirror_sweep(M11_GameViewState* state,
+                                           const M11_AssetSlot* portraits,
+                                           unsigned char* fb) {
+    size_t i;
+    int visibleCount = 0;
+    int clickableCount = 0;
+    int rejectedOpenCount = 0;
+    int ok = 1;
+
+    printf("\n[Group E] player-route HoC mirror sweep has no Sonja-only rendering/click drift\n");
+    memset(fb, 0, FB_W * FB_H);
+    clear_candidate_and_party(state);
+    for (i = 0; i < sizeof(kPlayerRouteMirrorSweep) / sizeof(kPlayerRouteMirrorSweep[0]); ++i) {
+        const HocExpectedPose* p = &kPlayerRouteMirrorSweep[i];
+        int actual;
+        int pct;
+        int bestOrdinal = -1;
+        int bestPct;
+        int warm;
+
+        /* Do not clear the framebuffer here.  This catches the packaged-app
+         * symptom class where a previous D1C portrait remains visible or a
+         * later mirror fails to repaint while walking through HoC. */
+        draw_pose(state, fb, p->x, p->y, p->dir, 0);
+        actual = M11_GameView_GetFrontMirrorOrdinal(state);
+        pct = match_portrait(portraits, fb, p->ordinal);
+        bestPct = strongest_portrait_match(portraits, fb, &bestOrdinal);
+        warm = rect_warm_count(fb, PORTRAIT_X, PORTRAIT_Y, PORTRAIT_W, PORTRAIT_H);
+
+        if (p->sourceDrawsD1C) {
+            M11_GameInputResult clickRc;
+            CHECK(actual == p->ordinal,
+                  "route step %zu (%d,%d,%s) %s resolves ordinal %d",
+                  i, p->x, p->y, dir_name(p->dir), p->name, actual);
+            CHECK(pct >= 90 && bestOrdinal == p->ordinal,
+                  "route step %zu %s paints expected portrait pct=%d best=%d/%d",
+                  i, p->name, pct, bestOrdinal, bestPct);
+            clickRc = M11_GameView_HandlePointerButton(state,
+                                                       PORTRAIT_X + PORTRAIT_W / 2,
+                                                       PORTRAIT_Y + PORTRAIT_H / 2,
+                                                       M11_DM1_MOUSE_MASK_LEFT);
+            CHECK(clickRc == M11_GAME_INPUT_REDRAW &&
+                  state->candidateMirrorPanelActive == 1 &&
+                  state->candidateMirrorOrdinal == p->ordinal,
+                  "route step %zu %s click opens candidate ordinal=%d rc=%d",
+                  i, p->name, state->candidateMirrorOrdinal, (int)clickRc);
+            ok = ok && actual == p->ordinal && pct >= 90 &&
+                 bestOrdinal == p->ordinal &&
+                 clickRc == M11_GAME_INPUT_REDRAW &&
+                 state->candidateMirrorPanelActive == 1 &&
+                 state->candidateMirrorOrdinal == p->ordinal;
+            if (actual == p->ordinal && pct >= 90 && bestOrdinal == p->ordinal) {
+                ++visibleCount;
+            }
+            if (clickRc == M11_GAME_INPUT_REDRAW &&
+                state->candidateMirrorPanelActive == 1 &&
+                state->candidateMirrorOrdinal == p->ordinal) {
+                ++clickableCount;
+            }
+            clear_candidate_and_party(state);
+        } else {
+            CHECK(actual == -1,
+                  "route step %zu (%d,%d,%s) %s open/non-wall C127 remains non-front ordinal=%d",
+                  i, p->x, p->y, dir_name(p->dir), p->name, actual);
+            CHECK(warm < NEGATIVE_WARM_THRESHOLD && bestPct < 90,
+                  "route step %zu %s clears D1C portrait warm=%d best=%d/%d",
+                  i, p->name, warm, bestOrdinal, bestPct);
+            ok = ok && actual == -1 &&
+                 warm < NEGATIVE_WARM_THRESHOLD &&
+                 bestPct < 90;
+            if (actual == -1 && warm < NEGATIVE_WARM_THRESHOLD &&
+                bestPct < 90) {
+                ++rejectedOpenCount;
+            }
+        }
+    }
+
+    CHECK(visibleCount == 19,
+          "player-route visible wall mirrors count=%d",
+          visibleCount);
+    CHECK(clickableCount == 19,
+          "player-route clickable wall mirrors count=%d",
+          clickableCount);
+    CHECK(rejectedOpenCount == 5,
+          "player-route open/non-wall C127 rejection count=%d",
+          rejectedOpenCount);
+    return ok && visibleCount == 19 && clickableCount == 19 &&
+           rejectedOpenCount == 5;
+}
+
 static int check_open_front_c127_rejected(M11_GameViewState* state,
                                           const M11_AssetSlot* portraits,
                                           unsigned char* fb) {
@@ -581,17 +715,7 @@ static int check_seeded_all_ordinals(M11_GameViewState* state,
              state->candidateMirrorPanelActive == 1 &&
              state->candidateMirrorOrdinal == ordinal &&
              state->world.party.championCount == 1;
-        state->candidateMirrorPanelActive = 0;
-        state->candidateMirrorOrdinal = -1;
-        state->candidateMirrorPartyIndex = -1;
-        state->candidateMirrorRenameActive = 0;
-        memset(&state->candidateMirrorRename, 0,
-               sizeof(state->candidateMirrorRename));
-        memset(state->world.party.champions, 0,
-               sizeof(state->world.party.champions));
-        state->world.party.championCount = 0;
-        state->world.party.activeChampionIndex = -1;
-        state->inventoryPanelActive = 0;
+        clear_candidate_and_party(state);
     }
     state->world.things->sensors[sensorIndex].sensorData = savedData;
     return ok;
@@ -648,6 +772,7 @@ int main(int argc, char** argv) {
 
     ok = check_actual_hall_poses(&state, portraits, fb);
     ok = check_negative_redraws(&state, portraits, fb) && ok;
+    ok = check_player_route_mirror_sweep(&state, portraits, fb) && ok;
     ok = check_open_front_c127_rejected(&state, portraits, fb) && ok;
     ok = check_seeded_all_ordinals(&state, portraits, fb) && ok;
 
