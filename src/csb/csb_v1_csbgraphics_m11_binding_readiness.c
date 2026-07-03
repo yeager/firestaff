@@ -1,5 +1,6 @@
 #include "csb_v1_csbgraphics_m11_binding_readiness.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 enum {
@@ -244,6 +245,91 @@ int csb_v1_csbgraphics_m11_prepare_and_apply(
                                                 framebuffer_width,
                                                 framebuffer_height,
                                                 framebuffer_stride);
+}
+
+int csb_v1_csbgraphics_m11_decode_entry_and_apply(
+    const uint8_t *csbgraphics_bytes,
+    size_t csbgraphics_size,
+    uint32_t entry_index,
+    uint16_t decoded_width,
+    uint16_t decoded_height,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride,
+    CSB_V1_CSBGraphicsM11Binding *out_binding)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    CSB_V1_CSBGraphicsDecodedBitmap decoded;
+    uint8_t *decoded_bytes = NULL;
+    size_t expected_pixels;
+    size_t written = 0u;
+    size_t i;
+    uint8_t max_palette = 0u;
+    int rc;
+    int applied;
+
+    if (!csbgraphics_bytes || decoded_width == 0u || decoded_height == 0u ||
+        !framebuffer) {
+        return 0;
+    }
+
+    expected_pixels = (size_t)decoded_width * (size_t)decoded_height;
+    if (expected_pixels == 0u || expected_pixels > 65535u) {
+        return 0;
+    }
+
+    rc = csb_v1_csbgraphics_dat_entry_span(csbgraphics_bytes,
+                                           csbgraphics_size,
+                                           entry_index,
+                                           &span);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        (size_t)span.decompressed_size != expected_pixels) {
+        return 0;
+    }
+
+    decoded_bytes = (uint8_t *)malloc(expected_pixels);
+    if (!decoded_bytes) {
+        return 0;
+    }
+
+    rc = csb_v1_csbgraphics_dat_decode_entry(csbgraphics_bytes,
+                                             csbgraphics_size,
+                                             entry_index,
+                                             decoded_bytes,
+                                             expected_pixels,
+                                             &written);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK || written != expected_pixels) {
+        free(decoded_bytes);
+        return 0;
+    }
+
+    for (i = 0u; i < expected_pixels; ++i) {
+        if (decoded_bytes[i] > max_palette) {
+            max_palette = decoded_bytes[i];
+        }
+    }
+
+    memset(&decoded, 0, sizeof(decoded));
+    decoded.entry_index = entry_index;
+    decoded.width = decoded_width;
+    decoded.height = decoded_height;
+    decoded.bits_per_pixel = 4u;
+    decoded.max_palette_index = max_palette;
+    decoded.decoded_ok = 1;
+    decoded.trusted = 1;
+    decoded.indexed_pixels = decoded_bytes;
+    decoded.indexed_pixel_count = expected_pixels;
+
+    applied = csb_v1_csbgraphics_m11_prepare_and_apply(&span,
+                                                       &decoded,
+                                                       framebuffer,
+                                                       framebuffer_width,
+                                                       framebuffer_height,
+                                                       framebuffer_stride,
+                                                       out_binding);
+    free(decoded_bytes);
+    return applied;
 }
 
 const char *csb_v1_csbgraphics_m11_route_name(

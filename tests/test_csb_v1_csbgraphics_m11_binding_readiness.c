@@ -1,6 +1,8 @@
 #include "csb_v1_csbgraphics_m11_binding_readiness.h"
+#include "dm1_v1_graphics_loader_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_assertions;
@@ -38,6 +40,198 @@ static void check_contains(const char *label, const char *haystack, const char *
         return;
     }
     printf("ok %s contains=%s\n", label, needle);
+}
+
+static void write_be16(uint8_t *buf, size_t off, uint16_t value)
+{
+    buf[off] = (uint8_t)((value >> 8) & 0xffu);
+    buf[off + 1u] = (uint8_t)(value & 0xffu);
+}
+
+typedef struct {
+    uint8_t *buf;
+    size_t cap;
+    size_t bit_pos;
+} BitWriter;
+
+static void bw_init(BitWriter *bw)
+{
+    bw->cap = 1024u;
+    bw->buf = (uint8_t *)calloc(1u, bw->cap);
+    bw->bit_pos = 0u;
+}
+
+static int bw_grow(BitWriter *bw)
+{
+    size_t old_cap = bw->cap;
+    size_t new_cap = bw->cap * 2u;
+    uint8_t *new_buf = (uint8_t *)realloc(bw->buf, new_cap);
+    if (!new_buf) {
+        free(bw->buf);
+        bw->buf = NULL;
+        bw->cap = 0u;
+        return 0;
+    }
+    memset(new_buf + old_cap, 0, new_cap - old_cap);
+    bw->buf = new_buf;
+    bw->cap = new_cap;
+    return 1;
+}
+
+static int bw_write_bits(BitWriter *bw, uint32_t value, int n_bits)
+{
+    int i;
+    for (i = 0; i < n_bits; ++i) {
+        size_t bp = bw->bit_pos++;
+        size_t byte_idx;
+        int bit_in_byte;
+        if ((bp >> 3) >= bw->cap && !bw_grow(bw)) {
+            return 0;
+        }
+        byte_idx = bp >> 3;
+        bit_in_byte = (int)(bp & 7u);
+        if (value & (1u << (uint32_t)i)) {
+            bw->buf[byte_idx] |= (uint8_t)(1u << (uint32_t)bit_in_byte);
+        }
+    }
+    return 1;
+}
+
+typedef struct {
+    uint8_t dict_first[4096];
+    uint16_t dict_prefix[4096];
+    int dict_count;
+    int code_bits;
+} RefLZW;
+
+static void ref_lzw_init(RefLZW *e)
+{
+    int i;
+    e->dict_count = DM1_GFX_LZW_FIRST_CODE;
+    e->code_bits = 9;
+    for (i = 0; i < 256; ++i) {
+        e->dict_first[i] = (uint8_t)i;
+        e->dict_prefix[i] = 0xffffu;
+    }
+}
+
+static int ref_lzw_find_or_add(RefLZW *e, uint16_t prefix, uint8_t append)
+{
+    int i;
+    for (i = DM1_GFX_LZW_FIRST_CODE; i < e->dict_count; ++i) {
+        if (e->dict_prefix[i] == prefix && e->dict_first[i] == append) {
+            return i;
+        }
+    }
+    if (e->dict_count >= DM1_GFX_LZW_MAX_CODE) {
+        return -1;
+    }
+    e->dict_prefix[e->dict_count] = prefix;
+    e->dict_first[e->dict_count] = append;
+    ++e->dict_count;
+    return -1;
+}
+
+static void ref_lzw_maybe_grow(RefLZW *e)
+{
+    if (e->dict_count > ((1 << e->code_bits) - 1) && e->code_bits < 12) {
+        ++e->code_bits;
+    }
+}
+
+static int ref_lzw_encode(const uint8_t *input, size_t in_size,
+                          uint8_t **out_buf, size_t *out_size)
+{
+    BitWriter bw;
+    RefLZW e;
+    uint16_t prefix_code;
+    size_t i;
+
+    if (!input || !out_buf || !out_size) {
+        return -1;
+    }
+    *out_buf = NULL;
+    *out_size = 0u;
+
+    bw_init(&bw);
+    if (!bw.buf) {
+        return -1;
+    }
+    ref_lzw_init(&e);
+
+    if (!bw_write_bits(&bw, DM1_GFX_LZW_CLEAR_CODE, e.code_bits)) {
+        free(bw.buf);
+        return -1;
+    }
+    if (in_size == 0u) {
+        if (!bw_write_bits(&bw, DM1_GFX_LZW_END_CODE, e.code_bits)) {
+            free(bw.buf);
+            return -1;
+        }
+        *out_buf = bw.buf;
+        *out_size = (bw.bit_pos + 7u) / 8u;
+        return 0;
+    }
+
+    prefix_code = input[0];
+    for (i = 1u; i < in_size; ++i) {
+        uint8_t next_byte = input[i];
+        int existing = ref_lzw_find_or_add(&e, prefix_code, next_byte);
+        if (existing >= 0) {
+            prefix_code = (uint16_t)existing;
+        } else {
+            if (!bw_write_bits(&bw, prefix_code, e.code_bits)) {
+                free(bw.buf);
+                return -1;
+            }
+            ref_lzw_maybe_grow(&e);
+            prefix_code = next_byte;
+        }
+    }
+    if (!bw_write_bits(&bw, prefix_code, e.code_bits) ||
+        !bw_write_bits(&bw, DM1_GFX_LZW_END_CODE, e.code_bits)) {
+        free(bw.buf);
+        return -1;
+    }
+
+    *out_buf = bw.buf;
+    *out_size = (bw.bit_pos + 7u) / 8u;
+    return 0;
+}
+
+static uint8_t *build_csbgraphics_single_entry(
+    uint32_t entry_index,
+    const uint8_t *decoded,
+    size_t decoded_size,
+    size_t *out_size)
+{
+    uint8_t *compressed = NULL;
+    size_t compressed_size = 0u;
+    uint32_t count = entry_index + 1u;
+    size_t header_size = 2u + (size_t)count * 4u;
+    uint8_t *buf;
+    if (!out_size || !decoded || decoded_size == 0u ||
+        decoded_size > 65535u ||
+        ref_lzw_encode(decoded, decoded_size,
+                       &compressed, &compressed_size) != 0 ||
+        !compressed || compressed_size == 0u || compressed_size > 65535u) {
+        free(compressed);
+        return NULL;
+    }
+    buf = (uint8_t *)calloc(1u, header_size + compressed_size);
+    if (!buf) {
+        free(compressed);
+        return NULL;
+    }
+    write_be16(buf, 0u, (uint16_t)count);
+    write_be16(buf, 2u + (size_t)entry_index * 2u,
+               (uint16_t)compressed_size);
+    write_be16(buf, 2u + (size_t)count * 2u + (size_t)entry_index * 2u,
+               (uint16_t)decoded_size);
+    memcpy(buf + header_size, compressed, compressed_size);
+    *out_size = header_size + compressed_size;
+    free(compressed);
+    return buf;
 }
 
 static CSB_V1_CSBGraphicsEntrySpan span_for(uint32_t entry_index)
@@ -190,6 +384,75 @@ static void test_viewport_override_binding(void)
                                    CSB_V1_CSBGRAPHICS_M11_SOURCE_W +
                                    CSB_V1_CSBGRAPHICS_M11_VIEWPORT_X],
               3, "single-call CSBgraphics handoff copies viewport payload");
+}
+
+static void test_decode_entry_and_apply_viewport(void)
+{
+    enum { W = 8, H = 8 };
+    uint8_t pixels[W * H];
+    uint8_t framebuffer[CSB_V1_CSBGRAPHICS_M11_SOURCE_W *
+                        CSB_V1_CSBGRAPHICS_M11_SOURCE_H];
+    uint8_t *csbgraphics = NULL;
+    size_t csbgraphics_size = 0u;
+    CSB_V1_CSBGraphicsM11Binding binding;
+    int i;
+
+    for (i = 0; i < W * H; ++i) {
+        pixels[i] = (uint8_t)((i % 15) + 1);
+    }
+    csbgraphics = build_csbgraphics_single_entry(73u,
+                                                 pixels,
+                                                 sizeof(pixels),
+                                                 &csbgraphics_size);
+    if (!csbgraphics) {
+        ++g_failures;
+        printf("FAIL decode_apply.fixture allocation\n");
+        return;
+    }
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&binding, 0, sizeof(binding));
+    check_int("decode_apply.viewport",
+              csb_v1_csbgraphics_m11_decode_entry_and_apply(
+                  csbgraphics, csbgraphics_size, 73u,
+                  (uint16_t)W, (uint16_t)H,
+                  framebuffer,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  &binding),
+              1, "CSBgraphics.dat entry decode feeds M11 viewport handoff");
+    check_int("decode_apply.route", binding.route,
+              CSB_V1_CSBGRAPHICS_M11_ROUTE_VIEWPORT_DERIVED,
+              "decoded entry #73 uses viewport-derived route");
+    check_int("decode_apply.top_left",
+              framebuffer[CSB_V1_CSBGRAPHICS_M11_VIEWPORT_Y *
+                          CSB_V1_CSBGRAPHICS_M11_SOURCE_W +
+                          CSB_V1_CSBGRAPHICS_M11_VIEWPORT_X],
+              pixels[0], "decoded entry writes exact indexed payload");
+    check_int("decode_apply.before",
+              framebuffer[(CSB_V1_CSBGRAPHICS_M11_VIEWPORT_Y - 1) *
+                          CSB_V1_CSBGRAPHICS_M11_SOURCE_W],
+              0, "decoded entry preserves pixels outside route rectangle");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    check_int("decode_apply.geometry_mismatch",
+              csb_v1_csbgraphics_m11_decode_entry_and_apply(
+                  csbgraphics, csbgraphics_size, 73u,
+                  63u, (uint16_t)H,
+                  framebuffer,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  &binding),
+              0, "decoded entry rejects caller geometry mismatch");
+    check_int("decode_apply.mismatch_no_write",
+              framebuffer[CSB_V1_CSBGRAPHICS_M11_VIEWPORT_Y *
+                          CSB_V1_CSBGRAPHICS_M11_SOURCE_W +
+                          CSB_V1_CSBGRAPHICS_M11_VIEWPORT_X],
+              0, "geometry mismatch does not mutate M11 framebuffer");
+
+    free(csbgraphics);
 }
 
 static void test_hud_inventory_binding(void)
@@ -359,6 +622,7 @@ int main(void)
 {
     test_contract_constants_and_evidence();
     test_viewport_override_binding();
+    test_decode_entry_and_apply_viewport();
     test_hud_inventory_binding();
     test_hud_c040_panel_binding();
     test_fallbacks_are_explicit();
