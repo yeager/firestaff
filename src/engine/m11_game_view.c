@@ -150,7 +150,10 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
 {
     CSB_V1_BootProfile *profile;
     CSB_V1_ViewportConfig cfg;
+    const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
+    const CSB_V1_CSBGraphicsDatRealCache *cache;
     uint8_t dungeon_grid[32 * 32];
+    uint32_t i;
 
     if (!state || !state->csbBootProfile || !framebuffer) {
         return 0;
@@ -181,6 +184,22 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                   profile->runtime.party_dir,
                                   profile->runtime.party_x,
                                   profile->runtime.party_y);
+    plan = csb_v1_boot_csbgraphics_m11_plan(profile);
+    cache = csb_v1_boot_csbgraphics_cache(profile);
+    if (plan && plan->ready && cache && cache->loaded) {
+        for (i = 0u; i < plan->planned_count; ++i) {
+            CSB_V1_CSBGraphicsM11Binding binding;
+            (void)csb_v1_csbgraphics_m11_runtime_plan_apply_entry(
+                plan,
+                cache,
+                plan->entries[i].entry_index,
+                framebuffer,
+                framebufferWidth,
+                framebufferHeight,
+                framebufferWidth,
+                &binding);
+        }
+    }
     return 1;
 }
 
