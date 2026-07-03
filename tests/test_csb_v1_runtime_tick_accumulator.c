@@ -13,6 +13,8 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
+#include "memory_creature_ai_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -241,6 +243,103 @@ static void queue_square_cell_event(CSB_V1_RuntimeProfile *profile,
           "CSB runtime accepts a queued square event");
 }
 
+static uint32_t expected_c38_seed(uint32_t game_time,
+                                  int map_x,
+                                  int map_y,
+                                  int creature_type,
+                                  int creature_index,
+                                  int champion_index)
+{
+    uint32_t seed;
+
+    seed = 0xC5B1C038u ^
+           (game_time * 1103515245u) ^
+           ((uint32_t)(map_x & 0xFF) << 24) ^
+           ((uint32_t)(map_y & 0xFF) << 16) ^
+           ((uint32_t)(creature_type & 0xFF) << 8) ^
+           (uint32_t)((creature_index & 0x03) |
+                      ((champion_index & 0x03) << 2));
+    return (seed != 0u) ? seed : 1u;
+}
+
+static int expected_c38_shared_combat_damage(
+    const CSB_V1_Champion *champion,
+    int champion_index,
+    uint32_t game_time,
+    int map_x,
+    int map_y,
+    int creature_type,
+    int creature_index)
+{
+    const struct CreatureBehaviorProfile_Compat *profile;
+    struct CombatantCreatureSnapshot_Compat attacker;
+    struct CombatantChampionSnapshot_Compat defender;
+    struct CombatResult_Compat result;
+    struct RngState_Compat rng;
+    int parry_level;
+
+    profile = CREATURE_GetProfile_Compat(creature_type);
+    if (!champion || !profile) return -1;
+
+    memset(&attacker, 0, sizeof(attacker));
+    attacker.creatureType = creature_type;
+    attacker.attack = profile->baseAttack;
+    attacker.defense = profile->baseDefense;
+    attacker.dexterity = profile->dexterity;
+    attacker.baseHealth = profile->baseHealth;
+    attacker.poisonAttack = profile->poisonAttack;
+    attacker.attackType = profile->attackType;
+    attacker.attributes = profile->attributes;
+    attacker.woundProbabilities = profile->woundProbabilities;
+    attacker.properties = profile->properties;
+    attacker.creatureIndex = creature_index;
+
+    memset(&defender, 0, sizeof(defender));
+    defender.championIndex = champion_index;
+    defender.currentHealth = champion->CurrentHealth;
+    defender.dexterity =
+        (int)champion->Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR];
+    defender.statisticVitality =
+        (int)champion->Statistics[CSB_V1_STAT_VIT][CSB_V1_STAT_CUR];
+    defender.statisticAntifire =
+        (int)champion->Statistics[CSB_V1_STAT_ANTIFIRE][CSB_V1_STAT_CUR];
+    defender.statisticAntimagic =
+        (int)champion->Statistics[CSB_V1_STAT_ANTIMAGIC][CSB_V1_STAT_CUR];
+    defender.statisticWisdom =
+        (int)champion->Statistics[CSB_V1_STAT_WIS][CSB_V1_STAT_CUR];
+    defender.statisticLuck =
+        (int)champion->Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_CUR];
+    defender.statisticLuckMax =
+        (int)champion->Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MAX];
+    defender.statisticLuckMin =
+        (int)champion->Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MIN];
+    parry_level = (int)champion->Skills[7];
+    if (parry_level < 1) parry_level = 1;
+    if (parry_level > 16) parry_level = 16;
+    defender.skillLevelParry = parry_level;
+
+    (void)F0730_COMBAT_RngInit_Compat(
+        &rng,
+        expected_c38_seed(
+            game_time,
+            map_x,
+            map_y,
+            creature_type,
+            creature_index,
+            champion_index));
+    if (!F0736_COMBAT_ResolveCreatureMelee_Compat(
+            &attacker,
+            &defender,
+            &rng,
+            &result)) {
+        return -1;
+    }
+    return (result.outcome == COMBAT_OUTCOME_HIT_DAMAGE &&
+            result.damageApplied > 0)
+        ? result.damageApplied
+        : 0;
+}
+
 static void test_timeline_square_events_mutate_real_format_map_bytes(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -409,6 +508,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     uint16_t group_flags;
     uint32_t c38_dispatch_time;
     int c38_event_index;
+    int expected_c38_damage;
     int i;
 
     make_real_format_corridor_text_generator_dungeon(
@@ -442,6 +542,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
         profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_CUR] = 30;
         profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_MAX] = 30;
     }
+    profile.party_state.Champions[1].Skills[7] = 8;
 
     queue_square_event(
         &profile,
@@ -518,6 +619,14 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     CHECK(profile.timeline_queue.eventCount == 1,
           "adjacent attack transition queues one C38 creature attack event");
     c38_dispatch_time = profile.game_time;
+    expected_c38_damage = expected_c38_shared_combat_damage(
+        &profile.party_state.Champions[1],
+        1,
+        c38_dispatch_time,
+        1,
+        1,
+        9,
+        0);
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "next tick dispatches the bounded C38 attack event");
     CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
@@ -529,10 +638,11 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded C38 attack event keeps the adjacent group square");
     CHECK(dispatch.records[0].aux0 == (255 - 21),
           "bounded C38 attack event priority follows 255 - creature movement ticks");
-    CHECK(profile.party_state.Champions[0].CurrentHealth == 20 &&
-              profile.party_state.Champions[1].CurrentHealth > 0 &&
-              profile.party_state.Champions[1].CurrentHealth < 200,
-          "bounded C38 attack event targets the source-ordered champion cell through shared combat damage");
+    CHECK(expected_c38_damage > 0 &&
+              profile.party_state.Champions[0].CurrentHealth == 20 &&
+              profile.party_state.Champions[1].CurrentHealth ==
+                  200 - expected_c38_damage,
+          "bounded C38 attack event uses shared combat damage with imported PARRY level");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event requeues the next attack cadence");
     c38_event_index = profile.timeline_queue.timeline[0];
