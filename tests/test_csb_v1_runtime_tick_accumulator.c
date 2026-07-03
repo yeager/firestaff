@@ -361,6 +361,88 @@ static uint16_t make_sensor_target(int x, int y, int cell)
                       ((y & 0x1f) << 11));
 }
 
+static void make_real_format_corridor_text_generator_dungeon(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *raw,
+    size_t raw_size)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[2] = 68;
+    dungeon->thing_type_counts[2] = 1;
+    dungeon->thing_data_bases[3] = 72;
+    dungeon->thing_type_counts[3] = 1;
+
+    raw[real_format_square_offset(1, 0)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(2u << 10));
+    test_put_le16(raw, 68, (uint16_t)(3u << 10));
+    test_put_le16(raw, 70, 0x0000u);
+    test_put_le16(raw, 72, 0xfffeu);
+    test_put_le16(raw, 74, (uint16_t)((9u << 7) | 6u));
+    test_put_le16(raw, 76, (uint16_t)((2u << 7) | (1u << 6)));
+    test_put_le16(raw, 78, (uint16_t)((3u << 4) | 5u));
+}
+
+static void test_timeline_corridor_text_and_generator_mutations(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[96];
+    uint16_t text_word;
+    uint16_t type_data;
+
+    make_real_format_corridor_text_generator_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+
+    queue_square_event(
+        &profile,
+        DM1_EVENT_CORRIDOR,
+        DM1_EFFECT_SET,
+        1,
+        0);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C05 corridor event fires on the current tick");
+    text_word = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((text_word & 0x0001u) == 0x0001u,
+          "C05 corridor SET marks textstring visible");
+    type_data = (uint16_t)(raw[74] | ((uint16_t)raw[75] << 8));
+    CHECK((type_data & 0x007fu) == 0u && (type_data >> 7) == 9u,
+          "C05 C006 generator disables sensor while preserving creature data");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "C05 C006 generator schedules one delayed C65 re-enable event");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "first post-generator tick keeps delayed C65 pending");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "C65 remains queued before the source ticks delay expires");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "second post-generator tick is still before the delayed C65 boundary");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "C65 remains queued until the source pre-increment tick reaches the delay");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "third post-generator tick reaches the delayed C65 boundary");
+    type_data = (uint16_t)(raw[74] | ((uint16_t)raw[75] << 8));
+    CHECK((type_data & 0x007fu) == 6u && (type_data >> 7) == 9u,
+          "delayed C65 re-enables the generator sensor and preserves data");
+    CHECK(profile.timeline_queue.eventCount == 0,
+          "delayed C65 consumes the pending re-enable event");
+}
+
 static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -529,6 +611,7 @@ int main(void)
     test_tick_v1_steps_exactly_once_and_honors_stop_states();
     test_timeline_events_fire_before_game_time_increment();
     test_timeline_square_events_mutate_real_format_map_bytes();
+    test_timeline_corridor_text_and_generator_mutations();
     test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
