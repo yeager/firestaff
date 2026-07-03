@@ -1152,45 +1152,54 @@ static void test_c37_group_approach_teleporter_rotation(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
-    uint8_t raw[160];
+    uint8_t raw[180];
     struct DM1_Event_V1 ev;
     int event_index;
     uint16_t flags;
 
-    printf("\n-- CSB C37 group teleporter movement --\n");
+    printf("\n-- CSB C37 group chained teleporter movement --\n");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;
-    dungeon.square_first_thing_count = 3;
+    dungeon.square_first_thing_count = 4;
     dungeon.thing_data_bases[1] = 82;
-    dungeon.thing_type_counts[1] = 1;
-    dungeon.thing_data_bases[4] = 90;
+    dungeon.thing_type_counts[1] = 2;
+    dungeon.thing_data_bases[4] = 100;
     dungeon.thing_type_counts[4] = 1;
     raw[real_format_square_offset(0, 0)] =
         (uint8_t)((1u << 5) | 0x10u);
     raw[real_format_square_offset(0, 1)] =
         (uint8_t)((5u << 5) | 0x10u | 0x08u);
     raw[real_format_square_offset(1, 1)] =
+        (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    raw[real_format_square_offset(2, 1)] =
         (uint8_t)((1u << 5) | 0x10u);
     test_put_le16(raw, 60 + 0 * 2, 0);
     test_put_le16(raw, 60 + 1 * 2, 2);
+    test_put_le16(raw, 60 + 2 * 2, 3);
     test_put_le16(raw, 66, (uint16_t)(4u << 10));
     test_put_le16(raw, 68, (uint16_t)(1u << 10));
-    test_put_le16(raw, 70, 0xfffeu);
+    test_put_le16(raw, 70, (uint16_t)((1u << 10) | 1u));
+    test_put_le16(raw, 72, 0xfffeu);
     test_put_le16(raw, 82, 0xfffeu);
     test_put_le16(raw, 84,
                   (uint16_t)(1u | (1u << 5) | (1u << 10) |
                              (1u << 13)));
     test_put_le16(raw, 86, 0u);
-    test_put_le16(raw, 90, 0xfffeu);
-    test_put_le16(raw, 92, 0xfffeu);
-    raw[94] = 9u;
-    raw[95] = 0u;
-    test_put_le16(raw, 96, 40u);
-    test_put_le16(raw, 98, 0u);
-    test_put_le16(raw, 100, 0u);
+    test_put_le16(raw, 88, 0xfffeu);
+    test_put_le16(raw, 90,
+                  (uint16_t)(2u | (1u << 5) | (1u << 10) |
+                             (1u << 13)));
+    test_put_le16(raw, 92, 0u);
+    test_put_le16(raw, 100, 0xfffeu);
     test_put_le16(raw, 102, 0u);
-    test_put_le16(raw, 104, 7u);
+    raw[104] = 9u;
+    raw[105] = 0u;
+    test_put_le16(raw, 106, 40u);
+    test_put_le16(raw, 108, 0u);
+    test_put_le16(raw, 110, 0u);
+    test_put_le16(raw, 112, 0u);
+    test_put_le16(raw, 114, 7u);
 
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
@@ -1218,24 +1227,26 @@ static void test_c37_group_approach_teleporter_rotation(void)
           "C37 group teleporter fixture queues the approach event");
 
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
-          "C37 group teleporter fixture dispatches the approach event");
+          "C37 group chained teleporter fixture dispatches the approach event");
     CHECK(test_get_le16(raw, 66) == 0xfffeu,
-          "C37 group teleporter removes the group from the source square");
+          "C37 group chained teleporter removes the group from the source square");
     CHECK(test_get_le16(raw, 68) == (uint16_t)(1u << 10),
-          "C37 group teleporter leaves the C05 teleporter thing in place");
-    CHECK(test_get_le16(raw, 70) == (uint16_t)(4u << 10),
-          "C37 group teleporter links the group at the teleporter target");
-    CHECK(test_get_le16(raw, 90) == 0xfffeu,
-          "C37 group teleporter terminates the moved group chain");
-    flags = test_get_le16(raw, 104);
-    CHECK(raw[95] == 1u && ((flags >> 8) & 0x03u) == 1u,
-          "C37 group teleporter applies F0262 relative cell and direction rotation");
+          "C37 group chained teleporter leaves the first C05 thing in place");
+    CHECK(test_get_le16(raw, 70) == (uint16_t)((1u << 10) | 1u),
+          "C37 group chained teleporter leaves the second C05 thing in place");
+    CHECK(test_get_le16(raw, 72) == (uint16_t)(4u << 10),
+          "C37 group chained teleporter links the group at the final target");
+    CHECK(test_get_le16(raw, 100) == 0xfffeu,
+          "C37 group chained teleporter terminates the moved group chain");
+    flags = test_get_le16(raw, 114);
+    CHECK(raw[105] == 2u && ((flags >> 8) & 0x03u) == 2u,
+          "C37 group chained teleporter applies two F0262 relative rotations");
     event_index = find_queued_event_type(&profile,
                                          DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
     CHECK(event_index >= 0 &&
-              profile.timeline_queue.events[event_index].b_mapX == 1 &&
+              profile.timeline_queue.events[event_index].b_mapX == 2 &&
               profile.timeline_queue.events[event_index].b_mapY == 1,
-          "C37 group teleporter requeues behavior from the target square");
+          "C37 group chained teleporter requeues behavior from the final target");
 }
 
 static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)

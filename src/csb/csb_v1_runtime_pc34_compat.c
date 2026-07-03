@@ -1968,117 +1968,124 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
     int *inout_map_y)
 {
     CSB_V1_DungeonData *dungeon;
-    CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
-    CSB_V1_TeleporterRotationRuntimeGroupPc34 group;
-    CSB_V1_TeleporterRotationRuntimeGroupResultPc34 result;
-    uint8_t *group_record;
-    const struct CreatureBehaviorProfile_Compat *creature_profile;
-    int raw_square;
-    int scope = 0;
-    int thing_type = -1;
-    int thing_size = 0;
-    int creature_type;
-    uint16_t flags;
-    int direction;
+    int moved_count = 0;
+    int chain_guard;
 
     if (!profile || !profile->dungeon_handle ||
         !inout_map_x || !inout_map_y) {
         return 0;
     }
     dungeon = profile->dungeon_handle;
-    raw_square = csb_v1_dungeon_get_raw_square(
-        dungeon,
-        profile->current_level,
-        *inout_map_x,
-        *inout_map_y);
-    if (raw_square < 0 ||
-        ((raw_square >> 5) & 0x07) != 5 ||
-        (raw_square & 0x08) == 0) {
-        return 0;
-    }
-    if (csb_v1_runtime_decode_group_teleporter_at_square(
+    for (chain_guard = 0; chain_guard < 100; ++chain_guard) {
+        CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
+        CSB_V1_TeleporterRotationRuntimeGroupPc34 group;
+        CSB_V1_TeleporterRotationRuntimeGroupResultPc34 result;
+        uint8_t *group_record;
+        const struct CreatureBehaviorProfile_Compat *creature_profile;
+        int raw_square;
+        int scope = 0;
+        int thing_type = -1;
+        int thing_size = 0;
+        int creature_type;
+        uint16_t flags;
+        int direction;
+
+        raw_square = csb_v1_dungeon_get_raw_square(
             dungeon,
             profile->current_level,
             *inout_map_x,
-            *inout_map_y,
-            raw_square,
-            &teleporter,
-            &scope) <= 0 ||
-        (scope & 0x01) == 0 ||
-        teleporter.target_map_index != profile->current_level) {
-        return 0;
-    }
-    if (teleporter.target_map_x == *inout_map_x &&
-        teleporter.target_map_y == *inout_map_y) {
-        return 0;
-    }
-    if (csb_v1_runtime_group_destination_is_blocked(
-            dungeon,
-            profile->current_level,
-            teleporter.target_map_x,
-            teleporter.target_map_y)) {
-        return 0;
-    }
-    group_record = csb_v1_runtime_mutable_thing_record(
-        dungeon,
-        group_thing,
-        &thing_type,
-        &thing_size);
-    if (!group_record || thing_type != 4 || thing_size < 16) return 0;
-
-    creature_type = (int)group_record[4];
-    creature_profile = CREATURE_GetProfile_Compat(creature_type);
-    flags = csb_v1_runtime_read_u16(group_record + 14);
-    direction = (int)((flags >> 8) & 0x03u);
-
-    memset(&group, 0, sizeof(group));
-    group.count = (int)((flags >> 5) & 0x03u);
-    group.creature_size = creature_profile
-        ? (int)(creature_profile->attributes & 0x0003)
-        : 0;
-    group.directions_packed =
-        csb_v1_runtime_repeated_group_direction_pack(direction);
-    group.cells_packed = (uint16_t)group_record[5];
-    group.behavior = (int)(flags & 0x000Fu);
-    group.active_group_index = 0;
-    group.source_map_index = profile->current_level;
-    group.party_map_index = profile->current_level;
-    if (csb_v1_teleporter_rotation_apply_group_pc34_compat(
-            &teleporter,
-            &group,
-            &result) != 0) {
-        return 0;
-    }
-    if (!csb_v1_runtime_move_group_thing_to_square(
+            *inout_map_y);
+        if (raw_square < 0 ||
+            ((raw_square >> 5) & 0x07) != 5 ||
+            (raw_square & 0x08) == 0) {
+            break;
+        }
+        if (csb_v1_runtime_decode_group_teleporter_at_square(
+                dungeon,
+                profile->current_level,
+                *inout_map_x,
+                *inout_map_y,
+                raw_square,
+                &teleporter,
+                &scope) <= 0 ||
+            (scope & 0x01) == 0 ||
+            teleporter.target_map_index != profile->current_level) {
+            break;
+        }
+        if (teleporter.target_map_x == *inout_map_x &&
+            teleporter.target_map_y == *inout_map_y) {
+            break;
+        }
+        if (csb_v1_runtime_group_destination_is_blocked(
+                dungeon,
+                profile->current_level,
+                teleporter.target_map_x,
+                teleporter.target_map_y)) {
+            break;
+        }
+        group_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
             group_thing,
-            profile->current_level,
-            *inout_map_x,
-            *inout_map_y,
-            teleporter.target_map_x,
-            teleporter.target_map_y)) {
-        return 0;
-    }
+            &thing_type,
+            &thing_size);
+        if (!group_record || thing_type != 4 || thing_size < 16) break;
 
-    group_record = csb_v1_runtime_mutable_thing_record(
-        dungeon,
-        group_thing,
-        &thing_type,
-        &thing_size);
-    if (!group_record || thing_type != 4 || thing_size < 16) return 0;
-    group_record[5] = (uint8_t)(result.cells_packed & 0xFFu);
-    flags = csb_v1_runtime_read_u16(group_record + 14);
-    flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 8)) |
-                       (uint16_t)((result.directions_packed & 0x03u) << 8));
-    csb_v1_runtime_write_u16(group_record + 14, flags);
-    *inout_map_x = teleporter.target_map_x;
-    *inout_map_y = teleporter.target_map_y;
+        creature_type = (int)group_record[4];
+        creature_profile = CREATURE_GetProfile_Compat(creature_type);
+        flags = csb_v1_runtime_read_u16(group_record + 14);
+        direction = (int)((flags >> 8) & 0x03u);
+
+        memset(&group, 0, sizeof(group));
+        group.count = (int)((flags >> 5) & 0x03u);
+        group.creature_size = creature_profile
+            ? (int)(creature_profile->attributes & 0x0003)
+            : 0;
+        group.directions_packed =
+            csb_v1_runtime_repeated_group_direction_pack(direction);
+        group.cells_packed = (uint16_t)group_record[5];
+        group.behavior = (int)(flags & 0x000Fu);
+        group.active_group_index = 0;
+        group.source_map_index = profile->current_level;
+        group.party_map_index = profile->current_level;
+        if (csb_v1_teleporter_rotation_apply_group_pc34_compat(
+                &teleporter,
+                &group,
+                &result) != 0) {
+            break;
+        }
+        if (!csb_v1_runtime_move_group_thing_to_square(
+                dungeon,
+                group_thing,
+                profile->current_level,
+                *inout_map_x,
+                *inout_map_y,
+                teleporter.target_map_x,
+                teleporter.target_map_y)) {
+            break;
+        }
+
+        group_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            group_thing,
+            &thing_type,
+            &thing_size);
+        if (!group_record || thing_type != 4 || thing_size < 16) break;
+        group_record[5] = (uint8_t)(result.cells_packed & 0xFFu);
+        flags = csb_v1_runtime_read_u16(group_record + 14);
+        flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 8)) |
+                           (uint16_t)((result.directions_packed & 0x03u) << 8));
+        csb_v1_runtime_write_u16(group_record + 14, flags);
+        *inout_map_x = teleporter.target_map_x;
+        *inout_map_y = teleporter.target_map_y;
+        moved_count++;
+    }
     /* ReDMCSB MOVESENS.C F0267 lines 493-530 moves C04 groups through
-     * creature-scope teleporters and calls F0262 for direction/cell rotation.
-     * This bounded CSB runtime bridge handles same-map generated groups with
-     * raw C04 records; ActiveGroup side state, buzz audio, cross-map target
-     * maps, and chained group teleporter/pit routes remain separate work. */
-    return 1;
+     * creature-scope teleporters, applies the PC34 100-step chained movement
+     * cap, and calls F0262 for direction/cell rotation.  This bounded CSB
+     * runtime bridge handles same-map generated groups with raw C04 records;
+     * ActiveGroup side state, buzz audio, cross-map target maps, and chained
+     * group pit routes remain separate work. */
+    return moved_count;
 }
 
 static void csb_v1_runtime_apply_group_behavior_timeline_record(
