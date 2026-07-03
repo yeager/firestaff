@@ -17052,6 +17052,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_csbgraphics_dat_classify.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_csbgraphics_m11_runtime_plan PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -17066,6 +17067,33 @@ if(BUILD_TESTING)
     )
     set_tests_properties(csb_v1_csbgraphics_m11_runtime_plan PROPERTIES
         LABELS "tier2;csb;csbwin_custom_resource;m11;startup;data_free"
+    )
+
+    # CSB V1 CSBgraphics.dat real-scan manifest gate. The public build
+    # has no built-in CSBgraphics.dat hashes, so user-staged files are
+    # registered by a data-root csbgraphics.hashes manifest while keeping
+    # the actual recursive discovery path hash-only.
+    add_executable(test_csb_v1_csbgraphics_dat_real_scan_manifest
+        tests/test_csb_v1_csbgraphics_dat_real_scan_manifest.c
+        src/csb/csb_v1_csbgraphics_dat_real_scan.c
+        src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_csbgraphics_dat_real_scan_manifest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbgraphics_dat_real_scan_manifest PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbgraphics_dat_real_scan_manifest
+        COMMAND test_csb_v1_csbgraphics_dat_real_scan_manifest
+    )
+    set_tests_properties(csb_v1_csbgraphics_dat_real_scan_manifest PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;startup;data_free"
     )
 
     # CSB V1 CSBgraphics.dat shape + inventory walker — data-free

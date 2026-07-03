@@ -109,16 +109,16 @@ int main(int argc, char **argv)
            csb_v1_csbgraphics_dat_real_result_name(rc));
 
     /* Two legitimate SKIP paths:
-     *   1. Empty known-hash list (the default — see header).
+     *   1. Empty built-in list plus absent/missing data-root manifest.
      *   2. Known-hash list populated but the user has not staged a
      *      CSBgraphics.dat matching any registered hash.
      */
-    if (known_count == 0u) {
-        printf("SKIP: no source-cited CSBgraphics.dat MD5 is registered. "
-               "Stage a real CSBWin-produced CSBgraphics.dat under "
-               "~/.firestaff/data/csbwin-custom/<label>/ and extend "
-               "g_known_hashes[] in src/csb/csb_v1_csbgraphics_dat_real_scan.c "
-               "to enable this gate.\n");
+    if (known_count == 0u &&
+        rc == CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND) {
+        printf("SKIP: no CSBgraphics.dat MD5 is registered. Stage a real "
+               "CSBWin-produced CSBgraphics.dat under the data root and add "
+               "`csbgraphics.hashes` containing '<md5> <size> <label>' to "
+               "enable this gate without rebuilding Firestaff.\n");
         csb_v1_csbgraphics_dat_real_cache_free(&cache);
         return 0;
     }
@@ -176,8 +176,12 @@ int main(int argc, char **argv)
               (uint64_t)cache.index.max_decompressed,
           "total_decompressed >= max_decompressed");
 
-    /* Cross-check the matched MD5 against the known list. */
-    {
+    /* Cross-check the matched MD5 against the built-in known list when
+     * applicable. Manifest-provided rows are already proven by the
+     * scanner through cache.matched_md5/cache.matched_label and the
+     * size check before classification.
+     */
+    if (known_count > 0u) {
         int found = 0;
         size_t j;
         for (j = 0u; j < known_count; ++j) {
@@ -189,7 +193,10 @@ int main(int argc, char **argv)
             }
         }
         CHECK(found,
-              "matched MD5 is one of the source-cited known hashes");
+              "matched MD5 is one of the built-in known hashes");
+    } else {
+        CHECK(cache.matched_label[0] != '\0',
+              "manifest-provided matched row has a label");
     }
 
     /* Real-asset index helper round-trip. */

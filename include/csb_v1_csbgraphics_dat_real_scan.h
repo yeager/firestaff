@@ -14,16 +14,22 @@
  *     tables + payload offset.
  *   - csb_v1_csbgraphics_dat_real_scan owns the discovery
  *     + ownership contract: where the file lives, which MD5s
- *     we accept, how virtual container paths get materialized,
- *     and how the file buffer + parsed index get cached.
+ *     we accept, how user-staged hash manifests are consumed,
+ *     how virtual container paths get materialized, and how the
+ *     file buffer + parsed index get cached.
  *
- * The known MD5 list is intentionally empty by default. CSBWin
- * "CSBgraphics.dat" is a CSBGraffer / CSBWin Viewport Compiler
- * product, not an original CSB asset. There is no canonical
- * reference hash; we only know the hashes of files we have
- * personally staged. Future sessions can append rows as users
- * stage real CSBWin-produced CSBgraphics.dat files under
- * ~/.firestaff/data/csbwin-custom/<label>/.
+ * The built-in known MD5 list is intentionally empty by default.
+ * CSBWin "CSBgraphics.dat" is a CSBGraffer / CSBWin Viewport
+ * Compiler product, not an original CSB asset. There is no
+ * canonical reference hash. User-staged files can be registered
+ * without rebuilding Firestaff by adding a manifest named
+ * `csbgraphics.hashes` under the scanned data root:
+ *
+ *   <md5-hex> <size-bytes> <label>
+ *
+ * Lines starting with `#` are ignored. Discovery still remains
+ * hash-only: the manifest registers acceptable MD5/size pairs;
+ * filenames and directory layout are not trusted.
  *
  * Scope:
  *   - Hash-only discovery. No filename-based discovery.
@@ -60,13 +66,14 @@
 extern "C" {
 #endif
 
-/* Known CSBWin CSBgraphics.dat MD5 hashes, hex, NULL-terminated.
+/* Built-in CSBWin CSBgraphics.dat MD5 hashes, hex, NULL-terminated.
  *
  * The list is intentionally empty in the public build — see the
  * rationale in the module header. Operators with a real
- * CSBWin-produced CSBgraphics.dat can extend the list in their
- * own fork or via a runtime config hook without touching this
- * header. Empty list = no discovery happens, the probe SKIPs.
+ * CSBWin-produced CSBgraphics.dat should prefer the data-root
+ * `csbgraphics.hashes` manifest over recompiling this list.
+ * Empty built-in list plus absent manifest = no discovery happens,
+ * the probe SKIPs.
  */
 typedef struct {
     const char *label;        /* human-readable provenance label */
