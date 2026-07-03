@@ -10,8 +10,8 @@
  * input-command event that the shared DM1/CSB V1 input command
  * queue + F0380_COMMAND_ProcessQueue_CPSC dispatcher would have
  * written during real PC-34 gameplay, and the CSB V1 runtime
- * applies the source-locked F0284 direction rotation to the
- * party snapshot.
+ * applies the source-locked turn and one-step movement runtime boundary to
+ * the party snapshot.
  *
  * This test does not claim full CSB playability: it covers exactly
  * the startup-adjacent "menu input -> input command queue -> CSB
@@ -32,6 +32,9 @@
  *     dispatcher (lock, empty/movement-disabled gate, dequeue, dispatch).
  *   ReDMCSB CLIKMENU.C:142-174 F0365_CLIKMENU_ProcessTurn routes
  *     C001/C002 into (party_dir + 3/+1) & 3.
+ *   ReDMCSB CLIKMENU.C F0366 lines 224-351 maps C003..C006 to a
+ *     one-cell movement attempt.
+ *   ReDMCSB DUNGEON.C F0150 lines 1389-1391 resolves the destination.
  *   ReDMCSB CHAMPION.C F0284 lines 117-130 CHAMPION_SetPartyDirection
  *     rotates every champion Cell/Direction and writes
  *     G0308_i_PartyDirection.
@@ -277,17 +280,12 @@ static void test_turn_left_round_trip(void)
              "runtime dispatch count advances for the second turn");
 }
 
-static void test_forward_move_queued_but_not_applied(void)
+static void test_forward_move_applies_open_step(void)
 {
-    /* The bridge is intentionally narrow: forward/up movement is
-     * source-locked to a C003_COMMAND_MOVE_FORWARD event that the
-     * shared V1 input command queue accepts, but the CSB V1 runtime
-     * does not yet apply a step to runtime state in this build
-     * (movement-disabled gate, dungeon-aware stepping, and
-     * square/sensor materialization are tracked separately).  The
-     * bridge still drains the queue so callers see a dequeued
-     * command, and `is_forward_move=1` lets the caller distinguish
-     * the dispatch from a turn. */
+    /* Forward/up movement is source-locked to C003_COMMAND_MOVE_FORWARD.
+     * With no loaded dungeon handle the runtime step helper treats the
+     * synthetic path as open, applies the one-cell coordinate update, and
+     * keeps champion Cell/Direction stable. */
     CSB_V1_RuntimeProfile profile;
     CSB_V1_InputCommandBridgeResult result;
 
@@ -302,14 +300,22 @@ static void test_forward_move_queued_but_not_applied(void)
              "UP bridge does not report a turn dispatch");
     CHECK_EQ(result.queue_result.command, DM1_V1_COMMAND_MOVE_FORWARD,
              "dequeued command is C003 move-forward");
-    CHECK_EQ(result.runtime_state_changed, 0,
-             "UP bridge does not claim movement (party_dir/x/y unchanged)");
+    CHECK_EQ(result.runtime_state_changed, 1,
+             "UP bridge reports the runtime coordinate mutation");
+    CHECK_EQ(result.runtime_result.unsupported_runtime_command, 0,
+             "UP bridge is now a supported bounded movement binding");
     CHECK_EQ(profile.party_dir, CSB_V1_DIR_NORTH,
              "UP bridge leaves party_dir unchanged");
     CHECK_EQ(profile.party_x, CSB_V1_START_PARTY_X,
              "UP bridge leaves party_x unchanged");
-    CHECK_EQ(profile.party_y, CSB_V1_START_PARTY_Y,
-             "UP bridge leaves party_y unchanged");
+    CHECK_EQ(profile.party_y, CSB_V1_START_PARTY_Y - 1,
+             "UP bridge applies one northward step");
+    CHECK_EQ(profile.party_state.PartyMapY, CSB_V1_START_PARTY_Y - 1,
+             "UP bridge mirrors the step into party snapshot map y");
+    CHECK_EQ(profile.party_state.Champions[0].Cell, 0,
+             "UP bridge leaves champion Cell stable");
+    CHECK_EQ(profile.party_state.Champions[0].Direction, CSB_V1_DIR_NORTH,
+             "UP bridge leaves champion Direction stable");
     CHECK_EQ(profile.input_command_queue.count, 0u,
              "input command queue is empty after the forward dispatch");
 }
@@ -362,13 +368,13 @@ int main(void)
     test_unmapped_menu_inputs();
     test_turn_right_reaches_csb_runtime_state();
     test_turn_left_round_trip();
-    test_forward_move_queued_but_not_applied();
+    test_forward_move_applies_open_step();
     test_unmapped_menu_input_returns_zero();
     test_null_arguments_return_error();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
-        puts("ok: one M12 menu input reaches the CSB V1 runtime command queue + F0284 party state");
-        puts("sourceEvidence=ReDMCSB COMMAND.C:677-684,729-812,1709-1813,2045-2156 F0380; CLIKMENU.C:142-174 F0365; CHAMPION.C F0284 lines 117-130; DEFS.H:223-226 C001..C006, 3507-3509 C5/C7");
+        puts("ok: one M12 menu input reaches the CSB V1 runtime command queue, F0284 turn state, and bounded F0366 movement state");
+        puts("sourceEvidence=ReDMCSB COMMAND.C:677-684,729-812,1709-1813,2045-2156 F0380; CLIKMENU.C:142-174 F0365; CLIKMENU.C F0366 lines 224-351; DUNGEON.C F0150 lines 1389-1391; CHAMPION.C F0284 lines 117-130; DEFS.H:223-226 C001..C006, 3507-3509 C5/C7");
     }
     return failed == 0 ? 0 : 1;
 }

@@ -113,7 +113,7 @@ int CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
     struct Dm1V1InputEventPc34Compat event;
     int enqueued;
     int dispatched;
-    int command;
+    CSB_V1_InputCommandRuntimeResult runtime_result;
 
     if (!profile || !outResult) {
         return -1;
@@ -143,34 +143,31 @@ int CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
     /* Source-lock: ReDMCSB COMMAND.C:2045-2156 F0380_COMMAND_ProcessQueue_CPSC
      * locks the queue, checks the empty/movement-disabled gate, dequeues
      * one command, and dispatches turns to F0365 / moves to F0366.  The
-     * CSB V1 runtime adapter csb_v1_runtime_process_one_input_command()
-     * already mirrors that boundary: turns land in the runtime party_dir
-     * via CHAMPION.C F0284, move commands are reported but intentionally
-     * not applied to runtime state in this build. */
-    dispatched = csb_v1_runtime_process_one_input_command(
+     * CSB V1 runtime adapter owns the current bounded live state routes:
+     * turns reach CHAMPION.C F0284 and C003..C006 movement reaches the
+     * source-locked one-step runtime helper. */
+    memset(&runtime_result, 0, sizeof(runtime_result));
+    dispatched = csb_v1_runtime_process_input_queue(
         profile,
+        &profile->input_command_queue,
         disabledMovementTicks,
         projectileDisabledMovementTicks,
-        lastProjectileDisabledMovementDirection);
+        lastProjectileDisabledMovementDirection,
+        &runtime_result);
     if (dispatched < 0) {
         if (outResult) *outResult = local;
         return -1;
     }
 
-    if (csb_v1_runtime_get_last_input_dispatch(profile, &local.queue_result) >= 0) {
-        command = local.queue_result.command;
+    local.runtime_result = runtime_result;
+    local.queue_result = runtime_result.queue_result;
+    if (local.queue_result.dequeued) {
+        int command = local.queue_result.command;
         local.is_turn = (command == DM1_V1_COMMAND_TURN_LEFT ||
                          command == DM1_V1_COMMAND_TURN_RIGHT) ? 1 : 0;
-        local.is_forward_move = (command == DM1_V1_COMMAND_MOVE_FORWARD) ? 1 : 0;
-        /* Source-lock: only turn dispatches actually mutate CSB runtime
-         * state today (CLIKMENU.C:142-174 F0365 + CHAMPION.C F0284 lines
-         * 117-130).  Move commands (C003..C006) are reported as dequeued
-         * by the shared V1 input command queue but intentionally do not
-         * reach the runtime in this build, so the bridge keeps
-         * `runtime_state_changed` false for non-turn dispatches.  This
-         * matches csb_v1_runtime_process_input_queue()'s own
-         * `runtime_state_changed` invariant in src/csb/csb_v1_runtime_pc34_compat.c. */
-        local.runtime_state_changed = local.is_turn ? 1 : 0;
+        local.is_forward_move =
+            (command == DM1_V1_COMMAND_MOVE_FORWARD) ? 1 : 0;
+        local.runtime_state_changed = runtime_result.runtime_state_changed;
     }
 
     if (outResult) *outResult = local;

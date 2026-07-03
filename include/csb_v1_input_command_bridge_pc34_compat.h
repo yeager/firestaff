@@ -19,15 +19,17 @@
  *     scancode rows: 0xAB34 / 0xAB35 / 0xAB36 / 0xAB31 / 0xAB32 / 0xAB33.
  *   ReDMCSB COMMAND.C:2045-2156 F0380 — locks the queue, dequeues one
  *     command, dispatches turns to F0365_CLIKMENU_ProcessTurn.
+ *   ReDMCSB CLIKMENU.C F0366 lines 224-351 — applies one movement
+ *     coordinate step for C003..C006 commands.
  *   ReDMCSB CHAMPION.C F0284 lines 117-130 — applies the (target_dir -
  *     party_dir) delta to every champion Cell/Direction then writes
  *     G0308_i_PartyDirection.
  *
  * This is intentionally a startup-adjacent, data-free bridge.  It does
- * not claim full CSB playability, full mouse support, full movement
- * semantics, or any dungeon-aware behaviour; it proves the menu input
- * reaches the runtime command queue and that a TURN_LEFT/TURN_RIGHT
- * dispatch reaches the CSB runtime party state.  Broader playability
+ * not claim full CSB playability, full mouse support, or full movement
+ * semantics; it proves the menu input reaches the runtime command queue,
+ * TURN_LEFT/TURN_RIGHT reaches the CSB runtime party state, and C003..C006
+ * movement can apply one bounded dungeon-aware step.  Broader playability
  * remains an active TODO and is intentionally out of scope here.
  */
 
@@ -56,17 +58,15 @@ enum {
  * callers can inspect what was actually enqueued without reaching
  * into csb_v1_runtime_t internals.  `dispatch` is the runtime
  * dispatch result (forwarded from
- * csb_v1_runtime_process_one_input_command via the input command
- * queue helper).  `runtime_state_changed` mirrors the runtime
- * result's flag and is convenient for callers that just want a
- * boolean. */
+ * csb_v1_runtime_process_input_queue via the input command queue helper).
+ * `runtime_state_changed` mirrors the runtime result's flag and is
+ * convenient for callers that just want a boolean. */
 typedef struct {
     int mapped;                       /* 1 if the menu input was a recognised
                                        * CSB movement/turn/forward direction. */
     int is_turn;                      /* 1 if the dispatch was a turn command. */
     int is_forward_move;              /* 1 if the dispatch was a move-forward
-                                       * command (queued but intentionally
-                                       * not applied to runtime state today). */
+                                       * command. */
     struct Dm1V1InputEventPc34Compat event;
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     CSB_V1_InputCommandRuntimeResult runtime_result;
@@ -103,15 +103,15 @@ int CSB_V1_InputCommandBridge_EnqueueMenuInputPc34Compat(
  * "input command reaches runtime state transition" gate: the bridge
  * receives a M12 menu input, writes the PC-34 source-locked event
  * into the input command queue, and after dequeue the runtime
- * profile's party_dir + per-champion Cell/Direction reflect the
- * source-locked F0284 rotation.  Returns 1 if a command was
+ * profile reflects the source-locked F0284 rotation for turns or the
+ * bounded one-step F0366 movement route for movement commands.  Returns 1 if
+ * a command was
  * consumed, 0 if the queue stayed empty (no recognisable menu
  * input or queue was already empty after enqueue), -1 on a hard
  * error (NULL profile, NULL outResult, unsupported menu input, or
- * a runtime dispatch failure).  The function does not claim full
- * movement; movement commands are reported as `is_forward_move=1`
- * in the result struct with `runtime_state_changed=0` so the test
- * can verify the queue still owns them. */
+ * a runtime dispatch failure).  The function does not claim full movement:
+ * sensors, stairs, teleporters, doors, and other movement consequences remain
+ * outside this bridge. */
 int CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
     CSB_V1_RuntimeProfile* profile,
     M12_MenuInput menuInput,

@@ -358,14 +358,17 @@ int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
 /* Consume one queued V1 input command and apply the narrow CSB V1 runtime
  * boundary that is currently source-locked: C001/C002 turn commands dispatch
  * through the shared V1 queue and mutate the CSB party direction via
- * csb_v1_runtime_rotate_party().  Movement, inventory, action, and panel
- * commands are deliberately reported as unsupported_runtime_command until
- * their CSB runtime state boundaries are source-locked separately.
+ * csb_v1_runtime_rotate_party(); C003..C006 movement commands apply the
+ * bounded one-cell CSB movement-step helper with the live dungeon wall
+ * probe. Inventory, action, and panel commands are deliberately reported as
+ * unsupported_runtime_command until their CSB runtime state boundaries are
+ * source-locked separately.
  *
  * Returns 1 when a queue item was dequeued, 0 when the queue was empty or a
  * movement-disabled gate kept the command queued, and -1 on invalid input.
  * Source: ReDMCSB COMMAND.C F0380 lines 2045-2156 dispatches C001/C002 to
- * F0365_COMMAND_ProcessTypes1To2_TurnParty; CHAMPION.C F0284 lines 117-130
+ * F0365_COMMAND_ProcessTypes1To2_TurnParty; CLIKMENU.C F0366 lines
+ * 224-351 applies one movement step; CHAMPION.C F0284 lines 117-130
  * applies the party-direction delta to every champion Cell/Direction. */
 int csb_v1_runtime_process_input_queue(
     CSB_V1_RuntimeProfile *profile,
@@ -427,8 +430,9 @@ int csb_v1_runtime_get_last_timeline_dispatch(
  * CSB shares the DM1/CSB ReDMCSB command queue ids and queue mechanics.
  * This entrypoint intentionally does not claim broad movement/playability;
  * csb_v1_runtime_process_one_input_command() currently applies the
- * source-locked turn boundary and reports unsupported step commands as
- * dequeued but not applied.
+ * source-locked turn boundary and bounded one-cell movement step, but does
+ * not claim full sensors, doors, teleporters, stairs, inventory, or action
+ * handling.
  * Source: ReDMCSB COMMAND.C F0380 lines 2075-2127 and 2150-2156. */
 int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
                                          int command,
@@ -438,9 +442,11 @@ int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
 /* Process one queued CSB V1 input command.
  * TURN_LEFT/TURN_RIGHT dispatch through csb_v1_runtime_rotate_party(),
  * matching CLIKMENU.C F0365 lines 156-173 and CHAMPION.C F0284 lines
- * 117-130.  MOVE_* commands are deliberately not applied here yet; this
- * gate proves the command boundary reaches runtime state without claiming
- * full CSB movement/runtime playability.
+ * 117-130.  MOVE_* commands dispatch through the bounded one-cell runtime
+ * movement helper with a live dungeon wall probe.  This gate still does not
+ * claim full CSB movement/runtime playability: sensors, stairs, teleporters,
+ * doors, inventory, and action side effects remain separate source-locked
+ * boundaries.
  * Returns 1 when a command was processed/dequeued, 0 when the queue was
  * empty or movement cooldown blocked dequeue, and -1 on invalid input. */
 int csb_v1_runtime_process_one_input_command(CSB_V1_RuntimeProfile *profile,

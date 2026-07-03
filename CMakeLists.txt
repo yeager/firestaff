@@ -5804,6 +5804,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_movement_command_step_runtime_pc34_compat
         tests/test_csb_v1_movement_command_step_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_movement_command_step_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -5840,6 +5841,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_input_command_queue_binding
         tests/test_csb_v1_input_command_queue_binding.c
         src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_input_command_queue_binding PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -7283,6 +7285,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_input_command_bridge_pc34_compat.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_input_command_bridge_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

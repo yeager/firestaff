@@ -17,6 +17,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_movement_command_step_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include <stdio.h>
@@ -659,15 +660,29 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
     }
 }
 
-static int csb_v1_runtime_input_command_target_dir(int current_dir, int command)
+static int csb_v1_runtime_default_wall_probe(
+    const CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    void *context)
 {
-    if (command == DM1_V1_COMMAND_TURN_RIGHT) {
-        return (current_dir + 1) & 3;
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int square_type;
+
+    (void)context;
+    dungeon = (profile && profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) {
+        return 0;
     }
-    if (command == DM1_V1_COMMAND_TURN_LEFT) {
-        return (current_dir + 3) & 3;
+    level = csb_v1_dungeon_get_current_level();
+    if (level < 0 || level >= dungeon->level_count) {
+        level = 0;
     }
-    return -1;
+    square_type = csb_v1_dungeon_get_square_type(dungeon, level, map_x, map_y);
+    return square_type < 0 || square_type == 0;
 }
 
 /* ── Runtime profile API ────────────────────────────────────────────── */
@@ -749,42 +764,16 @@ int csb_v1_runtime_process_one_input_command(
     int projectile_disabled_movement_ticks,
     int last_projectile_disabled_movement_direction)
 {
-    int target_dir;
+    CSB_V1_InputCommandRuntimeResult result;
 
     if (!profile) return -1;
-    memset(&profile->last_input_dispatch, 0,
-           sizeof(profile->last_input_dispatch));
-
-    /* Source-lock: ReDMCSB COMMAND.C F0380 lines 2075-2127 locks the
-     * command queue, applies the movement-disabled gate, dequeues one
-     * command, and lines 2150-2156 dispatch turns to CLIKMENU.C F0365 or
-     * steps to F0366.  This CSB runtime boundary currently wires only the
-     * F0365 turn route into live CSB state; step commands are reported as
-     * dequeued/recognized but intentionally not applied here. */
-    profile->last_input_dispatch = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(
+    return csb_v1_runtime_process_input_queue(
+        profile,
         &profile->input_command_queue,
-        profile->party_dir,
         disabled_movement_ticks,
         projectile_disabled_movement_ticks,
-        last_projectile_disabled_movement_direction);
-
-    if (!profile->last_input_dispatch.dequeued) {
-        return 0;
-    }
-
-    profile->input_dispatch_count++;
-    target_dir = csb_v1_runtime_input_command_target_dir(
-        profile->party_dir, profile->last_input_dispatch.command);
-    if (target_dir >= 0) {
-        /* Source-lock: ReDMCSB CLIKMENU.C F0365 lines 156-173 turns
-         * C001/C002 into (party_dir + 3/+1) & 3 and calls CHAMPION.C F0284
-         * lines 117-130 to rotate every champion Cell/Direction before
-         * committing G0308_i_PartyDirection. */
-        if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
-            return -1;
-        }
-    }
-    return 1;
+        last_projectile_disabled_movement_direction,
+        &result);
 }
 
 int csb_v1_runtime_get_last_input_dispatch(
@@ -991,6 +980,9 @@ int csb_v1_runtime_process_input_queue(
         return 0;
     }
 
+    profile->last_input_dispatch = local_result.queue_result;
+    profile->input_dispatch_count++;
+
     switch (local_result.queue_result.command) {
     case DM1_V1_COMMAND_TURN_LEFT:
         target_dir = (profile->party_dir + 3) & 3;
@@ -1002,6 +994,26 @@ int csb_v1_runtime_process_input_queue(
         target_dir = (profile->party_dir + 1) & 3;
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
             local_result.unsupported_runtime_command = 1;
+        }
+        break;
+    case DM1_V1_COMMAND_MOVE_FORWARD:
+    case DM1_V1_COMMAND_MOVE_RIGHT:
+    case DM1_V1_COMMAND_MOVE_BACKWARD:
+    case DM1_V1_COMMAND_MOVE_LEFT:
+        {
+            CSB_V1_MovementCommandStepRuntimeResultPc34Compat step_result;
+            int step_status =
+                csb_v1_movement_command_step_runtime_apply_pc34_compat(
+                    profile,
+                    local_result.queue_result.command,
+                    csb_v1_runtime_default_wall_probe,
+                    NULL,
+                    &step_result);
+            if (step_status < 0) {
+                return -1;
+            }
+            local_result.unsupported_runtime_command =
+                step_result.unsupported_runtime_command;
         }
         break;
     default:
