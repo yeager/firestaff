@@ -36,6 +36,12 @@ void v2_particle_init(void);
 void v2_particle_emit(int emitter_idx, float x, float y);
 void v2_particle_update(float dt);
 void v2_particle_draw_all(void);
+int v2_particle_blit_indexed(unsigned char* framebuffer,
+                             int framebuffer_width,
+                             int framebuffer_height,
+                             int origin_x,
+                             int origin_y,
+                             unsigned char palette_index);
 void v2_particle_clear(void);
 void v2_particle_set_seed(uint32_t seed);
 

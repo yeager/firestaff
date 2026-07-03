@@ -12,6 +12,14 @@ int dm1_v2_enhanced_effects_runtime_tick(
     const DM1_V2_PhaseGateConfig* gateConfig,
     const DM1_V2_Settings* settings,
     float dt);
+int dm1_v2_enhanced_effects_runtime_render_indexed(
+    const DM1_V2_PhaseGateConfig* gateConfig,
+    const DM1_V2_Settings* settings,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int viewportX,
+    int viewportY);
 const char* dm1_v2_enhanced_effects_runtime_source_evidence(void);
 
 #ifdef __cplusplus

@@ -41,6 +41,18 @@ static void seed_short_lived_particle(void)
     CHECK(v2_particle_active_count() == 1, "particle initially alive");
 }
 
+static void seed_visible_particle(void)
+{
+    int emitter;
+    v2_particle_init();
+    v2_particle_set_seed(1u);
+    emitter = v2_particle_emitter_create(
+        10.0f, 12.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0x00ff00ffu, 1);
+    CHECK(emitter == 0, "visible emitter created");
+    v2_particle_emit(emitter, 10.0f, 12.0f);
+    CHECK(v2_particle_active_count() == 1, "visible particle initially alive");
+}
+
 static void init_dm1_state(M11_GameViewState* state, int presentationMode)
 {
     memset(state, 0, sizeof(*state));
@@ -51,36 +63,78 @@ static void init_dm1_state(M11_GameViewState* state, int presentationMode)
     state->presentationHeight = 200;
 }
 
-static void draw_once(M11_GameViewState* state)
+static void draw_once(M11_GameViewState* state, unsigned char* framebuffer)
 {
-    static unsigned char framebuffer[320 * 200];
-    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(framebuffer, 0, 320 * 200);
     M11_GameView_Draw(state, framebuffer, 320, 200);
+}
+
+static int count_particle_region_diff(const unsigned char* a,
+                                      const unsigned char* b)
+{
+    int changed = 0;
+    int y;
+    for (y = 33 + 11; y <= 33 + 13; y++) {
+        int x;
+        for (x = 9; x <= 11; x++) {
+            if (a[y * 320 + x] != b[y * 320 + x]) {
+                changed++;
+            }
+        }
+    }
+    return changed;
 }
 
 int main(void)
 {
     M11_GameViewState state;
+    unsigned char framebuffer[320 * 200];
+    unsigned char baseline[320 * 200];
 
     printf("=== M11 DM1 V2 enhanced-effects framepath probe ===\n");
 
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V1_ORIGINAL);
-    draw_once(&state);
+    draw_once(&state, framebuffer);
     CHECK(v2_particle_active_count() == 1,
           "V1 original draw does not tick V2 particles");
 
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
-    draw_once(&state);
+    draw_once(&state, framebuffer);
     CHECK(v2_particle_active_count() == 0,
           "V2.0 draw ticks enhanced-effects runtime");
 
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V22_MODERN);
-    draw_once(&state);
+    draw_once(&state, framebuffer);
     CHECK(v2_particle_active_count() == 0,
           "V2.2 draw ticks enhanced-effects runtime");
+
+    seed_visible_particle();
+    init_dm1_state(&state, M12_PRESENTATION_V1_ORIGINAL);
+    v2_particle_init();
+    draw_once(&state, baseline);
+    seed_visible_particle();
+    draw_once(&state, framebuffer);
+    CHECK(count_particle_region_diff(baseline, framebuffer) == 0,
+          "V1 original draw does not paint V2 particle overlay");
+
+    v2_particle_init();
+    init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
+    draw_once(&state, baseline);
+    seed_visible_particle();
+    draw_once(&state, framebuffer);
+    CHECK(count_particle_region_diff(baseline, framebuffer) > 0,
+          "V2.0 draw paints visible particle overlay into viewport");
+
+    v2_particle_init();
+    init_dm1_state(&state, M12_PRESENTATION_V22_MODERN);
+    draw_once(&state, baseline);
+    seed_visible_particle();
+    draw_once(&state, framebuffer);
+    CHECK(count_particle_region_diff(baseline, framebuffer) > 0,
+          "V2.2 draw paints visible particle overlay into viewport");
 
     if (s_fail) {
         fprintf(stderr, "Summary: %d passed, %d failed\n", s_pass, s_fail);

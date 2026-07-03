@@ -37,6 +37,38 @@ int dm1_v2_enhanced_effects_runtime_tick(
     return 1;
 }
 
+int dm1_v2_enhanced_effects_runtime_render_indexed(
+    const DM1_V2_PhaseGateConfig* gateConfig,
+    const DM1_V2_Settings* settings,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int viewportX,
+    int viewportY)
+{
+    DM1_V2_PhaseGateDecision decision;
+    unsigned char effectIndex = 12u;
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return 0;
+    }
+    decision = dm1_v2_phase_gate_decide(
+        gateConfig, DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION);
+    if (!decision.v2PresentationAllowed) {
+        return 0;
+    }
+    if (settings && !settings->palette_enhanced) {
+        effectIndex = 11u;
+    }
+
+    /* ReDMCSB owns the source thing/effect ordering in DUNVIEW.C F0115 and
+     * PROJEXPL.C F0213/F0220. This is a presentation-only indexed overlay
+     * for already-seeded V2 particles; it does not create, move, or materialise
+     * source projectiles/explosions. */
+    return v2_particle_blit_indexed(framebuffer, framebufferWidth,
+                                    framebufferHeight, viewportX, viewportY,
+                                    effectIndex);
+}
+
 const char* dm1_v2_enhanced_effects_runtime_source_evidence(void) {
     return "DM1 V2 enhanced effects runtime is gated by "
            "dm1_v2_phase_gate_decide(RENDER_PRESENTATION): COORD.C:1721-1722; "
