@@ -625,7 +625,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
-    uint8_t raw[112];
+    uint8_t raw[192];
     struct DM1_TickDispatchResult_V1 dispatch;
     uint16_t text_word;
     uint16_t type_data;
@@ -833,7 +833,7 @@ static void test_c38_poison_followup_and_c75_tick(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
-    uint8_t raw[112];
+    uint8_t raw[192];
     struct DM1_TickDispatchResult_V1 dispatch;
     int expected_damage;
     int expected_wounds;
@@ -1044,7 +1044,7 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
-    uint8_t raw[112];
+    uint8_t raw[192];
     struct ExplosionCreateInput_Compat input;
     struct TimelineEvent_Compat first_advance;
     int slot = -1;
@@ -1177,18 +1177,29 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     dungeon.square_first_thing_count = 1;
     dungeon.thing_data_bases[4] = 82;
     dungeon.thing_type_counts[4] = 1;
+    dungeon.thing_data_bases[6] = 98;
+    dungeon.thing_type_counts[6] = 4;
+    dungeon.thing_data_bases[5] = 114;
+    dungeon.thing_type_counts[5] = 3;
     raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
     test_put_le16(raw, 60 + 1 * 2, 0);
     test_put_le16(raw, 66, (uint16_t)(4u << 10));
     test_put_le16(raw, 82, 0xfffeu);
     test_put_le16(raw, 84, 0xfffeu);
-    raw[86] = 9u;
+    raw[86] = 18u;      /* Animated Armour: six fixed possession drops */
     raw[87] = 0x04u; /* slot0 cell0, slot1 cell1 */
     test_put_le16(raw, 88, 1u);
     test_put_le16(raw, 90, 500u);
     test_put_le16(raw, 96, (uint16_t)((1u << 5) | 6u)); /* two C6 creatures */
+    for (i = 0; i < 4; ++i) {
+        test_put_le16(raw, 98 + i * 4, 0xffffu);
+    }
+    for (i = 0; i < 3; ++i) {
+        test_put_le16(raw, 114 + i * 4, 0xffffu);
+    }
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_seed = 0xC5B10740u;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
     queue_future_creature_event(
@@ -1255,9 +1266,17 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 group kill packs surviving Health down to slot 0");
     CHECK((raw[87] & 0x03u) == 1u,
           "C25 group kill packs surviving cell down to slot 0");
+    CHECK((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) != 0xfffeu &&
+              ((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) & 0x3c00u) ==
+              (uint16_t)(6u << 10),
+          "C25 group partial kill appends first fixed armour drop after group");
+    CHECK((uint16_t)(raw[100] | ((uint16_t)raw[101] << 8)) == 0x0129u,
+          "C25 group partial kill materializes cursed animated-armour foot plate");
+    CHECK((uint16_t)(raw[116] | ((uint16_t)raw[117] << 8)) == 0x010au,
+          "C25 group partial kill materializes cursed animated-armour sword");
     slot = find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE);
     CHECK(slot >= 0 &&
-              profile.explosions.entries[slot].attack == 255 &&
+              profile.explosions.entries[slot].attack == 110 &&
               profile.explosions.entries[slot].mapX == 1 &&
               profile.explosions.entries[slot].mapY == 1 &&
               profile.explosions.entries[slot].cell == 0,
