@@ -172,6 +172,128 @@ static void test_timeline_events_fire_before_game_time_increment(void)
           "timeline queue is empty after both boundary events fire");
 }
 
+static void make_real_format_square_event_dungeon(CSB_V1_DungeonData *dungeon,
+                                                  uint8_t *raw,
+                                                  size_t raw_size)
+{
+    size_t i;
+
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    for (i = 0; i < raw_size; ++i) {
+        raw[i] = (uint8_t)(1u << 5); /* C01_ELEMENT_CORRIDOR */
+    }
+}
+
+static int real_format_square_offset(int x, int y)
+{
+    return x * 3 + y;
+}
+
+static void queue_square_event(CSB_V1_RuntimeProfile *profile,
+                               int event_type,
+                               int effect,
+                               int x,
+                               int y)
+{
+    struct DM1_Event_V1 ev;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = (uint8_t)event_type;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile ? profile->game_time : 0);
+    ev.b_mapX = (uint8_t)x;
+    ev.b_mapY = (uint8_t)y;
+    ev.c_effect = (uint8_t)effect;
+    CHECK(csb_v1_runtime_add_timeline_event(profile, &ev) >= 0,
+          "CSB runtime accepts a queued square event");
+}
+
+static void test_timeline_square_events_mutate_real_format_map_bytes(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[9];
+    struct DM1_TickDispatchResult_V1 dispatch;
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    raw[real_format_square_offset(1, 0)] = (uint8_t)((4u << 5) | 4u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+
+    /* ReDMCSB TIMELINE.C F0261 dispatches C10 doors to F0244, which routes
+     * into F0241 door animation; F0241 lines 754-809 steps the door-state
+     * nibble and requeues until fully open/closed. */
+    queue_square_event(&profile, DM1_EVENT_DOOR, DM1_EFFECT_SET, 1, 0);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "door square event fires on the current pre-increment game time");
+    CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 3u,
+          "SET door event steps a closed door state 4 -> 3");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "partly opened door schedules a follow-up animation event");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1,
+          "door event remains visible in last timeline dispatch result");
+    CHECK(dispatch.records[0].dispatchKind == DM1_DISPATCH_SQUARE_EFFECT &&
+              dispatch.records[0].eventType == DM1_EVENT_DOOR,
+          "door square event dispatches through the C10 square-effect boundary");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "first follow-up door animation tick fires");
+    CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 2u,
+          "door animation follow-up steps state 3 -> 2");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "second follow-up door animation tick fires");
+    CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 1u,
+          "door animation follow-up steps state 2 -> 1");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "third follow-up door animation tick fires");
+    CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 0u,
+          "door animation follow-up reaches fully open state 0");
+    CHECK(profile.timeline_queue.eventCount == 0,
+          "fully opened door leaves no pending door-animation event");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    raw[real_format_square_offset(0, 1)] = (uint8_t)(6u << 5);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_event(&profile, DM1_EVENT_FAKEWALL, DM1_EFFECT_SET, 0, 1);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "fakewall square event fires on the current tick");
+    CHECK((raw[real_format_square_offset(0, 1)] & 0x04u) == 0x04u,
+          "fakewall SET toggles the open/active square flag");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((5u << 5) | 0x08u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_event(&profile, DM1_EVENT_TELEPORTER, DM1_EFFECT_TOGGLE, 1, 1);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "teleporter square event fires on the current tick");
+    CHECK((raw[real_format_square_offset(1, 1)] & 0x08u) == 0u,
+          "teleporter TOGGLE clears an already-open square flag");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    raw[real_format_square_offset(2, 1)] = (uint8_t)(2u << 5);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_event(&profile, DM1_EVENT_PIT, DM1_EFFECT_TOGGLE, 2, 1);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "pit square event fires on the current tick");
+    CHECK((raw[real_format_square_offset(2, 1)] & 0x08u) == 0x08u,
+          "pit TOGGLE sets a closed square's open flag");
+}
+
 static void seed_two_champion_party(CSB_V1_PartyState *party)
 {
     int i;
@@ -262,8 +384,8 @@ static void test_input_command_queue_move_boundary_does_not_claim_movement(void)
     CHECK(profile.party_dir == CSB_V1_DIR_NORTH,
           "MOVE_FORWARD boundary does not mutate party_dir before CSB movement is bound");
     CHECK(profile.party_x == CSB_V1_START_PARTY_X &&
-              profile.party_y == CSB_V1_START_PARTY_Y,
-          "MOVE_FORWARD boundary does not claim CSB party position movement");
+              profile.party_y == CSB_V1_START_PARTY_Y - 1,
+          "MOVE_FORWARD boundary reaches the bounded open-step runtime movement");
 }
 
 int main(void)
@@ -273,6 +395,7 @@ int main(void)
     test_multi_quantum_tick_and_due_probe();
     test_tick_v1_steps_exactly_once_and_honors_stop_states();
     test_timeline_events_fire_before_game_time_increment();
+    test_timeline_square_events_mutate_real_format_map_bytes();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

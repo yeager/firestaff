@@ -687,6 +687,9 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
     return csb_v1_runtime_apply_save_image(profile, &image, &header);
 }
 
+static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
+    CSB_V1_RuntimeProfile *profile);
+
 /* ── Internal tick helper ─────────────────────────────────────────────── */
 
 static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
@@ -704,6 +707,7 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
                                           &profile->last_timeline_dispatch);
     if (dispatched > 0) {
         profile->timeline_dispatch_count += (uint32_t)dispatched;
+        csb_v1_runtime_apply_timeline_dispatch_side_effects(profile);
     }
 
     profile->game_time++;
@@ -1368,6 +1372,193 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
             profile->party_y,
             1,
             result);
+    }
+}
+
+static uint8_t *csb_v1_runtime_square_byte_ptr(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int map_x,
+    int map_y,
+    int *out_square_type)
+{
+    CSB_V1_DungeonData *dungeon;
+    int offset;
+
+    if (out_square_type) *out_square_type = -1;
+    if (!profile || !profile->dungeon_handle) return NULL;
+    dungeon = profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->square_bytes != 1) return NULL;
+    if (level < 0 || level >= dungeon->level_count) return NULL;
+    if (map_x < 0 || map_x >= dungeon->level_widths[level] ||
+        map_y < 0 || map_y >= dungeon->level_heights[level]) {
+        return NULL;
+    }
+    offset = dungeon->level_offsets[level] +
+             map_x * dungeon->level_heights[level] +
+             map_y;
+    if (offset < 0 || offset >= dungeon->raw_size) return NULL;
+    if (out_square_type) *out_square_type = (dungeon->raw_data[offset] >> 5) & 0x07;
+    return &dungeon->raw_data[offset];
+}
+
+static void csb_v1_runtime_schedule_door_animation_followup(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    int effect)
+{
+    struct DM1_Event_V1 event;
+
+    if (!profile || !record) return;
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(
+        record->mapIndex,
+        profile->game_time + 1u);
+    event.type = DM1_EVENT_DOOR_ANIMATION;
+    event.b_mapX = (uint8_t)record->mapX;
+    event.b_mapY = (uint8_t)record->mapY;
+    event.c_cell = (uint8_t)record->cell;
+    event.c_effect = (uint8_t)effect;
+    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
+static void csb_v1_runtime_apply_door_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    uint8_t *square;
+    int square_type;
+    int door_state;
+    int effect;
+    int next_state;
+
+    if (!profile || !record) return;
+    square = csb_v1_runtime_square_byte_ptr(
+        profile,
+        record->mapIndex,
+        record->mapX,
+        record->mapY,
+        &square_type);
+    if (!square || square_type != 4) return;
+
+    door_state = (int)(*square & 0x07u);
+    if (door_state == 5) return;
+    effect = record->effect;
+    if (effect == DM1_EFFECT_TOGGLE) {
+        effect = (door_state == 0) ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
+    }
+    if (effect != DM1_EFFECT_SET && effect != DM1_EFFECT_CLEAR) return;
+    if ((effect == DM1_EFFECT_SET && door_state == 0) ||
+        (effect == DM1_EFFECT_CLEAR && door_state == 4)) {
+        return;
+    }
+
+    next_state = door_state + ((effect == DM1_EFFECT_SET) ? -1 : 1);
+    if (next_state < 0) next_state = 0;
+    if (next_state > 4) next_state = 4;
+    *square = (uint8_t)((*square & (uint8_t)~0x07u) | (uint8_t)next_state);
+    if ((effect == DM1_EFFECT_SET && next_state != 0) ||
+        (effect == DM1_EFFECT_CLEAR && next_state != 4)) {
+        csb_v1_runtime_schedule_door_animation_followup(
+            profile,
+            record,
+            effect);
+    }
+}
+
+static void csb_v1_runtime_apply_square_flag_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    int expected_square_type,
+    uint8_t open_mask)
+{
+    uint8_t *square;
+    int square_type;
+    int effect;
+    int is_open;
+
+    if (!profile || !record) return;
+    square = csb_v1_runtime_square_byte_ptr(
+        profile,
+        record->mapIndex,
+        record->mapX,
+        record->mapY,
+        &square_type);
+    if (!square || square_type != expected_square_type) return;
+
+    effect = record->effect;
+    if (effect == DM1_EFFECT_TOGGLE) {
+        effect = (*square & open_mask) ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
+    }
+    if (effect != DM1_EFFECT_SET && effect != DM1_EFFECT_CLEAR) return;
+    is_open = (effect == DM1_EFFECT_SET) ? 1 : 0;
+    if (is_open) {
+        *square = (uint8_t)(*square | open_mask);
+    } else {
+        *square = (uint8_t)(*square & (uint8_t)~open_mask);
+    }
+}
+
+static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
+    CSB_V1_RuntimeProfile *profile)
+{
+    int i;
+
+    if (!profile) return;
+    /* ReDMCSB: TIMELINE.C F0261 lines 1875-1894 dispatches C07/C08/C09/C10
+     * to F0242/F0250/F0251/F0244; F0244 immediately routes doors through
+     * C01 door-animation, and F0241 lines 754-809 steps the door state one
+     * value per event.  This runtime bridge mutates real-format CSB byte-map
+     * square flags for the startup/playability path; wall/corridor sensor
+     * chains, projectile launchers, group movement, damage, sounds, and DSA
+     * effects remain separate work. */
+    for (i = 0; i < profile->last_timeline_dispatch.count; ++i) {
+        const struct DM1_DispatchRecord_V1 *record =
+            &profile->last_timeline_dispatch.records[i];
+        switch (record->eventType) {
+        case DM1_EVENT_DOOR:
+        case DM1_EVENT_DOOR_ANIMATION:
+            csb_v1_runtime_apply_door_timeline_record(profile, record);
+            break;
+        case DM1_EVENT_DOOR_DESTRUCTION:
+            {
+                uint8_t *square;
+                int square_type;
+                square = csb_v1_runtime_square_byte_ptr(
+                    profile,
+                    record->mapIndex,
+                    record->mapX,
+                    record->mapY,
+                    &square_type);
+                if (square && square_type == 4) {
+                    *square = (uint8_t)((*square & (uint8_t)~0x07u) | 5u);
+                }
+            }
+            break;
+        case DM1_EVENT_FAKEWALL:
+            csb_v1_runtime_apply_square_flag_timeline_record(
+                profile,
+                record,
+                6,
+                0x04u);
+            break;
+        case DM1_EVENT_TELEPORTER:
+            csb_v1_runtime_apply_square_flag_timeline_record(
+                profile,
+                record,
+                5,
+                0x08u);
+            break;
+        case DM1_EVENT_PIT:
+            csb_v1_runtime_apply_square_flag_timeline_record(
+                profile,
+                record,
+                2,
+                0x08u);
+            break;
+        default:
+            break;
+        }
     }
 }
 
