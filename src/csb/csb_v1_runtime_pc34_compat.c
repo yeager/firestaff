@@ -1268,6 +1268,17 @@ static int csb_v1_runtime_find_unused_group_record(
     return 0;
 }
 
+static int csb_v1_runtime_creature_movement_ticks(int creature_type)
+{
+    static const unsigned char movement_ticks[27] = {
+        8, 15, 3, 10, 9, 20, 120, 185, 11,
+        21, 17, 255, 7, 5, 10, 18, 13, 1,
+        6, 10, 255, 17, 15, 10, 60, 10, 10
+    };
+    if (creature_type < 0 || creature_type >= 27) return 255;
+    return (int)movement_ticks[creature_type];
+}
+
 static void csb_v1_runtime_trigger_floor_sensor_event(
     CSB_V1_RuntimeProfile *profile,
     int sensor_effect,
@@ -1748,6 +1759,24 @@ static void csb_v1_runtime_materialize_corridor_generator_group(
                              ((result.spawnedDirection & 0x03) << 8));
     csb_v1_runtime_write_u16(group_record + 14, group_flags);
     csb_v1_runtime_write_u16(first_thing_ptr, group_thing);
+    {
+        struct DM1_Event_V1 event;
+        int movement_ticks = csb_v1_runtime_creature_movement_ticks(
+            result.spawnedCreatureType);
+
+        /* ReDMCSB GROUP.C F0180 lines 311-340 starts wandering by
+         * scheduling C37 at game_time + 1 and prioritizes faster
+         * creatures as 255 - MovementTicks. */
+        memset(&event, 0, sizeof(event));
+        event.map_time = DM1_MAP_TIME_MAKE(
+            record->mapIndex,
+            profile->game_time + 1u);
+        event.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+        event.priority = (uint8_t)(255 - movement_ticks);
+        event.b_mapX = (uint8_t)record->mapX;
+        event.b_mapY = (uint8_t)record->mapY;
+        (void)dm1v1_event_add(&profile->timeline_queue, &event);
+    }
 }
 
 static void csb_v1_runtime_apply_corridor_timeline_record(

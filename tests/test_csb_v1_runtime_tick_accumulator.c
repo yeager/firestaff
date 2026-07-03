@@ -401,6 +401,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
     uint8_t raw[112];
+    struct DM1_TickDispatchResult_V1 dispatch;
     uint16_t text_word;
     uint16_t type_data;
     uint16_t group_flags;
@@ -440,11 +441,20 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     group_flags = (uint16_t)(raw[94] | ((uint16_t)raw[95] << 8));
     CHECK(((group_flags >> 5) & 0x03u) == 0u,
           "materialized single-creature group stores source 0-based count");
-    CHECK(profile.timeline_queue.eventCount == 1,
-          "C05 C006 generator schedules one delayed C65 re-enable event");
+    CHECK(profile.timeline_queue.eventCount == 2,
+          "C05 C006 generator schedules C37 wander plus delayed C65 re-enable");
 
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
-          "first post-generator tick keeps delayed C65 pending");
+          "first post-generator tick dispatches the generated group's C37 event");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
+              dispatch.count == 1 &&
+              dispatch.records[0].eventType == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+              dispatch.records[0].dispatchKind == DM1_DISPATCH_CREATURE_AI &&
+              dispatch.records[0].mapX == 1 &&
+              dispatch.records[0].mapY == 0,
+          "generated group C37 dispatch keeps source square and creature-AI kind");
+    CHECK(dispatch.records[0].aux0 == (255 - 21),
+          "generated group C37 priority follows 255 - creature movement ticks");
     CHECK(profile.timeline_queue.eventCount == 1,
           "C65 remains queued before the source ticks delay expires");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
