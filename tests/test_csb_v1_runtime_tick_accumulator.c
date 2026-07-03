@@ -1666,6 +1666,83 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    dungeon.square_first_thing_base = 120;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[1] = 136;
+    dungeon.thing_type_counts[1] = 1;
+    dungeon.thing_data_bases[4] = 152;
+    dungeon.thing_type_counts[4] = 1;
+    dungeon.thing_data_bases[5] = 168;
+    dungeon.thing_type_counts[5] = 1;
+    raw[dungeon.level_offsets[0] + real_format_square_offset(1, 1)] =
+        (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    raw[dungeon.level_offsets[1] + real_format_square_offset(1, 1)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 1 * 2, 0);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 4 * 2, 1);
+    test_put_le16(raw, 120, (uint16_t)(4u << 10));
+    test_put_le16(raw, 122, 0xfffeu);
+    test_put_le16(raw, 136, 0xfffeu);
+    test_put_le16(raw, 138,
+                  (uint16_t)(1u | (1u << 5) | (2u << 13)));
+    test_put_le16(raw, 140, (uint16_t)(1u << 8));
+    test_put_le16(raw, 152, (uint16_t)(1u << 10));
+    test_put_le16(raw, 154, (uint16_t)(5u << 10)); /* carried weapon slot */
+    raw[156] = 9u;
+    raw[157] = 0xffu;
+    test_put_le16(raw, 158, 1u);
+    test_put_le16(raw, 166, 0u);
+    test_put_le16(raw, 168, 0xfffeu);
+    test_put_le16(raw, 170, 27u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_seed = 0xC5B1073Cu;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 160;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    slot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 cross-map object teleporter fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 cross-map object teleporter reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 cross-map object teleporter dispatches through the explosion handler");
+    CHECK((test_get_le16(raw, 120) & 0x3fffu) == (uint16_t)(1u << 10),
+          "C25 cross-map object teleporter leaves the source C05 on map 0");
+    CHECK((test_get_le16(raw, 122) & 0x3fffu) == (uint16_t)(5u << 10),
+          "C25 cross-map object teleporter moves the carried thing to map 1");
+    CHECK(test_get_le16(raw, 152) == 0xffffu,
+          "C25 cross-map object teleporter marks the real-format group record unused");
+    CHECK(test_get_le16(raw, 154) == 0xfffeu,
+          "C25 cross-map object teleporter clears the real-format group Slot chain");
+    CHECK(test_get_le16(raw, 136) == 0xfffeu,
+          "C25 cross-map object teleporter leaves the source C05 chain terminated");
+    CHECK(test_get_le16(raw, 168) == 0xfffeu,
+          "C25 cross-map object teleporter terminates the moved carried thing chain");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.level_count = 2;
+    dungeon.level_widths[1] = 3;
+    dungeon.level_heights[1] = 3;
+    dungeon.level_offsets[1] = 9;
     dungeon.square_first_thing_base = 100;
     dungeon.square_first_thing_count = 2;
     dungeon.thing_data_bases[4] = 116;
