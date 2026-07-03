@@ -578,6 +578,7 @@ static int csb_v1_runtime_apply_save_image(
     profile->timeline_queue = image->timeline_queue;
     profile->last_timeline_dispatch = image->last_timeline_dispatch;
     profile->timeline_dispatch_count = image->timeline_dispatch_count;
+    memset(&profile->projectiles, 0, sizeof(profile->projectiles));
     profile->input_command_queue = image->input_command_queue;
     profile->last_input_dispatch = image->last_input_dispatch;
     profile->input_dispatch_count = image->input_dispatch_count;
@@ -1211,6 +1212,53 @@ static void csb_v1_runtime_decode_sensor_words(
     out_sensor->targetMapX = (unsigned char)((target_word >> 6) & 0x1Fu);
     out_sensor->targetMapY = (unsigned char)((target_word >> 11) & 0x1Fu);
     out_sensor->localMultiple = (unsigned short)(target_word & 0x0FFFu);
+}
+
+static int csb_v1_runtime_projectile_subtype_from_explosion_thing(
+    uint16_t associated_thing)
+{
+    unsigned int explosion_type;
+    if (associated_thing < DM1_THING_FIRST_EXPLOSION) {
+        return PROJECTILE_SUBTYPE_FIREBALL;
+    }
+    explosion_type = (unsigned int)(associated_thing - DM1_THING_FIRST_EXPLOSION);
+    switch (explosion_type) {
+    case C000_EXPLOSION_FIREBALL:
+        return PROJECTILE_SUBTYPE_FIREBALL;
+    case C001_EXPLOSION_SLIME:
+        return PROJECTILE_SUBTYPE_SLIME;
+    case C002_EXPLOSION_LIGHTNING_BOLT:
+        return PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+    case C003_EXPLOSION_HARM_NON_MATERIAL:
+        return PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+    case C004_EXPLOSION_OPEN_DOOR:
+        return PROJECTILE_SUBTYPE_OPEN_DOOR;
+    case C007_EXPLOSION_POISON_CLOUD:
+        return PROJECTILE_SUBTYPE_POISON_CLOUD;
+    default:
+        return PROJECTILE_SUBTYPE_FIREBALL;
+    }
+}
+
+static int csb_v1_runtime_projectile_attack_type_from_subtype(int subtype)
+{
+    switch (subtype) {
+    case PROJECTILE_SUBTYPE_FIREBALL:
+        return COMBAT_ATTACK_FIRE;
+    case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:
+        return COMBAT_ATTACK_LIGHTNING;
+    case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
+    case PROJECTILE_SUBTYPE_OPEN_DOOR:
+        return COMBAT_ATTACK_MAGIC;
+    default:
+        return COMBAT_ATTACK_NORMAL;
+    }
+}
+
+static int csb_v1_runtime_sensor_type_is_explosion_launcher(int sensor_type)
+{
+    return sensor_type == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION ||
+           sensor_type == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION;
 }
 
 static uint8_t *csb_v1_runtime_mutable_thing_record(
@@ -2840,6 +2888,87 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     endgame_result.triggered &&
                     endgame_result.endGameGameWon) {
                     profile->victory = 1;
+                }
+            } else if (csb_v1_runtime_sensor_type_is_explosion_launcher(
+                           sensor_type)) {
+                struct DungeonSensor_Compat decoded_sensor;
+                struct ProjectileLauncherContext_Compat launcher_ctx;
+                struct ProjectileLauncherResult_Compat launcher_result;
+                int launch_index;
+
+                csb_v1_runtime_decode_sensor_words(
+                    next_word,
+                    type_data,
+                    flags_word,
+                    target_word,
+                    &decoded_sensor);
+                memset(&launcher_ctx, 0, sizeof(launcher_ctx));
+                launcher_ctx.randomBit =
+                    (int)((profile->dungeon_seed ^ profile->game_time ^
+                           ((uint32_t)record->mapX << 4) ^
+                           ((uint32_t)record->mapY << 8)) & 1u);
+                launcher_ctx.newObjectThings[0] = 0xFFFFu;
+                launcher_ctx.newObjectThings[1] = 0xFFFFu;
+                memset(&launcher_result, 0, sizeof(launcher_result));
+                if (F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+                        &decoded_sensor,
+                        csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                            (uint16_t)thing),
+                        record->mapX,
+                        record->mapY,
+                        record->cell,
+                        &launcher_ctx,
+                        &launcher_result) &&
+                    launcher_result.triggered) {
+                    if (launcher_result.sensorDisabled) {
+                        type_data = (uint16_t)(type_data & 0xFF80u);
+                        csb_v1_runtime_write_u16(sensor + 2, type_data);
+                    }
+                    for (launch_index = 0;
+                         launch_index < launcher_result.launchCount;
+                         ++launch_index) {
+                        const struct ProjectileLauncherLaunch_Compat *launch =
+                            &launcher_result.launches[launch_index];
+                        struct ProjectileCreateInput_Compat input;
+                        struct TimelineEvent_Compat first_move;
+                        int slot = -1;
+                        int subtype;
+
+                        if (!launch->valid) continue;
+                        subtype =
+                            csb_v1_runtime_projectile_subtype_from_explosion_thing(
+                                launch->associatedThing);
+                        memset(&input, 0, sizeof(input));
+                        memset(&first_move, 0, sizeof(first_move));
+                        input.category = PROJECTILE_CATEGORY_MAGICAL;
+                        input.subtype = subtype;
+                        input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+                        input.ownerIndex = -1;
+                        input.mapIndex = record->mapIndex;
+                        input.mapX = launch->mapX;
+                        input.mapY = launch->mapY;
+                        input.cell = launch->cell;
+                        input.direction = launch->direction;
+                        input.kineticEnergy = launch->kineticEnergy;
+                        input.attack = launch->attack;
+                        input.launcherStrength = launch->attack;
+                        input.stepEnergy = launch->stepEnergy;
+                        input.currentTick = (int)profile->game_time;
+                        input.poisonAttack =
+                            (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
+                                ? launch->attack
+                                : 0;
+                        input.attackTypeCode =
+                            csb_v1_runtime_projectile_attack_type_from_subtype(
+                                subtype);
+                        input.associatedThing = (int)launch->associatedThing;
+                        input.firstMoveGraceFlag = 1;
+                        (void)F0810_PROJECTILE_Create_Compat(
+                            &input,
+                            &profile->projectiles,
+                            &slot,
+                            &first_move);
+                    }
                 }
             }
 

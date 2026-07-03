@@ -1029,6 +1029,54 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
         raw,
         sizeof(raw),
         0,
+        1,
+        (uint8_t)(0u << 5),
+        (uint16_t)((2u << 7) |
+                   DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION),
+        (uint16_t)(1u << 2),
+        (uint16_t)(7u | (9u << 8)));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_SET,
+        0,
+        1,
+        0);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall C010 launcher event fires on the current tick");
+    type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((type_data & 0x007fu) == 0u,
+          "C06 once-only launcher disables the source sensor type");
+    CHECK(profile.projectiles.count == 2,
+          "C06 double explosion launcher creates two CSB runtime projectiles");
+    CHECK(profile.projectiles.entries[0].projectileSubtype ==
+              PROJECTILE_SUBTYPE_LIGHTNING_BOLT &&
+              profile.projectiles.entries[1].projectileSubtype ==
+              PROJECTILE_SUBTYPE_LIGHTNING_BOLT,
+          "C06 launcher maps explosion thing data to lightning projectile subtype");
+    CHECK(profile.projectiles.entries[0].ownerKind == PROJECTILE_OWNER_LAUNCHER &&
+              profile.projectiles.entries[1].ownerKind == PROJECTILE_OWNER_LAUNCHER,
+          "C06 launcher projectiles are owned by the launcher boundary");
+    CHECK(profile.projectiles.entries[0].mapX == 0 &&
+              profile.projectiles.entries[0].mapY == 0 &&
+              profile.projectiles.entries[0].direction == 0,
+          "C06 launcher projectile starts one square in front of the wall cell");
+    CHECK(profile.projectiles.entries[0].cell == 2 &&
+              profile.projectiles.entries[1].cell == 3,
+          "C06 double launcher uses opposite and next projectile cells");
+    CHECK(profile.projectiles.entries[0].kineticEnergy == 7 &&
+              profile.projectiles.entries[0].stepEnergy == 9 &&
+              profile.projectiles.entries[0].attack == 100,
+          "C06 launcher carries kinetic, step, and attack values into F0810 state");
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        0,
         0,
         (uint8_t)(0u << 5),
         (uint16_t)DM1_SENSOR_WALL_END_GAME,
