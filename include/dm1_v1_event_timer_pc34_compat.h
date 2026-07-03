@@ -203,6 +203,10 @@ int dm1v1_event_get_timeline_index(
     const struct DM1_EventQueue_V1* queue,
     int eventIndex);
 
+int dm1v1_event_fix_existing_placement(
+    struct DM1_EventQueue_V1* queue,
+    int eventIndex);
+
 /* ================================================================
  *  API — Timer tick processing
  * ================================================================ */

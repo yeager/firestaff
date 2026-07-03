@@ -2206,7 +2206,68 @@ static void csb_v1_runtime_unlink_group_thing_from_square(
     }
 }
 
+static void csb_v1_runtime_rewrite_group_events_after_creature_death(
+    CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y,
+    int creature_index)
+{
+    struct DM1_EventQueue_V1 *queue;
+    uint16_t active_indices[DM1_EVENT_MAX_COUNT];
+    int active_count;
+    int i;
+
+    if (!profile || creature_index < 0 || creature_index > 3) return;
+    queue = &profile->timeline_queue;
+    active_count = queue->eventCount;
+    if (active_count < 0) active_count = 0;
+    if (active_count > DM1_EVENT_MAX_COUNT) active_count = DM1_EVENT_MAX_COUNT;
+    for (i = 0; i < active_count; ++i) {
+        active_indices[i] = queue->timeline[i];
+    }
+
+    for (i = 0; i < active_count; ++i) {
+        int event_index = active_indices[i];
+        struct DM1_Event_V1 *event;
+        int event_type;
+        int event_creature_index = -1;
+
+        if (event_index < 0 || event_index >= queue->maxEvents) continue;
+        event = &queue->events[event_index];
+        event_type = event->type;
+        if (event_type == DM1_EVENT_NONE ||
+            DM1_MAP_TIME_MAP(event->map_time) != (uint32_t)map_index ||
+            event->b_mapX != (uint8_t)map_x ||
+            event->b_mapY != (uint8_t)map_y) {
+            continue;
+        }
+        if (event_type >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
+            event_type <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3) {
+            event_creature_index =
+                event_type - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+        } else if (event_type >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+                   event_type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            event_creature_index =
+                event_type - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        } else {
+            continue;
+        }
+
+        /* ReDMCSB GROUP.C F0190 lines 852-875 deletes queued aspect/attack
+         * events for the killed creature and decrements higher creature-index
+         * event types before fixing timeline heap placement. */
+        if (event_creature_index == creature_index) {
+            (void)dm1v1_event_delete(queue, event_index);
+        } else if (event_creature_index > creature_index) {
+            event->type--;
+            (void)dm1v1_event_fix_existing_placement(queue, event_index);
+        }
+    }
+}
+
 static void csb_v1_runtime_pack_dead_group_creature(
+    CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint8_t *group_record,
     uint16_t group_thing,
@@ -2248,6 +2309,15 @@ static void csb_v1_runtime_pack_dead_group_creature(
         csb_v1_runtime_write_u16(group_record + 0, 0xFFFFu);
         csb_v1_runtime_write_u16(group_record + 2, 0xFFFEu);
         return;
+    }
+
+    if ((flags & 0x000fu) == 6u) {
+        csb_v1_runtime_rewrite_group_events_after_creature_death(
+            profile,
+            level,
+            map_x,
+            map_y,
+            creature_index);
     }
 
     cells = group_record[5];
@@ -2342,6 +2412,7 @@ static int csb_v1_runtime_apply_explosion_group_action(
                 if (damage < 1) damage = 1;
                 if (damage >= (int)hp) {
                     csb_v1_runtime_pack_dead_group_creature(
+                        profile,
                         dungeon,
                         thing_record,
                         (uint16_t)thing,

@@ -192,6 +192,19 @@ int dm1v1_event_get_timeline_index(
     return -1;  /* Not found — error */
 }
 
+int dm1v1_event_fix_existing_placement(
+    struct DM1_EventQueue_V1* queue,
+    int eventIndex)
+{
+    int timelineIndex;
+
+    if (!queue) return 0;
+    timelineIndex = dm1v1_event_get_timeline_index(queue, eventIndex);
+    if (timelineIndex < 0) return 0;
+    dm1v1_event_fix_placement(queue, timelineIndex);
+    return 1;
+}
+
 /* ================================================================
  *  F0237 — DeleteEvent
  * ================================================================ */
@@ -616,4 +629,3 @@ int dm1v1_event_queue_deserialize(
  *   TIMELINE.C:43 F0256_TIMELINE_P
  *   TIMELINE.C:525 F0277_CPSE_I
  * ══════════════════════════════════════════════════════════════════════ */
-

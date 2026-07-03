@@ -263,6 +263,24 @@ static void queue_explosion_advance_event(CSB_V1_RuntimeProfile *profile,
           "CSB runtime accepts a queued C25 explosion event");
 }
 
+static void queue_future_creature_event(CSB_V1_RuntimeProfile *profile,
+                                        int event_type,
+                                        int x,
+                                        int y,
+                                        uint32_t fire_at_tick)
+{
+    struct DM1_Event_V1 ev;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = (uint8_t)event_type;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, fire_at_tick);
+    ev.priority = 17u;
+    ev.b_mapX = (uint8_t)x;
+    ev.b_mapY = (uint8_t)y;
+    CHECK(csb_v1_runtime_add_timeline_event(profile, &ev) >= 0,
+          "CSB runtime accepts a queued future creature event");
+}
+
 static int find_queued_event_type(const CSB_V1_RuntimeProfile *profile,
                                   int event_type)
 {
@@ -1153,11 +1171,35 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     raw[87] = 0x04u; /* slot0 cell0, slot1 cell1 */
     test_put_le16(raw, 88, 1u);
     test_put_le16(raw, 90, 500u);
-    test_put_le16(raw, 96, (uint16_t)(1u << 5)); /* two creatures */
+    test_put_le16(raw, 96, (uint16_t)((1u << 5) | 6u)); /* two C6 creatures */
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
+    queue_future_creature_event(
+        &profile,
+        DM1_EVENT_UPDATE_ASPECT_CREATURE_0,
+        1,
+        1,
+        100u);
+    queue_future_creature_event(
+        &profile,
+        DM1_EVENT_UPDATE_ASPECT_CREATURE_1,
+        1,
+        1,
+        100u);
+    queue_future_creature_event(
+        &profile,
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+        1,
+        1,
+        100u);
+    queue_future_creature_event(
+        &profile,
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1,
+        1,
+        1,
+        100u);
 
     memset(&input, 0, sizeof(input));
     input.explosionType = C000_EXPLOSION_FIREBALL;
@@ -1180,6 +1222,11 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
               slot == 0,
           "CSB C25 two-creature group fixture creates an explosion slot");
     queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_0) == 1 &&
+              count_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_1) == 1 &&
+              count_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0) == 1 &&
+              count_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1) == 1,
+          "C25 two-creature fixture starts with queued aspect and attack events");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "C25 two-creature group reaches the scheduled boundary");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
@@ -1193,6 +1240,24 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 group kill packs surviving Health down to slot 0");
     CHECK((raw[87] & 0x03u) == 1u,
           "C25 group kill packs surviving cell down to slot 0");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_0) == 1 &&
+              count_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_1) == 0 &&
+              count_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0) == 1 &&
+              count_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1) == 0,
+          "C25 group kill deletes killed-slot events and reindexes survivor events");
+    CHECK(find_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_0) >= 0 &&
+              DM1_MAP_TIME_TIME(
+                  profile.timeline_queue.events[
+                      find_queued_event_type(
+                          &profile,
+                          DM1_EVENT_UPDATE_ASPECT_CREATURE_0)].map_time) == 100u &&
+              find_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0) >= 0 &&
+              DM1_MAP_TIME_TIME(
+                  profile.timeline_queue.events[
+                      find_queued_event_type(
+                          &profile,
+                          DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0)].map_time) == 100u,
+          "C25 group kill preserves future timing for reindexed survivor events");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;
