@@ -180,8 +180,8 @@ static int write_text_file(const char* path, const char* content) {
 static int write_minimal_dm1_v22_cache(const char* cache_path) {
     FILE* fp;
     unsigned char header[32];
-    unsigned char entries[4][32];
-    const SyntheticCacheEntry fixtures[4] = {
+    unsigned char entries[5][32];
+    const SyntheticCacheEntry fixtures[5] = {
         {
             "wall_shapes",
             "wall_d3_carved_01",
@@ -201,6 +201,11 @@ static int write_minimal_dm1_v22_cache(const char* cache_path) {
             "floor_shapes",
             "floor_stairs_down_01",
             { 0x00ffff00u, 0x00ffff00u, 0x00ffff00u, 0x00ffff00u }
+        },
+        {
+            "field_shapes",
+            "field_teleporter_01",
+            { 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu }
         }
     };
     size_t i;
@@ -311,13 +316,15 @@ static int run_synthetic_fallback_gate(void) {
     CHECK(m11_v22_inplace_draw_init() == 1);
     CHECK(m11_v22_inplace_draw_active() == 1);
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
+    CHECK(strcmp(m11_v22_inplace_get_cell_asset_id(2, 1),
+                 "field_teleporter_01") == 0);
 
     memset(fb, 0, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
     frame_sig = fnv1a_bytes(fb, sizeof(fb));
     frame_nonzero = nonzero_pixel_count(fb, sizeof(fb));
-    CHECK(painted == 8);
-    CHECK(frame_sig == 0x30894af5u);
+    CHECK(painted == 9);
+    CHECK(frame_sig == 0xbe1c77fdu);
     CHECK(frame_nonzero > 0);
 
     m11_v22_inplace_draw_shutdown();
