@@ -538,7 +538,7 @@ static int check_seeded_all_ordinals(M11_GameViewState* state,
     int ordinal;
     int ok = 1;
 
-    printf("\n[Group C] all 24 C026 ordinals share the same D1C wall cutout\n");
+    printf("\n[Group C] all 24 C026 ordinals share the same D1C wall cutout and C127 click route\n");
     /* The real HALK route: party at (1,2) NORTH sees square (1,1),
      * whose C127 sensor sits on visible cell bit (DIR_NORTH + 2) & 3 = 2.
      * Mutating only sensorData keeps the source wall coordinate constant
@@ -552,6 +552,7 @@ static int check_seeded_all_ordinals(M11_GameViewState* state,
     for (ordinal = 0; ordinal < ALL_PORTRAIT_COUNT; ++ordinal) {
         int actual;
         int pct;
+        M11_GameInputResult clickRc;
         state->world.things->sensors[sensorIndex].sensorData = (unsigned short)ordinal;
         draw_pose(state, fb, 1, 2, DIR_NORTH, 1);
         actual = M11_GameView_GetFrontMirrorOrdinal(state);
@@ -562,7 +563,35 @@ static int check_seeded_all_ordinals(M11_GameViewState* state,
         CHECK(pct >= 90,
               "seeded ordinal %d paints at D1C cutout pct=%d",
               ordinal, pct);
-        ok = ok && actual == ordinal && pct >= 90;
+        clickRc = M11_GameView_HandlePointerButton(state,
+                                                   PORTRAIT_X + PORTRAIT_W / 2,
+                                                   PORTRAIT_Y + PORTRAIT_H / 2,
+                                                   M11_DM1_MOUSE_MASK_LEFT);
+        CHECK(clickRc == M11_GAME_INPUT_REDRAW,
+              "seeded ordinal %d C080/C127 portrait click requests redraw rc=%d",
+              ordinal, (int)clickRc);
+        CHECK(state->candidateMirrorPanelActive == 1 &&
+              state->candidateMirrorOrdinal == ordinal &&
+              state->world.party.championCount == 1,
+              "seeded ordinal %d opens candidate panel ordinal=%d championCount=%d",
+              ordinal, state->candidateMirrorOrdinal,
+              state->world.party.championCount);
+        ok = ok && actual == ordinal && pct >= 90 &&
+             clickRc == M11_GAME_INPUT_REDRAW &&
+             state->candidateMirrorPanelActive == 1 &&
+             state->candidateMirrorOrdinal == ordinal &&
+             state->world.party.championCount == 1;
+        state->candidateMirrorPanelActive = 0;
+        state->candidateMirrorOrdinal = -1;
+        state->candidateMirrorPartyIndex = -1;
+        state->candidateMirrorRenameActive = 0;
+        memset(&state->candidateMirrorRename, 0,
+               sizeof(state->candidateMirrorRename));
+        memset(state->world.party.champions, 0,
+               sizeof(state->world.party.champions));
+        state->world.party.championCount = 0;
+        state->world.party.activeChampionIndex = -1;
+        state->inventoryPanelActive = 0;
     }
     state->world.things->sensors[sensorIndex].sensorData = savedData;
     return ok;
