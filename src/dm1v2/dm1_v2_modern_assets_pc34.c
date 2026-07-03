@@ -246,6 +246,17 @@ void m11_v22_set_manifest_path(const char* dataDir) {
                  modernDir, "modern_asset_manifest.json");
 }
 
+const char* m11_v22_get_modern_asset_root(void) {
+    static char modern_dir[FSP_PATH_MAX];
+    char* last_slash;
+    if (g_v22_manifest_path[0] == '\0') return "";
+    snprintf(modern_dir, sizeof(modern_dir), "%s", g_v22_manifest_path);
+    last_slash = strrchr(modern_dir, '/');
+    if (!last_slash) return "";
+    *last_slash = '\0';
+    return modern_dir;
+}
+
 /* m11_v22_validate_manifest — validates the JSON manifest.
  *
  * Checks:

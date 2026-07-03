@@ -228,6 +228,7 @@ typedef enum {
  * after resolving the Firestaff data directory.
  * Path: <dataDir>/../assets/dm1/modern/modern_asset_manifest.json */
 void m11_v22_set_manifest_path(const char* data_dir);
+const char* m11_v22_get_modern_asset_root(void);
 
 /* Validate the modern asset manifest JSON.
  * Returns: -1 on error (missing/invalid), 0 if partial, 1 if complete.

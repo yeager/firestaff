@@ -355,22 +355,17 @@ static int v22_load_cache_file(const char* path) {
 int m11_v22_inplace_draw_init(void) {
     if (g_v22_inplace_active) return 1;
 
-    /* Resolve cache path from manifest path */
     char cache_path[FSP_PATH_MAX];
-    {
-        /* Re-use m11_v22_get_shape_path to find the modern dir.
-         * The cache file lives next to modern_asset_manifest.json. */
-        char manifest_path[FSP_PATH_MAX];
-        /* m11_v22 doesn't expose its manifest path; reconstruct from data dir
-         * using the same logic as m11_v22_set_manifest_path. For first cut,
-         * hardcode the conventional path ~/.firestaff/assets/dm1/modern/. */
+    const char* modern_root = m11_v22_get_modern_asset_root();
+    if (modern_root && modern_root[0] != '\0') {
+        FSP_JoinPath(cache_path, sizeof(cache_path),
+                     modern_root, "v22_inplace_cache.bin");
+    } else {
         const char* home = getenv("HOME");
         if (!home) home = ".";
-        snprintf(manifest_path, sizeof(manifest_path),
-                 "%s/.firestaff/assets/dm1/modern/modern_asset_manifest.json", home);
-        char* last_slash = strrchr(manifest_path, '/');
-        if (last_slash) *last_slash = '\0';
-        snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", manifest_path);
+        snprintf(cache_path, sizeof(cache_path),
+                 "%s/.firestaff/assets/dm1/modern/v22_inplace_cache.bin",
+                 home);
     }
 
     if (!v22_load_cache_file(cache_path)) {

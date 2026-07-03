@@ -302,6 +302,7 @@ static int run_synthetic_fallback_gate(void) {
     if (failures) return 1;
 
     dm1_v22_famg_set_manifest_path(data_dir);
+    m11_v22_set_manifest_path(data_dir);
     CHECK(dm1_v22_famg_gate() ==
           DM1_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER);
     CHECK(dm1_v22_famg_is_finished_real() == 0);
