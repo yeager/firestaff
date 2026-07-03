@@ -295,6 +295,22 @@ static int build_runtime_resume_save(const char* data_dir,
     boot.runtime.party_state.PartyDirection = boot.runtime.party_dir;
     boot.runtime.party_state.LeaderIndex = boot.runtime.leader_index;
     boot.runtime.party_state.MagicCasterIndex = boot.runtime.magic_caster_index;
+    boot.runtime.party_state.ChampionCount = 2;
+    boot.runtime.party_state.ImportedFromDM1 = 1;
+    snprintf(boot.runtime.party_state.Champions[0].Name,
+             sizeof(boot.runtime.party_state.Champions[0].Name), "TESTA");
+    snprintf(boot.runtime.party_state.Champions[1].Name,
+             sizeof(boot.runtime.party_state.Champions[1].Name), "TESTB");
+    boot.runtime.party_state.Champions[0].Cell = CSB_V1_CELL_FRONT_LEFT;
+    boot.runtime.party_state.Champions[1].Cell = CSB_V1_CELL_RIGHT;
+    boot.runtime.party_state.Champions[0].Direction = boot.runtime.party_dir;
+    boot.runtime.party_state.Champions[1].Direction = boot.runtime.party_dir;
+    boot.runtime.party_state.Champions[0].CurrentHealth = 100;
+    boot.runtime.party_state.Champions[0].MaximumHealth = 100;
+    boot.runtime.party_state.Champions[1].CurrentHealth = 100;
+    boot.runtime.party_state.Champions[1].MaximumHealth = 100;
+    boot.runtime.party_state_valid = 1;
+    boot.runtime.champion_count = boot.runtime.party_state.ChampionCount;
 
     if (csb_v1_runtime_save_game_to_path(&boot.runtime, save_path) !=
         CSB_V1_SAVE_OK) {
@@ -431,6 +447,26 @@ int main(void) {
                     "M11 CSB draw matches the direct source viewport frame");
         expect_true(count_nonzero_rect(fb, 320, 18, 18, 160, 12) == 0,
                     "M11 CSB draw no longer uses the boot handoff text path");
+    }
+
+    if (profile) {
+        int old_dir = view.csbState.party_dir & 3;
+        int target_dir = (old_dir + 1) & 3;
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_TURN_RIGHT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB input dispatches turn-right through the CSB bridge");
+        expect_true(view.csbState.party_dir == target_dir &&
+                    profile->runtime.party_dir == target_dir &&
+                    profile->runtime.party_state.PartyDirection == target_dir,
+                    "M11 CSB turn-right updates mirrored and runtime party direction");
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_UP) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB movement input reaches the source command bridge");
+        expect_true(view.csbState.party_x == profile->runtime.party_x &&
+                    view.csbState.party_y == profile->runtime.party_y,
+                    "M11 CSB movement input keeps state mirrors aligned");
     }
 
     expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,

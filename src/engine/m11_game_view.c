@@ -8,6 +8,7 @@
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_input_command_bridge_pc34_compat.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
@@ -181,6 +182,19 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                   profile->runtime.party_x,
                                   profile->runtime.party_y);
     return 1;
+}
+
+static void m11_sync_csb_state_from_profile(M11_GameViewState *state,
+                                            const CSB_V1_BootProfile *profile)
+{
+    if (!state || !profile) {
+        return;
+    }
+    state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
+    state->csbState.party_x = profile->runtime.party_x;
+    state->csbState.party_y = profile->runtime.party_y;
+    state->csbState.party_dir = profile->runtime.party_dir;
+    state->csbState.tick_count = (int)profile->runtime.tick_count;
 }
 
 static void m11_theron_render_v2_hud(const M11_GameViewState* state,
@@ -30836,6 +30850,8 @@ static M11_GameInputResult m11_csb_toggle_champion_inventory(M11_GameViewState* 
 static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* state,
                                                           M12_MenuInput input) {
     int championIndex = -1;
+    CSB_V1_BootProfile *profile;
+    CSB_V1_InputCommandBridgeResult bridge;
 
     if (!m11_source_is_csb(state)) {
         return M11_GAME_INPUT_IGNORED;
@@ -30888,6 +30904,49 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
         input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY) {
         championIndex = (int)(input - M12_MENU_INPUT_CHAMPION_1_INVENTORY);
         return m11_csb_toggle_champion_inventory(state, championIndex);
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        profile = (CSB_V1_BootProfile*)state->csbBootProfile;
+        if (!profile) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+
+        /* ReDMCSB COMMAND.C F0361/F0380 owns keyboard movement command
+         * queueing for CSB.  Reuse the source-locked CSB bridge so M11
+         * does not duplicate the C001..C006 scancode/queue mapping.
+         * Current CSB runtime support applies C001/C002 turns through
+         * F0365/F0284; C003..C006 movement commands are consumed and
+         * reported by the bridge until the dungeon-aware movement boundary
+         * is widened separately. */
+        memset(&bridge, 0, sizeof(bridge));
+        if (CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
+                &profile->runtime,
+                input,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                &bridge) < 0) {
+            m11_set_status(state, "CSB", "INPUT REJECTED");
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (bridge.mapped) {
+            m11_sync_csb_state_from_profile(state, profile);
+            if (bridge.is_turn && bridge.runtime_state_changed) {
+                m11_set_status(state, "CSB", "FACING UPDATED");
+            } else if (bridge.queue_result.dispatchedMove) {
+                m11_set_status(state, "CSB", "MOVE QUEUED");
+            } else if (bridge.queue_result.movementDisabledGate) {
+                m11_set_status(state, "CSB", "MOVEMENT COOLDOWN");
+            } else if (bridge.queue_result.dequeued) {
+                m11_set_status(state, "CSB", "INPUT CONSUMED");
+            } else {
+                m11_set_status(state, "CSB", "INPUT QUEUED");
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
     }
 
     return M11_GAME_INPUT_IGNORED;
