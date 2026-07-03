@@ -5,7 +5,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.20 LANGUAGES C)
+project(Firestaff VERSION 3.0.21 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -139,6 +139,7 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
+    src/shared/fs_portable_compat.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/firestaff_cmp_decode.c
     src/engine/m11_game_text_latin_extended_glyphs.c

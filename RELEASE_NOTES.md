@@ -1,6 +1,39 @@
 
 # Unreleased
 
+# Firestaff v3.0.21
+
+Firestaff v3.0.21 packages the current post-v3.0.20 `main` state. The release
+keeps the public status conservative while publishing the latest CSB runtime
+handoff and movement gates, plus the DM1 source-locked runtime fixes that landed
+after v3.0.20.
+
+## Highlights since v3.0.20
+
+- **CSB V1 runtime handoff is stronger**: the tag includes new gates for startup
+  resume, quicksave/quickload restore, M11 viewport drawing, M11 input bridging,
+  bounded movement input, wall-result hardening, stair movement, door/fake-wall/
+  pit movement, teleporter movement, and chained party teleports through pits.
+
+- **DM1 V1 source-locked runtime coverage moved forward**: post-v3.0.20 commits
+  add save/timeline materialization, F0412 status duration handling, projectile
+  render source-lock coverage, stop-wait leader throw behavior, champion wound
+  selection, live damage feedback, darkness/light decay, fire-shield expiry,
+  zero-duration thieves-eye expiry, and endgame credits-path gating.
+
+- **The release path is repaired on CI**: the CSB boot-profile smoke test now
+  links the portable filesystem helper it needs through `firestaff_m10`, fixing
+  the latest red CMake build on `main`.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Local release-prep verification rebuilt `test_csb_v1_boot_profile_smoke` and
+  ran it successfully: 51 passed, 0 failed.
+- The GitHub release workflow is expected to build and package macOS, Windows,
+  Linux x86_64, and Linux arm64 artifacts from the `v3.0.21` release tag.
+
 # Firestaff v3.0.20
 
 Firestaff v3.0.20 packages the current post-v3.0.19 `main` state. The release

@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.21  (2026-07-03)",
+    "  - Packages the post-v3.0.20 mainline gates for CSB runtime movement, quicksave/quickload/resume handoff, M11 viewport/input bridging, and chained party teleports through pits.",
+    "  - DM1 V1 source-locked runtime coverage advances save/timeline materialization, F0412 status duration handling, live damage feedback, darkness/light decay, and endgame credits-path gating.",
+    "  - Release verification: fixes the CSB boot-profile smoke-test link path for fs_portable_compat, then rebuilds and reruns the focused CSB boot-profile gate before tagging.",
+    "",
     "V3.0.20  (2026-07-02)",
     "  - Packages the post-v3.0.19 mainline gates for DM1 projectile/explosion and spell handling, CSB title/import and champion-panel coverage, and DM2/Nexus/Theron launch/media boundaries.",
     "  - DM1 V1 source-locked combat coverage now includes projectile pass-through, door impact, black-flame impact, weak-miss, spell XP, shield timing, scent-window, kept-thrown-weapon, and render-slot guards.",
@@ -364,5 +369,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.20";
+    return "3.0.21";
 }
