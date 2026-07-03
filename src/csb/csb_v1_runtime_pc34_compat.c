@@ -1913,6 +1913,12 @@ static int csb_v1_runtime_location_after_level_change(
     int *inout_map_x,
     int *inout_map_y,
     int *out_map_index);
+static int csb_v1_runtime_apply_group_fall_damage(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y);
 
 static uint16_t csb_v1_runtime_repeated_group_direction_pack(int direction)
 {
@@ -1978,7 +1984,8 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
     uint16_t group_thing,
     int *inout_map_index,
     int *inout_map_x,
-    int *inout_map_y)
+    int *inout_map_y,
+    int *out_group_alive)
 {
     CSB_V1_DungeonData *dungeon;
     int moved_count = 0;
@@ -1988,6 +1995,7 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
         !inout_map_x || !inout_map_y) {
         return 0;
     }
+    if (out_group_alive) *out_group_alive = 1;
     dungeon = profile->dungeon_handle;
     for (chain_guard = 0; chain_guard < 100; ++chain_guard) {
         CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
@@ -2050,6 +2058,15 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
             *inout_map_x = target_x;
             *inout_map_y = target_y;
             moved_count++;
+            if (csb_v1_runtime_apply_group_fall_damage(
+                    profile,
+                    group_thing,
+                    target_map_index,
+                    target_x,
+                    target_y) == 2) {
+                if (out_group_alive) *out_group_alive = 0;
+                break;
+            }
             continue;
         }
         if (square_type != 5 || (raw_square & 0x08) == 0) break;
@@ -2267,14 +2284,19 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                         record->mapIndex,
                         target_x,
                         target_y);
-                    if (moved) {
-                        (void)csb_v1_runtime_apply_group_consequences_at_square(
-                            profile,
-                            group_thing,
-                            &target_map_index,
-                            &target_x,
-                            &target_y);
-                    }
+            if (moved) {
+                int group_alive = 1;
+                (void)csb_v1_runtime_apply_group_consequences_at_square(
+                    profile,
+                    group_thing,
+                    &target_map_index,
+                    &target_x,
+                    &target_y,
+                    &group_alive);
+                if (!group_alive) {
+                    return;
+                }
+            }
                 }
                 /* ReDMCSB GROUP.C F0209 lines 2228-2272 walks C7 approach
                  * toward the target using F0202 movement checks, then lines
@@ -3945,6 +3967,106 @@ static void csb_v1_runtime_pack_dead_group_creature(
     flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 5)) |
                        (uint16_t)(((raw_count - 1) & 0x03) << 5));
     csb_v1_runtime_write_u16(group_record + 14, flags);
+}
+
+static int csb_v1_runtime_apply_group_fall_damage(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *group_record;
+    struct RngState_Compat rng;
+    uint16_t flags;
+    int thing_type = -1;
+    int thing_size = 0;
+    int creature_count;
+    int random_window;
+    int base_attack;
+    int killed_some = 0;
+    int i;
+
+    if (!profile || !profile->dungeon_handle) return 0;
+    dungeon = profile->dungeon_handle;
+    group_record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        group_thing,
+        &thing_type,
+        &thing_size);
+    if (!group_record || thing_type != 4 || thing_size < 16) return 0;
+
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    creature_count = (int)((flags >> 5) & 0x03u) + 1;
+    if (creature_count < 1) creature_count = 1;
+    if (creature_count > 4) creature_count = 4;
+    random_window = (20 >> 3) + 1;
+    base_attack = 20 - random_window;
+    random_window <<= 1;
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)map_index << 4) ^
+            ((uint32_t)map_x << 8) ^
+            ((uint32_t)map_y << 16) ^
+            0xF0191u);
+
+    /* ReDMCSB MOVESENS.C F0267 lines 596-617 applies GROUP.C F0191 with
+     * attack 20 after a moving C04 group falls through a pit.  GROUP.C F0191
+     * lines 952-973 fans out attack +/- 1/8 from Count down to creature 0.
+     * This bounded bridge reuses the existing real-format F0190 pack/drop/
+     * smoke helper; ActiveGroup side state and audio remain separate work. */
+    for (i = creature_count - 1; i >= 0; --i) {
+        uint16_t hp;
+        int damage;
+
+        group_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            group_thing,
+            &thing_type,
+            &thing_size);
+        if (!group_record || thing_type != 4 || thing_size < 16) {
+            return killed_some ? 2 : 0;
+        }
+        hp = csb_v1_runtime_read_u16(group_record + 6 + i * 2);
+        if (hp == 0) continue;
+        damage = base_attack + F0732_COMBAT_RngRandom_Compat(
+            &rng,
+            random_window);
+        if (damage < 1) damage = 1;
+        if (damage >= (int)hp) {
+            killed_some = 1;
+            csb_v1_runtime_pack_dead_group_creature(
+                profile,
+                dungeon,
+                group_record,
+                group_thing,
+                map_index,
+                map_x,
+                map_y,
+                i);
+            if (creature_count <= 1) {
+                return 2;
+            }
+        } else {
+            csb_v1_runtime_write_u16(
+                group_record + 6 + i * 2,
+                (uint16_t)((int)hp - damage));
+        }
+    }
+    group_record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        group_thing,
+        &thing_type,
+        &thing_size);
+    if (!group_record || thing_type != 4 || thing_size < 16) {
+        return killed_some ? 2 : 0;
+    }
+    if (csb_v1_runtime_read_u16(group_record + 0) == 0xFFFFu) {
+        return 2;
+    }
+    return killed_some ? 1 : 0;
 }
 
 static int csb_v1_runtime_apply_explosion_group_action(
