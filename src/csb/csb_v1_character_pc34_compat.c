@@ -124,6 +124,8 @@ void csb_v1_champion_init(CSB_V1_Champion *c)
     c->HideDamageReceivedEventIndex = -1;
     c->Attributes = CSB_V1_CHAMPION_ATTRIBUTE_NONE;
     c->Wounds = 0;
+    c->PoisonDose = 0;
+    c->PoisonEventCount = 0;
     c->Food = 0;
     c->Water = 0;
     c->Load = 0;
@@ -376,6 +378,8 @@ int csb_v1_champion_resurrect(CSB_V1_Champion *c)
     /* Clear the dead flag */
     c->Attributes &= ~(uint16_t)CSB_V1_CHAMPION_ATTRIBUTE_DEAD;
     c->Wounds = 0;
+    c->PoisonDose = 0;
+    c->PoisonEventCount = 0;
 
     /* Re-enable action (champions start with REST) */
     c->ActionIndex = CSB_V1_ACTION_REST;
@@ -460,6 +464,8 @@ int csb_v1_champion_reincarnate(CSB_V1_Champion *c)
     /* Step 3: Clear all skills (F0008_MAIN_ClearBytes on Skills array) */
     memset(c->Skills, 0, sizeof(c->Skills));
     c->Wounds = 0;
+    c->PoisonDose = 0;
+    c->PoisonEventCount = 0;
 
     /* Step 4: Apply random +1 stat boosts (randomPoints, default 12).
      * F0281_CHAMPION_Rename is called here; in Firestaff we set the

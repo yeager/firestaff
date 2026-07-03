@@ -243,6 +243,24 @@ static void queue_square_cell_event(CSB_V1_RuntimeProfile *profile,
           "CSB runtime accepts a queued square event");
 }
 
+static int find_queued_event_type(const CSB_V1_RuntimeProfile *profile,
+                                  int event_type)
+{
+    int i;
+
+    if (!profile) return -1;
+    for (i = 0; i < profile->timeline_queue.eventCount; ++i) {
+        int event_index = profile->timeline_queue.timeline[i];
+        if (event_index >= 0 &&
+            event_index < DM1_EVENT_MAX_COUNT &&
+            profile->timeline_queue.events[event_index].type ==
+                (uint8_t)event_type) {
+            return event_index;
+        }
+    }
+    return -1;
+}
+
 static uint32_t expected_c38_seed(uint32_t game_time,
                                   int map_x,
                                   int map_y,
@@ -270,7 +288,8 @@ static int expected_c38_shared_combat_damage(
     int map_y,
     int creature_type,
     int creature_index,
-    int *out_wounds)
+    int *out_wounds,
+    int *out_poison)
 {
     const struct CreatureBehaviorProfile_Compat *profile;
     struct CombatantCreatureSnapshot_Compat attacker;
@@ -281,6 +300,7 @@ static int expected_c38_shared_combat_damage(
 
     profile = CREATURE_GetProfile_Compat(creature_type);
     if (out_wounds) *out_wounds = 0;
+    if (out_poison) *out_poison = 0;
     if (!champion || !profile) return -1;
 
     memset(&attacker, 0, sizeof(attacker));
@@ -337,6 +357,7 @@ static int expected_c38_shared_combat_damage(
         return -1;
     }
     if (out_wounds) *out_wounds = result.woundMaskAdded;
+    if (out_poison) *out_poison = result.poisonAttackPending;
     return (result.outcome == COMBAT_OUTCOME_HIT_DAMAGE &&
             result.damageApplied > 0)
         ? result.damageApplied
@@ -513,6 +534,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     int c38_event_index;
     int expected_c38_damage;
     int expected_c38_wounds;
+    int expected_c38_poison;
     int i;
 
     make_real_format_corridor_text_generator_dungeon(
@@ -631,7 +653,8 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
         1,
         9,
         0,
-        &expected_c38_wounds);
+        &expected_c38_wounds,
+        &expected_c38_poison);
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "next tick dispatches the bounded C38 attack event");
     CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
@@ -652,6 +675,9 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
               profile.party_state.Champions[1].Wounds ==
               (uint16_t)expected_c38_wounds,
           "bounded C38 attack event applies shared combat wound mask");
+    CHECK(expected_c38_poison == 0 &&
+              profile.party_state.Champions[1].PoisonEventCount == 0,
+          "bounded non-poison C38 attack leaves poison state clear");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event requeues the next attack cadence");
     c38_event_index = profile.timeline_queue.timeline[0];
@@ -701,6 +727,146 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded final C38 clears leadership and marks CSB runtime game over");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 0,
           "game-over CSB runtime blocks further V1 ticks after final knockout");
+}
+
+static void test_c38_poison_followup_and_c75_tick(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[112];
+    struct DM1_TickDispatchResult_V1 dispatch;
+    int expected_damage;
+    int expected_wounds;
+    int expected_poison;
+    int poison_event_index;
+    int poison_damage;
+    uint32_t poison_c38_time;
+    int i;
+
+    printf("\n-- CSB C38 poison follow-up and C75 tick --\n");
+
+    make_real_format_corridor_text_generator_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 68, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    raw[86] = 13u;       /* C13 Couatl: poisonAttack=100 */
+    raw[87] = 0xffu;
+    test_put_le16(raw, 88, 39u);
+    test_put_le16(raw, 96, 6u);  /* C6 attack, one creature */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 500;
+    profile.party_state.Champions[0].MaximumHealth = 500;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 0;
+    for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MIN] = 30;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_CUR] = 30;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MAX] = 30;
+    }
+    profile.party_state.Champions[0].Skills[7] = 16;
+
+    poison_c38_time = 0;
+    expected_damage = -1;
+    expected_wounds = 0;
+    expected_poison = 0;
+    for (i = 0; i < 256; ++i) {
+        expected_damage = expected_c38_shared_combat_damage(
+            &profile.party_state.Champions[0],
+            0,
+            (uint32_t)i,
+            1,
+            1,
+            13,
+            0,
+            &expected_wounds,
+            &expected_poison);
+        if (expected_damage > 0 && expected_poison > 1) {
+            poison_c38_time = (uint32_t)i;
+            break;
+        }
+    }
+    CHECK(expected_damage > 0 && expected_poison > 1,
+          "poison C38 fixture produces damage and a pending poison attack");
+    profile.game_time = poison_c38_time;
+    profile.timeline_queue.gameTick = poison_c38_time;
+    poison_damage = expected_poison >> 6;
+    if (poison_damage < 1) poison_damage = 1;
+
+    queue_square_event(
+        &profile,
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+        DM1_EFFECT_SET,
+        1,
+        1);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "poison C38 attack dispatches on the adjacent group square");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
+              dispatch.count == 1 &&
+              dispatch.records[0].eventType ==
+                  DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+          "poison C38 dispatch remains a creature-AI event");
+    CHECK(profile.party_state.Champions[0].CurrentHealth ==
+              500 - expected_damage - poison_damage,
+          "poison C38 applies melee damage plus immediate F0322 poison damage");
+    CHECK(profile.party_state.Champions[0].PoisonDose ==
+              (uint16_t)expected_poison &&
+              profile.party_state.Champions[0].PoisonEventCount == 1u,
+          "poison C38 stores poison dose and one pending C75 event");
+    poison_event_index = find_queued_event_type(
+        &profile,
+        DM1_EVENT_POISON_CHAMPION);
+    CHECK(poison_event_index >= 0 &&
+              DM1_MAP_TIME_TIME(
+                  profile.timeline_queue.events[poison_event_index].map_time) ==
+                  poison_c38_time + 36u &&
+              profile.timeline_queue.events[poison_event_index].priority == 0u &&
+              profile.timeline_queue.events[poison_event_index].c_effect ==
+                  (uint8_t)(expected_poison - 1),
+          "poison C38 schedules C75 with Attack-1 after 36 ticks");
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.party_state_valid = 1;
+    profile.champion_count = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 50;
+    profile.party_state.Champions[0].MaximumHealth = 50;
+    profile.party_state.Champions[0].PoisonDose = 100;
+    profile.party_state.Champions[0].PoisonEventCount = 1;
+    queue_square_event(
+        &profile,
+        DM1_EVENT_POISON_CHAMPION,
+        5,
+        1,
+        2);
+    profile.timeline_queue.events[
+        find_queued_event_type(&profile, DM1_EVENT_POISON_CHAMPION)]
+        .priority = 0;
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C75 poison event dispatches on the current tick");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 49,
+          "C75 poison tick applies max(1, Attack >> 6) damage");
+    CHECK(profile.party_state.Champions[0].PoisonDose == 105,
+          "C75 poison tick accumulates the carried attack into poison dose");
+    CHECK(profile.party_state.Champions[0].PoisonEventCount == 1u &&
+              find_queued_event_type(&profile, DM1_EVENT_POISON_CHAMPION) >= 0,
+          "C75 decrements the consumed event then reschedules Attack-1");
 }
 
 static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
@@ -872,6 +1038,7 @@ int main(void)
     test_timeline_events_fire_before_game_time_increment();
     test_timeline_square_events_mutate_real_format_map_bytes();
     test_timeline_corridor_text_and_generator_mutations();
+    test_c38_poison_followup_and_c75_tick();
     test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
