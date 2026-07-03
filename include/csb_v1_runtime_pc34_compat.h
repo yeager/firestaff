@@ -300,7 +300,13 @@ typedef struct {
     int movement_blocked_by_wall;
     int movement_destination_x;
     int movement_destination_y;
+    int movement_destination_square_type;
+    int movement_destination_raw_square;
     int disabled_movement_ticks_after;
+    int stair_transition_applied;
+    int stair_up;
+    int old_party_level;
+    int new_party_level;
 } CSB_V1_InputCommandRuntimeResult;
 
 /* ── Runtime profile API ─────────────────────────────────────────────── */
