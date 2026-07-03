@@ -1,6 +1,51 @@
 #include "entrance_frontend_pc34_compat.h"
 #include <string.h>
 
+#define ENTRANCE_COMPAT_SCREEN_WIDTH 320u
+#define ENTRANCE_COMPAT_SCREEN_HEIGHT 200u
+#define ENTRANCE_COMPAT_DOOR_SCREEN_Y 28u
+#define ENTRANCE_COMPAT_RUNTIME_VIEWPORT_SOURCE_X 0u
+#define ENTRANCE_COMPAT_RUNTIME_VIEWPORT_SOURCE_Y 33u
+#define ENTRANCE_COMPAT_DUNGEON_VIEW_X 0u
+#define ENTRANCE_COMPAT_DUNGEON_VIEW_Y 31u
+#define ENTRANCE_COMPAT_DUNGEON_VIEW_WIDTH 224u
+#define ENTRANCE_COMPAT_DUNGEON_VIEW_HEIGHT 136u
+
+static int entrance_copy_rect(unsigned char* dst,
+                              unsigned int dstW,
+                              unsigned int dstH,
+                              unsigned int dstX,
+                              unsigned int dstY,
+                              const unsigned char* src,
+                              unsigned int srcW,
+                              unsigned int srcH,
+                              unsigned int srcX,
+                              unsigned int srcY,
+                              unsigned int w,
+                              unsigned int h) {
+    unsigned int row;
+    if (!dst || !src || dstW == 0u || dstH == 0u ||
+        srcW == 0u || srcH == 0u || w == 0u || h == 0u) {
+        return 0;
+    }
+    if (srcX >= srcW || srcY >= srcH || dstX >= dstW || dstY >= dstH) {
+        return 0;
+    }
+    if (w > srcW - srcX) w = srcW - srcX;
+    if (h > srcH - srcY) h = srcH - srcY;
+    if (w > dstW - dstX) w = dstW - dstX;
+    if (h > dstH - dstY) h = dstH - dstY;
+    if (w == 0u || h == 0u) {
+        return 0;
+    }
+    for (row = 0u; row < h; ++row) {
+        memcpy(dst + (size_t)(dstY + row) * (size_t)dstW + (size_t)dstX,
+               src + (size_t)(srcY + row) * (size_t)srcW + (size_t)srcX,
+               (size_t)w);
+    }
+    return 1;
+}
+
 unsigned int ENTRANCE_Compat_GetDoorAnimationStepCount(void) {
     return 31u;
 }
@@ -120,6 +165,103 @@ unsigned int ENTRANCE_Compat_GetRuntimeDelayMs(const EntranceCompatSourceAnimati
 
 const char* ENTRANCE_Compat_GetSourceAnimationEvidence(void) {
     return "ReDMCSB ENTRANCE.C PC/F20 path: draw entrance micro-dungeon, fade/curtain to entrance palette, draw C004 entrance screen, wait on VBlank/input loop, play switch sound, F0022_MAIN_Delay(20), hide pointer, then F0438 opens doors in source animation steps 1..31 with a BUG0_71 one-VBlank guard per step; rattle sound fires when step%3==1; door boxes move 4px per step from DATA.C left {0,100,0,160} and right {109,231,0,160}.";
+}
+
+int ENTRANCE_Compat_CompositeDoorOpeningFrame(unsigned char* framebuffer,
+                                              unsigned int framebufferWidth,
+                                              unsigned int framebufferHeight,
+                                              const EntranceCompatCompositePixels* pixels,
+                                              const EntranceCompatDoorStep* door) {
+    int drewDoor = 0;
+    if (!framebuffer || !pixels || !door || !pixels->entranceScreen || !pixels->dungeonFrame) {
+        return 0;
+    }
+    if (pixels->entranceWidth < ENTRANCE_COMPAT_SCREEN_WIDTH ||
+        pixels->entranceHeight < ENTRANCE_COMPAT_SCREEN_HEIGHT ||
+        pixels->dungeonFrameWidth < ENTRANCE_COMPAT_RUNTIME_VIEWPORT_SOURCE_X + ENTRANCE_COMPAT_DUNGEON_VIEW_WIDTH ||
+        pixels->dungeonFrameHeight < ENTRANCE_COMPAT_RUNTIME_VIEWPORT_SOURCE_Y + ENTRANCE_COMPAT_DUNGEON_VIEW_HEIGHT) {
+        return 0;
+    }
+
+    /* ReDMCSB ENTRANCE.C:175 copies the saved C004+door background into the
+     * composite bitmap, line 184 blits only G0296_puc_Bitmap_Viewport behind
+     * the doors, and lines 189-231 overlay moving door strips.  Firestaff's
+     * runtime dungeon frame is a full 320x200 image, so this source-locked
+     * composite extracts just the 224x136 viewport from y=33 into the entrance
+     * door aperture at y=28+3. */
+    if (!entrance_copy_rect(framebuffer,
+                            framebufferWidth,
+                            framebufferHeight,
+                            0u,
+                            0u,
+                            pixels->entranceScreen,
+                            pixels->entranceWidth,
+                            pixels->entranceHeight,
+                            0u,
+                            0u,
+                            ENTRANCE_COMPAT_SCREEN_WIDTH,
+                            ENTRANCE_COMPAT_SCREEN_HEIGHT)) {
+        return 0;
+    }
+    if (!entrance_copy_rect(framebuffer,
+                            framebufferWidth,
+                            framebufferHeight,
+                            ENTRANCE_COMPAT_DUNGEON_VIEW_X,
+                            ENTRANCE_COMPAT_DUNGEON_VIEW_Y,
+                            pixels->dungeonFrame,
+                            pixels->dungeonFrameWidth,
+                            pixels->dungeonFrameHeight,
+                            ENTRANCE_COMPAT_RUNTIME_VIEWPORT_SOURCE_X,
+                            ENTRANCE_COMPAT_RUNTIME_VIEWPORT_SOURCE_Y,
+                            ENTRANCE_COMPAT_DUNGEON_VIEW_WIDTH,
+                            ENTRANCE_COMPAT_DUNGEON_VIEW_HEIGHT)) {
+        return 0;
+    }
+    if (door->leftBoxW > 0u) {
+        if (!pixels->leftDoor ||
+            pixels->leftDoorWidth < door->leftSourceX + door->leftBoxW ||
+            pixels->leftDoorHeight < door->leftBoxY + door->leftBoxH) {
+            return 0;
+        }
+        if (!entrance_copy_rect(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                door->leftBoxX,
+                                ENTRANCE_COMPAT_DOOR_SCREEN_Y + door->leftBoxY,
+                                pixels->leftDoor,
+                                pixels->leftDoorWidth,
+                                pixels->leftDoorHeight,
+                                door->leftSourceX,
+                                door->leftBoxY,
+                                door->leftBoxW,
+                                door->leftBoxH)) {
+            return 0;
+        }
+        drewDoor = 1;
+    }
+    if (door->rightBoxW > 0u) {
+        if (!pixels->rightDoor ||
+            pixels->rightDoorWidth < door->rightSourceX + door->rightBoxW ||
+            pixels->rightDoorHeight < door->rightBoxY + door->rightBoxH) {
+            return 0;
+        }
+        if (!entrance_copy_rect(framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                door->rightBoxX,
+                                ENTRANCE_COMPAT_DOOR_SCREEN_Y + door->rightBoxY,
+                                pixels->rightDoor,
+                                pixels->rightDoorWidth,
+                                pixels->rightDoorHeight,
+                                door->rightSourceX,
+                                door->rightBoxY,
+                                door->rightBoxW,
+                                door->rightBoxH)) {
+            return 0;
+        }
+        drewDoor = 1;
+    }
+    return drewDoor || door->animationStep > 0u;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
