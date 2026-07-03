@@ -1162,9 +1162,16 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
         if (outPlayedAnyFrame) {
             *outPlayedAnyFrame = 1;
         }
-        if (m11_delay_ms_with_intro_event_pump(
-                V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
-            break;
+        if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
+            if (m11_delay_ms_with_intro_event_pump(
+                    V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing))) {
+                break;
+            }
+        } else {
+            if (m11_delay_ms_with_intro_event_pump(
+                    V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
+                break;
+            }
         }
     }
     /* ReDMCSB TITLE.C:395-409 leaves two post-zoom VBlanks plus the final
