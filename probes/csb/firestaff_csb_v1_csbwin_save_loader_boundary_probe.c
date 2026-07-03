@@ -54,37 +54,6 @@ static int g_failures;
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 
-static int read_file_limited(const char *path, size_t max_size,
-                             uint8_t **out_bytes, size_t *out_size)
-{
-    FILE *f;
-    long sz;
-    uint8_t *buf;
-    size_t got;
-
-    if (!path || !out_bytes || !out_size) return 0;
-    *out_bytes = NULL;
-    *out_size = 0u;
-    f = fopen(path, "rb");
-    if (!f) return 0;
-    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return 0; }
-    sz = ftell(f);
-    if (sz < 0) { fclose(f); return 0; }
-    if (fseek(f, 0, SEEK_SET) != 0) { fclose(f); return 0; }
-    if ((size_t)sz > max_size) { fclose(f); return 0; }
-    buf = (uint8_t *)malloc((size_t)(sz > 0 ? sz : 1));
-    if (!buf) { fclose(f); return 0; }
-    got = fread(buf, 1u, (size_t)sz, f);
-    fclose(f);
-    if (got != (size_t)sz) {
-        free(buf);
-        return 0;
-    }
-    *out_bytes = buf;
-    *out_size = (size_t)sz;
-    return 1;
-}
-
 /* Resolve the data-dir argument / env var. Mirrors the helper
  * in firestaff_csb_v1_csbgraphics_dat_real_scan_probe.c. */
 static const char *data_dir_arg(int argc, char **argv,
@@ -234,8 +203,6 @@ int main(int argc, char **argv)
      * SKIP cleanly. */
     {
         char found_path[1024];
-        uint8_t *real_bytes = NULL;
-        size_t real_size = 0u;
         CSB_V1_CSBWinSaveDiscoveryResult disc;
         int found;
         int rc;
@@ -255,17 +222,16 @@ int main(int argc, char **argv)
         }
         printf("real_save=%s\n", found_path);
 
-        if (!read_file_limited(found_path, 4u * 1024u * 1024u,
-                               &real_bytes, &real_size)) {
+        rc = csb_v1_csbwin_save_loader_boundary_classify_file(
+            found_path, 4u * 1024u * 1024u, &disc);
+        if ((rc == CSB_SAVE_IMPORT_ERR_TRUNCATED ||
+             rc == CSB_SAVE_IMPORT_ERR_NULL) &&
+            disc.shape == CSB_V1_CSBWIN_SHAPE_COUNT) {
             printf("SKIP: failed to read %s "
                    "(larger than 4 MiB or unreadable); synthetic-fixture "
                    "gate still stands.\n", found_path);
             return 0;
         }
-        printf("real_save_size=%zu\n", real_size);
-
-        rc = csb_v1_csbwin_save_loader_boundary_classify(
-            found_path, real_bytes, real_size, &disc);
         printf("real discovery verdict: rc=%d, file_kind=%s, shape=%s, "
                "loader_code=%d, contract_match=%d, should_attempt_import=%d, "
                "decision=%s\n",
@@ -284,7 +250,6 @@ int main(int argc, char **argv)
                   (disc.loader.loader_code > 0 &&
                    disc.loader.contract_match == 1),
               "real should_attempt_import mirrors accepted loader verdict");
-        free(real_bytes);
     }
 
     printf("\n=== Summary: %d checks, %d failures ===\n",

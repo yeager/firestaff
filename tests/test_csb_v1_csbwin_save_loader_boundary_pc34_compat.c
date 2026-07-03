@@ -39,6 +39,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <process.h>
+#define TEST_GETPID() _getpid()
+#define TEST_MKDIR(path) _mkdir(path)
+#define TEST_RMDIR(path) _rmdir(path)
+#else
+#include <sys/stat.h>
+#include <unistd.h>
+#define TEST_GETPID() getpid()
+#define TEST_MKDIR(path) mkdir((path), 0700)
+#define TEST_RMDIR(path) rmdir(path)
+#endif
 
 static int g_pass = 0;
 static int g_fail = 0;
@@ -110,6 +123,19 @@ static void build_valid_csbwin_512_header(uint8_t *buf)
     }
     test_write_le16(buf, 254u, d5);
     test_scramble_block(buf + 256u, 0u, 128u);
+}
+
+static int write_test_file(const char *path, const uint8_t *bytes, size_t size)
+{
+    FILE *fp;
+    if (!path || !bytes) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (size > 0u && fwrite(bytes, 1u, size, fp) != size) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
 }
 
 int main(void)
@@ -439,6 +465,67 @@ int main(void)
             "/tmp/csbgame.dat", scratch, s, NULL);
         CHECK(rc == CSB_SAVE_IMPORT_ERR_NULL,
               "classify NULL out returns ERR_NULL");
+    }
+
+    /* ── File-backed discovery wrapper ── */
+    {
+        CSB_V1_CSBWinSaveDiscoveryResult disc;
+        uint8_t scratch[1024];
+        char dir[256];
+        char path[256];
+        size_t s;
+        int rc;
+
+        snprintf(dir, sizeof(dir),
+                 "/tmp/firestaff_csbwin_boundary_%ld",
+                 (long)TEST_GETPID());
+        (void)TEST_RMDIR(dir);
+        CHECK(TEST_MKDIR(dir) == 0,
+              "classify_file temp directory created");
+
+        s = csb_v1_csbwin_save_loader_boundary_build_fixture(
+            CSB_V1_CSBWIN_SHAPE_CSBGAME_V20, scratch, sizeof(scratch));
+        snprintf(path, sizeof(path), "%s/csbgame.dat", dir);
+        CHECK(write_test_file(path, scratch, s),
+              "classify_file fixture write succeeds");
+        rc = csb_v1_csbwin_save_loader_boundary_classify_file(path, 0u,
+                                                              &disc);
+        CHECK(rc > 0,
+              "classify_file CSBGAME.DAT v2.0 returns loader accept");
+        CHECK(disc.filename_candidate == 1,
+              "classify_file marks filename candidate");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_CSBGAME_V20,
+              "classify_file preserves v2.0 shape");
+        CHECK(disc.should_attempt_import == 1,
+              "classify_file marks v2.0 as import-ready");
+        CHECK(strcmp(disc.decision_label, "accept_loader_ready") == 0,
+              "classify_file v2.0 decision label");
+        rc = csb_v1_csbwin_save_loader_boundary_classify_file(path, s - 1u,
+                                                              &disc);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_TRUNCATED,
+              "classify_file over max_size returns TRUNCATED");
+        (void)remove(path);
+
+        build_valid_csbwin_512_header(scratch);
+        snprintf(path, sizeof(path), "%s/dmsave.dat", dir);
+        CHECK(write_test_file(path, scratch, CSB_V1_CSBWIN_BLOCK1_BYTES),
+              "classify_file valid 512-byte fixture write succeeds");
+        rc = csb_v1_csbwin_save_loader_boundary_classify_file(path, 0u,
+                                                              &disc);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_BAD_MAGIC,
+              "classify_file valid 512-byte header returns BAD_MAGIC");
+        CHECK(disc.xor512_valid == 1,
+              "classify_file valid 512-byte header marks xor512_valid");
+        CHECK(strcmp(disc.decision_label,
+                     "reject_csbwin_512_header_valid_import_pending") == 0,
+              "classify_file valid 512-byte header decision label");
+        (void)remove(path);
+
+        rc = csb_v1_csbwin_save_loader_boundary_classify_file(
+            "/tmp/firestaff_csbwin_boundary_missing.dat", 0u, &disc);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_NULL,
+              "classify_file missing path returns ERR_NULL");
+        (void)TEST_RMDIR(dir);
     }
 
     /* ── Source-evidence citation chain ── */

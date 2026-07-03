@@ -35,7 +35,9 @@
  * The module does not import a full CSBWin 512-byte save body and
  * does not bind into M11/M12. It only feeds synthetic / real byte
  * buffers into csb_v1_import_csb_save_buffer(), and for GAMEBLOCK1
- * bytes surfaces the read-only XOR-pad header verdict.
+ * bytes surfaces the read-only XOR-pad header verdict. The file helper
+ * below is a bounded read + classification convenience so startup/probe
+ * callers do not fork the byte-loading contract.
  *
  * Source references:
  *   - ReDMCSB CEDTINC8.C:101-118 (DMSAVE / CSBGAME.DAT routing)
@@ -271,6 +273,18 @@ int csb_v1_csbwin_save_loader_boundary_classify(
     const char *path_hint,
     const uint8_t *bytes,
     size_t size,
+    CSB_V1_CSBWinSaveDiscoveryResult *out);
+
+/* File-backed convenience wrapper for user-staged CSBWin saves. Reads the
+ * entire file when it is at most `max_size` bytes, then calls classify().
+ * Pass max_size=0 to use the module default cap. Returns the loader code
+ * from classify(), or CSB_SAVE_IMPORT_ERR_* on read/argument failure.
+ *
+ * This is intentionally classification-only. `should_attempt_import` tells
+ * callers whether a later runtime import should be attempted. */
+int csb_v1_csbwin_save_loader_boundary_classify_file(
+    const char *path,
+    size_t max_size,
     CSB_V1_CSBWinSaveDiscoveryResult *out);
 
 /* ── Lookup helpers (used by tests + probe + docs) ───────────────────── */

@@ -27,6 +27,8 @@
 #include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ── Documented contract table ───────────────────────────────────────── */
@@ -269,6 +271,10 @@ static int is_csbwin_512_shape(CSB_V1_CSBWinSaveShape shape)
            shape == CSB_V1_CSBWIN_SHAPE_CSBWIN_512_DM01 ||
            shape == CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CEDT;
 }
+
+enum {
+    CSB_V1_CSBWIN_SAVE_FILE_DEFAULT_MAX_BYTES = 4 * 1024 * 1024
+};
 
 const CSB_V1_CSBWinSaveShapeContract *
 csb_v1_csbwin_save_loader_boundary_contract(size_t *out_count)
@@ -728,6 +734,74 @@ int csb_v1_csbwin_save_loader_boundary_classify(
          out->loader.loader_code > 0) ? 1 : 0;
     out->decision_label =
         csb_v1_csbwin_save_loader_boundary_decision_name(out);
+    return rc;
+}
+
+int csb_v1_csbwin_save_loader_boundary_classify_file(
+    const char *path,
+    size_t max_size,
+    CSB_V1_CSBWinSaveDiscoveryResult *out)
+{
+    FILE *fp;
+    long file_size_long;
+    size_t file_size;
+    uint8_t *bytes;
+    size_t got;
+    int rc;
+
+    if (!path || path[0] == '\0' || !out) {
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    memset(out, 0, sizeof(*out));
+    out->file_kind = csb_v1_csbwin_save_loader_boundary_file_kind(path);
+    out->filename_candidate =
+        (out->file_kind != CSB_V1_CSBWIN_SAVE_FILE_NONE) ? 1 : 0;
+    out->shape = CSB_V1_CSBWIN_SHAPE_COUNT;
+    out->file_kind_label =
+        csb_v1_csbwin_save_loader_boundary_file_kind_name(out->file_kind);
+    out->decision_label =
+        csb_v1_csbwin_save_loader_boundary_decision_name(out);
+
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    if (max_size == 0u) {
+        max_size = (size_t)CSB_V1_CSBWIN_SAVE_FILE_DEFAULT_MAX_BYTES;
+    }
+    if (fseek(fp, 0L, SEEK_END) != 0) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    file_size_long = ftell(fp);
+    if (file_size_long < 0) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    file_size = (size_t)file_size_long;
+    if (file_size > max_size) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_TRUNCATED;
+    }
+    if (fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    bytes = (uint8_t *)malloc(file_size > 0u ? file_size : 1u);
+    if (!bytes) {
+        fclose(fp);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    got = fread(bytes, 1u, file_size, fp);
+    fclose(fp);
+    if (got != file_size) {
+        free(bytes);
+        return CSB_SAVE_IMPORT_ERR_TRUNCATED;
+    }
+
+    rc = csb_v1_csbwin_save_loader_boundary_classify(path, bytes, file_size,
+                                                     out);
+    free(bytes);
     return rc;
 }
 
