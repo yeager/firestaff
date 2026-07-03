@@ -1135,6 +1135,19 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
           "C49 movement decrements kinetic/attack energy without first-move grace");
     CHECK(count_queued_event_type(&profile, DM1_EVENT_MOVE_PROJECTILE) == 2,
           "C49 movement requeues live launcher projectiles for the following tick");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 launcher projectile wall-impact events dispatch on the next tick");
+    CHECK(profile.projectiles.count == 0,
+          "C49 wall impact despawns launcher projectiles");
+    CHECK(profile.explosions.count == 2,
+          "C49 wall impact materializes launcher projectile explosions");
+    CHECK(profile.explosions.entries[0].explosionType ==
+              C002_EXPLOSION_LIGHTNING_BOLT &&
+              profile.explosions.entries[1].explosionType ==
+              C002_EXPLOSION_LIGHTNING_BOLT,
+          "C49 wall impact preserves launcher lightning explosion type");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 2,
+          "C49 wall impact schedules C25 explosion advance events");
 
     make_real_format_sensor_dungeon(
         &dungeon,
