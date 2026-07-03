@@ -1844,9 +1844,10 @@ static int csb_v1_runtime_group_destination_is_blocked(
 static int csb_v1_runtime_move_group_thing_to_square(
     CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
-    int level,
+    int old_level,
     int old_x,
     int old_y,
+    int new_level,
     int new_x,
     int new_y)
 {
@@ -1860,15 +1861,18 @@ static int csb_v1_runtime_move_group_thing_to_square(
     int thing_size;
     int guard;
 
-    if (!dungeon || (old_x == new_x && old_y == new_y)) return 0;
+    if (!dungeon ||
+        (old_level == new_level && old_x == new_x && old_y == new_y)) {
+        return 0;
+    }
     source_first_ptr = csb_v1_runtime_square_first_thing_ptr(
         dungeon,
-        level,
+        old_level,
         old_x,
         old_y);
     dest_first_ptr = csb_v1_runtime_square_first_thing_ptr(
         dungeon,
-        level,
+        new_level,
         new_x,
         new_y);
     if (!source_first_ptr || !dest_first_ptr) return 0;
@@ -1964,6 +1968,7 @@ static int csb_v1_runtime_decode_group_teleporter_at_square(
 static int csb_v1_runtime_apply_group_teleporter_at_square(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
+    int *inout_map_index,
     int *inout_map_x,
     int *inout_map_y)
 {
@@ -1971,7 +1976,7 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
     int moved_count = 0;
     int chain_guard;
 
-    if (!profile || !profile->dungeon_handle ||
+    if (!profile || !profile->dungeon_handle || !inout_map_index ||
         !inout_map_x || !inout_map_y) {
         return 0;
     }
@@ -1987,12 +1992,18 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
         int thing_type = -1;
         int thing_size = 0;
         int creature_type;
+        int current_map_index;
         uint16_t flags;
         int direction;
 
+        current_map_index = *inout_map_index;
+        if (current_map_index < 0 ||
+            current_map_index >= dungeon->level_count) {
+            break;
+        }
         raw_square = csb_v1_dungeon_get_raw_square(
             dungeon,
-            profile->current_level,
+            current_map_index,
             *inout_map_x,
             *inout_map_y);
         if (raw_square < 0 ||
@@ -2002,23 +2013,27 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
         }
         if (csb_v1_runtime_decode_group_teleporter_at_square(
                 dungeon,
-                profile->current_level,
+                current_map_index,
                 *inout_map_x,
                 *inout_map_y,
                 raw_square,
                 &teleporter,
                 &scope) <= 0 ||
-            (scope & 0x01) == 0 ||
-            teleporter.target_map_index != profile->current_level) {
+            (scope & 0x01) == 0) {
             break;
         }
-        if (teleporter.target_map_x == *inout_map_x &&
+        if (teleporter.target_map_index == current_map_index &&
+            teleporter.target_map_x == *inout_map_x &&
             teleporter.target_map_y == *inout_map_y) {
+            break;
+        }
+        if (teleporter.target_map_index < 0 ||
+            teleporter.target_map_index >= dungeon->level_count) {
             break;
         }
         if (csb_v1_runtime_group_destination_is_blocked(
                 dungeon,
-                profile->current_level,
+                teleporter.target_map_index,
                 teleporter.target_map_x,
                 teleporter.target_map_y)) {
             break;
@@ -2045,7 +2060,7 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
         group.cells_packed = (uint16_t)group_record[5];
         group.behavior = (int)(flags & 0x000Fu);
         group.active_group_index = 0;
-        group.source_map_index = profile->current_level;
+        group.source_map_index = current_map_index;
         group.party_map_index = profile->current_level;
         if (csb_v1_teleporter_rotation_apply_group_pc34_compat(
                 &teleporter,
@@ -2056,9 +2071,10 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
         if (!csb_v1_runtime_move_group_thing_to_square(
                 dungeon,
                 group_thing,
-                profile->current_level,
+                current_map_index,
                 *inout_map_x,
                 *inout_map_y,
+                teleporter.target_map_index,
                 teleporter.target_map_x,
                 teleporter.target_map_y)) {
             break;
@@ -2075,6 +2091,7 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
         flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 8)) |
                            (uint16_t)((result.directions_packed & 0x03u) << 8));
         csb_v1_runtime_write_u16(group_record + 14, flags);
+        *inout_map_index = teleporter.target_map_index;
         *inout_map_x = teleporter.target_map_x;
         *inout_map_y = teleporter.target_map_y;
         moved_count++;
@@ -2082,9 +2099,9 @@ static int csb_v1_runtime_apply_group_teleporter_at_square(
     /* ReDMCSB MOVESENS.C F0267 lines 493-530 moves C04 groups through
      * creature-scope teleporters, applies the PC34 100-step chained movement
      * cap, and calls F0262 for direction/cell rotation.  This bounded CSB
-     * runtime bridge handles same-map generated groups with raw C04 records;
-     * ActiveGroup side state, buzz audio, cross-map target maps, and chained
-     * group pit routes remain separate work. */
+     * runtime bridge handles generated groups with raw C04 records;
+     * ActiveGroup side state, buzz audio, and chained group pit routes remain
+     * separate work. */
     return moved_count;
 }
 
@@ -2169,6 +2186,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 return;
             }
             if (behavior == 7) {
+                int target_map_index = record->mapIndex;
                 int target_x = record->mapX;
                 int target_y = record->mapY;
                 int moved = 0;
@@ -2203,12 +2221,14 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                         record->mapIndex,
                         record->mapX,
                         record->mapY,
+                        record->mapIndex,
                         target_x,
                         target_y);
                     if (moved) {
                         (void)csb_v1_runtime_apply_group_teleporter_at_square(
                             profile,
                             group_thing,
+                            &target_map_index,
                             &target_x,
                             &target_y);
                     }
@@ -2217,13 +2237,13 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                  * toward the target using F0202 movement checks, then lines
                  * 2450-2463 schedule the next C37.  This bounded bridge
                  * relinks a real-format C04 group when the destination square
-                 * already has a thing-list slot, then applies one same-map
-                 * creature-scope teleporter if present. Full F0202 occupancy,
-                 * ActiveGroup side state, sounds, chained routes, and attack
+                 * already has a thing-list slot, then applies the bounded
+                 * creature-scope teleporter chain. Full F0202 occupancy,
+                 * ActiveGroup side state, sounds, group pit routes, and attack
                  * expansion remain separate work. */
                 csb_v1_runtime_schedule_c37_group_event(
                     profile,
-                    record->mapIndex,
+                    moved ? target_map_index : record->mapIndex,
                     moved ? target_x : record->mapX,
                     moved ? target_y : record->mapY,
                     (int)thing_record[4],
