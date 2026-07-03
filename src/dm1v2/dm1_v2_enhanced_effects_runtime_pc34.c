@@ -16,6 +16,42 @@
  *   explicit.
  */
 
+static int dm1_v2_enhanced_effects_runtime_render_lights_indexed(
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int viewportX,
+    int viewportY,
+    unsigned char lightIndex)
+{
+    int changed = 0;
+    int ly;
+    for (ly = 0; ly < M11_V2_LIGHT_MAP_SIZE; ++ly) {
+        int lx;
+        for (lx = 0; lx < M11_V2_LIGHT_MAP_SIZE; ++lx) {
+            uint8_t r = 0;
+            uint8_t g = 0;
+            uint8_t b = 0;
+            unsigned int strength;
+            int x;
+            int y;
+            v2_light_get_tile(lx, ly, &r, &g, &b);
+            strength = (unsigned int)r + (unsigned int)g + (unsigned int)b;
+            if (strength < 96u) {
+                continue;
+            }
+            x = viewportX + (lx * 224) / M11_V2_LIGHT_MAP_SIZE;
+            y = viewportY + (ly * 136) / M11_V2_LIGHT_MAP_SIZE;
+            if (x >= 0 && x < framebufferWidth &&
+                y >= 0 && y < framebufferHeight) {
+                framebuffer[y * framebufferWidth + x] = lightIndex;
+                ++changed;
+            }
+        }
+    }
+    return changed;
+}
+
 int dm1_v2_enhanced_effects_runtime_tick(
     const DM1_V2_PhaseGateConfig* gateConfig,
     const DM1_V2_Settings* settings,
@@ -48,6 +84,7 @@ int dm1_v2_enhanced_effects_runtime_render_indexed(
 {
     DM1_V2_PhaseGateDecision decision;
     unsigned char effectIndex = 15u;
+    int changed = 0;
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return 0;
     }
@@ -64,9 +101,15 @@ int dm1_v2_enhanced_effects_runtime_render_indexed(
      * PROJEXPL.C F0213/F0220. This is a presentation-only indexed overlay
      * for already-seeded V2 particles; it does not create, move, or materialise
      * source projectiles/explosions. */
-    return v2_particle_blit_indexed(framebuffer, framebufferWidth,
-                                    framebufferHeight, viewportX, viewportY,
-                                    effectIndex);
+    changed += v2_particle_blit_indexed(framebuffer, framebufferWidth,
+                                        framebufferHeight, viewportX, viewportY,
+                                        effectIndex);
+    if (settings && settings->dynamicLightingEnabled) {
+        changed += dm1_v2_enhanced_effects_runtime_render_lights_indexed(
+            framebuffer, framebufferWidth, framebufferHeight,
+            viewportX, viewportY, effectIndex);
+    }
+    return changed;
 }
 
 const char* dm1_v2_enhanced_effects_runtime_source_evidence(void) {

@@ -35,6 +35,8 @@ typedef struct {
 } M11_V2_SourcePaletteLighting;
 
 void v2_light_init(void);
+void v2_light_clear_sources(void);
+int v2_light_source_count(void);
 int v2_light_add_source(float x, float y, float radius, uint8_t intensity, uint8_t r, uint8_t g, uint8_t b);
 void v2_light_remove_source(int idx);
 void v2_light_compute_map(void);
@@ -57,6 +59,7 @@ void v22_light_rebuild_map(void);
 float v22_light_get(int x, int y);
 void v22_light_set_ambient(float a);
 void v22_light_clear(void);
+int v22_light_source_count(void);
 void v22_light_tick(float dt);
 
 #ifdef __cplusplus

@@ -12,6 +12,7 @@
  */
 
 #include "dm1_v2_particle_system_pc34.h"
+#include "dm1_v2_lighting_dynamic_pc34.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -224,10 +225,14 @@ int main(void)
     init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
     seed_runtime_fireball_ahead(&state);
     v2_particle_init();
+    v2_light_init();
+    v22_light_clear();
     CHECK(M11_GameView_ProbeDm1V2LiveEffectSeedCount(&state) == 1,
           "V2 live-effect seed probe accepts active drawable projectile");
     CHECK(v2_particle_active_count() == 0,
           "V2 live-effect seed probe does not mutate particle runtime");
+    CHECK(v2_light_source_count() == 0 && v22_light_source_count() == 0,
+          "V2 live-effect seed probe does not mutate light runtime");
 
     init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
     seed_runtime_explosion_ahead(&state);
@@ -249,9 +254,13 @@ int main(void)
     init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
     seed_runtime_fireball_ahead(&state);
     v2_particle_init();
+    v2_light_init();
+    v22_light_clear();
     draw_once(&state, framebuffer);
     CHECK(v2_particle_active_count() > 0,
           "V2.0 live runtime projectile seeds transient particles");
+    CHECK(v2_light_source_count() > 0 && v22_light_source_count() > 0,
+          "V2.0 live runtime projectile seeds dynamic light sources");
     CHECK(count_live_effect_region_diff(baseline, framebuffer) > 0,
           "V2.0 live runtime projectile seeds additional effect overlay");
 

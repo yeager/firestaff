@@ -64,6 +64,7 @@
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
 #include "dm1_v2_enhanced_effects_runtime_pc34.h"
+#include "dm1_v2_lighting_dynamic_pc34.h"
 #include "dm1_v2_particle_system_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
 #include "m11_v22_inplace_draw_pc34.h"
@@ -532,7 +533,8 @@ static int m11_is_dm1_source_kind(M11_GameSourceKind kind)
 }
 
 static int m11_seed_dm1_v2_visible_effects_from_viewport(
-    const M11_GameViewState* state);
+    const M11_GameViewState* state,
+    int seedDynamicLights);
 
 static void m11_draw_dm1_v2_enhanced_effects_framepath(
     const M11_GameViewState* state,
@@ -567,7 +569,12 @@ static void m11_draw_dm1_v2_enhanced_effects_framepath(
      * rendered DM1 frame after the source viewport draw and behind the
      * DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION gate. */
     if (gate.v2PresentationEnabled) {
-        (void)m11_seed_dm1_v2_visible_effects_from_viewport(state);
+        if (settings.dynamicLightingEnabled) {
+            v2_light_clear_sources();
+            v22_light_clear();
+        }
+        (void)m11_seed_dm1_v2_visible_effects_from_viewport(
+            state, settings.dynamicLightingEnabled);
     }
     (void)dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 1.0f / 60.0f);
     (void)dm1_v2_enhanced_effects_runtime_render_indexed(
@@ -12000,8 +12007,36 @@ static int m11_dm1_v2_cell_would_seed_visible_effect(
              cell->elementType == DUNGEON_ELEMENT_TELEPORTER));
 }
 
+static void m11_seed_dm1_v2_visible_effect_light(float x,
+                                                 float y,
+                                                 float size,
+                                                 uint32_t color)
+{
+    float lightX = x * ((float)M11_V2_LIGHT_MAP_SIZE / 224.0f);
+    float lightY = y * ((float)M11_V2_LIGHT_MAP_SIZE / 136.0f);
+    uint8_t r = (uint8_t)((color >> 24) & 0xffu);
+    uint8_t g = (uint8_t)((color >> 16) & 0xffu);
+    uint8_t b = (uint8_t)((color >> 8) & 0xffu);
+    float radius = size < 2.0f ? 2.5f : 3.5f;
+    uint8_t intensity = size < 2.0f ? 160u : 220u;
+
+    if (lightX < 0.0f) lightX = 0.0f;
+    if (lightY < 0.0f) lightY = 0.0f;
+    if (lightX > (float)(M11_V2_LIGHT_MAP_SIZE - 1)) {
+        lightX = (float)(M11_V2_LIGHT_MAP_SIZE - 1);
+    }
+    if (lightY > (float)(M11_V2_LIGHT_MAP_SIZE - 1)) {
+        lightY = (float)(M11_V2_LIGHT_MAP_SIZE - 1);
+    }
+
+    (void)v2_light_add_source(lightX, lightY, radius, intensity, r, g, b);
+    (void)v22_light_add((int)(lightX + 0.5f), (int)(lightY + 0.5f),
+                        (float)intensity / 255.0f, radius, color, 1);
+}
+
 static int m11_seed_dm1_v2_visible_effect_particle(
-    const M11_ViewportCell* cell)
+    const M11_ViewportCell* cell,
+    int seedDynamicLights)
 {
     float x = 0.0f;
     float y = 0.0f;
@@ -12047,6 +12082,9 @@ static int m11_seed_dm1_v2_visible_effect_particle(
     }
 
     m11_dm1_v2_effect_point_for_cell(cell, &x, &y);
+    if (seedDynamicLights) {
+        m11_seed_dm1_v2_visible_effect_light(x, y, size, color);
+    }
     return v2_particle_add_direct(x, y, life, size, 0.0f, color) >= 0;
 }
 
@@ -12073,7 +12111,8 @@ static int m11_count_dm1_v2_visible_effect_seeds_from_viewport(
 }
 
 static int m11_seed_dm1_v2_visible_effects_from_viewport(
-    const M11_GameViewState* state)
+    const M11_GameViewState* state,
+    int seedDynamicLights)
 {
     int count = 0;
     int depth;
@@ -12085,7 +12124,8 @@ static int m11_seed_dm1_v2_visible_effects_from_viewport(
         for (side = -1; side <= 1; ++side) {
             M11_ViewportCell cell;
             if (m11_sample_viewport_cell(state, depth, side, &cell)) {
-                count += m11_seed_dm1_v2_visible_effect_particle(&cell);
+                count += m11_seed_dm1_v2_visible_effect_particle(
+                    &cell, seedDynamicLights);
             }
         }
     }
