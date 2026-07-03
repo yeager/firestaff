@@ -123,22 +123,22 @@ const unsigned char G9012_auc_VgaPaletteEntrance_Compat[16][3] = {
 
 /* Special full-screen palettes.  The credits and entrance palettes mirror
  * the VIDEODRV.C / DRAWVIEW.C G8147_CREDITS and G8148_ENTRANCE rows; the
- * TITLE palette is the merged F20E PC 3.4 result of the C13_DUNGEON and
- * C14_MASTER COLOR_DEF tables from DRAWVIEW.C.  The earlier v2.7.4
+ * TITLE palette is the merged PC 3.4 VGA result of the C13_DUNGEON and
+ * C14_MASTER COLOR_DEF tables from VIDEODRV.C.  The earlier v2.7.4
  * implementation copied the colors out of the DM1 PC34 TITLE.DAT PL
  * record; that record only carries the title-page palette and overlaps
  * the F20E DUNGEON/MASTER colors incorrectly (red where the source
  * asks for brown/gold, brown where the source asks for yellow), so
  * "DUNGEON" came out red and "MASTER" came out dark.  ReDMCSB
- * DRAWVIEW.C is the F20E PC 3.4 source of truth, and the constants
+ * VIDEODRV.C is the PC34 VGA source of truth, and the constants
  * below are the VGA 6-bit DAC values converted to RGB8 with
  * rgb8 = (vga6 << 2) | (vga6 >> 4).  The TITLE_PRESENTS palette is
  * C12_PRESENTS from the same file; the F20E TITLE.C F0437 routine
  * calls F1012_PALETTE_SetCurtain(C0_BLACK_PALETTE) and then
  * F0694_SetMultipleColorsInPalette(C12_PRESENTS) before the PRESENTS
- * blit.  The source normal palette remains live behind that row because
- * SetCurtain(C0_BLACK_PALETTE) blacks hardware output, not the saved
- * full palette. */
+ * blit.  On the VGA driver table C12 explicitly programs indices
+ * 0..14 black and 0x0F white, so Firestaff must not leave the normal
+ * LIGHT0 palette visible behind the PRESENTS strip. */
 const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT][16][3] = {
         /* VGA_PALETTE_PC34_SPECIAL_CREDITS — VIDEODRV.C G8147_CREDITS */
         {
@@ -154,29 +154,28 @@ const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_
                 {146, 109,  73}, {255,   0,   0}, {182, 146, 109}, {109,  73,  36},
                 { 73,  73,  73}, {182, 182, 182}, {109,  36,   0}, {255, 255, 255}
         },
-        /* VGA_PALETTE_PC34_SPECIAL_TITLE — F20E PC 3.4 DUNGEON+MASTER palette.
+        /* VGA_PALETTE_PC34_SPECIAL_TITLE — PC34 VGA DUNGEON+MASTER palette.
          * ReDMCSB DRAWVIEW.C F1012_PALETTE_SetCurtain:665-679 blacks the
          * hardware palette only; it does not erase G8183_aac_FullPalette.
-         * TITLE.C:362-367 then applies C13_DUNGEON and C14_MASTER on top
-         * of the normal LIGHT0 row before restoring the curtain. */
+         * TITLE.C:362-367 then applies VIDEODRV.C C13_DUNGEON and
+         * C14_MASTER on top of the normal LIGHT0 row before restoring the
+         * curtain. */
         {
                 {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {188, 156,  60},
                 {156,  92,  60}, {220, 188,  60}, {188,  92,  60}, {220, 220,  92},
                 {255, 255,  60}, {255, 182,   0}, {219, 146, 109}, {124,  60,  28},
-                {255,   0,   0}, {182, 182, 182}, {  0,   0, 255}, {255,   0,   0}
+                {255,   0,   0}, {182, 182, 182}, {  0,   0, 255}, {255, 255, 255}
         },
-        /* VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS — F20E PC 3.4 PRESENTS palette.
-         * ReDMCSB DRAWVIEW.C F20E:
-         *   G8159_PRESENTS (C12_PRESENTS) sets 0x0F to white over the
-         *   normal palette, so the PRESENTS blit (TITLE.C:319-324)
-         *   fades in with the word "PRESENTS" lit in white.
-         *   TITLE.C:333 then fades back to black
-         *   before C13_DUNGEON + C14_MASTER take over. */
+        /* VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS — PC34 VGA PRESENTS palette.
+         * ReDMCSB VIDEODRV.C C25_VGA G8159_PRESENTS sets 0..14 black and
+         * 0x0F white, so the PRESENTS blit (TITLE.C:319-324) is plain
+         * white on black before TITLE.C:333 fades back to black and
+         * C13_DUNGEON + C14_MASTER take over. */
         {
-                {  0,   0,   0}, {109, 109, 109}, {146, 146, 146}, {109,  36,   0},
-                {  0, 219, 219}, {146,  73,   0}, {  0, 146,   0}, {  0, 219,   0},
-                {255,   0,   0}, {255, 182,   0}, {219, 146, 109}, {255, 255,   0},
-                { 73,  73,  73}, {182, 182, 182}, {  0,   0, 255}, {255, 255, 255}
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
+                {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {255, 255, 255}
         }
 };
 

@@ -270,14 +270,14 @@ int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
     int palette;
 
     if (!outSpecialPalette) return 0;
-    /* ReDMCSB TITLE.C F0437 PC/F20 source-lock (DRAWVIEW.C F20E):
-     *   - PRESENTS uses C12_PRESENTS (0x0F = white over the normal palette).
+    /* ReDMCSB TITLE.C F0437 PC34 VGA source-lock (VIDEODRV.C C25_VGA):
+     *   - PRESENTS uses C12_PRESENTS (0x0F = white, 0..14 black).
      *     TITLE.C:319-324 blits "PRESENTS" and F1012_PALETTE_SetCurtain
      *     fades C0_BLACK_PALETTE → C1_NORMAL_PALETTE in between, with
      *     F0694_SetMultipleColorsInPalette(C12_PRESENTS) setting 0x0F
      *     to white first.
      *   - ZOOM_BLIT and MASTER_STRIKES_BACK_BLIT use the merged
-     *     C13_DUNGEON + C14_MASTER table (DRAWVIEW.C G8160 + G8161):
+     *     C13_DUNGEON + C14_MASTER table (VIDEODRV.C G8160 + G8161):
      *     TITLE.C:340-402 fades back to black, then loads C13_DUNGEON
      *     and C14_MASTER for the DUNGEON MASTER zoom and STRIKES BACK
      *     reveal.  In RGB8 that is VGA_PALETTE_PC34_SPECIAL_TITLE.

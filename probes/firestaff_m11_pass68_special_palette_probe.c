@@ -2,13 +2,13 @@
  * Pass 68 bounded probe — DM1 PC 3.4 special VGA palettes.
  *
  * Scope: V1 graphics blocker for credits/entrance/title palettes.
- * Verifies the source-backed G8147_CREDITS, G8148_ENTRANCE, F20E
- * C13_DUNGEON+C14_MASTER (merged) TITLE palette, and F20E C12_PRESENTS
+ * Verifies the source-backed G8147_CREDITS, G8148_ENTRANCE, PC34 VGA
+ * C13_DUNGEON+C14_MASTER (merged) TITLE palette, and PC34 VGA C12_PRESENTS
  * TITLE_PRESENTS palette are exposed through the compat palette layer
  * instead of falling back to the base dungeon palette.  The TITLE
  * palette is the v2.7.4 release regression: the previous implementation
  * read the TITLE.DAT PL record, which painted "DUNGEON" in red instead
- * of the F20E brown/gold DUNGEON text and the "PRESENTS" word with
+ * of the PC34 VGA brown/gold DUNGEON text and the "PRESENTS" word with
  * the DUNGEON+MASTER palette instead of plain white.
  */
 
@@ -99,11 +99,11 @@ int main(void) {
            special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 5, 220, 188, 60) &&
            special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 6, 188, 92, 60) &&
            special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 7, 220, 220, 92) &&
-           special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 8, 252, 252, 60) &&
+           special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 8, 255, 255, 60) &&
            special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 11, 124, 60, 28) &&
-           special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 12, 252, 0, 0) &&
-           special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 15, 252, 0, 0),
-           "title palette matches ReDMCSB DRAWVIEW.C F20E C13_DUNGEON + C14_MASTER merged");
+           special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 12, 255, 0, 0) &&
+           special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 15, 255, 255, 255),
+           "title palette matches ReDMCSB VIDEODRV.C C25_VGA C13_DUNGEON + C14_MASTER merged");
 
     record("INV_P68_08",
            special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS, 0, 0, 0, 0) &&
@@ -114,14 +114,14 @@ int main(void) {
 
     /* v2.7.4 release regression guard: the wrong TITLE palette painted
      * color 4 as pure red (255,0,0) and color 8 as pure red (204,0,0)
-     * instead of light brown and yellow.  Both must now be the F20E
+     * instead of light brown and yellow.  Both must now be the PC34 VGA
      * light brown and yellow, never pure red. */
     record("INV_P68_09",
            !special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 4, 255, 0, 0) &&
            !special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 8, 204, 0, 0) &&
            !special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 15, 170, 119, 0) &&
            special_eq(VGA_PALETTE_PC34_SPECIAL_TITLE, 0, 0, 0, 0),
-           "v2.7.4 wrong TITLE palette (red color 4 / red color 8) is replaced by F20E brown/gold");
+           "v2.7.4 wrong TITLE palette (red color 4 / red color 8) is replaced by PC34 VGA brown/gold");
 
     printf("# summary: %d/%d invariants passed\n", g_pass, g_pass + g_fail);
     return g_fail ? 1 : 0;
