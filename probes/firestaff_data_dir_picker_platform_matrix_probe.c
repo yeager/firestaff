@@ -332,6 +332,32 @@ static void clear_all_synthetic_hashes(void) {
     M12_AssetStatus_TestSetTheronSyntheticHash(NULL);
 }
 
+static void check_default_data_dir_resolution(const char* home) {
+    char expected[512];
+    char resolved[512];
+    char defaultOriginals[512];
+    int rc;
+
+#ifdef _WIN32
+    rc = snprintf(expected, sizeof(expected), "%s\\.firestaff\\data", home);
+#else
+    rc = snprintf(expected, sizeof(expected), "%s/.firestaff/data", home);
+#endif
+    check_int(rc > 0 && (size_t)rc < sizeof(expected),
+              "default data-dir expectation must fit");
+
+    (void)probe_setenv("FIRESTAFF_DATA", NULL);
+    check_int(FSP_GetDefaultOriginalsDir(defaultOriginals,
+                                         sizeof(defaultOriginals)) == 1,
+              "default data-dir helper must resolve");
+    check_int(strcmp(defaultOriginals, expected) == 0,
+              "default data-dir helper must use the canonical user data root");
+    check_int(FSP_ResolveDataDir(resolved, sizeof(resolved), NULL) == 1,
+              "data-dir resolver must resolve without FIRESTAFF_DATA");
+    check_int(strcmp(resolved, expected) == 0,
+              "data-dir resolver must default to the canonical user data root");
+}
+
 /* Part A: a fresh empty data root must report zero availability
  * and a single rootCount with zero duplicate-root skips. */
 static void check_empty_root_no_availability(const char* root) {
@@ -647,7 +673,7 @@ int main(void) {
         !FSP_JoinPath(goodRoot, sizeof(goodRoot), home, "data") ||
         !FSP_JoinPath(badRoot, sizeof(badRoot), home, "irrelevant") ||
         !probe_setenv("HOME", home) ||
-        !probe_setenv("FIRESTAFF_DATA", goodRoot) ||
+        !probe_setenv("USERPROFILE", home) ||
         !probe_setenv("XDG_DATA_HOME", home) ||
         !probe_setenv("APPDATA", home)) {
         fprintf(stderr, "fixture environment setup failed\n");
@@ -663,6 +689,10 @@ int main(void) {
     clear_all_synthetic_hashes();
 
     printf("=== Firestaff data-dir picker / platform-matrix regression ===\n");
+
+    check_default_data_dir_resolution(home);
+    check_int(probe_setenv("FIRESTAFF_DATA", goodRoot),
+              "fixture FIRESTAFF_DATA set after default-resolution checks");
 
     check_empty_root_no_availability(badRoot);
     check_empty_root_no_availability(goodRoot);
