@@ -313,6 +313,9 @@ typedef struct {
     int stair_up;
     int pit_fall_applied;
     int pit_open;
+    int pit_fall_damaged_champion_count;
+    int pit_fall_total_damage;
+    int pit_fall_wound_mask;
     int teleporter_transition_applied;
     int teleporter_open;
     int teleporter_scope;

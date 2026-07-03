@@ -59,6 +59,13 @@ static uint32_t csb_v1_runtime_creature_attack_seed(
     int creature_type,
     int creature_index,
     int champion_index);
+static int csb_v1_runtime_fill_defender_combat_snapshot(
+    const CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    struct CombatantChampionSnapshot_Compat *out);
+static void csb_v1_runtime_mark_champion_dead(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index);
 
 /* GRAPHICS.DAT (or CSB.DAT / CSBGRAPH.DAT) MD5 hashes for all known
  * CSB variants — mirrors g_csb_boot_graphics_hashes in csb_v1_boot.c
@@ -1129,6 +1136,110 @@ static void csb_v1_runtime_apply_destination_stairs(
     result->stair_transition_applied = 1;
 }
 
+static int csb_v1_runtime_apply_party_fall_damage(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result,
+    int map_index,
+    int map_x,
+    int map_y)
+{
+    struct RngState_Compat rng;
+    int random_window;
+    int base_attack;
+    int damaged_count = 0;
+    int total_damage = 0;
+    int wound_mask = 0;
+    int i;
+
+    if (!profile || !profile->party_state_valid ||
+        profile->party_state.ChampionCount <= 0) {
+        return 0;
+    }
+
+    random_window = (20 >> 3) + 1;
+    base_attack = 20 - random_window;
+    random_window <<= 1;
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)(map_index & 0xff) << 4) ^
+            ((uint32_t)(map_x & 0xff) << 12) ^
+            ((uint32_t)(map_y & 0xff) << 20) ^
+            0xF0324u);
+
+    /* ReDMCSB MOVESENS.C F0267 lines 590-603 applies
+     * CHAMPION.C F0324 after a party pit fall with attack 20,
+     * MASK0x0010_WOUND_LEGS | MASK0x0020_WOUND_FEET, and C2_ATTACK_SELF.
+     * CHAMPION.C F0324 lines 1991-2022 randomizes attack by +/- 1/8 for
+     * each champion before F0321 scaling/wound selection.  This bounded
+     * CSB bridge uses deterministic local RNG until the runtime owns the
+     * original global RNG stream. */
+    for (i = 0; i < profile->party_state.ChampionCount &&
+                i < CSB_V1_MAX_CHAMPIONS; ++i) {
+        CSB_V1_Champion *champion = &profile->party_state.Champions[i];
+        struct CombatantChampionSnapshot_Compat defender;
+        int randomized_attack;
+        int scaled_attack = 0;
+        int selected_wounds = 0;
+
+        if (champion->CurrentHealth <= 0 ||
+            (champion->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0) {
+            continue;
+        }
+
+        randomized_attack = base_attack +
+            F0732_COMBAT_RngRandom_Compat(&rng, random_window);
+        if (randomized_attack < 1) randomized_attack = 1;
+
+        if (!csb_v1_runtime_fill_defender_combat_snapshot(
+                profile,
+                i,
+                &defender) ||
+            !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
+                COMBAT_ATTACK_SELF,
+                randomized_attack,
+                COMBAT_WOUND_LEGS | COMBAT_WOUND_FEET,
+                &defender,
+                &rng,
+                &scaled_attack,
+                NULL) ||
+            scaled_attack <= 0) {
+            continue;
+        }
+
+        if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+                scaled_attack,
+                COMBAT_WOUND_LEGS | COMBAT_WOUND_FEET,
+                &defender,
+                &rng,
+                &selected_wounds,
+                NULL)) {
+            selected_wounds = 0;
+        }
+
+        champion->Wounds = (uint16_t)(champion->Wounds |
+                                      (uint16_t)selected_wounds);
+        wound_mask |= selected_wounds;
+        if (scaled_attack >= champion->CurrentHealth) {
+            total_damage += champion->CurrentHealth;
+            champion->CurrentHealth = 0;
+            csb_v1_runtime_mark_champion_dead(profile, i);
+        } else {
+            champion->CurrentHealth =
+                (int16_t)(champion->CurrentHealth - scaled_attack);
+            total_damage += scaled_attack;
+        }
+        damaged_count++;
+    }
+
+    if (result) {
+        result->pit_fall_damaged_champion_count += damaged_count;
+        result->pit_fall_total_damage += total_damage;
+        result->pit_fall_wound_mask |= wound_mask;
+    }
+    return damaged_count;
+}
+
 static void csb_v1_runtime_apply_destination_pit(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_InputCommandRuntimeResult *result)
@@ -1155,12 +1266,12 @@ static void csb_v1_runtime_apply_destination_pit(
     result->pit_open = (raw_square & 0x08) ? 1 : 0;
     if (!result->pit_open || (raw_square & 0x01)) return;
 
-    /* ReDMCSB: MOVESENS.C F0267 lines 538-574 handles an open,
+    /* ReDMCSB: MOVESENS.C F0267 lines 538-603 handles an open,
      * non-imaginary C02_ELEMENT_PIT by calling DUNGEON.C F0154 for a
-     * downward map transition, then sets the current map and party
-     * coordinates.  This bounded CSB runtime slice mirrors only the
-     * adjacent level-index fall; full F0154 coordinate pairing, fall damage,
-     * sounds, rope, chained pits, and view redraw timing stay separate. */
+     * downward map transition, then applies F0324 party fall damage.
+     * This bounded CSB runtime slice mirrors adjacent level-index falls;
+     * full F0154 coordinate pairing, rope, sounds, and view redraw timing
+     * stay separate. */
     target_level = level + 1;
     result->old_party_level = profile->current_level;
     result->new_party_level = profile->current_level;
@@ -1170,6 +1281,12 @@ static void csb_v1_runtime_apply_destination_pit(
     csb_v1_dungeon_set_current_level(target_level);
     result->new_party_level = target_level;
     result->pit_fall_applied = 1;
+    (void)csb_v1_runtime_apply_party_fall_damage(
+        profile,
+        result,
+        target_level,
+        profile->party_x,
+        profile->party_y);
 }
 
 static void csb_v1_runtime_copy_first_teleporter_result(
@@ -1201,6 +1318,10 @@ static void csb_v1_runtime_copy_first_pit_result(
     }
     result->pit_fall_applied = 1;
     result->pit_chain_count++;
+    result->pit_fall_damaged_champion_count +=
+        step->pit_fall_damaged_champion_count;
+    result->pit_fall_total_damage += step->pit_fall_total_damage;
+    result->pit_fall_wound_mask |= step->pit_fall_wound_mask;
 }
 
 static void csb_v1_runtime_apply_destination_chain(
