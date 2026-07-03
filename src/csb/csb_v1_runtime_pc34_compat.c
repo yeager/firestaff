@@ -20,6 +20,7 @@
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
 #include "csb_v1_teleporter_rotation_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
+#include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
@@ -612,6 +613,61 @@ int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
     return csb_v1_save_game(path, &image, (int)sizeof(image), &header);
 }
 
+int csb_v1_runtime_import_csbgame_roster_from_path(
+    CSB_V1_RuntimeProfile *profile,
+    const char *path)
+{
+    CSB_V1_PartyState party;
+    int imported;
+    int pose_x;
+    int pose_y;
+    int pose_z;
+    int pose_dir;
+    int pose_level;
+
+    if (!profile || !path) return CSB_SAVE_IMPORT_ERR_NULL;
+
+    pose_x = profile->party_x;
+    pose_y = profile->party_y;
+    pose_z = profile->party_z;
+    pose_dir = profile->party_dir & 3;
+    pose_level = profile->current_level;
+
+    memset(&party, 0, sizeof(party));
+    imported = csb_v1_import_csb_save_file(&party, path);
+    if (imported <= 0) {
+        return imported;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 restores a full running game, while
+     * CHARACTER.C ReadingChampion()/CEDTINC8.C import only the roster
+     * payload from CSBGAME.DAT.  Until the CSBGAME dungeon/global-data
+     * body is source-locked, keep the already booted runtime pose and
+     * promote only the champion roster into live CSB state. */
+    party.PartyMapX = pose_x;
+    party.PartyMapY = pose_y;
+    party.PartyDirection = (uint8_t)pose_dir;
+    party.MagicCasterIndex = party.LeaderIndex;
+
+    if (csb_v1_runtime_set_party_state(profile, &party) != 0) {
+        return -1;
+    }
+
+    profile->party_x = pose_x;
+    profile->party_y = pose_y;
+    profile->party_z = pose_z;
+    profile->party_dir = pose_dir;
+    profile->current_level = pose_level;
+    profile->difficulty =
+        (CSB_V1_Difficulty)csb_v1_runtime_calc_difficulty(imported);
+    profile->party_state.PartyMapX = pose_x;
+    profile->party_state.PartyMapY = pose_y;
+    profile->party_state.PartyDirection = (uint8_t)pose_dir;
+    profile->party_state.MagicCasterIndex = profile->magic_caster_index;
+    profile->timeline_queue.gameTick = profile->game_time;
+    return CSB_V1_LOAD_OK;
+}
+
 int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
                                        const char *path)
 {
@@ -623,7 +679,11 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
     memset(&image, 0, sizeof(image));
     memset(&header, 0, sizeof(header));
     result = csb_v1_load_game(path, &image, (int)sizeof(image), &header);
-    if (result != CSB_V1_LOAD_OK) return result;
+    if (result != CSB_V1_LOAD_OK) {
+        int import_result =
+            csb_v1_runtime_import_csbgame_roster_from_path(profile, path);
+        return (import_result == CSB_V1_LOAD_OK) ? CSB_V1_LOAD_OK : result;
+    }
     return csb_v1_runtime_apply_save_image(profile, &image, &header);
 }
 
