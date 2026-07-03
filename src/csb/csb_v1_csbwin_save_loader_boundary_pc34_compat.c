@@ -151,6 +151,31 @@ static unsigned int read_le32_at(const uint8_t *bytes, size_t size, size_t off)
          | ((unsigned int)bytes[off + 3u] << 24);
 }
 
+static CSB_V1_CSBWinSaveShape classify_valid_xor512_shape(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWin512Report *out_report)
+{
+    CSB_V1_CSBWin512Report local_report;
+    CSB_V1_CSBWin512Report *report = out_report ? out_report : &local_report;
+    int rc;
+
+    if (!bytes || size < CSB_V1_CSBWIN_BLOCK1_BYTES) {
+        return CSB_V1_CSBWIN_SHAPE_COUNT;
+    }
+    rc = csb_v1_csbwin_512_xor_pad_classify(bytes, size, report);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        return CSB_V1_CSBWIN_SHAPE_COUNT;
+    }
+    if (report->verdict == CSB_V1_CSBWIN_512_VERDICT_CSB) {
+        return CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CSB1;
+    }
+    if (report->verdict == CSB_V1_CSBWIN_512_VERDICT_DM) {
+        return CSB_V1_CSBWIN_SHAPE_CSBWIN_512_DM01;
+    }
+    return CSB_V1_CSBWIN_SHAPE_COUNT;
+}
+
 static CSB_V1_CSBWinSaveShape classify_bytes_shape(
     const uint8_t *bytes,
     size_t size)
@@ -189,6 +214,13 @@ static CSB_V1_CSBWinSaveShape classify_bytes_shape(
         bytes[2] == (uint8_t)'D' &&
         bytes[3] == (uint8_t)'T') {
         return CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CEDT;
+    }
+    {
+        CSB_V1_CSBWinSaveShape xor_shape =
+            classify_valid_xor512_shape(bytes, size, NULL);
+        if (xor_shape != CSB_V1_CSBWIN_SHAPE_COUNT) {
+            return xor_shape;
+        }
     }
     if (memcmp(bytes, kCsbGameMagic, CSB_SAVE_MAGIC_LEN) != 0) {
         return CSB_V1_CSBWIN_SHAPE_NO_MAGIC_8_PLUS;
@@ -229,6 +261,13 @@ static CSB_V1_CSBWinSaveShape classify_bytes_shape(
     return (version == CSB_SAVE_VERSION_V21)
         ? CSB_V1_CSBWIN_SHAPE_CSBGAME_V21
         : CSB_V1_CSBWIN_SHAPE_CSBGAME_V20;
+}
+
+static int is_csbwin_512_shape(CSB_V1_CSBWinSaveShape shape)
+{
+    return shape == CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CSB1 ||
+           shape == CSB_V1_CSBWIN_SHAPE_CSBWIN_512_DM01 ||
+           shape == CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CEDT;
 }
 
 const CSB_V1_CSBWinSaveShapeContract *
@@ -661,6 +700,13 @@ int csb_v1_csbwin_save_loader_boundary_classify(
     out->file_kind_label =
         csb_v1_csbwin_save_loader_boundary_file_kind_name(kind);
 
+    if (is_csbwin_512_shape(shape)) {
+        CSB_V1_CSBWinSaveShape xor_shape =
+            classify_valid_xor512_shape(bytes, size, &out->xor512_report);
+        out->xor512_valid =
+            (xor_shape != CSB_V1_CSBWIN_SHAPE_COUNT) ? 1 : 0;
+    }
+
     if (shape == CSB_V1_CSBWIN_SHAPE_COUNT) {
         out->loader.shape = shape;
         out->loader.shape_label =
@@ -730,6 +776,9 @@ const char *csb_v1_csbwin_save_loader_boundary_decision_name(
     }
     if (result->should_attempt_import) {
         return "accept_loader_ready";
+    }
+    if (is_csbwin_512_shape(result->shape) && result->xor512_valid) {
+        return "reject_csbwin_512_header_valid_import_pending";
     }
     switch (result->shape) {
     case CSB_V1_CSBWIN_SHAPE_DM1_RAW_RDMCSB15:
