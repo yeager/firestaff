@@ -58,6 +58,10 @@ typedef struct {
     int csbgraphics_scan_attempted;
     int csbgraphics_scan_result;
     int csbgraphics_plan_result;
+    int csbgraphics_skin_def_loaded;
+    uint16_t csbgraphics_skin_def_words
+        [CSB_V1_CSBGRAPHICS_M11_SKIN_DEF_MAX_WORDS];
+    size_t csbgraphics_skin_def_word_count;
     CSB_V1_CSBGraphicsDatRealCache csbgraphics_cache;
     CSB_V1_CSBGraphicsM11RuntimePlan csbgraphics_m11_plan;
 
@@ -81,6 +85,9 @@ const CSB_V1_CSBGraphicsM11RuntimePlan *
 csb_v1_boot_csbgraphics_m11_plan(const CSB_V1_BootProfile *profile);
 const CSB_V1_CSBGraphicsDatRealCache *
 csb_v1_boot_csbgraphics_cache(const CSB_V1_BootProfile *profile);
+const uint16_t *
+csb_v1_boot_csbgraphics_skin_def_words(const CSB_V1_BootProfile *profile,
+                                       size_t *out_word_count);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *
