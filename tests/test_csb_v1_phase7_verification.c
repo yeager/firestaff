@@ -372,6 +372,79 @@ static void test_dungeon_real_format_expool_db11_skin_lookup(void)
     csb_v1_dungeon_free(&d);
 }
 
+static void test_runtime_custom_background_skin_grid_from_expool(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData *dungeon;
+    uint8_t buf[384];
+    uint8_t skins[16];
+    int width = 0;
+    int height = 0;
+    int loaded_level = -1;
+    int default_skin = 0;
+    const int map_desc = 44;
+    const int column_counts = 60;
+    const int db11 = 64;
+    const int raw_map = 320;
+    const uint16_t raw_bit_a = (uint16_t)(0 | ((2 - 1) << 6) | ((2 - 1) << 11));
+    const uint32_t column_record_id = (uint32_t)(4u << 24);
+    const uint32_t default_record_id = (uint32_t)((4u << 24) | 0x800000u);
+    const uint32_t column_hash = column_record_id * 0xbb40e62du;
+    const uint32_t default_hash = default_record_id * 0xbb40e62du;
+
+    memset(buf, 0, sizeof(buf));
+    put_le16(buf, 0, 0);
+    buf[4] = 1;
+    put_le16(buf, 6, 0);
+    put_le16(buf, 10, 0);
+    put_le16(buf, 12 + 11 * 2, 1);
+    put_le16(buf, map_desc + 0, 0);
+    put_le16(buf, map_desc + 8, raw_bit_a);
+    put_le16(buf, column_counts + 0, 0);
+    put_le16(buf, column_counts + 2, 0);
+
+    put_le16(buf, db11 + 2, 4);
+    put_le32(buf, db11 + (int)(32u + (column_hash >> 27)) * 4, 1);
+    put_le32(buf, db11 + 1 * 4, 0);
+    put_le32(buf, db11 + 2 * 4, column_record_id);
+    buf[db11 + 3 * 4 + 0] = 2;
+    buf[db11 + 3 * 4 + 1] = 3;
+    buf[db11 + 3 * 4 + 2] = 4;
+    buf[db11 + 3 * 4 + 3] = 5;
+    put_le32(buf, db11 + (int)(32u + (default_hash >> 27)) * 4, 5);
+    put_le32(buf, db11 + 5 * 4, 0);
+    put_le32(buf, db11 + 6 * 4, default_record_id);
+    buf[db11 + 7 * 4 + 0] = 9;
+    buf[raw_map + 0] = 0x01u;
+    buf[raw_map + 1] = 0x02u;
+    buf[raw_map + 2] = 0x03u;
+    buf[raw_map + 3] = 0x04u;
+
+    dungeon = (CSB_V1_DungeonData *)calloc(1, sizeof(*dungeon));
+    CHECK(dungeon != NULL, "runtime skin-grid test allocates dungeon handle");
+    if (!dungeon) {
+        return;
+    }
+    CHECK(csb_v1_dungeon_load(dungeon, buf, (int)sizeof(buf)) == 0,
+          "runtime skin-grid fixture dungeon loads");
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = dungeon;
+    profile.current_level = 0;
+    memset(skins, 0xff, sizeof(skins));
+
+    CHECK(csb_v1_runtime_custom_background_skin_grid(
+              &profile, skins, (int)sizeof(skins),
+              &width, &height, &loaded_level, &default_skin) == 1,
+          "runtime custom-background skin grid resolves through DB11 Expool");
+    CHECK(width == 2 && height == 2 && loaded_level == 0,
+          "runtime skin grid reports loaded level dimensions");
+    CHECK(default_skin == 9, "runtime skin grid resolves default skin from Expool");
+    CHECK(skins[0] == 2 && skins[1] == 3 && skins[2] == 4 && skins[3] == 5,
+          "runtime skin grid preserves CSBWin column byte ordering");
+
+    csb_v1_runtime_cleanup(&profile);
+}
+
 static void test_dungeon_decode_square(void)
 {
     CSB_V1_DungeonData d;
@@ -1273,6 +1346,7 @@ int main(void)
     test_dungeon_first_thing();
     test_dungeon_real_format_square_first_thing_chain();
     test_dungeon_real_format_expool_db11_skin_lookup();
+    test_runtime_custom_background_skin_grid_from_expool();
     test_dungeon_decode_square();
     test_wall_text_oracle_slice();
     test_dungeon_collision_wall();
