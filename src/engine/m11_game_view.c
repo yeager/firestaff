@@ -17267,18 +17267,24 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable) {
         return;
     }
-    (void)cells;
-    (void)maxVisibleForward;
     flipWalls = m11_dm1_use_flipped_walls(state);
     for (i = 0; i < sizeof(kM11_DM1SideWallBlits) /
                     sizeof(kM11_DM1SideWallBlits[0]); ++i) {
         M11_ViewportCell cell;
-        /* ReDMCSB DUNVIEW.C F0128 lines 8478-8533 draws side wall
+        /* Far to near: ReDMCSB DUNVIEW.C F0128 lines 8478-8533 draws side wall
          * squares far-to-near without testing nearer side-lane occupancy;
          * nearer D1/D2 side walls and center walls overpaint farther panels.
-         * Do not reuse thing/projectile lane guards or the center-lane
-         * max-visible-depth gate here, or source-visible D2L/D2R side
-         * panels disappear until the party steps forward. */
+         * Firestaff's split primitive passes still must honor the nearest
+         * center blocker and same-side blockers, otherwise D3/D2 side
+         * wall panels can paint a continuing corridor through a D1/D2C wall. */
+        if (kM11_DM1SideWallBlits[i].relForward > maxVisibleForward) {
+            continue;
+        }
+        if (!m11_dm1_side_lane_clear_for_rel(cells,
+                                             kM11_DM1SideWallBlits[i].relForward,
+                                             kM11_DM1SideWallBlits[i].relSide)) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state,
                                       kM11_DM1SideWallBlits[i].relForward,
                                       kM11_DM1SideWallBlits[i].relSide,

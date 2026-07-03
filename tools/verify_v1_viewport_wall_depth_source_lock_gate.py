@@ -62,6 +62,25 @@ def find_red_function(text: str, name: str) -> tuple[int, int, str]:
     end = next_match.start() if next_match else len(text)
     return match.start(), end, text[match.start():end]
 
+def find_static_array(text: str, name: str) -> tuple[int, int, str]:
+    needle = name + "[]"
+    start = text.find(needle)
+    if start < 0:
+        raise AssertionError(f"missing static array for {name}")
+    brace = text.find("{", start)
+    if brace < 0:
+        raise AssertionError(f"missing initializer for {name}")
+    depth = 0
+    for pos in range(brace, len(text)):
+        if text[pos] == "{":
+            depth += 1
+        elif text[pos] == "}":
+            depth -= 1
+            if depth == 0:
+                line_start = text.rfind("\n", 0, start) + 1
+                return line_start, pos + 1, text[line_start:pos + 1]
+    raise AssertionError(f"unterminated static array for {name}")
+
 def require_in_order(body: str, markers: list[tuple[str, str]], label: str) -> list[tuple[str, int]]:
     out: list[tuple[str, int]] = []
     last = -1
@@ -171,12 +190,16 @@ def main() -> int:
         ("front wall wrapper blit", "m11_draw_dm1_front_wall_blit"),
         ("nearer center occludes farther", "occluded = 1;"),
     ], "Firestaff front wall depth/occlusion")
-    side_start, _side_end, side = find_function(fire, "m11_draw_dm1_side_walls")
-    require_in_order(side, [
+    side_table_start, _side_table_end, side_table = find_static_array(fire, "kM11_DM1SideWallBlits")
+    require_in_order(side_table, [
         ("D3 side wall first", "{3, 3, -2, M11_GFX_WALLSET0_D3L2"),
         ("D2 side wall after D3", "{2, 2, -2, M11_GFX_WALLSET0_D2L2"),
         ("D1 side wall after D2", "{1, 1, -1, M11_GFX_WALLSET0_D1L"),
         ("D0 side wall nearest", "{0, 0, -1, M11_GFX_WALLSET0_D0L"),
+    ], "Firestaff side wall depth table")
+    side_start, _side_end, side = find_function(fire, "m11_draw_dm1_side_walls")
+    require_in_order(side, [
+        ("max-visible guard", "relForward > maxVisibleForward"),
         ("same-lane guard", "m11_dm1_side_lane_clear_for_rel(cells,"),
         ("wall blit", "m11_draw_dm1_wall_blit_with_transparency"),
     ], "Firestaff side wall depth/occlusion")
