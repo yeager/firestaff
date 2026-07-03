@@ -9110,6 +9110,38 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
         m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile*)state->csbBootProfile;
+        if (!profile) {
+            m11_set_status(state, "LOAD", "CSB PROFILE MISSING");
+            return 0;
+        }
+        /* ReDMCSB LOADSAVE.C F0435 restores CSB live globals from the save
+         * file after the dungeon/profile is available.  M11 already owns
+         * the verified CSB boot profile here, so direct F9 can reload the
+         * runtime snapshot in place without touching the DM1 world loader. */
+        if (csb_v1_runtime_load_game_from_path(&profile->runtime, path) !=
+            CSB_V1_LOAD_OK) {
+            m11_set_status(state, "LOAD", "CSB QUICKSAVE INVALID");
+            return 0;
+        }
+        state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
+        state->csbState.party_x = profile->runtime.party_x;
+        state->csbState.party_y = profile->runtime.party_y;
+        state->csbState.party_dir = profile->runtime.party_dir;
+        state->csbState.tick_count = (int)profile->runtime.tick_count;
+        state->loadGameTick = profile->runtime.game_time;
+        state->lastSaveTick = profile->runtime.game_time;
+        m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "CSB RESTORED");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "TICK %u RELOADED FROM %s",
+                 (unsigned int)profile->runtime.game_time,
+                 path);
+        return 1;
+    }
 
     return m11_game_view_load_quicksave_path(state, path);
 }
