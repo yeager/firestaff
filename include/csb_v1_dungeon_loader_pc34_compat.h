@@ -34,6 +34,9 @@ typedef struct {
     int level_offsets[CSB_V1_MAX_LEVELS];
     int level_widths[CSB_V1_MAX_LEVELS];
     int level_heights[CSB_V1_MAX_LEVELS];
+    int map_levels[CSB_V1_MAX_LEVELS];
+    int map_offset_x[CSB_V1_MAX_LEVELS];
+    int map_offset_y[CSB_V1_MAX_LEVELS];
     int square_bytes;
     int raw_map_data_base;
     int square_first_thing_base;

@@ -1731,6 +1731,87 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 final group pit drop terminates the fallen carried thing chain");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.level_count = 3;
+    dungeon.level_widths[1] = 3;
+    dungeon.level_heights[1] = 3;
+    dungeon.level_offsets[1] = 9;
+    dungeon.level_widths[2] = 3;
+    dungeon.level_heights[2] = 3;
+    dungeon.level_offsets[2] = 18;
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
+    dungeon.map_levels[2] = 1;
+    dungeon.map_offset_x[0] = 4;
+    dungeon.map_offset_y[0] = 4;
+    dungeon.map_offset_x[1] = 20;
+    dungeon.map_offset_y[1] = 20;
+    dungeon.map_offset_x[2] = 4;
+    dungeon.map_offset_y[2] = 4;
+    dungeon.square_first_thing_base = 120;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[4] = 136;
+    dungeon.thing_type_counts[4] = 1;
+    dungeon.thing_data_bases[5] = 152;
+    dungeon.thing_type_counts[5] = 1;
+    raw[dungeon.level_offsets[0] + real_format_square_offset(1, 1)] =
+        (uint8_t)((2u << 5) | 0x10u | 0x08u);
+    raw[dungeon.level_offsets[2] + real_format_square_offset(1, 1)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 1 * 2, 0);
+    test_put_le16(raw, 44 + dungeon.level_count * 16 + 7 * 2, 1);
+    test_put_le16(raw, 120, (uint16_t)(4u << 10));
+    test_put_le16(raw, 122, 0xfffeu);
+    test_put_le16(raw, 136, 0xfffeu);
+    test_put_le16(raw, 138, (uint16_t)(5u << 10)); /* carried weapon slot */
+    raw[140] = 9u;
+    raw[141] = 0xffu;
+    test_put_le16(raw, 142, 1u);
+    test_put_le16(raw, 150, 0u);
+    test_put_le16(raw, 152, 0xfffeu);
+    test_put_le16(raw, 154, 27u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_seed = 0xC5B1073Bu;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 160;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    slot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 offset-map pit-drop fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 offset-map pit-drop reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 offset-map pit-drop dispatches through the explosion handler");
+    CHECK(test_get_le16(raw, 120) == 0xfffeu,
+          "C25 offset-map pit drop leaves the source pit thing-list empty");
+    CHECK((test_get_le16(raw, 122) & 0x3fffu) == (uint16_t)(5u << 10),
+          "C25 offset-map pit drop chooses the F0154 target map, not map_index+1");
+    CHECK(test_get_le16(raw, 136) == 0xffffu,
+          "C25 offset-map pit drop marks the real-format group record unused");
+    CHECK(test_get_le16(raw, 138) == 0xfffeu,
+          "C25 offset-map pit drop clears the real-format group Slot chain");
+    CHECK(test_get_le16(raw, 152) == 0xfffeu,
+          "C25 offset-map pit drop terminates the moved carried thing chain");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.level_count = 2;
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
