@@ -407,6 +407,8 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     uint16_t text_word;
     uint16_t type_data;
     uint16_t group_flags;
+    uint32_t c38_dispatch_time;
+    int c38_event_index;
     int i;
 
     make_real_format_corridor_text_generator_dungeon(
@@ -505,6 +507,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "adjacent attack transition does not move the group onto the party square");
     CHECK(profile.timeline_queue.eventCount == 1,
           "adjacent attack transition queues one C38 creature attack event");
+    c38_dispatch_time = profile.game_time;
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "next tick dispatches the bounded C38 attack event");
     CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
@@ -518,8 +521,17 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded C38 attack event priority follows 255 - creature movement ticks");
     CHECK(profile.party_state.Champions[0].CurrentHealth == 18,
           "bounded C38 attack event applies deterministic champion HP damage");
-    CHECK(profile.timeline_queue.eventCount == 0,
-          "bounded C38 attack event consumes the generated attack queue");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "bounded C38 attack event requeues the next attack cadence");
+    c38_event_index = profile.timeline_queue.timeline[0];
+    CHECK(profile.timeline_queue.events[c38_event_index].type ==
+              DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+              DM1_MAP_TIME_TIME(
+                  profile.timeline_queue.events[c38_event_index].map_time) ==
+                  c38_dispatch_time + 14U &&
+              profile.timeline_queue.events[c38_event_index].priority ==
+                  (uint8_t)(255 - 21),
+          "bounded C38 requeue uses C09 AttackTicks and movement priority");
     profile.party_state.Champions[0].CurrentHealth = 2;
     queue_square_event(
         &profile,
