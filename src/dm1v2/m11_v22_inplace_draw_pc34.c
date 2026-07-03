@@ -26,6 +26,7 @@
  *   - Floor PLAIN pattern  -> floor_plain_01
  *   - Floor CRACKED pattern -> floor_cracked_01
  *   - Floor MOSSY pattern  -> floor_plain_01 (no mossy variant in v1.4.0)
+ *   - Teleporter fields    -> field_teleporter_01
  *   - Creatures (any)      -> creature_demon_01
  *
  * Source-lock: m11_v22_shape_cache_pc34.h (the cache),
@@ -87,6 +88,7 @@ static const char* v22_floor_plain_id = "floor_plain_01";
 static const char* v22_floor_cracked_id = "floor_cracked_01";
 static const char* v22_floor_pit_id = "floor_pit_01";
 static const char* v22_floor_stairs_down_id = "floor_stairs_down_01";
+static const char* v22_field_teleporter_id = "field_teleporter_01";
 static const char* v22_creature_asset_id = "creature_demon_01";
 
 static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
@@ -111,6 +113,11 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
         case M11_V22_SHAPE_FLOOR_STAIRS_DOWN:
             return v22_floor_stairs_down_id;
         case M11_V22_SHAPE_FIELD_TELEPORTER:
+            /* ReDMCSB DUNVIEW.C F0113 draws the teleporter/fluxcage
+             * field as its own C10-transparent surface after the floor/
+             * wall tail, not as wall art. V2.2 keeps that distinction by
+             * routing to a field asset when the modern pack provides one. */
+            return v22_field_teleporter_id;
         case M11_V22_SHAPE_FIELD_FLUXCAGE:
         case M11_V22_SHAPE_FIELD_EXPLOSION:
             return NULL;
@@ -181,6 +188,7 @@ static int v22_manifest_category_from_line(const char* line,
         "wall_shapes",
         "floor_shapes",
         "creature_shapes",
+        "field_shapes",
         "ui_chrome",
         "champion_portraits",
         "door_shapes",
@@ -395,6 +403,7 @@ const uint32_t* m11_v22_inplace_get_cell_bitmap(int depth, int lateral,
     const char* category = "wall_shapes";  /* default; refine per cell */
     /* Decide category from asset_id */
     if (strncmp(asset_id, "floor_", 6) == 0) category = "floor_shapes";
+    else if (strncmp(asset_id, "field_", 6) == 0) category = "field_shapes";
     else if (strncmp(asset_id, "creature_", 9) == 0) category = "creature_shapes";
     else if (strncmp(asset_id, "ui_", 3) == 0) category = "ui_chrome";
     else if (strncmp(asset_id, "champion_", 9) == 0) category = "champion_portraits";
@@ -519,7 +528,7 @@ const char* m11_v22_inplace_draw_source_evidence(void) {
     return "m11_v22_shape_cache_pc34.c (per-cell V22 shape cache); "
            "dm1_v2_modern_assets_pc34.c (manifest path resolution); "
            "m11_v22_render_overlay_pc34.c (sibling overlay path, placeholder); "
-           "pit/stairs material routing and field no-wrong-wall fallback; "
+           "pit/stairs/teleporter-field material routing and no wrong-wall fallback; "
            "include/dm1_v2_shape_runtime_pc34.h (shape variant enum); "
            "ReDMCSB DUNVIEW.C:6697-6816 (DM1 4x3 composition order); "
            "v22_inplace_cache.bin (build-time RGBA pack from PNG via PIL).";
