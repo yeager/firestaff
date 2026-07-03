@@ -278,6 +278,22 @@ static void make_real_format_consequence_dungeon(CSB_V1_DungeonData *dungeon,
     }
 }
 
+static void seed_center_party(CSB_V1_RuntimeProfile *profile);
+
+static void set_real_format_offset_level_change_metadata(
+    CSB_V1_DungeonData *dungeon)
+{
+    dungeon->map_levels[0] = 0;
+    dungeon->map_offset_x[0] = 4;
+    dungeon->map_offset_y[0] = 4;
+    dungeon->map_levels[1] = 1;
+    dungeon->map_offset_x[1] = 20;
+    dungeon->map_offset_y[1] = 20;
+    dungeon->map_levels[2] = 1;
+    dungeon->map_offset_x[2] = 4;
+    dungeon->map_offset_y[2] = 4;
+}
+
 static int load_real_format_teleporter_dungeon(CSB_V1_DungeonData *dungeon)
 {
     uint8_t buf[114];
@@ -518,10 +534,9 @@ static void test_forward_command_applies_real_format_stairs(void)
     CHECK(profile.current_level == 1 && csb_v1_dungeon_get_current_level() == 1,
           "stair-down movement updates profile and dungeon current level");
 
-    profile.party_x = 1;
-    profile.party_y = 1;
-    profile.party_state.PartyMapX = 1;
-    profile.party_state.PartyMapY = 1;
+    seed_center_party(&profile);
+    profile.current_level = 1;
+    csb_v1_dungeon_set_current_level(1);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
               &queue,
@@ -746,6 +761,65 @@ static void test_forward_command_chains_real_format_pits(void)
           "chained-pit movement keeps the falling coordinates");
 }
 
+static void test_forward_command_uses_f0154_offset_maps_for_level_changes(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[27];
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+    const int north_of_center = 1 * 3 + 0;
+
+    csb_v1_runtime_init(&profile, NULL);
+    make_real_format_consequence_dungeon(&dungeon, raw, sizeof(raw));
+    set_real_format_offset_level_change_metadata(&dungeon);
+    profile.dungeon_handle = &dungeon;
+
+    raw[north_of_center] = (uint8_t)(3u << 5);
+    raw[18 + north_of_center] = (uint8_t)((3u << 5) | 0x04u);
+    seed_center_party(&profile);
+    queue_forward_or_fail(
+        &queue,
+        "PC-34 forward key queues offset-map stair-down move");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the offset-map stair-down command");
+    CHECK(result.stair_transition_applied == 1,
+          "offset-map stair-down applies a level transition");
+    CHECK(result.old_party_level == 0 && result.new_party_level == 2,
+          "offset-map stair-down chooses F0154 target map over map_index+1");
+    CHECK(profile.current_level == 2 && csb_v1_dungeon_get_current_level() == 2,
+          "offset-map stair-down updates profile and dungeon current map");
+    CHECK(profile.party_x == 1 && profile.party_y == 0,
+          "offset-map stair-down preserves local destination coordinates");
+    CHECK(profile.party_dir == CSB_V1_DIR_EAST,
+          "offset-map stair-down applies F0155 exit direction");
+    CHECK(profile.party_state.Champions[0].Cell == 1 &&
+          profile.party_state.Champions[1].Cell == 2,
+          "offset-map stair-down rotates champion cells through F0284");
+
+    make_real_format_consequence_dungeon(&dungeon, raw, sizeof(raw));
+    set_real_format_offset_level_change_metadata(&dungeon);
+    raw[north_of_center] = (uint8_t)((2u << 5) | 0x08u);
+    seed_center_party(&profile);
+    queue_forward_or_fail(
+        &queue,
+        "PC-34 forward key queues offset-map pit move");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the offset-map pit command");
+    CHECK(result.pit_fall_applied == 1,
+          "offset-map pit applies a fall transition");
+    CHECK(result.old_party_level == 0 && result.new_party_level == 2,
+          "offset-map pit chooses F0154 target map over map_index+1");
+    CHECK(profile.current_level == 2 && csb_v1_dungeon_get_current_level() == 2,
+          "offset-map pit updates profile and dungeon current map");
+    CHECK(profile.party_x == 1 && profile.party_y == 0,
+          "offset-map pit preserves local destination coordinates");
+    CHECK(result.pit_fall_damaged_champion_count == 2,
+          "offset-map pit applies F0324 damage at the resolved map");
+}
+
 static void test_forward_command_chains_real_format_teleporters(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -852,6 +926,7 @@ int main(void)
     test_forward_command_handles_real_format_door_fakewall_and_pit();
     test_forward_command_applies_real_format_teleporter();
     test_forward_command_chains_real_format_pits();
+    test_forward_command_uses_f0154_offset_maps_for_level_changes();
     test_forward_command_chains_real_format_teleporters();
     test_forward_command_triggers_real_format_party_floor_sensor();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

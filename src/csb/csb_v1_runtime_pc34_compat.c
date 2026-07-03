@@ -66,6 +66,18 @@ static int csb_v1_runtime_fill_defender_combat_snapshot(
 static void csb_v1_runtime_mark_champion_dead(
     CSB_V1_RuntimeProfile *profile,
     int champion_index);
+static int csb_v1_runtime_location_after_level_change(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index,
+    int level_delta,
+    int *inout_map_x,
+    int *inout_map_y,
+    int *out_map_index);
+static int csb_v1_runtime_stairs_exit_direction(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y);
 
 /* GRAPHICS.DAT (or CSB.DAT / CSBGRAPH.DAT) MD5 hashes for all known
  * CSB variants — mirrors g_csb_boot_graphics_hashes in csb_v1_boot.c
@@ -1100,6 +1112,9 @@ static void csb_v1_runtime_apply_destination_stairs(
     int square_type;
     int stair_up;
     int target_level;
+    int target_x;
+    int target_y;
+    int exit_direction;
 
     if (!profile || !result || !result->movement_step_applied ||
         result->teleporter_transition_applied ||
@@ -1118,20 +1133,38 @@ static void csb_v1_runtime_apply_destination_stairs(
     square_type = result->movement_destination_square_type;
     if (square_type != 3) return;
 
-    /* ReDMCSB: CLIKMENU.C F0366 lines ~230-236 reaches C03_ELEMENT_STAIRS
-     * and asks DUNGEON.C F0150 for the stair destination; DEFS.H defines
-     * MASK0x0004 as the stairs-up flag.  This bounded CSB runtime handoff
-     * only mirrors the map-index transition; full stair coordinate pairing,
-     * sensors, and timing remain separate movement-consequence work. */
+    /* ReDMCSB: CLIKMENU.C F0366 lines 264-276 reaches C03_ELEMENT_STAIRS
+     * and calls F0364_COMMAND_TakeStairs.  F0364 lines 136-138 resolves
+     * the destination through DUNGEON.C F0154, then applies F0155 exit
+     * direction through CHAMPION.C F0284. */
     stair_up = (raw_square & 0x04) ? 1 : 0;
-    target_level = level + (stair_up ? -1 : 1);
+    target_x = result->movement_destination_x;
+    target_y = result->movement_destination_y;
     result->stair_up = stair_up;
     result->old_party_level = profile->current_level;
     result->new_party_level = profile->current_level;
-    if (target_level < 0 || target_level >= dungeon->level_count) return;
+    if (!csb_v1_runtime_location_after_level_change(
+            dungeon,
+            level,
+            stair_up ? -1 : 1,
+            &target_x,
+            &target_y,
+            &target_level)) {
+        return;
+    }
 
     profile->current_level = target_level;
+    profile->party_x = target_x;
+    profile->party_y = target_y;
+    profile->party_state.PartyMapX = target_x;
+    profile->party_state.PartyMapY = target_y;
     csb_v1_dungeon_set_current_level(target_level);
+    exit_direction = csb_v1_runtime_stairs_exit_direction(
+        dungeon,
+        target_level,
+        target_x,
+        target_y);
+    (void)csb_v1_runtime_rotate_party(profile, exit_direction);
     result->new_party_level = target_level;
     result->stair_transition_applied = 1;
 }
@@ -1248,6 +1281,8 @@ static void csb_v1_runtime_apply_destination_pit(
     int level;
     int raw_square;
     int target_level;
+    int target_x;
+    int target_y;
 
     if (!profile || !result || !result->movement_step_applied ||
         result->teleporter_transition_applied ||
@@ -1269,15 +1304,26 @@ static void csb_v1_runtime_apply_destination_pit(
     /* ReDMCSB: MOVESENS.C F0267 lines 538-603 handles an open,
      * non-imaginary C02_ELEMENT_PIT by calling DUNGEON.C F0154 for a
      * downward map transition, then applies F0324 party fall damage.
-     * This bounded CSB runtime slice mirrors adjacent level-index falls;
-     * full F0154 coordinate pairing, rope, sounds, and view redraw timing
-     * stay separate. */
-    target_level = level + 1;
+     * Rope, sounds, and view redraw timing stay separate. */
+    target_x = result->movement_destination_x;
+    target_y = result->movement_destination_y;
     result->old_party_level = profile->current_level;
     result->new_party_level = profile->current_level;
-    if (target_level < 0 || target_level >= dungeon->level_count) return;
+    if (!csb_v1_runtime_location_after_level_change(
+            dungeon,
+            level,
+            1,
+            &target_x,
+            &target_y,
+            &target_level)) {
+        return;
+    }
 
     profile->current_level = target_level;
+    profile->party_x = target_x;
+    profile->party_y = target_y;
+    profile->party_state.PartyMapX = target_x;
+    profile->party_state.PartyMapY = target_y;
     csb_v1_dungeon_set_current_level(target_level);
     result->new_party_level = target_level;
     result->pit_fall_applied = 1;
@@ -1285,8 +1331,8 @@ static void csb_v1_runtime_apply_destination_pit(
         profile,
         result,
         target_level,
-        profile->party_x,
-        profile->party_y);
+        target_x,
+        target_y);
 }
 
 static void csb_v1_runtime_copy_first_teleporter_result(
@@ -2027,13 +2073,6 @@ static int csb_v1_runtime_move_group_thing_to_square(
     return 0;
 }
 
-static int csb_v1_runtime_location_after_level_change(
-    const CSB_V1_DungeonData *dungeon,
-    int map_index,
-    int level_delta,
-    int *inout_map_x,
-    int *inout_map_y,
-    int *out_map_index);
 static int csb_v1_runtime_apply_group_fall_damage(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
