@@ -4114,6 +4114,16 @@ static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_
     if (out_dy) *out_dy = dy;
 }
 
+static int csb_v1_runtime_projectile_teleporter_scope_allows(int scope)
+{
+    /* ReDMCSB MOVESENS.C F0267 lines 450-482 gives non-party,
+     * non-group things a combined creatures|objects-or-party requirement,
+     * then rejects only creature-only teleporters for non-groups.  C14
+     * projectiles therefore use object/party-capable teleporters, not the
+     * party-only scope test used by normal C003..C006 movement. */
+    return scope != 0x01;
+}
+
 static void csb_v1_runtime_schedule_projectile_move_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event)
@@ -4184,6 +4194,119 @@ static int csb_v1_runtime_square_type_from_raw(
     return (dungeon->square_bytes == 1)
         ? ((raw_square >> 5) & 0x07)
         : (raw_square & 0x1F);
+}
+
+static int csb_v1_runtime_projectile_resolve_teleporter_chain(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct ProjectileInstance_Compat *projectile,
+    int start_map_index,
+    int start_map_x,
+    int start_map_y,
+    int base_cell,
+    int *out_map_index,
+    int *out_map_x,
+    int *out_map_y,
+    int *out_direction,
+    int *out_cell)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int map_index;
+    int map_x;
+    int map_y;
+    int direction;
+    int cell;
+    int i;
+    int applied = 0;
+
+    if (out_map_index) *out_map_index = start_map_index;
+    if (out_map_x) *out_map_x = start_map_x;
+    if (out_map_y) *out_map_y = start_map_y;
+    if (out_direction) {
+        *out_direction = projectile ? (projectile->direction & 3) : -1;
+    }
+    if (out_cell) *out_cell = base_cell;
+    if (!profile || !projectile || !profile->dungeon_handle) return 0;
+    dungeon = profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->level_count <= 0) return 0;
+
+    map_index = start_map_index;
+    map_x = start_map_x;
+    map_y = start_map_y;
+    direction = projectile->direction & 3;
+    cell = (base_cell >= 0) ? (base_cell & 3) : 0;
+
+    /* ReDMCSB MOVESENS.C F0267 lines 466-530 chains teleporters up to the
+     * PC34/I34E MEDIA529 100-step cap.  F0264 lines 148-170 marks C14
+     * projectiles as levitating, so pits are intentionally not part of this
+     * projectile chain helper. */
+    for (i = 0; i < 100; ++i) {
+        CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
+        CSB_V1_TeleporterRotationRuntimeProjectileResultPc34 teleporter_result;
+        uint16_t projectile_thing;
+        int raw_square;
+        int scope = 0;
+        int self_target;
+
+        if (map_index < 0 || map_index >= dungeon->level_count) break;
+        raw_square = csb_v1_dungeon_get_raw_square(
+            dungeon,
+            map_index,
+            map_x,
+            map_y);
+        if (raw_square < 0 ||
+            csb_v1_runtime_square_type_from_raw(dungeon, raw_square) !=
+                PROJECTILE_ELEMENT_TELEPORTER ||
+            (raw_square & 0x08) == 0) {
+            break;
+        }
+        if (csb_v1_runtime_decode_teleporter_at_square(
+                dungeon,
+                map_index,
+                map_x,
+                map_y,
+                raw_square,
+                &teleporter,
+                &scope) <= 0) {
+            break;
+        }
+        if (!csb_v1_runtime_projectile_teleporter_scope_allows(scope) ||
+            teleporter.target_map_index < 0 ||
+            teleporter.target_map_index >= dungeon->level_count) {
+            break;
+        }
+
+        projectile_thing = (uint16_t)(((cell & 3) << 14) |
+                                      (14u << 10) |
+                                      (uint16_t)(projectile->slotIndex &
+                                                 0x03FF));
+        if (csb_v1_teleporter_rotation_apply_projectile_pc34_compat(
+                &teleporter,
+                projectile_thing,
+                direction,
+                &teleporter_result) != 0) {
+            break;
+        }
+
+        self_target = teleporter.target_map_index == map_index &&
+                      teleporter.target_map_x == map_x &&
+                      teleporter.target_map_y == map_y;
+        map_index = teleporter.target_map_index;
+        map_x = teleporter.target_map_x;
+        map_y = teleporter.target_map_y;
+        direction = teleporter_result.direction & 3;
+        cell = csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+            teleporter_result.thing) & 3;
+        applied++;
+        if (self_target) break;
+    }
+
+    if (!applied) return 0;
+    if (out_map_index) *out_map_index = map_index;
+    if (out_map_x) *out_map_x = map_x;
+    if (out_map_y) *out_map_y = map_y;
+    if (out_direction) *out_direction = direction;
+    if (out_cell) *out_cell = (base_cell >= 0) ? cell : base_cell;
+    return applied;
 }
 
 static int csb_v1_runtime_build_projectile_digest(
@@ -4263,55 +4386,38 @@ static int csb_v1_runtime_build_projectile_digest(
         csb_v1_runtime_square_type_from_raw(dungeon, dest_raw_square);
     if (out->destSquareType == PROJECTILE_ELEMENT_TELEPORTER &&
         (dest_raw_square & 0x08) != 0) {
-        CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
-        CSB_V1_TeleporterRotationRuntimeProjectileResultPc34 teleporter_result;
-        uint16_t projectile_thing;
-        int scope = 0;
-        int decoded = csb_v1_runtime_decode_teleporter_at_square(
-            dungeon,
-            projectile->mapIndex,
-            dest_x,
-            dest_y,
-            dest_raw_square,
-            &teleporter,
-            &scope);
-        if (decoded > 0 &&
-            (scope & 0x01) != 0 &&
-            teleporter.target_map_index >= 0 &&
-            teleporter.target_map_index < dungeon->level_count) {
-            projectile_thing = (uint16_t)(((projectile->cell & 3) << 14) |
-                                          (14u << 10) |
-                                          (uint16_t)(projectile->slotIndex &
-                                                     0x03FF));
-            if (csb_v1_teleporter_rotation_apply_projectile_pc34_compat(
-                    &teleporter,
-                    projectile_thing,
-                    projectile->direction,
-                    &teleporter_result) == 0) {
-                int target_raw_square;
-                out->destTeleporterNewDirection = teleporter_result.direction;
-                out->destMapIndex = teleporter.target_map_index;
-                out->destMapX = teleporter.target_map_x;
-                out->destMapY = teleporter.target_map_y;
-                dest_x = out->destMapX;
-                dest_y = out->destMapY;
-                dest_raw_square = csb_v1_dungeon_get_raw_square(
-                    dungeon,
-                    out->destMapIndex,
-                    dest_x,
-                    dest_y);
-                if (dest_raw_square >= 0) {
-                    target_raw_square = dest_raw_square;
-                    out->destSquareType =
-                        csb_v1_runtime_square_type_from_raw(
-                            dungeon,
-                            target_raw_square);
-                }
-                /* ReDMCSB MOVESENS.C F0263 lines 113-134 rotates
-                 * projectile direction and, for relative teleporters, the
-                 * thing cell.  F0811 owns the pure movement result and only
-                 * accepts a direction override; the CSB runtime applies the
-                 * cell part after F0811 returns. */
+        int chain_map_index = projectile->mapIndex;
+        int chain_x = dest_x;
+        int chain_y = dest_y;
+        int chain_direction = projectile->direction;
+        if (csb_v1_runtime_projectile_resolve_teleporter_chain(
+                profile,
+                projectile,
+                projectile->mapIndex,
+                dest_x,
+                dest_y,
+                -1,
+                &chain_map_index,
+                &chain_x,
+                &chain_y,
+                &chain_direction,
+                NULL) > 0) {
+            out->destTeleporterNewDirection = chain_direction;
+            out->destMapIndex = chain_map_index;
+            out->destMapX = chain_x;
+            out->destMapY = chain_y;
+            dest_x = out->destMapX;
+            dest_y = out->destMapY;
+            dest_raw_square = csb_v1_dungeon_get_raw_square(
+                dungeon,
+                out->destMapIndex,
+                dest_x,
+                dest_y);
+            if (dest_raw_square >= 0) {
+                out->destSquareType =
+                    csb_v1_runtime_square_type_from_raw(
+                        dungeon,
+                        dest_raw_square);
             }
         }
     }
@@ -4399,69 +4505,34 @@ static int csb_v1_runtime_projectile_teleporter_rotated_cell(
     const CSB_V1_RuntimeProfile *profile,
     const struct ProjectileInstance_Compat *projectile,
     int base_cell,
+    int *out_direction,
     int *out_cell)
 {
-    const CSB_V1_DungeonData *dungeon;
-    CSB_V1_TeleporterRotationRuntimeTeleporterPc34 teleporter;
-    CSB_V1_TeleporterRotationRuntimeProjectileResultPc34 teleporter_result;
-    uint16_t projectile_thing;
     int dx;
     int dy;
     int dest_x;
     int dest_y;
-    int raw_square;
-    int scope = 0;
-    int decoded;
 
+    if (out_direction) *out_direction = -1;
     if (out_cell) *out_cell = -1;
-    if (!profile || !projectile || !out_cell || !profile->dungeon_handle) {
+    if (!profile || !projectile || !out_cell) {
         return 0;
     }
-    dungeon = profile->dungeon_handle;
     csb_v1_runtime_projectile_step(projectile->direction, &dx, &dy);
     dest_x = projectile->mapX + dx;
     dest_y = projectile->mapY + dy;
-    raw_square = csb_v1_dungeon_get_raw_square(
-        dungeon,
-        projectile->mapIndex,
-        dest_x,
-        dest_y);
-    if (raw_square < 0 ||
-        csb_v1_runtime_square_type_from_raw(dungeon, raw_square) !=
-            PROJECTILE_ELEMENT_TELEPORTER ||
-        (raw_square & 0x08) == 0) {
-        return 0;
-    }
-    decoded = csb_v1_runtime_decode_teleporter_at_square(
-        dungeon,
+    return csb_v1_runtime_projectile_resolve_teleporter_chain(
+        profile,
+        projectile,
         projectile->mapIndex,
         dest_x,
         dest_y,
-        raw_square,
-        &teleporter,
-        &scope);
-    if (decoded <= 0 ||
-        (scope & 0x01) == 0 ||
-        teleporter.target_map_index < 0 ||
-        teleporter.target_map_index >= dungeon->level_count) {
-        return 0;
-    }
-
-    projectile_thing = (uint16_t)(((base_cell & 3) << 14) |
-                                  (14u << 10) |
-                                  (uint16_t)(projectile->slotIndex &
-                                             0x03FF));
-    if (csb_v1_teleporter_rotation_apply_projectile_pc34_compat(
-            &teleporter,
-            projectile_thing,
-            projectile->direction,
-            &teleporter_result) != 0) {
-        return 0;
-    }
-    *out_cell =
-        csb_v1_teleporter_rotation_thing_cell_pc34_compat(
-            teleporter_result.thing);
-    return 1;
+        base_cell,
+        NULL,
+        NULL,
+        NULL,
+        out_direction,
+        out_cell) > 0;
 }
 
 static int csb_v1_runtime_build_explosion_digest(
@@ -4641,12 +4712,18 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
     if (!tick_result.despawn &&
         tick_result.resultKind == PROJECTILE_RESULT_FLEW &&
         digest.destTeleporterNewDirection >= 0) {
+        int rotated_direction = -1;
         int rotated_cell = -1;
         if (csb_v1_runtime_projectile_teleporter_rotated_cell(
                 profile,
                 projectile,
                 new_state.cell,
+                &rotated_direction,
                 &rotated_cell)) {
+            if (rotated_direction >= 0) {
+                new_state.direction = rotated_direction & 3;
+                tick_result.newDirection = new_state.direction;
+            }
             new_state.cell = rotated_cell & 3;
             tick_result.newCell = new_state.cell;
             tick_result.outNextTick.cell = new_state.cell;
