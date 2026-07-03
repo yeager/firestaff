@@ -160,6 +160,19 @@ static void test_forward_command_applies_open_runtime_step(void)
           "shared V1 queue marks the command as a move dispatch");
     CHECK(result.unsupported_runtime_command == 0,
           "move-forward is a supported bounded CSB runtime binding");
+    CHECK(result.movement_command_handled == 1,
+          "runtime result reports handled movement command");
+    CHECK(result.movement_step_attempted == 1,
+          "runtime result reports attempted movement step");
+    CHECK(result.movement_step_applied == 1,
+          "runtime result reports applied movement step");
+    CHECK(result.movement_blocked_by_wall == 0,
+          "runtime result reports no wall block on open step");
+    CHECK(result.movement_destination_x == CSB_V1_START_PARTY_X &&
+          result.movement_destination_y == CSB_V1_START_PARTY_Y - 1,
+          "runtime result exposes open-step destination");
+    CHECK(result.disabled_movement_ticks_after == 1,
+          "runtime result exposes movement cooldown after open step");
     CHECK(result.runtime_state_changed == 1,
           "CSB runtime reports a coordinate state mutation");
     CHECK(profile.party_x == CSB_V1_START_PARTY_X,
@@ -177,12 +190,94 @@ static void test_forward_command_applies_open_runtime_step(void)
           "input queue is empty after the consumed open step");
 }
 
+static void make_legacy_wall_dungeon(CSB_V1_DungeonData *dungeon,
+                                     uint8_t *raw,
+                                     size_t raw_size)
+{
+    size_t i;
+
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 2;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+
+    for (i = 0; i < 9; ++i) {
+        raw[i * 2] = 2;      /* legacy fixture floor */
+        raw[i * 2 + 1] = 0;
+    }
+    raw[(1 * 3 + 0) * 2] = 1; /* north of center: legacy fixture wall */
+}
+
+static void test_forward_command_blocks_legacy_wall_destination(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_PartyState party;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[18];
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+
+    csb_v1_runtime_init(&profile, NULL);
+    make_party(&party);
+    party.PartyMapX = 1;
+    party.PartyMapY = 1;
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "legacy-wall fixture party enters runtime profile");
+    profile.party_x = 1;
+    profile.party_y = 1;
+    profile.party_state.PartyMapX = 1;
+    profile.party_state.PartyMapY = 1;
+    make_legacy_wall_dungeon(&dungeon, raw, sizeof(raw));
+    profile.dungeon_handle = &dungeon;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
+              &queue,
+              (struct Dm1V1InputEventPc34Compat){
+                  DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }) == 1,
+          "PC-34 forward key queues a legacy-wall movement command");
+
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "CSB runtime consumes the wall-blocked command");
+    CHECK(result.queue_result.command == DM1_V1_COMMAND_MOVE_FORWARD,
+          "legacy-wall command is C003 move-forward");
+    CHECK(result.unsupported_runtime_command == 0,
+          "legacy-wall command is handled by bounded runtime movement");
+    CHECK(result.movement_command_handled == 1,
+          "legacy-wall result reports handled movement command");
+    CHECK(result.movement_step_attempted == 1,
+          "legacy-wall result reports attempted movement step");
+    CHECK(result.movement_step_applied == 0,
+          "legacy-wall result reports no applied movement step");
+    CHECK(result.movement_blocked_by_wall == 1,
+          "legacy-wall result reports wall block");
+    CHECK(result.movement_destination_x == 1 &&
+          result.movement_destination_y == 0,
+          "legacy-wall result exposes blocked destination");
+    CHECK(result.runtime_state_changed == 0,
+          "legacy-wall block reports no coordinate mutation");
+    CHECK(profile.party_x == 1 && profile.party_y == 1,
+          "legacy wall destination blocks the runtime party step");
+    CHECK(profile.party_state.PartyMapX == 1 &&
+          profile.party_state.PartyMapY == 1,
+          "legacy wall block keeps party snapshot coordinates");
+    CHECK(queue.count == 0u,
+          "input queue is empty after the consumed wall-blocked command");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Input Command Queue Binding Gate ===\n\n");
     test_turn_right_command_reaches_csb_runtime_state();
     test_movement_gate_keeps_command_queued();
     test_forward_command_applies_open_runtime_step();
+    test_forward_command_blocks_legacy_wall_destination();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: queued CSB V1 turn and bounded movement commands reach CSB runtime party state");

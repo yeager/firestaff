@@ -682,7 +682,11 @@ static int csb_v1_runtime_default_wall_probe(
         level = 0;
     }
     square_type = csb_v1_dungeon_get_square_type(dungeon, level, map_x, map_y);
-    return square_type < 0 || square_type == 0;
+    if (square_type < 0) return 1;
+    if (dungeon->square_bytes == 1) {
+        return square_type == 0;
+    }
+    return square_type == 1;
 }
 
 /* ── Runtime profile API ────────────────────────────────────────────── */
@@ -1014,6 +1018,14 @@ int csb_v1_runtime_process_input_queue(
             }
             local_result.unsupported_runtime_command =
                 step_result.unsupported_runtime_command;
+            local_result.movement_command_handled = step_result.command_handled;
+            local_result.movement_step_attempted = step_result.step_attempted;
+            local_result.movement_step_applied = step_result.step_applied;
+            local_result.movement_blocked_by_wall = step_result.blocked_by_wall;
+            local_result.movement_destination_x = step_result.destination_x;
+            local_result.movement_destination_y = step_result.destination_y;
+            local_result.disabled_movement_ticks_after =
+                step_result.disabled_movement_ticks_after;
         }
         break;
     default:
