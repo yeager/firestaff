@@ -48,6 +48,7 @@
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
+#include "csb_v1_skin_cache_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
@@ -254,6 +255,7 @@ typedef struct {
     uint32_t                timeline_dispatch_count;
     struct ProjectileList_Compat projectiles;
     struct ExplosionList_Compat explosions;
+    CSB_V1_SkinCache skin_cache;
     struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
     struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
     uint32_t                input_dispatch_count;
@@ -457,6 +459,15 @@ int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile);
 /* Check if a V1 tick is due at accumulated wall-clock time now_ms.
  * Pass 0 to use profile->total_play_ms. */
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms);
+
+int csb_v1_runtime_custom_background_skin_grid(
+    CSB_V1_RuntimeProfile *profile,
+    uint8_t *out_cell_skins,
+    int out_cell_skin_capacity,
+    int *out_width,
+    int *out_height,
+    int *out_loaded_level,
+    int *out_default_skin);
 
 /* Queue one source-locked timeline event for the CSB V1 runtime.
  * The underlying event heap is the shared V1 ReDMCSB TIMELINE.C model used

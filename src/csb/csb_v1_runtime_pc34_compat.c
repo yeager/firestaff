@@ -6810,6 +6810,7 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     memset(&profile->last_timeline_dispatch, 0,
            sizeof(profile->last_timeline_dispatch));
     profile->timeline_dispatch_count = 0;
+    csb_v1_skin_cache_init(&profile->skin_cache);
     DM1_V1_InputCommandQueue_InitPc34Compat(&profile->input_command_queue);
     memset(&profile->last_input_dispatch, 0,
            sizeof(profile->last_input_dispatch));
@@ -6817,6 +6818,82 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
 
     profile->data_dir = data_dir;
     profile->save_dir = csb_v1_runtime_save_dir();
+}
+
+int csb_v1_runtime_custom_background_skin_grid(
+    CSB_V1_RuntimeProfile *profile,
+    uint8_t *out_cell_skins,
+    int out_cell_skin_capacity,
+    int *out_width,
+    int *out_height,
+    int *out_loaded_level,
+    int *out_default_skin)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int width;
+    int height;
+    int x;
+    int y;
+    int has_skin = 0;
+    uint8_t default_skin;
+
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (out_loaded_level) *out_loaded_level = -1;
+    if (out_default_skin) *out_default_skin = 0;
+    if (!profile || !out_cell_skins || out_cell_skin_capacity <= 0 ||
+        !profile->dungeon_handle) {
+        return 0;
+    }
+
+    dungeon = profile->dungeon_handle;
+    level = profile->current_level;
+    if (level < 0 || level >= dungeon->level_count) {
+        return 0;
+    }
+    width = dungeon->level_widths[level];
+    height = dungeon->level_heights[level];
+    if (width <= 0 || height <= 0 ||
+        width * height > out_cell_skin_capacity) {
+        return 0;
+    }
+
+    memset(out_cell_skins, 0, (size_t)width * (size_t)height);
+    /* CSBWin data.cpp SKIN_CACHE::GetSkin/GetDefaultSkin reads Expool
+     * EDT_Skins records through Locate(); Firestaff keeps the same runtime
+     * ownership boundary by resolving records from the loaded DB11 dungeon. */
+    default_skin = csb_v1_skin_cache_get_default_skin(
+        &profile->skin_cache,
+        csb_v1_dungeon_skin_cache_record_lookup,
+        (void *)dungeon,
+        level);
+    if (default_skin != 0u) {
+        has_skin = 1;
+    }
+    for (y = 0; y < height; ++y) {
+        for (x = 0; x < width; ++x) {
+            uint8_t skin = csb_v1_skin_cache_get_skin(
+                &profile->skin_cache,
+                csb_v1_dungeon_skin_cache_record_lookup,
+                (void *)dungeon,
+                level,
+                width,
+                height,
+                x,
+                y);
+            out_cell_skins[(size_t)y * (size_t)width + (size_t)x] = skin;
+            if (skin != 0u) {
+                has_skin = 1;
+            }
+        }
+    }
+
+    if (out_width) *out_width = width;
+    if (out_height) *out_height = height;
+    if (out_loaded_level) *out_loaded_level = level;
+    if (out_default_skin) *out_default_skin = (int)default_skin;
+    return has_skin;
 }
 
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
@@ -7248,6 +7325,7 @@ void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile) {
         free(profile->dungeon_handle);
         profile->dungeon_handle = NULL;
     }
+    csb_v1_skin_cache_cleanup(&profile->skin_cache);
 }
 
 

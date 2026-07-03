@@ -153,6 +153,7 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
     const CSB_V1_CSBGraphicsDatRealCache *cache;
     uint8_t dungeon_grid[32 * 32];
+    uint8_t custom_background_cell_skins[32 * 32];
     uint32_t i;
 
     if (!state || !state->csbBootProfile || !framebuffer) {
@@ -185,6 +186,16 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
         csb_v1_boot_csbgraphics_skin_def_words(
             profile,
             &cfg.custom_background_skin_def_word_count);
+    if (csb_v1_runtime_custom_background_skin_grid(
+            &profile->runtime,
+            custom_background_cell_skins,
+            (int)sizeof(custom_background_cell_skins),
+            &cfg.custom_background_cell_skin_width,
+            &cfg.custom_background_cell_skin_height,
+            &cfg.custom_background_loaded_level,
+            &cfg.custom_background_default_skin)) {
+        cfg.custom_background_cell_skins = custom_background_cell_skins;
+    }
 
     /* Source-lock: ReDMCSB DUNVIEW.C F0128 is the CSB viewport draw
      * boundary; CSBWin Viewport.cpp keeps the same party pose contract.
