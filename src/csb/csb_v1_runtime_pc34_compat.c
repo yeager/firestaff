@@ -22,6 +22,8 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
+#include "memory_creature_ai_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
@@ -1615,6 +1617,136 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
     }
 }
 
+static int csb_v1_runtime_stat_or_default(
+    const CSB_V1_Champion *champion,
+    int stat_index,
+    int stat_kind)
+{
+    int value;
+
+    if (!champion ||
+        stat_index < 0 ||
+        stat_index >= CSB_V1_STAT_COUNT ||
+        stat_kind < 0 ||
+        stat_kind > CSB_V1_STAT_MAX) {
+        return 30;
+    }
+    value = (int)champion->Statistics[stat_index][stat_kind];
+    return (value > 0) ? value : 30;
+}
+
+static int csb_v1_runtime_fill_creature_combat_snapshot(
+    int creature_type,
+    int creature_index,
+    struct CombatantCreatureSnapshot_Compat *out)
+{
+    const struct CreatureBehaviorProfile_Compat *creature_profile;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    creature_profile = CREATURE_GetProfile_Compat(creature_type);
+    if (!creature_profile) return 0;
+
+    /* ReDMCSB DUNGEON.C G0243 supplies immutable creature attack fields;
+     * live C04 real-format group records supply the per-creature slot. */
+    out->creatureType = creature_type;
+    out->attack = creature_profile->baseAttack;
+    out->defense = creature_profile->baseDefense;
+    out->dexterity = creature_profile->dexterity;
+    out->baseHealth = creature_profile->baseHealth;
+    out->poisonAttack = creature_profile->poisonAttack;
+    out->attackType = creature_profile->attackType;
+    out->attributes = creature_profile->attributes;
+    out->woundProbabilities = creature_profile->woundProbabilities;
+    out->properties = creature_profile->properties;
+    out->doubledMapDifficulty = 0;
+    out->creatureIndex = creature_index;
+    out->healthBefore = 0;
+    return 1;
+}
+
+static int csb_v1_runtime_fill_defender_combat_snapshot(
+    const CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    struct CombatantChampionSnapshot_Compat *out)
+{
+    const CSB_V1_Champion *champion;
+
+    if (!profile || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+    if (champion->CurrentHealth <= 0 ||
+        (champion->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0) {
+        return 0;
+    }
+
+    /* ReDMCSB CHAMPION.C F0321 consumes a snapshot of current champion
+     * statistics, wounds, defenses, and party shields.  CSB V1's imported
+     * champion block currently carries the source statistics but not yet the
+     * full DM1 armor/wound/rest/shield side state, so those fields stay at
+     * bounded zero until the shared inventory/lifecycle bridge is attached. */
+    out->championIndex = champion_index;
+    out->currentHealth = champion->CurrentHealth;
+    out->dexterity = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_DEX,
+        CSB_V1_STAT_CUR);
+    out->skillLevelParry = 0;
+    out->statisticVitality = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_VIT,
+        CSB_V1_STAT_CUR);
+    out->statisticAntifire = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_ANTIFIRE,
+        CSB_V1_STAT_CUR);
+    out->statisticAntimagic = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_ANTIMAGIC,
+        CSB_V1_STAT_CUR);
+    out->statisticWisdom = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_WIS,
+        CSB_V1_STAT_CUR);
+    out->statisticLuck = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_LUCK,
+        CSB_V1_STAT_CUR);
+    out->statisticLuckMax = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_LUCK,
+        CSB_V1_STAT_MAX);
+    out->statisticLuckMin = csb_v1_runtime_stat_or_default(
+        champion,
+        CSB_V1_STAT_LUCK,
+        CSB_V1_STAT_MIN);
+    return 1;
+}
+
+static uint32_t csb_v1_runtime_creature_attack_seed(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    int creature_type,
+    int creature_index,
+    int champion_index)
+{
+    uint32_t seed;
+
+    seed = 0xC5B1C038u ^
+           ((uint32_t)profile->game_time * 1103515245u) ^
+           ((uint32_t)(record->mapX & 0xFF) << 24) ^
+           ((uint32_t)(record->mapY & 0xFF) << 16) ^
+           ((uint32_t)(creature_type & 0xFF) << 8) ^
+           (uint32_t)((creature_index & 0x03) |
+                      ((champion_index & 0x03) << 2));
+    return (seed != 0u) ? seed : 1u;
+}
+
 static void csb_v1_runtime_apply_creature_attack_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -1630,6 +1762,10 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
     int champion_index;
     int creature_cell;
     int damage;
+    struct CombatantCreatureSnapshot_Compat attacker;
+    struct CombatantChampionSnapshot_Compat defender;
+    struct CombatResult_Compat combat;
+    struct RngState_Compat rng;
 
     if (!profile || !record || !profile->dungeon_handle ||
         !profile->party_state_valid) {
@@ -1647,12 +1783,13 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
     if (thing < 0) return;
 
     /* ReDMCSB GROUP.C F0209 lines 1443-1515 processes C38-C41 as
-     * per-creature attack decisions after C6 attack entry.  Full DM1/CSB
-     * attack resolution includes direction/cell targeting, evasion, damage
-     * rolls, projectile attacks, sounds, and aspect timing.  This bounded
-     * CSB startup bridge proves that a generated C38 event reaches live party
-     * state by applying a deterministic minimum HP loss to the first living
-     * champion; the full attack body remains in the source-locked AI layer. */
+     * per-creature attack decisions after C6 attack entry and calls the
+     * common creature melee damage path (PROJEXPL.C F0230, then
+     * CHAMPION.C F0321).  CSB keeps the real-format group lookup and target
+     * selection here, then delegates the bounded damage roll to the shared
+     * M10 combat resolver used by DM1.  Full CSB runtime RNG state, poison,
+     * armor inventory, rest wake, active-group side state, sounds, and aspect
+     * timing remain later slices. */
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
         thing_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -1677,7 +1814,52 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     csb_v1_runtime_first_living_champion(&profile->party_state);
             }
             if (champion_index < 0) return;
-            damage = 1 + ((int)thing_record[4] % 4);
+            memset(&combat, 0, sizeof(combat));
+            if (!csb_v1_runtime_fill_creature_combat_snapshot(
+                    (int)thing_record[4],
+                    creature_index,
+                    &attacker)) {
+                return;
+            }
+            if (!csb_v1_runtime_fill_defender_combat_snapshot(
+                    profile,
+                    champion_index,
+                    &defender)) {
+                return;
+            }
+            (void)F0730_COMBAT_RngInit_Compat(
+                &rng,
+                csb_v1_runtime_creature_attack_seed(
+                    profile,
+                    record,
+                    attacker.creatureType,
+                    creature_index,
+                    champion_index));
+            if (!F0736_COMBAT_ResolveCreatureMelee_Compat(
+                    &attacker,
+                    &defender,
+                    &rng,
+                    &combat)) {
+                return;
+            }
+            damage = (combat.outcome == COMBAT_OUTCOME_HIT_DAMAGE &&
+                      combat.damageApplied > 0)
+                ? combat.damageApplied
+                : 0;
+            if (damage <= 0) {
+                if (!profile->game_over) {
+                    csb_v1_runtime_schedule_c38_attack_event(
+                        profile,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        (int)thing_record[4],
+                        creature_index,
+                        (uint32_t)csb_v1_runtime_creature_attack_ticks(
+                            (int)thing_record[4]));
+                }
+                return;
+            }
             if (profile->party_state.Champions[champion_index].CurrentHealth <=
                 damage) {
                 (void)csb_v1_champion_kill(

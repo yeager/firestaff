@@ -430,10 +430,18 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     profile.party_state.Champions[0].MaximumHealth = 20;
     profile.party_state.Champions[0].Attributes = 0;
     profile.party_state.Champions[0].Cell = 2;
-    profile.party_state.Champions[1].CurrentHealth = 20;
-    profile.party_state.Champions[1].MaximumHealth = 20;
+    profile.party_state.Champions[1].CurrentHealth = 200;
+    profile.party_state.Champions[1].MaximumHealth = 200;
     profile.party_state.Champions[1].Attributes = 0;
     profile.party_state.Champions[1].Cell = 0;
+    for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MIN] = 30;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_CUR] = 30;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MAX] = 30;
+        profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_MIN] = 30;
+        profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_CUR] = 30;
+        profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_MAX] = 30;
+    }
 
     queue_square_event(
         &profile,
@@ -522,8 +530,9 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     CHECK(dispatch.records[0].aux0 == (255 - 21),
           "bounded C38 attack event priority follows 255 - creature movement ticks");
     CHECK(profile.party_state.Champions[0].CurrentHealth == 20 &&
-              profile.party_state.Champions[1].CurrentHealth == 18,
-          "bounded C38 attack event targets the source-ordered champion cell");
+              profile.party_state.Champions[1].CurrentHealth > 0 &&
+              profile.party_state.Champions[1].CurrentHealth < 200,
+          "bounded C38 attack event targets the source-ordered champion cell through shared combat damage");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event requeues the next attack cadence");
     c38_event_index = profile.timeline_queue.timeline[0];
