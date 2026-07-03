@@ -84,6 +84,17 @@ static const unsigned char csb_thing_data_byte_count[CSB_THING_TYPE_COUNT] = {
     4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
 };
 
+static int csb_thing_data_record_byte_count(int type)
+{
+    if (type < 0 || type >= CSB_THING_TYPE_COUNT) return 0;
+    if (type == 11) {
+        /* CSBWin CSB.h DB11: ui16 size + ui32 d[63], total 256 bytes.
+         * data.cpp EXPOOL::Setup/enlarge stores DB11 blocks in dbEXPOOL. */
+        return 256;
+    }
+    return (int)csb_thing_data_byte_count[type];
+}
+
 static void csb_decode_map_bitfield_a(uint16_t raw, int *level, int *width, int *height) {
     if (level) *level = (int)(raw & 0x3Fu);
     if (width) *width = (int)(((raw >> 6) & 0x1Fu) + 1U);
@@ -206,7 +217,7 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
                           (int)text_word_count * 2;
         for (i = 0; i < CSB_THING_TYPE_COUNT; i++) {
             int count = (int)rd16(decoded + 12 + i * 2);
-            int byte_count = (int)csb_thing_data_byte_count[i];
+            int byte_count = csb_thing_data_record_byte_count(i);
             out->thing_data_bases[i] = thing_data_base + (int)thing_data_total;
             out->thing_type_counts[i] = count;
             thing_data_total += (long)count * (long)byte_count;
@@ -407,6 +418,9 @@ const uint8_t *csb_v1_dungeon_get_thing_record(
     index = (int)(thing & 0x03FFu);
     if (type < 0 || type >= CSB_THING_TYPE_COUNT) return NULL;
     byte_count = (int)csb_thing_data_byte_count[type];
+    if (type == 11) {
+        byte_count = csb_thing_data_record_byte_count(type);
+    }
     if (byte_count <= 0) return NULL;
     if (index < 0 || index >= d->thing_type_counts[type]) return NULL;
 
@@ -416,6 +430,109 @@ const uint8_t *csb_v1_dungeon_get_thing_record(
     if (out_index) *out_index = index;
     if (out_size) *out_size = byte_count;
     return d->raw_data + offset;
+}
+
+static uint32_t csb_v1_dungeon_read_le32_at_word(
+    const CSB_V1_DungeonData *d,
+    int word_index)
+{
+    int offset;
+
+    if (!d || !d->raw_data || word_index < 0) return 0u;
+    offset = d->thing_data_bases[11] + word_index * 4;
+    if (offset < 0 || offset + 4 > d->raw_size) return 0u;
+    return rd32(d->raw_data + offset);
+}
+
+static uint16_t csb_v1_dungeon_read_le16_at_db11_offset(
+    const CSB_V1_DungeonData *d,
+    int byte_offset)
+{
+    int offset;
+
+    if (!d || !d->raw_data || byte_offset < 0) return 0u;
+    offset = d->thing_data_bases[11] + byte_offset;
+    if (offset < 0 || offset + 2 > d->raw_size) return 0u;
+    return rd16(d->raw_data + offset);
+}
+
+int csb_v1_dungeon_expool_locate_record(
+    const CSB_V1_DungeonData *d,
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size)
+{
+    uint32_t hash;
+    uint32_t hashi;
+    uint32_t bucket;
+    uint32_t p;
+    uint32_t size_words;
+    int total_words;
+    int guard;
+
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!d || !d->raw_data || d->thing_type_counts[11] <= 0 ||
+        d->thing_data_bases[11] < 0) {
+        return 0;
+    }
+    total_words = d->thing_type_counts[11] * 64;
+    if (d->thing_data_bases[11] + total_words * 4 > d->raw_size) {
+        return 0;
+    }
+
+    /* CSBWin data.cpp EXPOOL::Locate: hash = key * 0xbb40e62d,
+     * bucket = 32 + top 5 hash bits, optional secondary table when the
+     * high bit is set, then linked record nodes at word offsets. */
+    hash = record_id * 0xbb40e62du;
+    hashi = 32u + (hash >> 27);
+    if (hashi >= (uint32_t)total_words) return 0;
+    bucket = csb_v1_dungeon_read_le32_at_word(d, (int)hashi);
+    if ((bucket & 0x80000000u) != 0u) {
+        hashi = (bucket & 0x7fffffffu) + ((hash >> 21) & 0x3fu);
+        if (hashi >= (uint32_t)total_words) return 0;
+        bucket = csb_v1_dungeon_read_le32_at_word(d, (int)hashi);
+    }
+
+    for (guard = 0; guard < total_words && bucket != 0u; ++guard) {
+        p = bucket;
+        if (p + 2u > (uint32_t)total_words) return 0;
+        if (csb_v1_dungeon_read_le32_at_word(d, (int)(p + 1u)) ==
+            record_id) {
+            uint32_t block_base = p & 0xffffffc0u;
+            int payload_offset;
+            if (block_base >= (uint32_t)total_words) return 0;
+            size_words = csb_v1_dungeon_read_le16_at_db11_offset(
+                d, (int)(block_base * 4u + 2u));
+            if (size_words < 2u || p + size_words > (uint32_t)total_words) {
+                return 0;
+            }
+            payload_offset = d->thing_data_bases[11] + (int)(p + 2u) * 4;
+            if (payload_offset < 0 ||
+                payload_offset + (int)((size_words - 2u) * 4u) >
+                    d->raw_size) {
+                return 0;
+            }
+            if (out_bytes) *out_bytes = d->raw_data + payload_offset;
+            if (out_size) *out_size = (size_t)(size_words - 2u) * 4u;
+            return 1;
+        }
+        bucket = csb_v1_dungeon_read_le32_at_word(d, (int)p);
+    }
+    return 0;
+}
+
+int csb_v1_dungeon_skin_cache_record_lookup(
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size,
+    void *user)
+{
+    return csb_v1_dungeon_expool_locate_record(
+        (const CSB_V1_DungeonData *)user,
+        record_id,
+        out_bytes,
+        out_size);
 }
 
 /* ── Square decoding ─────────────────────────────────────────────────── */
@@ -475,6 +592,7 @@ const char *csb_v1_dungeon_source_evidence(void) {
     return
         "CSBWin/CSBCode.cpp:318-480 DBank::Initialize TAG00332a\n"
         "CSBWin/CSBCode.cpp:6800-6950 LoadDungeon\n"
+        "CSBWin CSB.h DB11 + data.cpp EXPOOL::Locate DB11 hash records\n"
         "ReDMCSB DUNGEON.C F0148-F0170 shared format\n"
         "ReDMCSB DUNGEON.C F0160/F0161 square-first-thing table lookup\n"
         "CSB-specific: DSA thing type 15, custom backgrounds\n"

@@ -128,6 +128,14 @@ static void put_le16(uint8_t *buf, int off, uint16_t value)
     buf[off + 1] = (uint8_t)(value >> 8);
 }
 
+static void put_le32(uint8_t *buf, int off, uint32_t value)
+{
+    buf[off + 0] = (uint8_t)(value & 0xffu);
+    buf[off + 1] = (uint8_t)((value >> 8) & 0xffu);
+    buf[off + 2] = (uint8_t)((value >> 16) & 0xffu);
+    buf[off + 3] = (uint8_t)(value >> 24);
+}
+
 static uint16_t pack3_codes(int a, int b, int c)
 {
     return (uint16_t)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
@@ -294,6 +302,74 @@ static void test_dungeon_real_format_square_first_thing_chain(void)
     CHECK(csb_dungeon_get_first_thing_default(2, 1) == CSB_THING_ENDOFLIST,
           "current-dungeon default accessor returns ENDOFLIST for an empty cell");
     csb_v1_dungeon_unload();
+}
+
+static void test_dungeon_real_format_expool_db11_skin_lookup(void)
+{
+    CSB_V1_DungeonData d;
+    uint8_t buf[384];
+    const int map_desc = 44;
+    const int column_counts = 60;
+    const int db11 = 64;
+    const int raw_map = 320;
+    const uint16_t raw_bit_a = (uint16_t)(0 | ((2 - 1) << 6) | ((1 - 1) << 11));
+    const uint32_t record_id = (uint32_t)(4u << 24); /* CSBWin EXPOOL_DATA_TYPE::EDT_Skins */
+    const uint32_t hash = record_id * 0xbb40e62du;
+    const uint32_t hashi = 32u + (hash >> 27);
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    int r;
+
+    memset(buf, 0, sizeof(buf));
+    put_le16(buf, 0, 0);       /* text data word count */
+    buf[4] = 1;                /* map count */
+    put_le16(buf, 6, 0);       /* text string word count */
+    put_le16(buf, 10, 0);      /* square-first-thing table entries */
+    put_le16(buf, 12 + 11 * 2, 1); /* one DB11 Expool block */
+    put_le16(buf, map_desc + 0, 0);
+    put_le16(buf, map_desc + 8, raw_bit_a);
+
+    put_le16(buf, column_counts + 0, 0);
+    put_le16(buf, column_counts + 2, 0);
+
+    /* CSBWin CSB.h DB11 stores a 16-bit size in the first block dword after
+     * DBCOMMON; data.cpp EXPOOL::Locate treats p+1 as key and p+2 as payload. */
+    put_le16(buf, db11 + 2, 4);                  /* size in 32-bit words */
+    put_le32(buf, db11 + (int)hashi * 4, 1);     /* bucket points to node p=1 */
+    put_le32(buf, db11 + 1 * 4, 0);              /* next node */
+    put_le32(buf, db11 + 2 * 4, record_id);      /* key */
+    buf[db11 + 3 * 4 + 0] = 21;
+    buf[db11 + 3 * 4 + 1] = 22;
+    buf[db11 + 3 * 4 + 2] = 23;
+    buf[db11 + 3 * 4 + 3] = 24;
+    buf[db11 + 4 * 4 + 0] = 25;
+    buf[db11 + 4 * 4 + 1] = 26;
+    buf[db11 + 4 * 4 + 2] = 27;
+    buf[db11 + 4 * 4 + 3] = 28;
+
+    buf[raw_map + 1] = 0x23u;
+
+    r = csb_v1_dungeon_load(&d, buf, (int)sizeof(buf));
+    CHECK(r == 0, "real-format dungeon with DB11 Expool loads");
+    CHECK(d.thing_type_counts[11] == 1, "DB11 thing count is imported");
+    CHECK(d.thing_data_bases[11] == db11, "DB11 thing data base follows header tables");
+    CHECK(d.raw_map_data_base == raw_map, "raw map starts after 256-byte DB11 block");
+    CHECK(csb_v1_dungeon_get_raw_square(&d, 0, 1, 0) == 0x23,
+          "raw square access uses map offset after DB11 Expool");
+    CHECK(csb_v1_dungeon_expool_locate_record(&d, record_id, &payload, &payload_size) == 1,
+          "Expool Locate finds skin record by CSBWin hash bucket");
+    CHECK(payload_size == 8u, "Expool payload size is size-2 words");
+    CHECK(payload != NULL && payload[0] == 21 && payload[5] == 26 && payload[7] == 28,
+          "Expool payload bytes are returned from p+2");
+    payload = NULL;
+    payload_size = 0u;
+    CHECK(csb_v1_dungeon_skin_cache_record_lookup(record_id, &payload, &payload_size, &d) == 1,
+          "skin cache lookup adapter resolves dungeon Expool records");
+    CHECK(payload != NULL && payload_size == 8u && payload[1] == 22,
+          "skin cache lookup adapter preserves payload");
+    CHECK(csb_v1_dungeon_expool_locate_record(&d, record_id + 1u, &payload, &payload_size) == 0,
+          "missing Expool key returns not found");
+    csb_v1_dungeon_free(&d);
 }
 
 static void test_dungeon_decode_square(void)
@@ -1196,6 +1272,7 @@ int main(void)
     test_dungeon_square_access();
     test_dungeon_first_thing();
     test_dungeon_real_format_square_first_thing_chain();
+    test_dungeon_real_format_expool_db11_skin_lookup();
     test_dungeon_decode_square();
     test_wall_text_oracle_slice();
     test_dungeon_collision_wall();
