@@ -1,6 +1,7 @@
 #include "menu_startup_m12.h"
 #include "config_m12.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
@@ -121,6 +122,65 @@ static int write_serialized_csb_quicksave(const char* path) {
     rc = csb_v1_runtime_save_game_to_path(&runtime, path);
     csb_v1_runtime_cleanup(&runtime);
     return rc == CSB_V1_SAVE_OK;
+}
+
+static void fill_raw_csbgame_champion(CSB_V1_Champion* champ,
+                                      const char* name,
+                                      int hp,
+                                      int cell) {
+    int i;
+    if (!champ) return;
+    memset(champ, 0, sizeof(*champ));
+    snprintf(champ->Name, sizeof(champ->Name), "%s", name);
+    champ->CurrentHealth = (int16_t)hp;
+    champ->MaximumHealth = (int16_t)hp;
+    champ->CurrentStamina = (int16_t)(hp + 10);
+    champ->MaximumStamina = (int16_t)(hp + 10);
+    champ->CurrentMana = (int16_t)(hp / 2);
+    champ->MaximumMana = (int16_t)(hp / 2);
+    for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
+        champ->Statistics[i][0] = (uint16_t)(20 + i);
+        champ->Statistics[i][1] = (uint16_t)(30 + i);
+        champ->Statistics[i][2] = (uint16_t)(40 + i);
+    }
+    for (i = 0; i < CSB_V1_SKILL_COUNT; ++i) {
+        champ->Skills[i] = (uint8_t)(i + 1);
+    }
+    champ->Cell = (uint8_t)cell;
+    champ->Direction = CSB_V1_DIR_EAST;
+}
+
+static int write_raw_csbgame_roster_quicksave(const char* path) {
+    CSB_V1_PartyState party;
+    unsigned char buf[CSB_SAVE_HEADER_SIZE + CSB_SAVE_CHAMP_SIZE * 2];
+    long len;
+    FILE* fp;
+    int ok;
+
+    csb_v1_character_init_default(&party);
+    party.ChampionCount = 2;
+    party.LeaderIndex = 0;
+    party.MagicCasterIndex = 0;
+    party.PartyMapX = CSB_V1_START_PARTY_X + 4;
+    party.PartyMapY = CSB_V1_START_PARTY_Y + 5;
+    party.PartyDirection = CSB_V1_DIR_EAST;
+    fill_raw_csbgame_champion(&party.Champions[0], "ROSTERA", 96,
+                              CSB_V1_CELL_FRONT_LEFT);
+    fill_raw_csbgame_champion(&party.Champions[1], "ROSTERB", 88,
+                              CSB_V1_CELL_RIGHT);
+    len = csb_v1_build_csb_save_buffer(&party, CSB_SAVE_VERSION_V21,
+                                       buf, (long)sizeof(buf));
+    if (len <= 0) {
+        return 0;
+    }
+
+    fp = fopen(path, "wb");
+    if (!fp) {
+        return 0;
+    }
+    ok = fwrite(buf, 1u, (size_t)len, fp) == (size_t)len &&
+         fclose(fp) == 0;
+    return ok;
 }
 
 static void wr32le(unsigned char* p, uint32_t v) {
@@ -394,6 +454,29 @@ int main(void) {
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "CSB quick Resume must reject DM1-shaped quicksave bytes")) return 1;
+
+    if (!expect(write_raw_csbgame_roster_quicksave(csbSavePath),
+                "should write raw CSBGAME roster quicksave")) return 1;
+    M12_Config_SetLastSavePath(csbSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "raw CSBGAME roster save must enable CSB quick Resume")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
+                "raw CSBGAME quick Resume should identify csb")) return 1;
+    if (!expect(strcmp(state.quickResumeSavePath, csbSavePath) == 0,
+                "raw CSBGAME quick Resume should retain save path")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.launchRequested == 1,
+                "raw CSBGAME quick Resume accept should request launch")) return 1;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "csb") == 0,
+                "raw CSBGAME quick Resume launch intent should identify CSB")) return 1;
+    if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
+                "raw CSBGAME quick Resume launch intent must carry exact save path")) return 1;
 
     if (!expect(write_serialized_csb_quicksave(csbSavePath),
                 "should write serialized CSB runtime quicksave")) return 1;

@@ -14,6 +14,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "m11_game_view.h"
@@ -325,12 +326,73 @@ static int build_runtime_resume_save(const char* data_dir,
     return 1;
 }
 
+static void fill_raw_csbgame_champion(CSB_V1_Champion* champ,
+                                      const char* name,
+                                      int hp,
+                                      int cell) {
+    int i;
+    if (!champ) return;
+    memset(champ, 0, sizeof(*champ));
+    snprintf(champ->Name, sizeof(champ->Name), "%s", name);
+    champ->CurrentHealth = (int16_t)hp;
+    champ->MaximumHealth = (int16_t)hp;
+    champ->CurrentStamina = (int16_t)(hp + 12);
+    champ->MaximumStamina = (int16_t)(hp + 12);
+    champ->CurrentMana = (int16_t)(hp / 2);
+    champ->MaximumMana = (int16_t)(hp / 2);
+    for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
+        champ->Statistics[i][0] = (uint16_t)(20 + i);
+        champ->Statistics[i][1] = (uint16_t)(30 + i);
+        champ->Statistics[i][2] = (uint16_t)(40 + i);
+    }
+    for (i = 0; i < CSB_V1_SKILL_COUNT; ++i) {
+        champ->Skills[i] = (uint8_t)(i + 1);
+    }
+    champ->Cell = (uint8_t)cell;
+    champ->Direction = CSB_V1_DIR_EAST;
+}
+
+static int write_raw_csbgame_roster_save(const char* path) {
+    CSB_V1_PartyState party;
+    unsigned char buf[CSB_SAVE_HEADER_SIZE + CSB_SAVE_CHAMP_SIZE * 2];
+    long len;
+    FILE* fp;
+    int ok;
+
+    csb_v1_character_init_default(&party);
+    party.ChampionCount = 2;
+    party.LeaderIndex = 0;
+    party.MagicCasterIndex = 0;
+    party.PartyMapX = CSB_V1_START_PARTY_X + 4;
+    party.PartyMapY = CSB_V1_START_PARTY_Y + 5;
+    party.PartyDirection = CSB_V1_DIR_EAST;
+    fill_raw_csbgame_champion(&party.Champions[0], "ROSTERA", 96,
+                              CSB_V1_CELL_FRONT_LEFT);
+    fill_raw_csbgame_champion(&party.Champions[1], "ROSTERB", 88,
+                              CSB_V1_CELL_RIGHT);
+    len = csb_v1_build_csb_save_buffer(&party, CSB_SAVE_VERSION_V21,
+                                       buf, (long)sizeof(buf));
+    if (len <= 0) {
+        return 0;
+    }
+
+    fp = fopen(path, "wb");
+    if (!fp) {
+        return 0;
+    }
+    ok = fwrite(buf, 1u, (size_t)len, fp) == (size_t)len &&
+         fclose(fp) == 0;
+    return ok;
+}
+
 int main(void) {
     char fallback[512];
     char save_tmpl[] = "/tmp/firestaff_csb_m11_resume_XXXXXX";
     char quick_save_tmpl[] = "/tmp/firestaff_csb_m11_quicksave_XXXXXX";
+    char roster_save_tmpl[] = "/tmp/firestaff_csb_m11_roster_XXXXXX";
     char save_path[560];
     char quick_save_path[560];
+    char roster_save_path[560];
     const char* data_dir = csb_data_dir(fallback);
     CSB_V1_BootProfile preflight;
     CSB_V1_RuntimeProfile expected;
@@ -367,6 +429,8 @@ int main(void) {
     snprintf(save_path, sizeof(save_path), ".\\firestaff-csb-m11-resume.sav");
     snprintf(quick_save_path, sizeof(quick_save_path),
              ".\\firestaff-csb-m11-quicksave.sav");
+    snprintf(roster_save_path, sizeof(roster_save_path),
+             ".\\firestaff-csb-m11-roster.sav");
 #else
     {
         int fd = mkstemp(save_tmpl);
@@ -388,6 +452,17 @@ int main(void) {
         snprintf(quick_save_path, sizeof(quick_save_path), "%s.sav",
                  quick_save_tmpl);
         remove(quick_save_tmpl);
+    }
+    {
+        int fd = mkstemp(roster_save_tmpl);
+        if (fd < 0) {
+            fprintf(stderr, "FAIL: could not create temporary roster save path\n");
+            return 1;
+        }
+        close(fd);
+        snprintf(roster_save_path, sizeof(roster_save_path), "%s.sav",
+                 roster_save_tmpl);
+        remove(roster_save_tmpl);
     }
 #endif
 
@@ -518,8 +593,46 @@ int main(void) {
     M11_GameView_Shutdown(&view);
     expect_true(view.csbBootProfile == NULL,
                 "M11 shutdown clears CSB boot ownership");
+
+    expect_true(write_raw_csbgame_roster_save(roster_save_path),
+                "built raw CSBGAME roster save fixture");
+    fill_csb_launch_spec(&spec, data_dir, roster_save_path);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB raw CSBGAME roster resume start succeeds");
+    expect_true(view.active == 1,
+                "M11 CSB raw CSBGAME roster resume leaves view active");
+    expect_true(view.csbState.party_x == CSB_V1_START_PARTY_X &&
+                view.csbState.party_y == CSB_V1_START_PARTY_Y &&
+                view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
+                "M11 CSB raw CSBGAME roster resume preserves boot pose");
+    profile = (CSB_V1_BootProfile*)view.csbBootProfile;
+    if (profile) {
+        expect_true(profile->runtime.champion_count == 2,
+                    "M11 CSB raw CSBGAME roster resume imports champion count");
+        expect_true(profile->runtime.party_state.ImportSource ==
+                    CSB_SAVE_IMPORT_SOURCE,
+                    "M11 CSB raw CSBGAME roster resume stamps import source");
+        expect_true(strcmp(profile->runtime.party_state.Champions[0].Name,
+                           "ROSTERA") == 0 &&
+                    strcmp(profile->runtime.party_state.Champions[1].Name,
+                           "ROSTERB") == 0,
+                    "M11 CSB raw CSBGAME roster resume imports champion names");
+        expect_true(profile->runtime.party_state.PartyMapX ==
+                    profile->runtime.party_x &&
+                    profile->runtime.party_state.PartyMapY ==
+                    profile->runtime.party_y &&
+                    profile->runtime.party_state.PartyDirection ==
+                    profile->runtime.party_dir,
+                    "M11 CSB raw CSBGAME roster resume reanchors imported party");
+    }
+    M11_GameView_Shutdown(&view);
+    expect_true(view.csbBootProfile == NULL,
+                "M11 shutdown clears raw CSBGAME roster boot ownership");
+
     remove(save_path);
     remove(quick_save_path);
+    remove(roster_save_path);
 
     if (g_failures) {
         fprintf(stderr, "CSB V1 M11 startup/resume gate FAILED (%d failures)\n",
