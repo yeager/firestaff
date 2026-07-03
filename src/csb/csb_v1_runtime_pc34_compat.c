@@ -2449,6 +2449,7 @@ static int csb_v1_runtime_projectile_result_places_associated_object(
     switch (result_kind) {
     case PROJECTILE_RESULT_DESPAWN_ENERGY:
     case PROJECTILE_RESULT_HIT_CHAMPION:
+    case PROJECTILE_RESULT_HIT_CREATURE:
     case PROJECTILE_RESULT_HIT_DOOR:
     case PROJECTILE_RESULT_HIT_WALL:
     case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
@@ -3273,6 +3274,223 @@ static int csb_v1_runtime_apply_explosion_group_action(
         thing = csb_v1_runtime_read_u16(thing_record + 0);
     }
     return applied;
+}
+
+static int csb_v1_runtime_projectile_weapon_type_is_kept_sharp(int weapon_type)
+{
+    return weapon_type == 8  ||  /* C08_WEAPON_DAGGER */
+           weapon_type == 27 ||  /* C27_WEAPON_ARROW */
+           weapon_type == 28 ||  /* C28_WEAPON_SLAYER */
+           weapon_type == 31 ||  /* C31_WEAPON_POISON_DART */
+           weapon_type == 32;    /* C32_WEAPON_THROWING_STAR */
+}
+
+static int csb_v1_runtime_link_projectile_thing_to_group_slot_tail(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *group_record,
+    uint16_t associated_thing)
+{
+    uint16_t group_slot;
+    uint16_t tail;
+    int guard;
+
+    if (!dungeon || !group_record ||
+        associated_thing == 0xFFFEu ||
+        associated_thing == 0xFFFFu) {
+        return 0;
+    }
+    group_slot = csb_v1_runtime_read_u16(group_record + 2);
+    if (group_slot == 0xFFFEu || group_slot == 0xFFFFu) {
+        uint8_t *record;
+        int thing_type;
+        int thing_size;
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            associated_thing,
+            &thing_type,
+            &thing_size);
+        if (!record || thing_size < 2) return 0;
+        csb_v1_runtime_write_u16(record, 0xFFFEu);
+        csb_v1_runtime_write_u16(group_record + 2, associated_thing);
+        return 1;
+    }
+
+    tail = group_slot;
+    for (guard = 0; guard < 64 && tail != 0xFFFEu && tail != 0xFFFFu;
+         ++guard) {
+        uint8_t *record;
+        uint16_t next_thing;
+        int thing_type;
+        int thing_size;
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            tail,
+            &thing_type,
+            &thing_size);
+        if (!record || thing_size < 2) return 0;
+        next_thing = csb_v1_runtime_read_u16(record);
+        if (next_thing == 0xFFFEu || next_thing == 0xFFFFu) {
+            uint8_t *associated_record =
+                csb_v1_runtime_mutable_thing_record(
+                    dungeon,
+                    associated_thing,
+                    &thing_type,
+                    &thing_size);
+            if (!associated_record || thing_size < 2) return 0;
+            csb_v1_runtime_write_u16(associated_record, 0xFFFEu);
+            csb_v1_runtime_write_u16(record, associated_thing);
+            return 1;
+        }
+        tail = next_thing;
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_maybe_attach_projectile_weapon_to_group_slot(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *group_record,
+    const struct ProjectileInstance_Compat *projectile)
+{
+    const struct CreatureBehaviorProfile_Compat *creature_profile;
+    uint8_t *weapon_record;
+    uint16_t associated_thing;
+    int thing_type;
+    int thing_size;
+    int weapon_type;
+    int creature_type;
+
+    if (!dungeon || !group_record || !projectile) return 0;
+    associated_thing = (uint16_t)projectile->reserved1;
+    if (associated_thing == 0u ||
+        associated_thing == 0xFFFEu ||
+        associated_thing == 0xFFFFu ||
+        ((associated_thing >> 10) & 0x0Fu) != 5u ||
+        (projectile->flags & PROJECTILE_FLAG_CREATES_EXPLOSION) != 0) {
+        return 0;
+    }
+    creature_type = group_record[4];
+    creature_profile = CREATURE_GetProfile_Compat(creature_type);
+    if (!creature_profile ||
+        ((creature_profile->attributes &
+          CREATURE_ATTR_MASK_KEEP_THROWN_SHARP_WEAPONS) == 0)) {
+        return 0;
+    }
+    weapon_record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        associated_thing,
+        &thing_type,
+        &thing_size);
+    if (!weapon_record || thing_type != 5 || thing_size < 4) return 0;
+    weapon_type = (int)(csb_v1_runtime_read_u16(weapon_record + 2) & 0x7Fu);
+    if (!csb_v1_runtime_projectile_weapon_type_is_kept_sharp(weapon_type)) {
+        return 0;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0217 lines 540-553 selects GROUP.Slot for
+     * surviving dagger/arrow/slayer/poison-dart/throwing-star impacts
+     * against creatures with KEEP_THROWN_SHARP_WEAPONS; F0215 lines
+     * 239-256 then appends the projectile associated thing to that slot
+     * list instead of moving it to the floor square. */
+    return csb_v1_runtime_link_projectile_thing_to_group_slot_tail(
+        dungeon,
+        group_record,
+        associated_thing);
+}
+
+static int csb_v1_runtime_apply_projectile_group_action(
+    CSB_V1_RuntimeProfile *profile,
+    const struct CombatAction_Compat *action,
+    struct ProjectileInstance_Compat *projectile)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *thing_record;
+    int first_thing;
+    int thing;
+    int guard;
+    int thing_type;
+    int thing_size;
+
+    if (!profile || !action || !projectile ||
+        action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP ||
+        action->rawAttackValue <= 0 ||
+        !profile->dungeon_handle) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        action->targetMapIndex,
+        action->targetMapX,
+        action->targetMapY);
+    if (first_thing < 0) return 0;
+
+    for (guard = 0, thing = first_thing;
+         guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        thing_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!thing_record || thing_size < 16) return 0;
+        if (thing_type == 4) {
+            uint16_t flags;
+            uint16_t hp;
+            uint8_t *hp_ptr;
+            int creature_count;
+            int creature_index = -1;
+            int cells;
+            int i;
+
+            flags = csb_v1_runtime_read_u16(thing_record + 14);
+            creature_count = (int)((flags >> 5) & 0x03u) + 1;
+            if (creature_count < 1) creature_count = 1;
+            if (creature_count > 4) creature_count = 4;
+            cells = thing_record[5];
+            if (cells == 0xFF) {
+                creature_index = 0;
+            } else {
+                for (i = 0; i < creature_count; ++i) {
+                    if (csb_v1_runtime_group_cell_value(cells, i) ==
+                        (action->targetCell & 3)) {
+                        creature_index = i;
+                        break;
+                    }
+                }
+            }
+            if (creature_index < 0 || creature_index >= creature_count) {
+                return 0;
+            }
+            hp_ptr = thing_record + 6 + creature_index * 2;
+            hp = csb_v1_runtime_read_u16(hp_ptr);
+            if (hp == 0) return 0;
+            if (action->rawAttackValue >= (int)hp) {
+                csb_v1_runtime_pack_dead_group_creature(
+                    profile,
+                    dungeon,
+                    thing_record,
+                    (uint16_t)thing,
+                    action->targetMapIndex,
+                    action->targetMapX,
+                    action->targetMapY,
+                    creature_index);
+                return 1;
+            }
+
+            csb_v1_runtime_write_u16(
+                hp_ptr,
+                (uint16_t)((int)hp - action->rawAttackValue));
+            if (csb_v1_runtime_maybe_attach_projectile_weapon_to_group_slot(
+                    dungeon,
+                    thing_record,
+                    projectile)) {
+                projectile->reserved1 = 0xFFFF;
+            }
+            return 1;
+        }
+        thing = csb_v1_runtime_read_u16(thing_record + 0);
+    }
+    return 0;
 }
 
 static void csb_v1_runtime_apply_creature_attack_timeline_record(
@@ -4137,6 +4355,13 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
                 profile,
                 &first_advance);
         }
+    }
+    if (tick_result.emittedCombatAction &&
+        tick_result.outAction.kind == COMBAT_ACTION_APPLY_DAMAGE_GROUP) {
+        (void)csb_v1_runtime_apply_projectile_group_action(
+            profile,
+            &tick_result.outAction,
+            projectile);
     }
     if (tick_result.despawn) {
         (void)csb_v1_runtime_materialize_projectile_associated_object(

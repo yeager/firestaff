@@ -2115,6 +2115,72 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
               test_get_le16(raw, 82) == 0xfffeu,
           "C49 kinetic wall impact materializes the associated object on the source square");
 
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 82;
+    dungeon.thing_type_counts[4] = 1;
+    dungeon.thing_data_bases[5] = 98;
+    dungeon.thing_type_counts[5] = 1;
+    raw[real_format_square_offset(1, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, 0xfffeu);
+    raw[86] = 3u;     /* C03: keeps thrown sharp weapons in G0243. */
+    raw[87] = 0xffu;  /* single centered creature. */
+    test_put_le16(raw, 88, 500u);
+    test_put_le16(raw, 96, 0u);
+    test_put_le16(raw, 98, 0xfffeu);
+    test_put_le16(raw, 100, 27u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        struct ProjectileCreateInput_Compat projectile_input;
+        struct TimelineEvent_Compat first_move;
+        int projectile_slot = -1;
+        memset(&projectile_input, 0, sizeof(projectile_input));
+        memset(&first_move, 0, sizeof(first_move));
+        projectile_input.category = PROJECTILE_CATEGORY_KINETIC;
+        projectile_input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        projectile_input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        projectile_input.ownerIndex = 4;
+        projectile_input.mapIndex = 0;
+        projectile_input.mapX = 1;
+        projectile_input.mapY = 1;
+        projectile_input.cell = 0;
+        projectile_input.direction = 0;
+        projectile_input.kineticEnergy = 20;
+        projectile_input.attack = 20;
+        projectile_input.launcherStrength = 20;
+        projectile_input.stepEnergy = 1;
+        projectile_input.currentTick = (int)profile.game_time;
+        projectile_input.associatedThing = (int)(5u << 10);
+        CHECK(F0810_PROJECTILE_Create_Compat(
+                  &projectile_input,
+                  &profile.projectiles,
+                  &projectile_slot,
+                  &first_move) == 1 &&
+                  projectile_slot == 0,
+              "C49 creature-hit fixture creates a kinetic arrow projectile");
+        queue_projectile_move_event(&profile, &first_move);
+    }
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 creature-hit fixture advances to first move tick");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 creature-hit event dispatches");
+    CHECK(profile.projectiles.count == 0,
+          "C49 creature hit despawns the object projectile");
+    CHECK(test_get_le16(raw, 84) == (uint16_t)(5u << 10) &&
+              test_get_le16(raw, 98) == 0xfffeu,
+          "C49 kept sharp arrow links into GROUP.Slot");
+    CHECK(test_get_le16(raw, 66) == (uint16_t)(4u << 10),
+          "C49 kept sharp arrow does not replace the square group chain");
+    CHECK(test_get_le16(raw, 88) < 500u,
+          "C49 creature hit writes projectile damage into GROUP.Health");
+
     make_real_format_sensor_dungeon(
         &dungeon,
         raw,
