@@ -3,8 +3,8 @@
  *
  * The probe finds a real visible TextString in map 0, places the party so
  * that the text-bearing wall is D1C, renders through M11_GameView_Draw, and
- * verifies the readable inscription path has both the clean wall patch and
- * the M648 glyph pixels.
+ * verifies the readable inscription path restores source wall pixels under
+ * the M648 glyphs without Firestaff's old synthetic dark text box.
  *
  * Source-locked to ReDMCSB:
  *   DUNGEON.C:2329 stores 0x80 line separators for inscriptions.
@@ -246,28 +246,23 @@ static int check_rendered_lines(const unsigned char* fb, char* decoded) {
             int textW = DM1_V1_InscriptionTextWidth(charCount);
             int textX = DM1_V1_InscriptionTextX(charCount);
             int textY = VIEWPORT_Y + kLineBottomY[line] - 7;
-            int patchX = textX - 3;
-            int patchY = textY - 2;
-            int patchW = textW + 6;
-            int topBlack = row_color_count(fb, patchY, patchX, patchX + patchW,
-                                           COLOR_BLACK);
-            int innerDark = row_color_count(fb, textY - 1,
-                                            patchX + 1,
-                                            patchX + patchW - 1,
-                                            COLOR_DARK_GRAY);
             int glyphPixels = glyph_pixel_count(fb, textX, textY, textW,
                                                  DM1_V1_INSCRIPTION_GLYPH_HEIGHT);
-            CHECK(topBlack >= patchW - 2,
-                  "line %d top patch border black count=%d width=%d text=\"%s\"",
-                  line, topBlack, patchW, cursor);
-            CHECK(innerDark >= patchW - 4,
-                  "line %d inner patch row dark count=%d width=%d",
-                  line, innerDark, patchW);
+            int blackRow = row_color_count(fb, textY - 1, textX, textX + textW,
+                                           COLOR_BLACK);
+            int darkRow = row_color_count(fb, textY - 1, textX, textX + textW,
+                                          COLOR_DARK_GRAY);
+            CHECK(blackRow < textW - 2,
+                  "line %d has no synthetic black patch row count=%d width=%d text=\"%s\"",
+                  line, blackRow, textW, cursor);
+            CHECK(darkRow < textW - 4,
+                  "line %d has no synthetic dark-gray patch row count=%d width=%d",
+                  line, darkRow, textW);
             CHECK(glyphPixels >= charCount * 2,
                   "line %d glyph pixels visible count=%d chars=%d",
                   line, glyphPixels, charCount);
-            ok = ok && topBlack >= patchW - 2 &&
-                 innerDark >= patchW - 4 &&
+            ok = ok && blackRow < textW - 2 &&
+                 darkRow < textW - 4 &&
                  glyphPixels >= charCount * 2;
         }
         if (!next) {
