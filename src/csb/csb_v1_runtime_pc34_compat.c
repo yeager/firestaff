@@ -205,6 +205,11 @@ typedef struct {
 
 static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
+static int csb_v1_runtime_target_champion_for_adjacent_attack(
+    const CSB_V1_RuntimeProfile *profile,
+    int attacker_x,
+    int attacker_y,
+    int creature_cell);
 
 static void csb_v1_init_save_dir(void)
 {
@@ -1623,6 +1628,7 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
     int thing_type;
     int thing_size;
     int champion_index;
+    int creature_cell;
     int damage;
 
     if (!profile || !record || !profile->dungeon_handle ||
@@ -1631,8 +1637,6 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
     }
     creature_index = record->eventType - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
     if (creature_index < 0 || creature_index > 3) return;
-    champion_index = csb_v1_runtime_first_living_champion(&profile->party_state);
-    if (champion_index < 0) return;
 
     dungeon = profile->dungeon_handle;
     thing = csb_v1_dungeon_get_first_thing(
@@ -1660,6 +1664,19 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
             flags = csb_v1_runtime_read_u16(thing_record + 14);
             if ((flags & 0x000Fu) != 6u) return;
             if (creature_index > (int)((flags >> 5) & 0x03u)) return;
+            creature_cell = (thing_record[3] == 0xFFu)
+                ? 0
+                : ((int)thing_record[3] >> (creature_index * 2)) & 0x03;
+            champion_index = csb_v1_runtime_target_champion_for_adjacent_attack(
+                profile,
+                record->mapX,
+                record->mapY,
+                creature_cell);
+            if (champion_index < 0) {
+                champion_index =
+                    csb_v1_runtime_first_living_champion(&profile->party_state);
+            }
+            if (champion_index < 0) return;
             damage = 1 + ((int)thing_record[4] % 4);
             if (profile->party_state.Champions[champion_index].CurrentHealth <=
                 damage) {
@@ -2630,6 +2647,85 @@ static int csb_v1_runtime_first_living_champion(const CSB_V1_PartyState *party)
             party->Champions[i].CurrentHealth > 0) {
             return i;
         }
+    }
+    return -1;
+}
+
+static int csb_v1_runtime_direction_from_source_to_destination(
+    int source_x,
+    int source_y,
+    int dest_x,
+    int dest_y)
+{
+    if (source_x == dest_x) return (source_y > dest_y) ? 0 : 2;
+    if (source_y == dest_y) return (source_x > dest_x) ? 3 : 1;
+    return 0;
+}
+
+static int csb_v1_runtime_champion_index_in_cell(
+    const CSB_V1_PartyState *party,
+    int cell)
+{
+    int i;
+    if (!party) return -1;
+    for (i = 0; i < party->ChampionCount && i < CSB_V1_MAX_CHAMPIONS; i++) {
+        const CSB_V1_Champion *champion = &party->Champions[i];
+        if (((int)champion->Cell & 3) == (cell & 3) &&
+            !csb_v1_champion_is_dead(champion) &&
+            champion->CurrentHealth > 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int csb_v1_runtime_target_champion_for_adjacent_attack(
+    const CSB_V1_RuntimeProfile *profile,
+    int attacker_x,
+    int attacker_y,
+    int creature_cell)
+{
+    static const unsigned char ordered_cells[8][4] = {
+        { 0, 1, 3, 2 },
+        { 1, 0, 2, 3 },
+        { 1, 2, 0, 3 },
+        { 2, 1, 3, 0 },
+        { 3, 2, 0, 1 },
+        { 2, 3, 1, 0 },
+        { 0, 3, 1, 2 },
+        { 3, 0, 2, 1 }
+    };
+    int distance_x;
+    int distance_y;
+    int direction;
+    int table_index;
+    int i;
+
+    if (!profile || !profile->party_state_valid) return -1;
+    distance_x = abs(profile->party_x - attacker_x);
+    distance_y = abs(profile->party_y - attacker_y);
+    if (distance_x > 1 || distance_y > 1) return -1;
+
+    /* ReDMCSB CHAMPION.C F0286 calls PROJEXPL.C F0229, which derives an
+     * ordered four-cell attack list from attacker/party coordinates and the
+     * source creature cell, then returns the first living champion in those
+     * cells. */
+    direction = csb_v1_runtime_direction_from_source_to_destination(
+        profile->party_x,
+        profile->party_y,
+        attacker_x,
+        attacker_y);
+    table_index = direction << 1;
+    if ((table_index & 0x0002) == 0) {
+        creature_cell++;
+    }
+    table_index += (creature_cell >> 1) & 0x0001;
+    table_index &= 7;
+    for (i = 0; i < 4; i++) {
+        int champion_index = csb_v1_runtime_champion_index_in_cell(
+            &profile->party_state,
+            ordered_cells[table_index][i]);
+        if (champion_index >= 0) return champion_index;
     }
     return -1;
 }
