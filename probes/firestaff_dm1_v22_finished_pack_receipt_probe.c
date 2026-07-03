@@ -130,6 +130,11 @@ static const char* k_finished_real_manifest =
     "\"door_shapes\":["
     "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
     "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+    "],"
+    "\"field_shapes\":["
+    "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"pbr_hero\","
+    "\"source_file\":\"field_teleporter_hero_01.png\","
+    "\"width\":64,\"height\":64}"
     "]}";
 
 static const char* k_placeholder_manifest =
@@ -155,14 +160,19 @@ static const char* k_placeholder_manifest =
     "\"door_shapes\":["
     "{\"id\":\"door_hero_01\",\"generator\":\"placeholder\","
     "\"source_file\":\"placeholder.png\",\"width\":32,\"height\":48}"
+    "],"
+    "\"field_shapes\":["
+    "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"placeholder\","
+    "\"source_file\":\"placeholder.png\",\"width\":64,\"height\":64}"
     "]}";
 
 static void lay_down_finish_real_files(void) {
     char cmd[FSP_PATH_MAX * 4];
     snprintf(cmd, sizeof(cmd),
              "mkdir -p '%s/wall_shapes' '%s/floor_shapes' "
-             "'%s/creature_shapes' '%s/champion_portraits' '%s/door_shapes'",
-             k_modern, k_modern, k_modern, k_modern, k_modern);
+             "'%s/creature_shapes' '%s/champion_portraits' '%s/door_shapes' "
+             "'%s/field_shapes'",
+             k_modern, k_modern, k_modern, k_modern, k_modern, k_modern);
     system(cmd);
     const char* files[DM1_V22_FAMG_MATERIAL_COUNT] = {
         "wall_d3_carved_hero_01.png",
@@ -170,13 +180,14 @@ static void lay_down_finish_real_files(void) {
         "floor_pit_hero_01.png",
         "creature_demon_hero_01.png",
         "champion_warrior_hero_01.png",
-        "door_hero_01.png"
+        "door_hero_01.png",
+        "field_teleporter_hero_01.png"
     };
     const unsigned widths[DM1_V22_FAMG_MATERIAL_COUNT] = {
-        64U, 64U, 64U, 48U, 48U, 32U
+        64U, 64U, 64U, 48U, 48U, 32U, 64U
     };
     const unsigned heights[DM1_V22_FAMG_MATERIAL_COUNT] = {
-        64U, 64U, 64U, 48U, 48U, 48U
+        64U, 64U, 64U, 48U, 48U, 48U, 64U
     };
     for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
         char fpath[FSP_PATH_MAX];
@@ -197,7 +208,8 @@ static void build_receipt(char* out, size_t outSize,
         "floor_pit_hero_01",
         "creature_demon_hero_01",
         "champion_warrior_hero_01",
-        "door_hero_01"
+        "door_hero_01",
+        "field_teleporter_hero_01"
     };
     size_t off = 0U;
     int n;
@@ -306,15 +318,15 @@ int main(void) {
 
     check("FINISHED_REAL manifest -> material gate=FINISHED_REAL",
           dm1_v22_famg_is_finished_real() == 1);
-    check("3-of-6 reviewed -> MATCH_PARTIAL gate",
+    check("3-of-7 reviewed -> MATCH_PARTIAL gate",
           dm1_v22_fpr_state() == DM1_V22_FPR_MATCH_PARTIAL);
-    check("3-of-6 reviewed -> is_promoted=0",
+    check("3-of-7 reviewed -> is_promoted=0",
           dm1_v22_fpr_is_promoted() == 0);
     {
         int required = 0;
         int reviewed = dm1_v22_fpr_receipt_slot_count(&required);
-        check("3-of-6 reviewed -> required=6", required == 6);
-        check("3-of-6 reviewed -> reviewed=3", reviewed == 3);
+        check("3-of-7 reviewed -> required=7", required == 7);
+        check("3-of-7 reviewed -> reviewed=3", reviewed == 3);
     }
 
     /* ── Scenario 6: receipt + FINISHED_REAL + all slots reviewed ─ */
@@ -331,8 +343,8 @@ int main(void) {
     {
         int required = 0;
         int reviewed = dm1_v22_fpr_receipt_slot_count(&required);
-        check("full review -> required=6", required == 6);
-        check("full review -> reviewed=6", reviewed == 6);
+        check("full review -> required=7", required == 7);
+        check("full review -> reviewed=7", reviewed == 7);
         check("full review -> stale_review_count=0",
               dm1_v22_fpr_receipt_stale_review_count() == 0);
     }
@@ -455,7 +467,8 @@ int main(void) {
                "\"reviewedSlots\":["
                "\"wall_d3_carved_hero_01\",\"floor_plain_hero_01\","
                "\"floor_pit_hero_01\",\"creature_demon_hero_01\","
-               "\"champion_warrior_hero_01\",\"door_hero_01\"]}");
+               "\"champion_warrior_hero_01\",\"door_hero_01\","
+               "\"field_teleporter_hero_01\"]}");
     check("state cached -> still NOT_INSTALLED after file drop",
           dm1_v22_fpr_state() == DM1_V22_FPR_NOT_INSTALLED);
     dm1_v22_fpr_reset_state();

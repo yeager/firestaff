@@ -13,7 +13,7 @@
  *   Scenario 3: empty manifest                     -> SYNTHETIC_PLACEHOLDER
  *   Scenario 4: placeholder-only manifest          -> SYNTHETIC_PLACEHOLDER
  *   Scenario 5: PARTIAL (some REAL, some PLACEHOLDER) -> PARTIAL
- *   Scenario 6: FINISHED_REAL (all 6 slots REAL)   -> FINISHED_REAL
+ *   Scenario 6: FINISHED_REAL (all 7 slots REAL)   -> FINISHED_REAL
  *   Scenario 7: PARTIAL via missing source_file    -> PARTIAL
  *                                                       (declared slots
  *                                                        PARTIAL-only)
@@ -22,7 +22,7 @@
  *   Scenario 9: garbage manifest                   -> NO_MANIFEST
  *                                                       (parser rejects)
  *   Scenario 10: per-slot invariant suite
- *               - 6 slots tracked
+ *               - 7 slots tracked
  *               - slot names match hero_01 ids from the sibling
  *                 SKIP-only real-asset test
  *               - source_evidence cites DUNVIEW.C / DUNGEON.C / PANEL.C
@@ -127,6 +127,11 @@ static int write_all_real_manifest_with_receipt(const char* path,
         "\"door_shapes\":["
         "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
         "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"field_teleporter_hero_01.png\","
+        "\"width\":64,\"height\":64}"
         "]");
     if (receipt_generator) {
         fprintf(fp,
@@ -277,6 +282,10 @@ int main(void) {
         "\"door_shapes\":["
         "{\"id\":\"door_hero_01\",\"generator\":\"placeholder\","
         "\"source_file\":\"placeholder.png\",\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"placeholder.png\",\"width\":64,\"height\":64}"
         "]}";
     check("wrote placeholder manifest",
           write_file(manifest_file, placeholder_content));
@@ -302,6 +311,10 @@ int main(void) {
     check("placeholder -> door_front=PLACEHOLDER",
           dm1_v22_famg_classify_slot(
               DM1_V22_FAMG_DOOR_FRONT) ==
+              DM1_V22_FAMG_CLASS_PLACEHOLDER);
+    check("placeholder -> teleporter_field=PLACEHOLDER",
+          dm1_v22_famg_classify_slot(
+              DM1_V22_FAMG_TELEPORTER_FIELD) ==
               DM1_V22_FAMG_CLASS_PLACEHOLDER);
     check("placeholder -> uses_placeholder=1 (wall)",
           dm1_v22_famg_uses_placeholder(
@@ -347,6 +360,10 @@ int main(void) {
         "\"door_shapes\":["
         "{\"id\":\"door_hero_01\",\"generator\":\"placeholder\","
         "\"source_file\":\"placeholder.png\",\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"placeholder.png\",\"width\":64,\"height\":64}"
         "]}";
     check("wrote partial manifest",
           write_file(manifest_file, partial_content));
@@ -378,25 +395,27 @@ int main(void) {
     check("partial -> total=DM1_V22_FAMG_MATERIAL_COUNT",
           total == (int)DM1_V22_FAMG_MATERIAL_COUNT);
 
-    /* ── Scenario 6: FINISHED_REAL gate (all 6 slots REAL) ───────── */
+    /* ── Scenario 6: FINISHED_REAL gate (all 7 slots REAL) ───────── */
     printf("\n[ Scenario 6: FINISHED_REAL gate ]\n");
     /* Create every category directory so source_file resolution can
      * land on disk. */
     snprintf(mkdir_cmd, sizeof(mkdir_cmd),
              "mkdir -p '%s/wall_shapes' '%s/floor_shapes' "
-             "'%s/creature_shapes' '%s/champion_portraits' '%s/door_shapes'",
+             "'%s/creature_shapes' '%s/champion_portraits' '%s/door_shapes' "
+             "'%s/field_shapes'",
              resolved_mdir, resolved_mdir, resolved_mdir,
-             resolved_mdir, resolved_mdir);
+             resolved_mdir, resolved_mdir, resolved_mdir);
     system(mkdir_cmd);
 
-    /* Create all 6 source files on disk under their category dirs. */
+    /* Create all 7 source files on disk under their category dirs. */
     const char* files[DM1_V22_FAMG_MATERIAL_COUNT] = {
         "wall_d3_carved_hero_01.png",
         "floor_plain_hero_01.png",
         "floor_pit_hero_01.png",
         "creature_demon_hero_01.png",
         "champion_warrior_hero_01.png",
-        "door_hero_01.png"
+        "door_hero_01.png",
+        "field_teleporter_hero_01.png"
     };
     for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
         char fpath[1024];
@@ -438,6 +457,11 @@ int main(void) {
         "\"door_shapes\":["
         "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
         "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"field_teleporter_hero_01.png\","
+        "\"width\":64,\"height\":64}"
         "]}";
     check("wrote finished-real manifest",
           write_file(manifest_file, finished_content));
@@ -451,14 +475,14 @@ int main(void) {
           dm1_v22_famg_is_synthetic_or_partial() == 0);
     total = 0;
     real = dm1_v22_famg_real_count(&total);
-    check("finished-real -> real_count=6", real == 6);
-    check("finished-real -> total=6", total == 6);
+    check("finished-real -> real_count=7", real == 7);
+    check("finished-real -> total=7", total == 7);
     for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
-        check("finished-real -> all 6 slots REAL",
+        check("finished-real -> all 7 slots REAL",
               dm1_v22_famg_classify_slot(
                   (DM1_V22_FamgSlot)i) ==
                   DM1_V22_FAMG_CLASS_REAL);
-        check("finished-real -> all 6 slots uses_placeholder=0",
+        check("finished-real -> all 7 slots uses_placeholder=0",
               dm1_v22_famg_uses_placeholder(
                   (DM1_V22_FamgSlot)i) == 0);
     }
@@ -584,8 +608,8 @@ int main(void) {
 
     /* ── Scenario 10: per-slot invariants + names + evidence ─────── */
     printf("\n[ Scenario 10: invariants + names + evidence ]\n");
-    check("DM1_V22_FAMG_MATERIAL_COUNT=6",
-          DM1_V22_FAMG_MATERIAL_COUNT == 6);
+    check("DM1_V22_FAMG_MATERIAL_COUNT=7",
+          DM1_V22_FAMG_MATERIAL_COUNT == 7);
     check("slot[0] = wall_d3_carved_hero_01",
           strcmp(dm1_v22_famg_slot_name(
               DM1_V22_FAMG_WALL_D3_CARVED),
@@ -610,6 +634,10 @@ int main(void) {
           strcmp(dm1_v22_famg_slot_name(
               DM1_V22_FAMG_DOOR_FRONT),
               "door_hero_01") == 0);
+    check("slot[6] = field_teleporter_hero_01",
+          strcmp(dm1_v22_famg_slot_name(
+              DM1_V22_FAMG_TELEPORTER_FIELD),
+              "field_teleporter_hero_01") == 0);
     check("out-of-range slot name -> UNKNOWN",
           strcmp(dm1_v22_famg_slot_name(
               (DM1_V22_FamgSlot)9999), "UNKNOWN") == 0);
