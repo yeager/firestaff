@@ -2037,12 +2037,7 @@ static int csb_v1_runtime_move_group_thing_to_square(
         old_level,
         old_x,
         old_y);
-    dest_first_ptr = csb_v1_runtime_square_first_thing_ptr(
-        dungeon,
-        new_level,
-        new_x,
-        new_y);
-    if (!source_first_ptr || !dest_first_ptr) return 0;
+    if (!source_first_ptr) return 0;
 
     previous_record = NULL;
     thing = csb_v1_runtime_read_u16(source_first_ptr);
@@ -2061,10 +2056,40 @@ static int csb_v1_runtime_move_group_thing_to_square(
             } else {
                 csb_v1_runtime_write_u16(source_first_ptr, next_thing);
             }
-            csb_v1_runtime_write_u16(
-                group_record,
-                csb_v1_runtime_read_u16(dest_first_ptr));
-            csb_v1_runtime_write_u16(dest_first_ptr, group_thing);
+            dest_first_ptr = csb_v1_runtime_square_first_thing_ptr(
+                dungeon,
+                new_level,
+                new_x,
+                new_y);
+            if (dest_first_ptr) {
+                csb_v1_runtime_write_u16(
+                    group_record,
+                    csb_v1_runtime_read_u16(dest_first_ptr));
+                csb_v1_runtime_write_u16(dest_first_ptr, group_thing);
+                return 1;
+            }
+            dest_first_ptr = csb_v1_runtime_create_square_first_thing_ptr(
+                dungeon,
+                new_level,
+                new_x,
+                new_y,
+                group_thing);
+            if (!dest_first_ptr) {
+                if (previous_record) {
+                    csb_v1_runtime_write_u16(previous_record, group_thing);
+                } else {
+                    csb_v1_runtime_write_u16(source_first_ptr, group_thing);
+                }
+                csb_v1_runtime_write_u16(group_record, next_thing);
+                return 0;
+            }
+            /* ReDMCSB: MOVESENS.C F0267 lines 858-867 moves C04 groups by
+             * relinking with DUNGEON.C F0163. F0163 lines 1804-1829 creates
+             * a square-first entry when the destination square has no thing
+             * list. Firestaff keeps the original preallocated-slot contract
+             * bounded by refusing insertion when no trailing THING_NONE slot
+             * exists. */
+            csb_v1_runtime_write_u16(group_record, 0xFFFEu);
             return 1;
         }
         previous_record = group_record;
