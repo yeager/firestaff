@@ -17074,6 +17074,28 @@ if(BUILD_TESTING)
         LABELS "tier2;csb;csbwin_custom_resource;m11;startup;data_free"
     )
 
+    # CSB V1 CSBWin skinCache source-lock. This is the bounded runtime
+    # cache contract used by CustomBackgrounds before a full Expool-backed
+    # DUNGEON.DAT reader feeds it real records.
+    add_executable(test_csb_v1_skin_cache_pc34_compat
+        tests/test_csb_v1_skin_cache_pc34_compat.c
+        src/csb/csb_v1_skin_cache_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_skin_cache_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_skin_cache_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_skin_cache_pc34_compat
+        COMMAND test_csb_v1_skin_cache_pc34_compat
+    )
+    set_tests_properties(csb_v1_skin_cache_pc34_compat PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;custom_backgrounds;data_free"
+    )
+
     # CSB V1 CSBgraphics.dat real-scan manifest gate. The public build
     # has no built-in CSBgraphics.dat hashes, so user-staged files are
     # registered by a data-root csbgraphics.hashes manifest while keeping
