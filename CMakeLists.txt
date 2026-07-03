@@ -141,9 +141,15 @@ add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
     src/shared/fs_portable_compat.c
     src/shared/dungeon_decompressor_ftl.c
+    src/shared/asset_find_by_hash.c
     src/shared/firestaff_cmp_decode.c
     src/engine/m11_game_text_latin_extended_glyphs.c
     src/shared/image_backend_pc34_compat_globals.c
+    src/csb/csb_v1_csbgraphics_dat_classify.c
+    src/csb/csb_v1_csbgraphics_dat_real_scan.c
+    src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
+    src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+    src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c
     src/dm2/dm2_v1_creature.c

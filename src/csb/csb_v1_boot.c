@@ -2,6 +2,8 @@
 
 #include "asset_find_by_hash.h"
 #include "csb_v1_cmp_import_pc34_compat.h"
+#include "csb_v1_csbgraphics_dat_real_scan.h"
+#include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
 
@@ -184,9 +186,68 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
     profile->cmp_imported_slot = -1;
     profile->cmp_imported_champion_count = 0;
     profile->engine_version_displayed = 0;
+    profile->csbgraphics_scan_attempted = 0;
+    profile->csbgraphics_scan_result =
+        CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
+    profile->csbgraphics_plan_result =
+        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_CACHE;
+    csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
     csb_v1_character_init_default(&profile->imported_party);
     csb_v1_runtime_init(&profile->runtime, NULL);
     csb_v1_engine_version_display_set_csb(0);
+}
+
+static void csb_v1_boot_reset_csbgraphics(CSB_V1_BootProfile *profile)
+{
+    if (!profile) {
+        return;
+    }
+    csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
+    csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    profile->csbgraphics_scan_attempted = 0;
+    profile->csbgraphics_scan_result =
+        CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
+    profile->csbgraphics_plan_result =
+        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_ERR_NO_CACHE;
+}
+
+int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
+                                 const char *cache_dir)
+{
+    const char *root;
+
+    if (!profile) {
+        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_ARGUMENT;
+    }
+    root = profile->asset_root[0] ? profile->asset_root : NULL;
+    csb_v1_boot_reset_csbgraphics(profile);
+    profile->csbgraphics_scan_attempted = 1;
+    profile->csbgraphics_scan_result =
+        csb_v1_csbgraphics_dat_real_scan_and_load(
+            root, cache_dir, 4, &profile->csbgraphics_cache);
+    if (profile->csbgraphics_scan_result !=
+        CSB_V1_CSBGRAPHICS_DAT_REAL_OK) {
+        return profile->csbgraphics_scan_result;
+    }
+    profile->csbgraphics_plan_result =
+        csb_v1_csbgraphics_m11_runtime_plan_build_from_cache(
+            &profile->csbgraphics_cache,
+            &profile->csbgraphics_m11_plan);
+    return profile->csbgraphics_plan_result;
+}
+
+const CSB_V1_CSBGraphicsM11RuntimePlan *
+csb_v1_boot_csbgraphics_m11_plan(const CSB_V1_BootProfile *profile)
+{
+    return profile ? &profile->csbgraphics_m11_plan : NULL;
+}
+
+const CSB_V1_CSBGraphicsDatRealCache *
+csb_v1_boot_csbgraphics_cache(const CSB_V1_BootProfile *profile)
+{
+    return profile ? &profile->csbgraphics_cache : NULL;
 }
 
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
@@ -284,6 +345,7 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     profile->dungeon_md5[0] = '\0';
     profile->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
     profile->variant_id = CSB_V1_VARIANT_UNKNOWN;
+    csb_v1_boot_reset_csbgraphics(profile);
 
     /* A successful csb_v1_boot_enter_game() hands the verified DUNGEON.DAT
      * off to the runtime as profile->runtime.dungeon_handle and to the global
@@ -343,6 +405,7 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     if (profile->save_root[0] == '\0') {
         csb_v1_boot_set_save_root(profile, NULL);
     }
+    (void)csb_v1_boot_scan_csbgraphics(profile, NULL);
     if (profile->assets_verified) {
         profile->state = CSB_V1_BOOT_STATE_ASSETS_READY;
         return 0;
@@ -468,6 +531,7 @@ void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
      * leaving the profile.
      * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 */
     csb_v1_runtime_cleanup(&profile->runtime);
+    csb_v1_boot_reset_csbgraphics(profile);
     profile->state = CSB_V1_BOOT_STATE_PROFILE_READY;
     memset(&profile->runtime, 0, sizeof(profile->runtime));
     csb_v1_engine_version_display_set_csb(0);
@@ -490,6 +554,7 @@ size_t csb_v1_boot_diagnostic_report(const CSB_V1_BootProfile *profile,
                  "dungeon=%s md5=%s\n"
                  "save_root=%s tick_ms=%u entrance_map=%u start_map=%u\n"
                  "engine_version=%s flipped=%s\n"
+                 "csbgraphics_scan attempted=%s result=%s plan=%s ready=%s planned=%u\n"
                  "cmp_import attempted=%s succeeded=%s slot=%d champions=%d\n"
                  "imported_party_ready=%s\n",
                  (int)profile->state,
@@ -507,6 +572,13 @@ size_t csb_v1_boot_diagnostic_report(const CSB_V1_BootProfile *profile,
                  (unsigned)profile->start_map_index,
                  engine_version_str ? engine_version_str : "(unset)",
                  profile->engine_version_displayed ? "YES" : "NO",
+                 profile->csbgraphics_scan_attempted ? "YES" : "NO",
+                 csb_v1_csbgraphics_dat_real_result_name(
+                     profile->csbgraphics_scan_result),
+                 csb_v1_csbgraphics_m11_runtime_plan_result_name(
+                     profile->csbgraphics_plan_result),
+                 profile->csbgraphics_m11_plan.ready ? "YES" : "NO",
+                 (unsigned)profile->csbgraphics_m11_plan.planned_count,
                  profile->cmp_import_attempted ? "YES" : "NO",
                  profile->cmp_import_succeeded ? "YES" : "NO",
                  profile->cmp_imported_slot,

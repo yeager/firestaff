@@ -497,6 +497,18 @@ int main(void) {
                     "CSB boot profile remains hash verified");
         expect_true(strcmp(profile->game_id, "csb") == 0,
                     "CSB boot profile game id is csb");
+        expect_true(profile->csbgraphics_scan_attempted == 1,
+                    "CSB boot profile attempts CSBgraphics startup scan");
+        expect_true(csb_v1_boot_csbgraphics_cache(profile) ==
+                        &profile->csbgraphics_cache &&
+                    csb_v1_boot_csbgraphics_m11_plan(profile) ==
+                        &profile->csbgraphics_m11_plan,
+                    "CSB boot profile owns CSBgraphics cache and M11 plan");
+        expect_true(profile->csbgraphics_scan_result ==
+                        CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND ||
+                    profile->csbgraphics_scan_result ==
+                        CSB_V1_CSBGRAPHICS_DAT_REAL_OK,
+                    "CSBgraphics startup scan is skip-safe or loaded");
         expect_true(profile->runtime.party_x == expected.party_x &&
                     profile->runtime.party_y == expected.party_y &&
                     profile->runtime.party_dir == expected.party_dir,

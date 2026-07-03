@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_runtime_pc34_compat.h"
 
 #ifdef __cplusplus
@@ -54,6 +55,12 @@ typedef struct {
     int engine_version_displayed;
     CSB_V1_PartyState imported_party;
 
+    int csbgraphics_scan_attempted;
+    int csbgraphics_scan_result;
+    int csbgraphics_plan_result;
+    CSB_V1_CSBGraphicsDatRealCache csbgraphics_cache;
+    CSB_V1_CSBGraphicsM11RuntimePlan csbgraphics_m11_plan;
+
     CSB_V1_RuntimeProfile runtime;
 } CSB_V1_BootProfile;
 
@@ -68,6 +75,12 @@ int csb_v1_boot_set_imported_party_from_cmp(CSB_V1_BootProfile *profile,
                                             size_t cmp_size);
 int csb_v1_boot_mark_imported_party_ready(CSB_V1_BootProfile *profile);
 void csb_v1_boot_reset_engine_version_to_dm1(void);
+int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
+                                 const char *cache_dir);
+const CSB_V1_CSBGraphicsM11RuntimePlan *
+csb_v1_boot_csbgraphics_m11_plan(const CSB_V1_BootProfile *profile);
+const CSB_V1_CSBGraphicsDatRealCache *
+csb_v1_boot_csbgraphics_cache(const CSB_V1_BootProfile *profile);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *
