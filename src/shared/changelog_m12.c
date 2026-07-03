@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.23  (2026-07-03)",
+    "  - Packages the post-v3.0.22 mainline passes for CSB save discovery, party floor-sensor movement, CSB graphics runtime planning, title-palette fidelity, HoC click routing, and DM1 inscription-wall restoration.",
+    "  - CSB V1 gains stronger staged-file save classification, party floor-sensor command handling, and a source-locked CSB graphics M11 runtime-plan path with focused unit and probe coverage.",
+    "  - DM1 V1 presentation coverage tightens title/menu cadence, special-palette handling, Hall of Champions coordinate routing, and front-wall inscription readability.",
+    "",
     "V3.0.22  (2026-07-03)",
     "  - Packages the post-v3.0.21 mainline gates for CSB CSBGAME roster import, startup resume handoff, and CSB graphics decode handoff into M11 drawing.",
     "  - CSB V1 now carries an explicit M11 runtime graphics plan from boot preparation through the game view, with binding-readiness and runtime-plan coverage.",
@@ -374,5 +379,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.22";
+    return "3.0.23";
 }
