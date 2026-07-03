@@ -1,6 +1,40 @@
 
 # Unreleased
 
+# Firestaff v3.0.22
+
+Firestaff v3.0.22 packages the current post-v3.0.21 `main` state. The release
+keeps the public status conservative while publishing the latest CSB CSBGAME and
+CSB graphics handoff gates, plus DM1 presentation fixes that landed after
+v3.0.21.
+
+## Highlights since v3.0.21
+
+- **CSB V1 runtime handoff is broader**: the tag includes the latest CSBGAME
+  roster import and startup resume gates, keeping the CSB runtime profile moving
+  closer to a complete M11 handoff.
+
+- **CSB graphics now have an explicit M11 runtime plan**: post-v3.0.21 commits
+  add binding readiness, decode-to-M11 handoff helpers, boot-owned graphics-plan
+  state, and application of that plan during M11 drawing.
+
+- **DM1 V1 presentation polish moved forward**: keyboard arrow visual feedback,
+  startup animation timing, entrance-door compositing, source-font inscriptions,
+  and front-wall side occlusion are covered by the current mainline gates.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Main CI for `pass691 apply csbgraphics plan during m11 draw` completed
+  successfully before this release-prep commit.
+- Local release-prep verification rebuilt the full Debug tree and re-ran the
+  version/changelog gate, Phase A, audio, CSB graphics binding/runtime-plan,
+  CSB startup/resume, M12 quick-resume, entrance-door composite, inscription
+  font, startup-intro state-machine, and data-scanner smoke gates.
+- The GitHub release workflow is expected to build and package macOS, Windows,
+  Linux x86_64, and Linux arm64 artifacts from the `v3.0.22` release tag.
+
 # Firestaff v3.0.21
 
 Firestaff v3.0.21 packages the current post-v3.0.20 `main` state. The release
