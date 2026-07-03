@@ -937,6 +937,28 @@ static void m11_swsh_unpack_4bpp_to_indexed(const unsigned char* packed,
     }
 }
 
+static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs) {
+    Uint64 start;
+    if (delayMs == 0U) {
+        return M11_Render_PumpEvents();
+    }
+    start = SDL_GetTicks();
+    while ((SDL_GetTicks() - start) < (Uint64)delayMs) {
+        Uint64 elapsed;
+        unsigned int remaining;
+        if (M11_Render_PumpEvents()) {
+            return 1;
+        }
+        elapsed = SDL_GetTicks() - start;
+        if (elapsed >= (Uint64)delayMs) {
+            break;
+        }
+        remaining = delayMs - (unsigned int)elapsed;
+        SDL_Delay(remaining > 10U ? 10U : remaining);
+    }
+    return 0;
+}
+
 static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
                                               const char* dataDir,
                                               int skipSwoosh) {
@@ -981,9 +1003,12 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
     memset(swshPalette, 0, sizeof(swshPalette));
     {
       unsigned int sourceStep;
-      SDL_Delay(20);
       m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
       M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+      if (m11_delay_ms_with_intro_event_pump(
+              SWSH_Compat_GetRuntimeInitialLogoHoldMs())) {
+          goto cleanup;
+      }
       for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
           SWSH_CompatSourceAnimationStep step;
           if (M11_Render_PumpEvents()) break;
@@ -994,7 +1019,6 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
               m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
               M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
-              unsigned int vblank;
               /* ReDMCSB SWSH.C:33-37: each Vsync wait is one 50 Hz vertical
                * blank (~20 ms).  Use wall-clock timing so high-refresh displays
                * (e.g. MacBook Pro 120 Hz ProMotion) do not race through the
@@ -1002,19 +1026,18 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
                * The previous dead-code `paletteDirty` flag was removed:
                * the WAIT_VBLANKS branch never had a palette to "re-render"
                * because every SET_PALETTE_COLOR step renders its own frame. */
-              for (vblank = 0U; vblank < step.vblankCount; ++vblank) {
-                  Uint64 t0 = SDL_GetTicks();
-                  SDL_Delay(16);  /* yield most of the 20 ms frame */
-                  while ((SDL_GetTicks() - t0) < 20) {
-                      SDL_Delay(1);
-                  }
+              if (m11_delay_ms_with_intro_event_pump(
+                      SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                          step.vblankCount))) {
+                  break;
               }
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
               /* No palette was queued between the previous SET_PALETTE_COLOR
                * and now (the dead paletteDirty=1 path was never reachable). */
           }
       }
-      SDL_Delay(120); }
+      (void)m11_delay_ms_with_intro_event_pump(
+          SWSH_Compat_GetRuntimeFinalHoldMs()); }
 cleanup:
     SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
     if (logoImg) free(logoImg);
@@ -1117,8 +1140,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
                                        0, 118,
                                        0);
         } else {
-            SDL_Delay(V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));
-            if (M11_Render_PumpEvents()) {
+            if (m11_delay_ms_with_intro_event_pump(
+                    V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
                 break;
             }
             continue;
@@ -1142,8 +1165,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
         if (outPlayedAnyFrame) {
             *outPlayedAnyFrame = 1;
         }
-        SDL_Delay(V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));
-        if (M11_Render_PumpEvents()) {
+        if (m11_delay_ms_with_intro_event_pump(
+                V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
             break;
         }
     }
@@ -1151,7 +1174,11 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
      * BUG0_71 guard before STARTUP1.C advances into the entrance.  The
      * TITLE.DAT fallback below already observes this; keep the GRAPHICS.DAT
      * C001 runtime path on the same source cadence. */
-    SDL_Delay(V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
+    if (!m11_delay_ms_with_intro_event_pump(
+            V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing))) {
+        (void)m11_delay_ms_with_intro_event_pump(
+            V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&timing));
+    }
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }
@@ -1257,12 +1284,13 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
          * smash straight into the entrance screen.  Bind the runtime delay
          * through the TITLE frontend helper so the observable handoff cadence
          * remains tied to the source timing evidence. */
-        SDL_Delay(V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));
-        if (M11_Render_PumpEvents()) {
+        if (m11_delay_ms_with_intro_event_pump(
+                V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
             break;
         }
     }
-    SDL_Delay(V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
+    (void)m11_delay_ms_with_intro_event_pump(
+        V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }

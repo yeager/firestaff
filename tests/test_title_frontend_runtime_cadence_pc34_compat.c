@@ -52,21 +52,29 @@ int main(void) {
 
     expect_u("source zoom step count", timing.zoomStepCount, 18u);
     expect_u("source animation step count", timing.sourceAnimationStepCount, 23u);
+    expect_u("C001 cadence pad target matches TITLE frame-bank cadence",
+             timing.frameBankEquivalentStepCount, V1_TITLE_DAT_FRAME_MAX);
     expect_u("runtime frame delay from source vblank cadence",
              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing),
              (unsigned int)V1_TICK_MS);
     expect_u("runtime final guard delay from source post/final vblanks",
              V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing),
              3u * (unsigned int)V1_TICK_MS);
-    /* ReDMCSB TITLE.C F0437 uses F0022_MAIN_Delay(20) after the PRESENTS
-     * strip and a three-vblank final guard, 60u ms in the original PC delay
-     * units; Firestaff maps the same source vblank counts onto V1_TICK_MS at
-     * runtime to match the engine tick cadence. */
+    expect_u("runtime C001 cadence pad closes 23-step fast path",
+             V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&timing),
+             (V1_TITLE_DAT_FRAME_MAX - 23u) * (unsigned int)V1_TICK_MS);
+    /* ReDMCSB TITLE.C F0437 waits through the zoom/post-zoom/final-guard
+     * VBlank path, and Firestaff pads the shorter GRAPHICS.DAT C001 step
+     * schedule to the same finite cadence as the existing 53-frame TITLE
+     * bank path so fast machines cannot collapse the intro into a burst. */
     expect_u("runtime fallback frame delay stays deliberate, not zero-speed",
              V1_TitleFrontend_GetRuntimeFrameDelayMs(&zero),
              50u);
     expect_u("runtime null final guard delay is safe",
              V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(NULL),
+             0u);
+    expect_u("runtime null C001 cadence pad is safe",
+             V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(NULL),
              0u);
 
     /* ReDMCSB TITLE.C PC/F20 source audit:
