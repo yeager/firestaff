@@ -420,6 +420,12 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     profile.party_x = 1;
     profile.party_y = 2;
     profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.party_state.Champions[0].CurrentHealth = 20;
+    profile.party_state.Champions[0].MaximumHealth = 20;
+    profile.party_state.Champions[0].Attributes = 0;
 
     queue_square_event(
         &profile,
@@ -506,6 +512,8 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded C38 attack event keeps the adjacent group square");
     CHECK(dispatch.records[0].aux0 == (255 - 21),
           "bounded C38 attack event priority follows 255 - creature movement ticks");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 18,
+          "bounded C38 attack event applies deterministic champion HP damage");
     CHECK(profile.timeline_queue.eventCount == 0,
           "bounded C38 attack event consumes the generated attack queue");
 }

@@ -156,6 +156,9 @@ static char g_csb_save_dir_buf[512];
 static char g_csb_save_path_buf[512];
 static int  g_save_dir_init = 0;
 
+static int csb_v1_runtime_first_living_champion(
+    const CSB_V1_PartyState *party);
+
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
 #define CSB_V1_RUNTIME_SAVE_VERSION 1u
 
@@ -1567,6 +1570,73 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
     }
 }
 
+static void csb_v1_runtime_apply_creature_attack_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *thing_record;
+    uint16_t flags;
+    int thing;
+    int guard;
+    int creature_index;
+    int thing_type;
+    int thing_size;
+    int champion_index;
+    int damage;
+
+    if (!profile || !record || !profile->dungeon_handle ||
+        !profile->party_state_valid) {
+        return;
+    }
+    creature_index = record->eventType - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    if (creature_index < 0 || creature_index > 3) return;
+    champion_index = csb_v1_runtime_first_living_champion(&profile->party_state);
+    if (champion_index < 0) return;
+
+    dungeon = profile->dungeon_handle;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        record->mapIndex,
+        record->mapX,
+        record->mapY);
+    if (thing < 0) return;
+
+    /* ReDMCSB GROUP.C F0209 lines 1443-1515 processes C38-C41 as
+     * per-creature attack decisions after C6 attack entry.  Full DM1/CSB
+     * attack resolution includes direction/cell targeting, evasion, damage
+     * rolls, projectile attacks, sounds, and aspect timing.  This bounded
+     * CSB startup bridge proves that a generated C38 event reaches live party
+     * state by applying a deterministic minimum HP loss to the first living
+     * champion; the full attack body remains in the source-locked AI layer. */
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
+        thing_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!thing_record) break;
+        if (thing_type == 4 && thing_size >= 16) {
+            flags = csb_v1_runtime_read_u16(thing_record + 14);
+            if ((flags & 0x000Fu) != 6u) return;
+            if (creature_index > (int)((flags >> 5) & 0x03u)) return;
+            damage = 1 + ((int)thing_record[4] % 4);
+            if (profile->party_state.Champions[champion_index].CurrentHealth <=
+                damage) {
+                profile->party_state.Champions[champion_index].CurrentHealth = 0;
+            } else {
+                profile->party_state.Champions[champion_index].CurrentHealth =
+                    (int16_t)(profile->party_state
+                                  .Champions[champion_index]
+                                  .CurrentHealth -
+                              damage);
+            }
+            return;
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+}
+
 static void csb_v1_runtime_trigger_floor_sensor_event(
     CSB_V1_RuntimeProfile *profile,
     int sensor_effect,
@@ -2363,6 +2433,14 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             break;
         case DM1_EVENT_UPDATE_BEHAVIOR_GROUP:
             csb_v1_runtime_apply_group_behavior_timeline_record(
+                profile,
+                record);
+            break;
+        case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0:
+        case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1:
+        case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_2:
+        case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3:
+            csb_v1_runtime_apply_creature_attack_timeline_record(
                 profile,
                 record);
             break;
