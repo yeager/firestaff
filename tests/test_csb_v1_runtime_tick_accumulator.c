@@ -1017,6 +1017,7 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     int slot = -1;
     uint16_t group_hp_before;
     uint16_t group_hp_after;
+    uint16_t group_flags;
     int i;
 
     printf("\n-- CSB C25 party/group damage writeback --\n");
@@ -1137,6 +1138,110 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 group fireball despawns after one-shot advance");
     CHECK(group_hp_after < group_hp_before,
           "C25 group fireball writes damage into real-format GROUP.Health");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 82;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, 0xfffeu);
+    raw[86] = 9u;
+    raw[87] = 0x04u; /* slot0 cell0, slot1 cell1 */
+    test_put_le16(raw, 88, 1u);
+    test_put_le16(raw, 90, 500u);
+    test_put_le16(raw, 96, (uint16_t)(1u << 5)); /* two creatures */
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 80;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    slot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 two-creature group fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 two-creature group reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 two-creature group dispatches through the explosion handler");
+    group_flags = (uint16_t)(raw[96] | ((uint16_t)raw[97] << 8));
+    group_hp_after = (uint16_t)(raw[88] | ((uint16_t)raw[89] << 8));
+    CHECK(((group_flags >> 5) & 0x03u) == 0u,
+          "C25 group kill compacts real-format Count from two creatures to one");
+    CHECK(group_hp_after > 0u && group_hp_after < 500u &&
+              (uint16_t)(raw[90] | ((uint16_t)raw[91] << 8)) == 0u,
+          "C25 group kill packs surviving Health down to slot 0");
+    CHECK((raw[87] & 0x03u) == 1u,
+          "C25 group kill packs surviving cell down to slot 0");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 82;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, 0xfffeu);
+    raw[86] = 9u;
+    raw[87] = 0xffu;
+    test_put_le16(raw, 88, 1u);
+    test_put_le16(raw, 96, 0u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 160;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    slot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 final-creature group fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 final-creature group reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 final-creature group dispatches through the explosion handler");
+    CHECK((uint16_t)(raw[66] | ((uint16_t)raw[67] << 8)) == 0xfffeu,
+          "C25 final group kill unlinks the group thing from the square head");
+    CHECK((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) == 0xffffu,
+          "C25 final group kill marks the real-format group record unused");
 }
 
 static void test_explosion_c25_door_destruction_writeback(void)
