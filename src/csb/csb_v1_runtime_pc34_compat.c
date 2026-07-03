@@ -2056,6 +2056,167 @@ static void csb_v1_runtime_apply_poison_event_record(
         record->effect);
 }
 
+static int csb_v1_runtime_apply_explosion_party_action(
+    CSB_V1_RuntimeProfile *profile,
+    const struct CombatAction_Compat *action,
+    struct RngState_Compat *rng)
+{
+    int applied;
+    int random_window;
+    int base_attack;
+    int i;
+
+    if (!profile || !action || !rng ||
+        !profile->party_state_valid ||
+        action->kind != COMBAT_ACTION_APPLY_DAMAGE_CHAMPION ||
+        action->rawAttackValue <= 0) {
+        return 0;
+    }
+
+    applied = 0;
+    random_window = (action->rawAttackValue >> 3) + 1;
+    base_attack = action->rawAttackValue - random_window;
+    random_window <<= 1;
+
+    /* ReDMCSB PROJEXPL.C F0213 lines 169-174 and F0220 lines
+     * 858-862 dispatch party-square fireball/lightning/poison-cloud
+     * explosions through CHAMPION.C F0324.  F0324 fans out to every
+     * living champion, randomizes attack by +/- 1/8, and then calls F0321
+     * for shield/defense/wound scaling before F0319 death handling. */
+    for (i = 0; i < profile->party_state.ChampionCount &&
+                i < CSB_V1_MAX_CHAMPIONS; ++i) {
+        CSB_V1_Champion *champion = &profile->party_state.Champions[i];
+        struct CombatantChampionSnapshot_Compat defender;
+        int randomized_attack;
+        int scaled_attack = 0;
+        int selected_wounds = 0;
+
+        if (champion->CurrentHealth <= 0 ||
+            (champion->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0) {
+            continue;
+        }
+        randomized_attack = base_attack +
+            F0732_COMBAT_RngRandom_Compat(rng, random_window);
+        if (randomized_attack < 1) randomized_attack = 1;
+        if (!csb_v1_runtime_fill_defender_combat_snapshot(
+                profile,
+                i,
+                &defender) ||
+            !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
+                action->attackTypeCode,
+                randomized_attack,
+                action->allowedWounds,
+                &defender,
+                rng,
+                &scaled_attack,
+                NULL) ||
+            scaled_attack <= 0) {
+            continue;
+        }
+        if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
+                scaled_attack,
+                action->allowedWounds,
+                &defender,
+                rng,
+                &selected_wounds,
+                NULL)) {
+            selected_wounds = 0;
+        }
+        champion->Wounds = (uint16_t)(champion->Wounds |
+                                      (uint16_t)selected_wounds);
+        if (scaled_attack >= champion->CurrentHealth) {
+            champion->CurrentHealth = 0;
+            csb_v1_runtime_mark_champion_dead(profile, i);
+        } else {
+            champion->CurrentHealth =
+                (int16_t)(champion->CurrentHealth - scaled_attack);
+        }
+        applied++;
+    }
+    return applied;
+}
+
+static int csb_v1_runtime_apply_explosion_group_action(
+    CSB_V1_RuntimeProfile *profile,
+    const struct CombatAction_Compat *action,
+    struct RngState_Compat *rng)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *thing_record;
+    int first_thing;
+    int thing;
+    int guard;
+    int thing_type;
+    int thing_size;
+    int applied = 0;
+
+    if (!profile || !action || !rng ||
+        action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP ||
+        action->rawAttackValue <= 0 ||
+        !profile->dungeon_handle) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        action->targetMapIndex,
+        action->targetMapX,
+        action->targetMapY);
+    if (first_thing < 0) return 0;
+
+    for (guard = 0, thing = first_thing;
+         guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        thing_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!thing_record || thing_size < 16) return applied;
+        if (thing_type == 4) {
+            uint16_t flags;
+            int creature_count;
+            int random_window;
+            int base_attack;
+            int i;
+
+            flags = csb_v1_runtime_read_u16(thing_record + 14);
+            creature_count = (int)((flags >> 5) & 0x03u) + 1;
+            if (creature_count < 1) creature_count = 1;
+            if (creature_count > 4) creature_count = 4;
+            random_window = (action->rawAttackValue >> 3) + 1;
+            base_attack = action->rawAttackValue - random_window;
+            random_window <<= 1;
+
+            /* ReDMCSB GROUP.C F0191 lines 952-973 applies the same
+             * +/- 1/8 all-creature attack fanout used by explosion group
+             * impacts in PROJEXPL.C F0213/F0220.  This real-format bridge
+             * mutates GROUP.Health[4]; active-group aspect cleanup, drops,
+             * and fixed possessions remain later CSB runtime slices. */
+            for (i = 0; i < creature_count; ++i) {
+                uint8_t *hp_ptr = thing_record + 6 + i * 2;
+                uint16_t hp = csb_v1_runtime_read_u16(hp_ptr);
+                int damage;
+                if (hp == 0) continue;
+                damage = base_attack +
+                    F0732_COMBAT_RngRandom_Compat(rng, random_window);
+                if (damage < 1) damage = 1;
+                if (damage >= (int)hp) {
+                    csb_v1_runtime_write_u16(hp_ptr, 0);
+                } else {
+                    csb_v1_runtime_write_u16(
+                        hp_ptr,
+                        (uint16_t)((int)hp - damage));
+                }
+                applied++;
+            }
+            return applied;
+        }
+        thing = csb_v1_runtime_read_u16(thing_record + 0);
+    }
+    return applied;
+}
+
 static void csb_v1_runtime_apply_creature_attack_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -2974,6 +3135,19 @@ static void csb_v1_runtime_apply_explosion_timeline_record(
             &tick_result)) {
         (void)F0824_EXPLOSION_Despawn_Compat(&profile->explosions, slot);
         return;
+    }
+
+    if (tick_result.emittedCombatActionPartyCount > 0) {
+        (void)csb_v1_runtime_apply_explosion_party_action(
+            profile,
+            &tick_result.outActionParty,
+            &rng);
+    }
+    if (tick_result.emittedCombatActionGroupCount > 0) {
+        (void)csb_v1_runtime_apply_explosion_group_action(
+            profile,
+            &tick_result.outActionGroup,
+            &rng);
     }
 
     if (tick_result.emittedDoorDestructionEvent) {

@@ -1007,6 +1007,138 @@ static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)
           "C25 smoke final advance leaves no stale C25 event");
 }
 
+static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[112];
+    struct ExplosionCreateInput_Compat input;
+    struct TimelineEvent_Compat first_advance;
+    int slot = -1;
+    uint16_t group_hp_before;
+    uint16_t group_hp_after;
+    int i;
+
+    printf("\n-- CSB C25 party/group damage writeback --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 1;
+    profile.party_dir = 0;
+    profile.champion_count = 2;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 2;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 1;
+    profile.party_state.Champions[0].MaximumHealth = 20;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[1].CurrentHealth = 500;
+    profile.party_state.Champions[1].MaximumHealth = 500;
+    profile.party_state.Champions[1].Attributes = 0;
+    for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MIN] = 30;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_CUR] = 30;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MAX] = 30;
+        profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_MIN] = 30;
+        profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_CUR] = 30;
+        profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_MAX] = 30;
+    }
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 255;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 party fireball fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 party fireball reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 party fireball dispatches through the explosion handler");
+    CHECK(profile.explosions.count == 0,
+          "C25 party fireball despawns after one-shot advance");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 0 &&
+              (profile.party_state.Champions[0].Attributes &
+               CSB_V1_CHAMPION_ATTRIBUTE_DEAD),
+          "C25 party fireball applies lethal F0324-style damage");
+    CHECK(profile.party_state.LeaderIndex == 1 && profile.leader_index == 1,
+          "C25 party fireball moves leadership to the next living champion");
+    CHECK(profile.party_state.Champions[1].CurrentHealth < 500 &&
+              profile.party_state.Champions[1].CurrentHealth > 0,
+          "C25 party fireball damages the other living champion");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 82;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, 0xfffeu);
+    raw[86] = 9u;
+    raw[87] = 0xffu;
+    test_put_le16(raw, 88, 300u);
+    test_put_le16(raw, 96, 0u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 160;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    slot = -1;
+    group_hp_before = (uint16_t)(raw[88] | ((uint16_t)raw[89] << 8));
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 group fireball fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 group fireball reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 group fireball dispatches through the explosion handler");
+    group_hp_after = (uint16_t)(raw[88] | ((uint16_t)raw[89] << 8));
+    CHECK(profile.explosions.count == 0,
+          "C25 group fireball despawns after one-shot advance");
+    CHECK(group_hp_after < group_hp_before,
+          "C25 group fireball writes damage into real-format GROUP.Health");
+}
+
 static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -1481,6 +1613,7 @@ int main(void)
     test_c38_poison_followup_and_c75_tick();
     test_explosion_c25_persistent_smoke_requeues_until_depleted();
     test_runtime_save_roundtrips_projectiles_and_explosions();
+    test_explosion_c25_party_damage_and_group_hp_writeback();
     test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
