@@ -131,6 +131,11 @@ static int write_all_real_manifest_with_receipt(const char* path,
         "\"door_shapes\":["
         "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
         "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"field_teleporter_hero_01.png\","
+        "\"width\":64,\"height\":64}"
         "]");
     if (receipt_generator) {
         fprintf(fp,
@@ -326,6 +331,11 @@ static void test_placeholder_only_manifest_yields_placeholder_gate(void) {
         "{\"id\":\"door_hero_01\",\"generator\":\"placeholder\","
         "\"source_file\":\"placeholder_door.png\","
         "\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"placeholder_field_teleporter.png\","
+        "\"width\":64,\"height\":64}"
         "]}";
     CHECK(write_file(manifest_path, content), "wrote placeholder manifest");
 
@@ -353,6 +363,9 @@ static void test_placeholder_only_manifest_yields_placeholder_gate(void) {
     cls = dm1_v22_famg_classify_slot(DM1_V22_FAMG_DOOR_FRONT);
     CHECK(cls == DM1_V22_FAMG_CLASS_PLACEHOLDER,
           "door_front -> PLACEHOLDER");
+    cls = dm1_v22_famg_classify_slot(DM1_V22_FAMG_TELEPORTER_FIELD);
+    CHECK(cls == DM1_V22_FAMG_CLASS_PLACEHOLDER,
+          "teleporter_field -> PLACEHOLDER");
 
     DM1_V22_FamgGate gate = dm1_v22_famg_gate();
     CHECK(gate == DM1_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER,
@@ -379,11 +392,12 @@ static void test_real_slot_classifies_as_real(void) {
     char mkdir_cmd[1200];
     snprintf(mkdir_cmd, sizeof(mkdir_cmd),
              "mkdir -p '%s/wall_shapes' '%s/floor_shapes' '%s/creature_shapes' "
-             "'%s/champion_portraits' '%s/door_shapes'",
-             assets_root, assets_root, assets_root, assets_root, assets_root);
+             "'%s/champion_portraits' '%s/door_shapes' '%s/field_shapes'",
+             assets_root, assets_root, assets_root, assets_root, assets_root,
+             assets_root);
     CHECK(system(mkdir_cmd) == 0, "mkdir category dirs");
 
-    /* All six slots fully REAL with pbr_hero generator + on-disk file. */
+    /* All seven slots fully REAL with pbr_hero generator + on-disk file. */
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
         "\"wall_shapes\":["
@@ -408,6 +422,11 @@ static void test_real_slot_classifies_as_real(void) {
         "\"door_shapes\":["
         "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
         "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"field_teleporter_hero_01.png\","
+        "\"width\":64,\"height\":64}"
         "]}";
     CHECK(write_file(manifest_path, content), "wrote all-real manifest");
 
@@ -418,7 +437,8 @@ static void test_real_slot_classifies_as_real(void) {
         "floor_pit_hero_01.png",
         "creature_demon_hero_01.png",
         "champion_warrior_hero_01.png",
-        "door_hero_01.png"
+        "door_hero_01.png",
+        "field_teleporter_hero_01.png"
     };
     for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
         char fpath[FSP_PATH_MAX];
@@ -479,8 +499,9 @@ static void test_partial_when_some_real(void) {
     char mkdir_cmd[1200];
     snprintf(mkdir_cmd, sizeof(mkdir_cmd),
              "mkdir -p '%s/wall_shapes' '%s/floor_shapes' '%s/creature_shapes' "
-             "'%s/champion_portraits' '%s/door_shapes'",
-             assets_root, assets_root, assets_root, assets_root, assets_root);
+             "'%s/champion_portraits' '%s/door_shapes' '%s/field_shapes'",
+             assets_root, assets_root, assets_root, assets_root, assets_root,
+             assets_root);
     system(mkdir_cmd);
 
     /* Only wall_d3_carved is REAL with on-disk file; the rest are
@@ -515,6 +536,11 @@ static void test_partial_when_some_real(void) {
         "\"door_shapes\":["
         "{\"id\":\"door_hero_01\",\"generator\":\"placeholder\","
         "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"field_teleporter_hero_01.png\","
+        "\"width\":64,\"height\":64}"
         "]}";
     CHECK(write_file(manifest_path, content), "wrote mixed manifest");
 
@@ -742,15 +768,16 @@ static void test_get_slot_info_populates_fields(void) {
     CHECK(ok == 0, "get_slot_info absent slot returns 0");
 }
 
-static void test_slot_count_is_six(void) {
-    CHECK(DM1_V22_FAMG_MATERIAL_COUNT == 6,
-          "DM1_V22_FAMG_MATERIAL_COUNT=6");
+static void test_slot_count_is_seven(void) {
+    CHECK(DM1_V22_FAMG_MATERIAL_COUNT == 7,
+          "DM1_V22_FAMG_MATERIAL_COUNT=7");
     CHECK(DM1_V22_FAMG_WALL_D3_CARVED   == 0, "slot[0] = wall_d3_carved");
     CHECK(DM1_V22_FAMG_FLOOR_PLAIN      == 1, "slot[1] = floor_plain");
     CHECK(DM1_V22_FAMG_FLOOR_PIT        == 2, "slot[2] = floor_pit");
     CHECK(DM1_V22_FAMG_CREATURE_DEMON   == 3, "slot[3] = creature_demon");
     CHECK(DM1_V22_FAMG_CHAMPION_WARRIOR == 4, "slot[4] = champion_warrior");
     CHECK(DM1_V22_FAMG_DOOR_FRONT       == 5, "slot[5] = door_front");
+    CHECK(DM1_V22_FAMG_TELEPORTER_FIELD == 6, "slot[6] = teleporter_field");
 }
 
 static void test_names_are_stable(void) {
@@ -779,6 +806,10 @@ static void test_names_are_stable(void) {
             DM1_V22_FAMG_DOOR_FRONT),
             "door_hero_01") == 0,
           "door_front name stable");
+    CHECK(strcmp(dm1_v22_famg_slot_name(
+            DM1_V22_FAMG_TELEPORTER_FIELD),
+            "field_teleporter_hero_01") == 0,
+          "teleporter_field name stable");
     /* Out-of-range name */
     CHECK(strcmp(dm1_v22_famg_slot_name(
             (DM1_V22_FamgSlot)9999),
@@ -915,9 +946,9 @@ static void test_real_screenshot_receipt_gate(void) {
              "%s/../../assets/dm1/modern", dataDir);
     snprintf(mkdir_cmd, sizeof(mkdir_cmd),
              "mkdir -p '%s/wall_shapes' '%s/floor_shapes' '%s/creature_shapes' "
-             "'%s/champion_portraits' '%s/door_shapes' '%s/receipts'",
+             "'%s/champion_portraits' '%s/door_shapes' '%s/field_shapes' '%s/receipts'",
              assets_root, assets_root, assets_root, assets_root,
-             assets_root, assets_root);
+             assets_root, assets_root, assets_root);
     CHECK(system(mkdir_cmd) == 0, "mkdir category dirs plus receipts");
 
     const char* files[DM1_V22_FAMG_MATERIAL_COUNT] = {
@@ -926,13 +957,14 @@ static void test_real_screenshot_receipt_gate(void) {
         "floor_pit_hero_01.png",
         "creature_demon_hero_01.png",
         "champion_warrior_hero_01.png",
-        "door_hero_01.png"
+        "door_hero_01.png",
+        "field_teleporter_hero_01.png"
     };
     const unsigned widths[DM1_V22_FAMG_MATERIAL_COUNT] = {
-        64U, 64U, 64U, 48U, 48U, 32U
+        64U, 64U, 64U, 48U, 48U, 32U, 64U
     };
     const unsigned heights[DM1_V22_FAMG_MATERIAL_COUNT] = {
-        64U, 64U, 64U, 48U, 48U, 48U
+        64U, 64U, 64U, 48U, 48U, 48U, 64U
     };
     for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
         char fpath[FSP_PATH_MAX];
@@ -1064,7 +1096,7 @@ int main(void) {
     test_real_metadata_requires_png_header_match();
     test_partial_when_fields_missing();
     test_get_slot_info_populates_fields();
-    test_slot_count_is_six();
+    test_slot_count_is_seven();
     test_names_are_stable();
     test_source_evidence_citations();
     test_installed_flag_round_trip();

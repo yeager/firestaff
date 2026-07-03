@@ -78,6 +78,8 @@ extern "C" {
  *                       m11_v22_inplace_draw_pc34.c
  *   - CHAMPION_WARRIOR: the first champion portrait slot
  *   - DOOR_FRONT      : the door shape used by DUNGEON.C:2238-2246
+ *   - TELEPORTER_FIELD: the F0113 teleporter field surface routed by
+ *                       m11_v22_inplace_draw_pc34.c
  *
  * All slots map 1:1 to a fixture in tests/test_dm1_v22_real_asset_
  * material_gate_pc34.c so the synthetic-fallback tests and the real-
@@ -89,7 +91,8 @@ typedef enum {
     DM1_V22_FAMG_CREATURE_DEMON  = 3,  /* material: creatures */
     DM1_V22_FAMG_CHAMPION_WARRIOR= 4,  /* material: champion portraits */
     DM1_V22_FAMG_DOOR_FRONT      = 5,  /* material: doors */
-    DM1_V22_FAMG_MATERIAL_COUNT  = 6
+    DM1_V22_FAMG_TELEPORTER_FIELD = 6, /* material: teleporter fields */
+    DM1_V22_FAMG_MATERIAL_COUNT  = 7
 } DM1_V22_FamgSlot;
 
 /* ── Per-slot classification ──────────────────────────────────── */
@@ -287,7 +290,7 @@ int dm1_v22_famg_is_synthetic_or_partial(void);
 /* Runtime screenshot/material receipt helpers. These read the optional
  * `dm1_v22_real_screenshot_material_receipt_01` entry from the stored
  * manifest. FINISHED_REAL requires:
- *   - material gate == FINISHED_REAL across all six tracked slots
+ *   - material gate == FINISHED_REAL across all tracked slots
  *   - receipt generator is not placeholder/synthetic_test
  *   - receipt source_file resolves under <manifest_dir>/receipts/
  *   - width, height, frame_hash, and material_gate are present

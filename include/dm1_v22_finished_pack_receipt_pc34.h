@@ -165,7 +165,7 @@ int dm1_v22_fpr_receipt_hash_matches(void);
 /* Counts how many of the gate's required slots are listed in the
  * receipt's reviewedSlots array. The int* out_required argument is
  * filled with the total required slot count from the sibling
- * material gate (typically 6). Returns the reviewed count; 0 means
+ * material gate. Returns the reviewed count; 0 means
  * either the receipt had no reviewedSlots array, or the array did
  * not contain any required slot id. */
 int dm1_v22_fpr_receipt_slot_count(int* out_required);

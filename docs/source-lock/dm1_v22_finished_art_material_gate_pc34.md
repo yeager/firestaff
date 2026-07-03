@@ -11,10 +11,10 @@ provenance hardening landed 2026-06-29
 **Companion (SKIP-only real-asset) gate:**
 `test_dm1_v22_real_asset_material_gate_pc34` — the existing gate that
 SKIPs unless an operator has dropped a full hero manifest on disk. The
-new gate covers the same manifest surface (the same six `hero_01` ids
+new gate covers the same manifest surface (the same seven `hero_01` ids
 in `wall_shapes` / `floor_shapes` / `creature_shapes` /
-`champion_portraits` / `door_shapes`) but exercises the placeholder-
-vs-real state machine with synthetic manifests so CI can verify the
+`champion_portraits` / `door_shapes` / `field_shapes`) but exercises
+the placeholder-vs-real state machine with synthetic manifests so CI can verify the
 gate without requiring real PBR art.
 
 **Module files:**
@@ -56,7 +56,7 @@ the state machine on every CI run.
 
 This document specifies:
 
-1. The six material slots the gate tracks.
+1. The seven material slots the gate tracks.
 2. The manifest JSON schema operators can populate at
    `~/.firestaff/assets/dm1/modern/modern_asset_manifest.json`.
 3. The gate state machine: `NOT_PROBED` / `NO_MANIFEST` /
@@ -84,10 +84,12 @@ the existing SKIP-only sibling gate. The mapping is:
 | `CREATURE_DEMON`      | Creature fallback                 | `creature_demon_hero_01`       | `creature_shapes`    | `creature_demon_01`                 |
 | `CHAMPION_WARRIOR`    | Champion portrait slot 0          | `champion_warrior_hero_01`     | `champion_portraits` | (none — falls back to runtime champion-stat renderer) |
 | `DOOR_FRONT`          | Door shape                        | `door_hero_01`                 | `door_shapes`        | (none — drawn by `m11_draw_dm1_door_pc34`) |
+| `TELEPORTER_FIELD`    | F0113 teleporter field surface    | `field_teleporter_hero_01`     | `field_shapes`       | `field_teleporter_01`               |
 
 Slot ordinals are stable: `DM1_V22_FAMG_WALL_D3_CARVED == 0`,
 `DM1_V22_FAMG_FLOOR_PLAIN == 1`, ..., `DM1_V22_FAMG_DOOR_FRONT == 5`,
-`DM1_V22_FAMG_MATERIAL_COUNT == 6`. The slot table is the canonical
+`DM1_V22_FAMG_TELEPORTER_FIELD == 6`,
+`DM1_V22_FAMG_MATERIAL_COUNT == 7`. The slot table is the canonical
 mapping between gate slots and the manifest surface — reordering or
 inserting slots must keep the count in sync and update the
 `k_slot_table` array in the .c file.
@@ -109,7 +111,7 @@ Reuses the existing `modern_asset_manifest.json` format defined for
 }
 ```
 
-- `id` — the canonical slot id. Must match one of the six ids in the
+- `id` — the canonical slot id. Must match one of the seven ids in the
   slot table.
 - `generator` — required. `"placeholder"` is the procedural fallback
   marker; any other value (`"pbr_hero"`, `"ai_upscale"`,
@@ -171,7 +173,7 @@ FINISHED_REAL                                          │ │
 |-------------------------|----------------------------------------------------------|---------------------------------|
 | `NOT_PROBED`            | Gate has never been evaluated                            | Call `dm1_v22_famg_set_manifest_path()` + `dm1_v22_famg_gate()` |
 | `NO_MANIFEST`           | Path unset OR file unreadable                            | Drop a valid `modern_asset_manifest.json` under `~/.firestaff/assets/dm1/modern/` |
-| `SYNTHETIC_PLACEHOLDER` | Manifest valid, every declared slot uses `placeholder` generator (the honest CI default) | Add a non-placeholder slot to promote to `PARTIAL`; complete all six for `FINISHED_REAL` |
+| `SYNTHETIC_PLACEHOLDER` | Manifest valid, every declared slot uses `placeholder` generator (the honest CI default) | Add a non-placeholder slot to promote to `PARTIAL`; complete all seven for `FINISHED_REAL` |
 | `PARTIAL`               | At least one REAL, at least one non-REAL                  | Replace remaining placeholders with disk-resolved real PNGs to move toward `FINISHED_REAL` |
 | `FINISHED_REAL`         | Every required slot REAL with non-placeholder generator + on-disk PNG whose IHDR dimensions match the manifest | Promotion requires an explicit sibling gap-list update |
 
@@ -212,12 +214,12 @@ Receipt gate states:
 |---------------|---------|
 | `NO_RECEIPT` | Manifest missing, unreadable, or no receipt entry is present |
 | `SYNTHETIC_PLACEHOLDER` | Receipt entry exists but declares `generator` as `placeholder`, `synthetic`, or `synthetic_test` |
-| `PARTIAL` | Receipt metadata is incomplete, the receipt file is missing, `material_gate` is not `FINISHED_REAL`, or the six-slot material gate is not currently `FINISHED_REAL` |
-| `FINISHED_REAL` | The six-slot material gate is `FINISHED_REAL`, receipt `generator` is non-synthetic, `source_file` resolves under `receipts/`, and `width`/`height`/`frame_hash`/`material_gate` are present |
+| `PARTIAL` | Receipt metadata is incomplete, the receipt file is missing, `material_gate` is not `FINISHED_REAL`, or the seven-slot material gate is not currently `FINISHED_REAL` |
+| `FINISHED_REAL` | The seven-slot material gate is `FINISHED_REAL`, receipt `generator` is non-synthetic, `source_file` resolves under `receipts/`, and `width`/`height`/`frame_hash`/`material_gate` are present |
 
 This intentionally separates two claims:
 
-- `dm1_v22_famg_is_finished_real()` means the six tracked material
+- `dm1_v22_famg_is_finished_real()` means the seven tracked material
   slots are real operator-installed files.
 - `dm1_v22_famg_has_finished_real_receipt()` means there is also an
   operator-reviewed runtime screenshot/material receipt. This is the
@@ -255,7 +257,7 @@ This gate **does NOT** claim finished PBR art has been reviewed or
 shipped. `FINISHED_REAL` is reachable only when:
 
 1. An operator has installed a `modern_asset_manifest.json` at
-   `~/.firestaff/assets/dm1/modern/` with all six required slots
+   `~/.firestaff/assets/dm1/modern/` with all seven required slots
    declaring `generator != "placeholder"`.
 2. Each slot's `source_file` resolves on disk under
    `<manifest_dir>/<category>/<source_file>`.
@@ -340,7 +342,7 @@ The receipt id is
 resolves under `receipts/`. Synthetic generators (`placeholder`,
 `synthetic`, `synthetic_test`) never promote final evidence; a
 finished receipt requires `material_gate == "FINISHED_REAL"` and the
-six-slot material gate to be `FINISHED_REAL` at query time.
+seven-slot material gate to be `FINISHED_REAL` at query time.
 
 ## Companion (SKIP-only) gate
 

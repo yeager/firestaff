@@ -113,6 +113,12 @@ static const DM1_V22_FamgSlotDesc k_slot_table[DM1_V22_FAMG_MATERIAL_COUNT] = {
         "door_shapes",
         NULL /* doors are drawn by m11_draw_dm1_door_pc34 directly; no
                 in-place asset_id exists in the synthetic cache. */
+    },
+    {
+        DM1_V22_FAMG_TELEPORTER_FIELD,
+        "field_teleporter_hero_01",
+        "field_shapes",
+        "field_teleporter_01"
     }
 };
 

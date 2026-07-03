@@ -115,9 +115,10 @@ static void mkdirs_for_finish_real(const char* modern_dir) {
     char cmd[FSP_PATH_MAX * 2];
     snprintf(cmd, sizeof(cmd),
              "mkdir -p '%s/wall_shapes' '%s/floor_shapes' "
-             "'%s/creature_shapes' '%s/champion_portraits' '%s/door_shapes'",
+             "'%s/creature_shapes' '%s/champion_portraits' '%s/door_shapes' "
+             "'%s/field_shapes'",
              modern_dir, modern_dir, modern_dir,
-             modern_dir, modern_dir);
+             modern_dir, modern_dir, modern_dir);
     system(cmd);
 }
 
@@ -129,13 +130,14 @@ static void lay_down_finish_real_files(const char* modern_dir) {
         "floor_pit_hero_01.png",
         "creature_demon_hero_01.png",
         "champion_warrior_hero_01.png",
-        "door_hero_01.png"
+        "door_hero_01.png",
+        "field_teleporter_hero_01.png"
     };
     const unsigned widths[DM1_V22_FAMG_MATERIAL_COUNT] = {
-        64U, 64U, 64U, 48U, 48U, 32U
+        64U, 64U, 64U, 48U, 48U, 32U, 64U
     };
     const unsigned heights[DM1_V22_FAMG_MATERIAL_COUNT] = {
-        64U, 64U, 64U, 48U, 48U, 48U
+        64U, 64U, 64U, 48U, 48U, 48U, 64U
     };
     for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
         char fpath[FSP_PATH_MAX];
@@ -179,6 +181,11 @@ static const char* k_finished_real_manifest =
     "\"door_shapes\":["
     "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
     "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+    "],"
+    "\"field_shapes\":["
+    "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"pbr_hero\","
+    "\"source_file\":\"field_teleporter_hero_01.png\","
+    "\"width\":64,\"height\":64}"
     "]}";
 
 static const char* k_placeholder_manifest =
@@ -204,6 +211,10 @@ static const char* k_placeholder_manifest =
     "\"door_shapes\":["
     "{\"id\":\"door_hero_01\",\"generator\":\"placeholder\","
     "\"source_file\":\"placeholder.png\",\"width\":32,\"height\":48}"
+    "],"
+    "\"field_shapes\":["
+    "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"placeholder\","
+    "\"source_file\":\"placeholder.png\",\"width\":64,\"height\":64}"
     "]}";
 
 /* Build a receipt body covering all required slots. The caller
@@ -220,7 +231,8 @@ static void build_full_receipt_body(char* out, size_t outSize,
         "floor_pit_hero_01",
         "creature_demon_hero_01",
         "champion_warrior_hero_01",
-        "door_hero_01"
+        "door_hero_01",
+        "field_teleporter_hero_01"
     };
     size_t off = 0U;
     int n = 0;
@@ -335,7 +347,8 @@ static void test_stale_hash(void) {
                "\"floor_pit_hero_01\","
                "\"creature_demon_hero_01\","
                "\"champion_warrior_hero_01\","
-               "\"door_hero_01\"]}");
+               "\"door_hero_01\","
+               "\"field_teleporter_hero_01\"]}");
     dm1_v22_fpr_set_receipt_path(k_data);
     dm1_v22_fpr_reset_state();
     /* Material gate may still be NO_MANIFEST here because the data
@@ -406,6 +419,10 @@ static void test_partial_manifest_with_receipt(void) {
         "\"door_shapes\":["
         "{\"id\":\"door_hero_01\",\"generator\":\"placeholder\","
         "\"source_file\":\"placeholder.png\",\"width\":32,\"height\":48}"
+        "],"
+        "\"field_shapes\":["
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"placeholder.png\",\"width\":64,\"height\":64}"
         "]}";
     write_file(k_manifest, partial);
     lay_down_finish_real_files(k_modern);
@@ -428,7 +445,7 @@ static void test_partial_manifest_with_receipt(void) {
              "%s/door_shapes/door_hero_01.png", k_modern);
     unlink(fpath);
 
-    /* Receipt has all 6 slots + matches hash. */
+    /* Receipt has all required slots + matches hash. */
     uint32_t h = dm1_v22_fpr_fnv1a_file(k_manifest);
     char hex[16];
     snprintf(hex, sizeof(hex), "%08x", (unsigned)h);
@@ -458,7 +475,7 @@ static void test_partial_review_with_full_real_manifest(void) {
     char hex[16];
     snprintf(hex, sizeof(hex), "%08x", (unsigned)h);
     char receipt[2048];
-    /* Reviewer signed off on only the first 3 of 6 slots. */
+    /* Reviewer signed off on only the first 3 of 7 slots. */
     build_full_receipt_body(receipt, sizeof(receipt), hex, 3);
     write_file(k_receipt, receipt);
 
@@ -470,14 +487,14 @@ static void test_partial_review_with_full_real_manifest(void) {
     CHECK(dm1_v22_fpr_receipt_hash_matches() == 1,
           "hash matches FINISHED_REAL manifest");
     CHECK(dm1_v22_fpr_state() == DM1_V22_FPR_MATCH_PARTIAL,
-          "3-of-6 reviewed -> MATCH_PARTIAL");
+          "3-of-7 reviewed -> MATCH_PARTIAL");
     CHECK(dm1_v22_fpr_is_promoted() == 0,
-          "3-of-6 reviewed -> is_promoted=0");
+          "3-of-7 reviewed -> is_promoted=0");
 
     int required = 0;
     int reviewed = dm1_v22_fpr_receipt_slot_count(&required);
     CHECK(required == (int)DM1_V22_FAMG_MATERIAL_COUNT,
-          "required = 6");
+          "required = 7");
     CHECK(reviewed == 3, "reviewed = 3");
 }
 
@@ -510,9 +527,9 @@ static void test_full_review_with_full_real_manifest(void) {
     int required = 0;
     int reviewed = dm1_v22_fpr_receipt_slot_count(&required);
     CHECK(reviewed == (int)DM1_V22_FAMG_MATERIAL_COUNT,
-          "reviewed = 6");
+          "reviewed = 7");
     CHECK(required == (int)DM1_V22_FAMG_MATERIAL_COUNT,
-          "required = 6");
+          "required = 7");
     CHECK(dm1_v22_fpr_receipt_stale_review_count() == 0,
           "no slot regressed -> stale=0");
 }
@@ -548,13 +565,13 @@ static void test_stale_review_after_regression(void) {
           "removed door file -> material != FINISHED_REAL");
     CHECK(dm1_v22_fpr_state() == DM1_V22_FPR_MATERIAL_NOT_REAL,
           "regressed -> MATERIAL_NOT_REAL");
-    /* The receipt still covers all six slots; the gate sees this
+    /* The receipt still covers all seven slots; the gate sees this
      * receipt as currently stale (the reviewed slots include one
      * whose file is gone). */
     int required = 0;
     int reviewed = dm1_v22_fpr_receipt_slot_count(&required);
     CHECK(reviewed == (int)DM1_V22_FAMG_MATERIAL_COUNT,
-          "receipt slot_count=6 even after regression");
+          "receipt slot_count=7 even after regression");
 }
 
 /* ── Scenario 11: receipt_present / receipt_hash_matches helpers ─ */
