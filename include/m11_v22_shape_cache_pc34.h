@@ -44,6 +44,11 @@ int m11_v22_shape_cache_active(int depth, int lateral);
 /* True if at least one cache_update has been called. */
 int m11_v22_shape_cache_populated(void);
 
+/* Reset the per-frame cache to the pre-populated state. Runtime callers
+ * normally overwrite the cache once per frame; tests/probes use this to
+ * assert unpopulated no-op behavior without depending on process order. */
+void m11_v22_shape_cache_reset(void);
+
 /* Source evidence for tests/probes. */
 const char* m11_v22_shape_cache_source_evidence(void);
 

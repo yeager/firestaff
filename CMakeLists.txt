@@ -2322,6 +2322,15 @@ target_link_libraries(firestaff_m11_v22_shape_cache_probe
 if(NOT MSVC)
     target_compile_options(firestaff_m11_v22_shape_cache_probe PRIVATE -Wall -Wextra -O2)
 endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME firestaff_m11_v22_shape_cache_probe
+        COMMAND firestaff_m11_v22_shape_cache_probe
+    )
+    set_tests_properties(firestaff_m11_v22_shape_cache_probe PROPERTIES
+        LABELS "dm1;v2;render;readiness;shape-cache"
+    )
+endif()
 
 # M11 V2.2 GPU render path: V22 modern-art overlay probe. Paints a
 # placeholder colored rectangle over each V22-active cell. See
@@ -2345,6 +2354,15 @@ target_link_libraries(firestaff_m11_v22_render_overlay_probe
     PRIVATE firestaff_v2 firestaff_m10 firestaff_m11 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_v22_render_overlay_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME firestaff_m11_v22_render_overlay_probe
+        COMMAND firestaff_m11_v22_render_overlay_probe
+    )
+    set_tests_properties(firestaff_m11_v22_render_overlay_probe PROPERTIES
+        LABELS "dm1;v2;render;readiness;overlay"
+    )
 endif()
 
 # Theron V2 presentation-mode probe. Headless: no game data.

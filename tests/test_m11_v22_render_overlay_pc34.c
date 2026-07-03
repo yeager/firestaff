@@ -4,8 +4,8 @@
  * Verifies that the overlay:
  *   - Is a no-op when V22 is inactive (V1 path).
  *   - Paints 9 cells (D1..D3, L/C/R) when V22 is active.
- *   - Writes the right color (palette index derived from color_tint)
- *     to the right framebuffer region.
+ *   - Writes a material-category fill, optionally source-palette
+ *     shadowed, to the right framebuffer region.
  *   - Has a 1-pixel border.
  *   - Returns 0 cells painted when the cache is unpopulated.
  */
@@ -29,6 +29,7 @@ static void t_v1_inactive(void) {
     unsigned char fb[320 * 200];
     memset(fb, 0x00, sizeof(fb));
     dm1_v2_presentation_mode_reset();
+    m11_v22_shape_cache_reset();
     /* Manually mark the cache as populated but cells inactive by
      * updating with a V1 setup (no actual populate function in this
      * test path, so we call update with V1 active). */
@@ -47,18 +48,20 @@ static void t_unpopulated(void) {
     /* Cache not populated: overlay returns 0 cells without crashing. */
     unsigned char fb[320 * 200];
     memset(fb, 0x00, sizeof(fb));
-    /* The cache was populated by t_v1_inactive; we need to reset
-     * it by calling the cache reset function. Since there's no public
-     * reset, simulate by calling update with the cache marker off
-     * (the cache only goes dirty -> populated). So the cache is
-     * always "populated" after the first call. Skip the test. */
-    check(1, "skipped (no cache reset API)");
+    m11_v22_shape_cache_reset();
+    check(m11_v22_shape_cache_populated() == 0,
+          "unpopulated: cache reset clears populated flag");
+    check(m11_v22_render_overlay(fb, 320, 200) == 0,
+          "unpopulated: overlay paints 0 cells");
+    check(fb[0] == 0x00 && fb[(200 * 320) - 1] == 0x00,
+          "unpopulated: framebuffer unchanged at bounds");
 }
 
 static void t_v22_paints_9_cells(void) {
     unsigned char fb[320 * 200];
     memset(fb, 0x00, sizeof(fb));
     dm1_v2_presentation_mode_reset();
+    m11_v22_shape_cache_reset();
     dm1_v2_presentation_mode_set_modern_pack_available(1);
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     /* Cache with all-zeros raw squares. The V22 cells will still be
@@ -85,6 +88,7 @@ static void t_v22_placeholder_index(void) {
     unsigned char fb[320 * 200];
     memset(fb, 0x00, sizeof(fb));
     dm1_v2_presentation_mode_reset();
+    m11_v22_shape_cache_reset();
     dm1_v2_presentation_mode_set_modern_pack_available(1);
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char[3][3]){0});
@@ -107,6 +111,7 @@ static void t_v22_source_palette_shadow(void) {
     memset(bright, 0x00, sizeof(bright));
     memset(dark, 0x00, sizeof(dark));
     dm1_v2_presentation_mode_reset();
+    m11_v22_shape_cache_reset();
     dm1_v2_presentation_mode_set_modern_pack_available(1);
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char[3][3]){0});
@@ -135,6 +140,7 @@ static void t_v22_material_categories(void) {
     unsigned char field;
     memset(fb, 0x00, sizeof(fb));
     dm1_v2_presentation_mode_reset();
+    m11_v22_shape_cache_reset();
     dm1_v2_presentation_mode_set_modern_pack_available(1);
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
