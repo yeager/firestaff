@@ -17,9 +17,13 @@
  *   champion Cell and Direction before writing G0308_i_PartyDirection.
  *   ReDMCSB CLIKMENU.C F0366 lines 224-351 plus DUNGEON.C F0150 lines
  *   1389-1391 apply one movement coordinate step.
+ *   ReDMCSB MOVESENS.C F0267 lines 538-603 applies open-pit falls and
+ *   CHAMPION.C F0324 lines 1991-2022 applies attack-20 fall damage to
+ *   every living champion with legs/feet wound eligibility.
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -630,6 +634,15 @@ static void test_forward_command_handles_real_format_door_fakewall_and_pit(void)
           "open-pit movement applies bounded level fall");
     CHECK(result.chained_move_count == 1 && result.pit_chain_count == 1,
           "open-pit movement reports one chained pit move");
+    CHECK(result.pit_fall_damaged_champion_count == 2,
+          "open-pit movement applies F0324 fall damage to both champions");
+    CHECK(result.pit_fall_total_damage > 0 &&
+          profile.party_state.Champions[0].CurrentHealth < 100 &&
+          profile.party_state.Champions[1].CurrentHealth < 100,
+          "open-pit movement mutates champion health through fall damage");
+    CHECK((result.pit_fall_wound_mask &
+           ~(COMBAT_WOUND_LEGS | COMBAT_WOUND_FEET)) == 0,
+          "open-pit movement restricts fall wounds to legs/feet");
     CHECK(result.old_party_level == 0 && result.new_party_level == 1,
           "open-pit movement changes runtime level 0 to 1");
     CHECK(profile.current_level == 1 && csb_v1_dungeon_get_current_level() == 1,
@@ -717,6 +730,12 @@ static void test_forward_command_chains_real_format_pits(void)
           "chained-pit movement applies at least one pit fall");
     CHECK(result.chained_move_count == 2 && result.pit_chain_count == 2,
           "chained-pit movement follows both open pits");
+    CHECK(result.pit_fall_damaged_champion_count == 4,
+          "chained-pit movement applies F0324 damage once per champion per pit");
+    CHECK(result.pit_fall_total_damage > 0 &&
+          profile.party_state.Champions[0].CurrentHealth < 100 &&
+          profile.party_state.Champions[1].CurrentHealth < 100,
+          "chained-pit movement accumulates champion fall damage");
     CHECK(result.chained_move_limit_hit == 0,
           "chained-pit movement stops before the F0267 chain limit");
     CHECK(result.old_party_level == 0 && result.new_party_level == 2,
