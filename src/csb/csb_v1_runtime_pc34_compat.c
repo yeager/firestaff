@@ -1506,6 +1506,111 @@ static void csb_v1_runtime_schedule_c38_attack_event(
     (void)dm1v1_event_add(&profile->timeline_queue, &event);
 }
 
+static void csb_v1_runtime_schedule_c38_followup_event(
+    CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y,
+    int creature_type,
+    int creature_index,
+    uint32_t attack_delay_ticks)
+{
+    struct DM1_Event_V1 event;
+    uint32_t attack_time;
+    uint32_t aspect_time;
+    int movement_ticks;
+
+    if (!profile || creature_index < 0 || creature_index > 3 ||
+        attack_delay_ticks == 0u) {
+        return;
+    }
+    attack_time = profile->game_time + attack_delay_ticks;
+    aspect_time = profile->game_time + 1u;
+    if (aspect_time >= attack_time) {
+        csb_v1_runtime_schedule_c38_attack_event(
+            profile,
+            map_index,
+            map_x,
+            map_y,
+            creature_type,
+            creature_index,
+            attack_delay_ticks);
+        return;
+    }
+
+    movement_ticks = csb_v1_runtime_creature_movement_ticks(creature_type);
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(map_index, aspect_time);
+    event.type = (uint8_t)(DM1_EVENT_UPDATE_ASPECT_CREATURE_0 +
+                           creature_index);
+    event.priority = (uint8_t)(255 - movement_ticks);
+    event.b_mapX = (uint8_t)map_x;
+    event.b_mapY = (uint8_t)map_y;
+    event.c_effect = (uint8_t)((attack_time - aspect_time) & 0xffu);
+    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
+static void csb_v1_runtime_apply_creature_aspect_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    CSB_V1_DungeonData *dungeon;
+    int creature_index;
+    int remaining_ticks;
+    int thing;
+    int guard;
+
+    if (!profile || !record || !profile->dungeon_handle) return;
+    creature_index = record->eventType - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+    if (creature_index < 0 || creature_index > 3) return;
+    remaining_ticks = record->effect & 0xff;
+    if (remaining_ticks <= 0) remaining_ticks = 1;
+
+    dungeon = profile->dungeon_handle;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        record->mapIndex,
+        record->mapX,
+        record->mapY);
+    if (thing < 0) return;
+
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
+        uint8_t *thing_record;
+        uint16_t flags;
+        int thing_type;
+        int thing_size;
+
+        thing_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!thing_record) break;
+        if (thing_type == 4 && thing_size >= 16) {
+            flags = csb_v1_runtime_read_u16(thing_record + 14);
+            if ((flags & 0x000Fu) != 6u) return;
+            if (creature_index > (int)((flags >> 5) & 0x03u)) return;
+
+            /* ReDMCSB GROUP.C F0209 lines 2075-2148 handles C33..C36
+             * aspect events by preparing the matching C38..C41 behavior
+             * event.  F0208 lines 1820-1834 stores the remaining behavior
+             * delay in C.Ticks; Firestaff's V1 queue carries it in
+             * c_effect/record->effect.  Live aspect sprite mutation remains
+             * a later ActiveGroup slice. */
+            csb_v1_runtime_schedule_c38_attack_event(
+                profile,
+                record->mapIndex,
+                record->mapX,
+                record->mapY,
+                (int)thing_record[4],
+                creature_index,
+                (uint32_t)remaining_ticks);
+            return;
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+}
+
 static void csb_v1_runtime_schedule_c38_attack_events(
     CSB_V1_RuntimeProfile *profile,
     int map_index,
@@ -2867,7 +2972,7 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                 : 0;
             if (damage <= 0) {
                 if (!profile->game_over) {
-                    csb_v1_runtime_schedule_c38_attack_event(
+                    csb_v1_runtime_schedule_c38_followup_event(
                         profile,
                         record->mapIndex,
                         record->mapX,
@@ -2907,19 +3012,24 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
             }
             if (!profile->game_over) {
                 /* ReDMCSB GROUP.C F0209 lines 2343-2422 computes the next
-                 * C38 attack time from CreatureInfo.AttackTicks plus random
-                 * jitter after an attack decision.  This bounded CSB bridge
-                 * requeues the same creature with the source AttackTicks base;
-                 * RNG jitter and aspect-event timing remain later slices. */
-                csb_v1_runtime_schedule_c38_attack_event(
+                 * C38 attack time and F0208 lines 1820-1834 may convert the
+                 * paired earlier aspect update into C33..C36 with C.Ticks
+                 * carrying the remaining attack delay; when C33 dispatches
+                 * it prepares the matching C38.  This bounded CSB bridge
+                 * keeps the source AttackTicks base and explicit C33->C38
+                 * handoff; RNG jitter and live ActiveGroup aspect sprites
+                 * remain later slices. */
+                uint32_t attack_delay =
+                    (uint32_t)csb_v1_runtime_creature_attack_ticks(
+                        (int)thing_record[4]);
+                csb_v1_runtime_schedule_c38_followup_event(
                     profile,
                     record->mapIndex,
                     record->mapX,
                     record->mapY,
                     (int)thing_record[4],
                     creature_index,
-                    (uint32_t)csb_v1_runtime_creature_attack_ticks(
-                        (int)thing_record[4]));
+                    attack_delay);
             }
             return;
         }
@@ -4375,6 +4485,14 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             break;
         case DM1_EVENT_UPDATE_BEHAVIOR_GROUP:
             csb_v1_runtime_apply_group_behavior_timeline_record(
+                profile,
+                record);
+            break;
+        case DM1_EVENT_UPDATE_ASPECT_CREATURE_0:
+        case DM1_EVENT_UPDATE_ASPECT_CREATURE_1:
+        case DM1_EVENT_UPDATE_ASPECT_CREATURE_2:
+        case DM1_EVENT_UPDATE_ASPECT_CREATURE_3:
+            csb_v1_runtime_apply_creature_aspect_timeline_record(
                 profile,
                 record);
             break;
