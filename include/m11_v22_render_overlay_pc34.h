@@ -52,6 +52,10 @@ extern "C" {
 int m11_v22_render_overlay(unsigned char* framebuffer,
                            int fbW,
                            int fbH);
+int m11_v22_render_overlay_with_palette(unsigned char* framebuffer,
+                                        int fbW,
+                                        int fbH,
+                                        int sourcePaletteIndex);
 
 /* The placeholder palette index written for V22 cells. The test
  * reads this to verify the overlay wrote the right color. */

@@ -31086,9 +31086,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     if (m11_v22_inplace_render_pass(framebuffer,
                                     framebufferWidth,
                                     framebufferHeight) == 0) {
-        (void)m11_v22_render_overlay(framebuffer,
-                                     framebufferWidth,
-                                     framebufferHeight);
+        int paletteIndex = m11_compute_dungeon_palette_index(state);
+        (void)m11_v22_render_overlay_with_palette(framebuffer,
+                                                  framebufferWidth,
+                                                  framebufferHeight,
+                                                  paletteIndex);
     }
 
     m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,

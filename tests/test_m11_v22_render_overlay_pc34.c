@@ -97,6 +97,30 @@ static void t_v22_placeholder_index(void) {
           "V22: D1L top-left border = placeholder index");
 }
 
+static void t_v22_source_palette_shadow(void) {
+    unsigned char bright[320 * 200];
+    unsigned char dark[320 * 200];
+    int d1l_x = 8 + 35;
+    int d1l_y = 103 + 15;
+    int center = d1l_y * 320 + d1l_x;
+    int border = 103 * 320 + 8;
+    memset(bright, 0x00, sizeof(bright));
+    memset(dark, 0x00, sizeof(dark));
+    dm1_v2_presentation_mode_reset();
+    dm1_v2_presentation_mode_set_modern_pack_available(1);
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    m11_v22_shape_cache_update(0, (const unsigned char[3][3]){0});
+
+    check(m11_v22_render_overlay_with_palette(bright, 320, 200, 0) == 9,
+          "V22 palette shadow: bright paints 9 cells");
+    check(m11_v22_render_overlay_with_palette(dark, 320, 200, 5) == 9,
+          "V22 palette shadow: dark paints 9 cells");
+    check(dark[center] < bright[center],
+          "V22 palette shadow: palette 5 darkens center fill");
+    check(dark[border] == M11_V22_OVERLAY_PLACEHOLDER_INDEX,
+          "V22 palette shadow: border remains placeholder index");
+}
+
 static void t_null_safe(void) {
     /* NULL framebuffer: no crash, 0 cells painted. */
     int n = m11_v22_render_overlay(NULL, 320, 200);
@@ -120,6 +144,7 @@ int main(void) {
     t_unpopulated();
     t_v22_paints_9_cells();
     t_v22_placeholder_index();
+    t_v22_source_palette_shadow();
     t_null_safe();
     t_evidence();
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);
