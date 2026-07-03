@@ -13,6 +13,8 @@
 
 #include "branding_logo_m12.h"
 #include "config_m12.h"
+#include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "render_sdl_m11.h"
 #include "color_presets_m11.h"
 #include "ui_scale_m11.h"
@@ -1730,7 +1732,7 @@ static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
 }
 
 
-static int m12_is_valid_quicksave_path(const char* path) {
+static int m12_is_valid_dm1_quicksave_path(const char* path) {
     static const unsigned char quicksaveMagic[8] = {
         'F', 'S', 'M', '1', '1', 'Q', 'S', '1'
     };
@@ -1765,6 +1767,41 @@ static int m12_is_valid_quicksave_path(const char* path) {
     return fileSize == (long)(M12_QUICKSAVE_HEADER_SIZE + blobSize);
 }
 
+static int m12_is_valid_csb_quick_resume_path(const char* path) {
+    CSB_V1_RuntimeProfile profile;
+    int rc;
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    csb_v1_runtime_init(&profile, NULL);
+    /* ReDMCSB LOADSAVE.C F0435 restores CSB GLOBAL_DATA, party state,
+     * events, and timeline through the CSB save path.  Match the M11
+     * resume gate here by validating the same Firestaff CSB runtime
+     * payload, not just a header-shaped CSB save container. */
+    rc = csb_v1_runtime_load_game_from_path(&profile, path);
+    csb_v1_runtime_cleanup(&profile);
+    return rc == CSB_V1_LOAD_OK;
+}
+
+static int m12_is_quick_resume_game_supported(const char* gameId) {
+    return gameId && (strcmp(gameId, "dm1") == 0 ||
+                      strcmp(gameId, "csb") == 0);
+}
+
+static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
+                                                   const char* path) {
+    if (!m12_is_quick_resume_game_supported(gameId)) {
+        return 0;
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return m12_is_valid_dm1_quicksave_path(path);
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return m12_is_valid_csb_quick_resume_path(path);
+    }
+    return 0;
+}
+
 static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     M12_Config config;
     if (!state) {
@@ -1779,9 +1816,6 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     M12_Config_Load(&config, NULL);
 
     if (!config.quickResumeEnabled) {
-        return;
-    }
-    if (!m12_is_valid_quicksave_path(config.lastSavePath)) {
         return;
     }
 
@@ -1809,7 +1843,8 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
         state->quickResumeGameId[end - start] = '\0';
     }
 
-    if (strcmp(state->quickResumeGameId, "dm1") != 0) {
+    if (!m12_is_valid_quick_resume_path_for_game(state->quickResumeGameId,
+                                                 config.lastSavePath)) {
         return;
     }
 

@@ -1,5 +1,7 @@
 #include "menu_startup_m12.h"
 #include "config_m12.h"
+#include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -45,6 +47,42 @@ static void force_dm1_available(M12_StartupMenuState* state) {
     state->view = M12_MENU_VIEW_MAIN;
 }
 
+static void force_csb_available(M12_StartupMenuState* state) {
+    state->entries[1].title = "CHAOS STRIKES BACK";
+    state->entries[1].gameId = "csb";
+    state->entries[1].kind = M12_MENU_ENTRY_GAME;
+    state->entries[1].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
+    state->entries[1].available = 1;
+    state->assetStatus.originalFileCandidateFound = 1;
+    state->assetStatus.csbAvailable = 1;
+    state->assetStatus.versions[1][0].gameId = "csb";
+    state->assetStatus.versions[1][0].versionId = "pc34-en";
+    state->assetStatus.versions[1][0].label = "PC 3.4 English";
+    state->assetStatus.versions[1][0].shortLabel = "PC34 EN";
+    state->assetStatus.versions[1][0].matched = 1;
+    state->assetStatus.requiredFileCounts[1] = 2;
+    state->assetStatus.requiredFiles[1][0].gameId = "csb";
+    state->assetStatus.requiredFiles[1][0].roleId = "graphics";
+    state->assetStatus.requiredFiles[1][0].label = "GRAPHICS.DAT";
+    state->assetStatus.requiredFiles[1][0].required = 1;
+    state->assetStatus.requiredFiles[1][0].matched = 1;
+    state->assetStatus.requiredFiles[1][1].gameId = "csb";
+    state->assetStatus.requiredFiles[1][1].roleId = "dungeon";
+    state->assetStatus.requiredFiles[1][1].label = "DUNGEON.DAT";
+    state->assetStatus.requiredFiles[1][1].required = 1;
+    state->assetStatus.requiredFiles[1][1].matched = 1;
+    state->gameOptions[1].versionIndex = 0;
+    state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    state->view = M12_MENU_VIEW_MAIN;
+    state->activatedIndex = -1;
+    state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
+    state->messageLine1 = "";
+    state->messageLine2 = "";
+    state->messageLine3 = "";
+}
+
 static int write_fake_quicksave(const char* path) {
     static const unsigned char hdr[16] = {
         'F','S','M','1','1','Q','S','1',
@@ -60,6 +98,29 @@ static int write_fake_quicksave(const char* path) {
         return 0;
     }
     return 1;
+}
+
+static int write_serialized_csb_quicksave(const char* path) {
+    CSB_V1_RuntimeProfile runtime;
+    int rc;
+
+    csb_v1_runtime_init(&runtime, NULL);
+    runtime.variant_id = CSB_V1_VARIANT_PC34_EN;
+    runtime.party_x = CSB_V1_START_PARTY_X + 3;
+    runtime.party_y = CSB_V1_START_PARTY_Y + 2;
+    runtime.party_dir = CSB_V1_DIR_EAST;
+    runtime.magic_caster_index = 1;
+    runtime.game_time = 42U;
+    runtime.tick_count = 42U;
+    runtime.total_play_ms = 42ULL * (uint64_t)CSB_V1_TICK_MS_NOMINAL;
+    runtime.party_state.PartyMapX = runtime.party_x;
+    runtime.party_state.PartyMapY = runtime.party_y;
+    runtime.party_state.PartyDirection = (uint8_t)runtime.party_dir;
+    runtime.party_state.MagicCasterIndex = runtime.magic_caster_index;
+
+    rc = csb_v1_runtime_save_game_to_path(&runtime, path);
+    csb_v1_runtime_cleanup(&runtime);
+    return rc == CSB_V1_SAVE_OK;
 }
 
 static void wr32le(unsigned char* p, uint32_t v) {
@@ -205,6 +266,7 @@ static int select_save_entry(M12_StartupMenuState* state,
 int main(void) {
     char tmpTemplate[] = "/tmp/firestaff-m12-qr-XXXXXX";
     char savePath[512];
+    char csbSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -322,6 +384,41 @@ int main(void) {
     if (!expect(intent.valid == 1, "normal DM1 launch intent should still be valid")) return 1;
     if (!expect(intent.savePath == NULL,
                 "normal DM1 launch must not inherit quick Resume save path")) return 1;
+
+    snprintf(csbSavePath, sizeof(csbSavePath),
+             "%s/firestaff-csb-quicksave.sav", tmpTemplate);
+    if (!expect(write_fake_quicksave(csbSavePath),
+                "should write fake CSB quicksave envelope")) return 1;
+    M12_Config_SetLastSavePath(csbSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 0,
+                "CSB quick Resume must reject DM1-shaped quicksave bytes")) return 1;
+
+    if (!expect(write_serialized_csb_quicksave(csbSavePath),
+                "should write serialized CSB runtime quicksave")) return 1;
+    M12_Config_SetLastSavePath(csbSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "valid CSB runtime save must enable quick Resume")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
+                "quick Resume should identify csb")) return 1;
+    if (!expect(strcmp(state.quickResumeSavePath, csbSavePath) == 0,
+                "CSB quick Resume should retain save path")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.launchRequested == 1,
+                "CSB quick Resume accept should request launch")) return 1;
+    if (!expect(state.activatedIndex == 1,
+                "CSB quick Resume accept should activate CSB slot")) return 1;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1,
+                "CSB quick Resume launch intent should be valid")) return 1;
+    if (!expect(intent.gameId && strcmp(intent.gameId, "csb") == 0,
+                "CSB quick Resume launch intent should identify CSB")) return 1;
+    if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
+                "CSB quick Resume launch intent must carry exact save path")) return 1;
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);
