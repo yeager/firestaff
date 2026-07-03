@@ -26,7 +26,7 @@
  *                 + M11_Render_PresentIndexed (320x200, V22 active)
  *
  *   - STABLE RECEIPTS: every BMP is hashed with FNV-1a 32-bit, and the
- *     probe writes a single JSON manifest under the user's home dir
+ *     probe writes a single JSON manifest under the probe output root
  *     (`~/.firestaff/probe-source-owned-screenshot-receipts.json`)
  *     listing per-row file path, expected mode/width/height, FNV-1a
  *     hash, BMP file size, BPP, and the source composition state used
@@ -520,8 +520,9 @@ static int run_mode_capture(ModeCapture* cap,
             dm1_v2_presentation_mode_set_modern_pack_available(1);
             dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
             m11_v22_shape_cache_update(0, raw_squares);
-            (void)m11_v22_render_overlay((unsigned char*)v1_framebuffer,
-                                         M11_FB_WIDTH, M11_FB_HEIGHT);
+            (void)m11_v22_render_overlay_with_palette(
+                (unsigned char*)v1_framebuffer,
+                M11_FB_WIDTH, M11_FB_HEIGHT, 3);
         }
         rc = M11_Render_PresentIndexed(v1_framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
         if (rc != M11_RENDER_OK) {
@@ -625,7 +626,7 @@ int main(void) {
     char dungeonPath[1024] = {0};
     char out_dir[512];
     char receipt_path[1024];
-    const char* home = NULL;
+    const char* output_root = NULL;
     int dungeonSize = 0;
     uint32_t dungeonFnv1a = 0;
     int rc;
@@ -644,11 +645,13 @@ int main(void) {
     memset(&input, 0, sizeof(input));
     memset(caps, 0, sizeof(caps));
 
-    /* Probe-controlled temp dir under HOME so we never touch the user-
-     * facing screenshotPath. */
-    home = getenv("HOME");
-    if (!home || !*home) home = ".";
-    snprintf(out_dir, sizeof(out_dir), "%s/.firestaff-probe-dm1-v2-source-owned", home);
+    /* Probe-controlled temp dir so we never touch the user-facing
+     * screenshotPath. Tests may redirect this inside the sandbox. */
+    output_root = getenv("FIRESTAFF_PROBE_OUTPUT_ROOT");
+    if (!output_root || !*output_root) output_root = getenv("HOME");
+    if (!output_root || !*output_root) output_root = ".";
+    snprintf(out_dir, sizeof(out_dir),
+             "%s/.firestaff-probe-dm1-v2-source-owned", output_root);
     snprintf(receipt_path, sizeof(receipt_path),
              "%s/source_owned_screenshot_receipts.json", out_dir);
     if (!ensure_dir(out_dir)) {

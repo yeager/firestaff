@@ -42,7 +42,7 @@
  * Headless / data-free / host-agnostic:
  *   - Uses SDL_VIDEODRIVER=dummy so the probe runs on Apple Silicon,
  *     Intel macOS, Linux, and Windows runners without a display.
- *   - Uses a probe-controlled temp directory under HOME; never touches
+ *   - Uses a probe-controlled temp directory; never touches
  *     the user-facing ~/.firestaff/screenshots/ or any data-dir assets.
  *   - Does NOT require real DM1 game data (GRAPHICS.DAT / DUNGEON.DAT).
  *   - Exits 0 on success, 1 on any failed invariant.
@@ -461,7 +461,8 @@ static int run_mode_capture(ModeCapture* cap,
         dm1_v2_presentation_mode_set_modern_pack_available(1);
         dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
         m11_v22_shape_cache_update(0, raw_squares);
-        m11_v22_render_overlay(v1_framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        m11_v22_render_overlay_with_palette(
+            v1_framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, 3);
     }
 
     if (cap->present_via_rgba) {
@@ -587,7 +588,7 @@ int main(void) {
     int dist_v20_v22 = 0;
     int dist_v21_v22 = 0;
     int dist_v20_unfiltered_v20_filtered = 0;
-    const char* home = NULL;
+    const char* output_root = NULL;
 
     memset(&stats, 0, sizeof(stats));
     memset(&v1_cap, 0, sizeof(v1_cap));
@@ -599,11 +600,13 @@ int main(void) {
     memset(&route_v22_repeat_cap, 0, sizeof(route_v22_repeat_cap));
     memset(&route_receipt, 0, sizeof(route_receipt));
 
-    /* Probe-controlled temp dir under HOME so we never touch the user-
-     * facing screenshotPath. */
-    home = getenv("HOME");
-    if (!home || !*home) home = ".";
-    snprintf(out_dir, sizeof(out_dir), "%s/.firestaff-probe-dm1-v2-actual", home);
+    /* Probe-controlled temp dir so we never touch the user-facing
+     * screenshotPath. Tests may redirect this inside the sandbox. */
+    output_root = getenv("FIRESTAFF_PROBE_OUTPUT_ROOT");
+    if (!output_root || !*output_root) output_root = getenv("HOME");
+    if (!output_root || !*output_root) output_root = ".";
+    snprintf(out_dir, sizeof(out_dir),
+             "%s/.firestaff-probe-dm1-v2-actual", output_root);
     if (!ensure_dir(out_dir)) {
         fprintf(stderr, "FAIL could not create probe output dir %s\n", out_dir);
         return 1;

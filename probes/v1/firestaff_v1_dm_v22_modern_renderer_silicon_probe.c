@@ -221,7 +221,8 @@ int main(void) {
         dm1_v2_presentation_mode_set_modern_pack_available(1);
         dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
         m11_v22_shape_cache_update(0, (const unsigned char[3][3]){{0}});
-        v22_painted = m11_v22_render_overlay(framebuffer, 320, 200);
+        v22_painted = m11_v22_render_overlay_with_palette(
+            framebuffer, 320, 200, 3);
 
         /* CPU-side: verify the overlay wrote some non-zero pixels
          * (the V22 placeholder rectangles). */
@@ -293,7 +294,8 @@ int main(void) {
             dm1_v2_presentation_mode_set_modern_pack_available(1);
             dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
             m11_v22_shape_cache_update(direction, raw_squares);
-            painted = m11_v22_render_overlay(framebuffer, 320, 200);
+            painted = m11_v22_render_overlay_with_palette(
+                framebuffer, 320, 200, 3);
             nonzero = count_nonzero_pixels(framebuffer, framebuffer_size);
             total_painted += painted;
             total_nonzero += nonzero;
@@ -391,7 +393,7 @@ int main(void) {
         dm1_v2_presentation_mode_set_modern_pack_available(1);
         dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
         m11_v22_shape_cache_update(0, (const unsigned char[3][3]){{0}});
-        m11_v22_render_overlay(framebuffer, 320, 200);
+        m11_v22_render_overlay_with_palette(framebuffer, 320, 200, 3);
         memcpy(pre_fb, framebuffer, framebuffer_size);
 
         /* Now flip back to V1. */
