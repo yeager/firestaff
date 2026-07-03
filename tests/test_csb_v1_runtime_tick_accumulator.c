@@ -192,6 +192,12 @@ static void make_real_format_square_event_dungeon(CSB_V1_DungeonData *dungeon,
     }
 }
 
+static void test_put_le16(uint8_t *buf, int offset, uint16_t value)
+{
+    buf[offset + 0] = (uint8_t)(value & 0xffu);
+    buf[offset + 1] = (uint8_t)((value >> 8) & 0xffu);
+}
+
 static int real_format_square_offset(int x, int y)
 {
     return x * 3 + y;
@@ -210,6 +216,26 @@ static void queue_square_event(CSB_V1_RuntimeProfile *profile,
     ev.map_time = DM1_MAP_TIME_MAKE(0, profile ? profile->game_time : 0);
     ev.b_mapX = (uint8_t)x;
     ev.b_mapY = (uint8_t)y;
+    ev.c_effect = (uint8_t)effect;
+    CHECK(csb_v1_runtime_add_timeline_event(profile, &ev) >= 0,
+          "CSB runtime accepts a queued square event");
+}
+
+static void queue_square_cell_event(CSB_V1_RuntimeProfile *profile,
+                                    int event_type,
+                                    int effect,
+                                    int x,
+                                    int y,
+                                    int cell)
+{
+    struct DM1_Event_V1 ev;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = (uint8_t)event_type;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile ? profile->game_time : 0);
+    ev.b_mapX = (uint8_t)x;
+    ev.b_mapY = (uint8_t)y;
+    ev.c_cell = (uint8_t)cell;
     ev.c_effect = (uint8_t)effect;
     CHECK(csb_v1_runtime_add_timeline_event(profile, &ev) >= 0,
           "CSB runtime accepts a queued square event");
@@ -292,6 +318,113 @@ static void test_timeline_square_events_mutate_real_format_map_bytes(void)
           "pit square event fires on the current tick");
     CHECK((raw[real_format_square_offset(2, 1)] & 0x08u) == 0x08u,
           "pit TOGGLE sets a closed square's open flag");
+}
+
+static void make_real_format_sensor_dungeon(CSB_V1_DungeonData *dungeon,
+                                            uint8_t *raw,
+                                            size_t raw_size,
+                                            int sensor_x,
+                                            int sensor_y,
+                                            uint8_t sensor_square,
+                                            uint16_t sensor_type_data,
+                                            uint16_t sensor_flags,
+                                            uint16_t sensor_target)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[3] = 68;
+    dungeon->thing_type_counts[3] = 1;
+
+    raw[real_format_square_offset(sensor_x, sensor_y)] =
+        (uint8_t)(sensor_square | 0x10u);
+    test_put_le16(raw, 60 + sensor_x * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(3u << 10));
+    test_put_le16(raw, 68, 0xfffeu);
+    test_put_le16(raw, 70, sensor_type_data);
+    test_put_le16(raw, 72, sensor_flags);
+    test_put_le16(raw, 74, sensor_target);
+}
+
+static uint16_t make_sensor_target(int x, int y, int cell)
+{
+    return (uint16_t)(((cell & 3) << 4) |
+                      ((x & 0x1f) << 6) |
+                      ((y & 0x1f) << 11));
+}
+
+static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[96];
+    uint16_t type_data;
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        1,
+        0,
+        (uint8_t)(1u << 5),
+        (uint16_t)(12u << 7), /* disabled sensor preserving generator data */
+        0,
+        0);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_event(
+        &profile,
+        DM1_EVENT_ENABLE_GROUP_GENERATOR,
+        DM1_EFFECT_SET,
+        1,
+        0);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C65 enable-generator event fires on the current tick");
+    type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((type_data & 0x007fu) == 6u && (type_data >> 7) == 12u,
+          "C65 mutates the first disabled sensor back to C006 and preserves data");
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        0,
+        0,
+        (uint8_t)(0u << 5),
+        (uint16_t)((0x10u << 7) | 5u), /* C005 gate, ref mask bit 0 */
+        (uint16_t)(DM1_EFFECT_HOLD << 3),
+        make_sensor_target(1, 0, 0));
+    raw[real_format_square_offset(1, 0)] = (uint8_t)((4u << 5) | 4u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_SET,
+        0,
+        0,
+        0);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall gate event fires and mutates the sensor record");
+    type_data = (uint16_t)(raw[70] | ((uint16_t)raw[71] << 8));
+    CHECK((type_data >> 7) == 0x11u,
+          "C005 wall gate SET records the current mask bit");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "matching C005 HOLD gate queues one remote square effect");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "remote wall-gate square effect fires on the next tick");
+    CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 3u,
+          "remote wall-gate effect reaches the target door and starts opening");
 }
 
 static void seed_two_champion_party(CSB_V1_PartyState *party)
@@ -396,6 +529,7 @@ int main(void)
     test_tick_v1_steps_exactly_once_and_honors_stop_states();
     test_timeline_events_fire_before_game_time_increment();
     test_timeline_square_events_mutate_real_format_map_bytes();
+    test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

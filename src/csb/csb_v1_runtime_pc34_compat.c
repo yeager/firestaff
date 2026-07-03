@@ -1163,6 +1163,40 @@ static int csb_v1_runtime_sensor_next_thing(
     return (int)((uint16_t)record[0] | ((uint16_t)record[1] << 8));
 }
 
+static uint16_t csb_v1_runtime_read_u16(const uint8_t *p)
+{
+    if (!p) return 0;
+    return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+}
+
+static void csb_v1_runtime_write_u16(uint8_t *p, uint16_t value)
+{
+    if (!p) return;
+    p[0] = (uint8_t)(value & 0xFFu);
+    p[1] = (uint8_t)((value >> 8) & 0xFFu);
+}
+
+static uint8_t *csb_v1_runtime_mutable_thing_record(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    int *out_type,
+    int *out_size)
+{
+    const uint8_t *record;
+
+    if (out_type) *out_type = -1;
+    if (out_size) *out_size = 0;
+    if (!dungeon || !dungeon->raw_data) return NULL;
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        out_type,
+        NULL,
+        out_size);
+    if (!record) return NULL;
+    return dungeon->raw_data + (record - (const uint8_t *)dungeon->raw_data);
+}
+
 static void csb_v1_runtime_trigger_floor_sensor_event(
     CSB_V1_RuntimeProfile *profile,
     int sensor_effect,
@@ -1375,6 +1409,45 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
     }
 }
 
+static void csb_v1_runtime_trigger_remote_sensor_event(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int sensor_effect,
+    int target_x,
+    int target_y,
+    int target_cell)
+{
+    CSB_V1_DungeonData *dungeon;
+    struct DM1_Event_V1 event;
+    int raw_square;
+    int square_type;
+    int event_type;
+
+    if (!profile || !profile->dungeon_handle) return;
+    dungeon = profile->dungeon_handle;
+    if (!dungeon->raw_data) return;
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        level,
+        target_x,
+        target_y);
+    if (raw_square < 0) return;
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
+    if (event_type == DM1_EVENT_NONE) return;
+
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(level, profile->game_time);
+    event.type = (uint8_t)event_type;
+    event.b_mapX = (uint8_t)target_x;
+    event.b_mapY = (uint8_t)target_y;
+    event.c_cell = (uint8_t)target_cell;
+    event.c_effect = (uint8_t)sensor_effect;
+    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
 static uint8_t *csb_v1_runtime_square_byte_ptr(
     CSB_V1_RuntimeProfile *profile,
     int level,
@@ -1499,23 +1572,181 @@ static void csb_v1_runtime_apply_square_flag_timeline_record(
     }
 }
 
+static void csb_v1_runtime_apply_enable_group_generator_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    CSB_V1_DungeonData *dungeon;
+    int thing;
+    int guard;
+
+    if (!profile || !record || !profile->dungeon_handle) return;
+    dungeon = profile->dungeon_handle;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        record->mapIndex,
+        record->mapX,
+        record->mapY);
+    if (thing < 0) return;
+
+    /* ReDMCSB TIMELINE.C F0246 lines 1009-1027 walks square things and
+     * changes the first disabled C03 sensor type back to C006 group
+     * generator. */
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
+        uint8_t *sensor;
+        int thing_type;
+        int thing_size;
+        uint16_t type_data;
+
+        sensor = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!sensor) break;
+        if (thing_type == 3 && thing_size >= 8) {
+            type_data = csb_v1_runtime_read_u16(sensor + 2);
+            if ((type_data & 0x007Fu) == 0u) {
+                type_data = (uint16_t)((type_data & 0xFF80u) | 6u);
+                csb_v1_runtime_write_u16(sensor + 2, type_data);
+                return;
+            }
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+}
+
+static void csb_v1_runtime_apply_wall_sensor_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    CSB_V1_DungeonData *dungeon;
+    int thing;
+    int guard;
+
+    if (!profile || !record || !profile->dungeon_handle) return;
+    dungeon = profile->dungeon_handle;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        record->mapIndex,
+        record->mapX,
+        record->mapY);
+    if (thing < 0) return;
+
+    /* ReDMCSB TIMELINE.C F0248 lines 1198-1308 handles wall C006 countdown
+     * and C005 AND/OR gate sensors by mutating M040_DATA and feeding matching
+     * remote effects back through F0272_SENSOR_TriggerEffect.  Projectile
+     * launchers, endgame, text visibility, and rotation side effects remain
+     * separate runtime work. */
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
+        uint8_t *sensor;
+        int thing_type;
+        int thing_size;
+        uint16_t type_data;
+        uint16_t flags_word;
+        uint16_t target_word;
+        int sensor_type;
+        int sensor_data;
+        int sensor_effect;
+        int revert_effect;
+        int target_x;
+        int target_y;
+        int target_cell;
+        int trigger = 0;
+        int trigger_effect = DM1_EFFECT_SET;
+
+        sensor = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!sensor) break;
+        if (thing_type == 3 && thing_size >= 8) {
+            type_data = csb_v1_runtime_read_u16(sensor + 2);
+            flags_word = csb_v1_runtime_read_u16(sensor + 4);
+            target_word = csb_v1_runtime_read_u16(sensor + 6);
+            sensor_type = (int)(type_data & 0x007Fu);
+            sensor_data = (int)(type_data >> 7);
+            sensor_effect = (int)((flags_word >> 3) & 0x03u);
+            revert_effect = (int)((flags_word >> 5) & 0x01u);
+            target_cell = (int)((target_word >> 4) & 0x03u);
+            target_x = (int)((target_word >> 6) & 0x1Fu);
+            target_y = (int)((target_word >> 11) & 0x1Fu);
+
+            if (sensor_type == 6 && sensor_data > 0) {
+                if (record->effect == DM1_EFFECT_SET) {
+                    if (sensor_data < 511) sensor_data++;
+                } else {
+                    sensor_data--;
+                }
+                type_data = (uint16_t)((type_data & 0x007Fu) |
+                                       ((uint16_t)sensor_data << 7));
+                csb_v1_runtime_write_u16(sensor + 2, type_data);
+                if (sensor_effect == DM1_EFFECT_HOLD) {
+                    trigger = 1;
+                    trigger_effect = ((sensor_data == 0) != revert_effect)
+                        ? DM1_EFFECT_SET
+                        : DM1_EFFECT_CLEAR;
+                } else if (sensor_data == 0) {
+                    trigger = 1;
+                    trigger_effect = sensor_effect;
+                }
+            } else if (sensor_type == 5) {
+                int bit_mask = 1 << (record->cell & 3);
+                if (record->effect == DM1_EFFECT_TOGGLE) {
+                    sensor_data ^= bit_mask;
+                } else if (record->effect) {
+                    sensor_data &= ~bit_mask;
+                } else {
+                    sensor_data |= bit_mask;
+                }
+                type_data = (uint16_t)((type_data & 0x007Fu) |
+                                       ((uint16_t)sensor_data << 7));
+                csb_v1_runtime_write_u16(sensor + 2, type_data);
+                trigger = (((sensor_data & 0x000F) ==
+                            ((sensor_data & 0x00F0) >> 4)) != revert_effect);
+                if (sensor_effect == DM1_EFFECT_HOLD) {
+                    trigger_effect = trigger ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
+                    trigger = 1;
+                } else {
+                    trigger_effect = sensor_effect;
+                }
+            }
+
+            if (trigger) {
+                csb_v1_runtime_trigger_remote_sensor_event(
+                    profile,
+                    record->mapIndex,
+                    trigger_effect,
+                    target_x,
+                    target_y,
+                    target_cell);
+            }
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+}
+
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile)
 {
     int i;
 
     if (!profile) return;
-    /* ReDMCSB: TIMELINE.C F0261 lines 1875-1894 dispatches C07/C08/C09/C10
+    /* ReDMCSB: TIMELINE.C F0261 lines 1875-1901 dispatches C05/C06/C07/C08/C09/C10
      * to F0242/F0250/F0251/F0244; F0244 immediately routes doors through
      * C01 door-animation, and F0241 lines 754-809 steps the door state one
      * value per event.  This runtime bridge mutates real-format CSB byte-map
-     * square flags for the startup/playability path; wall/corridor sensor
-     * chains, projectile launchers, group movement, damage, sounds, and DSA
-     * effects remain separate work. */
+     * square flags and bounded wall/generator sensor state for the startup
+     * playability path; projectile launchers, group movement, damage, sounds,
+     * and DSA effects remain separate work. */
     for (i = 0; i < profile->last_timeline_dispatch.count; ++i) {
         const struct DM1_DispatchRecord_V1 *record =
             &profile->last_timeline_dispatch.records[i];
         switch (record->eventType) {
+        case DM1_EVENT_WALL:
+            csb_v1_runtime_apply_wall_sensor_timeline_record(profile, record);
+            break;
         case DM1_EVENT_DOOR:
         case DM1_EVENT_DOOR_ANIMATION:
             csb_v1_runtime_apply_door_timeline_record(profile, record);
@@ -1555,6 +1786,11 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
                 record,
                 2,
                 0x08u);
+            break;
+        case DM1_EVENT_ENABLE_GROUP_GENERATOR:
+            csb_v1_runtime_apply_enable_group_generator_record(
+                profile,
+                record);
             break;
         default:
             break;
