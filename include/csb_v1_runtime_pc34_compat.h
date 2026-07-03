@@ -323,6 +323,18 @@ typedef struct {
     int chained_move_limit_hit;
     int teleporter_chain_count;
     int pit_chain_count;
+    int sensor_source_remove_checked;
+    int sensor_destination_add_checked;
+    int sensor_trigger_count;
+    int sensor_event_count;
+    int sensor_audible_count;
+    int sensor_last_type;
+    int sensor_last_data;
+    int sensor_last_effect;
+    int sensor_last_target_x;
+    int sensor_last_target_y;
+    int sensor_last_target_cell;
+    int sensor_last_event_type;
     int old_party_level;
     int new_party_level;
 } CSB_V1_InputCommandRuntimeResult;
@@ -462,8 +474,9 @@ int csb_v1_runtime_get_last_timeline_dispatch(
  * This entrypoint intentionally does not claim broad movement/playability;
  * csb_v1_runtime_process_one_input_command() currently applies the
  * source-locked turn boundary and bounded one-cell movement step, but does
- * not claim full sensors, doors, teleporters, stairs, inventory, or action
- * handling.
+ * now also covers bounded movement consequences for stairs, pits,
+ * teleporters, doors/fake walls, and party floor sensors. It still does not
+ * claim full sensors, inventory, or action handling.
  * Source: ReDMCSB COMMAND.C F0380 lines 2075-2127 and 2150-2156. */
 int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
                                          int command,
@@ -475,9 +488,9 @@ int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
  * matching CLIKMENU.C F0365 lines 156-173 and CHAMPION.C F0284 lines
  * 117-130.  MOVE_* commands dispatch through the bounded one-cell runtime
  * movement helper with a live dungeon wall probe.  This gate still does not
- * claim full CSB movement/runtime playability: sensors, stairs, teleporters,
- * doors, inventory, and action side effects remain separate source-locked
- * boundaries.
+ * claim full CSB movement/runtime playability: wall-click/object/group/
+ * projectile sensors, inventory, and action side effects remain separate
+ * source-locked boundaries.
  * Returns 1 when a command was processed/dequeued, 0 when the queue was
  * empty or movement cooldown blocked dequeue, and -1 on invalid input. */
 int csb_v1_runtime_process_one_input_command(CSB_V1_RuntimeProfile *profile,
