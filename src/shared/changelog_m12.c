@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.22  (2026-07-03)",
+    "  - Packages the post-v3.0.21 mainline gates for CSB CSBGAME roster import, startup resume handoff, and CSB graphics decode handoff into M11 drawing.",
+    "  - CSB V1 now carries an explicit M11 runtime graphics plan from boot preparation through the game view, with binding-readiness and runtime-plan coverage.",
+    "  - DM1 V1 presentation polish advances keyboard arrow feedback, startup animation timing, entrance-door compositing, source-font inscriptions, and side-wall occlusion guards.",
+    "",
     "V3.0.21  (2026-07-03)",
     "  - Packages the post-v3.0.20 mainline gates for CSB runtime movement, quicksave/quickload/resume handoff, M11 viewport/input bridging, and chained party teleports through pits.",
     "  - DM1 V1 source-locked runtime coverage advances save/timeline materialization, F0412 status duration handling, live damage feedback, darkness/light decay, and endgame credits-path gating.",
@@ -369,5 +374,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.21";
+    return "3.0.22";
 }
