@@ -53,6 +53,12 @@ typedef enum {
     M11_GAME_SOURCE_DIRECT_DUNGEON,
     M11_GAME_SOURCE_NEXUS_DGN,
     M11_GAME_SOURCE_THERON_TRACK02,
+    M11_GAME_SOURCE_CSB_BOOT, /* CSB V1 hand-off: M11 owns the verified
+                               * CSB boot profile and runtime save/resume
+                               * boundary. The CSB viewport/gameplay bridge
+                               * is still narrower than DM1, so M11 dispatch
+                               * paths must not fall through to the DM1 world
+                               * tick or loader when this source is active. */
     M11_GAME_SOURCE_DM2_BOOT /* DM2 V1 hand-off: M11 owns the launch but the
                               * actual game state + tick + rendering go
                               * through dm2_v1_boot_enter_game() and the
@@ -478,6 +484,19 @@ typedef struct {
         int party_x, party_y, party_dir;
         int tick_count;
     } theronState;
+
+    /* CSB (Chaos Strikes Back) V1 runtime — active when sourceKind ==
+     * M11_GAME_SOURCE_CSB_BOOT. Opaque here so the public M11 state
+     * does not expose CSB-private implementation headers. Populated by
+     * M11_GameView_Start() after csb_v1_boot_enter_game() succeeds;
+     * csbBootProfile owns the live CSB_V1_RuntimeProfile and any loaded
+     * DUNGEON.DAT handle. */
+    void *csbBootProfile;     /* CSB_V1_BootProfile* */
+    struct {
+        int level_loaded;
+        int party_x, party_y, party_dir;
+        int tick_count;
+    } csbState;
 
     /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==
      * M11_GAME_SOURCE_DM2_BOOT. Opaque here so the public M11 state

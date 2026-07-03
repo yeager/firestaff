@@ -6,7 +6,9 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
+#include "csb_v1_boot.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v2_runtime.h"
@@ -2027,6 +2029,8 @@ static const char* m11_source_name(M11_GameSourceKind sourceKind) {
             return "NEXUS";
         case M11_GAME_SOURCE_THERON_TRACK02:
             return "THERON";
+        case M11_GAME_SOURCE_CSB_BOOT:
+            return "CSB";
         default:
             return "BUILTIN";
     }
@@ -8089,6 +8093,11 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         free(state->theronBootProfile);
         state->theronBootProfile = NULL;
     }
+    if (state->csbBootProfile) {
+        csb_v1_boot_cleanup((CSB_V1_BootProfile*)state->csbBootProfile);
+        free(state->csbBootProfile);
+        state->csbBootProfile = NULL;
+    }
     if (state->dm2BootProfile) {
         dm2_v1_boot_cleanup((DM2_V1_BootProfile*)state->dm2BootProfile);
         free(state->dm2BootProfile);
@@ -8243,18 +8252,61 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
     }
     /* ── CSB V1: bypass DM1 dungeon loader, use CSB V1 runtime boot ──
-     * When gameId == "csb", the M11 game-loop launches CSB via the
-     * Firestaff game-loop (FS_GAME_CSB path in firestaff_game_loop.c),
-     * not through the DM1 F0882_WORLD_InitFromDungeonDat_Compat path.
-     * Detect here and return 1 to indicate the launch was handled;
-     * the actual boot is driven by the FS_GAME_CSB path in fs_game_init().
-     * Source: TODO comment and CSB V1 Phase 2 integration. */
+     * M11 owns the verified CSB boot profile for direct/launcher starts,
+     * mirroring the DM2 hand-off below.  A savePath must be loaded here,
+     * before the generic DM1 quick-resume branch, because CSB restores
+     * GLOBAL_DATA / GameTime / party position through its own save image.
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 2721-2800. */
     if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
-        /* CSB is driven by the Firestaff game loop (FS_GAME_CSB),
-         * not by the M11 game view.  Return 1 to indicate successful
-         * launch handoff.  The FS game loop takes it from here. */
+        const char *dd = spec->dataDir;
+        char scanDir[512];
+        CSB_V1_BootProfile *profile = NULL;
+        int savedDebugHUD = state->showDebugHUD;
+        if (!dd || !dd[0]) {
+            dd = "~/.firestaff/data";
+        }
+        M11_GameView_Shutdown(state);
+        M11_GameView_Init(state);
+        state->showDebugHUD = savedDebugHUD;
+        profile = (CSB_V1_BootProfile *)calloc(1, sizeof(*profile));
+        if (!profile) {
+            m11_set_status(state, "BOOT", "CSB OOM");
+            m11_log_event(state, M11_COLOR_RED, "T0: CSB BOOT OOM");
+            return 0;
+        }
+        csb_v1_boot_profile_init(profile);
+        snprintf(scanDir, sizeof(scanDir), "%s/csb", dd);
+        if (csb_v1_boot_scan_assets(profile, scanDir) != 0) {
+            if (csb_v1_boot_scan_assets(profile, dd) != 0) {
+                m11_set_status(state, "BOOT", "CSB ASSETS MISSING");
+                m11_log_event(state, M11_COLOR_RED, "T0: CSB SCAN FAILED");
+                free(profile);
+                return 0;
+            }
+        }
+        if (csb_v1_boot_enter_game(profile) != 0) {
+            m11_set_status(state, "BOOT", "CSB ENTER GAME FAILED");
+            m11_log_event(state, M11_COLOR_RED, "T0: CSB BOOT ENTER FAILED");
+            csb_v1_boot_cleanup(profile);
+            free(profile);
+            return 0;
+        }
+        if (spec->savePath && spec->savePath[0] != '\0') {
+            if (csb_v1_runtime_load_game_from_path(&profile->runtime,
+                                                   spec->savePath) !=
+                CSB_V1_LOAD_OK) {
+                m11_set_status(state, "BOOT", "CSB RESUME FAILED");
+                m11_log_event(state, M11_COLOR_RED,
+                              "T0: CSB RESUME FAILED: %s",
+                              spec->savePath);
+                csb_v1_boot_cleanup(profile);
+                free(profile);
+                return 0;
+            }
+        }
         state->active = 1;
         state->startedFromLauncher = 1;
+        state->sourceKind = M11_GAME_SOURCE_CSB_BOOT;
         state->presentationMode = spec->presentationMode;
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
@@ -8262,8 +8314,22 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                  spec->title ? spec->title : "CHAOS STRIKES BACK");
         snprintf(state->sourceId, sizeof(state->sourceId), "%s",
                  spec->sourceId ? spec->sourceId : "csb");
-        m11_set_status(state, "BOOT", "CSB READY (FS LOOP)");
-        m11_log_event(state, M11_COLOR_YELLOW, "T0: CSB LOADED (FS LOOP)");
+        snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
+                 profile->dungeon_path[0] ? profile->dungeon_path : "DUNGEON.DAT");
+        state->csbBootProfile = profile;
+        state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
+        state->csbState.party_x = profile->runtime.party_x;
+        state->csbState.party_y = profile->runtime.party_y;
+        state->csbState.party_dir = profile->runtime.party_dir;
+        state->csbState.tick_count = (int)profile->runtime.tick_count;
+        m11_set_status(state, "BOOT",
+                       (spec->savePath && spec->savePath[0] != '\0')
+                           ? "CSB RESUMED"
+                           : "CSB READY");
+        m11_log_event(state, M11_COLOR_YELLOW,
+                      (spec->savePath && spec->savePath[0] != '\0')
+                          ? "T0: CSB RESUMED"
+                          : "T0: CSB LOADED");
         /* Tier 4: CSB launcher stderr-pipe — surface the boot milestone to
          * stderr so `firestaff_tier1_strict_boot_probe` and CI can detect
          * a successful CSB direct launch via `--game csb --data-dir`. The
@@ -9172,6 +9238,22 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         state->theronState.tick_count = (int)world->world_tick;
         return M11_GAME_INPUT_REDRAW;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile*)state->csbBootProfile;
+        if (!profile) {
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        if (csb_v1_runtime_tick_v1(&profile->runtime) <= 0) {
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
+        state->csbState.party_x = profile->runtime.party_x;
+        state->csbState.party_y = profile->runtime.party_y;
+        state->csbState.party_dir = profile->runtime.party_dir;
+        state->csbState.tick_count = (int)profile->runtime.tick_count;
+        return M11_GAME_INPUT_REDRAW;
+    }
     /* DM2 V1: use the DM2 tick function instead of DM1's m11_apply_tick.
      * DM2 owns its own game state in state->dm2World (party position,
      * tick_count, dungeon squares, creatures, magic, etc.). The DM1
@@ -9257,6 +9339,7 @@ int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,
     if (!state || !state->active ||
         state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN ||
         state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 ||
+        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
         state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
         strncmp(state->sourceId, "csb", 3) == 0) {
         return 0;
@@ -10419,6 +10502,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             state->csbDiskMenuActive) {
             return csbResult;
         }
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        if (!state->csbBootProfile) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_BACK) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        return M11_GAME_INPUT_IGNORED;
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
@@ -32692,6 +32785,21 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                               framebufferWidth,
                               framebufferHeight);
         }
+        g_drawState = NULL;
+        g_activeOriginalFont = NULL;
+        g_m11_font_scale_override = 0;
+        return;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const char *boot_status = state->lastOutcome[0]
+            ? state->lastOutcome
+            : "CSB BOOT READY (M11 HAND-OFF)";
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 18, "CHAOS STRIKES BACK",
+                      &g_text_title);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 36, boot_status, &g_text_shadow);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
