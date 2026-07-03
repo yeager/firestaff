@@ -244,6 +244,25 @@ static void queue_square_cell_event(CSB_V1_RuntimeProfile *profile,
           "CSB runtime accepts a queued square event");
 }
 
+static void queue_explosion_advance_event(CSB_V1_RuntimeProfile *profile,
+                                          const struct TimelineEvent_Compat *timeline_event)
+{
+    struct DM1_Event_V1 ev;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_EXPLOSION;
+    ev.map_time = DM1_MAP_TIME_MAKE(
+        timeline_event ? timeline_event->mapIndex : 0,
+        timeline_event ? timeline_event->fireAtTick : 0);
+    ev.priority = (uint8_t)(timeline_event ? timeline_event->aux0 : 0);
+    ev.b_mapX = (uint8_t)(timeline_event ? timeline_event->mapX : 0);
+    ev.b_mapY = (uint8_t)(timeline_event ? timeline_event->mapY : 0);
+    ev.c_cell = (uint8_t)(timeline_event ? timeline_event->cell : 0);
+    ev.c_effect = (uint8_t)(timeline_event ? timeline_event->aux1 : 0);
+    CHECK(csb_v1_runtime_add_timeline_event(profile, &ev) >= 0,
+          "CSB runtime accepts a queued C25 explosion event");
+}
+
 static int find_queued_event_type(const CSB_V1_RuntimeProfile *profile,
                                   int event_type)
 {
@@ -917,6 +936,177 @@ static void test_c38_poison_followup_and_c75_tick(void)
           "C75 decrements the consumed event then reschedules Attack-1");
 }
 
+static void test_explosion_c25_persistent_smoke_requeues_until_depleted(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[96];
+    struct ExplosionCreateInput_Compat input;
+    struct TimelineEvent_Compat first_advance;
+    int slot = -1;
+
+    printf("\n-- CSB C25 persistent smoke requeue --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C040_EXPLOSION_SMOKE;
+    input.attack = 96;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0 &&
+              first_advance.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE,
+          "CSB C25 smoke fixture creates a live persistent explosion");
+    queue_explosion_advance_event(&profile, &first_advance);
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 smoke first boundary tick reaches the scheduled C25 time");
+    CHECK(profile.explosions.count == 1 &&
+              profile.explosions.entries[slot].attack == 96 &&
+              count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 1,
+          "C25 smoke first boundary tick leaves the future event queued");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 smoke first advance dispatches at the scheduled boundary");
+    CHECK(profile.explosions.count == 1 &&
+              profile.explosions.entries[slot].attack == 56 &&
+              profile.explosions.entries[slot].currentFrame == 1,
+          "C25 smoke first advance decrements attack and writes back frame state");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 1,
+          "C25 smoke first advance requeues the next C25 event");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 smoke second advance dispatches on the following boundary");
+    CHECK(profile.explosions.count == 1 &&
+              profile.explosions.entries[slot].attack == 16 &&
+              profile.explosions.entries[slot].currentFrame == 2,
+          "C25 smoke second advance decrements attack and keeps the slot live");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 1,
+          "C25 smoke second advance requeues the final C25 event");
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 smoke final advance dispatches after attack depletion");
+    CHECK(profile.explosions.count == 0,
+          "C25 smoke final advance despawns the depleted explosion");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 0,
+          "C25 smoke final advance leaves no stale C25 event");
+}
+
+static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_RuntimeProfile loaded;
+    struct ProjectileCreateInput_Compat projectile_input;
+    struct TimelineEvent_Compat first_move;
+    struct ExplosionCreateInput_Compat explosion_input;
+    struct TimelineEvent_Compat first_advance;
+    const char *path =
+        "/tmp/firestaff_csb_runtime_projectile_explosion_roundtrip.fsav";
+    int projectile_slot = -1;
+    int explosion_slot = -1;
+
+    printf("\n-- CSB runtime save projectile/explosion persistence --\n");
+
+    remove(path);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_game_id = 0x731u;
+    profile.dungeon_seed = 0xC5B10731u;
+    profile.party_x = 2;
+    profile.party_y = 3;
+    profile.party_dir = CSB_V1_DIR_EAST;
+    profile.current_level = 0;
+    profile.game_time = 42u;
+    profile.timeline_queue.gameTick = profile.game_time;
+
+    memset(&projectile_input, 0, sizeof(projectile_input));
+    projectile_input.category = PROJECTILE_CATEGORY_MAGICAL;
+    projectile_input.subtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+    projectile_input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    projectile_input.ownerIndex = 7;
+    projectile_input.mapIndex = 0;
+    projectile_input.mapX = 1;
+    projectile_input.mapY = 2;
+    projectile_input.cell = 3;
+    projectile_input.direction = 1;
+    projectile_input.kineticEnergy = 22;
+    projectile_input.attack = 88;
+    projectile_input.launcherStrength = 99;
+    projectile_input.stepEnergy = 5;
+    projectile_input.currentTick = (int)profile.game_time;
+    projectile_input.associatedThing = C002_EXPLOSION_LIGHTNING_BOLT;
+    projectile_input.firstMoveGraceFlag = 0;
+    CHECK(F0810_PROJECTILE_Create_Compat(
+              &projectile_input,
+              &profile.projectiles,
+              &projectile_slot,
+              &first_move) == 1 &&
+              projectile_slot == 0,
+          "CSB runtime save fixture creates a live projectile");
+    (void)first_move;
+
+    memset(&explosion_input, 0, sizeof(explosion_input));
+    explosion_input.explosionType = C040_EXPLOSION_SMOKE;
+    explosion_input.attack = 96;
+    explosion_input.mapIndex = 0;
+    explosion_input.mapX = 1;
+    explosion_input.mapY = 1;
+    explosion_input.cell = EXPLOSION_CELL_CENTERED;
+    explosion_input.centered = 1;
+    explosion_input.currentTick = (int)profile.game_time;
+    explosion_input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    explosion_input.ownerIndex = 7;
+    explosion_input.creatorProjectileSlot = projectile_slot;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &explosion_input,
+              &profile.explosions,
+              &explosion_slot,
+              &first_advance) == 1 &&
+              explosion_slot == 0,
+          "CSB runtime save fixture creates a live explosion");
+    queue_explosion_advance_event(&profile, &first_advance);
+
+    CHECK(csb_v1_runtime_save_game_to_path(&profile, path) == 0,
+          "CSB runtime save writes projectile/explosion state");
+    csb_v1_runtime_init(&loaded, NULL);
+    CHECK(csb_v1_runtime_load_game_from_path(&loaded, path) == 0,
+          "CSB runtime load accepts projectile/explosion save state");
+    CHECK(loaded.projectiles.count == 1 &&
+              loaded.projectiles.entries[projectile_slot].reserved3 != 0 &&
+              loaded.projectiles.entries[projectile_slot].projectileSubtype ==
+                  PROJECTILE_SUBTYPE_LIGHTNING_BOLT &&
+              loaded.projectiles.entries[projectile_slot].mapX == 1 &&
+              loaded.projectiles.entries[projectile_slot].mapY == 2 &&
+              loaded.projectiles.entries[projectile_slot].attack == 88,
+          "CSB runtime load restores live projectile slot state");
+    CHECK(loaded.explosions.count == 1 &&
+              loaded.explosions.entries[explosion_slot].reserved0 != 0 &&
+              loaded.explosions.entries[explosion_slot].explosionType ==
+                  C040_EXPLOSION_SMOKE &&
+              loaded.explosions.entries[explosion_slot].attack == 96 &&
+              loaded.explosions.entries[explosion_slot].creatorProjectileSlot ==
+                  projectile_slot,
+          "CSB runtime load restores live explosion slot state");
+    CHECK(count_queued_event_type(&loaded, DM1_EVENT_EXPLOSION) == 1,
+          "CSB runtime load preserves queued C25 explosion event");
+    remove(path);
+}
+
 static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -1289,6 +1479,8 @@ int main(void)
     test_timeline_square_events_mutate_real_format_map_bytes();
     test_timeline_corridor_text_and_generator_mutations();
     test_c38_poison_followup_and_c75_tick();
+    test_explosion_c25_persistent_smoke_requeues_until_depleted();
+    test_runtime_save_roundtrips_projectiles_and_explosions();
     test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
