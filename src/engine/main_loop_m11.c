@@ -2106,6 +2106,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 menuState->settings.windowWidth = M11_Render_GetWindowWidth();
                 menuState->settings.windowHeight = M11_Render_GetWindowHeight();
             }
+            if (gameView && gameView->active && gameViewResult) {
+                *gameViewResult = M11_GAME_INPUT_REDRAW;
+            }
             continue;
         }
         if (ev.type == SDL_EVENT_MOUSE_MOTION &&
@@ -2878,6 +2881,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     } else {
         m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
     }
+    int gameFrameNeedsPresent = 0;
 
     while (o->durationMs < 0 || (now - start) < duration) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
@@ -2943,6 +2947,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             }
             if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs, o->dataDir)) {
                 launchedEver = 1;
+                if (gameView.active) {
+                    gameFrameNeedsPresent = 1;
+                }
                 if (exitAfterLaunch) {
                     break;
                 }
@@ -2969,6 +2976,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                 o->dataDir) &&
                     gameView.active) {
                     launchedEver = 1;
+                    gameFrameNeedsPresent = 1;
                     if (exitAfterLaunch) {
                         break;
                     }
@@ -2981,6 +2989,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                   M11_Render_GetFramebuffer(),
                                   M11_FB_WIDTH,
                                   M11_FB_HEIGHT);
+                gameFrameNeedsPresent = 1;
                 if (gameView.world.gameTick != tickBeforeEvents) {
                     idleAccumulatorMs = 0;
                 }
@@ -3039,6 +3048,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                     o->dataDir) &&
                         gameView.active) {
                         launchedEver = 1;
+                        gameFrameNeedsPresent = 1;
                         if (exitAfterLaunch) {
                             break;
                         }
@@ -3053,6 +3063,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                       M11_Render_GetFramebuffer(),
                                       M11_FB_WIDTH,
                                       M11_FB_HEIGHT);
+                    gameFrameNeedsPresent = 1;
                     inputRedrawDrawCount++;
                     if (redrawWasAfterViewportDirty) {
                         inputRedrawAfterViewportDirtyCount++;
@@ -3083,6 +3094,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                     if (m11_open_requested_launch(&gameView, &menuState, &idleAccumulatorMs, o->dataDir)) {
                         launchedEver = 1;
+                        if (gameView.active) {
+                            gameFrameNeedsPresent = 1;
+                        }
                         if (exitAfterLaunch) {
                             break;
                         }
@@ -3099,18 +3113,26 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                   M11_Render_GetFramebuffer(),
                                   M11_FB_WIDTH,
                                   M11_FB_HEIGHT);
+                gameFrameNeedsPresent = 1;
             }
             idleAccumulatorMs -= (uint32_t)gameTickInterval;
         }
         if (gameView.active) {
-            DM1_AutoMap_RecordVisit(&gameView);
-            DM1_Minimap_Render(&gameView,
-                               M11_Render_GetFramebuffer(),
-                               M11_FB_WIDTH, M11_FB_HEIGHT);
-            DM1_CombatLog_Render(&gameView,
-                                 M11_Render_GetFramebuffer(),
-                                 M11_FB_WIDTH, M11_FB_HEIGHT);
-            m11_present_game_frame(&gameView);
+            /* Static DM1 V1 frames do not need a 60 Hz full redraw/present.
+             * Resurrecting a champion enables the full HUD/champion render
+             * path, so keep CPU bounded by presenting only after input,
+             * resize, launch, restart, or a source tick dirties the frame. */
+            if (gameFrameNeedsPresent) {
+                DM1_AutoMap_RecordVisit(&gameView);
+                DM1_Minimap_Render(&gameView,
+                                   M11_Render_GetFramebuffer(),
+                                   M11_FB_WIDTH, M11_FB_HEIGHT);
+                DM1_CombatLog_Render(&gameView,
+                                     M11_Render_GetFramebuffer(),
+                                     M11_FB_WIDTH, M11_FB_HEIGHT);
+                m11_present_game_frame(&gameView);
+                gameFrameNeedsPresent = 0;
+            }
         } else {
             /* Redraw the launcher every tick so animations (pulse,
              * hover) remain alive even without input. */
