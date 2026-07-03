@@ -157,6 +157,71 @@ int csb_v1_csbgraphics_m11_prepare_binding(
     return 1;
 }
 
+int csb_v1_csbgraphics_m11_apply_binding(
+    const CSB_V1_CSBGraphicsM11Binding *binding,
+    const CSB_V1_CSBGraphicsDecodedBitmap *decoded,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int framebuffer_stride)
+{
+    int x;
+    int y;
+    int copy_w;
+    int copy_h;
+
+    if (!binding || !decoded || !framebuffer) {
+        return 0;
+    }
+    if (binding->decision != CSB_V1_CSBGRAPHICS_M11_DECISION_BIND_OVERRIDE ||
+        binding->route == CSB_V1_CSBGRAPHICS_M11_ROUTE_NONE) {
+        return 0;
+    }
+    if (!decoded->decoded_ok || !decoded->trusted ||
+        decoded->entry_index != binding->entry_index ||
+        decoded->bits_per_pixel != 4u ||
+        decoded->max_palette_index > CSB_V1_CSBGRAPHICS_M11_PALETTE_MAX ||
+        !decoded_pixel_count_fits(decoded)) {
+        return 0;
+    }
+    if (framebuffer_width <= 0 || framebuffer_height <= 0 ||
+        framebuffer_stride < framebuffer_width) {
+        return 0;
+    }
+    if (binding->destination_x < 0 || binding->destination_y < 0 ||
+        binding->destination_w <= 0 || binding->destination_h <= 0) {
+        return 0;
+    }
+
+    copy_w = (int)decoded->width;
+    copy_h = (int)decoded->height;
+    if (copy_w <= 0 || copy_h <= 0 ||
+        copy_w > binding->destination_w ||
+        copy_h > binding->destination_h) {
+        return 0;
+    }
+    if (binding->destination_x + copy_w > framebuffer_width ||
+        binding->destination_y + copy_h > framebuffer_height) {
+        return 0;
+    }
+
+    /* Source-lock boundary: CSBWin Graphics.cpp:1717 ReadGraphic delivers
+     * indexed bitmap payloads for graphics overrides. M11 keeps V1's
+     * 320x200 indexed framebuffer, so the runtime handoff is a direct
+     * palette-index copy into the prepared route rectangle. */
+    for (y = 0; y < copy_h; ++y) {
+        uint8_t *dst = framebuffer +
+            (binding->destination_y + y) * framebuffer_stride +
+            binding->destination_x;
+        const uint8_t *src = decoded->indexed_pixels +
+            (size_t)y * (size_t)decoded->width;
+        for (x = 0; x < copy_w; ++x) {
+            dst[x] = src[x];
+        }
+    }
+    return 1;
+}
+
 const char *csb_v1_csbgraphics_m11_route_name(
     CSB_V1_CSBGraphicsM11Route route)
 {

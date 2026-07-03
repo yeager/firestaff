@@ -129,12 +129,15 @@ static void test_contract_constants_and_evidence(void)
 static void test_viewport_override_binding(void)
 {
     uint8_t pixels[64 * 40];
+    uint8_t framebuffer[CSB_V1_CSBGRAPHICS_M11_SOURCE_W *
+                        CSB_V1_CSBGRAPHICS_M11_SOURCE_H];
     CSB_V1_CSBGraphicsEntrySpan span = span_for(73u);
     CSB_V1_CSBGraphicsDecodedBitmap decoded =
         decoded_for(73u, 64u, 40u, 15u, pixels, sizeof(pixels));
     CSB_V1_CSBGraphicsM11Binding binding;
 
     memset(pixels, 3, sizeof(pixels));
+    memset(framebuffer, 0, sizeof(framebuffer));
     check_int("viewport.prepare",
               csb_v1_csbgraphics_m11_prepare_binding(&span, &decoded, &binding),
               1, "trusted decoded viewport graphic");
@@ -155,6 +158,22 @@ static void test_viewport_override_binding(void)
     check_int("viewport.palette_preserved", binding.preserves_v1_palette_indices, 1,
               binding.source_evidence);
     check_str("viewport.reason", binding.reason, "trusted-decoded-override");
+    check_int("viewport.apply",
+              csb_v1_csbgraphics_m11_apply_binding(
+                  &binding, &decoded, framebuffer,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W),
+              1, binding.source_evidence);
+    check_int("viewport.apply.top_left",
+              framebuffer[CSB_V1_CSBGRAPHICS_M11_VIEWPORT_Y *
+                          CSB_V1_CSBGRAPHICS_M11_SOURCE_W +
+                          CSB_V1_CSBGRAPHICS_M11_VIEWPORT_X],
+              3, "CSBgraphics viewport override copied into M11 framebuffer");
+    check_int("viewport.apply.before",
+              framebuffer[(CSB_V1_CSBGRAPHICS_M11_VIEWPORT_Y - 1) *
+                          CSB_V1_CSBGRAPHICS_M11_SOURCE_W],
+              0, "CSBgraphics viewport override does not write before viewport");
 }
 
 static void test_hud_inventory_binding(void)
@@ -193,6 +212,8 @@ static void test_hud_c040_panel_binding(void)
 {
     uint8_t pixels[CSB_V1_CSBGRAPHICS_M11_C040_PANEL_W *
                    CSB_V1_CSBGRAPHICS_M11_C040_PANEL_H];
+    uint8_t framebuffer[CSB_V1_CSBGRAPHICS_M11_SOURCE_W *
+                        CSB_V1_CSBGRAPHICS_M11_SOURCE_H];
     CSB_V1_CSBGraphicsEntrySpan span = span_for(40u);
     CSB_V1_CSBGraphicsDecodedBitmap decoded =
         decoded_for(40u,
@@ -202,6 +223,7 @@ static void test_hud_c040_panel_binding(void)
     CSB_V1_CSBGraphicsM11Binding binding;
 
     memset(pixels, 6, sizeof(pixels));
+    memset(framebuffer, 0, sizeof(framebuffer));
     check_int("c040.prepare",
               csb_v1_csbgraphics_m11_prepare_binding(&span, &decoded, &binding),
               1, "PANEL.C:1632 C040 panel");
@@ -217,17 +239,37 @@ static void test_hud_c040_panel_binding(void)
     check_int("c040.dest_h", binding.destination_h, 73, binding.source_evidence);
     check_int("c040.hud_redraw", binding.needs_hud_redraw, 1,
               binding.source_evidence);
+    check_int("c040.apply",
+              csb_v1_csbgraphics_m11_apply_binding(
+                  &binding, &decoded, framebuffer,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W),
+              1, binding.source_evidence);
+    check_int("c040.apply.top_left",
+              framebuffer[CSB_V1_CSBGRAPHICS_M11_C040_PANEL_Y *
+                          CSB_V1_CSBGRAPHICS_M11_SOURCE_W +
+                          CSB_V1_CSBGRAPHICS_M11_C040_PANEL_X],
+              6, "CSBgraphics C040 override copied into source panel rect");
+    check_int("c040.apply.outside",
+              framebuffer[(CSB_V1_CSBGRAPHICS_M11_C040_PANEL_Y - 1) *
+                          CSB_V1_CSBGRAPHICS_M11_SOURCE_W +
+                          CSB_V1_CSBGRAPHICS_M11_C040_PANEL_X],
+              0, "CSBgraphics C040 override preserves pixels outside panel");
 }
 
 static void test_fallbacks_are_explicit(void)
 {
     uint8_t pixels[32 * 32];
+    uint8_t framebuffer[CSB_V1_CSBGRAPHICS_M11_SOURCE_W *
+                        CSB_V1_CSBGRAPHICS_M11_SOURCE_H];
     CSB_V1_CSBGraphicsEntrySpan span = span_for(40u);
     CSB_V1_CSBGraphicsDecodedBitmap decoded =
         decoded_for(40u, 32u, 32u, 15u, pixels, sizeof(pixels));
     CSB_V1_CSBGraphicsM11Binding binding;
 
     memset(pixels, 7, sizeof(pixels));
+    memset(framebuffer, 0, sizeof(framebuffer));
 
     check_int("missing.out",
               csb_v1_csbgraphics_m11_prepare_binding(&span, &decoded, NULL),
@@ -280,6 +322,13 @@ static void test_fallbacks_are_explicit(void)
               csb_v1_csbgraphics_m11_prepare_binding(&span, &decoded, &binding),
               1, "unsupported route stays fallback");
     check_str("unsupported.reason", binding.reason, "unsupported-entry-route");
+    check_int("fallback.apply.rejected",
+              csb_v1_csbgraphics_m11_apply_binding(
+                  &binding, &decoded, framebuffer,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_H,
+                  CSB_V1_CSBGRAPHICS_M11_SOURCE_W),
+              0, "fallback bindings do not mutate M11 framebuffer");
 }
 
 int main(void)
