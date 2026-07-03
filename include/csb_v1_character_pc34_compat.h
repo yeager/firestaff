@@ -159,13 +159,14 @@ typedef struct {
     int16_t  EnableActionEventIndex;                  /* 3879 */
     int16_t  HideDamageReceivedEventIndex;            /* 3881 */
     uint16_t Attributes;                               /* 3883  bit flags (icon, dead, ...) */
-    int16_t  Food;                                     /* 3885 */
-    int16_t  Water;                                    /* 3887 */
-    uint16_t Load;                                     /* 3889 */
-    uint8_t  Padding1[2];                              /* 3891  alignment padding */
+    uint16_t Wounds;                                   /* 3885  ReDMCSB CHAMPION.Wounds bits */
+    int16_t  Food;                                     /* 3887 */
+    int16_t  Water;                                    /* 3889 */
+    uint16_t Load;                                     /* 3891 */
+    uint8_t  Padding1[2];                              /* 3893  alignment padding */
 
     /* ── Additional state (from ReDMCSB) ── */
-    int16_t  EventIndex;                              /* 3893 */
+    int16_t  EventIndex;                              /* 3895 */
     /* ── Reincarnation scaling (CHANGE7_24 globals — per-champion) ── */
     uint8_t  reincarnateAttributePenalty;  /* default 2, max 16 — attribute tier loss */
     uint8_t  reincarnateStatPenalty;      /* default 8, max 16 — stat point loss denominator */
@@ -246,10 +247,9 @@ void  csb_v1_champion_recompute_load(CSB_V1_Champion *c);
  *   base  = (STR_CURRENT << 3) + 100
  *   base  = F0306_CHAMPION_GetStaminaAdjustedValue(champion, base)
  *   base += 9; base -= base % 10   (round up to next multiple of 10)
- * Elven Boots (C05 feet slot) and wound tier are not yet modeled in the
- * CSB V1 champion struct, so this helper implements the STR + stamina
- * sub-formula only and intentionally matches the F0309_MEDIA182 baseline
- * (no boots, no wounds).  Returns 0 when champion is NULL.
+ * Wounds reduce carrying capacity; Elven Boots (C05 feet slot) are not yet
+ * modeled through icon lookup in the CSB V1 champion struct.  Returns 0 when
+ * champion is NULL.
  * Source: ReDMCSB CHAMPION.C F0309_CHAMPION_GetMaximumLoad lines 1157-1178
  *         and F0306_CHAMPION_GetStaminaAdjustedValue lines 1078-1106. */
 unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c);
@@ -262,9 +262,8 @@ unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c);
  *   else                         ticks = 4 + ((Load - MaxLoad) << 2) / MaxLoad
  *   [+1 or +2 if feet wounded]
  *   [-1 if wearing Boot of Speed in C05 feet slot]
- * Wounds on the legs and the feet-slot boots are not yet modeled in
- * CSB_V1_Champion, so this returns the F0310 baseline (no wound, no
- * boot).  Returns 2 when champion is NULL (the light-load default).
+ * Wounds are modeled; feet-slot boots are not yet modeled through icon lookup
+ * in CSB_V1_Champion.  Returns 2 when champion is NULL (the light-load default).
  * Source: ReDMCSB CHAMPION.C F0310_CHAMPION_GetMovementTicks lines 1180-1214. */
 unsigned int csb_v1_champion_get_movement_ticks(const CSB_V1_Champion *c);
 

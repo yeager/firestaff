@@ -20,6 +20,7 @@
 
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -122,6 +123,7 @@ void csb_v1_champion_init(CSB_V1_Champion *c)
     c->EnableActionEventIndex = -1;
     c->HideDamageReceivedEventIndex = -1;
     c->Attributes = CSB_V1_CHAMPION_ATTRIBUTE_NONE;
+    c->Wounds = 0;
     c->Food = 0;
     c->Water = 0;
     c->Load = 0;
@@ -233,19 +235,22 @@ static int16_t csb_v1_champion_stamina_adjusted_value(
  *   base = (STR_CURRENT << 3) + 100
  *   base = F0306_CHAMPION_GetStaminaAdjustedValue(c, base)
  *   base += 9; base -= base % 10
- * CSB V1's CSB_V1_Champion struct does not yet model Wounds or the
- * feet-slot Elven Boots icon override, so this is the F0309 baseline
- * for "no wound, no boots" — exactly the contract exercised by the
- * runtime load-attrs follow-up test.
+ * CSB V1's CSB_V1_Champion struct now models Wounds; the feet-slot
+ * Elven Boots icon override remains a later inventory-icon bridge.
  * Source: ReDMCSB CHAMPION.C F0309 lines 1157-1178. */
 unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c)
 {
     int32_t base;
+    uint16_t wounds;
     if (!c) return 0;
     base = ((int32_t)c->Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] << 3)
            + 100;
     base = csb_v1_champion_stamina_adjusted_value(c, (int16_t)base);
     if (base < 0) base = 0;
+    wounds = c->Wounds;
+    if (wounds) {
+        base -= base >> ((wounds & COMBAT_WOUND_LEGS) ? 2 : 3);
+    }
     base += 9;
     base -= base % 10;
     return (unsigned int)base;
@@ -262,8 +267,8 @@ unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c)
  *   [-1 if wearing Boot of Speed in C05]
  * The result is consumed by the dungeon tick scheduler (F0235_TIMELINE_ProcessTick)
  * to decide how long the party waits between footstep tiles. CSB V1
- * does not yet model the Wounds/feet-slot fields, so this returns the
- * F0310 baseline (no wound, no boot).  NULL champion returns 2 (the
+ * now models Wounds; feet-slot Boot of Speed remains a later inventory-icon
+ * bridge.  NULL champion returns 2 (the
  * MaxLoad > Load default when MaxLoad=0 is unreachable; we mirror the
  * BUG0_72 branch entry for any non-overloaded champion).
  * Source: ReDMCSB CHAMPION.C F0310 lines 1180-1214. */
@@ -271,6 +276,8 @@ unsigned int csb_v1_champion_get_movement_ticks(const CSB_V1_Champion *c)
 {
     unsigned int max_load;
     unsigned int load;
+    unsigned int ticks;
+    unsigned int wound_ticks;
     if (!c) return 2u;
     max_load = csb_v1_champion_get_maximum_load(c);
     load = c->Load;
@@ -281,19 +288,23 @@ unsigned int csb_v1_champion_get_movement_ticks(const CSB_V1_Champion *c)
         return 4u;
     }
     if (max_load > load) {
-        unsigned int ticks = 2u;
+        ticks = 2u;
         if (((unsigned long long)load << 3) >
             ((unsigned long long)max_load * 5u)) {
             ticks++;
         }
-        return ticks;
-    }
-    /* BUG0_72 else-branch: Load >= MaxLoad (the comparison is > not >=,
-     * so the equal-load case falls here and gets 4 ticks). */
-    {
+        wound_ticks = 1u;
+    } else {
+        /* BUG0_72 else-branch: Load >= MaxLoad (the comparison is > not >=,
+         * so the equal-load case falls here and gets 4 ticks). */
         unsigned int over = (load - max_load) << 2;
-        return 4u + (over / max_load);
+        ticks = 4u + (over / max_load);
+        wound_ticks = 2u;
     }
+    if (c->Wounds & COMBAT_WOUND_FEET) {
+        ticks += wound_ticks;
+    }
+    return ticks;
 }
 
 /* Load > MaxLoad is the champion panel red-load condition. BUG0_72 is
@@ -364,6 +375,7 @@ int csb_v1_champion_resurrect(CSB_V1_Champion *c)
 
     /* Clear the dead flag */
     c->Attributes &= ~(uint16_t)CSB_V1_CHAMPION_ATTRIBUTE_DEAD;
+    c->Wounds = 0;
 
     /* Re-enable action (champions start with REST) */
     c->ActionIndex = CSB_V1_ACTION_REST;
@@ -447,6 +459,7 @@ int csb_v1_champion_reincarnate(CSB_V1_Champion *c)
 
     /* Step 3: Clear all skills (F0008_MAIN_ClearBytes on Skills array) */
     memset(c->Skills, 0, sizeof(c->Skills));
+    c->Wounds = 0;
 
     /* Step 4: Apply random +1 stat boosts (randomPoints, default 12).
      * F0281_CHAMPION_Rename is called here; in Firestaff we set the

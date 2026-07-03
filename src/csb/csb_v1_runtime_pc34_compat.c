@@ -1752,6 +1752,7 @@ static int csb_v1_runtime_fill_defender_combat_snapshot(
         champion,
         CSB_V1_STAT_LUCK,
         CSB_V1_STAT_MIN);
+    out->wounds = (int)champion->Wounds;
     return 1;
 }
 
@@ -1889,6 +1890,11 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
             }
             if (profile->party_state.Champions[champion_index].CurrentHealth <=
                 damage) {
+                profile->party_state.Champions[champion_index].Wounds =
+                    (uint16_t)(profile->party_state
+                                   .Champions[champion_index]
+                                   .Wounds |
+                               (uint16_t)combat.woundMaskAdded);
                 (void)csb_v1_champion_kill(
                     &profile->party_state.Champions[champion_index]);
                 if (profile->party_state.LeaderIndex == champion_index ||
@@ -1906,6 +1912,11 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     }
                 }
             } else {
+                profile->party_state.Champions[champion_index].Wounds =
+                    (uint16_t)(profile->party_state
+                                   .Champions[champion_index]
+                                   .Wounds |
+                               (uint16_t)combat.woundMaskAdded);
                 profile->party_state.Champions[champion_index].CurrentHealth =
                     (int16_t)(profile->party_state
                                   .Champions[champion_index]
