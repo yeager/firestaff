@@ -2491,6 +2491,24 @@ static int csb_v1_runtime_projectile_instance_active(
            projectile->reserved3 != 0;
 }
 
+static int csb_v1_runtime_explosion_instance_active(
+    const struct ExplosionInstance_Compat *explosion)
+{
+    return explosion &&
+           explosion->slotIndex >= 0 &&
+           explosion->reserved0 != 0;
+}
+
+static int csb_v1_runtime_square_type_from_raw(
+    const CSB_V1_DungeonData *dungeon,
+    int raw_square)
+{
+    if (!dungeon || raw_square < 0) return PROJECTILE_ELEMENT_WALL;
+    return (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+}
+
 static int csb_v1_runtime_build_projectile_digest(
     const CSB_V1_RuntimeProfile *profile,
     const struct ProjectileInstance_Compat *projectile,
@@ -2529,9 +2547,8 @@ static int csb_v1_runtime_build_projectile_digest(
     out->sourceMapIndex = projectile->mapIndex;
     out->sourceMapX = projectile->mapX;
     out->sourceMapY = projectile->mapY;
-    out->sourceSquareType = (dungeon->square_bytes == 1)
-        ? ((raw_square >> 5) & 0x07)
-        : (raw_square & 0x1F);
+    out->sourceSquareType =
+        csb_v1_runtime_square_type_from_raw(dungeon, raw_square);
     out->destTeleporterNewDirection = -1;
     out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
 
@@ -2565,9 +2582,8 @@ static int csb_v1_runtime_build_projectile_digest(
         return 1;
     }
 
-    out->destSquareType = (dungeon->square_bytes == 1)
-        ? ((dest_raw_square >> 5) & 0x07)
-        : (dest_raw_square & 0x1F);
+    out->destSquareType =
+        csb_v1_runtime_square_type_from_raw(dungeon, dest_raw_square);
     if (out->destSquareType == PROJECTILE_ELEMENT_FAKEWALL) {
         out->destFakeWallIsImaginaryOrOpen =
             (dest_raw_square & 0x05) ? 1 : 0;
@@ -2611,6 +2627,14 @@ static int csb_v1_runtime_build_projectile_digest(
             out->destCreatureType =
                 (group && thing_type == 4 && thing_size > 4) ? group[4] : 0;
             out->destCreatureCellMask = 0x0F;
+            {
+                const struct CreatureBehaviorProfile_Compat *creature_profile =
+                    CREATURE_GetProfile_Compat(out->destCreatureType);
+                out->destCreatureIsNonMaterial =
+                    creature_profile &&
+                    ((creature_profile->attributes &
+                      CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
+            }
             (void)thing_index;
         }
     }
@@ -2635,6 +2659,99 @@ static int csb_v1_runtime_build_projectile_digest(
         if (other->cell == new_cell) {
             out->destHasOtherProjectile = 1;
             break;
+        }
+    }
+    return 1;
+}
+
+static int csb_v1_runtime_build_explosion_digest(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct ExplosionInstance_Compat *explosion,
+    struct CellContentDigest_Compat *out)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int raw_square;
+
+    if (!profile || !explosion || !out || !profile->dungeon_handle) return 0;
+    dungeon = profile->dungeon_handle;
+    if (!dungeon->raw_data ||
+        explosion->mapIndex < 0 ||
+        explosion->mapIndex >= dungeon->level_count) {
+        return 0;
+    }
+
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        explosion->mapIndex,
+        explosion->mapX,
+        explosion->mapY);
+    if (raw_square < 0) return 0;
+
+    memset(out, 0, sizeof(*out));
+    out->sourceMapIndex = explosion->mapIndex;
+    out->sourceMapX = explosion->mapX;
+    out->sourceMapY = explosion->mapY;
+    out->sourceSquareType =
+        csb_v1_runtime_square_type_from_raw(dungeon, raw_square);
+    out->destMapIndex = explosion->mapIndex;
+    out->destMapX = explosion->mapX;
+    out->destMapY = explosion->mapY;
+    out->destSquareType = out->sourceSquareType;
+    out->destTeleporterNewDirection = -1;
+    out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+
+    if (out->destSquareType == PROJECTILE_ELEMENT_FAKEWALL) {
+        out->destFakeWallIsImaginaryOrOpen =
+            (raw_square & 0x05) ? 1 : 0;
+    }
+    if (out->destSquareType == PROJECTILE_ELEMENT_DOOR) {
+        int door_state = raw_square & 0x07;
+        if (door_state == 0) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_OPEN;
+        } else if (door_state <= 4) {
+            out->destDoorState = door_state;
+        } else if (door_state == 5) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
+        }
+        out->destDoorAllowsProjectilePassThrough = 0;
+    }
+    if (profile->current_level == explosion->mapIndex &&
+        profile->party_x == explosion->mapX &&
+        profile->party_y == explosion->mapY) {
+        out->destHasChampion = 1;
+        out->destPartyDirection = profile->party_dir & 3;
+        out->destChampionCellMask = 0x0F;
+    }
+    {
+        int first_thing = csb_v1_dungeon_get_first_thing(
+            dungeon,
+            explosion->mapIndex,
+            explosion->mapX,
+            explosion->mapY);
+        if (first_thing >= 0 &&
+            ((first_thing >> 10) & 0x0F) == 4) {
+            int thing_type = -1;
+            int thing_index = -1;
+            int thing_size = 0;
+            const uint8_t *group = csb_v1_dungeon_get_thing_record(
+                dungeon,
+                first_thing,
+                &thing_type,
+                &thing_index,
+                &thing_size);
+            out->destHasCreatureGroup = 1;
+            out->destCreatureType =
+                (group && thing_type == 4 && thing_size > 4) ? group[4] : 0;
+            out->destCreatureCellMask = 0x0F;
+            {
+                const struct CreatureBehaviorProfile_Compat *creature_profile =
+                    CREATURE_GetProfile_Compat(out->destCreatureType);
+                out->destCreatureIsNonMaterial =
+                    creature_profile &&
+                    ((creature_profile->attributes &
+                      CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
+            }
+            (void)thing_index;
         }
     }
     return 1;
@@ -2739,6 +2856,78 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
         door_event.c_cell = (uint8_t)(tick_result.outNextTick.cell & 3);
         door_event.c_effect = (uint8_t)tick_result.outNextTick.aux0;
         (void)dm1v1_event_add(&profile->timeline_queue, &door_event);
+    }
+}
+
+static void csb_v1_runtime_apply_explosion_timeline_record(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    struct ExplosionInstance_Compat *explosion;
+    struct ExplosionInstance_Compat new_state;
+    struct ExplosionTickResult_Compat tick_result;
+    struct CellContentDigest_Compat digest;
+    struct RngState_Compat rng;
+    int slot;
+
+    if (!profile || !record) return;
+    slot = record->aux0;
+    if (slot < 0 || slot >= EXPLOSION_LIST_CAPACITY) return;
+    explosion = &profile->explosions.entries[slot];
+    if (!csb_v1_runtime_explosion_instance_active(explosion)) return;
+    if (!csb_v1_runtime_build_explosion_digest(
+            profile,
+            explosion,
+            &digest)) {
+        (void)F0824_EXPLOSION_Despawn_Compat(&profile->explosions, slot);
+        return;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0220 is dispatched from TIMELINE.C F0261 C25.
+     * CSB keeps real-format byte-map lookup here and delegates explosion
+     * frame/attack/lifecycle parity to the shared M10 F0822 mirror. */
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)explosion->mapX << 8) ^
+            ((uint32_t)explosion->mapY << 16) ^
+            (uint32_t)(slot << 24));
+    if (!F0822_EXPLOSION_Advance_Compat(
+            explosion,
+            &digest,
+            profile->game_time,
+            &rng,
+            &new_state,
+            &tick_result)) {
+        (void)F0824_EXPLOSION_Despawn_Compat(&profile->explosions, slot);
+        return;
+    }
+
+    if (tick_result.emittedDoorDestructionEvent) {
+        struct DM1_Event_V1 door_event;
+        memset(&door_event, 0, sizeof(door_event));
+        door_event.map_time = DM1_MAP_TIME_MAKE(
+            tick_result.outNextTick.mapIndex,
+            tick_result.outNextTick.fireAtTick);
+        door_event.type = DM1_EVENT_DOOR_DESTRUCTION;
+        door_event.priority = 0;
+        door_event.b_mapX = (uint8_t)tick_result.outNextTick.mapX;
+        door_event.b_mapY = (uint8_t)tick_result.outNextTick.mapY;
+        door_event.c_cell = (uint8_t)(tick_result.outNextTick.cell & 0xFF);
+        door_event.c_effect = 0;
+        (void)dm1v1_event_add(&profile->timeline_queue, &door_event);
+    }
+    if (tick_result.despawn) {
+        (void)F0824_EXPLOSION_Despawn_Compat(&profile->explosions, slot);
+        return;
+    }
+
+    *explosion = new_state;
+    if (tick_result.outNextTick.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE) {
+        explosion->scheduledAtTick = (int)tick_result.outNextTick.fireAtTick;
+        csb_v1_runtime_schedule_explosion_advance_event(
+            profile,
+            &tick_result.outNextTick);
     }
 }
 
@@ -3339,6 +3528,9 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             csb_v1_runtime_apply_projectile_move_timeline_record(
                 profile,
                 record);
+            break;
+        case DM1_EVENT_EXPLOSION:
+            csb_v1_runtime_apply_explosion_timeline_record(profile, record);
             break;
         case DM1_EVENT_DOOR:
         case DM1_EVENT_DOOR_ANIMATION:
