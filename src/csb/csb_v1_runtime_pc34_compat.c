@@ -1623,7 +1623,16 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
             damage = 1 + ((int)thing_record[4] % 4);
             if (profile->party_state.Champions[champion_index].CurrentHealth <=
                 damage) {
-                profile->party_state.Champions[champion_index].CurrentHealth = 0;
+                (void)csb_v1_champion_kill(
+                    &profile->party_state.Champions[champion_index]);
+                if (profile->party_state.LeaderIndex == champion_index ||
+                    profile->leader_index == champion_index) {
+                    int next_leader =
+                        csb_v1_runtime_first_living_champion(
+                            &profile->party_state);
+                    profile->party_state.LeaderIndex = next_leader;
+                    profile->leader_index = next_leader;
+                }
             } else {
                 profile->party_state.Champions[champion_index].CurrentHealth =
                     (int16_t)(profile->party_state
