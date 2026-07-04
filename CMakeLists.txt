@@ -149,6 +149,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_csbgraphics_dat_real_scan.c
     src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
     src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+    src/csb/csb_v1_csbwin_512_xor_pad_classify.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c

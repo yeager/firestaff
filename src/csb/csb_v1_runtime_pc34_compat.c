@@ -8321,6 +8321,71 @@ int csb_v1_runtime_apply_csbwin_resume_report(
     return 0;
 }
 
+int csb_v1_runtime_apply_csbwin_resume_file(
+    CSB_V1_RuntimeProfile *profile,
+    const char *path,
+    size_t max_size)
+{
+    enum { DEFAULT_MAX_BYTES = 4 * 1024 * 1024 };
+    FILE *fp;
+    long file_size_long;
+    size_t file_size;
+    uint8_t *bytes;
+    size_t got;
+    int rc;
+    CSB_V1_CSBWin512BodyReport report;
+
+    if (!profile || !path || path[0] == '\0') {
+        return -1;
+    }
+    if (max_size == 0u) {
+        max_size = (size_t)DEFAULT_MAX_BYTES;
+    }
+
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return -1;
+    }
+    if (fseek(fp, 0L, SEEK_END) != 0) {
+        fclose(fp);
+        return -1;
+    }
+    file_size_long = ftell(fp);
+    if (file_size_long < 0) {
+        fclose(fp);
+        return -1;
+    }
+    file_size = (size_t)file_size_long;
+    if (file_size > max_size) {
+        fclose(fp);
+        return -1;
+    }
+    if (fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    bytes = (uint8_t *)malloc(file_size > 0u ? file_size : 1u);
+    if (!bytes) {
+        fclose(fp);
+        return -1;
+    }
+    got = fread(bytes, 1u, file_size, fp);
+    fclose(fp);
+    if (got != file_size) {
+        free(bytes);
+        return -1;
+    }
+
+    memset(&report, 0, sizeof(report));
+    rc = csb_v1_csbwin_512_verify_save_body(bytes, file_size, 0u, &report);
+    free(bytes);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        return -1;
+    }
+    return csb_v1_runtime_apply_csbwin_resume_report(profile, &report);
+}
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index)
 {
