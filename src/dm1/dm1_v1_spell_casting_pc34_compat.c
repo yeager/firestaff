@@ -376,7 +376,8 @@ static DM1_SpellPotionObject* find_empty_flask_in_hand(
  *   3. requiredSkillLevel = spell->BaseRequiredSkillLevel + powerSymbolOrdinal
  *   4. experience = rng8 + (requiredSkill << 4) + ((powerOrd-1)*baseRequired << 3) + (required^2)
  *   5. Skill check: if skillLevel < required, random failure check per missing level
- *   6. Switch on spell kind (potion → needs flask, projectile → create, other → effect)
+ *   6. Switch on spell kind (potion → needs flask, magic-map → needs map,
+ *      projectile → create, other → effect)
  *   7. F0408 cast-click feedback clears symbols and redraws spell rows for every
  *      result except C3_SPELL_CAST_FAILURE_NEEDS_FLASK.
  */
@@ -444,6 +445,17 @@ int dm1_spell_cast(DM1_SpellCastingState* s, int champIdx,
         if (outSpell) *outSpell = spell;
         if (outFailure) *outFailure = DM1_FAILURE_NEEDS_FLASK_IN_HAND;
         return DM1_SPELL_CAST_FAILURE_NEEDS_FLASK;
+    }
+
+    if (kind == DM1_SPELL_KIND_MAGIC_MAP) {
+        /* CSB-only media spells route is currently source-locked:
+         * fail fast when no magic map action hand is present.
+         * Return code shares C3 with C10 to match legacy cast-result
+         * handling while preserving distinct failure metadata.
+         */
+        if (outSpell) *outSpell = spell;
+        if (outFailure) *outFailure = DM1_FAILURE_NEEDS_MAGIC_MAP_IN_HAND;
+        return DM1_SPELL_CAST_FAILURE_NEEDS_MAGIC_MAP;
     }
 
     if (kind == DM1_SPELL_KIND_PROJECTILE) {
