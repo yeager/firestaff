@@ -5490,6 +5490,29 @@ static int csb_v1_runtime_projectile_resolve_teleporter_chain(
     return applied;
 }
 
+static int csb_v1_runtime_party_champion_cell_mask(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    int i;
+    int mask = 0;
+
+    if (!profile || !profile->party_state_valid) return 0;
+
+    /* ReDMCSB: MOVESENS.C F0266 lines 241-247 fills the projectile
+     * impact cell table from F0285_CHAMPION_GetIndexInCell(), so empty
+     * party cells must not be exposed as champion impact targets. */
+    for (i = 0; i < profile->party_state.ChampionCount &&
+                i < CSB_V1_MAX_CHAMPIONS; ++i) {
+        const CSB_V1_Champion *champion = &profile->party_state.Champions[i];
+        if (csb_v1_champion_is_dead(champion) ||
+            champion->CurrentHealth <= 0) {
+            continue;
+        }
+        mask |= 1 << ((int)champion->Cell & 3);
+    }
+    return mask;
+}
+
 static int csb_v1_runtime_build_projectile_digest(
     const CSB_V1_RuntimeProfile *profile,
     const struct ProjectileInstance_Compat *projectile,
@@ -5620,9 +5643,10 @@ static int csb_v1_runtime_build_projectile_digest(
     if (profile->current_level == projectile->mapIndex &&
         profile->party_x == dest_x &&
         profile->party_y == dest_y) {
-        out->destHasChampion = 1;
+        out->destChampionCellMask =
+            csb_v1_runtime_party_champion_cell_mask(profile);
+        out->destHasChampion = out->destChampionCellMask ? 1 : 0;
         out->destPartyDirection = profile->party_dir & 3;
-        out->destChampionCellMask = 0x0F;
     }
     {
         int first_thing = csb_v1_dungeon_get_first_thing(
@@ -5770,9 +5794,10 @@ static int csb_v1_runtime_build_explosion_digest(
     if (profile->current_level == explosion->mapIndex &&
         profile->party_x == explosion->mapX &&
         profile->party_y == explosion->mapY) {
-        out->destHasChampion = 1;
+        out->destChampionCellMask =
+            csb_v1_runtime_party_champion_cell_mask(profile);
+        out->destHasChampion = out->destChampionCellMask ? 1 : 0;
         out->destPartyDirection = profile->party_dir & 3;
-        out->destChampionCellMask = 0x0F;
     }
     {
         int first_thing = csb_v1_dungeon_get_first_thing(
