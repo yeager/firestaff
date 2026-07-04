@@ -4462,8 +4462,9 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
           "CSBWin summary keeps existing party snapshot metadata aligned");
     CHECK(profile.csbwin_gameblock2_summary_valid == 1 &&
               profile.csbwin_random_seed == 0xA1B2C3D4u &&
-              profile.csbwin_object_in_hand == 0x4321u,
-          "CSBWin summary stores RNG seed and cursor object for later import");
+              profile.csbwin_object_in_hand == 0x4321u &&
+              profile.party_state.LeaderHandThing == 0x4321u,
+          "CSBWin summary stores RNG seed and cursor object in runtime hand state");
     CHECK(profile.csbwin_num_timer == 9u &&
               profile.csbwin_first_avail_timer == 2u &&
               profile.csbwin_max_timers == 11u &&
@@ -4562,7 +4563,8 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
                   exported.party_level == 4u &&
                   exported.party_facing == 3u &&
                   exported.hand_char == 1u &&
-                  exported.magic_caster == 0u,
+                  exported.magic_caster == 0u &&
+                  exported.object_in_hand == 0x4321u,
               "CSBWin champion export writes GAMEBLOCK2 party metadata summary");
         CHECK(exported.champions[0].valid == 1 &&
                   strcmp(exported.champions[0].name, "TIGGY") == 0 &&
@@ -4990,6 +4992,7 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               &expool_payload_size) == 0,
           "CSBWin runtime appended Expool lookup rejects missing records");
 
+    profile.party_state.LeaderHandThing = 0x2202u;
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
               &profile, exported, sizeof(exported), &exported_size) == 0,
           "CSBWin core export writes bounded memory bytes");
@@ -5001,8 +5004,9 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               CSB_V1_CSBWIN_512_OK,
           "CSBWin core export bytes verify through the 512-byte body gate");
     CHECK(report.game_time == profile.game_time &&
-              report.num_character == 2u,
-          "CSBWin core export report preserves runtime time and champions");
+              report.num_character == 2u &&
+              report.object_in_hand == 0x2202u,
+          "CSBWin core export report preserves runtime time, champions, and live hand object");
     CHECK(report.item16_summary_total ==
               profile.csbwin_item16_summary_total,
           "CSBWin core export report preserves ITEM16 summary count");
@@ -5031,11 +5035,12 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
     CHECK(memory_loaded.game_time == profile.game_time &&
               memory_loaded.party_x == profile.party_x &&
               memory_loaded.party_state_valid == 1 &&
+              memory_loaded.party_state.LeaderHandThing == 0x2202u &&
               strcmp(memory_loaded.party_state.Champions[0].Name,
                      profile.party_state.Champions[0].Name) == 0 &&
               memory_loaded.csbwin_runtime_item16_count == 2u &&
               memory_loaded.timeline_queue.eventCount == 3,
-          "CSBWin exported memory roundtrip restores runtime resume state");
+          "CSBWin exported memory roundtrip restores runtime resume and hand state");
     CHECK(memory_loaded.csbwin_header_tail_valid == 1 &&
               memory_loaded.csbwin_header_byte22808[0] == 0x40u &&
               memory_loaded.csbwin_header_byte22808[131] ==
@@ -5111,6 +5116,8 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
                      appended_tail,
                      sizeof(appended_tail)) == 0,
           "Firestaff native CSB save/load preserves appended CSBWin tail");
+    CHECK(native_loaded.party_state.LeaderHandThing == 0x2202u,
+          "Firestaff native CSB save/load preserves live leader-hand object");
     expool_payload = NULL;
     expool_payload_size = 0u;
     CHECK(csb_v1_runtime_locate_csbwin_appended_expool_record(
