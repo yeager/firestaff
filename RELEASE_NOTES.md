@@ -1,6 +1,38 @@
 
 # Unreleased
 
+# Firestaff v3.0.24
+
+Firestaff v3.0.24 packages the current post-v3.0.23 `main` state. The release
+publishes the latest DM1 V1 runtime hardening plus DM1 V2 readiness/receipt
+gates while keeping parity claims conservative.
+
+## Highlights since v3.0.23
+
+- **DM1 V1 combat/spell hardening**: the tag includes source-locked F0407
+  FUSE/FLUXCAGE runtime proof, the shared F0412 magic-map runtime path, and an
+  internal F0811 guard so inactive compact projectile slots cannot advance into
+  phantom Hall of Champions fireballs/items if a direct caller misses the outer
+  runtime scan guard.
+
+- **DM1 V2 readiness checks are fresher**: the V2 completion matrix, V2/V2.2
+  runtime smoke, and finished-art receipt validation now reflect the current
+  source ownership and package-readiness gates.
+
+- **Public status stays conservative**: DM1 V1 is still the strongest playable
+  target, with remaining work tracked for original/pixel proof, broader
+  spell-family runtime evidence, and packaged MacBook Pro smoke captures.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Local focused verification before release prep covered the DM1 V1 F0412
+  duration/source-lock gate, F0811 projectile door/portcullis/sound gates,
+  M11 inactive projectile rendering guard, and M11 game-view probe build.
+- The GitHub release workflow is expected to build and package macOS, Windows,
+  Linux x86_64, and Linux arm64 artifacts from the `v3.0.24` release tag.
+
 # Firestaff v3.0.23
 
 Firestaff v3.0.23 packages the current post-v3.0.22 `main` state. The release
