@@ -68,6 +68,11 @@ static uint32_t read_le32(const uint8_t *bytes, size_t offset)
            ((uint32_t)bytes[offset + 3u] << 24);
 }
 
+static uint32_t read_le32_word(const uint8_t *bytes, uint32_t word_index)
+{
+    return read_le32(bytes, (size_t)word_index * 4u);
+}
+
 static void write_le16(uint8_t *bytes, size_t offset, uint16_t value)
 {
     bytes[offset + 0u] = (uint8_t)(value & 0xffu);
@@ -1446,11 +1451,73 @@ int csb_v1_csbwin_512_verify_save_body(
         out->appended_size = appended_size;
         out->appended_preserved_size = preserve_size;
         out->appended_fnv1a = fnv1a32_bytes(bytes + offset, appended_size);
+        if (!out->appended_truncated &&
+            (appended_size % CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES) == 0u) {
+            out->appended_expool_candidate = 1;
+            out->appended_expool_block_count =
+                (uint16_t)(appended_size / CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+        }
         if (preserve_size != 0u) {
             memcpy(out->appended_preserved, bytes + offset, preserve_size);
         }
     }
     return CSB_V1_CSBWIN_512_OK;
+}
+
+int csb_v1_csbwin_512_appended_expool_locate_record(
+    const CSB_V1_CSBWin512BodyReport *report,
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size)
+{
+    const uint8_t *bytes;
+    uint32_t total_words;
+    uint32_t hash;
+    uint32_t hashi;
+    uint32_t bucket;
+    int guard;
+
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!report || report->appended_truncated ||
+        report->appended_size == 0u ||
+        report->appended_size != report->appended_preserved_size ||
+        (report->appended_size & 3u) != 0u ||
+        !report->appended_expool_candidate) {
+        return 0;
+    }
+    bytes = report->appended_preserved;
+    total_words = (uint32_t)(report->appended_size / 4u);
+    if (total_words < 64u) return 0;
+
+    hash = record_id * 0xbb40e62du;
+    hashi = 32u + (hash >> 27);
+    if (hashi >= total_words) return 0;
+    bucket = read_le32_word(bytes, hashi);
+    if ((bucket & 0x80000000u) != 0u) {
+        hashi = (bucket & 0x7fffffffu) + ((hash >> 21) & 0x3fu);
+        if (hashi >= total_words) return 0;
+        bucket = read_le32_word(bytes, hashi);
+    }
+
+    for (guard = 0; guard < (int)total_words && bucket != 0u; ++guard) {
+        uint32_t p = bucket;
+        uint32_t block_base;
+        uint32_t size_words;
+
+        if (p + 2u > total_words) return 0;
+        if (read_le32_word(bytes, p + 1u) == record_id) {
+            block_base = p & 0xffffffc0u;
+            if (block_base >= total_words) return 0;
+            size_words = read_le16(bytes, (size_t)block_base * 4u + 2u);
+            if (size_words < 2u || p + size_words > total_words) return 0;
+            if (out_bytes) *out_bytes = bytes + (size_t)(p + 2u) * 4u;
+            if (out_size) *out_size = (size_t)(size_words - 2u) * 4u;
+            return 1;
+        }
+        bucket = read_le32_word(bytes, p);
+    }
+    return 0;
 }
 
 const char *csb_v1_csbwin_512_xor_pad_result_name(int result)
@@ -1490,6 +1557,7 @@ const char *csb_v1_csbwin_512_xor_pad_source_evidence(void)
         "CSBWin/Chaos.cpp:2357 ReadSaves fallback: try CSB key (29), then DM key (10)\n"
         "CSBWin/CSBCode.cpp:9061 UnscrambleStream (section checksum gate)\n"
         "CSBWin/CSBCode.cpp:9038 Unscramble (RC4-like XOR stream)\n"
+        "CSBWin/data.cpp EXPOOL::Locate (record hash/bucket lookup for appended DB11 blocks)\n"
         "CSBWin/Hint.cpp:601 Unscramble (same algorithm on HCSB.HTC hint text)\n"
         "ReDMCSB DEFS.H:469 DM_SAVE_HEADER Noise[149] (C10_DM_SAVE_HEADER_DECRYPTION_KEY_INDEX = 10)\n"
         "ReDMCSB DEFS.H:480 CSB_SAVE_HEADER Noise[150] (C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX = 29)\n"
