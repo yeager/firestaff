@@ -151,6 +151,7 @@ void csb_v1_character_init_default(CSB_V1_PartyState *party)
     party->MagicCasterIndex = -1;
     party->PartyMapX = -1;
     party->PartyMapY = -1;
+    party->LeaderHandThing = 0xffffu;
     for (i = 0; i < CSB_V1_MAX_CHAMPIONS; i++) {
         csb_v1_champion_init(&party->Champions[i]);
     }

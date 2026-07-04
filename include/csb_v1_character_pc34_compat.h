@@ -208,7 +208,8 @@ typedef struct {
     int             MagicCasterIndex;        /* champion currently casting */
     int             PartyMapX;               /* current dungeon X */
     int             PartyMapY;               /* current dungeon Y */
-    uint8_t         Reserved[64];             /* future expansion */
+    uint16_t        LeaderHandThing;          /* CSBWin GAMEBLOCK2 object_in_hand / G4055 hand thing */
+    uint8_t         Reserved[62];             /* future expansion */
 } CSB_V1_PartyState;
 
 /* ── Function declarations ─────────────────────────────────────────── */

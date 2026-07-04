@@ -298,6 +298,9 @@ typedef struct {
 
 static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
+static uint16_t csb_v1_runtime_normalize_leader_hand_thing(uint16_t thing);
+static uint16_t csb_v1_runtime_export_leader_hand_thing(
+    const CSB_V1_RuntimeProfile *profile);
 static int csb_v1_runtime_target_champion_for_adjacent_attack(
     const CSB_V1_RuntimeProfile *profile,
     int attacker_x,
@@ -766,6 +769,9 @@ static int csb_v1_runtime_apply_save_image(
     profile->input_dispatch_count = image->input_dispatch_count;
     profile->chaos_magic = image->chaos_magic;
     profile->party_state = image->party_state;
+    profile->party_state.LeaderHandThing =
+        csb_v1_runtime_normalize_leader_hand_thing(
+            profile->party_state.LeaderHandThing);
     if (image->byte_size >=
         offsetof(CSB_V1_RuntimeSaveImageV1, csbwin_header_byte22808) +
             sizeof(image->csbwin_header_byte22808)) {
@@ -7940,6 +7946,25 @@ static int csb_v1_runtime_first_living_champion(const CSB_V1_PartyState *party)
     return -1;
 }
 
+static uint16_t csb_v1_runtime_normalize_leader_hand_thing(uint16_t thing)
+{
+    return thing == 0u ? 0xffffu : thing;
+}
+
+static uint16_t csb_v1_runtime_export_leader_hand_thing(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile) return 0xffffu;
+    if (profile->party_state_valid) {
+        return csb_v1_runtime_normalize_leader_hand_thing(
+            profile->party_state.LeaderHandThing);
+    }
+    return profile->csbwin_gameblock2_summary_valid
+        ? csb_v1_runtime_normalize_leader_hand_thing(
+              profile->csbwin_object_in_hand)
+        : 0xffffu;
+}
+
 static int csb_v1_runtime_direction_from_source_to_destination(
     int source_x,
     int source_y,
@@ -8030,6 +8055,9 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
     }
 
     profile->party_state = *party;
+    profile->party_state.LeaderHandThing =
+        csb_v1_runtime_normalize_leader_hand_thing(
+            profile->party_state.LeaderHandThing);
     profile->party_state_valid = 1;
     profile->champion_count = party->ChampionCount;
     profile->party_dir = party->PartyDirection & 3;
@@ -8101,6 +8129,11 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     profile->csbwin_gameblock2_summary_valid = 1;
     profile->csbwin_random_seed = summary->random_seed;
     profile->csbwin_object_in_hand = summary->object_in_hand;
+    if (profile->party_state_valid) {
+        profile->party_state.LeaderHandThing =
+            csb_v1_runtime_normalize_leader_hand_thing(
+                summary->object_in_hand);
+    }
     profile->csbwin_num_timer = summary->num_timer;
     profile->csbwin_first_avail_timer = summary->first_avail_timer;
     profile->csbwin_max_timers = summary->max_timers;
@@ -8200,6 +8233,9 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
         (summary->magic_caster < summary->num_character)
             ? (int)summary->magic_caster
             : -1;
+    profile->party_state.LeaderHandThing =
+        csb_v1_runtime_normalize_leader_hand_thing(
+            summary->object_in_hand);
 
     for (champion_index = 0; champion_index < CSB_V1_MAX_CHAMPIONS;
          ++champion_index) {
@@ -8348,6 +8384,8 @@ int csb_v1_runtime_export_csbwin_champion_summaries(
          profile->party_state.MagicCasterIndex < champion_count)
             ? (uint16_t)profile->party_state.MagicCasterIndex
             : 0xffffu;
+    out_summary->object_in_hand = csb_v1_runtime_export_leader_hand_thing(
+        profile);
 
     for (champion_index = 0; champion_index < CSB_V1_MAX_CHAMPIONS;
          ++champion_index) {
@@ -8903,9 +8941,7 @@ static int csb_v1_runtime_build_csbwin_core_summary(
     summary->random_seed = profile->csbwin_gameblock2_summary_valid
         ? profile->csbwin_random_seed
         : profile->dungeon_seed;
-    summary->object_in_hand = profile->csbwin_gameblock2_summary_valid
-        ? profile->csbwin_object_in_hand
-        : 0xffffu;
+    summary->object_in_hand = csb_v1_runtime_export_leader_hand_thing(profile);
     summary->last_monster_attack_time =
         profile->csbwin_last_monster_attack_time;
     summary->last_party_move_time = profile->csbwin_last_party_move_time;
