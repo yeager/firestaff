@@ -447,6 +447,10 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
 int csb_v1_runtime_apply_csbwin_resume_report(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
+int csb_v1_runtime_apply_csbwin_resume_file(
+    CSB_V1_RuntimeProfile *profile,
+    const char *path,
+    size_t max_size);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
