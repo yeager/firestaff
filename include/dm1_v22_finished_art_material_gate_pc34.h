@@ -191,6 +191,9 @@ typedef struct {
     int  width;
     int  height;
     int  file_exists;
+    int  bmp_header_valid;
+    int  bmp_width;
+    int  bmp_height;
     DM1_V22_FamgReceiptGate gate;
 } DM1_V22_FamgReceiptInfo;
 
@@ -294,6 +297,7 @@ int dm1_v22_famg_is_synthetic_or_partial(void);
  *   - receipt generator is not placeholder/synthetic_test
  *   - receipt source_file resolves under <manifest_dir>/receipts/
  *   - width, height, frame_hash, and material_gate are present
+ *   - receipt BMP header dimensions match width/height
  */
 const char* dm1_v22_famg_receipt_manifest_id(void);
 DM1_V22_FamgReceiptGate dm1_v22_famg_receipt_gate(void);
