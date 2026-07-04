@@ -4084,9 +4084,17 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.timers[0].valid = 1;
     summary.timers[0].time = 0x01020304u;
     summary.timers[0].function = 70u;
+    summary.timers[0].ubyte5 = 0xA5u;
     summary.timers[0].ubyte6 = 0x06u;
     summary.timers[0].sequence = 0x2222u;
     summary.timers[0].level = 5u;
+    summary.timers[1].valid = 1;
+    summary.timers[1].time = 0x11121314u;
+    summary.timers[1].function = DM1_EVENT_FIRESHIELD;
+    summary.timers[1].ubyte5 = 0x03u;
+    summary.timers[1].ubyte6 = 0x33u;
+    summary.timers[1].sequence = 0x3333u;
+    summary.timers[1].level = 6u;
     summary.timers[2].valid = 1;
     summary.timers[2].function = 49u;
     summary.timers[2].sequence = 0x4444u;
@@ -4211,6 +4219,35 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.csbwin_timer_queue[0] == 2u &&
               profile.csbwin_timer_queue[2] == 1u,
           "CSBWin runtime summary stores timer queue order");
+    CHECK(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 3,
+          "CSBWin timer queue materializes into Firestaff timeline events");
+    CHECK(profile.timeline_queue.eventCount == 3,
+          "CSBWin materialized timer queue creates three active events");
+    {
+        int found_light = 0;
+        int found_projectile = 0;
+        int ti;
+        for (ti = 0; ti < profile.timeline_queue.eventCount; ++ti) {
+            const struct DM1_Event_V1 *event =
+                &profile.timeline_queue.events[profile.timeline_queue.timeline[ti]];
+            if (event->type == DM1_EVENT_LIGHT &&
+                event->map_time == 0x01020304u &&
+                event->priority == 0xA5u &&
+                event->b_mapX == 0x06u &&
+                event->b_mapY == 0x00u) {
+                found_light = 1;
+            }
+            if (event->type == DM1_EVENT_MOVE_PROJECTILE &&
+                event->priority == 0u &&
+                event->map_time == 0u) {
+                found_projectile = 1;
+            }
+        }
+        CHECK(found_light == 1,
+              "CSBWin materialized timers preserve m_time/function/priority/coordinates");
+        CHECK(found_projectile == 1,
+              "CSBWin materialized timers preserve queued zero-field projectile timer");
+    }
 
     summary.party_facing = 4u;
     CHECK(csb_v1_runtime_apply_csbwin_champion_summaries(

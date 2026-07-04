@@ -8156,6 +8156,60 @@ int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     return 0;
 }
 
+int csb_v1_runtime_materialize_csbwin_timer_queue(
+    CSB_V1_RuntimeProfile *profile)
+{
+    uint16_t queue_index;
+    int imported = 0;
+
+    if (!profile || !profile->csbwin_body_runtime_summary_valid) {
+        return -1;
+    }
+    if (profile->csbwin_timer_queue_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
+        profile->csbwin_timer_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES) {
+        return -1;
+    }
+
+    /* CSBWin Timer.cpp:728-772 orders timers by full m_time, then
+     * timerFunction, then m_timerUByte5, then m_timerSequence when enabled.
+     * The decoded CSBWin timer queue already captures the source order; this
+     * handoff rebuilds Firestaff's timeline heap from that queue, preserving
+     * m_time as Map_Time and m_timerUByte5 as the Type_Priority priority byte.
+     * Unsupported side effects remain harmless dispatch records until their
+     * runtime handlers are implemented. */
+    dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
+    for (queue_index = 0u;
+         queue_index < profile->csbwin_timer_queue_summary_count;
+         ++queue_index) {
+        uint16_t timer_index = profile->csbwin_timer_queue[queue_index];
+        const CSB_V1_CSBWin512TimerSummary *timer;
+        struct DM1_Event_V1 event;
+
+        if (timer_index >= profile->csbwin_timer_summary_count) {
+            continue;
+        }
+        timer = &profile->csbwin_timers[timer_index];
+        if (!timer->valid || timer->function == DM1_EVENT_NONE) {
+            continue;
+        }
+
+        memset(&event, 0, sizeof(event));
+        event.map_time = timer->time;
+        event.type = timer->function;
+        event.priority = timer->ubyte5;
+        event.b_mapX = timer->ubyte6;
+        event.b_mapY = timer->ubyte7;
+        event.c_cell = timer->ubyte8;
+        event.c_effect = timer->ubyte9;
+        if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0) {
+            ++imported;
+        }
+    }
+    return imported;
+}
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index)
 {

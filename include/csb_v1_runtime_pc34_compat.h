@@ -420,6 +420,8 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
 int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
+int csb_v1_runtime_materialize_csbwin_timer_queue(
+    CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
