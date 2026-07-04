@@ -183,13 +183,25 @@ static size_t build_full_csbwin_body_fixture(uint8_t *buf,
 
     write_le32(block2, 0u, 0x01020304u);
     write_le32(block2, 4u, 0xA0B0C0D0u);
+    write_le16(block2, 8u, 0x4321u);
     write_le16(block2, 10u, 4u);
     write_le16(block2, 12u, 17u);
     write_le16(block2, 14u, 22u);
     write_le16(block2, 16u, 3u);
     write_le16(block2, 18u, 5u);
+    write_le16(block2, 20u, 2u);
+    write_le16(block2, 22u, 1u);
+    write_le16(block2, 24u, 2u);
+    write_le16(block2, 26u, 1u);
     write_le16(block2, 28u, MAX_TIMERS);
+    write_le16(block2, 30u, 6u);
+    write_le32(block2, 32u, 0x11121314u);
+    write_le32(block2, 36u, 0x21222324u);
+    write_le16(block2, 40u, 7u);
+    write_le16(block2, 42u, 8u);
+    write_le16(block2, 44u, 9u);
     write_le16(block2, 46u, MAX_ITEM16);
+    write_le16(block2, 48u, 0x1357u);
 
     off = CSB_V1_CSBWIN_BLOCK1_BYTES;
     memcpy(buf + off, block2, sizeof(block2));
@@ -550,13 +562,27 @@ static int test_full_save_body_verify(void)
     ASSERT_TRUE(report.header_valid == 1);
     ASSERT_TRUE(report.header.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB);
     ASSERT_TRUE(report.timer_record_size == 16u);
+    ASSERT_TRUE(report.game_time == 0x01020304u);
+    ASSERT_TRUE(report.random_seed == 0xA0B0C0D0u);
+    ASSERT_TRUE(report.object_in_hand == 0x4321u);
     ASSERT_TRUE(report.max_item16 == 2u);
     ASSERT_TRUE(report.max_timers == 3u);
+    ASSERT_TRUE(report.num_timer == 2u);
+    ASSERT_TRUE(report.first_avail_timer == 1u);
+    ASSERT_TRUE(report.item16_queue_len == 6u);
+    ASSERT_TRUE(report.timer_sequence == 0x1357u);
     ASSERT_TRUE(report.num_character == 4u);
     ASSERT_TRUE(report.party_x == 17u);
     ASSERT_TRUE(report.party_y == 22u);
     ASSERT_TRUE(report.party_facing == 3u);
     ASSERT_TRUE(report.party_level == 5u);
+    ASSERT_TRUE(report.hand_char == 2u);
+    ASSERT_TRUE(report.magic_caster == 1u);
+    ASSERT_TRUE(report.last_monster_attack_time == 0x11121314u);
+    ASSERT_TRUE(report.last_party_move_time == 0x21222324u);
+    ASSERT_TRUE(report.party_move_disable_timer == 7u);
+    ASSERT_TRUE(report.word11712 == 8u);
+    ASSERT_TRUE(report.word11714 == 9u);
     ASSERT_TRUE(report.required_size == size);
     ASSERT_TRUE(report.sections_verified == CSB_V1_CSBWIN_512_SECTION_COUNT);
 

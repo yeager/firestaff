@@ -520,13 +520,31 @@ int csb_v1_csbwin_512_verify_save_body(
     ++out->sections_verified;
     offset += 128u;
 
+    /* CSBWin SaveGame.cpp GAMEBLOCK2 lines 106-132, consumed by
+     * the load path at lines 1775-1811 after swapBlock2(). These
+     * fields are the bounded startup/resume handoff summary; the
+     * raw decoded sections are still not imported here. */
+    out->game_time = read_le32(block2, 0u);
+    out->random_seed = read_le32(block2, 4u);
+    out->object_in_hand = read_le16(block2, 8u);
     out->num_character = read_le16(block2, 10u);
     out->party_x = read_le16(block2, 12u);
     out->party_y = read_le16(block2, 14u);
     out->party_facing = read_le16(block2, 16u);
     out->party_level = read_le16(block2, 18u);
+    out->hand_char = read_le16(block2, 20u);
+    out->magic_caster = read_le16(block2, 22u);
+    out->num_timer = read_le16(block2, 24u);
+    out->first_avail_timer = read_le16(block2, 26u);
     out->max_timers = read_le16(block2, 28u);
+    out->item16_queue_len = read_le16(block2, 30u);
+    out->last_monster_attack_time = read_le32(block2, 32u);
+    out->last_party_move_time = read_le32(block2, 36u);
+    out->party_move_disable_timer = read_le16(block2, 40u);
+    out->word11712 = read_le16(block2, 42u);
+    out->word11714 = read_le16(block2, 44u);
     out->max_item16 = read_le16(block2, 46u);
+    out->timer_sequence = read_le16(block2, 48u);
     free(block2);
     block2 = NULL;
 
