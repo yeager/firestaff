@@ -4005,6 +4005,55 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.party_move_disable_timer = 8u;
     summary.word11712 = 0x55u;
     summary.word11714 = 0x66u;
+    summary.champions[0].valid = 1;
+    strcpy(summary.champions[0].name, "TIGGY");
+    strcpy(summary.champions[0].title, "APPRENTICE");
+    summary.champions[0].facing = 2u;
+    summary.champions[0].char_position = 3u;
+    summary.champions[0].attack_type = 5;
+    summary.champions[0].max_recent_damage = 23u;
+    summary.champions[0].poison_count = 4u;
+    summary.champions[0].busy_timer = -16;
+    summary.champions[0].timer_index = 17;
+    summary.champions[0].char_flags = 0x1234;
+    summary.champions[0].wounds = 0x00A5;
+    summary.champions[0].hp = 321;
+    summary.champions[0].max_hp = 456;
+    summary.champions[0].stamina = 1234;
+    summary.champions[0].max_stamina = 2345;
+    summary.champions[0].mana = 67;
+    summary.champions[0].max_mana = 89;
+    summary.champions[0].food = 1500;
+    summary.champions[0].water = 1600;
+    summary.champions[0].load = 777u;
+    summary.champions[0].attributes[0][0] = 90u;
+    summary.champions[0].attributes[0][1] = 50u;
+    summary.champions[0].attributes[0][2] = 10u;
+    summary.champions[0].attributes[1][0] = 91u;
+    summary.champions[0].attributes[1][1] = 51u;
+    summary.champions[0].attributes[1][2] = 11u;
+    summary.champions[0].attributes[2][0] = 92u;
+    summary.champions[0].attributes[2][1] = 52u;
+    summary.champions[0].attributes[2][2] = 12u;
+    summary.champions[0].attributes[3][0] = 93u;
+    summary.champions[0].attributes[3][1] = 53u;
+    summary.champions[0].attributes[3][2] = 13u;
+    summary.champions[0].attributes[4][0] = 94u;
+    summary.champions[0].attributes[4][1] = 54u;
+    summary.champions[0].attributes[4][2] = 14u;
+    summary.champions[0].attributes[5][0] = 95u;
+    summary.champions[0].attributes[5][1] = 55u;
+    summary.champions[0].attributes[5][2] = 15u;
+    summary.champions[0].attributes[6][0] = 96u;
+    summary.champions[0].attributes[6][1] = 56u;
+    summary.champions[0].attributes[6][2] = 16u;
+    summary.champions[0].possessions[0] = 0x2200u;
+    summary.champions[0].possessions[1] = 0x2201u;
+    summary.champions[1].valid = 1;
+    strcpy(summary.champions[1].name, "BORIS");
+    strcpy(summary.champions[1].title, "WIZARD");
+    summary.champions[1].hp = 111;
+    summary.champions[1].max_hp = 222;
 
     CHECK(csb_v1_runtime_apply_csbwin_gameblock2_summary(
               &profile, &summary) == 0,
@@ -4041,8 +4090,57 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.csbwin_last_party_move_time == 0x11121314u &&
               profile.csbwin_party_move_disable_timer == 8u,
           "CSBWin summary stores action timestamps and movement cooldown");
+    CHECK(csb_v1_runtime_apply_csbwin_champion_summaries(
+              &profile, &summary) == 0,
+          "CSBWin decoded CHARDESC summaries apply to runtime party state");
+    CHECK(profile.party_state_valid == 1 &&
+              profile.party_state.ChampionCount == 2,
+          "CSBWin champion handoff creates a two-champion party snapshot");
+    CHECK(strcmp(profile.party_state.Champions[0].Name, "TIGGY") == 0 &&
+              strcmp(profile.party_state.Champions[0].Title,
+                     "APPRENTICE") == 0,
+          "CSBWin champion handoff copies fixed-width identity text");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 321 &&
+              profile.party_state.Champions[0].MaximumHealth == 456 &&
+              profile.party_state.Champions[0].CurrentStamina == 1234 &&
+              profile.party_state.Champions[0].MaximumStamina == 2345 &&
+              profile.party_state.Champions[0].CurrentMana == 67 &&
+              profile.party_state.Champions[0].MaximumMana == 89,
+          "CSBWin champion handoff copies vitals");
+    CHECK(profile.party_state.Champions[0].Statistics[CSB_V1_STAT_STR]
+                                                 [CSB_V1_STAT_MIN] == 11u &&
+              profile.party_state.Champions[0].Statistics[CSB_V1_STAT_STR]
+                                                     [CSB_V1_STAT_CUR] == 51u &&
+              profile.party_state.Champions[0].Statistics[CSB_V1_STAT_STR]
+                                                     [CSB_V1_STAT_MAX] == 91u &&
+              profile.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK]
+                                                     [CSB_V1_STAT_MIN] == 10u,
+          "CSBWin champion handoff maps ATTRIBUTE max/current/min into Firestaff stats");
+    CHECK(profile.party_state.Champions[0].Slots[0] == 0x2200u &&
+              profile.party_state.Champions[0].Slots[1] == 0x2201u,
+          "CSBWin champion handoff copies possession RN slots");
+    CHECK(profile.party_state.Champions[0].Cell == 3u &&
+              profile.party_state.Champions[0].Direction == 2u &&
+              profile.party_state.Champions[0].ActionIndex == 5u &&
+              profile.party_state.Champions[0].EnableActionEventIndex == -16 &&
+              profile.party_state.Champions[0].HideDamageReceivedEventIndex == 17,
+          "CSBWin champion handoff copies pose and action timer state");
+    CHECK(profile.party_state.Champions[0].Attributes == 0x1234u &&
+              profile.party_state.Champions[0].Wounds == 0x00A5u &&
+              profile.party_state.Champions[0].PoisonEventCount == 4u &&
+              profile.party_state.Champions[0].Food == 1500 &&
+              profile.party_state.Champions[0].Water == 1600 &&
+              profile.party_state.Champions[0].Load == 777u,
+          "CSBWin champion handoff copies status, food, water, and load");
+    CHECK(strcmp(profile.party_state.Champions[1].Name, "BORIS") == 0 &&
+              profile.party_state.Champions[1].CurrentHealth == 111 &&
+              profile.party_state.Champions[1].MaximumHealth == 222,
+          "CSBWin champion handoff copies the second active champion");
 
     summary.party_facing = 4u;
+    CHECK(csb_v1_runtime_apply_csbwin_champion_summaries(
+              &profile, &summary) == -1,
+          "CSBWin champion handoff rejects out-of-range party direction");
     CHECK(csb_v1_runtime_apply_csbwin_gameblock2_summary(
               &profile, &summary) == -1,
           "CSBWin summary rejects out-of-range party direction");

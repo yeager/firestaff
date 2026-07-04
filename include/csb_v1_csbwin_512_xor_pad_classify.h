@@ -53,8 +53,10 @@
  *     ReDMCSB values.
  *
  * What this module does NOT do:
- *   - It does not parse/import decoded CSBWin items, champions,
- *     timers, DSAs, or DSA-level indexes into runtime state.
+ *   - It does not parse/import decoded CSBWin items, timers, DSAs,
+ *     or DSA-level indexes into runtime state.
+ *   - It only summarizes CHARDESC champion records; it does not import
+ *     portrait bytes or full skill-XP model state into runtime by itself.
  *   - It does not bind to csb_v1_import_csb_save_buffer() (that
  *     loader rejects 512-byte XOR-pad headers).
  *   - It does not produce an M11/M12 wiring.
@@ -86,9 +88,9 @@
  *
  * Non-claims:
  *   - No file I/O. Callers feed 512 bytes; the module reports.
- *   - Body-section decoding is bounded verification only:
- *     GAMEBLOCK2, ITEM16, characters, timers, and timer queue
- *     can be checksum-verified but are not parsed/imported.
+ *   - Body-section decoding is bounded verification plus summaries:
+ *     GAMEBLOCK2 and CHARDESC fields are surfaced for startup/runtime
+ *     handoff, while ITEM16, timers, and timer queue remain checksum-only.
  *   - No M11/M12 wiring. Callers (a future launcher import
  *     button) decide what to do with the verdict.
  */
@@ -263,6 +265,41 @@ typedef struct {
 } CSB_V1_CSBWin512BodySectionReport;
 
 typedef struct {
+    int valid;
+    char name[9];
+    char title[17];
+    uint8_t facing;
+    uint8_t char_position;
+    int8_t attack_type;
+    uint8_t facing3;
+    uint8_t max_recent_damage;
+    uint8_t poison_count;
+    int16_t busy_timer;
+    int16_t timer_index;
+    int16_t char_flags;
+    int16_t wounds;
+    int16_t hp;
+    int16_t max_hp;
+    int16_t stamina;
+    int16_t max_stamina;
+    int16_t mana;
+    int16_t max_mana;
+    int16_t word64;
+    int16_t food;
+    int16_t water;
+    uint8_t attributes[7][3];       /* CSBWin ATTRIBUTE: max,current,min */
+    int16_t skill_temp_adjust[20];  /* CSBWin SKILL.tempAdjust */
+    uint32_t skill_experience[20];  /* CSBWin SKILL.experience */
+    uint16_t possessions[30];       /* CSBWin RN values */
+    uint16_t load;
+    uint16_t shield_strength;
+    uint32_t talents;
+    uint16_t fingerprint;
+    uint16_t cause_of_damage;
+    uint16_t monster_causing_damage;
+} CSB_V1_CSBWin512ChampionSummary;
+
+typedef struct {
     CSB_V1_CSBWin512Report header;
     int header_valid;
     uint16_t timer_record_size;
@@ -291,6 +328,7 @@ typedef struct {
     int sections_verified;
     CSB_V1_CSBWin512BodySectionReport
         sections[CSB_V1_CSBWIN_512_SECTION_COUNT];
+    CSB_V1_CSBWin512ChampionSummary champions[4];
 } CSB_V1_CSBWin512BodyReport;
 
 /* ── Public API ──────────────────────────────────────────────────────── */
@@ -365,9 +403,9 @@ int csb_v1_csbwin_512_decode_stream_section(
  * pass 0 for the current CSBWin extended-timer default of 16.
  *
  * The function verifies each encrypted section with the hashes and
- * checksums stored in GAMEBLOCK1. It reports section boundaries and
- * decoded GAMEBLOCK2 sizing fields, but does not import runtime
- * state and does not expose decoded section buffers. */
+ * checksums stored in GAMEBLOCK1. It reports section boundaries,
+ * decoded GAMEBLOCK2 sizing fields, and a bounded summary of the four
+ * CSBWin CHARDESC records. It does not expose decoded section buffers. */
 int csb_v1_csbwin_512_verify_save_body(
     const uint8_t *bytes,
     size_t size,

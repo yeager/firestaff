@@ -37,9 +37,9 @@
  *
  * This module never modifies the caller's buffer; it always
  * copies 512 bytes into a local scratch buffer before
- * attempting the in-place unscramble. The classifier never
- * decodes anything beyond the documented GAMEBLOCK1 public
- * fields. It does not bind into M11/M12, does not promise
+ * attempting the in-place unscramble. The classifier decodes
+ * GAMEBLOCK1 plus bounded verified save-body summaries needed by
+ * startup/resume handoff. It does not bind into M11/M12, does not promise
  * end-to-end CSBWin save import, and remains tracked under
  * docs/FIRESTAFF_GAP_LIST.md row C3 / A3 (CSBWin custom
  * resource handling) as a bounded advance.
@@ -82,6 +82,111 @@ static int checked_mul_size(size_t a, size_t b, size_t *out)
     }
     *out = a * b;
     return 1;
+}
+
+enum {
+    CSBWIN_CHARDESC_STRIDE = 800,
+    CSBWIN_CHARDESC_COUNT = 4,
+    CSBWIN_CHARDESC_OFF_NAME = 0,
+    CSBWIN_CHARDESC_OFF_TITLE = 8,
+    CSBWIN_CHARDESC_OFF_FACING = 28,
+    CSBWIN_CHARDESC_OFF_POSITION = 29,
+    CSBWIN_CHARDESC_OFF_ATTACK_TYPE = 32,
+    CSBWIN_CHARDESC_OFF_FACING3 = 40,
+    CSBWIN_CHARDESC_OFF_MAX_RECENT_DAMAGE = 41,
+    CSBWIN_CHARDESC_OFF_POISON_COUNT = 42,
+    CSBWIN_CHARDESC_OFF_BUSY_TIMER = 44,
+    CSBWIN_CHARDESC_OFF_TIMER_INDEX = 46,
+    CSBWIN_CHARDESC_OFF_CHAR_FLAGS = 48,
+    CSBWIN_CHARDESC_OFF_WOUNDS = 50,
+    CSBWIN_CHARDESC_OFF_HP = 52,
+    CSBWIN_CHARDESC_OFF_WORD64 = 64,
+    CSBWIN_CHARDESC_OFF_FOOD = 66,
+    CSBWIN_CHARDESC_OFF_WATER = 68,
+    CSBWIN_CHARDESC_OFF_ATTRIBUTES = 70,
+    CSBWIN_CHARDESC_OFF_SKILLS = 92,
+    CSBWIN_CHARDESC_OFF_POSSESSIONS = 212,
+    CSBWIN_CHARDESC_OFF_LOAD = 272,
+    CSBWIN_CHARDESC_OFF_SHIELD = 274,
+    CSBWIN_CHARDESC_OFF_TALENTS = 276,
+    CSBWIN_CHARDESC_OFF_FINGERPRINT = 280,
+    CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE = 282,
+    CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE = 284
+};
+
+static void copy_fixed_text(char *dst,
+                            size_t dst_size,
+                            const uint8_t *src,
+                            size_t src_size)
+{
+    size_t i;
+    if (!dst || dst_size == 0u) return;
+    memset(dst, 0, dst_size);
+    if (!src) return;
+    for (i = 0u; i + 1u < dst_size && i < src_size; ++i) {
+        dst[i] = (char)src[i];
+        if (src[i] == 0u) break;
+    }
+}
+
+static void parse_champion_summary(const uint8_t *record,
+                                   CSB_V1_CSBWin512ChampionSummary *out)
+{
+    size_t i;
+    if (!record || !out) return;
+    memset(out, 0, sizeof(*out));
+    out->valid = 1;
+    copy_fixed_text(out->name, sizeof(out->name),
+                    record + CSBWIN_CHARDESC_OFF_NAME, 8u);
+    copy_fixed_text(out->title, sizeof(out->title),
+                    record + CSBWIN_CHARDESC_OFF_TITLE, 16u);
+    out->facing = record[CSBWIN_CHARDESC_OFF_FACING];
+    out->char_position = record[CSBWIN_CHARDESC_OFF_POSITION];
+    out->attack_type = (int8_t)record[CSBWIN_CHARDESC_OFF_ATTACK_TYPE];
+    out->facing3 = record[CSBWIN_CHARDESC_OFF_FACING3];
+    out->max_recent_damage = record[CSBWIN_CHARDESC_OFF_MAX_RECENT_DAMAGE];
+    out->poison_count = record[CSBWIN_CHARDESC_OFF_POISON_COUNT];
+    out->busy_timer =
+        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_BUSY_TIMER);
+    out->timer_index =
+        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_TIMER_INDEX);
+    out->char_flags =
+        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_CHAR_FLAGS);
+    out->wounds = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_WOUNDS);
+    out->hp = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 0u);
+    out->max_hp = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 2u);
+    out->stamina = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 4u);
+    out->max_stamina =
+        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 6u);
+    out->mana = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 8u);
+    out->max_mana =
+        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 10u);
+    out->word64 = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_WORD64);
+    out->food = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_FOOD);
+    out->water = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_WATER);
+    for (i = 0u; i < 7u; ++i) {
+        const size_t base = CSBWIN_CHARDESC_OFF_ATTRIBUTES + i * 3u;
+        out->attributes[i][0] = record[base + 0u];
+        out->attributes[i][1] = record[base + 1u];
+        out->attributes[i][2] = record[base + 2u];
+    }
+    for (i = 0u; i < 20u; ++i) {
+        const size_t base = CSBWIN_CHARDESC_OFF_SKILLS + i * 6u;
+        out->skill_temp_adjust[i] = (int16_t)read_le16(record, base);
+        out->skill_experience[i] = read_le32(record, base + 2u);
+    }
+    for (i = 0u; i < 30u; ++i) {
+        out->possessions[i] =
+            read_le16(record, CSBWIN_CHARDESC_OFF_POSSESSIONS + i * 2u);
+    }
+    out->load = read_le16(record, CSBWIN_CHARDESC_OFF_LOAD);
+    out->shield_strength = read_le16(record, CSBWIN_CHARDESC_OFF_SHIELD);
+    out->talents = read_le32(record, CSBWIN_CHARDESC_OFF_TALENTS);
+    out->fingerprint = read_le16(record, CSBWIN_CHARDESC_OFF_FINGERPRINT);
+    out->cause_of_damage =
+        read_le16(record, CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE);
+    out->monster_causing_damage =
+        read_le16(record, CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE);
 }
 
 /* First-half rolling checksum from CSBWin/Chaos.cpp:1341
@@ -583,6 +688,22 @@ int csb_v1_csbwin_512_verify_save_body(
     }
     out->sections[CSB_V1_CSBWIN_512_SECTION_CHARACTERS] = section;
     ++out->sections_verified;
+    {
+        size_t champion_index;
+        /* CSBWin/SaveGame.cpp:1838 calls swapCharacterData() after reading
+         * the 3328-byte character body. CSBWin/CSB.h CHARDESC lines
+         * 2486-2597 defines four 800-byte CHARDESC records at the start of
+         * that body; SaveGame.cpp:489-520 lists every endian-swapped field.
+         * We surface a lossless fixed-offset summary here and leave portrait
+         * bytes plus trailing PartyFootprints/Brightness state for later. */
+        for (champion_index = 0u;
+             champion_index < CSBWIN_CHARDESC_COUNT;
+             ++champion_index) {
+            parse_champion_summary(
+                decoded + champion_index * CSBWIN_CHARDESC_STRIDE,
+                &out->champions[champion_index]);
+        }
+    }
     free(decoded);
     decoded = NULL;
     offset += 3328u;
