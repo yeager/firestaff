@@ -174,6 +174,44 @@ static void read_public_fields(const uint8_t *bytes_256,
         out->additional_data[i] =
             bytes_256[(size_t)CSB_V1_CSBWIN_512_OFF_ADDITIONAL + i];
     }
+
+    /* CSBWin SaveGame.cpp GAMEBLOCK1 lines 59-104 stores the
+     * body-section hashes/checksums in the first block; after
+     * UnscrambleBlock1 those bytes live in this second-half buffer
+     * at absolute-offset-minus-256. The load path consumes them at
+     * SaveGame.cpp lines 1768-1855 through UnscrambleStream. */
+    out->csbwin_byte22598 = bytes_256[300u - 256u];
+    out->csbwin_byte22596 = bytes_256[301u - 256u];
+    out->csbwin_save_option =
+        (int16_t)read_le16(bytes_256, 306u - 256u);
+    out->csbwin_random_game_id =
+        read_le32(bytes_256, 308u - 256u);
+    out->csbwin_block2_hash =
+        read_le16(bytes_256, 312u - 256u);
+    out->csbwin_item16_hash =
+        read_le16(bytes_256, 314u - 256u);
+    out->csbwin_character_hash =
+        read_le16(bytes_256, 316u - 256u);
+    out->csbwin_timers_hash =
+        read_le16(bytes_256, 318u - 256u);
+    out->csbwin_timer_queue_hash =
+        read_le16(bytes_256, 320u - 256u);
+    out->csbwin_total_move_count =
+        read_le32(bytes_256, 322u - 256u);
+    out->csbwin_block2_checksum =
+        read_le16(bytes_256, 344u - 256u);
+    out->csbwin_item16_checksum =
+        read_le16(bytes_256, 346u - 256u);
+    out->csbwin_character_checksum =
+        read_le16(bytes_256, 348u - 256u);
+    out->csbwin_timers_checksum =
+        read_le16(bytes_256, 350u - 256u);
+    out->csbwin_timer_queue_checksum =
+        read_le16(bytes_256, 352u - 256u);
+    out->csbwin_word22594 =
+        (int16_t)read_le16(bytes_256, 376u - 256u);
+    out->csbwin_word22592 =
+        (int16_t)read_le16(bytes_256, 378u - 256u);
 }
 
 /* ── Internal: try one key on a fresh scratch copy ─────────────────── */
@@ -328,6 +366,36 @@ int csb_v1_csbwin_512_xor_pad_classify_dm_key(
     return CSB_V1_CSBWIN_512_OK;
 }
 
+int csb_v1_csbwin_512_decode_stream_section(
+    const uint8_t *src,
+    size_t size,
+    uint16_t initial_hash,
+    uint16_t expected_checksum,
+    uint8_t *out,
+    size_t out_capacity)
+{
+    uint16_t actual_checksum;
+
+    if (!src || !out) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    if (size == 0u || (size & 1u) != 0u || out_capacity < size) {
+        return CSB_V1_CSBWIN_512_ERR_TOO_SMALL;
+    }
+    memcpy(out, src, size);
+    /* CSBWin/CSBCode.cpp UnscrambleStream lines 9061-9069 reads the
+     * encrypted bytes, calls Unscramble(dest, initialHash, size/2),
+     * and accepts the section only when the returned checksum equals
+     * the GAMEBLOCK1 section checksum. */
+    actual_checksum = unscramble_block(out, initial_hash,
+                                       (uint16_t)(size / 2u));
+    if (actual_checksum != expected_checksum) {
+        memset(out, 0, size);
+        return CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
+    }
+    return CSB_V1_CSBWIN_512_OK;
+}
+
 const char *csb_v1_csbwin_512_xor_pad_result_name(int result)
 {
     switch (result) {
@@ -335,6 +403,7 @@ const char *csb_v1_csbwin_512_xor_pad_result_name(int result)
     case CSB_V1_CSBWIN_512_ERR_ARGUMENT: return "argument";
     case CSB_V1_CSBWIN_512_ERR_TOO_SMALL: return "too-small";
     case CSB_V1_CSBWIN_512_ERR_BAD_KEYS: return "bad-keys";
+    case CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM: return "bad-checksum";
     default: return "unknown";
     }
 }
@@ -356,9 +425,12 @@ const char *csb_v1_csbwin_512_xor_pad_source_evidence(void)
         "CSBWin/SaveGame.cpp:880 GAMEBLOCK1 (512 bytes, first block)\n"
         "CSBWin/SaveGame.cpp:1145 WriteFirstBlock / ScrambleAndWrite\n"
         "CSBWin/SaveGame.cpp:715 ScrambleAndWrite (trash first 256 bytes + write D5W^D6W)\n"
+        "CSBWin/SaveGame.cpp:59-104 GAMEBLOCK1 body-section hash/checksum fields\n"
+        "CSBWin/SaveGame.cpp:1768-1855 load path decodes block2/items/characters/timers\n"
         "CSBWin/Chaos.cpp:1326 ReadGameBlock1 (read 512 bytes)\n"
         "CSBWin/Chaos.cpp:1341 UnscrambleBlock1 (first-half D6W + Unscramble + D5W)\n"
         "CSBWin/Chaos.cpp:2357 ReadSaves fallback: try CSB key (29), then DM key (10)\n"
+        "CSBWin/CSBCode.cpp:9061 UnscrambleStream (section checksum gate)\n"
         "CSBWin/CSBCode.cpp:9038 Unscramble (RC4-like XOR stream)\n"
         "CSBWin/Hint.cpp:601 Unscramble (same algorithm on HCSB.HTC hint text)\n"
         "ReDMCSB DEFS.H:469 DM_SAVE_HEADER Noise[149] (C10_DM_SAVE_HEADER_DECRYPTION_KEY_INDEX = 10)\n"

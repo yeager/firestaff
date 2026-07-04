@@ -156,7 +156,8 @@ typedef enum {
     CSB_V1_CSBWIN_512_OK = 0,
     CSB_V1_CSBWIN_512_ERR_ARGUMENT = -1,
     CSB_V1_CSBWIN_512_ERR_TOO_SMALL = -2,
-    CSB_V1_CSBWIN_512_ERR_BAD_KEYS = -3
+    CSB_V1_CSBWIN_512_ERR_BAD_KEYS = -3,
+    CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM = -4
 } CSB_V1_CSBWin512Result;
 
 /* The verdict: which documented CSBWin scramble key (if any)
@@ -199,6 +200,30 @@ typedef struct {
      * second half). We surface the first 32 to keep the struct
      * bounded. */
     uint8_t  additional_data[32];
+
+    /* CSBWin SaveGame.cpp GAMEBLOCK1 fields needed to decode the
+     * following save-body sections. These byte offsets are the
+     * CSBWin GAMEBLOCK1 layout at absolute offsets 300..378,
+     * read from the already-unscrambled second half (offset
+     * absolute - 256). Source: CSBWin/SaveGame.cpp lines 59-104
+     * and load path lines 1768-1855. */
+    uint8_t  csbwin_byte22598;       /* GAMEBLOCK1 offset 300 */
+    uint8_t  csbwin_byte22596;       /* GAMEBLOCK1 offset 301 */
+    int16_t  csbwin_save_option;     /* GAMEBLOCK1 offset 306 */
+    uint32_t csbwin_random_game_id;  /* GAMEBLOCK1 offset 308 */
+    uint16_t csbwin_block2_hash;     /* GAMEBLOCK1 offset 312 */
+    uint16_t csbwin_item16_hash;     /* GAMEBLOCK1 offset 314 */
+    uint16_t csbwin_character_hash;  /* GAMEBLOCK1 offset 316 */
+    uint16_t csbwin_timers_hash;     /* GAMEBLOCK1 offset 318 */
+    uint16_t csbwin_timer_queue_hash;/* GAMEBLOCK1 offset 320 */
+    uint32_t csbwin_total_move_count;/* GAMEBLOCK1 offset 322 */
+    uint16_t csbwin_block2_checksum; /* GAMEBLOCK1 offset 344 */
+    uint16_t csbwin_item16_checksum; /* GAMEBLOCK1 offset 346 */
+    uint16_t csbwin_character_checksum; /* GAMEBLOCK1 offset 348 */
+    uint16_t csbwin_timers_checksum; /* GAMEBLOCK1 offset 350 */
+    uint16_t csbwin_timer_queue_checksum; /* GAMEBLOCK1 offset 352 */
+    int16_t  csbwin_word22594;       /* GAMEBLOCK1 offset 376 */
+    int16_t  csbwin_word22592;       /* GAMEBLOCK1 offset 378 */
 } CSB_V1_CSBWin512Public;
 
 /* Top-level verdict + public-field record. `verdict` is the
@@ -262,6 +287,25 @@ int csb_v1_csbwin_512_xor_pad_classify_dm_key(
 int csb_v1_csbwin_512_xor_pad_classify_csb_key(
     const uint8_t *bytes, size_t size,
     CSB_V1_CSBWin512Report *out_report);
+
+/* Decode one CSBWin save-body stream section.
+ *
+ * Mirrors CSBWin/CSBCode.cpp UnscrambleStream lines 9061-9069:
+ * the caller supplies the encrypted stream bytes, the section's
+ * initial hash, and the expected checksum from GAMEBLOCK1. The
+ * function copies the decoded bytes to `out`, verifies the
+ * Unscramble return checksum, and never mutates `src`.
+ *
+ * This is the primitive needed after GAMEBLOCK1 classification for
+ * block 2, ITEM16, characters, timers, and timer queue. It does
+ * not parse those sections or import runtime state by itself. */
+int csb_v1_csbwin_512_decode_stream_section(
+    const uint8_t *src,
+    size_t size,
+    uint16_t initial_hash,
+    uint16_t expected_checksum,
+    uint8_t *out,
+    size_t out_capacity);
 
 /* ── Lookup helpers (used by tests + probe + docs) ──────────────────── */
 

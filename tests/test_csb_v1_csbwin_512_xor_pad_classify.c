@@ -78,24 +78,25 @@ static void write_le32(uint8_t *b, size_t off, uint32_t v)
  * production path. We could link the production helper but
  * keeping the test self-contained makes the test fixture
  * builder independent and easier to read. */
-static void scramble_block(uint8_t *buf, uint16_t initial_hash,
-                           uint16_t numword)
+static uint16_t scramble_block(uint8_t *buf, uint16_t initial_hash,
+                               uint16_t numword)
 {
     uint16_t d7 = initial_hash;
     uint16_t d6 = numword;
+    uint16_t d5 = initial_hash;
     size_t i;
     for (i = 0u; i < numword; ++i) {
         size_t off = i * 2u;
         uint16_t w = read_le16(buf, off);
-        uint16_t d5 = (uint16_t)(w);  /* matches the read-side w pre-XOR */
-        w = (uint16_t)(w ^ d7);
         d5 = (uint16_t)(d5 + w);
+        w = (uint16_t)(w ^ d7);
         buf[off + 0u] = (uint8_t)(w & 0xFFu);
         buf[off + 1u] = (uint8_t)((w >> 8) & 0xFFu);
-        (void)d5;
+        d5 = (uint16_t)(d5 + w);
         d7 = (uint16_t)(d7 + d6);
         d6 = (uint16_t)(d6 - 1u);
     }
+    return d5;
 }
 
 /* Build a valid CSBWin 512-byte header whose second-half public
@@ -288,6 +289,23 @@ static int test_csb_key_synthetic_accept(void)
     write_le16(public_bytes, CSB_V1_CSBWIN_512_OFF_CHECKSUMS, 0xABCDu);
     write_le16(public_bytes, CSB_V1_CSBWIN_512_OFF_PLATFORM, 0x0007u);
     write_le16(public_bytes, CSB_V1_CSBWIN_512_OFF_DUNGEON_ID, 0x1234u);
+    public_bytes[300u - 256u] = 0xCDu;
+    public_bytes[301u - 256u] = 0xABu;
+    write_le16(public_bytes, 306u - 256u, 0x0001u);
+    write_le32(public_bytes, 308u - 256u, 0x01020304u);
+    write_le16(public_bytes, 312u - 256u, 0x1111u);
+    write_le16(public_bytes, 314u - 256u, 0x2222u);
+    write_le16(public_bytes, 316u - 256u, 0x3333u);
+    write_le16(public_bytes, 318u - 256u, 0x4444u);
+    write_le16(public_bytes, 320u - 256u, 0x5555u);
+    write_le32(public_bytes, 322u - 256u, 0x0A0B0C0Du);
+    write_le16(public_bytes, 344u - 256u, 0xAAAAu);
+    write_le16(public_bytes, 346u - 256u, 0xBBBBu);
+    write_le16(public_bytes, 348u - 256u, 0xCCCCu);
+    write_le16(public_bytes, 350u - 256u, 0xDDDDu);
+    write_le16(public_bytes, 352u - 256u, 0xEEEEu);
+    write_le16(public_bytes, 376u - 256u, 0x0065u);
+    write_le16(public_bytes, 378u - 256u, 0x000Cu);
     /* Stamp the first 4 bytes of AdditionalData. */
     public_bytes[CSB_V1_CSBWIN_512_OFF_ADDITIONAL + 0u] = 0xA1u;
     public_bytes[CSB_V1_CSBWIN_512_OFF_ADDITIONAL + 1u] = 0xB2u;
@@ -316,6 +334,23 @@ static int test_csb_key_synthetic_accept(void)
     ASSERT_TRUE(report.public_fields.additional_data[1] == 0xB2u);
     ASSERT_TRUE(report.public_fields.additional_data[2] == 0xC3u);
     ASSERT_TRUE(report.public_fields.additional_data[3] == 0xD4u);
+    ASSERT_TRUE(report.public_fields.csbwin_byte22598 == 0xCDu);
+    ASSERT_TRUE(report.public_fields.csbwin_byte22596 == 0xABu);
+    ASSERT_TRUE(report.public_fields.csbwin_save_option == 1);
+    ASSERT_TRUE(report.public_fields.csbwin_random_game_id == 0x01020304u);
+    ASSERT_TRUE(report.public_fields.csbwin_block2_hash == 0x1111u);
+    ASSERT_TRUE(report.public_fields.csbwin_item16_hash == 0x2222u);
+    ASSERT_TRUE(report.public_fields.csbwin_character_hash == 0x3333u);
+    ASSERT_TRUE(report.public_fields.csbwin_timers_hash == 0x4444u);
+    ASSERT_TRUE(report.public_fields.csbwin_timer_queue_hash == 0x5555u);
+    ASSERT_TRUE(report.public_fields.csbwin_total_move_count == 0x0A0B0C0Du);
+    ASSERT_TRUE(report.public_fields.csbwin_block2_checksum == 0xAAAAu);
+    ASSERT_TRUE(report.public_fields.csbwin_item16_checksum == 0xBBBBu);
+    ASSERT_TRUE(report.public_fields.csbwin_character_checksum == 0xCCCCu);
+    ASSERT_TRUE(report.public_fields.csbwin_timers_checksum == 0xDDDDu);
+    ASSERT_TRUE(report.public_fields.csbwin_timer_queue_checksum == 0xEEEEu);
+    ASSERT_TRUE(report.public_fields.csbwin_word22594 == 0x0065);
+    ASSERT_TRUE(report.public_fields.csbwin_word22592 == 0x000C);
     /* D6W == D5W after successful unscramble. */
     ASSERT_TRUE(report.first_half_d6w == report.second_half_d5w);
     return 1;
@@ -352,6 +387,51 @@ static int test_dm_key_synthetic_accept(void)
     ASSERT_TRUE(report.public_fields.platform == (int16_t)0x0002);
     ASSERT_TRUE(report.public_fields.dungeon_id == 0x5678u);
     ASSERT_TRUE(report.first_half_d6w == report.second_half_d5w);
+    return 1;
+}
+
+static int test_stream_section_decode(void)
+{
+    uint8_t plain[128];
+    uint8_t encrypted[128];
+    uint8_t decoded[128];
+    uint8_t short_out[16];
+    uint16_t checksum;
+    size_t i;
+
+    for (i = 0u; i < sizeof(plain); ++i) {
+        plain[i] = (uint8_t)((i * 17u + 3u) & 0xFFu);
+    }
+    memcpy(encrypted, plain, sizeof(encrypted));
+    checksum = scramble_block(encrypted, 0x2468u,
+                              (uint16_t)(sizeof(encrypted) / 2u));
+
+    ASSERT_TRUE(csb_v1_csbwin_512_decode_stream_section(
+                    encrypted, sizeof(encrypted), 0x2468u, checksum,
+                    decoded, sizeof(decoded)) == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(memcmp(decoded, plain, sizeof(plain)) == 0);
+    ASSERT_TRUE(memcmp(encrypted, plain, sizeof(plain)) != 0);
+
+    memset(decoded, 0x7Eu, sizeof(decoded));
+    ASSERT_TRUE(csb_v1_csbwin_512_decode_stream_section(
+                    encrypted, sizeof(encrypted), 0x2468u,
+                    (uint16_t)(checksum + 1u), decoded, sizeof(decoded)) ==
+                CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM);
+    for (i = 0u; i < sizeof(decoded); ++i) {
+        ASSERT_TRUE(decoded[i] == 0u);
+    }
+    ASSERT_TRUE(csb_v1_csbwin_512_decode_stream_section(
+                    encrypted, sizeof(encrypted), 0x2468u, checksum,
+                    short_out, sizeof(short_out)) ==
+                CSB_V1_CSBWIN_512_ERR_TOO_SMALL);
+    ASSERT_TRUE(csb_v1_csbwin_512_decode_stream_section(
+                    encrypted, sizeof(encrypted) - 1u, 0x2468u, checksum,
+                    decoded, sizeof(decoded)) ==
+                CSB_V1_CSBWIN_512_ERR_TOO_SMALL);
+    ASSERT_TRUE(csb_v1_csbwin_512_decode_stream_section(
+                    NULL, sizeof(encrypted), 0x2468u, checksum,
+                    decoded, sizeof(decoded)) ==
+                CSB_V1_CSBWIN_512_ERR_ARGUMENT);
     return 1;
 }
 
@@ -431,6 +511,9 @@ static int test_result_and_evidence_strings(void)
                            CSB_V1_CSBWIN_512_ERR_TOO_SMALL), "too-small") == 0);
     ASSERT_TRUE(strcmp(csb_v1_csbwin_512_xor_pad_result_name(
                            CSB_V1_CSBWIN_512_ERR_ARGUMENT), "argument") == 0);
+    ASSERT_TRUE(strcmp(csb_v1_csbwin_512_xor_pad_result_name(
+                           CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM),
+                       "bad-checksum") == 0);
 
     ASSERT_TRUE(strcmp(csb_v1_csbwin_512_xor_pad_verdict_name(
                            CSB_V1_CSBWIN_512_VERDICT_CSB), "CSB") == 0);
@@ -461,6 +544,7 @@ struct { const char *name; test_fn fn; } tests[] = {
     { "both-keys-fail-fixture",       test_both_keys_fail_fixture },
     { "csb-key-synthetic-accept",     test_csb_key_synthetic_accept },
     { "dm-key-synthetic-accept",      test_dm_key_synthetic_accept },
+    { "stream-section-decode",        test_stream_section_decode },
     { "csb-first-fallback-to-dm",     test_csb_first_fallback_to_dm },
     { "input-buffer-not-modified",    test_input_buffer_not_modified },
     { "result-and-evidence-strings",  test_result_and_evidence_strings },
