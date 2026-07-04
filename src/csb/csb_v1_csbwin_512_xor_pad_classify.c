@@ -711,6 +711,8 @@ static void read_public_fields(const uint8_t *bytes_256,
         (int16_t)read_le16(bytes_256, 376u - 256u);
     out->csbwin_word22592 =
         (int16_t)read_le16(bytes_256, 378u - 256u);
+    memcpy(out->csbwin_byte22808, bytes_256 + (380u - 256u),
+           sizeof(out->csbwin_byte22808));
 }
 
 /* ── Internal: try one key on a fresh scratch copy ─────────────────── */
@@ -1142,6 +1144,9 @@ int csb_v1_csbwin_512_build_writable_core_save(
     header.timer_queue_checksum = runtime.timer_queue_checksum;
     header.word22594 = summary->header.public_fields.csbwin_word22594;
     header.word22592 = summary->header.public_fields.csbwin_word22592;
+    memcpy(header.byte22808,
+           summary->header.public_fields.csbwin_byte22808,
+           sizeof(header.byte22808));
 
     rc = csb_v1_csbwin_512_build_writable_header(&header, block1);
     if (rc != CSB_V1_CSBWIN_512_OK) return rc;

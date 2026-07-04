@@ -298,6 +298,7 @@ static size_t build_full_csbwin_body_fixture(uint8_t *buf,
     uint8_t public_bytes[256];
     uint8_t block2[128];
     size_t off;
+    size_t i;
     uint16_t block2_checksum;
     uint16_t item16_checksum;
     uint16_t character_checksum;
@@ -389,6 +390,10 @@ static size_t build_full_csbwin_body_fixture(uint8_t *buf,
     write_le16(public_bytes, 348u - 256u, character_checksum);
     write_le16(public_bytes, 350u - 256u, timers_checksum);
     write_le16(public_bytes, 352u - 256u, timer_queue_checksum);
+    for (i = 0u; i < 132u; ++i) {
+        public_bytes[380u - 256u + i] =
+            (uint8_t)(0x40u + (i & 0x3Fu));
+    }
 
     build_csbwin_fixture(buf, public_bytes);
     return off;
@@ -519,6 +524,7 @@ static int test_csb_key_synthetic_accept(void)
     CSB_V1_CSBWin512Report report;
     uint8_t buf[CSB_V1_CSBWIN_BLOCK1_BYTES];
     uint8_t public_bytes[256];
+    size_t i;
     /* Build a second-half with non-trivial content so we can
      * verify the public-field readback. FormatID = 5 (CSB on
      * Amiga/PC — DEFS.H:508), Useless = 1 (BUG0_00 always 1),
@@ -557,6 +563,10 @@ static int test_csb_key_synthetic_accept(void)
     public_bytes[CSB_V1_CSBWIN_512_OFF_ADDITIONAL + 1u] = 0xB2u;
     public_bytes[CSB_V1_CSBWIN_512_OFF_ADDITIONAL + 2u] = 0xC3u;
     public_bytes[CSB_V1_CSBWIN_512_OFF_ADDITIONAL + 3u] = 0xD4u;
+    for (i = 0u; i < 132u; ++i) {
+        public_bytes[380u - 256u + i] =
+            (uint8_t)(0x40u + (i & 0x3Fu));
+    }
 
     build_csbwin_fixture(buf, public_bytes);
 
@@ -597,6 +607,9 @@ static int test_csb_key_synthetic_accept(void)
     ASSERT_TRUE(report.public_fields.csbwin_timer_queue_checksum == 0xEEEEu);
     ASSERT_TRUE(report.public_fields.csbwin_word22594 == 0x0065);
     ASSERT_TRUE(report.public_fields.csbwin_word22592 == 0x000C);
+    ASSERT_TRUE(report.public_fields.csbwin_byte22808[0] == 0x40u);
+    ASSERT_TRUE(report.public_fields.csbwin_byte22808[131] ==
+                (uint8_t)(0x40u + (131u & 0x3Fu)));
     /* D6W == D5W after successful unscramble. */
     ASSERT_TRUE(report.first_half_d6w == report.second_half_d5w);
     return 1;
@@ -1052,6 +1065,9 @@ static int test_writable_header_roundtrip(void)
     header.timer_queue_checksum = runtime.timer_queue_checksum;
     header.word22594 = report.header.public_fields.csbwin_word22594;
     header.word22592 = report.header.public_fields.csbwin_word22592;
+    memcpy(header.byte22808,
+           report.header.public_fields.csbwin_byte22808,
+           sizeof(header.byte22808));
 
     memset(rebuilt, 0, sizeof(rebuilt));
     rc = csb_v1_csbwin_512_build_writable_header(&header, rebuilt);
@@ -1077,6 +1093,10 @@ static int test_writable_header_roundtrip(void)
     ASSERT_TRUE(header_report.public_fields.csbwin_timer_queue_hash == 0u);
     ASSERT_TRUE(header_report.public_fields.csbwin_timer_queue_checksum ==
                 runtime.timer_queue_checksum);
+    ASSERT_TRUE(header_report.public_fields.csbwin_byte22808[0] ==
+                report.header.public_fields.csbwin_byte22808[0]);
+    ASSERT_TRUE(header_report.public_fields.csbwin_byte22808[131] ==
+                report.header.public_fields.csbwin_byte22808[131]);
 
     memcpy(rebuilt + CSB_V1_CSBWIN_BLOCK1_BYTES,
            writable.block2_scrambled,
@@ -1132,6 +1152,10 @@ static int test_writable_header_roundtrip(void)
     ASSERT_TRUE(assembled_report.item16[1].monster_index == 0x5678u);
     ASSERT_TRUE(assembled_report.timers[0].sequence == 0x2222u);
     ASSERT_TRUE(assembled_report.timer_queue[2] == 1u);
+    ASSERT_TRUE(assembled_report.header.public_fields.csbwin_byte22808[0] ==
+                report.header.public_fields.csbwin_byte22808[0]);
+    ASSERT_TRUE(assembled_report.header.public_fields.csbwin_byte22808[131] ==
+                report.header.public_fields.csbwin_byte22808[131]);
 
     assembled_size = 123u;
     rc = csb_v1_csbwin_512_build_writable_core_save(
