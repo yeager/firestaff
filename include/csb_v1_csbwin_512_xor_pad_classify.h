@@ -538,6 +538,17 @@ int csb_v1_csbwin_512_build_writable_header(
     const CSB_V1_CSBWin512WritableHeader *header,
     uint8_t out_header[CSB_V1_CSBWIN_BLOCK1_BYTES]);
 
+/* Assemble the bounded CSBWin core save prefix in file order:
+ * GAMEBLOCK1, GAMEBLOCK2, ITEM16, CHARDESC/character data, TIMER, and timer
+ * queue. The caller owns the output buffer and receives the exact byte count.
+ * This intentionally stops at the timer queue; appended DSA/global/expool data
+ * remains outside this bounded core writer. */
+int csb_v1_csbwin_512_build_writable_core_save(
+    const CSB_V1_CSBWin512BodyReport *summary,
+    uint8_t *out,
+    size_t out_capacity,
+    size_t *out_size);
+
 /* Verify the CSBWin save-body layout that follows GAMEBLOCK1.
  *
  * Source: CSBWin/SaveGame.cpp lines 1768-1855 reads 128-byte

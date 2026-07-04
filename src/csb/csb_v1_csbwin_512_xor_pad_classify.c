@@ -1077,6 +1077,95 @@ int csb_v1_csbwin_512_build_writable_header(
     return CSB_V1_CSBWIN_512_OK;
 }
 
+int csb_v1_csbwin_512_build_writable_core_save(
+    const CSB_V1_CSBWin512BodyReport *summary,
+    uint8_t *out,
+    size_t out_capacity,
+    size_t *out_size)
+{
+    CSB_V1_CSBWin512WritableChampionSections champion;
+    CSB_V1_CSBWin512WritableRuntimeSections runtime;
+    CSB_V1_CSBWin512WritableHeader header;
+    uint8_t block1[CSB_V1_CSBWIN_BLOCK1_BYTES];
+    size_t required;
+    size_t offset;
+    int rc;
+
+    if (!summary || !out || !out_size) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    *out_size = 0u;
+    if (summary->max_item16 != summary->item16_summary_total ||
+        summary->max_timers != summary->timer_summary_total ||
+        summary->max_timers != summary->timer_queue_summary_total) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+
+    rc = csb_v1_csbwin_512_build_writable_champion_sections(
+        summary, &champion);
+    if (rc != CSB_V1_CSBWIN_512_OK) return rc;
+    rc = csb_v1_csbwin_512_build_writable_runtime_sections(
+        summary, &runtime);
+    if (rc != CSB_V1_CSBWIN_512_OK) return rc;
+
+    required = CSB_V1_CSBWIN_BLOCK1_BYTES +
+               champion.block2_size +
+               runtime.item16_size +
+               champion.character_size +
+               runtime.timers_size +
+               runtime.timer_queue_size;
+    if (out_capacity < required) {
+        return CSB_V1_CSBWIN_512_ERR_TOO_SMALL;
+    }
+
+    memset(&header, 0, sizeof(header));
+    header.key_index =
+        (summary->header.verdict == CSB_V1_CSBWIN_512_VERDICT_DM)
+            ? CSB_V1_CSBWIN_512_KEY_DM
+            : CSB_V1_CSBWIN_512_KEY_CSB;
+    header.byte22598 = summary->header.public_fields.csbwin_byte22598;
+    header.byte22596 = summary->header.public_fields.csbwin_byte22596;
+    header.save_option = summary->header.public_fields.csbwin_save_option;
+    header.random_game_id =
+        summary->header.public_fields.csbwin_random_game_id;
+    header.block2_hash = champion.block2_hash;
+    header.item16_hash = runtime.item16_hash;
+    header.character_hash = champion.character_hash;
+    header.timers_hash = runtime.timers_hash;
+    header.timer_queue_hash = runtime.timer_queue_hash;
+    header.total_move_count =
+        summary->header.public_fields.csbwin_total_move_count;
+    header.block2_checksum = champion.block2_checksum;
+    header.item16_checksum = runtime.item16_checksum;
+    header.character_checksum = champion.character_checksum;
+    header.timers_checksum = runtime.timers_checksum;
+    header.timer_queue_checksum = runtime.timer_queue_checksum;
+    header.word22594 = summary->header.public_fields.csbwin_word22594;
+    header.word22592 = summary->header.public_fields.csbwin_word22592;
+
+    rc = csb_v1_csbwin_512_build_writable_header(&header, block1);
+    if (rc != CSB_V1_CSBWIN_512_OK) return rc;
+
+    offset = 0u;
+    memcpy(out + offset, block1, sizeof(block1));
+    offset += sizeof(block1);
+    memcpy(out + offset, champion.block2_scrambled, champion.block2_size);
+    offset += champion.block2_size;
+    memcpy(out + offset, runtime.item16_scrambled, runtime.item16_size);
+    offset += runtime.item16_size;
+    memcpy(out + offset, champion.characters_scrambled,
+           champion.character_size);
+    offset += champion.character_size;
+    memcpy(out + offset, runtime.timers_scrambled, runtime.timers_size);
+    offset += runtime.timers_size;
+    memcpy(out + offset, runtime.timer_queue_scrambled,
+           runtime.timer_queue_size);
+    offset += runtime.timer_queue_size;
+
+    *out_size = offset;
+    return CSB_V1_CSBWIN_512_OK;
+}
+
 static int verify_body_section(
     const uint8_t *bytes,
     size_t size,
