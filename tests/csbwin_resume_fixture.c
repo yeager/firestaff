@@ -181,6 +181,7 @@ size_t firestaff_test_build_csbwin_resume_fixture(uint8_t *buf,
     uint16_t character_checksum;
     uint16_t timers_checksum;
     uint16_t timer_queue_checksum;
+    size_t tail_i;
 
     if (capacity < total) return 0u;
     memset(buf, 0, total);
@@ -263,6 +264,10 @@ size_t firestaff_test_build_csbwin_resume_fixture(uint8_t *buf,
     test_write_le16(public_bytes, 348u - 256u, character_checksum);
     test_write_le16(public_bytes, 350u - 256u, timers_checksum);
     test_write_le16(public_bytes, 352u - 256u, timer_queue_checksum);
+    for (tail_i = 0u; tail_i < 132u; ++tail_i) {
+        public_bytes[380u - 256u + tail_i] =
+            (uint8_t)(0x40u + (tail_i & 0x3Fu));
+    }
 
     test_build_csbwin_header(buf, public_bytes);
     return off;

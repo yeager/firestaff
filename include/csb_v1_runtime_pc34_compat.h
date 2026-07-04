@@ -287,6 +287,8 @@ typedef struct {
     uint16_t                csbwin_party_move_disable_timer;
     uint16_t                csbwin_word11712;
     uint16_t                csbwin_word11714;
+    int                     csbwin_header_tail_valid;
+    uint8_t                 csbwin_header_byte22808[132];
     int                     csbwin_body_runtime_summary_valid;
     int16_t                 csbwin_character_tail_brightness;
     uint8_t                 csbwin_character_tail_see_thru_walls;
