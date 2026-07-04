@@ -5049,6 +5049,226 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
     }
 }
 
+static int csb_v1_runtime_queue_remote_square_event(
+    CSB_V1_RuntimeProfile *profile,
+    int sensor_effect,
+    int target_x,
+    int target_y,
+    int target_cell)
+{
+    const CSB_V1_DungeonData *dungeon;
+    struct DM1_Event_V1 event;
+    int raw_square;
+    int square_type;
+    int event_type;
+
+    if (!profile) return 0;
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data) return 0;
+
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        profile->current_level,
+        target_x,
+        target_y);
+    if (raw_square < 0) return 0;
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
+    if (event_type == DM1_EVENT_NONE) return 0;
+
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(
+        profile->current_level,
+        profile->game_time);
+    event.type = (uint8_t)event_type;
+    event.b_mapX = (uint8_t)target_x;
+    event.b_mapY = (uint8_t)target_y;
+    event.c_cell = (uint8_t)target_cell;
+    event.c_effect = (uint8_t)sensor_effect;
+    return dm1v1_event_add(&profile->timeline_queue, &event) >= 0 ? 1 : 0;
+}
+
+static int csb_v1_runtime_object_type_from_thing(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing)
+{
+    const uint8_t *record;
+    int thing_type;
+    int thing_size;
+
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &thing_size);
+    if (!record || thing_type <= 4 || thing_type >= 14 || thing_size < 4) {
+        return -1;
+    }
+    return (int)(csb_v1_runtime_read_u16(record + 2) & 0x007Fu);
+}
+
+int csb_v1_runtime_trigger_wall_ornament_click(
+    CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    int cell,
+    int object_type)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int first_thing;
+    int thing;
+    int guard;
+    int queued = 0;
+
+    if (!profile) return 0;
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->square_bytes != 1) return 0;
+    if (csb_v1_dungeon_get_raw_square(
+            dungeon,
+            profile->current_level,
+            map_x,
+            map_y) < 0) {
+        return 0;
+    }
+
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        profile->current_level,
+        map_x,
+        map_y);
+    if (first_thing < 0 || first_thing == 0xFFFE || first_thing == 0xFFFF) {
+        return 0;
+    }
+
+    /* ReDMCSB: MOVESENS.C F0276 lines 1737-1785 handles wall-square
+     * C001..C003 ornament-click sensors by matching the clicked cell,
+     * resolving Revert/HOLD, then calling F0272_SENSOR_TriggerEffect. */
+    thing = first_thing;
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        const uint8_t *record;
+        int thing_type;
+        int thing_size;
+        uint16_t type_data;
+        uint16_t flags_word;
+        uint16_t target_word;
+        int sensor_type;
+        int sensor_data;
+        int sensor_cell;
+        int square_has_object = 0;
+        int same_type_present = 0;
+        int different_type_present = 0;
+        int trigger = 1;
+        int sensor_effect;
+        int target_cell;
+        int target_x;
+        int target_y;
+        int scan;
+        int scan_guard;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            NULL,
+            &thing_size);
+        if (!record) break;
+        if (thing_type >= 4) break;
+        if (thing_type != 3 || thing_size < 8) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+        sensor_cell = thing & 3;
+        if (sensor_cell != (cell & 3)) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
+        scan = first_thing;
+        for (scan_guard = 0;
+             scan_guard < 128 && scan != 0xFFFE && scan != 0xFFFF;
+             ++scan_guard) {
+            int scan_type;
+            int scan_object_type;
+            const uint8_t *scan_record = csb_v1_dungeon_get_thing_record(
+                dungeon,
+                (uint16_t)scan,
+                &scan_type,
+                NULL,
+                NULL);
+            (void)scan_record;
+            if (!scan_record) break;
+            if ((scan & 3) == (cell & 3) && scan_type > 4 && scan_type < 14) {
+                square_has_object = 1;
+                scan_object_type = csb_v1_runtime_object_type_from_thing(
+                    dungeon,
+                    (uint16_t)scan);
+                if (scan_object_type == object_type) {
+                    same_type_present = 1;
+                } else {
+                    different_type_present = 1;
+                }
+            }
+            scan = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)scan);
+        }
+
+        type_data = csb_v1_runtime_read_u16(record + 2);
+        flags_word = csb_v1_runtime_read_u16(record + 4);
+        target_word = csb_v1_runtime_read_u16(record + 6);
+        sensor_type = (int)(type_data & 0x007Fu);
+        sensor_data = (int)(type_data >> 7);
+        switch (sensor_type) {
+        case 1: /* C001_SENSOR_WALL_ORNAMENT_CLICK */
+            trigger = (object_type < 0 && !square_has_object) ? 1 : 0;
+            break;
+        case 2: /* C002_SENSOR_WALL_ORNAMENT_CLICK_WITH_ANY_OBJECT */
+            trigger = (object_type >= 0 &&
+                       !same_type_present &&
+                       sensor_data == object_type) ? 1 : 0;
+            break;
+        case 3: /* C003_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT */
+            trigger = (object_type >= 0 &&
+                       !different_type_present &&
+                       sensor_data != object_type) ? 1 : 0;
+            break;
+        default:
+            trigger = 0;
+            break;
+        }
+
+        if ((flags_word >> 5) & 0x01u) {
+            trigger ^= 1;
+        }
+        sensor_effect = (int)((flags_word >> 3) & 0x03u);
+        if (sensor_effect == DM1_EFFECT_HOLD) {
+            sensor_effect = trigger ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
+        } else if (!trigger) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
+        target_cell = (int)((target_word >> 4) & 0x03u);
+        target_x = (int)((target_word >> 6) & 0x1Fu);
+        target_y = (int)((target_word >> 11) & 0x1Fu);
+        queued += csb_v1_runtime_queue_remote_square_event(
+            profile,
+            sensor_effect,
+            target_x,
+            target_y,
+            target_cell);
+        break;
+    }
+
+    return queued;
+}
+
 static void csb_v1_runtime_process_party_floor_sensors_at(
     CSB_V1_RuntimeProfile *profile,
     int map_x,
