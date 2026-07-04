@@ -60,6 +60,27 @@ static uint32_t test_fnv1a32_bytes(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+static void test_write_appended_expool_tail(uint8_t *tail,
+                                            uint32_t record_id)
+{
+    uint32_t hash = record_id * 0xbb40e62du;
+    uint32_t hashi = 32u + (hash >> 27);
+
+    memset(tail, 0, CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+    test_write_le16(tail, 2u, 4u);
+    test_write_le32(tail, hashi * 4u, 1u);
+    test_write_le32(tail, 1u * 4u, 0u);
+    test_write_le32(tail, 2u * 4u, record_id);
+    tail[3u * 4u + 0u] = 0x71u;
+    tail[3u * 4u + 1u] = 0x72u;
+    tail[3u * 4u + 2u] = 0x73u;
+    tail[3u * 4u + 3u] = 0x74u;
+    tail[4u * 4u + 0u] = 0x81u;
+    tail[4u * 4u + 1u] = 0x82u;
+    tail[4u * 4u + 2u] = 0x83u;
+    tail[4u * 4u + 3u] = 0x84u;
+}
+
 static uint16_t test_scramble_block(uint8_t *buf, uint16_t initial_hash,
                                     uint16_t numword)
 {
@@ -4895,9 +4916,10 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
 {
     uint8_t fixture[8192];
     uint8_t exported[8192];
-    const uint8_t appended_tail[9] = {
-        0xD5u, 0x11u, 0x67u, 0x88u, 0x09u, 0xFEu, 0x31u, 0x44u, 0xA0u
-    };
+    uint8_t appended_tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
+    const uint32_t expool_record_id = 0x12003456u;
+    const uint8_t *expool_payload = NULL;
+    size_t expool_payload_size = 0u;
     size_t fixture_size;
     size_t core_size;
     size_t exported_size = 0u;
@@ -4916,6 +4938,7 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
     CHECK(fixture_size == 4054u,
           "CSBWin export fixture builds a verified source body");
     core_size = fixture_size;
+    test_write_appended_expool_tail(appended_tail, expool_record_id);
     memcpy(fixture + fixture_size, appended_tail, sizeof(appended_tail));
     fixture_size += sizeof(appended_tail);
     appended_hash = test_fnv1a32_bytes(appended_tail, sizeof(appended_tail));
@@ -4949,6 +4972,23 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
                      appended_tail,
                      sizeof(appended_tail)) == 0,
           "CSBWin resume stores appended tail bytes in runtime");
+    CHECK(csb_v1_runtime_locate_csbwin_appended_expool_record(
+              &profile,
+              expool_record_id,
+              &expool_payload,
+              &expool_payload_size) == 1 &&
+              expool_payload_size == 8u &&
+              expool_payload == profile.csbwin_appended_tail + 12u &&
+              expool_payload[0] == 0x71u &&
+              expool_payload[5] == 0x82u &&
+              expool_payload[7] == 0x84u,
+          "CSBWin resume exposes appended Expool record payload in runtime");
+    CHECK(csb_v1_runtime_locate_csbwin_appended_expool_record(
+              &profile,
+              expool_record_id + 1u,
+              &expool_payload,
+              &expool_payload_size) == 0,
+          "CSBWin runtime appended Expool lookup rejects missing records");
 
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
               &profile, exported, sizeof(exported), &exported_size) == 0,
@@ -5007,6 +5047,16 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
                      appended_tail,
                      sizeof(appended_tail)) == 0,
           "CSBWin exported memory roundtrip keeps appended-tail runtime state");
+    expool_payload = NULL;
+    expool_payload_size = 0u;
+    CHECK(csb_v1_runtime_locate_csbwin_appended_expool_record(
+              &memory_loaded,
+              expool_record_id,
+              &expool_payload,
+              &expool_payload_size) == 1 &&
+              expool_payload_size == 8u &&
+              expool_payload[7] == 0x84u,
+          "CSBWin exported memory roundtrip keeps appended Expool lookup");
 
     exported_size = 123u;
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
@@ -5061,6 +5111,17 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
                      appended_tail,
                      sizeof(appended_tail)) == 0,
           "Firestaff native CSB save/load preserves appended CSBWin tail");
+    expool_payload = NULL;
+    expool_payload_size = 0u;
+    CHECK(csb_v1_runtime_locate_csbwin_appended_expool_record(
+              &native_loaded,
+              expool_record_id,
+              &expool_payload,
+              &expool_payload_size) == 1 &&
+              expool_payload_size == 8u &&
+              expool_payload[0] == 0x71u &&
+              expool_payload[7] == 0x84u,
+          "Firestaff native CSB save/load preserves appended Expool lookup");
     memset(exported, 0, sizeof(exported));
     exported_size = 0u;
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(

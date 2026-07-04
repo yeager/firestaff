@@ -8991,6 +8991,65 @@ static int csb_v1_runtime_build_csbwin_core_summary(
     return 0;
 }
 
+int csb_v1_runtime_locate_csbwin_appended_expool_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size)
+{
+    CSB_V1_CSBWin512BodyReport report;
+    const uint8_t *report_bytes = NULL;
+    size_t report_size = 0u;
+    size_t offset;
+
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!profile || !profile->csbwin_appended_tail_valid ||
+        profile->csbwin_appended_tail_truncated ||
+        profile->csbwin_appended_tail_size == 0u ||
+        profile->csbwin_appended_tail_size !=
+            profile->csbwin_appended_tail_preserved_size ||
+        profile->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+        return 0;
+    }
+
+    memset(&report, 0, sizeof(report));
+    report.appended_size = profile->csbwin_appended_tail_size;
+    report.appended_preserved_size =
+        profile->csbwin_appended_tail_preserved_size;
+    report.appended_fnv1a = profile->csbwin_appended_tail_fnv1a;
+    report.appended_truncated = profile->csbwin_appended_tail_truncated;
+    if ((report.appended_size % CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES) == 0u) {
+        report.appended_expool_candidate = 1;
+        report.appended_expool_block_count =
+            (uint16_t)(report.appended_size /
+                       CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+    }
+    memcpy(report.appended_preserved,
+           profile->csbwin_appended_tail,
+           report.appended_preserved_size);
+
+    /* CSBWin data.cpp EXPOOL::Locate returns a pointer into the DB11 block.
+     * The lower-level helper works on a verifier report, so translate the
+     * found offset back into the runtime profile's preserved tail storage. */
+    if (!csb_v1_csbwin_512_appended_expool_locate_record(
+            &report, record_id, &report_bytes, &report_size) ||
+        !report_bytes ||
+        report_bytes < report.appended_preserved) {
+        return 0;
+    }
+    offset = (size_t)(report_bytes - report.appended_preserved);
+    if (offset > profile->csbwin_appended_tail_preserved_size ||
+        report_size >
+            profile->csbwin_appended_tail_preserved_size - offset) {
+        return 0;
+    }
+    if (out_bytes) *out_bytes = profile->csbwin_appended_tail + offset;
+    if (out_size) *out_size = report_size;
+    return 1;
+}
+
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t *out,
