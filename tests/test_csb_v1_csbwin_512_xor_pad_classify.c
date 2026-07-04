@@ -948,6 +948,116 @@ static int test_writable_champion_sections(void)
     return 1;
 }
 
+static int test_writable_header_roundtrip(void)
+{
+    uint8_t original[8192];
+    uint8_t rebuilt[8192];
+    CSB_V1_CSBWin512BodyReport report;
+    CSB_V1_CSBWin512BodyReport roundtrip;
+    CSB_V1_CSBWin512WritableChampionSections writable;
+    CSB_V1_CSBWin512WritableHeader header;
+    CSB_V1_CSBWin512Report header_report;
+    int rc;
+    size_t size;
+
+    size = build_full_csbwin_body_fixture(original, sizeof(original), 0);
+    ASSERT_TRUE(size == 4054u);
+    rc = csb_v1_csbwin_512_verify_save_body(original, size, 16u, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    rc = csb_v1_csbwin_512_build_writable_champion_sections(
+        &report, &writable);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+
+    memset(&header, 0, sizeof(header));
+    header.key_index = CSB_V1_CSBWIN_512_KEY_CSB;
+    header.byte22598 = report.header.public_fields.csbwin_byte22598;
+    header.byte22596 = report.header.public_fields.csbwin_byte22596;
+    header.save_option = report.header.public_fields.csbwin_save_option;
+    header.random_game_id =
+        report.header.public_fields.csbwin_random_game_id;
+    header.block2_hash = writable.block2_hash;
+    header.item16_hash = report.header.public_fields.csbwin_item16_hash;
+    header.character_hash = writable.character_hash;
+    header.timers_hash = report.header.public_fields.csbwin_timers_hash;
+    header.timer_queue_hash =
+        report.header.public_fields.csbwin_timer_queue_hash;
+    header.total_move_count =
+        report.header.public_fields.csbwin_total_move_count;
+    header.block2_checksum = writable.block2_checksum;
+    header.item16_checksum =
+        report.header.public_fields.csbwin_item16_checksum;
+    header.character_checksum = writable.character_checksum;
+    header.timers_checksum =
+        report.header.public_fields.csbwin_timers_checksum;
+    header.timer_queue_checksum =
+        report.header.public_fields.csbwin_timer_queue_checksum;
+    header.word22594 = report.header.public_fields.csbwin_word22594;
+    header.word22592 = report.header.public_fields.csbwin_word22592;
+
+    memset(rebuilt, 0, sizeof(rebuilt));
+    rc = csb_v1_csbwin_512_build_writable_header(&header, rebuilt);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    rc = csb_v1_csbwin_512_xor_pad_classify(rebuilt, sizeof(rebuilt),
+                                            &header_report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(header_report.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB);
+    ASSERT_TRUE(header_report.first_half_d6w ==
+                header_report.second_half_d5w);
+    ASSERT_TRUE(header_report.public_fields.csbwin_block2_hash == 0u);
+    ASSERT_TRUE(header_report.public_fields.csbwin_block2_checksum ==
+                writable.block2_checksum);
+    ASSERT_TRUE(header_report.public_fields.csbwin_character_hash == 0u);
+    ASSERT_TRUE(header_report.public_fields.csbwin_character_checksum ==
+                writable.character_checksum);
+    ASSERT_TRUE(header_report.public_fields.csbwin_item16_hash ==
+                report.header.public_fields.csbwin_item16_hash);
+
+    memcpy(rebuilt + CSB_V1_CSBWIN_BLOCK1_BYTES,
+           writable.block2_scrambled,
+           writable.block2_size);
+    memcpy(rebuilt + report.sections[CSB_V1_CSBWIN_512_SECTION_ITEM16]
+                         .encrypted_offset,
+           original + report.sections[CSB_V1_CSBWIN_512_SECTION_ITEM16]
+                          .encrypted_offset,
+           report.sections[CSB_V1_CSBWIN_512_SECTION_ITEM16].encrypted_size);
+    memcpy(rebuilt + report.sections[CSB_V1_CSBWIN_512_SECTION_CHARACTERS]
+                         .encrypted_offset,
+           writable.characters_scrambled,
+           writable.character_size);
+    memcpy(rebuilt + report.sections[CSB_V1_CSBWIN_512_SECTION_TIMERS]
+                         .encrypted_offset,
+           original + report.sections[CSB_V1_CSBWIN_512_SECTION_TIMERS]
+                          .encrypted_offset,
+           report.sections[CSB_V1_CSBWIN_512_SECTION_TIMERS].encrypted_size);
+    memcpy(rebuilt + report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE]
+                         .encrypted_offset,
+           original + report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE]
+                          .encrypted_offset,
+           report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE]
+               .encrypted_size);
+
+    rc = csb_v1_csbwin_512_verify_save_body(rebuilt, size, 16u, &roundtrip);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(roundtrip.game_time == report.game_time);
+    ASSERT_TRUE(roundtrip.random_seed == report.random_seed);
+    ASSERT_TRUE(roundtrip.object_in_hand == report.object_in_hand);
+    ASSERT_TRUE(roundtrip.max_item16 == report.max_item16);
+    ASSERT_TRUE(roundtrip.max_timers == report.max_timers);
+    ASSERT_TRUE(strcmp(roundtrip.champions[0].name, "TIGGY") == 0);
+    ASSERT_TRUE(strcmp(roundtrip.champions[1].name, "BORIS") == 0);
+    ASSERT_TRUE(roundtrip.champions[0].skill_experience[19] ==
+                report.champions[0].skill_experience[19]);
+    ASSERT_TRUE(roundtrip.character_tail_party_footprints[23] ==
+                report.character_tail_party_footprints[23]);
+
+    rc = csb_v1_csbwin_512_build_writable_header(NULL, rebuilt);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_ARGUMENT);
+    header.key_index = 0;
+    rc = csb_v1_csbwin_512_build_writable_header(&header, rebuilt);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_ARGUMENT);
+    return 1;
+}
+
 static int test_csb_first_fallback_to_dm(void)
 {
     CSB_V1_CSBWin512Report report;
@@ -1060,6 +1170,7 @@ struct { const char *name; test_fn fn; } tests[] = {
     { "stream-section-decode",        test_stream_section_decode },
     { "full-save-body-verify",        test_full_save_body_verify },
     { "writable-champion-sections",   test_writable_champion_sections },
+    { "writable-header-roundtrip",    test_writable_header_roundtrip },
     { "csb-first-fallback-to-dm",     test_csb_first_fallback_to_dm },
     { "input-buffer-not-modified",    test_input_buffer_not_modified },
     { "result-and-evidence-strings",  test_result_and_evidence_strings },

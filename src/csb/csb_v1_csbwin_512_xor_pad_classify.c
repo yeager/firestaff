@@ -1,7 +1,7 @@
 /*
  * csb_v1_csbwin_512_xor_pad_classify.c
  *
- * Read-only classifier for the CSBWin 512-byte XOR-pad
+ * Classifier and bounded writer primitives for the CSBWin 512-byte XOR-pad
  * obfuscated save header. See
  * include/csb_v1_csbwin_512_xor_pad_classify.h for scope and
  * source references.
@@ -35,12 +35,14 @@
  *     until D6W == 0
  *     return D5W
  *
- * This module never modifies the caller's buffer; it always
+ * The classifier never modifies the caller's buffer; it always
  * copies 512 bytes into a local scratch buffer before
  * attempting the in-place unscramble. The classifier decodes
  * GAMEBLOCK1 plus bounded verified save-body summaries needed by
- * startup/resume handoff. It does not bind into M11/M12, does not promise
- * end-to-end CSBWin save import, and remains tracked under
+ * startup/resume handoff. The writer path emits only bounded in-memory
+ * GAMEBLOCK1/GAMEBLOCK2/CHARDESC blocks so far. It does not bind into
+ * M11/M12, does not promise end-to-end CSBWin save import/export, and remains
+ * tracked under
  * docs/FIRESTAFF_GAP_LIST.md row C3 / A3 (CSBWin custom
  * resource handling) as a bounded advance.
  */
@@ -568,6 +570,33 @@ static uint16_t second_half_d5w(const uint8_t *bytes_256)
     return d5;
 }
 
+static void write_csbwin_header_fields(
+    uint8_t *bytes_256,
+    const CSB_V1_CSBWin512WritableHeader *header)
+{
+    if (!bytes_256 || !header) return;
+    memset(bytes_256, 0, 256u);
+    bytes_256[300u - 256u] = header->byte22598;
+    bytes_256[301u - 256u] = header->byte22596;
+    write_le16(bytes_256, 306u - 256u, (uint16_t)header->save_option);
+    write_le32(bytes_256, 308u - 256u, header->random_game_id);
+    write_le16(bytes_256, 312u - 256u, header->block2_hash);
+    write_le16(bytes_256, 314u - 256u, header->item16_hash);
+    write_le16(bytes_256, 316u - 256u, header->character_hash);
+    write_le16(bytes_256, 318u - 256u, header->timers_hash);
+    write_le16(bytes_256, 320u - 256u, header->timer_queue_hash);
+    write_le32(bytes_256, 322u - 256u, header->total_move_count);
+    write_le16(bytes_256, 344u - 256u, header->block2_checksum);
+    write_le16(bytes_256, 346u - 256u, header->item16_checksum);
+    write_le16(bytes_256, 348u - 256u, header->character_checksum);
+    write_le16(bytes_256, 350u - 256u, header->timers_checksum);
+    write_le16(bytes_256, 352u - 256u, header->timer_queue_checksum);
+    write_le16(bytes_256, 376u - 256u, (uint16_t)header->word22594);
+    write_le16(bytes_256, 378u - 256u, (uint16_t)header->word22592);
+    memcpy(bytes_256 + (380u - 256u), header->byte22808,
+           sizeof(header->byte22808));
+}
+
 /* Pull the documented public fields out of the unscrambled
  * second half. Caller guarantees the buffer has been
  * successfully unscrambled. */
@@ -888,6 +917,39 @@ int csb_v1_csbwin_512_build_writable_champion_sections(
         out->characters_scrambled,
         out->character_hash,
         (uint16_t)(sizeof(characters_plain) / 2u));
+    return CSB_V1_CSBWIN_512_OK;
+}
+
+int csb_v1_csbwin_512_build_writable_header(
+    const CSB_V1_CSBWin512WritableHeader *header,
+    uint8_t out_header[CSB_V1_CSBWIN_BLOCK1_BYTES])
+{
+    uint16_t d5;
+    uint16_t d6;
+    uint16_t checksum_word;
+    uint16_t initial_hash;
+
+    if (!header || !out_header ||
+        (header->key_index != CSB_V1_CSBWIN_512_KEY_CSB &&
+         header->key_index != CSB_V1_CSBWIN_512_KEY_DM)) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+
+    memset(out_header, 0, CSB_V1_CSBWIN_BLOCK1_BYTES);
+    write_csbwin_header_fields(out_header + 256u, header);
+
+    /* CSBWin SaveGame.cpp:715-759 / Chaos.cpp:1376-1418:
+     * ScrambleAndWrite computes D5 as the sum of the plain second half,
+     * trashes the first half, writes the final first-half word so the
+     * read-side D6 checksum matches D5, and then runs Unscramble() over the
+     * second half before writing the 512-byte GAMEBLOCK1. */
+    d5 = second_half_d5w(out_header + 256u);
+    d6 = first_half_d6w(out_header);
+    checksum_word = (uint16_t)(d5 ^ d6);
+    write_le16(out_header, 254u, checksum_word);
+
+    initial_hash = read_le16(out_header, (size_t)header->key_index * 2u);
+    (void)unscramble_block(out_header + 256u, initial_hash, 128u);
     return CSB_V1_CSBWIN_512_OK;
 }
 
