@@ -858,7 +858,7 @@ const char *csb_v1_csbwin_save_loader_boundary_decision_name(
         return "accept_loader_ready";
     }
     if (is_csbwin_512_shape(result->shape) && result->xor512_body_valid) {
-        return "reject_csbwin_512_body_valid_import_pending";
+        return "accept_csbwin_512_runtime_handoff_ready";
     }
     if (is_csbwin_512_shape(result->shape) && result->xor512_valid) {
         return "reject_csbwin_512_header_valid_import_pending";

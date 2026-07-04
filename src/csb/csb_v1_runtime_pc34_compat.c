@@ -8276,6 +8276,51 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     return imported;
 }
 
+int csb_v1_runtime_apply_csbwin_resume_report(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512BodyReport *summary)
+{
+    if (!profile || !summary || !summary->header_valid ||
+        summary->sections_verified < CSB_V1_CSBWIN_512_SECTION_COUNT ||
+        summary->num_character > CSB_V1_MAX_CHAMPIONS ||
+        summary->party_x > CSB_V1_MAX_PARTY_X ||
+        summary->party_y > CSB_V1_MAX_PARTY_Y ||
+        summary->party_facing > 3u ||
+        summary->item16_summary_count >
+            CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES ||
+        summary->timer_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        summary->timer_queue_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES) {
+        return -1;
+    }
+
+    /* CSBWin SaveGame.cpp:1768-1855 loads GAMEBLOCK2, ITEM16,
+     * character data, timers, then the timer queue. Firestaff keeps the
+     * lower-level handoff helpers testable, but startup/resume callers use
+     * this ordered boundary so a verified CSBWin body cannot be applied as a
+     * half-imported runtime state. */
+    if (csb_v1_runtime_apply_csbwin_gameblock2_summary(
+            profile, summary) != 0) {
+        return -1;
+    }
+    if (csb_v1_runtime_apply_csbwin_champion_summaries(
+            profile, summary) != 0) {
+        return -1;
+    }
+    if (csb_v1_runtime_apply_csbwin_body_runtime_summaries(
+            profile, summary) != 0) {
+        return -1;
+    }
+    if (csb_v1_runtime_materialize_csbwin_item16_summaries(profile) < 0) {
+        return -1;
+    }
+    if (csb_v1_runtime_materialize_csbwin_timer_queue(profile) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index)
 {

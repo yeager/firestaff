@@ -4289,8 +4289,38 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
         CHECK(found_projectile == 1,
               "CSBWin materialized timers preserve queued zero-field projectile timer");
     }
+    {
+        CSB_V1_RuntimeProfile resume_profile;
+        csb_v1_runtime_init(&resume_profile, NULL);
+        CHECK(csb_v1_runtime_apply_csbwin_resume_report(
+                  &resume_profile, &summary) == 0,
+              "CSBWin resume report applies the complete runtime handoff");
+        CHECK(resume_profile.game_time == 123456u &&
+                  resume_profile.party_x == 12 &&
+                  resume_profile.party_y == 7 &&
+                  resume_profile.party_dir == 3 &&
+                  resume_profile.party_state_valid == 1 &&
+                  resume_profile.party_state.ChampionCount == 2,
+              "CSBWin resume report applies GAMEBLOCK2 and champion state");
+        CHECK(resume_profile.csbwin_runtime_item16_count == 2u &&
+                  resume_profile.csbwin_runtime_item16[0].monster_index == 0x1234u,
+              "CSBWin resume report materializes ITEM16 active-monster state");
+        CHECK(resume_profile.timeline_queue.eventCount == 3,
+              "CSBWin resume report materializes the timer queue");
+    }
 
     summary.party_facing = 4u;
+    {
+        CSB_V1_RuntimeProfile rejected_profile;
+        csb_v1_runtime_init(&rejected_profile, NULL);
+        CHECK(csb_v1_runtime_apply_csbwin_resume_report(
+                  &rejected_profile, &summary) == -1,
+              "CSBWin resume report rejects out-of-range party direction before handoff");
+        CHECK(rejected_profile.csbwin_gameblock2_summary_valid == 0 &&
+                  rejected_profile.party_state_valid == 0 &&
+                  rejected_profile.timeline_queue.eventCount == 0,
+              "CSBWin resume report invalid prevalidation leaves runtime unmodified");
+    }
     CHECK(csb_v1_runtime_apply_csbwin_champion_summaries(
               &profile, &summary) == -1,
           "CSBWin champion handoff rejects out-of-range party direction");
