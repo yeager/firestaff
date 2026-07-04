@@ -62,11 +62,11 @@ timing and inventory routes.
 
 | Game | Original (V1) | Custom (V2.0..V2.2) |
 |---|---|---|
-| **Dungeon Master (DM1)** | Playable and source-locked against the PC 3.4 lineage. v2.7.25 added 18 Group 8 bounded fixes including 2 real source-locked bug fixes (TAB-06 G0050 wound-defense, DUN-06 F0705 stairs NULL-deref) and 16 source-lock pins across F0284 cell rotation, F0150 step-delta, F0316/F0317 scent, F0192 poison resistance, BUG0_78 door-wound preserve, BUG0_16 projectile cap, F0822/F0824 explosion advance/despawn, F0830/F0831 lifecycle, F0501 party-location, F0758 potion power, and F0864 reincarnation RNG. 28 hand-drawn Latin Extended-A glyphs in M11 game-text fix 244/548 (44%) of `sv.po` msgstrs that previously rendered as SPACE. CSB launch verified end-to-end via `--scan-data` and `--game csb`. | All three Custom modes share one selectable resolution from 640x400 through 3840x2160; the filtered 2x mode is no longer locked to 640x400. Side-by-side Original/Custom seed and region manifests are in place. Full enhanced screenshot/pixel gates and broader presentation polish remain active. |
-| **Chaos Strikes Back (CSB)** | Hash-verified launch/profile boundary, real DUNGEON.DAT load, dungeon handle handoff, object-chain access, imported champion stats/load behavior, party rotation, tick accumulation, timeline dispatch, wall text, and deterministic boot-to-viewport render slices are verified. End-to-end playability, title/import UI composition, broader command queue binding, and full viewport integration are still being hardened. | All three Custom modes share the same selectable 640x400..3840x2160 resolution. Original compatibility and launch/profile separation exist. HUD overlay and smooth-movement scaffolds are covered by probes, but enhanced assets, lighting, controller ergonomics, and full side-by-side screenshot verification remain open. |
-| **Dungeon Master II: Skullkeep (DM2)** | Boot/profile, utility/import, world-state, save/load, weather, projectile-door, asset-loader, dungeon-loader, object-model, and map-state probes exist. Broader dungeon, rendering, mechanics, creature/combat, shops/NPCs, and real-runtime compatibility remain active work. | All three Custom modes share the same selectable 640x400..3840x2160 resolution. Enhanced asset, HUD, lighting/outdoor effects, smooth movement, touch/controller, and verification scaffolds are implemented. Custom remains presentation work on top of the still-active Original parity effort. |
-| **DM Nexus (Saturn)** | Saturn DMDF/DGN parsing, world/runtime state, rendering slices, save/load, actor bounds, mechanics scaffolding, and verification paths exist. Launcher/game-loop handoff with real Saturn asset-path proof and broader runtime coverage remain active. | All three Custom modes share the same selectable 640x400..3840x2160 resolution once launchable. Asset, UI, lighting, and touch/controller slices exist, and v2.8.0 added the smooth-movement tick to the Custom render pipeline. Custom compatibility lock, launch/profile separation, and full verification remain behind the Original handoff proof. |
-| **Theron's Quest** | JP/US Track 02 provenance is hash-verified. Parser, world/progression state, viewport/UI, mechanics, save/load, shop-table guards, direct hash-verified boot-profile loading, raw JP/US Track 02 bank-anchor offsets, US ISO bank-boundary signal, M11 command/tick handoff, and metadata-only runtime screenshot readiness receipts are verified. Tier 1 #5 strict boot-probe confirms JP canonical, JP extras, and US extras all reach `TQR level load` via `--data-dir`. Semantic Track 02 dungeon-table decoding, full dungeon loader parity, real `.srm` import, broader runtime playability proof, and README-eligible real screenshots remain active work. | Custom selection, settings, V2.0 filter config, V2.1 upscale, V2.2 shape/modern-asset scaffolding, and smooth movement gates are verified. Finished real PBR art, per-cell modern-art swap, enhanced UI overlays, and screenshot/material pixel gates remain active work. |
+| **Dungeon Master (DM1)** | Playable and source-locked against the PC 3.4 lineage. Current work focuses on visual parity, combat/spell edge cases, Hall of Champions reliability, save compatibility and packaged-release smoke testing. | Selectable Custom modes exist from filtered 2x through 4K-oriented presentation. They run on top of the Original runtime and remain presentation work, with screenshot/pixel gates and art polish still active. |
+| **Chaos Strikes Back (CSB)** | Hash-verified launch/profile boundary, real dungeon load, object-chain access, imported champion behavior, party rotation, timeline dispatch, wall text and deterministic boot-to-viewport slices are verified. End-to-end playability is still being hardened. | Custom mode shares the same selectable resolution path as DM1. HUD overlay, smooth movement scaffolds and runtime handoff slices exist; enhanced assets and full viewport verification remain open. |
+| **Dungeon Master II: Skullkeep (DM2)** | Boot/profile, utility/import, world-state, save/load, weather, projectile-door, asset-loader, dungeon-loader, object-model and map-state probes exist. Broader dungeon, rendering, mechanics, shops/NPCs and real-runtime compatibility remain active work. | Enhanced asset, HUD, lighting/outdoor effects, smooth movement, touch/controller and verification scaffolds are implemented. Custom remains presentation work on top of the still-active Original parity effort. |
+| **DM Nexus (Saturn)** | Saturn DMDF/DGN parsing, world/runtime state, rendering slices, save/load, actor bounds, mechanics scaffolding and verification paths exist. Launcher/game-loop handoff with real Saturn asset-path proof remains active work. | Custom selection and asset/UI/lighting scaffolds exist, but full Custom compatibility depends on the Original handoff proof. |
+| **Theron's Quest** | JP/US Track 02 provenance is hash-verified. Parser, world/progression state, viewport/UI, mechanics, save/load, shop-table guards and direct boot-profile loading have focused coverage. Full dungeon-loader parity and broader playability proof remain active work. | Custom selection, settings, filter/upscale/modern scaffolding and smooth-movement gates are verified. Finished real art, enhanced UI overlays and screenshot/material pixel gates remain active work. |
 
 ## What Firestaff Gives You
 
@@ -99,24 +99,10 @@ timing and inventory routes.
 
 **Current version:** `3.0.24`.
 
-The latest release packages the 2026-07-04 DM1 V1 hardening and DM1 V2
-readiness work after v3.0.23. It tightens source-locked runtime coverage for
-DM1 V1 spells, FUSE/FLUXCAGE, and projectile-slot guards, while keeping public
-claims conservative for broader parity and package-smoke work still being
-hardened.
-
-### v3.0.24 release highlights
-
-- **DM1 V1 runtime hardening**: F0407 FUSE/FLUXCAGE, shared F0412 magic-map
-  runtime handling, and F0811 inactive projectile-slot rejection are covered by
-  focused local gates.
-- **Hall of Champions artifact guard**: inactive compact projectile slots are
-  rejected inside the public F0811 helper as well as by M11/M10 scan guards,
-  reducing the risk of phantom fireballs or floor items.
-- **DM1 V2 readiness**: V2/V2.2 completion, runtime smoke, and finished-art
-  receipt gates were refreshed for the current source ownership.
-- **Conservative release claims**: DM1 V1 remains the strongest playable target;
-  original/pixel proof and package-smoke confirmation remain tracked work.
+Release-specific details live in
+[GitHub Releases](https://github.com/yeager/firestaff/releases/latest). The
+README keeps the stable project status, build instructions, data-scanner
+behavior and platform notes in one place instead of duplicating release notes.
 
 ## Download
 
