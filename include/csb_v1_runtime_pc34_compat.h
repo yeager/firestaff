@@ -519,6 +519,17 @@ int csb_v1_runtime_get_last_input_dispatch(
     const CSB_V1_RuntimeProfile *profile,
     struct Dm1V1InputQueueProcessResultPc34Compat *out_result);
 
+/* Trigger bounded CSB wall-ornament click sensors on a real-format wall
+ * square.  object_type is the F0032 object type in hand, or -1 for an
+ * empty-hand click.  Returns the number of queued remote square events.
+ * Source: ReDMCSB MOVESENS.C F0276 lines 1737-1785. */
+int csb_v1_runtime_trigger_wall_ornament_click(
+    CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    int cell,
+    int object_type);
+
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);
 const CSB_V1_VariantInfo *csb_v1_runtime_get_variant_info(CSB_V1_VariantId id);

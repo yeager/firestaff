@@ -211,6 +211,17 @@ static int real_format_square_offset(int x, int y)
     return x * 3 + y;
 }
 
+static void make_real_format_sensor_dungeon(CSB_V1_DungeonData *dungeon,
+                                            uint8_t *raw,
+                                            size_t raw_size,
+                                            int sensor_x,
+                                            int sensor_y,
+                                            uint8_t sensor_square,
+                                            uint16_t sensor_type_data,
+                                            uint16_t sensor_flags,
+                                            uint16_t sensor_target);
+static uint16_t make_sensor_target(int x, int y, int cell);
+
 static void make_c38_giggler_steal_fixture(CSB_V1_RuntimeProfile *profile,
                                            CSB_V1_DungeonData *dungeon,
                                            uint8_t *raw,
@@ -558,8 +569,46 @@ static void test_timeline_square_events_mutate_real_format_map_bytes(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
-    uint8_t raw[9];
+    uint8_t raw[128];
     struct DM1_TickDispatchResult_V1 dispatch;
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        0,
+        0,
+        (uint8_t)(0u << 5),
+        1u, /* C001_SENSOR_WALL_ORNAMENT_CLICK */
+        (uint16_t)(DM1_EFFECT_SET << 3),
+        make_sensor_target(1, 0, 0));
+    raw[real_format_square_offset(1, 0)] = (uint8_t)((4u << 5) | 4u);
+    test_put_le16(raw, 66, (uint16_t)(3u << 10));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile,
+              0,
+              0,
+              1,
+              -1) == 0,
+          "C001 wall ornament click ignores the wrong wall cell");
+    CHECK(profile.timeline_queue.eventCount == 0,
+          "wrong-cell wall ornament click queues no CSB square event");
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click(
+              &profile,
+              0,
+              0,
+              0,
+              -1) == 1,
+          "C001 wall ornament click queues one remote square event");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "wall ornament click stores the queued remote door event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "wall ornament click remote event dispatches on the current tick");
+    CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 3u,
+          "wall ornament click remote SET starts opening the target door");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     raw[real_format_square_offset(1, 0)] = (uint8_t)((4u << 5) | 4u);
