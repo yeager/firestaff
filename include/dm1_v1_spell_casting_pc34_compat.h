@@ -73,6 +73,7 @@ extern "C" {
 #define DM1_SPELL_KIND_POTION     1
 #define DM1_SPELL_KIND_PROJECTILE 2
 #define DM1_SPELL_KIND_OTHER      3
+#define DM1_SPELL_KIND_MAGIC_MAP  4
 
 /* ── Spell types — projectile (DEFS.H:1766) ────────────────────── */
 #define DM1_SPELL_TYPE_PROJ_OPEN_DOOR 4
@@ -92,6 +93,7 @@ extern "C" {
 #define DM1_SPELL_CAST_FAILURE             0
 #define DM1_SPELL_CAST_SUCCESS             1
 #define DM1_SPELL_CAST_FAILURE_NEEDS_FLASK 3
+#define DM1_SPELL_CAST_FAILURE_NEEDS_MAGIC_MAP DM1_SPELL_CAST_FAILURE_NEEDS_FLASK
 
 /* ── Failure message types (DEFS.H:2932-2935) ──────────────────── */
 #define DM1_FAILURE_NEEDS_MORE_PRACTICE    0

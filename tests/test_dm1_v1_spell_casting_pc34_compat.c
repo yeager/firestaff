@@ -903,6 +903,12 @@ static void test_spell_failure_feedback_metadata(void) {
     assert(flask->clearsSymbolsOnCastClick == 0);
     assert(strcmp(flask->messageBeforeSkill, " NEEDS AN EMPTY FLASK IN HAND FOR POTION.") == 0);
 
+    const DM1_SpellFailureFeedback* magicMap = dm1_spell_failureFeedback(DM1_FAILURE_NEEDS_MAGIC_MAP_IN_HAND);
+    (void)magicMap;
+    assert(magicMap != NULL);
+    assert(magicMap->clearsSymbolsOnCastClick == 0);
+    assert(strcmp(magicMap->messageBeforeSkill, " NEEDS A MAGIC MAP IN ACTION HAND FOR THIS SPELL.") == 0);
+
     assert(dm1_spell_failureFeedback(99) == NULL);
 
     printf("    PASS\n");
@@ -915,6 +921,7 @@ static void test_spell_cast_click_cleanup_predicate(void) {
     assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_FAILURE) == 1);
     assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_SUCCESS) == 1);
     assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_FAILURE_NEEDS_FLASK) == 0);
+    assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_FAILURE_NEEDS_MAGIC_MAP) == 0);
 
     printf("    PASS\n");
 }
@@ -955,6 +962,6 @@ int main(void) {
     test_spell_failure_feedback_metadata();
     test_spell_cast_click_cleanup_predicate();
 
-    printf("\nAll 29 tests PASSED.\n");
+    printf("\nAll 30 tests PASSED.\n");
     return 0;
 }
