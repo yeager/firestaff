@@ -205,6 +205,7 @@ static size_t test_build_full_csbwin_resume_fixture(uint8_t *buf,
     uint16_t character_checksum;
     uint16_t timers_checksum;
     uint16_t timer_queue_checksum;
+    size_t tail_i;
 
     if (capacity < total) return 0u;
     memset(buf, 0, total);
@@ -287,6 +288,10 @@ static size_t test_build_full_csbwin_resume_fixture(uint8_t *buf,
     test_write_le16(public_bytes, 348u - 256u, character_checksum);
     test_write_le16(public_bytes, 350u - 256u, timers_checksum);
     test_write_le16(public_bytes, 352u - 256u, timer_queue_checksum);
+    for (tail_i = 0u; tail_i < 132u; ++tail_i) {
+        public_bytes[380u - 256u + tail_i] =
+            (uint8_t)(0x40u + (tail_i & 0x3Fu));
+    }
 
     test_build_csbwin_header(buf, public_bytes);
     return off;
@@ -4884,8 +4889,10 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeProfile memory_loaded;
     CSB_V1_RuntimeProfile file_loaded;
+    CSB_V1_RuntimeProfile native_loaded;
     CSB_V1_CSBWin512BodyReport report;
     char path[512];
+    char native_path[512];
     const char *tmp_root;
 
     fixture_size = test_build_full_csbwin_resume_fixture(
@@ -4900,6 +4907,11 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
           "CSBWin export fixture verifies before runtime handoff");
     CHECK(csb_v1_runtime_apply_csbwin_resume_report(&profile, &report) == 0,
           "CSBWin export fixture applies to runtime first");
+    CHECK(profile.csbwin_header_tail_valid == 1 &&
+              profile.csbwin_header_byte22808[0] == 0x40u &&
+              profile.csbwin_header_byte22808[131] ==
+                  (uint8_t)(0x40u + (131u & 0x3Fu)),
+          "CSBWin resume stores imported GAMEBLOCK1 tail bytes in runtime");
 
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
               &profile, exported, sizeof(exported), &exported_size) == 0,
@@ -4924,6 +4936,10 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               report.timer_queue[1] < 3u &&
               report.timer_queue[2] < 3u,
           "CSBWin core export report writes bounded timer queue indexes");
+    CHECK(report.header.public_fields.csbwin_byte22808[0] == 0x40u &&
+              report.header.public_fields.csbwin_byte22808[131] ==
+                  (uint8_t)(0x40u + (131u & 0x3Fu)),
+          "CSBWin core export preserves imported GAMEBLOCK1 tail bytes");
 
     csb_v1_runtime_init(&memory_loaded, NULL);
     CHECK(csb_v1_runtime_apply_csbwin_resume_report(
@@ -4937,6 +4953,11 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               memory_loaded.csbwin_runtime_item16_count == 2u &&
               memory_loaded.timeline_queue.eventCount == 3,
           "CSBWin exported memory roundtrip restores runtime resume state");
+    CHECK(memory_loaded.csbwin_header_tail_valid == 1 &&
+              memory_loaded.csbwin_header_byte22808[0] == 0x40u &&
+              memory_loaded.csbwin_header_byte22808[131] ==
+                  (uint8_t)(0x40u + (131u & 0x3Fu)),
+          "CSBWin exported memory roundtrip keeps header-tail runtime state");
 
     exported_size = 123u;
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
@@ -4968,6 +4989,35 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               file_loaded.timeline_queue.eventCount == 3,
           "CSBWin exported file roundtrip restores champion and timer state");
     remove(path);
+
+    snprintf(native_path, sizeof(native_path),
+             "%s/firestaff_csbwin_header_tail_native_%lu_%p.fsav",
+             tmp_root, (unsigned long)fixture_size, (void *)&profile);
+    remove(native_path);
+    CHECK(csb_v1_runtime_save_game_to_path(&profile, native_path) == 0,
+          "Firestaff native CSB save writes imported CSBWin header-tail state");
+    csb_v1_runtime_init(&native_loaded, NULL);
+    CHECK(csb_v1_runtime_load_game_from_path(&native_loaded, native_path) == 0,
+          "Firestaff native CSB load restores imported CSBWin runtime state");
+    CHECK(native_loaded.csbwin_header_tail_valid == 1 &&
+              native_loaded.csbwin_header_byte22808[0] == 0x40u &&
+              native_loaded.csbwin_header_byte22808[131] ==
+                  (uint8_t)(0x40u + (131u & 0x3Fu)),
+          "Firestaff native CSB save/load preserves CSBWin header-tail bytes");
+    memset(exported, 0, sizeof(exported));
+    exported_size = 0u;
+    CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
+              &native_loaded, exported, sizeof(exported), &exported_size) == 0,
+          "CSBWin core export works after Firestaff native save/load");
+    memset(&report, 0, sizeof(report));
+    CHECK(csb_v1_csbwin_512_verify_save_body(
+              exported, exported_size, 0u, &report) ==
+              CSB_V1_CSBWIN_512_OK &&
+              report.header.public_fields.csbwin_byte22808[0] == 0x40u &&
+              report.header.public_fields.csbwin_byte22808[131] ==
+                  (uint8_t)(0x40u + (131u & 0x3Fu)),
+          "CSBWin export after native load keeps header-tail bytes");
+    remove(native_path);
 }
 
 int main(void)
