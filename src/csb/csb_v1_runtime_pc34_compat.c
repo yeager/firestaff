@@ -8156,6 +8156,140 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
     return 0;
 }
 
+int csb_v1_runtime_export_csbwin_champion_summaries(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWin512BodyReport *out_summary)
+{
+    static const int attr_to_stat[CSB_V1_STAT_COUNT] = {
+        1, /* STR -> CSBWin attribute[1] Strength */
+        2, /* DEX -> CSBWin attribute[2] Dexterity */
+        3, /* WIS -> CSBWin attribute[3] Wisdom */
+        4, /* VIT -> CSBWin attribute[4] Vitality */
+        5, /* AntiMagic -> CSBWin attribute[5] */
+        6, /* AntiFire -> CSBWin attribute[6] */
+        0  /* Luck -> CSBWin attribute[0] */
+    };
+    int champion_count;
+    int champion_index;
+
+    if (!profile || !out_summary || !profile->party_state_valid) {
+        return -1;
+    }
+
+    memset(out_summary, 0, sizeof(*out_summary));
+    champion_count = profile->party_state.ChampionCount;
+    if (champion_count < 0) champion_count = 0;
+    if (champion_count > CSB_V1_MAX_CHAMPIONS) {
+        champion_count = CSB_V1_MAX_CHAMPIONS;
+    }
+
+    /* CSBWin SaveGame.cpp:1838 writes four CHARDESC records after
+     * swapCharacterData(); CSBWin/CSB.h:2486-2597 defines the fixed field
+     * order. This export is a bounded runtime summary, not the encrypted
+     * 512-byte CSBWin file writer. */
+    out_summary->header_valid = 1;
+    out_summary->sections_verified = CSB_V1_CSBWIN_512_SECTION_COUNT;
+    out_summary->num_character = (uint16_t)champion_count;
+    out_summary->party_x = (uint16_t)(profile->party_state.PartyMapX & 0xffff);
+    out_summary->party_y = (uint16_t)(profile->party_state.PartyMapY & 0xffff);
+    out_summary->party_level = (uint16_t)(profile->party_z & 0xffff);
+    out_summary->party_facing =
+        (uint16_t)(profile->party_state.PartyDirection & 3);
+    out_summary->hand_char =
+        (profile->party_state.LeaderIndex >= 0 &&
+         profile->party_state.LeaderIndex < champion_count)
+            ? (uint16_t)profile->party_state.LeaderIndex
+            : 0xffffu;
+    out_summary->magic_caster =
+        (profile->party_state.MagicCasterIndex >= 0 &&
+         profile->party_state.MagicCasterIndex < champion_count)
+            ? (uint16_t)profile->party_state.MagicCasterIndex
+            : 0xffffu;
+
+    for (champion_index = 0; champion_index < CSB_V1_MAX_CHAMPIONS;
+         ++champion_index) {
+        const CSB_V1_Champion *src =
+            &profile->party_state.Champions[champion_index];
+        CSB_V1_CSBWin512ChampionSummary *dst =
+            &out_summary->champions[champion_index];
+        int stat_index;
+        int skill_index;
+        int slot_index;
+
+        if (champion_index >= champion_count) {
+            continue;
+        }
+
+        dst->valid = 1;
+        csb_v1_runtime_copy_csbwin_champion_text(
+            dst->name, sizeof(dst->name), src->Name);
+        csb_v1_runtime_copy_csbwin_champion_text(
+            dst->title, sizeof(dst->title), src->Title);
+        dst->word24 = src->CsbWinWord24;
+        dst->facing = (uint8_t)(src->Direction & 3u);
+        dst->char_position = (uint8_t)(src->Cell & 3u);
+        dst->byte30 = src->CsbWinByte30;
+        dst->byte31 = src->CsbWinByte31;
+        dst->attack_type = (src->ActionIndex == CSB_V1_ACTION_NONE)
+            ? -1
+            : (int8_t)src->ActionIndex;
+        dst->byte33 = src->CsbWinByte33;
+        memcpy(dst->incantation, src->Incantation, sizeof(dst->incantation));
+        dst->facing3 = src->CsbWinFacing3;
+        dst->max_recent_damage =
+            (uint8_t)(src->DirectionMaximumDamageReceived & 0xffu);
+        dst->poison_count = src->PoisonEventCount;
+        dst->ubyte43 = src->CsbWinUByte43;
+        dst->busy_timer = src->EnableActionEventIndex;
+        dst->timer_index = src->HideDamageReceivedEventIndex;
+        dst->char_flags = (int16_t)src->Attributes;
+        dst->wounds = (int16_t)src->Wounds;
+        dst->hp = src->CurrentHealth;
+        dst->max_hp = src->MaximumHealth;
+        dst->stamina = src->CurrentStamina;
+        dst->max_stamina = src->MaximumStamina;
+        dst->mana = src->CurrentMana;
+        dst->max_mana = src->MaximumMana;
+        dst->word64 = src->CsbWinWord64;
+        dst->food = src->Food;
+        dst->water = src->Water;
+        for (stat_index = 0; stat_index < CSB_V1_STAT_COUNT; ++stat_index) {
+            const int csbwin_attr = attr_to_stat[stat_index];
+            dst->attributes[csbwin_attr][0] =
+                (uint8_t)(src->Statistics[stat_index][CSB_V1_STAT_MAX] &
+                          0xffu);
+            dst->attributes[csbwin_attr][1] =
+                (uint8_t)(src->Statistics[stat_index][CSB_V1_STAT_CUR] &
+                          0xffu);
+            dst->attributes[csbwin_attr][2] =
+                (uint8_t)(src->Statistics[stat_index][CSB_V1_STAT_MIN] &
+                          0xffu);
+        }
+        if (src->SkillExperienceValid) {
+            for (skill_index = 0;
+                 skill_index < CSB_V1_FULL_SKILL_COUNT;
+                 ++skill_index) {
+                dst->skill_experience[skill_index] =
+                    src->SkillExperience[skill_index];
+                dst->skill_temp_adjust[skill_index] =
+                    src->SkillTemporaryExperience[skill_index];
+            }
+        }
+        for (slot_index = 0; slot_index < CSB_V1_SLOT_COUNT; ++slot_index) {
+            dst->possessions[slot_index] = src->Slots[slot_index];
+        }
+        dst->load = src->Load;
+        dst->shield_strength = src->ShieldStrength;
+        dst->talents = src->Talents;
+        dst->fingerprint = src->Fingerprint;
+        dst->cause_of_damage = src->CauseOfDamage;
+        dst->monster_causing_damage = src->MonsterCausingDamage;
+        memcpy(dst->portrait, src->Portrait, sizeof(dst->portrait));
+    }
+
+    return champion_count;
+}
+
 int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary)

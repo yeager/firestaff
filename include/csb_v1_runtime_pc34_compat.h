@@ -447,6 +447,9 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
 int csb_v1_runtime_apply_csbwin_champion_summaries(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
+int csb_v1_runtime_export_csbwin_champion_summaries(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWin512BodyReport *out_summary);
 int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
