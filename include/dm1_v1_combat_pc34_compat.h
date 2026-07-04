@@ -60,6 +60,14 @@ enum {
     DM1_OUTCOME_KILLED_ALL  = 2
 };
 
+/* ── Creature sizes (DEFS.H MASK0x0003_SIZE) ──────────────────────── */
+enum {
+    DM1_CREATURE_SIZE_FULL_SQUARE = 0,
+    DM1_CREATURE_SIZE_HALF_SQUARE = 1,
+    DM1_CREATURE_SIZE_QUARTER_SQUARE = 2,
+    DM1_CREATURE_SIZE_SINGLE_CENTERED = 3
+};
+
 /* -- Weapon classes / SHOOT action constants (DEFS.H / MENU.C) ------- */
 enum {
     DM1_WEAPON_CLASS_BOW_AMMUNITION = 10,

@@ -856,15 +856,40 @@ static int dm1_primary_direction_to_attacker(int partyDirection) {
     return d;
 }
 
+static int dm1_group_creature_occupies_cell_pc34(const DM1_CreatureGroup* group,
+                                                 int creatureIdx,
+                                                 int cell,
+                                                 int groupDirection) {
+    int creatureCell;
+    int queryCell;
+
+    if (!group) return 0;
+    if (creatureIdx < 0 || creatureIdx > group->count) return 0;
+
+    creatureCell = group->creatures[creatureIdx].cell & 3;
+    queryCell = cell & 3;
+
+    /* ReDMCSB GROUP.C F0176 lines 69-107: half-square creatures occupy
+     * two adjacent cells. When the group's facing parity matches the
+     * queried cell parity, the query is first moved to M020_PREVIOUS(cell),
+     * then F0176 matches either that cell or M017_NEXT(cell). */
+    if ((group->info.size & 3) == DM1_CREATURE_SIZE_HALF_SQUARE) {
+        if (((groupDirection & 1) == (queryCell & 1))) {
+            queryCell = (queryCell + 3) & 3;
+        }
+        return creatureCell == queryCell || creatureCell == ((queryCell + 1) & 3);
+    }
+
+    return creatureCell == queryCell;
+}
+
 /*
  * F0177_GROUP_GetMeleeTargetCreatureOrdinal
  * ReDMCSB GROUP.C:147 (F0177) calls F0229 + F0176 to find the creature
  * the champion should attack. v1 wires the priority through the
- * G0023_aac_Graphic562_OrderedCellsToAttack table mirror, then walks
- * the table until a creature slot is found at that cell. F0176's
- * half-square diagonal handling (MASK0x0003_SIZE) is not modelled
- * here; v1 treats every creature as a full-square occupant and so
- * uses the non-diagonal row of the table directly.
+ * G0023_aac_Graphic562_OrderedCellsToAttack table mirror, then applies
+ * F0176 cell occupancy semantics for full-square and half-square
+ * creatures before returning Firestaff's zero-based slot index.
  */
 int dm1_get_melee_target(const DM1_CreatureGroup* group, int championCell,
                          int partyDirection, int groupDirection) {
@@ -895,7 +920,7 @@ int dm1_get_melee_target(const DM1_CreatureGroup* group, int championCell,
     for (c = 0; c < 4; c++) {
         unsigned char want = row[c];
         for (i = group->count; i >= 0; i--) {
-            if (group->creatures[i].cell == (int)want) {
+            if (dm1_group_creature_occupies_cell_pc34(group, i, (int)want, groupDirection)) {
                 return i;
             }
         }
