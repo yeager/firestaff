@@ -17624,9 +17624,11 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
                                     int fbH,
-                                    int maxVisibleForward) {
+                                    int maxVisibleForward,
+                                    const M11_ViewportCell cells[3][3]) {
     size_t i;
     int flipWalls;
+    const M11_DM1WallFrontBlit* kSideBlits = kM11_DM1SideWallBlits;
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -17643,9 +17645,14 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
         if (kM11_DM1SideWallBlits[i].relForward > maxVisibleForward) {
             continue;
         }
+        if (!m11_dm1_side_lane_clear_for_rel(cells,
+                                             kSideBlits[i].relForward,
+                                             kSideBlits[i].relSide)) {
+            continue;
+        }
         if (!m11_sample_viewport_cell(state,
-                                      kM11_DM1SideWallBlits[i].relForward,
-                                      kM11_DM1SideWallBlits[i].relSide,
+                                      kSideBlits[i].relForward,
+                                      kSideBlits[i].relSide,
                                       &cell)) {
             continue;
         }
@@ -17661,8 +17668,8 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                  * and vice versa.  The paired entry is at i^1 (XOR toggles
                  * the LSB to swap even/odd = L/R partner). */
                 size_t partner = i ^ 1;
-                M11_DM1WallFrontBlit swapped = kM11_DM1SideWallBlits[i];
-                swapped.graphicIndex = kM11_DM1SideWallBlits[partner].graphicIndex;
+                M11_DM1WallFrontBlit swapped = kSideBlits[i];
+                swapped.graphicIndex = kSideBlits[partner].graphicIndex;
                 (void)m11_draw_dm1_wall_blit_flipped(state,
                                                      framebuffer,
                                                      fbW,
@@ -30918,7 +30925,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                            maxVisibleForward);
+                            maxVisibleForward, cells);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
@@ -30951,7 +30958,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         if (blockingCenterDepth > 0) {
             int nearMaxVisibleForward = blockingCenterDepth;
             m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    nearMaxVisibleForward);
+                                    nearMaxVisibleForward, cells);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                         nearMaxVisibleForward, cells);
             m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
