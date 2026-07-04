@@ -158,6 +158,25 @@ static void t_v22_material_categories(void) {
     check(field != floor, "V22 material categories: field differs from floor");
 }
 
+static void t_cell_rect_api(void) {
+    const M11_V22_CellRect* d1l = m11_v22_cell_rect(1, -1);
+    const M11_V22_CellRect* d2c = m11_v22_cell_rect(2, 0);
+    const M11_V22_CellRect* d3r = m11_v22_cell_rect(3, 1);
+    check(d1l != NULL && d1l->x == 8 && d1l->y == 103 &&
+              d1l->w == 69 && d1l->h == 30,
+          "V22 cell rect API: D1L source geometry");
+    check(d2c != NULL && d2c->x == 78 && d2c->y == 72 &&
+              d2c->w == 61 && d2c->h == 30,
+          "V22 cell rect API: D2C source geometry");
+    check(d3r != NULL && d3r->x == 139 && d3r->y == 41 &&
+              d3r->w == 69 && d3r->h == 30,
+          "V22 cell rect API: D3R source geometry");
+    check(m11_v22_cell_rect(0, 0) == NULL,
+          "V22 cell rect API: rejects depth 0");
+    check(m11_v22_cell_rect(1, 2) == NULL,
+          "V22 cell rect API: rejects lateral 2");
+}
+
 static void t_null_safe(void) {
     /* NULL framebuffer: no crash, 0 cells painted. */
     int n = m11_v22_render_overlay(NULL, 320, 200);
@@ -183,6 +202,7 @@ int main(void) {
     t_v22_placeholder_index();
     t_v22_source_palette_shadow();
     t_v22_material_categories();
+    t_cell_rect_api();
     t_null_safe();
     t_evidence();
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);

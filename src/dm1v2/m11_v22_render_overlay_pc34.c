@@ -36,24 +36,6 @@
  *   R: x = 139..208 (w=69)
  *
  * 1-pixel gaps separate cells horizontally and vertically. */
-static const M11_V22_CellRect kV22CellRects[3][3] = {
-    /* depth 0 = D1 (closest) */ {
-        {  8, 103, 69, 30 },  /* D1L */
-        { 78, 103, 61, 30 },  /* D1C */
-        {139, 103, 69, 30 }   /* D1R */
-    },
-    /* depth 1 = D2 (middle) */ {
-        {  8,  72, 69, 30 },  /* D2L */
-        { 78,  72, 61, 30 },  /* D2C */
-        {139,  72, 69, 30 }   /* D2R */
-    },
-    /* depth 2 = D3 (back) */ {
-        {  8,  41, 69, 30 },  /* D3L */
-        { 78,  41, 61, 30 },  /* D3C */
-        {139,  41, 69, 30 }   /* D3R */
-    }
-};
-
 /* Fill a horizontal span of the framebuffer with a single color. */
 static void v22_overlay_hline(unsigned char* framebuffer,
                               int fbW, int fbH,
@@ -172,7 +154,8 @@ int m11_v22_render_overlay_with_palette(unsigned char* framebuffer,
                 m11_v22_shape_cache_get(depth + 1, lateral);
             if (!r || !r->active) continue;
             {
-                const M11_V22_CellRect* rect = &kV22CellRects[depth][lateral + 1];
+                const M11_V22_CellRect* rect = m11_v22_cell_rect(depth + 1, lateral);
+                if (!rect) continue;
                 /* Placeholder fill: derive a stable material category from
                  * the V22 shape type. This keeps the no-asset fallback bound
                  * to the same source square/material classification as the
