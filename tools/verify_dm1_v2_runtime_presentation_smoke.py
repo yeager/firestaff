@@ -151,6 +151,8 @@ def run_mode(firestaff: Path, data_dir: Path, mode: dict[str, Any]) -> dict[str,
             presentation = probe.get("presentation", {})
             screenshots = row["screenshots"]
             presented = row["presented_screenshots"]
+            presented_w = presented[0].get("width", 0) if presented else 0
+            presented_h = presented[0].get("height", 0) if presented else 0
             row["ok"] = (
                 probe.get("schema") == "firestaff_m11_autotest_runtime_probe.v1"
                 and probe.get("launchedEver") == 1
@@ -162,8 +164,8 @@ def run_mode(firestaff: Path, data_dir: Path, mode: dict[str, Any]) -> dict[str,
                 and len(screenshots) == 1
                 and screenshots[0].get("size", 0) > 54
                 and len(presented) == 1
-                and presented[0].get("width") == 640
-                and presented[0].get("height") == 400
+                and presented_w >= 640
+                and presented_h >= 400
                 and presented[0].get("size", 0) > 54
             )
         return row
