@@ -982,16 +982,33 @@ int F0811_PROJECTILE_Advance_Compat(
     if (in == NULL || digest == NULL || outNewState == NULL || outResult == NULL) {
         return 0;
     }
+    memset(outResult, 0, sizeof(*outResult));
+    *outNewState = *in;
+
+    /* ReDMCSB PROJEXPL.C F0219 is entered from an active linked
+     * PROJECTILE thing.  Firestaff's runtime mirror marks such slots
+     * with reserved3; keep the public helper defensive so a zeroed
+     * compact array entry cannot become a phantom HoC fireball/item if
+     * a caller misses the outer scan guard. */
+    if (in->slotIndex < 0 || in->reserved3 == 0) {
+        outResult->resultKind = PROJECTILE_RESULT_INVALID;
+        outResult->despawn = 0;
+        outResult->newCell = in->cell;
+        outResult->newMapIndex = in->mapIndex;
+        outResult->newMapX = in->mapX;
+        outResult->newMapY = in->mapY;
+        outResult->newDirection = in->direction;
+        outResult->newKineticEnergy = in->kineticEnergy;
+        outResult->newAttack = in->attack;
+        outResult->newFirstMoveGraceFlag = in->firstMoveGraceFlag;
+        return 1;
+    }
     if (in->direction < 0 || in->direction > 3
         || in->cell < 0 || in->cell > 3) {
-        memset(outResult, 0, sizeof(*outResult));
         outResult->resultKind = PROJECTILE_RESULT_INVALID;
         outResult->despawn    = 1;
         return 0;
     }
-
-    memset(outResult, 0, sizeof(*outResult));
-    *outNewState = *in;
 
     /* Populate trivial "new*" fields up-front so non-move paths
      * still report a self-consistent state. */

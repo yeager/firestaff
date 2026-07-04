@@ -67,6 +67,7 @@ static void make_open_door_projectile(struct ProjectileInstance_Compat* p)
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode = COMBAT_ATTACK_MAGIC;
     p->flags = 0;
+    p->reserved3 = 1;
 }
 
 static void make_non_weapon_projectile(struct ProjectileInstance_Compat* p)
@@ -88,6 +89,7 @@ static void make_non_weapon_projectile(struct ProjectileInstance_Compat* p)
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode = COMBAT_ATTACK_NORMAL;
     p->flags = 0;
+    p->reserved3 = 1;
 }
 
 static void make_weapon_arrow_projectile(struct ProjectileInstance_Compat* p)
@@ -109,6 +111,7 @@ static void make_weapon_arrow_projectile(struct ProjectileInstance_Compat* p)
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode = COMBAT_ATTACK_NORMAL;
     p->flags = 0;
+    p->reserved3 = 1;
 }
 
 static void make_weapon_dagger_projectile(struct ProjectileInstance_Compat* p)
@@ -131,6 +134,7 @@ static void make_weapon_dagger_projectile(struct ProjectileInstance_Compat* p)
     p->attackTypeCode = COMBAT_ATTACK_NORMAL;
     p->flags = 0;
     p->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+    p->reserved3 = 1;
 }
 
 static void make_non_weapon_kinetic_arrow_projectile(struct ProjectileInstance_Compat* p)
