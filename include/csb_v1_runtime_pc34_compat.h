@@ -530,6 +530,16 @@ int csb_v1_runtime_trigger_wall_ornament_click(
     int cell,
     int object_type);
 
+/* Extended wall-ornament click path for source sensors that move an
+ * actual leader-hand thing, such as C013 object storage + sensor
+ * rotation.  Pass NULL to keep the legacy object_type-only behavior. */
+int csb_v1_runtime_trigger_wall_ornament_click_ex(
+    CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    int cell,
+    uint16_t *leader_hand_thing);
+
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);
 const CSB_V1_VariantInfo *csb_v1_runtime_get_variant_info(CSB_V1_VariantId id);

@@ -14264,6 +14264,7 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
     int mapX;
     int mapY;
     int queued;
+    unsigned short leaderHand;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbBootProfile) {
@@ -14287,14 +14288,20 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
     /* ReDMCSB MOVESENS.C F0276 lines 1737-1785: a C080 viewport
      * click on C05/front-wall ornament enters the CSB wall-square
      * sensor path, not the DM1 M11 world thing-list path. */
-    queued = csb_v1_runtime_trigger_wall_ornament_click(
+    leaderHand = M11_GameView_GetV1LeaderHandThing(state);
+    queued = csb_v1_runtime_trigger_wall_ornament_click_ex(
         &profile->runtime,
         mapX,
         mapY,
         0,
-        -1);
+        &leaderHand);
     if (queued <= 0) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    if (leaderHand == THING_NONE || leaderHand == THING_ENDOFLIST) {
+        M11_GameView_ClearV1LeaderHandObject(state);
+    } else {
+        (void)M11_GameView_SetV1LeaderHandObject(state, leaderHand);
     }
 
     m11_sync_csb_state_from_profile(state, profile);
