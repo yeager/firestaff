@@ -764,6 +764,160 @@ static void make_real_format_c013_storage_rotation_dungeon(
     test_put_le16(raw, 110, 8u); /* weapon/object type used by C013 data */
 }
 
+static void make_real_format_c011_rotation_dungeon(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *raw,
+    size_t raw_size)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[3] = 68;
+    dungeon->thing_type_counts[3] = 5;
+    dungeon->thing_data_bases[5] = 108;
+    dungeon->thing_type_counts[5] = 1;
+
+    raw[real_format_square_offset(0, 0)] = 0x10u;
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
+    test_put_le16(raw, 60, 0);
+    test_put_le16(raw, 66, (uint16_t)(3u << 10));
+    test_put_le16(raw, 68, (uint16_t)((3u << 10) | 4u));
+    test_put_le16(raw, 70,
+                  (uint16_t)((8u << 7) |
+                             0u));
+    test_put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 74, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 100, 0xfffeu);
+    test_put_le16(raw, 102,
+                  (uint16_t)((8u << 7) |
+                             DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE));
+    test_put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 106, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 108, 0xfffeu);
+    test_put_le16(raw, 110, 8u);
+}
+
+static void make_real_format_c012_generator_dungeon(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *raw,
+    size_t raw_size)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[3] = 68;
+    dungeon->thing_type_counts[3] = 1;
+    dungeon->thing_data_bases[5] = 76;
+    dungeon->thing_type_counts[5] = 1;
+
+    raw[real_format_square_offset(0, 0)] = 0x10u;
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
+    test_put_le16(raw, 60, 0);
+    test_put_le16(raw, 66, (uint16_t)(3u << 10));
+    test_put_le16(raw, 68, 0xfffeu);
+    test_put_le16(raw, 70,
+                  (uint16_t)((51u << 7) |
+                             DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE));
+    test_put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 74, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 76, 0xffffu);
+    test_put_le16(raw, 78, 0u);
+}
+
+static void make_real_format_c016_exchange_dungeon(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *raw,
+    size_t raw_size)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[3] = 68;
+    dungeon->thing_type_counts[3] = 1;
+    dungeon->thing_data_bases[5] = 76;
+    dungeon->thing_type_counts[5] = 2;
+
+    raw[real_format_square_offset(0, 0)] = 0x10u;
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
+    test_put_le16(raw, 60, 0);
+    test_put_le16(raw, 66, (uint16_t)(3u << 10));
+    test_put_le16(raw, 68, (uint16_t)(5u << 10));
+    test_put_le16(raw, 70,
+                  (uint16_t)((8u << 7) |
+                             DM1_SENSOR_WALL_OBJECT_EXCHANGER));
+    test_put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 74, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 76, 0xfffeu);
+    test_put_le16(raw, 78, 12u);
+    test_put_le16(raw, 80, 0xfffeu);
+    test_put_le16(raw, 82, 8u);
+}
+
+static void make_real_format_c017_remove_sensor_dungeon(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *raw,
+    size_t raw_size)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[3] = 68;
+    dungeon->thing_type_counts[3] = 5;
+    dungeon->thing_data_bases[5] = 108;
+    dungeon->thing_type_counts[5] = 1;
+
+    raw[real_format_square_offset(0, 0)] = 0x10u;
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
+    test_put_le16(raw, 60, 0);
+    test_put_le16(raw, 66, (uint16_t)((3u << 10) | 1u));
+    test_put_le16(raw, 76, (uint16_t)((3u << 10) | 4u));
+    test_put_le16(raw, 78,
+                  (uint16_t)((8u << 7) |
+                             DM1_SENSOR_WALL_ORNAMENT_CLICK));
+    test_put_le16(raw, 80, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 82, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 100, 0xfffeu);
+    test_put_le16(raw, 102,
+                  (uint16_t)((8u << 7) |
+                             DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR));
+    test_put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 106, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 108, 0xfffeu);
+    test_put_le16(raw, 110, 8u);
+}
+
 static void make_real_format_wall_text_dungeon(CSB_V1_DungeonData *dungeon,
                                                uint8_t *raw,
                                                size_t raw_size,
@@ -2961,6 +3115,107 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
                   test_get_le16(raw, 100) == (uint16_t)(5u << 10) &&
                   test_get_le16(raw, 68) == (uint16_t)((3u << 10) | 4u),
               "C013 wall storage deposit links the object back into the wall cell");
+    }
+
+    make_real_format_c011_rotation_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        uint16_t leader_hand = (uint16_t)(5u << 10);
+        CHECK(csb_v1_runtime_trigger_wall_ornament_click_ex(
+                  &profile,
+                  0,
+                  0,
+                  0,
+                  &leader_hand) == 1,
+              "C011 wall click removed-rotate queues one remote square event");
+        CHECK(leader_hand == 0xffffu,
+              "C011 wall click removed-rotate clears the matching leader hand");
+        CHECK(test_get_le16(raw, 66) == (uint16_t)((3u << 10) | 4u) &&
+                  test_get_le16(raw, 100) == (uint16_t)(3u << 10) &&
+                  test_get_le16(raw, 68) == 0xfffeu,
+              "C011 wall click removed-rotate applies same-cell sensor rotation");
+        CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+              "C011 remote fakewall event fires on the current tick");
+        CHECK((raw[real_format_square_offset(2, 0)] & 0x04u) != 0,
+              "C011 remote event opens the target fakewall");
+    }
+
+    make_real_format_c012_generator_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        uint16_t leader_hand = 0xffffu;
+        CHECK(csb_v1_runtime_trigger_wall_ornament_click_ex(
+                  &profile,
+                  0,
+                  0,
+                  0,
+                  &leader_hand) == 1,
+              "C012 wall object generator queues one remote square event");
+        CHECK(leader_hand == (uint16_t)(5u << 10),
+              "C012 wall object generator places allocated object in leader hand");
+        CHECK(test_get_le16(raw, 76) == 0xfffeu &&
+                  test_get_le16(raw, 78) == 27u,
+              "C012 wall object generator materializes the bounded F0167 arrow object");
+    }
+
+    make_real_format_c016_exchange_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        uint16_t leader_hand = (uint16_t)((5u << 10) | 1u);
+        CHECK(csb_v1_runtime_trigger_wall_ornament_click_ex(
+                  &profile,
+                  0,
+                  0,
+                  0,
+                  &leader_hand) == 1,
+              "C016 wall object exchanger queues one remote square event");
+        CHECK(leader_hand == (uint16_t)(5u << 10),
+              "C016 wall object exchanger moves the old square object into leader hand");
+        CHECK(test_get_le16(raw, 68) == (uint16_t)((5u << 10) | 1u) &&
+                  test_get_le16(raw, 80) == 0xfffeu,
+              "C016 wall object exchanger links the old leader object into the wall square");
+    }
+
+    make_real_format_c017_remove_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        uint16_t leader_hand = (uint16_t)(5u << 10);
+        CHECK(csb_v1_runtime_trigger_wall_ornament_click_ex(
+                  &profile,
+                  0,
+                  0,
+                  0,
+                  &leader_hand) == 1,
+              "C017 wall click removed-remove-sensor queues one remote square event");
+        CHECK(leader_hand == 0xffffu,
+              "C017 wall click removed-remove-sensor clears the matching leader hand");
+        CHECK(test_get_le16(raw, 76) == 0xfffeu &&
+                  test_get_le16(raw, 100) == 0xffffu,
+              "C017 wall click removed-remove-sensor unlinks and marks the sensor unused");
+        CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+              "C017 remote fakewall event fires on the current tick");
+        CHECK((raw[real_format_square_offset(2, 0)] & 0x04u) != 0,
+              "C017 remote event opens the target fakewall");
     }
 
     make_real_format_sensor_dungeon(

@@ -5147,6 +5147,107 @@ static int csb_v1_runtime_find_wall_cell_object_of_type(
     return 0;
 }
 
+static int csb_v1_runtime_find_first_square_object(
+    const CSB_V1_DungeonData *dungeon,
+    int first_thing,
+    uint16_t *out_thing)
+{
+    int thing = first_thing;
+    int guard;
+
+    if (out_thing) *out_thing = 0xFFFFu;
+    if (!dungeon) return 0;
+    for (guard = 0;
+         guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        int thing_type;
+        const uint8_t *record = csb_v1_dungeon_get_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            NULL,
+            NULL);
+        if (!record) break;
+        if (thing_type > 4 && thing_type < 14) {
+            if (out_thing) *out_thing = (uint16_t)thing;
+            return 1;
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_has_later_wall_cell_sensor(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    int cell)
+{
+    int guard;
+
+    if (!dungeon || thing == 0xFFFEu || thing == 0xFFFFu) return 0;
+    thing = csb_v1_runtime_sensor_next_thing(dungeon, thing);
+    for (guard = 0;
+         guard < 128 && thing != 0xFFFEu && thing != 0xFFFFu;
+         ++guard) {
+        int thing_type;
+        const uint8_t *record = csb_v1_dungeon_get_thing_record(
+            dungeon,
+            thing,
+            &thing_type,
+            NULL,
+            NULL);
+        if (!record || thing_type >= 4) break;
+        if (thing_type == 3 && ((thing & 3) == (uint16_t)(cell & 3))) {
+            return 1;
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, thing);
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_remove_wall_sensor_after_previous(
+    CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y,
+    uint16_t previous_thing,
+    uint16_t sensor_thing)
+{
+    uint8_t *previous_record;
+    uint8_t *sensor_record;
+    uint16_t next_thing;
+    int previous_size;
+    int sensor_type;
+    int sensor_size;
+
+    if (!dungeon || previous_thing == sensor_thing ||
+        sensor_thing == 0xFFFEu || sensor_thing == 0xFFFFu) {
+        return 0;
+    }
+    previous_record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        previous_thing,
+        NULL,
+        &previous_size);
+    sensor_record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        sensor_thing,
+        &sensor_type,
+        &sensor_size);
+    if (!previous_record || previous_size < 2 ||
+        !sensor_record || sensor_size < 2 ||
+        sensor_type != 3) {
+        return 0;
+    }
+    (void)level;
+    (void)map_x;
+    (void)map_y;
+    next_thing = csb_v1_runtime_read_u16(sensor_record);
+    csb_v1_runtime_write_u16(previous_record, next_thing);
+    csb_v1_runtime_write_u16(sensor_record, 0xFFFFu);
+    return 1;
+}
+
 static int csb_v1_runtime_rotate_wall_cell_sensors(
     CSB_V1_DungeonData *dungeon,
     int level,
@@ -5252,6 +5353,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
     CSB_V1_DungeonData *dungeon;
     int first_thing;
     int thing;
+    int previous_thing;
     int guard;
     int queued = 0;
     uint16_t hand_thing = 0xFFFFu;
@@ -5289,6 +5391,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
     /* ReDMCSB: MOVESENS.C F0275/F0276 handles wall ornament clicks by
      * matching the clicked cell, resolving Revert/HOLD, applying local
      * storage/rotation side effects, then calling F0272_SENSOR_TriggerEffect. */
+    previous_thing = first_thing;
     thing = first_thing;
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
          ++guard) {
@@ -5312,8 +5415,12 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         int scan;
         int scan_guard;
         uint16_t storage_thing = 0xFFFFu;
+        uint16_t square_thing = 0xFFFFu;
+        uint16_t generated_thing = 0xFFFFu;
         int storage_action = 0;
         int do_not_trigger = 0;
+        int rotate_after = 0;
+        int remove_current_sensor = 0;
 
         record = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -5323,11 +5430,13 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         if (!record) break;
         if (thing_type >= 4) break;
         if (thing_type != 3 || thing_size < 8) {
+            previous_thing = thing;
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
         sensor_cell = thing & 3;
         if (sensor_cell != (cell & 3)) {
+            previous_thing = thing;
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
@@ -5379,6 +5488,39 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                        !different_type_present &&
                        sensor_data != object_type) ? 1 : 0;
             break;
+        case DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED:
+        case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE:
+        case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR:
+            if (!leader_hand_thing ||
+                csb_v1_runtime_has_later_wall_cell_sensor(
+                    dungeon,
+                    (uint16_t)thing,
+                    cell)) {
+                trigger = 0;
+                break;
+            }
+            trigger = (object_type >= 0 && sensor_data == object_type) ? 1 : 0;
+            if (sensor_type == DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE) {
+                rotate_after = 1;
+            } else if (sensor_type ==
+                       DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR) {
+                remove_current_sensor = 1;
+            }
+            storage_action = 3;
+            break;
+        case DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE:
+            if (!leader_hand_thing ||
+                csb_v1_runtime_has_later_wall_cell_sensor(
+                    dungeon,
+                    (uint16_t)thing,
+                    cell)) {
+                trigger = 0;
+                break;
+            }
+            trigger = (object_type < 0) ? 1 : 0;
+            if (trigger) rotate_after = 1;
+            storage_action = 4;
+            break;
         case DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE:
             if (!leader_hand_thing) {
                 trigger = 0;
@@ -5412,6 +5554,26 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             }
             trigger = 1;
             break;
+        case DM1_SENSOR_WALL_OBJECT_EXCHANGER:
+            if (!leader_hand_thing ||
+                csb_v1_runtime_has_later_wall_cell_sensor(
+                    dungeon,
+                    (uint16_t)thing,
+                    cell)) {
+                trigger = 0;
+                break;
+            }
+            if (object_type != sensor_data ||
+                !csb_v1_runtime_find_first_square_object(
+                    dungeon,
+                    first_thing,
+                    &square_thing)) {
+                trigger = 0;
+                break;
+            }
+            storage_action = 5;
+            trigger = 1;
+            break;
         default:
             trigger = 0;
             break;
@@ -5424,10 +5586,12 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         if (sensor_effect == DM1_EFFECT_HOLD) {
             sensor_effect = do_not_trigger ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
         } else if (!trigger || do_not_trigger) {
+            previous_thing = thing;
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
         if (!trigger) {
+            previous_thing = thing;
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;
         }
@@ -5439,33 +5603,106 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                     profile->current_level,
                     map_x,
                     map_y)) {
+                previous_thing = thing;
                 thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
                 continue;
             }
             *leader_hand_thing = storage_thing;
             object_type = sensor_data;
         } else if (storage_action == 2) {
-            uint16_t stored_thing = (uint16_t)((hand_thing & 0x3FFFu) |
-                                              (uint16_t)((cell & 3) << 14));
+            uint16_t stored_thing = csb_v1_runtime_thing_with_cell(
+                (hand_thing >> 10) & 0x0F,
+                hand_thing & 0x03FFu,
+                cell);
             if (!csb_v1_runtime_append_thing_to_square_tail(
                     dungeon,
                     stored_thing,
                     profile->current_level,
                     map_x,
                     map_y)) {
+                previous_thing = thing;
                 thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
                 continue;
             }
             *leader_hand_thing = 0xFFFFu;
             object_type = -1;
+        } else if (storage_action == 3) {
+            uint8_t *hand_record = csb_v1_runtime_mutable_thing_record(
+                dungeon,
+                hand_thing,
+                NULL,
+                NULL);
+            if (!hand_record) {
+                previous_thing = thing;
+                thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+                continue;
+            }
+            csb_v1_runtime_write_u16(hand_record, 0xFFFFu);
+            *leader_hand_thing = 0xFFFFu;
+            object_type = -1;
+        } else if (storage_action == 4) {
+            generated_thing = csb_v1_runtime_allocate_new_object_launcher_thing(
+                dungeon,
+                sensor_data);
+            if (generated_thing != 0xFFFFu && generated_thing != 0xFFFEu) {
+                *leader_hand_thing = generated_thing;
+                object_type = csb_v1_runtime_object_type_from_thing(
+                    dungeon,
+                    generated_thing);
+            }
+        } else if (storage_action == 5) {
+            uint16_t stored_thing;
+            if (!csb_v1_runtime_unlink_thing_from_square(
+                    dungeon,
+                    square_thing,
+                    profile->current_level,
+                    map_x,
+                    map_y)) {
+                previous_thing = thing;
+                thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+                continue;
+            }
+            stored_thing = csb_v1_runtime_thing_with_cell(
+                (hand_thing >> 10) & 0x0F,
+                hand_thing & 0x03FFu,
+                cell);
+            if (!csb_v1_runtime_append_thing_to_square_tail(
+                    dungeon,
+                    stored_thing,
+                    profile->current_level,
+                    map_x,
+                    map_y)) {
+                (void)csb_v1_runtime_append_thing_to_square_tail(
+                    dungeon,
+                    square_thing,
+                    profile->current_level,
+                    map_x,
+                    map_y);
+                previous_thing = thing;
+                thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+                continue;
+            }
+            *leader_hand_thing = square_thing;
+            object_type = csb_v1_runtime_object_type_from_thing(
+                dungeon,
+                square_thing);
         }
-        if (storage_action) {
+        if (storage_action == 1 || storage_action == 2 || rotate_after) {
             (void)csb_v1_runtime_rotate_wall_cell_sensors(
                 dungeon,
                 profile->current_level,
                 map_x,
                 map_y,
                 cell);
+        }
+        if (remove_current_sensor) {
+            (void)csb_v1_runtime_remove_wall_sensor_after_previous(
+                dungeon,
+                profile->current_level,
+                map_x,
+                map_y,
+                (uint16_t)previous_thing,
+                (uint16_t)thing);
         }
 
         target_cell = (int)((target_word >> 4) & 0x03u);
