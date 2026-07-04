@@ -4510,6 +4510,80 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.party_state.Champions[1].CurrentHealth == 111 &&
               profile.party_state.Champions[1].MaximumHealth == 222,
           "CSBWin champion handoff copies the second active champion");
+    {
+        CSB_V1_CSBWin512BodyReport exported;
+        memset(&exported, 0, sizeof(exported));
+        CHECK(csb_v1_runtime_export_csbwin_champion_summaries(
+                  &profile, &exported) == 2,
+              "CSBWin champion export writes active CHARDESC summaries");
+        CHECK(exported.header_valid == 1 &&
+                  exported.sections_verified ==
+                      CSB_V1_CSBWIN_512_SECTION_COUNT &&
+                  exported.num_character == 2u &&
+                  exported.party_x == 12u &&
+                  exported.party_y == 7u &&
+                  exported.party_level == 4u &&
+                  exported.party_facing == 3u &&
+                  exported.hand_char == 1u &&
+                  exported.magic_caster == 0u,
+              "CSBWin champion export writes GAMEBLOCK2 party metadata summary");
+        CHECK(exported.champions[0].valid == 1 &&
+                  strcmp(exported.champions[0].name, "TIGGY") == 0 &&
+                  strcmp(exported.champions[0].title, "APPRENTICE") == 0 &&
+                  exported.champions[0].hp == 321 &&
+                  exported.champions[0].max_hp == 456 &&
+                  exported.champions[0].stamina == 1234 &&
+                  exported.champions[0].max_stamina == 2345 &&
+                  exported.champions[0].mana == 67 &&
+                  exported.champions[0].max_mana == 89,
+              "CSBWin champion export preserves identity and vitals");
+        CHECK(exported.champions[0].attributes[1][0] == 91u &&
+                  exported.champions[0].attributes[1][1] == 51u &&
+                  exported.champions[0].attributes[1][2] == 11u &&
+                  exported.champions[0].attributes[0][0] == 90u &&
+                  exported.champions[0].attributes[0][1] == 50u &&
+                  exported.champions[0].attributes[0][2] == 10u,
+              "CSBWin champion export maps Firestaff stats back to ATTRIBUTE max/current/min");
+        CHECK(exported.champions[0].skill_experience[7] == 8000u &&
+                  exported.champions[0].skill_temp_adjust[7] == 1000,
+              "CSBWin champion export preserves imported full skill XP state");
+        CHECK(exported.champions[0].possessions[0] == 0x2200u &&
+                  exported.champions[0].possessions[1] == 0x2201u &&
+                  exported.champions[0].portrait[0] == 0xA0u &&
+                  exported.champions[0].portrait[463] == 0xA1u,
+              "CSBWin champion export preserves slots and portrait bytes");
+        CHECK(exported.champions[0].word24 == 0x2468 &&
+                  exported.champions[0].facing == 2u &&
+                  exported.champions[0].char_position == 3u &&
+                  exported.champions[0].byte30 == 0x30u &&
+                  exported.champions[0].byte31 == 0x31u &&
+                  exported.champions[0].attack_type == 5 &&
+                  exported.champions[0].byte33 == 0x33 &&
+                  exported.champions[0].incantation[0] == 96 &&
+                  exported.champions[0].incantation[3] == 114 &&
+                  exported.champions[0].facing3 == 1u &&
+                  exported.champions[0].max_recent_damage == 23u &&
+                  exported.champions[0].poison_count == 4u &&
+                  exported.champions[0].ubyte43 == 0x43u &&
+                  exported.champions[0].busy_timer == -16 &&
+                  exported.champions[0].timer_index == 17,
+              "CSBWin champion export preserves action/body/timer bytes");
+        CHECK(exported.champions[0].char_flags == 0x1234 &&
+                  exported.champions[0].wounds == 0x00A5 &&
+                  exported.champions[0].food == 1500 &&
+                  exported.champions[0].water == 1600 &&
+                  exported.champions[0].load == 777u &&
+                  exported.champions[0].shield_strength == 88u &&
+                  exported.champions[0].talents == 0xCAFEBABEu &&
+                  exported.champions[0].fingerprint == 0xBEEFu &&
+                  exported.champions[0].cause_of_damage == 0x0042u &&
+                  exported.champions[0].monster_causing_damage == 0x0055u &&
+                  exported.champions[0].word64 == -7,
+              "CSBWin champion export preserves status and body metadata");
+        CHECK(exported.champions[2].valid == 0 &&
+                  exported.champions[3].valid == 0,
+              "CSBWin champion export clears inactive CHARDESC slots");
+    }
     CHECK(csb_v1_runtime_apply_csbwin_body_runtime_summaries(
               &profile, &summary) == 0,
           "CSBWin decoded body summaries apply to runtime preservation fields");
