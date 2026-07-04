@@ -3418,6 +3418,36 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
               "C013 wall storage deposit links the object back into the wall cell");
     }
 
+    make_real_format_c013_storage_rotation_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.party_state_valid = 1;
+    profile.party_state.LeaderHandThing = 0xffffu;
+    profile.csbwin_gameblock2_summary_valid = 1;
+    profile.csbwin_object_in_hand = 0xffffu;
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile,
+              0,
+              0,
+              0) == 1,
+          "C013 runtime-hand pickup queues one remote square event");
+    CHECK(profile.party_state.LeaderHandThing == (uint16_t)(5u << 10) &&
+              profile.csbwin_object_in_hand == profile.party_state.LeaderHandThing,
+          "C013 runtime-hand pickup writes the live CSB party hand");
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile,
+              0,
+              0,
+              0) == 1,
+          "C013 runtime-hand deposit queues one remote square event");
+    CHECK(profile.party_state.LeaderHandThing == 0xffffu &&
+              profile.csbwin_object_in_hand == 0xffffu,
+          "C013 runtime-hand deposit clears the live CSB party hand");
+
     make_real_format_c011_rotation_dungeon(
         &dungeon,
         raw,
