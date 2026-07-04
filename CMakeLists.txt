@@ -14567,6 +14567,18 @@ if(BUILD_TESTING)
         NAME dm1_v1_combat_damage_source_lock
         COMMAND test_dm1_v1_combat_pc34_compat_integration
     )
+
+    add_executable(test_dm1_v1_melee_target_half_square_pc34_compat
+        tests/test_dm1_v1_melee_target_half_square_pc34_compat.c
+        src/dm1/dm1_v1_combat_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_melee_target_half_square_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_melee_target_half_square_pc34_compat
+        COMMAND test_dm1_v1_melee_target_half_square_pc34_compat
+    )
 endif()
 
 # ── Install rules ────────────────────────────────────────────────────
