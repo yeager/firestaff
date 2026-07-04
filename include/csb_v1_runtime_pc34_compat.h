@@ -265,6 +265,31 @@ typedef struct {
     uint16_t                csbwin_party_move_disable_timer;
     uint16_t                csbwin_word11712;
     uint16_t                csbwin_word11714;
+    int                     csbwin_body_runtime_summary_valid;
+    int16_t                 csbwin_character_tail_brightness;
+    uint8_t                 csbwin_character_tail_see_thru_walls;
+    uint8_t                 csbwin_character_tail_magic_footprints_active;
+    int16_t                 csbwin_character_tail_party_shield;
+    int16_t                 csbwin_character_tail_fire_shield;
+    int16_t                 csbwin_character_tail_spell_shield;
+    uint8_t                 csbwin_character_tail_num_footprint_entries;
+    uint8_t                 csbwin_character_tail_freeze_life_timer;
+    uint8_t                 csbwin_character_tail_first_magic_footprint;
+    uint8_t                 csbwin_character_tail_last_magic_footprint;
+    uint16_t                csbwin_character_tail_party_footprints[24];
+    uint8_t                 csbwin_character_tail_byte13220[24];
+    uint8_t                 csbwin_character_tail_invisible;
+    uint16_t                csbwin_item16_summary_count;
+    uint16_t                csbwin_item16_summary_total;
+    CSB_V1_CSBWin512Item16Summary
+                            csbwin_item16[CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
+    uint16_t                csbwin_timer_summary_count;
+    uint16_t                csbwin_timer_summary_total;
+    CSB_V1_CSBWin512TimerSummary
+                            csbwin_timers[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES];
+    uint16_t                csbwin_timer_queue_summary_count;
+    uint16_t                csbwin_timer_queue_summary_total;
+    uint16_t                csbwin_timer_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
     struct DM1_EventQueue_V1 timeline_queue;  /* ReDMCSB TIMELINE.C heap */
     struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
     uint32_t                timeline_dispatch_count;
@@ -390,6 +415,9 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
 int csb_v1_runtime_apply_csbwin_champion_summaries(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512BodyReport *summary);
+int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,

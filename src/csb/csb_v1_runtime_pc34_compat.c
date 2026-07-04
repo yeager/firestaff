@@ -8085,6 +8085,77 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
     return 0;
 }
 
+int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512BodyReport *summary)
+{
+    if (!profile || !summary || !summary->header_valid ||
+        summary->sections_verified < CSB_V1_CSBWIN_512_SECTION_COUNT ||
+        summary->item16_summary_count >
+            CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES ||
+        summary->timer_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        summary->timer_queue_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES) {
+        return -1;
+    }
+
+    /* CSBWin SaveGame.cpp:535-543 swapCharacterData() and
+     * SaveGame.cpp:1822-1855 body load restore character-tail spell state,
+     * ITEM16 active-monster records, timers, and timer queue after the
+     * GAMEBLOCK2 handoff. This runtime step is intentionally still a
+     * bounded summary copy: it preserves verified decoded state for startup
+     * resume while the full event/item materialization remains separate. */
+    profile->csbwin_body_runtime_summary_valid = 1;
+    profile->csbwin_character_tail_brightness =
+        summary->character_tail_brightness;
+    profile->csbwin_character_tail_see_thru_walls =
+        summary->character_tail_see_thru_walls;
+    profile->csbwin_character_tail_magic_footprints_active =
+        summary->character_tail_magic_footprints_active;
+    profile->csbwin_character_tail_party_shield =
+        summary->character_tail_party_shield;
+    profile->csbwin_character_tail_fire_shield =
+        summary->character_tail_fire_shield;
+    profile->csbwin_character_tail_spell_shield =
+        summary->character_tail_spell_shield;
+    profile->csbwin_character_tail_num_footprint_entries =
+        summary->character_tail_num_footprint_entries;
+    profile->csbwin_character_tail_freeze_life_timer =
+        summary->character_tail_freeze_life_timer;
+    profile->csbwin_character_tail_first_magic_footprint =
+        summary->character_tail_first_magic_footprint;
+    profile->csbwin_character_tail_last_magic_footprint =
+        summary->character_tail_last_magic_footprint;
+    memcpy(profile->csbwin_character_tail_party_footprints,
+           summary->character_tail_party_footprints,
+           sizeof(profile->csbwin_character_tail_party_footprints));
+    memcpy(profile->csbwin_character_tail_byte13220,
+           summary->character_tail_byte13220,
+           sizeof(profile->csbwin_character_tail_byte13220));
+    profile->csbwin_character_tail_invisible =
+        summary->character_tail_invisible;
+
+    profile->csbwin_item16_summary_count = summary->item16_summary_count;
+    profile->csbwin_item16_summary_total = summary->item16_summary_total;
+    memcpy(profile->csbwin_item16,
+           summary->item16,
+           sizeof(profile->csbwin_item16));
+    profile->csbwin_timer_summary_count = summary->timer_summary_count;
+    profile->csbwin_timer_summary_total = summary->timer_summary_total;
+    memcpy(profile->csbwin_timers,
+           summary->timers,
+           sizeof(profile->csbwin_timers));
+    profile->csbwin_timer_queue_summary_count =
+        summary->timer_queue_summary_count;
+    profile->csbwin_timer_queue_summary_total =
+        summary->timer_queue_summary_total;
+    memcpy(profile->csbwin_timer_queue,
+           summary->timer_queue,
+           sizeof(profile->csbwin_timer_queue));
+    return 0;
+}
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index)
 {

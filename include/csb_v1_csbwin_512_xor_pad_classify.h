@@ -111,6 +111,9 @@ extern "C" {
  * loop and the 128-word second-half unscramble can run without
  * bounds traps. */
 #define CSB_V1_CSBWIN_BLOCK1_BYTES  512u
+#define CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES 64u
+#define CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES 64u
+#define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 64u
 
 /* The two documented scramble keys. CSBWin/Chaos.cpp:2357 tries
  * CSB_KEY first, then DM_KEY on UnscrambleBlock1 returning 0.
@@ -300,6 +303,37 @@ typedef struct {
 } CSB_V1_CSBWin512ChampionSummary;
 
 typedef struct {
+    int valid;
+    int truncated;
+    uint16_t monster_index;
+    uint8_t facings;
+    uint8_t positions;
+    uint8_t ubyte4;
+    uint8_t ubyte5;
+    uint8_t target_x;
+    uint8_t target_y;
+    uint8_t previous_x;
+    uint8_t previous_y;
+    uint8_t current_x;
+    uint8_t current_y;
+    uint8_t single_monster_status[4];
+} CSB_V1_CSBWin512Item16Summary;
+
+typedef struct {
+    int valid;
+    int truncated;
+    uint32_t time;
+    uint8_t function;
+    uint8_t ubyte5;
+    uint8_t ubyte6;
+    uint8_t ubyte7;
+    uint8_t ubyte8;
+    uint8_t ubyte9;
+    uint16_t sequence;
+    uint8_t level;
+} CSB_V1_CSBWin512TimerSummary;
+
+typedef struct {
     CSB_V1_CSBWin512Report header;
     int header_valid;
     uint16_t timer_record_size;
@@ -329,6 +363,30 @@ typedef struct {
     CSB_V1_CSBWin512BodySectionReport
         sections[CSB_V1_CSBWIN_512_SECTION_COUNT];
     CSB_V1_CSBWin512ChampionSummary champions[4];
+    int16_t character_tail_brightness;
+    uint8_t character_tail_see_thru_walls;
+    uint8_t character_tail_magic_footprints_active;
+    int16_t character_tail_party_shield;
+    int16_t character_tail_fire_shield;
+    int16_t character_tail_spell_shield;
+    uint8_t character_tail_num_footprint_entries;
+    uint8_t character_tail_freeze_life_timer;
+    uint8_t character_tail_first_magic_footprint;
+    uint8_t character_tail_last_magic_footprint;
+    uint16_t character_tail_party_footprints[24];
+    uint8_t character_tail_byte13220[24];
+    uint8_t character_tail_invisible;
+    uint16_t item16_summary_count;
+    uint16_t item16_summary_total;
+    CSB_V1_CSBWin512Item16Summary
+        item16[CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
+    uint16_t timer_summary_count;
+    uint16_t timer_summary_total;
+    CSB_V1_CSBWin512TimerSummary
+        timers[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES];
+    uint16_t timer_queue_summary_count;
+    uint16_t timer_queue_summary_total;
+    uint16_t timer_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
 } CSB_V1_CSBWin512BodyReport;
 
 /* ── Public API ──────────────────────────────────────────────────────── */
