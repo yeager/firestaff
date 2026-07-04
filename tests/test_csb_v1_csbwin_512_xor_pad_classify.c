@@ -952,9 +952,14 @@ static int test_writable_header_roundtrip(void)
 {
     uint8_t original[8192];
     uint8_t rebuilt[8192];
+    uint8_t decoded_item16[1024];
+    uint8_t decoded_timers[1024];
+    uint8_t decoded_timer_queue[128];
     CSB_V1_CSBWin512BodyReport report;
     CSB_V1_CSBWin512BodyReport roundtrip;
+    CSB_V1_CSBWin512BodyReport truncated;
     CSB_V1_CSBWin512WritableChampionSections writable;
+    CSB_V1_CSBWin512WritableRuntimeSections runtime;
     CSB_V1_CSBWin512WritableHeader header;
     CSB_V1_CSBWin512Report header_report;
     int rc;
@@ -967,6 +972,61 @@ static int test_writable_header_roundtrip(void)
     rc = csb_v1_csbwin_512_build_writable_champion_sections(
         &report, &writable);
     ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    rc = csb_v1_csbwin_512_build_writable_runtime_sections(
+        &report, &runtime);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(runtime.item16_hash == 0u);
+    ASSERT_TRUE(runtime.timers_hash == 0u);
+    ASSERT_TRUE(runtime.timer_queue_hash == 0u);
+    ASSERT_TRUE(runtime.item16_size == 32u);
+    ASSERT_TRUE(runtime.timers_size == 48u);
+    ASSERT_TRUE(runtime.timer_queue_size == 6u);
+    ASSERT_TRUE(runtime.item16_checksum != 0u);
+    ASSERT_TRUE(runtime.timers_checksum != 0u);
+    ASSERT_TRUE(runtime.timer_queue_checksum != 0u);
+
+    rc = csb_v1_csbwin_512_decode_stream_section(
+        runtime.item16_scrambled,
+        runtime.item16_size,
+        runtime.item16_hash,
+        runtime.item16_checksum,
+        decoded_item16,
+        sizeof(decoded_item16));
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(read_le16(decoded_item16, 0u) == 0x1234u);
+    ASSERT_TRUE(decoded_item16[2u] == 0x20u);
+    ASSERT_TRUE(decoded_item16[15u] == 0x2Du);
+    ASSERT_TRUE(read_le16(decoded_item16, 16u) == 0x5678u);
+    ASSERT_TRUE(decoded_item16[18u] == 0x40u);
+    ASSERT_TRUE(decoded_item16[31u] == 0x4Du);
+
+    rc = csb_v1_csbwin_512_decode_stream_section(
+        runtime.timers_scrambled,
+        runtime.timers_size,
+        runtime.timers_hash,
+        runtime.timers_checksum,
+        decoded_timers,
+        sizeof(decoded_timers));
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(read_le32(decoded_timers, 0u) == 0x01020304u);
+    ASSERT_TRUE(decoded_timers[4u] == 70u);
+    ASSERT_TRUE(read_le16(decoded_timers, 10u) == 0x2222u);
+    ASSERT_TRUE(decoded_timers[12u] == 5u);
+    ASSERT_TRUE(read_le32(decoded_timers, 32u) == 0x21222324u);
+    ASSERT_TRUE(decoded_timers[36u] == 49u);
+    ASSERT_TRUE(read_le16(decoded_timers, 42u) == 0x4444u);
+
+    rc = csb_v1_csbwin_512_decode_stream_section(
+        runtime.timer_queue_scrambled,
+        runtime.timer_queue_size,
+        runtime.timer_queue_hash,
+        runtime.timer_queue_checksum,
+        decoded_timer_queue,
+        sizeof(decoded_timer_queue));
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(read_le16(decoded_timer_queue, 0u) == 2u);
+    ASSERT_TRUE(read_le16(decoded_timer_queue, 2u) == 0u);
+    ASSERT_TRUE(read_le16(decoded_timer_queue, 4u) == 1u);
 
     memset(&header, 0, sizeof(header));
     header.key_index = CSB_V1_CSBWIN_512_KEY_CSB;
@@ -976,21 +1036,17 @@ static int test_writable_header_roundtrip(void)
     header.random_game_id =
         report.header.public_fields.csbwin_random_game_id;
     header.block2_hash = writable.block2_hash;
-    header.item16_hash = report.header.public_fields.csbwin_item16_hash;
+    header.item16_hash = runtime.item16_hash;
     header.character_hash = writable.character_hash;
-    header.timers_hash = report.header.public_fields.csbwin_timers_hash;
-    header.timer_queue_hash =
-        report.header.public_fields.csbwin_timer_queue_hash;
+    header.timers_hash = runtime.timers_hash;
+    header.timer_queue_hash = runtime.timer_queue_hash;
     header.total_move_count =
         report.header.public_fields.csbwin_total_move_count;
     header.block2_checksum = writable.block2_checksum;
-    header.item16_checksum =
-        report.header.public_fields.csbwin_item16_checksum;
+    header.item16_checksum = runtime.item16_checksum;
     header.character_checksum = writable.character_checksum;
-    header.timers_checksum =
-        report.header.public_fields.csbwin_timers_checksum;
-    header.timer_queue_checksum =
-        report.header.public_fields.csbwin_timer_queue_checksum;
+    header.timers_checksum = runtime.timers_checksum;
+    header.timer_queue_checksum = runtime.timer_queue_checksum;
     header.word22594 = report.header.public_fields.csbwin_word22594;
     header.word22592 = report.header.public_fields.csbwin_word22592;
 
@@ -1009,32 +1065,35 @@ static int test_writable_header_roundtrip(void)
     ASSERT_TRUE(header_report.public_fields.csbwin_character_hash == 0u);
     ASSERT_TRUE(header_report.public_fields.csbwin_character_checksum ==
                 writable.character_checksum);
-    ASSERT_TRUE(header_report.public_fields.csbwin_item16_hash ==
-                report.header.public_fields.csbwin_item16_hash);
+    ASSERT_TRUE(header_report.public_fields.csbwin_item16_hash == 0u);
+    ASSERT_TRUE(header_report.public_fields.csbwin_item16_checksum ==
+                runtime.item16_checksum);
+    ASSERT_TRUE(header_report.public_fields.csbwin_timers_hash == 0u);
+    ASSERT_TRUE(header_report.public_fields.csbwin_timers_checksum ==
+                runtime.timers_checksum);
+    ASSERT_TRUE(header_report.public_fields.csbwin_timer_queue_hash == 0u);
+    ASSERT_TRUE(header_report.public_fields.csbwin_timer_queue_checksum ==
+                runtime.timer_queue_checksum);
 
     memcpy(rebuilt + CSB_V1_CSBWIN_BLOCK1_BYTES,
            writable.block2_scrambled,
            writable.block2_size);
     memcpy(rebuilt + report.sections[CSB_V1_CSBWIN_512_SECTION_ITEM16]
                          .encrypted_offset,
-           original + report.sections[CSB_V1_CSBWIN_512_SECTION_ITEM16]
-                          .encrypted_offset,
-           report.sections[CSB_V1_CSBWIN_512_SECTION_ITEM16].encrypted_size);
+           runtime.item16_scrambled,
+           runtime.item16_size);
     memcpy(rebuilt + report.sections[CSB_V1_CSBWIN_512_SECTION_CHARACTERS]
                          .encrypted_offset,
            writable.characters_scrambled,
            writable.character_size);
     memcpy(rebuilt + report.sections[CSB_V1_CSBWIN_512_SECTION_TIMERS]
                          .encrypted_offset,
-           original + report.sections[CSB_V1_CSBWIN_512_SECTION_TIMERS]
-                          .encrypted_offset,
-           report.sections[CSB_V1_CSBWIN_512_SECTION_TIMERS].encrypted_size);
+           runtime.timers_scrambled,
+           runtime.timers_size);
     memcpy(rebuilt + report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE]
                          .encrypted_offset,
-           original + report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE]
-                          .encrypted_offset,
-           report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE]
-               .encrypted_size);
+           runtime.timer_queue_scrambled,
+           runtime.timer_queue_size);
 
     rc = csb_v1_csbwin_512_verify_save_body(rebuilt, size, 16u, &roundtrip);
     ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
@@ -1049,11 +1108,22 @@ static int test_writable_header_roundtrip(void)
                 report.champions[0].skill_experience[19]);
     ASSERT_TRUE(roundtrip.character_tail_party_footprints[23] ==
                 report.character_tail_party_footprints[23]);
+    ASSERT_TRUE(roundtrip.item16[0].monster_index == 0x1234u);
+    ASSERT_TRUE(roundtrip.item16[1].positions == 0x41u);
+    ASSERT_TRUE(roundtrip.timers[2].time == 0x21222324u);
+    ASSERT_TRUE(roundtrip.timers[2].function == 49u);
+    ASSERT_TRUE(roundtrip.timer_queue[0] == 2u &&
+                roundtrip.timer_queue[2] == 1u);
 
     rc = csb_v1_csbwin_512_build_writable_header(NULL, rebuilt);
     ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_ARGUMENT);
     header.key_index = 0;
     rc = csb_v1_csbwin_512_build_writable_header(&header, rebuilt);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_ARGUMENT);
+    truncated = report;
+    truncated.item16_summary_count = 1u;
+    rc = csb_v1_csbwin_512_build_writable_runtime_sections(
+        &truncated, &runtime);
     ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_ARGUMENT);
     return 1;
 }

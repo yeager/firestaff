@@ -1,7 +1,7 @@
 /*
  * csb_v1_csbwin_512_xor_pad_classify.h
  *
- * CSB V1 CSBWin 512-byte XOR-pad save-header classifier.
+ * CSB V1 CSBWin 512-byte XOR-pad save-header classifier/writer.
  *
  * Closes a bounded slice of the "CSBWin custom resource handling
  * (csbgraphics.dat + dmsave + csbgame)" gap
@@ -21,8 +21,9 @@
  *     the two-checksum invariant of UnscrambleBlock1, and
  *     surfaces the public fields of the unscrambled second-half
  *     block when a key matches. It also exposes bounded write helpers for
- *     GAMEBLOCK1 plus the currently supported GAMEBLOCK2/CHARDESC sections.
- *     It never modifies classifier input buffers and never binds into M11/M12.
+ *     GAMEBLOCK1, GAMEBLOCK2, CHARDESC, ITEM16, TIMER, and timer-queue
+ *     sections. It never modifies classifier input buffers and never binds
+ *     into M11/M12.
  *
  * The two-checksum invariant (CSBWin/Chaos.cpp UnscrambleBlock1
  * lines 1341-1368):
@@ -90,9 +91,10 @@
  * Non-claims:
  *   - No file I/O. Callers feed bytes; the module reports or emits bounded
  *     in-memory CSBWin blocks.
- *   - Body-section decoding is bounded verification plus summaries:
- *     GAMEBLOCK2 and CHARDESC fields are surfaced for startup/runtime
- *     handoff, while ITEM16, timers, and timer queue remain checksum-only.
+ *   - Body-section decoding/writing is bounded verification plus summaries:
+ *     GAMEBLOCK2, CHARDESC, ITEM16, timers, and timer queue are surfaced for
+ *     startup/runtime handoff, but this module still does not assemble or
+ *     write a complete save file.
  *   - No M11/M12 wiring. Callers decide what to do with the verdict/blocks.
  */
 
@@ -409,6 +411,21 @@ typedef struct {
 } CSB_V1_CSBWin512WritableChampionSections;
 
 typedef struct {
+    uint16_t item16_hash;
+    uint16_t item16_checksum;
+    uint16_t timers_hash;
+    uint16_t timers_checksum;
+    uint16_t timer_queue_hash;
+    uint16_t timer_queue_checksum;
+    size_t item16_size;
+    size_t timers_size;
+    size_t timer_queue_size;
+    uint8_t item16_scrambled[CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES * 16u];
+    uint8_t timers_scrambled[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES * 16u];
+    uint8_t timer_queue_scrambled[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES * 2u];
+} CSB_V1_CSBWin512WritableRuntimeSections;
+
+typedef struct {
     int key_index;                  /* CSB_V1_CSBWIN_512_KEY_CSB or _DM */
     uint8_t byte22598;              /* GAMEBLOCK1 offset 300 */
     uint8_t byte22596;              /* GAMEBLOCK1 offset 301 */
@@ -501,6 +518,13 @@ int csb_v1_csbwin_512_decode_stream_section(
 int csb_v1_csbwin_512_build_writable_champion_sections(
     const CSB_V1_CSBWin512BodyReport *summary,
     CSB_V1_CSBWin512WritableChampionSections *out);
+
+/* Build CSBWin ITEM16, TIMER, and timer-queue body sections from a bounded
+ * verified/runtime summary. Totals must fit the bounded summary arrays; this
+ * function refuses truncated summaries instead of emitting partial save data. */
+int csb_v1_csbwin_512_build_writable_runtime_sections(
+    const CSB_V1_CSBWin512BodyReport *summary,
+    CSB_V1_CSBWin512WritableRuntimeSections *out);
 
 /* Build a CSBWin GAMEBLOCK1 header from bounded section metadata.
  *

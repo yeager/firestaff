@@ -438,6 +438,29 @@ static void parse_item16_summaries(const uint8_t *decoded,
     }
 }
 
+static void write_item16_summary(uint8_t *record,
+                                 const CSB_V1_CSBWin512Item16Summary *item)
+{
+    if (!record || !item) return;
+    memset(record, 0, 16u);
+    if (!item->valid) return;
+    write_le16(record, 0u, item->monster_index);
+    record[2u] = item->facings;
+    record[3u] = item->positions;
+    record[4u] = item->ubyte4;
+    record[5u] = item->ubyte5;
+    record[6u] = item->target_x;
+    record[7u] = item->target_y;
+    record[8u] = item->previous_x;
+    record[9u] = item->previous_y;
+    record[10u] = item->current_x;
+    record[11u] = item->current_y;
+    record[12u] = item->single_monster_status[0];
+    record[13u] = item->single_monster_status[1];
+    record[14u] = item->single_monster_status[2];
+    record[15u] = item->single_monster_status[3];
+}
+
 static void parse_timer_summaries(const uint8_t *decoded,
                                   uint16_t total,
                                   uint16_t record_size,
@@ -471,6 +494,28 @@ static void parse_timer_summaries(const uint8_t *decoded,
         if (record_size >= 13u) {
             timer->level = record[12u];
         }
+    }
+}
+
+static void write_timer_summary(uint8_t *record,
+                                uint16_t record_size,
+                                const CSB_V1_CSBWin512TimerSummary *timer)
+{
+    if (!record || !timer) return;
+    memset(record, 0, record_size);
+    if (!timer->valid) return;
+    write_le32(record, 0u, timer->time);
+    record[4u] = timer->function;
+    record[5u] = timer->ubyte5;
+    record[6u] = timer->ubyte6;
+    record[7u] = timer->ubyte7;
+    record[8u] = timer->ubyte8;
+    record[9u] = timer->ubyte9;
+    if (record_size >= 12u) {
+        write_le16(record, 10u, timer->sequence);
+    }
+    if (record_size >= 13u) {
+        record[12u] = timer->level;
     }
 }
 
@@ -917,6 +962,85 @@ int csb_v1_csbwin_512_build_writable_champion_sections(
         out->characters_scrambled,
         out->character_hash,
         (uint16_t)(sizeof(characters_plain) / 2u));
+    return CSB_V1_CSBWIN_512_OK;
+}
+
+int csb_v1_csbwin_512_build_writable_runtime_sections(
+    const CSB_V1_CSBWin512BodyReport *summary,
+    CSB_V1_CSBWin512WritableRuntimeSections *out)
+{
+    uint8_t item16_plain[CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES * 16u];
+    uint8_t timers_plain[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES * 16u];
+    uint8_t timer_queue_plain[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES * 2u];
+    size_t i;
+
+    if (!summary || !out ||
+        (summary->timer_record_size != 10u &&
+         summary->timer_record_size != 12u &&
+         summary->timer_record_size != 16u) ||
+        summary->item16_summary_total != summary->item16_summary_count ||
+        summary->timer_summary_total != summary->timer_summary_count ||
+        summary->timer_queue_summary_total !=
+            summary->timer_queue_summary_count ||
+        summary->item16_summary_total >
+            CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES ||
+        summary->timer_summary_total >
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        summary->timer_queue_summary_total >
+            CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+
+    memset(out, 0, sizeof(*out));
+    memset(item16_plain, 0, sizeof(item16_plain));
+    memset(timers_plain, 0, sizeof(timers_plain));
+    memset(timer_queue_plain, 0, sizeof(timer_queue_plain));
+
+    out->item16_size = (size_t)summary->item16_summary_total * 16u;
+    out->timers_size =
+        (size_t)summary->timer_summary_total *
+        (size_t)summary->timer_record_size;
+    out->timer_queue_size =
+        (size_t)summary->timer_queue_summary_total * 2u;
+
+    for (i = 0u; i < summary->item16_summary_total; ++i) {
+        write_item16_summary(item16_plain + i * 16u,
+                             &summary->item16[i]);
+    }
+    for (i = 0u; i < summary->timer_summary_total; ++i) {
+        write_timer_summary(
+            timers_plain + i * (size_t)summary->timer_record_size,
+            summary->timer_record_size,
+            &summary->timers[i]);
+    }
+    for (i = 0u; i < summary->timer_queue_summary_total; ++i) {
+        write_le16(timer_queue_plain, i * 2u, summary->timer_queue[i]);
+    }
+
+    /* CSBWin SaveGame.cpp:1114-1204 sets all section hashes to zero before
+     * GenChecksum()/WriteScrambled(); use the same seed for emitted write
+     * sections. */
+    if (out->item16_size > 0u) {
+        memcpy(out->item16_scrambled, item16_plain, out->item16_size);
+        out->item16_checksum = unscramble_block(out->item16_scrambled,
+                                               0u,
+                                               (uint16_t)(out->item16_size / 2u));
+    }
+    if (out->timers_size > 0u) {
+        memcpy(out->timers_scrambled, timers_plain, out->timers_size);
+        out->timers_checksum = unscramble_block(
+            out->timers_scrambled,
+            0u,
+            (uint16_t)(out->timers_size / 2u));
+    }
+    if (out->timer_queue_size > 0u) {
+        memcpy(out->timer_queue_scrambled, timer_queue_plain,
+               out->timer_queue_size);
+        out->timer_queue_checksum = unscramble_block(
+            out->timer_queue_scrambled,
+            0u,
+            (uint16_t)(out->timer_queue_size / 2u));
+    }
     return CSB_V1_CSBWIN_512_OK;
 }
 
