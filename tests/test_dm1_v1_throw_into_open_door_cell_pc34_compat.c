@@ -166,6 +166,40 @@ static void make_thrown_item(
 
 static void make_door_digest(
     struct CellContentDigest_Compat* d,
+    int destDoorState);
+
+static void test_f0811_inactive_projectile_slot_noop(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct ProjectileInstance_Compat pOut;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0811_inactive_projectile_slot_noop\n");
+
+    make_thrown_item(&p, 0, 0, 5, 5);
+    make_door_digest(&d, THROW_OPEN_DOOR_STATE);
+    p.reserved3 = 0;
+    memset(&pOut, 0x7A, sizeof(pOut));
+    memset(&r, 0x7B, sizeof(r));
+
+    expect_int("f0811.inactive.rc",
+               F0811_PROJECTILE_Advance_Compat(&p, &d, 100u, NULL,
+                                                &pOut, &r),
+               1,
+               "ReDMCSB PROJEXPL.C:F0219 only dispatches linked PROJECTILE things");
+    expect_int("f0811.inactive.kind", r.resultKind, PROJECTILE_RESULT_INVALID,
+               "inactive compact runtime slots are no-op, not visible projectiles");
+    expect_int("f0811.inactive.despawn", r.despawn, 0,
+               "inactive compact runtime slots do not materialize/despawn");
+    expect_int("f0811.inactive.x", r.newMapX, p.mapX,
+               "inactive compact runtime slots preserve source x");
+    expect_int("f0811.inactive.y", r.newMapY, p.mapY,
+               "inactive compact runtime slots preserve source y");
+}
+
+static void make_door_digest(
+    struct CellContentDigest_Compat* d,
     int destDoorState)
 {
     memset(d, 0, sizeof(*d));
@@ -374,6 +408,7 @@ static void test_source_evidence_mentions_required_anchors(void)
 int main(void)
 {
     printf("probe=dm1_v1_throw_into_open_door_cell_pc34_compat\n");
+    test_f0811_inactive_projectile_slot_noop();
     test_f0814_inspect_destination_per_door_state();
     test_f0811_thrown_item_per_door_state();
     test_f0816_thrown_item_pass_through_per_door_state();

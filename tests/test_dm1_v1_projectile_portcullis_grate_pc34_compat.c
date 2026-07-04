@@ -179,6 +179,7 @@ static void make_thrown_dagger(struct ProjectileInstance_Compat* p)
     p->reserved2          =
         PROJECTILE_ASSOCIATED_ALLOWED_SLOTS_POUCH_PASS_THROUGH_DOORS;
     p->flags              = 0;
+    p->reserved3          = 1;
 }
 
 /* ---- Fixture: a closed portcullis (grate) at (5,4) NORTH of (5,5) - */
