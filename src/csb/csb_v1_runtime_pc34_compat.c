@@ -5914,6 +5914,33 @@ int csb_v1_runtime_trigger_wall_ornament_click_ex(
         leader_hand_thing);
 }
 
+int csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+    CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    int cell)
+{
+    uint16_t leader_hand;
+    int queued;
+
+    if (!profile || !profile->party_state_valid) return 0;
+    leader_hand = csb_v1_runtime_normalize_leader_hand_thing(
+        profile->party_state.LeaderHandThing);
+    queued = csb_v1_runtime_trigger_wall_ornament_click_core(
+        profile,
+        map_x,
+        map_y,
+        cell,
+        -1,
+        &leader_hand);
+    profile->party_state.LeaderHandThing =
+        csb_v1_runtime_normalize_leader_hand_thing(leader_hand);
+    if (profile->csbwin_gameblock2_summary_valid) {
+        profile->csbwin_object_in_hand = profile->party_state.LeaderHandThing;
+    }
+    return queued;
+}
+
 static int csb_v1_runtime_scan_thing_chain_for_object_type(
     const CSB_V1_DungeonData *dungeon,
     uint16_t thing,

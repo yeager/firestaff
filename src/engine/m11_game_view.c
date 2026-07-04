@@ -2398,10 +2398,14 @@ static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
                                             const CSB_V1_RuntimeProfile *profile)
 {
     uint16_t thing;
-    if (!state || !profile || !profile->csbwin_gameblock2_summary_valid) {
+    if (!state || !profile ||
+        (!profile->party_state_valid &&
+         !profile->csbwin_gameblock2_summary_valid)) {
         return;
     }
-    thing = profile->csbwin_object_in_hand;
+    thing = profile->party_state_valid
+        ? profile->party_state.LeaderHandThing
+        : profile->csbwin_object_in_hand;
     if (thing == THING_NONE || thing == THING_ENDOFLIST) {
         state->leaderHandObjectPresent = 0;
         state->leaderHandThing = THING_NONE;
@@ -14330,16 +14334,17 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
     /* ReDMCSB MOVESENS.C F0276 lines 1737-1785: a C080 viewport
      * click on C05/front-wall ornament enters the CSB wall-square
      * sensor path, not the DM1 M11 world thing-list path. */
-    leaderHand = M11_GameView_GetV1LeaderHandThing(state);
-    queued = csb_v1_runtime_trigger_wall_ornament_click_ex(
+    profile->runtime.party_state.LeaderHandThing =
+        M11_GameView_GetV1LeaderHandThing(state);
+    queued = csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
         &profile->runtime,
         mapX,
         mapY,
-        0,
-        &leaderHand);
+        0);
     if (queued <= 0) {
         return M11_GAME_INPUT_IGNORED;
     }
+    leaderHand = profile->runtime.party_state.LeaderHandThing;
     if (leaderHand == THING_NONE || leaderHand == THING_ENDOFLIST) {
         M11_GameView_ClearV1LeaderHandObject(state);
     } else {

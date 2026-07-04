@@ -656,6 +656,14 @@ int csb_v1_runtime_trigger_wall_ornament_click_ex(
     int cell,
     uint16_t *leader_hand_thing);
 
+/* Runtime-owned variant: reads/writes CSB_V1_PartyState.LeaderHandThing
+ * instead of requiring the caller to carry a transient hand copy. */
+int csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+    CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    int cell);
+
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);
 const CSB_V1_VariantInfo *csb_v1_runtime_get_variant_info(CSB_V1_VariantId id);
