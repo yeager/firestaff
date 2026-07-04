@@ -3,7 +3,8 @@
     "M11 samples the source V1 viewport cells before V22 shape-cache update.",
     "DM1 V2.2 start initializes the optional in-place bitmap cache only on the DM1 V22-active branch.",
     "The viewport draw path prefers m11_v22_inplace_render_pass and calls the colored overlay only when that pass paints zero cells.",
-    "Pit and stairs have distinct asset ids, and teleporter/field shapes do not fall back to wall art."
+    "Pit and stairs have distinct asset ids, and teleporter/field shapes do not fall back to wall art.",
+    "The in-place and placeholder overlay fallback passes share m11_v22_cell_rect() for D1/D2/D3 x L/C/R geometry."
   ],
   "drawOrder": [
     {
@@ -24,19 +25,20 @@
     },
     {
       "marker": "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 14844
+      "offset": 14830
     },
     {
       "marker": "if (m11_v22_inplace_render_pass(framebuffer,",
-      "offset": 15514
+      "offset": 15500
     },
     {
-      "marker": "m11_v22_render_overlay(framebuffer,",
-      "offset": 15690
+      "marker": "m11_v22_render_overlay_with_palette(framebuffer,",
+      "offset": 15745
     }
   ],
   "errors": [],
   "firestaffAnchors": {
+    "cellRects": "src/dm1v2/m11_v22_cell_rects_pc34.c",
     "gameView": "src/engine/m11_game_view.c",
     "inplaceDraw": "src/dm1v2/m11_v22_inplace_draw_pc34.c",
     "overlayFallback": "src/dm1v2/m11_v22_render_overlay_pc34.c",

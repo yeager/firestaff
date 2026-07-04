@@ -55,12 +55,14 @@ def main() -> int:
     errors: list[str] = []
     game_view_path = ROOT / "src/engine/m11_game_view.c"
     inplace_path = ROOT / "src/dm1v2/m11_v22_inplace_draw_pc34.c"
+    cell_rects_path = ROOT / "src/dm1v2/m11_v22_cell_rects_pc34.c"
     cache_path = ROOT / "src/dm1v2/m11_v22_shape_cache_pc34.c"
     overlay_path = ROOT / "src/dm1v2/m11_v22_render_overlay_pc34.c"
     dunview_path = REDMCSB / "DUNVIEW.C"
 
     game_view = read(game_view_path)
     inplace = read(inplace_path)
+    cell_rects = read(cell_rects_path)
     cache = read(cache_path)
     overlay = read(overlay_path)
     dunview = read(dunview_path)
@@ -78,7 +80,7 @@ def main() -> int:
         "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
         "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
         "if (m11_v22_inplace_render_pass(framebuffer,",
-        "m11_v22_render_overlay(framebuffer,",
+        "m11_v22_render_overlay_with_palette(framebuffer,",
         "m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,",
     ]
     for marker in required_game_view_markers:
@@ -105,12 +107,12 @@ def main() -> int:
             "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
             "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
             "if (m11_v22_inplace_render_pass(framebuffer,",
-            "m11_v22_render_overlay(framebuffer,",
+            "m11_v22_render_overlay_with_palette(framebuffer,",
         ],
     )
     errors.extend(draw_errors)
     require(errors, "== 0) {" in draw_window[draw_window.find("if (m11_v22_inplace_render_pass(") :
-                                           draw_window.find("m11_v22_render_overlay(")],
+                                           draw_window.find("m11_v22_render_overlay_with_palette(")],
             "placeholder overlay is not guarded as the in-place-render fallback")
 
     inplace_required = [
@@ -122,8 +124,9 @@ def main() -> int:
         "int m11_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH)",
         "if (!m11_v22_inplace_draw_active()) return 0;",
         "if (!m11_v22_shape_cache_populated()) return 0;",
+        "m11_v22_cell_rect(depth + 1, lateral);",
         "cells_painted++;",
-        "pit/stairs material routing and field no-wrong-wall fallback;",
+        "pit/stairs/teleporter-field material routing and no wrong-wall fallback;",
     ]
     for marker in inplace_required:
         require(errors, marker in inplace, f"m11_v22_inplace_draw_pc34.c missing marker: {marker}")
@@ -143,10 +146,20 @@ def main() -> int:
         "int m11_v22_render_overlay(unsigned char* framebuffer, int fbW, int fbH)",
         "m11_v22_shape_cache_get(depth + 1, lateral);",
         "if (!r || !r->active) continue;",
+        "m11_v22_cell_rect(depth + 1, lateral);",
         "M11_V22_OVERLAY_PLACEHOLDER_INDEX",
     ]
     for marker in overlay_required:
         require(errors, marker in overlay, f"m11_v22_render_overlay_pc34.c missing marker: {marker}")
+
+    cell_rect_required = [
+        "m11_v22_cell_rect(int depth, int lateral)",
+        "depth < 1 || depth > 3",
+        "lateral < -1 || lateral > 1",
+        "return &kV22CellRects[depth - 1][lateral + 1];",
+    ]
+    for marker in cell_rect_required:
+        require(errors, marker in cell_rects, f"m11_v22_cell_rects_pc34.c missing marker: {marker}")
 
     redmcsb_required = [
         "void F0128_DUNGEONVIEW_Draw_CPSF",
@@ -164,6 +177,7 @@ def main() -> int:
         "firestaffAnchors": {
             "gameView": str(game_view_path.relative_to(ROOT)),
             "inplaceDraw": str(inplace_path.relative_to(ROOT)),
+            "cellRects": str(cell_rects_path.relative_to(ROOT)),
             "shapeCache": str(cache_path.relative_to(ROOT)),
             "overlayFallback": str(overlay_path.relative_to(ROOT)),
         },
@@ -174,6 +188,7 @@ def main() -> int:
             "DM1 V2.2 start initializes the optional in-place bitmap cache only on the DM1 V22-active branch.",
             "The viewport draw path prefers m11_v22_inplace_render_pass and calls the colored overlay only when that pass paints zero cells.",
             "Pit and stairs have distinct asset ids, and teleporter/field shapes do not fall back to wall art.",
+            "The in-place and placeholder overlay fallback passes share m11_v22_cell_rect() for D1/D2/D3 x L/C/R geometry.",
         ],
         "nonClaims": [
             "No original DOS screenshot or pixel-parity claim.",
