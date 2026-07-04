@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "csb_v1_boot.h"
 #include "csb_v1_keyboard_commands_pc34_compat.h"
 #include "m11_game_view.h"
 
@@ -46,10 +47,59 @@ static void seed_csb_view(M11_GameViewState* view)
     }
 }
 
+static void test_put_le16(unsigned char* buf, int offset, unsigned int value)
+{
+    buf[offset + 0] = (unsigned char)(value & 0xffu);
+    buf[offset + 1] = (unsigned char)((value >> 8) & 0xffu);
+}
+
+static int real_format_square_offset(int x, int y)
+{
+    return x * 3 + y;
+}
+
+static unsigned int make_sensor_target(int x, int y, int cell)
+{
+    return (unsigned int)(((cell & 3) << 4) |
+                          ((x & 0x1f) << 6) |
+                          ((y & 0x1f) << 11));
+}
+
+static void make_csb_wall_click_dungeon(CSB_V1_DungeonData* dungeon,
+                                        unsigned char* raw,
+                                        size_t rawSize)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, rawSize);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)rawSize;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[3] = 68;
+    dungeon->thing_type_counts[3] = 1;
+
+    raw[real_format_square_offset(1, 0)] = 0x10u; /* front wall + thing list */
+    raw[real_format_square_offset(2, 0)] = (unsigned char)((4u << 5) | 4u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (3u << 10)); /* C03 sensor thing, cell 0 */
+    test_put_le16(raw, 68, 0xfffeu);
+    test_put_le16(raw, 70, 1u); /* C001 wall-ornament click */
+    test_put_le16(raw, 72, 0u); /* DM1_EFFECT_SET << 3 */
+    test_put_le16(raw, 74, make_sensor_target(2, 0, 0));
+}
+
 int main(void)
 {
     M11_GameViewState view;
     M12_MenuInput plainS = M12_MENU_INPUT_NONE;
+    CSB_V1_BootProfile boot;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
     int ok = 1;
 
     printf("probe=csb_v1_keyboard_commands_pc34_compat\n");
@@ -147,6 +197,32 @@ int main(void)
                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT),
                      M11_GAME_INPUT_REDRAW);
     ok &= expect_int("CSB resting cleared", view.resting, 0);
+
+    make_csb_wall_click_dungeon(&dungeon, raw, sizeof(raw));
+    csb_v1_boot_profile_init(&boot);
+    boot.runtime.chaos_magic.magic_initialized = 1;
+    boot.runtime.dungeon_handle = &dungeon;
+    boot.runtime.current_level = 0;
+    boot.runtime.party_x = 1;
+    boot.runtime.party_y = 1;
+    boot.runtime.party_dir = 0;
+    seed_csb_view(&view);
+    view.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+    view.csbBootProfile = &boot;
+    view.csbState.level_loaded = 1;
+    view.csbState.party_x = boot.runtime.party_x;
+    view.csbState.party_y = boot.runtime.party_y;
+    view.csbState.party_dir = boot.runtime.party_dir;
+    ok &= expect_int("CSB M11 wall ornament click redraw",
+                     M11_GameView_HandlePointer(&view, 100, 73, 1),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("CSB M11 wall ornament click queues sensor event",
+                     boot.runtime.timeline_queue.eventCount, 1);
+    ok &= expect_int("CSB queued wall click event fires",
+                     csb_v1_runtime_tick_v1(&boot.runtime), 1);
+    ok &= expect_int("CSB wall click opens target door",
+                     raw[real_format_square_offset(2, 0)] & 7, 3);
+    view.csbBootProfile = NULL;
 
     return ok ? 0 : 1;
 }
