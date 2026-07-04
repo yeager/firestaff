@@ -4069,16 +4069,31 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.character_tail_byte13220[0] = 0x90u;
     summary.character_tail_byte13220[23] = 0xA7u;
     summary.character_tail_invisible = 1u;
-    summary.item16_summary_total = 2u;
-    summary.item16_summary_count = 2u;
+    summary.item16_summary_total = 3u;
+    summary.item16_summary_count = 3u;
     summary.item16[0].valid = 1;
     summary.item16[0].monster_index = 0x1234u;
     summary.item16[0].facings = 0x20u;
     summary.item16[0].positions = 0x21u;
+    summary.item16[0].ubyte4 = 0x22u;
+    summary.item16[0].ubyte5 = 0x23u;
     summary.item16[0].target_x = 0x24u;
     summary.item16[0].target_y = 0x25u;
+    summary.item16[0].previous_x = 0x26u;
+    summary.item16[0].previous_y = 0x27u;
+    summary.item16[0].current_x = 0x28u;
+    summary.item16[0].current_y = 0x29u;
+    summary.item16[0].single_monster_status[0] = 0x2Au;
+    summary.item16[0].single_monster_status[3] = 0x2Du;
     summary.item16[1].valid = 1;
     summary.item16[1].monster_index = 0x5678u;
+    summary.item16[1].facings = 0x30u;
+    summary.item16[1].positions = 0x31u;
+    summary.item16[1].target_x = 0x32u;
+    summary.item16[1].target_y = 0x33u;
+    summary.item16[2].valid = 1;
+    summary.item16[2].monster_index = 0xffffu;
+    summary.item16[2].facings = 0x44u;
     summary.timer_summary_total = 3u;
     summary.timer_summary_count = 3u;
     summary.timers[0].valid = 1;
@@ -4201,12 +4216,38 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.csbwin_character_tail_byte13220[0] == 0x90u &&
               profile.csbwin_character_tail_byte13220[23] == 0xA7u,
           "CSBWin runtime summary stores footprint history bytes");
-    CHECK(profile.csbwin_item16_summary_total == 2u &&
-              profile.csbwin_item16_summary_count == 2u &&
+    CHECK(profile.csbwin_item16_summary_total == 3u &&
+              profile.csbwin_item16_summary_count == 3u &&
               profile.csbwin_item16[0].monster_index == 0x1234u &&
               profile.csbwin_item16[0].target_x == 0x24u &&
               profile.csbwin_item16[1].monster_index == 0x5678u,
           "CSBWin runtime summary stores bounded ITEM16 active-monster records");
+    CHECK(csb_v1_runtime_materialize_csbwin_item16_summaries(&profile) == 2,
+          "CSBWin ITEM16 summaries materialize active monster records");
+    CHECK(profile.csbwin_runtime_item16_count == 2u &&
+              profile.csbwin_runtime_item16_total == 3u,
+          "CSBWin ITEM16 materialization skips unused negative word0 slots");
+    CHECK(profile.csbwin_runtime_item16[0].valid == 1 &&
+              profile.csbwin_runtime_item16[0].monster_index == 0x1234u &&
+              profile.csbwin_runtime_item16[0].facings == 0x20u &&
+              profile.csbwin_runtime_item16[0].positions == 0x21u &&
+              profile.csbwin_runtime_item16[0].last_move_time_lsb == 0x22u &&
+              profile.csbwin_runtime_item16[0].delay_or_flee_timer == 0x23u &&
+              profile.csbwin_runtime_item16[0].target_x == 0x24u &&
+              profile.csbwin_runtime_item16[0].target_y == 0x25u &&
+              profile.csbwin_runtime_item16[0].previous_x == 0x26u &&
+              profile.csbwin_runtime_item16[0].previous_y == 0x27u &&
+              profile.csbwin_runtime_item16[0].current_x == 0x28u &&
+              profile.csbwin_runtime_item16[0].current_y == 0x29u &&
+              profile.csbwin_runtime_item16[0].single_monster_status[0] == 0x2Au &&
+              profile.csbwin_runtime_item16[0].single_monster_status[3] == 0x2Du,
+          "CSBWin ITEM16 materialization preserves active-monster state bytes");
+    CHECK(profile.csbwin_runtime_item16[1].monster_index == 0x5678u &&
+              profile.csbwin_runtime_item16[1].facings == 0x30u &&
+              profile.csbwin_runtime_item16[1].positions == 0x31u &&
+              profile.csbwin_runtime_item16[1].target_x == 0x32u &&
+              profile.csbwin_runtime_item16[1].target_y == 0x33u,
+          "CSBWin ITEM16 materialization preserves the second active record");
     CHECK(profile.csbwin_timer_summary_total == 3u &&
               profile.csbwin_timer_summary_count == 3u &&
               profile.csbwin_timers[0].time == 0x01020304u &&

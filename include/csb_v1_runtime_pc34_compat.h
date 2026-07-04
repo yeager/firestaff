@@ -190,6 +190,22 @@ typedef struct {
     int      magic_initialized;   /* 1 = spell grid built */
 } CSB_V1_ChaosMagicState;
 
+typedef struct {
+    int valid;
+    uint16_t monster_index;
+    uint8_t facings;
+    uint8_t positions;
+    uint8_t last_move_time_lsb;
+    uint8_t delay_or_flee_timer;
+    uint8_t target_x;
+    uint8_t target_y;
+    uint8_t previous_x;
+    uint8_t previous_y;
+    uint8_t current_x;
+    uint8_t current_y;
+    uint8_t single_monster_status[4];
+} CSB_V1_CSBWinRuntimeItem16;
+
 /* ── Runtime profile ─────────────────────────────────────────────────── */
 /*
  * CSB V1 runtime profile: everything that distinguishes CSB from DM1.
@@ -283,6 +299,10 @@ typedef struct {
     uint16_t                csbwin_item16_summary_total;
     CSB_V1_CSBWin512Item16Summary
                             csbwin_item16[CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
+    uint16_t                csbwin_runtime_item16_count;
+    uint16_t                csbwin_runtime_item16_total;
+    CSB_V1_CSBWinRuntimeItem16
+                            csbwin_runtime_item16[CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
     uint16_t                csbwin_timer_summary_count;
     uint16_t                csbwin_timer_summary_total;
     CSB_V1_CSBWin512TimerSummary
@@ -420,6 +440,8 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
 int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
+int csb_v1_runtime_materialize_csbwin_item16_summaries(
+    CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_materialize_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
