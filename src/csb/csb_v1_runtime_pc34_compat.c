@@ -5752,6 +5752,88 @@ int csb_v1_runtime_trigger_wall_ornament_click_ex(
         leader_hand_thing);
 }
 
+static int csb_v1_runtime_scan_thing_chain_for_object_type(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    int object_type)
+{
+    int guard;
+
+    if (!dungeon || object_type < 0) return 0;
+    for (guard = 0;
+         guard < DM1_SENSOR_POSSESSION_MAX_SCAN_STEPS &&
+             thing != 0xFFFEu && thing != 0xFFFFu;
+         ++guard) {
+        const uint8_t *record;
+        int thing_type;
+        int thing_size;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon,
+            thing,
+            &thing_type,
+            NULL,
+            &thing_size);
+        if (!record || thing_size < 2) return 0;
+        if (thing_type > 4 && thing_type < 14 &&
+            csb_v1_runtime_object_type_from_thing(dungeon, thing) ==
+                object_type) {
+            return 1;
+        }
+        thing = csb_v1_runtime_read_u16(record);
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_party_has_possession_object_type(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    int object_type)
+{
+    int champion_count;
+    int champion_index;
+
+    if (!profile || !dungeon || object_type < 0 ||
+        !profile->party_state_valid) {
+        return 0;
+    }
+    champion_count = profile->party_state.ChampionCount;
+    if (champion_count < 0) champion_count = 0;
+    if (champion_count > CSB_V1_MAX_CHAMPIONS) {
+        champion_count = CSB_V1_MAX_CHAMPIONS;
+    }
+    for (champion_index = 0;
+         champion_index < champion_count;
+         ++champion_index) {
+        const CSB_V1_Champion *champion =
+            &profile->party_state.Champions[champion_index];
+        int slot_index;
+
+        if (champion->CurrentHealth <= 0) continue;
+        for (slot_index = 0;
+             slot_index < CSB_V1_SLOT_COUNT &&
+                 slot_index < DM1_SENSOR_POSSESSION_SLOT_LAST;
+             ++slot_index) {
+            uint16_t slot_thing = champion->Slots[slot_index];
+            if (slot_thing == 0xFFFEu || slot_thing == 0xFFFFu) {
+                continue;
+            }
+            if (csb_v1_runtime_scan_thing_chain_for_object_type(
+                    dungeon,
+                    slot_thing,
+                    object_type)) {
+                return 1;
+            }
+        }
+    }
+    /* ReDMCSB MOVESENS.C F0274 lines 1271-1306 also checks the
+     * leader-hand object once after champion slots.  CSB runtime's
+     * current owned profile stores imported equipment slots but M11 owns
+     * the transient cursor/leader-hand object, so that cursor fallback
+     * remains part of the later full M11/CSB inventory handoff. */
+    return 0;
+}
+
 static void csb_v1_runtime_process_party_floor_sensors_at(
     CSB_V1_RuntimeProfile *profile,
     int map_x,
@@ -5784,8 +5866,8 @@ static void csb_v1_runtime_process_party_floor_sensors_at(
      * the first non-sensor, checks floor sensor types C003/C005/C009 for the
      * party, resolves HOLD into SET/CLEAR, then calls F0272/F0268 to enqueue
      * the square-effect event.  This CSB runtime slice covers party floor
-     * sensors only; wall clicks, possessions, objects, groups, launchers, and
-     * sensor rotation remain separate runtime work. */
+     * sensors, including C008 party-possession checks over imported champion
+     * slots; object/group movement sensors remain separate runtime work. */
     thing = first_thing;
     for (guard = 0; guard < 128 && thing != 0xFFFE; ++guard) {
         const uint8_t *record;
@@ -5848,6 +5930,13 @@ static void csb_v1_runtime_process_party_floor_sensors_at(
                         : (raw_square & 0x1F));
                 trigger = (square_type == 3) ? trigger : 0;
             }
+            break;
+        case 8: /* C008_SENSOR_FLOOR_PARTY_POSSESSION */
+            trigger = add_party &&
+                csb_v1_runtime_party_has_possession_object_type(
+                    profile,
+                    dungeon,
+                    sensor_data);
             break;
         case 9: /* C009_SENSOR_FLOOR_VERSION_CHECKER, PC34 engine <= 34 */
             trigger = add_party && (sensor_data <= 34);

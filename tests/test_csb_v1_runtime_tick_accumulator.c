@@ -3773,6 +3773,127 @@ static void seed_two_champion_party(CSB_V1_PartyState *party)
     }
 }
 
+static void test_input_forward_c008_party_possession_sensor(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_PartyState party;
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+    uint8_t raw[128];
+    int i;
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        0,
+        1,
+        (uint8_t)(1u << 5),
+        (uint16_t)((8u << 7) | DM1_SENSOR_FLOOR_PARTY_POSSESSION),
+        (uint16_t)(DM1_EFFECT_SET << 3),
+        make_sensor_target(2, 0, 0));
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
+    dungeon.thing_data_bases[5] = 76;
+    dungeon.thing_type_counts[5] = 1;
+    test_put_le16(raw, 76, 0xfffeu);
+    test_put_le16(raw, 78, 8u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 0;
+    profile.party_dir = CSB_V1_DIR_SOUTH;
+    seed_two_champion_party(&party);
+    party.ChampionCount = 1;
+    party.PartyDirection = CSB_V1_DIR_SOUTH;
+    for (i = 0; i < CSB_V1_SLOT_COUNT; ++i) {
+        party.Champions[0].Slots[i] = 0xffffu;
+    }
+    party.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] =
+        (uint16_t)(5u << 10);
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "C008 fixture party with a matching carried object enters CSB runtime");
+    profile.party_x = 0;
+    profile.party_y = 0;
+    profile.party_dir = CSB_V1_DIR_SOUTH;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
+              &queue,
+              (struct Dm1V1InputEventPc34Compat){
+                  DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }) == 1,
+          "PC-34 forward key queues C008 sensor movement");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "C008 possession-sensor movement command is consumed");
+    CHECK(result.movement_step_applied == 1 &&
+              profile.party_x == 0 &&
+              profile.party_y == 1,
+          "C008 fixture applies one southward movement step");
+    CHECK(result.sensor_trigger_count == 1 &&
+              result.sensor_last_type == DM1_SENSOR_FLOOR_PARTY_POSSESSION &&
+              result.sensor_last_data == 8,
+          "C008 party-possession sensor triggers on matching champion slot object");
+    CHECK(result.sensor_event_count == 1 &&
+              result.sensor_last_event_type == DM1_EVENT_FAKEWALL &&
+              result.sensor_last_effect == DM1_EFFECT_SET,
+          "C008 queues the target fakewall SET event");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "C008 possession trigger owns one queued timeline event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C008 queued fakewall event fires on the current tick");
+    CHECK((raw[real_format_square_offset(2, 0)] & 0x04u) == 0x04u,
+          "C008 fakewall target is opened by the queued SET event");
+
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        0,
+        1,
+        (uint8_t)(1u << 5),
+        (uint16_t)((8u << 7) | DM1_SENSOR_FLOOR_PARTY_POSSESSION),
+        (uint16_t)(DM1_EFFECT_SET << 3),
+        make_sensor_target(2, 0, 0));
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
+    dungeon.thing_data_bases[5] = 76;
+    dungeon.thing_type_counts[5] = 1;
+    test_put_le16(raw, 76, 0xfffeu);
+    test_put_le16(raw, 78, 9u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 0;
+    profile.party_dir = CSB_V1_DIR_SOUTH;
+    party.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] =
+        (uint16_t)(5u << 10);
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "C008 negative fixture party enters CSB runtime");
+    profile.party_x = 0;
+    profile.party_y = 0;
+    profile.party_dir = CSB_V1_DIR_SOUTH;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(
+              &queue,
+              (struct Dm1V1InputEventPc34Compat){
+                  DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }) == 1,
+          "PC-34 forward key queues C008 negative sensor movement");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "C008 negative possession-sensor movement command is consumed");
+    CHECK(result.movement_step_applied == 1 &&
+              result.sensor_trigger_count == 0 &&
+              result.sensor_event_count == 0,
+          "C008 does not trigger when carried object type differs");
+    CHECK(profile.timeline_queue.eventCount == 0,
+          "C008 negative fixture queues no timeline event");
+}
+
 static void test_input_command_queue_turn_reaches_runtime_party_state(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -3868,6 +3989,7 @@ int main(void)
     test_explosion_c25_party_damage_and_group_hp_writeback();
     test_explosion_c25_door_destruction_writeback();
     test_timeline_wall_gate_and_generator_sensor_mutations();
+    test_input_forward_c008_party_possession_sensor();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
