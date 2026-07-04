@@ -27099,6 +27099,26 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     return performed;
 }
 
+int M11_GameView_ProbeF0407FuseImmediate(M11_GameViewState* state,
+                                         int championIndex) {
+    struct ChampionState_Compat* champ;
+    char champName[16];
+    if (!state || !state->active) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current == 0) return 0;
+    m11_format_champion_name(champ->name, champName, sizeof(champName));
+    state->world.party.activeChampionIndex = championIndex;
+    /* Probe-only F0407 C043 boundary: MENU.C lines 1499-1504 calls F0406,
+     * recomputes the target from PartyDirection, then calls F0225 before
+     * the common action tail advances time.  This hook stops at that exact
+     * point so probes can inspect F0225's immediate Harm Non Material
+     * explosion before the following M11 CMD_NONE tick advances it. */
+    m11_set_champion_direction_to_party_f0406(state, champ);
+    return m11_perform_fuse_action(state, champName);
+}
+
 /* ---------------------------------------------------------------
  * DM1 action-menu mode (F0387_MENUS_DrawActionArea, menu branch).
  *
