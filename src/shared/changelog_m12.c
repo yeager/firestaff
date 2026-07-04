@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.24  (2026-07-04)",
+    "  - Packages the post-v3.0.23 mainline DM1 V1 hardening and DM1 V2 readiness work now on main.",
+    "  - DM1 V1 adds stronger source-locked coverage for F0407 FUSE/FLUXCAGE, shared F0412 magic-map runtime handling, and defensive F0811 inactive projectile-slot rejection to reduce phantom HoC projectile/item risk.",
+    "  - DM1 V2/V2.2 readiness and receipt gates are refreshed, including completion-matrix ownership, finished-art receipt validation, and V2 runtime presentation smoke coverage.",
+    "",
     "V3.0.23  (2026-07-03)",
     "  - Packages the post-v3.0.22 mainline passes for CSB save discovery, party floor-sensor movement, CSB graphics runtime planning, title-palette fidelity, HoC click routing, and DM1 inscription-wall restoration.",
     "  - CSB V1 gains stronger staged-file save classification, party floor-sensor command handling, and a source-locked CSB graphics M11 runtime-plan path with focused unit and probe coverage.",
@@ -379,5 +384,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.23";
+    return "3.0.24";
 }

@@ -97,28 +97,26 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `3.0.13`.
+**Current version:** `3.0.24`.
 
-The latest release packages the 2026-06-28/29 runtime-hardening work after
-v3.0.12. It keeps DM1 V1 capture work accountable with a reviewed
-post-dungeon target-selection gate, tightens several launcher/runtime probes,
-and adds bounded presentation and data-handoff evidence without claiming
-finished parity for targets still being hardened.
+The latest release packages the 2026-07-04 DM1 V1 hardening and DM1 V2
+readiness work after v3.0.23. It tightens source-locked runtime coverage for
+DM1 V1 spells, FUSE/FLUXCAGE, and projectile-slot guards, while keeping public
+claims conservative for broader parity and package-smoke work still being
+hardened.
 
-### v3.0.13 release highlights
+### v3.0.24 release highlights
 
-- **DM1 V1 capture accountability**: the post-dungeon live-route runbook now
-  requires a reviewed target-selection receipt before dispatching routes for
-  creature-chain, champion-panel, wall/door/fakewall, viewport, or collision
-  pairing work.
-- **Selector regression coverage**: a new hermetic selector self-test and
-  runbook-consistency check pin target kinds, keypad route keys, required
-  fields, baseline non-claims, and asset/preflight hashes.
-- **Runtime and launcher probes**: M11 font-scale banner fit, DM1 required-data
-  popup behavior, DM2 HUD widget manifest integrity, and CSB real-asset
-  ornament provenance all have tighter gates.
-- **Conservative release claims**: no proprietary frames are shipped, and the
-  new capture tooling is an accountability gate rather than a parity promotion.
+- **DM1 V1 runtime hardening**: F0407 FUSE/FLUXCAGE, shared F0412 magic-map
+  runtime handling, and F0811 inactive projectile-slot rejection are covered by
+  focused local gates.
+- **Hall of Champions artifact guard**: inactive compact projectile slots are
+  rejected inside the public F0811 helper as well as by M11/M10 scan guards,
+  reducing the risk of phantom fireballs or floor items.
+- **DM1 V2 readiness**: V2/V2.2 completion, runtime smoke, and finished-art
+  receipt gates were refreshed for the current source ownership.
+- **Conservative release claims**: DM1 V1 remains the strongest playable target;
+  original/pixel proof and package-smoke confirmation remain tracked work.
 
 ## Download
 
