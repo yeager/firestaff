@@ -118,6 +118,7 @@ extern "C" {
 #define CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 4096u
+#define CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES 256u
 
 /* The two documented scramble keys. CSBWin/Chaos.cpp:2357 tries
  * CSB_KEY first, then DM_KEY on UnscrambleBlock1 returning 0.
@@ -401,6 +402,8 @@ typedef struct {
     size_t appended_preserved_size;
     uint32_t appended_fnv1a;
     int appended_truncated;
+    int appended_expool_candidate;
+    uint16_t appended_expool_block_count;
     uint8_t appended_preserved[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
 } CSB_V1_CSBWin512BodyReport;
 
@@ -571,6 +574,18 @@ int csb_v1_csbwin_512_verify_save_body(
     size_t size,
     uint16_t timer_record_size,
     CSB_V1_CSBWin512BodyReport *out);
+
+/* Locate a CSBWin DB11/Expool-style record inside a preserved appended
+ * save tail. This mirrors CSBWin data.cpp EXPOOL::Locate and the dungeon
+ * loader's DB11 adapter: hash = key * 0xbb40e62d, bucket table at word 32,
+ * optional secondary bucket table, and linked nodes whose p+1 word is the
+ * record id and p+2 starts the payload. Returns 1 when found, 0 when absent
+ * or when the appended tail is truncated / not DB11-shaped. */
+int csb_v1_csbwin_512_appended_expool_locate_record(
+    const CSB_V1_CSBWin512BodyReport *report,
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size);
 
 /* ── Lookup helpers (used by tests + probe + docs) ──────────────────── */
 

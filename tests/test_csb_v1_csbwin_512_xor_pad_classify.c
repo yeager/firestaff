@@ -985,6 +985,8 @@ static int test_writable_header_roundtrip(void)
     CSB_V1_CSBWin512BodyReport assembled_report;
     CSB_V1_CSBWin512BodyReport appended_report;
     CSB_V1_CSBWin512BodyReport appended_roundtrip;
+    CSB_V1_CSBWin512BodyReport expool_report;
+    CSB_V1_CSBWin512BodyReport expool_roundtrip;
     CSB_V1_CSBWin512BodyReport truncated;
     CSB_V1_CSBWin512WritableChampionSections writable;
     CSB_V1_CSBWin512WritableRuntimeSections runtime;
@@ -993,6 +995,11 @@ static int test_writable_header_roundtrip(void)
     int rc;
     size_t size;
     size_t assembled_size;
+    const uint32_t expool_record_id = 0x12003456u;
+    const uint32_t expool_hash = expool_record_id * 0xbb40e62du;
+    const uint32_t expool_hashi = 32u + (expool_hash >> 27);
+    const uint8_t *expool_payload;
+    size_t expool_payload_size;
 
     size = build_full_csbwin_body_fixture(original, sizeof(original), 0);
     ASSERT_TRUE(size == 4054u);
@@ -1203,6 +1210,66 @@ static int test_writable_header_roundtrip(void)
     ASSERT_TRUE(appended_roundtrip.appended_size == 7u);
     ASSERT_TRUE(appended_roundtrip.appended_fnv1a ==
                 appended_report.appended_fnv1a);
+    ASSERT_TRUE(appended_roundtrip.appended_expool_candidate == 0);
+
+    memset(original + size, 0, CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+    write_le16(original + size, 2u, 4u);
+    write_le32(original + size, expool_hashi * 4u, 1u);
+    write_le32(original + size, 1u * 4u, 0u);
+    write_le32(original + size, 2u * 4u, expool_record_id);
+    original[size + 3u * 4u + 0u] = 0x71u;
+    original[size + 3u * 4u + 1u] = 0x72u;
+    original[size + 3u * 4u + 2u] = 0x73u;
+    original[size + 3u * 4u + 3u] = 0x74u;
+    original[size + 4u * 4u + 0u] = 0x81u;
+    original[size + 4u * 4u + 1u] = 0x82u;
+    original[size + 4u * 4u + 2u] = 0x83u;
+    original[size + 4u * 4u + 3u] = 0x84u;
+    rc = csb_v1_csbwin_512_verify_save_body(
+        original,
+        size + CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES,
+        16u,
+        &expool_report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(expool_report.appended_expool_candidate == 1);
+    ASSERT_TRUE(expool_report.appended_expool_block_count == 1u);
+    expool_payload = NULL;
+    expool_payload_size = 0u;
+    ASSERT_TRUE(csb_v1_csbwin_512_appended_expool_locate_record(
+                    &expool_report,
+                    expool_record_id,
+                    &expool_payload,
+                    &expool_payload_size) == 1);
+    ASSERT_TRUE(expool_payload_size == 8u);
+    ASSERT_TRUE(expool_payload != NULL &&
+                expool_payload[0] == 0x71u &&
+                expool_payload[5] == 0x82u &&
+                expool_payload[7] == 0x84u);
+    ASSERT_TRUE(csb_v1_csbwin_512_appended_expool_locate_record(
+                    &expool_report,
+                    expool_record_id + 1u,
+                    &expool_payload,
+                    &expool_payload_size) == 0);
+    assembled_size = 0u;
+    memset(assembled, 0, sizeof(assembled));
+    rc = csb_v1_csbwin_512_build_writable_core_save(
+        &expool_report, assembled, sizeof(assembled), &assembled_size);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(assembled_size ==
+                size + CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+    rc = csb_v1_csbwin_512_verify_save_body(
+        assembled, assembled_size, 16u, &expool_roundtrip);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    expool_payload = NULL;
+    expool_payload_size = 0u;
+    ASSERT_TRUE(csb_v1_csbwin_512_appended_expool_locate_record(
+                    &expool_roundtrip,
+                    expool_record_id,
+                    &expool_payload,
+                    &expool_payload_size) == 1);
+    ASSERT_TRUE(expool_payload_size == 8u &&
+                expool_payload[0] == 0x71u &&
+                expool_payload[7] == 0x84u);
 
     assembled_size = 123u;
     rc = csb_v1_csbwin_512_build_writable_core_save(
