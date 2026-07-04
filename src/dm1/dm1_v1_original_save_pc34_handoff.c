@@ -13,6 +13,8 @@
      DM1_PC34_ORIGINAL_PARTY_INFO_BYTE_COUNT)
 #define DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT 16u
 #define DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT 10u
+#define DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT 3u
+#define DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT 4u
 
 #define DM1_PC34_CHAMPION_NAME_OFFSET 0u
 #define DM1_PC34_CHAMPION_TITLE_OFFSET 8u
@@ -56,9 +58,44 @@ static uint32_t read_u32_le(const uint8_t *p)
            ((uint32_t)p[3] << 24);
 }
 
+static void write_u16_le(uint8_t *p, uint16_t v)
+{
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+}
+
+static void write_u32_le(uint8_t *p, uint32_t v)
+{
+    write_u16_le(p, (uint16_t)(v & 0xffffu));
+    write_u16_le(p + 2u, (uint16_t)((v >> 16) & 0xffffu));
+}
+
 static int16_t read_i16_le(const uint8_t *p)
 {
     return (int16_t)read_u16_le(p);
+}
+
+static uint16_t original_pc34_header_first_half_checksum(const uint8_t *header)
+{
+    uint16_t acc = 0u;
+    size_t i;
+    for (i = 0u; i < 32u; ++i) {
+        acc = (uint16_t)(acc + read_u16_le(header + (i * 8u) + 0u));
+        acc = (uint16_t)(acc ^ read_u16_le(header + (i * 8u) + 2u));
+        acc = (uint16_t)(acc - read_u16_le(header + (i * 8u) + 4u));
+        acc = (uint16_t)(acc ^ read_u16_le(header + (i * 8u) + 6u));
+    }
+    return acc;
+}
+
+static uint16_t original_pc34_header_second_half_plain_sum(const uint8_t *header)
+{
+    uint16_t sum = 0u;
+    size_t i;
+    for (i = SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS; i < 256u; ++i) {
+        sum = (uint16_t)(sum + read_u16_le(header + (i * 2u)));
+    }
+    return sum;
 }
 
 static uint32_t read_skill_experience_le(const uint8_t *p)
@@ -99,6 +136,136 @@ static uint16_t f0417_xor_checksum_bytes(uint8_t *bytes,
         rolling_key = (uint16_t)(rolling_key + (uint16_t)word_count);
     }
     return checksum;
+}
+
+static int write_original_part(uint8_t *dst,
+                               size_t dst_capacity,
+                               const uint8_t *plain,
+                               size_t byte_count,
+                               uint16_t key,
+                               uint16_t *out_checksum)
+{
+    uint16_t checksum;
+
+    if (!dst || !plain || !out_checksum) {
+        return SAVEGAME_PC34_ERROR_NULL_ARG;
+    }
+    if ((byte_count & 1u) != 0u ||
+        byte_count > 0xffffu ||
+        dst_capacity < 2u + byte_count) {
+        return SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    write_u16_le(dst, (uint16_t)byte_count);
+    memcpy(dst + 2u, plain, byte_count);
+    checksum = f0417_xor_checksum_bytes(dst + 2u, byte_count / 2u, key);
+    *out_checksum = checksum;
+    return (int)(2u + byte_count);
+}
+
+static void write_original_pc34_fixture_champion(uint8_t *dst,
+                                                 const char *name,
+                                                 const char *title,
+                                                 int direction,
+                                                 int hp_current,
+                                                 int hp_maximum,
+                                                 int stamina_current,
+                                                 int stamina_maximum,
+                                                 int mana_current,
+                                                 int mana_maximum,
+                                                 int food,
+                                                 int water,
+                                                 uint16_t wounds,
+                                                 uint16_t hand_item)
+{
+    int i;
+
+    memset(dst, 0, DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT);
+    memset(dst + DM1_PC34_CHAMPION_NAME_OFFSET, ' ', CHAMPION_NAME_LENGTH);
+    memset(dst + DM1_PC34_CHAMPION_TITLE_OFFSET, ' ', CHAMPION_TITLE_LENGTH);
+    if (name) {
+        size_t n = strlen(name);
+        if (n > CHAMPION_NAME_LENGTH) n = CHAMPION_NAME_LENGTH;
+        memcpy(dst + DM1_PC34_CHAMPION_NAME_OFFSET, name, n);
+    }
+    if (title) {
+        size_t n = strlen(title);
+        if (n > CHAMPION_TITLE_LENGTH) n = CHAMPION_TITLE_LENGTH;
+        memcpy(dst + DM1_PC34_CHAMPION_TITLE_OFFSET, title, n);
+    }
+    dst[DM1_PC34_CHAMPION_DIRECTION_OFFSET] = (uint8_t)(direction & 3);
+    write_u16_le(dst + DM1_PC34_CHAMPION_ATTRIBUTES_OFFSET, 0x1234u);
+    write_u16_le(dst + DM1_PC34_CHAMPION_WOUNDS_OFFSET, wounds);
+    write_u16_le(dst + DM1_PC34_CHAMPION_CURRENT_HEALTH_OFFSET, (uint16_t)hp_current);
+    write_u16_le(dst + DM1_PC34_CHAMPION_MAXIMUM_HEALTH_OFFSET, (uint16_t)hp_maximum);
+    write_u16_le(dst + DM1_PC34_CHAMPION_CURRENT_STAMINA_OFFSET, (uint16_t)stamina_current);
+    write_u16_le(dst + DM1_PC34_CHAMPION_MAXIMUM_STAMINA_OFFSET, (uint16_t)stamina_maximum);
+    write_u16_le(dst + DM1_PC34_CHAMPION_CURRENT_MANA_OFFSET, (uint16_t)mana_current);
+    write_u16_le(dst + DM1_PC34_CHAMPION_MAXIMUM_MANA_OFFSET, (uint16_t)mana_maximum);
+    write_u16_le(dst + DM1_PC34_CHAMPION_FOOD_OFFSET, (uint16_t)food);
+    write_u16_le(dst + DM1_PC34_CHAMPION_WATER_OFFSET, (uint16_t)water);
+    for (i = 0; i < 7; ++i) {
+        uint8_t *stat = dst + DM1_PC34_CHAMPION_STATISTICS_OFFSET +
+                        (size_t)i * 3u;
+        stat[0] = (uint8_t)(40 + i);
+        stat[1] = (uint8_t)(30 + i);
+        stat[2] = (uint8_t)(10 + i);
+    }
+    for (i = 0; i < 20; ++i) {
+        uint8_t *skill = dst + DM1_PC34_CHAMPION_SKILLS_OFFSET +
+                         (size_t)i * 6u;
+        write_u16_le(skill, (uint16_t)(0x0100u + (uint16_t)i));
+        write_u32_le(skill + 2u, 1000u + (uint32_t)i * 111u);
+    }
+    for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        write_u16_le(dst + DM1_PC34_CHAMPION_SLOTS_OFFSET +
+                     (size_t)i * 2u, 0xffffu);
+    }
+    write_u16_le(dst + DM1_PC34_CHAMPION_SLOTS_OFFSET +
+                 (size_t)CHAMPION_SLOT_HAND_RIGHT * 2u, hand_item);
+    write_u16_le(dst + DM1_PC34_CHAMPION_LOAD_OFFSET, 345u);
+}
+
+static void write_original_pc34_fixture_active_group(uint8_t *dst,
+                                                     uint16_t group_thing_index,
+                                                     int directions,
+                                                     int cells,
+                                                     int target_x,
+                                                     int target_y)
+{
+    write_u16_le(dst + 0u, group_thing_index);
+    dst[2u] = (uint8_t)directions;
+    dst[3u] = (uint8_t)cells;
+    dst[4u] = 12u;
+    dst[5u] = 3u;
+    dst[6u] = (uint8_t)target_x;
+    dst[7u] = (uint8_t)target_y;
+    dst[8u] = 5u;
+    dst[9u] = 6u;
+    dst[10u] = 7u;
+    dst[11u] = 8u;
+    dst[12u] = 0x41u;
+    dst[13u] = 0x42u;
+    dst[14u] = 0x43u;
+    dst[15u] = 0x44u;
+}
+
+static void write_original_pc34_fixture_event(uint8_t *dst,
+                                              uint32_t map_time,
+                                              int type,
+                                              int priority,
+                                              int map_x,
+                                              int map_y,
+                                              int cell,
+                                              int effect)
+{
+    write_u32_le(dst + 0u, map_time);
+    dst[4u] = (uint8_t)type;
+    dst[5u] = (uint8_t)priority;
+    dst[6u] = (uint8_t)map_x;
+    dst[7u] = (uint8_t)map_y;
+    dst[8u] = (uint8_t)cell;
+    dst[9u] = (uint8_t)effect;
 }
 
 static int read_original_part(const uint8_t *bytes,
@@ -897,6 +1064,222 @@ static int import_original_pc34_global_data(
         out_report->imported_active_champion_index =
             out_state->party->activeChampionIndex;
     }
+    return SAVEGAME_PC34_OK;
+}
+
+int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+    const DM1OriginalSavePC34FixtureSpec *spec,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size)
+{
+    uint8_t header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
+    uint8_t global[SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT];
+    uint8_t active_group[DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT *
+                         DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT];
+    uint8_t party[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    uint8_t events[DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT *
+                   DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT];
+    uint8_t timeline[2u * DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT];
+    uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
+    uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT];
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    int champion_count;
+    int current_active_group_count;
+    int maximum_active_group_count;
+    int event_count;
+    int event_maximum_count;
+    int rc;
+    int i;
+
+    if (!spec || !out_bytes || !out_size) {
+        return SAVEGAME_PC34_ERROR_NULL_ARG;
+    }
+    *out_size = 0u;
+    if (out_capacity < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) {
+        return SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL;
+    }
+
+    champion_count = spec->champion_count;
+    if (champion_count < 0) champion_count = 0;
+    if (champion_count > CHAMPION_MAX_PARTY) champion_count = CHAMPION_MAX_PARTY;
+
+    current_active_group_count = spec->current_active_group_count;
+    if (current_active_group_count < 0) current_active_group_count = 0;
+    if (current_active_group_count > (int)DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT) {
+        current_active_group_count = (int)DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT;
+    }
+    maximum_active_group_count = spec->maximum_active_group_count;
+    if (maximum_active_group_count <= 0) {
+        maximum_active_group_count =
+            (int)DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT;
+    }
+    if (maximum_active_group_count >
+        (int)DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT) {
+        maximum_active_group_count =
+            (int)DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT;
+    }
+
+    event_count = spec->event_count;
+    if (event_count <= 0) event_count = 3;
+    if (event_count > (int)DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT) {
+        event_count = (int)DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT;
+    }
+    event_maximum_count = spec->event_maximum_count;
+    if (event_maximum_count <= 0) {
+        event_maximum_count = (int)DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT;
+    }
+    if (event_maximum_count < event_count) {
+        event_maximum_count = event_count;
+    }
+    if (event_maximum_count > (int)DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT) {
+        event_maximum_count = (int)DM1_PC34_ORIGINAL_EVENT_FIXTURE_COUNT;
+    }
+
+    memset(out_bytes, 0, out_capacity);
+    memset(header, 0, sizeof(header));
+    memset(global, 0, sizeof(global));
+    memset(active_group, 0, sizeof(active_group));
+    memset(party, 0, sizeof(party));
+    memset(events, 0, sizeof(events));
+    memset(timeline, 0, sizeof(timeline));
+    memset(checksums, 0, sizeof(checksums));
+
+    for (i = 0; i < 127; ++i) {
+        write_u16_le(header + (size_t)i * 2u,
+                     (uint16_t)(0x4321u + (uint16_t)(i * 17u)));
+    }
+    write_u16_le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u,
+                 0x2468u);
+    header[298u] = 1u;
+    header[299u] = SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC;
+    write_u16_le(header + 304u, 1u);
+    write_u32_le(header + 306u,
+                 spec->game_id ? spec->game_id : 0x50433334u);
+
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        keys[i] = (uint16_t)(0x2000u + (uint16_t)(i * 0x101u));
+    }
+
+    write_u32_le(global + 0u, spec->game_time ? spec->game_time : 123456u);
+    write_u16_le(global + 10u, (uint16_t)champion_count);
+    write_u16_le(global + 12u, (uint16_t)spec->map_x);
+    write_u16_le(global + 14u, (uint16_t)spec->map_y);
+    write_u16_le(global + 16u, (uint16_t)spec->direction);
+    write_u16_le(global + 18u, (uint16_t)spec->map_index);
+    write_u16_le(global + 20u, (uint16_t)spec->active_champion_index);
+    write_u16_le(global + DM1_PC34_GLOBAL_EVENT_COUNT_OFFSET,
+                 (uint16_t)event_count);
+    write_u16_le(global + DM1_PC34_GLOBAL_FIRST_UNUSED_EVENT_INDEX_OFFSET,
+                 (uint16_t)event_count);
+    write_u16_le(global + DM1_PC34_GLOBAL_EVENT_MAXIMUM_COUNT_OFFSET,
+                 (uint16_t)event_maximum_count);
+    write_u16_le(global + DM1_PC34_GLOBAL_CURRENT_ACTIVE_GROUP_COUNT_OFFSET,
+                 (uint16_t)current_active_group_count);
+    write_u16_le(global + DM1_PC34_GLOBAL_MAXIMUM_ACTIVE_GROUP_COUNT_OFFSET,
+                 (uint16_t)maximum_active_group_count);
+
+    write_original_pc34_fixture_active_group(active_group + 0u, 0x1001u,
+                                             0x5a, 0xc3, 21, 22);
+    write_original_pc34_fixture_active_group(
+        active_group + DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT,
+        0x1002u, 0x6b, 0xd4, 23, 24);
+    write_original_pc34_fixture_active_group(
+        active_group + 2u * DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT,
+        0x1003u, 0x7c, 0xe5, 25, 26);
+
+    if (champion_count > 0) {
+        write_original_pc34_fixture_champion(
+            party + 0u, "TIGGY", "APPRENTICE", spec->direction,
+            44, 55, 66, 77, 8, 9, 1500, -32, 0x0021u, 0x1555u);
+    }
+    if (champion_count > 1) {
+        write_original_pc34_fixture_champion(
+            party + DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT,
+            "WUUF", "BIKA", (spec->direction + 1) & 3,
+            88, 99, 111, 122, 33, 44, 1200, 1100, 0x0002u, 0x1666u);
+    }
+    if (champion_count > 2) {
+        write_original_pc34_fixture_champion(
+            party + 2u * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT,
+            "HALK", "BARBARIAN", (spec->direction + 2) & 3,
+            101, 202, 303, 404, 55, 66, 900, 800, 0x0010u, 0x1777u);
+    }
+
+    write_original_pc34_fixture_event(events + 0u,
+                                      DM1_MAP_TIME_MAKE(2, 123500u),
+                                      DM1_EVENT_MOVE_GROUP_AUDIBLE, 7,
+                                      11, 12, 3, DM1_EFFECT_SET);
+    write_original_pc34_fixture_event(
+        events + DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+        DM1_MAP_TIME_MAKE(2, 123470u),
+        DM1_EVENT_DOOR, 4, 21, 22, 1, DM1_EFFECT_TOGGLE);
+    write_original_pc34_fixture_event(
+        events + 2u * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+        DM1_MAP_TIME_MAKE(1, 123490u),
+        DM1_EVENT_LIGHT, 2, 0, 0, 0, 9);
+    write_u16_le(timeline + 0u, 1u);
+    write_u16_le(timeline + 2u, 2u);
+    write_u16_le(timeline + 4u, 0u);
+    write_u16_le(timeline + 6u, 3u);
+
+    rc = write_original_part(out_bytes + cursor, out_capacity - cursor,
+                             global, sizeof(global),
+                             keys[SAVEGAME_PC34_PART_GLOBAL_DATA],
+                             &checksums[SAVEGAME_PC34_PART_GLOBAL_DATA]);
+    if (rc < 0) return rc;
+    cursor += (size_t)rc;
+    rc = write_original_part(
+        out_bytes + cursor, out_capacity - cursor,
+        active_group,
+        (size_t)maximum_active_group_count *
+            DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT,
+        keys[SAVEGAME_PC34_PART_ACTIVE_GROUP],
+        &checksums[SAVEGAME_PC34_PART_ACTIVE_GROUP]);
+    if (rc < 0) return rc;
+    cursor += (size_t)rc;
+    rc = write_original_part(out_bytes + cursor, out_capacity - cursor,
+                             party, sizeof(party),
+                             keys[SAVEGAME_PC34_PART_PARTY],
+                             &checksums[SAVEGAME_PC34_PART_PARTY]);
+    if (rc < 0) return rc;
+    cursor += (size_t)rc;
+    rc = write_original_part(
+        out_bytes + cursor, out_capacity - cursor,
+        events,
+        (size_t)event_maximum_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+        keys[SAVEGAME_PC34_PART_EVENTS],
+        &checksums[SAVEGAME_PC34_PART_EVENTS]);
+    if (rc < 0) return rc;
+    cursor += (size_t)rc;
+    rc = write_original_part(out_bytes + cursor, out_capacity - cursor,
+                             timeline, (size_t)event_maximum_count * 2u,
+                             keys[SAVEGAME_PC34_PART_TIMELINE],
+                             &checksums[SAVEGAME_PC34_PART_TIMELINE]);
+    if (rc < 0) return rc;
+    cursor += (size_t)rc;
+
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        write_u16_le(header + 310u + (size_t)i * 2u, keys[i]);
+        write_u16_le(header + 342u + (size_t)i * 2u, checksums[i]);
+    }
+    write_u16_le(header + 374u, SAVEGAME_PC34_PLATFORM_PC);
+    write_u16_le(header + 376u, SAVEGAME_PC34_DUNGEON_ID_DM);
+    {
+        uint16_t second_sum = original_pc34_header_second_half_plain_sum(header);
+        uint16_t first_before_last =
+            original_pc34_header_first_half_checksum(header);
+        uint16_t last =
+            (uint16_t)(read_u16_le(header + 254u) ^
+                       first_before_last ^
+                       second_sum);
+        write_u16_le(header + 254u, last);
+    }
+    (void)f0417_xor_checksum_bytes(
+        header + 256u, SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS,
+        read_u16_le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    memcpy(out_bytes, header, sizeof(header));
+    *out_size = cursor;
     return SAVEGAME_PC34_OK;
 }
 

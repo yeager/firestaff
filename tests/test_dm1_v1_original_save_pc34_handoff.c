@@ -913,6 +913,74 @@ static void test_file_runtime_world_loader(void)
           "world loader reports missing file");
 }
 
+static void test_public_fixture_builder_roundtrips_pc34_handoff(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    size_t written = 0u;
+    DM1OriginalSavePC34FixtureSpec spec;
+    DM1OriginalSaveClassifyResult classified;
+    DM1OriginalSavePC34HandoffReport report;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    int rc;
+
+    memset(&spec, 0, sizeof(spec));
+    spec.champion_count = 2;
+    spec.map_index = 4;
+    spec.map_x = 12;
+    spec.map_y = 17;
+    spec.direction = 3;
+    spec.active_champion_index = 1;
+    spec.current_active_group_count = 2;
+    spec.maximum_active_group_count = ORIGINAL_PC34_ACTIVE_GROUP_COUNT;
+    spec.event_count = ORIGINAL_PC34_EVENT_COUNT;
+    spec.event_maximum_count = ORIGINAL_PC34_EVENT_MAXIMUM_COUNT;
+    spec.game_time = 654321u;
+    spec.game_id = 0x51503433u;
+
+    rc = dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+        &spec, bytes, sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "public PC34 fixture builder succeeds");
+    CHECK(written > SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
+          "public builder writes header plus parts");
+
+    rc = dm1_v1_original_save_classify_bytes(bytes, written, &classified);
+    CHECK(rc == 1, "public builder bytes classify");
+    CHECK(classified.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34,
+          "public builder writes PC34 original header");
+    CHECK(classified.header_checksum_ok == 1,
+          "public builder header checksum validates");
+    CHECK(classified.pc34_importer_candidate == 1,
+          "public builder marks importer candidate");
+    CHECK(classified.game_id == 0x51503433u,
+          "public builder preserves requested game id");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "public builder bytes import through handoff");
+    CHECK(report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT,
+          "public builder writes all part checksums");
+    CHECK(report.original_game_time == 654321u,
+          "public builder global game time imports");
+    CHECK(imported.party->championCount == 2,
+          "public builder champion count imports");
+    CHECK(imported.party->mapIndex == 4,
+          "public builder map index imports");
+    CHECK(imported.party->mapX == 12,
+          "public builder map x imports");
+    CHECK(imported.party->mapY == 17,
+          "public builder map y imports");
+    CHECK(imported.party->direction == 3,
+          "public builder direction imports");
+    CHECK(memcmp(imported.party->champions[1].name, "WUUF    ", 8u) == 0,
+          "public builder second champion imports");
+}
+
 static void test_strings(void)
 {
     CHECK(strcmp(dm1_v1_original_save_pc34_handoff_result_name(
@@ -954,6 +1022,7 @@ int main(void)
     test_pc34_handoff_imports_party_state();
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
+    test_public_fixture_builder_roundtrips_pc34_handoff();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;
