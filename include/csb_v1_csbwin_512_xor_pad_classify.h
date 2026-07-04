@@ -209,12 +209,9 @@ typedef struct {
     uint16_t checksums[16];         /* CSB_SAVE_HEADER.Checksums[16] */
     int16_t  platform;              /* CSB_SAVE_HEADER.Platform */
     uint16_t dungeon_id;            /* CSB_SAVE_HEADER.DungeonID */
-    /* First 32 bytes of CSB_SAVE_HEADER.AdditionalData. The full
-     * field is 132 bytes; the 512-byte CSBWin block only carries
-     * the first 96 of those (offsets 0x050..0x0B0 relative to
-     * start of CSB_SAVE_HEADER, i.e. bytes 0x050..0x0B0 of the
-     * second half). We surface the first 32 to keep the struct
-     * bounded. */
+    /* First 32 bytes of the legacy CSB_SAVE_HEADER.AdditionalData view.
+     * These overlap CSBWin's GAMEBLOCK1 body-section fields at absolute
+     * offsets 336..367 and are kept for the older header-readback tests. */
     uint8_t  additional_data[32];
 
     /* CSBWin SaveGame.cpp GAMEBLOCK1 fields needed to decode the
@@ -240,6 +237,7 @@ typedef struct {
     uint16_t csbwin_timer_queue_checksum; /* GAMEBLOCK1 offset 352 */
     int16_t  csbwin_word22594;       /* GAMEBLOCK1 offset 376 */
     int16_t  csbwin_word22592;       /* GAMEBLOCK1 offset 378 */
+    uint8_t  csbwin_byte22808[132];  /* GAMEBLOCK1 offset 380 */
 } CSB_V1_CSBWin512Public;
 
 /* Top-level verdict + public-field record. `verdict` is the
