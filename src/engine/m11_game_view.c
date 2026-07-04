@@ -14689,13 +14689,6 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
         !state->world.things || !state->world.things->sensors) {
         return -1;
     }
-    /* ReDMCSB DUNGEON.C F0172 lines 2523-2627 only routes C127 champion
-     * portrait sensors through the wall/fake-wall square-aspect path; open
-     * corridor, pit, and teleporter squares use the floor-ornament path at
-     * lines 2665-2681 and must not set G0289. */
-    if (!m11_viewport_cell_is_wall_like(&frontCell)) {
-        return -1;
-    }
     visibleWallCell = (state->world.party.direction + 2) & 3;
 
     /* ReDMCSB DUNGEON.C:2573 / MOVESENS.C:1501-1503 / REVIVE.C F0280:
@@ -14708,7 +14701,14 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
      * G0289, so the source-visible wall cell is direction+2.
      * The TextString is the candidate's stats anchor on the corridor
      * floor (DUNGEON.C:2570-2584) and is not required to be present on
-     * the front wall square. */
+     * the front wall square.
+     *
+     * PC 3.4 Hall of Champions also has front-facing C127 mirror sensors
+     * on corridor carrier squares.  DUNGEON.C F0172 lines 2665-2681 routes
+     * ordinary corridor sensors through floor-ornament ordinal state, but
+     * MOVESENS.C still uses the C127 sensorData for REVIVE.C F0280.  Accept
+     * only the concrete front-facing C127 + valid catalog ordinal here; do
+     * not promote arbitrary corridor ornaments or payload objects. */
     thing = frontCell.firstThing;
     while (thing != THING_ENDOFLIST && thing != THING_NONE) {
         int thingType = THING_GET_TYPE(thing);
@@ -14718,6 +14718,11 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
             state->world.things->sensors[thingIndex].sensorType == 127) {
             int sensorData = (int)state->world.things->sensors[thingIndex].sensorData;
             if ((int)THING_GET_CELL(thing) != visibleWallCell) {
+                thing = m11_raw_next_thing(state->world.things, thing);
+                continue;
+            }
+            if (!m11_viewport_cell_is_wall_like(&frontCell) &&
+                state->world.party.mapIndex != 0) {
                 thing = m11_raw_next_thing(state->world.things, thing);
                 continue;
             }
