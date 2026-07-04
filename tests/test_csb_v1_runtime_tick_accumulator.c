@@ -3277,6 +3277,65 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     CHECK(test_get_le16(raw, 88) < 500u,
           "C49 creature hit writes projectile damage into GROUP.Health");
 
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 1;
+    profile.party_dir = CSB_V1_DIR_NORTH;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 2;
+    {
+        struct ProjectileCreateInput_Compat projectile_input;
+        struct TimelineEvent_Compat first_move;
+        int projectile_slot = -1;
+        memset(&projectile_input, 0, sizeof(projectile_input));
+        memset(&first_move, 0, sizeof(first_move));
+        projectile_input.category = PROJECTILE_CATEGORY_MAGICAL;
+        projectile_input.subtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+        projectile_input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        projectile_input.ownerIndex = 8;
+        projectile_input.mapIndex = 0;
+        projectile_input.mapX = 1;
+        projectile_input.mapY = 1;
+        projectile_input.cell = 0;
+        projectile_input.direction = 3;
+        projectile_input.kineticEnergy = 20;
+        projectile_input.attack = 20;
+        projectile_input.launcherStrength = 20;
+        projectile_input.stepEnergy = 1;
+        projectile_input.currentTick = (int)profile.game_time;
+        CHECK(F0810_PROJECTILE_Create_Compat(
+                  &projectile_input,
+                  &profile.projectiles,
+                  &projectile_slot,
+                  &first_move) == 1 &&
+                  projectile_slot == 0,
+              "C49 party empty-cell fixture creates a spell projectile");
+        queue_projectile_move_event(&profile, &first_move);
+    }
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 party empty-cell fixture advances to first move tick");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C49 party empty-cell event dispatches");
+    CHECK(profile.projectiles.count == 1,
+          "C49 projectile entering an unoccupied party cell remains live");
+    CHECK(profile.projectiles.entries[0].mapX == 0 &&
+              profile.projectiles.entries[0].mapY == 1 &&
+              profile.projectiles.entries[0].cell == 1,
+          "C49 party empty-cell movement commits the cross-cell step");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 100,
+          "C49 projectile entering an empty party cell does not damage the champion");
+
     make_real_format_sensor_dungeon(
         &dungeon,
         raw,
