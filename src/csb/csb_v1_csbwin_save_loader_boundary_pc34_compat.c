@@ -711,6 +711,12 @@ int csb_v1_csbwin_save_loader_boundary_classify(
             classify_valid_xor512_shape(bytes, size, &out->xor512_report);
         out->xor512_valid =
             (xor_shape != CSB_V1_CSBWIN_SHAPE_COUNT) ? 1 : 0;
+        if (out->xor512_valid &&
+            csb_v1_csbwin_512_verify_save_body(
+                bytes, size, 0u, &out->xor512_body_report) ==
+                    CSB_V1_CSBWIN_512_OK) {
+            out->xor512_body_valid = 1;
+        }
     }
 
     if (shape == CSB_V1_CSBWIN_SHAPE_COUNT) {
@@ -851,6 +857,9 @@ const char *csb_v1_csbwin_save_loader_boundary_decision_name(
     if (result->should_attempt_import) {
         return "accept_loader_ready";
     }
+    if (is_csbwin_512_shape(result->shape) && result->xor512_body_valid) {
+        return "reject_csbwin_512_body_valid_import_pending";
+    }
     if (is_csbwin_512_shape(result->shape) && result->xor512_valid) {
         return "reject_csbwin_512_header_valid_import_pending";
     }
@@ -917,6 +926,8 @@ const char *csb_v1_csbwin_save_loader_boundary_source_evidence(void)
         "ReDMCSB SAVEHEAD.C F0429/F0430 (header read/write)\n"
         "ReDMCSB DEFS.H:1289 (CSBGAME.DAT magic literal)\n"
         "CSBWin SaveGame.cpp:927/1711/2111 (save file I/O + 512-byte XOR header)\n"
+        "CSBWin SaveGame.cpp:1768-1855 (GAMEBLOCK2/ITEM16/characters/timers load order)\n"
+        "CSBWin CSBCode.cpp:9061-9069 (UnscrambleStream checksum gate)\n"
         "CSBWin CSBCode.cpp:421-422 (csbgame.dat / csbgame.bak literals)\n"
         "CSBWin CSBCode.cpp:9813 (SaveGameFilename pointer)\n"
         "CSBWin Data.h:590 (SaveGameFilename field)\n"

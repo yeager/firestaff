@@ -148,6 +148,108 @@ static void build_csbwin_fixture(uint8_t *buf,
     scramble_block(buf + 256u, 0u, 128u);
 }
 
+static size_t build_full_csbwin_body_fixture(uint8_t *buf,
+                                             size_t capacity,
+                                             int corrupt_timer_queue)
+{
+    enum {
+        MAX_ITEM16 = 2,
+        MAX_TIMERS = 3,
+        TIMER_RECORD_SIZE = 16,
+        ITEM16_SIZE = MAX_ITEM16 * 16,
+        CHARACTER_SIZE = 3328,
+        TIMER_SIZE = MAX_TIMERS * TIMER_RECORD_SIZE,
+        TIMER_QUEUE_SIZE = MAX_TIMERS * 2
+    };
+    const size_t total = CSB_V1_CSBWIN_BLOCK1_BYTES + 128u +
+                         ITEM16_SIZE + CHARACTER_SIZE + TIMER_SIZE +
+                         TIMER_QUEUE_SIZE;
+    uint8_t public_bytes[256];
+    uint8_t block2[128];
+    size_t off;
+    size_t i;
+    uint16_t block2_checksum;
+    uint16_t item16_checksum;
+    uint16_t character_checksum;
+    uint16_t timers_checksum;
+    uint16_t timer_queue_checksum;
+
+    if (capacity < total) {
+        return 0u;
+    }
+    memset(buf, 0, total);
+    memset(public_bytes, 0, sizeof(public_bytes));
+    memset(block2, 0, sizeof(block2));
+
+    write_le32(block2, 0u, 0x01020304u);
+    write_le32(block2, 4u, 0xA0B0C0D0u);
+    write_le16(block2, 10u, 4u);
+    write_le16(block2, 12u, 17u);
+    write_le16(block2, 14u, 22u);
+    write_le16(block2, 16u, 3u);
+    write_le16(block2, 18u, 5u);
+    write_le16(block2, 28u, MAX_TIMERS);
+    write_le16(block2, 46u, MAX_ITEM16);
+
+    off = CSB_V1_CSBWIN_BLOCK1_BYTES;
+    memcpy(buf + off, block2, sizeof(block2));
+    block2_checksum = scramble_block(buf + off, 0x1111u, 64u);
+    off += sizeof(block2);
+
+    for (i = 0u; i < ITEM16_SIZE; ++i) {
+        buf[off + i] = (uint8_t)(0x20u + i);
+    }
+    item16_checksum = scramble_block(buf + off, 0x2222u,
+                                     (uint16_t)(ITEM16_SIZE / 2));
+    off += ITEM16_SIZE;
+
+    for (i = 0u; i < CHARACTER_SIZE; ++i) {
+        buf[off + i] = (uint8_t)((i * 7u + 5u) & 0xFFu);
+    }
+    character_checksum = scramble_block(buf + off, 0x3333u,
+                                        (uint16_t)(CHARACTER_SIZE / 2));
+    off += CHARACTER_SIZE;
+
+    for (i = 0u; i < TIMER_SIZE; ++i) {
+        buf[off + i] = (uint8_t)((i * 11u + 9u) & 0xFFu);
+    }
+    timers_checksum = scramble_block(buf + off, 0x4444u,
+                                     (uint16_t)(TIMER_SIZE / 2));
+    off += TIMER_SIZE;
+
+    for (i = 0u; i < TIMER_QUEUE_SIZE; ++i) {
+        buf[off + i] = (uint8_t)(0x80u + i);
+    }
+    timer_queue_checksum = scramble_block(buf + off, 0x5555u,
+                                          (uint16_t)(TIMER_QUEUE_SIZE / 2));
+    if (corrupt_timer_queue) {
+        buf[off + 1u] ^= 0x40u;
+    }
+    off += TIMER_QUEUE_SIZE;
+
+    public_bytes[CSB_V1_CSBWIN_512_OFF_USELESS] = 1u;
+    public_bytes[CSB_V1_CSBWIN_512_OFF_FORMAT_ID] =
+        (uint8_t)CSB_V1_FORMAT_DM_AMIGA_36_PC_CSB;
+    public_bytes[CSB_V1_CSBWIN_512_OFF_SAVE_AND_PLAY] = 1u;
+    write_le32(public_bytes, CSB_V1_CSBWIN_512_OFF_GAME_ID, 0x2468ACE0u);
+    public_bytes[300u - 256u] = 0x04u;
+    public_bytes[301u - 256u] = 0x01u;
+    write_le32(public_bytes, 308u - 256u, 0x10203040u);
+    write_le16(public_bytes, 312u - 256u, 0x1111u);
+    write_le16(public_bytes, 314u - 256u, 0x2222u);
+    write_le16(public_bytes, 316u - 256u, 0x3333u);
+    write_le16(public_bytes, 318u - 256u, 0x4444u);
+    write_le16(public_bytes, 320u - 256u, 0x5555u);
+    write_le16(public_bytes, 344u - 256u, block2_checksum);
+    write_le16(public_bytes, 346u - 256u, item16_checksum);
+    write_le16(public_bytes, 348u - 256u, character_checksum);
+    write_le16(public_bytes, 350u - 256u, timers_checksum);
+    write_le16(public_bytes, 352u - 256u, timer_queue_checksum);
+
+    build_csbwin_fixture(buf, public_bytes);
+    return off;
+}
+
 /* Build a fixture that fails both keys. We take a valid CSBWin
  * fixture and flip a single byte in the *first half* (the
  * trashed area) which keeps the CSBWin structure intact but
@@ -435,6 +537,66 @@ static int test_stream_section_decode(void)
     return 1;
 }
 
+static int test_full_save_body_verify(void)
+{
+    uint8_t bytes[4096];
+    CSB_V1_CSBWin512BodyReport report;
+    size_t size = build_full_csbwin_body_fixture(bytes, sizeof(bytes), 0);
+    int rc;
+
+    ASSERT_TRUE(size == 4054u);
+    rc = csb_v1_csbwin_512_verify_save_body(bytes, size, 16u, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(report.header_valid == 1);
+    ASSERT_TRUE(report.header.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB);
+    ASSERT_TRUE(report.timer_record_size == 16u);
+    ASSERT_TRUE(report.max_item16 == 2u);
+    ASSERT_TRUE(report.max_timers == 3u);
+    ASSERT_TRUE(report.num_character == 4u);
+    ASSERT_TRUE(report.party_x == 17u);
+    ASSERT_TRUE(report.party_y == 22u);
+    ASSERT_TRUE(report.party_facing == 3u);
+    ASSERT_TRUE(report.party_level == 5u);
+    ASSERT_TRUE(report.required_size == size);
+    ASSERT_TRUE(report.sections_verified == CSB_V1_CSBWIN_512_SECTION_COUNT);
+
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_BLOCK2].
+                encrypted_offset == 512u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_BLOCK2].
+                encrypted_size == 128u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_ITEM16].
+                encrypted_offset == 640u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_ITEM16].
+                encrypted_size == 32u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_CHARACTERS].
+                encrypted_offset == 672u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_CHARACTERS].
+                encrypted_size == 3328u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_TIMERS].
+                encrypted_offset == 4000u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_TIMERS].
+                encrypted_size == 48u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE].
+                encrypted_offset == 4048u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE].
+                encrypted_size == 6u);
+    ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE].
+                checksum_ok == 1);
+
+    rc = csb_v1_csbwin_512_verify_save_body(bytes, size - 1u, 16u, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_TOO_SMALL);
+    rc = csb_v1_csbwin_512_verify_save_body(bytes, size, 14u, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_ARGUMENT);
+
+    size = build_full_csbwin_body_fixture(bytes, sizeof(bytes), 0);
+    ASSERT_TRUE(size == 4054u);
+    bytes[4050u] ^= 0x7Fu;
+    rc = csb_v1_csbwin_512_verify_save_body(bytes, size, 16u, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM);
+    ASSERT_TRUE(report.sections_verified == 4);
+    return 1;
+}
+
 static int test_csb_first_fallback_to_dm(void)
 {
     CSB_V1_CSBWin512Report report;
@@ -545,6 +707,7 @@ struct { const char *name; test_fn fn; } tests[] = {
     { "csb-key-synthetic-accept",     test_csb_key_synthetic_accept },
     { "dm-key-synthetic-accept",      test_dm_key_synthetic_accept },
     { "stream-section-decode",        test_stream_section_decode },
+    { "full-save-body-verify",        test_full_save_body_verify },
     { "csb-first-fallback-to-dm",     test_csb_first_fallback_to_dm },
     { "input-buffer-not-modified",    test_input_buffer_not_modified },
     { "result-and-evidence-strings",  test_result_and_evidence_strings },

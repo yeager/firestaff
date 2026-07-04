@@ -53,9 +53,9 @@
  *
  * Scope (non-claims):
  *   - No file I/O. Callers feed bytes; the module reports.
- *   - No LZW / RLE body-section decoding. The CSBWin 512-byte
- *     body remains documented as loader-reject here even when
- *     the GAMEBLOCK1 XOR-pad header validates.
+ *   - No LZW / RLE payload import. The CSBWin 512-byte body can
+ *     be boundary/checksum-verified here, but remains documented
+ *     as loader-reject until runtime import is wired.
  *   - No runtime binding. Callers (a future launcher import
  *     button) decide what to do with the verdict.
  *   - No real CSBWin save bytes are vendored; fixtures are
@@ -193,6 +193,8 @@ typedef struct {
     CSB_V1_CSBWinLoaderBoundaryResult loader; /* bounded importer verdict */
     int                       xor512_valid; /* 1 when GAMEBLOCK1 validates with CSB/DM key */
     CSB_V1_CSBWin512Report    xor512_report; /* read-only header verdict; no body import */
+    int                       xor512_body_valid; /* 1 when body sections verify */
+    CSB_V1_CSBWin512BodyReport xor512_body_report; /* body-section boundaries/checksums */
     const char               *file_kind_label;
     const char               *decision_label;
 } CSB_V1_CSBWinSaveDiscoveryResult;
@@ -267,8 +269,9 @@ csb_v1_csbwin_save_loader_boundary_file_kind(const char *path_hint);
  * existing loader-boundary verdict. For CSBWin 512-byte GAMEBLOCK1
  * shapes it also runs the read-only XOR-pad header classifier so
  * startup can distinguish a valid CSBWin header from plain bad magic.
- * It does not allocate, decode body blocks, or import into a persistent
- * party. */
+ * If enough bytes are present after GAMEBLOCK1, it also verifies the
+ * CSBWin body-section boundaries/checksums. It does not import into a
+ * persistent party. */
 int csb_v1_csbwin_save_loader_boundary_classify(
     const char *path_hint,
     const uint8_t *bytes,
