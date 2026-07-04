@@ -24053,6 +24053,22 @@ static void m11_projectile_step(int dir, int* dx, int* dy) {
     }
 }
 
+static int m11_party_champion_cell_mask(const struct GameWorld_Compat* world) {
+    int mask = 0;
+    int i;
+    if (!world) return 0;
+    /* ReDMCSB: MOVESENS.C F0266 lines 241-247 builds the party impact
+     * cell map through F0285_CHAMPION_GetIndexInCell instead of treating
+     * every party sub-cell as occupied. */
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        const struct ChampionState_Compat* champion =
+            &world->party.champions[i];
+        if (!champion->present) continue;
+        mask |= 1 << ((int)champion->cell & 3);
+    }
+    return mask;
+}
+
 /* Build a CellContentDigest_Compat capturing everything F0811
  * needs to know about the source and destination squares.  Returns
  * 1 on success, 0 if the source square cannot be sampled (should
@@ -24206,10 +24222,9 @@ static int m11_build_projectile_digest(
     if (world->party.mapIndex == p->mapIndex
             && world->party.mapX == destX
             && world->party.mapY == destY) {
-        out->destHasChampion       = 1;
-        out->destPartyDirection    = world->party.direction & 3;
-        /* Party occupies all 4 sub-cells for F0811's cell-mask gate. */
-        out->destChampionCellMask  = M11_DM1_CELL_OCCUPIED_MASK;
+        out->destChampionCellMask = m11_party_champion_cell_mask(world);
+        out->destHasChampion = out->destChampionCellMask ? 1 : 0;
+        out->destPartyDirection = world->party.direction & 3;
     }
 
     /* Creature group on destination square (via AI state slots).  v1
@@ -25535,9 +25550,9 @@ static int m11_build_explosion_digest(
     if (world->party.mapIndex == e->mapIndex
             && world->party.mapX == e->mapX
             && world->party.mapY == e->mapY) {
-        out->destHasChampion      = 1;
-        out->destPartyDirection   = world->party.direction & 3;
-        out->destChampionCellMask = 0x0F;
+        out->destChampionCellMask = m11_party_champion_cell_mask(world);
+        out->destHasChampion = out->destChampionCellMask ? 1 : 0;
+        out->destPartyDirection = world->party.direction & 3;
     }
 
     /* Creature group on the explosion cell. */
