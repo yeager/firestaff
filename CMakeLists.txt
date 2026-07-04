@@ -6049,6 +6049,7 @@ if(BUILD_TESTING)
 
     add_executable(test_csb_v1_m11_startup_resume_gate
         tests/test_csb_v1_m11_startup_resume_gate.c
+        tests/csbwin_resume_fixture.c
     )
     target_include_directories(test_csb_v1_m11_startup_resume_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -7973,6 +7974,7 @@ if(BUILD_TESTING)
 
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c
+        tests/csbwin_resume_fixture.c
     )
     target_link_libraries(test_m12_quick_resume_gate PRIVATE firestaff_m12)
     if(NOT MSVC)

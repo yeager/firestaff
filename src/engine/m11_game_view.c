@@ -2376,6 +2376,24 @@ static uint32_t m11_read_u32_le(const unsigned char* src) {
            ((uint32_t)src[3] << 24);
 }
 
+static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
+                                            const char *path)
+{
+    int rc;
+    if (!profile || !path || path[0] == '\0') {
+        return 0;
+    }
+    rc = csb_v1_runtime_load_game_from_path(profile, path);
+    if (rc == CSB_V1_LOAD_OK) {
+        return 1;
+    }
+    /* ReDMCSB LOADSAVE.C F0435 covers native CSB save restore, while
+     * CSBWin SaveGame.cpp stores GAMEBLOCK1 plus checksum-gated body
+     * streams.  Startup/F9 accepts CSBWin only after the verifier can
+     * apply the bounded runtime handoff from disk. */
+    return csb_v1_runtime_apply_csbwin_resume_file(profile, path, 0u) == 0;
+}
+
 static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
                                              const char* path);
 static void m11_set_status(M11_GameViewState* state,
@@ -8551,9 +8569,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         if (spec->savePath && spec->savePath[0] != '\0') {
-            if (csb_v1_runtime_load_game_from_path(&profile->runtime,
-                                                   spec->savePath) !=
-                CSB_V1_LOAD_OK) {
+            if (!m11_csb_runtime_load_resume_path(&profile->runtime,
+                                                  spec->savePath)) {
                 m11_set_status(state, "BOOT", "CSB RESUME FAILED");
                 m11_log_event(state, M11_COLOR_RED,
                               "T0: CSB RESUME FAILED: %s",
@@ -9380,8 +9397,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
          * file after the dungeon/profile is available.  M11 already owns
          * the verified CSB boot profile here, so direct F9 can reload the
          * runtime snapshot in place without touching the DM1 world loader. */
-        if (csb_v1_runtime_load_game_from_path(&profile->runtime, path) !=
-            CSB_V1_LOAD_OK) {
+        if (!m11_csb_runtime_load_resume_path(&profile->runtime, path)) {
             m11_set_status(state, "LOAD", "CSB QUICKSAVE INVALID");
             return 0;
         }

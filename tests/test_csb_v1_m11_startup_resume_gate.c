@@ -12,6 +12,7 @@
  */
 
 #include "csb_v1_boot.h"
+#include "csbwin_resume_fixture.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
@@ -622,9 +623,11 @@ int main(void) {
     char save_tmpl[] = "/tmp/firestaff_csb_m11_resume_XXXXXX";
     char quick_save_tmpl[] = "/tmp/firestaff_csb_m11_quicksave_XXXXXX";
     char roster_save_tmpl[] = "/tmp/firestaff_csb_m11_roster_XXXXXX";
+    char csbwin_save_tmpl[] = "/tmp/firestaff_csb_m11_csbwin_XXXXXX";
     char save_path[560];
     char quick_save_path[560];
     char roster_save_path[560];
+    char csbwin_save_path[560];
     const char* data_dir = csb_data_dir(fallback);
     CSB_V1_BootProfile preflight;
     CSB_V1_RuntimeProfile expected;
@@ -663,6 +666,8 @@ int main(void) {
              ".\\firestaff-csb-m11-quicksave.sav");
     snprintf(roster_save_path, sizeof(roster_save_path),
              ".\\firestaff-csb-m11-roster.sav");
+    snprintf(csbwin_save_path, sizeof(csbwin_save_path),
+             ".\\firestaff-csb-m11-csbwin.sav");
 #else
     {
         int fd = mkstemp(save_tmpl);
@@ -695,6 +700,17 @@ int main(void) {
         snprintf(roster_save_path, sizeof(roster_save_path), "%s.sav",
                  roster_save_tmpl);
         remove(roster_save_tmpl);
+    }
+    {
+        int fd = mkstemp(csbwin_save_tmpl);
+        if (fd < 0) {
+            fprintf(stderr, "FAIL: could not create temporary CSBWin save path\n");
+            return 1;
+        }
+        close(fd);
+        snprintf(csbwin_save_path, sizeof(csbwin_save_path), "%s.sav",
+                 csbwin_save_tmpl);
+        remove(csbwin_save_tmpl);
     }
 #endif
 
@@ -850,6 +866,52 @@ int main(void) {
     expect_true(view.csbBootProfile == NULL,
                 "M11 shutdown clears CSB boot ownership");
 
+    expect_true(firestaff_test_write_csbwin_resume_fixture(csbwin_save_path, 0),
+                "built verified CSBWin resume save fixture");
+    fill_csb_launch_spec(&spec, data_dir, csbwin_save_path);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB CSBWin verified-body resume start succeeds");
+    expect_true(view.active == 1,
+                "M11 CSB CSBWin resume leaves view active");
+    expect_true(view.sourceKind == M11_GAME_SOURCE_CSB_BOOT,
+                "M11 CSBWin resume source kind is CSB boot");
+    expect_true(view.csbState.party_x == 12 &&
+                view.csbState.party_y == 7 &&
+                view.csbState.party_dir == 3,
+                "M11 CSBWin resume mirrors GAMEBLOCK2 party pose");
+    profile = (CSB_V1_BootProfile*)view.csbBootProfile;
+    if (profile) {
+        expect_true(profile->runtime.game_time == 0x01020304u,
+                    "M11 CSBWin resume applies GAMEBLOCK2 game time");
+        expect_true(profile->runtime.party_state_valid == 1 &&
+                    profile->runtime.party_state.ChampionCount == 2 &&
+                    strcmp(profile->runtime.party_state.Champions[0].Name,
+                           "TIGGY") == 0 &&
+                    strcmp(profile->runtime.party_state.Champions[1].Name,
+                           "BORIS") == 0,
+                    "M11 CSBWin resume applies champion summaries");
+        expect_true(profile->runtime.csbwin_runtime_item16_count == 2u,
+                    "M11 CSBWin resume materializes ITEM16 summaries");
+        expect_true(profile->runtime.timeline_queue.eventCount == 3,
+                    "M11 CSBWin resume materializes timer queue");
+    }
+    M11_GameView_Shutdown(&view);
+    expect_true(view.csbBootProfile == NULL,
+                "M11 shutdown clears CSBWin resume boot ownership");
+
+    expect_true(firestaff_test_write_csbwin_resume_fixture(csbwin_save_path, 1),
+                "built corrupt CSBWin resume save fixture");
+    fill_csb_launch_spec(&spec, data_dir, csbwin_save_path);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec) == 0,
+                "M11 CSB corrupt CSBWin resume start fails closed");
+    expect_true(view.active == 0,
+                "M11 corrupt CSBWin resume leaves view inactive");
+    expect_true(view.csbBootProfile == NULL,
+                "M11 corrupt CSBWin resume releases boot profile");
+    M11_GameView_Shutdown(&view);
+
     expect_true(write_raw_csbgame_roster_save(roster_save_path),
                 "built raw CSBGAME roster save fixture");
     fill_csb_launch_spec(&spec, data_dir, roster_save_path);
@@ -889,6 +951,7 @@ int main(void) {
     remove(save_path);
     remove(quick_save_path);
     remove(roster_save_path);
+    remove(csbwin_save_path);
 
     if (g_failures) {
         fprintf(stderr, "CSB V1 M11 startup/resume gate FAILED (%d failures)\n",
