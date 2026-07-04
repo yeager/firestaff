@@ -8707,6 +8707,220 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     return csb_v1_runtime_apply_csbwin_resume_report(profile, &report);
 }
 
+static int csb_v1_runtime_build_csbwin_core_summary(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWin512BodyReport *summary)
+{
+    int rc;
+    uint16_t i;
+    uint16_t timer_count;
+    uint16_t item_count;
+
+    if (!profile || !summary || !profile->party_state_valid) {
+        return -1;
+    }
+
+    rc = csb_v1_runtime_export_csbwin_champion_summaries(profile, summary);
+    if (rc < 0) {
+        return -1;
+    }
+
+    summary->header_valid = 1;
+    summary->header.verdict = CSB_V1_CSBWIN_512_VERDICT_CSB;
+    summary->header.key_index = CSB_V1_CSBWIN_512_KEY_CSB;
+    summary->timer_record_size = 16u;
+    summary->header.public_fields.csbwin_random_game_id =
+        (uint32_t)csb_v1_runtime_effective_game_id(profile);
+    summary->header.public_fields.csbwin_total_move_count =
+        profile->tick_count;
+    summary->game_time = profile->game_time;
+    summary->random_seed = profile->csbwin_gameblock2_summary_valid
+        ? profile->csbwin_random_seed
+        : profile->dungeon_seed;
+    summary->object_in_hand = profile->csbwin_gameblock2_summary_valid
+        ? profile->csbwin_object_in_hand
+        : 0xffffu;
+    summary->last_monster_attack_time =
+        profile->csbwin_last_monster_attack_time;
+    summary->last_party_move_time = profile->csbwin_last_party_move_time;
+    summary->party_move_disable_timer =
+        profile->csbwin_party_move_disable_timer;
+    summary->word11712 = profile->csbwin_word11712;
+    summary->word11714 = profile->csbwin_word11714;
+
+    if (profile->csbwin_body_runtime_summary_valid) {
+        summary->character_tail_brightness =
+            profile->csbwin_character_tail_brightness;
+        summary->character_tail_see_thru_walls =
+            profile->csbwin_character_tail_see_thru_walls;
+        summary->character_tail_magic_footprints_active =
+            profile->csbwin_character_tail_magic_footprints_active;
+        summary->character_tail_party_shield =
+            profile->csbwin_character_tail_party_shield;
+        summary->character_tail_fire_shield =
+            profile->csbwin_character_tail_fire_shield;
+        summary->character_tail_spell_shield =
+            profile->csbwin_character_tail_spell_shield;
+        summary->character_tail_num_footprint_entries =
+            profile->csbwin_character_tail_num_footprint_entries;
+        summary->character_tail_freeze_life_timer =
+            profile->csbwin_character_tail_freeze_life_timer;
+        summary->character_tail_first_magic_footprint =
+            profile->csbwin_character_tail_first_magic_footprint;
+        summary->character_tail_last_magic_footprint =
+            profile->csbwin_character_tail_last_magic_footprint;
+        memcpy(summary->character_tail_party_footprints,
+               profile->csbwin_character_tail_party_footprints,
+               sizeof(summary->character_tail_party_footprints));
+        memcpy(summary->character_tail_byte13220,
+               profile->csbwin_character_tail_byte13220,
+               sizeof(summary->character_tail_byte13220));
+        summary->character_tail_invisible =
+            profile->csbwin_character_tail_invisible;
+    }
+
+    item_count = profile->csbwin_body_runtime_summary_valid
+        ? profile->csbwin_item16_summary_total
+        : profile->csbwin_runtime_item16_total;
+    if (item_count > CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
+        return -1;
+    }
+    summary->max_item16 = item_count;
+    summary->item16_queue_len = item_count;
+    summary->item16_summary_total = item_count;
+    summary->item16_summary_count = item_count;
+    if (profile->csbwin_body_runtime_summary_valid) {
+        memcpy(summary->item16,
+               profile->csbwin_item16,
+               (size_t)item_count * sizeof(summary->item16[0]));
+    } else {
+        for (i = 0u; i < item_count; ++i) {
+            const CSB_V1_CSBWinRuntimeItem16 *src =
+                &profile->csbwin_runtime_item16[i];
+            CSB_V1_CSBWin512Item16Summary *dst = &summary->item16[i];
+            if (!src->valid) {
+                continue;
+            }
+            dst->valid = 1;
+            dst->monster_index = src->monster_index;
+            dst->facings = src->facings;
+            dst->positions = src->positions;
+            dst->ubyte4 = src->last_move_time_lsb;
+            dst->ubyte5 = src->delay_or_flee_timer;
+            dst->target_x = src->target_x;
+            dst->target_y = src->target_y;
+            dst->previous_x = src->previous_x;
+            dst->previous_y = src->previous_y;
+            dst->current_x = src->current_x;
+            dst->current_y = src->current_y;
+            memcpy(dst->single_monster_status,
+                   src->single_monster_status,
+                   sizeof(dst->single_monster_status));
+        }
+    }
+
+    if (profile->timeline_queue.eventCount < 0 ||
+        profile->timeline_queue.eventCount >
+            (int)CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        profile->timeline_queue.eventCount >
+            (int)CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES) {
+        return -1;
+    }
+    timer_count = (uint16_t)profile->timeline_queue.eventCount;
+    summary->max_timers = timer_count;
+    summary->num_timer = timer_count;
+    summary->first_avail_timer = timer_count;
+    summary->timer_sequence = profile->csbwin_timer_sequence;
+    summary->timer_summary_total = timer_count;
+    summary->timer_summary_count = timer_count;
+    summary->timer_queue_summary_total = timer_count;
+    summary->timer_queue_summary_count = timer_count;
+
+    /* CSBWin SaveGame.cpp writes the TIMER array and then the timer queue
+     * after GAMEBLOCK2/ITEM16/CHARDESC. For Firestaff's bounded core export,
+     * write the current runtime timeline heap order as the CSBWin queue so a
+     * re-import reaches the same event boundary without relying on stale
+     * imported timer bytes. */
+    for (i = 0u; i < timer_count; ++i) {
+        int event_index = profile->timeline_queue.timeline[i];
+        const struct DM1_Event_V1 *event;
+        CSB_V1_CSBWin512TimerSummary *timer = &summary->timers[i];
+        if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
+            return -1;
+        }
+        event = &profile->timeline_queue.events[event_index];
+        timer->valid = 1;
+        timer->time = event->map_time;
+        timer->function = (uint8_t)event->type;
+        timer->ubyte5 = event->priority;
+        timer->ubyte6 = event->b_mapX;
+        timer->ubyte7 = event->b_mapY;
+        timer->ubyte8 = event->c_cell;
+        timer->ubyte9 = event->c_effect;
+        timer->sequence =
+            (uint16_t)(profile->csbwin_timer_sequence + i);
+        timer->level = (uint8_t)DM1_MAP_TIME_MAP(event->map_time);
+        summary->timer_queue[i] = i;
+    }
+
+    summary->sections_verified = CSB_V1_CSBWIN_512_SECTION_COUNT;
+    return 0;
+}
+
+int csb_v1_runtime_export_csbwin_core_save_to_memory(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t *out,
+    size_t out_capacity,
+    size_t *out_size)
+{
+    CSB_V1_CSBWin512BodyReport summary;
+
+    if (!profile || !out || !out_size) {
+        return -1;
+    }
+    *out_size = 0u;
+    memset(&summary, 0, sizeof(summary));
+    if (csb_v1_runtime_build_csbwin_core_summary(profile, &summary) != 0) {
+        return -1;
+    }
+    return csb_v1_csbwin_512_build_writable_core_save(
+        &summary,
+        out,
+        out_capacity,
+        out_size) == CSB_V1_CSBWIN_512_OK ? 0 : -1;
+}
+
+int csb_v1_runtime_export_csbwin_core_save_to_path(
+    const CSB_V1_RuntimeProfile *profile,
+    const char *path)
+{
+    uint8_t bytes[CSB_V1_CSBWIN_BLOCK1_BYTES + 128u +
+                  CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES * 16u +
+                  3328u +
+                  CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES * 16u +
+                  CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES * 2u];
+    size_t size = 0u;
+    FILE *fp;
+    size_t wrote;
+
+    if (!profile || !path || path[0] == '\0') {
+        return -1;
+    }
+    if (csb_v1_runtime_export_csbwin_core_save_to_memory(
+            profile, bytes, sizeof(bytes), &size) != 0) {
+        return -1;
+    }
+    fp = fopen(path, "wb");
+    if (!fp) {
+        return -1;
+    }
+    wrote = fwrite(bytes, 1u, size, fp);
+    if (fclose(fp) != 0) {
+        return -1;
+    }
+    return wrote == size ? 0 : -1;
+}
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index)
 {

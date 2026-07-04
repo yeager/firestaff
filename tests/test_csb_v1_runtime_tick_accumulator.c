@@ -4875,6 +4875,101 @@ static void test_csbwin_resume_file_applies_runtime_handoff(void)
     remove(path);
 }
 
+static void test_csbwin_core_save_export_roundtrips_runtime(void)
+{
+    uint8_t fixture[4096];
+    uint8_t exported[8192];
+    size_t fixture_size;
+    size_t exported_size = 0u;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_RuntimeProfile memory_loaded;
+    CSB_V1_RuntimeProfile file_loaded;
+    CSB_V1_CSBWin512BodyReport report;
+    char path[512];
+    const char *tmp_root;
+
+    fixture_size = test_build_full_csbwin_resume_fixture(
+        fixture, sizeof(fixture), 0);
+    CHECK(fixture_size == 4054u,
+          "CSBWin export fixture builds a verified source body");
+
+    csb_v1_runtime_init(&profile, NULL);
+    CHECK(csb_v1_csbwin_512_verify_save_body(
+              fixture, fixture_size, 0u, &report) ==
+              CSB_V1_CSBWIN_512_OK,
+          "CSBWin export fixture verifies before runtime handoff");
+    CHECK(csb_v1_runtime_apply_csbwin_resume_report(&profile, &report) == 0,
+          "CSBWin export fixture applies to runtime first");
+
+    CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
+              &profile, exported, sizeof(exported), &exported_size) == 0,
+          "CSBWin core export writes bounded memory bytes");
+    CHECK(exported_size == fixture_size,
+          "CSBWin core export preserves core prefix byte size");
+    memset(&report, 0, sizeof(report));
+    CHECK(csb_v1_csbwin_512_verify_save_body(
+              exported, exported_size, 0u, &report) ==
+              CSB_V1_CSBWIN_512_OK,
+          "CSBWin core export bytes verify through the 512-byte body gate");
+    CHECK(report.game_time == profile.game_time &&
+              report.num_character == 2u,
+          "CSBWin core export report preserves runtime time and champions");
+    CHECK(report.item16_summary_total ==
+              profile.csbwin_item16_summary_total,
+          "CSBWin core export report preserves ITEM16 summary count");
+    CHECK(report.timer_summary_total == 3u &&
+              report.timer_queue_summary_total == 3u,
+          "CSBWin core export report preserves live timer counts");
+    CHECK(report.timer_queue[0] < 3u &&
+              report.timer_queue[1] < 3u &&
+              report.timer_queue[2] < 3u,
+          "CSBWin core export report writes bounded timer queue indexes");
+
+    csb_v1_runtime_init(&memory_loaded, NULL);
+    CHECK(csb_v1_runtime_apply_csbwin_resume_report(
+              &memory_loaded, &report) == 0,
+          "CSBWin exported memory report re-imports into runtime");
+    CHECK(memory_loaded.game_time == profile.game_time &&
+              memory_loaded.party_x == profile.party_x &&
+              memory_loaded.party_state_valid == 1 &&
+              strcmp(memory_loaded.party_state.Champions[0].Name,
+                     profile.party_state.Champions[0].Name) == 0 &&
+              memory_loaded.csbwin_runtime_item16_count == 2u &&
+              memory_loaded.timeline_queue.eventCount == 3,
+          "CSBWin exported memory roundtrip restores runtime resume state");
+
+    exported_size = 123u;
+    CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
+              &profile, exported, fixture_size - 1u, &exported_size) == -1 &&
+              exported_size == 0u,
+          "CSBWin core export rejects undersized output buffers");
+    CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
+              NULL, exported, sizeof(exported), &exported_size) == -1,
+          "CSBWin core export rejects NULL profile");
+
+    tmp_root = getenv("TMPDIR");
+    if (!tmp_root || tmp_root[0] == '\0') tmp_root = getenv("TEMP");
+    if (!tmp_root || tmp_root[0] == '\0') tmp_root = getenv("TMP");
+    if (!tmp_root || tmp_root[0] == '\0') tmp_root = ".";
+    snprintf(path, sizeof(path),
+             "%s/firestaff_csbwin_core_export_%lu_%p.sav",
+             tmp_root, (unsigned long)fixture_size, (void *)&profile);
+    remove(path);
+    CHECK(csb_v1_runtime_export_csbwin_core_save_to_path(
+              &profile, path) == 0,
+          "CSBWin core export writes a file-backed core save");
+    csb_v1_runtime_init(&file_loaded, NULL);
+    CHECK(csb_v1_runtime_apply_csbwin_resume_file(
+              &file_loaded, path, 0u) == 0,
+          "CSBWin exported file re-imports through resume-file loader");
+    CHECK(file_loaded.game_time == profile.game_time &&
+              file_loaded.party_state_valid == 1 &&
+              strcmp(file_loaded.party_state.Champions[1].Name, "BORIS") == 0 &&
+              file_loaded.timeline_queue.eventCount == 3,
+          "CSBWin exported file roundtrip restores champion and timer state");
+    remove(path);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Runtime Tick Accumulator Follow-up ===\n\n");
@@ -4900,6 +4995,7 @@ int main(void)
     test_csbwin_gameblock2_summary_applies_runtime_handoff();
     test_csbwin_item16_claims_live_ai_ownership();
     test_csbwin_resume_file_applies_runtime_handoff();
+    test_csbwin_core_save_export_roundtrips_runtime();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 runtime tick boundary accumulates sub-55ms frame slices, fires source-locked V1 quanta, and dispatches timeline events before game_time increments");
