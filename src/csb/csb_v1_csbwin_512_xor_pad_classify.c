@@ -100,6 +100,19 @@ static int checked_mul_size(size_t a, size_t b, size_t *out)
     return 1;
 }
 
+static uint32_t fnv1a32_bytes(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes && size != 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 enum {
     CSBWIN_CHARDESC_STRIDE = 800,
     CSBWIN_CHARDESC_COUNT = 4,
@@ -1110,12 +1123,22 @@ int csb_v1_csbwin_512_build_writable_core_save(
         summary, &runtime);
     if (rc != CSB_V1_CSBWIN_512_OK) return rc;
 
+    if (summary->appended_preserved_size > summary->appended_size ||
+        summary->appended_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    if (summary->appended_size != summary->appended_preserved_size) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+
     required = CSB_V1_CSBWIN_BLOCK1_BYTES +
                champion.block2_size +
                runtime.item16_size +
                champion.character_size +
                runtime.timers_size +
-               runtime.timer_queue_size;
+               runtime.timer_queue_size +
+               summary->appended_preserved_size;
     if (out_capacity < required) {
         return CSB_V1_CSBWIN_512_ERR_TOO_SMALL;
     }
@@ -1166,6 +1189,11 @@ int csb_v1_csbwin_512_build_writable_core_save(
     memcpy(out + offset, runtime.timer_queue_scrambled,
            runtime.timer_queue_size);
     offset += runtime.timer_queue_size;
+    if (summary->appended_preserved_size != 0u) {
+        memcpy(out + offset, summary->appended_preserved,
+               summary->appended_preserved_size);
+        offset += summary->appended_preserved_size;
+    }
 
     *out_size = offset;
     return CSB_V1_CSBWIN_512_OK;
@@ -1407,6 +1435,21 @@ int csb_v1_csbwin_512_verify_save_body(
     offset += timer_queue_size;
 
     out->required_size = offset;
+    if (size > offset) {
+        const size_t appended_size = size - offset;
+        size_t preserve_size = appended_size;
+        if (preserve_size > CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+            preserve_size = CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES;
+            out->appended_truncated = 1;
+        }
+        out->appended_offset = offset;
+        out->appended_size = appended_size;
+        out->appended_preserved_size = preserve_size;
+        out->appended_fnv1a = fnv1a32_bytes(bytes + offset, appended_size);
+        if (preserve_size != 0u) {
+            memcpy(out->appended_preserved, bytes + offset, preserve_size);
+        }
+    }
     return CSB_V1_CSBWIN_512_OK;
 }
 

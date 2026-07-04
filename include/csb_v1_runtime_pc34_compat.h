@@ -289,6 +289,12 @@ typedef struct {
     uint16_t                csbwin_word11714;
     int                     csbwin_header_tail_valid;
     uint8_t                 csbwin_header_byte22808[132];
+    int                     csbwin_appended_tail_valid;
+    size_t                  csbwin_appended_tail_size;
+    size_t                  csbwin_appended_tail_preserved_size;
+    uint32_t                csbwin_appended_tail_fnv1a;
+    int                     csbwin_appended_tail_truncated;
+    uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
     int                     csbwin_body_runtime_summary_valid;
     int16_t                 csbwin_character_tail_brightness;
     uint8_t                 csbwin_character_tail_see_thru_walls;
