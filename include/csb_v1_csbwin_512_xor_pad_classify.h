@@ -266,13 +266,27 @@ typedef struct {
     CSB_V1_CSBWin512Report header;
     int header_valid;
     uint16_t timer_record_size;
+    uint32_t game_time;
+    uint32_t random_seed;
+    uint16_t object_in_hand;
     uint16_t max_item16;
     uint16_t max_timers;
+    uint16_t num_timer;
+    uint16_t first_avail_timer;
+    uint16_t item16_queue_len;
+    uint16_t timer_sequence;
     uint16_t num_character;
     uint16_t party_x;
     uint16_t party_y;
     uint16_t party_facing;
     uint16_t party_level;
+    uint16_t hand_char;
+    uint16_t magic_caster;
+    uint32_t last_monster_attack_time;
+    uint32_t last_party_move_time;
+    uint16_t party_move_disable_timer;
+    uint16_t word11712;
+    uint16_t word11714;
     size_t required_size;
     int sections_verified;
     CSB_V1_CSBWin512BodySectionReport
