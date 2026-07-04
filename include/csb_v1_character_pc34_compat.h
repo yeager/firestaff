@@ -23,6 +23,7 @@
 #define CSB_V1_MAX_NAME_LEN     15
 #define CSB_V1_MAX_TITLE_LEN    15
 #define CSB_V1_SKILL_COUNT      16
+#define CSB_V1_FULL_SKILL_COUNT 20
 #define CSB_V1_STAT_COUNT        7  /* STR, DEX, WIS, VIT, ANTIMAGIC, ANTIFIRE, LUCK */
 #define CSB_V1_STAT_STR          0
 #define CSB_V1_STAT_DEX          1
@@ -145,6 +146,10 @@ typedef struct {
 
     /* ── 16 skills (0–255 each) ── */
     uint8_t  Skills[CSB_V1_SKILL_COUNT];              /* 3798 */
+    uint8_t  SkillExperienceValid;                    /* CSBWin full 20-skill XP state imported */
+    uint8_t  PaddingSkills[3];                        /* alignment padding */
+    uint32_t SkillExperience[CSB_V1_FULL_SKILL_COUNT];
+    int16_t  SkillTemporaryExperience[CSB_V1_FULL_SKILL_COUNT];
 
     /* ── 30 equipment slots (THING values) ── */
     uint16_t Slots[CSB_V1_SLOT_COUNT];                 /* 3814 — 30×2 = 60 bytes */

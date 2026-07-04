@@ -92,6 +92,14 @@ static void test_write_csbwin_champion(uint8_t *record,
         record[70u + i * 3u + 1u] = (uint8_t)(50u + i);
         record[70u + i * 3u + 2u] = (uint8_t)(10u + i);
     }
+    for (i = 0u; i < 20u; ++i) {
+        test_write_le16(record, 92u + i * 6u, (uint16_t)(0x0100u + i));
+        test_write_le32(record, 92u + i * 6u + 2u, 0x10000000u + (uint32_t)i);
+    }
+    test_write_le16(record, 92u + 0u * 6u, 0u);
+    test_write_le32(record, 92u + 0u * 6u + 2u, 2000u);
+    test_write_le16(record, 92u + 7u * 6u, 1000u);
+    test_write_le32(record, 92u + 7u * 6u + 2u, 8000u);
     for (i = 0u; i < 30u; ++i) {
         test_write_le16(record, 212u + i * 2u, (uint16_t)(slot0 + i));
     }

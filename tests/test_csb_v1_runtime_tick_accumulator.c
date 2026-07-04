@@ -116,6 +116,14 @@ static void test_write_csbwin_champion(uint8_t *record,
         record[70u + i * 3u + 1u] = (uint8_t)(50u + i);
         record[70u + i * 3u + 2u] = (uint8_t)(10u + i);
     }
+    for (i = 0u; i < 20u; ++i) {
+        test_write_le16(record, 92u + i * 6u, (uint16_t)(0x0100u + i));
+        test_write_le32(record, 92u + i * 6u + 2u, 0x10000000u + (uint32_t)i);
+    }
+    test_write_le16(record, 92u + 0u * 6u, 0u);
+    test_write_le32(record, 92u + 0u * 6u + 2u, 2000u);
+    test_write_le16(record, 92u + 7u * 6u, 1000u);
+    test_write_le32(record, 92u + 7u * 6u + 2u, 8000u);
     for (i = 0u; i < 30u; ++i) {
         test_write_le16(record, 212u + i * 2u, (uint16_t)(slot0 + i));
     }
@@ -4286,6 +4294,9 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.champions[0].attributes[6][0] = 96u;
     summary.champions[0].attributes[6][1] = 56u;
     summary.champions[0].attributes[6][2] = 16u;
+    summary.champions[0].skill_experience[0] = 2000u;
+    summary.champions[0].skill_experience[7] = 8000u;
+    summary.champions[0].skill_temp_adjust[7] = 1000;
     summary.champions[0].possessions[0] = 0x2200u;
     summary.champions[0].possessions[1] = 0x2201u;
     summary.champions[1].valid = 1;
@@ -4419,6 +4430,12 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK]
                                                      [CSB_V1_STAT_MIN] == 10u,
           "CSBWin champion handoff maps ATTRIBUTE max/current/min into Firestaff stats");
+    CHECK(profile.party_state.Champions[0].SkillExperienceValid == 1u &&
+              profile.party_state.Champions[0].SkillExperience[7] == 8000u &&
+              profile.party_state.Champions[0].SkillTemporaryExperience[7] == 1000 &&
+              csb_v1_runtime_get_champion_skill_level(&profile, 0, 7) == 5 &&
+              profile.party_state.Champions[0].Skills[7] == 5u,
+          "CSBWin champion handoff preserves full skill XP and derives F0303 levels");
     CHECK(profile.party_state.Champions[0].Slots[0] == 0x2200u &&
               profile.party_state.Champions[0].Slots[1] == 0x2201u,
           "CSBWin champion handoff copies possession RN slots");
@@ -4689,6 +4706,10 @@ static void test_csbwin_resume_file_applies_runtime_handoff(void)
               profile.party_state.ChampionCount == 2 &&
               strcmp(profile.party_state.Champions[0].Name, "TIGGY") == 0,
           "CSBWin resume file applies champion summaries");
+    CHECK(csb_v1_runtime_get_champion_skill_level(&profile, 0, 7) == 5 &&
+              profile.party_state.Champions[0].SkillExperience[7] == 8000u &&
+              profile.party_state.Champions[0].SkillTemporaryExperience[7] == 1000,
+          "CSBWin resume file preserves decoded skill XP into runtime levels");
     CHECK(profile.csbwin_runtime_item16_count == 2u &&
               profile.csbwin_runtime_item16[0].monster_index == 0x1234u,
           "CSBWin resume file materializes ITEM16 records");

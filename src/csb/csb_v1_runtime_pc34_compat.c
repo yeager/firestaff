@@ -198,7 +198,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 2u
+#define CSB_V1_RUNTIME_SAVE_VERSION 3u
 
 typedef struct {
     uint32_t magic;
@@ -2788,22 +2788,60 @@ static int csb_v1_runtime_imported_skill_level(
 
     if (!champion ||
         skill_index < 0 ||
-        skill_index >= CSB_V1_SKILL_COUNT) {
+        skill_index >= CSB_V1_FULL_SKILL_COUNT) {
         return 1;
     }
 
-    /* ReDMCSB PROJEXPL.C F0230 line 1390 subtracts
-     * F0303_CHAMPION_GetSkillLevel(C07_SKILL_PARRY) << 1 from creature
-     * attack.  CSB's current imported champion block carries the compact
-     * 16-byte DM1/CSB skill row rather than Firestaff M10's full 20-skill
-     * XP/lifecycle state, so this bounded bridge treats the stored byte as
-     * an imported source skill level and clamps it to the F0303 level range.
-     * Full CSB skill-XP reconstruction belongs with the original-save body
-     * importer, not in the C38 attack dispatcher. */
+    if (champion->SkillExperienceValid) {
+        int64_t experience;
+
+        /* CSBWin SaveGame.cpp:1838 swaps four CHARDESC records whose SKILL
+         * rows are CSB.h CHARDESC::skill[20] tempAdjust/experience pairs.
+         * ReDMCSB CHAMPION.C F0303 lines 752-768 adds temporary experience,
+         * averages hidden skills with their base skill, then halves from the
+         * 500 XP threshold to derive the live skill level. */
+        experience = (int64_t)champion->SkillExperience[skill_index] +
+                     (int64_t)champion->SkillTemporaryExperience[skill_index];
+        if (skill_index > 3) {
+            const int base_skill = (skill_index - 4) >> 2;
+            experience +=
+                (int64_t)champion->SkillExperience[base_skill] +
+                (int64_t)champion->SkillTemporaryExperience[base_skill];
+            experience >>= 1;
+        }
+        if (experience < 0) experience = 0;
+        level = 1;
+        while (experience >= 500 && level < 16) {
+            experience >>= 1;
+            level++;
+        }
+        return level;
+    }
+
+    if (skill_index >= CSB_V1_SKILL_COUNT) {
+        return 1;
+    }
     level = (int)champion->Skills[skill_index];
     if (level < 1) level = 1;
     if (level > 16) level = 16;
     return level;
+}
+
+int csb_v1_runtime_get_champion_skill_level(
+    const CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int skill_index)
+{
+    if (!profile ||
+        !profile->party_state_valid ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+    return csb_v1_runtime_imported_skill_level(
+        &profile->party_state.Champions[champion_index],
+        skill_index);
 }
 
 static int csb_v1_runtime_fill_creature_combat_snapshot(
@@ -8027,6 +8065,7 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
         const CSB_V1_CSBWin512ChampionSummary *src =
             &summary->champions[champion_index];
         int stat_index;
+        int skill_index;
         int slot_index;
 
         csb_v1_champion_init(dst);
@@ -8058,6 +8097,23 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
             dst->Statistics[stat_index][CSB_V1_STAT_MAX] =
                 csb_v1_runtime_csbwin_attr_to_firestaff_stat(
                     src, csbwin_attr, CSB_V1_STAT_MAX);
+        }
+        dst->SkillExperienceValid = 1u;
+        for (skill_index = 0;
+             skill_index < CSB_V1_FULL_SKILL_COUNT;
+             ++skill_index) {
+            dst->SkillExperience[skill_index] =
+                src->skill_experience[skill_index];
+            dst->SkillTemporaryExperience[skill_index] =
+                src->skill_temp_adjust[skill_index];
+        }
+        for (skill_index = 0;
+             skill_index < CSB_V1_SKILL_COUNT;
+             ++skill_index) {
+            dst->Skills[skill_index] =
+                (uint8_t)csb_v1_runtime_imported_skill_level(
+                    dst,
+                    skill_index);
         }
         for (slot_index = 0; slot_index < CSB_V1_SLOT_COUNT; ++slot_index) {
             dst->Slots[slot_index] = src->possessions[slot_index];
