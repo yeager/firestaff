@@ -437,6 +437,10 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
                                    const CSB_V1_PartyState *party);
 int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
                                    CSB_V1_PartyState *out_party);
+int csb_v1_runtime_get_champion_skill_level(
+    const CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int skill_index);
 int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
