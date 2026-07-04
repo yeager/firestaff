@@ -596,12 +596,155 @@ static void draw_panel(M12_ModernCanvas* c, int x, int y, int w, int h,
 
 static const char* language_short(const M12_StartupMenuState* state) {
     int li = state ? state->settings.languageIndex : 0;
-    if (li == 1) return "SV";
-    if (li == 2) return "FR";
-    if (li == 3) return "DE";
-    if (li == 4) return "JA";
-    if (li == 5) return "ZH";
-    return "EN";
+    const char* code = M12_StartupMenu_GetLanguageCode(li);
+    return code ? code : "EN";
+}
+
+static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
+                             const char* label, const char* value,
+                             int selected);
+
+static int language_code_is(const char* code, const char* expected) {
+    return code && expected && strcmp(code, expected) == 0;
+}
+
+static void draw_language_flag(M12_ModernCanvas* c, int x, int y, int w, int h,
+                               const char* code) {
+    M12_RGB white = rgb(232, 232, 226);
+    M12_RGB red = rgb(196, 38, 42);
+    M12_RGB blue = rgb(30, 66, 150);
+    M12_RGB yellow = rgb(236, 196, 54);
+    M12_RGB green = rgb(36, 138, 78);
+    M12_RGB black = rgb(18, 18, 20);
+    M12_RGB orange = rgb(234, 128, 42);
+    fill_rounded_rect(c, x, y, w, h, 4, white);
+    stroke_rounded_rect(c, x, y, w, h, 4, rgb(72, 78, 96));
+    if (language_code_is(code, "SV")) {
+        fill_rect(c, x + 2, y + 2, w - 4, h - 4, blue);
+        fill_rect(c, x + w / 3, y + 2, w / 7, h - 4, yellow);
+        fill_rect(c, x + 2, y + h / 2 - h / 10, w - 4, h / 5, yellow);
+    } else if (language_code_is(code, "FR") || language_code_is(code, "NL")) {
+        if (language_code_is(code, "FR")) {
+            fill_rect(c, x + 2, y + 2, (w - 4) / 3, h - 4, blue);
+            fill_rect(c, x + 2 + 2 * ((w - 4) / 3), y + 2, (w - 4) / 3, h - 4, red);
+        } else {
+            fill_rect(c, x + 2, y + 2, w - 4, (h - 4) / 3, red);
+            fill_rect(c, x + 2, y + 2 + 2 * ((h - 4) / 3), w - 4, (h - 4) / 3, blue);
+        }
+    } else if (language_code_is(code, "DE")) {
+        fill_rect(c, x + 2, y + 2, w - 4, (h - 4) / 3, black);
+        fill_rect(c, x + 2, y + 2 + (h - 4) / 3, w - 4, (h - 4) / 3, red);
+        fill_rect(c, x + 2, y + 2 + 2 * ((h - 4) / 3), w - 4, (h - 4) / 3, yellow);
+    } else if (language_code_is(code, "JA")) {
+        int cx = x + w / 2;
+        int cy = y + h / 2;
+        int r = h / 4;
+        for (int yy = -r; yy <= r; ++yy) {
+            for (int xx = -r; xx <= r; ++xx) {
+                if (xx * xx + yy * yy <= r * r) {
+                    blend_pixel(c, cx + xx, cy + yy, red, 255);
+                }
+            }
+        }
+    } else if (language_code_is(code, "ZH")) {
+        fill_rect(c, x + 2, y + 2, w - 4, h - 4, red);
+        fill_rect(c, x + 8, y + 8, 8, 8, yellow);
+        fill_rect(c, x + 20, y + 7, 4, 4, yellow);
+        fill_rect(c, x + 25, y + 13, 4, 4, yellow);
+    } else if (language_code_is(code, "CS") || language_code_is(code, "RU")) {
+        fill_rect(c, x + 2, y + 2, w - 4, (h - 4) / 3, white);
+        fill_rect(c, x + 2, y + 2 + (h - 4) / 3, w - 4, (h - 4) / 3, language_code_is(code, "CS") ? red : blue);
+        fill_rect(c, x + 2, y + 2 + 2 * ((h - 4) / 3), w - 4, (h - 4) / 3, language_code_is(code, "CS") ? blue : red);
+    } else if (language_code_is(code, "DA") || language_code_is(code, "NO")) {
+        fill_rect(c, x + 2, y + 2, w - 4, h - 4, red);
+        fill_rect(c, x + w / 3, y + 2, w / 8, h - 4, white);
+        fill_rect(c, x + 2, y + h / 2 - h / 12, w - 4, h / 6, white);
+        if (language_code_is(code, "NO")) {
+            fill_rect(c, x + w / 3 + w / 28, y + 2, w / 18, h - 4, blue);
+            fill_rect(c, x + 2, y + h / 2 - h / 24, w - 4, h / 12, blue);
+        }
+    } else if (language_code_is(code, "ES")) {
+        fill_rect(c, x + 2, y + 2, w - 4, h - 4, yellow);
+        fill_rect(c, x + 2, y + 2, w - 4, h / 4, red);
+        fill_rect(c, x + 2, y + h - h / 4 - 2, w - 4, h / 4, red);
+    } else if (language_code_is(code, "FI")) {
+        fill_rect(c, x + w / 3, y + 2, w / 7, h - 4, blue);
+        fill_rect(c, x + 2, y + h / 2 - h / 10, w - 4, h / 5, blue);
+    } else if (language_code_is(code, "HU")) {
+        fill_rect(c, x + 2, y + 2, w - 4, (h - 4) / 3, red);
+        fill_rect(c, x + 2, y + 2 + 2 * ((h - 4) / 3), w - 4, (h - 4) / 3, green);
+    } else if (language_code_is(code, "IT")) {
+        fill_rect(c, x + 2, y + 2, (w - 4) / 3, h - 4, green);
+        fill_rect(c, x + 2 + 2 * ((w - 4) / 3), y + 2, (w - 4) / 3, h - 4, red);
+    } else if (language_code_is(code, "KO")) {
+        fill_rect(c, x + w / 2 - 8, y + h / 2 - 8, 16, 8, red);
+        fill_rect(c, x + w / 2 - 8, y + h / 2, 16, 8, blue);
+    } else if (language_code_is(code, "PL")) {
+        fill_rect(c, x + 2, y + h / 2, w - 4, h / 2 - 2, red);
+    } else if (language_code_is(code, "PT")) {
+        fill_rect(c, x + 2, y + 2, w - 4, h - 4, red);
+        fill_rect(c, x + 2, y + 2, w / 3, h - 4, green);
+        fill_rect(c, x + w / 3 - 3, y + h / 2 - 4, 8, 8, yellow);
+    } else if (language_code_is(code, "TR")) {
+        fill_rect(c, x + 2, y + 2, w - 4, h - 4, red);
+        fill_rect(c, x + w / 2 - 10, y + h / 2 - 7, 10, 14, white);
+    } else {
+        fill_rect(c, x + 2, y + 2, w - 4, h - 4, blue);
+        fill_rect(c, x + 2, y + 2, w - 4, h / 3, red);
+        fill_rect(c, x + 2, y + h - h / 3 - 2, w - 4, h / 3, white);
+    }
+}
+
+static void draw_language_button(M12_ModernCanvas* c, int x, int y, int w,
+                                 const M12_StartupMenuState* state,
+                                 int selected) {
+    int li = state ? state->settings.languageIndex : 0;
+    const char* code = M12_StartupMenu_GetLanguageCode(li);
+    const char* name = M12_StartupMenu_GetLanguageName(li);
+    char value[96];
+    if (!code) code = "EN";
+    if (!name) name = "ENGLISH";
+    snprintf(value, sizeof(value), "%s  %s", code, name);
+    draw_setting_row(c, x, y, w, fs_l10n_get(FS_STR_LANGUAGE), value, selected);
+    draw_language_flag(c, x + w - 270, y + 11, 42, 28, code);
+    ModernTextStyle arrow = text_style_make(2, selected ? COLOR_ACCENT_HI() : COLOR_TEXT_DIM(), 1);
+    draw_text(c, x + w - 38, y + 16, state && state->languagePopupOpen ? "^" : "v", &arrow);
+}
+
+static void draw_language_popup(M12_ModernCanvas* c, const M12_StartupMenuState* state,
+                                int x, int y) {
+    int count = M12_StartupMenu_GetLanguageCount();
+    int cols = 2;
+    int pad = 18;
+    int itemW = (632 - 2 * pad - 14) / 2;
+    int itemH = 42;
+    int itemGap = 8;
+    int rows = (count + cols - 1) / cols;
+    int panelW = 632;
+    int panelH = pad * 2 + rows * itemH + (rows - 1) * itemGap;
+    draw_panel(c, x, y, panelW, panelH, rgb(12, 14, 32), COLOR_ACCENT(), 12);
+    for (int i = 0; i < count; ++i) {
+        int col = i % cols;
+        int row = i / cols;
+        int ix = x + pad + col * (itemW + 14);
+        int iy = y + pad + row * (itemH + itemGap);
+        int active = state && i == (state->languagePopupOpen
+                                        ? state->languagePopupSelectedIndex
+                                        : state->settings.languageIndex);
+        const char* code = M12_StartupMenu_GetLanguageCode(i);
+        const char* name = M12_StartupMenu_GetLanguageName(i);
+        char label[96];
+        M12_RGB fill = active ? rgb(38, 48, 94) : rgb(18, 22, 48);
+        M12_RGB edge = active ? COLOR_ACCENT_HI() : COLOR_PANEL_EDGE();
+        if (!code) code = "EN";
+        if (!name) name = "ENGLISH";
+        snprintf(label, sizeof(label), "%s  %s", code, name);
+        fill_rounded_rect(c, ix, iy, itemW, itemH, 8, fill);
+        stroke_rounded_rect(c, ix, iy, itemW, itemH, 8, edge);
+        draw_language_flag(c, ix + 10, iy + 8, 36, 24, code);
+        ModernTextStyle t = text_style_make(1, active ? COLOR_ACCENT_HI() : COLOR_TEXT(), 0);
+        draw_text(c, ix + 58, iy + 15, label, &t);
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1086,16 +1229,14 @@ static void draw_card(M12_ModernCanvas* c,
         draw_text(c, x + 16, y + 200, "AND THE PRESERVATION PROJECTS", &p);
         draw_text(c, x + 16, y + 230, "DANIEL NYLANDER", &p);
 
-        static const char* langs[] = {"EN", "SV", "FR", "DE", "JA", "ZH"};
         static const char* grf[]   = {"V1", "V2.0", "V2.1", "V2.2"};
         ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
-        int li = state->settings.languageIndex;
+        const char* lang = language_short(state);
         int gi = state->settings.graphicsIndex;
-        if (li < 0) li = 0;
-        if (li > 5) li = 5;
         if (gi < 0) gi = 0;
         if (gi > 3) gi = 3;
-        draw_text(c, x + 16, y + h - 92,  langs[li], &v);
+        draw_language_flag(c, x + 16, y + h - 94, 38, 26, lang);
+        draw_text(c, x + 64, y + h - 90,  lang, &v);
         draw_text(c, x + 86, y + h - 92, grf[gi], &v);
 
         ModernTextStyle hint = text_style_make(1, COLOR_TEXT_FAINT(), 0);
@@ -1332,7 +1473,6 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
-    static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH", "日本語", "简体中文"};
     static const char* grf[]   = {"ORIGINAL", "ORIGINAL + FILTERS", "ORIGINAL 10X UPSCALE", "MODERN GRAPHICS"};
     static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
     char dataDir[96];
@@ -1342,7 +1482,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int wi = state->settings.windowModeIndex;
     int sessionMinutes = M12_StartupMenu_SessionTimerLimitMinutes(state);
     if (li < 0) li = 0;
-    if (li > 5) li = 5;
+    if (li >= M12_StartupMenu_GetLanguageCount()) li = 0;
     if (gi < 0) gi = 0;
     if (gi > 3) gi = 3;
     if (wi < 0) wi = 0;
@@ -1357,8 +1497,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int rowX = panelX + 36;
     int rowW = panelW - 72;
     int rowY = panelY + 36;
-    draw_setting_row(c, rowX, rowY,      rowW, fs_l10n_get(FS_STR_LANGUAGE), langs[li],
-                     state->settingsSelectedIndex == 0);
+    draw_language_button(c, rowX, rowY, rowW, state, state->settingsSelectedIndex == 0);
     draw_setting_row(c, rowX, rowY + 70, rowW, "GRAPHICS MODE", grf[gi],
                      state->settingsSelectedIndex == 1);
     draw_setting_row(c, rowX, rowY + 140, rowW, "WINDOW MODE",   win[wi],
@@ -1376,6 +1515,9 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 42);
     draw_setting_row(c, rowX, rowY + 560, rowW, "IMPORT SAVE MANIFEST", "READ...",
                      state->settingsSelectedIndex == 43);
+    if (state->languagePopupOpen) {
+        draw_language_popup(c, state, rowX + rowW - 632, rowY + 56);
+    }
 }
 
 typedef struct {
@@ -1558,7 +1700,6 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
-    static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH", "日本語", "简体中文"};
     static const char* aspects[] = {"ORIGINAL", "4:3", "16:9", "16:10", "32:9"};
     static const char* res[] = {"320X200", "640X400", "800X600", "1024X768", "1280X960"};
     static const char* speeds[] = {"SLOWER", "NORMAL", "FASTER"};
@@ -1579,8 +1720,8 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
                                                    : (ver->label ? ver->label : "-"))
                                 : "-";
     const char* patchLabel = opts->usePatch ? "PATCHED" : "ORIGINAL";
-    const char* langLabel  = (opts->languageIndex >= 0 && opts->languageIndex < 6)
-                              ? langs[opts->languageIndex] : "EN";
+    const char* langLabel  = M12_StartupMenu_GetLanguageName(opts->languageIndex);
+    if (!langLabel) langLabel = "ENGLISH";
     const char* cheatsLabel = opts->cheatsEnabled ? "ON" : "OFF";
     const char* hotkeysLabel = M12_GameOptions_SpeedHotkeysEnabled(opts) ? "ON" : "OFF";
     int speedIdx = opts->gameSpeed;

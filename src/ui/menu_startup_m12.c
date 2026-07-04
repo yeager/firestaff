@@ -4,7 +4,7 @@
 #include "firestaff_startup.h"
 #include "menu_startup_a11y_m12.h"
 
-#define FIRESTAFF_VERSION_STRING "v3.0.24"
+#define FIRESTAFF_VERSION_STRING "v3.0.26"
 #include "firestaff_bestiary.h"
 #include "screenshot_gallery_m12.h"
 #include "firestaff_spell_ref.h"
@@ -402,6 +402,19 @@ static FS_Language m12_fs_language_from_menu_index(int index) {
         case 3: return FS_LANG_DE;
         case 4: return FS_LANG_JA;
         case 5: return FS_LANG_ZH;
+        case 6: return FS_LANG_CS;
+        case 7: return FS_LANG_DA;
+        case 8: return FS_LANG_ES;
+        case 9: return FS_LANG_FI;
+        case 10: return FS_LANG_HU;
+        case 11: return FS_LANG_IT;
+        case 12: return FS_LANG_KO;
+        case 13: return FS_LANG_NL;
+        case 14: return FS_LANG_NO;
+        case 15: return FS_LANG_PL;
+        case 16: return FS_LANG_PT;
+        case 17: return FS_LANG_RU;
+        case 18: return FS_LANG_TR;
         case 0:
         default: return FS_LANG_EN;
     }
@@ -2244,6 +2257,8 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
         }
     }
     state->settingsSelectedIndex = 0;
+    state->languagePopupOpen = 0;
+    state->languagePopupSelectedIndex = state->settings.languageIndex;
     state->gameOptSelectedRow = 0;
     state->museumSelectedIndex = 0;
     state->museumPageIndex = 0;
@@ -3656,20 +3671,59 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     }
 
     if (state->view == M12_MENU_VIEW_SETTINGS) {
+        if (state->languagePopupOpen) {
+            int count = M12_UI_LANGUAGE_COUNT;
+            switch (input) {
+                case M12_MENU_INPUT_UP:
+                    state->languagePopupSelectedIndex = m12_cycle_index(
+                        state->languagePopupSelectedIndex, -2, count);
+                    return;
+                case M12_MENU_INPUT_DOWN:
+                    state->languagePopupSelectedIndex = m12_cycle_index(
+                        state->languagePopupSelectedIndex, 2, count);
+                    return;
+                case M12_MENU_INPUT_LEFT:
+                case M12_MENU_INPUT_VALUE_LEFT:
+                    state->languagePopupSelectedIndex = m12_cycle_index(
+                        state->languagePopupSelectedIndex, -1, count);
+                    return;
+                case M12_MENU_INPUT_RIGHT:
+                case M12_MENU_INPUT_VALUE_RIGHT:
+                    state->languagePopupSelectedIndex = m12_cycle_index(
+                        state->languagePopupSelectedIndex, 1, count);
+                    return;
+                case M12_MENU_INPUT_ACCEPT:
+                    state->settingsSelectedIndex = M12_SETTINGS_ROW_LANGUAGE;
+                    while (state->settings.languageIndex != state->languagePopupSelectedIndex) {
+                        m12_cycle_setting(state, 1);
+                    }
+                    state->languagePopupOpen = 0;
+                    return;
+                case M12_MENU_INPUT_BACK:
+                    state->languagePopupOpen = 0;
+                    return;
+                case M12_MENU_INPUT_NONE:
+                default:
+                    break;
+            }
+        }
         switch (input) {
             case M12_MENU_INPUT_UP:
+                state->languagePopupOpen = 0;
                 state->settingsSelectedIndex = m12_cycle_index(
                     state->settingsSelectedIndex,
                     -1,
                     M12_SETTINGS_ROW_COUNT);
                 break;
             case M12_MENU_INPUT_DOWN:
+                state->languagePopupOpen = 0;
                 state->settingsSelectedIndex = m12_cycle_index(
                     state->settingsSelectedIndex,
                     1,
                     M12_SETTINGS_ROW_COUNT);
                 break;
             case M12_MENU_INPUT_LEFT:
+                state->languagePopupOpen = 0;
                 /* v2.7.15: LEFT cycles the settings tab strip
                  * (CONTROLS/AUDIO/ACCESSIBILITY).  Per-row value
                  * cycling routes through the dedicated
@@ -3682,6 +3736,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 state->settingsSelectedIndex = 0;
                 break;
             case M12_MENU_INPUT_RIGHT:
+                state->languagePopupOpen = 0;
                 state->settingsTabIndex = m12_cycle_index(
                     state->settingsTabIndex,
                     1,
@@ -3689,18 +3744,32 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 state->settingsSelectedIndex = 0;
                 break;
             case M12_MENU_INPUT_VALUE_LEFT:
+                if (state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE) {
+                    state->languagePopupOpen = 1;
+                    state->languagePopupSelectedIndex = state->settings.languageIndex;
+                    break;
+                }
                 m12_cycle_setting(state, -1);
                 break;
             case M12_MENU_INPUT_VALUE_RIGHT:
+                if (state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE) {
+                    state->languagePopupOpen = 1;
+                    state->languagePopupSelectedIndex = state->settings.languageIndex;
+                    break;
+                }
                 m12_cycle_setting(state, 1);
                 break;
             case M12_MENU_INPUT_ACCEPT:
-                /* Enter on a selected row cycles its value
-                 * (was the dead-code semantics in the redesigned
-                 * menu).  Equivalent to VALUE_RIGHT. */
+                if (state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE) {
+                    state->languagePopupOpen = 1;
+                    state->languagePopupSelectedIndex = state->settings.languageIndex;
+                    break;
+                }
+                /* Enter on other selected rows cycles their value. */
                 m12_cycle_setting(state, 1);
                 break;
             case M12_MENU_INPUT_BACK:
+                state->languagePopupOpen = 0;
                 m12_return_to_main_view(state);
                 break;
             case M12_MENU_INPUT_NONE:

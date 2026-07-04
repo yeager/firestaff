@@ -1,6 +1,32 @@
 
 # Unreleased
 
+# Firestaff v3.0.26
+
+Firestaff v3.0.26 packages launcher polish for the startup menu and refreshed
+generated fallback card art for Nexus and Theron's Quest.
+
+## Highlights since v3.0.25
+
+- **Language selector popup**: the Settings language row is now a button that
+  opens a flag popup for the full 19-language menu list, with mouse and
+  keyboard selection.
+
+- **OS language defaults**: fresh configs now map the operating-system locale
+  across the supported language codes, while explicit saved language choices
+  remain stable.
+
+- **Nexus/Theron card refresh**: new generated hybrid images are stored under
+  `assets/generated/m12/` and embedded into the built-in card-art fallback.
+
+## Verification
+
+- Local syntax verification covered the touched startup menu, hit-test,
+  config, renderer, and generated card-art C files.
+- A targeted CMake probe build was attempted from the existing system-disk
+  build tree but stalled in `cmake_check_build_system` before compiler output;
+  no compiler errors were emitted before it was interrupted.
+
 # Firestaff v3.0.25
 
 Firestaff v3.0.25 packages the current post-v3.0.24 `main` state. The release
