@@ -114,6 +114,33 @@ static void test_inscription_separator_and_terminator(void) {
     ASSERT_EQ(decoded[8], 0, "inscription is nul terminated after marker");
 }
 
+static void test_symbol_escape_uses_redmcsb_table(void) {
+    struct DungeonThings_Compat things;
+    struct DungeonTextString_Compat textStrings[1];
+    struct DungeonScroll_Compat scrolls[1];
+    struct DungeonTextTable_Compat table;
+    unsigned short textData[2];
+    char decoded[64];
+
+    seed_things(&things, textStrings, scrolls, textData);
+    textStrings[0].visible = 1;
+    textData[0] = pack3(29, 0, 29);  /* escape-symbol 0, escape-symbol 24 */
+    textData[1] = pack3(24, 31, 31);
+    things.textDataWordCount = 2;
+
+    ASSERT_EQ(F0508_DUNGEON_DecodeTextStringThing_Compat(
+                  &things, 0, DUNGEON_TEXT_TYPE_SCROLL, decoded, sizeof(decoded)),
+              2, "symbol escape decode length");
+    ASSERT_STR_EQ(decoded, "a0", "symbol escape follows G0256 table");
+
+    memset(&table, 0, sizeof(table));
+    ASSERT_EQ(F0506_DUNGEON_DecodeTextTable_Compat(textData, 2, &table),
+              1, "symbol escape table decode succeeds");
+    ASSERT_EQ(table.count, 2, "symbol escape table preserves packed terminators");
+    ASSERT_STR_EQ(table.strings[0], "a0", "symbol escape table follows G0256 table");
+    F0506_DUNGEON_FreeTextTable_Compat(&table);
+}
+
 int main(void) {
     printf("=== Dungeon Text Scroll Source-Lock Gate ===\n");
     printf("ReDMCSB: DUNGEON.C F0168, PANEL.C F0341\n\n");
@@ -121,6 +148,7 @@ int main(void) {
     test_scroll_decode_uses_newline_and_invisible_mask();
     test_f0168_visibility_gate_and_message_separator();
     test_inscription_separator_and_terminator();
+    test_symbol_escape_uses_redmcsb_table();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
