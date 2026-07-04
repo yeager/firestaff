@@ -155,7 +155,8 @@ int M12_Config_GetAutoLanguageIndex(void) {
     const char* candidates[] = {
         getenv("LC_ALL"),
         getenv("LC_MESSAGES"),
-        getenv("LANG")
+        getenv("LANG"),
+        getenv("LANGUAGE")
     };
     size_t i;
     for (i = 0U; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
@@ -163,11 +164,64 @@ int M12_Config_GetAutoLanguageIndex(void) {
         if (!value || value[0] == '\0') {
             continue;
         }
+        if (m12_starts_with_lang(value, "en")) {
+            return 0;
+        }
         if (m12_starts_with_lang(value, "sv")) {
             return 1;
         }
         if (m12_starts_with_lang(value, "fr")) {
             return 2;
+        }
+        if (m12_starts_with_lang(value, "de")) {
+            return 3;
+        }
+        if (m12_starts_with_lang(value, "ja")) {
+            return 4;
+        }
+        if (m12_starts_with_lang(value, "zh")) {
+            return 5;
+        }
+        if (m12_starts_with_lang(value, "cs")) {
+            return 6;
+        }
+        if (m12_starts_with_lang(value, "da")) {
+            return 7;
+        }
+        if (m12_starts_with_lang(value, "es")) {
+            return 8;
+        }
+        if (m12_starts_with_lang(value, "fi")) {
+            return 9;
+        }
+        if (m12_starts_with_lang(value, "hu")) {
+            return 10;
+        }
+        if (m12_starts_with_lang(value, "it")) {
+            return 11;
+        }
+        if (m12_starts_with_lang(value, "ko")) {
+            return 12;
+        }
+        if (m12_starts_with_lang(value, "nl")) {
+            return 13;
+        }
+        if (m12_starts_with_lang(value, "no") ||
+            m12_starts_with_lang(value, "nb") ||
+            m12_starts_with_lang(value, "nn")) {
+            return 14;
+        }
+        if (m12_starts_with_lang(value, "pl")) {
+            return 15;
+        }
+        if (m12_starts_with_lang(value, "pt")) {
+            return 16;
+        }
+        if (m12_starts_with_lang(value, "ru")) {
+            return 17;
+        }
+        if (m12_starts_with_lang(value, "tr")) {
+            return 18;
         }
     }
     return 0;

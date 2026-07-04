@@ -389,6 +389,8 @@ typedef struct M12_StartupMenuState {
     int messageReturnNavLevel;
     M12_MenuSettingsState settings;
     int languageExplicit;
+    int languagePopupOpen;
+    int languagePopupSelectedIndex;
     M12_AssetStatus assetStatus;
     M12_GameOptions gameOptions[M12_CONFIG_GAME_COUNT];
     int gameOptSelectedRow;

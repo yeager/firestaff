@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.26  (2026-07-04)",
+    "  - Packages the launcher language selector as a real button with a flag popup for the full 19-language menu list.",
+    "  - Startup defaults now follow the operating-system locale across the supported language codes while preserving explicit saved language choices.",
+    "  - Nexus and Theron launcher cards get refreshed hybrid generated fallback art embedded in the built-in card-art table.",
+    "",
     "V3.0.25  (2026-07-04)",
     "  - Packages the post-v3.0.24 DM1 V1 melee-targeting hardening now on main.",
     "  - DM1 V1 source-locks GROUP.C F0176/F0177 melee target occupancy for half-square creatures and the C0xFF single-centered creature case.",
@@ -389,5 +394,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.25";
+    return "3.0.26";
 }

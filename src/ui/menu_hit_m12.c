@@ -63,6 +63,15 @@ static const int m12_hit_visible_settings_rows[] = {0, 1, 3, 14, 15, 16, 30, 42,
 #define M12_HIT_SETTINGS_ROW_DATA_DIR 15
 #define M12_HIT_SETTINGS_ROW_EXPORT 42
 #define M12_HIT_SETTINGS_ROW_IMPORT 43
+#define M12_HIT_SETTINGS_ROW_LANGUAGE 0
+#define M12_HIT_LANGUAGE_POPUP_X      (M12_HIT_PANEL_X + M12_HIT_ROW_INDENT + M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT - 632)
+#define M12_HIT_LANGUAGE_POPUP_Y      (M12_HIT_SETTINGS_ROW_Y0 + 56)
+#define M12_HIT_LANGUAGE_POPUP_W      632
+#define M12_HIT_LANGUAGE_POPUP_PAD    18
+#define M12_HIT_LANGUAGE_POPUP_COLS   2
+#define M12_HIT_LANGUAGE_POPUP_ITEM_W ((M12_HIT_LANGUAGE_POPUP_W - 2 * M12_HIT_LANGUAGE_POPUP_PAD - 14) / 2)
+#define M12_HIT_LANGUAGE_POPUP_ITEM_H 42
+#define M12_HIT_LANGUAGE_POPUP_ITEM_GAP 8
 
 /* Museum view mirrors the modern renderer: section rows in the left
  * panel, broad content area on the right for page cycling. */
@@ -174,6 +183,24 @@ static int m12_hit_is_cycle_plus(int rx, int rw, int x) {
     return x >= split;
 }
 
+static int m12_hit_language_popup_item(int x, int y) {
+    int count = M12_StartupMenu_GetLanguageCount();
+    int i;
+    for (i = 0; i < count; ++i) {
+        int col = i % M12_HIT_LANGUAGE_POPUP_COLS;
+        int row = i / M12_HIT_LANGUAGE_POPUP_COLS;
+        int ix = M12_HIT_LANGUAGE_POPUP_X + M12_HIT_LANGUAGE_POPUP_PAD +
+                 col * (M12_HIT_LANGUAGE_POPUP_ITEM_W + 14);
+        int iy = M12_HIT_LANGUAGE_POPUP_Y + M12_HIT_LANGUAGE_POPUP_PAD +
+                 row * (M12_HIT_LANGUAGE_POPUP_ITEM_H + M12_HIT_LANGUAGE_POPUP_ITEM_GAP);
+        if (rect_contains(ix, iy, M12_HIT_LANGUAGE_POPUP_ITEM_W,
+                          M12_HIT_LANGUAGE_POPUP_ITEM_H, x, y)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                                     int x, int y) {
     M12_MouseHit hit;
@@ -230,6 +257,14 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             break;
         }
         case M12_MENU_VIEW_SETTINGS:
+            if (state->languagePopupOpen) {
+                int li = m12_hit_language_popup_item(x, y);
+                if (li >= 0) {
+                    hit.kind = M12_HIT_LANGUAGE_POPUP_ITEM;
+                    hit.index = li;
+                    return hit;
+                }
+            }
             /* Tab strip click: switch tabs by index.  The strip
              * sits at y=52, h=22, with three equally-sized tabs
              * across the available width.  Clicking a tab moves
@@ -250,7 +285,10 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                 if (m12_hit_settings_row_rect(i, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
                     int rowIndex = m12_hit_visible_settings_rows[i];
-                    if (rowIndex == M12_HIT_SETTINGS_ROW_DATA_DIR ||
+                    if (rowIndex == M12_HIT_SETTINGS_ROW_LANGUAGE) {
+                        hit.kind = M12_HIT_SETTINGS_ROW;
+                        hit.index = rowIndex;
+                    } else if (rowIndex == M12_HIT_SETTINGS_ROW_DATA_DIR ||
                         rowIndex == M12_HIT_SETTINGS_ROW_EXPORT ||
                         rowIndex == M12_HIT_SETTINGS_ROW_IMPORT) {
                         hit.kind = M12_HIT_SETTINGS_CYCLE;
@@ -341,6 +379,7 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
         case M12_HIT_NONE:
             return 0;
         case M12_HIT_BACK:
+            state->languagePopupOpen = 0;
             M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_BACK);
             return 1;
         case M12_HIT_MAIN_CARD: {
@@ -385,6 +424,12 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                 M12_StartupMenu_HandleInput(state, mv);
                 if (state->settingsSelectedIndex == before) break;
             }
+            if (hit.index == M12_HIT_SETTINGS_ROW_LANGUAGE) {
+                state->languagePopupOpen = !state->languagePopupOpen;
+                state->languagePopupSelectedIndex = state->settings.languageIndex;
+                return 1;
+            }
+            state->languagePopupOpen = 0;
             /* Cycle the value of the selected row (not the tab
              * strip — that's M12_HIT_SETTINGS_TAB).  v2.7.15
              * split tab cycling (LEFT/RIGHT) from value cycling
@@ -398,7 +443,21 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                                             ? M12_MENU_INPUT_VALUE_RIGHT
                                             : M12_MENU_INPUT_VALUE_LEFT);
             return 1;
+        case M12_HIT_LANGUAGE_POPUP_ITEM:
+        {
+            int guard = 0;
+            int count = M12_StartupMenu_GetLanguageCount();
+            if (hit.index < 0 || hit.index >= count) return 0;
+            state->settingsSelectedIndex = M12_HIT_SETTINGS_ROW_LANGUAGE;
+            state->languagePopupOpen = 0;
+            while (state->settings.languageIndex != hit.index && guard++ < count + 1) {
+                M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_VALUE_RIGHT);
+            }
+            state->languagePopupSelectedIndex = state->settings.languageIndex;
+            return 1;
+        }
         case M12_HIT_SETTINGS_TAB:
+            state->languagePopupOpen = 0;
             /* Click on a settings tab strip: switch tabs by index.
              * Mirrors the keyboard LEFT/RIGHT path.  Bounded by
              * M12_SETTINGS_TAB_COUNT. */
