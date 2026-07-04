@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-04 DM1 V2 source-lock gate repair: the DM1 V2 HUD overlay and V2.2 M11 in-place handoff source-lock scripts now track the current code anchors instead of stale symbol/comment names. The V2.2 gate also verifies the new shared `m11_v22_cell_rect()` geometry module, the palette-aware overlay fallback, and the in-place fallback guard. Verification: `dm1_v2_hud_overlay_source_lock` and `dm1_v22_m11_inplace_handoff_source_lock` passed in `build-codex-system-m11-wall`.
+
 - ✅ 2026-07-04 DM1 V2.2 shared cell geometry: the V22 placeholder overlay and in-place modern-art pass now use one shared `m11_v22_cell_rect()` source for the D1/D2/D3 × L/C/R viewport rectangles instead of maintaining duplicate hardcoded tables. This keeps fallback overlay pixels and real-art cache pixels locked to the same source-view cells and reduces drift risk in the DM1 V2.2 renderer. Verification: `m11_v22_inplace_draw_pc34`, `m11_v22_render_overlay_pc34`, and `dm1_v22_real_asset_material_gate_pc34` passed in `build-codex-system-m11-wall`.
 
 - ✅ 2026-07-04 DM1 V1/V2 HoC side-wall occlusion: M11 side-wall drawing now follows the ReDMCSB `DUNVIEW.C F0128` far-to-near side-wall order without suppressing D2/D3 side walls behind nearer same-side blockers. Nearer side panels still overpaint farther panels, and the existing center-blocker replay keeps blocked center walls from leaking corridor pixels. This targets the reported HoC case where a wall two squares ahead and one square left/right vanished until the party stepped forward. Verification: `m11_overlay_command_queue_block` passed in `build-codex-system-m11-wall`.
