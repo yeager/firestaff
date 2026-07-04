@@ -7954,6 +7954,137 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     return 0;
 }
 
+static void csb_v1_runtime_copy_csbwin_champion_text(char *dst,
+                                                     size_t dst_size,
+                                                     const char *src)
+{
+    if (!dst || dst_size == 0u) return;
+    memset(dst, 0, dst_size);
+    if (!src) return;
+    strncpy(dst, src, dst_size - 1u);
+}
+
+static uint16_t csb_v1_runtime_csbwin_attr_to_firestaff_stat(
+    const CSB_V1_CSBWin512ChampionSummary *src,
+    int csbwin_attr,
+    int firestaff_component)
+{
+    static const int component_map[3] = {
+        2, /* Firestaff minimum <- CSBWin ATTRIBUTE.ubMinimum */
+        1, /* Firestaff current <- CSBWin ATTRIBUTE.ubCurrent */
+        0  /* Firestaff maximum <- CSBWin ATTRIBUTE.ubMaximum */
+    };
+    if (!src || csbwin_attr < 0 || csbwin_attr >= 7 ||
+        firestaff_component < 0 || firestaff_component >= 3) {
+        return 0u;
+    }
+    return (uint16_t)src->attributes[csbwin_attr]
+                                      [component_map[firestaff_component]];
+}
+
+int csb_v1_runtime_apply_csbwin_champion_summaries(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512BodyReport *summary)
+{
+    static const int attr_to_stat[CSB_V1_STAT_COUNT] = {
+        1, /* STR <- CSBWin attribute[1] Strength */
+        2, /* DEX <- CSBWin attribute[2] Dexterity */
+        3, /* WIS <- CSBWin attribute[3] Wisdom */
+        4, /* VIT <- CSBWin attribute[4] Vitality */
+        5, /* AntiMagic <- CSBWin attribute[5] */
+        6, /* AntiFire <- CSBWin attribute[6] */
+        0  /* Luck <- CSBWin attribute[0] */
+    };
+    int champion_count;
+    int champion_index;
+
+    if (!profile || !summary || !summary->header_valid ||
+        summary->sections_verified < CSB_V1_CSBWIN_512_SECTION_COUNT ||
+        summary->num_character > CSB_V1_MAX_CHAMPIONS ||
+        summary->party_facing > 3u) {
+        return -1;
+    }
+
+    champion_count = (int)summary->num_character;
+    profile->party_state_valid = 1;
+    profile->party_state.ChampionCount = champion_count;
+    profile->party_state.PartyDirection = (int)(summary->party_facing & 3u);
+    profile->party_state.PartyMapX = (int)summary->party_x;
+    profile->party_state.PartyMapY = (int)summary->party_y;
+    profile->party_state.LeaderIndex =
+        (summary->hand_char < summary->num_character)
+            ? (int)summary->hand_char
+            : -1;
+    profile->party_state.MagicCasterIndex =
+        (summary->magic_caster < summary->num_character)
+            ? (int)summary->magic_caster
+            : -1;
+
+    for (champion_index = 0; champion_index < CSB_V1_MAX_CHAMPIONS;
+         ++champion_index) {
+        CSB_V1_Champion *dst =
+            &profile->party_state.Champions[champion_index];
+        const CSB_V1_CSBWin512ChampionSummary *src =
+            &summary->champions[champion_index];
+        int stat_index;
+        int slot_index;
+
+        csb_v1_champion_init(dst);
+        if (champion_index >= champion_count || !src->valid) {
+            continue;
+        }
+
+        /* CSBWin SaveGame.cpp:1838 swapCharacterData() consumes four
+         * CHARDESC records. CSBWin/CSB.h:2486-2597 gives fixed offsets for
+         * identity, vitals, attributes, possessions, timers, and load. */
+        csb_v1_runtime_copy_csbwin_champion_text(
+            dst->Name, sizeof(dst->Name), src->name);
+        csb_v1_runtime_copy_csbwin_champion_text(
+            dst->Title, sizeof(dst->Title), src->title);
+        dst->CurrentHealth = src->hp;
+        dst->MaximumHealth = src->max_hp;
+        dst->CurrentStamina = src->stamina;
+        dst->MaximumStamina = src->max_stamina;
+        dst->CurrentMana = src->mana;
+        dst->MaximumMana = src->max_mana;
+        for (stat_index = 0; stat_index < CSB_V1_STAT_COUNT; ++stat_index) {
+            const int csbwin_attr = attr_to_stat[stat_index];
+            dst->Statistics[stat_index][CSB_V1_STAT_MIN] =
+                csb_v1_runtime_csbwin_attr_to_firestaff_stat(
+                    src, csbwin_attr, CSB_V1_STAT_MIN);
+            dst->Statistics[stat_index][CSB_V1_STAT_CUR] =
+                csb_v1_runtime_csbwin_attr_to_firestaff_stat(
+                    src, csbwin_attr, CSB_V1_STAT_CUR);
+            dst->Statistics[stat_index][CSB_V1_STAT_MAX] =
+                csb_v1_runtime_csbwin_attr_to_firestaff_stat(
+                    src, csbwin_attr, CSB_V1_STAT_MAX);
+        }
+        for (slot_index = 0; slot_index < CSB_V1_SLOT_COUNT; ++slot_index) {
+            dst->Slots[slot_index] = src->possessions[slot_index];
+        }
+        dst->Cell = (uint8_t)(src->char_position & 3u);
+        dst->Direction = (uint8_t)(src->facing & 3u);
+        dst->DirectionMaximumDamageReceived = src->max_recent_damage;
+        dst->ActionIndex = (src->attack_type < 0)
+            ? CSB_V1_ACTION_NONE
+            : (uint8_t)src->attack_type;
+        dst->EnableActionEventIndex = src->busy_timer;
+        dst->HideDamageReceivedEventIndex = src->timer_index;
+        dst->Attributes = (uint16_t)src->char_flags;
+        dst->Wounds = (uint16_t)src->wounds;
+        dst->PoisonEventCount = src->poison_count;
+        dst->Food = src->food;
+        dst->Water = src->water;
+        dst->Load = src->load;
+        dst->EventIndex = src->timer_index;
+    }
+
+    profile->champion_count = champion_count;
+    profile->leader_index = profile->party_state.LeaderIndex;
+    profile->magic_caster_index = profile->party_state.MagicCasterIndex;
+    return 0;
+}
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index)
 {

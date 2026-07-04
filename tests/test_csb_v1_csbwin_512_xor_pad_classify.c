@@ -33,7 +33,8 @@
  *     files are user-staged assets; the skip-safe real-asset
  *     probe (probes/csb/firestaff_csb_v1_csbwin_512_xor_pad_
  *     classify_probe.c) handles that path.
- *   - No body-section decoding (block 2 / items / characters).
+ *   - No full body import; GAMEBLOCK2 and bounded CHARDESC summaries are
+ *     decoded only as verified handoff metadata.
  *   - No M11/M12 wiring.
  */
 
@@ -148,6 +149,54 @@ static void build_csbwin_fixture(uint8_t *buf,
     scramble_block(buf + 256u, 0u, 128u);
 }
 
+static void write_csbwin_champion_fixture(uint8_t *record,
+                                          const char *name,
+                                          const char *title,
+                                          uint16_t slot0)
+{
+    size_t i;
+    memset(record, 0, 800u);
+    memcpy(record + 0u, name, strlen(name) < 8u ? strlen(name) : 8u);
+    memcpy(record + 8u, title, strlen(title) < 16u ? strlen(title) : 16u);
+    record[28u] = 2u;
+    record[29u] = 3u;
+    record[32u] = 5u;
+    record[40u] = 1u;
+    record[41u] = 23u;
+    record[42u] = 4u;
+    write_le16(record, 44u, 0xFFF0u);
+    write_le16(record, 46u, 0x0011u);
+    write_le16(record, 48u, 0x1234u);
+    write_le16(record, 50u, 0x00A5u);
+    write_le16(record, 52u, 321u);
+    write_le16(record, 54u, 456u);
+    write_le16(record, 56u, 1234u);
+    write_le16(record, 58u, 2345u);
+    write_le16(record, 60u, 67u);
+    write_le16(record, 62u, 89u);
+    write_le16(record, 64u, 0x0BADu);
+    write_le16(record, 66u, 1500u);
+    write_le16(record, 68u, 1600u);
+    for (i = 0u; i < 7u; ++i) {
+        record[70u + i * 3u + 0u] = (uint8_t)(90u + i);
+        record[70u + i * 3u + 1u] = (uint8_t)(50u + i);
+        record[70u + i * 3u + 2u] = (uint8_t)(10u + i);
+    }
+    for (i = 0u; i < 20u; ++i) {
+        write_le16(record, 92u + i * 6u, (uint16_t)(0x0100u + i));
+        write_le32(record, 94u + i * 6u, 0x10000000u + (uint32_t)i);
+    }
+    for (i = 0u; i < 30u; ++i) {
+        write_le16(record, 212u + i * 2u, (uint16_t)(slot0 + i));
+    }
+    write_le16(record, 272u, 777u);
+    write_le16(record, 274u, 88u);
+    write_le32(record, 276u, 0xCAFEBABEu);
+    write_le16(record, 280u, 0xBEEFu);
+    write_le16(record, 282u, 0x0042u);
+    write_le16(record, 284u, 0x0055u);
+}
+
 static size_t build_full_csbwin_body_fixture(uint8_t *buf,
                                              size_t capacity,
                                              int corrupt_timer_queue)
@@ -215,9 +264,9 @@ static size_t build_full_csbwin_body_fixture(uint8_t *buf,
                                      (uint16_t)(ITEM16_SIZE / 2));
     off += ITEM16_SIZE;
 
-    for (i = 0u; i < CHARACTER_SIZE; ++i) {
-        buf[off + i] = (uint8_t)((i * 7u + 5u) & 0xFFu);
-    }
+    memset(buf + off, 0, CHARACTER_SIZE);
+    write_csbwin_champion_fixture(buf + off, "TIGGY", "APPRENTICE", 0x2200u);
+    write_csbwin_champion_fixture(buf + off + 800u, "BORIS", "WIZARD", 0x3300u);
     character_checksum = scramble_block(buf + off, 0x3333u,
                                         (uint16_t)(CHARACTER_SIZE / 2));
     off += CHARACTER_SIZE;
@@ -608,6 +657,41 @@ static int test_full_save_body_verify(void)
                 encrypted_size == 6u);
     ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE].
                 checksum_ok == 1);
+    ASSERT_TRUE(report.champions[0].valid == 1);
+    ASSERT_TRUE(strcmp(report.champions[0].name, "TIGGY") == 0);
+    ASSERT_TRUE(strcmp(report.champions[0].title, "APPRENTICE") == 0);
+    ASSERT_TRUE(report.champions[0].facing == 2u);
+    ASSERT_TRUE(report.champions[0].char_position == 3u);
+    ASSERT_TRUE(report.champions[0].attack_type == 5);
+    ASSERT_TRUE(report.champions[0].max_recent_damage == 23u);
+    ASSERT_TRUE(report.champions[0].poison_count == 4u);
+    ASSERT_TRUE(report.champions[0].busy_timer == (int16_t)0xFFF0u);
+    ASSERT_TRUE(report.champions[0].timer_index == 0x0011);
+    ASSERT_TRUE(report.champions[0].char_flags == 0x1234);
+    ASSERT_TRUE(report.champions[0].wounds == 0x00A5);
+    ASSERT_TRUE(report.champions[0].hp == 321);
+    ASSERT_TRUE(report.champions[0].max_hp == 456);
+    ASSERT_TRUE(report.champions[0].stamina == 1234);
+    ASSERT_TRUE(report.champions[0].max_stamina == 2345);
+    ASSERT_TRUE(report.champions[0].mana == 67);
+    ASSERT_TRUE(report.champions[0].max_mana == 89);
+    ASSERT_TRUE(report.champions[0].food == 1500);
+    ASSERT_TRUE(report.champions[0].water == 1600);
+    ASSERT_TRUE(report.champions[0].attributes[1][0] == 91u);
+    ASSERT_TRUE(report.champions[0].attributes[1][1] == 51u);
+    ASSERT_TRUE(report.champions[0].attributes[1][2] == 11u);
+    ASSERT_TRUE(report.champions[0].skill_temp_adjust[3] == 0x0103);
+    ASSERT_TRUE(report.champions[0].skill_experience[3] == 0x10000003u);
+    ASSERT_TRUE(report.champions[0].possessions[0] == 0x2200u);
+    ASSERT_TRUE(report.champions[0].possessions[29] == 0x221Du);
+    ASSERT_TRUE(report.champions[0].load == 777u);
+    ASSERT_TRUE(report.champions[0].shield_strength == 88u);
+    ASSERT_TRUE(report.champions[0].talents == 0xCAFEBABEu);
+    ASSERT_TRUE(report.champions[0].fingerprint == 0xBEEFu);
+    ASSERT_TRUE(report.champions[0].cause_of_damage == 0x0042u);
+    ASSERT_TRUE(report.champions[0].monster_causing_damage == 0x0055u);
+    ASSERT_TRUE(strcmp(report.champions[1].name, "BORIS") == 0);
+    ASSERT_TRUE(report.champions[1].possessions[0] == 0x3300u);
 
     rc = csb_v1_csbwin_512_verify_save_body(bytes, size - 1u, 16u, &report);
     ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_TOO_SMALL);
