@@ -7894,6 +7894,66 @@ int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
     return out_party->ChampionCount;
 }
 
+int csb_v1_runtime_apply_csbwin_gameblock2_summary(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512BodyReport *summary)
+{
+    if (!profile || !summary || !summary->header_valid ||
+        summary->sections_verified < CSB_V1_CSBWIN_512_SECTION_COUNT) {
+        return -1;
+    }
+    if (summary->num_character > CSB_V1_MAX_CHAMPIONS ||
+        summary->party_x > CSB_V1_MAX_PARTY_X ||
+        summary->party_y > CSB_V1_MAX_PARTY_Y ||
+        summary->party_facing > 3u) {
+        return -1;
+    }
+
+    /* CSBWin SaveGame.cpp lines 1775-1811 applies GAMEBLOCK2 after
+     * `swapBlock2()`: time/RNG, party pose, hand/caster indexes, timer
+     * metadata, cursor object, and ITEM16 capacity. Firestaff stores this
+     * as a bounded startup/resume handoff until the decoded champion,
+     * item, and timer bodies are imported into the live runtime. */
+    profile->game_time = summary->game_time;
+    profile->timeline_queue.gameTick = profile->game_time;
+    profile->party_x = (int)summary->party_x;
+    profile->party_y = (int)summary->party_y;
+    profile->party_z = (int)summary->party_level;
+    profile->current_level = (int)summary->party_level;
+    profile->party_dir = (int)(summary->party_facing & 3u);
+    profile->champion_count = (int)summary->num_character;
+    profile->leader_index = (summary->hand_char < summary->num_character)
+        ? (int)summary->hand_char
+        : -1;
+    profile->magic_caster_index = (summary->magic_caster < summary->num_character)
+        ? (int)summary->magic_caster
+        : -1;
+    if (profile->party_state_valid) {
+        profile->party_state.ChampionCount = profile->champion_count;
+        profile->party_state.PartyDirection = (uint8_t)(profile->party_dir & 3);
+        profile->party_state.LeaderIndex = profile->leader_index;
+        profile->party_state.MagicCasterIndex = profile->magic_caster_index;
+    }
+
+    profile->csbwin_gameblock2_summary_valid = 1;
+    profile->csbwin_random_seed = summary->random_seed;
+    profile->csbwin_object_in_hand = summary->object_in_hand;
+    profile->csbwin_num_timer = summary->num_timer;
+    profile->csbwin_first_avail_timer = summary->first_avail_timer;
+    profile->csbwin_max_timers = summary->max_timers;
+    profile->csbwin_item16_queue_len = summary->item16_queue_len;
+    profile->csbwin_max_item16 = summary->max_item16;
+    profile->csbwin_timer_sequence = summary->timer_sequence;
+    profile->csbwin_last_monster_attack_time =
+        summary->last_monster_attack_time;
+    profile->csbwin_last_party_move_time = summary->last_party_move_time;
+    profile->csbwin_party_move_disable_timer =
+        summary->party_move_disable_timer;
+    profile->csbwin_word11712 = summary->word11712;
+    profile->csbwin_word11714 = summary->word11714;
+    return 0;
+}
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index)
 {

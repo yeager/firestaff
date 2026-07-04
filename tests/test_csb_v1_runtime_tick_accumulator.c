@@ -3970,6 +3970,89 @@ static void test_input_command_queue_move_boundary_does_not_claim_movement(void)
           "MOVE_FORWARD boundary reaches the bounded open-step runtime movement");
 }
 
+static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_PartyState party;
+    CSB_V1_CSBWin512BodyReport summary;
+
+    csb_v1_runtime_init(&profile, NULL);
+    seed_two_champion_party(&party);
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "runtime accepts seeded party before CSBWin summary handoff");
+
+    memset(&summary, 0, sizeof(summary));
+    summary.header_valid = 1;
+    summary.sections_verified = CSB_V1_CSBWIN_512_SECTION_COUNT;
+    summary.game_time = 123456u;
+    summary.random_seed = 0xA1B2C3D4u;
+    summary.object_in_hand = 0x4321u;
+    summary.num_character = 2u;
+    summary.party_x = 12u;
+    summary.party_y = 7u;
+    summary.party_facing = 3u;
+    summary.party_level = 4u;
+    summary.hand_char = 1u;
+    summary.magic_caster = 0u;
+    summary.num_timer = 9u;
+    summary.first_avail_timer = 2u;
+    summary.max_timers = 11u;
+    summary.item16_queue_len = 5u;
+    summary.max_item16 = 6u;
+    summary.timer_sequence = 0x2468u;
+    summary.last_monster_attack_time = 0x01020304u;
+    summary.last_party_move_time = 0x11121314u;
+    summary.party_move_disable_timer = 8u;
+    summary.word11712 = 0x55u;
+    summary.word11714 = 0x66u;
+
+    CHECK(csb_v1_runtime_apply_csbwin_gameblock2_summary(
+              &profile, &summary) == 0,
+          "CSBWin GAMEBLOCK2 summary applies to runtime profile");
+    CHECK(profile.game_time == 123456u &&
+              profile.timeline_queue.gameTick == 123456u,
+          "CSBWin summary updates game_time and timeline queue tick");
+    CHECK(profile.party_x == 12 && profile.party_y == 7 &&
+              profile.party_z == 4 && profile.current_level == 4 &&
+              profile.party_dir == 3,
+          "CSBWin summary updates party pose and current level");
+    CHECK(profile.champion_count == 2 &&
+              profile.leader_index == 1 &&
+              profile.magic_caster_index == 0,
+          "CSBWin summary updates champion count, leader, and caster indexes");
+    CHECK(profile.party_state.ChampionCount == 2 &&
+              profile.party_state.PartyDirection == 3 &&
+              profile.party_state.LeaderIndex == 1 &&
+              profile.party_state.MagicCasterIndex == 0,
+          "CSBWin summary keeps existing party snapshot metadata aligned");
+    CHECK(profile.csbwin_gameblock2_summary_valid == 1 &&
+              profile.csbwin_random_seed == 0xA1B2C3D4u &&
+              profile.csbwin_object_in_hand == 0x4321u,
+          "CSBWin summary stores RNG seed and cursor object for later import");
+    CHECK(profile.csbwin_num_timer == 9u &&
+              profile.csbwin_first_avail_timer == 2u &&
+              profile.csbwin_max_timers == 11u &&
+              profile.csbwin_timer_sequence == 0x2468u,
+          "CSBWin summary stores timer metadata for later timer-body import");
+    CHECK(profile.csbwin_item16_queue_len == 5u &&
+              profile.csbwin_max_item16 == 6u,
+          "CSBWin summary stores ITEM16 queue/capacity metadata");
+    CHECK(profile.csbwin_last_monster_attack_time == 0x01020304u &&
+              profile.csbwin_last_party_move_time == 0x11121314u &&
+              profile.csbwin_party_move_disable_timer == 8u,
+          "CSBWin summary stores action timestamps and movement cooldown");
+
+    summary.party_facing = 4u;
+    CHECK(csb_v1_runtime_apply_csbwin_gameblock2_summary(
+              &profile, &summary) == -1,
+          "CSBWin summary rejects out-of-range party direction");
+    summary.party_facing = 0u;
+    summary.num_character = 5u;
+    CHECK(csb_v1_runtime_apply_csbwin_gameblock2_summary(
+              &profile, &summary) == -1,
+          "CSBWin summary rejects out-of-range champion count");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Runtime Tick Accumulator Follow-up ===\n\n");
@@ -3992,6 +4075,7 @@ int main(void)
     test_input_forward_c008_party_possession_sensor();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
+    test_csbwin_gameblock2_summary_applies_runtime_handoff();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 runtime tick boundary accumulates sub-55ms frame slices, fires source-locked V1 quanta, and dispatches timeline events before game_time increments");
