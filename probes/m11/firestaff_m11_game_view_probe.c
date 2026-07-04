@@ -287,6 +287,50 @@ static void probe_set_square(struct DungeonDatState_Compat* dungeon,
     dungeon->tiles[0].squareData[mapX * height + mapY] = square;
 }
 
+static int probe_count_runtime_explosions_of_type(
+    const M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int explosionType) {
+    int i;
+    int count = 0;
+    if (!state) return 0;
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        const struct ExplosionInstance_Compat* e =
+            &state->world.explosions.entries[i];
+        if (e->reserved0 == 0) continue;
+        if (e->explosionType != explosionType) continue;
+        if (e->mapIndex != mapIndex || e->mapX != mapX || e->mapY != mapY) {
+            continue;
+        }
+        ++count;
+    }
+    return count;
+}
+
+static int probe_has_fluxcage_remove_event(
+    const M11_GameViewState* state,
+    uint32_t fireAtTick,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    int i;
+    if (!state) return 0;
+    for (i = 0; i < state->world.timeline.count; ++i) {
+        const struct TimelineEvent_Compat* ev = &state->world.timeline.events[i];
+        if (ev->kind == TIMELINE_EVENT_REMOVE_FLUXCAGE &&
+            ev->fireAtTick == fireAtTick &&
+            ev->mapIndex == mapIndex &&
+            ev->mapX == mapX &&
+            ev->mapY == mapY &&
+            ev->aux1 == C050_EXPLOSION_FLUXCAGE) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void probe_capture_vga_frame(const M11_GameViewState* state,
                                     const char* dir,
                                     const char* name) {
@@ -11768,6 +11812,133 @@ int main(int argc, char** argv) {
                         "spawns kinetic projectile");
                 }
                 menuView.world.things = savedThings;
+            }
+
+            /* ── INV_GV_340A..340D: DM1 F0407 FLUXCAGE/FUSE target and
+             * side-effect parity.
+             *
+             * ReDMCSB MENU.C F0407 computes L1251/L1252 from
+             * Champion.Direction at lines 1266-1268.  C035 FLUXCAGE then
+             * calls F0406 but does not recompute that target
+             * (lines 1495-1497).  C043 FUSE calls F0406 and explicitly
+             * recomputes the target from PartyDirection (lines 1499-1504).
+             * These invariants pin those two different target rules and
+             * F0224/F0225's observable runtime side effects. */
+            {
+                M11_GameViewState f0407View;
+                int performed;
+                uint32_t tickBefore;
+                int beforeCount;
+                int afterCount;
+
+                memset(&f0407View, 0, sizeof(f0407View));
+                if (probe_init_synthetic_view(&f0407View)) {
+                    f0407View.world.party.direction = DIR_NORTH;
+                    f0407View.world.party.champions[0].direction = DIR_WEST;
+                    tickBefore = f0407View.world.gameTick;
+                    beforeCount = probe_count_runtime_explosions_of_type(
+                        &f0407View, 0, 1, 3, C050_EXPLOSION_FLUXCAGE);
+                    performed = M11_GameView_TriggerNonMeleeActionByIndex(
+                        &f0407View, 0, 35);
+                    afterCount = probe_count_runtime_explosions_of_type(
+                        &f0407View, 0, 1, 3, C050_EXPLOSION_FLUXCAGE);
+                    probe_record(
+                        &tally, "INV_GV_340A",
+                        performed == 1 &&
+                            f0407View.world.party.champions[0].direction ==
+                                DIR_NORTH &&
+                            afterCount == beforeCount + 1 &&
+                            M11_GameView_CountCellExplosions(
+                                &f0407View.world, 0, 1, 3) >= 1 &&
+                            probe_has_fluxcage_remove_event(
+                                &f0407View, tickBefore + 100U, 0, 1, 3),
+                        "F0407 FLUXCAGE targets pre-F0406 champion direction "
+                        "and schedules REMOVE_FLUXCAGE at +100 ticks");
+                } else {
+                    probe_record(&tally, "INV_GV_340A", 0,
+                                 "F0407 FLUXCAGE synthetic setup failed");
+                }
+                probe_free_synthetic_view(&f0407View);
+
+                memset(&f0407View, 0, sizeof(f0407View));
+                if (probe_init_synthetic_view(&f0407View)) {
+                    f0407View.world.party.direction = DIR_NORTH;
+                    f0407View.world.party.champions[0].direction = DIR_WEST;
+                    probe_set_square(f0407View.world.dungeon, 1, 3,
+                                     (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+                    beforeCount = probe_count_runtime_explosions_of_type(
+                        &f0407View, 0, 1, 3, C050_EXPLOSION_FLUXCAGE);
+                    performed = M11_GameView_TriggerNonMeleeActionByIndex(
+                        &f0407View, 0, 35);
+                    afterCount = probe_count_runtime_explosions_of_type(
+                        &f0407View, 0, 1, 3, C050_EXPLOSION_FLUXCAGE);
+                    probe_record(
+                        &tally, "INV_GV_340B",
+                        performed == 1 &&
+                            afterCount == beforeCount &&
+                            f0407View.world.party.champions[0].direction ==
+                                DIR_NORTH,
+                        "F0407 FLUXCAGE wall/stairs fizzle preserves "
+                        "performed common-tail semantics");
+                } else {
+                    probe_record(&tally, "INV_GV_340B", 0,
+                                 "F0407 FLUXCAGE fizzle synthetic setup failed");
+                }
+                probe_free_synthetic_view(&f0407View);
+
+                memset(&f0407View, 0, sizeof(f0407View));
+                if (probe_init_synthetic_view(&f0407View)) {
+                    f0407View.world.party.mapX = 0;
+                    f0407View.world.party.mapY = 0;
+                    f0407View.world.party.direction = DIR_WEST;
+                    f0407View.world.party.champions[0].direction = DIR_NORTH;
+                    beforeCount = f0407View.world.explosions.count;
+                    performed = M11_GameView_TriggerNonMeleeActionByIndex(
+                        &f0407View, 0, 43);
+                    afterCount = f0407View.world.explosions.count;
+                    probe_record(
+                        &tally, "INV_GV_340C",
+                        performed == 1 &&
+                            afterCount == beforeCount &&
+                            f0407View.world.party.champions[0].direction ==
+                                DIR_WEST &&
+                            f0407View.gameWon == 0 &&
+                            f0407View.world.gameWon == 0,
+                        "F0407 FUSE recomputes from party direction and "
+                        "out-of-bounds target keeps performed without effect");
+                } else {
+                    probe_record(&tally, "INV_GV_340C", 0,
+                                 "F0407 FUSE boundary synthetic setup failed");
+                }
+                probe_free_synthetic_view(&f0407View);
+
+                memset(&f0407View, 0, sizeof(f0407View));
+                if (probe_init_synthetic_view(&f0407View)) {
+                    f0407View.world.party.direction = DIR_NORTH;
+                    f0407View.world.party.champions[0].direction = DIR_WEST;
+                    beforeCount = probe_count_runtime_explosions_of_type(
+                        &f0407View, 0, 2, 2,
+                        C003_EXPLOSION_HARM_NON_MATERIAL);
+                    performed = M11_GameView_ProbeF0407FuseImmediate(
+                        &f0407View, 0);
+                    afterCount = probe_count_runtime_explosions_of_type(
+                        &f0407View, 0, 2, 2,
+                        C003_EXPLOSION_HARM_NON_MATERIAL);
+                    probe_record(
+                        &tally, "INV_GV_340D",
+                        performed == 1 &&
+                            afterCount == beforeCount + 1 &&
+                            f0407View.world.party.champions[0].direction ==
+                                DIR_NORTH &&
+                            f0407View.gameWon == 0 &&
+                            f0407View.world.gameWon == 0,
+                        "F0407 FUSE no-Lord-Chaos target creates Harm Non "
+                        "Material and leaves endgame inactive");
+                } else {
+                    probe_record(&tally, "INV_GV_340D", 0,
+                                 "F0407 FUSE no-chaos synthetic setup failed");
+                }
+                probe_free_synthetic_view(&f0407View);
             }
         }
 

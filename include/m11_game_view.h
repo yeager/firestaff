@@ -942,6 +942,8 @@ int M11_GameView_GetProjectileCount(const M11_GameViewState* state);
 int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
                                               int championIndex,
                                               int actionIndex);
+int M11_GameView_ProbeF0407FuseImmediate(M11_GameViewState* state,
+                                         int championIndex);
 
 /* V1 projectile cycle probe hook: drive one tick of the V1
  * projectile advance over all live projectiles.  Normally invoked
