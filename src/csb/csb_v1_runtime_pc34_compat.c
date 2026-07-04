@@ -8156,6 +8156,72 @@ int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     return 0;
 }
 
+int csb_v1_runtime_materialize_csbwin_item16_summaries(
+    CSB_V1_RuntimeProfile *profile)
+{
+    uint16_t item_index;
+    int imported = 0;
+
+    if (!profile || !profile->csbwin_body_runtime_summary_valid) {
+        return -1;
+    }
+    if (profile->csbwin_item16_summary_count >
+        CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
+        return -1;
+    }
+
+    memset(profile->csbwin_runtime_item16, 0,
+           sizeof(profile->csbwin_runtime_item16));
+    profile->csbwin_runtime_item16_count = 0u;
+    profile->csbwin_runtime_item16_total =
+        profile->csbwin_item16_summary_total;
+
+    /* CSBWin CSB.h:2257-2280 defines ITEM16 as active-monster state:
+     * word0 DB4 monster index, packed facings/positions, d.Time low byte,
+     * target/previous/current coordinates, and four SINGLE_MONSTER_STATUS
+     * bytes. SaveGame.cpp:491-499 swaps only word0 after loading. A negative
+     * word0 marks an unused slot, so Firestaff skips 0xffff here while
+     * preserving the bounded active records for later AI/runtime ownership. */
+    for (item_index = 0u;
+         item_index < profile->csbwin_item16_summary_count;
+         ++item_index) {
+        const CSB_V1_CSBWin512Item16Summary *src =
+            &profile->csbwin_item16[item_index];
+        CSB_V1_CSBWinRuntimeItem16 *dst;
+
+        if (!src->valid || src->monster_index == 0xffffu) {
+            continue;
+        }
+        if (profile->csbwin_runtime_item16_count >=
+            CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
+            break;
+        }
+
+        dst = &profile->csbwin_runtime_item16
+            [profile->csbwin_runtime_item16_count];
+        memset(dst, 0, sizeof(*dst));
+        dst->valid = 1;
+        dst->monster_index = src->monster_index;
+        dst->facings = src->facings;
+        dst->positions = src->positions;
+        dst->last_move_time_lsb = src->ubyte4;
+        dst->delay_or_flee_timer = src->ubyte5;
+        dst->target_x = src->target_x;
+        dst->target_y = src->target_y;
+        dst->previous_x = src->previous_x;
+        dst->previous_y = src->previous_y;
+        dst->current_x = src->current_x;
+        dst->current_y = src->current_y;
+        memcpy(dst->single_monster_status,
+               src->single_monster_status,
+               sizeof(dst->single_monster_status));
+        ++profile->csbwin_runtime_item16_count;
+        ++imported;
+    }
+
+    return imported;
+}
+
 int csb_v1_runtime_materialize_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile)
 {
