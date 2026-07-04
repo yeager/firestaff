@@ -866,6 +866,15 @@ static int dm1_group_creature_occupies_cell_pc34(const DM1_CreatureGroup* group,
     if (!group) return 0;
     if (creatureIdx < 0 || creatureIdx > group->count) return 0;
 
+    /* ReDMCSB GROUP.C F0176 lines 86-88: a group-cell byte of
+     * C0xFF_SINGLE_CENTERED_CREATURE means one centered creature is
+     * present on all cells, so F0176 returns ordinal 1 before the size
+     * and per-cell tests. Firestaff's compact combat view stores the
+     * decoded group-cell sentinel on creature slot 0. */
+    if (group->creatures[0].cell == DM1_GROUP_CELLS_SINGLE_CENTERED) {
+        return creatureIdx == 0;
+    }
+
     creatureCell = group->creatures[creatureIdx].cell & 3;
     queryCell = cell & 3;
 

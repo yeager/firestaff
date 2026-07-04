@@ -4,8 +4,9 @@
  * Source-locked to ReDMCSB GROUP.C F0176/F0177 and PROJEXPL.C F0229.
  * F0177 walks the F0229 ordered attack cells, but the actual creature
  * hit-test is delegated to F0176. Half-square creatures occupy two
- * adjacent cells according to group-facing parity; this pins that
- * melee targeting does not silently treat them as full-square occupants.
+ * adjacent cells according to group-facing parity, and a single centered
+ * creature is present on all cells. This pins that melee targeting does
+ * not silently treat those source cases as full-square occupants.
  */
 
 #include "dm1_v1_combat_pc34_compat.h"
@@ -68,12 +69,31 @@ static int test_half_square_matches_adjacent_cells_by_group_direction(void)
     return 0;
 }
 
+static int test_single_centered_creature_is_present_on_all_cells(void)
+{
+    DM1_CreatureGroup group =
+        one_creature_group(DM1_CREATURE_SIZE_FULL_SQUARE, DM1_GROUP_CELLS_SINGLE_CENTERED);
+
+    CHECK(dm1_get_melee_target(&group, 0, 0, 0) == 0,
+          "single centered creature is reachable from north-facing ordered cells");
+    CHECK(dm1_get_melee_target(&group, 1, 1, 2) == 0,
+          "single centered creature is reachable from east-facing ordered cells");
+    CHECK(dm1_get_melee_target(&group, 2, 2, 1) == 0,
+          "single centered creature is reachable from south-facing ordered cells");
+    CHECK(dm1_get_melee_target(&group, 3, 3, 3) == 0,
+          "single centered creature is reachable from west-facing ordered cells");
+
+    return 0;
+}
+
 int main(void)
 {
     CHECK(test_full_square_requires_exact_cell() == 0,
           "full-square melee target baseline");
     CHECK(test_half_square_matches_adjacent_cells_by_group_direction() == 0,
           "half-square melee target parity");
+    CHECK(test_single_centered_creature_is_present_on_all_cells() == 0,
+          "single centered melee target parity");
 
     printf("dm1_v1_melee_target_half_square_pc34_compat: ok\n");
     return 0;

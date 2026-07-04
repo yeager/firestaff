@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.25  (2026-07-04)",
+    "  - Packages the post-v3.0.24 DM1 V1 melee-targeting hardening now on main.",
+    "  - DM1 V1 source-locks GROUP.C F0176/F0177 melee target occupancy for half-square creatures and the C0xFF single-centered creature case.",
+    "  - Focused CTest coverage keeps the targeting helper data-free and fast on local builds.",
+    "",
     "V3.0.24  (2026-07-04)",
     "  - Packages the post-v3.0.23 mainline DM1 V1 hardening and DM1 V2 readiness work now on main.",
     "  - DM1 V1 adds stronger source-locked coverage for F0407 FUSE/FLUXCAGE, shared F0412 magic-map runtime handling, and defensive F0811 inactive projectile-slot rejection to reduce phantom HoC projectile/item risk.",
@@ -384,5 +389,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.24";
+    return "3.0.25";
 }
