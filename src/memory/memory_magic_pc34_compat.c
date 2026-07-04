@@ -729,6 +729,73 @@ int F0758_MAGIC_ProducePotionEffect_Compat(
     return 1;
 }
 
+int F0759_MAGIC_ProduceMagicMapEffect_Compat(
+    const struct SpellDefinition_Compat* spell,
+    int powerOrdinal,
+    int hasMagicMapInHand,
+    int championIndex,
+    int partyDirection,
+    struct SpellEffect_Compat* out)
+{
+    int spellPower;
+    int statusKind;
+
+    if (out == 0) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+
+    if (spell == 0 ||
+        spell->kind != C4_SPELL_KIND_MAGIC_MAP_COMPAT ||
+        powerOrdinal < 1 || powerOrdinal > 6) {
+        return 0;
+    }
+
+    out->spellKind = C4_SPELL_KIND_MAGIC_MAP_COMPAT;
+    out->spellType = spell->type;
+    out->powerOrdinal = powerOrdinal;
+    out->followupEventKind = TIMELINE_EVENT_INVALID;
+
+    if (!hasMagicMapInHand) {
+        out->castResult = SPELL_CAST_FAILURE_NEEDS_FLASK;
+        out->failureReason = SPELL_FAILURE_NEEDS_MAGIC_MAP;
+        return 1;
+    }
+
+    /* ReDMCSB MENU.C F0412 lines 1873-1920.  These MEDIA629
+     * spells are documented in DEFS.H as CSB-only, but the spell
+     * resolver is shared, so keep the source formula available
+     * without adding any rows to DM1's 25-spell G0487 table. */
+    spellPower = (powerOrdinal + 1) << 2;
+    switch (spell->type) {
+        case C0_SPELL_TYPE_MAGIC_MAP_WIZARD_COMPAT:
+            statusKind = TIMELINE_AUX_MAGIC_MAP_WIZARD;
+            break;
+        case C1_SPELL_TYPE_MAGIC_MAP_NINJA_COMPAT:
+            statusKind = TIMELINE_AUX_MAGIC_MAP_NINJA;
+            spellPower -= 2;
+            break;
+        case C2_SPELL_TYPE_MAGIC_MAP_FIGHTER_COMPAT:
+            statusKind = TIMELINE_AUX_MAGIC_MAP_FIGHTER;
+            spellPower -= ((spellPower >> 2) - 1);
+            break;
+        case C3_SPELL_TYPE_MAGIC_MAP_PRIEST_COMPAT:
+            statusKind = TIMELINE_AUX_MAGIC_MAP_PRIEST;
+            out->magicStateDelta[0] = partyDirection;
+            break;
+        default:
+            return 0;
+    }
+
+    out->castResult = SPELL_CAST_SUCCESS;
+    out->durationTicks = spellPower * spellPower * 2;
+    out->magicStateDelta[5] = 1;
+    out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
+    out->followupEventAux0 = statusKind;
+    out->followupEventAux1 = championIndex;
+    return 1;
+}
+
 int F0759_MAGIC_ApplySpellImpactToChampion_Compat(
     const struct SpellEffect_Compat* effect,
     const struct CombatantChampionSnapshot_Compat* champ,

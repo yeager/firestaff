@@ -78,6 +78,13 @@
 
 #define C4_SPELL_TYPE_PROJECTILE_OPEN_DOOR_COMPAT 4
 
+/* -------- MAGIC MAP sub-types (DEFS.H:1776..1779) ---------------- */
+
+#define C0_SPELL_TYPE_MAGIC_MAP_WIZARD_COMPAT  0
+#define C1_SPELL_TYPE_MAGIC_MAP_NINJA_COMPAT   1
+#define C2_SPELL_TYPE_MAGIC_MAP_FIGHTER_COMPAT 2
+#define C3_SPELL_TYPE_MAGIC_MAP_PRIEST_COMPAT  3
+
 /* -------- Timeline aux0 tags used by F0757 / F0763 ------------ */
 
 #define TIMELINE_AUX_THIEVES_EYE     0x00740100
@@ -86,6 +93,10 @@
 #define TIMELINE_AUX_FIRESHIELD      0x00740800
 #define TIMELINE_AUX_FOOTPRINTS      0x00741000
 #define TIMELINE_AUX_SPELL_SHIELD    0x00742000
+#define TIMELINE_AUX_MAGIC_MAP_WIZARD  80
+#define TIMELINE_AUX_MAGIC_MAP_NINJA   81
+#define TIMELINE_AUX_MAGIC_MAP_FIGHTER 82
+#define TIMELINE_AUX_MAGIC_MAP_PRIEST  83
 
 /* -------- Data structures ------------------------------------- */
 
@@ -285,6 +296,14 @@ int F0758_MAGIC_ProducePotionEffect_Compat(
     int powerOrdinal,
     int hasEmptyFlaskInHand,
     struct RngState_Compat* rng,
+    struct SpellEffect_Compat* out);
+
+int F0759_MAGIC_ProduceMagicMapEffect_Compat(
+    const struct SpellDefinition_Compat* spell,
+    int powerOrdinal,
+    int hasMagicMapInHand,
+    int championIndex,
+    int partyDirection,
     struct SpellEffect_Compat* out);
 
 int F0759_MAGIC_ApplySpellImpactToChampion_Compat(

@@ -6018,6 +6018,46 @@ static int m11_find_empty_flask_in_hand_f0411(
     return -1;
 }
 
+static int m11_action_hand_has_magic_map_f0802(
+    const M11_GameViewState* state,
+    int championIndex)
+{
+    const struct DungeonScroll_Compat* scroll;
+    unsigned short thing;
+    int scrollIndex;
+    char decoded[32];
+
+    if (!state || !state->world.things ||
+        championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        !state->world.party.champions[championIndex].present) {
+        return 0;
+    }
+
+    thing = state->world.party.champions[championIndex]
+                .inventory[CHAMPION_SLOT_ACTION_HAND];
+    if (thing == THING_NONE || THING_GET_TYPE(thing) != THING_TYPE_SCROLL) {
+        return 0;
+    }
+    scrollIndex = (int)THING_GET_INDEX(thing);
+    if (!state->world.things->scrolls || scrollIndex < 0 ||
+        scrollIndex >= state->world.things->scrollCount) {
+        return 0;
+    }
+
+    /* ReDMCSB PANEL.C F0802 lines 519-531: a magic map is a scroll
+     * whose decoded text is exactly "MAGICMAP". */
+    scroll = &state->world.things->scrolls[scrollIndex];
+    if (F0508_DUNGEON_DecodeTextStringThing_Compat(
+            state->world.things,
+            (int)scroll->textStringThingIndex,
+            DUNGEON_TEXT_TYPE_SCROLL |
+                DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE,
+            decoded, sizeof(decoded)) < 0) {
+        return 0;
+    }
+    return strcmp(decoded, "MAGICMAP") == 0;
+}
+
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
     int runeValue;
     if (!state || !state->active || state->partyDead) return 0;
@@ -6294,7 +6334,9 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     req.hasEmptyFlaskInHand =
         m11_find_empty_flask_in_hand_f0411(
             state, state->world.party.activeChampionIndex) >= 0;
-    req.hasMagicMapInHand = 0;
+    req.hasMagicMapInHand =
+        m11_action_hand_has_magic_map_f0802(
+            state, state->world.party.activeChampionIndex);
     req.gameTimeTicksLow = (int)(state->world.gameTick & 0x7FFFFFFF);
     req.spellTableIndex = tableIndex;
     req.rawSymbolsPacked = (int)packed;
@@ -6374,6 +6416,9 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
                       CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_SHIFT) &
                      CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_MASK);
             }
+        } else if (spell.kind == C4_SPELL_KIND_MAGIC_MAP_COMPAT &&
+                   req.hasMagicMapInHand) {
+            input.reserved2 |= CMD_CAST_SPELL_RESERVED2_HAS_MAGIC_MAP;
         }
         memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
         /* Spell casting consumes a real game tick outside m11_apply_tick();
