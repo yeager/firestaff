@@ -14255,6 +14255,53 @@ static int m11_c080_drop_leader_hand(M11_GameViewState* state,
     return 1;
 }
 
+static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* state,
+                                                         int localX,
+                                                         int localY) {
+    CSB_V1_BootProfile* profile;
+    int dx = 0;
+    int dy = 0;
+    int mapX;
+    int mapY;
+    int queued;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
+    switch (profile->runtime.party_dir & 3) {
+        case 0: dy = -1; break;
+        case 1: dx = 1; break;
+        case 2: dy = 1; break;
+        case 3: dx = -1; break;
+        default: break;
+    }
+    mapX = profile->runtime.party_x + dx;
+    mapY = profile->runtime.party_y + dy;
+
+    /* ReDMCSB MOVESENS.C F0276 lines 1737-1785: a C080 viewport
+     * click on C05/front-wall ornament enters the CSB wall-square
+     * sensor path, not the DM1 M11 world thing-list path. */
+    queued = csb_v1_runtime_trigger_wall_ornament_click(
+        &profile->runtime,
+        mapX,
+        mapY,
+        0,
+        -1);
+    if (queued <= 0) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    m11_sync_csb_state_from_profile(state, profile);
+    m11_set_status(state, "CSB", "WALL SENSOR");
+    return M11_GAME_INPUT_REDRAW;
+}
+
 static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                                        int x,
                                                        int y) {
@@ -14270,6 +14317,10 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
 
     localX = x - M11_VIEWPORT_X;
     localY = y - M11_VIEWPORT_Y;
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        return m11_process_csb_v1_c080_click(state, localX, localY);
+    }
 
     /* ReDMCSB CLIKVIEW.C F0377 subtracts COORD.C viewport origin
      * G2067/G2068, then tests G2210_aai_XYZ_DungeonViewClickable[]. */
