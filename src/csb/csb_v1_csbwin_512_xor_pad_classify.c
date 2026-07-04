@@ -66,6 +66,20 @@ static uint32_t read_le32(const uint8_t *bytes, size_t offset)
            ((uint32_t)bytes[offset + 3u] << 24);
 }
 
+static void write_le16(uint8_t *bytes, size_t offset, uint16_t value)
+{
+    bytes[offset + 0u] = (uint8_t)(value & 0xffu);
+    bytes[offset + 1u] = (uint8_t)((value >> 8) & 0xffu);
+}
+
+static void write_le32(uint8_t *bytes, size_t offset, uint32_t value)
+{
+    bytes[offset + 0u] = (uint8_t)(value & 0xffu);
+    bytes[offset + 1u] = (uint8_t)((value >> 8) & 0xffu);
+    bytes[offset + 2u] = (uint8_t)((value >> 16) & 0xffu);
+    bytes[offset + 3u] = (uint8_t)((value >> 24) & 0xffu);
+}
+
 static int checked_add_size(size_t a, size_t b, size_t *out)
 {
     if (!out || a > ((size_t)-1) - b) {
@@ -155,6 +169,17 @@ static void copy_fixed_text(char *dst,
     }
 }
 
+static void write_fixed_text(uint8_t *dst, size_t dst_size, const char *src)
+{
+    size_t i;
+    if (!dst || dst_size == 0u) return;
+    memset(dst, 0, dst_size);
+    if (!src) return;
+    for (i = 0u; i < dst_size && src[i] != '\0'; ++i) {
+        dst[i] = (uint8_t)src[i];
+    }
+}
+
 static void parse_champion_summary(const uint8_t *record,
                                    CSB_V1_CSBWin512ChampionSummary *out)
 {
@@ -226,6 +251,78 @@ static void parse_champion_summary(const uint8_t *record,
            CSBWIN_CHARDESC_PORTRAIT_BYTES);
 }
 
+static void write_champion_summary(
+    uint8_t *record,
+    const CSB_V1_CSBWin512ChampionSummary *src)
+{
+    size_t i;
+    if (!record || !src) return;
+    memset(record, 0, CSBWIN_CHARDESC_STRIDE);
+    if (!src->valid) return;
+    write_fixed_text(record + CSBWIN_CHARDESC_OFF_NAME, 8u, src->name);
+    write_fixed_text(record + CSBWIN_CHARDESC_OFF_TITLE, 16u, src->title);
+    write_le16(record, CSBWIN_CHARDESC_OFF_WORD24, (uint16_t)src->word24);
+    record[CSBWIN_CHARDESC_OFF_FACING] = src->facing;
+    record[CSBWIN_CHARDESC_OFF_POSITION] = src->char_position;
+    record[CSBWIN_CHARDESC_OFF_BYTE30] = src->byte30;
+    record[CSBWIN_CHARDESC_OFF_BYTE31] = src->byte31;
+    record[CSBWIN_CHARDESC_OFF_ATTACK_TYPE] = (uint8_t)src->attack_type;
+    record[CSBWIN_CHARDESC_OFF_BYTE33] = (uint8_t)src->byte33;
+    memcpy(record + CSBWIN_CHARDESC_OFF_INCANTATION,
+           src->incantation,
+           sizeof(src->incantation));
+    record[CSBWIN_CHARDESC_OFF_FACING3] = src->facing3;
+    record[CSBWIN_CHARDESC_OFF_MAX_RECENT_DAMAGE] = src->max_recent_damage;
+    record[CSBWIN_CHARDESC_OFF_POISON_COUNT] = src->poison_count;
+    record[CSBWIN_CHARDESC_OFF_UBYTE43] = src->ubyte43;
+    write_le16(record, CSBWIN_CHARDESC_OFF_BUSY_TIMER,
+               (uint16_t)src->busy_timer);
+    write_le16(record, CSBWIN_CHARDESC_OFF_TIMER_INDEX,
+               (uint16_t)src->timer_index);
+    write_le16(record, CSBWIN_CHARDESC_OFF_CHAR_FLAGS,
+               (uint16_t)src->char_flags);
+    write_le16(record, CSBWIN_CHARDESC_OFF_WOUNDS,
+               (uint16_t)src->wounds);
+    write_le16(record, CSBWIN_CHARDESC_OFF_HP + 0u, (uint16_t)src->hp);
+    write_le16(record, CSBWIN_CHARDESC_OFF_HP + 2u, (uint16_t)src->max_hp);
+    write_le16(record, CSBWIN_CHARDESC_OFF_HP + 4u, (uint16_t)src->stamina);
+    write_le16(record, CSBWIN_CHARDESC_OFF_HP + 6u,
+               (uint16_t)src->max_stamina);
+    write_le16(record, CSBWIN_CHARDESC_OFF_HP + 8u, (uint16_t)src->mana);
+    write_le16(record, CSBWIN_CHARDESC_OFF_HP + 10u,
+               (uint16_t)src->max_mana);
+    write_le16(record, CSBWIN_CHARDESC_OFF_WORD64, (uint16_t)src->word64);
+    write_le16(record, CSBWIN_CHARDESC_OFF_FOOD, (uint16_t)src->food);
+    write_le16(record, CSBWIN_CHARDESC_OFF_WATER, (uint16_t)src->water);
+    for (i = 0u; i < 7u; ++i) {
+        const size_t base = CSBWIN_CHARDESC_OFF_ATTRIBUTES + i * 3u;
+        record[base + 0u] = src->attributes[i][0];
+        record[base + 1u] = src->attributes[i][1];
+        record[base + 2u] = src->attributes[i][2];
+    }
+    for (i = 0u; i < 20u; ++i) {
+        const size_t base = CSBWIN_CHARDESC_OFF_SKILLS + i * 6u;
+        write_le16(record, base, (uint16_t)src->skill_temp_adjust[i]);
+        write_le32(record, base + 2u, src->skill_experience[i]);
+    }
+    for (i = 0u; i < 30u; ++i) {
+        write_le16(record,
+                   CSBWIN_CHARDESC_OFF_POSSESSIONS + i * 2u,
+                   src->possessions[i]);
+    }
+    write_le16(record, CSBWIN_CHARDESC_OFF_LOAD, src->load);
+    write_le16(record, CSBWIN_CHARDESC_OFF_SHIELD, src->shield_strength);
+    write_le32(record, CSBWIN_CHARDESC_OFF_TALENTS, src->talents);
+    write_le16(record, CSBWIN_CHARDESC_OFF_FINGERPRINT, src->fingerprint);
+    write_le16(record, CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE,
+               src->cause_of_damage);
+    write_le16(record, CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE,
+               src->monster_causing_damage);
+    memcpy(record + CSBWIN_CHARDESC_OFF_PORTRAIT,
+           src->portrait,
+           CSBWIN_CHARDESC_PORTRAIT_BYTES);
+}
+
 static void parse_character_tail(const uint8_t *characters,
                                  CSB_V1_CSBWin512BodyReport *out)
 {
@@ -261,6 +358,45 @@ static void parse_character_tail(const uint8_t *characters,
             tail[CSBWIN_CHARACTER_TAIL_OFF_BYTE13220 + i];
     }
     out->character_tail_invisible = tail[CSBWIN_CHARACTER_TAIL_OFF_INVISIBLE];
+}
+
+static void write_character_tail(
+    uint8_t *characters,
+    const CSB_V1_CSBWin512BodyReport *summary)
+{
+    uint8_t *tail;
+    size_t i;
+    if (!characters || !summary) return;
+    tail = characters + CSBWIN_CHARACTER_TAIL_OFF;
+    write_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_BRIGHTNESS,
+               (uint16_t)summary->character_tail_brightness);
+    tail[CSBWIN_CHARACTER_TAIL_OFF_SEE_THRU_WALLS] =
+        summary->character_tail_see_thru_walls;
+    tail[CSBWIN_CHARACTER_TAIL_OFF_MAGIC_FOOTPRINTS_ACTIVE] =
+        summary->character_tail_magic_footprints_active;
+    write_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_PARTY_SHIELD,
+               (uint16_t)summary->character_tail_party_shield);
+    write_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_FIRE_SHIELD,
+               (uint16_t)summary->character_tail_fire_shield);
+    write_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_SPELL_SHIELD,
+               (uint16_t)summary->character_tail_spell_shield);
+    tail[CSBWIN_CHARACTER_TAIL_OFF_NUM_FOOTPRINT_ENT] =
+        summary->character_tail_num_footprint_entries;
+    tail[CSBWIN_CHARACTER_TAIL_OFF_FREEZE_LIFE_TIMER] =
+        summary->character_tail_freeze_life_timer;
+    tail[CSBWIN_CHARACTER_TAIL_OFF_FIRST_MAGIC_FOOTPRINT] =
+        summary->character_tail_first_magic_footprint;
+    tail[CSBWIN_CHARACTER_TAIL_OFF_LAST_MAGIC_FOOTPRINT] =
+        summary->character_tail_last_magic_footprint;
+    for (i = 0u; i < 24u; ++i) {
+        write_le16(tail,
+                   CSBWIN_CHARACTER_TAIL_OFF_PARTY_FOOTPRINTS + i * 2u,
+                   summary->character_tail_party_footprints[i]);
+        tail[CSBWIN_CHARACTER_TAIL_OFF_BYTE13220 + i] =
+            summary->character_tail_byte13220[i];
+    }
+    tail[CSBWIN_CHARACTER_TAIL_OFF_INVISIBLE] =
+        summary->character_tail_invisible;
 }
 
 static void parse_item16_summaries(const uint8_t *decoded,
@@ -682,6 +818,76 @@ int csb_v1_csbwin_512_decode_stream_section(
         memset(out, 0, size);
         return CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
     }
+    return CSB_V1_CSBWIN_512_OK;
+}
+
+int csb_v1_csbwin_512_build_writable_champion_sections(
+    const CSB_V1_CSBWin512BodyReport *summary,
+    CSB_V1_CSBWin512WritableChampionSections *out)
+{
+    uint8_t block2_plain[128];
+    uint8_t characters_plain[CSBWIN_CHARACTER_BODY_BYTES];
+    size_t i;
+
+    if (!summary || !out ||
+        summary->num_character > CSBWIN_CHARDESC_COUNT ||
+        summary->party_facing > 3u) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+
+    memset(out, 0, sizeof(*out));
+    memset(block2_plain, 0, sizeof(block2_plain));
+    memset(characters_plain, 0, sizeof(characters_plain));
+
+    /* CSBWin SaveGame.cpp:1114-1204 writes GAMEBLOCK2 and CHARDESC data
+     * after endian swap, stores GenChecksum() in GAMEBLOCK1, then writes
+     * the same bytes through WriteScrambled(). Current CSBWin sets these
+     * section hashes to zero before checksum/scramble. */
+    write_le32(block2_plain, 0u, summary->game_time);
+    write_le32(block2_plain, 4u, summary->random_seed);
+    write_le16(block2_plain, 8u, summary->object_in_hand);
+    write_le16(block2_plain, 10u, summary->num_character);
+    write_le16(block2_plain, 12u, summary->party_x);
+    write_le16(block2_plain, 14u, summary->party_y);
+    write_le16(block2_plain, 16u, summary->party_facing);
+    write_le16(block2_plain, 18u, summary->party_level);
+    write_le16(block2_plain, 20u, summary->hand_char);
+    write_le16(block2_plain, 22u, summary->magic_caster);
+    write_le16(block2_plain, 24u, summary->num_timer);
+    write_le16(block2_plain, 26u, summary->first_avail_timer);
+    write_le16(block2_plain, 28u, summary->max_timers);
+    write_le16(block2_plain, 30u, summary->item16_queue_len);
+    write_le32(block2_plain, 32u, summary->last_monster_attack_time);
+    write_le32(block2_plain, 36u, summary->last_party_move_time);
+    write_le16(block2_plain, 40u, summary->party_move_disable_timer);
+    write_le16(block2_plain, 42u, summary->word11712);
+    write_le16(block2_plain, 44u, summary->word11714);
+    write_le16(block2_plain, 46u, summary->max_item16);
+    write_le16(block2_plain, 48u, summary->timer_sequence);
+
+    for (i = 0u; i < CSBWIN_CHARDESC_COUNT; ++i) {
+        write_champion_summary(
+            characters_plain + i * CSBWIN_CHARDESC_STRIDE,
+            &summary->champions[i]);
+    }
+    write_character_tail(characters_plain, summary);
+
+    out->block2_hash = 0u;
+    out->character_hash = 0u;
+    out->block2_size = sizeof(block2_plain);
+    out->character_size = sizeof(characters_plain);
+    memcpy(out->block2_scrambled, block2_plain, sizeof(block2_plain));
+    memcpy(out->characters_scrambled,
+           characters_plain,
+           sizeof(characters_plain));
+    out->block2_checksum = unscramble_block(
+        out->block2_scrambled,
+        out->block2_hash,
+        (uint16_t)(sizeof(block2_plain) / 2u));
+    out->character_checksum = unscramble_block(
+        out->characters_scrambled,
+        out->character_hash,
+        (uint16_t)(sizeof(characters_plain) / 2u));
     return CSB_V1_CSBWIN_512_OK;
 }
 
