@@ -158,12 +158,21 @@ static void write_csbwin_champion_fixture(uint8_t *record,
     memset(record, 0, 800u);
     memcpy(record + 0u, name, strlen(name) < 8u ? strlen(name) : 8u);
     memcpy(record + 8u, title, strlen(title) < 16u ? strlen(title) : 16u);
+    write_le16(record, 24u, 0x2468u);
     record[28u] = 2u;
     record[29u] = 3u;
+    record[30u] = 0x30u;
+    record[31u] = 0x31u;
     record[32u] = 5u;
+    record[33u] = 0x33u;
+    record[34u] = 96;
+    record[35u] = 102;
+    record[36u] = 108;
+    record[37u] = 114;
     record[40u] = 1u;
     record[41u] = 23u;
     record[42u] = 4u;
+    record[43u] = 0x43u;
     write_le16(record, 44u, 0xFFF0u);
     write_le16(record, 46u, 0x0011u);
     write_le16(record, 48u, 0x1234u);
@@ -195,6 +204,9 @@ static void write_csbwin_champion_fixture(uint8_t *record,
     write_le16(record, 280u, 0xBEEFu);
     write_le16(record, 282u, 0x0042u);
     write_le16(record, 284u, 0x0055u);
+    for (i = 0u; i < 464u; ++i) {
+        record[336u + i] = (uint8_t)(0x80u + (uint8_t)(i & 0x3fu));
+    }
 }
 
 static void write_csbwin_character_tail_fixture(uint8_t *characters)
@@ -738,9 +750,17 @@ static int test_full_save_body_verify(void)
     ASSERT_TRUE(strcmp(report.champions[0].title, "APPRENTICE") == 0);
     ASSERT_TRUE(report.champions[0].facing == 2u);
     ASSERT_TRUE(report.champions[0].char_position == 3u);
+    ASSERT_TRUE(report.champions[0].word24 == 0x2468);
+    ASSERT_TRUE(report.champions[0].byte30 == 0x30u);
+    ASSERT_TRUE(report.champions[0].byte31 == 0x31u);
     ASSERT_TRUE(report.champions[0].attack_type == 5);
+    ASSERT_TRUE(report.champions[0].byte33 == 0x33);
+    ASSERT_TRUE(report.champions[0].incantation[0] == 96);
+    ASSERT_TRUE(report.champions[0].incantation[3] == 114);
+    ASSERT_TRUE(report.champions[0].facing3 == 1u);
     ASSERT_TRUE(report.champions[0].max_recent_damage == 23u);
     ASSERT_TRUE(report.champions[0].poison_count == 4u);
+    ASSERT_TRUE(report.champions[0].ubyte43 == 0x43u);
     ASSERT_TRUE(report.champions[0].busy_timer == (int16_t)0xFFF0u);
     ASSERT_TRUE(report.champions[0].timer_index == 0x0011);
     ASSERT_TRUE(report.champions[0].char_flags == 0x1234);
@@ -766,6 +786,9 @@ static int test_full_save_body_verify(void)
     ASSERT_TRUE(report.champions[0].fingerprint == 0xBEEFu);
     ASSERT_TRUE(report.champions[0].cause_of_damage == 0x0042u);
     ASSERT_TRUE(report.champions[0].monster_causing_damage == 0x0055u);
+    ASSERT_TRUE(report.champions[0].portrait[0] == 0x80u);
+    ASSERT_TRUE(report.champions[0].portrait[463] ==
+                (uint8_t)(0x80u + (463u & 0x3fu)));
     ASSERT_TRUE(strcmp(report.champions[1].name, "BORIS") == 0);
     ASSERT_TRUE(report.champions[1].possessions[0] == 0x3300u);
     ASSERT_TRUE(report.character_tail_brightness == 0x0123);

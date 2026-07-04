@@ -91,12 +91,18 @@ enum {
     CSBWIN_CHARACTER_TAIL_OFF = 3200,
     CSBWIN_CHARDESC_OFF_NAME = 0,
     CSBWIN_CHARDESC_OFF_TITLE = 8,
+    CSBWIN_CHARDESC_OFF_WORD24 = 24,
     CSBWIN_CHARDESC_OFF_FACING = 28,
     CSBWIN_CHARDESC_OFF_POSITION = 29,
+    CSBWIN_CHARDESC_OFF_BYTE30 = 30,
+    CSBWIN_CHARDESC_OFF_BYTE31 = 31,
     CSBWIN_CHARDESC_OFF_ATTACK_TYPE = 32,
+    CSBWIN_CHARDESC_OFF_BYTE33 = 33,
+    CSBWIN_CHARDESC_OFF_INCANTATION = 34,
     CSBWIN_CHARDESC_OFF_FACING3 = 40,
     CSBWIN_CHARDESC_OFF_MAX_RECENT_DAMAGE = 41,
     CSBWIN_CHARDESC_OFF_POISON_COUNT = 42,
+    CSBWIN_CHARDESC_OFF_UBYTE43 = 43,
     CSBWIN_CHARDESC_OFF_BUSY_TIMER = 44,
     CSBWIN_CHARDESC_OFF_TIMER_INDEX = 46,
     CSBWIN_CHARDESC_OFF_CHAR_FLAGS = 48,
@@ -113,7 +119,9 @@ enum {
     CSBWIN_CHARDESC_OFF_TALENTS = 276,
     CSBWIN_CHARDESC_OFF_FINGERPRINT = 280,
     CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE = 282,
-    CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE = 284
+    CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE = 284,
+    CSBWIN_CHARDESC_OFF_PORTRAIT = 336,
+    CSBWIN_CHARDESC_PORTRAIT_BYTES = 464
 };
 
 enum {
@@ -158,12 +166,20 @@ static void parse_champion_summary(const uint8_t *record,
                     record + CSBWIN_CHARDESC_OFF_NAME, 8u);
     copy_fixed_text(out->title, sizeof(out->title),
                     record + CSBWIN_CHARDESC_OFF_TITLE, 16u);
+    out->word24 = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_WORD24);
     out->facing = record[CSBWIN_CHARDESC_OFF_FACING];
     out->char_position = record[CSBWIN_CHARDESC_OFF_POSITION];
+    out->byte30 = record[CSBWIN_CHARDESC_OFF_BYTE30];
+    out->byte31 = record[CSBWIN_CHARDESC_OFF_BYTE31];
     out->attack_type = (int8_t)record[CSBWIN_CHARDESC_OFF_ATTACK_TYPE];
+    out->byte33 = (int8_t)record[CSBWIN_CHARDESC_OFF_BYTE33];
+    memcpy(out->incantation,
+           record + CSBWIN_CHARDESC_OFF_INCANTATION,
+           sizeof(out->incantation));
     out->facing3 = record[CSBWIN_CHARDESC_OFF_FACING3];
     out->max_recent_damage = record[CSBWIN_CHARDESC_OFF_MAX_RECENT_DAMAGE];
     out->poison_count = record[CSBWIN_CHARDESC_OFF_POISON_COUNT];
+    out->ubyte43 = record[CSBWIN_CHARDESC_OFF_UBYTE43];
     out->busy_timer =
         (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_BUSY_TIMER);
     out->timer_index =
@@ -205,6 +221,9 @@ static void parse_champion_summary(const uint8_t *record,
         read_le16(record, CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE);
     out->monster_causing_damage =
         read_le16(record, CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE);
+    memcpy(out->portrait,
+           record + CSBWIN_CHARDESC_OFF_PORTRAIT,
+           CSBWIN_CHARDESC_PORTRAIT_BYTES);
 }
 
 static void parse_character_tail(const uint8_t *characters,

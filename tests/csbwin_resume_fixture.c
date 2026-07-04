@@ -71,10 +71,19 @@ static void test_write_csbwin_champion(uint8_t *record,
     memcpy(record + 8u, title, strlen(title) < 16u ? strlen(title) : 16u);
     record[28u] = 2u;
     record[29u] = 3u;
+    test_write_le16(record, 24u, 0x2468u);
+    record[30u] = 0x30u;
+    record[31u] = 0x31u;
     record[32u] = 5u;
+    record[33u] = 0x33u;
+    record[34u] = 96;
+    record[35u] = 102;
+    record[36u] = 108;
+    record[37u] = 114;
     record[40u] = 1u;
     record[41u] = 23u;
     record[42u] = 4u;
+    record[43u] = 0x43u;
     test_write_le16(record, 44u, 0xFFF0u);
     test_write_le16(record, 46u, 0x0011u);
     test_write_le16(record, 48u, 0x1234u);
@@ -104,6 +113,14 @@ static void test_write_csbwin_champion(uint8_t *record,
         test_write_le16(record, 212u + i * 2u, (uint16_t)(slot0 + i));
     }
     test_write_le16(record, 272u, 777u);
+    test_write_le16(record, 274u, 88u);
+    test_write_le32(record, 276u, 0xCAFEBABEu);
+    test_write_le16(record, 280u, 0xBEEFu);
+    test_write_le16(record, 282u, 0x0042u);
+    test_write_le16(record, 284u, 0x0055u);
+    for (i = 0u; i < 464u; ++i) {
+        record[336u + i] = (uint8_t)(0x80u + (uint8_t)(i & 0x3fu));
+    }
 }
 
 static void test_write_csbwin_character_tail(uint8_t *characters)

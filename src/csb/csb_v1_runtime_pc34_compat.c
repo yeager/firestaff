@@ -198,7 +198,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 3u
+#define CSB_V1_RUNTIME_SAVE_VERSION 4u
 
 typedef struct {
     uint32_t magic;
@@ -8075,17 +8075,21 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
 
         /* CSBWin SaveGame.cpp:1838 swapCharacterData() consumes four
          * CHARDESC records. CSBWin/CSB.h:2486-2597 gives fixed offsets for
-         * identity, vitals, attributes, possessions, timers, and load. */
+         * identity, vitals, attributes, possessions, timers, load, and
+         * portrait bytes at offset 336. */
         csb_v1_runtime_copy_csbwin_champion_text(
             dst->Name, sizeof(dst->Name), src->name);
         csb_v1_runtime_copy_csbwin_champion_text(
             dst->Title, sizeof(dst->Title), src->title);
+        memcpy(dst->Portrait, src->portrait, sizeof(src->portrait));
+        dst->CsbWinWord24 = src->word24;
         dst->CurrentHealth = src->hp;
         dst->MaximumHealth = src->max_hp;
         dst->CurrentStamina = src->stamina;
         dst->MaximumStamina = src->max_stamina;
         dst->CurrentMana = src->mana;
         dst->MaximumMana = src->max_mana;
+        dst->CsbWinWord64 = src->word64;
         for (stat_index = 0; stat_index < CSB_V1_STAT_COUNT; ++stat_index) {
             const int csbwin_attr = attr_to_stat[stat_index];
             dst->Statistics[stat_index][CSB_V1_STAT_MIN] =
@@ -8121,6 +8125,12 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
         dst->Cell = (uint8_t)(src->char_position & 3u);
         dst->Direction = (uint8_t)(src->facing & 3u);
         dst->DirectionMaximumDamageReceived = src->max_recent_damage;
+        dst->CsbWinByte30 = src->byte30;
+        dst->CsbWinByte31 = src->byte31;
+        memcpy(dst->Incantation, src->incantation, sizeof(dst->Incantation));
+        dst->CsbWinByte33 = src->byte33;
+        dst->CsbWinFacing3 = src->facing3;
+        dst->CsbWinUByte43 = src->ubyte43;
         dst->ActionIndex = (src->attack_type < 0)
             ? CSB_V1_ACTION_NONE
             : (uint8_t)src->attack_type;
@@ -8132,6 +8142,11 @@ int csb_v1_runtime_apply_csbwin_champion_summaries(
         dst->Food = src->food;
         dst->Water = src->water;
         dst->Load = src->load;
+        dst->ShieldStrength = src->shield_strength;
+        dst->Talents = src->talents;
+        dst->Fingerprint = src->fingerprint;
+        dst->CauseOfDamage = src->cause_of_damage;
+        dst->MonsterCausingDamage = src->monster_causing_damage;
         dst->EventIndex = src->timer_index;
     }
 

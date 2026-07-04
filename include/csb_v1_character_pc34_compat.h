@@ -158,6 +158,14 @@ typedef struct {
     uint8_t  Cell;                                     /* 3874  view cell (0-3, normalized to party dir) */
     uint8_t  Direction;                                /* 3875  champion facing direction (0-3) */
     uint16_t DirectionMaximumDamageReceived;           /* 3876 */
+    int16_t  CsbWinWord24;
+    uint8_t  CsbWinByte30;
+    uint8_t  CsbWinByte31;
+    int8_t   Incantation[4];
+    int8_t   CsbWinByte33;
+    uint8_t  CsbWinFacing3;
+    uint8_t  CsbWinUByte43;
+    uint8_t  PaddingCsbWinBody;
 
     /* ── Status ── */
     uint8_t  ActionIndex;                             /* 3878  F0xx action code */
@@ -171,7 +179,12 @@ typedef struct {
     int16_t  Food;
     int16_t  Water;
     uint16_t Load;
-    uint8_t  Padding1[2];                              /* alignment padding */
+    uint16_t ShieldStrength;
+    uint32_t Talents;
+    uint16_t Fingerprint;
+    uint16_t CauseOfDamage;
+    uint16_t MonsterCausingDamage;
+    int16_t  CsbWinWord64;
 
     /* ── Additional state (from ReDMCSB) ── */
     int16_t  EventIndex;
