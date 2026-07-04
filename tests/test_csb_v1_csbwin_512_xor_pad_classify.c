@@ -68,6 +68,17 @@ static uint32_t read_le32(const uint8_t *b, size_t off)
            ((uint32_t)b[off + 3u] << 24);
 }
 
+static uint32_t fnv1a32_bytes(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static void write_le16(uint8_t *b, size_t off, uint16_t v)
 {
     b[off]     = (uint8_t)(v & 0xFFu);
@@ -972,6 +983,8 @@ static int test_writable_header_roundtrip(void)
     CSB_V1_CSBWin512BodyReport report;
     CSB_V1_CSBWin512BodyReport roundtrip;
     CSB_V1_CSBWin512BodyReport assembled_report;
+    CSB_V1_CSBWin512BodyReport appended_report;
+    CSB_V1_CSBWin512BodyReport appended_roundtrip;
     CSB_V1_CSBWin512BodyReport truncated;
     CSB_V1_CSBWin512WritableChampionSections writable;
     CSB_V1_CSBWin512WritableRuntimeSections runtime;
@@ -1156,6 +1169,40 @@ static int test_writable_header_roundtrip(void)
                 report.header.public_fields.csbwin_byte22808[0]);
     ASSERT_TRUE(assembled_report.header.public_fields.csbwin_byte22808[131] ==
                 report.header.public_fields.csbwin_byte22808[131]);
+
+    original[size + 0u] = 0xC5u;
+    original[size + 1u] = 0x5Au;
+    original[size + 2u] = 0x23u;
+    original[size + 3u] = 0x81u;
+    original[size + 4u] = 0x42u;
+    original[size + 5u] = 0x19u;
+    original[size + 6u] = 0xE0u;
+    rc = csb_v1_csbwin_512_verify_save_body(
+        original, size + 7u, 16u, &appended_report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(appended_report.required_size == size);
+    ASSERT_TRUE(appended_report.appended_offset == size);
+    ASSERT_TRUE(appended_report.appended_size == 7u);
+    ASSERT_TRUE(appended_report.appended_preserved_size == 7u);
+    ASSERT_TRUE(appended_report.appended_truncated == 0);
+    ASSERT_TRUE(appended_report.appended_fnv1a ==
+                fnv1a32_bytes(original + size, 7u));
+    ASSERT_TRUE(memcmp(appended_report.appended_preserved,
+                       original + size,
+                       7u) == 0);
+    assembled_size = 0u;
+    memset(assembled, 0, sizeof(assembled));
+    rc = csb_v1_csbwin_512_build_writable_core_save(
+        &appended_report, assembled, sizeof(assembled), &assembled_size);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(assembled_size == size + 7u);
+    ASSERT_TRUE(memcmp(assembled + size, original + size, 7u) == 0);
+    rc = csb_v1_csbwin_512_verify_save_body(
+        assembled, assembled_size, 16u, &appended_roundtrip);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(appended_roundtrip.appended_size == 7u);
+    ASSERT_TRUE(appended_roundtrip.appended_fnv1a ==
+                appended_report.appended_fnv1a);
 
     assembled_size = 123u;
     rc = csb_v1_csbwin_512_build_writable_core_save(

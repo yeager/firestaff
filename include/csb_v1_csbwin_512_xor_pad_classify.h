@@ -117,6 +117,7 @@ extern "C" {
 #define CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 64u
+#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 4096u
 
 /* The two documented scramble keys. CSBWin/Chaos.cpp:2357 tries
  * CSB_KEY first, then DM_KEY on UnscrambleBlock1 returning 0.
@@ -395,6 +396,12 @@ typedef struct {
     uint16_t timer_queue_summary_count;
     uint16_t timer_queue_summary_total;
     uint16_t timer_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
+    size_t appended_offset;
+    size_t appended_size;
+    size_t appended_preserved_size;
+    uint32_t appended_fnv1a;
+    int appended_truncated;
+    uint8_t appended_preserved[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
 } CSB_V1_CSBWin512BodyReport;
 
 typedef struct {

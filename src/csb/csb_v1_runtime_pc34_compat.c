@@ -198,7 +198,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 5u
+#define CSB_V1_RUNTIME_SAVE_VERSION 6u
 
 typedef struct {
     uint32_t magic;
@@ -243,12 +243,20 @@ typedef struct {
     struct ExplosionList_Compat explosions;
     int32_t csbwin_header_tail_valid;
     uint8_t csbwin_header_byte22808[132];
+    int32_t csbwin_appended_tail_valid;
+    uint32_t csbwin_appended_tail_size;
+    uint32_t csbwin_appended_tail_preserved_size;
+    uint32_t csbwin_appended_tail_fnv1a;
+    int32_t csbwin_appended_tail_truncated;
+    uint8_t csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
 } CSB_V1_RuntimeSaveImageV1;
 
 #define CSB_V1_RUNTIME_SAVE_V1_SIZE \
     ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, projectiles))
 #define CSB_V1_RUNTIME_SAVE_V4_SIZE \
     ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, csbwin_header_tail_valid))
+#define CSB_V1_RUNTIME_SAVE_V5_SIZE \
+    ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, csbwin_appended_tail_valid))
 
 static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
@@ -569,6 +577,19 @@ static void csb_v1_runtime_capture_save_image(
     memcpy(image->csbwin_header_byte22808,
            profile->csbwin_header_byte22808,
            sizeof(image->csbwin_header_byte22808));
+    image->csbwin_appended_tail_valid =
+        profile->csbwin_appended_tail_valid ? 1 : 0;
+    image->csbwin_appended_tail_size =
+        (uint32_t)profile->csbwin_appended_tail_size;
+    image->csbwin_appended_tail_preserved_size =
+        (uint32_t)profile->csbwin_appended_tail_preserved_size;
+    image->csbwin_appended_tail_fnv1a =
+        profile->csbwin_appended_tail_fnv1a;
+    image->csbwin_appended_tail_truncated =
+        profile->csbwin_appended_tail_truncated ? 1 : 0;
+    memcpy(image->csbwin_appended_tail,
+           profile->csbwin_appended_tail,
+           sizeof(image->csbwin_appended_tail));
 }
 
 static int csb_v1_runtime_validate_projectile_list(
@@ -637,6 +658,8 @@ static int csb_v1_runtime_apply_save_image(
            image->byte_size == CSB_V1_RUNTIME_SAVE_V1_SIZE) ||
           (image->version == 4u &&
            image->byte_size == CSB_V1_RUNTIME_SAVE_V4_SIZE) ||
+          (image->version == 5u &&
+           image->byte_size == CSB_V1_RUNTIME_SAVE_V5_SIZE) ||
           (image->version == CSB_V1_RUNTIME_SAVE_VERSION &&
            image->byte_size == sizeof(*image)))) {
         return -1;
@@ -687,7 +710,9 @@ static int csb_v1_runtime_apply_save_image(
     profile->timeline_queue = image->timeline_queue;
     profile->last_timeline_dispatch = image->last_timeline_dispatch;
     profile->timeline_dispatch_count = image->timeline_dispatch_count;
-    if (image->byte_size >= sizeof(*image)) {
+    if (image->byte_size >=
+        offsetof(CSB_V1_RuntimeSaveImageV1, explosions) +
+            sizeof(image->explosions)) {
         if (!csb_v1_runtime_validate_projectile_list(&image->projectiles) ||
             !csb_v1_runtime_validate_explosion_list(&image->explosions)) {
             return -1;
@@ -715,6 +740,37 @@ static int csb_v1_runtime_apply_save_image(
         profile->csbwin_header_tail_valid = 0;
         memset(profile->csbwin_header_byte22808, 0,
                sizeof(profile->csbwin_header_byte22808));
+    }
+    if (image->byte_size >=
+        offsetof(CSB_V1_RuntimeSaveImageV1, csbwin_appended_tail) +
+            sizeof(image->csbwin_appended_tail)) {
+        if (image->csbwin_appended_tail_preserved_size >
+                CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+            image->csbwin_appended_tail_size <
+                image->csbwin_appended_tail_preserved_size) {
+            return -1;
+        }
+        profile->csbwin_appended_tail_valid =
+            image->csbwin_appended_tail_valid ? 1 : 0;
+        profile->csbwin_appended_tail_size =
+            image->csbwin_appended_tail_size;
+        profile->csbwin_appended_tail_preserved_size =
+            image->csbwin_appended_tail_preserved_size;
+        profile->csbwin_appended_tail_fnv1a =
+            image->csbwin_appended_tail_fnv1a;
+        profile->csbwin_appended_tail_truncated =
+            image->csbwin_appended_tail_truncated ? 1 : 0;
+        memcpy(profile->csbwin_appended_tail,
+               image->csbwin_appended_tail,
+               sizeof(profile->csbwin_appended_tail));
+    } else {
+        profile->csbwin_appended_tail_valid = 0;
+        profile->csbwin_appended_tail_size = 0u;
+        profile->csbwin_appended_tail_preserved_size = 0u;
+        profile->csbwin_appended_tail_fnv1a = 0u;
+        profile->csbwin_appended_tail_truncated = 0;
+        memset(profile->csbwin_appended_tail, 0,
+               sizeof(profile->csbwin_appended_tail));
     }
 
     profile->party_state.PartyMapX = profile->party_x;
@@ -7967,7 +8023,10 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     if (summary->num_character > CSB_V1_MAX_CHAMPIONS ||
         summary->party_x > CSB_V1_MAX_PARTY_X ||
         summary->party_y > CSB_V1_MAX_PARTY_Y ||
-        summary->party_facing > 3u) {
+        summary->party_facing > 3u ||
+        summary->appended_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        summary->appended_size < summary->appended_preserved_size) {
         return -1;
     }
 
@@ -8017,6 +8076,20 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     memcpy(profile->csbwin_header_byte22808,
            summary->header.public_fields.csbwin_byte22808,
            sizeof(profile->csbwin_header_byte22808));
+    profile->csbwin_appended_tail_valid =
+        summary->appended_size != 0u ? 1 : 0;
+    profile->csbwin_appended_tail_size = summary->appended_size;
+    profile->csbwin_appended_tail_preserved_size =
+        summary->appended_preserved_size;
+    profile->csbwin_appended_tail_fnv1a = summary->appended_fnv1a;
+    profile->csbwin_appended_tail_truncated = summary->appended_truncated;
+    memset(profile->csbwin_appended_tail, 0,
+           sizeof(profile->csbwin_appended_tail));
+    if (summary->appended_preserved_size != 0u) {
+        memcpy(profile->csbwin_appended_tail,
+               summary->appended_preserved,
+               summary->appended_preserved_size);
+    }
     return 0;
 }
 
@@ -8766,6 +8839,24 @@ static int csb_v1_runtime_build_csbwin_core_summary(
                profile->csbwin_header_byte22808,
                sizeof(summary->header.public_fields.csbwin_byte22808));
     }
+    if (profile->csbwin_appended_tail_valid) {
+        if (profile->csbwin_appended_tail_preserved_size >
+                CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+            profile->csbwin_appended_tail_size !=
+                profile->csbwin_appended_tail_preserved_size) {
+            return -1;
+        }
+        summary->appended_offset = 0u;
+        summary->appended_size = profile->csbwin_appended_tail_size;
+        summary->appended_preserved_size =
+            profile->csbwin_appended_tail_preserved_size;
+        summary->appended_fnv1a = profile->csbwin_appended_tail_fnv1a;
+        summary->appended_truncated =
+            profile->csbwin_appended_tail_truncated;
+        memcpy(summary->appended_preserved,
+               profile->csbwin_appended_tail,
+               summary->appended_preserved_size);
+    }
     summary->game_time = profile->game_time;
     summary->random_seed = profile->csbwin_gameblock2_summary_valid
         ? profile->csbwin_random_seed
@@ -8931,7 +9022,8 @@ int csb_v1_runtime_export_csbwin_core_save_to_path(
                   CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES * 16u +
                   3328u +
                   CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES * 16u +
-                  CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES * 2u];
+                  CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES * 2u +
+                  CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
     size_t size = 0u;
     FILE *fp;
     size_t wrote;

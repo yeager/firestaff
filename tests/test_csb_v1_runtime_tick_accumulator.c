@@ -49,6 +49,17 @@ static void test_write_le32(uint8_t *b, size_t off, uint32_t v)
     b[off + 3u] = (uint8_t)((v >> 24) & 0xFFu);
 }
 
+static uint32_t test_fnv1a32_bytes(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static uint16_t test_scramble_block(uint8_t *buf, uint16_t initial_hash,
                                     uint16_t numword)
 {
@@ -4882,10 +4893,15 @@ static void test_csbwin_resume_file_applies_runtime_handoff(void)
 
 static void test_csbwin_core_save_export_roundtrips_runtime(void)
 {
-    uint8_t fixture[4096];
+    uint8_t fixture[8192];
     uint8_t exported[8192];
+    const uint8_t appended_tail[9] = {
+        0xD5u, 0x11u, 0x67u, 0x88u, 0x09u, 0xFEu, 0x31u, 0x44u, 0xA0u
+    };
     size_t fixture_size;
+    size_t core_size;
     size_t exported_size = 0u;
+    uint32_t appended_hash;
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeProfile memory_loaded;
     CSB_V1_RuntimeProfile file_loaded;
@@ -4899,6 +4915,10 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
         fixture, sizeof(fixture), 0);
     CHECK(fixture_size == 4054u,
           "CSBWin export fixture builds a verified source body");
+    core_size = fixture_size;
+    memcpy(fixture + fixture_size, appended_tail, sizeof(appended_tail));
+    fixture_size += sizeof(appended_tail);
+    appended_hash = test_fnv1a32_bytes(appended_tail, sizeof(appended_tail));
 
     csb_v1_runtime_init(&profile, NULL);
     CHECK(csb_v1_csbwin_512_verify_save_body(
@@ -4912,6 +4932,23 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               profile.csbwin_header_byte22808[131] ==
                   (uint8_t)(0x40u + (131u & 0x3Fu)),
           "CSBWin resume stores imported GAMEBLOCK1 tail bytes in runtime");
+    CHECK(report.required_size == core_size &&
+              report.appended_size == sizeof(appended_tail) &&
+              report.appended_preserved_size == sizeof(appended_tail) &&
+              report.appended_fnv1a == appended_hash &&
+              memcmp(report.appended_preserved,
+                     appended_tail,
+                     sizeof(appended_tail)) == 0,
+          "CSBWin resume report preserves appended save tail bytes");
+    CHECK(profile.csbwin_appended_tail_valid == 1 &&
+              profile.csbwin_appended_tail_size == sizeof(appended_tail) &&
+              profile.csbwin_appended_tail_preserved_size ==
+                  sizeof(appended_tail) &&
+              profile.csbwin_appended_tail_fnv1a == appended_hash &&
+              memcmp(profile.csbwin_appended_tail,
+                     appended_tail,
+                     sizeof(appended_tail)) == 0,
+          "CSBWin resume stores appended tail bytes in runtime");
 
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
               &profile, exported, sizeof(exported), &exported_size) == 0,
@@ -4940,6 +4977,12 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               report.header.public_fields.csbwin_byte22808[131] ==
                   (uint8_t)(0x40u + (131u & 0x3Fu)),
           "CSBWin core export preserves imported GAMEBLOCK1 tail bytes");
+    CHECK(report.appended_size == sizeof(appended_tail) &&
+              report.appended_fnv1a == appended_hash &&
+              memcmp(report.appended_preserved,
+                     appended_tail,
+                     sizeof(appended_tail)) == 0,
+          "CSBWin core export preserves appended save tail bytes");
 
     csb_v1_runtime_init(&memory_loaded, NULL);
     CHECK(csb_v1_runtime_apply_csbwin_resume_report(
@@ -4958,6 +5001,12 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               memory_loaded.csbwin_header_byte22808[131] ==
                   (uint8_t)(0x40u + (131u & 0x3Fu)),
           "CSBWin exported memory roundtrip keeps header-tail runtime state");
+    CHECK(memory_loaded.csbwin_appended_tail_valid == 1 &&
+              memory_loaded.csbwin_appended_tail_fnv1a == appended_hash &&
+              memcmp(memory_loaded.csbwin_appended_tail,
+                     appended_tail,
+                     sizeof(appended_tail)) == 0,
+          "CSBWin exported memory roundtrip keeps appended-tail runtime state");
 
     exported_size = 123u;
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
@@ -5004,6 +5053,14 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               native_loaded.csbwin_header_byte22808[131] ==
                   (uint8_t)(0x40u + (131u & 0x3Fu)),
           "Firestaff native CSB save/load preserves CSBWin header-tail bytes");
+    CHECK(native_loaded.csbwin_appended_tail_valid == 1 &&
+              native_loaded.csbwin_appended_tail_size ==
+                  sizeof(appended_tail) &&
+              native_loaded.csbwin_appended_tail_fnv1a == appended_hash &&
+              memcmp(native_loaded.csbwin_appended_tail,
+                     appended_tail,
+                     sizeof(appended_tail)) == 0,
+          "Firestaff native CSB save/load preserves appended CSBWin tail");
     memset(exported, 0, sizeof(exported));
     exported_size = 0u;
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
@@ -5015,8 +5072,12 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
               CSB_V1_CSBWIN_512_OK &&
               report.header.public_fields.csbwin_byte22808[0] == 0x40u &&
               report.header.public_fields.csbwin_byte22808[131] ==
-                  (uint8_t)(0x40u + (131u & 0x3Fu)),
-          "CSBWin export after native load keeps header-tail bytes");
+                  (uint8_t)(0x40u + (131u & 0x3Fu)) &&
+              report.appended_fnv1a == appended_hash &&
+              memcmp(report.appended_preserved,
+                     appended_tail,
+                     sizeof(appended_tail)) == 0,
+          "CSBWin export after native load keeps header and appended tails");
     remove(native_path);
 }
 
