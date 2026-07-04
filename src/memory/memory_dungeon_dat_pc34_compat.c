@@ -1417,6 +1417,15 @@ void F0504_DUNGEON_FreeThingData_Compat(
  *   29: escape (symbol), 30: escape (word), 31: end
  */
 
+static char F0508_DUNGEON_DecodeSymbolEscape29_Compat(int code)
+{
+        /* ReDMCSB DUNGEON.C F0168 lines 2305-2314:
+         * code 29 indexes G0256_aac_Graphic559_EscapeReplacementCharacters,
+         * not a placeholder. */
+        static const char s_symbolEscape[] = "abcdefghijklmnopqrstuvwx01234567";
+        return (code >= 0 && code < 32) ? s_symbolEscape[code] : ' ';
+}
+
 int F0507_DUNGEON_DecodeTextAtOffset_Compat(
         const unsigned short* textData,
         int                   textDataWordCount,
@@ -1528,8 +1537,10 @@ int F0508_DUNGEON_DecodeTextStringThing_Compat(
                                         outBuf[pos++] = *rep++;
                                 }
                         } else if (escape == 29) {
-                                /* Symbol escape: emit [SYM:N] placeholder */
-                                outBuf[pos++] = '?'; /* placeholder for symbol */
+                                /* Wall inscriptions render this through the
+                                 * source M648 glyph path, so emitting '?' makes the M11 inscription
+                                 * renderer reject the whole line. */
+                                outBuf[pos++] = F0508_DUNGEON_DecodeSymbolEscape29_Compat(code);
                         }
                         escape = 0;
                 } else if (code < 26) {
@@ -1627,7 +1638,7 @@ int F0506_DUNGEON_DecodeTextTable_Compat(
                                 while (*rep && pos < DUNGEON_TEXT_MAX_STRING_LEN - 1)
                                         buf[pos++] = *rep++;
                         } else if (escape == 29 && pos < DUNGEON_TEXT_MAX_STRING_LEN - 1) {
-                                buf[pos++] = '?';
+                                buf[pos++] = F0508_DUNGEON_DecodeSymbolEscape29_Compat(code);
                         }
                         escape = 0;
                 } else if (code == 31) {
