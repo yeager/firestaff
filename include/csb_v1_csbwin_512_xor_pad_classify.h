@@ -21,8 +21,7 @@
  *     the two-checksum invariant of UnscrambleBlock1, and
  *     surfaces the public fields of the unscrambled second-half
  *     block when a key matches. It never modifies the input
- *     buffer, never decodes the body sections, and never binds
- *     into M11/M12.
+ *     buffer and never binds into M11/M12.
  *
  * The two-checksum invariant (CSBWin/Chaos.cpp UnscrambleBlock1
  * lines 1341-1368):
@@ -54,7 +53,8 @@
  *     ReDMCSB values.
  *
  * What this module does NOT do:
- *   - It does not decode CSBWin items / DSAs / DSA-level index.
+ *   - It does not parse/import decoded CSBWin items, champions,
+ *     timers, DSAs, or DSA-level indexes into runtime state.
  *   - It does not bind to csb_v1_import_csb_save_buffer() (that
  *     loader rejects 512-byte XOR-pad headers).
  *   - It does not produce an M11/M12 wiring.
@@ -86,10 +86,9 @@
  *
  * Non-claims:
  *   - No file I/O. Callers feed 512 bytes; the module reports.
- *   - No scramble/unscramble of anything beyond the documented
- *     GAMEBLOCK1 second-half XOR-stream (128 uint16 words).
- *   - No body-section decoding (Block 2 / items / characters /
- *     timers - those remain separate gates).
+ *   - Body-section decoding is bounded verification only:
+ *     GAMEBLOCK2, ITEM16, characters, timers, and timer queue
+ *     can be checksum-verified but are not parsed/imported.
  *   - No M11/M12 wiring. Callers (a future launcher import
  *     button) decide what to do with the verdict.
  */
@@ -174,6 +173,15 @@ typedef enum {
     CSB_V1_CSBWIN_512_VERDICT_DM      = 2
 } CSB_V1_CSBWin512KeyVerdict;
 
+typedef enum {
+    CSB_V1_CSBWIN_512_SECTION_BLOCK2 = 0,
+    CSB_V1_CSBWIN_512_SECTION_ITEM16 = 1,
+    CSB_V1_CSBWIN_512_SECTION_CHARACTERS = 2,
+    CSB_V1_CSBWIN_512_SECTION_TIMERS = 3,
+    CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE = 4,
+    CSB_V1_CSBWIN_512_SECTION_COUNT = 5
+} CSB_V1_CSBWin512BodySectionKind;
+
 /* Public fields the classifier surfaces from a successful
  * unscramble. `format_id` is the documented ReDMCSB FormatID
  * (CSB_V1_FORMAT_*). `save_and_play_choice` is 0 for "Save and
@@ -244,6 +252,33 @@ typedef struct {
     CSB_V1_CSBWin512Public     public_fields;
 } CSB_V1_CSBWin512Report;
 
+typedef struct {
+    CSB_V1_CSBWin512BodySectionKind kind;
+    size_t encrypted_offset;
+    size_t encrypted_size;
+    uint16_t initial_hash;
+    uint16_t expected_checksum;
+    int present;
+    int checksum_ok;
+} CSB_V1_CSBWin512BodySectionReport;
+
+typedef struct {
+    CSB_V1_CSBWin512Report header;
+    int header_valid;
+    uint16_t timer_record_size;
+    uint16_t max_item16;
+    uint16_t max_timers;
+    uint16_t num_character;
+    uint16_t party_x;
+    uint16_t party_y;
+    uint16_t party_facing;
+    uint16_t party_level;
+    size_t required_size;
+    int sections_verified;
+    CSB_V1_CSBWin512BodySectionReport
+        sections[CSB_V1_CSBWIN_512_SECTION_COUNT];
+} CSB_V1_CSBWin512BodyReport;
+
 /* ── Public API ──────────────────────────────────────────────────────── */
 
 /* Classify the first 512 bytes of a CSBWin / DM1 save.
@@ -306,6 +341,24 @@ int csb_v1_csbwin_512_decode_stream_section(
     uint16_t expected_checksum,
     uint8_t *out,
     size_t out_capacity);
+
+/* Verify the CSBWin save-body layout that follows GAMEBLOCK1.
+ *
+ * Source: CSBWin/SaveGame.cpp lines 1768-1855 reads 128-byte
+ * GAMEBLOCK2, then ITEM16 (`16 * MaxITEM16`), character data
+ * (3328), timers (`MaxTimers * timerSize`), and timer queue
+ * (`MaxTimers * 2`). `timer_record_size` accepts 10, 12, or 16;
+ * pass 0 for the current CSBWin extended-timer default of 16.
+ *
+ * The function verifies each encrypted section with the hashes and
+ * checksums stored in GAMEBLOCK1. It reports section boundaries and
+ * decoded GAMEBLOCK2 sizing fields, but does not import runtime
+ * state and does not expose decoded section buffers. */
+int csb_v1_csbwin_512_verify_save_body(
+    const uint8_t *bytes,
+    size_t size,
+    uint16_t timer_record_size,
+    CSB_V1_CSBWin512BodyReport *out);
 
 /* ── Lookup helpers (used by tests + probe + docs) ──────────────────── */
 

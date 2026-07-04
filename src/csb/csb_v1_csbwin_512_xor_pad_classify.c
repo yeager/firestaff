@@ -47,6 +47,7 @@
 
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 /* ── Helpers ────────────────────────────────────────────────────────── */
@@ -63,6 +64,24 @@ static uint32_t read_le32(const uint8_t *bytes, size_t offset)
            ((uint32_t)bytes[offset + 1u] << 8) |
            ((uint32_t)bytes[offset + 2u] << 16) |
            ((uint32_t)bytes[offset + 3u] << 24);
+}
+
+static int checked_add_size(size_t a, size_t b, size_t *out)
+{
+    if (!out || a > ((size_t)-1) - b) {
+        return 0;
+    }
+    *out = a + b;
+    return 1;
+}
+
+static int checked_mul_size(size_t a, size_t b, size_t *out)
+{
+    if (!out || (a != 0u && b > ((size_t)-1) / a)) {
+        return 0;
+    }
+    *out = a * b;
+    return 1;
 }
 
 /* First-half rolling checksum from CSBWin/Chaos.cpp:1341
@@ -396,6 +415,193 @@ int csb_v1_csbwin_512_decode_stream_section(
     return CSB_V1_CSBWIN_512_OK;
 }
 
+static int verify_body_section(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWin512BodySectionKind kind,
+    size_t offset,
+    size_t section_size,
+    uint16_t initial_hash,
+    uint16_t expected_checksum,
+    CSB_V1_CSBWin512BodySectionReport *section,
+    uint8_t **out_decoded)
+{
+    uint8_t *decoded = NULL;
+    int rc;
+    size_t end;
+
+    if (!bytes || !section || !out_decoded) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    memset(section, 0, sizeof(*section));
+    section->kind = kind;
+    section->encrypted_offset = offset;
+    section->encrypted_size = section_size;
+    section->initial_hash = initial_hash;
+    section->expected_checksum = expected_checksum;
+
+    if (section_size == 0u) {
+        section->present = 0;
+        section->checksum_ok = 1;
+        *out_decoded = NULL;
+        return CSB_V1_CSBWIN_512_OK;
+    }
+    if ((section_size & 1u) != 0u ||
+        !checked_add_size(offset, section_size, &end) ||
+        end > size) {
+        return CSB_V1_CSBWIN_512_ERR_TOO_SMALL;
+    }
+    decoded = (uint8_t *)malloc(section_size);
+    if (!decoded) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    rc = csb_v1_csbwin_512_decode_stream_section(
+        bytes + offset, section_size, initial_hash, expected_checksum,
+        decoded, section_size);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        free(decoded);
+        return rc;
+    }
+    section->present = 1;
+    section->checksum_ok = 1;
+    *out_decoded = decoded;
+    return CSB_V1_CSBWIN_512_OK;
+}
+
+int csb_v1_csbwin_512_verify_save_body(
+    const uint8_t *bytes,
+    size_t size,
+    uint16_t timer_record_size,
+    CSB_V1_CSBWin512BodyReport *out)
+{
+    CSB_V1_CSBWin512BodySectionReport section;
+    uint8_t *block2 = NULL;
+    uint8_t *decoded = NULL;
+    size_t offset = CSB_V1_CSBWIN_BLOCK1_BYTES;
+    size_t item16_size = 0u;
+    size_t timer_size = 0u;
+    size_t timer_queue_size = 0u;
+    int rc;
+
+    if (!bytes || !out) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    memset(out, 0, sizeof(*out));
+    if (timer_record_size == 0u) {
+        timer_record_size = 16u;
+    }
+    if (timer_record_size != 10u &&
+        timer_record_size != 12u &&
+        timer_record_size != 16u) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    out->timer_record_size = timer_record_size;
+
+    rc = csb_v1_csbwin_512_xor_pad_classify(bytes, size, &out->header);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        return rc;
+    }
+    if (out->header.verdict == CSB_V1_CSBWIN_512_VERDICT_NEITHER) {
+        return CSB_V1_CSBWIN_512_ERR_BAD_KEYS;
+    }
+    out->header_valid = 1;
+
+    /* CSBWin/SaveGame.cpp lines 1768-1775: GAMEBLOCK2 is the
+     * first body section after GAMEBLOCK1 and is always 128 bytes. */
+    rc = verify_body_section(
+        bytes, size, CSB_V1_CSBWIN_512_SECTION_BLOCK2, offset, 128u,
+        out->header.public_fields.csbwin_block2_hash,
+        out->header.public_fields.csbwin_block2_checksum,
+        &section, &block2);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        return rc;
+    }
+    out->sections[CSB_V1_CSBWIN_512_SECTION_BLOCK2] = section;
+    ++out->sections_verified;
+    offset += 128u;
+
+    out->num_character = read_le16(block2, 10u);
+    out->party_x = read_le16(block2, 12u);
+    out->party_y = read_le16(block2, 14u);
+    out->party_facing = read_le16(block2, 16u);
+    out->party_level = read_le16(block2, 18u);
+    out->max_timers = read_le16(block2, 28u);
+    out->max_item16 = read_le16(block2, 46u);
+    free(block2);
+    block2 = NULL;
+
+    if (!checked_mul_size((size_t)out->max_item16, 16u, &item16_size) ||
+        !checked_mul_size((size_t)out->max_timers,
+                          (size_t)timer_record_size, &timer_size) ||
+        !checked_mul_size((size_t)out->max_timers, 2u,
+                          &timer_queue_size)) {
+        return CSB_V1_CSBWIN_512_ERR_TOO_SMALL;
+    }
+
+    /* CSBWin/SaveGame.cpp lines 1822-1831 skips ITEM16 when
+     * MaxITEM16 is zero; mirror that by reporting a zero-size
+     * absent-but-ok section. */
+    rc = verify_body_section(
+        bytes, size, CSB_V1_CSBWIN_512_SECTION_ITEM16, offset, item16_size,
+        out->header.public_fields.csbwin_item16_hash,
+        out->header.public_fields.csbwin_item16_checksum,
+        &section, &decoded);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        return rc;
+    }
+    out->sections[CSB_V1_CSBWIN_512_SECTION_ITEM16] = section;
+    ++out->sections_verified;
+    free(decoded);
+    decoded = NULL;
+    offset += item16_size;
+
+    rc = verify_body_section(
+        bytes, size, CSB_V1_CSBWIN_512_SECTION_CHARACTERS, offset, 3328u,
+        out->header.public_fields.csbwin_character_hash,
+        out->header.public_fields.csbwin_character_checksum,
+        &section, &decoded);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        return rc;
+    }
+    out->sections[CSB_V1_CSBWIN_512_SECTION_CHARACTERS] = section;
+    ++out->sections_verified;
+    free(decoded);
+    decoded = NULL;
+    offset += 3328u;
+
+    rc = verify_body_section(
+        bytes, size, CSB_V1_CSBWIN_512_SECTION_TIMERS, offset, timer_size,
+        out->header.public_fields.csbwin_timers_hash,
+        out->header.public_fields.csbwin_timers_checksum,
+        &section, &decoded);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        return rc;
+    }
+    out->sections[CSB_V1_CSBWIN_512_SECTION_TIMERS] = section;
+    ++out->sections_verified;
+    free(decoded);
+    decoded = NULL;
+    offset += timer_size;
+
+    rc = verify_body_section(
+        bytes, size, CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE, offset,
+        timer_queue_size,
+        out->header.public_fields.csbwin_timer_queue_hash,
+        out->header.public_fields.csbwin_timer_queue_checksum,
+        &section, &decoded);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        return rc;
+    }
+    out->sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE] = section;
+    ++out->sections_verified;
+    free(decoded);
+    decoded = NULL;
+    offset += timer_queue_size;
+
+    out->required_size = offset;
+    return CSB_V1_CSBWIN_512_OK;
+}
+
 const char *csb_v1_csbwin_512_xor_pad_result_name(int result)
 {
     switch (result) {
@@ -427,6 +633,7 @@ const char *csb_v1_csbwin_512_xor_pad_source_evidence(void)
         "CSBWin/SaveGame.cpp:715 ScrambleAndWrite (trash first 256 bytes + write D5W^D6W)\n"
         "CSBWin/SaveGame.cpp:59-104 GAMEBLOCK1 body-section hash/checksum fields\n"
         "CSBWin/SaveGame.cpp:1768-1855 load path decodes block2/items/characters/timers\n"
+        "CSBWin/SaveGame.cpp:1114-1204 write path stores body-section checksums/streams\n"
         "CSBWin/Chaos.cpp:1326 ReadGameBlock1 (read 512 bytes)\n"
         "CSBWin/Chaos.cpp:1341 UnscrambleBlock1 (first-half D6W + Unscramble + D5W)\n"
         "CSBWin/Chaos.cpp:2357 ReadSaves fallback: try CSB key (29), then DM key (10)\n"
