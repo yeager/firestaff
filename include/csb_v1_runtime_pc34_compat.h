@@ -48,6 +48,7 @@
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
+#include "csb_v1_csbwin_512_xor_pad_classify.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
@@ -250,6 +251,20 @@ typedef struct {
     uint32_t                game_time;       /* V1 game_time */
     uint64_t                total_play_ms;   /* wall-clock ms */
     uint32_t                tick_count;       /* how many V1 ticks elapsed */
+    int                     csbwin_gameblock2_summary_valid;
+    uint32_t                csbwin_random_seed;
+    uint16_t                csbwin_object_in_hand;
+    uint16_t                csbwin_num_timer;
+    uint16_t                csbwin_first_avail_timer;
+    uint16_t                csbwin_max_timers;
+    uint16_t                csbwin_item16_queue_len;
+    uint16_t                csbwin_max_item16;
+    uint16_t                csbwin_timer_sequence;
+    uint32_t                csbwin_last_monster_attack_time;
+    uint32_t                csbwin_last_party_move_time;
+    uint16_t                csbwin_party_move_disable_timer;
+    uint16_t                csbwin_word11712;
+    uint16_t                csbwin_word11714;
     struct DM1_EventQueue_V1 timeline_queue;  /* ReDMCSB TIMELINE.C heap */
     struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
     uint32_t                timeline_dispatch_count;
@@ -371,6 +386,9 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
                                    const CSB_V1_PartyState *party);
 int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
                                    CSB_V1_PartyState *out_party);
+int csb_v1_runtime_apply_csbwin_gameblock2_summary(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512BodyReport *summary);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
