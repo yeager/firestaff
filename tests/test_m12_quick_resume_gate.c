@@ -1,4 +1,5 @@
 #include "menu_startup_m12.h"
+#include "csbwin_resume_fixture.h"
 #include "config_m12.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
@@ -477,6 +478,37 @@ int main(void) {
                 "raw CSBGAME quick Resume launch intent should identify CSB")) return 1;
     if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
                 "raw CSBGAME quick Resume launch intent must carry exact save path")) return 1;
+
+    if (!expect(firestaff_test_write_csbwin_resume_fixture(csbSavePath, 0),
+                "should write CSBWin verified-body quicksave")) return 1;
+    M12_Config_SetLastSavePath(csbSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "CSBWin verified-body save must enable CSB quick Resume")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
+                "CSBWin quick Resume should identify csb")) return 1;
+    if (!expect(strcmp(state.quickResumeSavePath, csbSavePath) == 0,
+                "CSBWin quick Resume should retain save path")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.launchRequested == 1,
+                "CSBWin quick Resume accept should request launch")) return 1;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "csb") == 0,
+                "CSBWin quick Resume launch intent should identify CSB")) return 1;
+    if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
+                "CSBWin quick Resume launch intent must carry exact save path")) return 1;
+
+    if (!expect(firestaff_test_write_csbwin_resume_fixture(csbSavePath, 1),
+                "should write corrupt CSBWin quicksave")) return 1;
+    M12_Config_SetLastSavePath(csbSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 0,
+                "corrupt CSBWin save must not enable CSB quick Resume")) return 1;
 
     if (!expect(write_serialized_csb_quicksave(csbSavePath),
                 "should write serialized CSB runtime quicksave")) return 1;
