@@ -100,6 +100,33 @@ static int write_png_header_file(const char* path, unsigned width, unsigned heig
     return fclose(fp) == 0;
 }
 
+static void put_le32(unsigned char* p, unsigned v) {
+    p[0] = (unsigned char)(v & 0xffU);
+    p[1] = (unsigned char)((v >> 8) & 0xffU);
+    p[2] = (unsigned char)((v >> 16) & 0xffU);
+    p[3] = (unsigned char)((v >> 24) & 0xffU);
+}
+
+static int write_bmp_header_file(const char* path, unsigned width, unsigned height) {
+    unsigned char hdr[26];
+    FILE* fp;
+    memset(hdr, 0, sizeof(hdr));
+    hdr[0] = 'B';
+    hdr[1] = 'M';
+    put_le32(hdr + 2, 26U);
+    put_le32(hdr + 10, 26U);
+    put_le32(hdr + 14, 12U);
+    put_le32(hdr + 18, width);
+    put_le32(hdr + 22, height);
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(hdr, 1, sizeof(hdr), fp) != sizeof(hdr)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int write_all_real_manifest_with_receipt(const char* path,
                                                 const char* receipt_generator,
                                                 const char* receipt_source,
@@ -1019,6 +1046,8 @@ static void test_real_screenshot_receipt_gate(void) {
           "receipt dimensions stored");
     CHECK(info.file_exists == 1,
           "synthetic receipt file resolves under receipts/");
+    CHECK(info.bmp_header_valid == 0,
+          "synthetic text receipt does not pass BMP header validation");
 
     CHECK(write_all_real_manifest_with_receipt(
               manifest_path,
@@ -1033,7 +1062,7 @@ static void test_real_screenshot_receipt_gate(void) {
     snprintf(receipt_path, sizeof(receipt_path), "%s/receipts/reviewed_frame.bmp",
              assets_root);
     CHECK(write_file(receipt_path, "reviewed-runtime-bmp-receipt"),
-          "wrote reviewed receipt fixture");
+          "wrote reviewed text receipt fixture");
     CHECK(write_all_real_manifest_with_receipt(
               manifest_path,
               "operator_reviewed",
@@ -1050,6 +1079,34 @@ static void test_real_screenshot_receipt_gate(void) {
               "reviewed_frame.bmp",
               "sha256:reviewed",
               "FINISHED_REAL"),
+          "wrote reviewed receipt manifest with text file");
+    CHECK(dm1_v22_famg_receipt_gate() == DM1_V22_FAMG_RECEIPT_PARTIAL,
+          "reviewed text receipt cannot promote final proof");
+    CHECK(dm1_v22_famg_get_receipt_info(&info) == 1,
+          "receipt info populated for text receipt");
+    CHECK(info.file_exists == 1, "reviewed text receipt exists");
+    CHECK(info.bmp_header_valid == 0,
+          "reviewed text receipt has invalid BMP header");
+
+    CHECK(write_bmp_header_file(receipt_path, 319U, 200U),
+          "wrote reviewed receipt with mismatched BMP width");
+    CHECK(dm1_v22_famg_receipt_gate() == DM1_V22_FAMG_RECEIPT_PARTIAL,
+          "reviewed receipt requires matching BMP dimensions");
+    CHECK(dm1_v22_famg_get_receipt_info(&info) == 1,
+          "receipt info populated for mismatched BMP");
+    CHECK(info.bmp_width == 319 && info.bmp_height == 200,
+          "receipt info reports actual mismatched BMP dimensions");
+    CHECK(info.bmp_header_valid == 0,
+          "mismatched BMP receipt header is not valid for manifest");
+
+    CHECK(write_bmp_header_file(receipt_path, 320U, 200U),
+          "wrote reviewed receipt with matching BMP dimensions");
+    CHECK(write_all_real_manifest_with_receipt(
+              manifest_path,
+              "operator_reviewed",
+              "reviewed_frame.bmp",
+              "sha256:reviewed",
+              "FINISHED_REAL"),
           "wrote final reviewed receipt manifest");
     CHECK(dm1_v22_famg_receipt_gate() == DM1_V22_FAMG_RECEIPT_FINISHED_REAL,
           "reviewed receipt + finished material gate -> FINISHED_REAL");
@@ -1058,6 +1115,12 @@ static void test_real_screenshot_receipt_gate(void) {
     CHECK(strcmp(dm1_v22_famg_receipt_gate_name(
             DM1_V22_FAMG_RECEIPT_FINISHED_REAL), "FINISHED_REAL") == 0,
           "receipt gate name FINISHED_REAL");
+    CHECK(dm1_v22_famg_get_receipt_info(&info) == 1,
+          "receipt info populated for finished receipt");
+    CHECK(info.bmp_header_valid == 1,
+          "finished receipt BMP header matches manifest dimensions");
+    CHECK(info.bmp_width == 320 && info.bmp_height == 200,
+          "finished receipt BMP dimensions reported");
 
     const char* placeholder_content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","

@@ -74,6 +74,13 @@ static void put_be32(unsigned char* p, unsigned v) {
     p[3] = (unsigned char)(v & 0xffU);
 }
 
+static void put_le32(unsigned char* p, unsigned v) {
+    p[0] = (unsigned char)(v & 0xffU);
+    p[1] = (unsigned char)((v >> 8) & 0xffU);
+    p[2] = (unsigned char)((v >> 16) & 0xffU);
+    p[3] = (unsigned char)((v >> 24) & 0xffU);
+}
+
 static int write_png_header_file(const char* path,
                                  unsigned width,
                                  unsigned height) {
@@ -87,6 +94,28 @@ static int write_png_header_file(const char* path,
     memcpy(hdr + 12, "IHDR", 4);
     put_be32(hdr + 16, width);
     put_be32(hdr + 20, height);
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(hdr, 1, sizeof(hdr), fp) != sizeof(hdr)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+static int write_bmp_header_file(const char* path,
+                                 unsigned width,
+                                 unsigned height) {
+    unsigned char hdr[26];
+    FILE* fp;
+    memset(hdr, 0, sizeof(hdr));
+    hdr[0] = 'B';
+    hdr[1] = 'M';
+    put_le32(hdr + 2, 26U);
+    put_le32(hdr + 10, 26U);
+    put_le32(hdr + 14, 12U);
+    put_le32(hdr + 18, width);
+    put_le32(hdr + 22, height);
     fp = fopen(path, "wb");
     if (!fp) return 0;
     if (fwrite(hdr, 1, sizeof(hdr), fp) != sizeof(hdr)) {
@@ -527,6 +556,8 @@ int main(void) {
           receipt_info.file_exists == 1);
     check("receipt info hash retained",
           strcmp(receipt_info.frame_hash, "sha256:synthetic") == 0);
+    check("synthetic receipt text has no valid BMP header",
+          receipt_info.bmp_header_valid == 0);
 
     check("wrote reviewed missing-file receipt manifest",
           write_all_real_manifest_with_receipt(
@@ -542,6 +573,34 @@ int main(void) {
     snprintf(receipt_file, sizeof(receipt_file),
              "%s/reviewed_frame.bmp", receipt_dir);
     write_file(receipt_file, "reviewed-runtime-bmp");
+    check("wrote reviewed text receipt manifest",
+          write_all_real_manifest_with_receipt(
+              manifest_file,
+              "operator_reviewed",
+              "reviewed_frame.bmp",
+              "sha256:reviewed",
+              "FINISHED_REAL"));
+    check("reviewed text receipt -> PARTIAL",
+          dm1_v22_famg_receipt_gate() ==
+              DM1_V22_FAMG_RECEIPT_PARTIAL);
+    check("receipt info available for reviewed text",
+          dm1_v22_famg_get_receipt_info(&receipt_info) == 1);
+    check("reviewed text receipt invalid BMP header",
+          receipt_info.bmp_header_valid == 0);
+
+    write_bmp_header_file(receipt_file, 319U, 200U);
+    check("reviewed mismatched BMP receipt -> PARTIAL",
+          dm1_v22_famg_receipt_gate() ==
+              DM1_V22_FAMG_RECEIPT_PARTIAL);
+    check("receipt info available for mismatched BMP",
+          dm1_v22_famg_get_receipt_info(&receipt_info) == 1);
+    check("mismatched BMP dimensions retained",
+          receipt_info.bmp_width == 319 && receipt_info.bmp_height == 200);
+
+    write_bmp_header_file(receipt_file, 320U, 200U);
+    check("reviewed matching BMP receipt ready",
+          dm1_v22_famg_get_receipt_info(&receipt_info) == 1 &&
+          receipt_info.bmp_header_valid == 1);
     check("wrote reviewed complete receipt manifest",
           write_all_real_manifest_with_receipt(
               manifest_file,
