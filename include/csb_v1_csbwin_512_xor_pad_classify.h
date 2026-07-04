@@ -14,14 +14,15 @@
  *     csb_v1_import_csb_save_buffer() against the documented
  *     CSBWin / DM1 save shapes.
  *   - csb_v1_csbwin_512_xor_pad_classify (this module) is the
- *     read-only classifier that recognises the CSBWin 512-byte
+ *     classifier/writer primitive that recognises the CSBWin 512-byte
  *     XOR-pad-obfuscated save header without committing to a
  *     full CSBWin importer. It probes the two documented
  *     scramble keys (CSB Noise[29] / DM Noise[10]), verifies
  *     the two-checksum invariant of UnscrambleBlock1, and
  *     surfaces the public fields of the unscrambled second-half
- *     block when a key matches. It never modifies the input
- *     buffer and never binds into M11/M12.
+ *     block when a key matches. It also exposes bounded write helpers for
+ *     GAMEBLOCK1 plus the currently supported GAMEBLOCK2/CHARDESC sections.
+ *     It never modifies classifier input buffers and never binds into M11/M12.
  *
  * The two-checksum invariant (CSBWin/Chaos.cpp UnscrambleBlock1
  * lines 1341-1368):
@@ -60,7 +61,7 @@
  *   - It does not bind to csb_v1_import_csb_save_buffer() (that
  *     loader rejects 512-byte XOR-pad headers).
  *   - It does not produce an M11/M12 wiring.
- *   - It does not promise end-to-end CSBWin save import. That
+ *   - It does not promise end-to-end CSBWin save import/export. That
  *     remains tracked under docs/FIRESTAFF_GAP_LIST.md row C3 /
  *     A3 as OPEN-LARGE.
  *
@@ -87,12 +88,12 @@
  *     resource handling (csbgraphics.dat + dmsave + csbgame)".
  *
  * Non-claims:
- *   - No file I/O. Callers feed 512 bytes; the module reports.
+ *   - No file I/O. Callers feed bytes; the module reports or emits bounded
+ *     in-memory CSBWin blocks.
  *   - Body-section decoding is bounded verification plus summaries:
  *     GAMEBLOCK2 and CHARDESC fields are surfaced for startup/runtime
  *     handoff, while ITEM16, timers, and timer queue remain checksum-only.
- *   - No M11/M12 wiring. Callers (a future launcher import
- *     button) decide what to do with the verdict.
+ *   - No M11/M12 wiring. Callers decide what to do with the verdict/blocks.
  */
 
 #ifndef FIRESTAFF_CSB_V1_CSBWIN_512_XOR_PAD_CLASSIFY_H
@@ -407,6 +408,28 @@ typedef struct {
     uint8_t characters_scrambled[3328];
 } CSB_V1_CSBWin512WritableChampionSections;
 
+typedef struct {
+    int key_index;                  /* CSB_V1_CSBWIN_512_KEY_CSB or _DM */
+    uint8_t byte22598;              /* GAMEBLOCK1 offset 300 */
+    uint8_t byte22596;              /* GAMEBLOCK1 offset 301 */
+    int16_t save_option;            /* GAMEBLOCK1 offset 306 */
+    uint32_t random_game_id;        /* GAMEBLOCK1 offset 308 */
+    uint16_t block2_hash;           /* GAMEBLOCK1 offset 312 */
+    uint16_t item16_hash;           /* GAMEBLOCK1 offset 314 */
+    uint16_t character_hash;        /* GAMEBLOCK1 offset 316 */
+    uint16_t timers_hash;           /* GAMEBLOCK1 offset 318 */
+    uint16_t timer_queue_hash;      /* GAMEBLOCK1 offset 320 */
+    uint32_t total_move_count;      /* GAMEBLOCK1 offset 322 */
+    uint16_t block2_checksum;       /* GAMEBLOCK1 offset 344 */
+    uint16_t item16_checksum;       /* GAMEBLOCK1 offset 346 */
+    uint16_t character_checksum;    /* GAMEBLOCK1 offset 348 */
+    uint16_t timers_checksum;       /* GAMEBLOCK1 offset 350 */
+    uint16_t timer_queue_checksum;  /* GAMEBLOCK1 offset 352 */
+    int16_t word22594;              /* GAMEBLOCK1 offset 376 */
+    int16_t word22592;              /* GAMEBLOCK1 offset 378 */
+    uint8_t byte22808[132];         /* GAMEBLOCK1 offset 380 */
+} CSB_V1_CSBWin512WritableHeader;
+
 /* ── Public API ──────────────────────────────────────────────────────── */
 
 /* Classify the first 512 bytes of a CSBWin / DM1 save.
@@ -478,6 +501,18 @@ int csb_v1_csbwin_512_decode_stream_section(
 int csb_v1_csbwin_512_build_writable_champion_sections(
     const CSB_V1_CSBWin512BodyReport *summary,
     CSB_V1_CSBWin512WritableChampionSections *out);
+
+/* Build a CSBWin GAMEBLOCK1 header from bounded section metadata.
+ *
+ * Mirrors CSBWin SaveGame.cpp ScrambleAndWrite / Chaos.cpp WriteFirstBlock:
+ * the first 256 bytes are trashed to zero except the final checksum word,
+ * and the second 256 bytes carry the GAMEBLOCK1 public fields before being
+ * scrambled with the selected key word. This emits only the first 512-byte
+ * header. Callers still own the body sections and any appended dungeon/global
+ * data. */
+int csb_v1_csbwin_512_build_writable_header(
+    const CSB_V1_CSBWin512WritableHeader *header,
+    uint8_t out_header[CSB_V1_CSBWIN_BLOCK1_BYTES]);
 
 /* Verify the CSBWin save-body layout that follows GAMEBLOCK1.
  *
