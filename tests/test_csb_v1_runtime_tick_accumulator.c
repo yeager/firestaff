@@ -4579,6 +4579,72 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
           "CSBWin body summary handoff rejects out-of-range bounded list counts");
 }
 
+static void test_csbwin_item16_claims_live_ai_ownership(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[160];
+    int event_index;
+    const struct DM1_Event_V1 *event;
+
+    printf("\n-- CSBWin ITEM16 live AI ownership claim --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 70;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 60 + 2 * 2, 1);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 70, 0xfffeu);
+    test_put_le16(raw, 72, 0u);
+    raw[74] = 9u;
+    raw[75] = 0xffu;
+    test_put_le16(raw, 76, 40u);
+    test_put_le16(raw, 78, 0u);
+    test_put_le16(raw, 80, 0u);
+    test_put_le16(raw, 82, 0u);
+    test_put_le16(raw, 84, 0u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.game_time = 100u;
+    profile.timeline_queue.gameTick = 100u;
+    profile.dungeon_handle = &dungeon;
+    profile.csbwin_body_runtime_summary_valid = 1;
+    profile.csbwin_item16_summary_count = 1u;
+    profile.csbwin_item16_summary_total = 1u;
+    profile.csbwin_item16[0].valid = 1;
+    profile.csbwin_item16[0].monster_index = (uint16_t)(4u << 10);
+    profile.csbwin_item16[0].current_x = 1u;
+    profile.csbwin_item16[0].current_y = 1u;
+    CHECK(csb_v1_runtime_materialize_csbwin_item16_summaries(&profile) == 1,
+          "CSBWin ITEM16 live-AI fixture materializes one active monster");
+    CHECK(csb_v1_runtime_claim_csbwin_item16_ai_ownership(&profile) == 1,
+          "CSBWin ITEM16 active monster claims live AI ownership");
+    CHECK(profile.csbwin_runtime_item16[0].live_ai_owned == 1 &&
+              profile.csbwin_runtime_item16[0].live_ai_group_thing ==
+                  (uint16_t)(4u << 10) &&
+              profile.csbwin_runtime_item16[0].live_ai_map_index == 0 &&
+              profile.csbwin_runtime_item16[0].live_ai_map_x == 1 &&
+              profile.csbwin_runtime_item16[0].live_ai_map_y == 1,
+          "CSBWin ITEM16 claim records the located C04 group square");
+    CHECK(profile.csbwin_runtime_item16[0].live_ai_c37_queued == 1 &&
+              count_queued_c37_at(&profile, 0, 1, 1) == 1,
+          "CSBWin ITEM16 claim schedules a live C37 owner tick");
+    event_index = find_queued_event_type(&profile,
+                                         DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
+    event = event_index >= 0 ? &profile.timeline_queue.events[event_index] : NULL;
+    CHECK(event && DM1_MAP_TIME_TIME(event->map_time) == 101u &&
+              event->priority == (uint8_t)(255u - 21u),
+          "CSBWin ITEM16 C37 uses game_time+1 and creature movement priority");
+    CHECK(csb_v1_runtime_claim_csbwin_item16_ai_ownership(&profile) == 0 &&
+              count_queued_c37_at(&profile, 0, 1, 1) == 1,
+          "CSBWin ITEM16 ownership claim is idempotent");
+}
+
 static void test_csbwin_resume_file_applies_runtime_handoff(void)
 {
     uint8_t bytes[4096];
@@ -4679,6 +4745,7 @@ int main(void)
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
     test_csbwin_gameblock2_summary_applies_runtime_handoff();
+    test_csbwin_item16_claims_live_ai_ownership();
     test_csbwin_resume_file_applies_runtime_handoff();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {

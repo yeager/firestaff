@@ -193,6 +193,12 @@ typedef struct {
 typedef struct {
     int valid;
     uint16_t monster_index;
+    int live_ai_owned;
+    uint16_t live_ai_group_thing;
+    int live_ai_map_index;
+    int live_ai_map_x;
+    int live_ai_map_y;
+    int live_ai_c37_queued;
     uint8_t facings;
     uint8_t positions;
     uint8_t last_move_time_lsb;
@@ -441,6 +447,8 @@ int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_CSBWin512BodyReport *summary);
 int csb_v1_runtime_materialize_csbwin_item16_summaries(
+    CSB_V1_RuntimeProfile *profile);
+int csb_v1_runtime_claim_csbwin_item16_ai_ownership(
     CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_materialize_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile);

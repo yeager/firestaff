@@ -8202,6 +8202,10 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
         memset(dst, 0, sizeof(*dst));
         dst->valid = 1;
         dst->monster_index = src->monster_index;
+        dst->live_ai_group_thing = 0xFFFFu;
+        dst->live_ai_map_index = -1;
+        dst->live_ai_map_x = -1;
+        dst->live_ai_map_y = -1;
         dst->facings = src->facings;
         dst->positions = src->positions;
         dst->last_move_time_lsb = src->ubyte4;
@@ -8220,6 +8224,117 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
     }
 
     return imported;
+}
+
+static uint16_t csb_v1_runtime_csbwin_item16_group_thing(uint16_t monster_index)
+{
+    if (((monster_index >> 10) & 0x0Fu) == 4u) {
+        return monster_index;
+    }
+    return (uint16_t)((4u << 10) | (monster_index & 0x03FFu));
+}
+
+static int csb_v1_runtime_has_c37_for_square(
+    const CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y)
+{
+    int i;
+
+    if (!profile || map_index < 0 || map_x < 0 || map_y < 0) return 0;
+    for (i = 0; i < profile->timeline_queue.eventCount; ++i) {
+        int event_index = profile->timeline_queue.timeline[i];
+        const struct DM1_Event_V1 *event =
+            NULL;
+        if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
+            continue;
+        }
+        event = &profile->timeline_queue.events[event_index];
+        if (event->type == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+            DM1_MAP_TIME_MAP(event->map_time) == (uint8_t)map_index &&
+            event->b_mapX == (uint8_t)map_x &&
+            event->b_mapY == (uint8_t)map_y) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int csb_v1_runtime_claim_csbwin_item16_ai_ownership(
+    CSB_V1_RuntimeProfile *profile)
+{
+    uint16_t item_index;
+    int claimed = 0;
+
+    if (!profile || !profile->dungeon_handle) return 0;
+
+    for (item_index = 0u;
+         item_index < profile->csbwin_runtime_item16_count;
+         ++item_index) {
+        CSB_V1_CSBWinRuntimeItem16 *item =
+            &profile->csbwin_runtime_item16[item_index];
+        uint16_t group_thing;
+        int map_index = -1;
+        int map_x = -1;
+        int map_y = -1;
+        uint8_t *group_record;
+        int thing_type;
+        int thing_size;
+        int creature_type = 0;
+
+        if (!item->valid || item->live_ai_owned) {
+            continue;
+        }
+
+        group_thing =
+            csb_v1_runtime_csbwin_item16_group_thing(item->monster_index);
+        if (!csb_v1_runtime_find_group_thing_location(
+                profile->dungeon_handle,
+                group_thing,
+                &map_index,
+                &map_x,
+                &map_y)) {
+            continue;
+        }
+
+        item->live_ai_owned = 1;
+        item->live_ai_group_thing = group_thing;
+        item->live_ai_map_index = map_index;
+        item->live_ai_map_x = map_x;
+        item->live_ai_map_y = map_y;
+        group_record = csb_v1_runtime_mutable_thing_record(
+            profile->dungeon_handle,
+            group_thing,
+            &thing_type,
+            &thing_size);
+        if (group_record && thing_type == 4 && thing_size > 4) {
+            creature_type = (int)group_record[4];
+        }
+        if (!csb_v1_runtime_has_c37_for_square(
+                profile,
+                map_index,
+                map_x,
+                map_y)) {
+            csb_v1_runtime_schedule_c37_group_event(
+                profile,
+                map_index,
+                map_x,
+                map_y,
+                creature_type,
+                1u);
+            item->live_ai_c37_queued = 1;
+        }
+        ++claimed;
+    }
+
+    /* CSBWin CSB.h ITEM16 stores active-monster records keyed by the DB4
+     * monster/group index, while ReDMCSB GROUP.C F0209 resumes live monster
+     * behavior through C37 square events.  This bridge claims each decoded
+     * ITEM16 whose C04 group thing is still present in the loaded dungeon and
+     * ensures there is a C37 owner tick unless the imported timer queue
+     * already supplied one for that square. */
+    return claimed;
 }
 
 int csb_v1_runtime_materialize_csbwin_timer_queue(
@@ -8318,6 +8433,7 @@ int csb_v1_runtime_apply_csbwin_resume_report(
     if (csb_v1_runtime_materialize_csbwin_timer_queue(profile) < 0) {
         return -1;
     }
+    (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
     return 0;
 }
 
