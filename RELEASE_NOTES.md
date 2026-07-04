@@ -1,6 +1,30 @@
 
 # Unreleased
 
+# Firestaff v3.0.25
+
+Firestaff v3.0.25 packages the current post-v3.0.24 `main` state. The release
+keeps scope narrow: DM1 V1 melee targeting now covers the ReDMCSB half-square
+and single-centered creature occupancy rules in the shared combat helper.
+
+## Highlights since v3.0.24
+
+- **DM1 V1 melee target parity**: `dm1_get_melee_target()` now applies
+  `GROUP.C F0176` occupancy semantics for half-square creatures and the
+  `C0xFF_SINGLE_CENTERED_CREATURE` case before returning the target slot.
+
+- **Fast regression coverage**: the new
+  `dm1_v1_melee_target_half_square_pc34_compat` CTest target is data-free and
+  locks full-square, half-square and single-centered targeting behavior.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher changelog,
+  `include/firestaff_version.h`, README and release notes.
+- Local focused verification before release prep covered
+  `dm1_v1_melee_target_half_square_pc34_compat` via direct `cc` build/run
+  after CMake regeneration stalled in the existing local build directory.
+
 # Firestaff v3.0.24
 
 Firestaff v3.0.24 packages the current post-v3.0.23 `main` state. The release
