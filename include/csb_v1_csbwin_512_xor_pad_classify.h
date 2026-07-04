@@ -55,8 +55,8 @@
  * What this module does NOT do:
  *   - It does not parse/import decoded CSBWin items, timers, DSAs,
  *     or DSA-level indexes into runtime state.
- *   - It only summarizes CHARDESC champion records; it does not import
- *     portrait bytes or full skill-XP model state into runtime by itself.
+ *   - It summarizes CHARDESC champion records for runtime handoff; callers
+ *     own the final import policy.
  *   - It does not bind to csb_v1_import_csb_save_buffer() (that
  *     loader rejects 512-byte XOR-pad headers).
  *   - It does not produce an M11/M12 wiring.
@@ -271,12 +271,18 @@ typedef struct {
     int valid;
     char name[9];
     char title[17];
+    int16_t word24;
     uint8_t facing;
     uint8_t char_position;
+    uint8_t byte30;
+    uint8_t byte31;
     int8_t attack_type;
+    int8_t byte33;
+    int8_t incantation[4];
     uint8_t facing3;
     uint8_t max_recent_damage;
     uint8_t poison_count;
+    uint8_t ubyte43;
     int16_t busy_timer;
     int16_t timer_index;
     int16_t char_flags;
@@ -300,6 +306,7 @@ typedef struct {
     uint16_t fingerprint;
     uint16_t cause_of_damage;
     uint16_t monster_causing_damage;
+    uint8_t portrait[464];          /* CSBWin CHARDESC portrait bytes 336..799 */
 } CSB_V1_CSBWin512ChampionSummary;
 
 typedef struct {

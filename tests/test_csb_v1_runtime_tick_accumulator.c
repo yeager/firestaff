@@ -95,10 +95,19 @@ static void test_write_csbwin_champion(uint8_t *record,
     memcpy(record + 8u, title, strlen(title) < 16u ? strlen(title) : 16u);
     record[28u] = 2u;
     record[29u] = 3u;
+    test_write_le16(record, 24u, 0x2468u);
+    record[30u] = 0x30u;
+    record[31u] = 0x31u;
     record[32u] = 5u;
+    record[33u] = 0x33u;
+    record[34u] = 96;
+    record[35u] = 102;
+    record[36u] = 108;
+    record[37u] = 114;
     record[40u] = 1u;
     record[41u] = 23u;
     record[42u] = 4u;
+    record[43u] = 0x43u;
     test_write_le16(record, 44u, 0xFFF0u);
     test_write_le16(record, 46u, 0x0011u);
     test_write_le16(record, 48u, 0x1234u);
@@ -128,6 +137,14 @@ static void test_write_csbwin_champion(uint8_t *record,
         test_write_le16(record, 212u + i * 2u, (uint16_t)(slot0 + i));
     }
     test_write_le16(record, 272u, 777u);
+    test_write_le16(record, 274u, 88u);
+    test_write_le32(record, 276u, 0xCAFEBABEu);
+    test_write_le16(record, 280u, 0xBEEFu);
+    test_write_le16(record, 282u, 0x0042u);
+    test_write_le16(record, 284u, 0x0055u);
+    for (i = 0u; i < 464u; ++i) {
+        record[336u + i] = (uint8_t)(0x80u + (uint8_t)(i & 0x3fu));
+    }
 }
 
 static void test_write_csbwin_character_tail(uint8_t *characters)
@@ -4257,9 +4274,19 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     strcpy(summary.champions[0].title, "APPRENTICE");
     summary.champions[0].facing = 2u;
     summary.champions[0].char_position = 3u;
+    summary.champions[0].word24 = 0x2468;
+    summary.champions[0].byte30 = 0x30u;
+    summary.champions[0].byte31 = 0x31u;
     summary.champions[0].attack_type = 5;
+    summary.champions[0].byte33 = 0x33;
+    summary.champions[0].incantation[0] = 96;
+    summary.champions[0].incantation[1] = 102;
+    summary.champions[0].incantation[2] = 108;
+    summary.champions[0].incantation[3] = 114;
+    summary.champions[0].facing3 = 1u;
     summary.champions[0].max_recent_damage = 23u;
     summary.champions[0].poison_count = 4u;
+    summary.champions[0].ubyte43 = 0x43u;
     summary.champions[0].busy_timer = -16;
     summary.champions[0].timer_index = 17;
     summary.champions[0].char_flags = 0x1234;
@@ -4272,6 +4299,7 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.champions[0].max_mana = 89;
     summary.champions[0].food = 1500;
     summary.champions[0].water = 1600;
+    summary.champions[0].word64 = -7;
     summary.champions[0].load = 777u;
     summary.champions[0].attributes[0][0] = 90u;
     summary.champions[0].attributes[0][1] = 50u;
@@ -4297,6 +4325,13 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.champions[0].skill_experience[0] = 2000u;
     summary.champions[0].skill_experience[7] = 8000u;
     summary.champions[0].skill_temp_adjust[7] = 1000;
+    summary.champions[0].shield_strength = 88u;
+    summary.champions[0].talents = 0xCAFEBABEu;
+    summary.champions[0].fingerprint = 0xBEEFu;
+    summary.champions[0].cause_of_damage = 0x0042u;
+    summary.champions[0].monster_causing_damage = 0x0055u;
+    summary.champions[0].portrait[0] = 0xA0u;
+    summary.champions[0].portrait[463] = 0xA1u;
     summary.champions[0].possessions[0] = 0x2200u;
     summary.champions[0].possessions[1] = 0x2201u;
     summary.champions[1].valid = 1;
@@ -4439,19 +4474,38 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     CHECK(profile.party_state.Champions[0].Slots[0] == 0x2200u &&
               profile.party_state.Champions[0].Slots[1] == 0x2201u,
           "CSBWin champion handoff copies possession RN slots");
+    CHECK(profile.party_state.Champions[0].Portrait[0] == 0xA0u &&
+              profile.party_state.Champions[0].Portrait[463] == 0xA1u &&
+              profile.party_state.Champions[0].Portrait[464] == 0u,
+          "CSBWin champion handoff copies CHARDESC portrait bytes into runtime portrait");
     CHECK(profile.party_state.Champions[0].Cell == 3u &&
               profile.party_state.Champions[0].Direction == 2u &&
               profile.party_state.Champions[0].ActionIndex == 5u &&
               profile.party_state.Champions[0].EnableActionEventIndex == -16 &&
               profile.party_state.Champions[0].HideDamageReceivedEventIndex == 17,
           "CSBWin champion handoff copies pose and action timer state");
+    CHECK(profile.party_state.Champions[0].CsbWinWord24 == 0x2468 &&
+              profile.party_state.Champions[0].CsbWinByte30 == 0x30u &&
+              profile.party_state.Champions[0].CsbWinByte31 == 0x31u &&
+              profile.party_state.Champions[0].Incantation[0] == 96 &&
+              profile.party_state.Champions[0].Incantation[3] == 114 &&
+              profile.party_state.Champions[0].CsbWinByte33 == 0x33 &&
+              profile.party_state.Champions[0].CsbWinFacing3 == 1u &&
+              profile.party_state.Champions[0].CsbWinUByte43 == 0x43u,
+          "CSBWin champion handoff preserves CHARDESC action/body bytes");
     CHECK(profile.party_state.Champions[0].Attributes == 0x1234u &&
               profile.party_state.Champions[0].Wounds == 0x00A5u &&
               profile.party_state.Champions[0].PoisonEventCount == 4u &&
               profile.party_state.Champions[0].Food == 1500 &&
               profile.party_state.Champions[0].Water == 1600 &&
-              profile.party_state.Champions[0].Load == 777u,
-          "CSBWin champion handoff copies status, food, water, and load");
+              profile.party_state.Champions[0].Load == 777u &&
+              profile.party_state.Champions[0].ShieldStrength == 88u &&
+              profile.party_state.Champions[0].Talents == 0xCAFEBABEu &&
+              profile.party_state.Champions[0].Fingerprint == 0xBEEFu &&
+              profile.party_state.Champions[0].CauseOfDamage == 0x0042u &&
+              profile.party_state.Champions[0].MonsterCausingDamage == 0x0055u &&
+              profile.party_state.Champions[0].CsbWinWord64 == -7,
+          "CSBWin champion handoff copies status, food, water, load, and body metadata");
     CHECK(strcmp(profile.party_state.Champions[1].Name, "BORIS") == 0 &&
               profile.party_state.Champions[1].CurrentHealth == 111 &&
               profile.party_state.Champions[1].MaximumHealth == 222,
@@ -4710,6 +4764,10 @@ static void test_csbwin_resume_file_applies_runtime_handoff(void)
               profile.party_state.Champions[0].SkillExperience[7] == 8000u &&
               profile.party_state.Champions[0].SkillTemporaryExperience[7] == 1000,
           "CSBWin resume file preserves decoded skill XP into runtime levels");
+    CHECK(profile.party_state.Champions[0].Portrait[0] == 0x80u &&
+              profile.party_state.Champions[0].Portrait[463] ==
+                  (uint8_t)(0x80u + (463u & 0x3fu)),
+          "CSBWin resume file preserves decoded portrait bytes");
     CHECK(profile.csbwin_runtime_item16_count == 2u &&
               profile.csbwin_runtime_item16[0].monster_index == 0x1234u,
           "CSBWin resume file materializes ITEM16 records");
