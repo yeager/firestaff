@@ -72,6 +72,12 @@ typedef struct {
     int h;
 } M11_V22_CellRect;
 
+/* Return the shared V2.2 viewport cell rectangle for a source-view cell.
+ * depth is {1,2,3}; lateral is {-1,0,1}. Returns NULL out of range.
+ * Both the placeholder overlay and in-place bitmap pass use this source
+ * so their DM1 4x3 cell geometry cannot drift apart. */
+const M11_V22_CellRect* m11_v22_cell_rect(int depth, int lateral);
+
 /* Source evidence for tests/probes. */
 const char* m11_v22_render_overlay_source_evidence(void);
 

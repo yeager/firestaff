@@ -419,27 +419,6 @@ const char* m11_v22_inplace_get_cell_asset_id(int depth, int lateral) {
 
 /* ── In-place bitmap blit ──────────────────────────────────────── */
 
-/* DM1 4x3 cell rect coordinates (depth x lateral). Must match
- * kV22CellRects in m11_v22_render_overlay_pc34.c (exposed as
- * M11_V22_CellRect in m11_v22_render_overlay_pc34.h). */
-static const M11_V22_CellRect kV22CellRects[3][3] = {
-    /* depth 0 = D1 (closest) */ {
-        {  8, 103, 69, 30 },
-        { 78, 103, 61, 30 },
-        {139, 103, 69, 30 }
-    },
-    /* depth 1 = D2 (middle) */ {
-        {  8,  72, 69, 30 },
-        { 78,  72, 61, 30 },
-        {139,  72, 69, 30 }
-    },
-    /* depth 2 = D3 (back) */ {
-        {  8,  41, 69, 30 },
-        { 78,  41, 61, 30 },
-        {139,  41, 69, 30 }
-    }
-};
-
 /* Clamp helper */
 static int clampi(int v, int lo, int hi) {
     if (v < lo) return lo;
@@ -505,7 +484,8 @@ int m11_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {
             const uint32_t* rgba =
                 m11_v22_inplace_get_cell_bitmap(depth + 1, lateral, &w, &h);
             if (!rgba || w <= 0 || h <= 0) continue;
-            const M11_V22_CellRect* rect = &kV22CellRects[depth][lateral + 1];
+            const M11_V22_CellRect* rect = m11_v22_cell_rect(depth + 1, lateral);
+            if (!rect) continue;
             /* Clamp cell rect to framebuffer bounds */
             int dx = clampi(rect->x, 0, fbW);
             int dy = clampi(rect->y, 0, fbH);

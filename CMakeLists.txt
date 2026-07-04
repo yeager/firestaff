@@ -1715,6 +1715,7 @@ endif()
 add_executable(firestaff_dm1_v22_inplace_render_probe
     probes/firestaff_dm1_v22_inplace_render_probe.c
     src/dm1v2/m11_v22_inplace_draw_pc34.c
+    src/dm1v2/m11_v22_cell_rects_pc34.c
     src/dm1v2/m11_v22_shape_cache_pc34.c
     src/dm1v2/dm1_v2_shape_runtime_pc34.c
     src/dm1v2/dm1_v2_presentation_mode_pc34.c
@@ -2338,6 +2339,7 @@ endif()
 add_executable(firestaff_m11_v22_render_overlay_probe
     probes/firestaff_m11_v22_render_overlay_probe.c
     src/dm1v2/m11_v22_render_overlay_pc34.c
+    src/dm1v2/m11_v22_cell_rects_pc34.c
     src/dm1v2/m11_v22_shape_cache_pc34.c
     src/dm1v2/dm1_v2_shape_runtime_pc34.c
     src/dm1v2/dm1_v2_presentation_mode_pc34.c
@@ -11187,6 +11189,7 @@ if(BUILD_TESTING)
     add_executable(test_m11_v22_inplace_draw_pc34
         tests/test_m11_v22_inplace_draw_pc34.c
         src/dm1v2/m11_v22_inplace_draw_pc34.c
+        src/dm1v2/m11_v22_cell_rects_pc34.c
         src/dm1v2/m11_v22_shape_cache_pc34.c
         src/dm1v2/dm1_v22_shapes.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
@@ -11196,6 +11199,7 @@ if(BUILD_TESTING)
     add_executable(test_m11_v22_render_overlay_pc34
         tests/test_m11_v22_render_overlay_pc34.c
         src/dm1v2/m11_v22_render_overlay_pc34.c
+        src/dm1v2/m11_v22_cell_rects_pc34.c
         src/dm1v2/m11_v22_shape_cache_pc34.c
         src/dm1v2/dm1_v2_shape_runtime_pc34.c
         src/dm1v2/dm1_v2_presentation_mode_pc34.c
@@ -11254,6 +11258,7 @@ if(BUILD_TESTING)
         tests/test_dm1_v2_per_mode_material_signatures_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/m11_v22_inplace_draw_pc34.c
+        src/dm1v2/m11_v22_cell_rects_pc34.c
         src/dm1v2/m11_v22_shape_cache_pc34.c
         src/dm1v2/dm1_v2_shape_runtime_pc34.c
         src/dm1v2/dm1_v2_presentation_mode_pc34.c
@@ -11267,6 +11272,7 @@ if(BUILD_TESTING)
         tests/test_dm1_v22_real_asset_material_gate_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/m11_v22_inplace_draw_pc34.c
+        src/dm1v2/m11_v22_cell_rects_pc34.c
         src/dm1v2/m11_v22_shape_cache_pc34.c
         src/dm1v2/dm1_v2_shape_runtime_pc34.c
         src/dm1v2/dm1_v2_presentation_mode_pc34.c
@@ -16517,6 +16523,7 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_
     add_executable(firestaff_v1_dm_v22_modern_renderer_silicon_probe
         probes/v1/firestaff_v1_dm_v22_modern_renderer_silicon_probe.c
         src/dm1v2/m11_v22_render_overlay_pc34.c
+        src/dm1v2/m11_v22_cell_rects_pc34.c
         src/dm1v2/m11_v22_shape_cache_pc34.c
         src/dm1v2/dm1_v2_shape_runtime_pc34.c
         src/dm1v2/dm1_v22_shapes.c
