@@ -1443,6 +1443,13 @@ static int orch_cmd_cast_spell_empty_flask_slot_compat(
                  CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_SHIFT);
 }
 
+static int orch_cmd_cast_spell_has_magic_map_compat(
+    const struct TickInput_Compat* input)
+{
+    return input &&
+        (input->reserved2 & CMD_CAST_SPELL_RESERVED2_HAS_MAGIC_MAP) != 0u;
+}
+
 static int orch_cmd_cast_spell_xp_compat(
     const struct TickInput_Compat* input,
     const struct SpellDefinition_Compat* spell,
@@ -6865,8 +6872,14 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             F0758_MAGIC_ProducePotionEffect_Compat(
                 &spell, powerOrd, emptyFlaskSlot >= 0, &world->masterRng, &effect);
             break;
+        case C4_SPELL_KIND_MAGIC_MAP_COMPAT:
+            F0759_MAGIC_ProduceMagicMapEffect_Compat(
+                &spell, powerOrd,
+                orch_cmd_cast_spell_has_magic_map_compat(input),
+                champIdx, world->party.direction, &effect);
+            break;
         default:
-            /* Unknown kind (e.g. magic map) — no effect. */
+            /* Unknown kind — no effect. */
             return 1;
         }
 
