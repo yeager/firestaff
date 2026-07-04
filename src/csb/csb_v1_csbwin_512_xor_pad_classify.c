@@ -87,6 +87,8 @@ static int checked_mul_size(size_t a, size_t b, size_t *out)
 enum {
     CSBWIN_CHARDESC_STRIDE = 800,
     CSBWIN_CHARDESC_COUNT = 4,
+    CSBWIN_CHARACTER_BODY_BYTES = 3328,
+    CSBWIN_CHARACTER_TAIL_OFF = 3200,
     CSBWIN_CHARDESC_OFF_NAME = 0,
     CSBWIN_CHARDESC_OFF_TITLE = 8,
     CSBWIN_CHARDESC_OFF_FACING = 28,
@@ -112,6 +114,22 @@ enum {
     CSBWIN_CHARDESC_OFF_FINGERPRINT = 280,
     CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE = 282,
     CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE = 284
+};
+
+enum {
+    CSBWIN_CHARACTER_TAIL_OFF_BRIGHTNESS = 0,
+    CSBWIN_CHARACTER_TAIL_OFF_SEE_THRU_WALLS = 2,
+    CSBWIN_CHARACTER_TAIL_OFF_MAGIC_FOOTPRINTS_ACTIVE = 3,
+    CSBWIN_CHARACTER_TAIL_OFF_PARTY_SHIELD = 4,
+    CSBWIN_CHARACTER_TAIL_OFF_FIRE_SHIELD = 6,
+    CSBWIN_CHARACTER_TAIL_OFF_SPELL_SHIELD = 8,
+    CSBWIN_CHARACTER_TAIL_OFF_NUM_FOOTPRINT_ENT = 10,
+    CSBWIN_CHARACTER_TAIL_OFF_FREEZE_LIFE_TIMER = 11,
+    CSBWIN_CHARACTER_TAIL_OFF_FIRST_MAGIC_FOOTPRINT = 12,
+    CSBWIN_CHARACTER_TAIL_OFF_LAST_MAGIC_FOOTPRINT = 13,
+    CSBWIN_CHARACTER_TAIL_OFF_PARTY_FOOTPRINTS = 14,
+    CSBWIN_CHARACTER_TAIL_OFF_BYTE13220 = 62,
+    CSBWIN_CHARACTER_TAIL_OFF_INVISIBLE = 86
 };
 
 static void copy_fixed_text(char *dst,
@@ -187,6 +205,134 @@ static void parse_champion_summary(const uint8_t *record,
         read_le16(record, CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE);
     out->monster_causing_damage =
         read_le16(record, CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE);
+}
+
+static void parse_character_tail(const uint8_t *characters,
+                                 CSB_V1_CSBWin512BodyReport *out)
+{
+    const uint8_t *tail;
+    size_t i;
+    if (!characters || !out) return;
+    tail = characters + CSBWIN_CHARACTER_TAIL_OFF;
+    out->character_tail_brightness =
+        (int16_t)read_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_BRIGHTNESS);
+    out->character_tail_see_thru_walls =
+        tail[CSBWIN_CHARACTER_TAIL_OFF_SEE_THRU_WALLS];
+    out->character_tail_magic_footprints_active =
+        tail[CSBWIN_CHARACTER_TAIL_OFF_MAGIC_FOOTPRINTS_ACTIVE];
+    out->character_tail_party_shield =
+        (int16_t)read_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_PARTY_SHIELD);
+    out->character_tail_fire_shield =
+        (int16_t)read_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_FIRE_SHIELD);
+    out->character_tail_spell_shield =
+        (int16_t)read_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_SPELL_SHIELD);
+    out->character_tail_num_footprint_entries =
+        tail[CSBWIN_CHARACTER_TAIL_OFF_NUM_FOOTPRINT_ENT];
+    out->character_tail_freeze_life_timer =
+        tail[CSBWIN_CHARACTER_TAIL_OFF_FREEZE_LIFE_TIMER];
+    out->character_tail_first_magic_footprint =
+        tail[CSBWIN_CHARACTER_TAIL_OFF_FIRST_MAGIC_FOOTPRINT];
+    out->character_tail_last_magic_footprint =
+        tail[CSBWIN_CHARACTER_TAIL_OFF_LAST_MAGIC_FOOTPRINT];
+    for (i = 0u; i < 24u; ++i) {
+        out->character_tail_party_footprints[i] =
+            read_le16(tail,
+                      CSBWIN_CHARACTER_TAIL_OFF_PARTY_FOOTPRINTS + i * 2u);
+        out->character_tail_byte13220[i] =
+            tail[CSBWIN_CHARACTER_TAIL_OFF_BYTE13220 + i];
+    }
+    out->character_tail_invisible = tail[CSBWIN_CHARACTER_TAIL_OFF_INVISIBLE];
+}
+
+static void parse_item16_summaries(const uint8_t *decoded,
+                                   uint16_t total,
+                                   CSB_V1_CSBWin512BodyReport *out)
+{
+    size_t i;
+    size_t count;
+    if (!decoded || !out) return;
+    out->item16_summary_total = total;
+    count = total;
+    if (count > CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
+        count = CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES;
+    }
+    out->item16_summary_count = (uint16_t)count;
+    for (i = 0u; i < count; ++i) {
+        const uint8_t *record = decoded + i * 16u;
+        CSB_V1_CSBWin512Item16Summary *item = &out->item16[i];
+        memset(item, 0, sizeof(*item));
+        item->valid = 1;
+        item->truncated = (total > CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES);
+        item->monster_index = read_le16(record, 0u);
+        item->facings = record[2u];
+        item->positions = record[3u];
+        item->ubyte4 = record[4u];
+        item->ubyte5 = record[5u];
+        item->target_x = record[6u];
+        item->target_y = record[7u];
+        item->previous_x = record[8u];
+        item->previous_y = record[9u];
+        item->current_x = record[10u];
+        item->current_y = record[11u];
+        item->single_monster_status[0] = record[12u];
+        item->single_monster_status[1] = record[13u];
+        item->single_monster_status[2] = record[14u];
+        item->single_monster_status[3] = record[15u];
+    }
+}
+
+static void parse_timer_summaries(const uint8_t *decoded,
+                                  uint16_t total,
+                                  uint16_t record_size,
+                                  CSB_V1_CSBWin512BodyReport *out)
+{
+    size_t i;
+    size_t count;
+    if (!decoded || !out) return;
+    out->timer_summary_total = total;
+    count = total;
+    if (count > CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES) {
+        count = CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES;
+    }
+    out->timer_summary_count = (uint16_t)count;
+    for (i = 0u; i < count; ++i) {
+        const uint8_t *record = decoded + i * record_size;
+        CSB_V1_CSBWin512TimerSummary *timer = &out->timers[i];
+        memset(timer, 0, sizeof(*timer));
+        timer->valid = 1;
+        timer->truncated = (total > CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES);
+        timer->time = read_le32(record, 0u);
+        timer->function = record[4u];
+        timer->ubyte5 = record[5u];
+        timer->ubyte6 = record[6u];
+        timer->ubyte7 = record[7u];
+        timer->ubyte8 = record[8u];
+        timer->ubyte9 = record[9u];
+        if (record_size >= 12u) {
+            timer->sequence = read_le16(record, 10u);
+        }
+        if (record_size >= 13u) {
+            timer->level = record[12u];
+        }
+    }
+}
+
+static void parse_timer_queue_summary(const uint8_t *decoded,
+                                      uint16_t total,
+                                      CSB_V1_CSBWin512BodyReport *out)
+{
+    size_t i;
+    size_t count;
+    if (!decoded || !out) return;
+    out->timer_queue_summary_total = total;
+    count = total;
+    if (count > CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES) {
+        count = CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES;
+    }
+    out->timer_queue_summary_count = (uint16_t)count;
+    for (i = 0u; i < count; ++i) {
+        out->timer_queue[i] = read_le16(decoded, i * 2u);
+    }
 }
 
 /* First-half rolling checksum from CSBWin/Chaos.cpp:1341
@@ -674,6 +820,12 @@ int csb_v1_csbwin_512_verify_save_body(
     }
     out->sections[CSB_V1_CSBWIN_512_SECTION_ITEM16] = section;
     ++out->sections_verified;
+    if (decoded) {
+        /* CSBWin/SaveGame.cpp:480-486 swaps ITEM16.word0 after reading
+         * the ITEM16 body. CSBWin/CSB.h:2193-2230 defines the remaining
+         * byte fields as raw group movement/status state. */
+        parse_item16_summaries(decoded, out->max_item16, out);
+    }
     free(decoded);
     decoded = NULL;
     offset += item16_size;
@@ -703,6 +855,7 @@ int csb_v1_csbwin_512_verify_save_body(
                 decoded + champion_index * CSBWIN_CHARDESC_STRIDE,
                 &out->champions[champion_index]);
         }
+        parse_character_tail(decoded, out);
     }
     free(decoded);
     decoded = NULL;
@@ -718,6 +871,12 @@ int csb_v1_csbwin_512_verify_save_body(
     }
     out->sections[CSB_V1_CSBWIN_512_SECTION_TIMERS] = section;
     ++out->sections_verified;
+    if (decoded) {
+        /* CSBWin/SaveGame.cpp:563-615 swaps timer time/sequence and
+         * function-specific words after reading. This summary keeps the raw
+         * fixed TIMER fields plus the already-decoded LE time/sequence. */
+        parse_timer_summaries(decoded, out->max_timers, timer_record_size, out);
+    }
     free(decoded);
     decoded = NULL;
     offset += timer_size;
@@ -733,6 +892,11 @@ int csb_v1_csbwin_512_verify_save_body(
     }
     out->sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE] = section;
     ++out->sections_verified;
+    if (decoded) {
+        /* CSBWin/Data.h:1562 exposes TimerQueue() as uint16 entries and
+         * SaveGame.cpp:1851 decodes exactly MaxTimers * 2 bytes. */
+        parse_timer_queue_summary(decoded, out->max_timers, out);
+    }
     free(decoded);
     decoded = NULL;
     offset += timer_queue_size;

@@ -4054,6 +4054,47 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     strcpy(summary.champions[1].title, "WIZARD");
     summary.champions[1].hp = 111;
     summary.champions[1].max_hp = 222;
+    summary.character_tail_brightness = 0x0123;
+    summary.character_tail_see_thru_walls = 1u;
+    summary.character_tail_magic_footprints_active = 1u;
+    summary.character_tail_party_shield = 0x0022;
+    summary.character_tail_fire_shield = 0x0033;
+    summary.character_tail_spell_shield = 0x0044;
+    summary.character_tail_num_footprint_entries = 5u;
+    summary.character_tail_freeze_life_timer = 6u;
+    summary.character_tail_first_magic_footprint = 7u;
+    summary.character_tail_last_magic_footprint = 8u;
+    summary.character_tail_party_footprints[0] = 0x4000u;
+    summary.character_tail_party_footprints[23] = 0x4017u;
+    summary.character_tail_byte13220[0] = 0x90u;
+    summary.character_tail_byte13220[23] = 0xA7u;
+    summary.character_tail_invisible = 1u;
+    summary.item16_summary_total = 2u;
+    summary.item16_summary_count = 2u;
+    summary.item16[0].valid = 1;
+    summary.item16[0].monster_index = 0x1234u;
+    summary.item16[0].facings = 0x20u;
+    summary.item16[0].positions = 0x21u;
+    summary.item16[0].target_x = 0x24u;
+    summary.item16[0].target_y = 0x25u;
+    summary.item16[1].valid = 1;
+    summary.item16[1].monster_index = 0x5678u;
+    summary.timer_summary_total = 3u;
+    summary.timer_summary_count = 3u;
+    summary.timers[0].valid = 1;
+    summary.timers[0].time = 0x01020304u;
+    summary.timers[0].function = 70u;
+    summary.timers[0].ubyte6 = 0x06u;
+    summary.timers[0].sequence = 0x2222u;
+    summary.timers[0].level = 5u;
+    summary.timers[2].valid = 1;
+    summary.timers[2].function = 49u;
+    summary.timers[2].sequence = 0x4444u;
+    summary.timer_queue_summary_total = 3u;
+    summary.timer_queue_summary_count = 3u;
+    summary.timer_queue[0] = 2u;
+    summary.timer_queue[1] = 0u;
+    summary.timer_queue[2] = 1u;
 
     CHECK(csb_v1_runtime_apply_csbwin_gameblock2_summary(
               &profile, &summary) == 0,
@@ -4136,6 +4177,40 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.party_state.Champions[1].CurrentHealth == 111 &&
               profile.party_state.Champions[1].MaximumHealth == 222,
           "CSBWin champion handoff copies the second active champion");
+    CHECK(csb_v1_runtime_apply_csbwin_body_runtime_summaries(
+              &profile, &summary) == 0,
+          "CSBWin decoded body summaries apply to runtime preservation fields");
+    CHECK(profile.csbwin_body_runtime_summary_valid == 1 &&
+              profile.csbwin_character_tail_brightness == 0x0123 &&
+              profile.csbwin_character_tail_party_shield == 0x0022 &&
+              profile.csbwin_character_tail_fire_shield == 0x0033 &&
+              profile.csbwin_character_tail_spell_shield == 0x0044 &&
+              profile.csbwin_character_tail_freeze_life_timer == 6u &&
+              profile.csbwin_character_tail_invisible == 1u,
+          "CSBWin runtime summary stores character-tail spell state");
+    CHECK(profile.csbwin_character_tail_party_footprints[0] == 0x4000u &&
+              profile.csbwin_character_tail_party_footprints[23] == 0x4017u &&
+              profile.csbwin_character_tail_byte13220[0] == 0x90u &&
+              profile.csbwin_character_tail_byte13220[23] == 0xA7u,
+          "CSBWin runtime summary stores footprint history bytes");
+    CHECK(profile.csbwin_item16_summary_total == 2u &&
+              profile.csbwin_item16_summary_count == 2u &&
+              profile.csbwin_item16[0].monster_index == 0x1234u &&
+              profile.csbwin_item16[0].target_x == 0x24u &&
+              profile.csbwin_item16[1].monster_index == 0x5678u,
+          "CSBWin runtime summary stores bounded ITEM16 active-monster records");
+    CHECK(profile.csbwin_timer_summary_total == 3u &&
+              profile.csbwin_timer_summary_count == 3u &&
+              profile.csbwin_timers[0].time == 0x01020304u &&
+              profile.csbwin_timers[0].function == 70u &&
+              profile.csbwin_timers[0].sequence == 0x2222u &&
+              profile.csbwin_timers[2].function == 49u,
+          "CSBWin runtime summary stores bounded timer records");
+    CHECK(profile.csbwin_timer_queue_summary_total == 3u &&
+              profile.csbwin_timer_queue_summary_count == 3u &&
+              profile.csbwin_timer_queue[0] == 2u &&
+              profile.csbwin_timer_queue[2] == 1u,
+          "CSBWin runtime summary stores timer queue order");
 
     summary.party_facing = 4u;
     CHECK(csb_v1_runtime_apply_csbwin_champion_summaries(
@@ -4149,6 +4224,12 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     CHECK(csb_v1_runtime_apply_csbwin_gameblock2_summary(
               &profile, &summary) == -1,
           "CSBWin summary rejects out-of-range champion count");
+    summary.num_character = 2u;
+    summary.item16_summary_count =
+        (uint16_t)(CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES + 1u);
+    CHECK(csb_v1_runtime_apply_csbwin_body_runtime_summaries(
+              &profile, &summary) == -1,
+          "CSBWin body summary handoff rejects out-of-range bounded list counts");
 }
 
 int main(void)

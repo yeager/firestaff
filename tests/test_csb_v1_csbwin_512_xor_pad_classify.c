@@ -197,6 +197,68 @@ static void write_csbwin_champion_fixture(uint8_t *record,
     write_le16(record, 284u, 0x0055u);
 }
 
+static void write_csbwin_character_tail_fixture(uint8_t *characters)
+{
+    uint8_t *tail = characters + 3200u;
+    size_t i;
+    write_le16(tail, 0u, 0x0123u);
+    tail[2u] = 1u;
+    tail[3u] = 1u;
+    write_le16(tail, 4u, 0x0022u);
+    write_le16(tail, 6u, 0x0033u);
+    write_le16(tail, 8u, 0x0044u);
+    tail[10u] = 5u;
+    tail[11u] = 6u;
+    tail[12u] = 7u;
+    tail[13u] = 8u;
+    for (i = 0u; i < 24u; ++i) {
+        write_le16(tail, 14u + i * 2u, (uint16_t)(0x4000u + i));
+        tail[62u + i] = (uint8_t)(0x90u + i);
+    }
+    tail[86u] = 1u;
+}
+
+static void write_csbwin_item16_fixture(uint8_t *record,
+                                        uint16_t monster_index,
+                                        uint8_t base)
+{
+    write_le16(record, 0u, monster_index);
+    record[2u] = (uint8_t)(base + 0u);
+    record[3u] = (uint8_t)(base + 1u);
+    record[4u] = (uint8_t)(base + 2u);
+    record[5u] = (uint8_t)(base + 3u);
+    record[6u] = (uint8_t)(base + 4u);
+    record[7u] = (uint8_t)(base + 5u);
+    record[8u] = (uint8_t)(base + 6u);
+    record[9u] = (uint8_t)(base + 7u);
+    record[10u] = (uint8_t)(base + 8u);
+    record[11u] = (uint8_t)(base + 9u);
+    record[12u] = (uint8_t)(base + 10u);
+    record[13u] = (uint8_t)(base + 11u);
+    record[14u] = (uint8_t)(base + 12u);
+    record[15u] = (uint8_t)(base + 13u);
+}
+
+static void write_csbwin_timer_fixture(uint8_t *record,
+                                       uint32_t time,
+                                       uint8_t function,
+                                       uint16_t sequence,
+                                       uint8_t level)
+{
+    write_le32(record, 0u, time);
+    record[4u] = function;
+    record[5u] = 0xA5u;
+    record[6u] = 0x06u;
+    record[7u] = 0x07u;
+    record[8u] = 0x08u;
+    record[9u] = 0x09u;
+    write_le16(record, 10u, sequence);
+    record[12u] = level;
+    record[13u] = 0xCDu;
+    record[14u] = 0xCEu;
+    record[15u] = 0xCFu;
+}
+
 static size_t build_full_csbwin_body_fixture(uint8_t *buf,
                                              size_t capacity,
                                              int corrupt_timer_queue)
@@ -216,7 +278,6 @@ static size_t build_full_csbwin_body_fixture(uint8_t *buf,
     uint8_t public_bytes[256];
     uint8_t block2[128];
     size_t off;
-    size_t i;
     uint16_t block2_checksum;
     uint16_t item16_checksum;
     uint16_t character_checksum;
@@ -257,9 +318,9 @@ static size_t build_full_csbwin_body_fixture(uint8_t *buf,
     block2_checksum = scramble_block(buf + off, 0x1111u, 64u);
     off += sizeof(block2);
 
-    for (i = 0u; i < ITEM16_SIZE; ++i) {
-        buf[off + i] = (uint8_t)(0x20u + i);
-    }
+    memset(buf + off, 0, ITEM16_SIZE);
+    write_csbwin_item16_fixture(buf + off, 0x1234u, 0x20u);
+    write_csbwin_item16_fixture(buf + off + 16u, 0x5678u, 0x40u);
     item16_checksum = scramble_block(buf + off, 0x2222u,
                                      (uint16_t)(ITEM16_SIZE / 2));
     off += ITEM16_SIZE;
@@ -267,20 +328,22 @@ static size_t build_full_csbwin_body_fixture(uint8_t *buf,
     memset(buf + off, 0, CHARACTER_SIZE);
     write_csbwin_champion_fixture(buf + off, "TIGGY", "APPRENTICE", 0x2200u);
     write_csbwin_champion_fixture(buf + off + 800u, "BORIS", "WIZARD", 0x3300u);
+    write_csbwin_character_tail_fixture(buf + off);
     character_checksum = scramble_block(buf + off, 0x3333u,
                                         (uint16_t)(CHARACTER_SIZE / 2));
     off += CHARACTER_SIZE;
 
-    for (i = 0u; i < TIMER_SIZE; ++i) {
-        buf[off + i] = (uint8_t)((i * 11u + 9u) & 0xFFu);
-    }
+    memset(buf + off, 0, TIMER_SIZE);
+    write_csbwin_timer_fixture(buf + off, 0x01020304u, 70u, 0x2222u, 5u);
+    write_csbwin_timer_fixture(buf + off + 16u, 0x11121314u, 78u, 0x3333u, 6u);
+    write_csbwin_timer_fixture(buf + off + 32u, 0x21222324u, 49u, 0x4444u, 7u);
     timers_checksum = scramble_block(buf + off, 0x4444u,
                                      (uint16_t)(TIMER_SIZE / 2));
     off += TIMER_SIZE;
 
-    for (i = 0u; i < TIMER_QUEUE_SIZE; ++i) {
-        buf[off + i] = (uint8_t)(0x80u + i);
-    }
+    write_le16(buf + off, 0u, 2u);
+    write_le16(buf + off, 2u, 0u);
+    write_le16(buf + off, 4u, 1u);
     timer_queue_checksum = scramble_block(buf + off, 0x5555u,
                                           (uint16_t)(TIMER_QUEUE_SIZE / 2));
     if (corrupt_timer_queue) {
@@ -657,6 +720,19 @@ static int test_full_save_body_verify(void)
                 encrypted_size == 6u);
     ASSERT_TRUE(report.sections[CSB_V1_CSBWIN_512_SECTION_TIMER_QUEUE].
                 checksum_ok == 1);
+    ASSERT_TRUE(report.item16_summary_total == 2u);
+    ASSERT_TRUE(report.item16_summary_count == 2u);
+    ASSERT_TRUE(report.item16[0].valid == 1);
+    ASSERT_TRUE(report.item16[0].monster_index == 0x1234u);
+    ASSERT_TRUE(report.item16[0].facings == 0x20u);
+    ASSERT_TRUE(report.item16[0].positions == 0x21u);
+    ASSERT_TRUE(report.item16[0].target_x == 0x24u);
+    ASSERT_TRUE(report.item16[0].target_y == 0x25u);
+    ASSERT_TRUE(report.item16[0].current_x == 0x28u);
+    ASSERT_TRUE(report.item16[0].current_y == 0x29u);
+    ASSERT_TRUE(report.item16[0].single_monster_status[3] == 0x2Du);
+    ASSERT_TRUE(report.item16[1].monster_index == 0x5678u);
+    ASSERT_TRUE(report.item16[1].facings == 0x40u);
     ASSERT_TRUE(report.champions[0].valid == 1);
     ASSERT_TRUE(strcmp(report.champions[0].name, "TIGGY") == 0);
     ASSERT_TRUE(strcmp(report.champions[0].title, "APPRENTICE") == 0);
@@ -692,6 +768,38 @@ static int test_full_save_body_verify(void)
     ASSERT_TRUE(report.champions[0].monster_causing_damage == 0x0055u);
     ASSERT_TRUE(strcmp(report.champions[1].name, "BORIS") == 0);
     ASSERT_TRUE(report.champions[1].possessions[0] == 0x3300u);
+    ASSERT_TRUE(report.character_tail_brightness == 0x0123);
+    ASSERT_TRUE(report.character_tail_see_thru_walls == 1u);
+    ASSERT_TRUE(report.character_tail_magic_footprints_active == 1u);
+    ASSERT_TRUE(report.character_tail_party_shield == 0x0022);
+    ASSERT_TRUE(report.character_tail_fire_shield == 0x0033);
+    ASSERT_TRUE(report.character_tail_spell_shield == 0x0044);
+    ASSERT_TRUE(report.character_tail_num_footprint_entries == 5u);
+    ASSERT_TRUE(report.character_tail_freeze_life_timer == 6u);
+    ASSERT_TRUE(report.character_tail_first_magic_footprint == 7u);
+    ASSERT_TRUE(report.character_tail_last_magic_footprint == 8u);
+    ASSERT_TRUE(report.character_tail_party_footprints[0] == 0x4000u);
+    ASSERT_TRUE(report.character_tail_party_footprints[23] == 0x4017u);
+    ASSERT_TRUE(report.character_tail_byte13220[0] == 0x90u);
+    ASSERT_TRUE(report.character_tail_byte13220[23] == 0xA7u);
+    ASSERT_TRUE(report.character_tail_invisible == 1u);
+    ASSERT_TRUE(report.timer_summary_total == 3u);
+    ASSERT_TRUE(report.timer_summary_count == 3u);
+    ASSERT_TRUE(report.timers[0].valid == 1);
+    ASSERT_TRUE(report.timers[0].time == 0x01020304u);
+    ASSERT_TRUE(report.timers[0].function == 70u);
+    ASSERT_TRUE(report.timers[0].ubyte5 == 0xA5u);
+    ASSERT_TRUE(report.timers[0].ubyte6 == 0x06u);
+    ASSERT_TRUE(report.timers[0].ubyte9 == 0x09u);
+    ASSERT_TRUE(report.timers[0].sequence == 0x2222u);
+    ASSERT_TRUE(report.timers[0].level == 5u);
+    ASSERT_TRUE(report.timers[2].function == 49u);
+    ASSERT_TRUE(report.timers[2].sequence == 0x4444u);
+    ASSERT_TRUE(report.timer_queue_summary_total == 3u);
+    ASSERT_TRUE(report.timer_queue_summary_count == 3u);
+    ASSERT_TRUE(report.timer_queue[0] == 2u);
+    ASSERT_TRUE(report.timer_queue[1] == 0u);
+    ASSERT_TRUE(report.timer_queue[2] == 1u);
 
     rc = csb_v1_csbwin_512_verify_save_body(bytes, size - 1u, 16u, &report);
     ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_TOO_SMALL);
