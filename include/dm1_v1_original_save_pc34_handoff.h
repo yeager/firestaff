@@ -89,6 +89,21 @@ typedef struct {
     uint16_t timeline_indices[DM1_EVENT_MAX_COUNT];
 } DM1OriginalSavePC34HandoffReport;
 
+typedef struct {
+    int champion_count;
+    int map_index;
+    int map_x;
+    int map_y;
+    int direction;
+    int active_champion_index;
+    int current_active_group_count;
+    int maximum_active_group_count;
+    int event_count;
+    int event_maximum_count;
+    uint32_t game_time;
+    uint32_t game_id;
+} DM1OriginalSavePC34FixtureSpec;
+
 /* Classify `bytes` as a ReDMCSB DM1 PC 3.4 save header, then hand
  * the same byte buffer through a bounded ReDMCSB PC save-part
  * reader for GLOBAL_DATA and optional timeline handoff.
@@ -134,6 +149,23 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
     struct GameWorld_Compat *world,
     struct DM1_EventQueue_V1 *event_queue,
     DM1OriginalSavePC34HandoffReport *out_report);
+
+/* Builds a bounded ReDMCSB PC34-shaped original-save byte stream for
+ * importer/export handoff verification. This is not a full user save
+ * exporter: it writes a deterministic GLOBAL_DATA/ACTIVE_GROUP/PARTY/
+ * EVENT/TIMELINE envelope that the real classifier and handoff reader
+ * must accept.
+ *
+ * Source-lock:
+ *   ReDMCSB LOADSAVE.C F0433 save-part order and header write;
+ *   SAVEHEAD.C F0430 header checksum/obfuscation; READWRIT.C F0417
+ *   part checksum/obfuscation.
+ */
+int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
+    const DM1OriginalSavePC34FixtureSpec *spec,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size);
 
 const char *dm1_v1_original_save_pc34_handoff_result_name(int result);
 const char *dm1_v1_original_save_pc34_handoff_source_evidence(void);
