@@ -60,6 +60,14 @@ static uint16_t read_le16(const uint8_t *b, size_t off)
                       ((uint16_t)b[off + 1u] << 8));
 }
 
+static uint32_t read_le32(const uint8_t *b, size_t off)
+{
+    return ((uint32_t)b[off]) |
+           ((uint32_t)b[off + 1u] << 8) |
+           ((uint32_t)b[off + 2u] << 16) |
+           ((uint32_t)b[off + 3u] << 24);
+}
+
 static void write_le16(uint8_t *b, size_t off, uint16_t v)
 {
     b[off]     = (uint8_t)(v & 0xFFu);
@@ -838,6 +846,108 @@ static int test_full_save_body_verify(void)
     return 1;
 }
 
+static int test_writable_champion_sections(void)
+{
+    uint8_t bytes[8192];
+    uint8_t decoded_block2[128];
+    uint8_t decoded_characters[3328];
+    CSB_V1_CSBWin512BodyReport report;
+    CSB_V1_CSBWin512WritableChampionSections writable;
+    int rc;
+    size_t size;
+
+    size = build_full_csbwin_body_fixture(bytes, sizeof(bytes), 0);
+    ASSERT_TRUE(size == 4054u);
+    rc = csb_v1_csbwin_512_verify_save_body(bytes, size, 16u, &report);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+
+    rc = csb_v1_csbwin_512_build_writable_champion_sections(
+        &report, &writable);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(writable.block2_hash == 0u);
+    ASSERT_TRUE(writable.character_hash == 0u);
+    ASSERT_TRUE(writable.block2_size == 128u);
+    ASSERT_TRUE(writable.character_size == 3328u);
+    ASSERT_TRUE(writable.block2_checksum != 0u);
+    ASSERT_TRUE(writable.character_checksum != 0u);
+
+    memset(decoded_block2, 0, sizeof(decoded_block2));
+    rc = csb_v1_csbwin_512_decode_stream_section(
+        writable.block2_scrambled,
+        writable.block2_size,
+        writable.block2_hash,
+        writable.block2_checksum,
+        decoded_block2,
+        sizeof(decoded_block2));
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(read_le32(decoded_block2, 0u) == report.game_time);
+    ASSERT_TRUE(read_le32(decoded_block2, 4u) == report.random_seed);
+    ASSERT_TRUE(read_le16(decoded_block2, 8u) == report.object_in_hand);
+    ASSERT_TRUE(read_le16(decoded_block2, 10u) == report.num_character);
+    ASSERT_TRUE(read_le16(decoded_block2, 12u) == report.party_x);
+    ASSERT_TRUE(read_le16(decoded_block2, 14u) == report.party_y);
+    ASSERT_TRUE(read_le16(decoded_block2, 16u) == report.party_facing);
+    ASSERT_TRUE(read_le16(decoded_block2, 18u) == report.party_level);
+    ASSERT_TRUE(read_le16(decoded_block2, 20u) == report.hand_char);
+    ASSERT_TRUE(read_le16(decoded_block2, 22u) == report.magic_caster);
+    ASSERT_TRUE(read_le16(decoded_block2, 24u) == report.num_timer);
+    ASSERT_TRUE(read_le16(decoded_block2, 28u) == report.max_timers);
+    ASSERT_TRUE(read_le16(decoded_block2, 46u) == report.max_item16);
+    ASSERT_TRUE(read_le16(decoded_block2, 48u) == report.timer_sequence);
+
+    memset(decoded_characters, 0, sizeof(decoded_characters));
+    rc = csb_v1_csbwin_512_decode_stream_section(
+        writable.characters_scrambled,
+        writable.character_size,
+        writable.character_hash,
+        writable.character_checksum,
+        decoded_characters,
+        sizeof(decoded_characters));
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(memcmp(decoded_characters + 0u, "TIGGY", 5u) == 0);
+    ASSERT_TRUE(memcmp(decoded_characters + 8u, "APPRENTICE", 10u) == 0);
+    ASSERT_TRUE(read_le16(decoded_characters, 24u) == 0x2468u);
+    ASSERT_TRUE(decoded_characters[28u] == 2u);
+    ASSERT_TRUE(decoded_characters[29u] == 3u);
+    ASSERT_TRUE(decoded_characters[30u] == 0x30u);
+    ASSERT_TRUE(decoded_characters[31u] == 0x31u);
+    ASSERT_TRUE(decoded_characters[32u] == 5u);
+    ASSERT_TRUE(decoded_characters[34u] == 96u);
+    ASSERT_TRUE(decoded_characters[37u] == 114u);
+    ASSERT_TRUE(read_le16(decoded_characters, 44u) == 0xFFF0u);
+    ASSERT_TRUE(read_le16(decoded_characters, 46u) == 0x0011u);
+    ASSERT_TRUE(read_le16(decoded_characters, 52u) == 321u);
+    ASSERT_TRUE(read_le16(decoded_characters, 64u) == 0x0BADu);
+    ASSERT_TRUE(read_le16(decoded_characters, 92u + 3u * 6u) == 0x0103u);
+    ASSERT_TRUE(read_le16(decoded_characters, 212u) == 0x2200u);
+    ASSERT_TRUE(read_le16(decoded_characters, 212u + 29u * 2u) == 0x221Du);
+    ASSERT_TRUE(read_le16(decoded_characters, 272u) == 777u);
+    ASSERT_TRUE(read_le32(decoded_characters, 276u) == 0xCAFEBABEu);
+    ASSERT_TRUE(decoded_characters[336u] == 0x80u);
+    ASSERT_TRUE(decoded_characters[336u + 463u] ==
+                (uint8_t)(0x80u + (463u & 0x3fu)));
+    ASSERT_TRUE(memcmp(decoded_characters + 800u, "BORIS", 5u) == 0);
+    ASSERT_TRUE(read_le16(decoded_characters, 3200u) == 0x0123u);
+    ASSERT_TRUE(decoded_characters[3200u + 2u] == 1u);
+    ASSERT_TRUE(read_le16(decoded_characters, 3200u + 14u) == 0x4000u);
+    ASSERT_TRUE(read_le16(decoded_characters, 3200u + 14u + 23u * 2u) ==
+                0x4017u);
+    ASSERT_TRUE(decoded_characters[3200u + 62u] == 0x90u);
+    ASSERT_TRUE(decoded_characters[3200u + 62u + 23u] == 0xA7u);
+    ASSERT_TRUE(decoded_characters[3200u + 86u] == 1u);
+
+    writable.characters_scrambled[10u] ^= 0x55u;
+    rc = csb_v1_csbwin_512_decode_stream_section(
+        writable.characters_scrambled,
+        writable.character_size,
+        writable.character_hash,
+        writable.character_checksum,
+        decoded_characters,
+        sizeof(decoded_characters));
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM);
+    return 1;
+}
+
 static int test_csb_first_fallback_to_dm(void)
 {
     CSB_V1_CSBWin512Report report;
@@ -949,6 +1059,7 @@ struct { const char *name; test_fn fn; } tests[] = {
     { "dm-key-synthetic-accept",      test_dm_key_synthetic_accept },
     { "stream-section-decode",        test_stream_section_decode },
     { "full-save-body-verify",        test_full_save_body_verify },
+    { "writable-champion-sections",   test_writable_champion_sections },
     { "csb-first-fallback-to-dm",     test_csb_first_fallback_to_dm },
     { "input-buffer-not-modified",    test_input_buffer_not_modified },
     { "result-and-evidence-strings",  test_result_and_evidence_strings },

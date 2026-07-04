@@ -396,6 +396,17 @@ typedef struct {
     uint16_t timer_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
 } CSB_V1_CSBWin512BodyReport;
 
+typedef struct {
+    uint16_t block2_hash;
+    uint16_t block2_checksum;
+    uint16_t character_hash;
+    uint16_t character_checksum;
+    size_t block2_size;
+    size_t character_size;
+    uint8_t block2_scrambled[128];
+    uint8_t characters_scrambled[3328];
+} CSB_V1_CSBWin512WritableChampionSections;
+
 /* ── Public API ──────────────────────────────────────────────────────── */
 
 /* Classify the first 512 bytes of a CSBWin / DM1 save.
@@ -458,6 +469,15 @@ int csb_v1_csbwin_512_decode_stream_section(
     uint16_t expected_checksum,
     uint8_t *out,
     size_t out_capacity);
+
+/* Build the first CSBWin writeback sections from a bounded runtime summary.
+ * The output contains scrambled GAMEBLOCK2 and CHARDESC/character bytes plus
+ * the section hashes/checksums that a future GAMEBLOCK1 writer must store.
+ * It intentionally does not emit the 512-byte header, ITEM16, timers, timer
+ * queue, DSA data, or appended dungeon/global blocks. */
+int csb_v1_csbwin_512_build_writable_champion_sections(
+    const CSB_V1_CSBWin512BodyReport *summary,
+    CSB_V1_CSBWin512WritableChampionSections *out);
 
 /* Verify the CSBWin save-body layout that follows GAMEBLOCK1.
  *
