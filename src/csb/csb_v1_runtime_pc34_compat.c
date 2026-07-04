@@ -46,6 +46,11 @@ static const char *const g_csb_dungeon_hashes[] = {
     NULL
 };
 
+static int csb_v1_runtime_locate_appended_expool_record_internal(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size);
 static void csb_v1_runtime_schedule_explosion_advance_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event);
@@ -78,6 +83,39 @@ static int csb_v1_runtime_stairs_exit_direction(
     int level,
     int map_x,
     int map_y);
+
+typedef struct {
+    const CSB_V1_RuntimeProfile *profile;
+    const CSB_V1_DungeonData *dungeon;
+} CSB_V1_RuntimeSkinCacheLookupCtx;
+
+static int csb_v1_runtime_skin_cache_record_lookup(
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size,
+    void *user)
+{
+    const CSB_V1_RuntimeSkinCacheLookupCtx *ctx =
+        (const CSB_V1_RuntimeSkinCacheLookupCtx *)user;
+
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!ctx) return 0;
+
+    /* CSBWin DSA.cpp SETSKIN writes through Expool. A resumed CSBWin save
+     * can therefore carry skin records that supersede the static dungeon
+     * DB11 records; use the runtime save tail first, then fall back to the
+     * loaded dungeon's original Expool. */
+    if (csb_v1_runtime_locate_appended_expool_record_internal(
+            ctx->profile, record_id, out_bytes, out_size)) {
+        return 1;
+    }
+    return csb_v1_dungeon_skin_cache_record_lookup(
+        record_id,
+        out_bytes,
+        out_size,
+        (void *)ctx->dungeon);
+}
 
 /* GRAPHICS.DAT (or CSB.DAT / CSBGRAPH.DAT) MD5 hashes for all known
  * CSB variants — mirrors g_csb_boot_graphics_hashes in csb_v1_boot.c
@@ -7772,6 +7810,7 @@ int csb_v1_runtime_custom_background_skin_grid(
     int y;
     int has_skin = 0;
     uint8_t default_skin;
+    CSB_V1_RuntimeSkinCacheLookupCtx lookup_ctx;
 
     if (out_width) *out_width = 0;
     if (out_height) *out_height = 0;
@@ -7796,12 +7835,15 @@ int csb_v1_runtime_custom_background_skin_grid(
 
     memset(out_cell_skins, 0, (size_t)width * (size_t)height);
     /* CSBWin data.cpp SKIN_CACHE::GetSkin/GetDefaultSkin reads Expool
-     * EDT_Skins records through Locate(); Firestaff keeps the same runtime
-     * ownership boundary by resolving records from the loaded DB11 dungeon. */
+     * EDT_Skins records through Locate(); Firestaff resolves the runtime
+     * CSBWin save tail first so saved SETSKIN state can override the loaded
+     * dungeon DB11 defaults during startup/resume rendering. */
+    lookup_ctx.profile = profile;
+    lookup_ctx.dungeon = dungeon;
     default_skin = csb_v1_skin_cache_get_default_skin(
         &profile->skin_cache,
-        csb_v1_dungeon_skin_cache_record_lookup,
-        (void *)dungeon,
+        csb_v1_runtime_skin_cache_record_lookup,
+        &lookup_ctx,
         level);
     if (default_skin != 0u) {
         has_skin = 1;
@@ -7810,8 +7852,8 @@ int csb_v1_runtime_custom_background_skin_grid(
         for (x = 0; x < width; ++x) {
             uint8_t skin = csb_v1_skin_cache_get_skin(
                 &profile->skin_cache,
-                csb_v1_dungeon_skin_cache_record_lookup,
-                (void *)dungeon,
+                csb_v1_runtime_skin_cache_record_lookup,
+                &lookup_ctx,
                 level,
                 width,
                 height,
@@ -8991,7 +9033,7 @@ static int csb_v1_runtime_build_csbwin_core_summary(
     return 0;
 }
 
-int csb_v1_runtime_locate_csbwin_appended_expool_record(
+static int csb_v1_runtime_locate_appended_expool_record_internal(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t record_id,
     const uint8_t **out_bytes,
@@ -9048,6 +9090,19 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
     if (out_bytes) *out_bytes = profile->csbwin_appended_tail + offset;
     if (out_size) *out_size = report_size;
     return 1;
+}
+
+int csb_v1_runtime_locate_csbwin_appended_expool_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t record_id,
+    const uint8_t **out_bytes,
+    size_t *out_size)
+{
+    return csb_v1_runtime_locate_appended_expool_record_internal(
+        profile,
+        record_id,
+        out_bytes,
+        out_size);
 }
 
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
