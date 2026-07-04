@@ -17579,8 +17579,7 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
                                     int fbH,
-                                    int maxVisibleForward,
-                                    const M11_ViewportCell cells[3][3]) {
+                                    int maxVisibleForward) {
     size_t i;
     int flipWalls;
     if (!state || !state->assetsAvailable) {
@@ -17594,14 +17593,9 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
          * squares far-to-near without testing nearer side-lane occupancy;
          * nearer D1/D2 side walls and center walls overpaint farther panels.
          * Firestaff's split primitive passes still must honor the nearest
-         * center blocker and same-side blockers, otherwise D3/D2 side
-         * wall panels can paint a continuing corridor through a D1/D2C wall. */
+         * center blocker; same-side blockers are drawn later in the same
+         * far-to-near pass and overpaint the farther side panel. */
         if (kM11_DM1SideWallBlits[i].relForward > maxVisibleForward) {
-            continue;
-        }
-        if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             kM11_DM1SideWallBlits[i].relForward,
-                                             kM11_DM1SideWallBlits[i].relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state,
@@ -30859,7 +30853,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                            maxVisibleForward, cells);
+                            maxVisibleForward);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
@@ -30892,7 +30886,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         if (blockingCenterDepth > 0) {
             int nearMaxVisibleForward = blockingCenterDepth;
             m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    nearMaxVisibleForward, cells);
+                                    nearMaxVisibleForward);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                         nearMaxVisibleForward, cells);
             m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
