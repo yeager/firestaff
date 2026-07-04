@@ -2394,6 +2394,30 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
     return csb_v1_runtime_apply_csbwin_resume_file(profile, path, 0u) == 0;
 }
 
+static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
+                                            const CSB_V1_RuntimeProfile *profile)
+{
+    uint16_t thing;
+    if (!state || !profile || !profile->csbwin_gameblock2_summary_valid) {
+        return;
+    }
+    thing = profile->csbwin_object_in_hand;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+        state->leaderHandObjectPresent = 0;
+        state->leaderHandThing = THING_NONE;
+        state->leaderHandIconIndex = -1;
+        return;
+    }
+    /* CSBWin SaveGame.cpp GAMEBLOCK2 stores the transient cursor/
+     * leader-hand object separately from champion slots.  M11 has no
+     * CSB object-icon binding yet, so preserve the raw source thing and
+     * leave icon selection unknown instead of resolving it through the
+     * DM1 world thing tables. */
+    state->leaderHandObjectPresent = 1;
+    state->leaderHandThing = thing;
+    state->leaderHandIconIndex = -1;
+}
+
 static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
                                              const char* path);
 static void m11_set_status(M11_GameViewState* state,
@@ -8598,6 +8622,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.party_y = profile->runtime.party_y;
         state->csbState.party_dir = profile->runtime.party_dir;
         state->csbState.tick_count = (int)profile->runtime.tick_count;
+        m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
                            ? "CSB RESUMED"
@@ -9406,6 +9431,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
         state->csbState.party_y = profile->runtime.party_y;
         state->csbState.party_dir = profile->runtime.party_dir;
         state->csbState.tick_count = (int)profile->runtime.tick_count;
+        m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         state->loadGameTick = profile->runtime.game_time;
         state->lastSaveTick = profile->runtime.game_time;
         m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");

@@ -880,6 +880,8 @@ int main(void) {
                 view.csbState.party_y == 7 &&
                 view.csbState.party_dir == 3,
                 "M11 CSBWin resume mirrors GAMEBLOCK2 party pose");
+    expect_true(M11_GameView_GetV1LeaderHandThing(&view) == 0x4321u,
+                "M11 CSBWin resume mirrors object-in-hand into leader hand");
     profile = (CSB_V1_BootProfile*)view.csbBootProfile;
     if (profile) {
         expect_true(profile->runtime.game_time == 0x01020304u,
@@ -896,6 +898,19 @@ int main(void) {
         expect_true(profile->runtime.timeline_queue.eventCount == 3,
                     "M11 CSBWin resume materializes timer queue");
     }
+    expect_true(test_setenv("FIRESTAFF_QUICKSAVE_PATH", csbwin_save_path) == 0,
+                "test fixture points F9 at CSBWin resume save");
+    M11_GameView_ClearV1LeaderHandObject(&view);
+    expect_true(M11_GameView_GetV1LeaderHandThing(&view) == THING_NONE,
+                "test clears CSBWin mirrored leader hand before F9");
+    if (profile) {
+        profile->runtime.csbwin_gameblock2_summary_valid = 0;
+        profile->runtime.csbwin_object_in_hand = THING_NONE;
+    }
+    expect_true(M11_GameView_QuickLoad(&view),
+                "M11 CSB F9 quickload accepts verified CSBWin save");
+    expect_true(M11_GameView_GetV1LeaderHandThing(&view) == 0x4321u,
+                "M11 CSB F9 quickload restores CSBWin object-in-hand");
     M11_GameView_Shutdown(&view);
     expect_true(view.csbBootProfile == NULL,
                 "M11 shutdown clears CSBWin resume boot ownership");
