@@ -4308,6 +4308,86 @@ static void test_projectile_champion_hit_uses_f0321_defense_scale(void) {
               "shielded projectile champion impact does not trip party-dead gate");
 }
 
+static void test_projectile_empty_party_cell_does_not_hit_champion(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 0;
+    state.world.party.direction = 1;
+    state.world.party.championCount = 1;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].stamina.current = 100;
+    state.world.party.champions[0].stamina.maximum = 100;
+    state.world.party.champions[0].cell = 2;
+    state.world.gameTick = 100;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 7u);
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->attackTypeCode = COMBAT_ATTACK_NORMAL;
+    projectile->ownerKind = PROJECTILE_OWNER_CREATURE;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 0;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 50;
+    projectile->attack = 20;
+    projectile->stepEnergy = 5;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = THING_NONE;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "projectile landing in empty party sub-cell stays live");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapX, 0,
+              "empty-cell projectile enters party square");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapY, 0,
+              "empty-cell projectile keeps target row");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 1,
+              "empty-cell projectile commits F0219 parity landing cell");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 100,
+              "empty party sub-cell projectile does not damage champion in another cell");
+}
+
 static void test_projectile_champion_hit_can_kill_party(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -8755,6 +8835,7 @@ int main(void) {
     test_projectile_magical_door_zero_adjusted_skips_sound();
     test_projectile_champion_hit_applies_poison_dose();
     test_projectile_champion_hit_uses_f0321_defense_scale();
+    test_projectile_empty_party_cell_does_not_hit_champion();
     test_projectile_champion_hit_can_kill_party();
     test_thrown_potion_wall_impact_consumes_potion_thing();
     test_thrown_weapon_wall_impact_materializes_source_square();
