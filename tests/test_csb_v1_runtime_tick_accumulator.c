@@ -723,6 +723,47 @@ static uint16_t make_sensor_target(int x, int y, int cell)
                       ((y & 0x1f) << 11));
 }
 
+static void make_real_format_c013_storage_rotation_dungeon(
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *raw,
+    size_t raw_size)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 3;
+    dungeon->level_offsets[0] = 0;
+    dungeon->square_bytes = 1;
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->square_first_thing_base = 66;
+    dungeon->square_first_thing_count = 1;
+    dungeon->thing_data_bases[3] = 68;
+    dungeon->thing_type_counts[3] = 5;
+    dungeon->thing_data_bases[5] = 108;
+    dungeon->thing_type_counts[5] = 1;
+
+    raw[real_format_square_offset(0, 0)] = 0x10u; /* wall + thing list */
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5); /* fake wall */
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(3u << 10)); /* C013 sensor 0 */
+    test_put_le16(raw, 68, (uint16_t)((3u << 10) | 4u));
+    test_put_le16(raw, 70,
+                  (uint16_t)((8u << 7) |
+                             DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE));
+    test_put_le16(raw, 72, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 74, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 100, (uint16_t)(5u << 10)); /* C013 sensor 1 -> object */
+    test_put_le16(raw, 102,
+                  (uint16_t)((8u << 7) |
+                             DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE));
+    test_put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 106, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 108, 0xfffeu);
+    test_put_le16(raw, 110, 8u); /* weapon/object type used by C013 data */
+}
+
 static void make_real_format_wall_text_dungeon(CSB_V1_DungeonData *dungeon,
                                                uint8_t *raw,
                                                size_t raw_size,
@@ -2877,6 +2918,50 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
           "C06 square-object launcher unlinks both objects from the source square chain");
     CHECK(count_queued_event_type(&profile, DM1_EVENT_MOVE_PROJECTILE) == 2,
           "C06 square-object launcher schedules one C49 movement event per object projectile");
+
+    make_real_format_c013_storage_rotation_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    {
+        uint16_t leader_hand = 0xffffu;
+        CHECK(csb_v1_runtime_trigger_wall_ornament_click_ex(
+                  &profile,
+                  0,
+                  0,
+                  0,
+                  &leader_hand) == 1,
+              "C013 wall storage pickup queues one remote square event");
+        CHECK(leader_hand == (uint16_t)(5u << 10),
+              "C013 wall storage pickup moves matching object into leader hand");
+        CHECK(test_get_le16(raw, 66) == (uint16_t)((3u << 10) | 4u) &&
+                  test_get_le16(raw, 100) == (uint16_t)(3u << 10) &&
+                  test_get_le16(raw, 68) == 0xfffeu,
+              "C013 wall storage pickup rotates same-cell sensors after processing");
+        CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+              "C013 pickup remote fakewall event fires on the current tick");
+        CHECK((raw[real_format_square_offset(2, 0)] & 0x04u) != 0,
+              "C013 pickup remote event opens the target fakewall");
+        CHECK(csb_v1_runtime_trigger_wall_ornament_click_ex(
+                  &profile,
+                  0,
+                  0,
+                  0,
+                  &leader_hand) == 1,
+              "C013 wall storage deposit queues one remote square event");
+        CHECK(leader_hand == 0xffffu,
+              "C013 wall storage deposit clears leader hand");
+        CHECK(test_get_le16(raw, 66) == (uint16_t)(3u << 10) &&
+                  test_get_le16(raw, 68) == (uint16_t)((3u << 10) | 4u),
+              "C013 wall storage deposit rotates sensors back to the first record");
+        CHECK(test_get_le16(raw, 108) == 0xfffeu &&
+                  test_get_le16(raw, 100) == (uint16_t)(5u << 10) &&
+                  test_get_le16(raw, 68) == (uint16_t)((3u << 10) | 4u),
+              "C013 wall storage deposit links the object back into the wall cell");
+    }
 
     make_real_format_sensor_dungeon(
         &dungeon,
