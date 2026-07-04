@@ -466,6 +466,14 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     CSB_V1_RuntimeProfile *profile,
     const char *path,
     size_t max_size);
+int csb_v1_runtime_export_csbwin_core_save_to_memory(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t *out,
+    size_t out_capacity,
+    size_t *out_size);
+int csb_v1_runtime_export_csbwin_core_save_to_path(
+    const CSB_V1_RuntimeProfile *profile,
+    const char *path);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
