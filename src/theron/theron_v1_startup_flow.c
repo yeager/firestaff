@@ -15,13 +15,13 @@ static int tqr_stage_is_available(const Theron_DungeonProgression *progression,
 }
 
 static const Theron_StartupMirrorMeta g_tqr_mirror_meta[THERON_STARTUP_HERO_MIRROR_COUNT] = {
-    { "Fighter Mirror",  THERON_CLASS_FIGHTER, 1 },
-    { "Priest Mirror",   THERON_CLASS_PRIEST,  2 },
-    { "Ninja Mirror",    THERON_CLASS_NINJA,   3 },
-    { "Wizard Mirror",   THERON_CLASS_WIZARD,  4 },
-    { "Warrior Mirror",  THERON_CLASS_FIGHTER, 5 },
-    { "Healer Mirror",   THERON_CLASS_PRIEST,  6 },
-    { "Sorcerer Mirror", THERON_CLASS_WIZARD,  7 }
+    { "Hakar",  THERON_CLASS_FIGHTER, 1 },
+    { "Mara",   THERON_CLASS_PRIEST,  2 },
+    { "Tiran",  THERON_CLASS_FIGHTER, 3 },
+    { "Linos",  THERON_CLASS_NINJA,   4 },
+    { "Dotan",  THERON_CLASS_WIZARD,  5 },
+    { "Hexa",   THERON_CLASS_FIGHTER, 6 },
+    { "Pental", THERON_CLASS_FIGHTER, 7 }
 };
 
 const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index) {
@@ -185,6 +185,8 @@ const char *theron_v1_startup_result_name(Theron_StartupResult result) {
 const char *theron_v1_startup_flow_source_evidence(void) {
     return "Theron's Quest manual: choose stage, Soul Room, seven hero mirrors, "
            "resurrect up to three heroes, enter central forcefield; "
+           "manual/dmweb champion list: Hakar, Mara, Tiran, Linos, Dotan, "
+           "Hexa, Pental as the seven selectable heroes; "
            "dmweb Theron's Quest: Theron plus three champions, companions reset "
            "after dungeon completion; PC Engine Software Bible: console control "
            "profile for Dungeon Master: Theron's Quest.";

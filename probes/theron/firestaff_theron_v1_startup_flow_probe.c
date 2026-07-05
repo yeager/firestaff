@@ -97,16 +97,19 @@ int main(void) {
     check_int("party count theron plus three", party.champion_count, 4);
     check_int("leader slot is Theron", party.active_slot, THERON_CHAMPION_SLOT_THERON);
     check_contains("slot 0 name", party.champions[0].name, "Theron");
-    check_contains("slot 1 mirror name", party.champions[1].name, "Sorcerer Mirror");
-    check_contains("slot 2 mirror name", party.champions[2].name, "Fighter Mirror");
-    check_contains("slot 3 mirror name", party.champions[3].name, "Ninja Mirror");
+    check_contains("slot 1 mirror name", party.champions[1].name, "Pental");
+    check_contains("slot 2 mirror name", party.champions[2].name, "Hakar");
+    check_contains("slot 3 mirror name", party.champions[3].name, "Tiran");
     check_int("slot 1 portrait", party.champions[1].portrait_index, 7);
     check_int("slot 2 portrait", party.champions[2].portrait_index, 1);
     check_int("slot 3 portrait", party.champions[3].portrait_index, 3);
-    check_int("slot 1 class", party.champions[1].primary_class, THERON_CLASS_WIZARD);
+    check_int("slot 1 class", party.champions[1].primary_class, THERON_CLASS_FIGHTER);
     check_int("slot 2 class", party.champions[2].primary_class, THERON_CLASS_FIGHTER);
-    check_int("slot 3 class", party.champions[3].primary_class, THERON_CLASS_NINJA);
-    check_contains("mirror 0 meta", theron_v1_startup_mirror_meta(0)->name, "Fighter");
+    check_int("slot 3 class", party.champions[3].primary_class, THERON_CLASS_FIGHTER);
+    check_contains("mirror 0 meta", theron_v1_startup_mirror_meta(0)->name, "Hakar");
+    check_contains("mirror 1 meta", theron_v1_startup_mirror_meta(1)->name, "Mara");
+    check_contains("mirror 3 meta", theron_v1_startup_mirror_meta(3)->name, "Linos");
+    check_contains("mirror 6 meta", theron_v1_startup_mirror_meta(6)->name, "Pental");
     check_contains("class label", theron_v1_startup_class_name(THERON_CLASS_PRIEST), "PRIEST");
 
     theron_v1_startup_flow_init(&flow);
