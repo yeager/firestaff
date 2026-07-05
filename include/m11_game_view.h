@@ -412,6 +412,9 @@ typedef struct {
     unsigned short leaderHandThing;
     int leaderHandIconIndex;
     char leaderHandObjectName[32];
+    int pointerPositionKnown;
+    int pointerX;
+    int pointerY;
 
     /* Source inventory open-chest state.  Mirrors ReDMCSB
      * G0426_T_OpenChest at the V1 presentation bridge: THING_NONE means
@@ -693,6 +696,9 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
                                                int y,
                                                int primaryButton);
+M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
+                                                   int x,
+                                                   int y);
 M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int x,
                                                      int y,
@@ -1534,6 +1540,12 @@ int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
                                                 int* outY,
                                                 int* outW,
                                                 int* outH);
+int M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
+    const M11_GameViewState* state,
+    int* outX,
+    int* outY,
+    int* outW,
+    int* outH);
 uint32_t M11_GameView_GetDm2LeaderHandObject(const M11_GameViewState* state);
 int M11_GameView_Dm2LeaderHandObjectIconAvailable(
     const M11_GameViewState* state);
