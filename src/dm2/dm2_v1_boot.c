@@ -22,6 +22,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_save_load.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
 #include <stdio.h>
@@ -36,6 +37,7 @@
 #define DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT 0x20
 #define DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT 0x04
 #define DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT 0x08
+#define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -833,6 +835,67 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     if (out_stride) *out_stride = *cache_w;
     (void)fmt;
     return 0;
+}
+
+static int dm2_v1_boot_object_pool_to_gdat_category(uint8_t pool)
+{
+    switch (pool) {
+        case 5: return DM2_GDAT_CATEGORY_WEAPONS;
+        case 6: return DM2_GDAT_CATEGORY_CLOTHES;
+        case 7: return DM2_GDAT_CATEGORY_SCROLLS;
+        case 10: return DM2_GDAT_CATEGORY_MISCELLANEOUS;
+        default: return -1;
+    }
+}
+
+int dm2_v1_boot_object_icon_asset_fetch(
+    DM2_V1_BootProfile *profile,
+    uint32_t object_id,
+    uint8_t **out_pixels,
+    int *out_w,
+    int *out_h,
+    int *out_stride)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    uint8_t pool;
+    uint32_t index;
+    int category;
+    int field;
+    DM2_ImageFormat fmt = DM2_IMG_FMT_UNKNOWN;
+
+    if (out_pixels) *out_pixels = NULL;
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    if (out_stride) *out_stride = 0;
+    if (!profile || !profile->graphics_dat || !out_pixels) return -1;
+    if (!dm2_db_decode_handle(object_id, &pool, &index)) return -1;
+    if (index > 0xffu) return -1;
+    category = dm2_v1_boot_object_pool_to_gdat_category(pool);
+    if (category < 0) return -1;
+
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    for (field = 0; field < DM2_GDAT_OBJECT_ICON_FIELD_LIMIT; ++field) {
+        uint8_t *pixels = dm2_v1_asset_load_image_field(&gfx->loader,
+                                                        category,
+                                                        (int)index,
+                                                        field,
+                                                        out_w,
+                                                        out_h,
+                                                        &fmt);
+        if (pixels && out_w && out_h && *out_w > 0 && *out_h > 0) {
+            *out_pixels = pixels;
+            if (out_stride) *out_stride = *out_w;
+            (void)fmt;
+            return 0;
+        }
+        dm2_v1_asset_free_pixels(pixels);
+    }
+    return -1;
+}
+
+void dm2_v1_boot_object_icon_asset_free(uint8_t *pixels)
+{
+    dm2_v1_asset_free_pixels(pixels);
 }
 
 /* ── Cleanup ─────────────────────────────────────────────────────────── */

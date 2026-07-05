@@ -146,6 +146,19 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
                                      int *out_h,
                                      int *out_stride);
 
+/* Fetch a DM2 object icon image from the boot-owned GRAPHICS.DAT handle.
+ * The returned pixel buffer is owned by the caller and must be freed with
+ * dm2_v1_boot_object_icon_asset_free(). Returns 0 on success. */
+int dm2_v1_boot_object_icon_asset_fetch(
+    DM2_V1_BootProfile *profile,
+    uint32_t object_id,
+    uint8_t **out_pixels,
+    int *out_w,
+    int *out_h,
+    int *out_stride);
+
+void dm2_v1_boot_object_icon_asset_free(uint8_t *pixels);
+
 /* Free resources allocated during boot (but not the profile itself). */
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile);
 
