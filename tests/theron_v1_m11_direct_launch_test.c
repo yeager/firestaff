@@ -74,6 +74,15 @@ static int write_bytes(const char* path,
     return 1;
 }
 
+static int write_fake_us_track02_with_startup_prompt(const char* path) {
+    static const char prompt[] = "GO AWAY AND RESURRECT THERON";
+    unsigned char sector[2352];
+
+    memset(sector, 0, sizeof(sector));
+    memcpy(sector + 0x10u, prompt, sizeof(prompt) - 1u);
+    return write_bytes(path, sector, sizeof(sector));
+}
+
 static int make_temp_dir(char out[512]) {
 #if defined(_WIN32)
     const char* tmp = getenv("TEMP");
@@ -198,8 +207,8 @@ int main(void) {
     snprintf(track_path, sizeof(track_path),
              "%s%s%s", theron_dir, PATH_SEP,
              "Theron's Quest (US) (Track 02).bin");
-    expect_true(write_file(track_path, "fake-track02-without-bank-markers"),
-                "fake Track 02 file written");
+    expect_true(write_fake_us_track02_with_startup_prompt(track_path),
+                "fake Track 02 file with startup prompt written");
     expect_true(test_set_home(temp_dir), "test HOME points at Theron temp root");
 
     theron_v1_party_init(&saved_party, THERON_DUNGEON_1_HALL_OF_RECORDS);
@@ -317,6 +326,10 @@ int main(void) {
     expect_true(strstr(view.inspectDetail, "Chapter 1") != NULL &&
                 strstr(view.inspectDetail, "Hall of Records") != NULL,
                 "M11 Theron startup inspect readout reports chapter marker");
+    expect_true(view.theronState.startup_text_prompt_count == 1 &&
+                strcmp(view.theronState.startup_text_prompt,
+                       "GO AWAY AND RESURRECT THERON") == 0,
+                "M11 Theron startup captures byte-backed US Soul Room prompt");
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, FB_W, FB_H);
@@ -461,6 +474,8 @@ int main(void) {
                                      "Chapter 1: Hall of Records") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "SOUL ROOM") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "GO AWAY AND RESURRECT THERON") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "> HAKAR") &&
                 startup_rows_contain(startup_rows, startup_row_count,
