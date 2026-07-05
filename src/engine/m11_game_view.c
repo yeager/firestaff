@@ -33628,6 +33628,16 @@ static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
     state->dm2State.champion_inventory_objects[championIndex][championSlot] =
         leaderObject;
     state->dm2State.leader_hand_object = slotObject;
+    if (dm2_v1_runtime_set_champion_inventory_object(
+            (uint8_t)championIndex,
+            (uint8_t)championSlot,
+            leaderObject) != 0) {
+        state->dm2State.champion_inventory_objects[championIndex]
+                                                     [championSlot] =
+            slotObject;
+        state->dm2State.leader_hand_object = leaderObject;
+        return 0;
+    }
     dm2_v1_runtime_set_leader_hand_object(state->dm2State.leader_hand_object);
 
     if (state->dm2State.leader_hand_object != 0u && leaderObject != 0u) {

@@ -203,6 +203,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
     session.time_of_day_minutes = 1080;
     session.rain_intensity = 64;
     session.original_leader_hand_object = 0x08000034u;
+    ((DM2_ChampionRecord *)session.champion_data[0])->inventory[2] =
+        0x0A000033u;
     CHECK(dm2_v1_runtime_apply_session(&session) == 0,
           "runtime accepts a bounded DM2 startup session after handoff");
     CHECK(state->party_x == 19 && state->party_y == 12 &&
@@ -220,6 +222,14 @@ static void test_first_tick_after_boot_profile_handoff(void)
     CHECK(dm2_v1_runtime_get_leader_hand_object() ==
               session.original_leader_hand_object,
           "session apply updates runtime leader-hand object");
+    CHECK(dm2_v1_runtime_get_champion_inventory_object(0, 2) ==
+              0x0A000033u,
+          "session apply updates runtime champion inventory ObjectIDs");
+    CHECK(dm2_v1_runtime_set_champion_inventory_object(0, 2,
+                                                       0x0A000044u) == 0 &&
+          dm2_v1_runtime_get_champion_inventory_object(0, 2) ==
+              0x0A000044u,
+          "runtime champion inventory ObjectID writeback is mutable");
 
     {
         uint8_t framebuffer[320 * 200];
