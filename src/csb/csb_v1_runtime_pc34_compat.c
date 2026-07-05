@@ -56,6 +56,9 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     const uint8_t **out_bytes,
     size_t *out_size);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
+static int csb_v1_runtime_square_type_from_raw(
+    const CSB_V1_DungeonData *dungeon,
+    int raw_square);
 static void csb_v1_runtime_schedule_projectile_move_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event);
@@ -8976,6 +8979,177 @@ static int csb_v1_runtime_action_is_melee_contact(int action_index)
     }
 }
 
+static int csb_v1_runtime_action_hits_closed_door(int action_index)
+{
+    switch (action_index) {
+    case DM1_ACTION_CHOP:
+    case DM1_ACTION_KICK:
+    case DM1_ACTION_SWING:
+    case DM1_ACTION_HACK:
+    case DM1_ACTION_BERZERK:
+    case DM1_ACTION_BASH:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int csb_v1_runtime_door_defense_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int door_type)
+{
+    static const unsigned char s_i34_door_defense[4] = {
+        110, 42, 230, 255
+    };
+    int door_set;
+
+    if (!dungeon || level < 0 || level >= dungeon->level_count) return 255;
+    door_set = door_type ? dungeon->map_door_set1[level]
+                         : dungeon->map_door_set0[level];
+    return (int)s_i34_door_defense[door_set & 3];
+}
+
+static void csb_v1_runtime_request_closed_door_melee_sounds(
+    CSB_V1_RuntimeProfile *profile)
+{
+    CsbV1AudioRequest request;
+
+    if (!profile) return;
+    memset(&request, 0, sizeof(request));
+    request.soundIndex = CSB_V1_SOUND_COMBAT;
+    request.mapX = (int16_t)profile->party_x;
+    request.mapY = (int16_t)profile->party_y;
+    request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+    request.volume = 64;
+    request.priority = 6u;
+    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+
+    memset(&request, 0, sizeof(request));
+    request.soundIndex = CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM;
+    request.mapX = (int16_t)profile->party_x;
+    request.mapY = (int16_t)profile->party_y;
+    request.mode = CSB_V1_MODE_PLAY_ONE_TICK_LATER;
+    request.volume = 64;
+    request.priority = 4u;
+    /* ReDMCSB MENU.C F0407 lines 1308-1324 requests M563 immediately and
+     * C04 one tick later for the closed-door melee branch. The bounded CSB
+     * audio runtime records pending sound arbitration; actual mixing remains
+     * outside this game-logic bridge. */
+    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+}
+
+static int csb_v1_runtime_queue_door_destruction_event(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int map_x,
+    int map_y)
+{
+    struct DM1_Event_V1 event;
+
+    if (!profile) return 0;
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(level, profile->game_time + 2u);
+    event.type = DM1_EVENT_DOOR_DESTRUCTION;
+    event.priority = 0;
+    event.b_mapX = (uint8_t)map_x;
+    event.b_mapY = (uint8_t)map_y;
+    return dm1v1_event_add(&profile->timeline_queue, &event) >= 0;
+}
+
+static int csb_v1_runtime_try_closed_door_melee(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    CSB_V1_Champion *champion,
+    int champion_index,
+    int action_index,
+    int target_x,
+    int target_y,
+    int raw_square,
+    uint16_t action_thing,
+    const CSB_V1_RuntimeWeaponInfoPc34 *runtime_weapon,
+    struct RngState_Compat *rng,
+    CSB_V1_RuntimeMeleeActionResult *out_result)
+{
+    int first_thing;
+    int thing;
+    int guard;
+
+    if (!profile || !dungeon || !champion || !rng) return 0;
+    if (!csb_v1_runtime_action_hits_closed_door(action_index)) return 0;
+    if (csb_v1_runtime_square_type_from_raw(dungeon, raw_square) != 4 ||
+        (raw_square & 0x07) != 4) {
+        return 0;
+    }
+
+    if (out_result) out_result->hit_door = 1;
+    csb_v1_runtime_request_closed_door_melee_sounds(profile);
+
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        profile->current_level,
+        target_x,
+        target_y);
+    if (first_thing < 0) return 1;
+
+    for (guard = 0, thing = first_thing;
+         guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        uint8_t *record;
+        uint16_t door_word;
+        int thing_type;
+        int thing_size;
+        int door_type;
+        int attack;
+
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!record || thing_size < 4) return 1;
+        if (thing_type != THING_TYPE_DOOR) {
+            thing = csb_v1_runtime_read_u16(record + 0);
+            continue;
+        }
+
+        door_word = csb_v1_runtime_read_u16(record + 2);
+        if ((door_word & 0x0100u) == 0u) {
+            return 1;
+        }
+        door_type = (int)(door_word & 0x0001u);
+        attack = csb_v1_runtime_f0312_action_hand_strength(
+            profile,
+            champion_index,
+            champion,
+            action_thing,
+            runtime_weapon,
+            rng);
+        /* ReDMCSB: MENU.C F0407 lines 1308-1324 routes only the door-hit
+         * actions here; PROJEXPL.C F0232 lines 1575-1594 checks the door
+         * record's MeleeDestructible bit, compares attack with the active
+         * map door-set defense, and schedules C02 at GameTime+2 while the
+         * closed square remains unchanged in the action tick. */
+        if (attack >= csb_v1_runtime_door_defense_pc34(
+                dungeon,
+                profile->current_level,
+                door_type) &&
+            csb_v1_runtime_queue_door_destruction_event(
+                profile,
+                profile->current_level,
+                target_x,
+                target_y)) {
+            if (out_result) {
+                out_result->door_destroyed = 1;
+                out_result->door_event_scheduled = 1;
+            }
+        }
+        return 1;
+    }
+
+    return 1;
+}
+
 static int csb_v1_runtime_target_group_creature_index(
     int champion_cell,
     int cells,
@@ -9042,6 +9216,7 @@ int csb_v1_runtime_perform_melee_action(
     int target_x;
     int target_y;
     int square_type;
+    int raw_square;
     int first_thing;
     int thing;
     int guard;
@@ -9073,6 +9248,11 @@ int csb_v1_runtime_perform_melee_action(
     csb_v1_runtime_projectile_step(profile->party_dir, &dx, &dy);
     target_x = profile->party_x + dx;
     target_y = profile->party_y + dy;
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        profile->current_level,
+        target_x,
+        target_y);
     square_type = csb_v1_dungeon_get_square_type(
         dungeon,
         profile->current_level,
@@ -9086,15 +9266,6 @@ int csb_v1_runtime_perform_melee_action(
         out_result->target_map_y = target_y;
         out_result->target_square_type = square_type;
     }
-    if (!csb_v1_runtime_action_is_melee_contact(action_index)) return 1;
-
-    first_thing = csb_v1_dungeon_get_first_thing(
-        dungeon,
-        profile->current_level,
-        target_x,
-        target_y);
-    if (first_thing < 0) return 1;
-
     action_thing = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
     if (csb_v1_runtime_weapon_info_for_thing(
             profile,
@@ -9112,6 +9283,30 @@ int csb_v1_runtime_perform_melee_action(
             ((uint32_t)(target_x & 0xFF) << 16) ^
             ((uint32_t)(target_y & 0xFF) << 24) ^
             0xF0231u);
+
+    if (csb_v1_runtime_try_closed_door_melee(
+            profile,
+            dungeon,
+            champion,
+            champion_index,
+            action_index,
+            target_x,
+            target_y,
+            raw_square,
+            action_thing,
+            runtime_weapon_ptr,
+            &rng,
+            out_result)) {
+        return 1;
+    }
+    if (!csb_v1_runtime_action_is_melee_contact(action_index)) return 1;
+
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        profile->current_level,
+        target_x,
+        target_y);
+    if (first_thing < 0) return 1;
 
     /* ReDMCSB: MENU.C F0402 lines ~1021-1057 resolves a concrete melee
      * target creature before calling PROJEXPL.C F0231. This CSB bridge walks

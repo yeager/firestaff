@@ -49,12 +49,15 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     dungeon->raw_map_data_base = 66;
     dungeon->square_first_thing_base = 80;
     dungeon->square_first_thing_count = 1;
+    dungeon->map_door_set0[0] = 1; /* Wooden door defense: 42. */
     dungeon->raw_data = raw;
     dungeon->raw_size = (int)raw_size;
+    dungeon->thing_type_counts[THING_TYPE_DOOR] = 1;
     dungeon->thing_type_counts[THING_TYPE_GROUP] = 1;
     dungeon->thing_type_counts[THING_TYPE_WEAPON] = 3;
     dungeon->thing_type_counts[THING_TYPE_POTION] = 1;
     dungeon->thing_type_counts[THING_TYPE_CONTAINER] = 1;
+    dungeon->thing_data_bases[THING_TYPE_DOOR] = 112;
     dungeon->thing_data_bases[THING_TYPE_GROUP] = 96;
     dungeon->thing_data_bases[THING_TYPE_WEAPON] = 0;
     dungeon->thing_data_bases[THING_TYPE_POTION] = 12;
@@ -71,6 +74,8 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     raw[101] = 0xFFu; /* centered group cell encoding. */
     write_u16(raw + 102, 80u);
     write_u16(raw + 110, 0u); /* one creature: (count - 1) << 5. */
+    write_u16(raw + 112, THING_ENDOFLIST);
+    write_u16(raw + 114, 0x0100u); /* Type 0, melee destructible. */
 }
 
 int main(void)
@@ -241,6 +246,8 @@ int main(void)
         profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
             dagger;
         profile.runtime.party_state.Champions[0].CurrentStamina = 100;
+        profile.runtime.party_state.Champions[0]
+            .Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] = 140;
         check(M11_GameView_SetActingChampion(&state, 0),
               "CSB action menu reopens for melee action without DM1 world.things");
         check(M11_GameView_TriggerActionRow(&state, 1) == 1,
@@ -259,6 +266,48 @@ int main(void)
               "CSB STAB applies F0402/F0231 damage to runtime C04 group HP");
         check(profile.runtime.party_state.Champions[0].CurrentStamina < 100,
               "CSB STAB writes M11 stamina cost back to runtime");
+        state.actionDisabledTicks[0] = 0;
+        raw[67] = (unsigned char)((4u << 5) | 0x10u | 4u);
+        write_u16(raw + 80, (unsigned short)((THING_TYPE_DOOR << 10) | 0));
+        write_u16(raw + 2, 2u); /* Weapon type 2: action set 5 => SWING. */
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+            dagger;
+        state.world.party.champions[0].stamina.current = 100;
+        profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+            dagger;
+        profile.runtime.party_state.Champions[0].CurrentStamina = 100;
+        check(M11_GameView_SetActingChampion(&state, 0),
+              "CSB door-hit action menu opens from runtime action set");
+        check(M11_GameView_GetActingActionIndices(&state, actions),
+              "CSB door-hit action rows resolve through runtime");
+        check(actions[0] == DM1_ACTION_SWING,
+              "CSB weapon exposes SWING door-hit action row");
+        {
+            int event_count_before = profile.runtime.timeline_queue.eventCount;
+            check(M11_GameView_TriggerActionRow(&state, 0) == 1,
+                  "CSB SWING closed-door action dispatches through CSB runtime");
+            check((raw[67] & 0x07u) == 4u,
+                  "CSB SWING leaves closed door unchanged before C02 event");
+            check(profile.runtime.timeline_queue.eventCount ==
+                      event_count_before + 1,
+                  "CSB SWING schedules one C02 door destruction event");
+            if (profile.runtime.timeline_queue.eventCount > event_count_before) {
+                int saw_door_destruction = 0;
+                int i;
+                for (i = 0; i < profile.runtime.timeline_queue.eventCount; ++i) {
+                    unsigned short event_index =
+                        profile.runtime.timeline_queue.timeline[i];
+                    if (profile.runtime.timeline_queue.events[event_index].type ==
+                            DM1_EVENT_DOOR_DESTRUCTION &&
+                        profile.runtime.timeline_queue.events[event_index].b_mapX == 1 &&
+                        profile.runtime.timeline_queue.events[event_index].b_mapY == 0) {
+                        saw_door_destruction = 1;
+                    }
+                }
+                check(saw_door_destruction,
+                      "CSB SWING schedules C02 door destruction on the closed door square");
+            }
+        }
         state.actionDisabledTicks[0] = 0;
         state.world.party.champions[0].mana.current = 20;
         profile.runtime.party_state.Champions[0].CurrentMana = 20;
