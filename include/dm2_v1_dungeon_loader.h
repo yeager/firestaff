@@ -105,6 +105,11 @@ int dm2_v1_dungeon_resolve_actuator_wall_gfx(
     int wall_gfx_count,
     int *out_wall_gfx_index,
     int *out_wall_gfx_field);
+int dm2_v1_dungeon_get_map_wall_gfx_list(
+    const DM2_V1_DungeonData *d,
+    int level,
+    uint8_t *out_wall_gfx_list,
+    int out_capacity);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,

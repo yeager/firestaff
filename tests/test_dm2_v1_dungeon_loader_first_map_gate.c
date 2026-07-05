@@ -229,6 +229,28 @@ static size_t build_skproject_actuator_wall_gfx_fixture(uint8_t *buf, size_t cap
     return raw_map_base + 4u;
 }
 
+static size_t build_skproject_map_wall_gfx_list_fixture(uint8_t *buf,
+                                                       size_t cap)
+{
+    size_t size = build_skproject_actuator_wall_gfx_fixture(buf, cap);
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t raw_map_base = header_size + map_desc_size +
+                                4u + 2u + 4u + 8u;
+    uint8_t *desc;
+
+    if (size == 0 || cap < raw_map_base + 9u) return 0;
+    desc = buf + header_size;
+    put16le(desc + 10, 4); /* Map_definitions::WallGraphics() */
+    put16le(desc + 12, (uint16_t)(1u << 4)); /* CreaturesTypes() */
+    buf[raw_map_base + 4u] = 0x7e; /* creature id list entry */
+    buf[raw_map_base + 5u] = 0x10;
+    buf[raw_map_base + 6u] = 0x20;
+    buf[raw_map_base + 7u] = 0x2a;
+    buf[raw_map_base + 8u] = 0x30;
+    return raw_map_base + 9u;
+}
+
 static void test_first_map_metadata_and_tiles(void)
 {
     uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
@@ -427,6 +449,34 @@ static void test_skproject_actuator_wall_gfx_ordinal(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_map_wall_gfx_list(void)
+{
+    uint8_t dat[192];
+    DM2_V1_DungeonData dungeon;
+    size_t size = build_skproject_map_wall_gfx_list_fixture(dat, sizeof(dat));
+    uint8_t list[4] = { 0 };
+    int thing;
+    int index = -1;
+    int field = -1;
+    int count;
+
+    CHECK(size > 0, "skproject map wall-gfx list fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts a skproject map-local wall-gfx list");
+    count = dm2_v1_dungeon_get_map_wall_gfx_list(&dungeon, 0, list, 4);
+    CHECK(count == 4 && list[0] == 0x10 && list[1] == 0x20 &&
+          list[2] == 0x2a && list[3] == 0x30,
+          "loader exposes wall-gfx list after map creature ids");
+    thing = dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0);
+    CHECK(dm2_v1_dungeon_resolve_actuator_wall_gfx(
+              &dungeon, (uint16_t)thing, 0, 2, 8,
+              list, count, &index, &field) == 0 &&
+              index == 0x2a && field == 1,
+          "loader-resolved map wall-gfx list drives actuator ordinal");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Dungeon Loader First-Map Gate ===\n\n");
@@ -438,6 +488,7 @@ int main(void)
     test_skproject_chained_first_thing_finds_door_record();
     test_skproject_text_wall_gfx_metadata();
     test_skproject_actuator_wall_gfx_ordinal();
+    test_skproject_map_wall_gfx_list();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
