@@ -596,6 +596,7 @@ static void probe_raw_user_data_synthetic_fixture(void) {
     };
     uint8_t raw[raw_size];
     uint8_t user[user_size];
+    uint8_t range[80];
     size_t sectors = 0u;
     size_t bytes = 0u;
     size_t copied = 0u;
@@ -640,6 +641,73 @@ static void probe_raw_user_data_synthetic_fixture(void) {
     check_int("synthetic sector 1 first user byte",
               user[THERON_TRACK02_RAW_USER_DATA_BYTES],
               17);
+
+    status = theron_v1_track02_copy_raw_user_data_range(
+        raw,
+        sizeof(raw),
+        THERON_TRACK02_MD5_US_BIN,
+        THERON_TRACK02_RAW_USER_DATA_OFFSET + 33u,
+        16u,
+        range,
+        sizeof(range),
+        &user_offset);
+    check_int("synthetic raw user-data range copy status",
+              status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("synthetic raw user-data range copy offset",
+               user_offset,
+               33u);
+    check_int("synthetic raw user-data range first byte", range[0], 33);
+    check_int("synthetic raw user-data range last byte", range[15], 48);
+
+    status = theron_v1_track02_copy_raw_user_data_range(
+        raw,
+        sizeof(raw),
+        THERON_TRACK02_MD5_US_BIN,
+        THERON_TRACK02_RAW_USER_DATA_OFFSET +
+            THERON_TRACK02_RAW_USER_DATA_BYTES - 8u,
+        24u,
+        range,
+        sizeof(range),
+        &user_offset);
+    check_int("synthetic raw user-data cross-sector copy status",
+              status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("synthetic raw user-data cross-sector offset",
+               user_offset,
+               THERON_TRACK02_RAW_USER_DATA_BYTES - 8u);
+    check_int("synthetic raw user-data cross-sector first byte",
+              range[0],
+              0xf8);
+    check_int("synthetic raw user-data cross-sector sector1 first byte",
+              range[8],
+              17);
+
+    status = theron_v1_track02_copy_raw_user_data_range(
+        raw,
+        sizeof(raw),
+        THERON_TRACK02_MD5_US_BIN,
+        THERON_TRACK02_RAW_USER_DATA_OFFSET + 33u,
+        sizeof(range) + 1u,
+        range,
+        sizeof(range),
+        &user_offset);
+    check_int("synthetic raw user-data range capacity guard",
+              status,
+              THERON_TRACK02_SIGNAL_BAD_INPUT);
+
+    status = theron_v1_track02_copy_raw_user_data_range(
+        raw,
+        sizeof(raw),
+        THERON_TRACK02_MD5_US_BIN,
+        0u,
+        4u,
+        range,
+        sizeof(range),
+        &user_offset);
+    check_int("synthetic raw user-data range header rejected",
+              status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
 
     status = theron_v1_track02_raw_offset_to_user_offset(
         THERON_TRACK02_RAW_USER_DATA_OFFSET + 33u,

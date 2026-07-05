@@ -155,6 +155,16 @@ Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data(
     size_t out_user_data_capacity,
     size_t *out_user_data_size);
 
+Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data_range(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t raw_offset,
+    size_t byte_count,
+    uint8_t *out_bytes,
+    size_t out_bytes_capacity,
+    size_t *out_user_data_offset);
+
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
 const char *theron_v1_track02_source_evidence(void);
