@@ -163,6 +163,16 @@ typedef struct {
     /* Champion records (4 × 261 bytes, SUPPRESS-encoded) */
     uint8_t  champion_data[4][261];
 
+    /* Bounded original SKSave runtime sections. These mirror the documented
+     * SUPPRESS blocks after the game-state block/champion squad; full dungeon
+     * DB/state import remains separate from this startup session envelope. */
+    uint8_t  original_global_flags[DM2_GLOBAL_FLAGS_SIZE];
+    uint8_t  original_global_bytes[DM2_GLOBAL_BYTES_SIZE];
+    uint16_t original_global_words[DM2_GLOBAL_WORDS_SIZE];
+    uint8_t  original_spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE];
+    uint8_t  original_timer_count;
+    DM2_TimerEntry original_timers[DM2_MAX_TIMERS];
+
     /* Dungeon state (variable — level data) */
     /* Note: full dungeon state saved separately via dungeon_serialize() */
 
