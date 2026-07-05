@@ -574,6 +574,10 @@ static int build_runtime_resume_save(const char* data_dir,
     boot.runtime.party_state.Champions[1].MaximumHealth = 100;
     boot.runtime.party_state.Champions[1].CurrentStamina = 70;
     boot.runtime.party_state.Champions[1].MaximumStamina = 75;
+    boot.runtime.party_state.Champions[1].Portrait[70 * 8] = 0x03u;
+    boot.runtime.party_state.Champions[1].Portrait[70 * 8 + 5] = 0x0cu;
+    boot.runtime.party_state.Champions[1].Portrait[231 * 8 + 2] = 0x07u;
+    boot.runtime.party_state.Champions[1].Portrait[231 * 8 + 7] = 0x09u;
     boot.runtime.party_state_valid = 1;
     boot.runtime.champion_count = boot.runtime.party_state.ChampionCount;
 
@@ -801,8 +805,14 @@ int main(void) {
                        expected.party_state.Champions[0].Portrait,
                        CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT) == 0,
                 "M11 CSB party mirror copies compatible portrait bitmap");
-    expect_true(view.world.party.champions[1].portraitBitmapValid == 0,
-                "M11 CSB party mirror leaves empty portrait invalid");
+    expect_true(memcmp(expected.party_state.Champions[1].Portrait,
+                       view.world.party.champions[1].portraitBitmap,
+                       CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT) != 0,
+                "CSB wide portrait fixture is not a compatible-prefix copy");
+    expect_true(view.world.party.champions[1].portraitBitmapValid == 1 &&
+                view.world.party.champions[1].portraitBitmap[70] == 0x3cu &&
+                view.world.party.champions[1].portraitBitmap[231] == 0x79u,
+                "M11 CSB party mirror compacts wide runtime portrait bitmap");
 
     profile = (CSB_V1_BootProfile*)view.csbBootProfile;
     if (profile) {

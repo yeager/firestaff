@@ -152,28 +152,63 @@ static int m11_csb_copy_portrait_compat(struct ChampionState_Compat *dst,
                                         const CSB_V1_Champion *src)
 {
     int i;
-    int nonzero = 0;
+    int compatible_nonzero = 0;
+    int wide_nonzero = 0;
     if (!dst || !src) return 0;
     for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
         if (src->Portrait[i] != 0u) {
-            nonzero = 1;
+            compatible_nonzero = 1;
             break;
         }
     }
-    if (!nonzero) {
+    if (compatible_nonzero) {
+        /* ReDMCSB: PANEL.C F0354 draws status-box portraits from
+         * M516_CHAMPIONS[i].Portrait. Utility Disk CMP import and DM1 save import
+         * keep the DM1-compatible 32x29x4bpp packed portrait in the first 464
+         * bytes, so preserve that byte-exact fast path. */
+        memcpy(dst->portraitBitmap,
+               src->Portrait,
+               CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
+        dst->portraitBitmapValid = 1;
+        return 1;
+    }
+    for (i = CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT;
+         i < CSB_V1_PORTRAIT_BYTE_COUNT;
+         ++i) {
+        if (src->Portrait[i] != 0u) {
+            wide_nonzero = 1;
+            break;
+        }
+    }
+    if (!wide_nonzero) {
         dst->portraitBitmapValid = 0;
         memset(dst->portraitBitmap, 0, sizeof(dst->portraitBitmap));
         return 0;
     }
 
-    /* ReDMCSB: PANEL.C F0354 draws status-box portraits from
-     * M516_CHAMPIONS[i].Portrait. Utility Disk CMP import and DM1 save import
-     * keep the DM1-compatible 32x29x4bpp packed portrait in the first 464
-     * bytes; PORTRAIT.C F0515 owns wider Amiga/ST conversion, so the 3712-byte
-     * CSB buffer is not treated as a different M11 bitmap format here. */
-    memcpy(dst->portraitBitmap,
-           src->Portrait,
-           CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
+    /* ReDMCSB: CEDT006.C F7048 copies loaded portraits into the 464-byte
+     * on-screen portrait bitmap, and PORTRAIT.C F7251/F7252 convert between
+     * Atari ST planar storage and that packed 4bpp HUD bitmap. Firestaff's
+     * CSB runtime reserves a wider portrait buffer; if the compatible prefix is
+     * empty, compact two 4-byte source pixels as one 4bpp pixel pair so
+     * M11 has a bounded status-box bitmap instead of dropping the portrait. */
+    for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
+        const int base = i * 8;
+        unsigned int left = 0u;
+        unsigned int right = 0u;
+        if (base + 7 < CSB_V1_PORTRAIT_BYTE_COUNT) {
+            left = (unsigned int)(src->Portrait[base] |
+                                  src->Portrait[base + 1] |
+                                  src->Portrait[base + 2] |
+                                  src->Portrait[base + 3]);
+            right = (unsigned int)(src->Portrait[base + 4] |
+                                   src->Portrait[base + 5] |
+                                   src->Portrait[base + 6] |
+                                   src->Portrait[base + 7]);
+        }
+        dst->portraitBitmap[i] =
+            (unsigned char)(((left & 0x0fu) << 4) | (right & 0x0fu));
+    }
     dst->portraitBitmapValid = 1;
     return 1;
 }
