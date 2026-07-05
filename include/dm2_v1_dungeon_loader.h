@@ -26,9 +26,10 @@
  *   ...
  *   The PC G1 real-data path now reads 16-byte skproject-compatible
  *   Map_definitions from byte 44 and byte-sized column-major map squares
- *   from byte 492.  Tile type is stored in the high three bits and bit
- *   0x10 marks a thing-list square.  The bounded legacy loader path still
- *   accepts older Firestaff synthetic 16-bit map fixtures.
+ *   from the trailing map-data block.  Tile type is stored in the high
+ *   three bits and bit 0x10 marks a thing-list square.  The bounded
+ *   legacy loader path still accepts older Firestaff synthetic 16-bit map
+ *   fixtures.
  *
  *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
  *   Confirmed loader contract: level_count/map_count is byte offset 6. */
