@@ -205,6 +205,45 @@ static size_t build_skproject_custom_wall_button_fixture(uint8_t *buf,
     return size;
 }
 
+static size_t build_skproject_actuator_wall_button_fixture(uint8_t *buf,
+                                                          size_t cap)
+{
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + 4u;
+    const size_t thing_base = sft_base + 2u;
+    const size_t door_base = thing_base;
+    const size_t actuator_base = door_base + 4u;
+    const size_t raw_map_base = actuator_base + 8u;
+    uint8_t *desc;
+    uint16_t door_bits;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+    buf[4] = 1;
+    put16le(buf + 10, 1);
+    put16le(buf + 12, 1);
+    put16le(buf + 18, 1);
+    desc = buf + header_size;
+    put16le(desc + 8, (uint16_t)((1u << 6) | (1u << 11)));
+    put16le(buf + column_base, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x8c00);
+    put16le(buf + door_base, 0xfffe);
+    door_bits = (uint16_t)((1u << 5) | 1u);
+    put16le(buf + door_base + 2, door_bits);
+    put16le(buf + actuator_base, 0x0000);
+    put16le(buf + actuator_base + 2, 0x0000);
+    put16le(buf + actuator_base + 4, (uint16_t)(3u << 12));
+    put16le(buf + actuator_base + 6, 0x0000);
+    buf[raw_map_base + 0] = 0x20;
+    buf[raw_map_base + 1] = 0x20;
+    buf[raw_map_base + 2] = 0x90;
+    buf[raw_map_base + 3] = 0x20;
+    return raw_map_base + 4u;
+}
+
 static void test_first_tick_after_boot_profile_handoff(void)
 {
     DM2_V1_BootProfile profile;
@@ -497,6 +536,52 @@ static void test_first_tick_after_boot_profile_handoff(void)
                 dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
             } else {
                 CHECK(0, "runtime custom wall-button fixture loads");
+            }
+            if (replacement) {
+                dm2_v1_dungeon_free(replacement);
+                free(replacement);
+            }
+        }
+        {
+            uint8_t fixture[144];
+            static const uint8_t wall_gfx_list[4] = {
+                0x10, 0x20, 0x2a, 0x30
+            };
+            size_t fixture_size = build_skproject_actuator_wall_button_fixture(
+                fixture, sizeof(fixture));
+            DM2_V1_DungeonData *replacement =
+                (DM2_V1_DungeonData *)calloc(1, sizeof(*replacement));
+            CHECK(fixture_size > 0 && replacement != NULL,
+                  "runtime actuator wall-button fixture allocates");
+            if (replacement &&
+                dm2_v1_dungeon_load(replacement, fixture, (int)fixture_size) == 0) {
+                DM2_V1_DungeonData *old_dd =
+                    (DM2_V1_DungeonData *)profile.dungeon_data;
+                dm2_v1_dungeon_free(old_dd);
+                free(old_dd);
+                profile.dungeon_data = replacement;
+                replacement = NULL;
+                CHECK(dm2_v1_runtime_set_map_wall_gfx_list(
+                          wall_gfx_list, 4) == 0,
+                      "runtime accepts a bounded map wall-gfx list");
+                dm2_v1_runtime_set_position(0, 1, 1, 0);
+                dm2_v1_runtime_set_outdoor(0);
+                memset(framebuffer, 0, sizeof(framebuffer));
+                memset(s_wall_button_pixels, 6, sizeof(s_wall_button_pixels));
+                fetch_count = 0;
+                dm2_v1_runtime_set_viewport_asset_provider(
+                    synthetic_viewport_asset_fetch, &fetch_count);
+                CHECK(dm2_v1_runtime_render_frame(
+                          0, 1, 1, framebuffer, 320, 320, 200) == 0,
+                      "runtime renders a skproject actuator custom-button door square");
+                CHECK(dm2_v1_runtime_last_asset_door_panel_count() == 1 &&
+                      dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
+                      dm2_v1_runtime_last_asset_door_button_count() == 1,
+                      "runtime actuator wall-gfx list drives custom button draw");
+                dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+                (void)dm2_v1_runtime_set_map_wall_gfx_list(NULL, 0);
+            } else {
+                CHECK(0, "runtime actuator wall-button fixture loads");
             }
             if (replacement) {
                 dm2_v1_dungeon_free(replacement);

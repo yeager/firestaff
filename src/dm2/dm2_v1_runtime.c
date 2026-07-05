@@ -62,6 +62,8 @@ typedef struct {
     /* Startup/render asset boundary owned by the runtime handoff. */
     DM2_V1_ViewportAssetFetch viewport_asset_fetch;
     void *viewport_asset_user;
+    uint8_t map_wall_gfx_list[16];
+    int map_wall_gfx_count;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -118,6 +120,8 @@ static void dm2_runtime_apply_door_record_metadata(
     int x,
     int y,
     int view_dir,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
     DM2_ViewSquare *door) {
     int thing;
     int door_thing;
@@ -152,6 +156,14 @@ static void dm2_runtime_apply_door_record_metadata(
                                           view_dir, 2, 8,
                                           &wall_gfx_index,
                                           &wall_gfx_field) == 0) {
+        door->door_wall_button = 1;
+        door->door_wall_button_index = (uint8_t)wall_gfx_index;
+        door->door_wall_button_field = (uint8_t)wall_gfx_field;
+    } else if (!door->door_button &&
+               dm2_v1_dungeon_resolve_actuator_wall_gfx(
+                   dd, (uint16_t)thing, view_dir, 2, 8,
+                   wall_gfx_list, wall_gfx_count,
+                   &wall_gfx_index, &wall_gfx_field) == 0) {
         door->door_wall_button = 1;
         door->door_wall_button_index = (uint8_t)wall_gfx_index;
         door->door_wall_button_field = (uint8_t)wall_gfx_field;
@@ -218,7 +230,8 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
             door->door_open_pct =
                 (uint8_t)(dm2_runtime_door_state((uint16_t)raw) * 25);
             dm2_runtime_apply_door_record_metadata(
-                dd, rt->dungeon_level, map_x, map_y, dir, door);
+                dd, rt->dungeon_level, map_x, map_y, dir,
+                rt->map_wall_gfx_list, rt->map_wall_gfx_count, door);
         }
     }
 }
@@ -366,6 +379,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.stairs_callback = NULL;
     g_dm2_runtime.viewport_asset_fetch = NULL;
     g_dm2_runtime.viewport_asset_user = NULL;
+    memset(g_dm2_runtime.map_wall_gfx_list, 0,
+           sizeof(g_dm2_runtime.map_wall_gfx_list));
+    g_dm2_runtime.map_wall_gfx_count = 0;
 }
 
 int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
@@ -573,6 +589,21 @@ void dm2_v1_runtime_set_viewport_asset_provider(
     void *user) {
     g_dm2_runtime.viewport_asset_fetch = fetch;
     g_dm2_runtime.viewport_asset_user = user;
+}
+
+int dm2_v1_runtime_set_map_wall_gfx_list(const uint8_t *wall_gfx_list,
+                                         int wall_gfx_count) {
+    if (!wall_gfx_list || wall_gfx_count < 0 ||
+        wall_gfx_count > (int)sizeof(g_dm2_runtime.map_wall_gfx_list)) {
+        memset(g_dm2_runtime.map_wall_gfx_list, 0,
+               sizeof(g_dm2_runtime.map_wall_gfx_list));
+        g_dm2_runtime.map_wall_gfx_count = 0;
+        return wall_gfx_count == 0 ? 0 : -1;
+    }
+    memcpy(g_dm2_runtime.map_wall_gfx_list, wall_gfx_list,
+           (size_t)wall_gfx_count);
+    g_dm2_runtime.map_wall_gfx_count = wall_gfx_count;
+    return 0;
 }
 
 int dm2_v1_runtime_last_asset_floor_ceiling_count(void) {

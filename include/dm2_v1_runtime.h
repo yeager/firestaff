@@ -72,6 +72,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
 void dm2_v1_runtime_set_viewport_asset_provider(
     DM2_V1_ViewportAssetFetch fetch,
     void *user);
+int dm2_v1_runtime_set_map_wall_gfx_list(const uint8_t *wall_gfx_list,
+                                         int wall_gfx_count);
 int dm2_v1_runtime_last_asset_floor_ceiling_count(void);
 int dm2_v1_runtime_last_fallback_floor_ceiling_count(void);
 int dm2_v1_runtime_last_asset_wall_count(void);
