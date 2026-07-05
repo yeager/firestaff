@@ -652,6 +652,29 @@ set_tests_properties(theron_v1_startup_flow_probe PROPERTIES
     LABELS "tier4;theron;startup;soul-room;stage-select"
 )
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c"
+   AND NOT TARGET firestaff_theron_v1_startup_real_asset_receipt_probe)
+    add_executable(firestaff_theron_v1_startup_real_asset_receipt_probe
+        probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c
+    )
+    target_include_directories(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(firestaff_theron_v1_startup_real_asset_receipt_probe
+        PRIVATE firestaff_theron firestaff_m12 firestaff_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_startup_real_asset_receipt
+        COMMAND firestaff_theron_v1_startup_real_asset_receipt_probe
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    set_tests_properties(theron_v1_startup_real_asset_receipt PROPERTIES
+        LABELS "tier4;theron;startup;receipt;track02"
+    )
+endif()
+
 add_executable(firestaff_theron_v1_startup_save_resume_probe
     probes/theron/firestaff_theron_v1_startup_save_resume_probe.c
 )
