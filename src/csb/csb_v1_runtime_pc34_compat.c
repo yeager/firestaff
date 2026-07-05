@@ -7979,6 +7979,112 @@ static int csb_v1_runtime_object_info_index_from_record(
     }
 }
 
+typedef struct {
+    unsigned char weapon_class;
+    unsigned char kinetic_energy;
+    unsigned char shoot_attack;
+} CSB_V1_RuntimeWeaponInfoPc34;
+
+/* ReDMCSB DUNGEON.C G0238_as_Graphic559_WeaponInfo.  MENU.C F0407 uses
+ * Class, KineticEnergy, and M065_SHOOT_ATTACK for C032_ACTION_SHOOT. */
+static const CSB_V1_RuntimeWeaponInfoPc34
+    g_csb_v1_weapon_info_pc34[46] = {
+    {130,   0,   0}, {131,   0,   0}, {  0,   2,   0},
+    {112,  80,  40}, {129,   7,   0}, {113, 110,  66},
+    {  0,  20,   0}, {255,  10, 255}, {  2,  19,   0},
+    {  0,   8,   0}, {  0,  10,   0}, {  0,  10,   0},
+    {  0,  11,   0}, {  0,  12,   0}, {  0,  14,   0},
+    {  0,  14,   0}, {  0,  13,   0}, {  0,  15,   0},
+    {  2,  33,   0}, {  2,  44,   0}, {  0,  10,   0},
+    {  0,  13,   0}, {  0,  15,   0}, {  0,  10,   0},
+    {  0,  22,   0}, { 20,  50,  50}, { 30, 180, 120},
+    { 10,  10,   0}, { 10,  28,   0}, { 39,  20,  50},
+    { 11,  18,   0}, { 12,  23,   0}, {  1,  19,   0},
+    {  0,   4,   0}, {129,   4,   0}, {130,   0,   0},
+    {140,  20,   0}, {128,   6,   0}, {159,   4,   0},
+    {131,   3,   0}, {136,   7,   0}, {132,   1,   0},
+    {131,   4,   0}, {192,   1,   0}, { 26, 220, 125},
+    {255,  50, 255}
+};
+
+static int csb_v1_runtime_weapon_info_for_thing(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    CSB_V1_RuntimeWeaponInfoPc34 *out)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t word;
+    int thing_type;
+    int record_size;
+    int weapon_type;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!profile || !out ||
+        thing == THING_NONE ||
+        thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record ||
+        record_size < 4 ||
+        thing_type != THING_TYPE_WEAPON) {
+        return 0;
+    }
+    word = csb_v1_runtime_read_u16(record + 2);
+    weapon_type = (int)(word & 0x7Fu);
+    if (weapon_type < 0 ||
+        weapon_type >= (int)(sizeof(g_csb_v1_weapon_info_pc34) /
+                             sizeof(g_csb_v1_weapon_info_pc34[0]))) {
+        return 0;
+    }
+    *out = g_csb_v1_weapon_info_pc34[weapon_type];
+    return 1;
+}
+
+static int csb_v1_runtime_shoot_step_energy(
+    int action_class,
+    int *out_step_energy)
+{
+    if (!out_step_energy) return 0;
+    if (action_class >= 16 && action_class <= 31) {
+        *out_step_energy = action_class - 16;
+        return 1;
+    }
+    if (action_class >= 32 && action_class <= 47) {
+        *out_step_energy = action_class - 32;
+        return 1;
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_shoot_ammunition_matches(
+    const CSB_V1_RuntimeWeaponInfoPc34 *action_info,
+    const CSB_V1_RuntimeWeaponInfoPc34 *ready_info)
+{
+    int action_class;
+    int ready_class;
+
+    if (!action_info || !ready_info) return 0;
+    action_class = (int)action_info->weapon_class;
+    ready_class = (int)ready_info->weapon_class;
+    if (action_class >= 16 && action_class <= 31) {
+        return ready_class == 10;
+    }
+    if (action_class >= 32 && action_class <= 47) {
+        return ready_class == 11;
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_object_icon_from_object_info(
     int object_info_index)
 {
@@ -8367,6 +8473,83 @@ int csb_v1_runtime_throw_action_hand(
     csb_v1_runtime_schedule_projectile_move_event(profile, &first_move);
     champion->Slots[CSB_V1_SLOT_ACTION_HAND] = THING_NONE;
     if (out_projectile_slot) *out_projectile_slot = slot;
+    return 1;
+}
+
+int csb_v1_runtime_shoot_ready_hand(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int *out_projectile_slot)
+{
+    CSB_V1_Champion *champion;
+    CSB_V1_RuntimeWeaponInfoPc34 action_info;
+    CSB_V1_RuntimeWeaponInfoPc34 ready_info;
+    uint16_t action_thing;
+    uint16_t ready_thing;
+    int action_class;
+    int step_energy;
+    int skill_level;
+    int attack;
+    int kinetic_energy;
+    int projectile_slot = -1;
+
+    if (out_projectile_slot) *out_projectile_slot = -1;
+    if (!profile || !profile->party_state_valid) return 0;
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+    if (csb_v1_champion_is_dead(champion) ||
+        champion->CurrentHealth <= 0) {
+        return 0;
+    }
+
+    action_thing = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
+    ready_thing = champion->Slots[CSB_V1_SLOT_READY_HAND];
+    if (!csb_v1_runtime_weapon_info_for_thing(
+            profile, action_thing, &action_info) ||
+        !csb_v1_runtime_weapon_info_for_thing(
+            profile, ready_thing, &ready_info)) {
+        return 0;
+    }
+    action_class = (int)action_info.weapon_class;
+    if (!csb_v1_runtime_shoot_ammunition_matches(&action_info, &ready_info) ||
+        !csb_v1_runtime_shoot_step_energy(action_class, &step_energy)) {
+        return 0;
+    }
+
+    skill_level = csb_v1_runtime_get_champion_skill_level(
+        profile,
+        champion_index,
+        11);
+    if (skill_level < 0) skill_level = 0;
+    attack = ((int)action_info.shoot_attack + skill_level) << 1;
+    if (attack > 255) attack = 255;
+    kinetic_energy = (int)action_info.kinetic_energy +
+                     (int)ready_info.kinetic_energy;
+
+    /* ReDMCSB MENU.C F0407 lines 1363-1396 removes C00 ready hand and
+     * calls CHAMPION.C F0326; F0326 feeds PROJEXPL.C F0212/F0810. */
+    if (!csb_v1_runtime_spawn_champion_projectile(
+            profile,
+            champion_index,
+            32,
+            PROJECTILE_SUBTYPE_KINETIC_ARROW,
+            PROJECTILE_CATEGORY_KINETIC,
+            kinetic_energy,
+            attack,
+            COMBAT_ATTACK_NORMAL,
+            step_energy,
+            ready_thing,
+            0,
+            0,
+            &projectile_slot)) {
+        return 0;
+    }
+    champion->Slots[CSB_V1_SLOT_READY_HAND] = THING_NONE;
+    if (out_projectile_slot) *out_projectile_slot = projectile_slot;
     return 1;
 }
 

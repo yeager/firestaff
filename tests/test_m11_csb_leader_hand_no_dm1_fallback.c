@@ -41,10 +41,10 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     memset(raw, 0, raw_size);
     dungeon->raw_data = raw;
     dungeon->raw_size = (int)raw_size;
-    dungeon->thing_type_counts[THING_TYPE_WEAPON] = 1;
+    dungeon->thing_type_counts[THING_TYPE_WEAPON] = 3;
     dungeon->thing_type_counts[THING_TYPE_CONTAINER] = 1;
     dungeon->thing_data_bases[THING_TYPE_WEAPON] = 0;
-    dungeon->thing_data_bases[THING_TYPE_CONTAINER] = 8;
+    dungeon->thing_data_bases[THING_TYPE_CONTAINER] = 12;
 }
 
 int main(void)
@@ -96,6 +96,10 @@ int main(void)
         unsigned char raw[32];
         unsigned short dagger =
             (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        unsigned short bow =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+        unsigned short arrow =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
         unsigned short chest =
             (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
         int sx = 0, sy = 0, sw = 0, sh = 0;
@@ -106,8 +110,12 @@ int main(void)
         init_csb_dungeon(&dungeon, raw, sizeof(raw));
         write_u16(raw + 0, THING_ENDOFLIST);
         write_u16(raw + 2, 8u); /* ReDMCSB OBJECT.C F0033 dagger icon C032. */
+        write_u16(raw + 4, THING_ENDOFLIST);
+        write_u16(raw + 6, 25u); /* BOW: class 20, action set with SHOOT. */
         write_u16(raw + 8, THING_ENDOFLIST);
-        write_u16(raw + 10, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
+        write_u16(raw + 10, 27u); /* ARROW: class 10 bow ammunition. */
+        write_u16(raw + 12, THING_ENDOFLIST);
+        write_u16(raw + 14, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
 
         profile.runtime.dungeon_handle = &dungeon;
         profile.runtime.party_state_valid = 1;
@@ -219,6 +227,49 @@ int main(void)
               "CSB FIREBALL writes mana cost back to runtime");
         check(state.world.projectiles.count == 0,
               "CSB FIREBALL does not allocate into DM1 M11 projectile list");
+        state.actionDisabledTicks[0] = 0;
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+            bow;
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
+            arrow;
+        profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+            bow;
+        profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] =
+            arrow;
+        profile.runtime.party_state.Champions[0].CurrentStamina = 100;
+        check(M11_GameView_SetActingChampion(&state, 0),
+              "CSB bow action menu opens from runtime action set");
+        check(M11_GameView_GetActingActionIndices(&state, actions),
+              "CSB bow action rows resolve through runtime");
+        if (!(actions[0] == 32 && actions[1] == 255 && actions[2] == 255)) {
+            fprintf(stderr,
+                    "CSB bow actions: %u,%u,%u\n",
+                    (unsigned)actions[0],
+                    (unsigned)actions[1],
+                    (unsigned)actions[2]);
+        }
+        check(actions[0] == 32 && actions[1] == 255 && actions[2] == 255,
+              "CSB bow exposes source-locked SHOOT action row");
+        check(M11_GameView_TriggerActionRow(&state, 0) == 1,
+              "CSB SHOOT action dispatches through CSB runtime without DM1 world.things");
+        check(profile.runtime.projectiles.count == 3,
+              "CSB SHOOT allocates one additional runtime projectile");
+        check(profile.runtime.projectiles.entries[2].projectileCategory ==
+                  PROJECTILE_CATEGORY_KINETIC,
+              "CSB SHOOT projectile is kinetic");
+        check(profile.runtime.projectiles.entries[2].reserved1 == arrow,
+              "CSB SHOOT projectile preserves ammunition thing identity");
+        check(profile.runtime.party_state.Champions[0].ActionIndex ==
+                  DM1_ACTION_SHOOT,
+              "CSB SHOOT stores selected action index on runtime champion");
+        check(state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] ==
+                  THING_NONE,
+              "CSB SHOOT clears M11 ready-hand mirror");
+        check(profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] ==
+                  THING_NONE,
+              "CSB SHOOT clears runtime ready-hand slot");
+        check(state.world.projectiles.count == 0,
+              "CSB SHOOT does not allocate into DM1 M11 projectile list");
 
         M11_GameView_ClearV1LeaderHandObject(&state);
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =

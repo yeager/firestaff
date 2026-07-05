@@ -27098,6 +27098,25 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             int launchCell;
             int spawned;
 
+            if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                int projectileSlot = -1;
+                spawned = csb_v1_runtime_shoot_ready_hand(
+                    m11_mutable_csb_runtime_profile(state),
+                    championIndex,
+                    &projectileSlot);
+                if (!spawned) goto shoot_no_ammunition;
+                champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+                state->pendingShootReadyHandRefill[championIndex] = 0u;
+                m11_log_event(state, M11_COLOR_YELLOW,
+                              "T%u: %s SHOOTS",
+                              (unsigned int)state->world.gameTick,
+                              champName);
+                m11_audio_emit_source_sound(
+                    state, 13, M11_AUDIO_MARKER_COMBAT);
+                (void)projectileSlot;
+                return 1;
+            }
+
             if (!actionInfo || !readyInfo) goto shoot_no_ammunition;
             actionClass = actionInfo->weaponClass;
             if (!m11_dm1_shoot_ammunition_matches(actionInfo, readyInfo)) {
