@@ -8370,6 +8370,86 @@ int csb_v1_runtime_throw_action_hand(
     return 1;
 }
 
+int csb_v1_runtime_spawn_champion_projectile(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int action_index,
+    int projectile_subtype,
+    int projectile_category,
+    int kinetic_energy,
+    int attack,
+    int attack_type_code,
+    int step_energy,
+    uint16_t associated_thing,
+    int poison_attack,
+    int potion_power,
+    int *out_projectile_slot)
+{
+    CSB_V1_Champion *champion;
+    struct ProjectileCreateInput_Compat input;
+    struct TimelineEvent_Compat first_move;
+    int slot = -1;
+    int party_dir;
+    int launch_cell;
+
+    if (out_projectile_slot) *out_projectile_slot = -1;
+    if (!profile || !profile->party_state_valid) return 0;
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        action_index < 0 ||
+        action_index > 255) {
+        return 0;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+    if (csb_v1_champion_is_dead(champion) ||
+        champion->CurrentHealth <= 0) {
+        return 0;
+    }
+
+    party_dir = profile->party_dir & 3;
+    launch_cell = ((((((int)champion->Cell & 3) - party_dir + 1) & 2) >> 1) +
+                   party_dir) & 3;
+
+    memset(&input, 0, sizeof(input));
+    memset(&first_move, 0, sizeof(first_move));
+    input.category = projectile_category;
+    input.subtype = projectile_subtype;
+    input.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    input.ownerIndex = champion_index;
+    input.mapIndex = profile->current_level;
+    input.mapX = profile->party_x;
+    input.mapY = profile->party_y;
+    input.cell = launch_cell;
+    input.direction = party_dir;
+    input.kineticEnergy = kinetic_energy;
+    input.attack = attack;
+    input.launcherStrength = attack;
+    input.stepEnergy = step_energy > 0 ? step_energy : 1;
+    input.currentTick = (int)profile->game_time;
+    input.poisonAttack = poison_attack;
+    input.attackTypeCode = attack_type_code;
+    input.potionPower = potion_power;
+    input.associatedThing =
+        (associated_thing != THING_NONE && associated_thing != THING_ENDOFLIST)
+            ? (int)associated_thing
+            : (int)THING_NONE;
+    input.firstMoveGraceFlag = 1;
+
+    if (!F0810_PROJECTILE_Create_Compat(
+            &input,
+            &profile->projectiles,
+            &slot,
+            &first_move)) {
+        return 0;
+    }
+
+    csb_v1_runtime_schedule_projectile_move_event(profile, &first_move);
+    champion->ActionIndex = (uint8_t)action_index;
+    if (out_projectile_slot) *out_projectile_slot = slot;
+    return 1;
+}
+
 int csb_v1_runtime_record_champion_action(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,

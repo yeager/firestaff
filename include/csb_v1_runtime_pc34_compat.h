@@ -730,6 +730,24 @@ int csb_v1_runtime_throw_action_hand(
     int champion_index,
     int *out_projectile_slot);
 
+/* Create a champion-owned projectile from CSB runtime party pose/champion cell.
+ * This is the CSB counterpart to the shared F0810 projectile create path used
+ * by M11 action rows, without allocating into DM1 GameWorld.projectiles. */
+int csb_v1_runtime_spawn_champion_projectile(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int action_index,
+    int projectile_subtype,
+    int projectile_category,
+    int kinetic_energy,
+    int attack,
+    int attack_type_code,
+    int step_energy,
+    uint16_t associated_thing,
+    int poison_attack,
+    int potion_power,
+    int *out_projectile_slot);
+
 /* Record the currently selected F0407 champion action in the CSB runtime party
  * snapshot.  This is the M11 action-row bridge for actions whose exact combat
  * effects are still bounded elsewhere; it avoids dispatching CSB actions
