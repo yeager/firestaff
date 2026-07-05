@@ -1000,7 +1000,10 @@ int main(void) {
     if (loadable_icon_handle != 0u) {
         DM2_ChampionRecord *resume_champ =
             (DM2_ChampionRecord *)resume_session.champion_data[0];
+        DM2_ChampionRecord *resume_champ1 =
+            (DM2_ChampionRecord *)resume_session.champion_data[1];
         resume_champ->inventory[CHAMPION_SLOT_HEAD] = loadable_icon_handle;
+        resume_champ1->inventory[CHAMPION_SLOT_HEAD] = loadable_icon_handle;
     }
     expect_true(dm2_v1_session_save_slot(save_root,
                                          3,
@@ -1032,6 +1035,7 @@ int main(void) {
     if (loadable_icon_handle != 0u) {
         int viewport_x = 0, viewport_y = 0, viewport_w = 0, viewport_h = 0;
         int slot_x = 0, slot_y = 0, slot_w = 0, slot_h = 0;
+        int status_x = 0, status_y = 0, status_w = 0, status_h = 0;
         int source_slot =
             M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(
                 CHAMPION_SLOT_HEAD);
@@ -1108,6 +1112,54 @@ int main(void) {
         expect_true(dm2_v1_runtime_get_champion_inventory_object(
                         0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
                     "M11 DM2 resume slot place writes ObjectID back to runtime inventory");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 resume Back closes champion 0 inventory before champion switch");
+        expect_true(!M11_GameView_IsInventoryPanelActive(&view),
+                    "M11 DM2 champion 0 inventory is closed before champion switch");
+        expect_true(M11_GameView_GetV1StatusBoxZone(1,
+                                                    &status_x,
+                                                    &status_y,
+                                                    &status_w,
+                                                    &status_h),
+                    "M11 DM2 champion 1 status box zone is available");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        status_x + (status_w / 2),
+                        status_y + (status_h / 2),
+                        M11_DM1_MOUSE_MASK_RIGHT) == M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 right-click opens champion 1 inventory");
+        expect_true(M11_GameView_IsInventoryPanelActive(&view),
+                    "M11 DM2 champion 1 inventory is active");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        viewport_x + slot_x + (slot_w / 2),
+                        viewport_y + slot_y + (slot_h / 2),
+                        M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 champion 1 inventory click picks up slot ObjectID");
+        expect_true(M11_GameView_GetDm2InventoryObject(
+                        &view, 1, CHAMPION_SLOT_HEAD) == 0u,
+                    "M11 DM2 champion 1 pickup clears only champion 1 slot");
+        expect_true(M11_GameView_GetDm2InventoryObject(
+                        &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                    "M11 DM2 champion 1 pickup leaves champion 0 slot intact");
+        expect_true(dm2_v1_runtime_get_champion_inventory_object(
+                        1, CHAMPION_SLOT_HEAD) == 0u,
+                    "M11 DM2 champion 1 pickup writes cleared slot to runtime");
+        expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
+                        loadable_icon_handle,
+                    "M11 DM2 champion 1 pickup moves ObjectID to leader hand");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        viewport_x + slot_x + (slot_w / 2),
+                        viewport_y + slot_y + (slot_h / 2),
+                        M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 champion 1 inventory click places ObjectID back");
+        expect_true(M11_GameView_GetDm2InventoryObject(
+                        &view, 1, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                    "M11 DM2 champion 1 place restores champion 1 slot");
+        expect_true(M11_GameView_GetDm2LeaderHandObject(&view) == 0u,
+                    "M11 DM2 champion 1 place clears leader hand");
         expect_true(M11_GameView_HandleInput(&view,
                                              M12_MENU_INPUT_SAVE_GAME) ==
                         M11_GAME_INPUT_REDRAW,
@@ -1124,9 +1176,13 @@ int main(void) {
                         ->inventory[CHAMPION_SLOT_HEAD] ==
                         loadable_icon_handle,
                     "M11 DM2 saved session preserves runtime inventory slot ObjectID");
+        expect_true(((DM2_ChampionRecord *)resume_session.champion_data[1])
+                        ->inventory[CHAMPION_SLOT_HEAD] ==
+                        loadable_icon_handle,
+                    "M11 DM2 saved session preserves champion 1 runtime inventory slot ObjectID");
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 resume Back closes inventory slot ObjectID panel");
+                    "M11 DM2 resume Back closes champion 1 inventory slot ObjectID panel");
     }
     {
         char leader_name[32];
@@ -1173,11 +1229,17 @@ int main(void) {
     expect_true(M11_GameView_GetDm2InventoryObject(
                     &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
                 "M11 DM2 saved SKSave.dat restores slot ObjectID into view state");
+    expect_true(M11_GameView_GetDm2InventoryObject(
+                    &view, 1, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                "M11 DM2 saved SKSave.dat restores champion 1 slot ObjectID into view state");
     expect_true(M11_GameView_GetDm2LeaderHandObject(&view) == 0u,
                 "M11 DM2 saved SKSave.dat restores cleared leader hand into view state");
     expect_true(dm2_v1_runtime_get_champion_inventory_object(
                     0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
                 "M11 DM2 saved SKSave.dat restores slot ObjectID into runtime");
+    expect_true(dm2_v1_runtime_get_champion_inventory_object(
+                    1, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                "M11 DM2 saved SKSave.dat restores champion 1 slot ObjectID into runtime");
     expect_true(dm2_v1_runtime_get_leader_hand_object() == 0u,
                 "M11 DM2 saved SKSave.dat restores cleared runtime leader hand");
     M11_GameView_Shutdown(&view);
