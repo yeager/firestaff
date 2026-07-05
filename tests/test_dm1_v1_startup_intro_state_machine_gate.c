@@ -208,10 +208,39 @@ static void check_menu_to_entrance_wait_boundary(void) {
                        DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE_PC34);
 }
 
+static void check_dm1_launch_path_bypass_contract(void) {
+    expect_i("launcher launch path does not bypass intro",
+             dm1_v1_startup_launch_path_bypasses_intro_pc34(
+                 DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34),
+             0);
+    expect_i("direct game-view path bypasses intro",
+             dm1_v1_startup_launch_path_bypasses_intro_pc34(
+                 DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34),
+             1);
+    expect_i("unknown launch path is treated as bypass",
+             dm1_v1_startup_launch_path_bypasses_intro_pc34(
+                 (DM1_V1_StartupLaunchPath_PC34)99),
+             1);
+
+    expect_i("empty source reports no DM1 intro bypass",
+             dm1_v1_startup_intro_bypass_applies_to_source_pc34(NULL, 1),
+             0);
+    expect_i("DM1 source reports direct intro bypass",
+             dm1_v1_startup_intro_bypass_applies_to_source_pc34("dm1", 1),
+             1);
+    expect_i("DM1 source without bypass reports no bypass",
+             dm1_v1_startup_intro_bypass_applies_to_source_pc34("dm1", 0),
+             0);
+    expect_i("non-DM1 source ignores intro bypass flag",
+             dm1_v1_startup_intro_bypass_applies_to_source_pc34("csb", 1),
+             0);
+}
+
 int main(void) {
     check_swsh_to_title_boundary();
     check_title_to_menu_boundary();
     check_menu_to_entrance_wait_boundary();
+    check_dm1_launch_path_bypass_contract();
 
     expect_truth("startup stage order is source-valid",
                  dm1_v1_startup_sequence_source_order_valid_pc34());

@@ -10844,7 +10844,15 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
      * it at launch so the runtime can tick + surface the reminder /
      * forced-pause events during gameplay. */
     M11_GameView_InitFromMenuSessionTimer(state, menuState);
-    return M11_GameView_Start(state, &spec);
+    {
+        int ok = M11_GameView_Start(state, &spec);
+        if (ok && entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
+            state->dm1StartupIntroBypassed =
+                dm1_v1_startup_launch_path_bypasses_intro_pc34(
+                    DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34);
+        }
+        return ok;
+    }
 }
 
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
@@ -10857,7 +10865,22 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     spec.rendererBackend = M12_RENDERER_BACKEND_AUTO;
     spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
     spec.fontScale = 0; /* use built-in default scale */
-    return M11_GameView_Start(state, &spec);
+    {
+        int ok = M11_GameView_Start(state, &spec);
+        if (ok) {
+            state->dm1StartupIntroBypassed =
+                dm1_v1_startup_launch_path_bypasses_intro_pc34(
+                    DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34);
+        }
+        return ok;
+    }
+}
+
+int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state) {
+    if (!state) return 0;
+    return dm1_v1_startup_intro_bypass_applies_to_source_pc34(
+        state->sourceId,
+        state->dm1StartupIntroBypassed);
 }
 
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
