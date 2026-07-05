@@ -24541,6 +24541,34 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_remap_roundtrip.c"
     )
 endif()
 
+# M12 gamepad default mapping / axis processing gate. This pins the
+# controller contract used by the M11 runtime SDL gamepad bridge: D-pad
+# movement/turning, shoulders for strafe, face buttons for accept/back/action,
+# and left/right stick axis roles with dead-zone processing. Data-free; no
+# SDL window or game data.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_gamepad_config_m12.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/gamepad_config_m12.c")
+    add_executable(test_gamepad_config_m12
+        tests/test_gamepad_config_m12.c
+        src/shared/gamepad_config_m12.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_gamepad_config_m12 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(test_gamepad_config_m12 PRIVATE SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_gamepad_config_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME gamepad_config_m12
+        COMMAND test_gamepad_config_m12
+    )
+    set_tests_properties(gamepad_config_m12 PROPERTIES
+        LABELS "tier2;m12;gamepad;steamdeck;input-remap"
+    )
+endif()
+
 # M11 input scale boundary contract for the source-to-screen
 # direction. Pins the inverse helper
 # `M11_MapSourcePointToPresentedForPresentation()` (new in this
