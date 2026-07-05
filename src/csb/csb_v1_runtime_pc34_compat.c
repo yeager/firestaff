@@ -8163,6 +8163,35 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
     }
 }
 
+static void csb_v1_runtime_apply_party_turn_floor_sensor_add_consequences(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    int level;
+    int map_x;
+    int map_y;
+
+    if (!profile || !result) return;
+    level = profile->current_level;
+    map_x = profile->party_x;
+    map_y = profile->party_y;
+    if (level < 0) return;
+
+    /* ReDMCSB: CLIKMENU.C F0365 lines 169-172 processes party floor
+     * sensors on the current square before and after F0284 rotates the
+     * party.  Directional C003 floor sensors therefore see the old facing
+     * on removal and the new facing on addition.  The caller runs the
+     * pre-rotation removal pass; this helper runs the post-rotation add. */
+    result->sensor_destination_add_checked = 1;
+    csb_v1_runtime_process_party_floor_sensors_at_level(
+        profile,
+        level,
+        map_x,
+        map_y,
+        1,
+        result);
+}
+
 static void csb_v1_runtime_mark_deferred_new_party_map_index(
     CSB_V1_InputCommandRuntimeResult *result)
 {
@@ -11406,9 +11435,20 @@ int csb_v1_runtime_process_input_queue(
             break;
         }
         target_dir = (profile->party_dir + 3) & 3;
+        local_result.sensor_source_remove_checked = 1;
+        csb_v1_runtime_process_party_floor_sensors_at_level(
+            profile,
+            local_result.old_party_level,
+            local_result.old_party_x,
+            local_result.old_party_y,
+            0,
+            &local_result);
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
             local_result.unsupported_runtime_command = 1;
         }
+        csb_v1_runtime_apply_party_turn_floor_sensor_add_consequences(
+            profile,
+            &local_result);
         break;
     case DM1_V1_COMMAND_TURN_RIGHT:
         if (csb_v1_runtime_current_square_is_stairs(profile, NULL, NULL)) {
@@ -11420,9 +11460,20 @@ int csb_v1_runtime_process_input_queue(
             break;
         }
         target_dir = (profile->party_dir + 1) & 3;
+        local_result.sensor_source_remove_checked = 1;
+        csb_v1_runtime_process_party_floor_sensors_at_level(
+            profile,
+            local_result.old_party_level,
+            local_result.old_party_x,
+            local_result.old_party_y,
+            0,
+            &local_result);
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
             local_result.unsupported_runtime_command = 1;
         }
+        csb_v1_runtime_apply_party_turn_floor_sensor_add_consequences(
+            profile,
+            &local_result);
         break;
     case DM1_V1_COMMAND_MOVE_FORWARD:
     case DM1_V1_COMMAND_MOVE_RIGHT:
