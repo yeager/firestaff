@@ -204,6 +204,64 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
         return NULL;
     }
 
+    {
+        DM2_V1_DungeonData loaded;
+        if (dm2_v1_dungeon_load(&loaded, decoded, (int)decoded_size) == 0) {
+            int mc = loaded.level_count;
+            if (mc > DM2_MAX_LEVELS) mc = DM2_MAX_LEVELS;
+
+            world->map_count = mc;
+            world->text_word_count = loaded.text_word_count;
+            world->dungeon_seed = dm2_rd16le(decoded + 8);
+            for (int i = 0; i < DM2_MAX_THING_TYPES; ++i)
+                world->thing_pool_counts[i] = loaded.thing_type_counts[i];
+            for (int i = 0; i < mc; ++i) {
+                if ((size_t)(DM2_DUNGEON_HEADER_SIZE +
+                             i * DM2_MAP_DESC_SIZE + DM2_MAP_DESC_SIZE) <=
+                    decoded_size) {
+                    memcpy(&world->map_descs[i],
+                           decoded + DM2_DUNGEON_HEADER_SIZE +
+                               i * DM2_MAP_DESC_SIZE,
+                           DM2_MAP_DESC_SIZE);
+                }
+                world->levels[i].width = loaded.level_widths[i];
+                world->levels[i].height = loaded.level_heights[i];
+                world->levels[i].level_index = i;
+                world->levels[i].level_type = loaded.level_types[i];
+                world->levels[i].byte_offset = loaded.level_offsets[i];
+                if (loaded.level_widths[i] > 0 &&
+                    loaded.level_heights[i] > 0) {
+                    size_t count = (size_t)loaded.level_widths[i] *
+                                   (size_t)loaded.level_heights[i];
+                    world->levels[i].tiles =
+                        (dm2_tile_t *)malloc(count * sizeof(dm2_tile_t));
+                    if (world->levels[i].tiles) {
+                        for (int y = 0; y < loaded.level_heights[i]; ++y) {
+                            for (int x = 0; x < loaded.level_widths[i]; ++x) {
+                                int raw = dm2_v1_dungeon_get_tile_raw(
+                                    &loaded, i, x, y);
+                                int type = dm2_v1_dungeon_get_square_type(
+                                    &loaded, i, x, y);
+                                dm2_tile_t tile;
+                                tile.raw = (uint16_t)(raw < 0 ? 0 : raw);
+                                tile.type = (uint8_t)(type < 0 ? 0 : type);
+                                tile.flags = (uint8_t)
+                                    (loaded.square_bytes == 1
+                                         ? (tile.raw & 0x1fu)
+                                         : ((tile.raw &
+                                             ~DM2_SQUARE_TYPE_MASK) >> 5));
+                                world->levels[i].tiles
+                                    [y * loaded.level_widths[i] + x] = tile;
+                            }
+                        }
+                    }
+                }
+            }
+            dm2_v1_dungeon_free(&loaded);
+            return world;
+        }
+    }
+
     dm2_parse_header((const dm2_dungeon_header_t *)decoded, world);
     decoded      += DM2_DUNGEON_HEADER_SIZE;
     decoded_size -= DM2_DUNGEON_HEADER_SIZE;
