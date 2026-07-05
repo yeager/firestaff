@@ -324,9 +324,9 @@ int main(void) {
                 strcmp(world->party.champions[0].name, "Theron") == 0 &&
                 world->party.champions[0].health == 77,
                 "M11 forcefield materializes Theron plus selected mirrors");
-    expect_true(strcmp(world->party.champions[1].name, "Sorcerer Mirror") == 0 &&
-                strcmp(world->party.champions[2].name, "Fighter Mirror") == 0 &&
-                strcmp(world->party.champions[3].name, "Ninja Mirror") == 0,
+    expect_true(strcmp(world->party.champions[1].name, "Pental") == 0 &&
+                strcmp(world->party.champions[2].name, "Hakar") == 0 &&
+                strcmp(world->party.champions[3].name, "Tiran") == 0,
                 "M11 forcefield preserves Soul Room resurrection order");
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_IN_DUNGEON,
