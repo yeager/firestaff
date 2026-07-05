@@ -716,6 +716,41 @@ static void fill_csb_launch_spec(M11_GameLaunchSpec* spec,
     spec->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
 }
 
+static void force_csb_menu_available(M12_StartupMenuState* state) {
+    if (!state) return;
+    state->entries[1].title = "CHAOS STRIKES BACK";
+    state->entries[1].gameId = "csb";
+    state->entries[1].kind = M12_MENU_ENTRY_GAME;
+    state->entries[1].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
+    state->entries[1].available = 1;
+    state->assetStatus.originalFileCandidateFound = 1;
+    state->assetStatus.csbAvailable = 1;
+    state->assetStatus.versions[1][0].gameId = "csb";
+    state->assetStatus.versions[1][0].versionId = "pc34-en";
+    state->assetStatus.versions[1][0].label = "PC 3.4 English";
+    state->assetStatus.versions[1][0].shortLabel = "PC34 EN";
+    state->assetStatus.versions[1][0].matched = 1;
+    state->assetStatus.requiredFileCounts[1] = 2;
+    state->assetStatus.requiredFiles[1][0].gameId = "csb";
+    state->assetStatus.requiredFiles[1][0].roleId = "graphics";
+    state->assetStatus.requiredFiles[1][0].label = "GRAPHICS.DAT";
+    state->assetStatus.requiredFiles[1][0].required = 1;
+    state->assetStatus.requiredFiles[1][0].matched = 1;
+    state->assetStatus.requiredFiles[1][1].gameId = "csb";
+    state->assetStatus.requiredFiles[1][1].roleId = "dungeon";
+    state->assetStatus.requiredFiles[1][1].label = "DUNGEON.DAT";
+    state->assetStatus.requiredFiles[1][1].required = 1;
+    state->assetStatus.requiredFiles[1][1].matched = 1;
+    state->gameOptions[1].versionIndex = 0;
+    state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    state->view = M12_MENU_VIEW_MAIN;
+    state->selectedIndex = 1;
+    state->activatedIndex = 1;
+    state->launchRequested = 1;
+    state->quickResumeLaunchRequested = 0;
+}
+
 static int write_synthetic_dm1_import_save(const char *path,
                                            int champion_count) {
     unsigned char buf[1024];
@@ -1227,6 +1262,46 @@ int main(void) {
                     view.world.party.championCount == 2,
                 "M11 CSB imported party survives the entrance Enter handoff");
     M11_GameView_Shutdown(&view);
+
+    {
+        M12_StartupMenuState menu;
+        M12_StartupMenu_InitWithDataDir(&menu, data_dir, NULL);
+        force_csb_menu_available(&menu);
+        menu.csbImportDm1LaunchRequested = 1;
+        snprintf(menu.csbImportDm1SavePath,
+                 sizeof(menu.csbImportDm1SavePath),
+                 "%s",
+                 dm1_import_path);
+        M11_GameView_Init(&view);
+        expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu),
+                    "M11 CSB menu-entry launch accepts a DM1 utility import path");
+        expect_true(view.csbState.startup_entrance_active == 1 &&
+                        view.csbState.startup_import_available == 1 &&
+                        view.csbState.startup_import_champion_count == 2,
+                    "M11 CSB menu-entry launch forwards the DM1 import intent");
+        expect_true(view.world.party.championCount == 2 &&
+                        memcmp(view.world.party.champions[0].name,
+                               "ALPHA   ", 8u) == 0 &&
+                        memcmp(view.world.party.champions[1].name,
+                               "BETA    ", 8u) == 0,
+                    "M11 CSB menu-entry launch mirrors imported champion names");
+        expect_true(view.csbBootProfile != NULL &&
+                        ((CSB_V1_BootProfile *)view.csbBootProfile)
+                            ->runtime.party_state.ImportedFromDM1 == 1,
+                    "M11 CSB menu-entry launch marks imported runtime party");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        245,
+                        46,
+                        M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB menu-entry imported-party launch enters the dungeon");
+        expect_true(view.csbState.startup_entrance_active == 0 &&
+                        view.world.party.championCount == 2,
+                    "M11 CSB menu-entry imported party survives entrance handoff");
+        M11_GameView_Shutdown(&view);
+        M12_StartupMenu_Destroy(&menu);
+    }
 
     fill_csb_launch_spec(&spec, data_dir, NULL);
     M11_GameView_Init(&view);
