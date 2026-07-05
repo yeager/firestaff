@@ -8,6 +8,7 @@
 #include "menu_startup_m12.h"
 
 #include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_timer.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +51,7 @@ static int failures = 0;
 static int dialogCalls = 0;
 static int dialogHoldOpen = 0;
 static char dialogDefaultLocation[M12_ASSET_DATA_DIR_CAPACITY];
+static char dialogSelectedPath[M12_ASSET_DATA_DIR_CAPACITY];
 static SDL_DialogFileCallback dialogPendingCallback = NULL;
 static void* dialogPendingUserdata = NULL;
 
@@ -77,6 +79,11 @@ void SDLCALL SDL_ShowOpenFolderDialog(SDL_DialogFileCallback callback,
         return;
     }
     if (callback) {
+        if (dialogSelectedPath[0] != '\0') {
+            const char* selectedSelection[] = { dialogSelectedPath, NULL };
+            callback(userdata, selectedSelection, 0);
+            return;
+        }
         callback(userdata, canceledSelection, -1);
     }
 }
@@ -99,6 +106,7 @@ static void reset_dialog_stub(void) {
     dialogPendingCallback = NULL;
     dialogPendingUserdata = NULL;
     dialogDefaultLocation[0] = '\0';
+    dialogSelectedPath[0] = '\0';
 }
 
 static int make_child_dir(const char* parent,
@@ -308,11 +316,54 @@ static void check_active_scan_message_requests_cancel(void) {
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "CANCELLING DATA SCAN") == 0);
 }
 
+static void check_selected_folder_scans_asynchronously(void) {
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    int i;
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    if (failures) {
+        return;
+    }
+    snprintf(dialogSelectedPath, sizeof(dialogSelectedPath), "%s", dataRoot);
+
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+
+    CHECK(dialogCalls == 1);
+    CHECK(state.dataDirPickerActive == 0);
+    CHECK(state.dataDirScanActive == 1);
+    CHECK(state.dataDirScanJob != NULL);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "SCANNING GAME DATA") == 0);
+
+    for (i = 0; i < 200 && state.dataDirScanJob != NULL; ++i) {
+        (void)M12_StartupMenu_Update(&state);
+        SDL_Delay(1);
+    }
+
+    CHECK(state.dataDirScanActive == 0);
+    CHECK(state.dataDirScanJob == NULL);
+    CHECK(state.dataDirScanCancelled == 0);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "DATA DIRECTORY UPDATED") == 0);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataRoot) == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
+}
+
 int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
     check_cancel_preserves_no_data_state();
     check_active_picker_blocks_message_reentry();
     check_active_scan_message_requests_cancel();
+    check_selected_folder_scans_asynchronously();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

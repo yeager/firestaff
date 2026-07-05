@@ -427,6 +427,7 @@ typedef struct M12_StartupMenuState {
     int dataDirScanCancelRequested;
     int dataDirScanCancelled;
     M12_AssetScanProgress dataDirScanProgress;
+    void* dataDirScanJob;
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
@@ -440,6 +441,8 @@ int M12_StartupMenu_SessionTimerRemainingSeconds(const M12_StartupMenuState* sta
                                                  int elapsedSeconds);
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input);
+int M12_StartupMenu_Update(M12_StartupMenuState* state);
+void M12_StartupMenu_Destroy(M12_StartupMenuState* state);
 void m12_redesigned_handle_input(M12_StartupMenuState* state,
                                  int key_up,
                                  int key_down,

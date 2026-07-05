@@ -24,8 +24,11 @@
 #include "manual_docs_m12.h"
 #include "cloud_sync_m12.h"
 
+#include <SDL3/SDL_atomic.h>
 #include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_mutex.h>
+#include <SDL3/SDL_thread.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -34,6 +37,17 @@
 #include <time.h>
 
 void m12_update_game_availability(const FS_GameAvailability *avail);
+
+typedef struct M12_DataDirScanJob {
+    SDL_Thread* thread;
+    SDL_Mutex* mutex;
+    SDL_AtomicInt cancelRequested;
+    SDL_AtomicInt done;
+    int result;
+    char dataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    M12_AssetStatus assetStatus;
+    M12_AssetScanProgress progress;
+} M12_DataDirScanJob;
 
 enum {
     M12_COLOR_BLACK = 0,
@@ -1480,6 +1494,164 @@ static int m12_data_dir_scan_progress_callback(
     return state->dataDirScanCancelRequested ? 0 : 1;
 }
 
+static int m12_data_dir_scan_job_progress_callback(
+    const M12_AssetScanProgress* progress,
+    void* userData) {
+    M12_DataDirScanJob* job = (M12_DataDirScanJob*)userData;
+    if (!job || !progress) {
+        return 1;
+    }
+    if (job->mutex) {
+        SDL_LockMutex(job->mutex);
+    }
+    job->progress = *progress;
+    if (job->mutex) {
+        SDL_UnlockMutex(job->mutex);
+    }
+    return SDL_GetAtomicInt(&job->cancelRequested) ? 0 : 1;
+}
+
+static int SDLCALL m12_data_dir_scan_thread(void* data) {
+    M12_DataDirScanJob* job = (M12_DataDirScanJob*)data;
+    M12_AssetStatusScanOptions scanOptions;
+    if (!job) {
+        return 1;
+    }
+    memset(&scanOptions, 0, sizeof(scanOptions));
+    scanOptions.progressFn = m12_data_dir_scan_job_progress_callback;
+    scanOptions.progressUserData = job;
+    job->result = M12_AssetStatus_ScanWithOptions(&job->assetStatus,
+                                                  job->dataDir,
+                                                  &scanOptions);
+    if (job->mutex) {
+        SDL_LockMutex(job->mutex);
+    }
+    job->progress = *M12_AssetStatus_GetScanProgress(&job->assetStatus);
+    if (job->mutex) {
+        SDL_UnlockMutex(job->mutex);
+    }
+    SDL_SetAtomicInt(&job->done, 1);
+    return job->result ? 0 : 1;
+}
+
+static void m12_free_data_dir_scan_job(M12_DataDirScanJob* job) {
+    if (!job) {
+        return;
+    }
+    if (job->mutex) {
+        SDL_DestroyMutex(job->mutex);
+    }
+    free(job);
+}
+
+static void m12_apply_completed_asset_scan(M12_StartupMenuState* state) {
+    if (!state) {
+        return;
+    }
+    m12_sync_entries_from_assets(state);
+    m12_publish_game_availability(state);
+    m12_sync_card_art(state);
+    M12_CreatureArt_Init(&state->creatureArt,
+                         M12_AssetStatus_GetDataDir(&state->assetStatus),
+                         (unsigned int)time(NULL));
+    m12_probe_quick_resume(state);
+    m12_save_config(state);
+}
+
+static void m12_update_data_dir_scan_message(M12_StartupMenuState* state) {
+    char line2[256];
+    char line3[160];
+    if (!state || !state->dataDirScanActive) {
+        return;
+    }
+    m12_format_data_scan_progress_line(&state->dataDirScanProgress,
+                                       line2,
+                                       sizeof(line2));
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    m12_set_buffered_message(
+        state,
+        state->dataDirScanCancelRequested
+            ? m12_tr(state, "CANCELLING DATA SCAN")
+            : m12_tr(state, "SCANNING GAME DATA"),
+        state->dataDirScanCancelRequested
+            ? m12_tr(state, "WAITING FOR CURRENT FILE CHECK TO FINISH")
+            : line2,
+        line3);
+}
+
+static void m12_cancel_data_dir_scan(M12_StartupMenuState* state) {
+    M12_DataDirScanJob* job;
+    if (!state || !state->dataDirScanActive) {
+        return;
+    }
+    state->dataDirScanCancelRequested = 1;
+    job = (M12_DataDirScanJob*)state->dataDirScanJob;
+    if (job) {
+        SDL_SetAtomicInt(&job->cancelRequested, 1);
+    } else {
+        M12_AssetStatus_RequestCancel(&state->assetStatus);
+    }
+    m12_update_data_dir_scan_message(state);
+}
+
+static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
+                                         const char* dataDir) {
+    M12_DataDirScanJob* job;
+    if (!state || !dataDir || dataDir[0] == '\0') {
+        return 0;
+    }
+    if (!FSP_DirExists(dataDir)) {
+        char line3[160];
+        m12_format_data_dir_line(state, line3, sizeof(line3));
+        m12_enter_message_view(state);
+        state->messageReturnView = M12_MENU_VIEW_MAIN;
+        state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "DATA DIRECTORY NOT FOUND"),
+                                 m12_tr(state, "CHOOSE AN EXISTING FOLDER"),
+                                 line3);
+        return 0;
+    }
+    if (state->dataDirScanActive || state->dataDirScanJob) {
+        m12_cancel_data_dir_scan(state);
+        return 0;
+    }
+    job = (M12_DataDirScanJob*)calloc(1U, sizeof(*job));
+    if (!job) {
+        return M12_StartupMenu_SetDataDirectory(state, dataDir);
+    }
+    job->mutex = SDL_CreateMutex();
+    if (!job->mutex) {
+        m12_free_data_dir_scan_job(job);
+        return M12_StartupMenu_SetDataDirectory(state, dataDir);
+    }
+    snprintf(job->dataDir, sizeof(job->dataDir), "%s", dataDir);
+    SDL_SetAtomicInt(&job->cancelRequested, 0);
+    SDL_SetAtomicInt(&job->done, 0);
+    state->dataDirScanActive = 1;
+    state->dataDirScanCancelRequested = 0;
+    state->dataDirScanCancelled = 0;
+    memset(&state->dataDirScanProgress, 0, sizeof(state->dataDirScanProgress));
+    state->dataDirScanJob = job;
+    m12_enter_message_view(state);
+    state->messageReturnView = M12_MENU_VIEW_MAIN;
+    state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    m12_set_buffered_message(state,
+                             m12_tr(state, "SCANNING GAME DATA"),
+                             m12_tr(state, "STARTING"),
+                             dataDir);
+    job->thread = SDL_CreateThread(m12_data_dir_scan_thread,
+                                   "m12-data-dir-scan",
+                                   job);
+    if (!job->thread) {
+        state->dataDirScanJob = NULL;
+        state->dataDirScanActive = 0;
+        m12_free_data_dir_scan_job(job);
+        return M12_StartupMenu_SetDataDirectory(state, dataDir);
+    }
+    return 1;
+}
+
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir) {
     M12_AssetStatusScanOptions scanOptions;
@@ -1526,14 +1698,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                  line3);
         return 0;
     }
-    m12_sync_entries_from_assets(state);
-    m12_publish_game_availability(state);
-    m12_sync_card_art(state);
-    M12_CreatureArt_Init(&state->creatureArt,
-                         M12_AssetStatus_GetDataDir(&state->assetStatus),
-                         (unsigned int)time(NULL));
-    m12_probe_quick_resume(state);
-    m12_save_config(state);
+    m12_apply_completed_asset_scan(state);
     m12_show_data_dir_result_popup(state, 1);
     return 1;
 }
@@ -1789,7 +1954,7 @@ static void SDLCALL m12_data_dir_dialog_callback(void* userdata,
     }
     state->dataDirPickerActive = 0;
     if (filelist && filelist[0] && filelist[0][0] != '\0') {
-        (void)M12_StartupMenu_SetDataDirectory(state, filelist[0]);
+        (void)m12_begin_async_data_dir_scan(state, filelist[0]);
         return;
     }
     m12_show_data_dir_result_popup(state, 0);
@@ -2378,6 +2543,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->dataDirScanCancelRequested = 0;
     state->dataDirScanCancelled = 0;
     memset(&state->dataDirScanProgress, 0, sizeof(state->dataDirScanProgress));
+    state->dataDirScanJob = NULL;
     m12_show_no_game_data_popup(state);
     state->frameTick = 0;
     state->hoverX = -1;
@@ -3372,13 +3538,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             if (input == M12_MENU_INPUT_BACK ||
                 input == M12_MENU_INPUT_ACCEPT ||
                 input == M12_MENU_INPUT_ACTION) {
-                state->dataDirScanCancelRequested = 1;
-                M12_AssetStatus_RequestCancel(&state->assetStatus);
-                m12_set_buffered_message(
-                    state,
-                    m12_tr(state, "CANCELLING DATA SCAN"),
-                    m12_tr(state, "WAITING FOR CURRENT FILE CHECK TO FINISH"),
-                    state->messageLine3);
+                m12_cancel_data_dir_scan(state);
             }
             return;
         }
@@ -8422,6 +8582,83 @@ const char* M12_Museum_GetBullet(int categoryIndex, int pageIndex, int bulletInd
         return NULL;
     }
     return cat->pages[pi][bulletIndex];
+}
+
+int M12_StartupMenu_Update(M12_StartupMenuState* state) {
+    M12_DataDirScanJob* job;
+    int changed = 0;
+    if (!state) {
+        return 0;
+    }
+    job = (M12_DataDirScanJob*)state->dataDirScanJob;
+    if (!job) {
+        return 0;
+    }
+    if (job->mutex) {
+        SDL_LockMutex(job->mutex);
+    }
+    state->dataDirScanProgress = job->progress;
+    if (job->mutex) {
+        SDL_UnlockMutex(job->mutex);
+    }
+    if (state->dataDirScanActive) {
+        m12_update_data_dir_scan_message(state);
+        changed = 1;
+    }
+    if (SDL_GetAtomicInt(&job->done)) {
+        int threadStatus = 0;
+        SDL_WaitThread(job->thread, &threadStatus);
+        (void)threadStatus;
+        state->dataDirScanProgress =
+            *M12_AssetStatus_GetScanProgress(&job->assetStatus);
+        state->dataDirScanActive = 0;
+        state->dataDirScanCancelled =
+            job->result ? 0 : state->dataDirScanProgress.cancelled;
+        state->dataDirScanJob = NULL;
+        if (job->result && !state->dataDirScanCancelled) {
+            state->assetStatus = job->assetStatus;
+            m12_apply_completed_asset_scan(state);
+            m12_show_data_dir_result_popup(state, 1);
+        } else {
+            char line3[160];
+            m12_format_data_dir_line(state, line3, sizeof(line3));
+            m12_enter_message_view(state);
+            state->messageReturnView = M12_MENU_VIEW_MAIN;
+            state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+            m12_set_buffered_message(
+                state,
+                state->dataDirScanCancelled
+                    ? m12_tr(state, "DATA SCAN CANCELLED")
+                    : m12_tr(state, "DATA SCAN FAILED"),
+                state->dataDirScanCancelled
+                    ? m12_tr(state, "GAME AVAILABILITY WAS NOT UPDATED")
+                    : m12_tr(state, "CHOOSE AN EXISTING FOLDER"),
+                line3);
+        }
+        m12_free_data_dir_scan_job(job);
+        changed = 1;
+    }
+    return changed;
+}
+
+void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {
+    M12_DataDirScanJob* job;
+    if (!state) {
+        return;
+    }
+    job = (M12_DataDirScanJob*)state->dataDirScanJob;
+    if (!job) {
+        return;
+    }
+    SDL_SetAtomicInt(&job->cancelRequested, 1);
+    if (job->thread) {
+        int threadStatus = 0;
+        SDL_WaitThread(job->thread, &threadStatus);
+        (void)threadStatus;
+    }
+    state->dataDirScanJob = NULL;
+    state->dataDirScanActive = 0;
+    m12_free_data_dir_scan_job(job);
 }
 
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {

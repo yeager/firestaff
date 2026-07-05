@@ -3137,6 +3137,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             /* Redraw the launcher every tick so animations (pulse,
              * hover) remain alive even without input. */
             menuState.frameTick += 1U;
+            if (M12_StartupMenu_Update(&menuState)) {
+                M11_ApplyStartupMenuRuntime(&menuState);
+            }
             m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
             m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
         }
@@ -3149,6 +3152,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         runRc = 3;
     }
 cleanup:
+    M12_StartupMenu_Destroy(&menuState);
     m11_write_autotest_screenshot(getenv("FIRESTAFF_AUTOTEST_SCREENSHOT_DIR"));
     m11_write_autotest_presented_screenshot(getenv("FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR"));
     m11_write_autotest_runtime_probe(getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
