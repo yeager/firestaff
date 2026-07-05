@@ -344,6 +344,9 @@ bool dm2_v1_session_validate(const DM2_V1_SessionState *session)
     /* Gold should not be negative */
     if (session->gold > 4000000000u) return false;
 
+    /* Bounded WRITE_MINION_ASSOC startup copy. */
+    if (session->original_minions.count > DM2_MAX_MINIONS) return false;
+
     /* Champion records must have non-zero name */
     for (uint8_t i = 0; i < session->champion_count; i++) {
         const DM2_ChampionRecord *rec =
@@ -390,8 +393,11 @@ bool dm2_v1_session_validate(const DM2_V1_SessionState *session)
  *   1273    6     original_spell_effects
  *   1279    1     original_timer_count
  *   1280    320   original_timers[32]
+ *   1600    4     original_leader_hand_object
+ *   1604    1     original_minions.count
+ *   1605    128   original_minions.entries[16] (object_id + owner_champion)
  *   ──────  ────
- *   Total:  1600 bytes
+ *   Total:  1733 bytes
  *
  * Champion records are stored raw (261 bytes each, not SUPPRESS-encoded
  * at this level — the SUPPRESS encoding is done per-field by the
@@ -415,7 +421,9 @@ int dm2_v1_session_serialize(const DM2_V1_SessionState *session,
         DM2_GLOBAL_SPELL_EFFECTS_SIZE +
         1 +
         DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE +
-        4
+        4 +
+        1 +
+        DM2_MAX_MINIONS * 8
     };
     uint8_t *ext;
     if (buf_size < (size_t)DM2_SESSION_SERIALIZED_SIZE) return -1;
@@ -499,6 +507,22 @@ int dm2_v1_session_serialize(const DM2_V1_SessionState *session,
     ext[1] = (uint8_t)((session->original_leader_hand_object >> 8) & 0xFFu);
     ext[2] = (uint8_t)((session->original_leader_hand_object >> 16) & 0xFFu);
     ext[3] = (uint8_t)((session->original_leader_hand_object >> 24) & 0xFFu);
+    ext += 4;
+    *ext++ = session->original_minions.count > DM2_MAX_MINIONS
+                 ? DM2_MAX_MINIONS
+                 : session->original_minions.count;
+    for (int i = 0; i < DM2_MAX_MINIONS; i++) {
+        const DM2_MinionAssoc *m = &session->original_minions.entries[i];
+        ext[0] = (uint8_t)(m->object_id & 0xFFu);
+        ext[1] = (uint8_t)((m->object_id >> 8) & 0xFFu);
+        ext[2] = (uint8_t)((m->object_id >> 16) & 0xFFu);
+        ext[3] = (uint8_t)((m->object_id >> 24) & 0xFFu);
+        ext[4] = (uint8_t)(m->owner_champion & 0xFFu);
+        ext[5] = (uint8_t)((m->owner_champion >> 8) & 0xFFu);
+        ext[6] = (uint8_t)((m->owner_champion >> 16) & 0xFFu);
+        ext[7] = (uint8_t)((m->owner_champion >> 24) & 0xFFu);
+        ext += 8;
+    }
 
     return DM2_SESSION_SERIALIZED_SIZE;
 }
@@ -518,7 +542,9 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
             1 +
             DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE,
         DM2_SESSION_EXT_V2_SERIALIZED_SIZE =
-            DM2_SESSION_EXT_V1_SERIALIZED_SIZE + 4
+            DM2_SESSION_EXT_V1_SERIALIZED_SIZE + 4,
+        DM2_SESSION_EXT_V3_SERIALIZED_SIZE =
+            DM2_SESSION_EXT_V2_SERIALIZED_SIZE + 1 + DM2_MAX_MINIONS * 8
     };
     const uint8_t *ext;
     if (buf_size < (size_t)DM2_SESSION_BASE_SERIALIZED_SIZE) return -1;
@@ -605,6 +631,27 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
                 ((uint32_t)ext[1] << 8) |
                 ((uint32_t)ext[2] << 16) |
                 ((uint32_t)ext[3] << 24);
+            ext += 4;
+        }
+        if (buf_size >= (size_t)DM2_SESSION_EXT_V3_SERIALIZED_SIZE) {
+            session->original_minions.count = *ext++;
+            if (session->original_minions.count > DM2_MAX_MINIONS) {
+                return -1;
+            }
+            for (int i = 0; i < DM2_MAX_MINIONS; i++) {
+                DM2_MinionAssoc *m = &session->original_minions.entries[i];
+                m->object_id =
+                    ((uint32_t)ext[0]) |
+                    ((uint32_t)ext[1] << 8) |
+                    ((uint32_t)ext[2] << 16) |
+                    ((uint32_t)ext[3] << 24);
+                m->owner_champion =
+                    ((uint32_t)ext[4]) |
+                    ((uint32_t)ext[5] << 8) |
+                    ((uint32_t)ext[6] << 16) |
+                    ((uint32_t)ext[7] << 24);
+                ext += 8;
+            }
         }
     }
 
@@ -671,6 +718,31 @@ static uint32_t dm2_v1_read_u32_le_at(const uint8_t *buf, size_t offset)
            ((uint32_t)buf[offset + 1u] << 8) |
            ((uint32_t)buf[offset + 2u] << 16) |
            ((uint32_t)buf[offset + 3u] << 24);
+}
+
+static int dm2_v1_import_original_minion_blob(DM2_V1_SessionState *session,
+                                              const uint8_t *blob,
+                                              size_t blob_size)
+{
+    size_t pos = 0u;
+    int count;
+
+    if (!session || !blob || blob_size < 4u) return -1;
+    if (!dm2_v1_read_payload_i32_le(blob, blob_size, &pos, &count) ||
+        count < 0 || count > DM2_MAX_MINIONS) {
+        return -1;
+    }
+    if ((size_t)count * 8u > blob_size - pos) return -1;
+    memset(&session->original_minions, 0, sizeof(session->original_minions));
+    session->original_minions.count = (uint8_t)count;
+    for (int i = 0; i < count; i++) {
+        session->original_minions.entries[i].object_id =
+            dm2_v1_read_u32_le_at(blob, pos);
+        session->original_minions.entries[i].owner_champion =
+            dm2_v1_read_u32_le_at(blob, pos + 4u);
+        pos += 8u;
+    }
+    return pos == blob_size ? 0 : -1;
 }
 
 static int dm2_v1_import_original_optional_sections(
@@ -766,6 +838,17 @@ static int dm2_v1_import_original_optional_sections(
                 timer_pos += (size_t)timer_size;
             }
             if (timer_pos != blob_size) return -1;
+            continue;
+        }
+
+        r = dm2_v1_read_payload_tagged_blob(buf, size, pos, "MIN0",
+                                            &blob, &blob_size);
+        if (r < 0) return -1;
+        if (r > 0) {
+            if (dm2_v1_import_original_minion_blob(session, blob,
+                                                  blob_size) != 0) {
+                return -1;
+            }
             continue;
         }
 
@@ -995,6 +1078,22 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
         session->original_leader_hand_object =
             dm2_v1_read_u32_le_at(buf, pos);
         pos += 4u;
+    }
+    if (buf_size - pos >= 1u) {
+        const uint8_t count = buf[pos++];
+        if (count > DM2_MAX_MINIONS ||
+            (size_t)count * 8u > buf_size - pos) {
+            return -1;
+        }
+        memset(&session->original_minions, 0, sizeof(session->original_minions));
+        session->original_minions.count = count;
+        for (int i = 0; i < (int)count; i++) {
+            session->original_minions.entries[i].object_id =
+                dm2_v1_read_u32_le_at(buf, pos);
+            session->original_minions.entries[i].owner_champion =
+                dm2_v1_read_u32_le_at(buf, pos + 4u);
+            pos += 8u;
+        }
     }
 
     if (!dm2_v1_session_validate(session)) return -1;

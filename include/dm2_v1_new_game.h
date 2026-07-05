@@ -173,6 +173,7 @@ typedef struct {
     uint8_t  original_timer_count;
     DM2_TimerEntry original_timers[DM2_MAX_TIMERS];
     uint32_t original_leader_hand_object;
+    DM2_MinionTable original_minions;
 
     /* Dungeon state (variable — level data) */
     /* Note: full dungeon state saved separately via dungeon_serialize() */
@@ -181,7 +182,8 @@ typedef struct {
     /* Note: companion state serialized as fixed-size records */
 
     /* Minion table */
-    /* Note: minion table serialized as count + entries */
+    /* Bounded startup/import copy of WRITE_MINION_ASSOC records. Full live
+     * minion AI state stays with the later dungeon DB/runtime importer. */
 
     /* Padding to max size */
     uint8_t  reserved[256];

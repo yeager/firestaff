@@ -275,13 +275,21 @@ static void test_serialize_roundtrip(void)
     /* Verify the starter party has names */
     DM2_ChampionRecord *r0 = (DM2_ChampionRecord *)orig.champion_data[0];
     CHECK(r0->first_name[0] != '\0', "Champion 0 has a name");
+    orig.original_leader_hand_object = 0x0A000033u;
+    orig.original_minions.count = 2u;
+    orig.original_minions.entries[0].object_id = 0x04000012u;
+    orig.original_minions.entries[0].owner_champion = 0u;
+    orig.original_minions.entries[1].object_id = 0x05000034u;
+    orig.original_minions.entries[1].owner_champion = 2u;
 
     /* Serialize */
     uint8_t buf[4096];
     int sz = dm2_v1_session_serialize(&orig, buf, sizeof(buf));
     CHECK(sz > 0, "serialize returns positive size");
-    CHECK(sz == (29 + 4 * 261),  /* DM2_SESSION_SERIALIZED_SIZE */
-          "serialized size = 29 + 4*261 = 1073 bytes");
+    CHECK(sz == (29 + 4 * 261 + 8 + 64 + 128 + 6 + 1 +
+                 DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE + 4 + 1 +
+                 DM2_MAX_MINIONS * 8),
+          "serialized size includes original startup extension");
 
     /* Deserialize */
     int r = dm2_v1_session_deserialize(&loaded, buf, (size_t)sz);
@@ -306,6 +314,17 @@ static void test_serialize_roundtrip(void)
     CHECK(loaded.gold == orig.gold, "gold preserved");
     CHECK(loaded.rain_intensity == orig.rain_intensity,
           "rain_intensity preserved");
+    CHECK(loaded.original_leader_hand_object ==
+              orig.original_leader_hand_object,
+          "leader-hand object preserved");
+    CHECK(loaded.original_minions.count == 2u,
+          "minion count preserved");
+    CHECK(loaded.original_minions.entries[0].object_id == 0x04000012u &&
+              loaded.original_minions.entries[0].owner_champion == 0u,
+          "minion 0 association preserved");
+    CHECK(loaded.original_minions.entries[1].object_id == 0x05000034u &&
+              loaded.original_minions.entries[1].owner_champion == 2u,
+          "minion 1 association preserved");
 
     /* Verify champion 0 name preserved */
     DM2_ChampionRecord *l0 = (DM2_ChampionRecord *)loaded.champion_data[0];

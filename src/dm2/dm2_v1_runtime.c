@@ -46,6 +46,7 @@ typedef struct {
     int dungeon_level;
     int view_dir;
     uint32_t leader_hand_object;
+    DM2_MinionTable minions;
     int last_npc_level;
     int last_npc_x;
     int last_npc_y;
@@ -332,6 +333,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
     g_dm2_runtime.leader_hand_object = 0u;
+    memset(&g_dm2_runtime.minions, 0, sizeof(g_dm2_runtime.minions));
     g_dm2_runtime.last_npc_level = -1;
     g_dm2_runtime.last_npc_x = -1;
     g_dm2_runtime.last_npc_y = -1;
@@ -377,6 +379,10 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
     rt->leader_hand_object = session->original_leader_hand_object;
+    rt->minions = session->original_minions;
+    if (rt->minions.count > DM2_MAX_MINIONS) {
+        rt->minions.count = DM2_MAX_MINIONS;
+    }
     dm2_v1_weather_set(&rt->weather, session->rain_intensity > 0
                                       ? DM2_WEATHER_RAIN
                                       : DM2_WEATHER_CLEAR);
@@ -801,6 +807,19 @@ uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
 
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
     g_dm2_runtime.leader_hand_object = object;
+}
+
+uint8_t dm2_v1_runtime_get_minion_count(void) {
+    return g_dm2_runtime.minions.count;
+}
+
+int dm2_v1_runtime_get_minion_assoc(uint8_t index, DM2_MinionAssoc *out_assoc) {
+    if (!out_assoc || index >= g_dm2_runtime.minions.count ||
+        index >= DM2_MAX_MINIONS) {
+        return -1;
+    }
+    *out_assoc = g_dm2_runtime.minions.entries[index];
+    return 0;
 }
 
 uint32_t dm2_v1_runtime_get_weather_seed(void) {
