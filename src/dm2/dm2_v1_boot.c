@@ -19,6 +19,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "asset_find_by_hash.h"
@@ -38,6 +39,18 @@ typedef struct {
 static void dm2_md5_init(DM2_Md5Ctx *ctx);
 static void dm2_md5_update(DM2_Md5Ctx *ctx, const unsigned char *input, unsigned int len);
 static void dm2_md5_final(DM2_Md5Ctx *ctx, char outHex[33]);
+
+typedef struct {
+    uint8_t *bytes;
+    size_t size;
+    DM2_V1_AssetLoader loader;
+    uint8_t *ceiling_pixels;
+    int ceiling_w;
+    int ceiling_h;
+    uint8_t *floor_pixels;
+    int floor_w;
+    int floor_h;
+} DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
 
@@ -160,6 +173,63 @@ static void dm2_md5_final(DM2_Md5Ctx *ctx, char outHex[33]) {
         sprintf(outHex + i*2, "%02x", v & 0xff);
     }
     outHex[32] = '\0';
+}
+
+static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
+    if (!gfx) return;
+    dm2_v1_asset_free_pixels(gfx->ceiling_pixels);
+    dm2_v1_asset_free_pixels(gfx->floor_pixels);
+    dm2_v1_asset_loader_free(&gfx->loader);
+    free(gfx->bytes);
+    memset(gfx, 0, sizeof(*gfx));
+    free(gfx);
+}
+
+static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load(
+    const char *graphics_path) {
+    FILE *f;
+    long fsize;
+    size_t got;
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (!graphics_path || graphics_path[0] == '\0') return NULL;
+    f = fopen(graphics_path, "rb");
+    if (!f) return NULL;
+    if (fseek(f, 0, SEEK_END) != 0) {
+        fclose(f);
+        return NULL;
+    }
+    fsize = ftell(f);
+    if (fsize <= 0 || fsize > 16L * 1024L * 1024L) {
+        fclose(f);
+        return NULL;
+    }
+    if (fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        return NULL;
+    }
+
+    gfx = (DM2_V1_BootGraphicsDat *)calloc(1, sizeof(*gfx));
+    if (!gfx) {
+        fclose(f);
+        return NULL;
+    }
+    gfx->bytes = (uint8_t *)malloc((size_t)fsize);
+    if (!gfx->bytes) {
+        fclose(f);
+        dm2_v1_boot_graphics_free(gfx);
+        return NULL;
+    }
+    got = fread(gfx->bytes, 1, (size_t)fsize, f);
+    fclose(f);
+    if (got != (size_t)fsize ||
+        dm2_v1_asset_loader_init(&gfx->loader, gfx->bytes, got) != 0 ||
+        !dm2_v1_asset_loader_verify(&gfx->loader)) {
+        dm2_v1_boot_graphics_free(gfx);
+        return NULL;
+    }
+    gfx->size = got;
+    return gfx;
 }
 
 /* ── Known DM2 hashes ──────────────────────────────────────────────── */
@@ -597,6 +667,11 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         }
     }
 
+    if (profile->graphics_path[0] != '\0') {
+        profile->graphics_dat =
+            dm2_v1_boot_graphics_load(profile->graphics_path);
+    }
+
     /* Set default start position (Hall of Champions, north-facing)
      * Source: SKULL.ASM T520 — party_placement
      * PC English DM2 start: mapX=15, mapY=15, facing North */
@@ -612,10 +687,70 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     return 0;
 }
 
+int dm2_v1_boot_viewport_asset_fetch(void *user,
+                                     int gdat_index,
+                                     const uint8_t **out_pixels,
+                                     int *out_w,
+                                     int *out_h,
+                                     int *out_stride) {
+    DM2_V1_BootProfile *profile = (DM2_V1_BootProfile *)user;
+    DM2_V1_BootGraphicsDat *gfx;
+    uint8_t **cache_pixels;
+    int *cache_w;
+    int *cache_h;
+    DM2_ImageFormat fmt = DM2_IMG_FMT_UNKNOWN;
+    int category;
+    int index;
+
+    if (out_pixels) *out_pixels = NULL;
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    if (out_stride) *out_stride = 0;
+    if (!profile || !profile->graphics_dat) return -1;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+
+    if (gdat_index == -2) {
+        cache_pixels = &gfx->ceiling_pixels;
+        cache_w = &gfx->ceiling_w;
+        cache_h = &gfx->ceiling_h;
+        category = DM2_GDAT_CATEGORY_ENVIRONMENT;
+        index = 0;
+    } else if (gdat_index == -1) {
+        cache_pixels = &gfx->floor_pixels;
+        cache_w = &gfx->floor_w;
+        cache_h = &gfx->floor_h;
+        category = DM2_GDAT_CATEGORY_ENVIRONMENT;
+        index = 1;
+    } else {
+        return -1;
+    }
+
+    if (!*cache_pixels) {
+        *cache_pixels = dm2_v1_asset_load_image(&gfx->loader,
+                                                category,
+                                                index,
+                                                cache_w,
+                                                cache_h,
+                                                &fmt);
+    }
+    if (!*cache_pixels || *cache_w <= 0 || *cache_h <= 0) return -1;
+    if (out_pixels) *out_pixels = *cache_pixels;
+    if (out_w) *out_w = *cache_w;
+    if (out_h) *out_h = *cache_h;
+    if (out_stride) *out_stride = *cache_w;
+    (void)fmt;
+    return 0;
+}
+
 /* ── Cleanup ─────────────────────────────────────────────────────────── */
 
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     if (!profile) return;
+    if (profile->graphics_dat) {
+        dm2_v1_boot_graphics_free(
+            (DM2_V1_BootGraphicsDat *)profile->graphics_dat);
+        profile->graphics_dat = NULL;
+    }
     if (profile->dungeon_data) {
         DM2_V1_DungeonData *dd = (DM2_V1_DungeonData *)profile->dungeon_data;
         dm2_v1_dungeon_free(dd);

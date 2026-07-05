@@ -6132,6 +6132,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_boot_profile_smoke
         tests/test_dm2_v1_boot_profile_smoke.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_dungeon_loader.c
@@ -6218,6 +6219,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_save_load
         tests/test_dm2_v1_save_load.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_boot.c
@@ -6412,6 +6414,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_utility_import
         tests/test_dm2_v1_utility_import.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_boot.c

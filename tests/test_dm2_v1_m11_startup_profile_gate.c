@@ -505,9 +505,9 @@ int main(void) {
                 "M11 DM2 draw preserves the runtime HUD strip after border draw");
     expect_true(framebuffer[(100 * 320) + 160] != 0,
                 "M11 DM2 draw fills the runtime viewport body");
-    expect_true(dm2_v1_runtime_last_asset_floor_ceiling_count() == 0 &&
-                dm2_v1_runtime_last_fallback_floor_ceiling_count() == 2,
-                "M11 DM2 draw routes through the shared V1 viewport floor/ceiling pass");
+    expect_true(dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
+                dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0,
+                "M11 DM2 draw routes through the boot-owned V1 viewport asset provider");
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;
@@ -520,6 +520,8 @@ int main(void) {
                     "boot profile owns the M11 DM2 world pointer");
         expect_true(profile->dungeon_data != NULL,
                     "boot profile owns loaded dungeon data");
+        expect_true(profile->graphics_dat != NULL,
+                    "boot profile owns loaded GRAPHICS.DAT asset handle");
         expect_true(strcmp(profile->dungeon_path, view.dungeonPath) == 0,
                     "M11 dungeonPath mirrors the verified profile path");
     }

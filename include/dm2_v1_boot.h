@@ -137,6 +137,15 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
  * Returns 0 on success. */
 int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile);
 
+/* Viewport asset provider backed by profile->graphics_dat.
+ * Pass the DM2_V1_BootProfile as the user pointer. */
+int dm2_v1_boot_viewport_asset_fetch(void *user,
+                                     int gdat_index,
+                                     const uint8_t **out_pixels,
+                                     int *out_w,
+                                     int *out_h,
+                                     int *out_stride);
+
 /* Free resources allocated during boot (but not the profile itself). */
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile);
 
