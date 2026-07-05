@@ -11,6 +11,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
@@ -365,6 +366,28 @@ int main(void) {
             expect_true(world->reputation == reputation_before + 1,
                         "DM2 runtime interaction mutates the boot-owned world");
         }
+    }
+    profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    if (world && profile && profile->dungeon_data) {
+        expect_true(dm2_v1_dungeon_set_tile_raw(
+                        (DM2_V1_DungeonData *)profile->dungeon_data,
+                        0, 15, 14, 4u) == 0,
+                    "M11 DM2 door test seeds closed front door tile");
+        dm2_v1_runtime_set_position(0, 15, 15, 0);
+        dm2_v1_runtime_set_outdoor(0);
+        expect_true(dm2_v1_runtime_get_door_state(0, 15, 14) == 4,
+                    "M11 DM2 door test starts with closed front door");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 action opens a front door through runtime");
+        expect_true(strstr(view.lastOutcome, "DM2 DOOR") != NULL,
+                    "M11 DM2 front-door action reports door status");
+        expect_true(dm2_v1_dungeon_get_tile_raw(
+                        (DM2_V1_DungeonData *)profile->dungeon_data,
+                        0, 15, 14) == 3,
+                    "M11 DM2 front-door action writes stepped door state");
+        dm2_v1_runtime_set_position(0, 15, 15, 0);
+        dm2_v1_runtime_set_outdoor(0);
     }
     if (world) {
         int found_npc_square = 0;
