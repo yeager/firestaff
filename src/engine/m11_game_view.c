@@ -797,6 +797,7 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     state->leaderHandObjectPresent = m11_read_u32_le(buf + 12) ? 1 : 0;
     state->leaderHandThing = (unsigned short)m11_read_u32_le(buf + 16);
     state->leaderHandIconIndex = -1;
+    state->leaderHandObjectName[0] = '\0';
     state->v1OpenChestThing = (unsigned short)m11_read_u32_le(buf + 20);
     state->v1OpenChestOpenedByEye = m11_read_u32_le(buf + 24) ? 1 : 0;
     if (version >= 2U) {
@@ -2410,6 +2411,7 @@ static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
         state->leaderHandObjectPresent = 0;
         state->leaderHandThing = THING_NONE;
         state->leaderHandIconIndex = -1;
+        state->leaderHandObjectName[0] = '\0';
         return;
     }
     /* CSBWin SaveGame.cpp GAMEBLOCK2 stores the transient cursor/
@@ -2420,6 +2422,11 @@ static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
     state->leaderHandThing = thing;
     state->leaderHandIconIndex =
         csb_v1_runtime_object_icon_index(profile, thing);
+    (void)csb_v1_runtime_object_name(
+        profile,
+        thing,
+        state->leaderHandObjectName,
+        sizeof(state->leaderHandObjectName));
 }
 
 static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
@@ -27598,6 +27605,7 @@ int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
     state->leaderHandThing = thing;
     state->leaderHandIconIndex = m11_object_icon_index_for_thing(
         state, state->world.things, thing);
+    state->leaderHandObjectName[0] = '\0';
     state->v1ChampionStatsPanelActive = 0;
     state->v1FoodWaterPanelActive = 0;
     return 1;
@@ -27614,6 +27622,7 @@ void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state) {
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
     state->leaderHandIconIndex = -1;
+    state->leaderHandObjectName[0] = '\0';
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;
     state->v1FoodWaterPanelActive = 0;
@@ -27687,8 +27696,11 @@ int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         /* Same CSB handoff boundary as the icon accessor: preserve the raw
-         * CSBWin/ReDMCSB leader-hand thing without presenting a DM1 item name. */
-        return 0;
+         * CSBWin/ReDMCSB leader-hand thing and show only a CSB-owned runtime
+         * name resolved from CSB dungeon records. */
+        if (state->leaderHandObjectName[0] == '\0') return 0;
+        snprintf(out, (size_t)outSize, "%s", state->leaderHandObjectName);
+        return out[0] != '\0';
     }
     m11_get_item_name(state ? state->world.things : NULL, thing, out, (size_t)outSize);
     return out[0] != '\0';

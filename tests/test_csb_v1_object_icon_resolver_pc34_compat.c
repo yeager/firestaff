@@ -24,6 +24,15 @@ static void check_int(const char *label, int got, int expected)
     }
 }
 
+static void check_str(const char *label, const char *got, const char *expected)
+{
+    if (!got || strcmp(got, expected) != 0) {
+        fprintf(stderr, "FAIL: %s got=%s expected=%s\n",
+                label, got ? got : "(null)", expected);
+        ++g_failures;
+    }
+}
+
 static void write_u16(unsigned char *p, unsigned int value)
 {
     p[0] = (unsigned char)(value & 0xffu);
@@ -84,6 +93,30 @@ int main(void)
                   &profile,
                   (uint16_t)((THING_TYPE_WEAPON << 10) | 31u)),
               -1);
+
+    {
+        char name[32];
+        memset(name, 0, sizeof(name));
+        check_int("dagger has CSB-owned name",
+                  csb_v1_runtime_object_name(&profile, dagger, name, sizeof(name)),
+                  1);
+        check_str("dagger name", name, "DAGGER");
+        memset(name, 0, sizeof(name));
+        check_int("lit torch has CSB-owned name",
+                  csb_v1_runtime_object_name(&profile, lit_torch, name, sizeof(name)),
+                  1);
+        check_str("lit torch name", name, "TORCH");
+        memset(name, 0, sizeof(name));
+        check_int("closed scroll has CSB-owned name",
+                  csb_v1_runtime_object_name(&profile, scroll_closed, name, sizeof(name)),
+                  1);
+        check_str("closed scroll name", name, "SCROLL");
+        memset(name, 0, sizeof(name));
+        check_int("invalid thing has no CSB name",
+                  csb_v1_runtime_object_name(&profile, THING_NONE, name, sizeof(name)),
+                  0);
+        check_str("invalid thing leaves name blank", name, "");
+    }
 
     if (g_failures != 0) return 1;
     printf("PASS: csb_v1_object_icon_resolver_pc34_compat\n");

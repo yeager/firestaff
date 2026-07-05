@@ -378,6 +378,7 @@ typedef struct {
     int leaderHandObjectPresent;
     unsigned short leaderHandThing;
     int leaderHandIconIndex;
+    char leaderHandObjectName[32];
 
     /* Source inventory open-chest state.  Mirrors ReDMCSB
      * G0426_T_OpenChest at the V1 presentation bridge: THING_NONE means
