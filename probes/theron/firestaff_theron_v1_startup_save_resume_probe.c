@@ -70,15 +70,6 @@ static void check_int(const char *label, int got, int want) {
     }
 }
 
-static void check_size(const char *label, size_t got, size_t want) {
-    if (got != want) {
-        printf("FAIL %s: got %zu want %zu\n", label, got, want);
-        ++g_fail;
-    } else {
-        ++g_pass;
-    }
-}
-
 static void check_str(const char *label, const char *got, const char *want) {
     if (!got || !want || strcmp(got, want) != 0) {
         printf("FAIL %s: got '%s' want '%s'\n", label,

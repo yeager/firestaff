@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "asset_status_m12.h"
+#include "theron_v1_startup_save_resume.h"
 
 /* ══════════════════════════════════════════════════════════════════════
  * Theron's Quest V1 Boot Profile — Phase 1: Runtime Profile Split
@@ -243,6 +244,13 @@ void theron_v1_boot_rescan_call_count_reset(void);
  * If save_dir is NULL, uses default: <data_dir>/../saves/theron/ */
 void theron_v1_boot_set_save_root(Theron_V1_BootProfile *profile,
                                    const char *save_dir);
+
+/* Evaluate the bounded startup save/resume gate from a boot profile.
+ * Reports .tqsv/.srm availability without auto-resuming or mutating
+ * runtime state. */
+int theron_v1_boot_startup_save_resume(
+    const Theron_V1_BootProfile *profile,
+    Theron_V1StartupSaveResume *out_snapshot);
 
 /* Build deterministic config from detected dungeon header.
  * Reads dungeon_seed from header word at offset 8 (same layout as DM2).

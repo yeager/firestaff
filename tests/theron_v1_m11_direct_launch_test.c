@@ -160,6 +160,12 @@ int main(void) {
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_STAGE_SELECT,
                 "M11 direct launch starts at visible stage select");
+    expect_true(view.theronState.save_resume_verdict >= 0,
+                "M11 Theron direct launch evaluates startup save/resume verdict");
+    expect_true(view.theronState.save_resume_claim >= 0,
+                "M11 Theron direct launch evaluates startup save/resume claim");
+    expect_true(strstr(view.inspectDetail, "SAVE ") != NULL,
+                "M11 Theron startup inspect readout reports save/resume claim");
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, FB_W, FB_H);

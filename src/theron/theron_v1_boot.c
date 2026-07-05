@@ -562,6 +562,17 @@ void theron_v1_boot_set_save_root(Theron_V1_BootProfile *profile,
     }
 }
 
+int theron_v1_boot_startup_save_resume(
+    const Theron_V1_BootProfile *profile,
+    Theron_V1StartupSaveResume *out_snapshot) {
+
+    if (!profile || !out_snapshot) {
+        return 0;
+    }
+    return theron_v1_startup_save_resume_evaluate(profile->save_root,
+                                                  out_snapshot);
+}
+
 /* ── Deterministic config from dungeon header ─────────────────────── */
 
 /*
