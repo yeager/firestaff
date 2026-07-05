@@ -2159,6 +2159,17 @@ static void csb_v1_runtime_set_active_group_direction_all(
     int map_x,
     int map_y,
     int direction);
+static void csb_v1_runtime_set_active_group_direction_creature(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int direction,
+    int creature_index,
+    int creature_count,
+    int creature_size);
 
 static void csb_v1_runtime_schedule_c37_group_event(
     CSB_V1_RuntimeProfile *profile,
@@ -5152,6 +5163,90 @@ static void csb_v1_runtime_set_active_group_direction_all(
     state->directions = csb_v1_runtime_repeated_group_direction_pack(direction);
 }
 
+static int csb_v1_runtime_direction_delta(int from_direction, int to_direction)
+{
+    return (from_direction - to_direction) & 3;
+}
+
+static void csb_v1_runtime_set_active_group_direction_creature(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int direction,
+    int creature_index,
+    int creature_count,
+    int creature_size)
+{
+    CSB_V1_RuntimeActiveGroupState *state;
+    uint16_t flags;
+    int final_direction;
+    int two_half_square_creatures;
+
+    if (!profile || !group_record || creature_index < 0 ||
+        creature_index > 3) {
+        return;
+    }
+    if (creature_count < 1) creature_count = 1;
+    if (creature_count > 4) creature_count = 4;
+    if (creature_index >= creature_count) return;
+    direction &= 3;
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 8)) |
+                       (uint16_t)(direction << 8));
+    csb_v1_runtime_write_u16(group_record + 14, flags);
+
+    state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
+    if (!state) {
+        state = csb_v1_runtime_active_group_state_for(
+            profile,
+            group_thing,
+            level,
+            map_x,
+            map_y,
+            1);
+    }
+    if (!state) return;
+
+    final_direction = direction;
+    /* ReDMCSB GROUP.C F0205 lines 1607-1621 changes opposite turns one step
+     * at a time.  This bounded bridge uses the deterministic CSB runtime
+     * stream seed instead of the process-global source RNG. */
+    if (csb_v1_runtime_direction_delta(
+            csb_v1_runtime_group_direction_value(
+                state->directions,
+                creature_index),
+            direction) == 2) {
+        struct RngState_Compat rng;
+        F0730_COMBAT_RngInit_Compat(
+            &rng,
+            profile->dungeon_seed ^ profile->game_time ^
+                ((uint32_t)group_thing << 7) ^
+                ((uint32_t)creature_index << 17) ^
+                0xF0205u);
+        final_direction =
+            (direction + 1 +
+             (F0732_COMBAT_RngRandom_Compat(&rng, 65536) & 0x0002)) & 3;
+    }
+
+    two_half_square_creatures =
+        (creature_count == 2 && creature_size == 1 && creature_index > 0);
+    state->directions = csb_v1_runtime_group_directions_set_value(
+        state->directions,
+        creature_index,
+        final_direction);
+    if (two_half_square_creatures) {
+        /* ReDMCSB F0205 mirrors the direction to the paired half-square
+         * creature when F0206 selects the second creature of a two-half group. */
+        state->directions = csb_v1_runtime_group_directions_set_value(
+            state->directions,
+            creature_index ^ 1,
+            final_direction);
+    }
+}
+
 static void csb_v1_runtime_compact_active_group_state_after_kill(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
@@ -5943,6 +6038,8 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
     int thing;
     int guard;
     int creature_index;
+    int creature_count;
+    int creature_size;
     int thing_type;
     int thing_size;
     int champion_index;
@@ -5952,6 +6049,7 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
     struct CombatantChampionSnapshot_Compat defender;
     struct CombatResult_Compat combat;
     struct RngState_Compat rng;
+    const struct CreatureBehaviorProfile_Compat *creature_profile;
 
     if (!profile || !record || !profile->dungeon_handle ||
         !profile->party_state_valid) {
@@ -5986,7 +6084,12 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
         if (thing_type == 4 && thing_size >= 16) {
             flags = csb_v1_runtime_read_u16(thing_record + 14);
             if ((flags & 0x000Fu) != 6u) return;
-            if (creature_index > (int)((flags >> 5) & 0x03u)) return;
+            creature_count = (int)((flags >> 5) & 0x03u) + 1;
+            if (creature_index >= creature_count) return;
+            creature_profile = CREATURE_GetProfile_Compat((int)thing_record[4]);
+            creature_size = creature_profile
+                ? (int)(creature_profile->attributes & 0x0003u)
+                : 0;
             creature_cell = (thing_record[3] == 0xFFu)
                 ? 0
                 : ((int)thing_record[3] >> (creature_index * 2)) & 0x03;
@@ -6000,7 +6103,7 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     csb_v1_runtime_first_living_champion(&profile->party_state);
             }
             if (champion_index < 0) return;
-            csb_v1_runtime_set_active_group_direction_all(
+            csb_v1_runtime_set_active_group_direction_creature(
                 profile,
                 (uint16_t)thing,
                 thing_record,
@@ -6011,7 +6114,10 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     record->mapX,
                     record->mapY,
                     profile->party_x,
-                    profile->party_y));
+                    profile->party_y),
+                creature_index,
+                creature_count,
+                creature_size);
             csb_v1_runtime_set_active_group_aspect_attacking(
                 profile,
                 (uint16_t)thing,

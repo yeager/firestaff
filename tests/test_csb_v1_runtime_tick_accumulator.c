@@ -1933,6 +1933,85 @@ static void test_c38_giggler_steals_hand_slots_into_group_slot_chain(void)
           "C38 Giggler theft search stays within the bounded regression window");
 }
 
+static void test_c38_updates_only_attacking_creature_direction(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    struct DM1_TickDispatchResult_V1 dispatch;
+    uint8_t raw[256];
+    uint16_t directions;
+    int i;
+
+    printf("\n-- CSB C38 per-creature direction writeback --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 82;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, 0xfffeu);
+    raw[86] = 5u;     /* Ruster: ordinary non-Giggler C38 path. */
+    raw[87] = 0x04u;  /* creature 0 cell 0, creature 1 cell 1. */
+    test_put_le16(raw, 88, 500u);
+    test_put_le16(raw, 90, 500u);
+    test_put_le16(raw, 96, (uint16_t)((1u << 5) | 6u)); /* two C6 creatures */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_seed = 0xC5B10744u;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 500;
+    profile.party_state.Champions[0].MaximumHealth = 500;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 1;
+    for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MIN] = 30;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_CUR] = 30;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MAX] = 30;
+    }
+    profile.active_group_state_count = 1;
+    profile.active_group_state[0].valid = 1;
+    profile.active_group_state[0].group_thing = (uint16_t)(4u << 10);
+    profile.active_group_state[0].map_index = 0;
+    profile.active_group_state[0].map_x = 1;
+    profile.active_group_state[0].map_y = 1;
+    profile.active_group_state[0].cells = 0x04u;
+    profile.active_group_state[0].directions =
+        (uint16_t)((0u << 0) | (1u << 2) | (2u << 4) | (3u << 6));
+
+    queue_future_creature_event(
+        &profile,
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1,
+        1,
+        1,
+        0u);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C38 creature-1 direction fixture dispatches on the current tick");
+    CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
+              dispatch.count == 1 &&
+              dispatch.records[0].eventType ==
+                  DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1,
+          "C38 creature-1 direction fixture records the creature event");
+    directions = profile.active_group_state[0].directions;
+    CHECK((directions & 0x0003u) == 0u &&
+              ((directions >> 2) & 0x0003u) == 2u &&
+              ((directions >> 4) & 0x0003u) == 2u &&
+              ((directions >> 6) & 0x0003u) == 3u,
+          "C38 updates only the attacking creature direction slot");
+}
+
 static void test_c37_group_approach_teleporter_rotation(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -5515,6 +5594,7 @@ int main(void)
     test_c37_group_approach_defers_when_destination_has_group();
     test_c38_poison_followup_and_c75_tick();
     test_c38_giggler_steals_hand_slots_into_group_slot_chain();
+    test_c38_updates_only_attacking_creature_direction();
     test_c37_group_approach_teleporter_rotation();
     test_explosion_c25_persistent_smoke_requeues_until_depleted();
     test_runtime_save_roundtrips_projectiles_and_explosions();
