@@ -106,6 +106,9 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT 0x00
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D1C 0x00
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D2C 0x01
+#define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE (-0x400)
+#define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED 0x00
+#define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_PUSHED 0x05
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -113,6 +116,8 @@ int dm2_v1_viewport_door_frame_field_for_square(int view_square);
 int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square);
 int dm2_v1_viewport_door_panel_field_for_square(int view_square);
 int dm2_v1_viewport_door_panel_graphic_index_for_square(int view_square);
+int dm2_v1_viewport_door_button_field_for_state(int pushed);
+int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed);
 
 /* ── View square state ──────────────────────────────────────────── */
 typedef struct {
@@ -127,6 +132,8 @@ typedef struct {
     uint8_t  light_level;     /* 0–15 per-tile illumination */
     uint8_t  wall_parity;     /* 0=normal, 1=flipped (odd parity) */
     uint8_t  door_open_pct;    /* 0–100 door open percentage */
+    uint8_t  door_button;      /* 0=no default button, 1=draw default button */
+    uint8_t  door_button_state;/* skproject door->ButtonState(): 0=released, 1=pushed */
     int16_t  sprite_depth;    /* depth sort key */
 } DM2_ViewSquare;
 
@@ -216,6 +223,7 @@ typedef struct {
     int fallback_wall_drawn_count;
     int asset_door_panel_drawn_count;
     int asset_door_frame_drawn_count;
+    int asset_door_button_drawn_count;
     int fallback_door_drawn_count;
 } DM2_V1_ViewportState;
 

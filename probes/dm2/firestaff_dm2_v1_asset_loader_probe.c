@@ -334,6 +334,38 @@ int main(int argc, char **argv) {
                          fnv1a32_pixels(pixels, (size_t)w * (size_t)h) == 0x84cb658du,
                      "GDAT DOORS D2C panel IMG9 realizes from real image entry");
         dm2_v1_asset_free_pixels(pixels);
+
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader,
+            DM2_GDAT_CATEGORY_DOOR_BUTTONS,
+            0,
+            0,
+            &w,
+            &h,
+            &fmt);
+        PROBE_ASSERT(pixels != NULL && w == 8 && h == 9 &&
+                         fmt == DM2_IMG_FMT_IMG3 &&
+                         fnv1a32_pixels(pixels, (size_t)w * (size_t)h) == 0xd0bf6033u,
+                     "GDAT DOOR_BUTTONS released button IMG3 realizes from real image entry");
+        dm2_v1_asset_free_pixels(pixels);
+
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader,
+            DM2_GDAT_CATEGORY_DOOR_BUTTONS,
+            0,
+            5,
+            &w,
+            &h,
+            &fmt);
+        PROBE_ASSERT(pixels != NULL && w == 8 && h == 9 &&
+                         fmt == DM2_IMG_FMT_IMG3 &&
+                         fnv1a32_pixels(pixels, (size_t)w * (size_t)h) == 0x7cdc6addu,
+                     "GDAT DOOR_BUTTONS pushed button IMG3 realizes from real image entry");
+        dm2_v1_asset_free_pixels(pixels);
     }
 
     /* ── Test category entry count ── */
