@@ -31338,6 +31338,42 @@ int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
     return 1;
 }
 
+uint32_t M11_GameView_GetDm2LeaderHandObject(const M11_GameViewState* state) {
+    if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT) {
+        return 0u;
+    }
+    return state->dm2State.leader_hand_object;
+}
+
+int M11_GameView_Dm2LeaderHandObjectIconAvailable(
+    const M11_GameViewState* state) {
+    DM2_V1_BootProfile *profile;
+    uint8_t *pixels = NULL;
+    int srcW = 0;
+    int srcH = 0;
+    int srcStride = 0;
+    int available;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        state->dm2State.leader_hand_object == 0u || !state->dm2BootProfile) {
+        return 0;
+    }
+    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
+    /* DM2 uses skproject-style ObjectID handles, not DM1/CSB THING values.
+     * Keep the startup/resume handoff visible through a DM2-specific query
+     * and prove icon readiness through the boot-owned GRAPHICS.DAT provider. */
+    available = dm2_v1_boot_object_icon_asset_fetch(
+                    profile,
+                    state->dm2State.leader_hand_object,
+                    &pixels,
+                    &srcW,
+                    &srcH,
+                    &srcStride) == 0 &&
+                pixels && srcW > 0 && srcH > 0 && srcStride > 0;
+    dm2_v1_boot_object_icon_asset_free(pixels);
+    return available ? 1 : 0;
+}
+
 /* Source runtime bridge for the object in the DM1 leader hand.
  * The classic engine stores this as the transient mouse-hand object
  * G4055_s_LeaderHandObject, which is separate from every champion

@@ -1534,6 +1534,9 @@ int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
                                                 int* outY,
                                                 int* outW,
                                                 int* outH);
+uint32_t M11_GameView_GetDm2LeaderHandObject(const M11_GameViewState* state);
+int M11_GameView_Dm2LeaderHandObjectIconAvailable(
+    const M11_GameViewState* state);
 int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
                                         unsigned short thing);
 void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state);
