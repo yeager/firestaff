@@ -975,6 +975,38 @@ int main(void) {
     }
 #endif
 
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB new-game start succeeds");
+    expect_true(view.csbState.startup_entrance_active == 1 &&
+                view.csbState.startup_entrance_dismissed == 0,
+                "M11 CSB new-game start opens source-locked entrance");
+    expect_true(view.csbState.level_loaded == 1,
+                "M11 CSB entrance keeps runtime loaded behind startup screen");
+    {
+        int tick_before = view.csbState.tick_count;
+        unsigned char fb[320 * 200];
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(&view, fb, 320, 200);
+        expect_true(count_nonzero_rect(fb, 320, 18, 18, 284, 164) > 0,
+                    "M11 CSB entrance draws a visible startup screen");
+        expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB entrance advances its presentation frame");
+        expect_true(view.csbState.tick_count == tick_before &&
+                    view.csbState.startup_entrance_frame > 0,
+                    "M11 CSB entrance does not tick runtime before confirm");
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB entrance accepts Enter/Action");
+        expect_true(view.csbState.startup_entrance_active == 0 &&
+                    view.csbState.startup_entrance_dismissed == 1,
+                    "M11 CSB entrance dismisses to dungeon runtime");
+    }
+    M11_GameView_Shutdown(&view);
+
     memset(&expected, 0, sizeof(expected));
     expect_true(build_runtime_resume_save(data_dir, save_path, &expected),
                 "built CSB runtime save fixture from verified assets");
@@ -993,6 +1025,9 @@ int main(void) {
                 "M11 stores a CSB boot profile");
     expect_true(view.csbState.level_loaded == 1,
                 "M11 CSB mirror state reports level loaded");
+    expect_true(view.csbState.startup_entrance_active == 0 &&
+                view.csbState.startup_entrance_dismissed == 1,
+                "M11 CSB resume skips the new-game entrance gate");
     expect_true(view.csbState.party_x == expected.party_x &&
                 view.csbState.party_y == expected.party_y &&
                 view.csbState.party_dir == expected.party_dir,

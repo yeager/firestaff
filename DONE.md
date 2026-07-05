@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 CSB M11 entrance startup gate: new CSB starts now open a source-locked M11 entrance screen before dungeon input, keep the CSB runtime loaded behind it, block idle runtime ticks until Enter/Action confirms, and skip the gate for explicit save resumes. Verification: `test_csb_v1_m11_startup_resume_gate` covers visible entrance draw, tick blocking, confirm dismissal, and resume skip with local hash-verified CSB data.
+
 - ✅ 2026-07-05 Theron US Track 02 Soul Room prompt: M11 now captures the byte-backed US raw Track 02 startup prompt from `theron_v1_track02_catalog_startup_text_markers()` and renders `GO AWAY AND RESURRECT THERON` in the Soul Room when that prompt exists, instead of always using the generic fallback line. Verification: `test_theron_v1_m11_direct_launch` locks the captured prompt and render row with a synthetic raw-sector fixture; `firestaff_theron_v1_startup_real_asset_receipt_probe` still proves the local real JP/US Track 02 marker counts.
 
 - ✅ 2026-07-05 M11 Steam Deck/gamepad runtime routing: the main M11 SDL loop now loads the existing M12 gamepad map, opens the active SDL gamepad, routes gamepad button and axis events through the same `M12_MenuInput` contract as keyboard input, and polls held D-pad/stick motion at the DM1 V1 source-tick gate so Steam Deck controls can continue movement without repeated taps. Defaults map D-pad to movement/turning, shoulders to strafe, A/B/X/Y to accept/back/action/cycle, Start to inventory, Back to rest, stick axes to move/turn. Verification: `test_gamepad_config_m12` pins default buttons and axis dead-zone/roles; focused `firestaff` build passes.
