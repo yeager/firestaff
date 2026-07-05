@@ -101,6 +101,7 @@ int main(void)
 
         memset(&state, 0, sizeof(state));
         memset(&profile, 0, sizeof(profile));
+        csb_v1_runtime_init(&profile.runtime, NULL);
         init_csb_dungeon(&dungeon, raw, sizeof(raw));
         write_u16(raw + 0, THING_ENDOFLIST);
         write_u16(raw + 2, 8u); /* ReDMCSB OBJECT.C F0033 dagger icon C032. */
@@ -111,6 +112,10 @@ int main(void)
         profile.runtime.party_state_valid = 1;
         profile.runtime.party_state.ChampionCount = 1;
         profile.runtime.party_state.LeaderHandThing = THING_NONE;
+        profile.runtime.party_state.Champions[0].CurrentHealth = 10;
+        profile.runtime.party_state.Champions[0].CurrentStamina = 100;
+        profile.runtime.party_state.Champions[0].CurrentMana = 10;
+        profile.runtime.party_state.Champions[0].Cell = 0;
         profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
             dagger;
         state.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
@@ -122,6 +127,10 @@ int main(void)
         state.world.party.champions[0].present = 1;
         state.world.party.champions[0].hp.current = 10;
         state.world.party.champions[0].hp.maximum = 10;
+        state.world.party.champions[0].stamina.current = 100;
+        state.world.party.champions[0].stamina.maximum = 100;
+        state.world.party.champions[0].mana.current = 10;
+        state.world.party.champions[0].mana.maximum = 10;
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
             dagger;
 
@@ -146,6 +155,23 @@ int main(void)
               "CSB action rows resolve through runtime object action-set");
         check(actions[0] == 42 && actions[1] == 9 && actions[2] == 28,
               "CSB dagger exposes THROW/STAB/SLASH action rows");
+        check(M11_GameView_TriggerActionRow(&state, 0) == 1,
+              "CSB dagger THROW action dispatches through CSB runtime without DM1 world.things");
+        check(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] ==
+                  THING_NONE,
+              "CSB THROW clears M11 action-hand mirror");
+        check(profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] ==
+                  THING_NONE,
+              "CSB THROW clears runtime action-hand slot");
+        check(profile.runtime.projectiles.count == 1,
+              "CSB THROW allocates one runtime projectile");
+        check(profile.runtime.projectiles.entries[0].reserved1 == dagger,
+              "CSB THROW projectile preserves thrown thing identity");
+        check(profile.runtime.projectiles.entries[0].ownerKind ==
+                  PROJECTILE_OWNER_CHAMPION,
+              "CSB THROW projectile is champion-owned");
+        check(profile.runtime.timeline_queue.eventCount > 0,
+              "CSB THROW schedules first projectile movement event");
 
         M11_GameView_ClearV1LeaderHandObject(&state);
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =

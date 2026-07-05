@@ -720,6 +720,16 @@ uint16_t csb_v1_runtime_object_allowed_slots(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing);
 
+/* Bounded champion action-hand THROW boundary for M11 CSB playability.
+ * Uses the CSB runtime party snapshot and projectile list directly, without
+ * DM1 GameWorld thing arrays. On success the champion action-hand slot is
+ * cleared and a kinetic F0810 projectile is scheduled in the CSB runtime
+ * timeline. */
+int csb_v1_runtime_throw_action_hand(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int *out_projectile_slot);
+
 /* Load ReDMCSB OBJECT.C F0031 PC object names from M564_GRAPHIC_OBJECT_NAMES.
  * The PC stream terminates each name by setting bit 7 on the final byte. */
 int csb_v1_runtime_load_object_names_m564(
