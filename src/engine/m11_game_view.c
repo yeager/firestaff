@@ -3922,6 +3922,28 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
     return csb_v1_runtime_apply_csbwin_resume_file(profile, path, 0u) == 0;
 }
 
+static int m11_csb_utility_accept_import_action(CSB_V1_UtilFlowContext *flow)
+{
+    int guard;
+
+    if (!flow || flow->state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
+        return 0;
+    }
+    for (guard = 0;
+         guard < 4 &&
+         csb_v1_util_flow_selected_action(flow) != CSB_V1_UTIL_ACTION_IMPORT;
+         ++guard) {
+        if (csb_v1_util_flow_move_action_cursor(flow, 1) < 0) {
+            return 0;
+        }
+    }
+    if (csb_v1_util_flow_selected_action(flow) !=
+        CSB_V1_UTIL_ACTION_IMPORT) {
+        return 0;
+    }
+    return csb_v1_util_flow_accept_selected_action(flow) == 0;
+}
+
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                                  const char *path,
                                                  int *out_count,
@@ -3971,7 +3993,9 @@ static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
         flow.state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
         return 0;
     }
-    csb_v1_util_flow_set_action(&flow, CSB_V1_UTIL_ACTION_IMPORT);
+    if (!m11_csb_utility_accept_import_action(&flow)) {
+        return 0;
+    }
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS) {
         return 0;

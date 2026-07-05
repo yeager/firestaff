@@ -166,8 +166,34 @@ static void run_utility_import_to_new_game(const char *save_path,
 
     csb_v1_util_flow_init(&ctx);
     csb_v1_util_flow_set_dm1_path(&ctx, save_path);
-    ctx.state = CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS;
+    csb_v1_util_flow_mark_utility_disk_verified(&ctx, 1);
 
+    CHECK_EQ(csb_v1_util_flow_step(&ctx), 0,
+             "Utility flow reaches INSERT_DISK");
+    CHECK_EQ(ctx.state, CSB_V1_UTIL_FLOW_INSERT_DISK,
+             "Utility state is INSERT_DISK");
+    CHECK_EQ(csb_v1_util_flow_step(&ctx), 0,
+             "Utility flow reaches VERIFY_DISK");
+    CHECK_EQ(ctx.state, CSB_V1_UTIL_FLOW_VERIFY_DISK,
+             "Utility state is VERIFY_DISK");
+    CHECK_EQ(csb_v1_util_flow_step(&ctx), 0,
+             "Utility flow reaches DISK_OK");
+    CHECK_EQ(ctx.state, CSB_V1_UTIL_FLOW_DISK_OK,
+             "Utility state is DISK_OK");
+    CHECK_EQ(csb_v1_util_flow_step(&ctx), 0,
+             "Utility flow reaches SELECT_ACTION");
+    CHECK_EQ(ctx.state, CSB_V1_UTIL_FLOW_SELECT_ACTION,
+             "Utility state is SELECT_ACTION");
+    CHECK_EQ(csb_v1_util_flow_selected_action(&ctx),
+             CSB_V1_UTIL_ACTION_IMPORT,
+             "Utility cursor starts on import action");
+    CHECK_EQ(csb_v1_util_flow_accept_selected_action(&ctx), 0,
+             "Utility selected import action is accepted");
+
+    CHECK_EQ(csb_v1_util_flow_step(&ctx), 0,
+             "Utility accepted import reaches IMPORT_CHAMPIONS");
+    CHECK_EQ(ctx.state, CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS,
+             "Utility state is IMPORT_CHAMPIONS");
     CHECK_EQ(csb_v1_util_flow_step(&ctx), 0,
              "Utility import step accepts the DM1 save");
     CHECK_EQ(ctx.state, CSB_V1_UTIL_FLOW_CONFIRM_IMPORT,
