@@ -10537,6 +10537,9 @@ static void m11_theron_capture_track02_startup_roster(
     memset(state->theronState.startup_roster_names,
            0,
            sizeof(state->theronState.startup_roster_names));
+    memset(state->theronState.startup_roster_titles,
+           0,
+           sizeof(state->theronState.startup_roster_titles));
     if (!assets || !assets->hucard_rom || assets->hucard_rom_size == 0u ||
         !md5_hex || md5_hex[0] == '\0') {
         return;
@@ -10562,6 +10565,10 @@ static void m11_theron_capture_track02_startup_roster(
                  sizeof(state->theronState.startup_roster_names[i]),
                  "%s",
                  catalog.names[i].name);
+        snprintf(state->theronState.startup_roster_titles[i],
+                 sizeof(state->theronState.startup_roster_titles[i]),
+                 "%s",
+                 catalog.names[i].title);
     }
     state->theronState.startup_roster_name_count = (int)i;
 }
@@ -36988,6 +36995,18 @@ int M11_GameView_GetTheronStartupRenderRows(
                     state->theronState.startup_roster_names[j]);
             }
             ++count;
+            if (count >= maxRows) {
+                return count;
+            }
+        }
+        if (state->theronState.startup_roster_name_count > 7 &&
+            state->theronState.startup_roster_titles[1][0] != '\0' &&
+            state->theronState.startup_roster_titles[7][0] != '\0') {
+            snprintf(rows[count++],
+                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "TRACK 02 TITLES: MARA=%s; PENTAI=%s",
+                     state->theronState.startup_roster_titles[1],
+                     state->theronState.startup_roster_titles[7]);
             if (count >= maxRows) {
                 return count;
             }

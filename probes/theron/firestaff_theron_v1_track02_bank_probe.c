@@ -678,9 +678,18 @@ static void check_raw_user_data_contract(
                 "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN",
                 "DOTAN", "PENTAI"
             };
+            static const char *expected_titles[] = {
+                "", "GUARDIAN OF WISDO", "THE RESOLUTE", "LORD OF FEALTY",
+                "THE BRAVE", "KNIGHT OF STRENGT", "MASTER OF THE WIN",
+                "THE SURVIVOR"
+            };
             static const size_t expected_raw_offsets[] = {
                 0xb3d98u, 0xb3dd1u, 0xb3e1au, 0xb3e5eu,
                 0xb3ea3u, 0xb3ee4u, 0xb3f2eu, 0xb3f78u
+            };
+            static const size_t expected_title_raw_offsets[] = {
+                0u, 0xb3dd6u, 0xb3e20u, 0xb3e63u,
+                0xb3ea9u, 0xb3eeau, 0xb3f34u, 0xb3f7fu
             };
             check_int("JP startup roster name catalog status",
                       status,
@@ -701,6 +710,10 @@ static void check_raw_user_data_contract(
                 check_str_eq(roster_catalog.names[i].name,
                              expected_names[i],
                              name);
+                snprintf(name, sizeof(name), "JP roster title[%zu]", i);
+                check_str_eq(roster_catalog.names[i].title,
+                             expected_titles[i],
+                             name);
                 snprintf(name, sizeof(name), "JP roster raw offset[%zu]", i);
                 check_size(name,
                            roster_catalog.names[i].raw_offset,
@@ -716,6 +729,36 @@ static void check_raw_user_data_contract(
                 check_size(name,
                            roster_catalog.names[i].user_data_offset,
                            expected_user_offset);
+                snprintf(name, sizeof(name), "JP roster title valid[%zu]", i);
+                check_int(name,
+                          roster_catalog.names[i].title_offset_valid,
+                          expected_titles[i][0] ? 1 : 0);
+                if (expected_titles[i][0]) {
+                    snprintf(name,
+                             sizeof(name),
+                             "JP roster title raw offset[%zu]",
+                             i);
+                    check_size(name,
+                               roster_catalog.names[i].title_raw_offset,
+                               expected_title_raw_offsets[i]);
+                    status = theron_v1_track02_raw_offset_to_user_offset(
+                        expected_title_raw_offsets[i],
+                        size,
+                        md5_hex,
+                        &expected_user_offset);
+                    snprintf(name,
+                             sizeof(name),
+                             "JP roster title raw->user[%zu]",
+                             i);
+                    check_int(name, status, THERON_TRACK02_SIGNAL_OK);
+                    snprintf(name,
+                             sizeof(name),
+                             "JP roster title user offset[%zu]",
+                             i);
+                    check_size(name,
+                               roster_catalog.names[i].title_user_data_offset,
+                               expected_user_offset);
+                }
             }
         } else if (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) == 0) {
             check_int("US startup roster name catalog unsupported",
