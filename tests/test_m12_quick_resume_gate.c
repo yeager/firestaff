@@ -695,6 +695,7 @@ int main(void) {
     char dm2LastSessionSavePath[512];
     char nexusSavePath[512];
     char nexusBrowserSavePath[512];
+    char nexusSlotSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -1276,6 +1277,47 @@ int main(void) {
     if (!expect(intent.savePath &&
                 strcmp(intent.savePath, nexusBrowserSavePath) == 0,
                 "save browser Nexus launch intent should carry exact FNXS path")) return 1;
+
+    snprintf(nexusSlotSavePath, sizeof(nexusSlotSavePath),
+             "%s/nexus_save_03.dat", tmpTemplate);
+    if (!expect(write_nexus_fnxs_save(nexusSlotSavePath),
+                "should write Nexus manager slot save")) return 1;
+    M12_Config_SetLastSavePath(nexusSlotSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_nexus_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "Nexus manager slot save must enable quick Resume")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "nexus") == 0,
+                "Nexus manager slot quick Resume should identify nexus")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "nexus") == 0 &&
+                intent.savePath &&
+                strcmp(intent.savePath, nexusSlotSavePath) == 0,
+                "Nexus manager slot quick Resume should carry exact path")) return 1;
+
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_nexus_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for Nexus manager slots")) return 1;
+    if (!expect(select_save_entry(&state, "nexus_save_03.dat"),
+                "save browser should list Nexus manager slot save")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark Nexus manager slot loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "nexus") == 0,
+                "save browser should classify Nexus manager slot as nexus")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "nexus") == 0 &&
+                intent.savePath &&
+                strcmp(intent.savePath, nexusSlotSavePath) == 0,
+                "save browser Nexus manager slot should carry exact path")) return 1;
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);

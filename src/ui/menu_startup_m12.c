@@ -2167,6 +2167,33 @@ static int m12_is_csb_original_save_basename(const char* name) {
            m12_ascii_equal_ci(name, "DMSAVE.BAK");
 }
 
+static int m12_is_nexus_save_slot_basename(const char* name) {
+    int slot;
+    if (!name ||
+        m12_ascii_lower((unsigned char)name[0]) != 'n' ||
+        m12_ascii_lower((unsigned char)name[1]) != 'e' ||
+        m12_ascii_lower((unsigned char)name[2]) != 'x' ||
+        m12_ascii_lower((unsigned char)name[3]) != 'u' ||
+        m12_ascii_lower((unsigned char)name[4]) != 's' ||
+        name[5] != '_' ||
+        m12_ascii_lower((unsigned char)name[6]) != 's' ||
+        m12_ascii_lower((unsigned char)name[7]) != 'a' ||
+        m12_ascii_lower((unsigned char)name[8]) != 'v' ||
+        m12_ascii_lower((unsigned char)name[9]) != 'e' ||
+        name[10] != '_' ||
+        name[11] < '0' || name[11] > '9' ||
+        name[12] < '0' || name[12] > '9' ||
+        name[13] != '.' ||
+        m12_ascii_lower((unsigned char)name[14]) != 'd' ||
+        m12_ascii_lower((unsigned char)name[15]) != 'a' ||
+        m12_ascii_lower((unsigned char)name[16]) != 't' ||
+        name[17] != '\0') {
+        return 0;
+    }
+    slot = (name[11] - '0') * 10 + (name[12] - '0');
+    return slot >= 0 && slot < NEXUS_SAVE_MAX_SLOTS;
+}
+
 static int m12_parse_firestaff_save_game_id(const char* base,
                                             char* outId,
                                             int outSize) {
@@ -2251,6 +2278,10 @@ static int m12_infer_quick_resume_game_id(const char* path,
 
     if (m12_is_csb_original_save_basename(base) &&
         m12_try_quick_resume_candidate("csb", path, outId, outSize)) {
+        return 1;
+    }
+    if (m12_is_nexus_save_slot_basename(base) &&
+        m12_try_quick_resume_candidate("nexus", path, outId, outSize)) {
         return 1;
     }
     if (m12_try_quick_resume_candidate("dm1", path, outId, outSize)) {

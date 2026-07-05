@@ -116,6 +116,40 @@ static int is_csb_original_save_basename(const char* name) {
            ascii_equal_ci(name, "DMSAVE.BAK");
 }
 
+static int nexus_save_slot_from_basename(const char* name,
+                                         unsigned char* outSlot) {
+    int slot;
+    if (!name ||
+        ascii_lower((unsigned char)name[0]) != 'n' ||
+        ascii_lower((unsigned char)name[1]) != 'e' ||
+        ascii_lower((unsigned char)name[2]) != 'x' ||
+        ascii_lower((unsigned char)name[3]) != 'u' ||
+        ascii_lower((unsigned char)name[4]) != 's' ||
+        name[5] != '_' ||
+        ascii_lower((unsigned char)name[6]) != 's' ||
+        ascii_lower((unsigned char)name[7]) != 'a' ||
+        ascii_lower((unsigned char)name[8]) != 'v' ||
+        ascii_lower((unsigned char)name[9]) != 'e' ||
+        name[10] != '_' ||
+        name[11] < '0' || name[11] > '9' ||
+        name[12] < '0' || name[12] > '9' ||
+        name[13] != '.' ||
+        ascii_lower((unsigned char)name[14]) != 'd' ||
+        ascii_lower((unsigned char)name[15]) != 'a' ||
+        ascii_lower((unsigned char)name[16]) != 't' ||
+        name[17] != '\0') {
+        return 0;
+    }
+    slot = (name[11] - '0') * 10 + (name[12] - '0');
+    if (slot < 0 || slot >= NEXUS_SAVE_MAX_SLOTS) {
+        return 0;
+    }
+    if (outSlot) {
+        *outSlot = (unsigned char)slot;
+    }
+    return 1;
+}
+
 static int dm2_sksave_slot_from_basename(const char* name,
                                          unsigned char* outSlot,
                                          int* outLastSession) {
@@ -217,6 +251,7 @@ static int is_save_file(const char* name) {
     size_t len;
     if (!name) return 0;
     if (is_csb_original_save_basename(name)) return 1;
+    if (nexus_save_slot_from_basename(name, NULL)) return 1;
     if (dm2_sksave_slot_from_basename(name, NULL, NULL)) return 1;
     len = strlen(name);
     if (len < 15) return 0; /* "firestaff-.sav" minimum */
@@ -235,6 +270,10 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
     outId[0] = '\0';
     if (is_csb_original_save_basename(filename)) {
         snprintf(outId, (size_t)outSize, "csb");
+        return;
+    }
+    if (nexus_save_slot_from_basename(filename, NULL)) {
+        snprintf(outId, (size_t)outSize, "nexus");
         return;
     }
     if (dm2_sksave_slot_from_basename(filename, NULL, NULL)) {
