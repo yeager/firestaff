@@ -35,6 +35,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+enum {
+    DM2_RAW_DUNGEON_HEADER_SIZE = 44,
+    DM2_RAW_MAP_DESC_SIZE = 16,
+    DM2_RAW_THING_TYPE_COUNT = 16
+};
+
+static const int s_dm2_raw_db_record_size[DM2_RAW_THING_TYPE_COUNT] = {
+    0x04, 0x06, 0x04, 0x08, 0x10, 0x04, 0x04, 0x04,
+    0x04, 0x08, 0x04, 0x00, 0x00, 0x00, 0x08, 0x04
+};
+
 /* ════════════════════════════════════════════════════════════════
  * Starter party tables
  * Source: docs/dm2_party_state.md § Starter party
@@ -635,6 +646,11 @@ static int dm2_v1_read_payload_tagged_blob(const uint8_t *buf,
     return 1;
 }
 
+static uint16_t dm2_v1_read_u16_le_at(const uint8_t *buf, size_t offset)
+{
+    return (uint16_t)buf[offset] | ((uint16_t)buf[offset + 1u] << 8);
+}
+
 static int dm2_v1_import_original_optional_sections(
     DM2_V1_SessionState *session,
     const uint8_t *buf,
@@ -736,15 +752,217 @@ static int dm2_v1_import_original_optional_sections(
     return 0;
 }
 
+static void dm2_v1_apply_original_gamestate(DM2_V1_SessionState *session,
+                                            const DM2_GameStateBlock *gs)
+{
+    if (!session || !gs) return;
+
+    dm2_v1_session_new(session);
+    session->game_tick = gs->dwGameTick;
+    session->rng_seed = gs->dwRandomSeed;
+    session->party_x = gs->wPlayerPosX;
+    session->party_y = gs->wPlayerPosY;
+    session->party_dir = (uint8_t)(gs->wPlayerDir & 3u);
+    session->party_level = (uint8_t)(gs->wPlayerMap & 0xFFu);
+    session->leader_index = (uint8_t)(gs->wChampionLeader & 3u);
+    session->rain_intensity = gs->rain_state[0];
+}
+
+static int dm2_v1_decode_original_champions(DM2_V1_SessionState *session,
+                                            const uint8_t *buf,
+                                            size_t buf_size,
+                                            size_t *pos,
+                                            int length_prefixed,
+                                            int requested_champions)
+{
+    uint8_t champ_mask[261];
+    int decoded_champions = 0;
+
+    if (!session || !buf || !pos || *pos > buf_size) return -1;
+    if (requested_champions < 0) requested_champions = 0;
+    if (requested_champions > 4) requested_champions = 4;
+
+    dm2_suppress_champion_mask(champ_mask);
+    while (*pos < buf_size && decoded_champions < requested_champions) {
+        int champ_size;
+        DM2_ChampionRecord *champ =
+            (DM2_ChampionRecord *)session->champion_data[decoded_champions];
+
+        if (length_prefixed) {
+            if (!dm2_v1_read_payload_i32_le(buf, buf_size, pos,
+                                            &champ_size) ||
+                champ_size <= 0 ||
+                (size_t)champ_size > buf_size - *pos) {
+                return -1;
+            }
+        } else {
+            champ_size = (int)(buf_size - *pos);
+        }
+
+        memset(champ, 0, sizeof(*champ));
+        champ_size = dm2_suppress_decode_champion(buf + *pos,
+                                                  (size_t)champ_size,
+                                                  champ_mask,
+                                                  champ,
+                                                  0);
+        if (champ_size <= 0) return -1;
+        *pos += (size_t)champ_size;
+        decoded_champions++;
+    }
+
+    if (decoded_champions <= 0) return -1;
+    session->champion_count = (uint8_t)decoded_champions;
+    if (session->leader_index >= session->champion_count) {
+        session->leader_index = 0;
+    }
+    return 0;
+}
+
+static int dm2_v1_locate_raw_sksave_state_offset(const uint8_t *buf,
+                                                 size_t buf_size,
+                                                 size_t *out_offset)
+{
+    int map_count;
+    size_t column_index_base;
+    size_t total_columns = 0u;
+    size_t raw_map_bytes = 0u;
+    size_t sft_count;
+    size_t text_words;
+    size_t cursor;
+
+    if (!buf || !out_offset ||
+        buf_size < (size_t)(DM2_RAW_DUNGEON_HEADER_SIZE +
+                            DM2_RAW_MAP_DESC_SIZE)) {
+        return 0;
+    }
+
+    /* docs/dm2_save_format.md: original SKSave bodies start with a 44-byte
+     * dungeon header and 16-byte map descriptors. This bounded locator mirrors
+     * dm2_v1_dungeon_loader.c's skproject-layout math, then hands off at the
+     * documented game-state SUPPRESS block. */
+    map_count = (int)buf[4];
+    if (map_count < 1 || map_count > 64) return 0;
+    column_index_base = (size_t)DM2_RAW_DUNGEON_HEADER_SIZE +
+                        (size_t)map_count * DM2_RAW_MAP_DESC_SIZE;
+    if (column_index_base > buf_size) return 0;
+
+    for (int i = 0; i < map_count; i++) {
+        const size_t desc_off = (size_t)DM2_RAW_DUNGEON_HEADER_SIZE +
+                                (size_t)i * DM2_RAW_MAP_DESC_SIZE;
+        const uint16_t w8 = dm2_v1_read_u16_le_at(buf, desc_off + 8u);
+        const size_t rel = dm2_v1_read_u16_le_at(buf, desc_off + 0u);
+        const size_t width = (size_t)(((w8 >> 6) & 0x1Fu) + 1u);
+        const size_t height = (size_t)(((w8 >> 11) & 0x1Fu) + 1u);
+        size_t end;
+
+        if (width == 0u || width > 64u || height == 0u || height > 64u) {
+            return 0;
+        }
+        end = rel + width * height;
+        if (end < rel) return 0;
+        if (end > raw_map_bytes) raw_map_bytes = end;
+        total_columns += width;
+        if (total_columns > 4096u) return 0;
+    }
+    if (raw_map_bytes == 0u) return 0;
+
+    sft_count = dm2_v1_read_u16_le_at(buf, 10u);
+    text_words = dm2_v1_read_u16_le_at(buf, 6u);
+    cursor = column_index_base + total_columns * 2u +
+             sft_count * 2u + text_words * 2u;
+    if (cursor < column_index_base || cursor > buf_size) return 0;
+
+    for (int i = 0; i < DM2_RAW_THING_TYPE_COUNT; i++) {
+        const size_t count = dm2_v1_read_u16_le_at(buf, 12u + (size_t)i * 2u);
+        const size_t bytes = (size_t)s_dm2_raw_db_record_size[i];
+        const size_t pool_bytes = count * bytes;
+        if (bytes != 0u && pool_bytes / bytes != count) return 0;
+        if (pool_bytes > buf_size - cursor) return 0;
+        cursor += pool_bytes;
+    }
+    if (raw_map_bytes > buf_size - cursor) return 0;
+    cursor += raw_map_bytes;
+    if (cursor >= buf_size) return 0;
+
+    *out_offset = cursor;
+    return 1;
+}
+
+int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
+                                             const uint8_t *buf,
+                                             size_t buf_size)
+{
+    DM2_GameStateBlock gs;
+    size_t pos = 0u;
+    int decoded;
+
+    if (!session || !buf) return -1;
+    if (!dm2_v1_locate_raw_sksave_state_offset(buf, buf_size, &pos)) {
+        return -1;
+    }
+
+    memset(&gs, 0, sizeof(gs));
+    decoded = dm2_suppress_decode_gamestate(buf + pos, buf_size - pos,
+                                            &gs, 0);
+    if (decoded <= 0) return -1;
+    pos += (size_t)decoded;
+
+    dm2_v1_apply_original_gamestate(session, &gs);
+
+    decoded = dm2_suppress_decode_global_flags(buf + pos, buf_size - pos,
+                                               session->original_global_flags,
+                                               0);
+    if (decoded <= 0) return -1;
+    pos += (size_t)decoded;
+
+    decoded = dm2_suppress_decode_global_bytes(buf + pos, buf_size - pos,
+                                               session->original_global_bytes,
+                                               0);
+    if (decoded <= 0) return -1;
+    pos += (size_t)decoded;
+
+    decoded = dm2_suppress_decode_global_words(buf + pos, buf_size - pos,
+                                               session->original_global_words,
+                                               0);
+    if (decoded <= 0) return -1;
+    pos += (size_t)decoded;
+
+    if (dm2_v1_decode_original_champions(session, buf, buf_size, &pos, 0,
+                                         (int)gs.wChampionsCount) != 0) {
+        return -1;
+    }
+
+    decoded = dm2_suppress_decode_spell_effects(buf + pos, buf_size - pos,
+                                                session->original_spell_effects,
+                                                0);
+    if (decoded <= 0) return -1;
+    pos += (size_t)decoded;
+
+    session->original_timer_count = 0;
+    if (gs.wTimersCount > 0u) {
+        int timer_count = (int)gs.wTimersCount;
+        if (timer_count > DM2_MAX_TIMERS) timer_count = DM2_MAX_TIMERS;
+        for (int i = 0; i < timer_count; i++) {
+            decoded = dm2_suppress_decode_timer(buf + pos, buf_size - pos,
+                                                &session->original_timers[i],
+                                                0);
+            if (decoded <= 0) return -1;
+            pos += (size_t)decoded;
+            session->original_timer_count++;
+        }
+    }
+
+    if (!dm2_v1_session_validate(session)) return -1;
+    return 0;
+}
+
 int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
                                            const uint8_t *buf,
                                            size_t buf_size)
 {
     DM2_GameStateBlock gs;
-    uint8_t champ_mask[261];
     size_t pos = 0u;
     int gs_size;
-    int decoded_champions = 0;
     int requested_champions;
 
     if (!session || !buf || buf_size < 12u) {
@@ -768,43 +986,10 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
     }
     pos += (size_t)gs_size;
 
-    dm2_v1_session_new(session);
-    session->game_tick = gs.dwGameTick;
-    session->rng_seed = gs.dwRandomSeed;
-    session->party_x = gs.wPlayerPosX;
-    session->party_y = gs.wPlayerPosY;
-    session->party_dir = (uint8_t)(gs.wPlayerDir & 3u);
-    session->party_level = (uint8_t)(gs.wPlayerMap & 0xFFu);
-    session->leader_index = (uint8_t)(gs.wChampionLeader & 3u);
-    session->rain_intensity = gs.rain_state[0];
-
+    dm2_v1_apply_original_gamestate(session, &gs);
     requested_champions = (int)gs.wChampionsCount;
-    if (requested_champions < 0) requested_champions = 0;
-    if (requested_champions > 4) requested_champions = 4;
-    dm2_suppress_champion_mask(champ_mask);
-    while (pos < buf_size && decoded_champions < requested_champions) {
-        int champ_size;
-        DM2_ChampionRecord *champ =
-            (DM2_ChampionRecord *)session->champion_data[decoded_champions];
-
-        if (!dm2_v1_read_payload_i32_le(buf, buf_size, &pos, &champ_size) ||
-            champ_size <= 0 ||
-            (size_t)champ_size > buf_size - pos) {
-            return -1;
-        }
-        memset(champ, 0, sizeof(*champ));
-        if (dm2_suppress_decode_champion(buf + pos,
-                                         (size_t)champ_size,
-                                         champ_mask,
-                                         champ,
-                                         0) != champ_size) {
-            return -1;
-        }
-        pos += (size_t)champ_size;
-        decoded_champions++;
-    }
-
-    if (decoded_champions <= 0) {
+    if (dm2_v1_decode_original_champions(session, buf, buf_size, &pos, 1,
+                                         requested_champions) != 0) {
         return -1;
     }
     if (pos < buf_size &&
@@ -814,10 +999,6 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
     }
     if (pos != buf_size) {
         return -1;
-    }
-    session->champion_count = (uint8_t)decoded_champions;
-    if (session->leader_index >= session->champion_count) {
-        session->leader_index = 0;
     }
     if (!dm2_v1_session_validate(session)) {
         return -1;
@@ -889,7 +1070,11 @@ int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
     r = dm2_v1_session_deserialize(session, buf, out_size);
     if (r != 0) {
         r = dm2_v1_session_import_original_payload(session, buf, out_size);
-        if (r != 0) return r;
+        if (r != 0) {
+            r = dm2_v1_session_import_raw_sksave_payload(session, buf,
+                                                         out_size);
+            if (r != 0) return r;
+        }
     }
 
     if (!dm2_v1_session_validate(session)) return -1;
@@ -910,7 +1095,11 @@ int dm2_v1_session_load_last_session(const char *save_base,
     r = dm2_v1_session_deserialize(session, buf, out_size);
     if (r != 0) {
         r = dm2_v1_session_import_original_payload(session, buf, out_size);
-        if (r != 0) return r;
+        if (r != 0) {
+            r = dm2_v1_session_import_raw_sksave_payload(session, buf,
+                                                         out_size);
+            if (r != 0) return r;
+        }
     }
 
     if (!dm2_v1_session_validate(session)) return -1;
