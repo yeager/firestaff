@@ -319,6 +319,31 @@ static void test_first_tick_after_boot_profile_handoff(void)
           dm2_v1_runtime_get_last_spawn_y() == 1 &&
           dm2_v1_runtime_get_last_spawn_level() == 0,
           "runtime combat-ended trigger applies creature-spawn target");
+    CHECK(dm2_v1_runtime_invoke_actuator(
+              0, 0, 0, DM2_ACTUATOR_CREATURE_GENERATOR,
+              DM2_AI_DRAGOTH_MINION) == 0 &&
+          dm2_v1_runtime_get_last_actuator_type() ==
+              DM2_ACTUATOR_CREATURE_GENERATOR &&
+          dm2_v1_runtime_get_last_actuator_x() == 0 &&
+          dm2_v1_runtime_get_last_actuator_y() == 0 &&
+          dm2_v1_runtime_get_last_actuator_level() == 0 &&
+          dm2_v1_runtime_get_spawn_count() == 2 &&
+          dm2_v1_runtime_get_last_spawn_ai() == DM2_AI_DRAGOTH_MINION,
+          "runtime creature-generator actuator applies spawn target");
+    CHECK(dm2_v1_runtime_invoke_actuator(
+              0, 0, 0, DM2_ACTUATOR_ITEM_GENERATOR, 0x1234u) == 0 &&
+          dm2_v1_runtime_get_last_actuator_type() ==
+              DM2_ACTUATOR_ITEM_GENERATOR &&
+          dm2_v1_runtime_get_last_generated_object() == 0x1234u,
+          "runtime item-generator actuator records generated object target");
+    CHECK(dm2_v1_runtime_invoke_actuator(
+              0, 0, 0, DM2_ACTUATOR_MISSILE_SHOOTER,
+              DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL) == 0 &&
+          dm2_v1_runtime_get_last_actuator_type() ==
+              DM2_ACTUATOR_MISSILE_SHOOTER &&
+          dm2_v1_runtime_get_last_projectile_slot() >= 0 &&
+          dm2_v1_runtime_get_projectile_actuator_count() == 1,
+          "runtime missile-shooter actuator dispatches a projectile target");
 
     memset(&session, 0, sizeof(session));
     dm2_v1_session_new(&session);
