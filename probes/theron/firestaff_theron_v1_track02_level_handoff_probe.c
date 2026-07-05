@@ -236,6 +236,17 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     check_size("synthetic initial candidate scan offset",
                catalog.candidates[0].absolute_offset,
                candidate_offset);
+    check_int("synthetic initial candidate bind anchor",
+              theron_v1_track02_bind_level_candidate_anchor(
+                  descriptor_offset,
+                  &catalog),
+              1);
+    check_size("synthetic initial candidate descriptor delta",
+               catalog.candidates[0].descriptor_delta,
+               0xa852u);
+    check_int("synthetic initial candidate anchor match",
+              catalog.candidates[0].matches_initial_anchor,
+              1);
     check_int("synthetic initial candidate expected offset ok",
               theron_v1_track02_initial_candidate_expected_offset(
                   descriptor_offset,
@@ -351,6 +362,14 @@ static void probe_synthetic_initial_candidate_wrong_anchor_rejected(void) {
     check_size("synthetic wrong-anchor candidate scan offset",
                catalog.candidates[0].absolute_offset,
                wrong_candidate_offset);
+    check_int("synthetic wrong-anchor bind anchor",
+              theron_v1_track02_bind_level_candidate_anchor(
+                  descriptor_offset,
+                  &catalog),
+              1);
+    check_int("synthetic wrong-anchor candidate no anchor match",
+              catalog.candidates[0].matches_initial_anchor,
+              0);
 
     status = theron_v1_track02_load_initial_level_candidate(
         track,
@@ -504,6 +523,17 @@ static void probe_real_data_initial_candidate(const char *label,
     check_size("real initial candidate scan count",
                catalog.candidate_count,
                1u);
+    check_int("real initial candidate bind anchor",
+              theron_v1_track02_bind_level_candidate_anchor(
+                  signal.descriptor_offsets[0],
+                  &catalog),
+              1);
+    check_size("real initial candidate descriptor delta",
+               catalog.candidates[0].descriptor_delta,
+               0xa852u);
+    check_int("real initial candidate anchor match",
+              catalog.candidates[0].matches_initial_anchor,
+              1);
 
     status = theron_v1_track02_load_initial_level_candidate(
         data,
