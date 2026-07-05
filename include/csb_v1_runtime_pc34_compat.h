@@ -345,6 +345,9 @@ typedef struct {
     uint16_t                active_group_state_count;
     CSB_V1_RuntimeActiveGroupState
                             active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
+    int                     half_square_direction_debounce_valid;
+    uint16_t                half_square_direction_debounce_group;
+    uint32_t                half_square_direction_debounce_time;
     struct DM1_EventQueue_V1 timeline_queue;  /* ReDMCSB TIMELINE.C heap */
     struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
     uint32_t                timeline_dispatch_count;

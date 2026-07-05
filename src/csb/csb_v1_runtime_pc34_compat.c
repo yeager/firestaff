@@ -5050,6 +5050,10 @@ static void csb_v1_runtime_clear_active_group_state(
     if (profile->active_group_state_count > 0u) {
         --profile->active_group_state_count;
     }
+    if (profile->half_square_direction_debounce_valid &&
+        profile->half_square_direction_debounce_group == group_thing) {
+        profile->half_square_direction_debounce_valid = 0;
+    }
 }
 
 static CSB_V1_RuntimeActiveGroupState *
@@ -5100,6 +5104,9 @@ static void csb_v1_runtime_sync_active_group_state_from_record(
 
     state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
     existed = state ? 1 : 0;
+    if (existed) {
+        directions = state->directions;
+    }
     if (!state) {
         state = csb_v1_runtime_active_group_state_for(
             profile,
@@ -5230,10 +5237,6 @@ static void csb_v1_runtime_set_active_group_direction_creature(
     if (creature_count > 4) creature_count = 4;
     if (creature_index >= creature_count) return;
     direction &= 3;
-    flags = csb_v1_runtime_read_u16(group_record + 14);
-    flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 8)) |
-                       (uint16_t)(direction << 8));
-    csb_v1_runtime_write_u16(group_record + 14, flags);
 
     state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
     if (!state) {
@@ -5246,6 +5249,22 @@ static void csb_v1_runtime_set_active_group_direction_creature(
             1);
     }
     if (!state) return;
+    /* ReDMCSB GROUP.C F0205 lines 1598-1607 debounces two half-square
+     * creatures by active-group pointer and game time before mutating
+     * directions.  Firestaff's runtime profile owns the equivalent marker so
+     * multiple CSB profiles/tests in one process do not share process-global
+     * debounce state. */
+    if (two_half_square_creatures &&
+        profile->half_square_direction_debounce_valid &&
+        profile->half_square_direction_debounce_time == profile->game_time &&
+        profile->half_square_direction_debounce_group == group_thing) {
+        return;
+    }
+
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 8)) |
+                       (uint16_t)(direction << 8));
+    csb_v1_runtime_write_u16(group_record + 14, flags);
 
     final_direction = direction;
     /* ReDMCSB GROUP.C F0205 lines 1607-1621 changes opposite turns one step
@@ -5279,6 +5298,9 @@ static void csb_v1_runtime_set_active_group_direction_creature(
             state->directions,
             creature_index ^ 1,
             final_direction);
+        profile->half_square_direction_debounce_valid = 1;
+        profile->half_square_direction_debounce_time = profile->game_time;
+        profile->half_square_direction_debounce_group = group_thing;
     }
 }
 
