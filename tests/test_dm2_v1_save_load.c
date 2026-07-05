@@ -778,6 +778,86 @@ static int build_resume_payload(const DM2_GameStateBlock *gs,
     return 1;
 }
 
+static void write_u16_le_at(uint8_t *buf, size_t offset, uint16_t value)
+{
+    buf[offset + 0u] = (uint8_t)(value & 0xFFu);
+    buf[offset + 1u] = (uint8_t)((value >> 8) & 0xFFu);
+}
+
+static int build_raw_sksave_payload(
+    const DM2_GameStateBlock *gs,
+    const DM2_ChampionRecord *champ,
+    const uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE],
+    const uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE],
+    const uint16_t global_words[DM2_GLOBAL_WORDS_SIZE],
+    const uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE],
+    const DM2_TimerEntry *timers,
+    int timer_count,
+    uint8_t *payload,
+    size_t payload_cap,
+    size_t *payload_size)
+{
+    uint8_t enc[512];
+    uint8_t champ_mask[261];
+    int n;
+    size_t pos = 0u;
+
+    if (!gs || !champ || !global_flags || !global_bytes ||
+        !global_words || !spell_effects || !payload || !payload_size) {
+        return 0;
+    }
+
+    memset(payload, 0, payload_cap);
+    if (payload_cap < 63u) return 0;
+
+    /* Minimal skproject-shaped dungeon prefix:
+     * 44-byte header, one 16-byte map descriptor, one column index, one tile.
+     * The runtime state SUPPRESS stream starts immediately after byte 62. */
+    payload[4] = 1u;
+    write_u16_le_at(payload, 44u, 0u);
+    write_u16_le_at(payload, 44u + 8u, 0u);
+    pos = 63u;
+
+    n = dm2_suppress_encode_gamestate(gs, enc, sizeof(enc));
+    if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
+        return 0;
+    }
+    n = dm2_suppress_encode_global_flags(global_flags, enc, sizeof(enc));
+    if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
+        return 0;
+    }
+    n = dm2_suppress_encode_global_bytes(global_bytes, enc, sizeof(enc));
+    if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
+        return 0;
+    }
+    n = dm2_suppress_encode_global_words(global_words, enc, sizeof(enc));
+    if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
+        return 0;
+    }
+    dm2_suppress_champion_mask(champ_mask);
+    n = dm2_suppress_encode_champion(champ, champ_mask, enc, sizeof(enc));
+    if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
+        return 0;
+    }
+    n = dm2_suppress_encode_spell_effects(spell_effects, enc, sizeof(enc));
+    if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
+        return 0;
+    }
+    if (timers && timer_count > 0) {
+        if (timer_count > DM2_MAX_TIMERS) return 0;
+        for (int i = 0; i < timer_count; i++) {
+            n = dm2_suppress_encode_timer(&timers[i], enc, sizeof(enc));
+            if (n <= 0 ||
+                !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
+                return 0;
+            }
+        }
+    }
+
+    *payload_size = pos;
+    return 1;
+}
+
 static int read_resume_payload(const uint8_t *payload,
                                size_t payload_size,
                                DM2_GameStateBlock *gs,
@@ -1034,6 +1114,122 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
            "(gs=%zuB champion=%zuB payload=%zuB)\n",
            enc_gs_size, enc_champ_size, payload_size);
     cleanup_one_slot_dir(tmpdir, 4);
+    return 1;
+}
+
+static int test_raw_sksave_resume_import(void)
+{
+    printf("  Raw SKSave resume import: dungeon-prefix locator + SUPPRESS stream...\n");
+    char tmpdir[256];
+    uint8_t payload[2048];
+    size_t payload_size = 0u;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champ;
+    DM2_ChampionRecord imported_champ;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE];
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE];
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE];
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE];
+    DM2_TimerEntry timers[1];
+    DM2_V1_SessionState imported_session;
+    int r;
+
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_rawsave_%d",
+             FS_GETPID());
+    FS_MKDIR(tmpdir);
+
+    memset(&gs_store, 0, sizeof(gs_store));
+    gs->dwGameTick = 0x00034567u;
+    gs->dwRandomSeed = 0x00002211u;
+    gs->wChampionsCount = 1;
+    gs->wPlayerPosX = 11;
+    gs->wPlayerPosY = 14;
+    gs->wPlayerDir = 2;
+    gs->wPlayerMap = 5;
+    gs->wChampionLeader = 0;
+    gs->wTimersCount = 1;
+    gs->rain_state[0] = 19;
+
+    memset(&champ, 0, sizeof(champ));
+    memcpy(champ.first_name, "SAROS", 5);
+    memcpy(champ.last_name, "RAW", 3);
+    champ.absolute_direction = gs->wPlayerDir;
+    champ.squad_position = 0;
+    champ.cur_hp = 77;
+    champ.max_hp = 88;
+    champ.inventory[0] = dm2_db_make_handle(4, 0x0021);
+    champ.inventory[8] = dm2_db_make_handle(7, 0x0042);
+
+    memset(global_flags, 0, sizeof(global_flags));
+    memset(global_bytes, 0, sizeof(global_bytes));
+    memset(global_words, 0, sizeof(global_words));
+    memset(spell_effects, 0, sizeof(spell_effects));
+    memset(timers, 0, sizeof(timers));
+    global_flags[2] = 0x33u;
+    global_bytes[17] = 0x44u;
+    global_words[9] = 0x2A2Au;
+    spell_effects[4] = 0x11u;
+    timers[0].timer_id = 0x0203u;
+    timers[0].current_tick = 0x0040u;
+    timers[0].interval_ticks = 0x0008u;
+    timers[0].flags = 0x0001u;
+    timers[0].user_data = 0x0077u;
+
+    if (!build_raw_sksave_payload(gs, &champ,
+                                  global_flags, global_bytes, global_words,
+                                  spell_effects, timers, 1,
+                                  payload, sizeof(payload), &payload_size)) {
+        printf("    FAIL: could not build raw SKSave fixture\n");
+        cleanup_one_slot_dir(tmpdir, 5);
+        return 0;
+    }
+    r = dm2_sl_save(tmpdir, 5, "RawSKSave", payload, payload_size);
+    if (r != 0) {
+        printf("    FAIL: raw slot save returned %d\n", r);
+        cleanup_one_slot_dir(tmpdir, 5);
+        return 0;
+    }
+
+    memset(&imported_session, 0, sizeof(imported_session));
+    r = dm2_v1_session_load_slot(tmpdir, 5, &imported_session);
+    if (r != 0) {
+        printf("    FAIL: session loader rejected raw SKSave fixture (r=%d)\n",
+               r);
+        cleanup_one_slot_dir(tmpdir, 5);
+        return 0;
+    }
+    memset(&imported_champ, 0, sizeof(imported_champ));
+    memcpy(&imported_champ, imported_session.champion_data[0],
+           sizeof(imported_champ));
+    if (imported_session.game_tick != gs->dwGameTick ||
+        imported_session.rng_seed != gs->dwRandomSeed ||
+        imported_session.champion_count != 1 ||
+        imported_session.party_x != gs->wPlayerPosX ||
+        imported_session.party_y != gs->wPlayerPosY ||
+        imported_session.party_dir != (gs->wPlayerDir & 3u) ||
+        imported_session.party_level != (uint8_t)gs->wPlayerMap ||
+        imported_session.rain_intensity != gs->rain_state[0] ||
+        imported_champ.inventory[0] != champ.inventory[0] ||
+        imported_champ.inventory[8] != champ.inventory[8] ||
+        imported_session.original_global_flags[2] != global_flags[2] ||
+        imported_session.original_global_bytes[17] != global_bytes[17] ||
+        imported_session.original_global_words[9] !=
+            (global_words[9] & 0x7F7Fu) ||
+        imported_session.original_spell_effects[4] != spell_effects[4] ||
+        imported_session.original_timer_count != 1 ||
+        imported_session.original_timers[0].timer_id != timers[0].timer_id ||
+        imported_session.original_timers[0].user_data !=
+            timers[0].user_data) {
+        printf("    FAIL: raw SKSave fixture did not import expected tuple\n");
+        cleanup_one_slot_dir(tmpdir, 5);
+        return 0;
+    }
+
+    printf("    PASS: raw SKSave body imported after dungeon-prefix locator "
+           "(payload=%zuB)\n",
+           payload_size);
+    cleanup_one_slot_dir(tmpdir, 5);
     return 1;
 }
 
@@ -1342,7 +1538,8 @@ int main(void)
     RUN(12, test_invalid_slot_header_rejected);
     RUN(13, test_stale_fixture_metadata_guard);
     RUN(14, test_resume_smoke_gate_position_facing_inventory);
-    RUN(15, test_champion_death_permanence_source_lock);
+    RUN(15, test_raw_sksave_resume_import);
+    RUN(16, test_champion_death_permanence_source_lock);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

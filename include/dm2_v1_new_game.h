@@ -263,6 +263,14 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
                                            const uint8_t *buf,
                                            size_t buf_size);
 
+/* Import a raw original-style SKSave body after the 42-byte slot header has
+ * been stripped. This bounded bridge locates the documented dungeon prefix,
+ * imports the game-state/champion/global/timer SUPPRESS stream, and leaves
+ * full dungeon DB reconstruction to the DM2 dungeon loader path. */
+int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
+                                             const uint8_t *buf,
+                                             size_t buf_size);
+
 /* Save session to slot N using the slot manager.
  * Combines serialize + dm2_sl_save.
  * Returns 0 on success.
