@@ -13,6 +13,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
@@ -2983,6 +2984,7 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
     struct TimelineEvent_Compat first_move;
     struct ExplosionCreateInput_Compat explosion_input;
     struct TimelineEvent_Compat first_advance;
+    CSB_V1_SaveHeader saved_header;
     const char *path =
         "/tmp/firestaff_csb_runtime_projectile_explosion_roundtrip.fsav";
     int projectile_slot = -1;
@@ -2997,8 +2999,9 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
     profile.dungeon_seed = 0xC5B10731u;
     profile.party_x = 2;
     profile.party_y = 3;
+    profile.party_z = 1;
     profile.party_dir = CSB_V1_DIR_EAST;
-    profile.current_level = 0;
+    profile.current_level = 5;
     profile.game_time = 42u;
     profile.timeline_queue.gameTick = profile.game_time;
 
@@ -3051,9 +3054,16 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
 
     CHECK(csb_v1_runtime_save_game_to_path(&profile, path) == 0,
           "CSB runtime save writes projectile/explosion state");
+    memset(&saved_header, 0, sizeof(saved_header));
+    CHECK(csb_v1_load_game(path, NULL, 0, &saved_header) ==
+              CSB_V1_LOAD_OK &&
+              saved_header.PartyMapZ == 5,
+          "CSB runtime save header writes active current level");
     csb_v1_runtime_init(&loaded, NULL);
     CHECK(csb_v1_runtime_load_game_from_path(&loaded, path) == 0,
           "CSB runtime load accepts projectile/explosion save state");
+    CHECK(loaded.current_level == 5 && loaded.party_z == 1,
+          "CSB runtime load preserves payload current level separately from legacy party_z");
     CHECK(loaded.projectiles.count == 1 &&
               loaded.projectiles.entries[projectile_slot].reserved3 != 0 &&
               loaded.projectiles.entries[projectile_slot].projectileSubtype ==
