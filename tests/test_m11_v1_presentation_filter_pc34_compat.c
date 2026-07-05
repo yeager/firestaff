@@ -25,11 +25,16 @@ int main(void) {
                   M12_PRESENTATION_V1_ORIGINAL,
                   M11_SCALE_FILTER_NEAREST),
               M11_SCALE_FILTER_NEAREST);
-    check_int("v2 filtered keeps linear",
+    check_int("v2 filtered forces nearest from linear for source glyphs",
               M11_ResolveGameScaleFilterForPresentation(
                   M12_PRESENTATION_V20_FILTERED,
                   M11_SCALE_FILTER_LINEAR),
-              M11_SCALE_FILTER_LINEAR);
+              M11_SCALE_FILTER_NEAREST);
+    check_int("v2 filtered keeps nearest",
+              M11_ResolveGameScaleFilterForPresentation(
+                  M12_PRESENTATION_V20_FILTERED,
+                  M11_SCALE_FILTER_NEAREST),
+              M11_SCALE_FILTER_NEAREST);
     check_int("v2 upscaled keeps linear",
               M11_ResolveGameScaleFilterForPresentation(
                   M12_PRESENTATION_V21_UPSCALED,

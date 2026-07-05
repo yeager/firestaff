@@ -66,10 +66,9 @@ int M11_MapSourcePointToPresentedForPresentation(int presentationMode,
                                                  int* x,
                                                  int* y);
 
-/* V1 original is a 320x200 source-locked surface.  Enhanced modes may use the
-   user's scaling filter, but V1 must stay nearest-neighbor so small original
-   glyphs such as DM1 wall inscriptions remain readable when the window is
-   enlarged. */
+/* V1 original and V2.0 filtered both present the source-locked 320x200 glyph
+   layer.  They must stay nearest-neighbor so small original glyphs such as DM1
+   wall inscriptions remain readable when the window is enlarged. */
 int M11_ResolveGameScaleFilterForPresentation(int presentationMode,
                                               int requestedScaleFilter);
 

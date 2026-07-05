@@ -168,7 +168,8 @@ int M11_GameView_PresentationTarget(int presentationMode,
 
 int M11_ResolveGameScaleFilterForPresentation(int presentationMode,
                                               int requestedScaleFilter) {
-    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL ||
+        presentationMode == M12_PRESENTATION_V20_FILTERED) {
         return M11_SCALE_FILTER_NEAREST;
     }
     if (requestedScaleFilter != M11_SCALE_FILTER_NEAREST &&
@@ -207,7 +208,9 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
      * scaling filter is LINEAR, SDL smooths those glyphs during window
      * presentation and the wall text becomes unreadable.  V1 original mode
      * therefore presents with nearest-neighbor regardless of the enhanced-mode
-     * filter setting; V2 modes keep honoring the user setting. */
+     * filter setting.  V2.0 still shows the same source glyphs through the
+     * 320x200 -> 640x400 indexed path, so it also keeps nearest presentation;
+     * V2.1/V2.2 keep honoring the user setting. */
     if (effectiveFilter != requestedFilter) {
         M11_Render_SetScaleFilter(effectiveFilter);
         restoreFilter = 1;
