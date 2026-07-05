@@ -101,6 +101,7 @@ uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
                                                  uint8_t slot,
                                                  uint32_t object);
+int dm2_v1_runtime_export_inventory_to_session(DM2_V1_SessionState *session);
 uint8_t dm2_v1_runtime_get_minion_count(void);
 int dm2_v1_runtime_get_minion_assoc(uint8_t index, DM2_MinionAssoc *out_assoc);
 uint32_t dm2_v1_runtime_get_weather_seed(void);

@@ -26,6 +26,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <process.h>
+#define FS_MKDIR(path) _mkdir(path)
+#define FS_RMDIR(path) _rmdir(path)
+#define FS_GETPID() _getpid()
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#define FS_MKDIR(path) mkdir(path, 0700)
+#define FS_RMDIR(path) rmdir(path)
+#define FS_GETPID() getpid()
+#endif
 
 static int passed;
 static int failed;
@@ -230,6 +244,40 @@ static void test_first_tick_after_boot_profile_handoff(void)
           dm2_v1_runtime_get_champion_inventory_object(0, 2) ==
               0x0A000044u,
           "runtime champion inventory ObjectID writeback is mutable");
+    dm2_v1_runtime_set_leader_hand_object(0x0A000055u);
+    session.original_leader_hand_object = 0u;
+    ((DM2_ChampionRecord *)session.champion_data[0])->inventory[2] = 0u;
+    CHECK(dm2_v1_runtime_export_inventory_to_session(&session) == 0 &&
+          session.original_leader_hand_object == 0x0A000055u &&
+          ((DM2_ChampionRecord *)session.champion_data[0])->inventory[2] ==
+              0x0A000044u,
+          "runtime inventory export writes leader hand and champion slots into session");
+    {
+        char tmpdir[256];
+        char slot_path[320];
+        DM2_V1_SessionState restored;
+        snprintf(tmpdir, sizeof(tmpdir),
+                 "/tmp/firestaff_dm2_runtime_inv_%d", FS_GETPID());
+        (void)remove(tmpdir);
+        (void)FS_RMDIR(tmpdir);
+        CHECK(FS_MKDIR(tmpdir) == 0,
+              "runtime inventory export test creates save root");
+        CHECK(dm2_v1_session_save_slot(tmpdir, 6, "RuntimeInv",
+                                       &session) == 0,
+              "runtime inventory export session saves to DM2 slot");
+        memset(&restored, 0, sizeof(restored));
+        CHECK(dm2_v1_session_load_slot(tmpdir, 6, &restored) == 0,
+              "runtime inventory export session reloads from DM2 slot");
+        CHECK(restored.original_leader_hand_object == 0x0A000055u &&
+              ((DM2_ChampionRecord *)restored.champion_data[0])->inventory[2] ==
+                  0x0A000044u,
+              "runtime inventory export survives DM2 slot save/load");
+        snprintf(slot_path, sizeof(slot_path), "%s/SKSave06.dat", tmpdir);
+        (void)remove(slot_path);
+        snprintf(slot_path, sizeof(slot_path), "%s/SKSave.bak", tmpdir);
+        (void)remove(slot_path);
+        (void)FS_RMDIR(tmpdir);
+    }
 
     {
         uint8_t framebuffer[320 * 200];

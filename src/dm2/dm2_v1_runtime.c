@@ -839,6 +839,22 @@ int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
     return 0;
 }
 
+int dm2_v1_runtime_export_inventory_to_session(DM2_V1_SessionState *session) {
+    if (!session || !dm2_v1_session_validate(session)) {
+        return -1;
+    }
+    session->original_leader_hand_object = g_dm2_runtime.leader_hand_object;
+    for (uint8_t c = 0; c < session->champion_count && c < 4u; ++c) {
+        DM2_ChampionRecord *champ =
+            (DM2_ChampionRecord *)session->champion_data[c];
+        for (uint8_t slot = 0; slot < 30u; ++slot) {
+            champ->inventory[slot] =
+                g_dm2_runtime.champion_inventory_objects[c][slot];
+        }
+    }
+    return 0;
+}
+
 uint8_t dm2_v1_runtime_get_minion_count(void) {
     return g_dm2_runtime.minions.count;
 }
