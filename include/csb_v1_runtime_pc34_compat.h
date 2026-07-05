@@ -419,6 +419,8 @@ typedef struct {
     int sensor_last_event_type;
     int old_party_level;
     int new_party_level;
+    int deferred_new_party_map_index_valid;
+    int deferred_new_party_map_index;
 } CSB_V1_InputCommandRuntimeResult;
 
 /* ── Runtime profile API ─────────────────────────────────────────────── */
