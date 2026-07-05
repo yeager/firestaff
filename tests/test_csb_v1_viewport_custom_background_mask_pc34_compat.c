@@ -163,12 +163,33 @@ static int test_aligned_mask_composite(void)
 
     /* ReDMCSB: DUNVIEW.C F0098 lines 2962-3002 has no unaligned background
      * overlay. CSBWin Viewport.cpp lines 6454-6459 dispatches unaligned
-     * masks to ApplyBackground3, which is intentionally outside this slice. */
+     * masks to ApplyBackground3, and lines 6377-6433 handle the destination
+     * bit >= 8 case used by CSB CustomBackgrounds. */
+    for (size_t i = 0; i < sizeof(viewport) / sizeof(viewport[0]); ++i) {
+        viewport[i] = 0xccccccccu;
+    }
+    viewport[30] = 0xaaaaaaaau;
+    viewport[31] = 0xbbbbbbbbu;
+    viewport[32] = 0xddddddddu;
+    mask.mask_words = mask_low;
+    mask.src_x = 16;
+    mask.dst_x = 24;
+    copied = csb_v1_viewport_custom_background_apply_aligned_mask_pc34(
+        &mask, bitmap_a, sizeof(bitmap_a) / sizeof(bitmap_a[0]),
+        viewport, sizeof(viewport) / sizeof(viewport[0]), 224);
+    ok &= expect_int("mask.unaligned.copied_bytes", copied, 12);
+    ok &= expect_u32("mask.unaligned.word0", viewport[30], 0x34aa78aau);
+    ok &= expect_u32("mask.unaligned.word1", viewport[31], 0x65bb21bbu);
+    ok &= expect_u32("mask.unaligned.neighbor", viewport[32], 0xddddddddu);
+
+    /* CSBWin Viewport.cpp lines 6324-6376 leaves the SMR<8/SSR>=8 path
+     * commented/NotImplemented, so Firestaff still reports it as deferred. */
     mask.src_x = 8;
+    mask.dst_x = 16;
     copied = csb_v1_viewport_custom_background_apply_aligned_mask_pc34(
         &mask, bitmap_b, sizeof(bitmap_b) / sizeof(bitmap_b[0]),
         viewport, sizeof(viewport) / sizeof(viewport[0]), 224);
-    ok &= expect_int("mask.unaligned.deferred", copied, -2);
+    ok &= expect_int("mask.unaligned.csbwin_not_implemented", copied, -2);
 
     /* ReDMCSB: DUNVIEW.C F0128 lines 8318-8542 bounds viewport drawing to
      * the 224-pixel view area. CSBWin Viewport.cpp lines 6451-6466 rejects
