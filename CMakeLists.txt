@@ -20200,6 +20200,12 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_track02_descriptor_entry_roles
         COMMAND firestaff_theron_v1_track02_descriptor_entry_roles_probe
     )
+    if(Python3_EXECUTABLE)
+        add_test(
+            NAME theron_v1_probe_registration_hygiene
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_theron_v1_probe_registration.py
+        )
+    endif()
 
     # ── Theron V1 SRM (Save RAM) classifier probe ───────────────────────
     # Bounded real-artifact boundary for Theron .srm save data.  Data-free
