@@ -52,6 +52,19 @@ int main(void) {
                                             THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
     check_int("locked stage rejected", result, THERON_STARTUP_ERR_STAGE_LOCKED);
 
+    theron_v1_dungeon_advance(&progression);
+    result = theron_v1_startup_choose_stage(&flow,
+                                            &progression,
+                                            THERON_DUNGEON_5_VAULT_OF_SECRETS);
+    check_int("middle stage accepted after first completion", result, THERON_STARTUP_OK);
+    result = theron_v1_startup_choose_stage(&flow,
+                                            &progression,
+                                            THERON_DUNGEON_7_TOWER_OF_EPILOGUE);
+    check_int("final stage still locked after first completion",
+              result,
+              THERON_STARTUP_ERR_STAGE_LOCKED);
+
+    theron_v1_dungeon_progression_init(&progression);
     result = theron_v1_startup_choose_stage(&flow,
                                             &progression,
                                             THERON_DUNGEON_1_HALL_OF_RECORDS);
