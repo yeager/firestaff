@@ -4,6 +4,7 @@
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_viewport.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
@@ -9256,15 +9257,109 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     return 1;
 }
 
+static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
+                                                const TrAssetBundle* assets,
+                                                const char* md5_hex,
+                                                char* receipt,
+                                                size_t receipt_cap) {
+    Theron_Track02BankSignal signal;
+    Theron_Track02SignalStatus signal_status;
+    size_t anchor;
+    size_t entry;
+    int tried = 0;
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!world || !assets || !assets->hucard_rom || assets->hucard_rom_size == 0u ||
+        !md5_hex || md5_hex[0] == '\0') {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "no raw Track 02 bytes");
+        }
+        return 0;
+    }
+
+    signal_status = theron_v1_track02_find_bank_signal(assets->hucard_rom,
+                                                       assets->hucard_rom_size,
+                                                       md5_hex,
+                                                       &signal);
+    if (signal_status != THERON_TRACK02_SIGNAL_OK) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 bank signal %s",
+                     theron_v1_track02_signal_status_name(signal_status));
+        }
+        return 0;
+    }
+
+    for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
+        for (entry = 0u; entry < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++entry) {
+            Theron_Track02LevelHandoff handoff;
+            Theron_Track02LevelHandoffStatus level_status;
+            Theron_V1_Level candidate;
+
+            level_status = theron_v1_track02_load_descriptor_window_level(
+                assets->hucard_rom,
+                assets->hucard_rom_size,
+                signal.descriptor_offsets[anchor],
+                entry,
+                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                (int)entry,
+                &candidate,
+                &handoff);
+            ++tried;
+            if (level_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
+                world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+                world->current_level = 0;
+                world->levels[0][0] = candidate;
+                world->level_loaded[0][0] = 1;
+                theron_v1_party_place(world,
+                                      world->levels[0][0].start_x,
+                                      world->levels[0][0].start_y,
+                                      world->levels[0][0].start_dir);
+                if (receipt && receipt_cap > 0u) {
+                    snprintf(receipt,
+                             receipt_cap,
+                             "Track 02 level anchor=%zu entry=%zu offset=0x%zx size=%zu",
+                             anchor,
+                             entry,
+                             handoff.absolute_offset,
+                             handoff.byte_count);
+                }
+                return 1;
+            }
+        }
+    }
+
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 "Track 02 descriptors scanned anchors=%zu windows=%d; no level claim yet",
+                 signal.anchor_count,
+                 tried);
+    }
+    return 0;
+}
+
 static int m11_theron_load_initial_level(Theron_V1_World* world,
-                                         const TrAssetBundle* assets) {
+                                         const TrAssetBundle* assets,
+                                         const char* md5_hex,
+                                         char* receipt,
+                                         size_t receipt_cap) {
     uint8_t level_data[12 + 8 * 8];
     int x;
     int y;
     Theron_MapLoadResult r;
-    (void)assets;
     if (!world) {
         return 0;
+    }
+    if (m11_theron_try_track02_initial_level(world,
+                                             assets,
+                                             md5_hex,
+                                             receipt,
+                                             receipt_cap)) {
+        return 1;
     }
 
     /* Small deterministic launch room used until the real Track 02 dungeon
@@ -9304,6 +9399,9 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
                           world->levels[0][0].start_x,
                           world->levels[0][0].start_y,
                           world->levels[0][0].start_dir);
+    if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
+        snprintf(receipt, receipt_cap, "Track 02 descriptor scan unavailable; fallback room");
+    }
     return 1;
 }
 
@@ -9317,10 +9415,12 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     TrAssetBundle* assets = NULL;
     int savedDebugHUD;
     TrAssetResult assetResult;
+    char levelReceipt[160];
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
     }
+    levelReceipt[0] = '\0';
 
     savedDebugHUD = state->showDebugHUD;
     M11_GameView_Shutdown(state);
@@ -9358,7 +9458,11 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     }
 
     theron_v1_world_init(world);
-    if (!m11_theron_load_initial_level(world, assets)) {
+    if (!m11_theron_load_initial_level(world,
+                                       assets,
+                                       profile->graphics_md5,
+                                       levelReceipt,
+                                       sizeof(levelReceipt))) {
         m11_set_status(state, "BOOT", "THERON LEVEL LOAD FAILED");
         goto fail;
     }
@@ -9384,9 +9488,16 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
     m11_set_status(state, "BOOT", "THERON READY");
-    m11_set_inspect_readout(state, "READY",
-                            "THERON TRACK 02 VERIFIED; V1 RUNTIME READY");
+    if (levelReceipt[0] != '\0') {
+        m11_set_inspect_readout(state, "READY", levelReceipt);
+    } else {
+        m11_set_inspect_readout(state, "READY",
+                                "THERON TRACK 02 VERIFIED; V1 RUNTIME READY");
+    }
     m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON LOADED");
+    if (levelReceipt[0] != '\0') {
+        m11_log_event(state, M11_COLOR_YELLOW, levelReceipt);
+    }
     return 1;
 
 fail:

@@ -661,5 +661,6 @@ int theron_v1_trigger_activate(Theron_V1_World *world, int x, int y) {
 const char *theron_v1_mechanics_source_evidence(void) {
     return "THQUEST.ASM T520/T560/T600/T700/T800/T900  "
            "+ tqr_v1_phase2_data_formats_H2339.md  "
-           "+ movement_features.md (ReDMCSB MOVESENS.C:475-538)";
+           "+ movement_collision.md / movement_features.md "
+           "(ReDMCSB CLIKMENU.C F0366, MOVESENS.C:475-538)";
 }
