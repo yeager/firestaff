@@ -2463,6 +2463,65 @@ static const char* m11_dm2_item_name(int item_id)
     }
 }
 
+static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
+                                          unsigned char *framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight)
+{
+    const M11_AssetSlot *entrance = NULL;
+    int blink_on = 1;
+
+    if (!state || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0) {
+        return;
+    }
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
+    if (state->assetsAvailable) {
+        entrance = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&state->assetLoader, 4u);
+        if (entrance && entrance->width == 320u && entrance->height == 200u) {
+            M11_AssetLoader_Blit(entrance,
+                                 framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 0,
+                                 0,
+                                 -1);
+        }
+    }
+
+    /* ReDMCSB ENTRANCE.C F0806 lines 409-441 selects the CSB entrance
+     * palette/screen and lines 850-883 wait on the entrance state until the
+     * player confirms LOAD_DUNGEON.  Firestaff keeps the CSB runtime loaded
+     * behind this screen but blocks gameplay input/ticks until confirmation. */
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  18, 18, 284, 164, M11_COLOR_YELLOW);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  38, 42, "CHAOS STRIKES BACK", &g_text_title);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  38, 64, "ENTRANCE", &g_text_shadow);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  38, 84, "CSB RUNTIME READY", &g_text_small);
+    if (state->csbBootProfile) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        char row[96];
+        snprintf(row, sizeof(row), "START %d,%d DIR %d",
+                 profile->runtime.party_x,
+                 profile->runtime.party_y,
+                 profile->runtime.party_dir);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      38, 96, row, &g_text_small);
+    }
+    blink_on = ((state->csbState.startup_entrance_frame / 12) & 1) == 0;
+    if (blink_on) {
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      38, 154, "PRESS ENTER", &g_text_shadow);
+    }
+}
+
 static void m11_format_dm2_item_name(int item_id, char* out, size_t out_size)
 {
     const char* name;
@@ -9959,11 +10018,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         state->csbBootProfile = profile;
         m11_sync_csb_state_from_profile(state, profile);
+        state->csbState.startup_entrance_active =
+            (spec->savePath && spec->savePath[0] != '\0') ? 0 : 1;
+        state->csbState.startup_entrance_frame = 0;
+        state->csbState.startup_entrance_dismissed =
+            state->csbState.startup_entrance_active ? 0 : 1;
         m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
                            ? "CSB RESUMED"
-                           : "CSB READY");
+                           : "CSB ENTRANCE");
         m11_log_event(state, M11_COLOR_YELLOW,
                       (spec->savePath && spec->savePath[0] != '\0')
                           ? "T0: CSB RESUMED"
@@ -12196,6 +12260,10 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (!profile) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
+        if (state->csbState.startup_entrance_active) {
+            state->csbState.startup_entrance_frame++;
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (csb_v1_runtime_tick_v1(&profile->runtime) <= 0) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
@@ -13513,6 +13581,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (!state->gameWon && !state->mapOverlayActive &&
         !state->inventoryPanelActive) {
         m11_mark_v1_movement_arrow_visual(state, input);
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbState.startup_entrance_active) {
+        if (input == M12_MENU_INPUT_BACK) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (input == M12_MENU_INPUT_ACCEPT ||
+            input == M12_MENU_INPUT_ACTION) {
+            state->csbState.startup_entrance_active = 0;
+            state->csbState.startup_entrance_dismissed = 1;
+            m11_set_status(state, "BOOT", "CSB READY");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
     }
 
     if (m11_source_is_csb(state)) {
@@ -38177,6 +38261,16 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        if (state->csbState.startup_entrance_active) {
+            m11_draw_csb_startup_entrance(state,
+                                          framebuffer,
+                                          framebufferWidth,
+                                          framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
         if (!m11_render_csb_boot_viewport(state, framebuffer,
                                           framebufferWidth,
                                           framebufferHeight)) {
