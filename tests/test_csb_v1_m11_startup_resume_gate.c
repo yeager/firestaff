@@ -715,6 +715,30 @@ static void fill_csb_launch_spec(M11_GameLaunchSpec* spec,
     spec->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
 }
 
+static void assert_csb_view_matches_expected_resume(
+    const M11_GameViewState* view,
+    const CSB_V1_RuntimeProfile* expected,
+    const char* label) {
+    expect_true(view->csbState.party_x == expected->party_x &&
+                    view->csbState.party_y == expected->party_y &&
+                    view->csbState.party_dir == expected->party_dir,
+                label);
+    expect_true(view->csbState.current_level == expected->current_level,
+                "M11 CSB mirror state follows resumed current level");
+    expect_true(view->csbState.tick_count == (int)expected->tick_count,
+                "M11 CSB mirror state follows resumed tick count");
+    expect_true(view->world.party.championCount ==
+                    expected->party_state.ChampionCount,
+                "M11 CSB party mirror exposes imported champion count");
+    expect_true(view->world.party.activeChampionIndex ==
+                    expected->leader_index,
+                "M11 CSB party mirror exposes runtime leader");
+    expect_true(view->world.party.mapX == expected->party_x &&
+                    view->world.party.mapY == expected->party_y &&
+                    view->world.party.direction == expected->party_dir,
+                "M11 CSB party mirror follows runtime map pose");
+}
+
 static void check_incomplete_required_files_block_m11(const char* label,
                                                       int seed_graphics,
                                                       int seed_dungeon) {
@@ -999,6 +1023,10 @@ int main(void) {
     }
 #endif
 
+    memset(&expected, 0, sizeof(expected));
+    expect_true(build_runtime_resume_save(data_dir, save_path, &expected),
+                "built CSB runtime save fixture from verified assets");
+
     fill_csb_launch_spec(&spec, data_dir, NULL);
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
@@ -1069,9 +1097,32 @@ int main(void) {
     }
     M11_GameView_Shutdown(&view);
 
-    memset(&expected, 0, sizeof(expected));
-    expect_true(build_runtime_resume_save(data_dir, save_path, &expected),
-                "built CSB runtime save fixture from verified assets");
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    spec.entranceResumeSavePath = save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB new-game start with entrance resume path succeeds");
+    expect_true(view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_resume_available == 1,
+                "M11 CSB entrance stores validated resume path");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    245,
+                    80,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 CSB entrance resume button loads the validated save path");
+    expect_true(view.csbState.startup_entrance_active == 0 &&
+                    view.csbState.startup_entrance_dismissed == 1,
+                "M11 CSB entrance resume dismisses to resumed runtime");
+    expect_true(view.csbState.startup_entrance_last_command ==
+                    M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
+                "M11 CSB entrance records the resume command before loading");
+    assert_csb_view_matches_expected_resume(
+        &view,
+        &expected,
+        "M11 CSB entrance Resume follows resumed party pose");
+    M11_GameView_Shutdown(&view);
 
     fill_csb_launch_spec(&spec, data_dir, save_path);
     M11_GameView_Init(&view);
@@ -1090,24 +1141,10 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_active == 0 &&
                 view.csbState.startup_entrance_dismissed == 1,
                 "M11 CSB resume skips the new-game entrance gate");
-    expect_true(view.csbState.party_x == expected.party_x &&
-                view.csbState.party_y == expected.party_y &&
-                view.csbState.party_dir == expected.party_dir,
-                "M11 CSB mirror state follows resumed party pose");
-    expect_true(view.csbState.current_level == expected.current_level,
-                "M11 CSB mirror state follows resumed current level");
-    expect_true(view.csbState.tick_count == (int)expected.tick_count,
-                "M11 CSB mirror state follows resumed tick count");
-    expect_true(view.world.party.championCount ==
-                    expected.party_state.ChampionCount,
-                "M11 CSB party mirror exposes imported champion count");
-    expect_true(view.world.party.activeChampionIndex ==
-                    expected.leader_index,
-                "M11 CSB party mirror exposes runtime leader");
-    expect_true(view.world.party.mapX == expected.party_x &&
-                view.world.party.mapY == expected.party_y &&
-                view.world.party.direction == expected.party_dir,
-                "M11 CSB party mirror follows runtime map pose");
+    assert_csb_view_matches_expected_resume(
+        &view,
+        &expected,
+        "M11 CSB mirror state follows resumed party pose");
     expect_true(view.world.party.champions[0].present == 1 &&
                 view.world.party.champions[1].present == 1,
                 "M11 CSB party mirror marks resumed champions present");
