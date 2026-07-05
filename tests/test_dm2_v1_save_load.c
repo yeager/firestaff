@@ -793,6 +793,8 @@ static int build_raw_sksave_payload(
     const uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE],
     const DM2_TimerEntry *timers,
     int timer_count,
+    const uint32_t tail_inventory[DM2_CHAMPION_INVENTORY_SLOTS],
+    uint32_t leader_hand_object,
     uint8_t *payload,
     size_t payload_cap,
     size_t *payload_size)
@@ -851,6 +853,29 @@ static int build_raw_sksave_payload(
                 !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
                 return 0;
             }
+        }
+    }
+    if (tail_inventory) {
+        for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
+            uint8_t raw[4];
+            raw[0] = (uint8_t)(tail_inventory[i] & 0xFFu);
+            raw[1] = (uint8_t)((tail_inventory[i] >> 8) & 0xFFu);
+            raw[2] = (uint8_t)((tail_inventory[i] >> 16) & 0xFFu);
+            raw[3] = (uint8_t)((tail_inventory[i] >> 24) & 0xFFu);
+            if (!append_blob(payload, payload_cap, &pos, raw,
+                             sizeof(raw))) {
+                return 0;
+            }
+        }
+    }
+    if (leader_hand_object != 0u) {
+        uint8_t raw[4];
+        raw[0] = (uint8_t)(leader_hand_object & 0xFFu);
+        raw[1] = (uint8_t)((leader_hand_object >> 8) & 0xFFu);
+        raw[2] = (uint8_t)((leader_hand_object >> 16) & 0xFFu);
+        raw[3] = (uint8_t)((leader_hand_object >> 24) & 0xFFu);
+        if (!append_blob(payload, payload_cap, &pos, raw, sizeof(raw))) {
+            return 0;
         }
     }
 
@@ -1132,6 +1157,8 @@ static int test_raw_sksave_resume_import(void)
     uint16_t global_words[DM2_GLOBAL_WORDS_SIZE];
     uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE];
     DM2_TimerEntry timers[1];
+    uint32_t tail_inventory[DM2_CHAMPION_INVENTORY_SLOTS];
+    uint32_t leader_hand_object;
     DM2_V1_SessionState imported_session;
     int r;
 
@@ -1175,10 +1202,15 @@ static int test_raw_sksave_resume_import(void)
     timers[0].interval_ticks = 0x0008u;
     timers[0].flags = 0x0001u;
     timers[0].user_data = 0x0077u;
+    memset(tail_inventory, 0, sizeof(tail_inventory));
+    tail_inventory[0] = dm2_db_make_handle(8, 0x0011);
+    tail_inventory[8] = dm2_db_make_handle(9, 0x0022);
+    leader_hand_object = dm2_db_make_handle(10, 0x0033);
 
     if (!build_raw_sksave_payload(gs, &champ,
                                   global_flags, global_bytes, global_words,
                                   spell_effects, timers, 1,
+                                  tail_inventory, leader_hand_object,
                                   payload, sizeof(payload), &payload_size)) {
         printf("    FAIL: could not build raw SKSave fixture\n");
         cleanup_one_slot_dir(tmpdir, 5);
@@ -1210,8 +1242,8 @@ static int test_raw_sksave_resume_import(void)
         imported_session.party_dir != (gs->wPlayerDir & 3u) ||
         imported_session.party_level != (uint8_t)gs->wPlayerMap ||
         imported_session.rain_intensity != gs->rain_state[0] ||
-        imported_champ.inventory[0] != champ.inventory[0] ||
-        imported_champ.inventory[8] != champ.inventory[8] ||
+        imported_champ.inventory[0] != tail_inventory[0] ||
+        imported_champ.inventory[8] != tail_inventory[8] ||
         imported_session.original_global_flags[2] != global_flags[2] ||
         imported_session.original_global_bytes[17] != global_bytes[17] ||
         imported_session.original_global_words[9] !=
@@ -1220,7 +1252,8 @@ static int test_raw_sksave_resume_import(void)
         imported_session.original_timer_count != 1 ||
         imported_session.original_timers[0].timer_id != timers[0].timer_id ||
         imported_session.original_timers[0].user_data !=
-            timers[0].user_data) {
+            timers[0].user_data ||
+        imported_session.original_leader_hand_object != leader_hand_object) {
         printf("    FAIL: raw SKSave fixture did not import expected tuple\n");
         cleanup_one_slot_dir(tmpdir, 5);
         return 0;
