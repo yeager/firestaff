@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+#define DM2_GDAT_GFXSET_FLOOR 0x00
+#define DM2_GDAT_GFXSET_CEIL  0x01
+
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
 typedef struct {
@@ -701,6 +704,7 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     DM2_ImageFormat fmt = DM2_IMG_FMT_UNKNOWN;
     int category;
     int index;
+    int field;
 
     if (out_pixels) *out_pixels = NULL;
     if (out_w) *out_w = 0;
@@ -713,25 +717,31 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_pixels = &gfx->ceiling_pixels;
         cache_w = &gfx->ceiling_w;
         cache_h = &gfx->ceiling_h;
-        category = DM2_GDAT_CATEGORY_ENVIRONMENT;
+        category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = 0;
+        field = DM2_GDAT_GFXSET_CEIL;
     } else if (gdat_index == -1) {
         cache_pixels = &gfx->floor_pixels;
         cache_w = &gfx->floor_w;
         cache_h = &gfx->floor_h;
-        category = DM2_GDAT_CATEGORY_ENVIRONMENT;
-        index = 1;
+        category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+        index = 0;
+        field = DM2_GDAT_GFXSET_FLOOR;
     } else {
         return -1;
     }
 
     if (!*cache_pixels) {
-        *cache_pixels = dm2_v1_asset_load_image(&gfx->loader,
-                                                category,
-                                                index,
-                                                cache_w,
-                                                cache_h,
-                                                &fmt);
+        /* skproject SKWIN/defines.h lines ~484-485 names GRAPHICSSET
+         * field 0 as floor and field 1 as ceiling; SkWinCore.cpp
+         * lines ~48011-48026 draws those through QUERY_GDAT_IMAGE_ENTRY_BUFF. */
+        *cache_pixels = dm2_v1_asset_load_image_field(&gfx->loader,
+                                                      category,
+                                                      index,
+                                                      field,
+                                                      cache_w,
+                                                      cache_h,
+                                                      &fmt);
     }
     if (!*cache_pixels || *cache_w <= 0 || *cache_h <= 0) return -1;
     if (out_pixels) *out_pixels = *cache_pixels;

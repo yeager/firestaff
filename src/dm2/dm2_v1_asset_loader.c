@@ -72,6 +72,9 @@ static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] DM2_MAYBE_UNUSED = {
 #define DM2_PC_GDAT_CONTAINER_WORD 0x8005u
 #define DM2_PC_GDAT_ENT1_WORD 0x8001u
 #define DM2_GDAT_ENTRY_TYPE_MAX 0x0e
+#define DM2_GDAT_TYPE_IMAGE 0x01u
+#define DM2_IMG3_HEADER_SIZE 10u
+#define DM2_IMG_LOCAL_PALETTE_SIZE 16u
 
 enum {
     DM2_GDAT_EP_CLS1 = 0,
@@ -256,6 +259,106 @@ static int dm2_gdat_parse_ent1(DM2_V1_AssetLoader *loader) {
     return 0;
 }
 
+static int dm2_img3_signed_offset(uint16_t value) {
+    return (int)((int16_t)value >> 10);
+}
+
+static const DM2_V1_GdatEntry *dm2_gdat_find_entry(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int type,
+    int field) {
+    uint16_t i;
+
+    if (!loader || !loader->loaded || !loader->entries ||
+        !loader->raw_offsets || !loader->raw_sizes) {
+        return NULL;
+    }
+    if (category < 0 || category > DM2_GDAT_CATEGORY_LIMIT ||
+        index < 0 || index > 0xff ||
+        field < 0 || field > 0xff ||
+        type < 0 || type > 0xff) {
+        return NULL;
+    }
+    for (i = 0; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        if ((int)entry->cls1 == category &&
+            (int)entry->cls2 == index &&
+            (int)entry->cls3 == type &&
+            (int)entry->cls4 == field) {
+            return entry;
+        }
+    }
+    return NULL;
+}
+
+static const uint8_t *dm2_gdat_raw_from_entry(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_GdatEntry *entry,
+    size_t *out_size) {
+    uint16_t raw_index;
+
+    if (out_size) *out_size = 0;
+    if (!loader || !entry || !loader->raw_offsets || !loader->raw_sizes) {
+        return NULL;
+    }
+    raw_index = (uint16_t)(entry->data_index & 0x7fffu);
+    if (raw_index >= loader->raw_data_count) return NULL;
+    if (loader->raw_sizes[raw_index] == 0) return NULL;
+    if ((uint64_t)loader->raw_offsets[raw_index] +
+        loader->raw_sizes[raw_index] > loader->data_size) {
+        return NULL;
+    }
+    if (out_size) *out_size = loader->raw_sizes[raw_index];
+    return loader->data + loader->raw_offsets[raw_index];
+}
+
+static uint8_t *dm2_decode_uncompressed_image(const uint8_t *raw,
+                                              size_t raw_size,
+                                              int width,
+                                              int height,
+                                              int bpp,
+                                              DM2_ImageFormat *out_format) {
+    uint8_t *pixels;
+    size_t pixel_count;
+    size_t src_size;
+    size_t i;
+
+    if (!raw || width <= 0 || height <= 0) return NULL;
+    pixel_count = (size_t)width * (size_t)height;
+    if (pixel_count == 0 || pixel_count > (size_t)1024u * 1024u) return NULL;
+    if (raw_size < DM2_IMG3_HEADER_SIZE + DM2_IMG_LOCAL_PALETTE_SIZE) {
+        return NULL;
+    }
+
+    if (bpp == 4) {
+        src_size = (((size_t)width + 1u) & ~(size_t)1u) / 2u * (size_t)height;
+        if (raw_size < DM2_IMG3_HEADER_SIZE + src_size) return NULL;
+        pixels = (uint8_t *)malloc(pixel_count);
+        if (!pixels) return NULL;
+        for (i = 0; i < pixel_count; ++i) {
+            uint8_t byte = raw[DM2_IMG3_HEADER_SIZE + (i >> 1)];
+            pixels[i] = (uint8_t)((i & 1u) ? (byte & 0x0fu)
+                                           : ((byte >> 4) & 0x0fu));
+        }
+        if (out_format) *out_format = DM2_IMG_FMT_U4;
+        return pixels;
+    }
+
+    if (bpp == 8) {
+        src_size = pixel_count;
+        if (raw_size < DM2_IMG3_HEADER_SIZE + src_size) return NULL;
+        pixels = (uint8_t *)malloc(pixel_count);
+        if (!pixels) return NULL;
+        memcpy(pixels, raw + DM2_IMG3_HEADER_SIZE, pixel_count);
+        if (out_format) *out_format = DM2_IMG_FMT_U8;
+        return pixels;
+    }
+
+    return NULL;
+}
+
 /* ── IMG3 decompression (4-bit nibble → pixel bytes) ─────────────── */
 /*
  * dm2_img3_decode — decode IMG3 format to 8-bit pixel buffer.
@@ -391,13 +494,68 @@ uint8_t *dm2_v1_asset_load_image(const DM2_V1_AssetLoader *loader,
                                    int category, int index,
                                    int *out_width, int *out_height,
                                    DM2_ImageFormat *out_format) {
-    (void)loader; (void)category; (void)index;
+    return dm2_v1_asset_load_image_field(loader,
+                                         category,
+                                         index,
+                                         0,
+                                         out_width,
+                                         out_height,
+                                         out_format);
+}
+
+uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
+                                        int category, int index, int field,
+                                        int *out_width, int *out_height,
+                                        DM2_ImageFormat *out_format) {
+    const DM2_V1_GdatEntry *entry;
+    const uint8_t *raw;
+    size_t raw_size = 0;
+    uint16_t cx;
+    uint16_t cy;
+    uint16_t bpp;
+    int width;
+    int height;
+    int offset_y;
+    uint8_t *pixels;
+
     if (out_width) *out_width = 0;
     if (out_height) *out_height = 0;
     if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
-    /* skproject separates GDAT indexing from image realization
-     * (QUERY_GDAT_IMAGE_ENTRY_BUFF / QUERY_PICST_IT).  Firestaff now has the
-     * index; IMG realization remains the next startup-rendering step. */
+    entry = dm2_gdat_find_entry(loader,
+                                category,
+                                index,
+                                DM2_GDAT_TYPE_IMAGE,
+                                field);
+    raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return NULL;
+
+    cx = rd16le(raw + 0);
+    cy = rd16le(raw + 2);
+    bpp = rd16le(raw + 4);
+    width = (int)(cx & 0x03ffu);
+    height = (int)(cy & 0x03ffu);
+    offset_y = dm2_img3_signed_offset(cy);
+    if (width <= 0 || height <= 0) return NULL;
+
+    /* skproject: SKWIN/DME.h IMG3::Getpf lines 1114-1120 classifies
+     * OffsetY == -32 with w4 == 4/8 as uncompressed U4/U8.  EXTRACT_GDAT_IMAGE
+     * lines 38157-38170 returns the payload at IMG3+10 for those images. */
+    if (offset_y == -32) {
+        pixels = dm2_decode_uncompressed_image(raw,
+                                               raw_size,
+                                               width,
+                                               height,
+                                               (int)bpp,
+                                               out_format);
+        if (!pixels) return NULL;
+        if (out_width) *out_width = width;
+        if (out_height) *out_height = height;
+        return pixels;
+    }
+
+    /* Compressed C4/C8 realization remains separate from GDAT indexing.
+     * skproject routes those through DECODE_IMG3_UNDERLAY_LOCAL/DECODE_IMG9
+     * in EXTRACT_GDAT_IMAGE lines 38273-38286. */
     return NULL;
 }
 
@@ -465,6 +623,8 @@ const char *dm2_v1_asset_loader_source_evidence(void) {
     return
         "DM2 V1 Asset Loader — Phase 2 Graphics Ingestion\n"
         "Source: skproject SKWIN/SkWinCore.cpp READ_GRAPHICS_STRUCTURE/LOAD_ENT1/BUILD_GDAT_ENTRY_DATA\n"
+        "Source: skproject SKWIN/SkWinCore.cpp QUERY_GDAT_IMAGE_ENTRY_BUFF/EXTRACT_GDAT_IMAGE lines ~38081-38407\n"
+        "Source: skproject SKWIN/DME.h IMG3 lines ~1099-1143\n"
         "Source: skproject SKWIN/defines.h GDAT_CATEGORY_* and dtImage/dtWordValue codes\n"
         "Source: docs/dm2_v1_phase2_data_formats_H2254.md §3 — GRAPHICS.DAT structure\n"
         "Source: docs/dm2_graphics.md — GDAT categories (240 vs 29), image formats (IMG3/IMG9)\n"

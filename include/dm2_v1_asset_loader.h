@@ -79,6 +79,8 @@ typedef enum {
 typedef enum {
     DM2_IMG_FMT_UNKNOWN     = 0,
     DM2_IMG_FMT_IMG3        = 3,   /* 4-bit nibble encoding (simple textures) */
+    DM2_IMG_FMT_U4          = 4,   /* unpacked 4-bit source, returned as 8-bit indices */
+    DM2_IMG_FMT_U8          = 8,   /* uncompressed 8-bit palette indices */
     DM2_IMG_FMT_IMG9        = 9,   /* 9-bit per-pixel (complex walls) */
 } DM2_ImageFormat;
 
@@ -132,6 +134,14 @@ uint8_t *dm2_v1_asset_load_image(const DM2_V1_AssetLoader *loader,
                                   int category, int index,
                                   int *out_width, int *out_height,
                                   DM2_ImageFormat *out_format);
+
+/* Load image asset by explicit GDAT field (cls4).
+ * Source: skproject SKWIN/SkWinCore.cpp QUERY_GDAT_IMAGE_ENTRY_BUFF
+ * line ~38377 selects dtImage by (cls1, cls2, cls4). */
+uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
+                                        int category, int index, int field,
+                                        int *out_width, int *out_height,
+                                        DM2_ImageFormat *out_format);
 
 /* Get GDAT category count and index range for a category.
  * Returns number of entries in category.

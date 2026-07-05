@@ -505,9 +505,9 @@ int main(void) {
                 "M11 DM2 draw preserves the runtime HUD strip after border draw");
     expect_true(framebuffer[(100 * 320) + 160] != 0,
                 "M11 DM2 draw fills the runtime viewport body");
-    expect_true(dm2_v1_runtime_last_asset_floor_ceiling_count() == 0 &&
-                dm2_v1_runtime_last_fallback_floor_ceiling_count() == 2,
-                "M11 DM2 draw keeps fallback floor/ceiling until GDAT image decode is implemented");
+    expect_true(dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
+                dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0,
+                "M11 DM2 draw uses real GRAPHICSSET GDAT floor/ceiling strips");
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;

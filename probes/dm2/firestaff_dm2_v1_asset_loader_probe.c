@@ -150,9 +150,32 @@ int main(int argc, char **argv) {
     if (raw) {
         int w = 0, h = 0;
         DM2_ImageFormat fmt = DM2_IMG_FMT_UNKNOWN;
-        uint8_t *pixels = dm2_v1_asset_load_image(&loader, 0, 0, &w, &h, &fmt);
-        PROBE_ASSERT(pixels == NULL && w == 0 && h == 0 && fmt == DM2_IMG_FMT_UNKNOWN,
-                     "GDAT image decode is not faked before IMG realization lands");
+        uint8_t *pixels = dm2_v1_asset_load_image_field(
+            &loader,
+            DM2_GDAT_CATEGORY_GRAPHICSSET,
+            0,
+            0,
+            &w,
+            &h,
+            &fmt);
+        PROBE_ASSERT(pixels != NULL && w == 224 && h == 1 && fmt == DM2_IMG_FMT_U4,
+                     "GDAT GRAPHICSSET floor U4 strip realizes from real image entry (%dx%d fmt=%d)",
+                     w, h, (int)fmt);
+        dm2_v1_asset_free_pixels(pixels);
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader,
+            DM2_GDAT_CATEGORY_GRAPHICSSET,
+            0,
+            1,
+            &w,
+            &h,
+            &fmt);
+        PROBE_ASSERT(pixels != NULL && w == 224 && h == 1 && fmt == DM2_IMG_FMT_U4,
+                     "GDAT GRAPHICSSET ceiling U4 strip realizes from real image entry (%dx%d fmt=%d)",
+                     w, h, (int)fmt);
+        dm2_v1_asset_free_pixels(pixels);
     }
 
     /* ── Test category entry count ── */
