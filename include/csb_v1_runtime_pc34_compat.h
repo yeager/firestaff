@@ -757,6 +757,15 @@ int csb_v1_runtime_shoot_ready_hand(
     int champion_index,
     int *out_projectile_slot);
 
+/* Refill an empty C00 ready hand after a successful SHOOT enable event.
+ * Mirrors ReDMCSB TIMELINE.C F0253 lines ~1597-1607 by scanning the
+ * source quiver slots for ammunition compatible with the C01 bow/sling. */
+int csb_v1_runtime_refill_ready_hand_after_shoot(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int *out_source_slot,
+    uint16_t *out_thing);
+
 /* Create a champion-owned projectile from CSB runtime party pose/champion cell.
  * This is the CSB counterpart to the shared F0810 projectile create path used
  * by M11 action rows, without allocating into DM1 GameWorld.projectiles. */

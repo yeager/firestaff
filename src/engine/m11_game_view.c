@@ -4068,6 +4068,8 @@ static unsigned char m11_action_disabled_ticks_f0407(unsigned char actionIndex) 
 
 static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
                                                  int championIndex);
+static int m11_refill_ready_hand_after_shoot(M11_GameViewState* state,
+                                             int championIndex);
 
 static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
     int i;
@@ -4089,7 +4091,7 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
                      * compatible quiver ammunition when the champion action
                      * disable event closes, not immediately in F0407. */
                     state->pendingShootReadyHandRefill[i] = 0u;
-                    (void)m11_refill_ready_hand_after_dm1_shoot(state, i);
+                    (void)m11_refill_ready_hand_after_shoot(state, i);
                 }
                 state->actionDisabledIndex[i] = 0xFFu;
                 state->actionEnableSlotOrdinal[i] = 0xFFu;
@@ -4139,7 +4141,7 @@ static void m11_disable_champion_action_after_action_ticks(
     state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
     if (ticks == 0u && state->pendingShootReadyHandRefill[championIndex]) {
         state->pendingShootReadyHandRefill[championIndex] = 0u;
-        (void)m11_refill_ready_hand_after_dm1_shoot(state, championIndex);
+        (void)m11_refill_ready_hand_after_shoot(state, championIndex);
     }
 }
 
@@ -24226,6 +24228,38 @@ static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
     return 0;
 }
 
+static int m11_refill_ready_hand_after_shoot(M11_GameViewState* state,
+                                             int championIndex) {
+    if (!state) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_RuntimeProfile* runtime = m11_mutable_csb_runtime_profile(state);
+        int sourceSlot = -1;
+        uint16_t movedThing = THING_NONE;
+        int m11SourceSlot;
+
+        if (!csb_v1_runtime_refill_ready_hand_after_shoot(
+                runtime,
+                championIndex,
+                &sourceSlot,
+                &movedThing)) {
+            return 0;
+        }
+        if (championIndex >= 0 &&
+            championIndex < state->world.party.championCount &&
+            championIndex < CHAMPION_MAX_PARTY) {
+            struct ChampionState_Compat* champ =
+                &state->world.party.champions[championIndex];
+            champ->inventory[CHAMPION_SLOT_HAND_LEFT] = movedThing;
+            m11SourceSlot = m11_csb_mapped_inventory_slot(sourceSlot);
+            if (m11SourceSlot >= 0 && m11SourceSlot < CHAMPION_SLOT_COUNT) {
+                champ->inventory[m11SourceSlot] = THING_NONE;
+            }
+        }
+        return 1;
+    }
+    return m11_refill_ready_hand_after_dm1_shoot(state, championIndex);
+}
+
 static int m11_dm1_projectile_launch_cell(int championCell,
                                            int direction) {
     championCell &= 3;
@@ -28169,7 +28203,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                     &projectileSlot);
                 if (!spawned) goto shoot_no_ammunition;
                 champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
-                state->pendingShootReadyHandRefill[championIndex] = 0u;
+                state->pendingShootReadyHandRefill[championIndex] = 1u;
                 m11_log_event(state, M11_COLOR_YELLOW,
                               "T%u: %s SHOOTS",
                               (unsigned int)state->world.gameTick,
@@ -33147,7 +33181,9 @@ static int m11_set_active_champion(M11_GameViewState* state, int championIndex) 
 }
 
 static int m11_source_is_csb(const M11_GameViewState* state) {
-    return state && strcmp(state->sourceId, "csb") == 0;
+    return state &&
+           (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
+            strcmp(state->sourceId, "csb") == 0);
 }
 
 static M11_GameInputResult m11_csb_toggle_champion_inventory(M11_GameViewState* state,
@@ -33271,6 +33307,7 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
             return M11_GAME_INPUT_IGNORED;
         }
         if (bridge.mapped) {
+            m11_decrement_action_disabled_ticks(state);
             m11_sync_csb_state_from_profile(state, profile);
             if (bridge.is_turn && bridge.runtime_state_changed) {
                 m11_set_status(state, "CSB", "FACING UPDATED");

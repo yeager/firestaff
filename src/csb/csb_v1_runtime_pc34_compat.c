@@ -9015,6 +9015,77 @@ int csb_v1_runtime_shoot_ready_hand(
     return 1;
 }
 
+int csb_v1_runtime_refill_ready_hand_after_shoot(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int *out_source_slot,
+    uint16_t *out_thing)
+{
+    static const int kSourceQuiverOrder[] = {
+        12, /* ReDMCSB C12_SLOT_QUIVER_LINE1_1 */
+        7,  /* ReDMCSB C07_SLOT_QUIVER_LINE2_1 */
+        8,  /* ReDMCSB C08_SLOT_QUIVER_LINE1_2 */
+        9   /* ReDMCSB C09_SLOT_QUIVER_LINE2_2 */
+    };
+    CSB_V1_Champion *champion;
+    CSB_V1_RuntimeWeaponInfoPc34 action_info;
+    int i;
+
+    if (out_source_slot) *out_source_slot = -1;
+    if (out_thing) *out_thing = THING_NONE;
+    if (!profile || !profile->party_state_valid) return 0;
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+    if (csb_v1_champion_is_dead(champion) ||
+        champion->CurrentHealth <= 0 ||
+        champion->Slots[CSB_V1_SLOT_READY_HAND] != THING_NONE) {
+        return 0;
+    }
+    if (!csb_v1_runtime_weapon_info_for_thing(
+            profile,
+            champion->Slots[CSB_V1_SLOT_ACTION_HAND],
+            &action_info)) {
+        return 0;
+    }
+
+    for (i = 0;
+         i < (int)(sizeof(kSourceQuiverOrder) / sizeof(kSourceQuiverOrder[0]));
+         ++i) {
+        int slot = kSourceQuiverOrder[i];
+        uint16_t ammo_thing;
+        CSB_V1_RuntimeWeaponInfoPc34 ammo_info;
+
+        if (slot < 0 || slot >= CSB_V1_SLOT_COUNT) continue;
+        ammo_thing = champion->Slots[slot];
+        if (ammo_thing == THING_NONE || ammo_thing == THING_ENDOFLIST) {
+            continue;
+        }
+        if (!csb_v1_runtime_weapon_info_for_thing(
+                profile,
+                ammo_thing,
+                &ammo_info) ||
+            !csb_v1_runtime_shoot_ammunition_matches(
+                &action_info,
+                &ammo_info)) {
+            continue;
+        }
+
+        /* ReDMCSB TIMELINE.C F0253 lines ~1597-1607 moves the first
+         * compatible quiver object into C00_READY_HAND when the action
+         * enable event closes after SHOOT. */
+        champion->Slots[CSB_V1_SLOT_READY_HAND] = ammo_thing;
+        champion->Slots[slot] = THING_NONE;
+        if (out_source_slot) *out_source_slot = slot;
+        if (out_thing) *out_thing = ammo_thing;
+        return 1;
+    }
+    return 0;
+}
+
 int csb_v1_runtime_spawn_champion_projectile(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
