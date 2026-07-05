@@ -120,7 +120,9 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                                  const char *path,
                                                  int *out_count,
-                                                 int *out_utility_state);
+                                                 int *out_utility_state,
+                                                 char *out_utility_prompt,
+                                                 size_t out_utility_prompt_size);
 static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
                                             const CSB_V1_RuntimeProfile *profile);
 static void m11_award_magic_xp(M11_GameViewState* state,
@@ -3905,7 +3907,9 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                                  const char *path,
                                                  int *out_count,
-                                                 int *out_utility_state)
+                                                 int *out_utility_state,
+                                                 char *out_utility_prompt,
+                                                 size_t out_utility_prompt_size)
 {
     CSB_V1_UtilFlowContext flow;
     CSB_V1_PartyState party;
@@ -3916,6 +3920,9 @@ static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     }
     if (out_utility_state) {
         *out_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
+    }
+    if (out_utility_prompt && out_utility_prompt_size > 0u) {
+        out_utility_prompt[0] = '\0';
     }
     if (!profile || !path || path[0] == '\0') {
         return 0;
@@ -3966,6 +3973,12 @@ static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     }
     if (out_utility_state) {
         *out_utility_state = (int)flow.state;
+    }
+    if (out_utility_prompt && out_utility_prompt_size > 0u) {
+        snprintf(out_utility_prompt,
+                 out_utility_prompt_size,
+                 "%s",
+                 csb_v1_util_flow_prompt(&flow));
     }
     memset(&party, 0, sizeof(party));
     count = csb_v1_util_flow_get_party(&flow, &party);
@@ -10328,11 +10341,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                    spec->csbImportDm1SavePath[0] != '\0') {
             int imported_count = 0;
             int utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
+            char utility_prompt[sizeof(state->csbState.startup_import_utility_prompt)];
+            utility_prompt[0] = '\0';
             if (!m11_csb_runtime_import_dm1_party_path(
                     &profile->runtime,
                     spec->csbImportDm1SavePath,
                     &imported_count,
-                    &utility_state)) {
+                    &utility_state,
+                    utility_prompt,
+                    sizeof(utility_prompt))) {
                 m11_set_status(state, "BOOT", "CSB IMPORT FAILED");
                 m11_log_event(state, M11_COLOR_RED,
                               "T0: CSB DM1 IMPORT FAILED: %s",
@@ -10342,6 +10359,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 return 0;
             }
             state->csbState.startup_import_utility_state = utility_state;
+            snprintf(state->csbState.startup_import_utility_prompt,
+                     sizeof(state->csbState.startup_import_utility_prompt),
+                     "%s",
+                     utility_prompt);
         }
         state->active = 1;
         state->startedFromLauncher = 1;
@@ -10386,6 +10407,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_resume_path[0] = '\0';
         state->csbState.startup_import_available = 0;
         state->csbState.startup_import_champion_count = 0;
+        if (state->csbState.startup_import_utility_state !=
+            (int)CSB_V1_UTIL_FLOW_DONE) {
+            state->csbState.startup_import_utility_prompt[0] = '\0';
+        }
         if (state->csbState.startup_import_utility_state !=
             (int)CSB_V1_UTIL_FLOW_DONE) {
             state->csbState.startup_import_utility_state =
