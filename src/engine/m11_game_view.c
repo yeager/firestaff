@@ -240,6 +240,74 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
         dm2_v1_runtime_get_leader_hand_object();
 }
 
+static void m11_dm2_copy_printable(unsigned char *dst,
+                                   int dst_len,
+                                   const char *src,
+                                   int src_len)
+{
+    int i;
+    if (!dst || dst_len <= 0) return;
+    memset(dst, ' ', (size_t)dst_len);
+    if (!src || src_len <= 0) return;
+    for (i = 0; i < dst_len && i < src_len && src[i] != '\0'; ++i) {
+        unsigned char ch = (unsigned char)src[i];
+        dst[i] = (ch >= 0x20u && ch <= 0x7eu) ? ch : ' ';
+    }
+}
+
+static void m11_dm2_mirror_session_party(M11_GameViewState *state,
+                                         const DM2_V1_SessionState *session)
+{
+    int count;
+
+    if (!state || !session) return;
+    count = session->champion_count;
+    if (count < 0) count = 0;
+    if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
+    memset(&state->world.party, 0, sizeof(state->world.party));
+    state->world.party.championCount = count;
+    state->world.party.activeChampionIndex =
+        (count > 0 && session->leader_index < (uint8_t)count)
+            ? (int)session->leader_index
+            : (count > 0 ? 0 : -1);
+    state->world.party.mapX = (int)session->party_x;
+    state->world.party.mapY = (int)session->party_y;
+    state->world.party.mapIndex = (int)session->party_level;
+    state->world.party.direction = (int)(session->party_dir & 3u);
+    for (int i = 0; i < count; ++i) {
+        struct ChampionState_Compat *dst = &state->world.party.champions[i];
+        const DM2_ChampionRecord *src =
+            (const DM2_ChampionRecord *)session->champion_data[i];
+        memset(dst, 0, sizeof(*dst));
+        dst->present = 1;
+        dst->portraitIndex = i;
+        m11_dm2_copy_printable(dst->name,
+                               CHAMPION_NAME_LENGTH,
+                               src->first_name,
+                               DM2_CHAMPION_NAME_FIRST_LEN);
+        m11_dm2_copy_printable(dst->title,
+                               CHAMPION_TITLE_LENGTH,
+                               src->last_name,
+                               DM2_CHAMPION_NAME_LAST_LEN);
+        dst->hp.current = src->cur_hp;
+        dst->hp.maximum = src->max_hp ? src->max_hp : src->cur_hp;
+        dst->hp.shifted = (unsigned short)(dst->hp.maximum << 1);
+        dst->stamina.current = src->stamina;
+        dst->stamina.maximum = src->stamina;
+        dst->stamina.shifted = (unsigned short)(dst->stamina.maximum << 1);
+        dst->mana.current = src->mana;
+        dst->mana.maximum = src->mana;
+        dst->mana.shifted = (unsigned short)(dst->mana.maximum << 1);
+        dst->food = src->food;
+        dst->water = src->water;
+        dst->direction = (unsigned char)(src->absolute_direction & 3u);
+        dst->cell = (unsigned char)(src->squad_position & 3u);
+        for (int slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
+            dst->inventory[slot] = THING_NONE;
+        }
+    }
+}
+
 static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
                                                      M12_MenuInput input)
 {
@@ -442,6 +510,7 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
         m11_set_status(state, "BOOT", "DM2 RESUME FAILED");
         return 0;
     }
+    m11_dm2_mirror_session_party(state, &session);
     return 1;
 }
 
@@ -10266,6 +10335,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 free(profile);
                 return 0;
             }
+        } else {
+            DM2_V1_SessionState startup_session;
+            dm2_v1_session_new(&startup_session);
+            m11_dm2_mirror_session_party(state, &startup_session);
         }
         /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         dm2_v2_runtime_init(2);
@@ -14183,8 +14256,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return shop_result;
         }
         if (input == M12_MENU_INPUT_BACK) {
+            if (state->inventoryPanelActive) {
+                state->inventoryPanelActive = 0;
+                return M11_GAME_INPUT_REDRAW;
+            }
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (input == M12_MENU_INPUT_INVENTORY_TOGGLE) {
+            state->mapOverlayActive = 0;
+            M11_GameView_ToggleInventoryPanel(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (state->inventoryPanelActive) {
+            return input == M12_MENU_INPUT_NONE
+                       ? M11_GAME_INPUT_IGNORED
+                       : M11_GAME_INPUT_REDRAW;
         }
         dir = dm2_v1_runtime_get_party_dir() & 3;
         if (input == M12_MENU_INPUT_TURN_LEFT ||
@@ -38703,6 +38790,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
         m11_draw_dm2_shop_panel(state, framebuffer,
                                 framebufferWidth, framebufferHeight);
+        if (state->inventoryPanelActive) {
+            m11_draw_inventory_panel(state, framebuffer,
+                                     framebufferWidth, framebufferHeight);
+        }
         m11_draw_v1_leader_hand_object_name(state, framebuffer,
                                             framebufferWidth,
                                             framebufferHeight);
