@@ -2330,6 +2330,67 @@ static int csb_v1_runtime_creature_attack_sound_index(int creature_type)
     return (int)creature_sounds_attack[ordinal - 1];
 }
 
+static int csb_v1_runtime_creature_movement_sound_index(int creature_type)
+{
+    static const signed char attack_sound_ordinal[27] = {
+        4, 0, 6, 0, 1, 0, 3, 7, 2,
+        10, 2, 0, 11, 9, 0, 5, 10, 0,
+        11, 0, 8, 3, 0, 0, 1, 0, 0
+    };
+    static const signed char creature_sounds_movement[18] = {
+        CSB_V1_SOUND_MOVE_RED_DRAGON, -1,
+        CSB_V1_SOUND_MOVE_SCREAMER_ROCKPILE_WORM_PAIN_RAT_SCORPION_OITU,
+        CSB_V1_SOUND_MOVE_SCREAMER_ROCKPILE_WORM_PAIN_RAT_SCORPION_OITU,
+        CSB_V1_SOUND_MOVE_SCREAMER_ROCKPILE_WORM_PAIN_RAT_SCORPION_OITU,
+        CSB_V1_SOUND_MOVE_MUMMY_TROLIN_ANTMAN_STONE_GOLEM_GIGGLER_VEXIRK_DEMON,
+        CSB_V1_SOUND_MOVE_SCREAMER_ROCKPILE_WORM_PAIN_RAT_SCORPION_OITU,
+        CSB_V1_SOUND_MOVE_SWAMP_SLIME_WATER_ELEMENTAL,
+        CSB_V1_SOUND_MOVE_COUATL_GIANT_WASP_MUNCHER,
+        CSB_V1_SOUND_MOVE_MUMMY_TROLIN_ANTMAN_STONE_GOLEM_GIGGLER_VEXIRK_DEMON,
+        CSB_V1_SOUND_MOVE_SKELETON,
+        CSB_V1_SOUND_MOVE_ANIMATED_ARMOUR_DETH_KNIGHT,
+        CSB_V1_SOUND_MOVE_MUMMY_TROLIN_ANTMAN_STONE_GOLEM_GIGGLER_VEXIRK_DEMON,
+        CSB_V1_SOUND_MOVE_SWAMP_SLIME_WATER_ELEMENTAL,
+        CSB_V1_SOUND_MOVE_COUATL_GIANT_WASP_MUNCHER,
+        CSB_V1_SOUND_MOVE_MUMMY_TROLIN_ANTMAN_STONE_GOLEM_GIGGLER_VEXIRK_DEMON,
+        CSB_V1_SOUND_MOVE_SCREAMER_ROCKPILE_WORM_PAIN_RAT_SCORPION_OITU,
+        CSB_V1_SOUND_MOVE_SCREAMER_ROCKPILE_WORM_PAIN_RAT_SCORPION_OITU
+    };
+    int ordinal;
+
+    if (creature_type < 0 || creature_type >= 27) return CSB_V1_SOUND_NONE;
+    ordinal = (int)attack_sound_ordinal[creature_type];
+    if (ordinal <= 0 || ordinal > 18) return CSB_V1_SOUND_NONE;
+    return (int)creature_sounds_movement[ordinal - 1];
+}
+
+static void csb_v1_runtime_request_creature_movement_sound(
+    CSB_V1_RuntimeProfile *profile,
+    int creature_type,
+    int map_x,
+    int map_y)
+{
+    CsbV1AudioRequest request;
+    int sound_index;
+
+    if (!profile) return;
+    sound_index = csb_v1_runtime_creature_movement_sound_index(creature_type);
+    if (sound_index == CSB_V1_SOUND_NONE) return;
+
+    memset(&request, 0, sizeof(request));
+    request.soundIndex = (int16_t)sound_index;
+    request.mapX = (int16_t)map_x;
+    request.mapY = (int16_t)map_y;
+    request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+    request.volume = 64;
+    request.priority = 4u;
+    /* ReDMCSB MOVESENS.C F0267 lines 847-853 calls F0514, which maps
+     * CreatureInfo.AttackSoundOrdinal through DUNGEON.C
+     * G2003_aauc_CreatureSounds[][C1_MOVEMENT_SOUND] and requests
+     * SOUND.C F0064 with C01_MODE_PLAY_IF_PRIORITIZED after a group move. */
+    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+}
+
 static void csb_v1_runtime_request_creature_attack_sound(
     CSB_V1_RuntimeProfile *profile,
     int creature_type,
@@ -3440,7 +3501,13 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                     }
                     if (moved) {
                         int group_alive = 1;
-                        int consequence_moves =
+                        int consequence_moves;
+                        csb_v1_runtime_request_creature_movement_sound(
+                            profile,
+                            (int)thing_record[4],
+                            target_x,
+                            target_y);
+                        consequence_moves =
                             csb_v1_runtime_apply_group_consequences_at_square(
                             profile,
                             group_thing,
@@ -3510,7 +3577,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                  * needed, schedules C60/C61-style retry when blocked by
                  * party/group occupancy, then applies bounded creature-scope
                  * teleporter/pit chains. Full F0202 occupancy breadth,
-                 * sounds, and attack expansion remain separate work. */
+                 * archenemy buzz, and attack expansion remain separate work. */
                 if (!deferred) {
                     csb_v1_runtime_schedule_c37_group_event(
                         profile,
@@ -3608,6 +3675,22 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
             target_x,
             target_y)) {
         return;
+    }
+    {
+        int thing_type = -1;
+        int thing_size = 0;
+        uint8_t *group_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            group_thing,
+            &thing_type,
+            &thing_size);
+        if (group_record && thing_type == 4 && thing_size >= 16) {
+            csb_v1_runtime_request_creature_movement_sound(
+                profile,
+                (int)group_record[4],
+                target_x,
+                target_y);
+        }
     }
     /* ReDMCSB: MOVESENS.C F0265 lines 169-189 schedules C60/C61 with
      * destination map/x/y and group thing in C.Slot after a blocked group

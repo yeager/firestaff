@@ -1330,6 +1330,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     int expected_c38_poison;
     uint8_t expected_attack_aspect;
     uint8_t expected_non_attack_aspect;
+    uint32_t c38_audio_requests_before;
     int i;
 
     make_real_format_corridor_text_generator_dungeon(
@@ -1478,6 +1479,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
         0,
         &expected_c38_wounds,
         &expected_c38_poison);
+    c38_audio_requests_before = profile.audio_runtime.totalRequests;
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "next tick dispatches the bounded C38 attack event");
     CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
@@ -1516,7 +1518,8 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded C38 attack applies F0179-style attack aspect bits");
     CHECK(profile.audio_runtime.pendingSoundIndex ==
               CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM &&
-              profile.audio_runtime.totalRequests == 1u,
+              profile.audio_runtime.totalRequests ==
+                  c38_audio_requests_before + 1u,
           "bounded C38 attack requests source-mapped prioritized attack sound");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event queues the source C33 aspect wrapper");
@@ -1677,6 +1680,10 @@ static void test_c37_group_approach_creates_empty_destination_thing_list(void)
     CHECK(test_get_le16(raw, 60 + 1 * 2) == 2u &&
               test_get_le16(raw, 60 + 2 * 2) == 2u,
           "C37 empty-destination move increments later column first-thing counts");
+    CHECK(profile.audio_runtime.pendingSoundIndex ==
+              CSB_V1_SOUND_MOVE_MUMMY_TROLIN_ANTMAN_STONE_GOLEM_GIGGLER_VEXIRK_DEMON &&
+              profile.audio_runtime.totalRequests == 1u,
+          "C37 empty-destination move requests source-mapped movement sound");
     CHECK(profile.active_group_state_count == 1u &&
               profile.active_group_state[0].valid &&
               profile.active_group_state[0].group_thing ==
