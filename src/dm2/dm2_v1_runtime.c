@@ -272,97 +272,97 @@ static int dm2_runtime_set_target_door_state(DM2_V1_RuntimeState *rt,
         dm2_runtime_door_set_state((uint16_t)raw, state));
 }
 
-static void dm2_runtime_apply_trigger_target(DM2_V1_RuntimeState *rt,
-                                             const DM2_V1_Trigger *trigger) {
+static void dm2_runtime_apply_trigger_event(DM2_V1_RuntimeState *rt,
+                                            const DM2_V1_TriggerEvent *event) {
     DM2_V1_GameState *gs;
     int raw;
     int state;
     int next_state;
 
-    if (!rt || !trigger) return;
+    if (!rt || !event || !event->valid) return;
     if (!rt->boot || !rt->boot->dm2_state) return;
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
 
-    switch (trigger->target) {
+    switch (event->target) {
         case DM2_TRIGGER_TARGET_DOOR_OPEN:
-            dm2_runtime_set_target_door_state(rt, trigger->target_level,
-                                              trigger->target_x,
-                                              trigger->target_y, 0);
+            dm2_runtime_set_target_door_state(rt, event->target_level,
+                                              event->target_x,
+                                              event->target_y, 0);
             break;
         case DM2_TRIGGER_TARGET_DOOR_CLOSE:
-            dm2_runtime_set_target_door_state(rt, trigger->target_level,
-                                              trigger->target_x,
-                                              trigger->target_y, 4);
+            dm2_runtime_set_target_door_state(rt, event->target_level,
+                                              event->target_x,
+                                              event->target_y, 4);
             break;
         case DM2_TRIGGER_TARGET_DOOR_TOGGLE:
             if (rt->boot->dungeon_data) {
                 DM2_V1_DungeonData *dd =
                     (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-                raw = dm2_v1_dungeon_get_tile_raw(dd, trigger->target_level,
-                                                  trigger->target_x,
-                                                  trigger->target_y);
+                raw = dm2_v1_dungeon_get_tile_raw(dd, event->target_level,
+                                                  event->target_x,
+                                                  event->target_y);
                 if (raw >= 0) {
                     state = dm2_runtime_door_state((uint16_t)raw);
                     next_state = state == 0 ? 4 : 0;
                     dm2_runtime_set_target_door_state(rt,
-                                                      trigger->target_level,
-                                                      trigger->target_x,
-                                                      trigger->target_y,
+                                                      event->target_level,
+                                                      event->target_x,
+                                                      event->target_y,
                                                       next_state);
                 }
             }
             break;
         case DM2_TRIGGER_TARGET_TELEPORT_PARTY:
-            gs->current_level = trigger->target_level;
-            gs->party_x = trigger->target_x;
-            gs->party_y = trigger->target_y;
-            rt->dungeon_level = trigger->target_level;
+            gs->current_level = event->target_level;
+            gs->party_x = event->target_x;
+            gs->party_y = event->target_y;
+            rt->dungeon_level = event->target_level;
             break;
         default:
             break;
     }
 }
 
-static void dm2_runtime_apply_plate_target(DM2_V1_RuntimeState *rt,
-                                           const DM2_V1_PressurePlate *plate) {
+static void dm2_runtime_apply_plate_event(DM2_V1_RuntimeState *rt,
+                                          const DM2_V1_PlateEvent *event) {
     int raw;
     int state;
     int next_state;
 
-    if (!rt || !plate) return;
-    switch (plate->target_kind) {
+    if (!rt || !event || !event->valid) return;
+    switch (event->target_kind) {
         case DM2_PLATE_TARGET_DOOR_OPEN:
-            dm2_runtime_set_target_door_state(rt, plate->target_level,
-                                              plate->target_x,
-                                              plate->target_y, 0);
+            dm2_runtime_set_target_door_state(rt, event->target_level,
+                                              event->target_x,
+                                              event->target_y, 0);
             break;
         case DM2_PLATE_TARGET_DOOR_CLOSE:
-            dm2_runtime_set_target_door_state(rt, plate->target_level,
-                                              plate->target_x,
-                                              plate->target_y, 4);
+            dm2_runtime_set_target_door_state(rt, event->target_level,
+                                              event->target_x,
+                                              event->target_y, 4);
             break;
         case DM2_PLATE_TARGET_DOOR_TOGGLE:
             if (rt->boot && rt->boot->dungeon_data) {
                 DM2_V1_DungeonData *dd =
                     (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-                raw = dm2_v1_dungeon_get_tile_raw(dd, plate->target_level,
-                                                  plate->target_x,
-                                                  plate->target_y);
+                raw = dm2_v1_dungeon_get_tile_raw(dd, event->target_level,
+                                                  event->target_x,
+                                                  event->target_y);
                 if (raw >= 0) {
                     state = dm2_runtime_door_state((uint16_t)raw);
                     next_state = state == 0 ? 4 : 0;
                     dm2_runtime_set_target_door_state(rt,
-                                                      plate->target_level,
-                                                      plate->target_x,
-                                                      plate->target_y,
+                                                      event->target_level,
+                                                      event->target_x,
+                                                      event->target_y,
                                                       next_state);
                 }
             }
             break;
         case DM2_PLATE_TARGET_PIT_TOGGLE:
-            dm2_runtime_set_target_door_state(rt, plate->target_level,
-                                              plate->target_x,
-                                              plate->target_y, 0);
+            dm2_runtime_set_target_door_state(rt, event->target_level,
+                                              event->target_x,
+                                              event->target_y, 0);
             break;
         default:
             break;
@@ -750,6 +750,7 @@ int dm2_v1_runtime_move(int dir) {
         gs->party_x = nx;
         gs->party_y = ny;
         for (int i = 1; i <= dm2_v1_trigger_get_builtin_count(); ++i) {
+            DM2_V1_TriggerEvent event;
             const DM2_V1_Trigger *trigger =
                 dm2_v1_trigger_get_builtin(i);
             if (trigger &&
@@ -758,19 +759,22 @@ int dm2_v1_runtime_move(int dir) {
                 trigger->arg_map_y == ny &&
                 trigger->arg_map_level == rt->dungeon_level &&
                 dm2_v1_trigger_fire(trigger->trigger_id) ==
-                    (int)DM2_TRIGGER_RESULT_OK) {
-                dm2_runtime_apply_trigger_target(rt, trigger);
+                    (int)DM2_TRIGGER_RESULT_OK &&
+                dm2_v1_trigger_copy_last_event(&event)) {
+                dm2_runtime_apply_trigger_event(rt, &event);
             }
         }
         dm2_v1_plate_set_party_position(nx, ny, rt->dungeon_level);
         for (int i = 1; i <= dm2_v1_plate_get_builtin_count(); ++i) {
+            DM2_V1_PlateEvent event;
             const DM2_V1_PressurePlate *plate =
                 dm2_v1_plate_get_builtin(i);
             if (plate && plate->map_x == nx && plate->map_y == ny &&
                 plate->map_level == rt->dungeon_level &&
                 dm2_v1_plate_check(i, rt->tick_count) ==
-                    (int)DM2_PLATE_RESULT_OK) {
-                dm2_runtime_apply_plate_target(rt, plate);
+                    (int)DM2_PLATE_RESULT_OK &&
+                dm2_v1_plate_copy_last_event(&event)) {
+                dm2_runtime_apply_plate_event(rt, &event);
             }
         }
     }
