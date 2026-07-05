@@ -32,6 +32,8 @@
 #define TQR_RAW_INITIAL_LEVEL_HEIGHT 27u
 #define TQR_RAW_INITIAL_LEVEL_SEED 0x0108e938u
 #define TQR_RAW_INITIAL_LEVEL_INDEX 0x0026u
+#define TQR_RAW_INITIAL_LEVEL_DESCRIPTOR_DELTA \
+    (TQR_US_ISO_BANK_STRIDE_OFFSET + 0x92ceu)
 
 /* Audio-bank marker fingerprint (raw Track 02 BIN only).
  *
@@ -1090,6 +1092,23 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
         : THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
 }
 
+int theron_v1_track02_initial_candidate_expected_offset(
+    size_t descriptor_offset,
+    size_t *out_candidate_offset) {
+
+    if (out_candidate_offset) {
+        *out_candidate_offset = 0u;
+    }
+    if (descriptor_offset < TQR_RAW_INITIAL_LEVEL_DESCRIPTOR_DELTA) {
+        return 0;
+    }
+    if (out_candidate_offset) {
+        *out_candidate_offset =
+            descriptor_offset - TQR_RAW_INITIAL_LEVEL_DESCRIPTOR_DELTA;
+    }
+    return 1;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -1200,6 +1219,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     const Theron_Track02LevelCandidate *candidate;
     const uint8_t *level_bytes;
     Theron_MapLoadResult map_status;
+    size_t expected_candidate_offset = 0u;
 
     if (out_handoff) {
         memset(out_handoff, 0, sizeof(*out_handoff));
@@ -1237,6 +1257,12 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     candidate = &catalog.candidates[0];
     candidate_offset = candidate->absolute_offset;
     candidate_size = candidate->byte_count;
+    if (!theron_v1_track02_initial_candidate_expected_offset(
+            descriptor_offset,
+            &expected_candidate_offset) ||
+        candidate_offset != expected_candidate_offset) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
     if (candidate_offset > track02_size ||
         candidate_size > track02_size - candidate_offset) {
         return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;

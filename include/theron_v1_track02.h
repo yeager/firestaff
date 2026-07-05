@@ -467,6 +467,20 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
     size_t track02_size,
     Theron_Track02LevelCandidateCatalog *out_catalog);
 
+/* Expected raw Track 02 startup candidate offset for one descriptor anchor.
+ *
+ * The JP/US raw Track 02 BIN startup payload accepted by
+ * theron_v1_track02_load_initial_level_candidate() sits at a fixed byte
+ * distance before the 9-word descriptor table anchor.  This helper exposes
+ * that relation for tests and M11 diagnostics without exposing the private
+ * descriptor-base constants.
+ *
+ * Returns 1 when descriptor_offset is large enough to derive the offset,
+ * otherwise 0. */
+int theron_v1_track02_initial_candidate_expected_offset(
+    size_t descriptor_offset,
+    size_t *out_candidate_offset);
+
 const char *theron_v1_track02_level_handoff_status_name(
     Theron_Track02LevelHandoffStatus status);
 
