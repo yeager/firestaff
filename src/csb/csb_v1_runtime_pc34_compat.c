@@ -4481,6 +4481,47 @@ static void csb_v1_runtime_rewrite_group_events_after_creature_death(
     }
 }
 
+static void csb_v1_runtime_delete_group_events_at_square(
+    CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y)
+{
+    struct DM1_EventQueue_V1 *queue;
+    uint16_t active_indices[DM1_EVENT_MAX_COUNT];
+    int active_count;
+    int i;
+
+    if (!profile) return;
+    queue = &profile->timeline_queue;
+    active_count = queue->eventCount;
+    if (active_count < 0) active_count = 0;
+    if (active_count > DM1_EVENT_MAX_COUNT) active_count = DM1_EVENT_MAX_COUNT;
+    for (i = 0; i < active_count; ++i) {
+        active_indices[i] = queue->timeline[i];
+    }
+
+    for (i = 0; i < active_count; ++i) {
+        int event_index = active_indices[i];
+        struct DM1_Event_V1 *event;
+        int event_type;
+
+        if (event_index < 0 || event_index >= queue->maxEvents) continue;
+        event = &queue->events[event_index];
+        event_type = event->type;
+        /* ReDMCSB GROUP.C F0181 lines 340-366 deletes C29..C41 group
+         * reaction/aspect/behavior events for a square after F0189 removes
+         * the final creature group. */
+        if (event_type >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
+            event_type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3 &&
+            DM1_MAP_TIME_MAP(event->map_time) == (uint32_t)map_index &&
+            event->b_mapX == (uint8_t)map_x &&
+            event->b_mapY == (uint8_t)map_y) {
+            (void)dm1v1_event_delete(queue, event_index);
+        }
+    }
+}
+
 static int csb_v1_runtime_f0190_smoke_attack_for_creature(int creature_type)
 {
     const struct CreatureBehaviorProfile_Compat *creature_profile;
@@ -4589,6 +4630,11 @@ static void csb_v1_runtime_pack_dead_group_creature(
             profile,
             dungeon,
             group_record,
+            level,
+            map_x,
+            map_y);
+        csb_v1_runtime_delete_group_events_at_square(
+            profile,
             level,
             map_x,
             map_y);

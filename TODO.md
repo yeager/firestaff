@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-05 CSB C25 final-group event cleanup follow-up: current local work now mirrors ReDMCSB `GROUP.C F0181` for final-creature C25 group kills by deleting stale C29..C41 group reaction/aspect/behavior events on the removed group's square. Remaining C25/group aftermath work is active-group array/state preservation beyond Firestaff's current real-format group record bridge, fear/flee RNG side effects after partial kills, audio/sound mode, source-zone sprite binding, and wider real-data route proof.
+
 - 🔧 2026-07-05 CSB native save-header current-level follow-up: current local work now writes Firestaff-native CSB save-header `PartyMapZ` from runtime `current_level` instead of stale `party_z`, while preserving the payload's separate legacy `party_z` field. Remaining native-save work is broader original CSBGAME byte compatibility, real save corpus/original-engine proof, and wider gameplay state beyond the current runtime snapshot.
 
 - 🔧 2026-07-05 CSBWin export current-level follow-up: current local work now writes CSBWin GAMEBLOCK2/core-save `party_level` from CSB runtime `current_level` instead of stale `party_z`, so CSBWin export after stairs/pits/teleporters carries the active map level. Remaining CSBWin writeback work is still broader live body-state writeback beyond bounded champion/timer/ITEM16/leader-hand fields, plus original CSBWin byte roundtrip.
