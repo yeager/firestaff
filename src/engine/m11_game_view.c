@@ -9261,6 +9261,7 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
 static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
                                                 const TrAssetBundle* assets,
                                                 const char* md5_hex,
+                                                Theron_DungeonID dungeon_id,
                                                 char* receipt,
                                                 size_t receipt_cap) {
     Theron_Track02BankSignal signal;
@@ -9276,6 +9277,15 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
         !md5_hex || md5_hex[0] == '\0') {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap, "no raw Track 02 bytes");
+        }
+        return 0;
+    }
+    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 initial candidate pending for stage %d",
+                     (int)dungeon_id);
         }
         return 0;
     }
@@ -9384,6 +9394,7 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
 static int m11_theron_load_initial_level(Theron_V1_World* world,
                                          const TrAssetBundle* assets,
                                          const char* md5_hex,
+                                         Theron_DungeonID dungeon_id,
                                          char* receipt,
                                          size_t receipt_cap) {
     uint8_t level_data[12 + 8 * 8];
@@ -9393,9 +9404,14 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
     if (!world) {
         return 0;
     }
+    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT) {
+        dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    }
     if (m11_theron_try_track02_initial_level(world,
                                              assets,
                                              md5_hex,
+                                             dungeon_id,
                                              receipt,
                                              receipt_cap)) {
         return 1;
@@ -9420,7 +9436,7 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
     }
     level_data[12 + 1 * 8 + 3] = THERON_SQUARE_EXIT;
 
-    world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world->current_dungeon = dungeon_id;
     world->current_level = 0;
     r = theron_v1_level_load(&world->levels[0][0],
                              level_data,
@@ -9439,7 +9455,10 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
                           world->levels[0][0].start_y,
                           world->levels[0][0].start_dir);
     if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
-        snprintf(receipt, receipt_cap, "Track 02 descriptor scan unavailable; fallback room");
+        snprintf(receipt,
+                 receipt_cap,
+                 "Track 02 descriptor scan unavailable; fallback room stage=%d",
+                 (int)dungeon_id);
     }
     return 1;
 }
@@ -9566,6 +9585,7 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     if (!m11_theron_load_initial_level(world,
                                        assets,
                                        profile->graphics_md5,
+                                       flow.selected_dungeon,
                                        levelReceipt,
                                        sizeof(levelReceipt))) {
         if (receipt && receipt_cap > 0u) {
