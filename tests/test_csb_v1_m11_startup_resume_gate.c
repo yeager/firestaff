@@ -1143,6 +1143,9 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_QUIT,
                 "M11 CSB entrance records the source quit command");
+    expect_true(view.csbState.startup_entrance_active == 0 &&
+                    view.csbState.startup_entrance_dismissed == 1,
+                "M11 CSB entrance quit button clears startup state");
     expect_true(strcmp(view.lastOutcome, "BACK TO LAUNCHER") == 0,
                 "M11 CSB entrance quit button reports launcher return");
     M11_GameView_Shutdown(&view);
@@ -1157,6 +1160,9 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_QUIT,
                 "M11 CSB entrance Back input records the source quit command");
+    expect_true(view.csbState.startup_entrance_active == 0 &&
+                    view.csbState.startup_entrance_dismissed == 1,
+                "M11 CSB entrance Back input clears startup state");
     expect_true(strcmp(view.lastOutcome, "BACK TO LAUNCHER") == 0,
                 "M11 CSB entrance Back input reports launcher return");
     M11_GameView_Shutdown(&view);
