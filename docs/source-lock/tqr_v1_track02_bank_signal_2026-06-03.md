@@ -100,6 +100,13 @@ successfully. This is a bounded startup handoff. It does not claim a complete
 Track 02 dungeon-record format, object table, text table, palette table, or
 all-level parser.
 
+The real raw JP/US candidate's first generic loader floor tile is on the top
+edge, so the Track 02 startup handoff applies a bounded initial-pose selector
+after the header gate. It chooses the first interior floor tile with a passable
+neighbor, preferring east/south/west/north. Current real JP/US candidates prove
+`start=(2,1,EAST)`; the synthetic candidate fixture proves the same selector on
+`start=(1,1,EAST)`.
+
 ## Regression Gate
 
 `firestaff_theron_v1_track02_bank_probe` verifies:

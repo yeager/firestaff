@@ -9319,12 +9319,15 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
             if (receipt && receipt_cap > 0u) {
                 snprintf(receipt,
                          receipt_cap,
-                         "Track 02 initial level anchor=%zu offset=0x%zx header=%ux%u seed=0x%08x",
+                         "Track 02 initial level anchor=%zu offset=0x%zx header=%ux%u seed=0x%08x start=(%d,%d,%d)",
                          anchor,
                          initial_handoff.absolute_offset,
                          (unsigned)initial_handoff.header_width,
                          (unsigned)initial_handoff.header_height,
-                         (unsigned)initial_handoff.header_seed);
+                         (unsigned)initial_handoff.header_seed,
+                         (int)world->levels[0][0].start_x,
+                         (int)world->levels[0][0].start_y,
+                         (int)world->levels[0][0].start_dir);
             }
             return 1;
         }

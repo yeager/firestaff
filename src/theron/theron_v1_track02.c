@@ -951,6 +951,44 @@ static uint32_t rd32be(const uint8_t *p) {
     return ((uint32_t)rd16be(p) << 16) | rd16be(p + 2);
 }
 
+static int tqr_square_is_passable(uint8_t square) {
+    return square != THERON_SQUARE_WALL && square != THERON_SQUARE_SECRET;
+}
+
+static void choose_initial_level_start_pose(Theron_V1_Level *level) {
+    static const int dirs[4] = {1, 2, 3, 0}; /* prefer E/S/W/N for visible corridor entry */
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int y;
+    int x;
+
+    if (!level || level->width <= 2 || level->height <= 2) {
+        return;
+    }
+
+    for (y = 1; y + 1 < level->height; ++y) {
+        for (x = 1; x + 1 < level->width; ++x) {
+            int di;
+            if (level->squares[y][x] != THERON_SQUARE_FLOOR) {
+                continue;
+            }
+            for (di = 0; di < 4; ++di) {
+                int dir = dirs[di];
+                int nx = x + dx[dir];
+                int ny = y + dy[dir];
+                if (nx >= 0 && nx < level->width &&
+                    ny >= 0 && ny < level->height &&
+                    tqr_square_is_passable(level->squares[ny][nx])) {
+                    level->start_x = (int16_t)x;
+                    level->start_y = (int16_t)y;
+                    level->start_dir = dir;
+                    return;
+                }
+            }
+        }
+    }
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -1131,6 +1169,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
         return THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED;
     }
 
+    choose_initial_level_start_pose(out_level);
     out_handoff->loaded = 1;
     return THERON_TRACK02_LEVEL_HANDOFF_OK;
 }
