@@ -141,6 +141,32 @@ static int startup_rows_contain(
     return 0;
 }
 
+static const M11_TheronStartupElement* find_startup_element(
+    const M11_TheronStartupElement* elements,
+    int count,
+    M11_TheronStartupElementKind kind,
+    int id) {
+    int i;
+    if (!elements) {
+        return NULL;
+    }
+    for (i = 0; i < count; ++i) {
+        if (elements[i].kind != kind) {
+            continue;
+        }
+        if (kind == M11_THERON_STARTUP_ELEMENT_STAGE &&
+            elements[i].dungeonId != id) {
+            continue;
+        }
+        if (kind == M11_THERON_STARTUP_ELEMENT_MIRROR &&
+            elements[i].mirrorIndex != id) {
+            continue;
+        }
+        return &elements[i];
+    }
+    return NULL;
+}
+
 int main(void) {
     enum { FB_W = 320, FB_H = 200 };
     char temp_dir[512];
@@ -160,7 +186,9 @@ int main(void) {
     unsigned long rescans_after;
     int render_pixels;
     char startup_rows[16][M11_THERON_STARTUP_RENDER_ROW_CAPACITY];
+    M11_TheronStartupElement startup_layout[16];
     int startup_row_count;
+    int startup_layout_count;
     int i;
 
     expect_true(make_temp_dir(temp_dir), "temporary root created");
@@ -281,6 +309,37 @@ int main(void) {
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "> 1  Hall of Records"),
                 "M11 Theron startup render rows expose stage selection state");
+    startup_layout_count = M11_GameView_GetTheronStartupLayout(
+        &view, startup_layout, 16);
+    {
+        const M11_TheronStartupElement* title =
+            find_startup_element(startup_layout,
+                                 startup_layout_count,
+                                 M11_THERON_STARTUP_ELEMENT_TITLE,
+                                 0);
+        const M11_TheronStartupElement* cont =
+            find_startup_element(startup_layout,
+                                 startup_layout_count,
+                                 M11_THERON_STARTUP_ELEMENT_CONTINUE,
+                                 0);
+        const M11_TheronStartupElement* stage1 =
+            find_startup_element(startup_layout,
+                                 startup_layout_count,
+                                 M11_THERON_STARTUP_ELEMENT_STAGE,
+                                 THERON_DUNGEON_1_HALL_OF_RECORDS);
+        expect_true(startup_layout_count >= 9 &&
+                    title != NULL &&
+                    title->enabled == 1 &&
+                    strcmp(title->label, "THERON'S QUEST") == 0 &&
+                    cont != NULL &&
+                    cont->saveKind == 1 &&
+                    cont->saveSlot == 2 &&
+                    stage1 != NULL &&
+                    stage1->enabled == 1 &&
+                    stage1->selected == 1 &&
+                    stage1->cursor == 1,
+                    "M11 Theron startup layout exposes machine-readable stage state");
+    }
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                 M11_GAME_INPUT_REDRAW,
@@ -318,6 +377,28 @@ int main(void) {
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "ENTER FORCEFIELD"),
                 "M11 Theron Soul Room render rows expose original mirror names");
+    startup_layout_count = M11_GameView_GetTheronStartupLayout(
+        &view, startup_layout, 16);
+    {
+        const M11_TheronStartupElement* mirror0 =
+            find_startup_element(startup_layout,
+                                 startup_layout_count,
+                                 M11_THERON_STARTUP_ELEMENT_MIRROR,
+                                 0);
+        const M11_TheronStartupElement* forcefield =
+            find_startup_element(startup_layout,
+                                 startup_layout_count,
+                                 M11_THERON_STARTUP_ELEMENT_FORCEFIELD,
+                                 0);
+        expect_true(startup_layout_count >= 9 &&
+                    mirror0 != NULL &&
+                    mirror0->cursor == 1 &&
+                    mirror0->selected == 0 &&
+                    strcmp(mirror0->label, "Hakar") == 0 &&
+                    forcefield != NULL &&
+                    forcefield->enabled == 0,
+                    "M11 Theron startup layout exposes Soul Room mirrors and gated forcefield");
+    }
     for (i = 0; i < 6; ++i) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                     M11_GAME_INPUT_REDRAW,
@@ -339,6 +420,27 @@ int main(void) {
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "RESURRECTED #1"),
                 "M11 Theron Soul Room render rows show selected mirror order");
+    startup_layout_count = M11_GameView_GetTheronStartupLayout(
+        &view, startup_layout, 16);
+    {
+        const M11_TheronStartupElement* pental =
+            find_startup_element(startup_layout,
+                                 startup_layout_count,
+                                 M11_THERON_STARTUP_ELEMENT_MIRROR,
+                                 6);
+        const M11_TheronStartupElement* forcefield =
+            find_startup_element(startup_layout,
+                                 startup_layout_count,
+                                 M11_THERON_STARTUP_ELEMENT_FORCEFIELD,
+                                 0);
+        expect_true(pental != NULL &&
+                    pental->selected == 1 &&
+                    pental->selectedOrder == 1 &&
+                    pental->cursor == 1 &&
+                    forcefield != NULL &&
+                    forcefield->enabled == 1,
+                    "M11 Theron startup layout exposes selected mirror order and enabled forcefield");
+    }
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron Soul Room selected mirror accept deselects companion");
