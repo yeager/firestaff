@@ -267,6 +267,42 @@ static size_t build_skproject_actuator_wall_button_map_list_fixture(
     return raw_map_base + 9u;
 }
 
+static size_t build_skproject_square_actuator_fixture(uint8_t *buf,
+                                                      size_t cap,
+                                                      uint8_t actuator_type,
+                                                      uint16_t flag)
+{
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + 4u;
+    const size_t actuator_base = sft_base + 2u;
+    const size_t raw_map_base = actuator_base + 8u;
+    uint8_t *desc;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+    buf[4] = 1;
+    put16le(buf + 10, 1);
+    put16le(buf + 18, 1);
+    desc = buf + header_size;
+    put16le(desc + 8, (uint16_t)((1u << 6) | (1u << 11)));
+    put16le(buf + column_base, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x8c00);
+    put16le(buf + actuator_base, 0xfffe);
+    buf[actuator_base + 2] = actuator_type;
+    buf[actuator_base + 3] = 0;
+    put16le(buf + actuator_base + 4, flag);
+    buf[actuator_base + 6] = 0;
+    buf[actuator_base + 7] = 0;
+    buf[raw_map_base + 0] = 0x10;
+    buf[raw_map_base + 1] = 0x20;
+    buf[raw_map_base + 2] = 0x20;
+    buf[raw_map_base + 3] = 0x20;
+    return raw_map_base + 4u;
+}
+
 static void test_first_tick_after_boot_profile_handoff(void)
 {
     DM2_V1_BootProfile profile;
@@ -344,6 +380,37 @@ static void test_first_tick_after_boot_profile_handoff(void)
           dm2_v1_runtime_get_last_projectile_slot() >= 0 &&
           dm2_v1_runtime_get_projectile_actuator_count() == 1,
           "runtime missile-shooter actuator dispatches a projectile target");
+    {
+        uint8_t fixture[128];
+        size_t fixture_size = build_skproject_square_actuator_fixture(
+            fixture, sizeof(fixture),
+            (uint8_t)DM2_ACTUATOR_ITEM_GENERATOR, 0x4567u);
+        DM2_V1_DungeonData *replacement =
+            (DM2_V1_DungeonData *)calloc(1, sizeof(*replacement));
+        CHECK(fixture_size > 0 && replacement != NULL,
+              "runtime square-actuator fixture allocates");
+        if (replacement &&
+            dm2_v1_dungeon_load(replacement, fixture, (int)fixture_size) == 0) {
+            DM2_V1_DungeonData *old_dd =
+                (DM2_V1_DungeonData *)profile.dungeon_data;
+            dm2_v1_dungeon_free(old_dd);
+            free(old_dd);
+            profile.dungeon_data = replacement;
+            replacement = NULL;
+            dm2_v1_runtime_init(&profile);
+            CHECK(dm2_v1_runtime_invoke_square_actuators(0, 0, 0) == 1 &&
+                  dm2_v1_runtime_get_last_actuator_type() ==
+                      DM2_ACTUATOR_ITEM_GENERATOR &&
+                  dm2_v1_runtime_get_last_generated_object() == 0x4567u,
+                  "runtime square-first DB3 actuator invokes generated-object target");
+        } else {
+            CHECK(0, "runtime square-actuator fixture loads");
+        }
+        if (replacement) {
+            dm2_v1_dungeon_free(replacement);
+            free(replacement);
+        }
+    }
 
     memset(&session, 0, sizeof(session));
     dm2_v1_session_new(&session);

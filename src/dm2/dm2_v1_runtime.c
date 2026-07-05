@@ -1486,6 +1486,44 @@ int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
     return 0;
 }
 
+int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dd;
+    int thing;
+    int invoked = 0;
+    int guard = 0;
+
+    if (!rt->boot || !rt->boot->dungeon_data) return -1;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
+    if (thing < 0 || thing == 0xfffe) return 0;
+
+    while (thing >= 0 && thing != 0xfffe && guard++ < 64) {
+        int type = -1;
+        int size = 0;
+        int next;
+        const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+            dd, (uint16_t)thing, &type, NULL, &size);
+        if (!record || size < 2) break;
+        if (type == 3 && size >= 8) {
+            int actuator_type = (int)record[2];
+            uint16_t flag = (uint16_t)record[4] |
+                            ((uint16_t)record[5] << 8);
+            int tx = record[6] ? (int)record[6] : x;
+            int ty = record[7] ? (int)record[7] : y;
+            if (actuator_type != 0 &&
+                dm2_v1_runtime_invoke_actuator(
+                    level, tx, ty, (DM2_ActuatorType)actuator_type, flag) == 0) {
+                invoked++;
+            }
+        }
+        next = dm2_v1_dungeon_get_next_thing(dd, (uint16_t)thing);
+        if (next < 0 || next == thing) break;
+        thing = next;
+    }
+    return invoked;
+}
+
 /* ── Source evidence ──────────────────────────────────────────────── */
 
 const char *dm2_v1_runtime_source_evidence(void) {
