@@ -12536,10 +12536,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                                        dir, 0) == 0) {
                     m11_set_status(state, "ACTION", "DM2 DOOR");
                 } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
+                    int npc_id = dm2_v1_runtime_get_last_npc_id();
+                    int npc_line_index =
+                        dm2_v1_runtime_get_last_npc_dialog_line();
                     const char *npc_name =
-                        dm2_v1_npc_get_name(DM2_NPC_MERCHANT_FRIENDLY);
+                        dm2_v1_npc_get_name(npc_id);
                     const char *npc_line =
-                        dm2_v1_npc_get_dialog(DM2_NPC_MERCHANT_FRIENDLY, 0);
+                        dm2_v1_npc_get_dialog(npc_id, npc_line_index);
                     m11_set_status(state, "ACTION", "DM2 INTERACT");
                     m11_set_inspect_readout(state,
                                             npc_name ? npc_name : "DM2 NPC",

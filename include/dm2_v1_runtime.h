@@ -249,6 +249,8 @@ int dm2_v1_runtime_enter_shop(int level, int x, int y);
  * Source: dm2_v1_creature.h DM2_AI_MERCHANT=33
  *         DM2_CCM_MERCHANT_BEHAVIOR=0x0a */
 int dm2_v1_runtime_npc_interact(int level, int x, int y);
+int dm2_v1_runtime_get_last_npc_id(void);
+int dm2_v1_runtime_get_last_npc_dialog_line(void);
 
 /* ── Special squares ──────────────────────────────────────────────── */
 

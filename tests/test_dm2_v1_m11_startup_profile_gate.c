@@ -437,6 +437,21 @@ int main(void) {
                                dm2_v1_npc_get_dialog(
                                    DM2_NPC_MERCHANT_FRIENDLY, 0)) == 0,
                         "M11 DM2 NPC interaction exposes NPC dialog line");
+            expect_true(M11_GameView_HandleInput(&view,
+                                                 M12_MENU_INPUT_ACTION) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 repeated NPC action redraws");
+            expect_true(world->reputation == reputation_before + 2,
+                        "M11 DM2 repeated NPC interaction mutates reputation again");
+            expect_true(dm2_v1_runtime_get_last_npc_id() ==
+                            DM2_NPC_MERCHANT_FRIENDLY,
+                        "DM2 runtime records last NPC id for M11 readout");
+            expect_true(dm2_v1_runtime_get_last_npc_dialog_line() == 1,
+                        "DM2 runtime advances repeated same-square NPC dialog line");
+            expect_true(strcmp(view.inspectDetail,
+                               dm2_v1_npc_get_dialog(
+                                   DM2_NPC_MERCHANT_FRIENDLY, 1)) == 0,
+                        "M11 DM2 NPC interaction exposes advanced dialog line");
             dm2_v1_runtime_set_position(0, 15, 15, 0);
             dm2_v1_runtime_set_outdoor(0);
         }
