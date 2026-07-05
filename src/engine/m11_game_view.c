@@ -2413,13 +2413,13 @@ static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
         return;
     }
     /* CSBWin SaveGame.cpp GAMEBLOCK2 stores the transient cursor/
-     * leader-hand object separately from champion slots.  M11 has no
-     * CSB object-icon binding yet, so preserve the raw source thing and
-     * leave icon selection unknown instead of resolving it through the
+     * leader-hand object separately from champion slots.  Resolve the icon
+     * only through the CSB runtime's own dungeon records; never through M11's
      * DM1 world thing tables. */
     state->leaderHandObjectPresent = 1;
     state->leaderHandThing = thing;
-    state->leaderHandIconIndex = -1;
+    state->leaderHandIconIndex =
+        csb_v1_runtime_object_icon_index(profile, thing);
 }
 
 static int m11_game_view_load_quicksave_path(M11_GameViewState* state,

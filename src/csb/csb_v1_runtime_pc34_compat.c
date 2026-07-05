@@ -5974,6 +5974,132 @@ static int csb_v1_runtime_scan_thing_chain_for_object_type(
     return 0;
 }
 
+static int csb_v1_runtime_object_info_index_from_record(
+    int thing_type,
+    const uint8_t *record,
+    int record_size)
+{
+    uint16_t word;
+    int subtype;
+
+    if (!record || record_size < 4) return -1;
+    word = csb_v1_runtime_read_u16(record + 2);
+    switch (thing_type) {
+    case THING_TYPE_SCROLL:
+        return 0;
+    case THING_TYPE_CONTAINER:
+        if (record_size < 8) return -1;
+        subtype = (int)((word >> 1) & 0x03u);
+        if (subtype > 0) subtype = 0;
+        return 1 + subtype;
+    case THING_TYPE_POTION:
+        subtype = (int)((word >> 8) & 0x7Fu);
+        if (subtype > 20) return -1;
+        return 2 + subtype;
+    case THING_TYPE_WEAPON:
+        subtype = (int)(word & 0x7Fu);
+        if (subtype > 45) return -1;
+        return 23 + subtype;
+    case THING_TYPE_ARMOUR:
+        subtype = (int)(word & 0x7Fu);
+        if (subtype > 57) return -1;
+        return 69 + subtype;
+    case THING_TYPE_JUNK:
+        subtype = (int)(word & 0x7Fu);
+        if (subtype > 52) return -1;
+        return 127 + subtype;
+    default:
+        return -1;
+    }
+}
+
+static int csb_v1_runtime_object_icon_from_object_info(
+    int object_info_index)
+{
+    static const unsigned char kObjectInfoIcon[180] = {
+         30,144,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,
+        166,167,195, 16, 18,  4, 14, 20, 23, 25, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+         41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+         61, 62, 63, 64, 65, 66,135,143, 28, 80, 81, 82,112,114, 67, 83, 68, 84, 69, 70,
+         85, 86, 71, 87,119, 72, 88,113, 89, 73, 74, 90,103,104, 96, 97, 98,105,106,108,
+        107, 75, 91, 76, 92, 99,115,100, 77, 93,116,109,101, 78, 94,117,110,102, 79, 95,
+        118,111,140,141,142,194,196,  0,  8, 10, 12,146,147,125,126,127,176,177,178,179,
+        180,181,182,183,184,185,186,187,188,189,190,191,128,129,130,131,168,169,170,171,
+        172,173,174,175,120,121,122,123,124,132,133,134,136,137,138,139,192,193,197,198
+    };
+    if (object_info_index < 0 || object_info_index >= 180) return -1;
+    return (int)kObjectInfoIcon[object_info_index];
+}
+
+int csb_v1_runtime_object_icon_index(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t word;
+    int thing_type;
+    int record_size;
+    int object_info_index;
+    int icon_index;
+
+    if (!profile || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return -1;
+    }
+    dungeon = profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record) return -1;
+
+    object_info_index = csb_v1_runtime_object_info_index_from_record(
+        thing_type,
+        record,
+        record_size);
+    icon_index = csb_v1_runtime_object_icon_from_object_info(
+        object_info_index);
+    if (icon_index < 0) return -1;
+
+    /* ReDMCSB DUNGEON.C F0141 maps thing type/subtype to G0237 object info;
+     * OBJECT.C F0033 then applies per-object dynamic icon adjustments for
+     * compass direction, lit torches, closed scrolls, charge-bearing junk,
+     * and charge-bearing magical weapons. */
+    word = csb_v1_runtime_read_u16(record + 2);
+    if (thing_type == THING_TYPE_WEAPON) {
+        int charge = (int)((word >> 10) & 0x0Fu);
+        int lit = (word & 0x8000u) ? 1 : 0;
+        if (icon_index == 4 && lit) {
+            static const unsigned char kChargeCountToTorchIconOffset[16] = {
+                0,1,1,1,2,2,2,2,3,3,3,3,3,3,3,3
+            };
+            icon_index += (int)kChargeCountToTorchIconOffset[charge & 0x0F];
+        } else if (charge &&
+                   (icon_index == 14 || icon_index == 16 ||
+                    icon_index == 18 || icon_index == 20 ||
+                    icon_index == 23 || icon_index == 25)) {
+            icon_index += 1;
+        }
+    } else if (thing_type == THING_TYPE_SCROLL) {
+        int closed = (int)((word >> 10) & 0x3Fu);
+        if (icon_index == 30 && closed) icon_index += 1;
+    } else if (thing_type == THING_TYPE_JUNK) {
+        int charge = (int)((word >> 14) & 0x03u);
+        if (icon_index == 0) {
+            icon_index += profile->party_dir & 0x03;
+        } else if (charge &&
+                   (icon_index == 8 || icon_index == 10 ||
+                    icon_index == 12)) {
+            icon_index += 1;
+        }
+    }
+    return icon_index;
+}
+
 static int csb_v1_runtime_party_has_possession_object_type(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,

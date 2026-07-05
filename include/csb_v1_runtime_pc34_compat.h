@@ -664,6 +664,12 @@ int csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
     int map_y,
     int cell);
 
+/* Resolve a CSB runtime object thing to the ReDMCSB OBJECT.C F0033 icon
+ * index using the CSB dungeon handle, not DM1 M11 world tables. */
+int csb_v1_runtime_object_icon_index(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing);
+
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);
 const CSB_V1_VariantInfo *csb_v1_runtime_get_variant_info(CSB_V1_VariantId id);
