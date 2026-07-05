@@ -1018,6 +1018,9 @@ static void m11_csb_runtime_overlay_stats_reset(
     mutable_state->csbState.runtime_object_marker_drawn_count = 0;
     mutable_state->csbState.runtime_group_sprite_drawn_count = 0;
     mutable_state->csbState.runtime_group_marker_drawn_count = 0;
+    mutable_state->csbState.runtime_projectile_sprite_drawn_count = 0;
+    mutable_state->csbState.runtime_projectile_material_resolved_count = 0;
+    mutable_state->csbState.runtime_projectile_marker_drawn_count = 0;
 }
 
 static void m11_csb_runtime_overlay_stats_add_object_sprite(
@@ -1385,6 +1388,12 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                   profile->runtime.party_dir,
                                   profile->runtime.party_x,
                                   profile->runtime.party_y);
+    ((M11_GameViewState *)state)->csbState.runtime_projectile_sprite_drawn_count =
+        cfg.runtime_projectile_sprite_drawn_count;
+    ((M11_GameViewState *)state)->csbState.runtime_projectile_material_resolved_count =
+        cfg.runtime_projectile_material_resolved_count;
+    ((M11_GameViewState *)state)->csbState.runtime_projectile_marker_drawn_count =
+        cfg.runtime_projectile_marker_drawn_count;
     if (plan && plan->ready && cache && cache->loaded) {
         for (i = 0u; i < plan->planned_count; ++i) {
             CSB_V1_CSBGraphicsM11Binding binding;
@@ -28547,7 +28556,10 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     int* outObjectIconCount,
     int* outObjectMarkerCount,
     int* outGroupSpriteCount,
-    int* outGroupMarkerCount)
+    int* outGroupMarkerCount,
+    int* outProjectileSpriteCount,
+    int* outProjectileMaterialCount,
+    int* outProjectileMarkerCount)
 {
     if (!state) {
         return 0;
@@ -28571,6 +28583,18 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     if (outGroupMarkerCount) {
         *outGroupMarkerCount =
             state->csbState.runtime_group_marker_drawn_count;
+    }
+    if (outProjectileSpriteCount) {
+        *outProjectileSpriteCount =
+            state->csbState.runtime_projectile_sprite_drawn_count;
+    }
+    if (outProjectileMaterialCount) {
+        *outProjectileMaterialCount =
+            state->csbState.runtime_projectile_material_resolved_count;
+    }
+    if (outProjectileMarkerCount) {
+        *outProjectileMarkerCount =
+            state->csbState.runtime_projectile_marker_drawn_count;
     }
     return 1;
 }

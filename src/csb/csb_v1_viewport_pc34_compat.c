@@ -436,6 +436,7 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
             placement.viewport_y,
             color,
             placement.source_zone >= 0 ? 2 : 1);
+        ++cfg->runtime_projectile_marker_drawn_count;
     }
 }
 
