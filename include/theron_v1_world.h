@@ -18,7 +18,7 @@
  *   - Theron persists fully across dungeons.
  *   - Champions reset inventories each dungeon, keep stats/skills.
  *   - 7 quest items (one per dungeon) must be found before exit.
- *   - Party of 4: Theron + 3 companions, fixed order (no party swap).
+ *   - Party of 1-4: Theron plus up to 3 companions chosen in the Soul Room.
  *
  * Source references:
  *   THQUEST.ASM T000  — title/startup entry
@@ -171,7 +171,7 @@ typedef struct {
     /* Dungeon progression (quest items, dungeon sequence) */
     Theron_DungeonProgression progression;
 
-    /* Party — Theron + 3 companions */
+    /* Party: Theron plus up to 3 companions */
     Theron_V1_Party party;
 
     /* Object pool */
