@@ -10,6 +10,7 @@
  */
 
 #include "m11_game_view.h"
+#include "csb_v1_boot.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -23,6 +24,24 @@ static void check(int condition, const char *label)
         fprintf(stderr, "FAIL: %s\n", label);
         ++g_failures;
     }
+}
+
+static void write_u16(unsigned char *p, unsigned int value)
+{
+    p[0] = (unsigned char)(value & 0xffu);
+    p[1] = (unsigned char)((value >> 8) & 0xffu);
+}
+
+static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
+                             unsigned char *raw,
+                             size_t raw_size)
+{
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, raw_size);
+    dungeon->raw_data = raw;
+    dungeon->raw_size = (int)raw_size;
+    dungeon->thing_type_counts[THING_TYPE_WEAPON] = 1;
+    dungeon->thing_data_bases[THING_TYPE_WEAPON] = 0;
 }
 
 int main(void)
@@ -66,6 +85,36 @@ int main(void)
     state.leaderHandIconIndex = 77;
     check(M11_GameView_GetV1LeaderHandObjectIconIndex(&state) == 77,
           "DM1 cached leader-hand icon still surfaces");
+
+    {
+        CSB_V1_BootProfile profile;
+        CSB_V1_DungeonData dungeon;
+        unsigned char raw[16];
+        unsigned short dagger =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+
+        memset(&state, 0, sizeof(state));
+        memset(&profile, 0, sizeof(profile));
+        init_csb_dungeon(&dungeon, raw, sizeof(raw));
+        write_u16(raw + 0, THING_ENDOFLIST);
+        write_u16(raw + 2, 8u); /* ReDMCSB OBJECT.C F0033 dagger icon C032. */
+
+        profile.runtime.dungeon_handle = &dungeon;
+        state.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+        state.csbBootProfile = &profile;
+
+        check(M11_GameView_GetObjectIconIndexForThing(&state, dagger) == 32,
+              "CSB object icon accessor uses CSB runtime dungeon records without DM1 world.things");
+        check(M11_GameView_SetV1LeaderHandObject(&state, dagger),
+              "CSB leader-hand set accepts runtime-owned object binding");
+        check(M11_GameView_GetV1LeaderHandObjectIconIndex(&state) == 32,
+              "CSB leader-hand icon resolves through CSB runtime object binding");
+        memset(name, 0, sizeof(name));
+        check(M11_GameView_GetV1LeaderHandObjectName(&state, name, sizeof(name)),
+              "CSB leader-hand name resolves through CSB runtime object binding");
+        check(strcmp(name, "DAGGER") == 0,
+              "CSB leader-hand name comes from CSB runtime resolver");
+    }
 
     if (g_failures != 0) {
         return 1;

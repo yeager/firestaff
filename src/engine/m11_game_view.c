@@ -21709,6 +21709,40 @@ static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_csb_runtime_object_icon_index_for_thing(
+    const M11_GameViewState *state,
+    unsigned short thingId)
+{
+    const CSB_V1_BootProfile *profile;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile ||
+        thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return -1;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    return csb_v1_runtime_object_icon_index(&profile->runtime, thingId);
+}
+
+static int m11_csb_runtime_object_name_for_thing(
+    const M11_GameViewState *state,
+    unsigned short thingId,
+    char *out,
+    size_t out_size)
+{
+    const CSB_V1_BootProfile *profile;
+    if (!out || out_size == 0u) {
+        return 0;
+    }
+    out[0] = '\0';
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile ||
+        thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    return csb_v1_runtime_object_name(&profile->runtime, thingId, out, out_size);
+}
+
 static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
                                            const struct DungeonThings_Compat* things,
                                            unsigned short thingId) {
@@ -21723,8 +21757,16 @@ static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
         180,181,182,183,184,185,186,187,188,189,190,191,128,129,130,131,168,169,170,171,
         172,173,174,175,120,121,122,123,124,132,133,134,136,137,138,139,192,193,197,198
     };
-    int objectInfoIndex = m11_object_info_index_for_thing(things, thingId);
+    int objectInfoIndex;
     int iconIndex;
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* ReDMCSB OBJECT.C F0032/F0033 resolves object icons from the
+         * active game's DUNGEON.DAT records.  CSB M11 must therefore use
+         * the CSB runtime-owned dungeon handle instead of DM1's M11
+         * `world.things` arrays, which are absent or stale on CSB launch. */
+        return m11_csb_runtime_object_icon_index_for_thing(state, thingId);
+    }
+    objectInfoIndex = m11_object_info_index_for_thing(things, thingId);
     if (objectInfoIndex < 0 || objectInfoIndex >= 180) return -1;
     iconIndex = (int)kObjectInfoType[objectInfoIndex];
     if (THING_GET_TYPE(thingId) == THING_TYPE_WEAPON) {
@@ -26172,7 +26214,7 @@ int M11_GameView_GetV1ViewportSourceDrawOrderStep(int ordinal) {
 
 int M11_GameView_GetObjectIconIndexForThing(const M11_GameViewState* state,
                                             unsigned short thingId) {
-    if (!state || !state->world.things) return -1;
+    if (!state) return -1;
     return m11_object_icon_index_for_thing(state, state->world.things, thingId);
 }
 
@@ -27592,6 +27634,13 @@ int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
     state->leaderHandIconIndex = m11_object_icon_index_for_thing(
         state, state->world.things, thing);
     state->leaderHandObjectName[0] = '\0';
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        (void)m11_csb_runtime_object_name_for_thing(
+            state,
+            thing,
+            state->leaderHandObjectName,
+            sizeof(state->leaderHandObjectName));
+    }
     state->v1ChampionStatsPanelActive = 0;
     state->v1FoodWaterPanelActive = 0;
     return 1;
