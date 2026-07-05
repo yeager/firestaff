@@ -610,6 +610,7 @@ typedef struct {
         int party_x, party_y, party_dir;
         int tick_count;
         uint32_t leader_hand_object;
+        uint32_t champion_inventory_objects[4][30];
     } dm2State;
     int dm2ShopSelectedStockIndex;
     int dm2ShopSelectedInventoryIndex;
@@ -1554,6 +1555,9 @@ int M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
     int* outW,
     int* outH);
 uint32_t M11_GameView_GetDm2LeaderHandObject(const M11_GameViewState* state);
+uint32_t M11_GameView_GetDm2InventoryObject(const M11_GameViewState* state,
+                                            int championIndex,
+                                            int championSlot);
 int M11_GameView_Dm2LeaderHandObjectIconAvailable(
     const M11_GameViewState* state);
 int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,

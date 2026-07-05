@@ -419,6 +419,7 @@ int main(void) {
     char save_root[512];
     char save_path[512];
     DM2_V1_SessionState resume_session;
+    uint32_t loadable_icon_handle = 0u;
 
     check_incomplete_required_files_block_m11(
         "M11 blocks DM2 launch when GRAPHICS.DAT is present without DUNGEON.DAT",
@@ -742,6 +743,9 @@ int main(void) {
         expect_true(find_loadable_dm2_object_icon_handle(profile, &icon_handle),
                     "DM2 boot profile can resolve at least one object icon from GRAPHICS.DAT");
         if (icon_handle != 0u) {
+            loadable_icon_handle = icon_handle;
+        }
+        if (icon_handle != 0u) {
             dm2_v1_runtime_set_leader_hand_object(icon_handle);
             view.dm2State.leader_hand_object =
                 dm2_v1_runtime_get_leader_hand_object();
@@ -993,6 +997,11 @@ int main(void) {
     resume_session.time_of_day_minutes = 990;
     resume_session.rain_intensity = 60;
     resume_session.original_leader_hand_object = dm2_db_make_handle(10, 0x0033);
+    if (loadable_icon_handle != 0u) {
+        DM2_ChampionRecord *resume_champ =
+            (DM2_ChampionRecord *)resume_session.champion_data[0];
+        resume_champ->inventory[CHAMPION_SLOT_HEAD] = loadable_icon_handle;
+    }
     expect_true(dm2_v1_session_save_slot(save_root,
                                          3,
                                          "M11 Resume",
@@ -1020,6 +1029,51 @@ int main(void) {
     expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
                     dm2_db_make_handle(10, 0x0033),
                 "M11 DM2 resume exposes saved leader-hand ObjectID through public accessor");
+    if (loadable_icon_handle != 0u) {
+        int viewport_x = 0, viewport_y = 0, viewport_w = 0, viewport_h = 0;
+        int slot_x = 0, slot_y = 0, slot_w = 0, slot_h = 0;
+        int source_slot =
+            M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(
+                CHAMPION_SLOT_HEAD);
+        expect_true(M11_GameView_GetDm2InventoryObject(
+                        &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                    "M11 DM2 resume mirrors champion inventory ObjectID without THING casting");
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_INVENTORY_TOGGLE) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 resume inventory toggle opens panel for slot ObjectIDs");
+        expect_true(M11_GameView_GetV1ViewportZone(&viewport_x,
+                                                   &viewport_y,
+                                                   &viewport_w,
+                                                   &viewport_h) &&
+                        M11_GameView_GetV1InventorySourceSlotBoxZone(
+                            source_slot,
+                            &slot_x,
+                            &slot_y,
+                            &slot_w,
+                            &slot_h),
+                    "M11 DM2 resume inventory source slot zone is available");
+        view.dm2State.champion_inventory_objects[0][CHAMPION_SLOT_HEAD] = 0u;
+        memset(framebuffer_without_hand, 0, sizeof(framebuffer_without_hand));
+        M11_GameView_Draw(&view, framebuffer_without_hand, 320, 200);
+        view.dm2State.champion_inventory_objects[0][CHAMPION_SLOT_HEAD] =
+            loadable_icon_handle;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(framebuffer_zone_differs(
+                        framebuffer_without_hand,
+                        framebuffer,
+                        320,
+                        200,
+                        viewport_x + slot_x,
+                        viewport_y + slot_y,
+                        slot_w,
+                        slot_h),
+                    "M11 DM2 resume inventory draws GDAT-backed slot ObjectID icon");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 resume Back closes inventory slot ObjectID panel");
+    }
     {
         char leader_name[32];
 

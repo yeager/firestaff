@@ -265,6 +265,8 @@ static void m11_dm2_mirror_session_party(M11_GameViewState *state,
     if (count < 0) count = 0;
     if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
     memset(&state->world.party, 0, sizeof(state->world.party));
+    memset(state->dm2State.champion_inventory_objects, 0,
+           sizeof(state->dm2State.champion_inventory_objects));
     state->world.party.championCount = count;
     state->world.party.activeChampionIndex =
         (count > 0 && session->leader_index < (uint8_t)count)
@@ -304,6 +306,8 @@ static void m11_dm2_mirror_session_party(M11_GameViewState *state,
         dst->cell = (unsigned char)(src->squad_position & 3u);
         for (int slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
             dst->inventory[slot] = THING_NONE;
+            state->dm2State.champion_inventory_objects[i][slot] =
+                src->inventory[slot];
         }
     }
 }
@@ -31647,6 +31651,18 @@ uint32_t M11_GameView_GetDm2LeaderHandObject(const M11_GameViewState* state) {
     return state->dm2State.leader_hand_object;
 }
 
+uint32_t M11_GameView_GetDm2InventoryObject(const M11_GameViewState* state,
+                                            int championIndex,
+                                            int championSlot) {
+    if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) {
+        return 0u;
+    }
+    return state->dm2State.champion_inventory_objects[championIndex]
+                                                    [championSlot];
+}
+
 int M11_GameView_Dm2LeaderHandObjectIconAvailable(
     const M11_GameViewState* state) {
     DM2_V1_BootProfile *profile;
@@ -34774,43 +34790,45 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
     }
 }
 
-static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
-                                                 unsigned char* framebuffer,
-                                                 int framebufferWidth,
-                                                 int framebufferHeight) {
+static int m11_draw_dm2_object_icon_at(const M11_GameViewState* state,
+                                       uint32_t object,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight,
+                                       int dstX,
+                                       int dstY,
+                                       int dstW,
+                                       int dstH,
+                                       int fillBackground) {
     DM2_V1_BootProfile *profile;
     uint8_t *pixels = NULL;
     int srcW = 0;
     int srcH = 0;
     int srcStride = 0;
-    int dstX = 0;
-    int dstY = 0;
-    int dstW = 0;
-    int dstH = 0;
     int y;
 
     if (!state || !framebuffer ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
-        state->dm2State.leader_hand_object == 0u ||
-        !M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
-            state, &dstX, &dstY, &dstW, &dstH)) {
-        return;
+        object == 0u || dstW <= 0 || dstH <= 0) {
+        return 0;
     }
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
     if (dm2_v1_boot_object_icon_asset_fetch(profile,
-                                            state->dm2State.leader_hand_object,
+                                            object,
                                             &pixels,
                                             &srcW,
                                             &srcH,
                                             &srcStride) != 0) {
-        return;
+        return 0;
     }
     if (!pixels || srcW <= 0 || srcH <= 0 || srcStride <= 0) {
         dm2_v1_boot_object_icon_asset_free(pixels);
-        return;
+        return 0;
     }
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  dstX, dstY, dstW, dstH, M11_COLOR_BLACK);
+    if (fillBackground) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      dstX, dstY, dstW, dstH, M11_COLOR_BLACK);
+    }
     for (y = 0; y < dstH; ++y) {
         int x;
         int sy = (y * srcH) / dstH;
@@ -34825,6 +34843,81 @@ static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
         }
     }
     dm2_v1_boot_object_icon_asset_free(pixels);
+    return 1;
+}
+
+static void m11_draw_dm2_inventory_object_icons(const M11_GameViewState* state,
+                                                unsigned char* framebuffer,
+                                                int framebufferWidth,
+                                                int framebufferHeight) {
+    int championIndex;
+
+    if (!state || !framebuffer ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !state->dm2BootProfile ||
+        !state->inventoryPanelActive) {
+        return;
+    }
+    championIndex = state->world.party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+        return;
+    }
+    for (int slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
+        uint32_t object =
+            state->dm2State.champion_inventory_objects[championIndex][slot];
+        int sourceSlotBox;
+        int zx = 0, zy = 0, zw = 0, zh = 0;
+        int drawW, drawH;
+        if (object == 0u) continue;
+        sourceSlotBox =
+            M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(slot);
+        if (!sourceSlotBox ||
+            !M11_GameView_GetV1InventorySourceSlotBoxZone(
+                sourceSlotBox, &zx, &zy, &zw, &zh)) {
+            continue;
+        }
+        drawW = zw > 2 ? zw - 2 : zw;
+        drawH = zh > 2 ? zh - 2 : zh;
+        (void)m11_draw_dm2_object_icon_at(
+            state,
+            object,
+            framebuffer,
+            framebufferWidth,
+            framebufferHeight,
+            M11_VIEWPORT_X + zx + 1,
+            M11_VIEWPORT_Y + zy + 1,
+            drawW,
+            drawH,
+            0);
+    }
+}
+
+static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
+                                                 unsigned char* framebuffer,
+                                                 int framebufferWidth,
+                                                 int framebufferHeight) {
+    int dstX = 0;
+    int dstY = 0;
+    int dstW = 0;
+    int dstH = 0;
+
+    if (!state || !framebuffer ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        state->dm2State.leader_hand_object == 0u ||
+        !M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
+            state, &dstX, &dstY, &dstW, &dstH)) {
+        return;
+    }
+    (void)m11_draw_dm2_object_icon_at(state,
+                                      state->dm2State.leader_hand_object,
+                                      framebuffer,
+                                      framebufferWidth,
+                                      framebufferHeight,
+                                      dstX,
+                                      dstY,
+                                      dstW,
+                                      dstH,
+                                      1);
 }
 
 static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
@@ -37312,6 +37405,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 }
             }
         }
+        m11_draw_dm2_inventory_object_icons(state, framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight);
         if (M11_GameView_GetV1OpenChestThing(state) != THING_NONE) {
             unsigned short chestSlots[8];
             int chestOrdinal;
