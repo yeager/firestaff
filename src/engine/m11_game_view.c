@@ -27891,8 +27891,11 @@ static int m11_v1_inventory_slot_icon_index_for_thing(const M11_GameViewState* s
                                                       int championSlot,
                                                       unsigned short thing) {
     int iconIndex;
-    if (!state || !state->world.things ||
+    if (!state ||
         thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return -1;
+    }
+    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT && !state->world.things) {
         return -1;
     }
     iconIndex = m11_object_icon_index_for_thing(state, state->world.things, thing);
@@ -33283,7 +33286,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             int sourceSlotBox = M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(slotIdx);
             if (!sourceSlotBox) continue;
             if (thingId != THING_NONE && thingId != THING_ENDOFLIST &&
-                state->assetsAvailable && state->world.things) {
+                state->assetsAvailable &&
+                (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
+                 state->world.things)) {
                 int zx = 0, zy = 0, zw = 0, zh = 0;
                 int iconIndex = m11_v1_inventory_slot_icon_index_for_thing(
                     state, slotIdx, thingId);
@@ -33344,7 +33349,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 }
                 if (chestSlots[chestOrdinal] != THING_NONE &&
                     chestSlots[chestOrdinal] != THING_ENDOFLIST &&
-                    state->assetsAvailable && state->world.things) {
+                    state->assetsAvailable &&
+                    (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
+                     state->world.things)) {
                     int iconIndex = m11_object_icon_index_for_thing(
                         state, state->world.things, chestSlots[chestOrdinal]);
                     (void)m11_draw_dm_object_icon_index(
