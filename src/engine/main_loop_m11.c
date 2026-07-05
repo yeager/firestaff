@@ -509,6 +509,96 @@ static int m11_draw_entrance_closed_doors_asset(M11_GameViewState* gameView,
     return 1;
 }
 
+typedef enum {
+    M11_ENTRANCE_COMMAND_QUIT = -1,
+    M11_ENTRANCE_COMMAND_NONE = 0,
+    M11_ENTRANCE_COMMAND_ENTER = 1,
+    M11_ENTRANCE_COMMAND_RESUME = 2,
+    M11_ENTRANCE_COMMAND_CREDITS = 3
+} M11_EntranceCommand;
+
+static int m11_draw_entrance_credits_asset(M11_GameViewState* gameView,
+                                           unsigned char* framebuffer) {
+    const M11_AssetSlot* credits;
+    if (!gameView || !framebuffer || !gameView->assetsAvailable) {
+        return 0;
+    }
+    credits = M11_AssetLoader_Load(&gameView->assetLoader, 5U);
+    if (!credits || credits->width != 320U || credits->height != 200U) {
+        return 0;
+    }
+    M11_AssetLoader_Blit(credits,
+                         framebuffer,
+                         M11_FB_WIDTH,
+                         M11_FB_HEIGHT,
+                         0,
+                         0,
+                         -1);
+    return 1;
+}
+
+static int m11_wait_for_entrance_credits_done(void) {
+    unsigned int ticks;
+    SDL_Event ev;
+    /* ReDMCSB ENTRANCE.C:1012-1091 F0442 sets L1406=1800, discards stale
+     * keyboard input, then waits one delay/vblank per tick until any
+     * keyboard or mouse input is present before returning to the entrance
+     * command loop. */
+    while (SDL_PollEvent(&ev)) {
+        (void)ev;
+    }
+    for (ticks = 0U; ticks < 1800U; ++ticks) {
+        while (SDL_PollEvent(&ev)) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
+            if (ev.type == SDL_EVENT_KEY_DOWN ||
+                ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN ||
+                ev.type == SDL_EVENT_FINGER_DOWN) {
+                return M11_ENTRANCE_COMMAND_NONE;
+            }
+            if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
+                ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            }
+#else
+            if (ev.type == SDL_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
+            if (ev.type == SDL_KEYDOWN ||
+                ev.type == SDL_MOUSEBUTTONDOWN ||
+                ev.type == SDL_FINGERDOWN) {
+                return M11_ENTRANCE_COMMAND_NONE;
+            }
+            if (ev.type == SDL_WINDOWEVENT &&
+                ev.window.event == SDL_WINDOWEVENT_RESIZED) {
+                M11_Render_HandleResize(ev.window.data1, ev.window.data2);
+            }
+#endif
+        }
+        SDL_Delay(20);
+    }
+    return M11_ENTRANCE_COMMAND_NONE;
+}
+
+static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
+                                             unsigned char* framebuffer) {
+    int waitResult;
+    if (!gameView || !framebuffer) return M11_ENTRANCE_COMMAND_NONE;
+    if (!m11_draw_entrance_credits_asset(gameView, framebuffer)) {
+        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                              0, 0, M11_FB_WIDTH, M11_FB_HEIGHT, 1);
+        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                              36, 88, 248, 24, 15);
+        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                              40, 92, 240, 16, 0);
+    }
+    M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
+                                                M11_FB_WIDTH,
+                                                M11_FB_HEIGHT,
+                                                VGA_PALETTE_PC34_SPECIAL_CREDITS);
+    waitResult = m11_wait_for_entrance_credits_done();
+    return waitResult;
+}
+
 static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
                                                  unsigned char* framebuffer,
                                                  const unsigned char* dungeonFrame,
@@ -559,14 +649,6 @@ static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
     m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y, 1, h, 13);
     m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x + w - 1, y, 1, h, 0);
 }
-
-typedef enum {
-    M11_ENTRANCE_COMMAND_QUIT = -1,
-    M11_ENTRANCE_COMMAND_NONE = 0,
-    M11_ENTRANCE_COMMAND_ENTER = 1,
-    M11_ENTRANCE_COMMAND_RESUME = 2,
-    M11_ENTRANCE_COMMAND_CREDITS = 3
-} M11_EntranceCommand;
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
 
@@ -728,6 +810,12 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
                 return M11_ENTRANCE_COMMAND_RESUME;
             }
             if (cmd == M11_ENTRANCE_COMMAND_CREDITS) {
+                int creditsResult =
+                    m11_show_redmcsb_entrance_credits(gameView, framebuffer);
+                if (creditsResult == M11_ENTRANCE_COMMAND_QUIT) {
+                    free(dungeonFrame);
+                    return M11_ENTRANCE_COMMAND_QUIT;
+                }
                 sourceStep = 0U;
                 continue;
             }

@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 DM1 V1 entrance credits button handoff: the M11 entrance credits command now renders GRAPHICS.DAT C005 with the PC34 credits palette, waits up to the ReDMCSB `F0442` 1800-tick input window, and returns to the entrance command loop instead of immediately restarting the entrance screen without showing credits. Verification: focused M11/entrance build plus `test_entrance_runtime_dispatch_source_lock`, `test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat`, and `test_entrance_door_opening_composite_pc34_compat` pass locally.
+
 - ✅ 2026-07-05 DM1 V1 entrance Return/KP Enter gate: the M11 entrance wait loop now routes fresh Return and keypad Enter through the ReDMCSB PC/F20 `ENTRANCE.C:850-883` carriage-return path to `C001_MODE_LOAD_DUNGEON`, while keeping Space inert and preserving ESC/Q quit plus source-locked pointer button routes. Verification: `test_entrance_runtime_dispatch_source_lock`, `test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat`, and `test_entrance_door_opening_composite_pc34_compat` pass locally in `build-codex-system-csb-bg`.
 
 - ✅ 2026-07-05 CSB M11 entrance startup gate: new CSB starts now open a source-locked M11 entrance screen before dungeon input, keep the CSB runtime loaded behind it, block idle runtime ticks until Enter/Action confirms, and skip the gate for explicit save resumes. Verification: `test_csb_v1_m11_startup_resume_gate` covers visible entrance draw, tick blocking, confirm dismissal, and resume skip with local hash-verified CSB data.
