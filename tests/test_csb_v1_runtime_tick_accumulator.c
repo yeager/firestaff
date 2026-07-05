@@ -2417,6 +2417,57 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     dungeon.square_first_thing_count = 1;
     dungeon.thing_data_bases[4] = 82;
     dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, 0xfffeu);
+    raw[86] = 2u;      /* Giggler: low F0190 fear resistance. */
+    raw[87] = 0x04u;   /* slot0 cell0, slot1 cell1 */
+    test_put_le16(raw, 88, 1u);
+    test_put_le16(raw, 90, 500u);
+    test_put_le16(raw, 96, (uint16_t)((1u << 5) | 6u)); /* two C6 creatures */
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_seed = 0xC5B10700u;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 80;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.currentTick = 0;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    slot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input,
+              &profile.explosions,
+              &slot,
+              &first_advance) == 1 &&
+              slot == 0,
+          "CSB C25 F0190 fear fixture creates an explosion slot");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 F0190 fear fixture reaches the scheduled boundary");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C25 F0190 fear fixture dispatches through the explosion handler");
+    group_flags = (uint16_t)(raw[96] | ((uint16_t)raw[97] << 8));
+    CHECK(((group_flags >> 5) & 0x03u) == 0u &&
+              (group_flags & 0x000fu) == 5u,
+          "C25 group partial kill applies F0190 fear flee behavior");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 82;
+    dungeon.thing_type_counts[4] = 1;
     dungeon.thing_data_bases[6] = 98;
     dungeon.thing_type_counts[6] = 4;
     dungeon.thing_data_bases[5] = 114;

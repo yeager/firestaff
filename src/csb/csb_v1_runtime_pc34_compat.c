@@ -4534,6 +4534,53 @@ static int csb_v1_runtime_f0190_smoke_attack_for_creature(int creature_type)
     return 255;
 }
 
+static void csb_v1_runtime_apply_f0190_fear_after_partial_kill(
+    CSB_V1_RuntimeProfile *profile,
+    uint8_t *group_record,
+    uint16_t *inout_flags,
+    int creature_type,
+    int creature_count,
+    int level,
+    int map_x,
+    int map_y,
+    struct RngState_Compat *rng)
+{
+    const struct CreatureBehaviorProfile_Compat *creature_profile;
+    struct DM1GroupBehaviorContext_Compat ctx;
+    int should_flee = 0;
+    int flee_delay = 0;
+
+    if (!profile || !group_record || !inout_flags || !rng ||
+        level != profile->current_level ||
+        ((*inout_flags) & 0x000Fu) != 6u) {
+        return;
+    }
+    creature_profile = CREATURE_GetProfile_Compat(creature_type);
+    if (!creature_profile) return;
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.currentGroupMapX = map_x;
+    ctx.currentGroupMapY = map_y;
+    ctx.creatureType = creature_type;
+    ctx.creatureInfo.properties = creature_profile->properties;
+
+    /* ReDMCSB GROUP.C F0190 lines 887-890 tests fear only for attacking
+     * groups on the party map.  The original also stores DelayFleeingFromTarget
+     * on ACTIVE_GROUP; Firestaff's current CSB bridge owns the real-format
+     * GROUP record here, so this slice commits the source C5 flee behavior
+     * and leaves full active-group delay state for the broader AI runtime. */
+    if (F0821_DM1_GROUP_ShouldFrighten_Compat(
+            &ctx,
+            creature_count,
+            rng,
+            &should_flee,
+            &flee_delay) &&
+        should_flee) {
+        (void)flee_delay;
+        *inout_flags = (uint16_t)((*inout_flags & ~(uint16_t)0x000Fu) | 5u);
+        csb_v1_runtime_write_u16(group_record + 14, *inout_flags);
+    }
+}
+
 static void csb_v1_runtime_spawn_f0190_death_smoke(
     CSB_V1_RuntimeProfile *profile,
     int creature_type,
@@ -4579,7 +4626,8 @@ static void csb_v1_runtime_pack_dead_group_creature(
     int level,
     int map_x,
     int map_y,
-    int creature_index)
+    int creature_index,
+    struct RngState_Compat *rng)
 {
     uint16_t flags;
     int raw_count;
@@ -4657,6 +4705,16 @@ static void csb_v1_runtime_pack_dead_group_creature(
             map_x,
             map_y,
             creature_index);
+        csb_v1_runtime_apply_f0190_fear_after_partial_kill(
+            profile,
+            group_record,
+            &flags,
+            creature_type,
+            creature_count,
+            level,
+            map_x,
+            map_y,
+            rng);
     }
 
     /* ReDMCSB GROUP.C F0190 lines 892-905 compacts Health, directions,
@@ -4756,7 +4814,8 @@ static int csb_v1_runtime_apply_group_fall_damage(
                 map_index,
                 map_x,
                 map_y,
-                i);
+                i,
+                &rng);
             if (creature_count <= 1) {
                 return 2;
             }
@@ -4857,7 +4916,8 @@ static int csb_v1_runtime_apply_explosion_group_action(
                         action->targetMapIndex,
                         action->targetMapX,
                         action->targetMapY,
-                        i);
+                        i,
+                        rng);
                     creature_count--;
                     if (creature_count <= 0) {
                         applied++;
@@ -5011,6 +5071,7 @@ static int csb_v1_runtime_apply_projectile_group_action(
     int guard;
     int thing_type;
     int thing_size;
+    struct RngState_Compat rng;
 
     if (!profile || !action || !projectile ||
         action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP ||
@@ -5025,6 +5086,13 @@ static int csb_v1_runtime_apply_projectile_group_action(
         action->targetMapX,
         action->targetMapY);
     if (first_thing < 0) return 0;
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)(projectile->slotIndex & 0xFF) << 4) ^
+            ((uint32_t)(projectile->mapX & 0xFF) << 12) ^
+            ((uint32_t)(projectile->mapY & 0xFF) << 20) ^
+            0xF0190u);
 
     for (guard = 0, thing = first_thing;
          guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
@@ -5075,7 +5143,8 @@ static int csb_v1_runtime_apply_projectile_group_action(
                     action->targetMapIndex,
                     action->targetMapX,
                     action->targetMapY,
-                    creature_index);
+                    creature_index,
+                    &rng);
                 return 1;
             }
 
