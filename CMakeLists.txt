@@ -850,6 +850,8 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_pressure_plate.c
+    src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
@@ -880,6 +882,8 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_pressure_plate.c
+    src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
@@ -906,6 +910,8 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v2_touch_controller_affordance.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_pressure_plate.c
+    src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
@@ -933,6 +939,8 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_pressure_plate.c
+    src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
@@ -1087,6 +1095,8 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_pressure_plate.c
+    src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
@@ -1121,6 +1131,8 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_pressure_plate.c
+    src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
@@ -1144,6 +1156,8 @@ add_test(
 add_executable(firestaff_dm2_v2_smooth_movement_probe
     probes/firestaff_dm2_v2_smooth_movement_probe.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_pressure_plate.c
+    src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
@@ -1875,6 +1889,8 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v2_viewport_renderer.c
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_pressure_plate.c
+    src/dm2/dm2_v1_trigger.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
     src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_dm2_v22_viewport_swap_wireup_probe PRIVATE
@@ -6271,6 +6287,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_movement_collision_gate_pc34_compat.c
         src/dm2/dm2_v1_world_model.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_projectile_step_pc34_compat.c
@@ -6297,6 +6315,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_seed_regression.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
@@ -6325,6 +6345,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
@@ -7305,6 +7327,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_phase_gate.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_weather.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c

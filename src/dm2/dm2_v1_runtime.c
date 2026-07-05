@@ -19,10 +19,12 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_trigger.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -431,6 +433,16 @@ int dm2_v1_runtime_move(int dir) {
         }
         gs->party_x = nx;
         gs->party_y = ny;
+        dm2_v1_trigger_signal_square_entered(nx, ny, rt->dungeon_level);
+        dm2_v1_plate_set_party_position(nx, ny, rt->dungeon_level);
+        for (int i = 1; i <= dm2_v1_plate_get_builtin_count(); ++i) {
+            const DM2_V1_PressurePlate *plate =
+                dm2_v1_plate_get_builtin(i);
+            if (plate && plate->map_x == nx && plate->map_y == ny &&
+                plate->map_level == rt->dungeon_level) {
+                dm2_v1_plate_check(i, rt->tick_count);
+            }
+        }
     }
 
     /* Fire smooth turn callback when facing changes.

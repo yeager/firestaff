@@ -314,7 +314,7 @@ static int test_time_elapsed_first_call_uses_now(void) {
     int f1 = dm2_v1_trigger_tick(50000);
     int count_after_first = dm2_v1_trigger_get_fire_count(5);
     int f2 = dm2_v1_trigger_tick(70000);
-    return count_after_first == 0 && f2 >= 1
+    return f1 >= 0 && count_after_first == 0 && f2 >= 1
         && dm2_v1_trigger_get_fire_count(5) == 1;
 }
 
