@@ -10,9 +10,11 @@
  */
 
 #include "m11_game_view.h"
+#include "nexus_v1_engine.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_save.h"
+#include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_world.h"
 
 #include <stdio.h>
@@ -125,6 +127,38 @@ static void fill_nexus_spec(M11_GameLaunchSpec* spec, const char* data_dir) {
     spec->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
 }
 
+static void expect_face_loader_counts_real_vs_fallback(void) {
+    Nexus_UI_Manager ui;
+    unsigned char face_bytes[48 * 48];
+    unsigned char short_bytes[16];
+    int i;
+
+    for (i = 0; i < (int)sizeof(face_bytes); ++i) {
+        face_bytes[i] = (unsigned char)((i % 31) + 1);
+    }
+    memset(short_bytes, 3, sizeof(short_bytes));
+    nexus_ui_manager_init(&ui);
+    expect_true(nexus_ui_load_faces(&ui,
+                                    face_bytes,
+                                    0,
+                                    (int)sizeof(face_bytes),
+                                    0,
+                                    48,
+                                    48,
+                                    NULL) > 0,
+                "Nexus FACE loader reports real portrait copy");
+    expect_true(nexus_ui_load_faces(&ui,
+                                    short_bytes,
+                                    0,
+                                    (int)sizeof(short_bytes),
+                                    1,
+                                    48,
+                                    48,
+                                    NULL) == 0,
+                "Nexus FACE loader reports fallback portrait separately");
+    nexus_ui_manager_free(&ui);
+}
+
 static void expect_failed_start_is_inactive(const char* data_dir,
                                             const char* expected_status) {
     M11_GameViewState view;
@@ -168,6 +202,8 @@ int main(void) {
     char partial_dm_bin[512];
     char real_fallback[512];
     const char* real_dir;
+
+    expect_face_loader_counts_real_vs_fallback();
 
     if (make_temp_root(empty_root)) {
         expect_failed_start_is_inactive(empty_root, "NEXUS DATA ERROR");
@@ -230,8 +266,14 @@ int main(void) {
             expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
                         "real Nexus champion selection draws a nonblank frame");
             expect_true(view.nexusEngine &&
-                            view.nexusEngine->ui_faces_loaded > 0,
+                            nexus_v1_startup_faces_loaded_count(view.nexusEngine) > 0,
                         "real Nexus startup loads FACE.BIN champion portraits");
+            expect_true(view.nexusEngine &&
+                            nexus_v1_startup_faces_expected_count(view.nexusEngine) ==
+                                view.nexusEngine->champions.champion_count &&
+                            nexus_v1_startup_faces_fallback_count(view.nexusEngine) == 0 &&
+                            nexus_v1_startup_faces_ready(view.nexusEngine),
+                        "real Nexus startup FACE.BIN coverage matches roster without fallback");
             expect_true(count_nonzero_region(framebuffer, 320, 200,
                                              22, 38, 10, 10) > 0,
                         "real Nexus champion selection draws FACE.BIN portrait pixels");

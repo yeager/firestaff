@@ -64,6 +64,8 @@ struct Nexus_V1_Engine {
     /* Startup UI surfaces. FACE.BIN carries the champion select portraits. */
     Nexus_UI_Manager ui;
     int ui_faces_loaded;
+    int ui_faces_expected;
+    int ui_faces_fallback;
 
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;
@@ -110,5 +112,10 @@ void nexus_v1_tick(Nexus_V1_Engine *engine);
 
 /* Shutdown and free all resources */
 void nexus_v1_shutdown(Nexus_V1_Engine *engine);
+
+int nexus_v1_startup_faces_loaded_count(const Nexus_V1_Engine *engine);
+int nexus_v1_startup_faces_expected_count(const Nexus_V1_Engine *engine);
+int nexus_v1_startup_faces_fallback_count(const Nexus_V1_Engine *engine);
+int nexus_v1_startup_faces_ready(const Nexus_V1_Engine *engine);
 
 #endif /* NEXUS_V1_ENGINE_H */
