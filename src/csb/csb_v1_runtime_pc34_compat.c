@@ -8866,7 +8866,7 @@ int csb_v1_runtime_export_csbwin_champion_summaries(
     out_summary->num_character = (uint16_t)champion_count;
     out_summary->party_x = (uint16_t)(profile->party_state.PartyMapX & 0xffff);
     out_summary->party_y = (uint16_t)(profile->party_state.PartyMapY & 0xffff);
-    out_summary->party_level = (uint16_t)(profile->party_z & 0xffff);
+    out_summary->party_level = (uint16_t)(profile->current_level & 0xffff);
     out_summary->party_facing =
         (uint16_t)(profile->party_state.PartyDirection & 3);
     out_summary->hand_char =

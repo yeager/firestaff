@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-05 CSBWin export current-level follow-up: current local work now writes CSBWin GAMEBLOCK2/core-save `party_level` from CSB runtime `current_level` instead of stale `party_z`, so CSBWin export after stairs/pits/teleporters carries the active map level. Remaining CSBWin writeback work is still broader live body-state writeback beyond bounded champion/timer/ITEM16/leader-hand fields, plus original CSBWin byte roundtrip.
+
 - 🔧 2026-07-05 CSB save/resume current-level follow-up: current local work now also publishes raw `CSBGAME` roster-import and CSBWin GAMEBLOCK2/resume `party_level` handoffs into the dungeon-layer current-level singleton, not only the runtime profile. Remaining CSB save/resume level work is broader real-route proof with imported CSBGAME/CSBWin saves that cross stairs/pits/teleporters, plus original-byte roundtrip coverage.
 
 - 🔧 2026-07-05 CSB M11 current-level mirror follow-up: current local work now mirrors CSB runtime `current_level` through M11 startup/resume, input bridge sync, quicksave, quickload, idle ticks, and the runtime save-image restore path, so level-changing CSB movement/load state does not leave M11's public CSB state or dungeon singleton at an old map. Remaining CSB level-state work is broader real-route proof with stairs/pits/teleporters under package/runtime play, plus original CSBGAME/CSBWin byte-roundtrip coverage.
