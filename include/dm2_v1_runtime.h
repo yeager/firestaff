@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include "dm2_v1_boot.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_weather.h"
 
 #ifdef __cplusplus
@@ -68,6 +69,9 @@ int  dm2_v1_runtime_get_projectile_drain(DM2_V1_DrainedProjectile **out_list);
 int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                                   uint8_t *framebuffer, int fb_stride,
                                   int view_w, int view_h);
+void dm2_v1_runtime_set_viewport_asset_provider(
+    DM2_V1_ViewportAssetFetch fetch,
+    void *user);
 int dm2_v1_runtime_last_asset_floor_ceiling_count(void);
 int dm2_v1_runtime_last_fallback_floor_ceiling_count(void);
 

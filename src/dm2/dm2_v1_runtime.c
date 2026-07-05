@@ -53,6 +53,9 @@ typedef struct {
     DM2_V2_MoveCallback  move_callback;
     DM2_V2_TurnCallback  turn_callback;
     DM2_V2_StairsCallback stairs_callback;
+    /* Startup/render asset boundary owned by the runtime handoff. */
+    DM2_V1_ViewportAssetFetch viewport_asset_fetch;
+    void *viewport_asset_user;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -212,6 +215,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.move_callback  = NULL;
     g_dm2_runtime.turn_callback  = NULL;
     g_dm2_runtime.stairs_callback = NULL;
+    g_dm2_runtime.viewport_asset_fetch = NULL;
+    g_dm2_runtime.viewport_asset_user = NULL;
 }
 
 int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
@@ -375,6 +380,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_time(
         &viewport,
         (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       rt->viewport_asset_fetch,
+                                       rt->viewport_asset_user);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
     g_dm2_last_asset_floor_ceiling_count =
@@ -383,6 +391,13 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.fallback_floor_ceiling_drawn_count;
 
     return 0;
+}
+
+void dm2_v1_runtime_set_viewport_asset_provider(
+    DM2_V1_ViewportAssetFetch fetch,
+    void *user) {
+    g_dm2_runtime.viewport_asset_fetch = fetch;
+    g_dm2_runtime.viewport_asset_user = user;
 }
 
 int dm2_v1_runtime_last_asset_floor_ceiling_count(void) {

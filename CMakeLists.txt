@@ -856,7 +856,7 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_phase3_hud_overlay_probe
-    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_phase3_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -888,7 +888,7 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_hud_runtime_probe
-    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_hud_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -916,7 +916,7 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_touch_runtime_probe
-    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m10 m)
+    PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_touch_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -945,7 +945,7 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_lighting_runtime_probe
-    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_lighting_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -1101,7 +1101,7 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_m11_game_loop_wireup_probe
-    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m10 m)
+    PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_m11_game_loop_wireup_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -1138,7 +1138,7 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm1v2/dm1_v2_anim_timing_pc34.c
     src/dm2/dm2_v2_interaction_feedback.c)
 target_link_libraries(firestaff_dm2_v2_verification_suite_probe
-    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m10 m)
+    PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_verification_suite_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -1164,7 +1164,7 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
 target_include_directories(firestaff_dm2_v2_smooth_movement_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(firestaff_dm2_v2_smooth_movement_probe
-    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -1897,7 +1897,7 @@ target_include_directories(firestaff_dm2_v22_viewport_swap_wireup_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(firestaff_dm2_v22_viewport_swap_wireup_probe
-    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m12 firestaff_m10 m)
+    PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m12 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v22_viewport_swap_wireup_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -6299,7 +6299,7 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
-    target_link_libraries(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE firestaff_m10 m)
+    target_link_libraries(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -6325,7 +6325,7 @@ if(BUILD_TESTING)
     target_include_directories(test_dm2_v1_weather_seed_regression PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v1_weather_seed_regression PRIVATE firestaff_m10)
+    target_link_libraries(test_dm2_v1_weather_seed_regression PRIVATE firestaff_dm2 firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_weather_seed_regression PRIVATE -Wall -Wextra -O2)
     endif()
@@ -6355,7 +6355,7 @@ if(BUILD_TESTING)
     target_include_directories(test_dm2_v1_runtime_handoff_smoke PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v1_runtime_handoff_smoke PRIVATE firestaff_m10)
+    target_link_libraries(test_dm2_v1_runtime_handoff_smoke PRIVATE firestaff_dm2 firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_runtime_handoff_smoke PRIVATE -Wall -Wextra -O2)
     endif()
@@ -7336,7 +7336,7 @@ if(BUILD_TESTING)
     target_include_directories(test_dm2_v2_smooth_runtime_binding PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v2_smooth_runtime_binding PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    target_link_libraries(test_dm2_v2_smooth_runtime_binding PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v2_smooth_runtime_binding PRIVATE -Wall -Wextra -O2)
     endif()
