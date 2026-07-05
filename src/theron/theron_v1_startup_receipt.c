@@ -588,6 +588,26 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
             }
         }
     }
+    {
+        Theron_Track02StartupRosterNameCatalog roster_catalog;
+        if (theron_v1_track02_catalog_startup_roster_names(
+                data,
+                size,
+                expected_md5,
+                &roster_catalog) == THERON_TRACK02_SIGNAL_OK) {
+            size_t i;
+            receipt->startup_roster_name_count =
+                (uint32_t)roster_catalog.name_count;
+            receipt->startup_roster_overflow_count =
+                (uint32_t)roster_catalog.overflow_count;
+            for (i = 0u; i < roster_catalog.name_count; ++i) {
+                if (roster_catalog.names[i].title_offset_valid &&
+                    roster_catalog.names[i].title[0] != '\0') {
+                    ++receipt->startup_roster_title_count;
+                }
+            }
+        }
+    }
 
     if (signal.anchor_count > 0u) {
         Theron_V1_Level initial_level;
@@ -735,6 +755,12 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->startup_text_jp_roster_count), h);
     h = fnv1a_32(&receipt->startup_text_marker_overflow_count,
                  sizeof(receipt->startup_text_marker_overflow_count), h);
+    h = fnv1a_32(&receipt->startup_roster_name_count,
+                 sizeof(receipt->startup_roster_name_count), h);
+    h = fnv1a_32(&receipt->startup_roster_title_count,
+                 sizeof(receipt->startup_roster_title_count), h);
+    h = fnv1a_32(&receipt->startup_roster_overflow_count,
+                 sizeof(receipt->startup_roster_overflow_count), h);
     h = fnv1a_32(&receipt->initial_candidate_found,
                  sizeof(receipt->initial_candidate_found), h);
     h = fnv1a_32(&receipt->initial_candidate_offset,
@@ -832,6 +858,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "user_initial=%u user_overflow=%u "
                  "startup_text_markers=%u startup_text_us=%u "
                  "startup_text_jp=%u startup_text_overflow=%u "
+                 "startup_roster_names=%u startup_roster_titles=%u "
+                 "startup_roster_overflow=%u "
                  "initial_candidate=%d initial_off=0x%llx "
                  "initial_size=%llu initial_header=%ux%u "
                  "initial_seed=0x%x initial_level=0x%x "
@@ -880,6 +908,9 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned)receipt->startup_text_us_prompt_count,
                  (unsigned)receipt->startup_text_jp_roster_count,
                  (unsigned)receipt->startup_text_marker_overflow_count,
+                 (unsigned)receipt->startup_roster_name_count,
+                 (unsigned)receipt->startup_roster_title_count,
+                 (unsigned)receipt->startup_roster_overflow_count,
                  receipt->initial_candidate_found,
                  (unsigned long long)receipt->initial_candidate_offset,
                  (unsigned long long)receipt->initial_candidate_size,

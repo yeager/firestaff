@@ -189,6 +189,9 @@ typedef struct {
     uint32_t startup_text_us_prompt_count;
     uint32_t startup_text_jp_roster_count;
     uint32_t startup_text_marker_overflow_count;
+    uint32_t startup_roster_name_count;
+    uint32_t startup_roster_title_count;
+    uint32_t startup_roster_overflow_count;
 
     /* ── Track 02 startup-level candidate summary ─────────────── */
     int      initial_candidate_found;
