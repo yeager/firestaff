@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 CSB entrance Resume path validation: M11 now validates `entranceResumeSavePath` against a copied CSB runtime profile before marking the entrance Resume button as available, so invalid/non-loadable paths are cleared and handled as unavailable without mutating the startup runtime behind the entrance. Verification: `test_csb_v1_m11_startup_resume_gate` passes locally with hash-verified CSB data.
+
 - ✅ 2026-07-05 CSB entrance Resume unavailable guard: the CSB M11 entrance Resume command now reports `CSB RESUME UNAVAILABLE` and stays on the source-locked entrance screen when no launcher-validated CSB resume path is available, instead of presenting a dead resume request. Verification: `test_csb_v1_m11_startup_resume_gate` passes locally with hash-verified CSB data.
 
 - ✅ 2026-07-05 DM2 live startup quick-save world-state proof: the M11 DM2 startup gate now proves a live direct-start session with runtime NPC/shop mutations can quick-save `SKSave.dat` and restart from it with mutated gold, reputation, pose, level, outdoor mode, and advanced tick restored into the boot-owned DM2 world/runtime. Verification: `test_dm2_v1_m11_startup_profile_gate` passes locally with hash-verified DM2 PC English data.
