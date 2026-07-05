@@ -531,6 +531,36 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         }
     }
 
+    {
+        Theron_Track02UserDataWindowCatalog catalog;
+        if (theron_v1_track02_catalog_user_data_windows(
+                data,
+                size,
+                expected_md5,
+                &catalog) == THERON_TRACK02_SIGNAL_OK) {
+            size_t i;
+            receipt->user_data_window_count = (uint32_t)catalog.entry_count;
+            receipt->user_data_window_overflow_count =
+                (uint32_t)catalog.overflow_count;
+            for (i = 0u; i < catalog.entry_count; ++i) {
+                switch (catalog.entries[i].role) {
+                case THERON_TRACK02_USER_DATA_WINDOW_BANK_DESCRIPTOR_TABLE:
+                    ++receipt->user_data_window_descriptor_count;
+                    break;
+                case THERON_TRACK02_USER_DATA_WINDOW_POST_BOUNDARY_SPAN:
+                    ++receipt->user_data_window_span_count;
+                    break;
+                case THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE:
+                    ++receipt->user_data_window_initial_count;
+                    break;
+                case THERON_TRACK02_USER_DATA_WINDOW_UNKNOWN:
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
     if (signal.anchor_count > 0u) {
         Theron_V1_Level initial_level;
         Theron_Track02LevelHandoff initial_handoff;
@@ -659,6 +689,16 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->descriptor_first_nonzero_after), h);
     h = fnv1a_32(&receipt->descriptor_all_zero_after,
                  sizeof(receipt->descriptor_all_zero_after), h);
+    h = fnv1a_32(&receipt->user_data_window_count,
+                 sizeof(receipt->user_data_window_count), h);
+    h = fnv1a_32(&receipt->user_data_window_descriptor_count,
+                 sizeof(receipt->user_data_window_descriptor_count), h);
+    h = fnv1a_32(&receipt->user_data_window_span_count,
+                 sizeof(receipt->user_data_window_span_count), h);
+    h = fnv1a_32(&receipt->user_data_window_initial_count,
+                 sizeof(receipt->user_data_window_initial_count), h);
+    h = fnv1a_32(&receipt->user_data_window_overflow_count,
+                 sizeof(receipt->user_data_window_overflow_count), h);
     h = fnv1a_32(&receipt->initial_candidate_found,
                  sizeof(receipt->initial_candidate_found), h);
     h = fnv1a_32(&receipt->initial_candidate_offset,
@@ -752,6 +792,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "roles=z%u/pre%u/post%u/desc%u desc_entry=%d "
                  "desc_prev=0x%x desc_prev_rts=%d "
                  "desc_first_after=0x%llx desc_zero_after=%d "
+                 "user_windows=%u user_desc=%u user_span=%u "
+                 "user_initial=%u user_overflow=%u "
                  "initial_candidate=%d initial_off=0x%llx "
                  "initial_size=%llu initial_header=%ux%u "
                  "initial_seed=0x%x initial_level=0x%x "
@@ -791,6 +833,11 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  receipt->descriptor_byte_before_is_rts,
                  (unsigned long long)receipt->descriptor_first_nonzero_after,
                  receipt->descriptor_all_zero_after,
+                 (unsigned)receipt->user_data_window_count,
+                 (unsigned)receipt->user_data_window_descriptor_count,
+                 (unsigned)receipt->user_data_window_span_count,
+                 (unsigned)receipt->user_data_window_initial_count,
+                 (unsigned)receipt->user_data_window_overflow_count,
                  receipt->initial_candidate_found,
                  (unsigned long long)receipt->initial_candidate_offset,
                  (unsigned long long)receipt->initial_candidate_size,

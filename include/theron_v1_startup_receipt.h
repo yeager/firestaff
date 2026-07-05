@@ -108,11 +108,15 @@ typedef enum {
  *                                        9 descriptor windows (zero/pre/post/
  *                                        descriptor-table only; no graphics or
  *                                        dungeon semantic claim)
-     *   - initial_candidate_*              : hash/anchor-gated startup level
-     *                                        candidate receipt when raw Track 02
-     *                                        exposes the bounded 32x27 payload,
-     *                                        including both raw and logical
-     *                                        MODE1/2048 user-data offsets
+ *   - user_data_window_*               : role-tagged logical MODE1/2048 window
+ *                                        catalog counts for raw JP/US Track 02
+ *                                        (descriptor/span/initial-level only;
+ *                                        no art/text/palette/object claim)
+ *   - initial_candidate_*              : hash/anchor-gated startup level
+ *                                        candidate receipt when raw Track 02
+ *                                        exposes the bounded 32x27 payload,
+ *                                        including both raw and logical
+ *                                        MODE1/2048 user-data offsets
  *   - startup_mirror_*                 : public Soul Room mirror contract
  *                                        from theron_v1_startup_flow.c, so
  *                                        receipt/probe consumers can verify
@@ -172,6 +176,13 @@ typedef struct {
     int      descriptor_byte_before_is_rts;
     uint64_t descriptor_first_nonzero_after;
     int      descriptor_all_zero_after;
+
+    /* ── Track 02 logical user-data window catalog summary ────── */
+    uint32_t user_data_window_count;
+    uint32_t user_data_window_descriptor_count;
+    uint32_t user_data_window_span_count;
+    uint32_t user_data_window_initial_count;
+    uint32_t user_data_window_overflow_count;
 
     /* ── Track 02 startup-level candidate summary ─────────────── */
     int      initial_candidate_found;

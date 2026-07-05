@@ -282,6 +282,12 @@ static void check_placeholder_fields(void) {
     check(r.initial_candidate_user_data_offset_valid == 0 &&
           r.initial_candidate_user_data_offset == 0u,
           "placeholder leaves initial user-data offset empty");
+    check(r.user_data_window_count == 0u &&
+          r.user_data_window_descriptor_count == 0u &&
+          r.user_data_window_span_count == 0u &&
+          r.user_data_window_initial_count == 0u &&
+          r.user_data_window_overflow_count == 0u,
+          "placeholder leaves user-data window catalog empty");
     check_startup_mirror_summary(&r, "placeholder startup");
     check_startup_chapter_placeholder(&r, "placeholder startup");
 
@@ -562,6 +568,19 @@ static void check_real_asset_path(void) {
                   r.descriptor_role_post_data_count +
                   r.descriptor_role_descriptor_table_count == 9u,
                   "real receipt descriptor role summary covers all 9 entries");
+            if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0 ||
+                strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
+                check(r.user_data_window_count == 7u,
+                      "raw Track 02 receipt has 7 logical user-data windows");
+                check(r.user_data_window_descriptor_count == 3u,
+                      "raw Track 02 receipt has 3 descriptor user-data windows");
+                check(r.user_data_window_span_count == 3u,
+                      "raw Track 02 receipt has 3 span user-data windows");
+                check(r.user_data_window_initial_count == 1u,
+                      "raw Track 02 receipt has 1 initial-candidate user-data window");
+                check(r.user_data_window_overflow_count == 0u,
+                      "raw Track 02 receipt has no user-data window overflow");
+            }
             check(r.descriptor_window_entry_index >= 0 &&
                   r.descriptor_window_entry_index < 9,
                   "real receipt descriptor window index is in range");
@@ -620,6 +639,8 @@ static void check_real_asset_path(void) {
                                    "raw Track 02 rendered line names bind status");
                 check_str_contains(line, "initial_user_valid=1",
                                    "raw Track 02 rendered line marks user-data offset valid");
+                check_str_contains(line, "user_windows=7",
+                                   "raw Track 02 rendered line names user-data catalog count");
             }
         } else {
             check(r.initial_candidate_found == 0,
