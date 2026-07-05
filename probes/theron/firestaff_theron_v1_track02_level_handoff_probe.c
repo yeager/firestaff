@@ -271,6 +271,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
               (int)candidate_height);
     check_int("synthetic initial candidate start x", level.start_x, 1);
     check_int("synthetic initial candidate start y", level.start_y, 1);
+    check_int("synthetic initial candidate start dir", level.start_dir, 1);
 
     candidate[4] = 0x11u; /* corrupt the source-locked seed gate */
     status = theron_v1_track02_load_initial_level_candidate(
@@ -418,7 +419,7 @@ static void probe_real_data_initial_candidate(const char *label,
         0,
         &level,
         &handoff);
-    printf("%s initial candidate: status=%s map=%d offset=0x%zx size=%zu header=%ux%u seed=0x%08x start=(%d,%d)\n",
+    printf("%s initial candidate: status=%s map=%d offset=0x%zx size=%zu header=%ux%u seed=0x%08x start=(%d,%d,%d)\n",
            label,
            theron_v1_track02_level_handoff_status_name(status),
            handoff.map_status,
@@ -428,7 +429,8 @@ static void probe_real_data_initial_candidate(const char *label,
            (unsigned)handoff.header_height,
            (unsigned)handoff.header_seed,
            level.start_x,
-           level.start_y);
+           level.start_y,
+           level.start_dir);
 
     check_int("real initial candidate status",
               status,
@@ -440,6 +442,9 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate loaded", handoff.loaded, 1);
     check_int("real initial candidate level width", level.width, 32);
     check_int("real initial candidate level height", level.height, 27);
+    check_int("real initial candidate start x", level.start_x, 2);
+    check_int("real initial candidate start y", level.start_y, 1);
+    check_int("real initial candidate start dir", level.start_dir, 1);
 
     free(data);
 }
