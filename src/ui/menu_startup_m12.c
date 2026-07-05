@@ -3281,7 +3281,7 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                     if (!FSP_DirExists(defaultOriginals)) {
                         (void)FSP_CreateDirectoryRecursive(defaultOriginals);
                     }
-                    (void)M12_StartupMenu_SetDataDirectory(state, defaultOriginals);
+                    (void)m12_begin_async_data_dir_scan(state, defaultOriginals);
                 }
             } else {
                 m12_begin_data_dir_browse(state);
