@@ -359,65 +359,293 @@ static uint8_t *dm2_decode_uncompressed_image(const uint8_t *raw,
     return NULL;
 }
 
-/* ── IMG3 decompression (4-bit nibble → pixel bytes) ─────────────── */
-/*
- * dm2_img3_decode — decode IMG3 format to 8-bit pixel buffer.
- * IMG3 format: two pixels per byte (4 bits each), with escape sequences.
- * Escape: nibble 15 followed by:
- *   15 → repeat count (next nibble = count, next = value)
- *   0-14 → literal run of that many pixels with value from next nibble
- *
- * Source: ReDMCSB DUNGEON.C — IMG3 decoder (F0687, F0688, F0689)
- */
-static DM2_MAYBE_UNUSED uint8_t *dm2_img3_decode(const uint8_t *src, size_t src_size,
-                                                  int *out_width, int *out_height,
-                                                  int alloc_w, int alloc_h) {
-    /* IMG3 output is typically 64x64 or 128x128 for wall/floor tiles.
-     * DM2 uses 64x64 as standard tile size for indoor levels.
-     * Outdoor level tiles (sky/ground) are larger (256x128 or 640x200).
-     * Source: SKULL.ASM T560 viewport rendering */
-    int w = alloc_w > 0 ? alloc_w : 64;
-    int h = alloc_h > 0 ? alloc_h : 64;
-    uint8_t *pixels = malloc((size_t)w * (size_t)h);
-    if (!pixels) return NULL;
-    memset(pixels, 0, (size_t)w * (size_t)h);
+static int dm2_img3_read_nibble(const uint8_t *raw,
+                                size_t raw_size,
+                                size_t *cursor,
+                                uint8_t *out) {
+    size_t byte_pos;
 
-    int src_idx = 0;
-    int dst_idx = 0;
-    int count_remaining = 0;
-    int repeat_value = 0;
+    if (!raw || !cursor || !out) return 0;
+    byte_pos = *cursor >> 1;
+    if (byte_pos >= raw_size) return 0;
+    *out = (uint8_t)(((*cursor & 1u) != 0u)
+                     ? (raw[byte_pos] & 0x0fu)
+                     : ((raw[byte_pos] >> 4) & 0x0fu));
+    ++(*cursor);
+    return 1;
+}
 
-    while (dst_idx < w * h && src_idx < (int)src_size) {
-        if (count_remaining > 0) {
-            pixels[dst_idx++] = (uint8_t)repeat_value;
-            count_remaining--;
-            continue;
+static int dm2_img3_read_duration(const uint8_t *raw,
+                                  size_t raw_size,
+                                  size_t *cursor,
+                                  int *out_duration) {
+    uint8_t n;
+
+    if (!dm2_img3_read_nibble(raw, raw_size, cursor, &n)) return 0;
+    if (n == 0x0f) {
+        uint8_t hi;
+        uint8_t lo;
+        int v;
+        if (!dm2_img3_read_nibble(raw, raw_size, cursor, &hi) ||
+            !dm2_img3_read_nibble(raw, raw_size, cursor, &lo)) {
+            return 0;
         }
+        v = ((int)hi << 4) | (int)lo;
+        if (v == 0xff) {
+            uint8_t a;
+            uint8_t b;
+            uint8_t c;
+            uint8_t d;
+            if (!dm2_img3_read_nibble(raw, raw_size, cursor, &a) ||
+                !dm2_img3_read_nibble(raw, raw_size, cursor, &b) ||
+                !dm2_img3_read_nibble(raw, raw_size, cursor, &c) ||
+                !dm2_img3_read_nibble(raw, raw_size, cursor, &d)) {
+                return 0;
+            }
+            v = ((int)a << 12) | ((int)b << 8) | ((int)c << 4) | (int)d;
+            *out_duration = v;
+            return v > 0;
+        }
+        *out_duration = v + 0x11;
+        return 1;
+    }
+    *out_duration = (int)n + 2;
+    return 1;
+}
 
-        int nibble = (src_idx % 2 == 0)
-                     ? (src[src_idx / 2] >> 4) & 0x0F
-                     : src[src_idx / 2] & 0x0F;
-
-        if (nibble == 15) {
-            src_idx++;
-            if (src_idx >= (int)src_size) break;
-            int count_nibble = (src_idx % 2 == 0)
-                               ? (src[src_idx / 2] >> 4) & 0x0F
-                               : src[src_idx / 2] & 0x0F;
-            src_idx++;
-            if (src_idx >= (int)src_size) break;
-            repeat_value = (src_idx % 2 == 0)
-                           ? (src[src_idx / 2] >> 4) & 0x0F
-                           : src[src_idx / 2] & 0x0F;
-            src_idx++;
-            count_remaining = count_nibble;
+static int dm2_img3_emit_run(uint8_t *padded,
+                             size_t total,
+                             int width,
+                             int even_width,
+                             size_t *pos,
+                             int *line_left,
+                             int count,
+                             uint8_t color,
+                             int copy_previous_line) {
+    while (count > 0) {
+        int n;
+        int i;
+        if (!padded || !pos || !line_left || width <= 0 ||
+            even_width < width || *line_left <= 0) {
+            return 0;
+        }
+        n = count < *line_left ? count : *line_left;
+        if (*pos + (size_t)n > total) return 0;
+        if (copy_previous_line) {
+            /* skproject SKWIN/SkWinCore.cpp DECODE_IMG3_UNDERLAY lines
+             * ~37980-37983 copies the remaining row span for odd-width
+             * partial previous-line runs, then advances only by run length. */
+            int copy_n = n < *line_left ? *line_left : n;
+            if (*pos < (size_t)even_width) return 0;
+            if (*pos + (size_t)copy_n > total) return 0;
+            for (i = 0; i < copy_n; ++i) {
+                padded[*pos + (size_t)i] =
+                    padded[*pos - (size_t)even_width + (size_t)i];
+            }
         } else {
-            pixels[dst_idx++] = (uint8_t)nibble;
+            memset(padded + *pos, color, (size_t)n);
+        }
+        *pos += (size_t)n;
+        *line_left -= n;
+        count -= n;
+        if (*line_left == 0 && *pos < total) {
+            *pos += (size_t)(even_width - width);
+            *line_left = width;
+        }
+    }
+    return 1;
+}
+
+static uint8_t *dm2_decode_img3_c4(const uint8_t *raw,
+                                   size_t raw_size,
+                                   int width,
+                                   int height,
+                                   DM2_ImageFormat *out_format) {
+    int even_width;
+    size_t padded_total;
+    size_t pixel_total;
+    uint8_t *padded;
+    uint8_t *pixels;
+    uint8_t palette[6];
+    size_t cursor = 8u;
+    size_t pos = 0u;
+    int line_left;
+    int i;
+    int y;
+
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE ||
+        width <= 0 || height <= 0) {
+        return NULL;
+    }
+    even_width = (width + 1) & ~1;
+    padded_total = (size_t)even_width * (size_t)height;
+    pixel_total = (size_t)width * (size_t)height;
+    if (padded_total == 0 || padded_total > (size_t)1024u * 1024u) {
+        return NULL;
+    }
+
+    padded = (uint8_t *)calloc(padded_total, 1u);
+    pixels = (uint8_t *)malloc(pixel_total);
+    if (!padded || !pixels) {
+        free(padded);
+        free(pixels);
+        return NULL;
+    }
+
+    for (i = 0; i < 6; ++i) {
+        if (!dm2_img3_read_nibble(raw, raw_size, &cursor, &palette[i])) {
+            free(padded);
+            free(pixels);
+            return NULL;
         }
     }
 
-    if (out_width) *out_width = w;
-    if (out_height) *out_height = h;
+    line_left = width;
+    while (pos < padded_total) {
+        uint8_t command;
+        int code;
+        int run;
+        uint8_t color;
+
+        if (!dm2_img3_read_nibble(raw, raw_size, &cursor, &command)) {
+            free(padded);
+            free(pixels);
+            return NULL;
+        }
+        code = command & 7;
+        if (code == 6) {
+            run = ((command & 8) != 0)
+                      ? 0
+                      : 1;
+            if ((command & 8) != 0 &&
+                !dm2_img3_read_duration(raw, raw_size, &cursor, &run)) {
+                free(padded);
+                free(pixels);
+                return NULL;
+            }
+            if (!dm2_img3_emit_run(padded,
+                                   padded_total,
+                                   width,
+                                   even_width,
+                                   &pos,
+                                   &line_left,
+                                   run,
+                                   0,
+                                   1)) {
+                free(padded);
+                free(pixels);
+                return NULL;
+            }
+            continue;
+        }
+
+        if (code < 6) {
+            color = palette[code];
+        } else if (!dm2_img3_read_nibble(raw, raw_size, &cursor, &color)) {
+            free(padded);
+            free(pixels);
+            return NULL;
+        }
+
+        if ((command & 8) != 0) {
+            if (!dm2_img3_read_duration(raw, raw_size, &cursor, &run)) {
+                free(padded);
+                free(pixels);
+                return NULL;
+            }
+        } else {
+            run = 1;
+        }
+        if (!dm2_img3_emit_run(padded,
+                               padded_total,
+                               width,
+                               even_width,
+                               &pos,
+                               &line_left,
+                               run,
+                               color,
+                               0)) {
+            free(padded);
+            free(pixels);
+            return NULL;
+        }
+    }
+
+    for (y = 0; y < height; ++y) {
+        memcpy(pixels + ((size_t)y * (size_t)width),
+               padded + ((size_t)y * (size_t)even_width),
+               (size_t)width);
+    }
+    free(padded);
+    if (out_format) *out_format = DM2_IMG_FMT_IMG3;
+    return pixels;
+}
+
+static uint8_t *dm2_decode_img9_c8(const uint8_t *raw,
+                                   size_t raw_size,
+                                   int width,
+                                   int height,
+                                   DM2_ImageFormat *out_format) {
+    size_t pixel_total;
+    size_t in_pos = 8u;
+    size_t out_pos = 0u;
+    uint8_t *pixels;
+    uint8_t typex;
+
+    if (!raw || raw_size < 9u || width <= 0 || height <= 0) return NULL;
+    pixel_total = (size_t)width * (size_t)height;
+    if (pixel_total == 0 || pixel_total > (size_t)1024u * 1024u) return NULL;
+    pixels = (uint8_t *)malloc(pixel_total);
+    if (!pixels) return NULL;
+    typex = raw[6];
+
+    while (out_pos < pixel_total) {
+        uint8_t command;
+        int bit;
+        if (in_pos >= raw_size) {
+            free(pixels);
+            return NULL;
+        }
+        command = raw[in_pos++];
+        for (bit = 0; bit < 8 && out_pos < pixel_total; ++bit, command >>= 1) {
+            if ((command & 1u) != 0u) {
+                if (in_pos >= raw_size) {
+                    free(pixels);
+                    return NULL;
+                }
+                pixels[out_pos++] = raw[in_pos++];
+            } else {
+                int a;
+                int b;
+                int negative_offset;
+                int copy_length;
+                int i;
+                if (in_pos + 1u >= raw_size) {
+                    free(pixels);
+                    return NULL;
+                }
+                a = raw[in_pos++];
+                b = raw[in_pos++];
+                if (typex == 2u) {
+                    negative_offset = (a >> 4) + (16 * b);
+                    copy_length = (a & 0x0f) + 3;
+                } else {
+                    negative_offset = (a >> 5) + (8 * b);
+                    copy_length = (a & 0x1f) + 3;
+                }
+                if (negative_offset <= 0 ||
+                    (size_t)negative_offset > out_pos) {
+                    free(pixels);
+                    return NULL;
+                }
+                for (i = 0; i < copy_length && out_pos < pixel_total; ++i) {
+                    pixels[out_pos] = pixels[out_pos - (size_t)negative_offset];
+                    ++out_pos;
+                }
+            }
+        }
+    }
+    if (out_format) *out_format = DM2_IMG_FMT_IMG9;
     return pixels;
 }
 
@@ -553,10 +781,29 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
         return pixels;
     }
 
-    /* Compressed C4/C8 realization remains separate from GDAT indexing.
-     * skproject routes those through DECODE_IMG3_UNDERLAY_LOCAL/DECODE_IMG9
-     * in EXTRACT_GDAT_IMAGE lines 38273-38286. */
-    return NULL;
+    if (offset_y == 31) {
+        pixels = dm2_decode_img9_c8(raw,
+                                    raw_size,
+                                    width,
+                                    height,
+                                    out_format);
+        if (!pixels) return NULL;
+        if (out_width) *out_width = width;
+        if (out_height) *out_height = height;
+        return pixels;
+    }
+
+    /* skproject routes compressed C4 through DECODE_IMG3_UNDERLAY_LOCAL in
+     * EXTRACT_GDAT_IMAGE lines 38273-38286 and DME.h IMG3::Getpf line ~1122. */
+    pixels = dm2_decode_img3_c4(raw,
+                                raw_size,
+                                width,
+                                height,
+                                out_format);
+    if (!pixels) return NULL;
+    if (out_width) *out_width = width;
+    if (out_height) *out_height = height;
+    return pixels;
 }
 
 int dm2_v1_asset_category_entry_count(const DM2_V1_AssetLoader *loader,
@@ -624,6 +871,7 @@ const char *dm2_v1_asset_loader_source_evidence(void) {
         "DM2 V1 Asset Loader — Phase 2 Graphics Ingestion\n"
         "Source: skproject SKWIN/SkWinCore.cpp READ_GRAPHICS_STRUCTURE/LOAD_ENT1/BUILD_GDAT_ENTRY_DATA\n"
         "Source: skproject SKWIN/SkWinCore.cpp QUERY_GDAT_IMAGE_ENTRY_BUFF/EXTRACT_GDAT_IMAGE lines ~38081-38407\n"
+        "Source: skproject SKWIN/SkWinCore.cpp READ_IMG3_DURATION/DECODE_IMG3_UNDERLAY/DECODE_IMG9 lines ~37543-38066\n"
         "Source: skproject SKWIN/DME.h IMG3 lines ~1099-1143\n"
         "Source: skproject SKWIN/defines.h GDAT_CATEGORY_* and dtImage/dtWordValue codes\n"
         "Source: docs/dm2_v1_phase2_data_formats_H2254.md §3 — GRAPHICS.DAT structure\n"
