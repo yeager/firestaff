@@ -492,6 +492,105 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
     return 0;
 }
 
+static int dm2_v1_read_payload_i32_le(const uint8_t *buf,
+                                      size_t size,
+                                      size_t *pos,
+                                      int *out)
+{
+    uint32_t value;
+    if (!buf || !pos || !out || *pos > size || size - *pos < 4u) {
+        return 0;
+    }
+    value = ((uint32_t)buf[*pos + 0u]) |
+            ((uint32_t)buf[*pos + 1u] << 8) |
+            ((uint32_t)buf[*pos + 2u] << 16) |
+            ((uint32_t)buf[*pos + 3u] << 24);
+    *pos += 4u;
+    *out = (int)value;
+    return 1;
+}
+
+int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
+                                           const uint8_t *buf,
+                                           size_t buf_size)
+{
+    DM2_GameStateBlock gs;
+    uint8_t champ_mask[261];
+    size_t pos = 0u;
+    int gs_size;
+    int decoded_champions = 0;
+    int requested_champions;
+
+    if (!session || !buf || buf_size < 12u) {
+        return -1;
+    }
+    if (memcmp(buf, "D2RS", 4) != 0) {
+        return -1;
+    }
+    pos = 4u;
+    if (!dm2_v1_read_payload_i32_le(buf, buf_size, &pos, &gs_size) ||
+        gs_size <= 0 ||
+        (size_t)gs_size > buf_size - pos) {
+        return -1;
+    }
+    memset(&gs, 0, sizeof(gs));
+    if (dm2_suppress_decode_gamestate(buf + pos,
+                                      (size_t)gs_size,
+                                      &gs,
+                                      0) != gs_size) {
+        return -1;
+    }
+    pos += (size_t)gs_size;
+
+    dm2_v1_session_new(session);
+    session->game_tick = gs.dwGameTick;
+    session->rng_seed = gs.dwRandomSeed;
+    session->party_x = gs.wPlayerPosX;
+    session->party_y = gs.wPlayerPosY;
+    session->party_dir = (uint8_t)(gs.wPlayerDir & 3u);
+    session->party_level = (uint8_t)(gs.wPlayerMap & 0xFFu);
+    session->leader_index = (uint8_t)(gs.wChampionLeader & 3u);
+    session->rain_intensity = gs.rain_state[0];
+
+    requested_champions = (int)gs.wChampionsCount;
+    if (requested_champions < 0) requested_champions = 0;
+    if (requested_champions > 4) requested_champions = 4;
+    dm2_suppress_champion_mask(champ_mask);
+    while (pos < buf_size && decoded_champions < requested_champions) {
+        int champ_size;
+        DM2_ChampionRecord *champ =
+            (DM2_ChampionRecord *)session->champion_data[decoded_champions];
+
+        if (!dm2_v1_read_payload_i32_le(buf, buf_size, &pos, &champ_size) ||
+            champ_size <= 0 ||
+            (size_t)champ_size > buf_size - pos) {
+            return -1;
+        }
+        memset(champ, 0, sizeof(*champ));
+        if (dm2_suppress_decode_champion(buf + pos,
+                                         (size_t)champ_size,
+                                         champ_mask,
+                                         champ,
+                                         0) != champ_size) {
+            return -1;
+        }
+        pos += (size_t)champ_size;
+        decoded_champions++;
+    }
+
+    if (decoded_champions <= 0 || pos != buf_size) {
+        return -1;
+    }
+    session->champion_count = (uint8_t)decoded_champions;
+    if (session->leader_index >= session->champion_count) {
+        session->leader_index = 0;
+    }
+    if (!dm2_v1_session_validate(session)) {
+        return -1;
+    }
+    return 0;
+}
+
 /* ════════════════════════════════════════════════════════════════
  * Session → slot manager integration
  * Source: dm2_v1_save_load.h dm2_sl_save/dm2_sl_load
@@ -549,9 +648,15 @@ int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
     int r = dm2_sl_load(save_base, slot, buf, sizeof(buf), &out_size);
     if (r != 0) return r;
 
-    /* Deserialize into session */
+    /* Deserialize into the Firestaff compact session first. If the payload is
+     * a bounded original/SUPPRESS resume body, import that instead so M11
+     * startup can resume SKSave files that do not carry Firestaff's byte-28
+     * session-version marker. */
     r = dm2_v1_session_deserialize(session, buf, out_size);
-    if (r != 0) return r;
+    if (r != 0) {
+        r = dm2_v1_session_import_original_payload(session, buf, out_size);
+        if (r != 0) return r;
+    }
 
     if (!dm2_v1_session_validate(session)) return -1;
 
@@ -569,7 +674,10 @@ int dm2_v1_session_load_last_session(const char *save_base,
     if (r != 0) return r;
 
     r = dm2_v1_session_deserialize(session, buf, out_size);
-    if (r != 0) return r;
+    if (r != 0) {
+        r = dm2_v1_session_import_original_payload(session, buf, out_size);
+        if (r != 0) return r;
+    }
 
     if (!dm2_v1_session_validate(session)) return -1;
 

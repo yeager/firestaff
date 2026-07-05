@@ -208,6 +208,62 @@ static const char* dm2_data_dir(char fallback[512]) {
     return fallback;
 }
 
+static int append_blob(uint8_t *dst, size_t cap, size_t *pos,
+                       const void *src, size_t n)
+{
+    if (!dst || !pos || !src || *pos > cap || n > cap - *pos) return 0;
+    memcpy(dst + *pos, src, n);
+    *pos += n;
+    return 1;
+}
+
+static void write_i32_le(uint8_t out[4], int value)
+{
+    uint32_t v = (uint32_t)value;
+    out[0] = (uint8_t)(v & 0xFFu);
+    out[1] = (uint8_t)((v >> 8) & 0xFFu);
+    out[2] = (uint8_t)((v >> 16) & 0xFFu);
+    out[3] = (uint8_t)((v >> 24) & 0xFFu);
+}
+
+static int write_original_resume_slot(const char *save_root,
+                                      uint8_t slot,
+                                      const char *name,
+                                      const DM2_GameStateBlock *gs,
+                                      const DM2_ChampionRecord *champ)
+{
+    uint8_t payload[768];
+    uint8_t enc_gs[DM2_GAME_STATE_BLOCK_SIZE];
+    uint8_t champ_mask[261];
+    uint8_t enc_champ[261];
+    uint8_t size_le[4];
+    size_t pos = 0u;
+    int gs_n;
+    int champ_n;
+
+    if (!save_root || !gs || !champ) return 0;
+    gs_n = dm2_suppress_encode_gamestate(gs, enc_gs, sizeof(enc_gs));
+    if (gs_n <= 0) return 0;
+    dm2_suppress_champion_mask(champ_mask);
+    champ_n = dm2_suppress_encode_champion(champ,
+                                           champ_mask,
+                                           enc_champ,
+                                           sizeof(enc_champ));
+    if (champ_n <= 0) return 0;
+
+    if (!append_blob(payload, sizeof(payload), &pos, "D2RS", 4)) return 0;
+    write_i32_le(size_le, gs_n);
+    if (!append_blob(payload, sizeof(payload), &pos, size_le, 4)) return 0;
+    if (!append_blob(payload, sizeof(payload), &pos, enc_gs,
+                     (size_t)gs_n)) return 0;
+    write_i32_le(size_le, champ_n);
+    if (!append_blob(payload, sizeof(payload), &pos, size_le, 4)) return 0;
+    if (!append_blob(payload, sizeof(payload), &pos, enc_champ,
+                     (size_t)champ_n)) return 0;
+
+    return dm2_sl_save(save_root, slot, name, payload, pos) == 0;
+}
+
 int main(void) {
     char fallback[512];
     const char* data_dir = dm2_data_dir(fallback);
@@ -490,6 +546,66 @@ int main(void) {
     expect_true(world && world->current_level == 2 && world->outdoor == 0,
                 "DM2 world SKSave.dat resume applies saved level");
     M11_GameView_Shutdown(&view);
+
+    {
+        DM2_GameStateBlock original_gs;
+        DM2_ChampionRecord original_champ;
+
+        memset(&original_gs, 0, sizeof(original_gs));
+        original_gs.dwGameTick = 84u;
+        original_gs.dwRandomSeed = 0x1234u;
+        original_gs.wChampionsCount = 1u;
+        original_gs.wPlayerPosX = 19u;
+        original_gs.wPlayerPosY = 7u;
+        original_gs.wPlayerDir = 1u;
+        original_gs.wPlayerMap = 3u;
+        original_gs.wChampionLeader = 0u;
+        original_gs.rain_state[0] = 20u;
+
+        memset(&original_champ, 0, sizeof(original_champ));
+        memcpy(original_champ.first_name, "TORHAM", 6);
+        original_champ.absolute_direction = original_gs.wPlayerDir;
+        original_champ.squad_position = 0;
+        original_champ.cur_hp = 88;
+        original_champ.max_hp = 99;
+        original_champ.stamina = 66;
+        original_champ.mana = 22;
+        original_champ.inventory[0] = dm2_db_make_handle(4, 0x0012);
+        original_champ.inventory[1] = dm2_db_make_handle(5, 0x0034);
+
+        expect_true(write_original_resume_slot(save_root,
+                                               4,
+                                               "M11 Original",
+                                               &original_gs,
+                                               &original_champ),
+                    "wrote DM2 SKSave04.dat SUPPRESS resume fixture");
+        snprintf(save_path, sizeof(save_path), "%s%sSKSave04.dat",
+                 save_root, TEST_PATH_SEP);
+
+        fill_dm2_launch_spec(&spec, data_dir);
+        spec.savePath = save_path;
+        M11_GameView_Init(&view);
+        expect_true(M11_GameView_Start(&view, &spec),
+                    "M11 DM2 SUPPRESS payload resume succeeds");
+        expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
+                    "M11 DM2 SUPPRESS payload reports resumed status");
+        expect_true(view.dm2State.party_x == 19 &&
+                    view.dm2State.party_y == 7 &&
+                    view.dm2State.party_dir == 1,
+                    "M11 DM2 SUPPRESS payload mirrors saved party pose");
+        expect_true(view.dm2State.tick_count == 84,
+                    "M11 DM2 SUPPRESS payload mirrors saved game tick");
+        expect_true(dm2_v1_runtime_get_party_x() == 19 &&
+                    dm2_v1_runtime_get_party_y() == 7 &&
+                    dm2_v1_runtime_get_party_dir() == 1,
+                    "DM2 runtime SUPPRESS payload applies saved party pose");
+        expect_true(dm2_v1_runtime_get_tick_count() == 84,
+                    "DM2 runtime SUPPRESS payload applies saved tick");
+        world = (DM2_V1_GameState*)view.dm2World;
+        expect_true(world && world->current_level == 3,
+                    "DM2 world SUPPRESS payload applies saved level");
+        M11_GameView_Shutdown(&view);
+    }
 
     fill_dm2_launch_spec(&spec, data_dir);
     spec.savePath = save_root;
