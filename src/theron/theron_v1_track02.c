@@ -1138,6 +1138,88 @@ int theron_v1_track02_initial_candidate_expected_offset(
     return 1;
 }
 
+Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    Theron_Track02InitialCandidateBinding *out_binding) {
+
+    Theron_Track02DescriptorTable table;
+    Theron_Track02TableDecodeStatus table_status;
+    Theron_Track02LevelCandidateCatalog catalog;
+    size_t expected_candidate_offset = 0u;
+    int expected_ok;
+    Theron_Track02LevelHandoffStatus status =
+        THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+
+    if (out_binding) {
+        memset(out_binding, 0, sizeof(*out_binding));
+        out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+        out_binding->candidate_index = (size_t)-1;
+    }
+
+    if (!track02_data || track02_size == 0u || !out_binding) {
+        return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+    }
+
+    out_binding->descriptor_offset = descriptor_offset;
+    if (descriptor_offset < TQR_US_ISO_BANK_STRIDE_OFFSET ||
+        descriptor_offset > track02_size ||
+        TQR_US_ISO_BANK_STRIDE_BYTES > track02_size - descriptor_offset) {
+        out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
+        return out_binding->status;
+    }
+
+    table_status = theron_v1_track02_decode_descriptor_table(
+        track02_data + descriptor_offset,
+        TQR_US_ISO_BANK_STRIDE_BYTES,
+        TQR_US_ISO_BANK_STRIDE_STEP,
+        &table);
+    if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
+        out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
+        return out_binding->status;
+    }
+
+    status = theron_v1_track02_scan_level_candidates(track02_data,
+                                                     track02_size,
+                                                     &catalog);
+    out_binding->candidate_count = catalog.candidate_count;
+    if (status != THERON_TRACK02_LEVEL_HANDOFF_OK) {
+        out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+        return out_binding->status;
+    }
+    if (catalog.candidate_count > 1u) {
+        out_binding->status =
+            THERON_TRACK02_LEVEL_HANDOFF_AMBIGUOUS_CANDIDATES;
+        return out_binding->status;
+    }
+    if (catalog.candidate_count != 1u) {
+        out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+        return out_binding->status;
+    }
+
+    theron_v1_track02_bind_level_candidate_anchor(descriptor_offset, &catalog);
+    expected_ok = theron_v1_track02_initial_candidate_expected_offset(
+        descriptor_offset,
+        &expected_candidate_offset);
+    out_binding->expected_offset_valid = expected_ok ? 1 : 0;
+    out_binding->expected_offset = expected_candidate_offset;
+    out_binding->candidate_index = 0u;
+    out_binding->candidate = catalog.candidates[0];
+    out_binding->matches_initial_anchor =
+        catalog.candidates[0].matches_initial_anchor;
+
+    if (!expected_ok ||
+        catalog.candidates[0].absolute_offset != expected_candidate_offset ||
+        !catalog.candidates[0].matches_initial_anchor) {
+        out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+        return out_binding->status;
+    }
+
+    out_binding->status = THERON_TRACK02_LEVEL_HANDOFF_OK;
+    return out_binding->status;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -1240,15 +1322,11 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     Theron_V1_Level *out_level,
     Theron_Track02LevelHandoff *out_handoff) {
 
-    Theron_Track02DescriptorTable table;
-    Theron_Track02TableDecodeStatus table_status;
-    size_t candidate_offset;
-    size_t candidate_size;
-    Theron_Track02LevelCandidateCatalog catalog;
+    Theron_Track02LevelHandoffStatus binding_status;
+    Theron_Track02InitialCandidateBinding binding;
     const Theron_Track02LevelCandidate *candidate;
     const uint8_t *level_bytes;
     Theron_MapLoadResult map_status;
-    size_t expected_candidate_offset = 0u;
 
     if (out_handoff) {
         memset(out_handoff, 0, sizeof(*out_handoff));
@@ -1261,46 +1339,32 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     if (!track02_data || track02_size == 0u || !out_level || !out_handoff) {
         return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
     }
-    if (descriptor_offset < TQR_US_ISO_BANK_STRIDE_OFFSET ||
-        descriptor_offset > track02_size ||
-        TQR_US_ISO_BANK_STRIDE_BYTES > track02_size - descriptor_offset) {
-        return THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
+    binding_status = theron_v1_track02_bind_initial_level_candidate(
+        track02_data,
+        track02_size,
+        descriptor_offset,
+        &binding);
+    out_handoff->binding_status = (int32_t)binding_status;
+    out_handoff->candidate_count = binding.candidate_count;
+    out_handoff->expected_offset = binding.expected_offset;
+    out_handoff->matches_initial_anchor = binding.matches_initial_anchor;
+    if (binding.candidate_count == 1u) {
+        out_handoff->descriptor_delta = binding.candidate.descriptor_delta;
+    }
+    if (binding_status != THERON_TRACK02_LEVEL_HANDOFF_OK) {
+        return binding_status;
     }
 
-    table_status = theron_v1_track02_decode_descriptor_table(
-        track02_data + descriptor_offset,
-        TQR_US_ISO_BANK_STRIDE_BYTES,
-        TQR_US_ISO_BANK_STRIDE_STEP,
-        &table);
-    if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
-        return THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
-    }
-
-    if (theron_v1_track02_scan_level_candidates(track02_data,
-                                                track02_size,
-                                                &catalog) !=
-        THERON_TRACK02_LEVEL_HANDOFF_OK ||
-        catalog.candidate_count != 1u) {
-        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
-    }
-    candidate = &catalog.candidates[0];
-    candidate_offset = candidate->absolute_offset;
-    candidate_size = candidate->byte_count;
-    if (!theron_v1_track02_initial_candidate_expected_offset(
-            descriptor_offset,
-            &expected_candidate_offset) ||
-        candidate_offset != expected_candidate_offset) {
-        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
-    }
-    if (candidate_offset > track02_size ||
-        candidate_size > track02_size - candidate_offset) {
+    candidate = &binding.candidate;
+    if (candidate->absolute_offset > track02_size ||
+        candidate->byte_count > track02_size - candidate->absolute_offset) {
         return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
     }
 
-    level_bytes = track02_data + candidate_offset;
+    level_bytes = track02_data + candidate->absolute_offset;
     out_handoff->entry_index = THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES;
-    out_handoff->absolute_offset = candidate_offset;
-    out_handoff->byte_count = candidate_size;
+    out_handoff->absolute_offset = candidate->absolute_offset;
+    out_handoff->byte_count = candidate->byte_count;
     out_handoff->window_kind = THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
     out_handoff->header_width = rd16be(level_bytes + 0);
     out_handoff->header_height = rd16be(level_bytes + 2);
@@ -1321,7 +1385,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
 
     map_status = theron_v1_level_load(out_level,
                                       level_bytes,
-                                      (int)candidate_size,
+                                      (int)candidate->byte_count,
                                       dungeon_id,
                                       sub_level_index);
     out_handoff->map_status = map_status;
@@ -1349,6 +1413,8 @@ const char *theron_v1_track02_level_handoff_status_name(
         return "window-not-data";
     case THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED:
         return "level-load-failed";
+    case THERON_TRACK02_LEVEL_HANDOFF_AMBIGUOUS_CANDIDATES:
+        return "ambiguous-candidates";
     default:
         return "unknown";
     }

@@ -293,6 +293,9 @@ int main(void) {
                 "M11 Theron direct launch exposes active .tqsv continue slot");
     expect_true(strstr(view.inspectDetail, "SAVE ") != NULL,
                 "M11 Theron startup inspect readout reports save/resume claim");
+    expect_true(strstr(view.inspectDetail, "Chapter 1") != NULL &&
+                strstr(view.inspectDetail, "Hall of Records") != NULL,
+                "M11 Theron startup inspect readout reports chapter marker");
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, FB_W, FB_H);
@@ -301,7 +304,9 @@ int main(void) {
                 "M11 Theron startup screen produces a nonblank framebuffer");
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
-    expect_true(startup_row_count >= 4 &&
+    expect_true(startup_row_count >= 5 &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "Chapter 1: Hall of Records") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "CHOOSE A STAGE") &&
                 startup_rows_contain(startup_rows, startup_row_count,
@@ -317,6 +322,11 @@ int main(void) {
                                  startup_layout_count,
                                  M11_THERON_STARTUP_ELEMENT_TITLE,
                                  0);
+        const M11_TheronStartupElement* chapter =
+            find_startup_element(startup_layout,
+                                 startup_layout_count,
+                                 M11_THERON_STARTUP_ELEMENT_CHAPTER,
+                                 0);
         const M11_TheronStartupElement* cont =
             find_startup_element(startup_layout,
                                  startup_layout_count,
@@ -327,15 +337,20 @@ int main(void) {
                                  startup_layout_count,
                                  M11_THERON_STARTUP_ELEMENT_STAGE,
                                  THERON_DUNGEON_1_HALL_OF_RECORDS);
-        expect_true(startup_layout_count >= 9 &&
+        expect_true(startup_layout_count >= 10 &&
                     title != NULL &&
                     title->enabled == 1 &&
                     strcmp(title->label, "THERON'S QUEST") == 0 &&
+                    chapter != NULL &&
+                    chapter->enabled == 1 &&
+                    strstr(chapter->label, "Chapter 1") != NULL &&
+                    chapter->x == 34 &&
+                    chapter->y == 38 &&
                     cont != NULL &&
                     cont->saveKind == 1 &&
                     cont->saveSlot == 2 &&
                     cont->x == 40 &&
-                    cont->y == 58 &&
+                    cont->y == 66 &&
                     cont->w > 0 &&
                     cont->h > 0 &&
                     stage1 != NULL &&
@@ -343,7 +358,7 @@ int main(void) {
                     stage1->selected == 1 &&
                     stage1->cursor == 1 &&
                     stage1->x == 40 &&
-                    stage1->y == 70 &&
+                    stage1->y == 78 &&
                     stage1->w > 0 &&
                     stage1->h > 0,
                     "M11 Theron startup layout exposes machine-readable stage state");
@@ -364,6 +379,9 @@ int main(void) {
     expect_true(world->progression.dungeon_playtime_seconds == 1234 &&
                 world->party.champions[0].health == 77,
                 "M11 Theron Continue applies progression and Theron champion data");
+    expect_true(strstr(view.inspectDetail, "continued slot=2") != NULL &&
+                strstr(view.inspectDetail, "Chapter 1") != NULL,
+                "M11 Theron Continue inspect readout keeps chapter marker");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                 M11_GAME_INPUT_REDRAW,
@@ -373,7 +391,9 @@ int main(void) {
                 "M11 Theron startup enters Soul Room before dungeon");
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
-    expect_true(startup_row_count >= 11 &&
+    expect_true(startup_row_count >= 12 &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "Chapter 1: Hall of Records") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "SOUL ROOM") &&
                 startup_rows_contain(startup_rows, startup_row_count,
@@ -398,19 +418,21 @@ int main(void) {
                                  startup_layout_count,
                                  M11_THERON_STARTUP_ELEMENT_FORCEFIELD,
                                  0);
-        expect_true(startup_layout_count >= 9 &&
+        expect_true(startup_layout_count >= 10 &&
                     mirror0 != NULL &&
                     mirror0->cursor == 1 &&
                     mirror0->selected == 0 &&
                     mirror0->x == 46 &&
-                    mirror0->y == 76 &&
+                    mirror0->y == 78 &&
                     mirror0->w > 0 &&
                     mirror0->h > 0 &&
+                    mirror0->portraitIndex == 1 &&
+                    mirror0->primaryClass == THERON_CLASS_FIGHTER &&
                     strcmp(mirror0->label, "Hakar") == 0 &&
                     forcefield != NULL &&
                     forcefield->enabled == 0 &&
                     forcefield->x == 46 &&
-                    forcefield->y == 158 &&
+                    forcefield->y == 160 &&
                     forcefield->w > 0 &&
                     forcefield->h > 0,
                     "M11 Theron startup layout exposes Soul Room mirrors and gated forcefield");
@@ -453,15 +475,17 @@ int main(void) {
                     pental->selected == 1 &&
                     pental->selectedOrder == 1 &&
                     pental->cursor == 1 &&
+                    pental->portraitIndex == 7 &&
+                    pental->primaryClass == THERON_CLASS_FIGHTER &&
                     pental->x == 46 &&
-                    pental->y == 142 &&
+                    pental->y == 144 &&
                     pental->w > 0 &&
                     pental->h > 0 &&
                     forcefield != NULL &&
                     forcefield->enabled == 1,
                     "M11 Theron startup layout exposes selected mirror order and enabled forcefield");
     }
-    expect_true(M11_GameView_HandlePointer(&view, 46 + 115, 142 + 5, 1) ==
+    expect_true(M11_GameView_HandlePointer(&view, 46 + 115, 144 + 5, 1) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron Soul Room selected mirror click deselects companion");
     expect_true(view.theronState.startup_phase ==
@@ -476,7 +500,7 @@ int main(void) {
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "AVAILABLE"),
                 "M11 Theron Soul Room render rows show deselected mirror as available");
-    expect_true(M11_GameView_HandlePointer(&view, 46 + 115, 142 + 5, 1) ==
+    expect_true(M11_GameView_HandlePointer(&view, 46 + 115, 144 + 5, 1) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron Soul Room mirror 7 click can reselect after deselect");
     expect_true(view.theronState.startup_phase ==
@@ -530,6 +554,13 @@ int main(void) {
                 view.theronState.party_dir == 0 &&
                 view.theronState.tick_count == 0,
                 "M11 starts at the deterministic Theron runtime pose");
+    expect_true(world->levels[
+                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0].width == 8 &&
+                world->levels[
+                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0].height == 8 &&
+                world->progression.dungeon_seeds[
+                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1] == 313,
+                "M11 Theron stage 1 fallback room keeps the legacy 8x8 seed-313 contract");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
                 M11_GAME_INPUT_REDRAW,
@@ -602,6 +633,10 @@ int main(void) {
                 THERON_STARTUP_PHASE_STAGE_SELECT &&
                 view.theronState.level_loaded == 0,
                 "M11 Theron exit unloads dungeon and shows stage select");
+    expect_true(strstr(view.inspectDetail, "dungeon complete") != NULL &&
+                strstr(view.inspectDetail, "Chapter 2") != NULL &&
+                strstr(view.inspectDetail, "Crypt of Shadows") != NULL,
+                "M11 Theron exit inspect readout advances chapter marker");
     expect_true(world->progression.dungeon_states[
                     THERON_DUNGEON_1_HALL_OF_RECORDS - 1] ==
                     THERON_DUNGEON_STATE_COMPLETE &&
@@ -633,6 +668,14 @@ int main(void) {
     expect_true(world->level_loaded[
                     THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0] == 1,
                 "M11 Theron stage 2 loads the selected dungeon level slot");
+    expect_true(world->levels[
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0].width == 8 &&
+                world->levels[
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0].height == 8 &&
+                world->progression.dungeon_seeds[
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] == 414 &&
+                theron_v1_world_get_square(world, 6, 4) == THERON_SQUARE_POOL,
+                "M11 Theron stage 2 fallback room carries stage-specific seed and marker");
     expect_true(theron_v1_world_get_square(world,
                                            world->party.leader_x,
                                            world->party.leader_y - 1) ==

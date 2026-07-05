@@ -50,6 +50,15 @@
  *  10. Variant / version id selection: JP BIN -> pce-jp, US BIN ->
  *      pce-en, JP Rev 1 ISO -> pce-jp-rev1-iso, US ISO -> pce-en-iso.
  *
+ *  11. Startup Soul Room mirror contract is present even on no-data
+ *      hosts: seven mirrors, three-companion cap, portrait ordinals 1..7,
+ *      and class mask covering Fighter/Ninja/Priest/Wizard.
+ *
+ *  12. Startup chapter/progression contract is present in the receipt:
+ *      placeholder rows are clearly no-profile/no-progression, while
+ *      real Track 02 receipts expose Chapter 1 / Hall of Records and a
+ *      0/7 quest-item summary without entering M11.
+ *
  * Exit codes:
  *   0  - all checks passed (or were appropriately skipped with a
  *        deterministic verdict)
@@ -73,6 +82,7 @@
 #include "asset_status_m12.h"
 #include "theron_v1_startup_receipt.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_startup_flow.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -122,6 +132,67 @@ static void check_str_contains(const char *got,
     } else {
         printf("[PASS] %s\n", name);
     }
+}
+
+static void check_startup_mirror_summary(const Theron_V1_StartupReceipt *r,
+                                         const char *prefix) {
+    uint32_t expected_class_mask =
+        (uint32_t)((1u << THERON_CLASS_FIGHTER) |
+                   (1u << THERON_CLASS_NINJA) |
+                   (1u << THERON_CLASS_PRIEST) |
+                   (1u << THERON_CLASS_WIZARD));
+    char name[160];
+
+    snprintf(name, sizeof(name), "%s mirror count == 7", prefix);
+    check(r->startup_mirror_count == THERON_STARTUP_HERO_MIRROR_COUNT,
+          name);
+    snprintf(name, sizeof(name), "%s companion limit == 3", prefix);
+    check(r->startup_companion_limit == THERON_STARTUP_MAX_COMPANIONS,
+          name);
+    snprintf(name, sizeof(name), "%s portrait range is 1..7", prefix);
+    check(r->startup_portrait_min == 1u &&
+          r->startup_portrait_max == 7u,
+          name);
+    snprintf(name, sizeof(name), "%s class mask covers all four classes",
+             prefix);
+    check(r->startup_class_mask == expected_class_mask, name);
+}
+
+static void check_startup_chapter_placeholder(
+    const Theron_V1_StartupReceipt *r,
+    const char *prefix) {
+    char name[160];
+
+    snprintf(name, sizeof(name), "%s chapter label marks no profile", prefix);
+    check_str_contains(r->startup_chapter_label, "no boot profile", name);
+    snprintf(name, sizeof(name), "%s quest total == 7", prefix);
+    check(r->startup_quest_item_total == 7u, name);
+    snprintf(name, sizeof(name), "%s quest mask starts empty", prefix);
+    check(r->startup_quest_items_collected == 0u, name);
+    snprintf(name, sizeof(name), "%s quest summary marks no progression", prefix);
+    check_str_contains(r->startup_quest_summary, "0/7", name);
+}
+
+static void check_startup_chapter_real(
+    const Theron_V1_StartupReceipt *r,
+    const char *prefix) {
+    char name[160];
+
+    snprintf(name, sizeof(name), "%s chapter label starts at Hall of Records",
+             prefix);
+    check_str_contains(r->startup_chapter_label,
+                       "Chapter 1: Hall of Records",
+                       name);
+    snprintf(name, sizeof(name), "%s quest total == 7", prefix);
+    check(r->startup_quest_item_total == 7u, name);
+    snprintf(name, sizeof(name), "%s quest mask starts empty", prefix);
+    check(r->startup_quest_items_collected == 0u, name);
+    snprintf(name, sizeof(name), "%s quest summary starts at 0/7", prefix);
+    check_str_contains(r->startup_quest_summary, "0/7", name);
+    snprintf(name, sizeof(name), "%s next hint names Crypt of Shadows", prefix);
+    check_str_contains(r->startup_next_dungeon_hint,
+                       "Crypt of Shadows",
+                       name);
 }
 
 static int file_exists_nonempty(const char *path) {
@@ -201,6 +272,8 @@ static void check_placeholder_fields(void) {
           "placeholder leaves m11_dispatch_source_kind at -1");
     check(r.boot_profile_assets_verified == 0,
           "placeholder leaves boot_profile_assets_verified 0");
+    check_startup_mirror_summary(&r, "placeholder startup");
+    check_startup_chapter_placeholder(&r, "placeholder startup");
 
     n = theron_v1_startup_receipt_to_line(&r, line, sizeof(line));
     check(n > 0u && n < sizeof(line),
@@ -209,6 +282,16 @@ static void check_placeholder_fields(void) {
                        "rendered line contains verdict marker");
     check_str_contains(line, "session_tick=0x",
                        "rendered line contains session tick marker");
+    check_str_contains(line, "mirrors=7",
+                       "rendered line contains startup mirror count");
+    check_str_contains(line, "portrait_range=1..7",
+                       "rendered line contains portrait range");
+    check_str_contains(line, "chapter=\"Chapter ?",
+                       "rendered line contains startup chapter marker");
+    check_str_contains(line, "quest_total=7",
+                       "rendered line contains quest total");
+    check_str_contains(line, "initial_bind_name=no-level",
+                       "rendered line contains placeholder bind status name");
 }
 
 /* ── Invariant 3: MD5 recognition gate ───────────────────────────── */
@@ -410,6 +493,8 @@ static void check_real_asset_path(void) {
               "boot profile carries the documented 7 mini-dungeons");
         check(r.boot_profile_dungeon_seed != 0u,
               "boot profile carries a non-zero dungeon_seed");
+        check_startup_mirror_summary(&r, "real receipt startup");
+        check_startup_chapter_real(&r, "real receipt startup");
         /* JP Rev 1 ISO is allowed to be a zero-fill and we still want
          * the receipt to be REAL_ASSET_RECEIPT (the direct-launch
          * succeeded; the bank-signal decoder reported
@@ -497,6 +582,20 @@ static void check_real_asset_path(void) {
                   "raw Track 02 initial candidate descriptor delta is locked");
             check(r.initial_candidate_anchor_match == 1,
                   "raw Track 02 initial candidate anchor relation is locked");
+            check(r.initial_candidate_binding_status ==
+                      THERON_TRACK02_LEVEL_HANDOFF_OK,
+                  "raw Track 02 initial candidate binding status is OK");
+            check(r.initial_candidate_count == 1u,
+                  "raw Track 02 initial candidate binding finds one candidate");
+            check(r.initial_candidate_expected_offset ==
+                      r.initial_candidate_offset,
+                  "raw Track 02 initial candidate expected offset matches");
+            {
+                char line[1024];
+                theron_v1_startup_receipt_to_line(&r, line, sizeof(line));
+                check_str_contains(line, "initial_bind_name=ok",
+                                   "raw Track 02 rendered line names bind status");
+            }
         } else {
             check(r.initial_candidate_found == 0,
                   "non-raw Track 02 receipt makes no initial candidate claim");
