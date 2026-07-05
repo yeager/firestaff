@@ -27629,6 +27629,13 @@ int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state) 
     unsigned short thing = M11_GameView_GetV1LeaderHandThing(state);
     if (!state || thing == THING_NONE || thing == THING_ENDOFLIST) return -1;
     if (state->leaderHandIconIndex >= 0) return state->leaderHandIconIndex;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* CSBWin SaveGame.cpp GAMEBLOCK2 and ReDMCSB CHAMPION.C F0297/F0298
+         * store only the transient G4055 thing in the leader hand.  Until the
+         * CSB object-icon table is bound, do not reinterpret that raw thing
+         * through DM1's G0237/F0033 tables. */
+        return -1;
+    }
     return m11_object_icon_index_for_thing(state, state->world.things, thing);
 }
 
@@ -27678,6 +27685,11 @@ int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
     out[0] = '\0';
     thing = M11_GameView_GetV1LeaderHandThing(state);
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* Same CSB handoff boundary as the icon accessor: preserve the raw
+         * CSBWin/ReDMCSB leader-hand thing without presenting a DM1 item name. */
+        return 0;
+    }
     m11_get_item_name(state ? state->world.things : NULL, thing, out, (size_t)outSize);
     return out[0] != '\0';
 }

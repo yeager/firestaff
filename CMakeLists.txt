@@ -3865,6 +3865,20 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_csb_leader_hand_no_dm1_fallback.c")
+        add_executable(test_m11_csb_leader_hand_no_dm1_fallback
+            tests/test_m11_csb_leader_hand_no_dm1_fallback.c)
+        target_link_libraries(test_m11_csb_leader_hand_no_dm1_fallback PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_csb_leader_hand_no_dm1_fallback PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_csb_leader_hand_no_dm1_fallback
+            COMMAND test_m11_csb_leader_hand_no_dm1_fallback
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_dm1_v2_source_owned_route_screenshot_probe.c")
         add_executable(firestaff_dm1_v2_source_owned_route_screenshot_probe
             probes/firestaff_dm1_v2_source_owned_route_screenshot_probe.c)
