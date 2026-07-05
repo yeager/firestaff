@@ -342,6 +342,9 @@ int main(void) {
     snprintf(view.theronState.startup_roster_titles[1],
              sizeof(view.theronState.startup_roster_titles[1]),
              "GUARDIAN OF WISDO");
+    snprintf(view.theronState.startup_roster_titles[4],
+             sizeof(view.theronState.startup_roster_titles[4]),
+             "THE BRAVE");
     snprintf(view.theronState.startup_roster_titles[7],
              sizeof(view.theronState.startup_roster_titles[7]),
              "THE SURVIVOR");
@@ -355,7 +358,6 @@ int main(void) {
                                      startup_row_count,
                                      "TRACK 02 TITLES: MARA=GUARDIAN OF WISDO; PENTAI=THE SURVIVOR"),
                 "M11 Theron startup render rows expose decoded Track 02 roster titles");
-    view.theronState.startup_roster_name_count = 0;
     startup_layout_count = M11_GameView_GetTheronStartupLayout(
         &view, startup_layout, 16);
     {
@@ -471,6 +473,8 @@ int main(void) {
                     mirror0->portraitIndex == 1 &&
                     mirror0->primaryClass == THERON_CLASS_FIGHTER &&
                     strcmp(mirror0->label, "Hakar") == 0 &&
+                    strcmp(mirror0->decodedName, "HAKAR") == 0 &&
+                    strcmp(mirror0->decodedTitle, "THE BRAVE") == 0 &&
                     forcefield != NULL &&
                     forcefield->enabled == 0 &&
                     forcefield->x == 46 &&
@@ -496,7 +500,7 @@ int main(void) {
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(startup_rows_contain(startup_rows, startup_row_count,
-                                     "Pental") &&
+                                     "Pental/PENTAI") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "RESURRECTED #1"),
                 "M11 Theron Soul Room render rows show selected mirror order");
@@ -523,6 +527,8 @@ int main(void) {
                     pental->y == 144 &&
                     pental->w > 0 &&
                     pental->h > 0 &&
+                    strcmp(pental->decodedName, "PENTAI") == 0 &&
+                    strcmp(pental->decodedTitle, "THE SURVIVOR") == 0 &&
                     forcefield != NULL &&
                     forcefield->enabled == 1,
                     "M11 Theron startup layout exposes selected mirror order and enabled forcefield");
