@@ -63,6 +63,7 @@
 #include "theron_v1_world.h"
 #include "theron_v1_mechanics.h"
 #include "theron_v1_dungeon_progression.h"
+#include "theron_v1_startup_flow.h"
 
 /* ── Headless SDL defaults (Phase A pattern) ───────────────────── */
 #ifdef _WIN32
@@ -232,6 +233,8 @@ static void make_state_from_world(M11_GameViewState* state,
     state->theronState.party_y = world->party.leader_y;
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
+    state->theronState.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    state->theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;
 }
 
 /*
