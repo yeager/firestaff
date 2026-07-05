@@ -181,6 +181,18 @@ static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
                        result == 1 ? "DM2 SHOP BUY" : "DM2 SHOP BUY FAILED");
         return M11_GAME_INPUT_REDRAW;
     }
+    if (input == M12_MENU_INPUT_DROP_ITEM) {
+        result = dm2_v1_shop_sell(shop_id, 0);
+        shop_state = dm2_v1_shop_get_state();
+        world = (DM2_V1_GameState *)state->dm2World;
+        if (world && shop_state) {
+            world->gold = (int)shop_state->party_gold;
+        }
+        m11_sync_dm2_state_from_runtime(state);
+        m11_set_status(state, "SHOP",
+                       result == 1 ? "DM2 SHOP SELL" : "DM2 SHOP SELL FAILED");
+        return M11_GAME_INPUT_REDRAW;
+    }
     m11_set_status(state, "SHOP", "DM2 SHOP ACTIVE");
     return M11_GAME_INPUT_REDRAW;
 }
