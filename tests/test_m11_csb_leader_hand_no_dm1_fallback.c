@@ -42,9 +42,11 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     dungeon->raw_data = raw;
     dungeon->raw_size = (int)raw_size;
     dungeon->thing_type_counts[THING_TYPE_WEAPON] = 3;
+    dungeon->thing_type_counts[THING_TYPE_POTION] = 1;
     dungeon->thing_type_counts[THING_TYPE_CONTAINER] = 1;
     dungeon->thing_data_bases[THING_TYPE_WEAPON] = 0;
-    dungeon->thing_data_bases[THING_TYPE_CONTAINER] = 12;
+    dungeon->thing_data_bases[THING_TYPE_POTION] = 12;
+    dungeon->thing_data_bases[THING_TYPE_CONTAINER] = 16;
 }
 
 int main(void)
@@ -100,6 +102,8 @@ int main(void)
             (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
         unsigned short arrow =
             (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+        unsigned short ven_potion =
+            (unsigned short)((THING_TYPE_POTION << 10) | 0);
         unsigned short chest =
             (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
         int sx = 0, sy = 0, sw = 0, sh = 0;
@@ -115,7 +119,9 @@ int main(void)
         write_u16(raw + 8, THING_ENDOFLIST);
         write_u16(raw + 10, 27u); /* ARROW: class 10 bow ammunition. */
         write_u16(raw + 12, THING_ENDOFLIST);
-        write_u16(raw + 14, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
+        write_u16(raw + 14, (3u << 8) | 80u); /* VEN potion, power 80. */
+        write_u16(raw + 16, THING_ENDOFLIST);
+        write_u16(raw + 18, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
 
         profile.runtime.dungeon_handle = &dungeon;
         profile.runtime.party_state_valid = 1;
@@ -123,7 +129,11 @@ int main(void)
         profile.runtime.party_state.LeaderHandThing = THING_NONE;
         profile.runtime.party_state.Champions[0].CurrentHealth = 10;
         profile.runtime.party_state.Champions[0].CurrentStamina = 100;
+        profile.runtime.party_state.Champions[0].MaximumStamina = 100;
         profile.runtime.party_state.Champions[0].CurrentMana = 10;
+        profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] =
+            40;
+        profile.runtime.party_state.Champions[0].Skills[10] = 3;
         profile.runtime.party_state.Champions[0].Cell = 0;
         profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
             dagger;
@@ -179,6 +189,13 @@ int main(void)
         check(profile.runtime.projectiles.entries[0].ownerKind ==
                   PROJECTILE_OWNER_CHAMPION,
               "CSB THROW projectile is champion-owned");
+        check(profile.runtime.projectiles.entries[0].kineticEnergy != 64,
+              "CSB THROW uses source-style strength/weight kinetic energy instead of fixed bridge value");
+        check(profile.runtime.projectiles.entries[0].attack >= 40 &&
+                  profile.runtime.projectiles.entries[0].attack <= 200,
+              "CSB THROW attack is source-bounded");
+        check(profile.runtime.projectiles.entries[0].stepEnergy >= 5,
+              "CSB THROW step energy is source-bounded");
         check(profile.runtime.timeline_queue.eventCount > 0,
               "CSB THROW schedules first projectile movement event");
         state.actionDisabledTicks[0] = 0;
@@ -270,6 +287,32 @@ int main(void)
               "CSB SHOOT clears runtime ready-hand slot");
         check(state.world.projectiles.count == 0,
               "CSB SHOOT does not allocate into DM1 M11 projectile list");
+        state.actionDisabledTicks[0] = 0;
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+            ven_potion;
+        state.world.party.champions[0].stamina.current = 100;
+        profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+            ven_potion;
+        profile.runtime.party_state.Champions[0].CurrentStamina = 100;
+        check(M11_GameView_SetActingChampion(&state, 0),
+              "CSB Ven potion action menu opens from runtime action set");
+        check(M11_GameView_GetActingActionIndices(&state, actions),
+              "CSB Ven potion action rows resolve through runtime");
+        check(actions[0] == 42 && actions[1] == 255 && actions[2] == 255,
+              "CSB Ven potion exposes source-locked THROW action row");
+        check(M11_GameView_TriggerActionRow(&state, 0) == 1,
+              "CSB Ven potion THROW dispatches through CSB runtime");
+        check(profile.runtime.projectiles.count == 4,
+              "CSB Ven potion THROW allocates one additional runtime projectile");
+        check(profile.runtime.projectiles.entries[3].projectileSubtype ==
+                  PROJECTILE_SUBTYPE_POISON_CLOUD,
+              "CSB Ven potion THROW creates poison-cloud projectile subtype");
+        check(profile.runtime.projectiles.entries[3].associatedPotionPower == 80,
+              "CSB Ven potion THROW preserves potion power for impact");
+        check(profile.runtime.projectiles.entries[3].reserved1 == ven_potion,
+              "CSB Ven potion THROW preserves potion thing identity");
+        check(state.world.projectiles.count == 0,
+              "CSB Ven potion THROW does not allocate into DM1 M11 projectile list");
 
         M11_GameView_ClearV1LeaderHandObject(&state);
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
