@@ -786,6 +786,36 @@ int main(void) {
                                                      icon_w,
                                                      icon_h),
                         "M11 DM2 draw overlays the GDAT-backed leader-hand icon at the pointer");
+            expect_true(M11_GameView_HandleInput(&view,
+                                                 M12_MENU_INPUT_INVENTORY_TOGGLE) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 inventory toggle opens the startup inventory panel");
+            expect_true(M11_GameView_IsInventoryPanelActive(&view),
+                        "M11 DM2 startup inventory panel is active");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
+                            &view,
+                            &icon_x,
+                            &icon_y,
+                            &icon_w,
+                            &icon_h) &&
+                            icon_x == 120 && icon_y == 80,
+                        "M11 DM2 inventory keeps the leader-hand icon at the pointer");
+            expect_true(framebuffer_zone_has_nonzero(framebuffer,
+                                                     320,
+                                                     200,
+                                                     icon_x,
+                                                     icon_y,
+                                                     icon_w,
+                                                     icon_h),
+                        "M11 DM2 inventory draw keeps the GDAT leader-hand icon visible");
+            expect_true(M11_GameView_HandleInput(&view,
+                                                 M12_MENU_INPUT_BACK) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 Back closes the startup inventory panel");
+            expect_true(!M11_GameView_IsInventoryPanelActive(&view),
+                        "M11 DM2 startup inventory panel closes before launcher return");
             expect_true(M11_GameView_HandlePointerMove(&view, 319, 199) ==
                             M11_GAME_INPUT_REDRAW,
                         "M11 DM2 pointer motion redraws at the framebuffer edge");
