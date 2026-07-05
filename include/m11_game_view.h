@@ -24,8 +24,31 @@ enum {
     M11_GAME_VIEW_PATH_CAPACITY = 512,
     M11_TORCH_FUEL_CAPACITY = 256,
     M11_ENDGAME_F0445_REPLAY_CAPACITY = 64,
-    M11_THERON_STARTUP_RENDER_ROW_CAPACITY = 80
+    M11_THERON_STARTUP_RENDER_ROW_CAPACITY = 80,
+    M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY = 48
 };
+
+typedef enum {
+    M11_THERON_STARTUP_ELEMENT_TITLE = 1,
+    M11_THERON_STARTUP_ELEMENT_CONTINUE,
+    M11_THERON_STARTUP_ELEMENT_STAGE,
+    M11_THERON_STARTUP_ELEMENT_MIRROR,
+    M11_THERON_STARTUP_ELEMENT_FORCEFIELD
+} M11_TheronStartupElementKind;
+
+typedef struct {
+    M11_TheronStartupElementKind kind;
+    int phase;
+    int cursor;
+    int enabled;
+    int selected;
+    int dungeonId;
+    int mirrorIndex;
+    int selectedOrder;
+    int saveKind; /* 0=none, 1=TQSV, 2=SRM */
+    int saveSlot;
+    char label[M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
+} M11_TheronStartupElement;
 
 typedef enum {
     M11_GAME_INPUT_IGNORED = 0,
@@ -1209,6 +1232,14 @@ int M11_GameView_GetTheronStartupRenderRows(
     const M11_GameViewState* state,
     char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
     int maxRows);
+
+/* Machine-readable Theron startup layout.  This is the render-facing
+ * contract used before decoded Track 02 menu/mirror art replaces the bounded
+ * text screen; callers should use element fields instead of parsing row text. */
+int M11_GameView_GetTheronStartupLayout(
+    const M11_GameViewState* state,
+    M11_TheronStartupElement* elements,
+    int maxElements);
 
 /* Total derived-bitmap cache slots F460_xxxx_START_CalculateDerivedBitmap-
  * CacheSizes reserves for this creature (Front D3 + Front D2 always,
