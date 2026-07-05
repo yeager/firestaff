@@ -15,6 +15,8 @@
 #include "config_m12.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "dm1_v1_save_load.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include "render_sdl_m11.h"
 #include "color_presets_m11.h"
 #include "ui_scale_m11.h"
@@ -1985,7 +1987,7 @@ static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
 }
 
 
-static int m12_is_valid_dm1_quicksave_path(const char* path) {
+static int m12_is_valid_dm1_firestaff_quicksave_path(const char* path) {
     static const unsigned char quicksaveMagic[8] = {
         'F', 'S', 'M', '1', '1', 'Q', 'S', '1'
     };
@@ -2018,6 +2020,35 @@ static int m12_is_valid_dm1_quicksave_path(const char* path) {
     fileSize = ftell(fp);
     fclose(fp);
     return fileSize == (long)(M12_QUICKSAVE_HEADER_SIZE + blobSize);
+}
+
+static int m12_is_valid_dm1_quicksave_path(const char* path) {
+    struct GameWorld_Compat world;
+    struct DM1SaveHeader header;
+    int rc;
+
+    if (m12_is_valid_dm1_firestaff_quicksave_path(path)) {
+        return 1;
+    }
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+
+    memset(&world, 0, sizeof(world));
+    memset(&header, 0, sizeof(header));
+    /*
+     * ReDMCSB LOADSAVE.C F0435 is the authoritative DM1 load gate.
+     * M11 resumes through DM1_LoadGameWithBackup(), whose loader accepts
+     * both Firestaff-native saves and original PC34 handoff saves.
+     * Keep M12 Continue on that same runtime gate so the launcher does not
+     * hide a save that the game view can start.
+     */
+    rc = DM1_LoadGameWithBackup(path, &world, &header, NULL);
+    if (rc == DM1_SAVE_OK) {
+        F0883_WORLD_Free_Compat(&world);
+        return 1;
+    }
+    return 0;
 }
 
 static int m12_is_valid_csb_quick_resume_path(const char* path) {
@@ -2073,11 +2104,10 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
         return;
     }
 
-    /* Extract game id from save path pattern: firestaff-{id}-quicksave.sav */
+    /* Extract game id from save path pattern: firestaff-{id}-*.sav */
     {
         const char* base = strrchr(config.lastSavePath, '/');
         const char* prefix = "firestaff-";
-        const char* suffix = "-quicksave.sav";
         const char* start;
         const char* end;
         if (!base) {
@@ -2089,7 +2119,7 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
             return;
         }
         start = base + strlen(prefix);
-        end = strstr(start, suffix);
+        end = strchr(start, '-');
         if (!end || (size_t)(end - start) >= sizeof(state->quickResumeGameId)) {
             return;
         }
