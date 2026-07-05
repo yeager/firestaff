@@ -3658,7 +3658,15 @@ static int m12_main_action_csb_utility_import(M12_StartupMenuState* state) {
         return 1;
     }
     if (!m12_save_browser_select_first_game(state, "dm1")) {
+        M12_MenuView returnView = state->saveBrowserReturnView;
         m12_enter_message_view(state);
+        if (returnView == M12_MENU_VIEW_MAIN ||
+            returnView == M12_MENU_VIEW_SETTINGS) {
+            state->messageReturnView = returnView;
+            state->messageReturnNavLevel = (returnView == M12_MENU_VIEW_MAIN)
+                                               ? (int)M12_NAV_MAIN
+                                               : (int)g_nav_level;
+        }
         m12_set_buffered_message(state,
                                  m12_tr(state, "NO DM1 SAVES FOUND"),
                                  m12_tr(state, "SAVE OR IMPORT DM1 FIRST"),
