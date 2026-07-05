@@ -423,6 +423,10 @@ typedef struct M12_StartupMenuState {
     char quickResumeGameId[32];
     char quickResumeSavePath[256];
     int dataDirPickerActive;
+    int dataDirScanActive;
+    int dataDirScanCancelRequested;
+    int dataDirScanCancelled;
+    M12_AssetScanProgress dataDirScanProgress;
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
