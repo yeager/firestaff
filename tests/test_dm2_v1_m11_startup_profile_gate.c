@@ -205,6 +205,8 @@ static void remove_temp_save_root(const char* root) {
                  root, TEST_PATH_SEP, i);
         remove(path);
     }
+    snprintf(path, sizeof(path), "%s%sSKSave.dat", root, TEST_PATH_SEP);
+    remove(path);
     snprintf(path, sizeof(path), "%s%sSKSave.bak", root, TEST_PATH_SEP);
     remove(path);
     (void)TEST_RMDIR(root);
@@ -416,8 +418,11 @@ int main(void) {
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
     unsigned char framebuffer_without_hand[320 * 200];
+    char direct_save_root[512] = {0};
+    char direct_save_path[512] = {0};
     char save_root[512];
     char save_path[512];
+    DM2_V1_SessionState direct_session;
     DM2_V1_SessionState resume_session;
     uint32_t loadable_icon_handle = 0u;
 
@@ -473,6 +478,55 @@ int main(void) {
                 "DM2 V1 runtime accessors report the boot pose");
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "DM2 V1 runtime tick counter starts at zero");
+
+    expect_true(make_temp_save_root(direct_save_root),
+                "created isolated DM2 direct-start quick-save root");
+    profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    if (profile) {
+        DM2_ChampionRecord *direct_champ;
+        dm2_v1_boot_set_save_root(profile, direct_save_root);
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_SAVE_GAME) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 direct-start save command writes SKSave.dat");
+        memset(&direct_session, 0, sizeof(direct_session));
+        expect_true(dm2_v1_session_load_last_session(direct_save_root,
+                                                     &direct_session) == 0,
+                    "M11 DM2 direct-start save command writes loadable last session");
+        direct_champ =
+            (DM2_ChampionRecord *)direct_session.champion_data[0];
+        expect_true(direct_session.champion_count == 4,
+                    "M11 DM2 direct-start quick-save preserves starter party count");
+        expect_true(direct_session.party_x == 15 &&
+                    direct_session.party_y == 15 &&
+                    direct_session.party_dir == 0 &&
+                    direct_session.party_level == 0,
+                    "M11 DM2 direct-start quick-save preserves boot pose");
+        expect_true(direct_session.game_tick == 0,
+                    "M11 DM2 direct-start quick-save preserves boot tick");
+        expect_true(direct_session.original_leader_hand_object == 0u,
+                    "M11 DM2 direct-start quick-save preserves empty leader hand");
+        expect_true(direct_champ->first_name[0] != '\0',
+                    "M11 DM2 direct-start quick-save preserves starter champion data");
+    }
+    snprintf(direct_save_path, sizeof(direct_save_path), "%s%sSKSave.dat",
+             direct_save_root, TEST_PATH_SEP);
+    M11_GameView_Shutdown(&view);
+    fill_dm2_launch_spec(&spec, data_dir);
+    spec.savePath = direct_save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 DM2 direct-start SKSave.dat resume succeeds");
+    expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
+                "M11 DM2 direct-start SKSave.dat resume reports resumed status");
+    expect_true(view.dm2State.party_x == 15 &&
+                view.dm2State.party_y == 15 &&
+                view.dm2State.party_dir == 0,
+                "M11 DM2 direct-start SKSave.dat restores boot pose");
+    expect_true(view.dm2State.tick_count == 0,
+                "M11 DM2 direct-start SKSave.dat restores boot tick");
+    expect_true(dm2_v1_runtime_get_tick_count() == 0,
+                "M11 DM2 direct-start SKSave.dat restores runtime tick");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
                     M11_GAME_INPUT_REDRAW,
@@ -983,6 +1037,9 @@ int main(void) {
     M11_GameView_Shutdown(&view);
     expect_true(view.dm2BootProfile == NULL && view.dm2World == NULL,
                 "M11 shutdown clears DM2 boot ownership");
+    if (direct_save_root[0]) {
+        remove_temp_save_root(direct_save_root);
+    }
 
     expect_true(make_temp_save_root(save_root),
                 "created isolated DM2 resume save root");

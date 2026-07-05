@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 DM2 direct-start quick-save resume proof: the M11 DM2 startup gate now proves a fresh verified DM2 start can write `SKSave.dat` through the runtime/session quick-save path, preserve starter party count, boot pose, tick, empty leader hand, and champion data, then restart M11 from that saved last-session file. Verification: `test_dm2_v1_m11_startup_profile_gate` passes locally with hash-verified DM2 PC English data.
+
 - ✅ 2026-07-05 DM2 multi-champion inventory ObjectID route proof: M11's DM2 startup/profile gate now proves the inventory ObjectID pickup/place/save/resume path for a non-leader champion as well as champion 0. The test opens champion 1's inventory through the V1 status-box route, moves a DM2 ObjectID between slot and leader hand, proves champion 0 is not changed, saves the runtime session, and reloads `SKSave.dat` with champion 1's slot restored in both M11 and runtime state.
 
 - ✅ 2026-07-05 DM2 M11 inventory save-resume roundtrip: the DM2 M11 startup/profile gate now proves the full slot-object path across runtime mutation, M11 save command, `SKSave.dat` reload, M11 view-state mirror, and DM2 runtime state. This locks the inventory ObjectID roundtrip rather than only checking the saved bytes. Verification: `test_dm2_v1_m11_startup_profile_gate` saves a changed DM2 inventory slot, restarts from the saved `SKSave.dat`, and proves both the view and runtime restore the slot ObjectID with an empty leader hand.
