@@ -11836,6 +11836,162 @@ int csb_v1_runtime_get_load_bonus_dungeon(
     return (profile && profile->load_bonus_dungeon) ? 1 : 0;
 }
 
+static int csb_v1_runtime_file_exists(const char *path)
+{
+    struct stat st;
+    return path && path[0] != '\0' && stat(path, &st) == 0 && S_ISREG(st.st_mode);
+}
+
+static int csb_v1_runtime_dirname(const char *path, char *out, size_t out_size)
+{
+    const char *slash;
+    const char *backslash;
+    const char *last;
+    size_t len;
+    if (!path || !out || out_size == 0u) return 0;
+    out[0] = '\0';
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    last = slash;
+    if (backslash && (!last || backslash > last)) {
+        last = backslash;
+    }
+    if (!last || last == path) return 0;
+    len = (size_t)(last - path);
+    if (len + 1u > out_size) return 0;
+    memcpy(out, path, len);
+    out[len] = '\0';
+    return 1;
+}
+
+static int csb_v1_runtime_join_path(char *out,
+                                    size_t out_size,
+                                    const char *dir,
+                                    const char *name)
+{
+    int rc;
+    const char *sep = "/";
+    size_t dir_len;
+    if (!out || out_size == 0u || !dir || !dir[0] || !name || !name[0]) {
+        return 0;
+    }
+    dir_len = strlen(dir);
+    if (dir[dir_len - 1u] == '/' || dir[dir_len - 1u] == '\\') {
+        sep = "";
+    }
+    rc = snprintf(out, out_size, "%s%s%s", dir, sep, name);
+    return rc > 0 && rc < (int)out_size;
+}
+
+static int csb_v1_runtime_replace_dungeon_handle(CSB_V1_RuntimeProfile *profile,
+                                                 const char *path)
+{
+    CSB_V1_DungeonData *dungeon;
+    if (!profile || !path || path[0] == '\0') return 0;
+    dungeon = (CSB_V1_DungeonData *)calloc(1, sizeof(*dungeon));
+    if (!dungeon) return 0;
+    if (csb_v1_dungeon_load_from_file(dungeon, path) != 0) {
+        free(dungeon);
+        return 0;
+    }
+    csb_v1_dungeon_unload();
+    if (profile->dungeon_handle) {
+        free(profile->dungeon_handle);
+    }
+    profile->dungeon_handle = dungeon;
+    profile->dungeon_path = path;
+    csb_v1_dungeon_set_current(dungeon);
+    csb_v1_dungeon_set_current_level(0);
+    return 1;
+}
+
+static int csb_v1_runtime_try_bonus_candidate(CSB_V1_RuntimeProfile *profile,
+                                              const char *dir,
+                                              const char *name)
+{
+    char candidate[ASSET_PATH_MAX];
+    if (!csb_v1_runtime_join_path(candidate, sizeof(candidate), dir, name)) {
+        return 0;
+    }
+    if (!csb_v1_runtime_file_exists(candidate)) {
+        return 0;
+    }
+    if (!csb_v1_runtime_replace_dungeon_handle(profile, candidate)) {
+        return 0;
+    }
+    snprintf(profile->bonus_dungeon_path,
+             sizeof(profile->bonus_dungeon_path),
+             "%s",
+             candidate);
+    profile->dungeon_path = profile->bonus_dungeon_path;
+    return 1;
+}
+
+int csb_v1_runtime_try_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile)
+{
+    static const char *const kBonusNames[] = {
+        "DUNGEONB.DAT",
+        "DungeonB.dat",
+        "dungeonb.dat",
+        "DUNGEON.BONUS",
+        NULL
+    };
+    char normal_dir[ASSET_PATH_MAX];
+    char csb_dir[ASSET_PATH_MAX];
+    int i;
+
+    if (!profile || !profile->load_bonus_dungeon) return 0;
+    profile->bonus_dungeon_path[0] = '\0';
+
+    /* ReDMCSB LOADSAVE.C lines 2316-2334 tries the platform bonus dungeon
+     * filename when G1147_B_LoadBonusDungeon is true, then falls back to the
+     * ordinary dungeon load path. Search the directory that supplied the
+     * verified normal dungeon first, then the runtime data root and its csb/
+     * child. Do not destroy the existing dungeon handle unless a candidate
+     * file is actually loadable. */
+    if (csb_v1_runtime_dirname(profile->dungeon_path,
+                               normal_dir,
+                               sizeof(normal_dir))) {
+        for (i = 0; kBonusNames[i]; ++i) {
+            if (csb_v1_runtime_try_bonus_candidate(profile,
+                                                   normal_dir,
+                                                   kBonusNames[i])) {
+                return 1;
+            }
+        }
+    }
+    if (profile->data_dir && profile->data_dir[0] != '\0') {
+        for (i = 0; kBonusNames[i]; ++i) {
+            if (csb_v1_runtime_try_bonus_candidate(profile,
+                                                   profile->data_dir,
+                                                   kBonusNames[i])) {
+                return 1;
+            }
+        }
+        if (csb_v1_runtime_join_path(csb_dir,
+                                     sizeof(csb_dir),
+                                     profile->data_dir,
+                                     "csb")) {
+            for (i = 0; kBonusNames[i]; ++i) {
+                if (csb_v1_runtime_try_bonus_candidate(profile,
+                                                       csb_dir,
+                                                       kBonusNames[i])) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+const char *csb_v1_runtime_get_bonus_dungeon_path(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    return (profile && profile->bonus_dungeon_path[0] != '\0')
+        ? profile->bonus_dungeon_path
+        : NULL;
+}
+
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
                                       const struct DM1_Event_V1 *event)
 {

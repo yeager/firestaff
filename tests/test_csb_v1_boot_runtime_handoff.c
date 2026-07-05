@@ -1046,12 +1046,16 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
 {
     CSB_V1_BootProfile p;
     char dungeon_path[ASSET_PATH_MAX];
+    char bonus_dungeon_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v2-profile-fallback-guard";
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+    snprintf(bonus_dungeon_path, sizeof(bonus_dungeon_path), "%s/DUNGEONB.DAT", tmp_dir);
     CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
           "synthetic DUNGEON.DAT written for CSB V2 profile fallback guard");
+    CHECK(write_synthetic_dungeon(bonus_dungeon_path, 7) == 0,
+          "synthetic DUNGEONB.DAT written for CSB bonus-dungeon handoff");
 
     memset(&p, 0, sizeof(p));
     csb_v1_boot_profile_init(&p);
@@ -1089,10 +1093,22 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
           "V2-labeled profile keeps the V1 entrance/start map boundary");
     CHECK(csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 0,
           "V1 runtime starts with the bonus-dungeon load flag clear");
+    CHECK(csb_v1_runtime_try_load_bonus_dungeon(&p.runtime) == 0,
+          "runtime does not load a bonus dungeon while the source flag is clear");
+    CHECK(p.runtime.dungeon_path == p.dungeon_path,
+          "clear bonus flag leaves the normal verified dungeon path active");
     CHECK(csb_v1_runtime_set_load_bonus_dungeon(&p.runtime, 1) == 1,
           "runtime accepts source C201 bonus-dungeon load request");
     CHECK(csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 1,
           "runtime exposes source C201 bonus-dungeon load request");
+    CHECK(csb_v1_runtime_try_load_bonus_dungeon(&p.runtime) == 1,
+          "runtime loads sibling DUNGEONB.DAT when C201 requested bonus dungeon");
+    CHECK(csb_v1_runtime_get_bonus_dungeon_path(&p.runtime) != NULL &&
+              strcmp(csb_v1_runtime_get_bonus_dungeon_path(&p.runtime),
+                     bonus_dungeon_path) == 0,
+          "runtime records the loaded bonus-dungeon path");
+    CHECK(strcmp(p.runtime.dungeon_path, bonus_dungeon_path) == 0,
+          "runtime active dungeon path points at the loaded bonus dungeon");
     CHECK(csb_v1_runtime_set_load_bonus_dungeon(&p.runtime, 0) == 1 &&
               csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 0,
           "runtime can clear the bonus-dungeon load request for normal enter");

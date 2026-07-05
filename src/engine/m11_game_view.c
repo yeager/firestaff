@@ -2587,6 +2587,8 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                 CSB_V1_BootProfile *profile =
                     (CSB_V1_BootProfile *)state->csbBootProfile;
                 csb_v1_runtime_set_load_bonus_dungeon(&profile->runtime, 1);
+                (void)csb_v1_runtime_try_load_bonus_dungeon(&profile->runtime);
+                m11_sync_csb_state_from_profile(state, profile);
             }
             state->csbState.startup_entrance_active = 0;
             state->csbState.startup_entrance_dismissed = 1;
