@@ -56,6 +56,35 @@ static int has_extracted(const char *dir) {
     return (stat(path, &st) == 0);
 }
 
+static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
+    int face_size = 0;
+    int i;
+    uint8_t *face_data;
+    if (!engine) return;
+    face_data = nexus_v1_read_file(engine, "FACE.BIN", &face_size);
+    if (!face_data) return;
+
+    /* DM Nexus FACE.BIN is the startup champion portrait source.  The
+     * current roster uses the first eight portrait indices; loading only the
+     * roster-backed slice avoids fabricating placeholder portraits for hidden
+     * or still-unmapped entries. */
+    for (i = 0; i < engine->champions.champion_count && i < 24; ++i) {
+        const int portrait_index = engine->champions.champions[i].portrait_index;
+        if (portrait_index < 0 || portrait_index >= 24) continue;
+        if (nexus_ui_load_faces(&engine->ui,
+                                face_data,
+                                portrait_index * 48 * 48,
+                                face_size,
+                                portrait_index,
+                                48,
+                                48,
+                                NULL) == 0) {
+            engine->ui_faces_loaded++;
+        }
+    }
+    free(face_data);
+}
+
 int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     char cue_path[512];
     if (!engine || !data_dir) return -1;
@@ -87,6 +116,10 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
 
     /* Init champion pool */
     nexus_v1_champions_init(&engine->champions);
+
+    /* Init startup UI surfaces after source selection and champion roster. */
+    nexus_ui_manager_init(&engine->ui);
+    nexus_v1_load_startup_faces(engine);
 
     /* Init creature manager */
     nexus_v1_creatures_init(&engine->creatures);
@@ -284,6 +317,7 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     engine->mechanics = NULL;
     for (i = 0; i < engine->model_count; i++)
         nexus_v1_dmdf_free(&engine->models[i]);
+    nexus_ui_manager_free(&engine->ui);
     nexus_v1_font_free(&engine->font);
     if (engine->source == NEXUS_SRC_ISO)
         nexus_iso_close(&engine->iso);

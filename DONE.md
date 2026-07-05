@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 Nexus FACE.BIN champion-select portraits: the Nexus engine now owns a startup UI surface manager, loads FACE.BIN portrait entries for the current champion roster during real data startup, and frees those surfaces on shutdown. M11 champion selection now draws scaled real portrait pixels beside each selectable champion while keeping the existing keyboard and pointer row routing stable. Verification: `test_m11_nexus_startup_gate` checks FACE.BIN load state and portrait-zone pixels during the real Nexus startup path.
+
 - ✅ 2026-07-05 DM2 leader-hand M11 handoff: M11 now mirrors the DM2 runtime leader-hand ObjectID into DM2-specific view state instead of reusing the DM1/CSB `THING` slot. Added DM2 DB-handle decode/label/name helpers and routed the V1 leader-hand name accessor through a DM2-safe `DM2 <POOL> <INDEX>` label while icon lookup stays disabled until real DM2 object/icon metadata is bound. Verification: targeted DM2 inventory-panel and M11 startup gates updated for the handoff.
 
 - ✅ 2026-07-05 DM2 leader-hand name render: the DM2 branch in `M11_GameView_Draw()` now overlays the leader-hand object-name zone after the DM2 runtime framebuffer and shop panel are drawn, so imported/resumed DM2 ObjectIDs are visibly labelled instead of only being reachable through the accessor. Verification: `test_dm2_v1_m11_startup_profile_gate` compares the same rendered pose with and without a DM2 leader-hand ObjectID and requires a pixel diff in the C017 name zone.
