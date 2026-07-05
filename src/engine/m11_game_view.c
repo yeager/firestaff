@@ -11185,8 +11185,16 @@ static int m11_theron_continue_srm_startup(M11_GameViewState* state,
         return 0;
     }
     slot = state->theronState.save_resume_srm_active_slot;
-    if (!theron_v1_srm_default_root(root) ||
-        !theron_v1_srm_slot_path(root, slot, path)) {
+    if (state->theronState.save_resume_srm_root[0] != '\0') {
+        snprintf(root, sizeof(root), "%s",
+                 state->theronState.save_resume_srm_root);
+    } else if (!theron_v1_srm_default_root(root)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "SRM root failed");
+        }
+        return 0;
+    }
+    if (!theron_v1_srm_slot_path(root, slot, path)) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap, "SRM slot path failed");
         }
@@ -11360,10 +11368,16 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     Theron_V1StartupSaveResume saveResume;
     int saveResumeReady = 0;
     int requestedSaveSlot = -1;
+    int requestedSrmSlot = -1;
+    int requestedSrmReady = 0;
+    char requestedSrmRoot[THERON_V1_SRM_PATH_MAX];
+    Theron_V1SrmEnvelopeReceipt requestedSrmEnvelope;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
     }
+    requestedSrmRoot[0] = '\0';
+    memset(&requestedSrmEnvelope, 0, sizeof(requestedSrmEnvelope));
     savedDebugHUD = state->showDebugHUD;
     M11_GameView_Shutdown(state);
     M11_GameView_Init(state);
@@ -11413,6 +11427,16 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             strcmp(base + 5, ".tqsv") == 0) {
             requestedSaveSlot = base[4] - '0';
         }
+        if (base &&
+            base[0] == 's' &&
+            base[1] == 'l' &&
+            base[2] == 'o' &&
+            base[3] == 't' &&
+            base[4] >= '0' &&
+            base[4] < (char)('0' + THERON_V1_SRM_DISK_SLOT_COUNT) &&
+            strcmp(base + 5, ".srm") == 0) {
+            requestedSrmSlot = base[4] - '0';
+        }
         if (slash && slash > savePath) {
             size_t len = (size_t)(slash - savePath);
             if (len >= sizeof(saveRoot)) {
@@ -11420,8 +11444,17 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             }
             memcpy(saveRoot, savePath, len);
             saveRoot[len] = '\0';
+            if (requestedSrmSlot >= 0) {
+                snprintf(requestedSrmRoot,
+                         sizeof(requestedSrmRoot),
+                         "%s",
+                         saveRoot);
+            }
             theron_v1_boot_set_save_root(profile, saveRoot);
         } else {
+            if (requestedSrmSlot >= 0) {
+                snprintf(requestedSrmRoot, sizeof(requestedSrmRoot), ".");
+            }
             theron_v1_boot_set_save_root(profile, NULL);
         }
     } else {
@@ -11447,6 +11480,51 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                  theron_v1_startup_save_resume_claim_name(
                      saveResume.resume_claim));
         saveResumeReady = 1;
+    }
+    if (requestedSrmSlot >= 0 &&
+        requestedSrmRoot[0] != '\0') {
+        char srmPath[THERON_V1_SRM_PATH_MAX];
+        uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+        Theron_V1SrmEnvelopeKind srmKind;
+        memset(scratch, 0, sizeof(scratch));
+        if (theron_v1_srm_slot_path(requestedSrmRoot,
+                                    requestedSrmSlot,
+                                    srmPath) &&
+            (srmKind = theron_v1_srm_decode_path(
+                 srmPath,
+                 requestedSrmSlot,
+                 scratch,
+                 sizeof(scratch),
+                 &requestedSrmEnvelope)) !=
+                THERON_V1_SRM_ENVELOPE_KIND_NONE &&
+            (srmKind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
+             srmKind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) &&
+            requestedSrmEnvelope.progression.restored) {
+            requestedSrmReady = 1;
+            saveResume.srm_first_recognized_slot = requestedSrmSlot;
+            if (saveResume.srm_recognized_slots <= 0) {
+                saveResume.srm_recognized_slots = 1;
+            }
+            saveResume.srm_progress_import_status =
+                requestedSrmEnvelope.decode_status;
+            saveResume.srm_progress_current_dungeon =
+                (int)requestedSrmEnvelope.progression.current_dungeon;
+            saveResume.srm_progress_current_level =
+                (int)requestedSrmEnvelope.progression.current_level;
+            saveResume.srm_progress_quest_mask =
+                (int)requestedSrmEnvelope.progression.quest_items_bitmask;
+            if (saveResume.resume_claim == THERON_V1_STARTUP_RESUME_NONE) {
+                saveResume.resume_claim = THERON_V1_STARTUP_RESUME_SRM;
+            } else if (saveResume.resume_claim == THERON_V1_STARTUP_RESUME_TQSV) {
+                saveResume.resume_claim = THERON_V1_STARTUP_RESUME_DUAL;
+            }
+            snprintf(saveResume.resume_claim_name,
+                     sizeof(saveResume.resume_claim_name),
+                     "%s",
+                     theron_v1_startup_save_resume_claim_name(
+                         saveResume.resume_claim));
+            saveResumeReady = 1;
+        }
     }
 
     assetResult = tr_asset_load(profile->graphics_path, assets);
@@ -11503,6 +11581,14 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         saveResumeReady ? saveResume.tqsv_valid_slots : 0;
     state->theronState.save_resume_srm_slots =
         saveResumeReady ? saveResume.srm_recognized_slots : 0;
+    if (requestedSrmReady) {
+        snprintf(state->theronState.save_resume_srm_root,
+                 sizeof(state->theronState.save_resume_srm_root),
+                 "%s",
+                 requestedSrmRoot);
+    } else {
+        state->theronState.save_resume_srm_root[0] = '\0';
+    }
     m11_theron_capture_track02_startup_roster(state,
                                               assets,
                                               profile->graphics_md5);

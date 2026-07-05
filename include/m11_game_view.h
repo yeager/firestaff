@@ -541,6 +541,7 @@ typedef struct {
         int save_resume_continue_focus;
         int save_resume_tqsv_slots;
         int save_resume_srm_slots;
+        char save_resume_srm_root[512];
         int startup_roster_name_count;
         int startup_roster_name_status;
         char startup_roster_names[8][16];
