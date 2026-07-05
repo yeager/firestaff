@@ -4643,6 +4643,8 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.party_state.Champions[1].CurrentHealth == 111 &&
               profile.party_state.Champions[1].MaximumHealth == 222,
           "CSBWin champion handoff copies the second active champion");
+    profile.party_z = 1;
+    profile.current_level = 6;
     {
         CSB_V1_CSBWin512BodyReport exported;
         memset(&exported, 0, sizeof(exported));
@@ -4655,12 +4657,12 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
                   exported.num_character == 2u &&
                   exported.party_x == 12u &&
                   exported.party_y == 7u &&
-                  exported.party_level == 4u &&
+                  exported.party_level == 6u &&
                   exported.party_facing == 3u &&
                   exported.hand_char == 1u &&
                   exported.magic_caster == 0u &&
                   exported.object_in_hand == 0x4321u,
-              "CSBWin champion export writes GAMEBLOCK2 party metadata summary");
+              "CSBWin champion export writes GAMEBLOCK2 party metadata from current runtime level");
         CHECK(exported.champions[0].valid == 1 &&
                   strcmp(exported.champions[0].name, "TIGGY") == 0 &&
                   strcmp(exported.champions[0].title, "APPRENTICE") == 0 &&
@@ -5091,6 +5093,8 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
           "CSBWin runtime appended Expool lookup rejects missing records");
 
     profile.party_state.LeaderHandThing = 0x2202u;
+    profile.party_z = 1;
+    profile.current_level = 6;
     CHECK(csb_v1_runtime_export_csbwin_core_save_to_memory(
               &profile, exported, sizeof(exported), &exported_size) == 0,
           "CSBWin core export writes bounded memory bytes");
@@ -5103,8 +5107,9 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
           "CSBWin core export bytes verify through the 512-byte body gate");
     CHECK(report.game_time == profile.game_time &&
               report.num_character == 2u &&
+              report.party_level == 6u &&
               report.object_in_hand == 0x2202u,
-          "CSBWin core export report preserves runtime time, champions, and live hand object");
+          "CSBWin core export report preserves runtime time, current level, champions, and live hand object");
     CHECK(report.item16_summary_total ==
               profile.csbwin_item16_summary_total,
           "CSBWin core export report preserves ITEM16 summary count");
