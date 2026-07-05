@@ -14700,6 +14700,8 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_process_v1_eye_click(M11_GameViewState* state);
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex);
+static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
+                                                    int sourceSlotBoxIndex);
 static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
                                                      int slotBoxIndex);
 
@@ -15088,6 +15090,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (command >= 28 && command <= 65 && zoneId >= 507 && zoneId <= 544) {
+            if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+                if (m11_process_dm2_inventory_slot_box_click(state,
+                                                             command - 20)) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
+            }
             if (m11_process_v1_inventory_slot_box_click(state, command - 20)) {
                 return M11_GAME_INPUT_REDRAW;
             }
@@ -33585,6 +33594,49 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
         m11_refresh_v1_action_hand_chest_panel(state, slotThing, THING_NONE);
     }
     m11_refresh_hash(state);
+    return 1;
+}
+
+static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
+                                                    int sourceSlotBoxIndex) {
+    int championIndex;
+    int championSlot;
+    uint32_t slotObject;
+    uint32_t leaderObject;
+
+    if (!state || !state->inventoryPanelActive ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT) {
+        return 0;
+    }
+    championIndex = state->world.party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    championSlot = M11_GameView_GetV1ChampionSlotForInventorySourceSlotBox(
+        sourceSlotBoxIndex);
+    if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) return 0;
+
+    slotObject = state->dm2State.champion_inventory_objects[championIndex]
+                                                         [championSlot];
+    leaderObject = state->dm2State.leader_hand_object;
+    if (slotObject == 0u && leaderObject == 0u) {
+        return 0;
+    }
+
+    /* DM2 startup inventory uses full ObjectID values from SKSave/DB,
+     * not DM1/CSB THING cells.  Source analogue: SKULL.ASM keeps the
+     * leader hand as the DB object handle while inventory clicks swap
+     * handles between the champion slot and hand. */
+    state->dm2State.champion_inventory_objects[championIndex][championSlot] =
+        leaderObject;
+    state->dm2State.leader_hand_object = slotObject;
+    dm2_v1_runtime_set_leader_hand_object(state->dm2State.leader_hand_object);
+
+    if (state->dm2State.leader_hand_object != 0u && leaderObject != 0u) {
+        m11_set_status(state, "INVENTORY", "DM2 SWAP");
+    } else if (state->dm2State.leader_hand_object != 0u) {
+        m11_set_status(state, "INVENTORY", "DM2 PICKUP");
+    } else {
+        m11_set_status(state, "INVENTORY", "DM2 PLACE");
+    }
     return 1;
 }
 
