@@ -5138,6 +5138,77 @@ static void test_input_current_stairs_turn_and_back_take_stairs(void)
           "MOVE_BACKWARD on current stairs lands on the matching lower stairs");
 }
 
+static void test_input_turn_directional_floor_sensor(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_PartyState party;
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+    uint8_t raw[128];
+
+    /* ReDMCSB CLIKMENU.C F0365 lines 169-172 runs F0276 before and
+     * after F0284 rotates the party.  A C003 directional floor sensor
+     * therefore triggers on the post-turn direction, not the old one.
+     */
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        1,
+        1,
+        (uint8_t)(1u << 5),
+        (uint16_t)((2u << 7) | DM1_SENSOR_FLOOR_PARTY),
+        (uint16_t)(DM1_EFFECT_SET << 3),
+        make_sensor_target(2, 0, 0));
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 1;
+    profile.party_dir = CSB_V1_DIR_NORTH;
+    seed_two_champion_party(&party);
+    party.ChampionCount = 1;
+    party.PartyDirection = CSB_V1_DIR_NORTH;
+    CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
+          "directional turn-sensor fixture party enters CSB runtime");
+    profile.party_x = 1;
+    profile.party_y = 1;
+    profile.party_dir = CSB_V1_DIR_NORTH;
+
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+              &queue,
+              DM1_V1_COMMAND_TURN_RIGHT,
+              0,
+              0) == 1,
+          "directional turn-sensor fixture queues TURN_RIGHT");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "TURN_RIGHT on directional floor sensor is consumed");
+    CHECK(profile.party_dir == CSB_V1_DIR_EAST &&
+              result.sensor_source_remove_checked == 1 &&
+              result.sensor_destination_add_checked == 1,
+          "TURN_RIGHT runs removal before rotation and addition after rotation");
+    CHECK(result.sensor_trigger_count == 1 &&
+              result.sensor_last_type == DM1_SENSOR_FLOOR_PARTY &&
+              result.sensor_last_data == 2 &&
+              result.sensor_last_effect == DM1_EFFECT_SET,
+          "directional C003 floor sensor triggers on the new EAST direction");
+    CHECK(result.sensor_event_count == 1 &&
+              result.sensor_last_event_type == DM1_EVENT_FAKEWALL,
+          "directional C003 turn sensor queues the target fakewall event");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "directional C003 turn sensor owns one queued timeline event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "directional C003 queued fakewall event fires on the current tick");
+    CHECK((raw[real_format_square_offset(2, 0)] & 0x04u) == 0x04u,
+          "directional C003 fakewall target is opened by the queued SET event");
+}
+
 static void test_input_command_queue_turn_reaches_runtime_party_state(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -6130,6 +6201,7 @@ int main(void)
     test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_forward_c008_party_possession_sensor();
     test_input_current_stairs_turn_and_back_take_stairs();
+    test_input_turn_directional_floor_sensor();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
     test_csbwin_gameblock2_summary_applies_runtime_handoff();
