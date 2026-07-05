@@ -68,7 +68,7 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     write_u16(raw + 60, 0u);
     write_u16(raw + 62, 0u);
     write_u16(raw + 64, 0u);
-    raw[67] = 0x10u; /* floor with thing-list-present, one step east. */
+    raw[67] = (unsigned char)((1u << 5) | 0x10u); /* corridor with thing-list-present, one step east. */
     write_u16(raw + 80, group);
     write_u16(raw + 96, THING_ENDOFLIST);
     write_u16(raw + 98, THING_ENDOFLIST);
@@ -234,6 +234,15 @@ int main(void)
         {
             unsigned char framebuffer[320 * 200];
             write_u16(raw + 96, dagger);
+            raw[67] = 0x10u; /* wall with thing-list-present: overlays must stay hidden. */
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&state, framebuffer, 320, 200);
+            check(framebuffer[95 * 320 + 112] != 0x0D,
+                  "CSB M11 draw hides runtime groups on blocking wall squares");
+            check(framebuffer[117 * 320 + 112] !=
+                      (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
+                  "CSB M11 draw hides runtime floor objects on blocking wall squares");
+            raw[67] = (unsigned char)((1u << 5) | 0x10u);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
             check(framebuffer[95 * 320 + 112] == 0x0D,
