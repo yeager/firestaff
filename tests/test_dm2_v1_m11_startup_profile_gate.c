@@ -332,11 +332,20 @@ static void write_i32_le(uint8_t out[4], int value)
     out[3] = (uint8_t)((v >> 24) & 0xFFu);
 }
 
+static void write_u32_le(uint8_t out[4], uint32_t value)
+{
+    out[0] = (uint8_t)(value & 0xFFu);
+    out[1] = (uint8_t)((value >> 8) & 0xFFu);
+    out[2] = (uint8_t)((value >> 16) & 0xFFu);
+    out[3] = (uint8_t)((value >> 24) & 0xFFu);
+}
+
 static int write_original_resume_slot(const char *save_root,
                                       uint8_t slot,
                                       const char *name,
                                       const DM2_GameStateBlock *gs,
-                                      const DM2_ChampionRecord *champ)
+                                      const DM2_ChampionRecord *champ,
+                                      const DM2_MinionTable *minions)
 {
     uint8_t payload[768];
     uint8_t enc_gs[DM2_GAME_STATE_BLOCK_SIZE];
@@ -366,6 +375,33 @@ static int write_original_resume_slot(const char *save_root,
     if (!append_blob(payload, sizeof(payload), &pos, size_le, 4)) return 0;
     if (!append_blob(payload, sizeof(payload), &pos, enc_champ,
                      (size_t)champ_n)) return 0;
+    if (minions && minions->count > 0u) {
+        uint8_t minion_blob[4u + DM2_MAX_MINIONS * 8u];
+        size_t minion_pos = 0u;
+        uint8_t count = minions->count > DM2_MAX_MINIONS
+                            ? DM2_MAX_MINIONS
+                            : minions->count;
+        write_i32_le(minion_blob, (int)count);
+        minion_pos = 4u;
+        for (int i = 0; i < (int)count; i++) {
+            write_u32_le(minion_blob + minion_pos,
+                         minions->entries[i].object_id);
+            write_u32_le(minion_blob + minion_pos + 4u,
+                         minions->entries[i].owner_champion);
+            minion_pos += 8u;
+        }
+        if (!append_blob(payload, sizeof(payload), &pos, "MIN0", 4)) {
+            return 0;
+        }
+        write_i32_le(size_le, (int)minion_pos);
+        if (!append_blob(payload, sizeof(payload), &pos, size_le, 4)) {
+            return 0;
+        }
+        if (!append_blob(payload, sizeof(payload), &pos, minion_blob,
+                         minion_pos)) {
+            return 0;
+        }
+    }
 
     return dm2_sl_save(save_root, slot, name, payload, pos) == 0;
 }
@@ -1024,6 +1060,8 @@ int main(void) {
     {
         DM2_GameStateBlock original_gs;
         DM2_ChampionRecord original_champ;
+        DM2_MinionTable original_minions;
+        DM2_MinionAssoc imported_minion;
 
         memset(&original_gs, 0, sizeof(original_gs));
         original_gs.dwGameTick = 84u;
@@ -1046,12 +1084,18 @@ int main(void) {
         original_champ.mana = 22;
         original_champ.inventory[0] = dm2_db_make_handle(4, 0x0012);
         original_champ.inventory[1] = dm2_db_make_handle(5, 0x0034);
+        memset(&original_minions, 0, sizeof(original_minions));
+        original_minions.count = 1u;
+        original_minions.entries[0].object_id =
+            dm2_db_make_handle(6, 0x0022);
+        original_minions.entries[0].owner_champion = 0u;
 
         expect_true(write_original_resume_slot(save_root,
                                                4,
                                                "M11 Original",
                                                &original_gs,
-                                               &original_champ),
+                                               &original_champ,
+                                               &original_minions),
                     "wrote DM2 SKSave04.dat SUPPRESS resume fixture");
         snprintf(save_path, sizeof(save_path), "%s%sSKSave04.dat",
                  save_root, TEST_PATH_SEP);
@@ -1075,6 +1119,14 @@ int main(void) {
                     "DM2 runtime SUPPRESS payload applies saved party pose");
         expect_true(dm2_v1_runtime_get_tick_count() == 84,
                     "DM2 runtime SUPPRESS payload applies saved tick");
+        expect_true(dm2_v1_runtime_get_minion_count() == 1u,
+                    "DM2 runtime SUPPRESS payload applies minion count");
+        expect_true(dm2_v1_runtime_get_minion_assoc(0,
+                                                    &imported_minion) == 0 &&
+                        imported_minion.object_id ==
+                            dm2_db_make_handle(6, 0x0022) &&
+                        imported_minion.owner_champion == 0u,
+                    "DM2 runtime SUPPRESS payload applies minion association");
         world = (DM2_V1_GameState*)view.dm2World;
         expect_true(world && world->current_level == 3,
                     "DM2 world SUPPRESS payload applies saved level");
