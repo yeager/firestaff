@@ -15,6 +15,7 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v2_runtime.h"
@@ -12355,6 +12356,32 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             m11_sync_dm2_state_from_runtime(state);
             m11_set_status(state, "MOVE",
                            result == 0 ? "DM2 STRAFE RIGHT" : "BLOCKED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_ACCEPT ||
+            input == M12_MENU_INPUT_ACTION) {
+            DM2_V1_GameState *world = (DM2_V1_GameState *)state->dm2World;
+            static const int dx[4] = {0, 1, 0, -1};
+            static const int dy[4] = {-1, 0, 1, 0};
+            int level = world ? world->current_level : 0;
+            int fx = dm2_v1_runtime_get_party_x() + dx[dir];
+            int fy = dm2_v1_runtime_get_party_y() + dy[dir];
+            int square = dm2_v1_runtime_get_square_type(level, fx, fy);
+
+            if (square >= 0) {
+                if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
+                    m11_set_status(state, "ACTION", "DM2 INTERACT");
+                } else if (dm2_v1_runtime_invoke_actuator(
+                               level, fx, fy,
+                               DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH, 0u) == 0) {
+                    m11_set_status(state, "ACTION", "DM2 ACTUATOR");
+                } else {
+                    m11_set_status(state, "ACTION", "DM2 NO ACTION");
+                }
+                m11_sync_dm2_state_from_runtime(state);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            m11_set_status(state, "ACTION", "DM2 NO TARGET");
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;

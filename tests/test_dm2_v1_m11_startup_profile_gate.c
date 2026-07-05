@@ -289,6 +289,25 @@ int main(void) {
     expect_true(view.dm2State.party_x == 15 && view.dm2State.party_y == 15 &&
                 view.dm2State.party_dir == 0,
                 "M11 DM2 turn-left restores boot facing");
+    world = (DM2_V1_GameState*)view.dm2World;
+    {
+        int reputation_before = world ? world->reputation : -1;
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 action input redraws through runtime interaction");
+        expect_true(strstr(view.lastOutcome, "DM2 INTERACT") != NULL ||
+                    strstr(view.lastOutcome, "DM2 ACTUATOR") != NULL ||
+                    strstr(view.lastOutcome, "DM2 NO TARGET") != NULL,
+                    "M11 DM2 action reports a bounded runtime action status");
+        expect_true(view.dm2State.party_x == 15 && view.dm2State.party_y == 15 &&
+                    view.dm2State.party_dir == 0,
+                    "M11 DM2 action does not move or rotate the party");
+        if (world && reputation_before >= 0 &&
+            strstr(view.lastOutcome, "DM2 INTERACT") != NULL) {
+            expect_true(world->reputation == reputation_before + 1,
+                        "DM2 runtime interaction mutates the boot-owned world");
+        }
+    }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(framebuffer[0] == 7,
