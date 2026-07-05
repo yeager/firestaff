@@ -9583,7 +9583,10 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
-    world->current_dungeon = flow.selected_dungeon;
+    theron_v1_world_reset_for_dungeon(world, flow.selected_dungeon);
+    memset(world->level_loaded[flow.selected_dungeon - 1],
+           0,
+           sizeof(world->level_loaded[flow.selected_dungeon - 1]));
     if (!m11_theron_load_initial_level(world,
                                        assets,
                                        profile->graphics_md5,

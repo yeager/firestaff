@@ -239,6 +239,16 @@ int main(void) {
     expect_true(render_pixels > 1000,
                 "M11 Theron draw path produces a nonblank framebuffer");
 
+    world->object_count = 1;
+    world->objects[0].type = THERON_OBJTYPE_QUEST_ITEM;
+    world->objects[0].level = world->current_level;
+    world->objects[0].x = world->party.leader_x;
+    world->objects[0].y = world->party.leader_y;
+    world->timer_count = 1;
+    world->timers[0].id = 1;
+    world->timers[0].flags = THERON_TIMER_F_ACTIVE;
+    world->timers[0].remaining_ticks = 10;
+
     expect_true(theron_v1_quest_item_collect(
                     &world->progression,
                     (Theron_QuestItem)
@@ -279,6 +289,8 @@ int main(void) {
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron stage 2 forcefield loads selected dungeon");
+    expect_true(world->object_count == 0 && world->timer_count == 0,
+                "M11 Theron stage 2 forcefield clears prior dungeon runtime state");
     expect_true(world->current_dungeon == THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
                 world->progression.current_dungeon ==
                     THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
