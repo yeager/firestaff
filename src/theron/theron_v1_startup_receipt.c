@@ -532,6 +532,32 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         }
     }
 
+    if (signal.descriptor_offset != 0u &&
+        signal.descriptor_size >=
+            THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES * 2u &&
+        signal.descriptor_offset < size) {
+        Theron_Track02SemanticBinding semantic;
+        Theron_Track02SemanticBindingStatus semantic_status =
+            theron_v1_track02_bind_semantic_descriptor(
+                data,
+                size,
+                signal.descriptor_offset,
+                0u,
+                &semantic);
+        receipt->descriptor_semantic_status = (int32_t)semantic_status;
+        receipt->descriptor_semantic_role = (uint32_t)semantic.role;
+        receipt->descriptor_semantic_entry_index =
+            (uint32_t)semantic.entry_index;
+        receipt->descriptor_semantic_window_kind =
+            (uint32_t)semantic.window_kind;
+        receipt->descriptor_semantic_seed_shape_ok =
+            semantic.dungeon_seed_table.shape_ok;
+        receipt->descriptor_semantic_seed_first =
+            semantic.dungeon_seed_table.seeds[0];
+        receipt->descriptor_semantic_seed_last =
+            semantic.dungeon_seed_table.seeds[THERON_TRACK02_DUNGEON_COUNT - 1u];
+    }
+
     {
         Theron_Track02UserDataWindowCatalog catalog;
         if (theron_v1_track02_catalog_user_data_windows(
@@ -784,6 +810,20 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->descriptor_first_nonzero_after), h);
     h = fnv1a_32(&receipt->descriptor_all_zero_after,
                  sizeof(receipt->descriptor_all_zero_after), h);
+    h = fnv1a_32(&receipt->descriptor_semantic_status,
+                 sizeof(receipt->descriptor_semantic_status), h);
+    h = fnv1a_32(&receipt->descriptor_semantic_role,
+                 sizeof(receipt->descriptor_semantic_role), h);
+    h = fnv1a_32(&receipt->descriptor_semantic_entry_index,
+                 sizeof(receipt->descriptor_semantic_entry_index), h);
+    h = fnv1a_32(&receipt->descriptor_semantic_window_kind,
+                 sizeof(receipt->descriptor_semantic_window_kind), h);
+    h = fnv1a_32(&receipt->descriptor_semantic_seed_shape_ok,
+                 sizeof(receipt->descriptor_semantic_seed_shape_ok), h);
+    h = fnv1a_32(&receipt->descriptor_semantic_seed_first,
+                 sizeof(receipt->descriptor_semantic_seed_first), h);
+    h = fnv1a_32(&receipt->descriptor_semantic_seed_last,
+                 sizeof(receipt->descriptor_semantic_seed_last), h);
     h = fnv1a_32(&receipt->user_data_window_count,
                  sizeof(receipt->user_data_window_count), h);
     h = fnv1a_32(&receipt->user_data_window_descriptor_count,
@@ -911,6 +951,10 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "roles=z%u/pre%u/post%u/desc%u desc_entry=%d "
                  "desc_prev=0x%x desc_prev_rts=%d "
                  "desc_first_after=0x%llx desc_zero_after=%d "
+                 "semantic_status=%d semantic_name=%s semantic_role=%s "
+                 "semantic_entry=%u semantic_window=%s "
+                 "semantic_seed_shape=%d semantic_seed_first=0x%x "
+                 "semantic_seed_last=0x%x "
                  "user_windows=%u user_desc=%u user_span=%u "
                  "user_initial=%u user_overflow=%u "
                  "startup_text_markers=%u startup_text_us=%u "
@@ -958,6 +1002,20 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  receipt->descriptor_byte_before_is_rts,
                  (unsigned long long)receipt->descriptor_first_nonzero_after,
                  receipt->descriptor_all_zero_after,
+                 (int)receipt->descriptor_semantic_status,
+                 theron_v1_track02_semantic_binding_status_name(
+                     (Theron_Track02SemanticBindingStatus)
+                         receipt->descriptor_semantic_status),
+                 theron_v1_track02_semantic_role_name(
+                     (Theron_Track02SemanticRole)
+                         receipt->descriptor_semantic_role),
+                 (unsigned)receipt->descriptor_semantic_entry_index,
+                 theron_v1_track02_descriptor_window_kind_name(
+                     (Theron_Track02DescriptorWindowKind)
+                         receipt->descriptor_semantic_window_kind),
+                 receipt->descriptor_semantic_seed_shape_ok,
+                 (unsigned)receipt->descriptor_semantic_seed_first,
+                 (unsigned)receipt->descriptor_semantic_seed_last,
                  (unsigned)receipt->user_data_window_count,
                  (unsigned)receipt->user_data_window_descriptor_count,
                  (unsigned)receipt->user_data_window_span_count,
