@@ -276,6 +276,15 @@ int dm2_v1_runtime_enter_shop(int level, int x, int y);
 int dm2_v1_runtime_npc_interact(int level, int x, int y);
 int dm2_v1_runtime_get_last_npc_id(void);
 int dm2_v1_runtime_get_last_npc_dialog_line(void);
+int dm2_v1_runtime_signal_item_used(int item_id);
+int dm2_v1_runtime_signal_combat_ended(int victory);
+const char *dm2_v1_runtime_get_last_target_message(void);
+int dm2_v1_runtime_get_last_spawn_instance_id(void);
+int dm2_v1_runtime_get_last_spawn_ai(void);
+int dm2_v1_runtime_get_last_spawn_x(void);
+int dm2_v1_runtime_get_last_spawn_y(void);
+int dm2_v1_runtime_get_last_spawn_level(void);
+int dm2_v1_runtime_get_spawn_count(void);
 
 /* ── Special squares ──────────────────────────────────────────────── */
 
