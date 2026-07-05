@@ -329,6 +329,7 @@ int main(void) {
     char savePath[512];
     char csbSavePath[512];
     char csbBrowserSavePath[512];
+    char csbWinBrowserSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -568,6 +569,39 @@ int main(void) {
                 "save browser CSB launch intent should identify CSB")) return 1;
     if (!expect(intent.savePath && strcmp(intent.savePath, csbBrowserSavePath) == 0,
                 "save browser CSB launch intent should carry selected save path")) return 1;
+
+    snprintf(csbWinBrowserSavePath, sizeof(csbWinBrowserSavePath),
+             "%s/firestaff-csb-csbwin-browser.sav", tmpTemplate);
+    if (!expect(firestaff_test_write_csbwin_resume_fixture(csbWinBrowserSavePath, 0),
+                "should write CSBWin verified-body browser save")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_csb_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for CSBWin saves")) return 1;
+    if (!expect(select_save_entry(&state, "firestaff-csb-csbwin-browser.sav"),
+                "save browser should list CSBWin verified-body CSB save")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark CSBWin save loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "csb") == 0,
+                "save browser should classify CSBWin save as csb")) return 1;
+    if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
+                       "TIGGY") != NULL &&
+                strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
+                       "BORIS") != NULL,
+                "save browser should expose CSBWin champion names")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.launchRequested == 1,
+                "save browser accept should request CSBWin CSB launch")) return 1;
+    if (!expect(state.quickResumeLaunchRequested == 1,
+                "save browser accept should route selected CSBWin save as savePath")) return 1;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "csb") == 0,
+                "save browser CSBWin launch intent should identify CSB")) return 1;
+    if (!expect(intent.savePath && strcmp(intent.savePath, csbWinBrowserSavePath) == 0,
+                "save browser CSBWin launch intent should carry selected save path")) return 1;
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);
