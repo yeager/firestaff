@@ -41,25 +41,38 @@ extern "C" {
  * Source: SkGlobal.h:636 — GDAT_CATEGORY_LIMIT (DM2) vs (DM1)
  * Source: docs/dm2_v1_phase2_data_formats_H2254.md §1
  */
-#define DM2_GDAT_CATEGORY_LIMIT   0xF0   /* 240 categories */
+#define DM2_GDAT_CATEGORY_LIMIT   0xF0   /* skproject extended category limit */
 #define DM1_GDAT_CATEGORY_LIMIT   0x1D   /* 29 categories */
 
 typedef enum {
+    DM2_GDAT_CATEGORY_TECHDATA           = 0x00,
+    DM2_GDAT_CATEGORY_INTERFACE_GENERAL  = 0x01,
     DM2_GDAT_CATEGORY_SPELL_DEF          = 0x02, /* Custom spells (up to 255 vs DM1's 34) */
-    DM2_GDAT_CATEGORY_CREATURES          = 0x0D, /* 64 AI creature types */
+    DM2_GDAT_CATEGORY_MESSAGES           = 0x03,
+    DM2_GDAT_CATEGORY_MUSICS             = 0x04,
+    DM2_GDAT_CATEGORY_TITLE              = 0x05,
+    DM2_GDAT_CATEGORY_CREDITS            = 0x06,
+    DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET = 0x07,
+    DM2_GDAT_CATEGORY_GRAPHICSSET        = 0x08,
+    DM2_GDAT_CATEGORY_WALL_GFX           = 0x09,
+    DM2_GDAT_CATEGORY_FLOOR_GFX          = 0x0A,
+    DM2_GDAT_CATEGORY_DOOR_GFX           = 0x0B,
+    DM2_GDAT_CATEGORY_DOOR_BUTTONS       = 0x0C,
+    DM2_GDAT_CATEGORY_SPELL_MISSILES     = 0x0D,
     DM2_GDAT_CATEGORY_DOORS              = 0x0E, /* Door properties (strength, color keys) */
+    DM2_GDAT_CATEGORY_CREATURES          = 0x0F, /* 64 AI creature types */
     DM2_GDAT_CATEGORY_WEAPONS            = 0x10, /* Extended weapons (projectile flags) */
+    DM2_GDAT_CATEGORY_CLOTHES            = 0x11, /* Clothing/armor sprites */
+    DM2_GDAT_CATEGORY_SCROLLS            = 0x12,
+    DM2_GDAT_CATEGORY_POTIONS            = 0x13,
+    DM2_GDAT_CATEGORY_CONTAINERS         = 0x14,
+    DM2_GDAT_CATEGORY_MISCELLANEOUS      = 0x15,
     DM2_GDAT_CATEGORY_CHAMPIONS          = 0x16, /* Champion NPC data (sounds) */
     DM2_GDAT_CATEGORY_ENVIRONMENT        = 0x17, /* Outdoor assets (sky, ground, trees) */
     DM2_GDAT_CATEGORY_TELEPORTERS        = 0x18, /* Teleporter square type */
     DM2_GDAT_CATEGORY_CREATURE_AI        = 0x19, /* Per-creature AI behaviors */
     DM2_GDAT_CATEGORY_DIALOG_BOXES       = 0x1A, /* Dialog box graphics */
-    DM2_GDAT_CATEGORY_WALL_ORNAMENTS     = 0x0C, /* Wall decorations */
-    DM2_GDAT_CATEGORY_FLOOR_ORNAMENTS    = 0x0D, /* Floor decorations */
-    DM2_GDAT_CATEGORY_ITEMS              = 0x0F, /* Item sprites */
-    DM2_GDAT_CATEGORY_ARMOUR             = 0x11, /* Clothing/armor sprites */
-    DM2_GDAT_CATEGORY_INTERFACE          = 0x12, /* Champion sheets, HUD */
-    DM2_GDAT_CATEGORY_TEXT               = 0x00, /* Text fonts */
+    DM2_GDAT_CATEGORY_JAPANESE_FONT      = 0x1C,
 } DM2_GDAT_Category;
 
 /* ── Image Compression Types ─────────────────────────────────────── */
@@ -72,11 +85,28 @@ typedef enum {
 /* ── Asset Loader Context ─────────────────────────────────────────── */
 
 typedef struct {
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t cls3;
+    uint8_t cls4;
+    uint8_t cls5;
+    uint8_t cls6;
+    uint16_t data_index;
+} DM2_V1_GdatEntry;
+
+typedef struct {
     const uint8_t *data;     /* GRAPHICS.DAT data (owned or ref) */
     size_t         data_size; /* GRAPHICS.DAT size */
     int            category_count;
     int            loaded;    /* 1 if successfully loaded */
     uint32_t       md5_hash;  /* Low 32 bits of MD5 (for verification) */
+    uint16_t       gdat_version;
+    uint16_t       raw_data_count;
+    uint32_t      *raw_offsets;
+    uint32_t      *raw_sizes;
+    DM2_V1_GdatEntry *entries;
+    uint16_t       entry_count;
+    uint16_t       category_entry_counts[DM2_GDAT_CATEGORY_LIMIT + 1];
 } DM2_V1_AssetLoader;
 
 /* ── Public API ─────────────────────────────────────────────────── */
