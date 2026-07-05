@@ -675,11 +675,12 @@ static void check_raw_user_data_contract(
             &roster_catalog);
         if (strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) == 0) {
             static const char *expected_names[] = {
-                "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN"
+                "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN",
+                "DOTAN", "PENTAI"
             };
             static const size_t expected_raw_offsets[] = {
                 0xb3d98u, 0xb3dd1u, 0xb3e1au, 0xb3e5eu,
-                0xb3ea3u, 0xb3ee4u, 0xb3f2eu
+                0xb3ea3u, 0xb3ee4u, 0xb3f2eu, 0xb3f78u
             };
             check_int("JP startup roster name catalog status",
                       status,

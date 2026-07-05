@@ -739,7 +739,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
     Theron_Track02StartupRosterNameCatalog *out_catalog) {
 
     static const char *required_names[] = {
-        "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN"
+        "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN",
+        "PENTAI"
     };
     Theron_Track02StartupTextMarkerCatalog text_catalog;
     Theron_Track02Variant variant;
@@ -1281,7 +1282,8 @@ const char *theron_v1_track02_source_evidence(void) {
            "RESURRECT THERON` starting at 0xa0722; raw JP Track 02 carries "
            "seven user-data champion-roster marker clusters starting at "
            "0xb3d98 with THERON/MARA/LINOS/HEXA/HAKAR/TIRAN/DOTAN ASCII "
-           "names.  This is a bounded initial-level, raw-sector, and startup "
+           "names.  The first decoded startup roster additionally carries "
+           "PENTAI.  This is a bounded initial-level, raw-sector, and startup "
            "text-marker handoff, not a full dungeon-record decoder, "
            "object-table decoder, graphics/menu-art decoder, font/text "
            "renderer, ADPCM decode, CD-DA decode, or runtime playback proof.";
