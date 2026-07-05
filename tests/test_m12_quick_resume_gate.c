@@ -1575,6 +1575,31 @@ int main(void) {
     if (!expect(intent.savePath && strcmp(intent.savePath, nativeSavePath) == 0,
                 "save browser launch intent should carry selected save path")) return 1;
 
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_dm1_available(&state);
+    force_csb_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for CSB DM1 import")) return 1;
+    if (!expect(select_save_entry(&state, "firestaff-dm1-browser.sav"),
+                "save browser should select DM1 save for CSB import")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACTION);
+    if (!expect(state.launchRequested == 1,
+                "save browser action on DM1 save should request CSB import launch")) return 1;
+    if (!expect(state.quickResumeLaunchRequested == 0,
+                "CSB DM1 import launch should not mark quick Resume requested")) return 1;
+    if (!expect(state.csbImportDm1LaunchRequested == 1,
+                "CSB DM1 import launch should mark import requested")) return 1;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "csb") == 0,
+                "CSB DM1 import launch intent should target CSB")) return 1;
+    if (!expect(intent.savePath == NULL,
+                "CSB DM1 import launch intent must not treat DM1 save as Resume")) return 1;
+    if (!expect(intent.csbImportDm1SavePath &&
+                strcmp(intent.csbImportDm1SavePath, nativeSavePath) == 0,
+                "CSB DM1 import launch intent should carry selected DM1 save path")) return 1;
+
     puts("ok: quick Resume only carries save path for explicit Continue, never normal DM1 launch");
     return 0;
 }
