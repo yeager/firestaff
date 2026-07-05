@@ -80,6 +80,14 @@ int dm2_v1_dungeon_find_thing_of_type(
     uint16_t first_thing,
     int desired_type,
     int max_steps);
+int dm2_v1_dungeon_find_text_wall_gfx(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    int *out_wall_gfx_index,
+    int *out_wall_gfx_field);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,
