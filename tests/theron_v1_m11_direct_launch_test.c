@@ -285,6 +285,19 @@ int main(void) {
                 view.theronState.selected_dungeon ==
                     THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
                 "M11 Theron stage 2 forcefield does not fall back to dungeon 1");
+    expect_true(world->level_loaded[
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0] == 1,
+                "M11 Theron stage 2 loads the selected dungeon level slot");
+    expect_true(theron_v1_world_get_square(world,
+                                           world->party.leader_x,
+                                           world->party.leader_y - 1) ==
+                THERON_SQUARE_FLOOR,
+                "M11 Theron stage 2 movement samples selected dungeon map");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                M11_GAME_INPUT_REDRAW &&
+                view.theronState.party_x == 3 &&
+                view.theronState.party_y == 4,
+                "M11 Theron stage 2 can move inside selected dungeon map");
     expect_true(world->party.champion_count == 1 &&
                 strcmp(world->party.champions[0].name, "Theron") == 0,
                 "M11 Theron stage 2 forcefield starts with current Soul Room selection");

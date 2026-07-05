@@ -9398,6 +9398,7 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
                                          char* receipt,
                                          size_t receipt_cap) {
     uint8_t level_data[12 + 8 * 8];
+    int dungeon_index;
     int x;
     int y;
     Theron_MapLoadResult r;
@@ -9408,6 +9409,7 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
         dungeon_id > THERON_DUNGEON_COUNT) {
         dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
     }
+    dungeon_index = (int)dungeon_id - 1;
     if (m11_theron_try_track02_initial_level(world,
                                              assets,
                                              md5_hex,
@@ -9438,7 +9440,7 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
 
     world->current_dungeon = dungeon_id;
     world->current_level = 0;
-    r = theron_v1_level_load(&world->levels[0][0],
+    r = theron_v1_level_load(&world->levels[dungeon_index][0],
                              level_data,
                              (int)sizeof(level_data),
                              (int)world->current_dungeon,
@@ -9446,14 +9448,14 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
     if (r != THERON_MAP_OK) {
         return 0;
     }
-    world->levels[0][0].start_x = 3;
-    world->levels[0][0].start_y = 5;
-    world->levels[0][0].start_dir = 0; /* THQUEST.ASM T520: north */
-    world->level_loaded[0][0] = 1;
+    world->levels[dungeon_index][0].start_x = 3;
+    world->levels[dungeon_index][0].start_y = 5;
+    world->levels[dungeon_index][0].start_dir = 0; /* THQUEST.ASM T520: north */
+    world->level_loaded[dungeon_index][0] = 1;
     theron_v1_party_place(world,
-                          world->levels[0][0].start_x,
-                          world->levels[0][0].start_y,
-                          world->levels[0][0].start_dir);
+                          world->levels[dungeon_index][0].start_x,
+                          world->levels[dungeon_index][0].start_y,
+                          world->levels[dungeon_index][0].start_dir);
     if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
         snprintf(receipt,
                  receipt_cap,
