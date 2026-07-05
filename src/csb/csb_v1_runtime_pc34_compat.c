@@ -83,6 +83,23 @@ static int csb_v1_runtime_stairs_exit_direction(
     int level,
     int map_x,
     int map_y);
+static int csb_v1_runtime_object_type_from_thing(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing);
+static void csb_v1_runtime_trigger_remote_sensor_event(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int sensor_effect,
+    int target_x,
+    int target_y,
+    int target_cell);
+static void csb_v1_runtime_process_object_floor_sensors_at(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    uint16_t placed_thing,
+    int level,
+    int map_x,
+    int map_y);
 
 typedef struct {
     const CSB_V1_RuntimeProfile *profile;
@@ -3623,6 +3640,7 @@ static int csb_v1_runtime_location_after_level_change(
 }
 
 static int csb_v1_runtime_apply_object_consequences_at_square(
+    CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint16_t *inout_thing,
     int source_map_x,
@@ -3767,6 +3785,13 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
                 break;
             }
             moved_count++;
+            csb_v1_runtime_process_object_floor_sensors_at(
+                profile,
+                dungeon,
+                *inout_thing,
+                *inout_map_index,
+                *inout_map_x,
+                *inout_map_y);
             continue;
         }
         if ((raw_square & 0x08) == 0) break;
@@ -3812,6 +3837,13 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
             break;
         }
         moved_count++;
+        csb_v1_runtime_process_object_floor_sensors_at(
+            profile,
+            dungeon,
+            *inout_thing,
+            *inout_map_index,
+            *inout_map_x,
+            *inout_map_y);
         if (self_target) break;
     }
     /* ReDMCSB MOVESENS.C F0267 lines 450-530 lets non-party, non-group
@@ -3819,8 +3851,9 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
      * teleporters, rotates object cells only for relative teleporters unless
      * the object came from the CM2 projectile-associated-object path, and
      * continues into open non-imaginary pits and non-projectile stairs in the
-     * same PC34 100-step chain. This CSB bridge keeps buzz audio and object
-     * sensors as separate runtime work. */
+     * same PC34 100-step chain. This CSB bridge also dispatches bounded C004
+     * object floor sensors after successful materialization/movement; buzz
+     * audio and broader floor sensor types remain separate runtime work. */
     return moved_count;
 }
 
@@ -3872,19 +3905,29 @@ static int csb_v1_runtime_materialize_projectile_associated_object(
      * bridge performs the real-format thing-list writeback for squares whose
      * first-thing slot already exists; first-thing table expansion remains a
      * later full F0267 integration slice. */
-    return csb_v1_runtime_append_thing_to_square_tail(
+    if (!csb_v1_runtime_append_thing_to_square_tail(
+            dungeon,
+            placed_thing,
+            map_index,
+            map_x,
+            map_y)) {
+        return 0;
+    }
+    csb_v1_runtime_process_object_floor_sensors_at(
+        profile,
         dungeon,
         placed_thing,
         map_index,
         map_x,
-        map_y) &&
-        (csb_v1_runtime_apply_object_consequences_at_square(
-             dungeon,
-             &placed_thing,
-             CSB_V1_TELEPORTER_ROTATION_SOURCE_PROJECTILE_ASSOCIATED_OBJECT_PC34,
-             &map_index,
-             &map_x,
-             &map_y) >= 0);
+        map_y);
+    return csb_v1_runtime_apply_object_consequences_at_square(
+               profile,
+               dungeon,
+               &placed_thing,
+               CSB_V1_TELEPORTER_ROTATION_SOURCE_PROJECTILE_ASSOCIATED_OBJECT_PC34,
+               &map_index,
+               &map_x,
+               &map_y) >= 0;
 }
 
 static int csb_v1_runtime_collect_square_launcher_things(
@@ -4127,7 +4170,15 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
             int drop_level = level;
             int drop_x = map_x;
             int drop_y = map_y;
+            csb_v1_runtime_process_object_floor_sensors_at(
+                profile,
+                dungeon,
+                thing,
+                drop_level,
+                drop_x,
+                drop_y);
             (void)csb_v1_runtime_apply_object_consequences_at_square(
+                profile,
                 dungeon,
                 &thing,
                 -1,
@@ -4195,7 +4246,15 @@ static void csb_v1_runtime_drop_group_slot_possessions(
             int drop_level = level;
             int drop_x = map_x;
             int drop_y = map_y;
+            csb_v1_runtime_process_object_floor_sensors_at(
+                profile,
+                dungeon,
+                dropped_thing,
+                drop_level,
+                drop_x,
+                drop_y);
             (void)csb_v1_runtime_apply_object_consequences_at_square(
+                profile,
                 dungeon,
                 &dropped_thing,
                 -1,
@@ -5272,6 +5331,134 @@ static int csb_v1_runtime_object_type_from_thing(
         return -1;
     }
     return (int)(csb_v1_runtime_read_u16(record + 2) & 0x007Fu);
+}
+
+static void csb_v1_runtime_process_object_floor_sensors_at(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    uint16_t placed_thing,
+    int level,
+    int map_x,
+    int map_y)
+{
+    int first_thing;
+    int thing;
+    int object_type;
+    int guard;
+
+    if (!profile || !dungeon || !dungeon->raw_data) return;
+    if (profile->dungeon_handle != dungeon) return;
+    if (level < 0 || level >= dungeon->level_count) return;
+    object_type = csb_v1_runtime_object_type_from_thing(dungeon, placed_thing);
+    if (object_type < 0) return;
+
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        level,
+        map_x,
+        map_y);
+    if (first_thing < 0 || first_thing == 0xFFFE || first_thing == 0xFFFF) {
+        return;
+    }
+
+    /* ReDMCSB MOVESENS.C F0276 lines 1608-1655 classifies the moving
+     * THING, scans the square for matching object types before add, then
+     * lines 1691-1694 trigger C004 only when the sensor data matches
+     * F0032_OBJECT_GetType(P0590_T_Thing) and no same-type object is already
+     * present. Firestaff calls this after link, so the scan ignores the
+     * just-placed THING and treats any other same-type object as the source
+     * L0775_B_SquareContainsThingOfSameType guard. */
+    thing = first_thing;
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        const uint8_t *record;
+        int thing_type;
+        int thing_size;
+        uint16_t type_data;
+        uint16_t flags_word;
+        uint16_t target_word;
+        int sensor_type;
+        int sensor_data;
+        int same_type_present = 0;
+        int scan;
+        int scan_guard;
+        int sensor_effect;
+        int target_cell;
+        int target_x;
+        int target_y;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            NULL,
+            &thing_size);
+        if (!record) break;
+        if (thing_type >= 4) break;
+        if (thing_type != 3 || thing_size < 8) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
+        type_data = csb_v1_runtime_read_u16(record + 2);
+        flags_word = csb_v1_runtime_read_u16(record + 4);
+        target_word = csb_v1_runtime_read_u16(record + 6);
+        sensor_type = (int)(type_data & 0x007Fu);
+        sensor_data = (int)(type_data >> 7);
+        if (sensor_type != DM1_SENSOR_FLOOR_OBJECT ||
+            sensor_data != object_type) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
+        scan = first_thing;
+        for (scan_guard = 0;
+             scan_guard < 128 && scan != 0xFFFE && scan != 0xFFFF;
+             ++scan_guard) {
+            int scan_type;
+            const uint8_t *scan_record = csb_v1_dungeon_get_thing_record(
+                dungeon,
+                (uint16_t)scan,
+                &scan_type,
+                NULL,
+                NULL);
+            if (!scan_record) break;
+            if ((uint16_t)scan != placed_thing &&
+                scan_type > 4 &&
+                scan_type < 14 &&
+                csb_v1_runtime_object_type_from_thing(
+                    dungeon,
+                    (uint16_t)scan) == object_type) {
+                same_type_present = 1;
+                break;
+            }
+            scan = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)scan);
+        }
+        if (same_type_present) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+
+        sensor_effect = (int)((flags_word >> 3) & 0x03u);
+        if ((flags_word >> 5) & 0x01u) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+        if (sensor_effect == DM1_EFFECT_HOLD) {
+            sensor_effect = DM1_EFFECT_SET;
+        }
+        target_cell = (int)((target_word >> 4) & 0x03u);
+        target_x = (int)((target_word >> 6) & 0x1Fu);
+        target_y = (int)((target_word >> 11) & 0x1Fu);
+        csb_v1_runtime_trigger_remote_sensor_event(
+            profile,
+            level,
+            sensor_effect,
+            target_x,
+            target_y,
+            target_cell);
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
 }
 
 static int csb_v1_runtime_find_wall_cell_object_of_type(
