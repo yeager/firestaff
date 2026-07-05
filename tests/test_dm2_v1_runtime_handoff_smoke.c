@@ -270,7 +270,10 @@ static size_t build_skproject_actuator_wall_button_map_list_fixture(
 static size_t build_skproject_square_actuator_fixture(uint8_t *buf,
                                                       size_t cap,
                                                       uint8_t actuator_type,
-                                                      uint16_t flag)
+                                                      uint16_t flag,
+                                                      uint8_t target_level,
+                                                      uint8_t target_x,
+                                                      uint8_t target_y)
 {
     const size_t header_size = 44;
     const size_t map_desc_size = 16;
@@ -292,10 +295,10 @@ static size_t build_skproject_square_actuator_fixture(uint8_t *buf,
     put16le(buf + sft_base, 0x8c00);
     put16le(buf + actuator_base, 0xfffe);
     buf[actuator_base + 2] = actuator_type;
-    buf[actuator_base + 3] = 0;
+    buf[actuator_base + 3] = target_level;
     put16le(buf + actuator_base + 4, flag);
-    buf[actuator_base + 6] = 0;
-    buf[actuator_base + 7] = 0;
+    buf[actuator_base + 6] = target_x;
+    buf[actuator_base + 7] = target_y;
     buf[raw_map_base + 0] = 0x10;
     buf[raw_map_base + 1] = 0x20;
     buf[raw_map_base + 2] = 0x20;
@@ -384,7 +387,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
         uint8_t fixture[128];
         size_t fixture_size = build_skproject_square_actuator_fixture(
             fixture, sizeof(fixture),
-            (uint8_t)DM2_ACTUATOR_ITEM_GENERATOR, 0x4567u);
+            (uint8_t)DM2_ACTUATOR_ITEM_GENERATOR, 0x4567u,
+            0, 1, 1);
         DM2_V1_DungeonData *replacement =
             (DM2_V1_DungeonData *)calloc(1, sizeof(*replacement));
         CHECK(fixture_size > 0 && replacement != NULL,
@@ -401,8 +405,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
             CHECK(dm2_v1_runtime_invoke_square_actuators(0, 0, 0) == 1 &&
                   dm2_v1_runtime_get_last_actuator_type() ==
                       DM2_ACTUATOR_ITEM_GENERATOR &&
+                  dm2_v1_runtime_get_last_actuator_level() == 0 &&
+                  dm2_v1_runtime_get_last_actuator_x() == 1 &&
+                  dm2_v1_runtime_get_last_actuator_y() == 1 &&
                   dm2_v1_runtime_get_last_generated_object() == 0x4567u,
-                  "runtime square-first DB3 actuator invokes generated-object target");
+                  "runtime square-first DB3 actuator invokes decoded generated-object target");
             {
                 int before_actuators = dm2_v1_runtime_get_actuator_count();
                 dm2_v1_runtime_set_position(0, 0, 1, 0);
@@ -412,8 +419,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       dm2_v1_runtime_get_party_y() == 0 &&
                       dm2_v1_runtime_get_actuator_count() ==
                           before_actuators + 1 &&
+                      dm2_v1_runtime_get_last_actuator_level() == 0 &&
+                      dm2_v1_runtime_get_last_actuator_x() == 1 &&
+                      dm2_v1_runtime_get_last_actuator_y() == 1 &&
                       dm2_v1_runtime_get_last_generated_object() == 0x4567u,
-                      "runtime arrival on square-first DB3 actuator invokes generated-object target");
+                      "runtime arrival on square-first DB3 actuator invokes decoded generated-object target");
             }
         } else {
             CHECK(0, "runtime square-actuator fixture loads");
