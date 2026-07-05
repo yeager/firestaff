@@ -10,6 +10,18 @@ typedef int (*CSB_V1_ViewportProjectileMaterialResolver)(
     void *user,
     const struct ProjectileInstance_Compat *projectile);
 
+typedef int (*CSB_V1_ViewportProjectileSpriteDrawer)(
+    void *user,
+    const struct ProjectileInstance_Compat *projectile,
+    int forward,
+    int side,
+    int view_cell,
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    uint8_t *screen_pixels,
+    int screen_stride);
+
 typedef struct {
     int src_x;
     int src_y;
@@ -60,6 +72,9 @@ typedef struct {
     CSB_V1_ViewportProjectileMaterialResolver projectile_material_resolver;
     void *projectile_material_user;
     int runtime_projectile_material_resolved_count;
+    CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
+    void *projectile_sprite_user;
+    int runtime_projectile_sprite_drawn_count;
 
     /* Optional CSBgraphics.dat CustomBackgrounds bridge. The CSB boot layer
      * owns the plan/cache/skin-def bytes; the viewport can select a

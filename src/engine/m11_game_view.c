@@ -104,6 +104,25 @@ static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
                                int experience);
+static int m11_projectile_subtype_to_graphic_index(int subtype);
+static int m11_projectile_subtype_to_aspect_index(int subtype);
+static int m11_projectile_aspect_to_graphic_index(int aspectIndex,
+                                                  int relativeDir);
+static int m11_projectile_aspect_flip_flags(int aspectIndex,
+                                            int relativeDir,
+                                            int relativeCell,
+                                            int mapX,
+                                            int mapY);
+static int m11_draw_projectile_sprite(const M11_GameViewState* state,
+                                      unsigned char* framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight,
+                                      int x, int y, int w, int h,
+                                      int gfxIndex, int depthIndex,
+                                      int relativeDir,
+                                      int relativeCell,
+                                      int flipFlags,
+                                      int sourceZoneRow);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -614,6 +633,13 @@ static int m11_csb_build_viewport_grid(uint8_t grid[32 * 32])
     return 1;
 }
 
+typedef struct {
+    const M11_GameViewState *state;
+    const CSB_V1_BootProfile *profile;
+    int framebuffer_width;
+    int framebuffer_height;
+} M11_CSB_ProjectileSpriteContext;
+
 static int m11_csb_viewport_projectile_material_resolver(
     void *user,
     const struct ProjectileInstance_Compat *projectile)
@@ -629,6 +655,86 @@ static int m11_csb_viewport_projectile_material_resolver(
     return csb_v1_runtime_object_icon_index(&profile->runtime, thing);
 }
 
+static int m11_csb_viewport_projectile_sprite_drawer(
+    void *user,
+    const struct ProjectileInstance_Compat *projectile,
+    int forward,
+    int side,
+    int view_cell,
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    const M11_CSB_ProjectileSpriteContext *ctx =
+        (const M11_CSB_ProjectileSpriteContext *)user;
+    const CSB_V1_RuntimeProfile *runtime;
+    int aspect;
+    int relative_dir;
+    int relative_cell;
+    int gfx_index;
+    int flip_flags;
+    int source_zone_row = -1;
+    int pane_x;
+    int pane_y;
+    int pane_w;
+    int pane_h;
+
+    if (!ctx || !ctx->state || !ctx->profile || !projectile ||
+        !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
+    }
+    runtime = &ctx->profile->runtime;
+    aspect = m11_projectile_subtype_to_aspect_index(
+        projectile->projectileSubtype);
+    if (aspect < 0) {
+        return 0;
+    }
+    relative_dir = (projectile->direction - runtime->party_dir) & 3;
+    relative_cell = (view_cell - runtime->party_dir) & 3;
+    gfx_index = m11_projectile_aspect_to_graphic_index(aspect, relative_dir);
+    flip_flags = m11_projectile_aspect_flip_flags(
+        aspect,
+        relative_dir,
+        relative_cell,
+        projectile->mapX,
+        projectile->mapY);
+    if (source_zone >= 2900) {
+        source_zone_row = (source_zone - 2900) / 4;
+    }
+    pane_x = 0 + viewport_x - 16;
+    pane_y = 33 + viewport_y - 16;
+    pane_w = 32;
+    pane_h = 32;
+    if (source_zone_row >= 0) {
+        pane_x = 0;
+        pane_y = 33;
+        pane_w = 224;
+        pane_h = 136;
+    }
+    (void)side;
+    /* ReDMCSB DUNVIEW.C F0115 lines 5710-5722 picks the scale row from
+     * view depth/cell before the F0791 C10 projectile blit.  Reuse the
+     * M11 DM1 sprite path here; CSB PC34 shares the projectile bitmap
+     * indices and viewport coordinate tables for this bounded draw step. */
+    return m11_draw_projectile_sprite(
+        ctx->state,
+        screen_pixels,
+        screen_stride,
+        ctx->framebuffer_height,
+        pane_x,
+        pane_y,
+        pane_w,
+        pane_h,
+        gfx_index,
+        forward,
+        relative_dir,
+        relative_cell,
+        flip_flags,
+        source_zone_row);
+}
+
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -638,6 +744,7 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     CSB_V1_ViewportConfig cfg;
     const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
     const CSB_V1_CSBGraphicsDatRealCache *cache;
+    M11_CSB_ProjectileSpriteContext projectile_sprite_context;
     uint8_t dungeon_grid[32 * 32];
     uint8_t custom_background_cell_skins[32 * 32];
     uint32_t i;
@@ -667,6 +774,13 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     cfg.projectile_material_resolver =
         m11_csb_viewport_projectile_material_resolver;
     cfg.projectile_material_user = profile;
+    projectile_sprite_context.state = state;
+    projectile_sprite_context.profile = profile;
+    projectile_sprite_context.framebuffer_width = framebufferWidth;
+    projectile_sprite_context.framebuffer_height = framebufferHeight;
+    cfg.projectile_sprite_drawer =
+        m11_csb_viewport_projectile_sprite_drawer;
+    cfg.projectile_sprite_user = &projectile_sprite_context;
     plan = csb_v1_boot_csbgraphics_m11_plan(profile);
     cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.csbgraphics_plan = plan;
