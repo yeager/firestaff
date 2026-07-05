@@ -280,6 +280,22 @@ static int count_diff_rect(const unsigned char* expected,
     return count;
 }
 
+static int count_nonzero_slot_pixels(const M11_AssetSlot* slot) {
+    int count = 0;
+    size_t i;
+    size_t total;
+    if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
+        return 0;
+    }
+    total = (size_t)slot->width * (size_t)slot->height;
+    for (i = 0u; i < total; ++i) {
+        if (slot->pixels[i] != 0u) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 static void snapshot_current_csb_grid(uint8_t grid[32 * 32]) {
     const CSB_V1_DungeonData* dungeon = csb_v1_dungeon_get_current();
     int level;
@@ -769,8 +785,18 @@ int main(void) {
         expect_true(profile->runtime.game_time == expected.game_time,
                     "CSB runtime restored game time from savePath");
         if (profile->variant_id == CSB_V1_VARIANT_PC34_EN) {
+            const M11_AssetSlot* title;
             expect_true(view.assetsAvailable == 1,
                         "M11 CSB PC34 start exposes GRAPHICS.DAT to shared render paths");
+            title = M11_AssetLoader_Load(&view.assetLoader, 4u);
+            expect_true(title != NULL,
+                        "M11 CSB PC34 asset loader can load a real graphic entry");
+            if (title) {
+                expect_true(title->width == 320u && title->height == 200u,
+                            "M11 CSB PC34 graphic 4 has source full-screen dimensions");
+                expect_true(count_nonzero_slot_pixels(title) > 0,
+                            "M11 CSB PC34 loaded graphic has non-empty pixels");
+            }
         }
         if (view.assetsAvailable) {
             expect_true(strcmp(view.assetLoader.graphicsDatPath,
