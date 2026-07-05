@@ -173,6 +173,7 @@ int main(void) {
     char theron_dir[512];
     char track_path[512];
     char save_root[512];
+    char selected_save_path[512];
     unsigned char saved_champions[
         THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
     Theron_V1_Party saved_party;
@@ -224,6 +225,25 @@ int main(void) {
                                        &saved_progression,
                                        "Continue Test") == 0,
                 "test writes a valid Theron .tqsv continue slot");
+    saved_party.champions[0].health = 66;
+    memset(saved_champions, 0, sizeof(saved_champions));
+    expect_true(theron_v1_party_pack(&saved_party,
+                                     saved_champions,
+                                     sizeof(saved_champions)) ==
+                    theron_v1_party_pack_size(),
+                "test packs selected Theron champion save data");
+    saved_progression.dungeon_playtime_seconds = 5678;
+    expect_true(theron_v1_save_to_slot(save_root,
+                                       5,
+                                       saved_champions,
+                                       sizeof(saved_champions),
+                                       &saved_progression,
+                                       "Selected Continue") == 0,
+                "test writes selected Theron .tqsv continue slot");
+    theron_v1_save_slot_path(save_root,
+                             5,
+                             selected_save_path,
+                             sizeof(selected_save_path));
 
     memset(&spec, 0, sizeof(spec));
     spec.title = "THERON'S QUEST";
@@ -232,6 +252,7 @@ int main(void) {
     spec.dataDir = temp_dir;
     spec.verifiedAssetPath = track_path;
     spec.verifiedAssetMd5 = "f23601102138f87c33025877767ebf76";
+    spec.savePath = selected_save_path;
     spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
@@ -288,9 +309,9 @@ int main(void) {
                 "M11 Theron direct launch evaluates startup save/resume verdict");
     expect_true(view.theronState.save_resume_claim >= 0,
                 "M11 Theron direct launch evaluates startup save/resume claim");
-    expect_true(view.theronState.save_resume_active_slot == 2 &&
-                view.theronState.save_resume_tqsv_slots == 1,
-                "M11 Theron direct launch exposes active .tqsv continue slot");
+    expect_true(view.theronState.save_resume_active_slot == 5 &&
+                view.theronState.save_resume_tqsv_slots >= 2,
+                "M11 Theron direct launch exposes selected .tqsv continue slot");
     expect_true(strstr(view.inspectDetail, "SAVE ") != NULL,
                 "M11 Theron startup inspect readout reports save/resume claim");
     expect_true(strstr(view.inspectDetail, "Chapter 1") != NULL &&
@@ -310,7 +331,7 @@ int main(void) {
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "CHOOSE A STAGE") &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "CONTINUE  TQSV SLOT 2") &&
+                                     "CONTINUE  TQSV SLOT 5") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "> 1  Hall of Records"),
                 "M11 Theron startup render rows expose stage selection state");
@@ -392,7 +413,7 @@ int main(void) {
                     chapter->y == 38 &&
                     cont != NULL &&
                     cont->saveKind == 1 &&
-                    cont->saveSlot == 2 &&
+                    cont->saveSlot == 5 &&
                     cont->x == 40 &&
                     cont->y == 66 &&
                     cont->w > 0 &&
@@ -420,12 +441,12 @@ int main(void) {
                 view.theronState.startup_phase ==
                     THERON_STARTUP_PHASE_STAGE_SELECT,
                 "M11 Theron Continue returns to stage select");
-    expect_true(world->progression.dungeon_playtime_seconds == 1234 &&
-                world->party.champions[0].health == 77,
-                "M11 Theron Continue applies progression and Theron champion data");
-    expect_true(strstr(view.inspectDetail, "continued slot=2") != NULL &&
+    expect_true(world->progression.dungeon_playtime_seconds == 5678 &&
+                world->party.champions[0].health == 66,
+                "M11 Theron Continue applies selected progression and Theron champion data");
+    expect_true(strstr(view.inspectDetail, "continued slot=5") != NULL &&
                 strstr(view.inspectDetail, "Chapter 1") != NULL,
-                "M11 Theron Continue inspect readout keeps chapter marker");
+                "M11 Theron Continue inspect readout keeps selected slot and chapter marker");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                 M11_GAME_INPUT_REDRAW,
@@ -588,8 +609,8 @@ int main(void) {
     expect_true(world != NULL &&
                 world->party.champion_count == 4 &&
                 strcmp(world->party.champions[0].name, "Theron") == 0 &&
-                world->party.champions[0].health == 77,
-                "M11 forcefield materializes Theron plus selected mirrors");
+                world->party.champions[0].health == 66,
+                "M11 forcefield materializes selected .tqsv Theron plus mirrors");
     expect_true(strcmp(world->party.champions[1].name, "PENTAI") == 0 &&
                 strcmp(world->party.champions[2].name, "HAKAR") == 0 &&
                 strcmp(world->party.champions[3].name, "TIRAN") == 0,
