@@ -37,16 +37,40 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
                              unsigned char *raw,
                              size_t raw_size)
 {
+    unsigned short group = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+
     memset(dungeon, 0, sizeof(*dungeon));
     memset(raw, 0, raw_size);
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 3;
+    dungeon->level_heights[0] = 1;
+    dungeon->level_offsets[0] = 66;
+    dungeon->square_bytes = 1;
+    dungeon->raw_map_data_base = 66;
+    dungeon->square_first_thing_base = 80;
+    dungeon->square_first_thing_count = 1;
     dungeon->raw_data = raw;
     dungeon->raw_size = (int)raw_size;
+    dungeon->thing_type_counts[THING_TYPE_GROUP] = 1;
     dungeon->thing_type_counts[THING_TYPE_WEAPON] = 3;
     dungeon->thing_type_counts[THING_TYPE_POTION] = 1;
     dungeon->thing_type_counts[THING_TYPE_CONTAINER] = 1;
+    dungeon->thing_data_bases[THING_TYPE_GROUP] = 96;
     dungeon->thing_data_bases[THING_TYPE_WEAPON] = 0;
     dungeon->thing_data_bases[THING_TYPE_POTION] = 12;
     dungeon->thing_data_bases[THING_TYPE_CONTAINER] = 16;
+
+    write_u16(raw + 60, 0u);
+    write_u16(raw + 62, 0u);
+    write_u16(raw + 64, 0u);
+    raw[67] = 0x10u; /* floor with thing-list-present, one step east. */
+    write_u16(raw + 80, group);
+    write_u16(raw + 96, THING_ENDOFLIST);
+    write_u16(raw + 98, THING_ENDOFLIST);
+    raw[100] = 6u;   /* Screamer. */
+    raw[101] = 0xFFu; /* centered group cell encoding. */
+    write_u16(raw + 102, 80u);
+    write_u16(raw + 110, 0u); /* one creature: (count - 1) << 5. */
 }
 
 int main(void)
@@ -95,7 +119,7 @@ int main(void)
         CSB_V1_BootProfile profile;
         CSB_V1_DungeonData dungeon;
         unsigned char actions[3];
-        unsigned char raw[32];
+        unsigned char raw[128];
         unsigned short dagger =
             (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
         unsigned short bow =
@@ -124,7 +148,12 @@ int main(void)
         write_u16(raw + 18, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
 
         profile.runtime.dungeon_handle = &dungeon;
+        profile.runtime.dungeon_seed = 0x1234u;
         profile.runtime.party_state_valid = 1;
+        profile.runtime.current_level = 0;
+        profile.runtime.party_x = 0;
+        profile.runtime.party_y = 0;
+        profile.runtime.party_dir = 1;
         profile.runtime.party_state.ChampionCount = 1;
         profile.runtime.party_state.LeaderHandThing = THING_NONE;
         profile.runtime.party_state.Champions[0].CurrentHealth = 10;
@@ -133,7 +162,14 @@ int main(void)
         profile.runtime.party_state.Champions[0].CurrentMana = 10;
         profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] =
             40;
+        profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] =
+            120;
+        profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_CUR] =
+            80;
+        profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MAX] =
+            100;
         profile.runtime.party_state.Champions[0].Skills[10] = 3;
+        profile.runtime.party_state.Champions[0].Skills[4] = 8;
         profile.runtime.party_state.Champions[0].Cell = 0;
         profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
             dagger;
@@ -219,6 +255,8 @@ int main(void)
               "CSB STAB keeps action-hand object in runtime slot");
         check(profile.runtime.projectiles.count == 1,
               "CSB STAB does not allocate a projectile");
+        check((int)(raw[102] | (raw[103] << 8)) < 80,
+              "CSB STAB applies F0402/F0231 damage to runtime C04 group HP");
         check(profile.runtime.party_state.Champions[0].CurrentStamina < 100,
               "CSB STAB writes M11 stamina cost back to runtime");
         state.actionDisabledTicks[0] = 0;
