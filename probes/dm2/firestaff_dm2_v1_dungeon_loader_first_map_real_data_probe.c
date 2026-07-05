@@ -201,8 +201,8 @@ static void probe_first_map(const unsigned char *raw, int size)
           "loader preserves map-0 tile-data offset");
     CHECK(dungeon.square_bytes == 1,
           "loader selects the PC G1 byte-square layout");
-    CHECK(dungeon.raw_map_data_base == DM2_TILE_DATA_START,
-          "loader starts byte-square data immediately after map definitions");
+    CHECK(dungeon.raw_map_data_base == 31667,
+          "loader starts byte-square data at the trailing PC G1 map-data block");
     CHECK(dungeon.level_widths[0] == 7,
           "loader reports map-0 width from Map_definitions.w8");
     CHECK(dungeon.level_heights[0] == 10,
@@ -212,17 +212,17 @@ static void probe_first_map(const unsigned char *raw, int size)
     CHECK(dungeon.raw_size == size && dungeon.raw_data != NULL,
           "loader retains raw dungeon bytes for tile lookups");
 
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 0) == 0x62,
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 0) == 0x20,
           "map-0 tile(0,0) raw byte is stable");
-    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 0) == 3,
+    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 0) == 1,
           "map-0 tile(0,0) type comes from high three bits");
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 1) == 0x1e,
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 1) == 0x20,
           "map-0 tile(0,1) raw byte is stable");
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x03,
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x00,
           "map-0 tile(1,0) confirms byte column-major stepping");
     CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 1, 0) == 0,
           "map-0 tile(1,0) type comes from high three bits");
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 6, 9) == 0x00,
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 6, 9) == 0x20,
           "map-0 tile(6,9) last in-bounds raw byte is stable");
     CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 7, 0) == -1,
           "map-0 x=7 is rejected");

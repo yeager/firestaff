@@ -9,7 +9,7 @@
  *   - 'G1' magic at header bytes 2-3 (DM2 file format ID)
  *   - DUNGEON_HEADER-style preamble at byte 0 (44 bytes)
  *   - Map definitions at byte 44: 28 x 16 bytes each
- *   - Byte-sized map squares start at byte 492 (44 + 28*16)
+ *   - Byte-sized map squares are stored in the trailing map-data block
  *   - Square type is stored in the high three bits, column-major
  *
  *   DUNGEON_HEADER fields (44 bytes, LE):
@@ -43,7 +43,7 @@
  * FIXES vs stub:
  *   - level_count read from DUNGEON_HEADER.map_count byte offset 6 (stub read byte 0)
  *   - Real PC G1 map definitions use w8 dimensions and byte-sized squares
- *   - Tile data offset is relative to byte map-data start (tile_data_start = 492)
+ *   - Tile data offset is relative to the trailing byte map-data block
  *
  * Source: SKULL.ASM T560 DUNGEON_Load, ReDMCSB DEFS.H:985-998, :1048-1116,
  *         DM2 PC English DUNGEON.DAT binary analysis (39,437 bytes),
@@ -239,8 +239,7 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     memset(out, 0, sizeof(*out));
     out->level_count = map_count;
     out->square_bytes = 1;
-    out->raw_map_data_base = DM2_DUNGEON_HEADER_SIZE +
-                             map_count * DM2_MAP_DESC_SIZE;
+    out->raw_map_data_base = -1;
     out->column_index_base = -1;
     out->square_first_thing_base = -1;
     out->text_data_base = -1;
@@ -275,15 +274,16 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
         out->level_types[i] = (i == 0) ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
     }
 
-    if (raw_map_bytes <= 0 ||
-        out->raw_map_data_base + raw_map_bytes > size) {
+    if (raw_map_bytes <= 0 || raw_map_bytes > size) {
         return 0;
     }
+    out->raw_map_data_base = size - raw_map_bytes;
 
     /* skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE reads the PC
-     * G1 map bytes as column-major byte squares after the header/map table.
-     * DME.h Map_definitions::w8 stores (width-1,height-1); the square type
-     * is the high three bits and bit 0x10 marks a thing-list square. */
+     * G1 map bytes after the object pools, i.e. as the trailing cbMapData
+     * block. DME.h Map_definitions::w8 stores (width-1,height-1); the
+     * square type is the high three bits and bit 0x10 marks a thing-list
+     * square. */
     out->raw_data = (uint8_t *)malloc((size_t)size);
     if (!out->raw_data) return -1;
     memcpy(out->raw_data, dat, (size_t)size);
