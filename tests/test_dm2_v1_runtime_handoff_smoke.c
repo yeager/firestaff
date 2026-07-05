@@ -304,6 +304,21 @@ static void test_first_tick_after_boot_profile_handoff(void)
           dm2_v1_runtime_get_party_y() == 15 &&
           dm2_v1_runtime_get_party_dir() == 0,
           "runtime accessors read the handoff party snapshot");
+    CHECK(dm2_v1_runtime_get_last_target_message() == NULL &&
+          dm2_v1_runtime_get_spawn_count() == 0,
+          "runtime target receipts start empty after handoff bind");
+    CHECK(dm2_v1_runtime_signal_item_used(1001) == 1 &&
+          dm2_v1_runtime_get_last_target_message() != NULL &&
+          strstr(dm2_v1_runtime_get_last_target_message(),
+                 "flickering light") != NULL,
+          "runtime item-used trigger applies display-message target");
+    CHECK(dm2_v1_runtime_signal_combat_ended(1) == 2 &&
+          dm2_v1_runtime_get_spawn_count() == 1 &&
+          dm2_v1_runtime_get_last_spawn_ai() == 10 &&
+          dm2_v1_runtime_get_last_spawn_x() == 1 &&
+          dm2_v1_runtime_get_last_spawn_y() == 1 &&
+          dm2_v1_runtime_get_last_spawn_level() == 0,
+          "runtime combat-ended trigger applies creature-spawn target");
 
     memset(&session, 0, sizeof(session));
     dm2_v1_session_new(&session);
@@ -656,6 +671,10 @@ static void test_first_tick_after_boot_profile_handoff(void)
     dm2_v1_runtime_tick();
     CHECK(dm2_v1_runtime_get_tick_count() == 78,
           "first deterministic DM2 V1 runtime tick is observable");
+    CHECK(dm2_v1_runtime_get_last_target_message() != NULL &&
+          strstr(dm2_v1_runtime_get_last_target_message(),
+                 "dungeon awakens") != NULL,
+          "runtime tick applies timeline display-message target");
     CHECK(dm2_v1_runtime_get_party_x() >= 0 &&
           dm2_v1_runtime_get_party_y() >= 0 &&
           dm2_v1_runtime_get_party_dir() == 0,

@@ -18,6 +18,7 @@
 
 #include "dm2_v1_game.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_creature.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
@@ -25,6 +26,7 @@
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_timeline.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
 #include <stdio.h>
@@ -55,6 +57,13 @@ typedef struct {
     int last_npc_y;
     int last_npc_id;
     int last_npc_dialog_line;
+    char last_target_message[160];
+    int last_spawn_instance_id;
+    int last_spawn_ai;
+    int last_spawn_x;
+    int last_spawn_y;
+    int last_spawn_level;
+    int spawn_count;
     /* V2 smooth movement callbacks — registered by dm2_v2_runtime */
     DM2_V2_MoveCallback  move_callback;
     DM2_V2_TurnCallback  turn_callback;
@@ -272,6 +281,50 @@ static int dm2_runtime_set_target_door_state(DM2_V1_RuntimeState *rt,
         dm2_runtime_door_set_state((uint16_t)raw, state));
 }
 
+static void dm2_runtime_record_message(DM2_V1_RuntimeState *rt,
+                                       const char *message) {
+    if (!rt || !message) return;
+    snprintf(rt->last_target_message, sizeof(rt->last_target_message),
+             "%s", message);
+}
+
+static void dm2_runtime_record_spawn(DM2_V1_RuntimeState *rt,
+                                     int ai_index,
+                                     int level,
+                                     int x,
+                                     int y) {
+    int instance_id;
+
+    if (!rt) return;
+    instance_id = dm2_v1_creature_spawn(ai_index, x, y, level, 0, 8);
+    rt->last_spawn_instance_id = instance_id;
+    rt->last_spawn_ai = ai_index;
+    rt->last_spawn_x = x;
+    rt->last_spawn_y = y;
+    rt->last_spawn_level = level;
+    if (instance_id >= 0) rt->spawn_count++;
+}
+
+static int dm2_runtime_event_from_trigger(
+    const DM2_V1_Trigger *trigger,
+    const DM2_V1_TriggerState *state,
+    DM2_V1_TriggerEvent *event) {
+    if (!trigger || !state || !event) return 0;
+    memset(event, 0, sizeof(*event));
+    event->valid = 1;
+    event->trigger_id = trigger->trigger_id;
+    event->kind = trigger->kind;
+    event->target = trigger->target;
+    event->target_x = trigger->target_x;
+    event->target_y = trigger->target_y;
+    event->target_level = trigger->target_level;
+    event->arg_creature_id = trigger->arg_creature_id;
+    event->now_ms = state->last_fire_ms;
+    event->fire_count = state->fired_count;
+    event->message = trigger->message;
+    return 1;
+}
+
 static void dm2_runtime_apply_trigger_event(DM2_V1_RuntimeState *rt,
                                             const DM2_V1_TriggerEvent *event) {
     DM2_V1_GameState *gs;
@@ -317,6 +370,15 @@ static void dm2_runtime_apply_trigger_event(DM2_V1_RuntimeState *rt,
             gs->party_x = event->target_x;
             gs->party_y = event->target_y;
             rt->dungeon_level = event->target_level;
+            break;
+        case DM2_TRIGGER_TARGET_SPAWN_CREATURE:
+            dm2_runtime_record_spawn(rt, event->arg_creature_id,
+                                     event->target_level,
+                                     event->target_x,
+                                     event->target_y);
+            break;
+        case DM2_TRIGGER_TARGET_DISPLAY_MSG:
+            dm2_runtime_record_message(rt, event->message);
             break;
         default:
             break;
@@ -364,8 +426,90 @@ static void dm2_runtime_apply_plate_event(DM2_V1_RuntimeState *rt,
                                               event->target_x,
                                               event->target_y, 0);
             break;
+        case DM2_PLATE_TARGET_MESSAGE:
+            dm2_runtime_record_message(rt, event->message);
+            break;
+        case DM2_PLATE_TARGET_CREATURE_SPAWN:
+            dm2_runtime_record_spawn(rt, DM2_AI_DRAGOTH_MINION,
+                                     event->target_level,
+                                     event->target_x,
+                                     event->target_y);
+            break;
         default:
             break;
+    }
+}
+
+static void dm2_runtime_apply_timeline_event(DM2_V1_RuntimeState *rt,
+                                             const DM2_V1_TimelineEvent *event) {
+    if (!rt || !event) return;
+    switch (event->kind) {
+        case DM2_TIMELINE_EVENT_CREATURE_SPAWN:
+            dm2_runtime_record_spawn(rt, event->arg_creature_id,
+                                     event->arg_level,
+                                     event->arg_x,
+                                     event->arg_y);
+            break;
+        case DM2_TIMELINE_EVENT_DOOR_LOCK:
+            dm2_runtime_set_target_door_state(rt, event->arg_level,
+                                              event->arg_x,
+                                              event->arg_y, 4);
+            break;
+        case DM2_TIMELINE_EVENT_DOOR_UNLOCK:
+            dm2_runtime_set_target_door_state(rt, event->arg_level,
+                                              event->arg_x,
+                                              event->arg_y, 0);
+            break;
+        case DM2_TIMELINE_EVENT_MESSAGE_DISPLAY:
+            dm2_runtime_record_message(rt, event->message);
+            break;
+        default:
+            break;
+    }
+}
+
+static void dm2_runtime_process_time_triggers(DM2_V1_RuntimeState *rt,
+                                              int now_ms) {
+    if (!rt) return;
+    dm2_v1_trigger_set_now_ms(now_ms);
+    for (int i = 1; i <= dm2_v1_trigger_get_builtin_count(); ++i) {
+        DM2_V1_TriggerEvent event;
+        const DM2_V1_TriggerState *state;
+        const DM2_V1_Trigger *trigger = dm2_v1_trigger_get_builtin(i);
+        int last;
+        int delta;
+        if (!trigger || !trigger->enabled) continue;
+        if (trigger->kind != DM2_TRIGGER_KIND_TIME_ELAPSED) continue;
+        state = dm2_v1_trigger_get_state(trigger->trigger_id);
+        if (!state) continue;
+        if (trigger->fire_once && state->fired_count > 0) continue;
+        last = state->last_fire_ms;
+        delta = (last == 0) ? now_ms : (now_ms - last);
+        if (delta >= trigger->arg_time_ms &&
+            dm2_v1_trigger_fire(trigger->trigger_id) ==
+                (int)DM2_TRIGGER_RESULT_OK &&
+            dm2_v1_trigger_copy_last_event(&event)) {
+            dm2_runtime_apply_trigger_event(rt, &event);
+        }
+    }
+}
+
+static void dm2_runtime_process_timeline(DM2_V1_RuntimeState *rt, int now_ms) {
+    int before[DM2_TIMELINE_NUM_BUILTIN];
+    int fired;
+
+    if (!rt) return;
+    for (int i = 1; i <= DM2_TIMELINE_NUM_BUILTIN; ++i) {
+        before[i - 1] = dm2_v1_timeline_get_fire_count(i);
+    }
+    fired = dm2_v1_timeline_tick(now_ms);
+    if (fired <= 0) return;
+    for (int i = 1; i <= DM2_TIMELINE_NUM_BUILTIN; ++i) {
+        int after = dm2_v1_timeline_get_fire_count(i);
+        if (after > before[i - 1]) {
+            dm2_runtime_apply_timeline_event(rt,
+                                             dm2_v1_timeline_get_builtin(i));
+        }
     }
 }
 
@@ -393,6 +537,17 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.last_npc_y = -1;
     g_dm2_runtime.last_npc_id = DM2_NPC_MERCHANT_FRIENDLY;
     g_dm2_runtime.last_npc_dialog_line = -1;
+    g_dm2_runtime.last_target_message[0] = '\0';
+    g_dm2_runtime.last_spawn_instance_id = -1;
+    g_dm2_runtime.last_spawn_ai = -1;
+    g_dm2_runtime.last_spawn_x = -1;
+    g_dm2_runtime.last_spawn_y = -1;
+    g_dm2_runtime.last_spawn_level = -1;
+    g_dm2_runtime.spawn_count = 0;
+    dm2_v1_trigger_reset_state();
+    dm2_v1_plate_reset_state();
+    dm2_v1_timeline_reset_state();
+    dm2_v1_timeline_init();
     g_dm2_runtime.move_callback  = NULL;
     g_dm2_runtime.turn_callback  = NULL;
     g_dm2_runtime.stairs_callback = NULL;
@@ -500,6 +655,9 @@ void dm2_v1_runtime_tick(void) {
     if (rt->outdoor && rt->tick_count % 182 == 0) {  /* ~10 sec */
         dm2_v1_weather_next_state(&rt->weather);
     }
+
+    dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
+    dm2_runtime_process_timeline(rt, rt->tick_count * 55);
 
     /* Phase 5+ extension: step then drain DM2 projectile list into
      * M11-ready cache.  The step path applies the STEP_MISSILE
@@ -1138,6 +1296,71 @@ int dm2_v1_runtime_get_last_npc_id(void) {
 
 int dm2_v1_runtime_get_last_npc_dialog_line(void) {
     return g_dm2_runtime.last_npc_dialog_line;
+}
+
+int dm2_v1_runtime_signal_item_used(int item_id) {
+    DM2_V1_TriggerEvent event;
+    if (dm2_v1_trigger_signal_item_used(item_id) <= 0) return 0;
+    if (!dm2_v1_trigger_copy_last_event(&event)) return 0;
+    dm2_runtime_apply_trigger_event(&g_dm2_runtime, &event);
+    return 1;
+}
+
+int dm2_v1_runtime_signal_combat_ended(int victory) {
+    int fired;
+    int before[DM2_TRIGGER_NUM_BUILTIN];
+
+    for (int i = 1; i <= dm2_v1_trigger_get_builtin_count(); ++i) {
+        const DM2_V1_Trigger *trigger = dm2_v1_trigger_get_builtin(i);
+        before[i - 1] = trigger
+            ? dm2_v1_trigger_get_fire_count(trigger->trigger_id)
+            : -1;
+    }
+    fired = dm2_v1_trigger_signal_combat_ended(victory);
+    if (fired <= 0) return 0;
+    for (int i = 1; i <= dm2_v1_trigger_get_builtin_count(); ++i) {
+        DM2_V1_TriggerEvent event;
+        const DM2_V1_Trigger *trigger = dm2_v1_trigger_get_builtin(i);
+        const DM2_V1_TriggerState *state =
+            trigger ? dm2_v1_trigger_get_state(trigger->trigger_id) : NULL;
+        if (!trigger || !state) continue;
+        if (trigger->kind != DM2_TRIGGER_KIND_COMBAT_ENDED) continue;
+        if (state->fired_count <= before[i - 1]) continue;
+        if (dm2_runtime_event_from_trigger(trigger, state, &event)) {
+            dm2_runtime_apply_trigger_event(&g_dm2_runtime, &event);
+        }
+    }
+    return fired;
+}
+
+const char *dm2_v1_runtime_get_last_target_message(void) {
+    return g_dm2_runtime.last_target_message[0] != '\0'
+        ? g_dm2_runtime.last_target_message
+        : NULL;
+}
+
+int dm2_v1_runtime_get_last_spawn_instance_id(void) {
+    return g_dm2_runtime.last_spawn_instance_id;
+}
+
+int dm2_v1_runtime_get_last_spawn_ai(void) {
+    return g_dm2_runtime.last_spawn_ai;
+}
+
+int dm2_v1_runtime_get_last_spawn_x(void) {
+    return g_dm2_runtime.last_spawn_x;
+}
+
+int dm2_v1_runtime_get_last_spawn_y(void) {
+    return g_dm2_runtime.last_spawn_y;
+}
+
+int dm2_v1_runtime_get_last_spawn_level(void) {
+    return g_dm2_runtime.last_spawn_level;
+}
+
+int dm2_v1_runtime_get_spawn_count(void) {
+    return g_dm2_runtime.spawn_count;
 }
 
 int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
