@@ -156,6 +156,7 @@ static void populate_startup_mirror_summary(Theron_V1_StartupReceipt *receipt) {
     receipt->startup_portrait_max = portrait_max;
     receipt->startup_class_mask = class_mask;
     receipt->startup_fallback_label_count = THERON_STARTUP_HERO_MIRROR_COUNT;
+    receipt->startup_decoded_label_count = 0u;
     receipt->startup_decoded_art_count = 0u;
 }
 
@@ -606,6 +607,22 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
                     ++receipt->startup_roster_title_count;
                 }
             }
+            receipt->startup_decoded_label_count = 0u;
+            for (i = 0u; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
+                int roster_index =
+                    theron_v1_startup_roster_index_for_mirror((int)i);
+                if (roster_index >= 0 &&
+                    roster_index < (int)roster_catalog.name_count &&
+                    roster_catalog.names[roster_index].name[0] != '\0') {
+                    ++receipt->startup_decoded_label_count;
+                }
+            }
+            receipt->startup_fallback_label_count =
+                receipt->startup_decoded_label_count >=
+                    THERON_STARTUP_HERO_MIRROR_COUNT
+                    ? 0u
+                    : THERON_STARTUP_HERO_MIRROR_COUNT -
+                        receipt->startup_decoded_label_count;
         }
     }
 
@@ -807,6 +824,8 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->startup_class_mask), h);
     h = fnv1a_32(&receipt->startup_fallback_label_count,
                  sizeof(receipt->startup_fallback_label_count), h);
+    h = fnv1a_32(&receipt->startup_decoded_label_count,
+                 sizeof(receipt->startup_decoded_label_count), h);
     h = fnv1a_32(&receipt->startup_decoded_art_count,
                  sizeof(receipt->startup_decoded_art_count), h);
     h = fnv1a_str(h, receipt->startup_chapter_label);
@@ -869,7 +888,7 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "initial_user_valid=%d initial_user_off=0x%llx "
                  "mirrors=%u companions=%u portrait_range=%u..%u "
                  "class_mask=0x%x mirror_fallback_labels=%u "
-                 "mirror_decoded_art=%u chapter=\"%s\" "
+                 "mirror_decoded_labels=%u mirror_decoded_art=%u chapter=\"%s\" "
                  "quest=\"%s\" next=\"%s\" quest_total=%u "
                  "quest_items=0x%x "
                  "boot_platform=%d boot_version=%s boot_verified=%d "
@@ -937,6 +956,7 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned)receipt->startup_portrait_max,
                  (unsigned)receipt->startup_class_mask,
                  (unsigned)receipt->startup_fallback_label_count,
+                 (unsigned)receipt->startup_decoded_label_count,
                  (unsigned)receipt->startup_decoded_art_count,
                  receipt->startup_chapter_label[0]
                     ? receipt->startup_chapter_label : "(none)",
