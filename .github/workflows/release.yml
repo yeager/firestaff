@@ -299,7 +299,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build rpm dpkg-dev git pkg-config \
-            zstd \
+            zstd libarchive-tools \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
           git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
