@@ -31,18 +31,14 @@ static int expect_int(const char* label, int got, int want) {
     return 1;
 }
 
-static void set_hall_start_north(M11_GameViewState* game) {
-    /* Real DM1 V1 DUNGEON.DAT: (1,2) NORTH front=(1,1) has C127
-     * sensor idx=15 data=1 (HALK).  v2.7.22 anchored the front-cell
-     * mirror ordinal to the C127 sensorData (ReDMCSB DUNGEON.C:2573
-     * + MOVESENS.C:1501-1503 + REVIVE.C F0280).  The OLD corridor
-     * pose (1,4) NORTH had only a TextString and no C127 sensor —
-     * it returns -1 under the v2.7.22 contract.  The OLD ordinal
-     * 2 (HALK-by-old-assumption) is also stale: real (1,2) is
-     * ordinal 1, not 2.  Use (1,2) NORTH ordinal 1. */
+static void set_hall_halk_pose(M11_GameViewState* game) {
+    /* Real DM1 V1 DUNGEON.DAT after the ReDMCSB compact
+     * SquareFirstThings lookup: HALK's C127 sensorData=1 is front-visible
+     * from (7,9) NORTH.  The older (1,2) NORTH route came from dense
+     * square-first fallback and no longer matches the source thing list. */
     game->world.party.mapIndex = 0;
-    game->world.party.mapX = 1;
-    game->world.party.mapY = 2;
+    game->world.party.mapX = 7;
+    game->world.party.mapY = 9;
     game->world.party.direction = DIR_NORTH;
     game->showDebugHUD = 0;
     game->candidateMirrorPanelActive = 0;
@@ -62,7 +58,7 @@ static int open_game(const char* dataDir,
 static int prepare_candidate_with_spell(M11_GameViewState* game,
                                         int expectedMirrorOrdinal) {
     int ok = 1;
-    set_hall_start_north(game);
+    set_hall_halk_pose(game);
     ok &= expect_int("front mirror ordinal",
                      M11_GameView_GetFrontMirrorOrdinal(game),
                      expectedMirrorOrdinal);
@@ -176,12 +172,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    /* v2.7.22: real DM1 V1 Hall of Champions C127 mirror positions
-     * use the ReDMCSB DUNGEON.C:2573/2610-2612 front-wall side filter.
-     * HALK is visible from (1,2) NORTH ordinal=1; ZED's raw sensor is
-     * on (1,4) cell 0, so the source-visible pose is (1,3) SOUTH
-     * ordinal=10, not the wrong-wall (1,5) NORTH view.  Use HALK for
-     * the candidate-panel suppression regression. */
+    /* Real DM1 V1 Hall of Champions C127 mirror positions use the
+     * ReDMCSB compact SquareFirstThings table and DUNGEON.C:2573/2610-2612
+     * front-wall side filter.  Use HALK's real front-visible pose for the
+     * candidate-panel suppression regression. */
     if (prepare_candidate_with_spell(&game, 1)) {
         ok &= check_spell_cast_input_ignored(&game, 1);
         ok &= check_spell_clear_input_ignored(&game, 1);

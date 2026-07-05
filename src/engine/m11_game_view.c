@@ -2937,13 +2937,14 @@ static unsigned short m11_get_viewport_static_first_thing(const struct GameWorld
     int elementType;
     if (m11_get_square_byte(world, mapIndex, mapX, mapY, &square)) {
         elementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-        if (mapIndex == 0 && elementType != DUNGEON_ELEMENT_WALL) {
+        (void)elementType;
+        if (mapIndex == 0) {
             /* ReDMCSB DUNGEON.C F0160/F0161 stores SquareFirstThings as a
              * compact table indexed only by squares with the thing-list flag.
-             * The stock DM1 Hall of Champions has no active creatures or
-             * static projectiles/explosions in non-wall floor cells; using
-             * the older dense mapX*height+mapY route here can draw unrelated
-             * compact entries as HoC artifacts, including false fireballs. */
+             * The stock DM1 Hall of Champions keeps both mirror C127 wall
+             * sensors and mirror payload data in that compact table.  Using
+             * the older dense mapX*height+mapY route can either miss real
+             * mirrors or draw unrelated compact entries as HoC artifacts. */
             return m11_get_flagged_square_first_thing(world, mapIndex, mapX, mapY);
         }
     }
@@ -13797,7 +13798,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * ornamentOrdinal field specifies the graphic to display.
      * Sensor-placed ornaments OVERRIDE random ornaments. */
     if (state->world.things && state->world.things->sensors) {
-        unsigned short scanThing = firstThing;
+        unsigned short scanThing = viewportStaticFirstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
             if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {

@@ -9,13 +9,13 @@
  * at the source-locked position but no portrait is painted there
  * because the front square (0,2) is a doorway, not a C127 mirror
  * wall.  The positive route that puts ordinal 1 in that same D1C
- * rect is (1,2) facing NORTH.
+ * rect is (7,9) facing NORTH.
  *
  * Companion to firestaff_dm1_v1_champion_mirror_capture_probe and
  * firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe:
- *   - capture_probe proves the (1,2) NORTH HALK pose renders the
+ *   - capture_probe proves the (7,9) NORTH HALK pose renders the
  *     portrait and (1,2) WEST is empty at the hardcoded rect.
- *   - actual_pose_runtime_probe proves (1,2) NORTH returns
+ *   - actual_pose_runtime_probe proves (7,9) NORTH returns
  *     ordinal 1 from the C127 sensor lookup and (1,2) WEST
  *     returns -1.
  *   - panel_guard_probe proves the BUG-120/121 panel-active
@@ -24,7 +24,7 @@
  * What is NOT yet proven for ordinal 1 specifically:
  *   (1) The mirror catalog name (F0660) and title (F0661) for
  *       ordinal 1 round-trip to "HALK" and a non-empty title.
- *   (2) The D1C portrait cutout (96, 35, 32, 29) at (1,2) NORTH
+ *   (2) The D1C portrait cutout (96, 35, 32, 29) at (7,9) NORTH
  *       pixel-matches C026 atlas slot 1 (HALK) at >= 90% palette
  *       agreement — i.e. the rect contains the right champion,
  *       not a stale pixel from a previous frame or a different
@@ -41,7 +41,7 @@
  *       offset is locked regardless of which C127 sensorData
  *       ordinal is at the front square.
  *   (6) The resurrect round-trip via SelectFrontMirrorCandidate at
- *       (1,2) NORTH sets candidateMirrorOrdinal=1, ConfirmMirror-
+ *       (7,9) NORTH sets candidateMirrorOrdinal=1, ConfirmMirror-
  *       Candidate appends HALK with full HP, the mirror route
  *       disables, and 20 idle ticks later HALK is still alive.
  *
@@ -311,24 +311,24 @@ int main(int argc, char** argv) {
         CHECK(titleBuf[0] != '\0', msg);
     }
 
-    /* ── Group B: (1,2) NORTH HALK positive route ─────────────────
+    /* ── Group B: (7,9) NORTH HALK positive route ─────────────────
      * Source-locked to DUNGEON.C:2573 (C127 sensor front-wall
      * filter) + MOVESENS.C:1501-1503 (sensorData routing) +
-     * REVIVE.C F0280 (candidate materialization).  At (1,2)
-     * facing NORTH, the front square is (1,1) which carries a
-     * C127 sensor with sensorData=1 (HALK).  The engine must:
+     * REVIVE.C F0280 (candidate materialization).  At (7,9)
+     * facing NORTH, the front square carries the compact C127
+     * sensor with sensorData=1 (HALK).  The engine must:
      *   - return ordinal 1 from M11_GameView_GetFrontMirrorOrdinal
      *   - paint the HALK portrait sprite (atlas slot 1) at the
      *     D1C cutout (96, 35, 32, 29) with >= 90% pixel match.
      */
-    printf("\n[Group B] (1,2) NORTH HALK positive route: portrait painted at D1C rect\n");
+    printf("\n[Group B] (7,9) NORTH HALK positive route: portrait painted at D1C rect\n");
 
-    render_at(&state, fbNorth, 1, 2, DIR_NORTH);
+    render_at(&state, fbNorth, 7, 9, DIR_NORTH);
     ordinalNorth = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "M11_GameView_GetFrontMirrorOrdinal((1,2)N) == 1 (got %d)",
+                 "M11_GameView_GetFrontMirrorOrdinal((7,9)N) == 1 (got %d)",
                  ordinalNorth);
         CHECK(ordinalNorth == 1, msg);
     }
@@ -364,7 +364,7 @@ int main(int argc, char** argv) {
      * = (96, 35, 32, 29) per the (+16, +6) parented offset. */
     printf("\n[Group C] portrait_rect_position contract: (96, 35, 32, 29) invariant\n");
 
-    set_pose(&state, 1, 2, DIR_NORTH);
+    set_pose(&state, 7, 9, DIR_NORTH);
     {
         int rc = M11_GameView_GetD1CWallOrnamentZone(&state, &ornX, &ornY, &ornW, &ornH);
         char msg[200];
@@ -524,12 +524,12 @@ int main(int argc, char** argv) {
         ++g_pass;
     }
 
-    /* ── Group E: resurrect round-trip at (1,2) NORTH HALK ────────
+    /* ── Group E: resurrect round-trip at (7,9) NORTH HALK ────────
      * Source-locked to REVIVE.C F0280 (candidate materialization
      * from C127 sensorData) + REVIVE.C F0282 (disable matching
      * mirror after confirmed resurrect) + DUNGEON.C:2608-2612
      * (C127 sensorData storage in G0289). */
-    printf("\n[Group E] HALK resurrect round-trip via (1,2) NORTH\n");
+    printf("\n[Group E] HALK resurrect round-trip via (7,9) NORTH\n");
 
     {
         int initialCount;
@@ -537,14 +537,14 @@ int main(int argc, char** argv) {
         int rc;
         int i;
 
-        set_pose(&state, 1, 2, DIR_NORTH);
+        set_pose(&state, 7, 9, DIR_NORTH);
         initialCount = state.world.party.championCount;
 
         rc = M11_GameView_SelectFrontMirrorCandidate(&state);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "M11_GameView_SelectFrontMirrorCandidate((1,2)N) == 1 (got %d)",
+                     "M11_GameView_SelectFrontMirrorCandidate((7,9)N) == 1 (got %d)",
                      rc);
             CHECK(rc == 1, msg);
         }
@@ -560,7 +560,7 @@ int main(int argc, char** argv) {
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "M11_GameView_ConfirmMirrorCandidate((1,2)N) == 1 (got %d)",
+                     "M11_GameView_ConfirmMirrorCandidate((7,9)N) == 1 (got %d)",
                      rc);
             CHECK(rc == 1, msg);
         }
