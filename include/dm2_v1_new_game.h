@@ -245,6 +245,14 @@ int dm2_v1_session_serialize(const DM2_V1_SessionState *session,
 int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
                                  const uint8_t *buf, size_t buf_size);
 
+/* Import a bounded original/SUPPRESS resume payload into the Firestaff DM2
+ * session envelope. This is the startup bridge for SKSave payloads that carry
+ * the documented game-state block plus champion SUPPRESS records instead of
+ * Firestaff's compact session-version byte at offset 28. */
+int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
+                                           const uint8_t *buf,
+                                           size_t buf_size);
+
 /* Save session to slot N using the slot manager.
  * Combines serialize + dm2_sl_save.
  * Returns 0 on success.

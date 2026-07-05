@@ -742,6 +742,8 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
     DM2_GameStateBlock *resumed = &resumed_store.block;
     DM2_ChampionRecord champ;
     DM2_ChampionRecord resumed_champ;
+    DM2_V1_SessionState imported_session;
+    DM2_ChampionRecord imported_champ;
     int r;
 
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_resume_%d", FS_GETPID());
@@ -807,6 +809,31 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
         cleanup_one_slot_dir(tmpdir, 4);
         return 0;
     }
+    memset(&imported_session, 0, sizeof(imported_session));
+    r = dm2_v1_session_load_slot(tmpdir, 4, &imported_session);
+    if (r != 0) {
+        printf("    FAIL: session loader rejected SUPPRESS resume payload (r=%d)\n",
+               r);
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+    memset(&imported_champ, 0, sizeof(imported_champ));
+    memcpy(&imported_champ, imported_session.champion_data[0],
+           sizeof(imported_champ));
+    if (imported_session.game_tick != resumed->dwGameTick ||
+        imported_session.rng_seed != resumed->dwRandomSeed ||
+        imported_session.champion_count != 1 ||
+        imported_session.party_x != resumed->wPlayerPosX ||
+        imported_session.party_y != resumed->wPlayerPosY ||
+        imported_session.party_dir != (resumed->wPlayerDir & 3u) ||
+        imported_session.party_level != (uint8_t)resumed->wPlayerMap ||
+        imported_session.leader_index != 0 ||
+        imported_champ.inventory[0] != resumed_champ.inventory[0] ||
+        imported_champ.inventory[1] != resumed_champ.inventory[1]) {
+        printf("    FAIL: session loader did not import SUPPRESS resume tuple\n");
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
 
     gs->dwGameTick = 0x00123500u;
     gs->wPlayerPosX = 21;
@@ -843,6 +870,27 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
     }
     if (!check_resume_state("overwrite", gs, resumed,
                             champ.inventory, resumed_champ.inventory)) {
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+    memset(&imported_session, 0, sizeof(imported_session));
+    r = dm2_v1_session_load_slot(tmpdir, 4, &imported_session);
+    if (r != 0) {
+        printf("    FAIL: overwritten SUPPRESS payload did not import (r=%d)\n",
+               r);
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+    memset(&imported_champ, 0, sizeof(imported_champ));
+    memcpy(&imported_champ, imported_session.champion_data[0],
+           sizeof(imported_champ));
+    if (imported_session.game_tick != resumed->dwGameTick ||
+        imported_session.party_x != resumed->wPlayerPosX ||
+        imported_session.party_y != resumed->wPlayerPosY ||
+        imported_session.party_dir != (resumed->wPlayerDir & 3u) ||
+        imported_session.party_level != (uint8_t)resumed->wPlayerMap ||
+        imported_champ.inventory[8] != resumed_champ.inventory[8]) {
+        printf("    FAIL: overwritten SUPPRESS payload did not update session import\n");
         cleanup_one_slot_dir(tmpdir, 4);
         return 0;
     }
