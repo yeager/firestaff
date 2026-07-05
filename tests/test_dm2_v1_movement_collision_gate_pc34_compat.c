@@ -260,6 +260,55 @@ static int test_runtime_blocked_step_turn_state(void)
     return ok;
 }
 
+static int test_runtime_turn_only_keeps_position(void)
+{
+    DM2_V1_BootProfile profile;
+    DM2_V1_GameState game;
+    DM2_V1_DungeonData dungeon;
+    uint8_t raw[DM2_SYNTHETIC_RAW_SIZE];
+    int ok;
+
+    build_synthetic_runtime(&profile, &game, &dungeon, raw);
+    if (dungeon.raw_data == NULL) {
+        return 0;
+    }
+
+    dm2_v1_runtime_init(&profile);
+    dm2_v1_runtime_set_outdoor(0);
+    runtime_move_callbacks = 0;
+    runtime_turn_callbacks = 0;
+    runtime_last_turn_from = -1;
+    runtime_last_turn_to = -1;
+    dm2_v1_runtime_set_move_callback(on_runtime_move);
+    dm2_v1_runtime_set_turn_callback(on_runtime_turn);
+
+    ok = dm2_v1_runtime_turn(-1) == 0
+        && dm2_v1_runtime_get_party_x() == 1
+        && dm2_v1_runtime_get_party_y() == 1
+        && dm2_v1_runtime_get_party_dir() == 0
+        && runtime_move_callbacks == 0
+        && runtime_turn_callbacks == 1
+        && runtime_last_turn_from == 1
+        && runtime_last_turn_to == 0
+        && dm2_v1_runtime_can_move() == 1;
+
+    ok = ok
+        && dm2_v1_runtime_turn(1) == 0
+        && dm2_v1_runtime_get_party_x() == 1
+        && dm2_v1_runtime_get_party_y() == 1
+        && dm2_v1_runtime_get_party_dir() == 1
+        && runtime_move_callbacks == 0
+        && runtime_turn_callbacks == 2
+        && runtime_last_turn_from == 0
+        && runtime_last_turn_to == 1
+        && dm2_v1_runtime_can_move() == 1;
+
+    dm2_v1_runtime_set_move_callback(NULL);
+    dm2_v1_runtime_set_turn_callback(NULL);
+    dm2_v1_dungeon_free(&dungeon);
+    return ok;
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Movement Collision Gate ===\n\n");
@@ -270,6 +319,7 @@ int main(void)
     TEST(out_of_bounds_type_sentinel);
     TEST(source_evidence_mentions_collision_anchors);
     TEST(runtime_blocked_step_turn_state);
+    TEST(runtime_turn_only_keeps_position);
 
     printf("\nDM2 V1 Movement Collision Gate: %d/%d passed\n",
            tests_passed, tests_run);

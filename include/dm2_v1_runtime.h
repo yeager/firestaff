@@ -40,6 +40,7 @@ void dm2_v1_runtime_tick(void);
 int  dm2_v1_runtime_get_tick_count(void);
 int  dm2_v1_runtime_can_move(void);
 int  dm2_v1_runtime_move(int direction);        /* 0=N 1=E 2=S 3=W, returns 0=ok -1=blocked */
+int  dm2_v1_runtime_turn(int delta);            /* -1=left, +1=right, returns 0=ok -1=unbooted */
 void dm2_v1_runtime_set_outdoor(int is_outdoor);/* 1=outdoor 0=dungeon */
 void dm2_v1_runtime_set_position(int level, int x, int y, int dir);
 

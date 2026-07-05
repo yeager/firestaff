@@ -239,6 +239,23 @@ int main(void) {
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "DM2 V1 runtime tick counter starts at zero");
 
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 DM2 turn-right input redraws through runtime");
+    expect_true(view.dm2State.party_x == 15 && view.dm2State.party_y == 15 &&
+                view.dm2State.party_dir == 1,
+                "M11 DM2 turn-right rotates in place");
+    expect_true(dm2_v1_runtime_get_party_x() == 15 &&
+                dm2_v1_runtime_get_party_y() == 15 &&
+                dm2_v1_runtime_get_party_dir() == 1,
+                "DM2 runtime turn-right keeps boot position");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_LEFT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 DM2 turn-left input redraws through runtime");
+    expect_true(view.dm2State.party_x == 15 && view.dm2State.party_y == 15 &&
+                view.dm2State.party_dir == 0,
+                "M11 DM2 turn-left restores boot facing");
+
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;
     if (profile) {
