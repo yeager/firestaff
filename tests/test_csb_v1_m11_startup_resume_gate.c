@@ -768,6 +768,15 @@ int main(void) {
                     "CSB runtime restored magic caster from savePath");
         expect_true(profile->runtime.game_time == expected.game_time,
                     "CSB runtime restored game time from savePath");
+        if (profile->variant_id == CSB_V1_VARIANT_PC34_EN) {
+            expect_true(view.assetsAvailable == 1,
+                        "M11 CSB PC34 start exposes GRAPHICS.DAT to shared render paths");
+        }
+        if (view.assetsAvailable) {
+            expect_true(strcmp(view.assetLoader.graphicsDatPath,
+                               profile->graphics_path) == 0,
+                        "M11 CSB asset loader uses the CSB boot profile graphics path");
+        }
     }
 
     {
