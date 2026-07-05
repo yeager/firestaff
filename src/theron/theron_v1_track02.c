@@ -1243,6 +1243,52 @@ int theron_v1_track02_bind_level_candidate_anchor(
     return 1;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_bind_level_candidate_user_offsets(
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02LevelCandidateCatalog *catalog) {
+
+    size_t sector_count = 0u;
+    size_t user_data_size = 0u;
+    Theron_Track02SignalStatus status;
+
+    if (!catalog) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    for (size_t i = 0; i < catalog->candidate_count; ++i) {
+        catalog->candidates[i].user_data_offset = 0u;
+        catalog->candidates[i].user_data_offset_valid = 0;
+    }
+
+    status = theron_v1_track02_raw_user_data_size(track02_size,
+                                                  md5_hex,
+                                                  &sector_count,
+                                                  &user_data_size);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+
+    for (size_t i = 0; i < catalog->candidate_count; ++i) {
+        Theron_Track02LevelCandidate *candidate = &catalog->candidates[i];
+        size_t user_offset = 0u;
+        Theron_Track02SignalStatus offset_status =
+            theron_v1_track02_raw_offset_to_user_offset(
+                candidate->absolute_offset,
+                track02_size,
+                md5_hex,
+                &user_offset);
+        if (offset_status == THERON_TRACK02_SIGNAL_OK) {
+            candidate->user_data_offset = user_offset;
+            candidate->user_data_offset_valid = 1;
+        }
+    }
+
+    (void)sector_count;
+    (void)user_data_size;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 int theron_v1_track02_initial_candidate_expected_offset(
     size_t descriptor_offset,
     size_t *out_candidate_offset) {

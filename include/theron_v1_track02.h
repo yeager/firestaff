@@ -448,6 +448,8 @@ typedef struct {
     int start_dir;
     size_t descriptor_delta;
     int matches_initial_anchor;
+    size_t user_data_offset;
+    int user_data_offset_valid;
     int loaded;
 } Theron_Track02LevelCandidate;
 
@@ -536,6 +538,26 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
  */
 int theron_v1_track02_bind_level_candidate_anchor(
     size_t descriptor_offset,
+    Theron_Track02LevelCandidateCatalog *catalog);
+
+/* Annotate a raw Track 02 candidate catalog with logical 2048-byte user-data
+ * offsets.
+ *
+ * `theron_v1_track02_scan_level_candidates()` reports raw byte offsets because
+ * it scans the caller-supplied Track 02 byte image directly.  For JP/US raw
+ * BINs, downstream menu/art/dungeon decoders usually need the matching offset
+ * in the stripped MODE1/2048 user-data stream.  This helper preserves the raw
+ * offset while filling `candidate.user_data_offset` and
+ * `candidate.user_data_offset_valid` for candidates that begin inside a
+ * sector's 2048-byte user-data area.
+ *
+ * This is an offset-binding helper only. It does not reinterpret level
+ * candidates as graphics, menu art, text, palettes, objects, or broader dungeon
+ * records.
+ */
+Theron_Track02SignalStatus theron_v1_track02_bind_level_candidate_user_offsets(
+    size_t track02_size,
+    const char *md5_hex,
     Theron_Track02LevelCandidateCatalog *catalog);
 
 /* Bind the hash/anchor-gated initial startup candidate without loading it
