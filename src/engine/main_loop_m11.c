@@ -22,6 +22,7 @@
 #include "dm1_v1_automap_pc34_compat.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "title_frontend_v1.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 #include "dm1_v1_vblank_timing.h"
@@ -1446,6 +1447,11 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             menuState, menuState->activatedIndex);
         if (launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0) {
+            if (!dm1_v1_startup_sequence_source_order_valid_pc34()) {
+                fprintf(stderr,
+                        "DM1 startup source-order guard failed: %s\n",
+                        dm1_v1_startup_sequence_source_evidence_pc34());
+            }
             /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order.
              * Pass the menu state so the FTL/SWSH finder can locate SWOOSH next
              * to the matched GRAPHICS.DAT, the user-supplied data dir, or the

@@ -1,6 +1,7 @@
 #include "main_loop_m11.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "title_frontend_v1.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -11,15 +12,6 @@
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
-
-typedef enum DM1V1StartupStage {
-    DM1_V1_STARTUP_STAGE_SWSH_LOGO = 1,
-    DM1_V1_STARTUP_STAGE_SWSH_RUN_START = 2,
-    DM1_V1_STARTUP_STAGE_TITLE_BEGIN = 3,
-    DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME = 4,
-    DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE = 5,
-    DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT = 6
-} DM1V1StartupStage;
 
 static int g_failures = 0;
 
@@ -45,13 +37,13 @@ static void expect_truth(const char* label, int got) {
 }
 
 static void expect_stage_after(const char* label,
-                               DM1V1StartupStage later,
-                               DM1V1StartupStage earlier) {
-    if ((unsigned int)later <= (unsigned int)earlier) {
-        printf("FAIL %s: later %u earlier %u\n",
+                               DM1_V1_StartupStage_PC34 later,
+                               DM1_V1_StartupStage_PC34 earlier) {
+    if (!dm1_v1_startup_stage_after_pc34(later, earlier)) {
+        printf("FAIL %s: later %s earlier %s\n",
                label,
-               (unsigned int)later,
-               (unsigned int)earlier);
+               dm1_v1_startup_stage_name_pc34(later),
+               dm1_v1_startup_stage_name_pc34(earlier));
         g_failures++;
     }
 }
@@ -106,8 +98,8 @@ static void check_swsh_to_title_boundary(void) {
              (unsigned int)last.kind,
              (unsigned int)SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM);
     expect_stage_after("TITLE begins only after SWSH run-start",
-                       DM1_V1_STARTUP_STAGE_TITLE_BEGIN,
-                       DM1_V1_STARTUP_STAGE_SWSH_RUN_START);
+                       DM1_V1_STARTUP_STAGE_TITLE_BEGIN_PC34,
+                       DM1_V1_STARTUP_STAGE_SWSH_RUN_START_PC34);
 }
 
 static void check_title_to_menu_boundary(void) {
@@ -189,11 +181,11 @@ static void check_title_to_menu_boundary(void) {
     expect_i("TITLE explicit hold does not enter menu", held.enteredMenuAfterHandoff, 0);
 
     expect_stage_after("last TITLE frame follows first TITLE frame",
-                       DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME,
-                       DM1_V1_STARTUP_STAGE_TITLE_BEGIN);
+                       DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME_PC34,
+                       DM1_V1_STARTUP_STAGE_TITLE_BEGIN_PC34);
     expect_stage_after("menu follows last TITLE frame",
-                       DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE,
-                       DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME);
+                       DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE_PC34,
+                       DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME_PC34);
 }
 
 static void check_menu_to_entrance_wait_boundary(void) {
@@ -212,8 +204,8 @@ static void check_menu_to_entrance_wait_boundary(void) {
              M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1201u),
              1);
     expect_stage_after("entrance wait follows menu eligibility",
-                       DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT,
-                       DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE);
+                       DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
+                       DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE_PC34);
 }
 
 int main(void) {
@@ -221,17 +213,14 @@ int main(void) {
     check_title_to_menu_boundary();
     check_menu_to_entrance_wait_boundary();
 
-    expect_truth("startup stage order is monotonic",
-                 DM1_V1_STARTUP_STAGE_SWSH_LOGO <
-                 DM1_V1_STARTUP_STAGE_SWSH_RUN_START &&
-                 DM1_V1_STARTUP_STAGE_SWSH_RUN_START <
-                 DM1_V1_STARTUP_STAGE_TITLE_BEGIN &&
-                 DM1_V1_STARTUP_STAGE_TITLE_BEGIN <
-                 DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME &&
-                 DM1_V1_STARTUP_STAGE_TITLE_LAST_FRAME <
-                 DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE &&
-                 DM1_V1_STARTUP_STAGE_MENU_ELIGIBLE <
-                 DM1_V1_STARTUP_STAGE_ENTRANCE_WAIT);
+    expect_truth("startup stage order is source-valid",
+                 dm1_v1_startup_sequence_source_order_valid_pc34());
+    expect_truth("startup source evidence is present",
+                 dm1_v1_startup_sequence_source_evidence_pc34() != 0 &&
+                 strstr(dm1_v1_startup_sequence_source_evidence_pc34(),
+                        "TITLE.C") != 0 &&
+                 strstr(dm1_v1_startup_sequence_source_evidence_pc34(),
+                        "ENTRANCE.C") != 0);
 
     if (g_failures) {
         printf("dm1_v1_startup_intro_state_machine_gate failures=%d\n", g_failures);
