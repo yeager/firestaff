@@ -270,6 +270,25 @@ int main(void) {
                 view.theronState.companion_count == 0,
                 "M11 Theron exit clears selected companions before next startup");
 
+    expect_true(view.theronState.selected_dungeon ==
+                THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                "M11 Theron stage cursor returns on unlocked dungeon 2");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron stage 2 opens Soul Room");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron stage 2 forcefield loads selected dungeon");
+    expect_true(world->current_dungeon == THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                world->progression.current_dungeon ==
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                view.theronState.selected_dungeon ==
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                "M11 Theron stage 2 forcefield does not fall back to dungeon 1");
+    expect_true(world->party.champion_count == 1 &&
+                strcmp(world->party.champions[0].name, "Theron") == 0,
+                "M11 Theron stage 2 forcefield starts with current Soul Room selection");
+
     M11_GameView_Shutdown(&view);
 
     if (g_failures) {
