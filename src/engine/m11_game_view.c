@@ -2442,17 +2442,11 @@ static void m11_draw_text(unsigned char* framebuffer,
 
 static const char* m11_dm2_item_name(int item_id)
 {
+    const char *knownName = dm2_v1_tech_magic_item_name(item_id);
+    if (knownName) {
+        return knownName;
+    }
     switch (item_id) {
-        case DM2_ITEM_CROSSBOW: return "CROSSBOW";
-        case DM2_ITEM_PISTOL: return "PISTOL";
-        case DM2_ITEM_RIFLE: return "RIFLE";
-        case DM2_ITEM_BOMB_THROW: return "BOMB";
-        case DM2_ITEM_BOMB_REMOTE: return "REMOTE BOMB";
-        case DM2_ITEM_LANTERN: return "LANTERN";
-        case DM2_ITEM_MAGIC_BATTERY: return "MAGIC BATTERY";
-        case DM2_ITEM_FLAME_ORB: return "FLAME ORB";
-        case DM2_ITEM_HEAL_POTION: return "HEAL POTION";
-        case DM2_ITEM_MANA_POTION: return "MANA POTION";
         case 1001: return "TORCH";
         case 1002: return "BREAD";
         case 1003: return "WATER";
@@ -31539,6 +31533,35 @@ int M11_GameView_GetV1InventorySlotIconIndex(const M11_GameViewState* state,
     return m11_v1_inventory_slot_icon_index_for_thing(state, championSlot, thing);
 }
 
+static int m11_dm2_leader_hand_object_name(const M11_GameViewState* state,
+                                           char* out,
+                                           int outSize) {
+    uint8_t pool = 0;
+    uint32_t idx = 0u;
+    const char *knownName;
+
+    if (!state || !out || outSize <= 0 ||
+        !dm2_db_decode_handle(state->dm2State.leader_hand_object,
+                              &pool,
+                              &idx)) {
+        return 0;
+    }
+    /* skproject/SKWIN/SkWinCore.cpp keeps DM2 item identity as ObjectID
+     * pool + index.  Firestaff's current startup catalog can name a bounded
+     * set of known tech/magic item indexes; unknown indexes must keep the
+     * lossless pool/index fallback instead of being guessed. */
+    (void)pool;
+    knownName = dm2_v1_tech_magic_item_name((int)idx);
+    if (knownName && knownName[0] != '\0') {
+        snprintf(out, (size_t)outSize, "%s", knownName);
+        return out[0] != '\0';
+    }
+    return dm2_db_format_handle_name(
+        state->dm2State.leader_hand_object,
+        out,
+        (size_t)outSize) ? 1 : 0;
+}
+
 int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
                                            char* out,
                                            int outSize) {
@@ -31546,10 +31569,7 @@ int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
     if (!out || outSize <= 0) return 0;
     out[0] = '\0';
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-        return dm2_db_format_handle_name(
-            state->dm2State.leader_hand_object,
-            out,
-            (size_t)outSize) ? 1 : 0;
+        return m11_dm2_leader_hand_object_name(state, out, outSize);
     }
     thing = M11_GameView_GetV1LeaderHandThing(state);
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;

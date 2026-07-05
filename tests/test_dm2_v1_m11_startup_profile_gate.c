@@ -17,6 +17,7 @@
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_tech_magic.h"
 #include "dm2_v1_trigger.h"
 #include "m11_game_view.h"
 
@@ -963,6 +964,14 @@ int main(void) {
                                                            sizeof(leader_name)) &&
                         strcmp(leader_name, "DM2 MISC 51") == 0,
                     "M11 DM2 leader-hand name preserves DB handle identity");
+        view.dm2State.leader_hand_object =
+            dm2_db_make_handle(10, DM2_ITEM_HEAL_POTION);
+        expect_true(M11_GameView_GetV1LeaderHandObjectName(&view,
+                                                           leader_name,
+                                                           sizeof(leader_name)) &&
+                        strcmp(leader_name, "HEAL POTION") == 0,
+                    "M11 DM2 leader-hand name uses the known tech/magic item catalog");
+        view.dm2State.leader_hand_object = dm2_db_make_handle(10, 0x0033);
     }
     expect_true(dm2_v1_runtime_get_party_x() == 23 &&
                 dm2_v1_runtime_get_party_y() == 11 &&

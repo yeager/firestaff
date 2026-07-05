@@ -42,6 +42,7 @@ typedef enum {
 
 typedef struct {
     int item_id;
+    const char *name;
     DM2_ItemAffinity affinity;
     int tech_level;
     int magic_level;
@@ -57,6 +58,7 @@ int dm2_v1_item_power_cost(const DM2_V1_TechMagicItem *item);
  * and out is populated; 0 otherwise.  Source: SKULL.ASM tech/magic
  * item table (built-in DM2 item catalog). */
 int dm2_v1_tech_magic_lookup(int item_id, DM2_V1_TechMagicItem *out);
+const char *dm2_v1_tech_magic_item_name(int item_id);
 
 /* ── Phase 4 expansion: consume one charge ───────────────────────────
  * Returns 1 if a charge was consumed (item->charges > 0 before).
@@ -70,4 +72,3 @@ int dm2_v1_tech_magic_hybrid_power(const DM2_V1_TechMagicItem *item);
 
 const char *dm2_v1_tech_magic_source_evidence(void);
 #endif
-
