@@ -293,6 +293,10 @@ static void check_placeholder_fields(void) {
           r.startup_text_jp_roster_count == 0u &&
           r.startup_text_marker_overflow_count == 0u,
           "placeholder leaves startup text marker catalog empty");
+    check(r.startup_roster_name_count == 0u &&
+          r.startup_roster_title_count == 0u &&
+          r.startup_roster_overflow_count == 0u,
+          "placeholder leaves startup roster-name catalog empty");
     check_startup_mirror_summary(&r, "placeholder startup");
     check_startup_chapter_placeholder(&r, "placeholder startup");
 
@@ -319,6 +323,8 @@ static void check_placeholder_fields(void) {
                        "rendered line contains placeholder bind status name");
     check_str_contains(line, "startup_text_markers=0",
                        "rendered line contains placeholder text marker count");
+    check_str_contains(line, "startup_roster_names=0",
+                       "rendered line contains placeholder roster-name count");
 }
 
 /* ── Invariant 3: MD5 recognition gate ───────────────────────────── */
@@ -596,11 +602,21 @@ static void check_real_asset_path(void) {
                           "US raw Track 02 receipt has 7 resurrect prompt markers");
                     check(r.startup_text_jp_roster_count == 0u,
                           "US raw Track 02 receipt has no JP roster markers");
+                    check(r.startup_roster_name_count == 0u &&
+                          r.startup_roster_title_count == 0u &&
+                          r.startup_roster_overflow_count == 0u,
+                          "US raw Track 02 receipt has no decoded roster yet");
                 } else {
                     check(r.startup_text_us_prompt_count == 0u,
                           "JP raw Track 02 receipt has no US prompt markers");
                     check(r.startup_text_jp_roster_count == 7u,
                           "JP raw Track 02 receipt has 7 roster markers");
+                    check(r.startup_roster_name_count == 8u,
+                          "JP raw Track 02 receipt has 8 decoded roster names");
+                    check(r.startup_roster_title_count == 7u,
+                          "JP raw Track 02 receipt has 7 decoded roster titles");
+                    check(r.startup_roster_overflow_count == 0u,
+                          "JP raw Track 02 receipt has no roster overflow");
                 }
             }
             check(r.descriptor_window_entry_index >= 0 &&
@@ -665,6 +681,12 @@ static void check_real_asset_path(void) {
                                    "raw Track 02 rendered line names user-data catalog count");
                 check_str_contains(line, "startup_text_markers=7",
                                    "raw Track 02 rendered line names text marker count");
+                if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
+                    check_str_contains(line, "startup_roster_names=8",
+                                       "JP raw Track 02 rendered line names roster count");
+                    check_str_contains(line, "startup_roster_titles=7",
+                                       "JP raw Track 02 rendered line names title count");
+                }
             }
         } else {
             check(r.initial_candidate_found == 0,
