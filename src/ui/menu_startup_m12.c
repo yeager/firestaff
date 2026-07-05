@@ -1239,7 +1239,8 @@ static int m12_message_return_view_valid(M12_MenuView view) {
            view == M12_MENU_VIEW_CHANGELOG ||
            view == M12_MENU_VIEW_BESTIARY ||
            view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA ||
-           view == M12_MENU_VIEW_SCREENSHOT_GALLERY;
+           view == M12_MENU_VIEW_SCREENSHOT_GALLERY ||
+           view == M12_MENU_VIEW_SAVE_BROWSER;
 }
 
 static int m12_nav_level_valid(int navLevel) {
@@ -1252,7 +1253,8 @@ static void m12_enter_message_view(M12_StartupMenuState* state) {
     }
     if (state->view != M12_MENU_VIEW_MESSAGE) {
         if (state->view == M12_MENU_VIEW_GAME_OPTIONS ||
-            state->view == M12_MENU_VIEW_SETTINGS) {
+            state->view == M12_MENU_VIEW_SETTINGS ||
+            state->view == M12_MENU_VIEW_SAVE_BROWSER) {
             state->messageReturnView = state->view;
             state->messageReturnNavLevel = (int)g_nav_level;
         } else {
@@ -1381,6 +1383,9 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
     state->quickResumeLaunchRequested = 0;
     state->csbImportDm1LaunchRequested = 0;
     state->csbImportDm1SavePath[0] = '\0';
+    state->csbImportDm1ConfirmActive = 0;
+    state->csbImportDm1ConfirmPath[0] = '\0';
+    state->csbImportDm1ConfirmFilename[0] = '\0';
     m12_set_buffered_message(state, line1, line2, line3);
 }
 
@@ -2479,6 +2484,9 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     state->quickResumeSavePath[0] = '\0';
     state->csbImportDm1LaunchRequested = 0;
     state->csbImportDm1SavePath[0] = '\0';
+    state->csbImportDm1ConfirmActive = 0;
+    state->csbImportDm1ConfirmPath[0] = '\0';
+    state->csbImportDm1ConfirmFilename[0] = '\0';
 
     M12_Config_SetDefaults(&config);
     M12_Config_Load(&config, NULL);
@@ -2917,6 +2925,9 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->quickResumeLaunchRequested = 0;
     state->csbImportDm1LaunchRequested = 0;
     state->csbImportDm1SavePath[0] = '\0';
+    state->csbImportDm1ConfirmActive = 0;
+    state->csbImportDm1ConfirmPath[0] = '\0';
+    state->csbImportDm1ConfirmFilename[0] = '\0';
     state->activatedIndex = -1;
     state->view = M12_MENU_VIEW_MAIN;
     state->messageLine1 = "";
@@ -3902,17 +3913,15 @@ static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
                              m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
 }
 
-static void m12_save_browser_request_csb_import(M12_StartupMenuState* state) {
-    const M12_SaveBrowserEntry* entry;
+static void m12_save_browser_commit_csb_import(M12_StartupMenuState* state) {
     int csbSlot;
     int pmode;
 
     if (!state) {
         return;
     }
-    entry = M12_SaveBrowser_GetSelected(&state->saveBrowser);
-    if (!entry || !entry->valid || strcmp(entry->gameId, "dm1") != 0) {
-        (void)M12_SaveBrowser_HandleInput(&state->saveBrowser, 7);
+    if (!state->csbImportDm1ConfirmActive ||
+        state->csbImportDm1ConfirmPath[0] == '\0') {
         return;
     }
     csbSlot = m12_game_slot_from_id("csb");
@@ -3930,15 +3939,57 @@ static void m12_save_browser_request_csb_import(M12_StartupMenuState* state) {
     snprintf(state->csbImportDm1SavePath,
              sizeof(state->csbImportDm1SavePath),
              "%s",
-             entry->fullPath);
+             state->csbImportDm1ConfirmPath);
     state->csbImportDm1LaunchRequested = 1;
+    state->csbImportDm1ConfirmActive = 0;
+    state->csbImportDm1ConfirmPath[0] = '\0';
+    state->csbImportDm1ConfirmFilename[0] = '\0';
     state->quickResumeLaunchRequested = 0;
     state->launchRequested = 1;
     m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              m12_tr(state, "IMPORTING PARTY"),
-                             entry->filename,
+                             state->csbImportDm1SavePath,
                              m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+}
+
+static void m12_save_browser_request_csb_import(M12_StartupMenuState* state) {
+    const M12_SaveBrowserEntry* entry;
+    int csbSlot;
+
+    if (!state) {
+        return;
+    }
+    entry = M12_SaveBrowser_GetSelected(&state->saveBrowser);
+    if (!entry || !entry->valid || strcmp(entry->gameId, "dm1") != 0) {
+        (void)M12_SaveBrowser_HandleInput(&state->saveBrowser, 7);
+        return;
+    }
+    csbSlot = m12_game_slot_from_id("csb");
+    if (csbSlot < 0 || csbSlot >= m12_entry_count() ||
+        !state->entries[csbSlot].available) {
+        m12_show_missing_game_data_popup(state, "csb");
+        return;
+    }
+
+    snprintf(state->csbImportDm1ConfirmPath,
+             sizeof(state->csbImportDm1ConfirmPath),
+             "%s",
+             entry->fullPath);
+    snprintf(state->csbImportDm1ConfirmFilename,
+             sizeof(state->csbImportDm1ConfirmFilename),
+             "%s",
+             entry->filename);
+    state->csbImportDm1ConfirmActive = 1;
+    state->csbImportDm1LaunchRequested = 0;
+    state->csbImportDm1SavePath[0] = '\0';
+    state->quickResumeLaunchRequested = 0;
+    state->launchRequested = 0;
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_tr(state, "IMPORT DM1 PARTY TO CSB?"),
+                             entry->filename,
+                             m12_tr(state, "ENTER IMPORTS / ESC CANCELS"));
 }
 
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
@@ -3966,11 +4017,26 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             }
             return;
         }
+        if (state->csbImportDm1ConfirmActive) {
+            if (input == M12_MENU_INPUT_ACCEPT ||
+                input == M12_MENU_INPUT_ACTION) {
+                m12_save_browser_commit_csb_import(state);
+            } else if (input == M12_MENU_INPUT_BACK) {
+                state->csbImportDm1ConfirmActive = 0;
+                state->csbImportDm1ConfirmPath[0] = '\0';
+                state->csbImportDm1ConfirmFilename[0] = '\0';
+                state->csbImportDm1LaunchRequested = 0;
+                state->csbImportDm1SavePath[0] = '\0';
+                m12_return_from_message_view(state);
+            }
+            return;
+        }
         if (input == M12_MENU_INPUT_BACK ||
             input == M12_MENU_INPUT_ACCEPT ||
             input == M12_MENU_INPUT_ACTION) {
             state->launchRequested = 0;
             state->quickResumeLaunchRequested = 0;
+            state->csbImportDm1LaunchRequested = 0;
             m12_return_from_message_view(state);
         }
         return;

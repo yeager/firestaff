@@ -1583,8 +1583,23 @@ int main(void) {
     if (!expect(select_save_entry(&state, "firestaff-dm1-browser.sav"),
                 "save browser should select DM1 save for CSB import")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACTION);
+    if (!expect(state.view == M12_MENU_VIEW_MESSAGE &&
+                state.csbImportDm1ConfirmActive == 1,
+                "save browser action on DM1 save should open CSB import confirmation")) return 1;
+    if (!expect(state.launchRequested == 0 &&
+                state.csbImportDm1LaunchRequested == 0,
+                "CSB DM1 import confirmation should not launch before confirm")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_SAVE_BROWSER &&
+                state.csbImportDm1ConfirmActive == 0 &&
+                state.launchRequested == 0,
+                "CSB DM1 import confirmation Back should cancel and return to save browser")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACTION);
+    if (!expect(state.csbImportDm1ConfirmActive == 1,
+                "CSB DM1 import confirmation should re-arm after cancel")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 1,
-                "save browser action on DM1 save should request CSB import launch")) return 1;
+                "confirmed save browser action on DM1 save should request CSB import launch")) return 1;
     if (!expect(state.quickResumeLaunchRequested == 0,
                 "CSB DM1 import launch should not mark quick Resume requested")) return 1;
     if (!expect(state.csbImportDm1LaunchRequested == 1,

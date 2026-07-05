@@ -425,6 +425,9 @@ typedef struct M12_StartupMenuState {
     char quickResumeSavePath[256];
     int csbImportDm1LaunchRequested;
     char csbImportDm1SavePath[256];
+    int csbImportDm1ConfirmActive;
+    char csbImportDm1ConfirmPath[256];
+    char csbImportDm1ConfirmFilename[128];
     int dataDirPickerActive;
     int dataDirScanActive;
     int dataDirScanCancelRequested;
