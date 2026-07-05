@@ -182,6 +182,53 @@ static size_t build_skproject_text_wall_gfx_fixture(uint8_t *buf, size_t cap)
     return size;
 }
 
+static size_t build_skproject_actuator_wall_gfx_fixture(uint8_t *buf, size_t cap)
+{
+    const int w = 2;
+    const int h = 2;
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + (size_t)w * 2u;
+    const size_t thing_base = sft_base + 2u;
+    const size_t door_base = thing_base;
+    const size_t actuator_base = door_base + 4u;
+    const size_t raw_map_base = actuator_base + 8u;
+    uint8_t *desc;
+    uint16_t door_bits;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+
+    buf[4] = 1;
+    put16le(buf + 10, 1);
+    put16le(buf + 12, 1); /* nRecords[dbDoor] */
+    put16le(buf + 18, 1); /* nRecords[dbActuator] */
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0);
+    put16le(desc + 8, (uint16_t)(((w - 1) << 6) | ((h - 1) << 11)));
+
+    put16le(buf + column_base + 0, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x8c00); /* dir=S, dbActuator, index 0 */
+
+    put16le(buf + door_base, 0xfffe);
+    door_bits = (uint16_t)((1u << 5) | 1u);
+    put16le(buf + door_base + 2, door_bits);
+
+    put16le(buf + actuator_base, 0x0000); /* actuator.next -> dbDoor */
+    put16le(buf + actuator_base + 2, 0x0000);
+    put16le(buf + actuator_base + 4, (uint16_t)(3u << 12));
+    put16le(buf + actuator_base + 6, 0x0000);
+
+    buf[raw_map_base + 0] = 0x20;
+    buf[raw_map_base + 1] = 0x20;
+    buf[raw_map_base + 2] = 0x90;
+    buf[raw_map_base + 3] = 0x20;
+    return raw_map_base + 4u;
+}
+
 static void test_first_map_metadata_and_tiles(void)
 {
     uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
@@ -343,6 +390,31 @@ static void test_skproject_text_wall_gfx_metadata(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_actuator_wall_gfx_ordinal(void)
+{
+    uint8_t dat[176];
+    DM2_V1_DungeonData dungeon;
+    size_t size = build_skproject_actuator_wall_gfx_fixture(dat, sizeof(dat));
+    int thing;
+    int ordinal = -1;
+
+    CHECK(size > 0, "skproject actuator wall-gfx fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts a skproject actuator wall-gfx chain");
+    thing = dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0);
+    CHECK(thing == 0x8c00,
+          "actuator wall-gfx fixture carries direction on the DB3 ObjectID");
+    CHECK(dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
+              &dungeon, (uint16_t)thing, 0, 2, 8, &ordinal) == 0 &&
+              ordinal == 3,
+          "actuator wall-gfx helper exposes skproject GraphicNumber ordinal");
+    CHECK(dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
+              &dungeon, (uint16_t)thing, 1, 2, 8, &ordinal) == -1,
+          "actuator wall-gfx helper requires the requested relative side");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Dungeon Loader First-Map Gate ===\n\n");
@@ -353,6 +425,7 @@ int main(void)
     test_skproject_layout_first_thing_and_door_record();
     test_skproject_chained_first_thing_finds_door_record();
     test_skproject_text_wall_gfx_metadata();
+    test_skproject_actuator_wall_gfx_ordinal();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

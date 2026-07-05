@@ -695,6 +695,55 @@ int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
     return -1;
 }
 
+int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    int *out_wall_gfx_ordinal) {
+    uint16_t thing = first_thing;
+
+    if (out_wall_gfx_ordinal) *out_wall_gfx_ordinal = -1;
+    if (!d || !out_wall_gfx_ordinal) return -1;
+    if (side_index < 0 || side_index > 3) return -1;
+    if (max_steps <= 0) max_steps = 32;
+
+    for (int step = 0; step < max_steps; ++step) {
+        int type = -1;
+        int size = 0;
+        int next;
+        const uint8_t *record;
+        int object_dir;
+        int relative_side;
+
+        if (thing == DM2_THING_END_MARKER) return -1;
+        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
+        if (!record || size < 2) return -1;
+        if (type > 3) return -1;
+
+        if (type == 3 && size >= 8) {
+            int ordinal = (int)((RD16(record + 4) >> 12) & 0x0fu);
+            object_dir = (int)((thing >> 14) & 3u);
+            relative_side = ((object_dir - (view_dir & 3)) & 3);
+            /* skproject SKWINSPX/src/v4/skdungn.cpp
+             * GET_WALL_DECORATION_OF_ACTUATOR uses Actuator::GraphicNumber()
+             * as a one-based ordinal into the current map's wall-gfx list.
+             * Firestaff exposes that ordinal here; resolving it to the real
+             * GDAT WALL_GFX index belongs to the map graphics-list handoff. */
+            if (relative_side == side_index && ordinal > 0) {
+                *out_wall_gfx_ordinal = ordinal;
+                return 0;
+            }
+        }
+
+        next = dm2_v1_dungeon_get_next_thing(d, thing);
+        if (next < 0 || next == (int)thing) return -1;
+        thing = (uint16_t)next;
+    }
+    return -1;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;
