@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 CSB save-browser DM1 import confirmation: M12 now requires a two-step confirmation before a DM1 save selected in the save browser becomes a CSB import launch. ACTION on a valid DM1 save opens an `IMPORT DM1 PARTY TO CSB?` message without setting `launchRequested`; BACK cancels and returns to the save browser; ACCEPT/ACTION on the confirmation creates the CSB import launch intent. Verification: `m12_quick_resume_gate` direct run + CTest pass, and `csb_v1_m11_startup_resume_gate` CTest still passes.
+
 - ✅ 2026-07-05 CSB save-browser DM1 import launch path: M12 launch intent now carries a separate `csbImportDm1SavePath` so a DM1 save selected for CSB import is not misrouted as a quick Resume save. In the save browser, ACCEPT still launches the selected save's own game, while ACTION on a valid DM1 save requests a CSB launch/import when CSB data is available. `M11_GameView_OpenSelectedMenuEntry()` forwards that import path to the CSB startup runtime handoff. Verification: `m12_quick_resume_gate` and `csb_v1_m11_startup_resume_gate` direct runs and CTest both pass locally.
 
 - ✅ 2026-07-05 CSB entrance DM1 utility-import startup handoff: `M11_GameLaunchSpec` now accepts a CSB-specific DM1 save import candidate, imports that party into the CSB runtime before the entrance screen, exposes import readiness/count in CSB startup state, mirrors imported champion names through the M11 party/HUD model, and keeps the imported party alive after the source-locked entrance Enter command starts the dungeon. Verification: `test_csb_v1_m11_startup_resume_gate` direct run and CTest both pass locally with hash-verified CSB data.
