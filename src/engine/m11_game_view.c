@@ -38150,6 +38150,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
         m11_draw_dm2_shop_panel(state, framebuffer,
                                 framebufferWidth, framebufferHeight);
+        m11_draw_v1_leader_hand_object_name(state, framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;

@@ -60,6 +60,32 @@ static int write_tiny_file(const char* path, const char* bytes) {
     return 1;
 }
 
+static int framebuffer_zone_differs(const unsigned char *a,
+                                    const unsigned char *b,
+                                    int width,
+                                    int height,
+                                    int x,
+                                    int y,
+                                    int w,
+                                    int h)
+{
+    int xx;
+    int yy;
+
+    if (!a || !b || width <= 0 || height <= 0 ||
+        x < 0 || y < 0 || w <= 0 || h <= 0 ||
+        x + w > width || y + h > height) {
+        return 0;
+    }
+    for (yy = 0; yy < h; ++yy) {
+        for (xx = 0; xx < w; ++xx) {
+            int off = (y + yy) * width + x + xx;
+            if (a[off] != b[off]) return 1;
+        }
+    }
+    return 0;
+}
+
 static int make_temp_dm2_root(char root[512], char dm2_dir[512]) {
 #ifdef _WIN32
     snprintf(root, 512, ".\\firestaff_dm2_m11_profile_gate_%lu",
@@ -294,6 +320,7 @@ int main(void) {
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
+    unsigned char framebuffer_without_hand[320 * 200];
     char save_root[512];
     char save_path[512];
     DM2_V1_SessionState resume_session;
@@ -579,6 +606,35 @@ int main(void) {
     expect_true(dm2_v1_runtime_last_asset_door_frame_count() == 3 &&
                 dm2_v1_runtime_last_fallback_door_count() == 0,
                 "M11 DM2 draw uses real GRAPHICSSET GDAT D0C/D1C/D2C door-frame images");
+    {
+        int name_x = 0;
+        int name_y = 0;
+        int name_w = 0;
+        int name_h = 0;
+
+        memcpy(framebuffer_without_hand, framebuffer, sizeof(framebuffer));
+        dm2_v1_runtime_set_leader_hand_object(dm2_db_make_handle(10, 0x0033));
+        view.dm2State.leader_hand_object =
+            dm2_v1_runtime_get_leader_hand_object();
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(M11_GameView_GetV1LeaderHandObjectNameZone(&name_x,
+                                                               &name_y,
+                                                               &name_w,
+                                                               &name_h),
+                    "M11 DM2 leader-hand name zone is available");
+        expect_true(framebuffer_zone_differs(framebuffer_without_hand,
+                                             framebuffer,
+                                             320,
+                                             200,
+                                             name_x,
+                                             name_y,
+                                             name_w,
+                                             name_h),
+                    "M11 DM2 draw overlays the leader-hand ObjectID name");
+        dm2_v1_runtime_set_leader_hand_object(0u);
+        view.dm2State.leader_hand_object = 0u;
+    }
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;
