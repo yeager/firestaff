@@ -20,6 +20,7 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_graphics_loader_pc34_compat.h"
+#include "main_loop_m11.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -1022,13 +1023,49 @@ int main(void) {
         expect_true(view.csbState.tick_count == tick_before &&
                     view.csbState.startup_entrance_frame > 0,
                     "M11 CSB entrance does not tick runtime before confirm");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        250,
+                        188,
+                        M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_credits_active == 1 &&
+                    view.csbState.startup_entrance_last_command ==
+                        M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS,
+                    "M11 CSB entrance credits button opens the startup credits phase");
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(&view, fb, 320, 200);
+        expect_true(count_nonzero_rect(fb, 320, 0, 0, 320, 200) > 0,
+                    "M11 CSB entrance credits phase draws a visible screen");
         expect_true(M11_GameView_HandleInput(&view,
                                              M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_credits_active == 0,
+                    "M11 CSB entrance accepts Enter/Action to leave credits");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        245,
+                        80,
+                        M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_last_command ==
+                        M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
+                    "M11 CSB entrance resume button records a source-locked resume request");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        245,
+                        46,
+                        M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 CSB entrance accepts Enter/Action");
+                    "M11 CSB entrance enter button accepts source-locked pointer command");
         expect_true(view.csbState.startup_entrance_active == 0 &&
                     view.csbState.startup_entrance_dismissed == 1,
                     "M11 CSB entrance dismisses to dungeon runtime");
+        expect_true(view.csbState.startup_entrance_last_command ==
+                        M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
+                    "M11 CSB entrance records the enter-dungeon command");
     }
     M11_GameView_Shutdown(&view);
 

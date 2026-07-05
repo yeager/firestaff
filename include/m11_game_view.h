@@ -583,6 +583,8 @@ typedef struct {
         int startup_entrance_active;
         int startup_entrance_frame;
         int startup_entrance_dismissed;
+        int startup_entrance_last_command;
+        int startup_entrance_credits_active;
     } csbState;
 
     /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==
