@@ -135,6 +135,18 @@ static void test_inventory_selection_and_description(void)
           "leader-hand DB pool/index preserved");
     CHECK(strcmp(view.description, "Tech key") == 0,
           "leader-hand description displayed");
+
+    {
+        char name[32];
+
+        CHECK(dm2_db_decode_handle(tech_key, NULL, NULL),
+              "DM2 DB handle decodes without a loaded pool");
+        CHECK(strcmp(dm2_db_pool_label(DM2_DB_MISC), "MISC") == 0,
+              "DM2 DB pool label for misc is stable");
+        CHECK(dm2_db_format_handle_name(tech_key, name, sizeof(name)) &&
+              strcmp(name, "DM2 MISC 3") == 0,
+              "DM2 DB handle name formatter preserves pool and index");
+    }
 }
 
 static void test_empty_invalid_and_unresolved_slots(void)

@@ -230,6 +230,8 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.party_y = dm2_v1_runtime_get_party_y();
     state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
     state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
+    state->dm2State.leader_hand_object =
+        dm2_v1_runtime_get_leader_hand_object();
 }
 
 static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
@@ -31236,7 +31238,9 @@ unsigned short M11_GameView_GetV1LeaderHandThing(const M11_GameViewState* state)
 
 int M11_GameView_GetV1LeaderHandObjectIconIndex(const M11_GameViewState* state) {
     unsigned short thing = M11_GameView_GetV1LeaderHandThing(state);
-    if (!state || thing == THING_NONE || thing == THING_ENDOFLIST) return -1;
+    if (!state) return -1;
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) return -1;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return -1;
     if (state->leaderHandIconIndex >= 0) return state->leaderHandIconIndex;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         /* CSBWin SaveGame.cpp GAMEBLOCK2 and ReDMCSB CHAMPION.C F0297/F0298
@@ -31295,6 +31299,12 @@ int M11_GameView_GetV1LeaderHandObjectName(const M11_GameViewState* state,
     unsigned short thing;
     if (!out || outSize <= 0) return 0;
     out[0] = '\0';
+    if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        return dm2_db_format_handle_name(
+            state->dm2State.leader_hand_object,
+            out,
+            (size_t)outSize) ? 1 : 0;
+    }
     thing = M11_GameView_GetV1LeaderHandThing(state);
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {

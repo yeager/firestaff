@@ -396,6 +396,17 @@ bool dm2_db_resolve(uint32_t object_id,
  * Returns 0 if pool is out of range. */
 uint32_t dm2_db_make_handle(uint8_t pool, uint32_t index);
 
+/* Decode/format a DM2 ObjectID without requiring a loaded DB pool. Startup
+ * and UI handoff paths use this to preserve DM2 handle identity instead of
+ * truncating it to a DM1/CSB THING. */
+bool dm2_db_decode_handle(uint32_t object_id,
+                          uint8_t *out_pool,
+                          uint32_t *out_index);
+const char *dm2_db_pool_label(uint8_t pool);
+bool dm2_db_format_handle_name(uint32_t object_id,
+                               char *out,
+                               size_t out_size);
+
 /* Write one fixed-size DB record for pool[index] to file f. */
 bool dm2_db_write_record(uint8_t pool, uint32_t index,
                           FILE *f,

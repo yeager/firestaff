@@ -593,6 +593,7 @@ typedef struct {
         int level_loaded;
         int party_x, party_y, party_dir;
         int tick_count;
+        uint32_t leader_hand_object;
     } dm2State;
     int dm2ShopSelectedStockIndex;
     int dm2ShopSelectedInventoryIndex;
