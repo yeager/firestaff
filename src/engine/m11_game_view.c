@@ -11576,8 +11576,6 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
     return 1;
 }
 
-static int m11_theron_startup_decoded_roster_index_for_mirror(int mirror_index);
-
 static void m11_theron_apply_decoded_roster_to_party(
     const M11_GameViewState* state,
     const Theron_StartupFlow* flow,
@@ -11597,7 +11595,7 @@ static void m11_theron_apply_decoded_roster_to_party(
             continue;
         }
         roster_index =
-            m11_theron_startup_decoded_roster_index_for_mirror(mirror);
+            theron_v1_startup_roster_index_for_mirror(mirror);
         if (roster_index >= 0 &&
             roster_index < state->theronState.startup_roster_name_count &&
             roster_index < (int)(sizeof(state->theronState.startup_roster_names) /
@@ -38415,23 +38413,6 @@ static void m11_theron_startup_layout_set_rect(
     element->h = h;
 }
 
-static int m11_theron_startup_decoded_roster_index_for_mirror(
-    int mirror_index) {
-    static const int kMirrorToRosterIndex[THERON_STARTUP_HERO_MIRROR_COUNT] = {
-        4, /* Hakar -> HAKAR */
-        1, /* Mara -> MARA */
-        5, /* Tiran -> TIRAN */
-        2, /* Linos -> LINOS */
-        6, /* Dotan -> DOTAN */
-        3, /* Hexa -> HEXA */
-        7  /* Pental fallback label -> raw Track 02 PENTAI */
-    };
-    if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
-        return -1;
-    }
-    return kMirrorToRosterIndex[mirror_index];
-}
-
 static void m11_theron_startup_layout_bind_decoded_roster(
     const M11_GameViewState* state,
     M11_TheronStartupElement* element,
@@ -38441,7 +38422,7 @@ static void m11_theron_startup_layout_bind_decoded_roster(
         return;
     }
     roster_index =
-        m11_theron_startup_decoded_roster_index_for_mirror(mirror_index);
+        theron_v1_startup_roster_index_for_mirror(mirror_index);
     if (roster_index < 0 ||
         roster_index >= state->theronState.startup_roster_name_count ||
         roster_index >= (int)(sizeof(state->theronState.startup_roster_names) /

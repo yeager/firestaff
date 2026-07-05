@@ -124,6 +124,22 @@ int main(void) {
     check_contains("mirror 1 meta", theron_v1_startup_mirror_meta(1)->name, "Mara");
     check_contains("mirror 3 meta", theron_v1_startup_mirror_meta(3)->name, "Linos");
     check_contains("mirror 6 meta", theron_v1_startup_mirror_meta(6)->name, "Pental");
+    check_int("mirror 0 roster index", theron_v1_startup_roster_index_for_mirror(0), 4);
+    check_int("mirror 1 roster index", theron_v1_startup_roster_index_for_mirror(1), 1);
+    check_int("mirror 2 roster index", theron_v1_startup_roster_index_for_mirror(2), 5);
+    check_int("mirror 3 roster index", theron_v1_startup_roster_index_for_mirror(3), 2);
+    check_int("mirror 4 roster index", theron_v1_startup_roster_index_for_mirror(4), 6);
+    check_int("mirror 5 roster index", theron_v1_startup_roster_index_for_mirror(5), 3);
+    check_int("mirror 6 roster index", theron_v1_startup_roster_index_for_mirror(6), 7);
+    check_int("bad mirror roster index", theron_v1_startup_roster_index_for_mirror(99), -1);
+    check_int("roster index 4 mirror", theron_v1_startup_mirror_index_for_roster(4), 0);
+    check_int("roster index 1 mirror", theron_v1_startup_mirror_index_for_roster(1), 1);
+    check_int("roster index 5 mirror", theron_v1_startup_mirror_index_for_roster(5), 2);
+    check_int("roster index 2 mirror", theron_v1_startup_mirror_index_for_roster(2), 3);
+    check_int("roster index 6 mirror", theron_v1_startup_mirror_index_for_roster(6), 4);
+    check_int("roster index 3 mirror", theron_v1_startup_mirror_index_for_roster(3), 5);
+    check_int("roster index 7 mirror", theron_v1_startup_mirror_index_for_roster(7), 6);
+    check_int("Theron roster index has no mirror", theron_v1_startup_mirror_index_for_roster(0), -1);
     check_contains("class label", theron_v1_startup_class_name(THERON_CLASS_PRIEST), "PRIEST");
 
     theron_v1_startup_flow_init(&flow);

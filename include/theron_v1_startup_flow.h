@@ -74,6 +74,8 @@ const char *theron_v1_startup_phase_name(Theron_StartupPhase phase);
 const char *theron_v1_startup_result_name(Theron_StartupResult result);
 const char *theron_v1_startup_flow_source_evidence(void);
 const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index);
+int theron_v1_startup_roster_index_for_mirror(int mirror_index);
+int theron_v1_startup_mirror_index_for_roster(int roster_index);
 const char *theron_v1_startup_class_name(Theron_ChampionClass cls);
 
 #ifdef __cplusplus
