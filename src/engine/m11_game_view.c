@@ -5390,6 +5390,43 @@ static int m11_point_in_rect(int x, int y, int rx, int ry, int rw, int rh) {
     return x >= rx && y >= ry && x < (rx + rw) && y < (ry + rh);
 }
 
+static int m11_nexus_champion_in_party(const Nexus_V1_ChampionPool* pool,
+                                       int championIndex) {
+    int i;
+    if (!pool || championIndex < 0) {
+        return 0;
+    }
+    for (i = 0; i < pool->party_count; ++i) {
+        if (pool->party[i] == championIndex) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int m11_nexus_next_selectable_champion(
+    const Nexus_V1_ChampionPool* pool,
+    int start,
+    int step) {
+    int i;
+    int count;
+    if (!pool || pool->champion_count <= 0) {
+        return 0;
+    }
+    count = pool->champion_count;
+    if (start < 0 || start >= count) {
+        start = 0;
+    }
+    step = step < 0 ? -1 : 1;
+    for (i = 0; i < count; ++i) {
+        int idx = (start + step * i + count * 2) % count;
+        if (!m11_nexus_champion_in_party(pool, idx)) {
+            return idx;
+        }
+    }
+    return start;
+}
+
 static int m11_point_in_utility_button(int x,
                                        int y,
                                        int buttonX,
@@ -13467,20 +13504,32 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 cursor = 0;
             }
             if (input == M12_MENU_INPUT_UP) {
-                cursor = (cursor + pool->champion_count - 1) %
-                         pool->champion_count;
+                cursor = m11_nexus_next_selectable_champion(
+                    pool,
+                    cursor + pool->champion_count - 1,
+                    -1);
                 state->nexusState.champion_cursor = cursor;
                 m11_set_status(state, "STARTUP", "NEXUS CHAMPION CURSOR");
                 return M11_GAME_INPUT_REDRAW;
             }
             if (input == M12_MENU_INPUT_DOWN) {
-                cursor = (cursor + 1) % pool->champion_count;
+                cursor = m11_nexus_next_selectable_champion(
+                    pool,
+                    cursor + 1,
+                    1);
                 state->nexusState.champion_cursor = cursor;
                 m11_set_status(state, "STARTUP", "NEXUS CHAMPION CURSOR");
                 return M11_GAME_INPUT_REDRAW;
             }
             if (input == M12_MENU_INPUT_ACCEPT) {
                 if (nexus_v1_champion_recruit(pool, cursor) >= 0) {
+                    if (pool->party_count < NEXUS_MAX_PARTY) {
+                        state->nexusState.champion_cursor =
+                            m11_nexus_next_selectable_champion(
+                                pool,
+                                cursor + 1,
+                                1);
+                    }
                     m11_set_status(state, "STARTUP", "NEXUS CHAMPION ADDED");
                 } else {
                     m11_set_status(state, "STARTUP", "NEXUS CHAMPION SKIPPED");
@@ -14306,6 +14355,37 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     return M11_GAME_INPUT_IGNORED;
 }
 
+static M11_GameInputResult m11_nexus_handle_startup_pointer(
+    M11_GameViewState* state,
+    int x,
+    int y) {
+    if (!state ||
+        state->sourceKind != M11_GAME_SOURCE_NEXUS_DGN ||
+        !state->nexusEngine) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (state->nexusState.title_active) {
+        return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    }
+    if (state->nexusState.champion_select_active) {
+        Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+        int i;
+        if (m11_point_in_rect(x, y, 18, 180, 284, 18)) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
+        }
+        for (i = 0; i < pool->champion_count && i < 12; ++i) {
+            int rowY = 38 + i * 11;
+            if (!m11_point_in_rect(x, y, 18, rowY - 1, 284, 11)) {
+                continue;
+            }
+            state->nexusState.champion_cursor = i;
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {
     if (!state) return;
     state->v1MouthVisualIconIndex = 0;
@@ -14449,6 +14529,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             m11_theron_handle_startup_pointer(state, x, y);
         if (theronStartupPointer != M11_GAME_INPUT_IGNORED) {
             return theronStartupPointer;
+        }
+    }
+    {
+        M11_GameInputResult nexusStartupPointer =
+            m11_nexus_handle_startup_pointer(state, x, y);
+        if (nexusStartupPointer != M11_GAME_INPUT_IGNORED) {
+            return nexusStartupPointer;
         }
     }
 

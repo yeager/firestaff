@@ -208,9 +208,17 @@ int main(void) {
             expect_true(view.nexusEngine &&
                             view.nexusEngine->champions.party_count == 1,
                         "real Nexus champion selection fills party");
-            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+            expect_true(view.nexusState.champion_cursor == 1,
+                        "real Nexus champion selection advances cursor after recruit");
+            expect_true(M11_GameView_HandlePointer(&view, 24, 49, 1) ==
                             M11_GAME_INPUT_REDRAW,
-                        "real Nexus champion selection starts dungeon");
+                        "real Nexus champion selection accepts pointer row click");
+            expect_true(view.nexusEngine &&
+                            view.nexusEngine->champions.party_count == 2,
+                        "real Nexus pointer selection recruits second champion");
+            expect_true(M11_GameView_HandlePointer(&view, 24, 184, 1) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus champion selection pointer footer starts dungeon");
             expect_true(view.nexusState.champion_select_active == 0,
                         "real Nexus champion selection clears for dungeon");
             memset(framebuffer, 0, sizeof(framebuffer));
