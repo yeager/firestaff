@@ -51,6 +51,16 @@ int main(void)
     check(M11_GameView_GetV1LeaderHandObjectIconIndex(&state) == 77,
           "CSB explicit icon binding can still surface when present");
 
+    snprintf(state.leaderHandObjectName,
+             sizeof(state.leaderHandObjectName),
+             "%s",
+             "DAGGER");
+    memset(name, 0, sizeof(name));
+    check(M11_GameView_GetV1LeaderHandObjectName(&state, name, sizeof(name)),
+          "CSB explicit runtime name binding can surface when present");
+    check(strcmp(name, "DAGGER") == 0,
+          "CSB explicit runtime name is returned");
+
     memset(name, 0, sizeof(name));
     state.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
     state.leaderHandIconIndex = 77;

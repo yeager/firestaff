@@ -6031,6 +6031,100 @@ static int csb_v1_runtime_object_icon_from_object_info(
     return (int)kObjectInfoIcon[object_info_index];
 }
 
+static const char *csb_v1_runtime_object_name_from_record(
+    int thing_type,
+    const uint8_t *record,
+    int record_size)
+{
+    static const char *const kWeaponTypeNames[] = {
+        "EYE OF TIME", "STORMRING", "TORCH", "FLAMITT",
+        "STAFF OF CLAWS", "BOLT BLADE", "FURY", "THE FIRESTAFF",
+        "DAGGER", "FALCHION", "SWORD", "RAPIER",
+        "SABRE", "SAMURAI SWORD", "DELTA", "DIAMOND EDGE",
+        "VORPAL BLADE", "THE INQUISITOR", "AXE", "HARDCLEAVE",
+        "MACE", "MACE OF ORDER", "MORNING STAR", "CLUB",
+        "STONE CLUB", "BOW", "CROSSBOW", "ARROW",
+        "SLAYER", "SLING", "ROCK", "POISON DART",
+        "THROWING STAR", "STICK", "STAFF", "WAND",
+        "TEOWAND", "YEW STAFF", "STAFF OF MANAR", "SNAKE STAFF",
+        "THE CONDUIT", "DRAGON SPIT", "SCEPTRE OF LYF", "HORN OF FEAR",
+        "SPEED BOW", "THE FIRESTAFF"
+    };
+    static const char *const kPotionTypeNames[] = {
+        "MON POTION", "UM POTION", "DES POTION", "VEN POTION",
+        "SAR POTION", "ZO POTION", "ROS POTION", "KU POTION",
+        "DANE POTION", "NETA POTION", "BRO POTION", "MA POTION",
+        "YA POTION", "EE POTION", "VI POTION", "WATER FLASK",
+        "EMPTY FLASK"
+    };
+    static const char *const kArmourTypeNames[] = {
+        "CAPE", "CLOAK OF NIGHT", "BARBARIAN HIDE", "SANDALS",
+        "LEATHER BOOTS", "ELVEN BOOTS", "LEATHER JERKIN", "LEATHER PANTS",
+        "SUEDE BOOTS", "BLUE PANTS", "GHI", "GHI TROUSERS",
+        "CALISTA", "CROWN OF NERRA", "BEZERKER HELM", "HELMET",
+        "BASINET", "NETA SHIRT", "CHAINMAIL", "PLATE MAIL",
+        "MITHRAL MAIL", "MITHRAL HOSEN", "LEG MAIL", "FOOT PLATE",
+        "SMALL SHIELD", "WOODEN SHIELD", "LARGE SHIELD", "SHIELD OF LYTE",
+        "SHIELD OF DARC", "DEXHELM"
+    };
+    static const char *const kJunkTypeNames[] = {
+        "COMPASS", "TORCH", "WATERSKIN", "JEWEL SYMAL",
+        "ILLUMULET", "ASHES", "BONES", "SAR COIN",
+        "GOLD COIN", "IRON KEY", "KEY OF B", "SOLID KEY",
+        "SQUARE KEY", "TOURQUOISE KEY", "CROSS KEY", "ONYX KEY",
+        "SKELETON KEY", "GOLD KEY", "WINGED KEY", "TOPAZ KEY",
+        "SAPPHIRE KEY", "EMERALD KEY", "RUBY KEY", "RA KEY",
+        "MASTER KEY", "BOULDER", "BLUE GEM", "ORANGE GEM",
+        "GREEN GEM", "APPLE", "CORN", "BREAD",
+        "CHEESE", "SCREAMER SLICE", "WORM ROUND", "DRUMSTICK",
+        "DRAGON STEAK", "GEM OF AGES", "EKKHARD CROSS", "MOONSTONE",
+        "THE HELLION", "PENDANT FERAL", "MAGICAL BOX", "MIRROR OF DAWN",
+        "ROPE", "RABBIT FOOT", "CORBAMITE", "CHOKER",
+        "LOCK PICKS", "MAGNIFIER", "ZOKATHRA SPELL", "EMPTY FLASK"
+    };
+    uint16_t word;
+    int subtype;
+
+    if (!record || record_size < 4) return NULL;
+    word = csb_v1_runtime_read_u16(record + 2);
+    switch (thing_type) {
+    case THING_TYPE_SCROLL:
+        return "SCROLL";
+    case THING_TYPE_CONTAINER:
+        return "CHEST";
+    case THING_TYPE_POTION:
+        subtype = (int)((word >> 8) & 0x7Fu);
+        if (subtype >= 0 &&
+            subtype < (int)(sizeof(kPotionTypeNames) / sizeof(kPotionTypeNames[0]))) {
+            return kPotionTypeNames[subtype];
+        }
+        return "POTION";
+    case THING_TYPE_WEAPON:
+        subtype = (int)(word & 0x7Fu);
+        if (subtype >= 0 &&
+            subtype < (int)(sizeof(kWeaponTypeNames) / sizeof(kWeaponTypeNames[0]))) {
+            return kWeaponTypeNames[subtype];
+        }
+        return "WEAPON";
+    case THING_TYPE_ARMOUR:
+        subtype = (int)(word & 0x7Fu);
+        if (subtype >= 0 &&
+            subtype < (int)(sizeof(kArmourTypeNames) / sizeof(kArmourTypeNames[0]))) {
+            return kArmourTypeNames[subtype];
+        }
+        return "ARMOUR";
+    case THING_TYPE_JUNK:
+        subtype = (int)(word & 0x7Fu);
+        if (subtype >= 0 &&
+            subtype < (int)(sizeof(kJunkTypeNames) / sizeof(kJunkTypeNames[0]))) {
+            return kJunkTypeNames[subtype];
+        }
+        return "JUNK";
+    default:
+        return NULL;
+    }
+}
+
 int csb_v1_runtime_object_icon_index(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing)
@@ -6098,6 +6192,48 @@ int csb_v1_runtime_object_icon_index(
         }
     }
     return icon_index;
+}
+
+int csb_v1_runtime_object_name(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    char *out,
+    size_t out_size)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    const char *name;
+    int thing_type;
+    int record_size;
+
+    if (!out || out_size == 0U) return 0;
+    out[0] = '\0';
+    if (!profile || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record) return 0;
+
+    /* ReDMCSB OBJECT.C F0031 loads C199 icon-indexed names and F0034 draws
+     * the leader-hand object name after F0033 icon resolution.  Firestaff
+     * keeps this CSB-owned bridge record/subtype based until CSBGRAPH object
+     * name decoding is bound, so CSB never falls back to M11's DM1 thing
+     * arrays. */
+    name = csb_v1_runtime_object_name_from_record(
+        thing_type,
+        record,
+        record_size);
+    if (!name || name[0] == '\0') return 0;
+    snprintf(out, out_size, "%s", name);
+    return out[0] != '\0';
 }
 
 static int csb_v1_runtime_party_has_possession_object_type(

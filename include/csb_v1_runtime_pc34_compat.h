@@ -670,6 +670,14 @@ int csb_v1_runtime_object_icon_index(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing);
 
+/* Resolve a CSB runtime object thing to the leader-hand object name from
+ * CSB dungeon records, without using DM1 M11 world tables. */
+int csb_v1_runtime_object_name(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    char *out,
+    size_t out_size);
+
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);
 const CSB_V1_VariantInfo *csb_v1_runtime_get_variant_info(CSB_V1_VariantId id);
