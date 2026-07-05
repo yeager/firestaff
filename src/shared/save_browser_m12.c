@@ -19,6 +19,7 @@
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "nexus_v1_save.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -530,6 +531,87 @@ static int try_parse_csb_runtime_entry(M12_SaveBrowserEntry* entry) {
     return 1;
 }
 
+static int try_parse_nexus_fnxs_entry(M12_SaveBrowserEntry* entry) {
+    Nexus_V1_SaveHeader header;
+    unsigned char* champion_buf = NULL;
+    unsigned char* world_buf = NULL;
+    size_t champion_read = 0u;
+    size_t world_read = 0u;
+    size_t champion_cap;
+    size_t world_cap;
+    char diagnostic[256];
+    Nexus_SaveResult result;
+
+    if (!entry ||
+        (entry->expectedGameCode != 0 &&
+         entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_NEXUS)) {
+        return 0;
+    }
+
+    champion_cap = nexus_v1_save_max_champion_pool_size();
+    world_cap = nexus_v1_save_max_world_size();
+    champion_buf = (unsigned char*)malloc(champion_cap);
+    world_buf = (unsigned char*)malloc(world_cap);
+    if (!champion_buf || !world_buf) {
+        free(champion_buf);
+        free(world_buf);
+        return 0;
+    }
+
+    memset(&header, 0, sizeof(header));
+    memset(diagnostic, 0, sizeof(diagnostic));
+    /*
+     * Firestaff Nexus saves are the FNXS container from
+     * include/nexus_v1_save.h.  Validate the complete header/data/CRC
+     * envelope here so M12 only offers saves that the M11 Nexus resume
+     * path can hand to nexus_v1_load_full_from_path_with_runtime().
+     * Original Saturn memory-card bytes remain intentionally out of
+     * scope until that format is decoded.
+     */
+    result = nexus_v1_load_from_path(entry->fullPath,
+                                     &header,
+                                     champion_buf,
+                                     champion_cap,
+                                     &champion_read,
+                                     world_buf,
+                                     world_cap,
+                                     &world_read,
+                                     diagnostic,
+                                     sizeof(diagnostic));
+    free(champion_buf);
+    free(world_buf);
+    if (result != NEXUS_SAVE_OK) {
+        return 0;
+    }
+
+    snprintf(entry->gameId, sizeof(entry->gameId), "nexus");
+    entry->expectedGameCode = SAVEGAME_PC34_GAME_CODE_NEXUS;
+    entry->valid = 1;
+    entry->mapLevel = (int)header.current_level;
+    entry->championCount = 0;
+    entry->champions[0] = '\0';
+    if (header.description[0] != '\0') {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  X%d Y%d  (%.*s)",
+                 entry->gameId,
+                 entry->mapLevel,
+                 (int)header.party_x,
+                 (int)header.party_y,
+                 (int)sizeof(header.description),
+                 header.description);
+    } else {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  X%d Y%d  (FNXS save)",
+                 entry->gameId,
+                 entry->mapLevel,
+                 (int)header.party_x,
+                 (int)header.party_y);
+    }
+    (void)champion_read;
+    (void)world_read;
+    return 1;
+}
+
 static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     FILE* fp;
     unsigned char* buf;
@@ -763,6 +845,9 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
             return 1;
         }
         if (try_parse_csb_runtime_entry(entry)) {
+            return 1;
+        }
+        if (try_parse_nexus_fnxs_entry(entry)) {
             return 1;
         }
         if (try_parse_dm1_native_entry(entry)) {
