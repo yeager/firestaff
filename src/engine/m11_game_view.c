@@ -111,6 +111,10 @@ static void m11_set_status(M11_GameViewState* state,
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
                                            const char* savePath);
 static void m11_nexus_release_title(M11_GameViewState* state);
+static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
+                                            const char *path);
+static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
+                                            const CSB_V1_RuntimeProfile *profile);
 static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
@@ -2567,6 +2571,28 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             m11_set_status(state, "BOOT", "CSB READY");
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_RESUME:
+            if (state->csbState.startup_entrance_resume_available &&
+                state->csbState.startup_entrance_resume_path[0] != '\0' &&
+                state->csbBootProfile) {
+                CSB_V1_BootProfile *profile =
+                    (CSB_V1_BootProfile *)state->csbBootProfile;
+                /* ReDMCSB COMMAND.C M566 enters the saved-game load path from
+                 * the entrance.  Use M12's already validated CSB resume path
+                 * instead of probing a DM1-style fallback filename. */
+                if (m11_csb_runtime_load_resume_path(
+                        &profile->runtime,
+                        state->csbState.startup_entrance_resume_path)) {
+                    m11_sync_csb_state_from_profile(state, profile);
+                    m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
+                    state->csbState.startup_entrance_active = 0;
+                    state->csbState.startup_entrance_dismissed = 1;
+                    state->csbState.startup_entrance_credits_active = 0;
+                    m11_set_status(state, "BOOT", "CSB RESUMED");
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                m11_set_status(state, "BOOT", "CSB RESUME FAILED");
+                return M11_GAME_INPUT_REDRAW;
+            }
             m11_set_status(state, "BOOT", "CSB RESUME REQUESTED");
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS:
@@ -10085,6 +10111,20 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_last_command =
             M11_ENTRANCE_RUNTIME_COMMAND_NONE;
         state->csbState.startup_entrance_credits_active = 0;
+        state->csbState.startup_entrance_resume_available = 0;
+        state->csbState.startup_entrance_resume_path[0] = '\0';
+        if ((!spec->savePath || spec->savePath[0] == '\0') &&
+            spec->entranceResumeSavePath &&
+            spec->entranceResumeSavePath[0] != '\0') {
+            int rc = snprintf(state->csbState.startup_entrance_resume_path,
+                              sizeof(state->csbState.startup_entrance_resume_path),
+                              "%s",
+                              spec->entranceResumeSavePath);
+            if (rc > 0 &&
+                rc < (int)sizeof(state->csbState.startup_entrance_resume_path)) {
+                state->csbState.startup_entrance_resume_available = 1;
+            }
+        }
         m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
@@ -10401,6 +10441,13 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     } else {
         /* Non-launched path (menu browsing): use the current settings */
         spec.fontScale = menuState->settings.fontScale;
+    }
+    if (menuState->quickResumeAvailable &&
+        menuState->quickResumeSavePath[0] != '\0' &&
+        menuState->quickResumeGameId[0] != '\0' &&
+        entry->gameId &&
+        strcmp(menuState->quickResumeGameId, entry->gameId) == 0) {
+        spec.entranceResumeSavePath = menuState->quickResumeSavePath;
     }
     spec.sourceKind = (entry->sourceKind == M12_MENU_SOURCE_CUSTOM_DUNGEON)
                           ? M11_GAME_SOURCE_CUSTOM_DUNGEON
