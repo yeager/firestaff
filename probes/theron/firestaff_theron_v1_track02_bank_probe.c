@@ -583,6 +583,79 @@ static void check_raw_user_data_contract(
         }
     }
 
+    {
+        Theron_Track02StartupTextMarkerCatalog text_catalog;
+        Theron_Track02StartupTextMarkerKind expected_kind;
+        const char *expected_text;
+        size_t expected_text_size;
+        size_t expected_first_raw_offset;
+
+        status = theron_v1_track02_catalog_startup_text_markers(
+            data,
+            size,
+            md5_hex,
+            &text_catalog);
+        check_int("raw startup text marker catalog status",
+                  status,
+                  THERON_TRACK02_SIGNAL_OK);
+        check_size("raw startup text marker count",
+                   text_catalog.marker_count,
+                   7u);
+        check_size("raw startup text marker overflow",
+                   text_catalog.overflow_count,
+                   0u);
+
+        if (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) == 0) {
+            expected_kind =
+                THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT;
+            expected_text = "GO AWAY AND RESURRECT THERON";
+            expected_text_size = strlen(expected_text);
+            expected_first_raw_offset = 0xa0722u;
+        } else {
+            expected_kind =
+                THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER;
+            expected_text = "THERON";
+            expected_text_size = strlen(expected_text);
+            expected_first_raw_offset = 0xb3d98u;
+        }
+
+        for (i = 0; i < text_catalog.marker_count; ++i) {
+            const Theron_Track02StartupTextMarker *marker =
+                &text_catalog.markers[i];
+            char name[128];
+            size_t expected_user_offset = 0u;
+
+            snprintf(name, sizeof(name), "%s text marker kind[%zu]",
+                     label, i);
+            check_int(name, marker->kind, expected_kind);
+            snprintf(name, sizeof(name), "%s text marker occurrence[%zu]",
+                     label, i);
+            check_size(name, marker->occurrence_index, i);
+            snprintf(name, sizeof(name), "%s text marker raw->user[%zu]",
+                     label, i);
+            status = theron_v1_track02_raw_offset_to_user_offset(
+                marker->raw_offset,
+                size,
+                md5_hex,
+                &expected_user_offset);
+            check_int(name, status, THERON_TRACK02_SIGNAL_OK);
+            snprintf(name, sizeof(name), "%s text marker user offset[%zu]",
+                     label, i);
+            check_size(name, marker->user_data_offset, expected_user_offset);
+            snprintf(name, sizeof(name), "%s text marker payload[%zu]",
+                     label, i);
+            check_bytes(name,
+                        data + marker->raw_offset,
+                        (const uint8_t *)expected_text,
+                        expected_text_size);
+        }
+        if (text_catalog.marker_count > 0u) {
+            check_size("raw startup text marker first raw offset",
+                       text_catalog.markers[0].raw_offset,
+                       expected_first_raw_offset);
+        }
+    }
+
     free(user_data);
 }
 

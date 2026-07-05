@@ -407,6 +407,19 @@ const char *theron_v1_track02_user_data_window_role_name(
     }
 }
 
+const char *theron_v1_track02_startup_text_marker_kind_name(
+    Theron_Track02StartupTextMarkerKind kind) {
+    switch (kind) {
+    case THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT:
+        return "us-resurrect-theron-prompt";
+    case THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER:
+        return "jp-champion-roster-cluster";
+    case THERON_TRACK02_STARTUP_TEXT_UNKNOWN:
+    default:
+        return "unknown";
+    }
+}
+
 static void catalog_add_user_data_window(
     Theron_Track02UserDataWindowCatalog *catalog,
     Theron_Track02UserDataWindowRole role,
@@ -431,6 +444,52 @@ static void catalog_add_user_data_window(
     entry->byte_count = byte_count;
     entry->anchor_index = anchor_index;
     entry->candidate_index = candidate_index;
+}
+
+static void catalog_add_startup_text_marker(
+    Theron_Track02StartupTextMarkerCatalog *catalog,
+    Theron_Track02StartupTextMarkerKind kind,
+    size_t raw_offset,
+    size_t user_data_offset,
+    size_t byte_count,
+    size_t occurrence_index) {
+
+    Theron_Track02StartupTextMarker *marker;
+    if (!catalog) {
+        return;
+    }
+    if (catalog->marker_count >= THERON_TRACK02_MAX_STARTUP_TEXT_MARKERS) {
+        ++catalog->overflow_count;
+        return;
+    }
+    marker = &catalog->markers[catalog->marker_count++];
+    marker->kind = kind;
+    marker->raw_offset = raw_offset;
+    marker->user_data_offset = user_data_offset;
+    marker->byte_count = byte_count;
+    marker->occurrence_index = occurrence_index;
+}
+
+static int bytes_find(const uint8_t *data,
+                      size_t data_size,
+                      const uint8_t *needle,
+                      size_t needle_size,
+                      size_t *out_offset) {
+    if (out_offset) {
+        *out_offset = 0u;
+    }
+    if (!data || !needle || needle_size == 0u || needle_size > data_size) {
+        return 0;
+    }
+    for (size_t i = 0u; i <= data_size - needle_size; ++i) {
+        if (memcmp(data + i, needle, needle_size) == 0) {
+            if (out_offset) {
+                *out_offset = i;
+            }
+            return 1;
+        }
+    }
+    return 0;
 }
 
 Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
@@ -534,6 +593,122 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
     }
 
     return THERON_TRACK02_SIGNAL_OK;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02StartupTextMarkerCatalog *out_catalog) {
+
+    static const uint8_t us_prompt[] =
+        "GO AWAY AND RESURRECT THERON";
+    static const uint8_t jp_anchor[] = "THERON";
+    static const uint8_t jp_required[][6] = {
+        "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN"
+    };
+    Theron_Track02Variant variant;
+    const uint8_t *cursor;
+    const uint8_t *end;
+    size_t occurrence = 0u;
+
+    if (out_catalog) {
+        memset(out_catalog, 0, sizeof(*out_catalog));
+    }
+    if (!track02_data || track02_size == 0u || !out_catalog) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    out_catalog->variant = variant;
+    if (!variant_is_raw_bin(variant)) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+
+    cursor = track02_data;
+    end = track02_data + track02_size;
+    while (cursor < end) {
+        size_t remaining = (size_t)(end - cursor);
+        const uint8_t *found = NULL;
+        size_t marker_raw_offset;
+        size_t marker_user_offset = 0u;
+        size_t marker_byte_count = 0u;
+        Theron_Track02StartupTextMarkerKind kind =
+            THERON_TRACK02_STARTUP_TEXT_UNKNOWN;
+
+        if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+            size_t local_offset = 0u;
+            if (!bytes_find(cursor,
+                            remaining,
+                            us_prompt,
+                            sizeof(us_prompt) - 1u,
+                            &local_offset)) {
+                break;
+            }
+            found = cursor + local_offset;
+            marker_byte_count = sizeof(us_prompt) - 1u;
+            kind = THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT;
+        } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+            size_t local_offset = 0u;
+            size_t cluster_span = 0u;
+            int complete_cluster = 1;
+            if (!bytes_find(cursor,
+                            remaining,
+                            jp_anchor,
+                            sizeof(jp_anchor) - 1u,
+                            &local_offset)) {
+                break;
+            }
+            found = cursor + local_offset;
+            if ((size_t)(end - found) < 768u) {
+                cursor = found + 1u;
+                continue;
+            }
+            for (size_t i = 0u;
+                 i < sizeof(jp_required) / sizeof(jp_required[0]);
+                 ++i) {
+                size_t required_offset = 0u;
+                size_t required_len = strlen((const char *)jp_required[i]);
+                if (!bytes_find(found,
+                                768u,
+                                jp_required[i],
+                                required_len,
+                                &required_offset)) {
+                    complete_cluster = 0;
+                    break;
+                }
+                if (required_offset + required_len > cluster_span) {
+                    cluster_span = required_offset + required_len;
+                }
+            }
+            if (!complete_cluster) {
+                cursor = found + 1u;
+                continue;
+            }
+            marker_byte_count = cluster_span;
+            kind = THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER;
+        } else {
+            break;
+        }
+
+        marker_raw_offset = (size_t)(found - track02_data);
+        if (theron_v1_track02_raw_offset_to_user_offset(marker_raw_offset,
+                                                         track02_size,
+                                                         md5_hex,
+                                                         &marker_user_offset) ==
+            THERON_TRACK02_SIGNAL_OK) {
+            catalog_add_startup_text_marker(out_catalog,
+                                            kind,
+                                            marker_raw_offset,
+                                            marker_user_offset,
+                                            marker_byte_count,
+                                            occurrence++);
+        }
+        cursor = found + 1u;
+    }
+
+    return out_catalog->marker_count > 0u ? THERON_TRACK02_SIGNAL_OK
+                                          : THERON_TRACK02_SIGNAL_NOT_FOUND;
 }
 
 Theron_Track02SignalStatus theron_v1_track02_copy_user_data_window_by_role(
@@ -1001,10 +1176,15 @@ const char *theron_v1_track02_source_evidence(void) {
            "Raw-sector user-data bridge: JP/US raw BINs are MODE1/2352 sector "
            "images; descriptor/span payload offsets map into the 2048-byte "
            "user-data stream, while the audio-bank id words sit outside "
-           "user-data immediately before the span.  This is a bounded "
-           "initial-level and raw-sector handoff, not a full dungeon-record "
-           "decoder, object-table decoder, graphics/menu-art decoder, ADPCM "
-           "decode, CD-DA decode, or runtime playback proof.";
+           "user-data immediately before the span.  Startup text markers: raw "
+           "US Track 02 carries seven user-data occurrences of `GO AWAY AND "
+           "RESURRECT THERON` starting at 0xa0722; raw JP Track 02 carries "
+           "seven user-data champion-roster marker clusters starting at "
+           "0xb3d98 with THERON/MARA/LINOS/HEXA/HAKAR/TIRAN/DOTAN ASCII "
+           "names.  This is a bounded initial-level, raw-sector, and startup "
+           "text-marker handoff, not a full dungeon-record decoder, "
+           "object-table decoder, graphics/menu-art decoder, font/text "
+           "renderer, ADPCM decode, CD-DA decode, or runtime playback proof.";
 }
 
 /* ── Semantic dungeon-descriptor table decoder ──────────────────── */

@@ -22,6 +22,7 @@
 
 #define THERON_TRACK02_MAX_LEVEL_CANDIDATES 32u
 #define THERON_TRACK02_MAX_USER_DATA_WINDOWS 8u
+#define THERON_TRACK02_MAX_STARTUP_TEXT_MARKERS 8u
 #define THERON_TRACK02_RAW_SECTOR_BYTES 2352u
 #define THERON_TRACK02_RAW_USER_DATA_OFFSET 0x10u
 #define THERON_TRACK02_RAW_USER_DATA_BYTES 2048u
@@ -209,6 +210,37 @@ Theron_Track02SignalStatus theron_v1_track02_copy_user_data_window_by_role(
 
 const char *theron_v1_track02_user_data_window_role_name(
     Theron_Track02UserDataWindowRole role);
+
+typedef enum {
+    THERON_TRACK02_STARTUP_TEXT_UNKNOWN = 0,
+    THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT,
+    THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER
+} Theron_Track02StartupTextMarkerKind;
+
+typedef struct {
+    Theron_Track02StartupTextMarkerKind kind;
+    size_t raw_offset;
+    size_t user_data_offset;
+    size_t byte_count;
+    size_t occurrence_index;
+} Theron_Track02StartupTextMarker;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t marker_count;
+    size_t overflow_count;
+    Theron_Track02StartupTextMarker
+        markers[THERON_TRACK02_MAX_STARTUP_TEXT_MARKERS];
+} Theron_Track02StartupTextMarkerCatalog;
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02StartupTextMarkerCatalog *out_catalog);
+
+const char *theron_v1_track02_startup_text_marker_kind_name(
+    Theron_Track02StartupTextMarkerKind kind);
 
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
