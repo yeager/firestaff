@@ -796,6 +796,47 @@ static int m11_csb_runtime_group_direction(const uint8_t *record, int size)
     return (int)((flags >> 8) & 0x03u);
 }
 
+static int m11_csb_square_allows_runtime_thing_overlay(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y)
+{
+    int raw_square;
+    int square_type;
+    int door_state;
+
+    if (!dungeon) {
+        return 0;
+    }
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, x, y);
+    if (raw_square < 0) {
+        return 0;
+    }
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    if (square_type == 0) {
+        return 0;
+    }
+    if (square_type == 4) {
+        /* ReDMCSB CLIKMENU.C F0366 treats door states 0, 1, and 5 as
+         * passable/open enough for square interaction; closed doors block
+         * the runtime overlay bridge too. */
+        door_state = raw_square & 0x07;
+        return door_state == 0 || door_state == 1 || door_state == 5;
+    }
+    if (square_type == 6) {
+        /* ReDMCSB CLIKMENU.C F0366 permits only open or imaginary
+         * fakewalls. */
+        return (raw_square & 0x04) || (raw_square & 0x01);
+    }
+    return square_type == 1 ||
+           square_type == 2 ||
+           square_type == 3 ||
+           square_type == 5;
+}
+
 static void m11_csb_map_from_relative(int party_dir,
                                       int party_x,
                                       int party_y,
@@ -863,6 +904,13 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                                       side,
                                       &map_x,
                                       &map_y);
+            if (!m11_csb_square_allows_runtime_thing_overlay(
+                    dungeon,
+                    runtime->current_level,
+                    map_x,
+                    map_y)) {
+                continue;
+            }
             first_thing = csb_v1_dungeon_get_first_thing(
                 dungeon,
                 runtime->current_level,
@@ -970,6 +1018,13 @@ static void m11_draw_csb_runtime_group_overlays(
                                       side,
                                       &map_x,
                                       &map_y);
+            if (!m11_csb_square_allows_runtime_thing_overlay(
+                    dungeon,
+                    runtime->current_level,
+                    map_x,
+                    map_y)) {
+                continue;
+            }
             first_thing = csb_v1_dungeon_get_first_thing(
                 dungeon,
                 runtime->current_level,
