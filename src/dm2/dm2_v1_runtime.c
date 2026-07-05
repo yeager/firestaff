@@ -117,6 +117,7 @@ static void dm2_runtime_apply_door_record_metadata(
     int level,
     int x,
     int y,
+    int view_dir,
     DM2_ViewSquare *door) {
     int thing;
     int door_thing;
@@ -125,6 +126,8 @@ static void dm2_runtime_apply_door_record_metadata(
     int size = 0;
     const uint8_t *record;
     uint16_t w2;
+    int wall_gfx_index = -1;
+    int wall_gfx_field = -1;
 
     if (!dd || !door) return;
     thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
@@ -144,6 +147,15 @@ static void dm2_runtime_apply_door_record_metadata(
     door->door_button_state = (uint8_t)((w2 >> 11) & 1u);
     door->door_record_type = (uint8_t)(w2 & 1u);
     door->door_opening_dir = (uint8_t)((w2 >> 5) & 1u);
+    if (!door->door_button &&
+        dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
+                                          view_dir, 2, 8,
+                                          &wall_gfx_index,
+                                          &wall_gfx_field) == 0) {
+        door->door_wall_button = 1;
+        door->door_wall_button_index = (uint8_t)wall_gfx_index;
+        door->door_wall_button_field = (uint8_t)wall_gfx_field;
+    }
 }
 
 static uint16_t dm2_runtime_door_set_state(uint16_t square_raw, int state) {
@@ -206,7 +218,7 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
             door->door_open_pct =
                 (uint8_t)(dm2_runtime_door_state((uint16_t)raw) * 25);
             dm2_runtime_apply_door_record_metadata(
-                dd, rt->dungeon_level, map_x, map_y, door);
+                dd, rt->dungeon_level, map_x, map_y, dir, door);
         }
     }
 }

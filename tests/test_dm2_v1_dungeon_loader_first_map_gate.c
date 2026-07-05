@@ -164,6 +164,24 @@ static size_t build_skproject_chained_door_fixture(uint8_t *buf, size_t cap)
     return raw_map_base + 4u;
 }
 
+static size_t build_skproject_text_wall_gfx_fixture(uint8_t *buf, size_t cap)
+{
+    size_t size = build_skproject_chained_door_fixture(buf, cap);
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + 4u;
+    const size_t thing_base = sft_base + 2u;
+    const size_t door_base = thing_base;
+    const size_t text_base = door_base + 4u;
+
+    if (size == 0) return 0;
+    put16le(buf + sft_base, 0x8800); /* dir=S, dbText, index 0 */
+    put16le(buf + text_base, 0x0000);
+    put16le(buf + text_base + 2, (uint16_t)((1u << 1) | (0x2au << 3)));
+    return size;
+}
+
 static void test_first_map_metadata_and_tiles(void)
 {
     uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
@@ -299,6 +317,32 @@ static void test_skproject_chained_first_thing_finds_door_record(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_text_wall_gfx_metadata(void)
+{
+    uint8_t dat[160];
+    DM2_V1_DungeonData dungeon;
+    size_t size = build_skproject_text_wall_gfx_fixture(dat, sizeof(dat));
+    int thing;
+    int index = -1;
+    int field = -1;
+
+    CHECK(size > 0, "skproject text wall-gfx fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts a skproject text wall-gfx chain");
+    thing = dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0);
+    CHECK(thing == 0x8800,
+          "text wall-gfx fixture carries direction on the DB2 ObjectID");
+    CHECK(dm2_v1_dungeon_find_text_wall_gfx(
+              &dungeon, (uint16_t)thing, 0, 2, 8, &index, &field) == 0 &&
+              index == 0x2a && field == 1,
+          "text wall-gfx helper exposes skproject tfoi[2] index and field");
+    CHECK(dm2_v1_dungeon_find_text_wall_gfx(
+              &dungeon, (uint16_t)thing, 1, 2, 8, &index, &field) == -1,
+          "text wall-gfx helper requires the requested relative side");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Dungeon Loader First-Map Gate ===\n\n");
@@ -308,6 +352,7 @@ int main(void)
     test_shifted_first_map_offset_rejected();
     test_skproject_layout_first_thing_and_door_record();
     test_skproject_chained_first_thing_finds_door_record();
+    test_skproject_text_wall_gfx_metadata();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

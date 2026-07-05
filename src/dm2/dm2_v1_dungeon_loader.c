@@ -608,6 +608,93 @@ int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
     return -1;
 }
 
+int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
+                                      uint16_t first_thing,
+                                      int view_dir,
+                                      int side_index,
+                                      int max_steps,
+                                      int *out_wall_gfx_index,
+                                      int *out_wall_gfx_field) {
+    uint16_t thing = first_thing;
+
+    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
+    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+    if (!d || !out_wall_gfx_index || !out_wall_gfx_field) return -1;
+    if (side_index < 0 || side_index > 3) return -1;
+    if (max_steps <= 0) max_steps = 32;
+
+    for (int step = 0; step < max_steps; ++step) {
+        int type = -1;
+        int size = 0;
+        int next;
+        const uint8_t *record;
+        uint16_t w2;
+        int text_mode;
+        int text_index;
+        int ext_usage;
+        int text_visible;
+        int object_dir;
+        int relative_side;
+        int ornate;
+        int frame = 0;
+        int packed;
+        int accepts_static_wall_gfx = 0;
+
+        if (thing == DM2_THING_END_MARKER) return -1;
+        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
+        if (!record || size < 2) return -1;
+        if (type > 3) return -1;
+
+        if (type == 2 && size >= 4) {
+            w2 = RD16(record + 2);
+            text_mode = (int)((w2 >> 1) & 3u);
+            text_index = (int)((w2 >> 3) & 0x1fffu);
+            ext_usage = (text_index >> 8) & 0x1f;
+            text_visible = (int)(w2 & 1u);
+            object_dir = (int)((thing >> 14) & 3u);
+            relative_side = ((object_dir - (view_dir & 3)) & 3);
+            ornate = text_index & 0xff;
+
+            /* skproject SKWINSPX/src/v4/skdungn.cpp _0cee_1a46 handles
+             * DB2 TextMode()==1 as WALL_GFX ornament metadata.  This bounded
+             * startup helper covers the static cases that do not need the
+             * GDAT animation query: ext usages 0/6 are accepted immediately,
+             * 2 is always present, and 5/13 depend on TextVisibility(). */
+            if (text_mode == 1 && relative_side == side_index) {
+                switch (ext_usage) {
+                    case 0:
+                    case 6:
+                        accepts_static_wall_gfx = 1;
+                        break;
+                    case 2:
+                        accepts_static_wall_gfx = 1;
+                        frame = 0;
+                        break;
+                    case 5:
+                    case 13:
+                        accepts_static_wall_gfx = text_visible != 0;
+                        frame = 0;
+                        break;
+                    default:
+                        accepts_static_wall_gfx = 0;
+                        break;
+                }
+                if (accepts_static_wall_gfx) {
+                    packed = (frame << 10) | ornate;
+                    *out_wall_gfx_index = packed & 0xff;
+                    *out_wall_gfx_field = ((packed >> 8) & 0xff) + 1;
+                    return 0;
+                }
+            }
+        }
+
+        next = dm2_v1_dungeon_get_next_thing(d, thing);
+        if (next < 0 || next == (int)thing) return -1;
+        thing = (uint16_t)next;
+    }
+    return -1;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;
