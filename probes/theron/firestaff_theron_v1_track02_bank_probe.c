@@ -111,6 +111,16 @@ static void check_u32(const char *label, uint32_t got, uint32_t want) {
     }
 }
 
+static void check_bytes(const char *label,
+                        const uint8_t *got,
+                        const uint8_t *want,
+                        size_t count) {
+    if (!got || !want || memcmp(got, want, count) != 0) {
+        printf("FAIL %s: byte span mismatch (%zu bytes)\n", label, count);
+        ++g_fail;
+    }
+}
+
 static int file_exists(const char *path) {
     struct stat st;
     return path && path[0] && stat(path, &st) == 0 && st.st_size > 0;
@@ -293,6 +303,104 @@ static void check_raw_signal(const char *label,
                0u);
 }
 
+static void check_raw_user_data_contract(
+    const char *label,
+    const uint8_t *data,
+    size_t size,
+    const char *md5_hex,
+    const size_t descriptor_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const size_t span_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+    const uint32_t audio_bank_ids[THERON_TRACK02_MAX_BANK_ANCHORS]) {
+
+    size_t sector_count = 0u;
+    size_t user_data_size = 0u;
+    size_t copied_size = 0u;
+    uint8_t *user_data = NULL;
+    Theron_Track02SignalStatus status;
+    size_t i;
+
+    status = theron_v1_track02_raw_user_data_size(size,
+                                                  md5_hex,
+                                                  &sector_count,
+                                                  &user_data_size);
+    check_int("raw user-data size status",
+              status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("raw user-data sector count",
+               sector_count,
+               size / THERON_TRACK02_RAW_SECTOR_BYTES);
+    check_size("raw user-data byte count",
+               user_data_size,
+               sector_count * THERON_TRACK02_RAW_USER_DATA_BYTES);
+
+    user_data = (uint8_t *)malloc(user_data_size);
+    if (!user_data) {
+        printf("FAIL %s raw user-data allocation\n", label);
+        ++g_fail;
+        return;
+    }
+    status = theron_v1_track02_copy_raw_user_data(data,
+                                                  size,
+                                                  md5_hex,
+                                                  user_data,
+                                                  user_data_size,
+                                                  &copied_size);
+    check_int("raw user-data copy status",
+              status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("raw user-data copied byte count",
+               copied_size,
+               user_data_size);
+
+    for (i = 0; i < THERON_TRACK02_MAX_BANK_ANCHORS; ++i) {
+        char name[128];
+        size_t user_offset = 0u;
+        const size_t id_offset = span_offsets[i] - 4u;
+
+        status = theron_v1_track02_raw_offset_to_user_offset(
+            descriptor_offsets[i],
+            size,
+            md5_hex,
+            &user_offset);
+        snprintf(name, sizeof(name), "%s descriptor raw->user status[%zu]",
+                 label, i);
+        check_int(name, status, THERON_TRACK02_SIGNAL_OK);
+        snprintf(name, sizeof(name), "%s descriptor raw->user bytes[%zu]",
+                 label, i);
+        check_bytes(name,
+                    user_data + user_offset,
+                    data + descriptor_offsets[i],
+                    sizeof(g_descriptor));
+
+        status = theron_v1_track02_raw_offset_to_user_offset(
+            span_offsets[i],
+            size,
+            md5_hex,
+            &user_offset);
+        snprintf(name, sizeof(name), "%s span raw->user status[%zu]",
+                 label, i);
+        check_int(name, status, THERON_TRACK02_SIGNAL_OK);
+        snprintf(name, sizeof(name), "%s span raw->user bytes[%zu]",
+                 label, i);
+        check_bytes(name,
+                    user_data + user_offset,
+                    data + span_offsets[i],
+                    sizeof(g_post_boundary_span));
+
+        status = theron_v1_track02_raw_offset_to_user_offset(
+            id_offset,
+            size,
+            md5_hex,
+            &user_offset);
+        snprintf(name, sizeof(name), "%s audio id outside user-data[%zu]",
+                 label, i);
+        check_int(name, status, THERON_TRACK02_SIGNAL_NOT_FOUND);
+        (void)audio_bank_ids;
+    }
+
+    free(user_data);
+}
+
 static void probe_track(const char *label,
                         const char *env_name,
                         const char *default_file,
@@ -364,6 +472,13 @@ static void probe_track(const char *label,
                              g_us_audio_bank_ids,
                              3141u,
                              1263u);
+            check_raw_user_data_contract("US raw",
+                                         data,
+                                         size,
+                                         md5_hex,
+                                         g_us_bin_descriptor_offsets,
+                                         g_us_bin_span_offsets,
+                                         g_us_audio_bank_ids);
         } else if (signal.variant == THERON_TRACK02_VARIANT_JP_BIN) {
             check_raw_signal("JP raw",
                              &signal,
@@ -373,6 +488,13 @@ static void probe_track(const char *label,
                              g_jp_audio_bank_ids,
                              3140u,
                              1262u);
+            check_raw_user_data_contract("JP raw",
+                                         data,
+                                         size,
+                                         md5_hex,
+                                         g_jp_bin_descriptor_offsets,
+                                         g_jp_bin_span_offsets,
+                                         g_jp_audio_bank_ids);
         } else {
             printf("FAIL %s: unexpected OK variant %s\n",
                    label,
@@ -464,6 +586,118 @@ static void probe_boundary_prefix_only_negative_fixture(void) {
               status,
               THERON_TRACK02_SIGNAL_NOT_FOUND);
     free(fixture);
+}
+
+static void probe_raw_user_data_synthetic_fixture(void) {
+    enum {
+        sector_count = 2,
+        raw_size = sector_count * THERON_TRACK02_RAW_SECTOR_BYTES,
+        user_size = sector_count * THERON_TRACK02_RAW_USER_DATA_BYTES
+    };
+    uint8_t raw[raw_size];
+    uint8_t user[user_size];
+    size_t sectors = 0u;
+    size_t bytes = 0u;
+    size_t copied = 0u;
+    size_t user_offset = 0u;
+    Theron_Track02SignalStatus status;
+    size_t i;
+
+    memset(raw, 0xee, sizeof(raw));
+    memset(user, 0, sizeof(user));
+    for (i = 0u; i < THERON_TRACK02_RAW_USER_DATA_BYTES; ++i) {
+        raw[THERON_TRACK02_RAW_USER_DATA_OFFSET + i] =
+            (uint8_t)(i & 0xffu);
+        raw[THERON_TRACK02_RAW_SECTOR_BYTES +
+            THERON_TRACK02_RAW_USER_DATA_OFFSET + i] =
+            (uint8_t)((i + 17u) & 0xffu);
+    }
+
+    status = theron_v1_track02_raw_user_data_size(sizeof(raw),
+                                                  THERON_TRACK02_MD5_US_BIN,
+                                                  &sectors,
+                                                  &bytes);
+    check_int("synthetic raw user-data size status",
+              status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("synthetic raw sector count", sectors, sector_count);
+    check_size("synthetic raw user bytes", bytes, user_size);
+
+    status = theron_v1_track02_copy_raw_user_data(raw,
+                                                  sizeof(raw),
+                                                  THERON_TRACK02_MD5_US_BIN,
+                                                  user,
+                                                  sizeof(user),
+                                                  &copied);
+    check_int("synthetic raw user-data copy status",
+              status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("synthetic raw copied bytes", copied, user_size);
+    check_int("synthetic sector 0 first user byte", user[0], 0);
+    check_int("synthetic sector 0 last user byte",
+              user[THERON_TRACK02_RAW_USER_DATA_BYTES - 1u],
+              0xff);
+    check_int("synthetic sector 1 first user byte",
+              user[THERON_TRACK02_RAW_USER_DATA_BYTES],
+              17);
+
+    status = theron_v1_track02_raw_offset_to_user_offset(
+        THERON_TRACK02_RAW_USER_DATA_OFFSET + 33u,
+        sizeof(raw),
+        THERON_TRACK02_MD5_US_BIN,
+        &user_offset);
+    check_int("synthetic raw offset maps to user-data",
+              status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("synthetic raw offset user index", user_offset, 33u);
+
+    status = theron_v1_track02_raw_offset_to_user_offset(
+        THERON_TRACK02_RAW_SECTOR_BYTES +
+            THERON_TRACK02_RAW_USER_DATA_OFFSET + 5u,
+        sizeof(raw),
+        THERON_TRACK02_MD5_US_BIN,
+        &user_offset);
+    check_int("synthetic second-sector raw offset maps",
+              status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_size("synthetic second-sector user index",
+               user_offset,
+               THERON_TRACK02_RAW_USER_DATA_BYTES + 5u);
+
+    status = theron_v1_track02_raw_offset_to_user_offset(
+        0u,
+        sizeof(raw),
+        THERON_TRACK02_MD5_US_BIN,
+        &user_offset);
+    check_int("synthetic raw sector header offset rejected",
+              status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+
+    status = theron_v1_track02_raw_offset_to_user_offset(
+        THERON_TRACK02_RAW_USER_DATA_OFFSET +
+            THERON_TRACK02_RAW_USER_DATA_BYTES,
+        sizeof(raw),
+        THERON_TRACK02_MD5_US_BIN,
+        &user_offset);
+    check_int("synthetic raw EDC/ECC offset rejected",
+              status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+
+    status = theron_v1_track02_raw_user_data_size(sizeof(raw),
+                                                  THERON_TRACK02_MD5_US_ISO,
+                                                  &sectors,
+                                                  &bytes);
+    check_int("synthetic ISO user-data strip unsupported",
+              status,
+              THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+
+    status = theron_v1_track02_raw_user_data_size(sizeof(raw) - 1u,
+                                                  THERON_TRACK02_MD5_US_BIN,
+                                                  &sectors,
+                                                  &bytes);
+    check_int("synthetic partial raw sector rejected",
+              status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
 }
 
 static void fill_raw_anchor_fixture(uint8_t *fixture,
@@ -840,6 +1074,7 @@ int main(void) {
     probe_jp_zero_image_fixture();
     probe_descriptor_only_negative_fixture();
     probe_boundary_prefix_only_negative_fixture();
+    probe_raw_user_data_synthetic_fixture();
     probe_audio_bank_marker_synthetic_fixture();
     probe_audio_bank_marker_unsupported_variant_fixture();
     probe_audio_bank_marker_real_data(THERON_TRACK02_MD5_US_BIN,

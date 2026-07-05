@@ -21,6 +21,9 @@
 #define THERON_TRACK02_MD5_US_ISO      "3d8b78571dcd0e6eb8eb4b01eeb7fbba"
 
 #define THERON_TRACK02_MAX_LEVEL_CANDIDATES 32u
+#define THERON_TRACK02_RAW_SECTOR_BYTES 2352u
+#define THERON_TRACK02_RAW_USER_DATA_OFFSET 0x10u
+#define THERON_TRACK02_RAW_USER_DATA_BYTES 2048u
 
 typedef enum {
     THERON_TRACK02_VARIANT_UNKNOWN = 0,
@@ -116,6 +119,41 @@ Theron_Track02SignalStatus theron_v1_track02_find_audio_bank_marker(
     uint32_t *out_audio_bank_id,
     size_t *out_audio_bank_id_offset,
     size_t *out_audio_bank_prefix_offset);
+
+/* Raw Track 02 BIN -> logical 2048-byte user-data stream helpers.
+ *
+ * JP/US raw Track 02 BIN images are MODE1/2352 sector dumps.  The startup
+ * level, bank descriptors, and future menu/champion-art payload decoders need
+ * stable conversion from raw-sector offsets to the logical 2048-byte
+ * user-data stream before they can compare JP/US images or bind ISO-derived
+ * offsets.  These helpers are intentionally hash-gated to the two raw BIN MD5s;
+ * ISO variants and unknown MD5s return UNSUPPORTED_VARIANT.
+ *
+ * The helpers do not interpret user-data bytes as graphics, text, palettes,
+ * levels, or audio.  They only expose the sector strip boundary:
+ *   raw sector bytes 0..15     = sync/header
+ *   raw sector bytes 16..2063  = 2048-byte user data
+ *   raw sector bytes 2064..2351 = EDC/ECC/subheader area
+ */
+Theron_Track02SignalStatus theron_v1_track02_raw_user_data_size(
+    size_t track02_size,
+    const char *md5_hex,
+    size_t *out_sector_count,
+    size_t *out_user_data_size);
+
+Theron_Track02SignalStatus theron_v1_track02_raw_offset_to_user_offset(
+    size_t raw_offset,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t *out_user_offset);
+
+Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    uint8_t *out_user_data,
+    size_t out_user_data_capacity,
+    size_t *out_user_data_size);
 
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
