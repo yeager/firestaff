@@ -22,6 +22,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
+#include "dm2_v1_shop.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -457,7 +458,26 @@ int dm2_v1_runtime_turn(int delta) {
  *         SKULL.ASM T560 — dungeon mode entry
  */
 void dm2_v1_runtime_set_outdoor(int is_outdoor) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     g_dm2_runtime.outdoor = is_outdoor ? 1 : 0;
+    if (rt->boot && rt->boot->dm2_state) {
+        DM2_V1_GameState *gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+        gs->outdoor = g_dm2_runtime.outdoor;
+    }
+}
+
+void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_GameState *gs;
+
+    if (!rt->boot || !rt->boot->dm2_state) return;
+    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+    gs->current_level = level;
+    gs->party_x = x;
+    gs->party_y = y;
+    gs->party_dir = dir & 3;
+    rt->dungeon_level = level;
+    rt->view_dir = gs->party_dir;
 }
 
 /* ── Party position accessors ─────────────────────────────────────── */
@@ -562,11 +582,22 @@ int dm2_v1_runtime_is_passable(int level, int x, int y) {
 int dm2_v1_runtime_enter_shop(int level, int x, int y) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;
+    int shop_id = DM2_SHOP_ID_NONE;
 
     if (!rt->boot || !rt->boot->dm2_state) return -1;
-    if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
     if (!rt->outdoor && !gs->outdoor) return -1;
+    for (int i = 1; i <= DM2_NUM_BUILTIN_SHOPS; i++) {
+        const DM2_V1_ShopDescriptor *shop = dm2_v1_shop_get_builtin(i);
+        if (shop && shop->map_level == level &&
+            shop->map_x == x && shop->map_y == y) {
+            shop_id = shop->shop_id;
+            break;
+        }
+    }
+    if (shop_id == DM2_SHOP_ID_NONE) return -1;
+    dm2_v1_shop_set_party_gold((uint32_t)(gs->gold < 0 ? 0 : gs->gold));
+    if (!dm2_v1_shop_enter(shop_id)) return -1;
     gs->time_of_day = rt->time_of_day_minutes;
     return 0;
 }

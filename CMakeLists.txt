@@ -6322,6 +6322,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_runtime_handoff_smoke.c
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_dungeon_loader.c
