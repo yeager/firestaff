@@ -9593,6 +9593,63 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state,
+                                                        char* receipt,
+                                                        size_t receipt_cap) {
+    Theron_V1_World* world;
+    Theron_DungeonID next;
+    Theron_StartupFlow flow;
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!state) {
+        return 0;
+    }
+    world = (Theron_V1_World*)state->theronWorld;
+    if (!world) {
+        return 0;
+    }
+
+    next = theron_v1_dungeon_exit(&world->progression);
+    if (next == THERON_DUNGEON_INVALID &&
+        !theron_v1_quest_complete(&world->progression)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "dungeon exit rejected");
+        }
+        return 0;
+    }
+
+    theron_v1_party_dungeon_exit(&world->party);
+    world->party.champion_count = 1;
+    world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+    world->current_dungeon = world->progression.current_dungeon;
+    world->current_level = 0;
+    world->dungeon_complete = 0;
+    world->quest_items_in_dungeon = 0;
+    memset(world->level_loaded, 0, sizeof(world->level_loaded));
+
+    theron_v1_startup_flow_init(&flow);
+    flow.selected_dungeon = world->progression.current_dungeon;
+    m11_theron_sync_startup_state(state, &flow);
+    state->theronState.level_loaded = 0;
+    state->theronState.startup_cursor = 0;
+    state->theronState.party_x = world->party.leader_x;
+    state->theronState.party_y = world->party.leader_y;
+    state->theronState.party_dir = world->party.leader_dir;
+    state->theronState.tick_count = (int)world->world_tick;
+
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 theron_v1_quest_complete(&world->progression)
+                    ? "quest complete"
+                    : "dungeon complete; next stage=%d",
+                 (int)world->progression.current_dungeon);
+    }
+    return 1;
+}
+
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
@@ -11627,6 +11684,19 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
              * its source-locked THQUEST.ASM T600/T700 adapter here so the M11
              * path gets post-move effects instead of mutating coordinates. */
             moveResult = theron_v1_move_party(world, dir);
+            if (moveResult == THERON_MOVE_EXIT) {
+                char receipt[128];
+                if (m11_theron_return_to_stage_select_after_exit(state,
+                                                                 receipt,
+                                                                 sizeof(receipt))) {
+                    m11_set_status(state, "STARTUP", receipt);
+                    m11_set_inspect_readout(state, "STARTUP", receipt);
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                m11_set_status(state, "MOVE",
+                               receipt[0] ? receipt : "EXIT BLOCKED");
+                return M11_GAME_INPUT_REDRAW;
+            }
             moved = (moveResult != THERON_MOVE_BLOCKED);
             m11_set_status(state, "MOVE",
                            moved ? "THERON ADVANCED" : "BLOCKED");
@@ -11634,6 +11704,19 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             int oldDir = world->party.leader_dir & 3;
             int dir = (oldDir + 2) & 3;
             int moveResult = theron_v1_move_party(world, dir);
+            if (moveResult == THERON_MOVE_EXIT) {
+                char receipt[128];
+                if (m11_theron_return_to_stage_select_after_exit(state,
+                                                                 receipt,
+                                                                 sizeof(receipt))) {
+                    m11_set_status(state, "STARTUP", receipt);
+                    m11_set_inspect_readout(state, "STARTUP", receipt);
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                m11_set_status(state, "MOVE",
+                               receipt[0] ? receipt : "EXIT BLOCKED");
+                return M11_GAME_INPUT_REDRAW;
+            }
             moved = (moveResult != THERON_MOVE_BLOCKED);
             if (moved) {
                 world->party.leader_dir = (int8_t)oldDir;

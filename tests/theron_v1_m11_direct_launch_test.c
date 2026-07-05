@@ -239,6 +239,37 @@ int main(void) {
     expect_true(render_pixels > 1000,
                 "M11 Theron draw path produces a nonblank framebuffer");
 
+    expect_true(theron_v1_quest_item_collect(
+                    &world->progression,
+                    (Theron_QuestItem)
+                        THERON_QUEST_ITEM_MASK_FROM_DUNGEON(
+                            world->current_dungeon)) == 1,
+                "M11 Theron test collects current dungeon quest item");
+    world->dungeon_complete = 1;
+    world->party.leader_x = 3;
+    world->party.leader_y = 2;
+    world->party.leader_dir = 0;
+    view.theronState.party_x = world->party.leader_x;
+    view.theronState.party_y = world->party.leader_y;
+    view.theronState.party_dir = world->party.leader_dir;
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron exit returns to startup after quest item");
+    expect_true(view.theronState.startup_phase ==
+                THERON_STARTUP_PHASE_STAGE_SELECT &&
+                view.theronState.level_loaded == 0,
+                "M11 Theron exit unloads dungeon and shows stage select");
+    expect_true(world->progression.dungeon_states[
+                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1] ==
+                    THERON_DUNGEON_STATE_COMPLETE &&
+                world->progression.dungeon_states[
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] ==
+                    THERON_DUNGEON_STATE_AVAILABLE,
+                "M11 Theron exit advances progression and unlocks middle stages");
+    expect_true(world->party.champion_count == 1 &&
+                view.theronState.companion_count == 0,
+                "M11 Theron exit clears selected companions before next startup");
+
     M11_GameView_Shutdown(&view);
 
     if (g_failures) {
