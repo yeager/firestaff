@@ -205,9 +205,13 @@ dm-forum-announcement.md
 .idea/
 .cache/
 build/
+build-codex-*/
+build_*_test/
 cmake-build-*/
 *.dSYM/
 compile_commands.json
+firestaff-*.sav
+firestaff-*.sav.*
 
 # Python caches
 __pycache__/
