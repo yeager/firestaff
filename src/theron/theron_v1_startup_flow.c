@@ -14,20 +14,32 @@ static int tqr_stage_is_available(const Theron_DungeonProgression *progression,
            state == THERON_DUNGEON_STATE_IN_PROGRESS;
 }
 
-static Theron_ChampionClass tqr_mirror_class(int mirror_index) {
-    static const Theron_ChampionClass classes[THERON_STARTUP_HERO_MIRROR_COUNT] = {
-        THERON_CLASS_FIGHTER,
-        THERON_CLASS_PRIEST,
-        THERON_CLASS_NINJA,
-        THERON_CLASS_WIZARD,
-        THERON_CLASS_FIGHTER,
-        THERON_CLASS_PRIEST,
-        THERON_CLASS_WIZARD
-    };
+static const Theron_StartupMirrorMeta g_tqr_mirror_meta[THERON_STARTUP_HERO_MIRROR_COUNT] = {
+    { "Fighter Mirror",  THERON_CLASS_FIGHTER, 1 },
+    { "Priest Mirror",   THERON_CLASS_PRIEST,  2 },
+    { "Ninja Mirror",    THERON_CLASS_NINJA,   3 },
+    { "Wizard Mirror",   THERON_CLASS_WIZARD,  4 },
+    { "Warrior Mirror",  THERON_CLASS_FIGHTER, 5 },
+    { "Healer Mirror",   THERON_CLASS_PRIEST,  6 },
+    { "Sorcerer Mirror", THERON_CLASS_WIZARD,  7 }
+};
+
+const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index) {
     if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
-        return THERON_CLASS_FIGHTER;
+        return NULL;
     }
-    return classes[mirror_index];
+    return &g_tqr_mirror_meta[mirror_index];
+}
+
+const char *theron_v1_startup_class_name(Theron_ChampionClass cls) {
+    switch (cls) {
+    case THERON_CLASS_FIGHTER: return "FIGHTER";
+    case THERON_CLASS_NINJA: return "NINJA";
+    case THERON_CLASS_PRIEST: return "PRIEST";
+    case THERON_CLASS_WIZARD: return "WIZARD";
+    case THERON_CLASS_COUNT: break;
+    }
+    return "UNKNOWN";
 }
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow) {
@@ -115,10 +127,14 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
          mirror < THERON_STARTUP_HERO_MIRROR_COUNT && slot < THERON_MAX_CHAMPIONS;
          ++mirror) {
         if ((flow->selected_mirrors_mask & (uint8_t)(1u << mirror)) != 0u) {
+            const Theron_StartupMirrorMeta *meta = theron_v1_startup_mirror_meta(mirror);
             Theron_V1_Champion *champion = &party->champions[slot];
-            snprintf(champion->name, sizeof(champion->name), "Hero Mirror %d", mirror + 1);
-            champion->portrait_index = (uint8_t)(mirror + 1);
-            champion->primary_class = tqr_mirror_class(mirror);
+            snprintf(champion->name,
+                     sizeof(champion->name),
+                     "%s",
+                     meta ? meta->name : "Hero Mirror");
+            champion->portrait_index = meta ? meta->portrait_index : (uint8_t)(mirror + 1);
+            champion->primary_class = meta ? meta->primary_class : THERON_CLASS_FIGHTER;
             champion->alive = 1;
             ++slot;
         }
