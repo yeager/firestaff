@@ -391,35 +391,71 @@ static char* expand_tilde(const char* in) {
     }
 }
 
+static int try_load_dungeon_file(DM1_V2_DungeonDatState* dungeon,
+                                 const char* path,
+                                 char* outPath,
+                                 size_t outPathSize,
+                                 int* outSize) {
+    unsigned char* bytes;
+    if (!path || !path[0]) return 0;
+    bytes = read_file_bytes(path, outSize);
+    if (bytes && dm1_v2_vp_dungeon_dat_init(dungeon, bytes, *outSize)) {
+        snprintf(outPath, outPathSize, "%s", path);
+        /* IMPORTANT: keep `bytes` alive — dm1_v2_vp_dungeon_dat_init
+         * stores raw pointers into the bytes buffer (outState->bytes,
+         * per-map column0). The probe frees this only at shutdown. */
+        g_dungeon_bytes = bytes;
+        return 1;
+    }
+    free(bytes);
+    return 0;
+}
+
+static int try_load_dungeon_from_data_dir(DM1_V2_DungeonDatState* dungeon,
+                                          const char* dataDir,
+                                          char* outPath,
+                                          size_t outPathSize,
+                                          int* outSize) {
+    char path[1024];
+    int n;
+    if (!dataDir || !dataDir[0]) return 0;
+    n = snprintf(path, sizeof(path), "%s/DUNGEON.DAT", dataDir);
+    if (n <= 0 || (size_t)n >= sizeof(path)) return 0;
+    return try_load_dungeon_file(dungeon, path, outPath, outPathSize, outSize);
+}
+
 static int try_load_dungeon(DM1_V2_DungeonDatState* dungeon,
+                            const char* argDataDir,
                             char* outPath, size_t outPathSize,
                             int* outSize) {
     const char* env = getenv("DM1_PC34_DUNGEON_DAT");
+    const char* envDataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     int i;
     if (env && env[0]) {
-        unsigned char* bytes = read_file_bytes(env, outSize);
-        if (bytes && dm1_v2_vp_dungeon_dat_init(dungeon, bytes, *outSize)) {
-            snprintf(outPath, outPathSize, "%s", env);
-            /* IMPORTANT: keep `bytes` alive — dm1_v2_vp_dungeon_dat_init
-             * stores raw pointers into the bytes buffer (outState->bytes,
-             * per-map column0). The probe frees this only at shutdown. */
-            g_dungeon_bytes = bytes;
+        if (try_load_dungeon_file(dungeon, env, outPath, outPathSize, outSize)) {
             return 1;
         }
-        free(bytes);
+    }
+    if (argDataDir && argDataDir[0]) {
+        if (try_load_dungeon_from_data_dir(dungeon, argDataDir,
+                                           outPath, outPathSize, outSize)) {
+            return 1;
+        }
+    }
+    if (envDataDir && envDataDir[0]) {
+        if (try_load_dungeon_from_data_dir(dungeon, envDataDir,
+                                           outPath, outPathSize, outSize)) {
+            return 1;
+        }
     }
     for (i = 0; k_default_dungeon_paths[i]; ++i) {
         char* expanded = expand_tilde(k_default_dungeon_paths[i]);
-        unsigned char* bytes;
         if (!expanded) continue;
-        bytes = read_file_bytes(expanded, outSize);
-        if (bytes && dm1_v2_vp_dungeon_dat_init(dungeon, bytes, *outSize)) {
-            snprintf(outPath, outPathSize, "%s", expanded);
-            g_dungeon_bytes = bytes;
+        if (try_load_dungeon_file(dungeon, expanded,
+                                  outPath, outPathSize, outSize)) {
             free(expanded);
             return 1;
         }
-        free(bytes);
         free(expanded);
     }
     return 0;
@@ -616,7 +652,7 @@ static int write_receipts_json(const char* path,
 
 /* ---------- Main ---------- */
 
-int main(void) {
+int main(int argc, char** argv) {
     ProbeStats stats;
     DM1_V2_DungeonDatState dungeon;
     DM1_V2_ViewportState viewport;
@@ -662,10 +698,14 @@ int main(void) {
     /* Try to load a real DM1 PC 3.4 DUNGEON.DAT. If none is present,
      * emit a SKIP message and exit 0 so the CTest gate stays green on
      * hosts without original game data. */
-    if (!try_load_dungeon(&dungeon, dungeonPath, sizeof(dungeonPath), &dungeonSize)) {
+    if (!try_load_dungeon(&dungeon,
+                          (argc > 1 && argv && argv[1]) ? argv[1] : NULL,
+                          dungeonPath, sizeof(dungeonPath), &dungeonSize)) {
         printf("SKIP: firestaff_dm1_v2_source_owned_screenshot_probe: "
                "no canonical DM1 PC 3.4 DUNGEON.DAT present under any of:\n");
         printf("      $DM1_PC34_DUNGEON_DAT\n");
+        printf("      argv[1]/DUNGEON.DAT\n");
+        printf("      $FIRESTAFF_DM1_DATA_DIR/DUNGEON.DAT\n");
         printf("      parity-evidence/dm1_pc34_canonical/DUNGEON.DAT\n");
         printf("      ~/.firestaff/data/dm1/DUNGEON.DAT\n");
         printf("      ~/.firestaff/data/dm1-multilingual/DUNGEON.DAT\n");

@@ -1873,6 +1873,7 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_source_owned_screenshot_probe
         COMMAND firestaff_dm1_v2_source_owned_screenshot_probe
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     set_tests_properties(dm1_v2_source_owned_screenshot_probe PROPERTIES
