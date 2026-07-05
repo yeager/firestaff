@@ -143,6 +143,11 @@ int main(void)
         int object_marker_y = 117;
         int group_marker_x = 112;
         int group_marker_y = 144;
+        int object_sprite_count = -1;
+        int object_icon_count = -1;
+        int object_marker_count = -1;
+        int group_sprite_count = -1;
+        int group_marker_count = -1;
 
         memset(&state, 0, sizeof(state));
         memset(&profile, 0, sizeof(profile));
@@ -264,6 +269,18 @@ int main(void)
             raw[67] = 0x10u; /* wall with thing-list-present: overlays must stay hidden. */
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+                      &state,
+                      &object_sprite_count,
+                      &object_icon_count,
+                      &object_marker_count,
+                      &group_sprite_count,
+                      &group_marker_count),
+                  "CSB M11 draw exposes runtime overlay draw stats");
+            check(object_sprite_count == 0 && object_icon_count == 0 &&
+                      object_marker_count == 0 && group_sprite_count == 0 &&
+                      group_marker_count == 0,
+                  "CSB M11 draw stats stay empty for blocking wall square");
             check(framebuffer[group_marker_y * 320 + group_marker_x] != 0x0D,
                   "CSB M11 draw hides runtime groups on blocking wall squares");
             check(framebuffer[object_marker_y * 320 + object_marker_x] !=
@@ -272,6 +289,18 @@ int main(void)
             raw[67] = (unsigned char)((1u << 5) | 0x10u);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+                      &state,
+                      &object_sprite_count,
+                      &object_icon_count,
+                      &object_marker_count,
+                      &group_sprite_count,
+                      &group_marker_count),
+                  "CSB M11 draw exposes fallback runtime overlay draw stats");
+            check(object_sprite_count == 0 && object_icon_count == 0 &&
+                      object_marker_count == 1 && group_sprite_count == 0 &&
+                      group_marker_count == 1,
+                  "CSB M11 draw stats prove data-free runtime group/object marker fallback paths");
             check(framebuffer[group_marker_y * 320 + group_marker_x] == 0x0D,
                   "CSB M11 draw marks a runtime group from CSB square thing chain without DM1 world.things");
             check(framebuffer[object_marker_y * 320 + object_marker_x] ==
