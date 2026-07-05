@@ -591,14 +591,57 @@ uint32_t dm2_db_make_handle(uint8_t pool, uint32_t index)
     return ((uint32_t)pool << 24) | (index & 0x00FFFFFF);
 }
 
+bool dm2_db_decode_handle(uint32_t object_id,
+                          uint8_t *out_pool,
+                          uint32_t *out_index)
+{
+    uint8_t pool;
+    uint32_t idx;
+
+    if (object_id == 0) return false;
+    pool = (uint8_t)((object_id >> 24) & 0xFFu);
+    idx = object_id & 0x00FFFFFFu;
+    if (pool >= DM2_DB_POOL_COUNT) return false;
+    if (out_pool) *out_pool = pool;
+    if (out_index) *out_index = idx;
+    return true;
+}
+
+const char *dm2_db_pool_label(uint8_t pool)
+{
+    switch (pool) {
+        case 5: return "WEAPON";
+        case 6: return "CLOTH";
+        case 7: return "SCROLL";
+        case 10: return "MISC";
+        default: return "DB";
+    }
+}
+
+bool dm2_db_format_handle_name(uint32_t object_id,
+                               char *out,
+                               size_t out_size)
+{
+    uint8_t pool;
+    uint32_t idx;
+
+    if (!out || out_size == 0) return false;
+    out[0] = '\0';
+    if (!dm2_db_decode_handle(object_id, &pool, &idx)) return false;
+    snprintf(out, out_size, "DM2 %s %lu",
+             dm2_db_pool_label(pool),
+             (unsigned long)idx);
+    return out[0] != '\0';
+}
+
 bool dm2_db_resolve(uint32_t object_id,
                      const DM2_DB_State *db,
                      uint8_t *out_pool, uint32_t *out_index)
 {
-    if (object_id == 0) return false;
-    uint8_t pool = (uint8_t)((object_id >> 24) & 0xFF);
-    uint32_t idx = object_id & 0x00FFFFFF;
-    if (pool >= DM2_DB_POOL_COUNT) return false;
+    uint8_t pool;
+    uint32_t idx;
+
+    if (!dm2_db_decode_handle(object_id, &pool, &idx)) return false;
     if (!db || !db->pools[pool].data) return false;
     if (idx >= db->pools[pool].rec_count) return false;
     if (out_pool)  *out_pool  = pool;

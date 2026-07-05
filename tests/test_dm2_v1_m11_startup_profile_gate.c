@@ -740,6 +740,7 @@ int main(void) {
     resume_session.outdoor_mode = 1;
     resume_session.time_of_day_minutes = 990;
     resume_session.rain_intensity = 60;
+    resume_session.original_leader_hand_object = dm2_db_make_handle(10, 0x0033);
     expect_true(dm2_v1_session_save_slot(save_root,
                                          3,
                                          "M11 Resume",
@@ -761,6 +762,20 @@ int main(void) {
                 "M11 DM2 resume mirrors saved party pose");
     expect_true(view.dm2State.tick_count == 42,
                 "M11 DM2 resume mirrors saved game tick");
+    expect_true(view.dm2State.leader_hand_object ==
+                    dm2_db_make_handle(10, 0x0033),
+                "M11 DM2 resume mirrors saved leader-hand ObjectID");
+    {
+        char leader_name[32];
+
+        expect_true(M11_GameView_GetV1LeaderHandObjectIconIndex(&view) == -1,
+                    "M11 DM2 leader-hand does not fake a V1 object icon");
+        expect_true(M11_GameView_GetV1LeaderHandObjectName(&view,
+                                                           leader_name,
+                                                           sizeof(leader_name)) &&
+                        strcmp(leader_name, "DM2 MISC 51") == 0,
+                    "M11 DM2 leader-hand name preserves DB handle identity");
+    }
     expect_true(dm2_v1_runtime_get_party_x() == 23 &&
                 dm2_v1_runtime_get_party_y() == 11 &&
                 dm2_v1_runtime_get_party_dir() == 2,
