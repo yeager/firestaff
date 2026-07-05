@@ -192,6 +192,8 @@ typedef struct {
     void *asset_user;
     int asset_floor_ceiling_drawn_count;
     int fallback_floor_ceiling_drawn_count;
+    int asset_wall_drawn_count;
+    int fallback_wall_drawn_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */

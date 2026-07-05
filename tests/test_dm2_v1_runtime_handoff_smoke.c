@@ -30,6 +30,7 @@ static int passed;
 static int failed;
 static uint8_t s_ceiling_pixels[16 * 8];
 static uint8_t s_floor_pixels[16 * 8];
+static uint8_t s_wall_pixels[16 * 8];
 
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
@@ -64,6 +65,13 @@ static int synthetic_viewport_asset_fetch(void *user,
     }
     if (gdat_index == -1) {
         if (out_pixels) *out_pixels = s_floor_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index == -3) {
+        if (out_pixels) *out_pixels = s_wall_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -140,6 +148,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         int fetch_count = 0;
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
+        memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_runtime_set_outdoor(0);
         dm2_v1_runtime_set_viewport_asset_provider(
@@ -150,11 +159,14 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   dm2_v1_runtime_get_party_y(),
                   framebuffer, 320, 320, 200) == 0,
               "runtime renders through an injected viewport asset provider");
-        CHECK(fetch_count == 2,
-              "runtime viewport provider receives ceiling and floor fetches");
+        CHECK(fetch_count == 3,
+              "runtime viewport provider receives ceiling, floor and wall fetches");
         CHECK(dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
               dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0,
               "runtime records asset-backed floor/ceiling draw counts");
+        CHECK(dm2_v1_runtime_last_asset_wall_count() == 1 &&
+              dm2_v1_runtime_last_fallback_wall_count() == 0,
+              "runtime records asset-backed wall draw counts");
         CHECK(framebuffer[0] == 1,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
