@@ -2432,6 +2432,18 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     profile.dungeon_seed = 0xC5B10700u;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
+    profile.csbwin_body_runtime_summary_valid = 1;
+    profile.csbwin_item16_summary_count = 1u;
+    profile.csbwin_item16_summary_total = 1u;
+    profile.csbwin_item16[0].valid = 1;
+    profile.csbwin_item16[0].monster_index = (uint16_t)(4u << 10);
+    profile.csbwin_item16[0].current_x = 1u;
+    profile.csbwin_item16[0].current_y = 1u;
+    profile.csbwin_item16[0].ubyte5 = 0u;
+    CHECK(csb_v1_runtime_materialize_csbwin_item16_summaries(&profile) == 1,
+          "CSB C25 F0190 fear fixture materializes one ITEM16 active monster");
+    CHECK(csb_v1_runtime_claim_csbwin_item16_ai_ownership(&profile) == 1,
+          "CSB C25 F0190 fear fixture claims ITEM16 live AI ownership");
 
     memset(&input, 0, sizeof(input));
     input.explosionType = C000_EXPLOSION_FIREBALL;
@@ -2462,6 +2474,11 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     CHECK(((group_flags >> 5) & 0x03u) == 0u &&
               (group_flags & 0x000fu) == 5u,
           "C25 group partial kill applies F0190 fear flee behavior");
+    CHECK(profile.csbwin_runtime_item16_count == 1u &&
+              profile.csbwin_runtime_item16[0].delay_or_flee_timer > 0u &&
+              profile.csbwin_item16[0].ubyte5 ==
+                  profile.csbwin_runtime_item16[0].delay_or_flee_timer,
+          "C25 F0190 fear writes DelayFleeingFromTarget to owned ITEM16 state");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;

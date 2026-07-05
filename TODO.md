@@ -2,7 +2,7 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
-- 🔧 2026-07-05 CSB C25 F0190 fear/flee follow-up: current local work now applies the ReDMCSB `GROUP.C F0190` fear test after partial C25 group kills and writes surviving attacking groups to C5 flee behavior when the bounded RNG branch triggers. Remaining C25/group aftermath work is active-group `DelayFleeingFromTarget` preservation beyond Firestaff's current real-format group record bridge, audio/sound mode, source-zone sprite binding, and wider real-data route proof.
+- 🔧 2026-07-05 CSB C25 F0190 fear/flee follow-up: current local work now applies the ReDMCSB `GROUP.C F0190` fear test after partial C25 group kills, writes surviving attacking groups to C5 flee behavior when the bounded RNG branch triggers, and mirrors `DelayFleeingFromTarget` into any CSBWin ITEM16 active-monster record that has claimed the live C04 group. Remaining C25/group aftermath work is native CSB active-group array/state preservation beyond the current ITEM16 bridge, audio/sound mode, source-zone sprite binding, and wider real-data route proof.
 
 - 🔧 2026-07-05 CSB C25 final-group event cleanup follow-up: current local work now mirrors ReDMCSB `GROUP.C F0181` for final-creature C25 group kills by deleting stale C29..C41 group reaction/aspect/behavior events on the removed group's square. Remaining C25/group aftermath work is active-group array/state preservation beyond Firestaff's current real-format group record bridge, audio/sound mode, source-zone sprite binding, and wider real-data route proof.
 
