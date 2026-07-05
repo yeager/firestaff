@@ -22,6 +22,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifndef FIRESTAFF_HAS_ZLIB
+#define FIRESTAFF_HAS_ZLIB 0
+#endif
+
+static const unsigned char g_valid_gzip_srm[] = {
+    0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff,
+    0x73, 0x0b, 0x0e, 0x09, 0x0c, 0x08, 0x72, 0x37, 0x64, 0x64,
+    0x66, 0x66, 0xd4, 0x61, 0x64, 0x60, 0x60, 0x14, 0x60, 0x60,
+    0x60, 0x02, 0x62, 0x66, 0x20, 0x66, 0x01, 0x62, 0x56, 0x20,
+    0x66, 0x03, 0x62, 0x76, 0x20, 0x06, 0x00, 0x50, 0x8a, 0x0c,
+    0xc3, 0x2c, 0x00, 0x00, 0x00
+};
 
 static int m12_test_setenv(const char* name, const char* value) {
 #ifdef _WIN32
@@ -718,6 +730,29 @@ static int write_theron_tqsv_save(const char* root,
     return 1;
 }
 
+static int write_theron_srm_save(const char* root,
+                                 int slot,
+                                 char* outPath,
+                                 size_t outPathSize) {
+    int rc;
+    FILE* fp;
+    if (!root || !outPath || outPathSize == 0u || slot < 0 || slot > 9) {
+        return 0;
+    }
+    rc = snprintf(outPath, outPathSize, "%s/slot%d.srm", root, slot);
+    if (rc <= 0 || (size_t)rc >= outPathSize) {
+        return 0;
+    }
+    fp = fopen(outPath, "wb");
+    if (!fp) {
+        return 0;
+    }
+    rc = fwrite(g_valid_gzip_srm, 1u, sizeof(g_valid_gzip_srm), fp) ==
+         sizeof(g_valid_gzip_srm);
+    fclose(fp);
+    return rc;
+}
+
 static int select_save_entry(M12_StartupMenuState* state,
                              const char* filename) {
     int i;
@@ -752,6 +787,7 @@ int main(void) {
     char nexusSlotSavePath[512];
     char theronSaveRoot[512];
     char theronSlotSavePath[512];
+    char theronSrmSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -1420,6 +1456,52 @@ int main(void) {
                 intent.savePath &&
                 strcmp(intent.savePath, theronSlotSavePath) == 0,
                 "save browser Theron launch intent should carry exact .tqsv path")) return 1;
+
+#if FIRESTAFF_HAS_ZLIB
+    if (!expect(write_theron_srm_save(theronSaveRoot,
+                                      2,
+                                      theronSrmSavePath,
+                                      sizeof(theronSrmSavePath)),
+                "should write Theron .srm browser slot")) return 1;
+    M12_Config_SetLastSavePath(theronSrmSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_theron_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "Theron .srm slot must enable quick Resume when decoded")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "theron") == 0,
+                "Theron .srm quick Resume should identify theron")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "theron") == 0 &&
+                intent.savePath &&
+                strcmp(intent.savePath, theronSrmSavePath) == 0,
+                "Theron quick Resume should carry exact .srm path")) return 1;
+
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_theron_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for Theron .srm slots")) return 1;
+    if (!expect(select_save_entry(&state, "slot2.srm"),
+                "save browser should list Theron slot2.srm")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark Theron .srm loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "theron") == 0,
+                "save browser should classify Theron .srm as theron")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].mapLevel == 3,
+                "save browser should expose Theron .srm saved dungeon")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "theron") == 0 &&
+                intent.savePath &&
+                strcmp(intent.savePath, theronSrmSavePath) == 0,
+                "save browser Theron launch intent should carry exact .srm path")) return 1;
+#endif
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);

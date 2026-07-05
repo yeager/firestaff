@@ -21,10 +21,12 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "nexus_v1_save.h"
 #include "theron_v1_save_load.h"
+#include "theron_v1_srm_classifier.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -178,6 +180,33 @@ static int theron_tqsv_slot_from_basename(const char* name,
     return 1;
 }
 
+static int theron_srm_slot_from_basename(const char* name,
+                                         int* outSlot) {
+    int slot;
+    if (!name ||
+        ascii_lower((unsigned char)name[0]) != 's' ||
+        ascii_lower((unsigned char)name[1]) != 'l' ||
+        ascii_lower((unsigned char)name[2]) != 'o' ||
+        ascii_lower((unsigned char)name[3]) != 't' ||
+        name[4] < '0' ||
+        name[4] >= (char)('0' + THERON_V1_SRM_DISK_SLOT_COUNT) ||
+        name[5] != '.' ||
+        ascii_lower((unsigned char)name[6]) != 's' ||
+        ascii_lower((unsigned char)name[7]) != 'r' ||
+        ascii_lower((unsigned char)name[8]) != 'm' ||
+        name[9] != '\0') {
+        return 0;
+    }
+    slot = name[4] - '0';
+    if (slot < 0 || slot >= THERON_V1_SRM_DISK_SLOT_COUNT) {
+        return 0;
+    }
+    if (outSlot) {
+        *outSlot = slot;
+    }
+    return 1;
+}
+
 static int dm2_sksave_slot_from_basename(const char* name,
                                          unsigned char* outSlot,
                                          int* outLastSession) {
@@ -281,6 +310,7 @@ static int is_save_file(const char* name) {
     if (is_csb_original_save_basename(name)) return 1;
     if (nexus_save_slot_from_basename(name, NULL)) return 1;
     if (theron_tqsv_slot_from_basename(name, NULL)) return 1;
+    if (theron_srm_slot_from_basename(name, NULL)) return 1;
     if (dm2_sksave_slot_from_basename(name, NULL, NULL)) return 1;
     len = strlen(name);
     if (len < 15) return 0; /* "firestaff-.sav" minimum */
@@ -306,6 +336,10 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
         return;
     }
     if (theron_tqsv_slot_from_basename(filename, NULL)) {
+        snprintf(outId, (size_t)outSize, "theron");
+        return;
+    }
+    if (theron_srm_slot_from_basename(filename, NULL)) {
         snprintf(outId, (size_t)outSize, "theron");
         return;
     }
@@ -761,6 +795,61 @@ static int try_parse_theron_tqsv_entry(M12_SaveBrowserEntry* entry) {
     return 1;
 }
 
+static int try_parse_theron_srm_entry(M12_SaveBrowserEntry* entry) {
+    Theron_V1SrmEnvelopeReceipt envelope;
+    Theron_V1SrmEnvelopeKind kind;
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    int slot = -1;
+
+    if (!entry ||
+        (entry->expectedGameCode != 0 &&
+         entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_THERON)) {
+        return 0;
+    }
+    if (!theron_srm_slot_from_basename(path_basename(entry->fullPath),
+                                       &slot)) {
+        return 0;
+    }
+
+    memset(scratch, 0, sizeof(scratch));
+    memset(&envelope, 0, sizeof(envelope));
+    /*
+     * TQ Save Disk SRM files are launcher-visible only when the current
+     * bounded body decoder can restore progression.  Unknown real
+     * Sphenx/Greatstone bodies stay non-launchable until their body
+     * format is decoded.
+     */
+    kind = theron_v1_srm_decode_path(entry->fullPath,
+                                     slot,
+                                     scratch,
+                                     sizeof(scratch),
+                                     &envelope);
+    if ((kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION &&
+         kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) ||
+        !envelope.progression.restored) {
+        return 0;
+    }
+
+    snprintf(entry->gameId, sizeof(entry->gameId), "theron");
+    entry->expectedGameCode = SAVEGAME_PC34_GAME_CODE_THERON;
+    entry->valid = 1;
+    entry->mapLevel = (int)envelope.progression.current_dungeon;
+    entry->championCount = envelope.party.restored ? 1 : 0;
+    entry->champions[0] = '\0';
+    if (envelope.party.restored) {
+        snprintf(entry->champions,
+                 sizeof(entry->champions),
+                 "Theron");
+    }
+    snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+             "%s  D%d  Q%02x  (Theron SRM slot %d)",
+             entry->gameId,
+             (int)envelope.progression.current_dungeon,
+             (unsigned int)envelope.progression.quest_items_bitmask,
+             slot);
+    return 1;
+}
+
 static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     FILE* fp;
     unsigned char* buf;
@@ -1000,6 +1089,9 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
             return 1;
         }
         if (try_parse_theron_tqsv_entry(entry)) {
+            return 1;
+        }
+        if (try_parse_theron_srm_entry(entry)) {
             return 1;
         }
         if (try_parse_dm1_native_entry(entry)) {

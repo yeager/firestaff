@@ -805,8 +805,8 @@ int main(void) {
                                 g_valid_gzip_srm,
                                 sizeof(g_valid_gzip_srm)) == 1,
                     "SRM slot 1 written");
-        expect_true(test_setenv_name("FIRESTAFF_THERON_SRM_DIR", srm_root),
-                    "SRM env root set");
+        expect_true(test_setenv_name("FIRESTAFF_THERON_SRM_DIR", NULL),
+                    "SRM env root cleared");
 
         memset(&spec, 0, sizeof(spec));
         spec.title = "THERON'S QUEST";
@@ -815,6 +815,7 @@ int main(void) {
         spec.dataDir = srm_temp_dir;
         spec.verifiedAssetPath = srm_track_path;
         spec.verifiedAssetMd5 = "f23601102138f87c33025877767ebf76";
+        spec.savePath = srm_slot_path;
         spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
         spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
         spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
@@ -826,9 +827,11 @@ int main(void) {
         expect_true(srm_view.theronState.save_resume_claim ==
                         THERON_V1_STARTUP_RESUME_SRM &&
                     srm_view.theronState.save_resume_srm_active_slot == 1 &&
+                    strcmp(srm_view.theronState.save_resume_srm_root,
+                           srm_root) == 0 &&
                     srm_view.theronState.save_resume_srm_import_status ==
                         THERON_V1_SRM_PROGRESS_IMPORT_OK,
-                    "M11 Theron exposes decoded SRM Continue slot");
+                    "M11 Theron exposes selected decoded SRM Continue slot");
         expect_true(M11_GameView_HandleInput(&srm_view, M12_MENU_INPUT_UP) ==
                     M11_GAME_INPUT_REDRAW &&
                     srm_view.theronState.save_resume_continue_focus == 1,

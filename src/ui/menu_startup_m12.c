@@ -20,6 +20,7 @@
 #include "nexus_v1_save.h"
 #include "render_sdl_m11.h"
 #include "theron_v1_save_load.h"
+#include "theron_v1_srm_classifier.h"
 #include "color_presets_m11.h"
 #include "ui_scale_m11.h"
 #include "ambient_layer_m11.h"
@@ -35,6 +36,7 @@
 #include <SDL3/SDL_thread.h>
 #include <ctype.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -2174,6 +2176,60 @@ static int m12_theron_tqsv_root_and_slot_from_path(const char* path,
     return 1;
 }
 
+static int m12_theron_srm_root_and_slot_from_path(const char* path,
+                                                  char* outRoot,
+                                                  size_t outRootCap,
+                                                  int* outSlot) {
+    const char* slash;
+    const char* base;
+    size_t len;
+    int slot;
+
+    if (!path || !outRoot || outRootCap == 0u || !outSlot) {
+        return 0;
+    }
+    slash = strrchr(path, '/');
+#ifdef _WIN32
+    {
+        const char* backslash = strrchr(path, '\\');
+        if (!slash || (backslash && backslash > slash)) {
+            slash = backslash;
+        }
+    }
+#endif
+    base = slash ? slash + 1 : path;
+    if (!base ||
+        base[0] != 's' ||
+        base[1] != 'l' ||
+        base[2] != 'o' ||
+        base[3] != 't' ||
+        base[4] < '0' ||
+        base[4] >= (char)('0' + THERON_V1_SRM_DISK_SLOT_COUNT) ||
+        strcmp(base + 5, ".srm") != 0) {
+        return 0;
+    }
+    slot = base[4] - '0';
+    if (slot < 0 || slot >= THERON_V1_SRM_DISK_SLOT_COUNT) {
+        return 0;
+    }
+    if (!slash || slash == path) {
+        if (outRootCap < 2u) {
+            return 0;
+        }
+        outRoot[0] = '.';
+        outRoot[1] = '\0';
+    } else {
+        len = (size_t)(slash - path);
+        if (len >= outRootCap) {
+            return 0;
+        }
+        memcpy(outRoot, path, len);
+        outRoot[len] = '\0';
+    }
+    *outSlot = slot;
+    return 1;
+}
+
 static int m12_is_valid_theron_quick_resume_path(const char* path) {
     char saveRoot[512];
     int slot = -1;
@@ -2181,7 +2237,28 @@ static int m12_is_valid_theron_quick_resume_path(const char* path) {
                                                 saveRoot,
                                                 sizeof(saveRoot),
                                                 &slot)) {
-        return 0;
+        char srmRoot[THERON_V1_SRM_PATH_MAX];
+        char srmPath[THERON_V1_SRM_PATH_MAX];
+        uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+        Theron_V1SrmEnvelopeReceipt envelope;
+        Theron_V1SrmEnvelopeKind kind;
+        if (!m12_theron_srm_root_and_slot_from_path(path,
+                                                    srmRoot,
+                                                    sizeof(srmRoot),
+                                                    &slot) ||
+            !theron_v1_srm_slot_path(srmRoot, slot, srmPath)) {
+            return 0;
+        }
+        memset(scratch, 0, sizeof(scratch));
+        memset(&envelope, 0, sizeof(envelope));
+        kind = theron_v1_srm_decode_path(srmPath,
+                                         slot,
+                                         scratch,
+                                         sizeof(scratch),
+                                         &envelope);
+        return (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
+                kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) &&
+               envelope.progression.restored;
     }
     return theron_v1_save_verify_slot(saveRoot, slot) ? 1 : 0;
 }
@@ -2364,6 +2441,19 @@ static int m12_infer_quick_resume_game_id(const char* path,
             m12_try_quick_resume_candidate("theron", path, outId, outSize)) {
             (void)tqsvRoot;
             (void)tqsvSlot;
+            return 1;
+        }
+    }
+    {
+        char srmRoot[THERON_V1_SRM_PATH_MAX];
+        int srmSlot = -1;
+        if (m12_theron_srm_root_and_slot_from_path(path,
+                                                  srmRoot,
+                                                  sizeof(srmRoot),
+                                                  &srmSlot) &&
+            m12_try_quick_resume_candidate("theron", path, outId, outSize)) {
+            (void)srmRoot;
+            (void)srmSlot;
             return 1;
         }
     }
