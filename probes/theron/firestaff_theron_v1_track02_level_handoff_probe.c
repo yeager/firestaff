@@ -449,19 +449,27 @@ static void write_initial_candidate_fixture(uint8_t *candidate,
 
 static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     enum {
-        raw_sector_count = 2u,
+        raw_sector_count = 21u,
         candidate_offset = THERON_TRACK02_RAW_SECTOR_BYTES +
             THERON_TRACK02_RAW_USER_DATA_OFFSET + 0x40u,
+        descriptor_offset = candidate_offset + 0xa852u,
         candidate_width = 32u,
         candidate_height = 27u,
+        candidate_size = 12u + candidate_width * candidate_height,
         expected_user_offset = THERON_TRACK02_RAW_USER_DATA_BYTES + 0x40u
     };
     uint8_t track[raw_sector_count * THERON_TRACK02_RAW_SECTOR_BYTES];
+    uint8_t copied[candidate_size];
     Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02SignalStatus signal_status;
     Theron_Track02LevelHandoffStatus status;
+    size_t copied_size = 0u;
+    size_t copied_user_offset = 0u;
 
     memset(track, 0, sizeof(track));
+    memcpy(track + descriptor_offset,
+           g_canonical_descriptor,
+           sizeof(g_canonical_descriptor));
     write_initial_candidate_fixture(track + candidate_offset,
                                     candidate_width,
                                     candidate_height);
@@ -488,6 +496,39 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
     check_size("synthetic user-data candidate offset",
                catalog.candidates[0].user_data_offset,
                expected_user_offset);
+    status = theron_v1_track02_copy_initial_level_user_data_window(
+        track,
+        sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
+        descriptor_offset,
+        copied,
+        sizeof(copied),
+        &copied_size,
+        &copied_user_offset);
+    check_int("synthetic user-data initial window copy status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("synthetic user-data initial window size",
+               copied_size,
+               candidate_size);
+    check_size("synthetic user-data initial window offset",
+               copied_user_offset,
+               expected_user_offset);
+    check_int("synthetic user-data initial window bytes",
+              memcmp(copied, track + candidate_offset, candidate_size),
+              0);
+    status = theron_v1_track02_copy_initial_level_user_data_window(
+        track,
+        sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
+        descriptor_offset,
+        copied,
+        sizeof(copied) - 1u,
+        &copied_size,
+        &copied_user_offset);
+    check_int("synthetic user-data initial window copy capacity guard",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT);
 
     signal_status = theron_v1_track02_bind_level_candidate_user_offsets(
         sizeof(track),
@@ -661,6 +702,9 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
     size_t expected_user_data_offset = 0u;
+    uint8_t copied_candidate[12u + 32u * 27u];
+    size_t copied_candidate_size = 0u;
+    size_t copied_candidate_user_offset = 0u;
 
     path_to_read = (env_path && env_path[0]) ? env_path : NULL;
     if (!path_to_read) {
@@ -815,6 +859,29 @@ static void probe_real_data_initial_candidate(const char *label,
     check_size("real initial candidate handoff user-data offset",
                handoff.user_data_offset,
                expected_user_data_offset);
+    status = theron_v1_track02_copy_initial_level_user_data_window(
+        data,
+        size,
+        local_md5,
+        signal.descriptor_offsets[0],
+        copied_candidate,
+        sizeof(copied_candidate),
+        &copied_candidate_size,
+        &copied_candidate_user_offset);
+    check_int("real initial candidate user-data window copy status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("real initial candidate user-data window copy size",
+               copied_candidate_size,
+               handoff.byte_count);
+    check_size("real initial candidate user-data window copy offset",
+               copied_candidate_user_offset,
+               expected_user_data_offset);
+    check_int("real initial candidate user-data window bytes",
+              memcmp(copied_candidate,
+                     data + handoff.absolute_offset,
+                     handoff.byte_count),
+              0);
     check_int("real initial candidate loaded", handoff.loaded, 1);
     check_int("real initial candidate level width", level.width, 32);
     check_int("real initial candidate level height", level.height, 27);

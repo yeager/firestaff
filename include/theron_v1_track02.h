@@ -579,6 +579,26 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     size_t descriptor_offset,
     Theron_Track02InitialCandidateBinding *out_binding);
 
+/* Copy the hash/anchor-gated initial startup candidate through the logical
+ * MODE1/2048 user-data address space.
+ *
+ * The returned bytes are the same bounded 32x27 startup payload accepted by
+ * theron_v1_track02_load_initial_level_candidate(), but the source address is
+ * validated against the stripped user-data stream and `out_user_data_offset`
+ * reports the logical offset.  This is decoder infrastructure only: it does
+ * not claim the bytes are menu art, champion art, text, palettes, objects, or
+ * any broader dungeon record.
+ */
+Theron_Track02LevelHandoffStatus theron_v1_track02_copy_initial_level_user_data_window(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t descriptor_offset,
+    uint8_t *out_bytes,
+    size_t out_bytes_capacity,
+    size_t *out_byte_count,
+    size_t *out_user_data_offset);
+
 /* Expected raw Track 02 startup candidate offset for one descriptor anchor.
  *
  * The JP/US raw Track 02 BIN startup payload accepted by
