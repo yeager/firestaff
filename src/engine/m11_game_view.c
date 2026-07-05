@@ -8629,6 +8629,21 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                  spec->sourceId ? spec->sourceId : "csb");
         snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
                  profile->dungeon_path[0] ? profile->dungeon_path : "DUNGEON.DAT");
+        /* ReDMCSB ENTRANCE.C F0806 hands both dungeon and graphics globals to
+         * the CSB runtime before the first dungeon frame.  M11's shared V1
+         * chrome/object/font draw paths are still asset-loader based, so bind
+         * them to the verified CSB GRAPHICS.DAT instead of leaving CSB on the
+         * no-assets fallback path. */
+        if (profile->graphics_path[0] != '\0' &&
+            M11_AssetLoader_Init(&state->assetLoader, profile->graphics_path)) {
+            state->assetsAvailable = 1;
+            M11_Font_Init(&state->originalFont);
+            if (M11_Font_LoadFromGraphicsDat(&state->originalFont,
+                                             state->assetLoader.fileState,
+                                             state->assetLoader.runtimeState)) {
+                state->originalFontAvailable = 1;
+            }
+        }
         state->csbBootProfile = profile;
         m11_sync_csb_state_from_profile(state, profile);
         m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
