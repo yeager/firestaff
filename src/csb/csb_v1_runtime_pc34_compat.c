@@ -1230,7 +1230,17 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
     memset(&header, 0, sizeof(header));
     result = csb_v1_load_game(path, &image, (int)sizeof(image), &header);
     if (result != CSB_V1_LOAD_OK) {
-        int import_result =
+        int import_result;
+
+        /* CSBWin SaveGame.cpp/Chaos.cpp first validates GAMEBLOCK1, then
+         * reads GAMEBLOCK2, ITEM16, CHARDESC, TIMER, and timer queue. Keep
+         * this runtime entry point aligned with M11 startup/F9 so callers do
+         * not have to special-case verified CSBWin saves outside runtime. */
+        if (csb_v1_runtime_apply_csbwin_resume_file(profile, path, 0u) == 0) {
+            return CSB_V1_LOAD_OK;
+        }
+
+        import_result =
             csb_v1_runtime_import_csbgame_roster_from_path(profile, path);
         return (import_result == CSB_V1_LOAD_OK) ? CSB_V1_LOAD_OK : result;
     }
