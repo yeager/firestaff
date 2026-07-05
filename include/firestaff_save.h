@@ -25,7 +25,12 @@ typedef struct {
 int fs_save_game(const FS_GameState *state, int slot);
 int fs_load_game(FS_GameState *state, int slot);
 int fs_save_exists(int game_id, int slot);
+int fs_save_exists_in_dir(const char *save_dir, int game_id, int slot);
 const char *fs_save_slot_path(int game_id, int slot, char *buf, int bufsize);
+const char *fs_save_slot_path_in_dir(const char *save_dir,
+                                     int game_id,
+                                     int slot,
+                                     char *buf,
+                                     int bufsize);
 
 #endif
-

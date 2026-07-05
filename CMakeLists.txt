@@ -24893,6 +24893,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_inventory_panel_mouse_r
     )
 endif()
 
+# Direct CLI slot saves: --saves DIR must drive list/save/load paths instead
+# of falling back to the process working directory.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_save_root.c")
+    add_executable(test_firestaff_save_root
+        tests/test_firestaff_save_root.c
+        src/engine/firestaff_save.c
+        src/shared/fs_portable_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_save_root PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_save_root
+        COMMAND test_firestaff_save_root
+    )
+endif()
+
 foreach(_firestaff_csb_boot_target
         firestaff_csb_v1_real_asset_launch_probe
         firestaff_csb_v1_pc_real_asset_launch_probe
