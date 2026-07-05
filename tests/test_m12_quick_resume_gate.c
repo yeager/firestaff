@@ -770,6 +770,7 @@ static int select_save_entry(M12_StartupMenuState* state,
 
 int main(void) {
     char tmpTemplate[] = "/tmp/firestaff-m12-qr-XXXXXX";
+    char noDm1Template[] = "/tmp/firestaff-m12-csb-no-dm1-XXXXXX";
     char savePath[512];
     char csbSavePath[512];
     char csbBrowserSavePath[512];
@@ -780,6 +781,7 @@ int main(void) {
     char originalCsbGameBrowserSavePath[512];
     char originalDmSaveBrowserSavePath[512];
     char originalDm1SavePath[512];
+    char noDm1CsbSavePath[512];
     char dm2SlotSavePath[512];
     char dm2LastSessionSavePath[512];
     char nexusSavePath[512];
@@ -794,6 +796,10 @@ int main(void) {
     char pc34Path[512];
 
     if (!mkdtemp(tmpTemplate)) {
+        perror("mkdtemp");
+        return 1;
+    }
+    if (!mkdtemp(noDm1Template)) {
         perror("mkdtemp");
         return 1;
     }
@@ -1600,6 +1606,26 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
                 state.activatedIndex == 1,
                 "main CSB accept should still open normal CSB options")) return 1;
+
+    snprintf(noDm1CsbSavePath, sizeof(noDm1CsbSavePath),
+             "%s/firestaff-csb-only.sav", noDm1Template);
+    if (!expect(write_raw_csbgame_roster_quicksave(noDm1CsbSavePath),
+                "should write CSB-only save browser fixture")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, noDm1Template, NULL);
+    force_csb_available(&state);
+    state.selectedIndex = 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACTION);
+    if (!expect(state.view == M12_MENU_VIEW_MESSAGE &&
+                strcmp(state.messageLine1, "NO DM1 SAVES FOUND") == 0,
+                "main CSB action without DM1 saves should show import blocker")) return 1;
+    if (!expect(state.messageReturnView == M12_MENU_VIEW_MAIN,
+                "main CSB no-DM1 blocker should return to main")) return 1;
+    if (!expect(state.launchRequested == 0 &&
+                state.csbImportDm1LaunchRequested == 0,
+                "main CSB no-DM1 blocker should not request launch")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                "main CSB no-DM1 blocker Back should return to main")) return 1;
 
     M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
     force_dm1_available(&state);
