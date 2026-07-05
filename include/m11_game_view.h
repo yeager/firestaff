@@ -15,6 +15,7 @@
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -167,6 +168,7 @@ typedef struct {
 typedef struct {
     int active;
     int startedFromLauncher;
+    int dm1StartupIntroBypassed;
     char title[64];
     char sourceId[32];
     M11_GameSourceKind sourceKind;
@@ -670,6 +672,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
 int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState);
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
+int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state);
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
                                   size_t outSize);

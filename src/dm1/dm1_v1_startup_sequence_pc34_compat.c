@@ -1,4 +1,5 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include <string.h>
 
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage) {
     switch (stage) {
@@ -21,6 +22,26 @@ const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage) {
 int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
                                     DM1_V1_StartupStage_PC34 earlier) {
     return (unsigned int)later > (unsigned int)earlier;
+}
+
+int dm1_v1_startup_launch_path_bypasses_intro_pc34(
+    DM1_V1_StartupLaunchPath_PC34 path) {
+    switch (path) {
+        case DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34:
+            return 0;
+        case DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34:
+            /* M11_GameView_StartDm1() is a focused test/dev entry point.
+             * It intentionally starts the DM1 game view directly and must
+             * not be confused with the ReDMCSB SWSH -> TITLE -> ENTRANCE
+             * launcher handoff used by normal DM1 startup. */
+            return 1;
+    }
+    return 1;
+}
+
+int dm1_v1_startup_intro_bypass_applies_to_source_pc34(const char* sourceId,
+                                                       int bypassed) {
+    return sourceId && strcmp(sourceId, "dm1") == 0 && bypassed ? 1 : 0;
 }
 
 int dm1_v1_startup_sequence_source_order_valid_pc34(void) {
