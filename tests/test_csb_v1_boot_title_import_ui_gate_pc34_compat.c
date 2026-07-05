@@ -61,6 +61,7 @@
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_game_state_pc34_compat.h"
+#include "csb_v1_utility_flow_pc34_compat.h"
 #include "firestaff_cmp_decode.h"
 
 #include <stdio.h>
@@ -304,6 +305,60 @@ static void test_mark_imported_party_ready_uses_existing_party(void)
     csb_v1_boot_cleanup(&p);
 }
 
+static void test_utility_action_cursor_drives_select_action(void)
+{
+    CSB_V1_UtilFlowContext flow;
+
+    csb_v1_util_flow_init(&flow);
+    csb_v1_util_flow_mark_utility_disk_verified(&flow, 1);
+    CHECK(flow.selected_action_index == 0,
+          "utility action cursor starts on import");
+    CHECK(csb_v1_util_flow_selected_action(&flow) ==
+          CSB_V1_UTIL_ACTION_IMPORT,
+          "utility selected action starts as import");
+    CHECK(strcmp(csb_v1_util_flow_action_label(
+              csb_v1_util_flow_selected_action(&flow)),
+              "IMPORT CHAMPIONS FROM DUNGEON MASTER SAVE") == 0,
+          "utility selected action label is source menu import row");
+
+    CHECK(csb_v1_util_flow_step(&flow) == 0 &&
+          flow.state == CSB_V1_UTIL_FLOW_INSERT_DISK,
+          "utility flow reaches INSERT_DISK");
+    CHECK(csb_v1_util_flow_step(&flow) == 0 &&
+          flow.state == CSB_V1_UTIL_FLOW_VERIFY_DISK,
+          "utility flow reaches VERIFY_DISK");
+    CHECK(csb_v1_util_flow_step(&flow) == 0 &&
+          flow.state == CSB_V1_UTIL_FLOW_DISK_OK,
+          "utility flow reaches DISK_OK");
+    CHECK(csb_v1_util_flow_step(&flow) == 0 &&
+          flow.state == CSB_V1_UTIL_FLOW_SELECT_ACTION,
+          "utility flow reaches SELECT_ACTION");
+
+    CHECK(csb_v1_util_flow_move_action_cursor(&flow, 1) == 1 &&
+          csb_v1_util_flow_selected_action(&flow) ==
+              CSB_V1_UTIL_ACTION_LOAD,
+          "utility cursor moves to load row");
+    CHECK(csb_v1_util_flow_move_action_cursor(&flow, 2) == 3 &&
+          csb_v1_util_flow_selected_action(&flow) ==
+              CSB_V1_UTIL_ACTION_VIEW,
+          "utility cursor moves to view row");
+    CHECK(csb_v1_util_flow_move_action_cursor(&flow, 1) == 0 &&
+          csb_v1_util_flow_selected_action(&flow) ==
+              CSB_V1_UTIL_ACTION_IMPORT,
+          "utility cursor wraps from view to import");
+    CHECK(csb_v1_util_flow_move_action_cursor(&flow, -1) == 3 &&
+          csb_v1_util_flow_selected_action(&flow) ==
+              CSB_V1_UTIL_ACTION_VIEW,
+          "utility cursor wraps upward to view");
+    CHECK(csb_v1_util_flow_move_action_cursor(&flow, -3) == 0 &&
+          csb_v1_util_flow_accept_selected_action(&flow) == 0 &&
+          flow.action == CSB_V1_UTIL_ACTION_IMPORT,
+          "utility accept commits selected import action");
+    CHECK(csb_v1_util_flow_step(&flow) == 0 &&
+          flow.state == CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS,
+          "utility accepted import advances to import state");
+}
+
 static void test_diagnostic_report_surfaces_title_import_status(void)
 {
     CSB_V1_BootProfile p;
@@ -354,6 +409,7 @@ int main(void)
     test_cmp_import_reaches_boot_party_slot();
     test_cmp_import_bad_magic_rejected();
     test_mark_imported_party_ready_uses_existing_party();
+    test_utility_action_cursor_drives_select_action();
     test_diagnostic_report_surfaces_title_import_status();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

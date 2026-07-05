@@ -28,6 +28,15 @@
 
 /* Maximum disk check attempts (prevents infinite loops) */
 #define CSB_V1_UTIL_MAX_ATTEMPTS   5
+#define CSB_V1_UTIL_MENU_ACTION_COUNT 4
+
+static const CSB_V1_UtilFlowAction s_csb_v1_util_menu_actions[
+    CSB_V1_UTIL_MENU_ACTION_COUNT] = {
+    CSB_V1_UTIL_ACTION_IMPORT,
+    CSB_V1_UTIL_ACTION_LOAD,
+    CSB_V1_UTIL_ACTION_NEW,
+    CSB_V1_UTIL_ACTION_VIEW
+};
 
 /* Utility disk prompt strings (from ReDMCSB CEDTDATA.C).
  * These are reserved for the UI layer: the UI calls csb_v1_util_flow_get_prompt(ctx)
@@ -73,6 +82,7 @@ void csb_v1_util_flow_init(CSB_V1_UtilFlowContext *ctx)
     ctx->max_attempts = CSB_V1_UTIL_MAX_ATTEMPTS;
     ctx->utility_disk_verified = 0;
     ctx->import_confirmed = 0;
+    ctx->selected_action_index = 0;
     ctx->last_error = 0;
     memset(ctx->utility_disk_path, 0, sizeof(ctx->utility_disk_path));
     memset(ctx->dm1_save_path, 0, sizeof(ctx->dm1_save_path));
@@ -153,6 +163,7 @@ const char *csb_v1_util_flow_last_error(CSB_V1_UtilFlowContext *ctx)
 void csb_v1_util_flow_set_action(CSB_V1_UtilFlowContext *ctx,
                                    CSB_V1_UtilFlowAction action)
 {
+    int i;
     if (!ctx) return;
     if (ctx->state != CSB_V1_UTIL_FLOW_SELECT_ACTION &&
         ctx->state != CSB_V1_UTIL_FLOW_INIT) {
@@ -160,6 +171,72 @@ void csb_v1_util_flow_set_action(CSB_V1_UtilFlowContext *ctx,
         return;
     }
     ctx->action = action;
+    for (i = 0; i < CSB_V1_UTIL_MENU_ACTION_COUNT; ++i) {
+        if (s_csb_v1_util_menu_actions[i] == action) {
+            ctx->selected_action_index = i;
+            break;
+        }
+    }
+}
+
+int csb_v1_util_flow_move_action_cursor(CSB_V1_UtilFlowContext *ctx,
+                                        int delta)
+{
+    int next;
+
+    if (!ctx) return -1;
+    if (ctx->state != CSB_V1_UTIL_FLOW_SELECT_ACTION &&
+        ctx->state != CSB_V1_UTIL_FLOW_INIT) {
+        return -1;
+    }
+    next = ctx->selected_action_index + delta;
+    while (next < 0) next += CSB_V1_UTIL_MENU_ACTION_COUNT;
+    next %= CSB_V1_UTIL_MENU_ACTION_COUNT;
+    ctx->selected_action_index = next;
+    ctx->action = s_csb_v1_util_menu_actions[next];
+    return ctx->selected_action_index;
+}
+
+CSB_V1_UtilFlowAction csb_v1_util_flow_selected_action(
+    const CSB_V1_UtilFlowContext *ctx)
+{
+    int index;
+
+    if (!ctx) return CSB_V1_UTIL_ACTION_EXIT;
+    index = ctx->selected_action_index;
+    if (index < 0 || index >= CSB_V1_UTIL_MENU_ACTION_COUNT) {
+        return CSB_V1_UTIL_ACTION_EXIT;
+    }
+    return s_csb_v1_util_menu_actions[index];
+}
+
+int csb_v1_util_flow_accept_selected_action(CSB_V1_UtilFlowContext *ctx)
+{
+    if (!ctx) return -1;
+    if (ctx->state != CSB_V1_UTIL_FLOW_SELECT_ACTION &&
+        ctx->state != CSB_V1_UTIL_FLOW_INIT) {
+        return -1;
+    }
+    ctx->action = csb_v1_util_flow_selected_action(ctx);
+    return 0;
+}
+
+const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action)
+{
+    switch (action) {
+    case CSB_V1_UTIL_ACTION_IMPORT:
+        return "IMPORT CHAMPIONS FROM DUNGEON MASTER SAVE";
+    case CSB_V1_UTIL_ACTION_LOAD:
+        return "LOAD SAVED GAME";
+    case CSB_V1_UTIL_ACTION_NEW:
+        return "START NEW GAME";
+    case CSB_V1_UTIL_ACTION_VIEW:
+        return "VIEW CHAMPION DETAILS";
+    case CSB_V1_UTIL_ACTION_EXIT:
+        return "EXIT";
+    default:
+        return "";
+    }
 }
 
 /* ── Set paths ──────────────────────────────────────────────────────── */
