@@ -244,6 +244,29 @@ static size_t build_skproject_actuator_wall_button_fixture(uint8_t *buf,
     return raw_map_base + 4u;
 }
 
+static size_t build_skproject_actuator_wall_button_map_list_fixture(
+    uint8_t *buf,
+    size_t cap)
+{
+    size_t size = build_skproject_actuator_wall_button_fixture(buf, cap);
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t raw_map_base = header_size + map_desc_size +
+                                4u + 2u + 4u + 8u;
+    uint8_t *desc;
+
+    if (size == 0 || cap < raw_map_base + 9u) return 0;
+    desc = buf + header_size;
+    put16le(desc + 10, 4);
+    put16le(desc + 12, (uint16_t)(1u << 4));
+    buf[raw_map_base + 4u] = 0x7e;
+    buf[raw_map_base + 5u] = 0x10;
+    buf[raw_map_base + 6u] = 0x20;
+    buf[raw_map_base + 7u] = 0x2a;
+    buf[raw_map_base + 8u] = 0x30;
+    return raw_map_base + 9u;
+}
+
 static void test_first_tick_after_boot_profile_handoff(void)
 {
     DM2_V1_BootProfile profile;
@@ -561,10 +584,10 @@ static void test_first_tick_after_boot_profile_handoff(void)
                 free(old_dd);
                 profile.dungeon_data = replacement;
                 replacement = NULL;
+                dm2_v1_runtime_set_position(0, 1, 1, 0);
                 CHECK(dm2_v1_runtime_set_map_wall_gfx_list(
                           wall_gfx_list, 4) == 0,
                       "runtime accepts a bounded map wall-gfx list");
-                dm2_v1_runtime_set_position(0, 1, 1, 0);
                 dm2_v1_runtime_set_outdoor(0);
                 memset(framebuffer, 0, sizeof(framebuffer));
                 memset(s_wall_button_pixels, 6, sizeof(s_wall_button_pixels));
@@ -582,6 +605,46 @@ static void test_first_tick_after_boot_profile_handoff(void)
                 (void)dm2_v1_runtime_set_map_wall_gfx_list(NULL, 0);
             } else {
                 CHECK(0, "runtime actuator wall-button fixture loads");
+            }
+            if (replacement) {
+                dm2_v1_dungeon_free(replacement);
+                free(replacement);
+            }
+        }
+        {
+            uint8_t fixture[160];
+            size_t fixture_size =
+                build_skproject_actuator_wall_button_map_list_fixture(
+                    fixture, sizeof(fixture));
+            DM2_V1_DungeonData *replacement =
+                (DM2_V1_DungeonData *)calloc(1, sizeof(*replacement));
+            CHECK(fixture_size > 0 && replacement != NULL,
+                  "runtime map-list actuator wall-button fixture allocates");
+            if (replacement &&
+                dm2_v1_dungeon_load(replacement, fixture, (int)fixture_size) == 0) {
+                DM2_V1_DungeonData *old_dd =
+                    (DM2_V1_DungeonData *)profile.dungeon_data;
+                dm2_v1_dungeon_free(old_dd);
+                free(old_dd);
+                profile.dungeon_data = replacement;
+                replacement = NULL;
+                dm2_v1_runtime_set_position(0, 1, 1, 0);
+                dm2_v1_runtime_set_outdoor(0);
+                memset(framebuffer, 0, sizeof(framebuffer));
+                memset(s_wall_button_pixels, 6, sizeof(s_wall_button_pixels));
+                fetch_count = 0;
+                dm2_v1_runtime_set_viewport_asset_provider(
+                    synthetic_viewport_asset_fetch, &fetch_count);
+                CHECK(dm2_v1_runtime_render_frame(
+                          0, 1, 1, framebuffer, 320, 320, 200) == 0,
+                      "runtime renders map-list actuator custom-button door");
+                CHECK(dm2_v1_runtime_last_asset_door_panel_count() == 1 &&
+                      dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
+                      dm2_v1_runtime_last_asset_door_button_count() == 1,
+                      "runtime auto-loads map wall-gfx list for actuator buttons");
+                dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+            } else {
+                CHECK(0, "runtime map-list actuator wall-button fixture loads");
             }
             if (replacement) {
                 dm2_v1_dungeon_free(replacement);

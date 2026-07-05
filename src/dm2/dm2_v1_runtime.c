@@ -184,6 +184,25 @@ static int dm2_runtime_door_step(int current_state, int action) {
     return current_state - 1;
 }
 
+static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
+    DM2_V1_DungeonData *dd;
+    int count;
+
+    if (!rt) return;
+    memset(rt->map_wall_gfx_list, 0, sizeof(rt->map_wall_gfx_list));
+    rt->map_wall_gfx_count = 0;
+    if (!rt->boot || !rt->boot->dungeon_data) return;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    count = dm2_v1_dungeon_get_map_wall_gfx_list(
+        dd,
+        rt->dungeon_level,
+        rt->map_wall_gfx_list,
+        (int)sizeof(rt->map_wall_gfx_list));
+    if (count > 0) {
+        rt->map_wall_gfx_count = count;
+    }
+}
+
 static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
                                               DM2_V1_ViewportState *viewport,
                                               int party_dir,
@@ -382,6 +401,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     memset(g_dm2_runtime.map_wall_gfx_list, 0,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     g_dm2_runtime.map_wall_gfx_count = 0;
+    dm2_runtime_refresh_map_wall_gfx_list(&g_dm2_runtime);
 }
 
 int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
@@ -418,6 +438,7 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->time_of_day_minutes = gs->time_of_day;
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
+    dm2_runtime_refresh_map_wall_gfx_list(rt);
     rt->leader_hand_object = session->original_leader_hand_object;
     memset(rt->champion_inventory_objects, 0,
            sizeof(rt->champion_inventory_objects));
@@ -827,6 +848,7 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     gs->party_dir = dir & 3;
     rt->dungeon_level = level;
     rt->view_dir = gs->party_dir;
+    dm2_runtime_refresh_map_wall_gfx_list(rt);
 }
 
 /* ── Party position accessors ─────────────────────────────────────── */
