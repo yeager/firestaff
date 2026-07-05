@@ -98,6 +98,39 @@ const char *csb_v1_util_flow_state_name(CSB_V1_UtilFlowState state)
     }
 }
 
+const char *csb_v1_util_flow_prompt(const CSB_V1_UtilFlowContext *ctx)
+{
+    if (!ctx) return "";
+    switch (ctx->state) {
+    case CSB_V1_UTIL_FLOW_INIT:
+    case CSB_V1_UTIL_FLOW_INSERT_DISK:
+        return "PLEASE PUT THE CHAOS STRIKES BACK UTILITY DISK IN";
+    case CSB_V1_UTIL_FLOW_VERIFY_DISK:
+        return "CHECKING CHAOS STRIKES BACK UTILITY DISK";
+    case CSB_V1_UTIL_FLOW_DISK_OK:
+        return "THAT'S THE CHAOS STRIKES BACK UTILITY DISK!";
+    case CSB_V1_UTIL_FLOW_SELECT_ACTION:
+        return "IMPORT CHAMPIONS FROM DUNGEON MASTER SAVE\n"
+               "LOAD SAVED GAME\n"
+               "START NEW GAME\n"
+               "VIEW CHAMPION DETAILS";
+    case CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS:
+        return "IMPORT CHAMPIONS FROM DUNGEON MASTER SAVE";
+    case CSB_V1_UTIL_FLOW_CONFIRM_IMPORT:
+        return "IMPORT THESE CHAMPIONS TO CHAOS STRIKES BACK?";
+    case CSB_V1_UTIL_FLOW_LOAD_GAME:
+        return "LOAD SAVED GAME";
+    case CSB_V1_UTIL_FLOW_NEW_GAME:
+        return "START NEW GAME";
+    case CSB_V1_UTIL_FLOW_ERROR:
+        return csb_v1_util_flow_last_error((CSB_V1_UtilFlowContext *)ctx);
+    case CSB_V1_UTIL_FLOW_DONE:
+        return "CHAOS STRIKES BACK READY";
+    default:
+        return "";
+    }
+}
+
 /* ── Last error string ──────────────────────────────────────────────── */
 const char *csb_v1_util_flow_last_error(CSB_V1_UtilFlowContext *ctx)
 {
