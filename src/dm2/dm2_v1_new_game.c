@@ -411,10 +411,11 @@ int dm2_v1_session_serialize(const DM2_V1_SessionState *session,
             DM2_SESSION_BASE_SERIALIZED_SIZE +
             DM2_GLOBAL_FLAGS_SIZE +
             DM2_GLOBAL_BYTES_SIZE +
-            DM2_GLOBAL_WORDS_SIZE * 2 +
-            DM2_GLOBAL_SPELL_EFFECTS_SIZE +
-            1 +
-            DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE
+        DM2_GLOBAL_WORDS_SIZE * 2 +
+        DM2_GLOBAL_SPELL_EFFECTS_SIZE +
+        1 +
+        DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE +
+        4
     };
     uint8_t *ext;
     if (buf_size < (size_t)DM2_SESSION_SERIALIZED_SIZE) return -1;
@@ -494,6 +495,10 @@ int dm2_v1_session_serialize(const DM2_V1_SessionState *session,
         ext[9] = (uint8_t)((timer->user_data >> 8) & 0xFFu);
         ext += DM2_TIMER_ENTRY_SIZE;
     }
+    ext[0] = (uint8_t)(session->original_leader_hand_object & 0xFFu);
+    ext[1] = (uint8_t)((session->original_leader_hand_object >> 8) & 0xFFu);
+    ext[2] = (uint8_t)((session->original_leader_hand_object >> 16) & 0xFFu);
+    ext[3] = (uint8_t)((session->original_leader_hand_object >> 24) & 0xFFu);
 
     return DM2_SESSION_SERIALIZED_SIZE;
 }
@@ -504,14 +509,16 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
     if (!session || !buf) return -1;
     enum {
         DM2_SESSION_BASE_SERIALIZED_SIZE = 29 + 4 * 261,
-        DM2_SESSION_EXT_SERIALIZED_SIZE =
+        DM2_SESSION_EXT_V1_SERIALIZED_SIZE =
             DM2_SESSION_BASE_SERIALIZED_SIZE +
             DM2_GLOBAL_FLAGS_SIZE +
             DM2_GLOBAL_BYTES_SIZE +
             DM2_GLOBAL_WORDS_SIZE * 2 +
             DM2_GLOBAL_SPELL_EFFECTS_SIZE +
             1 +
-            DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE
+            DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE,
+        DM2_SESSION_EXT_V2_SERIALIZED_SIZE =
+            DM2_SESSION_EXT_V1_SERIALIZED_SIZE + 4
     };
     const uint8_t *ext;
     if (buf_size < (size_t)DM2_SESSION_BASE_SERIALIZED_SIZE) return -1;
@@ -559,7 +566,7 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
         chp += 261;
     }
 
-    if (buf_size >= (size_t)DM2_SESSION_EXT_SERIALIZED_SIZE) {
+    if (buf_size >= (size_t)DM2_SESSION_EXT_V1_SERIALIZED_SIZE) {
         ext = buf + DM2_SESSION_BASE_SERIALIZED_SIZE;
         memcpy(session->original_global_flags, ext, DM2_GLOBAL_FLAGS_SIZE);
         ext += DM2_GLOBAL_FLAGS_SIZE;
@@ -591,6 +598,13 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
             timer->user_data =
                 (uint16_t)ext[8] | ((uint16_t)ext[9] << 8);
             ext += DM2_TIMER_ENTRY_SIZE;
+        }
+        if (buf_size >= (size_t)DM2_SESSION_EXT_V2_SERIALIZED_SIZE) {
+            session->original_leader_hand_object =
+                ((uint32_t)ext[0]) |
+                ((uint32_t)ext[1] << 8) |
+                ((uint32_t)ext[2] << 16) |
+                ((uint32_t)ext[3] << 24);
         }
     }
 
@@ -649,6 +663,14 @@ static int dm2_v1_read_payload_tagged_blob(const uint8_t *buf,
 static uint16_t dm2_v1_read_u16_le_at(const uint8_t *buf, size_t offset)
 {
     return (uint16_t)buf[offset] | ((uint16_t)buf[offset + 1u] << 8);
+}
+
+static uint32_t dm2_v1_read_u32_le_at(const uint8_t *buf, size_t offset)
+{
+    return ((uint32_t)buf[offset]) |
+           ((uint32_t)buf[offset + 1u] << 8) |
+           ((uint32_t)buf[offset + 2u] << 16) |
+           ((uint32_t)buf[offset + 3u] << 24);
 }
 
 static int dm2_v1_import_original_optional_sections(
@@ -950,6 +972,29 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
             pos += (size_t)decoded;
             session->original_timer_count++;
         }
+    }
+
+    if (session->champion_count > 0u) {
+        const size_t inv_bytes =
+            (size_t)session->champion_count *
+            (size_t)DM2_CHAMPION_INVENTORY_SLOTS * 4u;
+        if (inv_bytes <= buf_size - pos) {
+            for (int c = 0; c < (int)session->champion_count; c++) {
+                DM2_ChampionRecord *champ =
+                    (DM2_ChampionRecord *)session->champion_data[c];
+                for (int slot = 0; slot < DM2_CHAMPION_INVENTORY_SLOTS;
+                     slot++) {
+                    champ->inventory[slot] =
+                        dm2_v1_read_u32_le_at(buf, pos);
+                    pos += 4u;
+                }
+            }
+        }
+    }
+    if (buf_size - pos >= 4u) {
+        session->original_leader_hand_object =
+            dm2_v1_read_u32_le_at(buf, pos);
+        pos += 4u;
     }
 
     if (!dm2_v1_session_validate(session)) return -1;

@@ -172,6 +172,7 @@ typedef struct {
     uint8_t  original_spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE];
     uint8_t  original_timer_count;
     DM2_TimerEntry original_timers[DM2_MAX_TIMERS];
+    uint32_t original_leader_hand_object;
 
     /* Dungeon state (variable — level data) */
     /* Note: full dungeon state saved separately via dungeon_serialize() */
