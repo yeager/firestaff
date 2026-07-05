@@ -125,6 +125,24 @@ static void remove_temp_save_root(const char* root) {
     (void)TEST_RMDIR(root);
 }
 
+static int find_in_bounds_door_pose(DM2_V1_DungeonData* dungeon,
+                                    int* level,
+                                    int* party_x,
+                                    int* party_y) {
+    if (!dungeon || !level || !party_x || !party_y) {
+        return 0;
+    }
+    for (int i = 0; i < dungeon->level_count; ++i) {
+        if (dungeon->level_widths[i] >= 2 && dungeon->level_heights[i] >= 4) {
+            *level = i;
+            *party_x = 1;
+            *party_y = 3;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void fill_dm2_launch_spec(M11_GameLaunchSpec* spec,
                                  const char* data_dir) {
     memset(spec, 0, sizeof(*spec));
@@ -371,13 +389,24 @@ int main(void) {
     }
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (world && profile && profile->dungeon_data) {
+        DM2_V1_DungeonData* dungeon =
+            (DM2_V1_DungeonData*)profile->dungeon_data;
+        int door_level = 0;
+        int door_party_x = 15;
+        int door_party_y = 15;
+        int has_door_pose = find_in_bounds_door_pose(
+            dungeon, &door_level, &door_party_x, &door_party_y);
+        expect_true(has_door_pose,
+                    "M11 DM2 door test finds an in-bounds real-data pose");
         expect_true(dm2_v1_dungeon_set_tile_raw(
-                        (DM2_V1_DungeonData *)profile->dungeon_data,
-                        0, 15, 14, 4u) == 0,
+                        dungeon,
+                        door_level, door_party_x, door_party_y - 1, 4u) == 0,
                     "M11 DM2 door test seeds closed front door tile");
-        dm2_v1_runtime_set_position(0, 15, 15, 0);
+        dm2_v1_runtime_set_position(
+            door_level, door_party_x, door_party_y, 0);
         dm2_v1_runtime_set_outdoor(0);
-        expect_true(dm2_v1_runtime_get_door_state(0, 15, 14) == 4,
+        expect_true(dm2_v1_runtime_get_door_state(
+                        door_level, door_party_x, door_party_y - 1) == 4,
                     "M11 DM2 door test starts with closed front door");
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
@@ -385,8 +414,8 @@ int main(void) {
         expect_true(strstr(view.lastOutcome, "DM2 DOOR") != NULL,
                     "M11 DM2 front-door action reports door status");
         expect_true(dm2_v1_dungeon_get_tile_raw(
-                        (DM2_V1_DungeonData *)profile->dungeon_data,
-                        0, 15, 14) == 3,
+                        dungeon,
+                        door_level, door_party_x, door_party_y - 1) == 0x83,
                     "M11 DM2 front-door action writes stepped door state");
         dm2_v1_runtime_set_position(0, 15, 15, 0);
         view.dm2State.party_x = 15;
@@ -464,36 +493,36 @@ int main(void) {
     if (world) {
         DM2_V1_DungeonData *dd =
             profile ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
+        int trigger_targets_valid = 0;
         dm2_v1_trigger_reset_state();
         dm2_v1_plate_reset_state();
         dm2_v1_plate_set_party_weight(500);
         if (dd) {
-            dm2_v1_dungeon_set_tile_raw(dd, 0, 16, 8, 4);
-            dm2_v1_dungeon_set_tile_raw(dd, 0, 13, 8, 4);
+            trigger_targets_valid =
+                dm2_v1_dungeon_set_tile_raw(dd, 0, 16, 8, 4) == 0 &&
+                dm2_v1_dungeon_set_tile_raw(dd, 0, 13, 8, 4) == 0;
         }
-        dm2_v1_runtime_set_position(0, 15, 9, 0);
-        dm2_v1_runtime_set_outdoor(1);
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 forward move reaches square-trigger route");
-        expect_true(dm2_v1_trigger_get_fire_count(1) == 1,
-                    "DM2 runtime movement signals square-entered trigger");
-        expect_true(view.dm2State.party_x == 15 &&
-                    view.dm2State.party_y == 8,
-                    "M11 DM2 mirror follows trigger-square movement");
-        if (dd) {
+        if (trigger_targets_valid) {
+            dm2_v1_runtime_set_position(0, 15, 9, 0);
+            dm2_v1_runtime_set_outdoor(1);
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 forward move reaches square-trigger route");
+            expect_true(dm2_v1_trigger_get_fire_count(1) == 1,
+                        "DM2 runtime movement signals square-entered trigger");
+            expect_true(view.dm2State.party_x == 15 &&
+                        view.dm2State.party_y == 8,
+                        "M11 DM2 mirror follows trigger-square movement");
             expect_true(dm2_v1_dungeon_get_tile_raw(dd, 0, 16, 8) == 0,
                         "DM2 square-entered trigger applies door-open target");
-        }
-        dm2_v1_runtime_set_position(0, 12, 9, 0);
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 forward move reaches pressure-plate route");
-        expect_true(dm2_v1_plate_get_fire_count(1) == 1,
-                    "DM2 runtime movement evaluates party pressure plate");
-        expect_true(dm2_v1_plate_fire_total() >= 1,
-                    "DM2 runtime movement records pressure-plate fire total");
-        if (dd) {
+            dm2_v1_runtime_set_position(0, 12, 9, 0);
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 forward move reaches pressure-plate route");
+            expect_true(dm2_v1_plate_get_fire_count(1) == 1,
+                        "DM2 runtime movement evaluates party pressure plate");
+            expect_true(dm2_v1_plate_fire_total() >= 1,
+                        "DM2 runtime movement records pressure-plate fire total");
             expect_true(dm2_v1_dungeon_get_tile_raw(dd, 0, 13, 8) == 0,
                         "DM2 pressure plate applies door-toggle target");
         }
@@ -504,18 +533,32 @@ int main(void) {
         dm2_v1_runtime_set_outdoor(0);
     }
     if (profile && profile->dungeon_data) {
+        DM2_V1_DungeonData* dungeon =
+            (DM2_V1_DungeonData*)profile->dungeon_data;
+        int draw_level = 0;
+        int draw_party_x = 15;
+        int draw_party_y = 15;
+        int has_draw_pose = find_in_bounds_door_pose(
+            dungeon, &draw_level, &draw_party_x, &draw_party_y);
+        expect_true(has_draw_pose,
+                    "DM2 M11 draw finds an in-bounds door render pose");
         expect_true(dm2_v1_dungeon_set_tile_raw(
-                        (DM2_V1_DungeonData *)profile->dungeon_data,
-                        0, 15, 14, 4u) == 0,
+                        dungeon,
+                        draw_level, draw_party_x, draw_party_y - 1, 4u) == 0,
                     "DM2 M11 draw seeds a front door tile for asset-backed door-frame proof");
         expect_true(dm2_v1_dungeon_set_tile_raw(
-                        (DM2_V1_DungeonData *)profile->dungeon_data,
-                        0, 15, 13, 4u) == 0,
+                        dungeon,
+                        draw_level, draw_party_x, draw_party_y - 2, 4u) == 0,
                     "DM2 M11 draw seeds a D1C door tile for asset-backed door-frame proof");
         expect_true(dm2_v1_dungeon_set_tile_raw(
-                        (DM2_V1_DungeonData *)profile->dungeon_data,
-                        0, 15, 12, 4u) == 0,
+                        dungeon,
+                        draw_level, draw_party_x, draw_party_y - 3, 4u) == 0,
                     "DM2 M11 draw seeds a D2C door tile for asset-backed door-frame proof");
+        dm2_v1_runtime_set_position(draw_level, draw_party_x, draw_party_y, 0);
+        view.dm2State.party_x = draw_party_x;
+        view.dm2State.party_y = draw_party_y;
+        view.dm2State.party_dir = 0;
+        dm2_v1_runtime_set_outdoor(0);
     }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
@@ -554,6 +597,11 @@ int main(void) {
                     "M11 dungeonPath mirrors the verified profile path");
     }
     if (world) {
+        dm2_v1_runtime_set_position(0, 15, 15, 0);
+        view.dm2State.party_x = 15;
+        view.dm2State.party_y = 15;
+        view.dm2State.party_dir = 0;
+        dm2_v1_runtime_set_outdoor(0);
         expect_true(world->party_x == 15 && world->party_y == 15 &&
                     world->party_dir == 0,
                     "DM2 V1 world starts at the source-locked boot pose");

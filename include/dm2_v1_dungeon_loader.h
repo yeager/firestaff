@@ -24,12 +24,11 @@
  *   Byte offset 14: uint16_le: 0x00d9 (217) — ???
  *   Byte offset 16: uint16_le: 0x0240 (576) — ???
  *   ...
- *   The bounded legacy loader path still accepts the older Firestaff
- *   synthetic 16-bit map fixtures.  The skproject-compatible path follows
- *   SKWIN/DME.h File_header + Map_definitions: 16-byte map headers,
- *   column object indexes, square-first object links, text data, DB pools,
- *   then byte-sized column-major map data.  In that path tile type is
- *   stored in the high three bits and bit 0x10 marks a thing-list square.
+ *   The PC G1 real-data path now reads 16-byte skproject-compatible
+ *   Map_definitions from byte 44 and byte-sized column-major map squares
+ *   from byte 492.  Tile type is stored in the high three bits and bit
+ *   0x10 marks a thing-list square.  The bounded legacy loader path still
+ *   accepts older Firestaff synthetic 16-bit map fixtures.
  *
  *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
  *   Confirmed loader contract: level_count/map_count is byte offset 6. */

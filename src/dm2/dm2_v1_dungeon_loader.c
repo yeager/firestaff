@@ -7,10 +7,10 @@
  * DM2 PC English DUNGEON.DAT format (39,437 bytes, MD5 6caccd7875009e82fe2e28e7f6d6adc0):
  *   - Pre-decompressed (no FTL wrapper — bytes 0-1=0x0000, not 0x8104)
  *   - 'G1' magic at header bytes 2-3 (DM2 file format ID)
- *   - DUNGEON_HEADER at byte 0 (44 bytes, same layout as DM1/DEFS.H:985)
- *   - Map descriptors at byte 44: 28 x 16 bytes each (DM1 MAP descriptor, same format)
- *   - Tile data starts at byte 492 (44 + 28*16)
- *   - Tile type in lower 5 bits of LE uint16 square words, column-major
+ *   - DUNGEON_HEADER-style preamble at byte 0 (44 bytes)
+ *   - Map definitions at byte 44: 28 x 16 bytes each
+ *   - Byte-sized map squares start at byte 492 (44 + 28*16)
+ *   - Square type is stored in the high three bits, column-major
  *
  *   DUNGEON_HEADER fields (44 bytes, LE):
  *     offset 0:  uint16_t reserved (0x0000)
@@ -25,7 +25,8 @@
  *     offset 18: uint16_t square_first_thing_count
  *     offset 20: uint16_t thing_count[16]
  *
- *   MAP DESCRIPTOR (16 bytes each, identical to DM1 DEFS.H:1048-1116):
+ *   PC G1 MAP DEFINITION (16 bytes each; source-compatible with
+ *   skproject SKWIN/DME.h Map_definitions for offset + w8 dimensions):
  *     offset 0:  uint16_t raw_map_data_byte_offset
  *     offset 2:  uint8_t  offset_map_x
  *     offset 3:  uint8_t  offset_map_y
@@ -36,15 +37,13 @@
  *     offset 12: uint16_t level_width_override  (DM2 extension)
  *     offset 14: uint16_t level_height_override (DM2 extension)
  *
- *   The offset fields in DM2 DMA don't work like DM1 due to the different DMA layout.
- *   Actual width/height come from bytes[12-15] (DM2 extension fields) where present;
- *   fallback to DM1 bitfield_a decoding. The DM2 PC English uses 16-byte descriptors
- *   appended with extra dimensions rather than a separate 8-byte format.
+ *   The legacy 16-bit square-word path below remains for older Firestaff
+ *   synthetic fixtures only. Real PC G1 data uses the byte-square path.
  *
  * FIXES vs stub:
  *   - level_count read from DUNGEON_HEADER.map_count byte offset 6 (stub read byte 0)
- *   - Format is 16-byte DM1 MAP Descriptor with DM2 extensions, not 8-byte
- *   - Tile data offset is relative to tile data region start (tile_data_start = 492)
+ *   - Real PC G1 map definitions use w8 dimensions and byte-sized squares
+ *   - Tile data offset is relative to byte map-data start (tile_data_start = 492)
  *
  * Source: SKULL.ASM T560 DUNGEON_Load, ReDMCSB DEFS.H:985-998, :1048-1116,
  *         DM2 PC English DUNGEON.DAT binary analysis (39,437 bytes),
@@ -222,6 +221,76 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
     return 1;
 }
 
+static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
+                                             const uint8_t *dat,
+                                             int size) {
+    int map_count;
+    int raw_map_bytes = 0;
+
+    if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
+    if (RD16(dat + 2) != 0x3147u || RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
+        return 0;
+
+    map_count = (int)dat[DM2_HDR_MAP_COUNT_OFFSET];
+    if (map_count < 1 || map_count > DM2_V1_MAX_LEVELS) return 0;
+    if (size < DM2_DUNGEON_HEADER_SIZE + map_count * DM2_MAP_DESC_SIZE)
+        return 0;
+
+    memset(out, 0, sizeof(*out));
+    out->level_count = map_count;
+    out->square_bytes = 1;
+    out->raw_map_data_base = DM2_DUNGEON_HEADER_SIZE +
+                             map_count * DM2_MAP_DESC_SIZE;
+    out->column_index_base = -1;
+    out->square_first_thing_base = -1;
+    out->text_data_base = -1;
+    out->square_first_thing_count = (int)RD16(dat + 18);
+    out->text_word_count = (int)RD16(dat + 14);
+    for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
+        out->thing_data_bases[i] = -1;
+        out->thing_type_counts[i] = 0;
+    }
+
+    for (int i = 0; i < map_count; ++i) {
+        const uint8_t *map_desc =
+            dat + DM2_DUNGEON_HEADER_SIZE + i * DM2_MAP_DESC_SIZE;
+        int w = 0;
+        int h = 0;
+        int rel_offset = (int)RD16(map_desc + 0);
+        int end;
+
+        if (!dm2_decode_map_dimensions_from_w8(map_desc, &w, &h))
+            return 0;
+        end = rel_offset + w * h;
+        if (end < rel_offset) return 0;
+        if (end > raw_map_bytes) raw_map_bytes = end;
+
+        out->level_widths[i] = w;
+        out->level_heights[i] = h;
+        out->level_offsets[i] = rel_offset;
+        out->map_offset_x[i] = (int)map_desc[6];
+        out->map_offset_y[i] = (int)map_desc[7];
+        out->map_door_set0[i] = (int)((RD16(map_desc + 14) >> 8) & 0x0fu);
+        out->map_door_set1[i] = (int)((RD16(map_desc + 14) >> 12) & 0x0fu);
+        out->level_types[i] = (i == 0) ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
+    }
+
+    if (raw_map_bytes <= 0 ||
+        out->raw_map_data_base + raw_map_bytes > size) {
+        return 0;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE reads the PC
+     * G1 map bytes as column-major byte squares after the header/map table.
+     * DME.h Map_definitions::w8 stores (width-1,height-1); the square type
+     * is the high three bits and bit 0x10 marks a thing-list square. */
+    out->raw_data = (uint8_t *)malloc((size_t)size);
+    if (!out->raw_data) return -1;
+    memcpy(out->raw_data, dat, (size_t)size);
+    out->raw_size = size;
+    return 1;
+}
+
 /* ── Public API ───────────────────────────────────────────────────── */
 
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
@@ -235,6 +304,10 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
     memset(out, 0, sizeof(*out));
 
     skproject_layout = dm2_v1_try_load_skproject_layout(out, dat, size);
+    if (skproject_layout != 0)
+        return (skproject_layout > 0) ? 0 : -1;
+
+    skproject_layout = dm2_v1_try_load_pc_g1_byte_layout(out, dat, size);
     if (skproject_layout != 0)
         return (skproject_layout > 0) ? 0 : -1;
 
@@ -393,7 +466,15 @@ int dm2_v1_dungeon_set_tile_raw(DM2_V1_DungeonData *d,
         int offset = d->raw_map_data_base + d->level_offsets[level] +
                      (x * h + y);
         if (offset < 0 || offset >= d->raw_size) return -1;
-        d->raw_data[offset] = (uint8_t)(raw & 0xffu);
+        if (raw <= 7u) {
+            uint8_t current = d->raw_data[offset];
+            uint8_t prefix = (uint8_t)(current & 0xf8u);
+            if (((current >> 5) & 0x07u) != 4u)
+                prefix = (uint8_t)(4u << 5);
+            d->raw_data[offset] = (uint8_t)(prefix | (raw & 0x07u));
+        } else {
+            d->raw_data[offset] = (uint8_t)(raw & 0xffu);
+        }
         return 0;
     }
 
@@ -500,6 +581,7 @@ const char *dm2_v1_dungeon_source_evidence(void) {
         "Source: skproject SKWIN/DME.h File_header/Map_definitions/ObjectID/Door\n"
         "Source: skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE + GET_TILE_RECORD_LINK\n"
         "Fix: level_count from DUNGEON_HEADER.map_count (byte offset 6), not byte offset 0\n"
+        "Fix: PC G1 real-data maps use byte squares with high-bit tile types from Map_definitions.w8\n"
         "Fix: skproject layout reads column object indexes, square-first things, text, DB pools, then byte map data\n"
         "Fix: tile offset = DM2_TILE_DATA_START(492) + raw_map_data_byte_offset\n"
         "Fix: column-major tile offset formula (col*height+row)*2\n"
