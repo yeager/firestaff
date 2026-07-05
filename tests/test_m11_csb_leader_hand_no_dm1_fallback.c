@@ -12,6 +12,7 @@
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_viewport_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -230,6 +231,15 @@ int main(void)
               "CSB action rows resolve through runtime object action-set");
         check(actions[0] == 42 && actions[1] == 9 && actions[2] == 28,
               "CSB dagger exposes THROW/STAB/SLASH action rows");
+        {
+            unsigned char framebuffer[320 * 200];
+            write_u16(raw + 96, dagger);
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&state, framebuffer, 320, 200);
+            check(framebuffer[117 * 320 + 112] ==
+                      (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
+                  "CSB M11 draw marks a runtime floor object from CSB square thing chain without DM1 world.things");
+        }
         check(M11_GameView_TriggerActionRow(&state, 0) == 1,
               "CSB dagger THROW action dispatches through CSB runtime without DM1 world.things");
         check(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] ==
