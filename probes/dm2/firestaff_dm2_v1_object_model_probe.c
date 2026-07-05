@@ -205,6 +205,8 @@ int main(int argc, char **argv) {
     if (load_result == 0) {
         PROBE_ASSERT(model.object_count >= 0,
                      "Object model loaded for level 0 (count=%d)", model.object_count);
+        PROBE_ASSERT(model.object_count == 0,
+                     "PC English object model stays empty until DB bases are proven");
         /* Object model stores objects in level's thing pools */
         for (int i = 0; i < model.object_count && i < 5; i++) {
             fprintf(stderr, "  object[%d]: type=%s level=%d\n",

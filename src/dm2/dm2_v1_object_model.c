@@ -258,7 +258,10 @@ static int dm2_v1_object_model_load_via_loader(DM2_ObjectModel *model,
         }
     }
     if (!has_record_bases) {
+        int is_unresolved_byte_layout = (dungeon.square_bytes == 1);
         dm2_v1_dungeon_free(&dungeon);
+        if (is_unresolved_byte_layout)
+            return 0;
         return 1;
     }
 

@@ -203,6 +203,19 @@ static void probe_first_map(const unsigned char *raw, int size)
           "loader selects the PC G1 byte-square layout");
     CHECK(dungeon.raw_map_data_base == 31667,
           "loader starts byte-square data at the trailing PC G1 map-data block");
+    CHECK(dungeon.text_word_count == 257,
+          "loader preserves PC G1 shifted File_header.cwTextData");
+    CHECK(dungeon.square_first_thing_count == 53,
+          "loader preserves PC G1 shifted File_header.cwListSize");
+    CHECK(dungeon.thing_type_counts[0] == 217 &&
+              dungeon.thing_type_counts[1] == 576 &&
+              dungeon.thing_type_counts[2] == 1020 &&
+              dungeon.thing_type_counts[3] == 299,
+          "loader preserves leading PC G1 DB record counts");
+    CHECK(dungeon.thing_data_bases[0] == -1 &&
+              dungeon.column_index_base == -1 &&
+              dungeon.square_first_thing_base == -1,
+          "loader keeps unresolved PC G1 DB bases disabled");
     CHECK(dungeon.level_widths[0] == 7,
           "loader reports map-0 width from Map_definitions.w8");
     CHECK(dungeon.level_heights[0] == 10,
