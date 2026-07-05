@@ -951,6 +951,8 @@ int dm2_v1_runtime_move(int dir) {
                 dm2_runtime_apply_plate_event(rt, &event);
             }
         }
+        (void)dm2_v1_runtime_invoke_square_actuators(
+            rt->dungeon_level, nx, ny);
     }
 
     /* Fire smooth turn callback when facing changes.
