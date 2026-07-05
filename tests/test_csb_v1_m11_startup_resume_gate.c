@@ -716,6 +716,57 @@ static void fill_csb_launch_spec(M11_GameLaunchSpec* spec,
     spec->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
 }
 
+static int write_synthetic_dm1_import_save(const char *path,
+                                           int champion_count) {
+    unsigned char buf[1024];
+    FILE *f;
+    size_t n;
+    int i;
+
+    if (!path || champion_count < 1 || champion_count > CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    memset(buf, 0, sizeof(buf));
+    buf[CSB_V1_DM1_HDR_CHAMP_COUNT] = (unsigned char)champion_count;
+    for (i = 0; i < champion_count; ++i) {
+        size_t off = (size_t)CSB_V1_DM1_HDR_CHAMPION_START +
+                     (size_t)i * (size_t)CSB_V1_DM1_CHAMP_SIZE;
+        size_t equip_off = off + (size_t)CSB_V1_DM1_CHAMP_OFF_EQUIP;
+        int slot;
+        memcpy(buf + off + CSB_V1_DM1_CHAMP_OFF_NAME,
+               i == 0 ? "ALPHA   " : "BETA    ",
+               8u);
+        write_le16(buf, off + CSB_V1_DM1_CHAMP_OFF_HEALTH,
+                   (unsigned short)(80 + i));
+        write_le16(buf, off + CSB_V1_DM1_CHAMP_OFF_MAX_HEALTH,
+                   (unsigned short)(100 + i));
+        write_le16(buf, off + CSB_V1_DM1_CHAMP_OFF_STAMINA,
+                   (unsigned short)(60 + i));
+        write_le16(buf, off + CSB_V1_DM1_CHAMP_OFF_MAX_STAMINA,
+                   (unsigned short)(100 + i));
+        write_le16(buf, off + CSB_V1_DM1_CHAMP_OFF_MANA,
+                   (unsigned short)(30 + i));
+        write_le16(buf, off + CSB_V1_DM1_CHAMP_OFF_MAX_MANA,
+                   (unsigned short)(50 + i));
+        buf[off + CSB_V1_DM1_CHAMP_OFF_STR] = (unsigned char)(55 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_DEX] = (unsigned char)(66 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_WIS] = (unsigned char)(77 + i);
+        buf[off + CSB_V1_DM1_CHAMP_OFF_VIT] = (unsigned char)(88 + i);
+        for (slot = 0; slot < CSB_V1_SLOT_COUNT; ++slot) {
+            write_le16(buf,
+                       equip_off + (size_t)slot * 2u,
+                       0xffffu);
+        }
+    }
+    f = fopen(path, "wb");
+    if (!f) {
+        return 0;
+    }
+    n = fwrite(buf, 1u, sizeof(buf), f);
+    fclose(f);
+    return n == sizeof(buf);
+}
+
 static void assert_csb_view_matches_expected_resume(
     const M11_GameViewState* view,
     const CSB_V1_RuntimeProfile* expected,
@@ -934,10 +985,12 @@ int main(void) {
     char quick_save_tmpl[] = "/tmp/firestaff_csb_m11_quicksave_XXXXXX";
     char roster_save_tmpl[] = "/tmp/firestaff_csb_m11_roster_XXXXXX";
     char csbwin_save_tmpl[] = "/tmp/firestaff_csb_m11_csbwin_XXXXXX";
+    char dm1_import_tmpl[] = "/tmp/firestaff_csb_m11_dm1import_XXXXXX";
     char save_path[560];
     char quick_save_path[560];
     char roster_save_path[560];
     char csbwin_save_path[560];
+    char dm1_import_path[560];
     const char* data_dir = csb_data_dir(fallback);
     CSB_V1_BootProfile preflight;
     CSB_V1_RuntimeProfile expected;
@@ -978,6 +1031,8 @@ int main(void) {
              ".\\firestaff-csb-m11-roster.sav");
     snprintf(csbwin_save_path, sizeof(csbwin_save_path),
              ".\\firestaff-csb-m11-csbwin.sav");
+    snprintf(dm1_import_path, sizeof(dm1_import_path),
+             ".\\firestaff-csb-m11-dm1import.sav");
 #else
     {
         int fd = mkstemp(save_tmpl);
@@ -1022,11 +1077,24 @@ int main(void) {
                  csbwin_save_tmpl);
         remove(csbwin_save_tmpl);
     }
+    {
+        int fd = mkstemp(dm1_import_tmpl);
+        if (fd < 0) {
+            fprintf(stderr, "FAIL: could not create temporary DM1 import save path\n");
+            return 1;
+        }
+        close(fd);
+        snprintf(dm1_import_path, sizeof(dm1_import_path), "%s.sav",
+                 dm1_import_tmpl);
+        remove(dm1_import_tmpl);
+    }
 #endif
 
     memset(&expected, 0, sizeof(expected));
     expect_true(build_runtime_resume_save(data_dir, save_path, &expected),
                 "built CSB runtime save fixture from verified assets");
+    expect_true(write_synthetic_dm1_import_save(dm1_import_path, 2),
+                "built synthetic DM1 save for CSB startup import");
 
     fill_csb_launch_spec(&spec, data_dir, NULL);
     M11_GameView_Init(&view);
@@ -1127,6 +1195,37 @@ int main(void) {
         expect_true(view.csbState.startup_entrance_bonus_requested == 0,
                     "M11 CSB normal enter does not mark bonus dungeon");
     }
+    M11_GameView_Shutdown(&view);
+
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    spec.csbImportDm1SavePath = dm1_import_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB startup accepts a DM1 utility import path");
+    expect_true(view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_import_available == 1 &&
+                    view.csbState.startup_import_champion_count == 2,
+                "M11 CSB entrance keeps imported DM1 party ready before dungeon entry");
+    expect_true(view.world.party.championCount == 2 &&
+                    memcmp(view.world.party.champions[0].name,
+                           "ALPHA   ", 8u) == 0 &&
+                    memcmp(view.world.party.champions[1].name,
+                           "BETA    ", 8u) == 0,
+                "M11 CSB party mirror exposes utility-imported champion names");
+    expect_true(view.csbBootProfile != NULL &&
+                    ((CSB_V1_BootProfile *)view.csbBootProfile)
+                        ->runtime.party_state.ImportedFromDM1 == 1,
+                "M11 CSB runtime marks the startup party as imported from DM1");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    245,
+                    46,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 CSB imported-party entrance enters the dungeon normally");
+    expect_true(view.csbState.startup_entrance_active == 0 &&
+                    view.world.party.championCount == 2,
+                "M11 CSB imported party survives the entrance Enter handoff");
     M11_GameView_Shutdown(&view);
 
     fill_csb_launch_spec(&spec, data_dir, NULL);
@@ -1653,6 +1752,7 @@ int main(void) {
     remove(quick_save_path);
     remove(roster_save_path);
     remove(csbwin_save_path);
+    remove(dm1_import_path);
 
     if (g_failures) {
         fprintf(stderr, "CSB V1 M11 startup/resume gate FAILED (%d failures)\n",

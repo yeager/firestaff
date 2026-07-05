@@ -111,6 +111,7 @@ typedef struct {
     const char* verifiedAssetMd5;  /* Optional: expected MD5 for verifiedAssetPath. */
     const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     const char* entranceResumeSavePath; /* Optional validated save for in-entrance Resume buttons. */
+    const char* csbImportDm1SavePath; /* Optional CSB utility startup import candidate. */
     int languageIndex;
     int rendererBackend;
     int presentationMode;
@@ -590,6 +591,9 @@ typedef struct {
         int startup_entrance_credits_remaining_ticks;
         int startup_entrance_resume_available;
         char startup_entrance_resume_path[512];
+        int startup_import_available;
+        int startup_import_champion_count;
+        char startup_import_dm1_save_path[512];
     } csbState;
 
     /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==
