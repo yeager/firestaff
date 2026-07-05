@@ -2143,7 +2143,7 @@ static void csb_v1_runtime_set_active_group_aspect_attacking(
     int map_y,
     int creature_index,
     int attacking);
-static void csb_v1_runtime_compact_active_group_aspect_after_kill(
+static void csb_v1_runtime_compact_active_group_state_after_kill(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
     int level,
@@ -3714,6 +3714,27 @@ static int csb_v1_runtime_group_cells_set_value(
     return cells & 0xFF;
 }
 
+static int csb_v1_runtime_group_direction_value(uint16_t directions, int index)
+{
+    if (index < 0 || index > 3) return 0;
+    return (int)((directions >> (index * 2)) & 0x03u);
+}
+
+static uint16_t csb_v1_runtime_group_directions_set_value(
+    uint16_t directions,
+    int index,
+    int value)
+{
+    int shift;
+
+    if (index < 0 || index > 3) return directions;
+    shift = index * 2;
+    directions = (uint16_t)(directions & ~(uint16_t)(0x03u << shift));
+    directions =
+        (uint16_t)(directions | (uint16_t)((value & 0x03) << shift));
+    return directions;
+}
+
 static void csb_v1_runtime_unlink_group_thing_from_square(
     CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
@@ -5131,7 +5152,7 @@ static void csb_v1_runtime_set_active_group_direction_all(
     state->directions = csb_v1_runtime_repeated_group_direction_pack(direction);
 }
 
-static void csb_v1_runtime_compact_active_group_aspect_after_kill(
+static void csb_v1_runtime_compact_active_group_state_after_kill(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
     int level,
@@ -5141,6 +5162,8 @@ static void csb_v1_runtime_compact_active_group_aspect_after_kill(
     int creature_count)
 {
     CSB_V1_RuntimeActiveGroupState *state;
+    uint8_t old_cells;
+    uint16_t old_directions;
     int i;
 
     if (!profile || creature_index < 0 || creature_index >= creature_count) {
@@ -5154,10 +5177,33 @@ static void csb_v1_runtime_compact_active_group_aspect_after_kill(
         map_y,
         0);
     if (!state) return;
+
+    old_cells = state->cells;
+    old_directions = state->directions;
+    /* ReDMCSB GROUP.C F0190 lines 892-905 compacts cells/directions for
+     * surviving creatures after a partial kill.  F0205/F0206 keep directions
+     * in the ACTIVE_GROUP side table, so Firestaff must pack this native state
+     * along with the raw GROUP record. */
     for (i = creature_index; i < creature_count - 1 && i < 3; ++i) {
+        if (old_cells != 0xFFu) {
+            state->cells = (uint8_t)csb_v1_runtime_group_cells_set_value(
+                state->cells,
+                i,
+                csb_v1_runtime_group_cell_value(old_cells, i + 1));
+        }
+        state->directions = csb_v1_runtime_group_directions_set_value(
+            state->directions,
+            i,
+            csb_v1_runtime_group_direction_value(old_directions, i + 1));
         state->aspect[i] = state->aspect[i + 1];
     }
     if (creature_count > 0 && creature_count <= 4) {
+        if (state->cells != 0xFFu) {
+            state->cells = (uint8_t)(state->cells &
+                (uint8_t)((1u << ((creature_count - 1) * 2)) - 1u));
+        }
+        state->directions = (uint16_t)(state->directions &
+            (uint16_t)((1u << ((creature_count - 1) * 2)) - 1u));
         state->aspect[creature_count - 1] = 0u;
     }
 }
@@ -5434,10 +5480,9 @@ static void csb_v1_runtime_pack_dead_group_creature(
 
     /* ReDMCSB GROUP.C F0190 lines 892-905 compacts Health, directions,
      * cells, active aspect, then decrements GROUP.Count.  CSB's bounded
-     * real-format bridge owns Health/Cells and mirrors native active-group
-     * Aspect compaction here; broader direction writeback remains with the
-     * wider active-group runtime work. */
-    csb_v1_runtime_compact_active_group_aspect_after_kill(
+     * real-format bridge owns Health/Cells and mirrors the native
+     * active-group Cells/Directions/Aspect side-table compaction here. */
+    csb_v1_runtime_compact_active_group_state_after_kill(
         profile,
         group_thing,
         level,

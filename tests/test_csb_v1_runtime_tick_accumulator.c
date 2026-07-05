@@ -2563,6 +2563,17 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     profile.dungeon_seed = 0xC5B10740u;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
+    profile.active_group_state_count = 1;
+    profile.active_group_state[0].valid = 1;
+    profile.active_group_state[0].group_thing = (uint16_t)(4u << 10);
+    profile.active_group_state[0].map_index = 0;
+    profile.active_group_state[0].map_x = 1;
+    profile.active_group_state[0].map_y = 1;
+    profile.active_group_state[0].cells = 0x04u;
+    profile.active_group_state[0].directions =
+        (uint16_t)((2u << 0) | (3u << 2));
+    profile.active_group_state[0].aspect[0] = 0x81u;
+    profile.active_group_state[0].aspect[1] = 0x42u;
     queue_future_creature_event(
         &profile,
         DM1_EVENT_UPDATE_ASPECT_CREATURE_0,
@@ -2627,6 +2638,11 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 group kill packs surviving Health down to slot 0");
     CHECK((raw[87] & 0x03u) == 1u,
           "C25 group kill packs surviving cell down to slot 0");
+    CHECK(profile.active_group_state[0].cells == 0x01u &&
+              profile.active_group_state[0].directions == 0x03u &&
+              profile.active_group_state[0].aspect[0] == 0x42u &&
+              profile.active_group_state[0].aspect[1] == 0u,
+          "C25 group kill packs native active-group cells directions and aspect");
     CHECK((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) != 0xfffeu &&
               ((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) & 0x3c00u) ==
               (uint16_t)(6u << 10),
