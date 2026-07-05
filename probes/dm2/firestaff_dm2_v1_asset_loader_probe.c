@@ -54,6 +54,31 @@ static uint8_t *load_file(const char *path, long *out_size) {
     return buf;
 }
 
+static uint32_t fnv1a32_pixels(const uint8_t *pixels, size_t count) {
+    uint32_t h = 2166136261u;
+    size_t i;
+    if (!pixels) return 0;
+    for (i = 0; i < count; ++i) {
+        h ^= pixels[i];
+        h *= 16777619u;
+    }
+    return h;
+}
+
+static int distinct_pixel_count(const uint8_t *pixels, size_t count) {
+    uint8_t seen[256] = {0};
+    int n = 0;
+    size_t i;
+    if (!pixels) return 0;
+    for (i = 0; i < count; ++i) {
+        if (!seen[pixels[i]]) {
+            seen[pixels[i]] = 1;
+            ++n;
+        }
+    }
+    return n;
+}
+
 int main(int argc, char **argv) {
     const char *gfx_path;
     long file_size = 0;
@@ -175,6 +200,59 @@ int main(int argc, char **argv) {
         PROBE_ASSERT(pixels != NULL && w == 224 && h == 1 && fmt == DM2_IMG_FMT_U4,
                      "GDAT GRAPHICSSET ceiling U4 strip realizes from real image entry (%dx%d fmt=%d)",
                      w, h, (int)fmt);
+        dm2_v1_asset_free_pixels(pixels);
+
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+            2,
+            7,
+            &w,
+            &h,
+            &fmt);
+        PROBE_ASSERT(pixels != NULL && w == 16 && h == 16 &&
+                         fmt == DM2_IMG_FMT_IMG3 &&
+                         distinct_pixel_count(pixels, (size_t)w * (size_t)h) == 4 &&
+                         fnv1a32_pixels(pixels, (size_t)w * (size_t)h) == 0x880ceb3cu,
+                     "GDAT C4 IMG3 decoder realizes even-width interface image hash");
+        dm2_v1_asset_free_pixels(pixels);
+
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+            3,
+            2,
+            &w,
+            &h,
+            &fmt);
+        PROBE_ASSERT(pixels != NULL && w == 29 && h == 23 &&
+                         fmt == DM2_IMG_FMT_IMG3 &&
+                         distinct_pixel_count(pixels, (size_t)w * (size_t)h) == 13 &&
+                         fnv1a32_pixels(pixels, (size_t)w * (size_t)h) == 0x76bb682du,
+                     "GDAT C4 IMG3 decoder realizes odd-width row-padded image hash (distinct=%d hash=0x%08x)",
+                     distinct_pixel_count(pixels, (size_t)w * (size_t)h),
+                     fnv1a32_pixels(pixels, (size_t)w * (size_t)h));
+        dm2_v1_asset_free_pixels(pixels);
+
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
+            &loader,
+            DM2_GDAT_CATEGORY_TITLE,
+            0,
+            1,
+            &w,
+            &h,
+            &fmt);
+        PROBE_ASSERT(pixels != NULL && w == 320 && h == 200 &&
+                         fmt == DM2_IMG_FMT_IMG9 &&
+                         distinct_pixel_count(pixels, (size_t)w * (size_t)h) == 149 &&
+                         fnv1a32_pixels(pixels, (size_t)w * (size_t)h) == 0x63ce78dbu,
+                     "GDAT C8 IMG9 decoder realizes 320x200 title image hash");
         dm2_v1_asset_free_pixels(pixels);
     }
 
