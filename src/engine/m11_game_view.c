@@ -2469,6 +2469,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           int framebufferHeight)
 {
     const M11_AssetSlot *entrance = NULL;
+    int drew_asset = 0;
     int blink_on = 1;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
@@ -2489,6 +2490,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                  0,
                                  0,
                                  -1);
+            drew_asset = 1;
         }
     }
 
@@ -2496,29 +2498,31 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
      * palette/screen and lines 850-883 wait on the entrance state until the
      * player confirms LOAD_DUNGEON.  Firestaff keeps the CSB runtime loaded
      * behind this screen but blocks gameplay input/ticks until confirmation. */
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  18, 18, 284, 164, M11_COLOR_YELLOW);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  38, 42, "CHAOS STRIKES BACK", &g_text_title);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  38, 64, "ENTRANCE", &g_text_shadow);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  38, 84, "CSB RUNTIME READY", &g_text_small);
-    if (state->csbBootProfile) {
-        const CSB_V1_BootProfile *profile =
-            (const CSB_V1_BootProfile *)state->csbBootProfile;
-        char row[96];
-        snprintf(row, sizeof(row), "START %d,%d DIR %d",
-                 profile->runtime.party_x,
-                 profile->runtime.party_y,
-                 profile->runtime.party_dir);
+    if (!drew_asset) {
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 18, 284, 164, M11_COLOR_YELLOW);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      38, 96, row, &g_text_small);
-    }
-    blink_on = ((state->csbState.startup_entrance_frame / 12) & 1) == 0;
-    if (blink_on) {
+                      38, 42, "CHAOS STRIKES BACK", &g_text_title);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      38, 154, "PRESS ENTER", &g_text_shadow);
+                      38, 64, "ENTRANCE", &g_text_shadow);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      38, 84, "CSB RUNTIME READY", &g_text_small);
+        if (state->csbBootProfile) {
+            const CSB_V1_BootProfile *profile =
+                (const CSB_V1_BootProfile *)state->csbBootProfile;
+            char row[96];
+            snprintf(row, sizeof(row), "START %d,%d DIR %d",
+                     profile->runtime.party_x,
+                     profile->runtime.party_y,
+                     profile->runtime.party_dir);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          38, 96, row, &g_text_small);
+        }
+        blink_on = ((state->csbState.startup_entrance_frame / 12) & 1) == 0;
+        if (blink_on) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          38, 154, "PRESS ENTER", &g_text_shadow);
+        }
     }
 }
 

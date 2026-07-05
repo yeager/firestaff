@@ -355,6 +355,29 @@ static int count_nonzero_rect(const unsigned char* fb,
     return count;
 }
 
+static int count_color_rect(const unsigned char* fb,
+                            int stride,
+                            int x,
+                            int y,
+                            int w,
+                            int h,
+                            unsigned char color) {
+    int count = 0;
+    int px;
+    int py;
+    if (!fb || stride <= 0 || w <= 0 || h <= 0) {
+        return 0;
+    }
+    for (py = y; py < y + h; ++py) {
+        for (px = x; px < x + w; ++px) {
+            if (fb[py * stride + px] == color) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 static int count_diff_rect(const unsigned char* expected,
                            const unsigned char* actual,
                            int stride,
@@ -991,6 +1014,8 @@ int main(void) {
         M11_GameView_Draw(&view, fb, 320, 200);
         expect_true(count_nonzero_rect(fb, 320, 18, 18, 284, 164) > 0,
                     "M11 CSB entrance draws a visible startup screen");
+        expect_true(count_color_rect(fb, 320, 18, 18, 284, 1, 11u) < 200,
+                    "M11 CSB real entrance does not keep the synthetic debug frame");
         expect_true(M11_GameView_AdvanceIdleTick(&view) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 CSB entrance advances its presentation frame");
