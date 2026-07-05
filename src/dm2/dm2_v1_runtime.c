@@ -92,10 +92,16 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
                                               int party_y) {
     static const int dx[4] = { 0, 1, 0, -1 };
     static const int dy[4] = { -1, 0, 1, 0 };
+    static const struct {
+        int square;
+        int forward;
+    } center_doors[] = {
+        { DM2_SQ_D0C, 1 },
+        { DM2_SQ_D1C, 2 },
+        { DM2_SQ_D2C, 3 },
+    };
     DM2_V1_DungeonData *dd;
     int dir;
-    int raw;
-    int type;
 
     if (!rt || !viewport || rt->outdoor || !rt->boot ||
         !rt->boot->dungeon_data) {
@@ -103,17 +109,22 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
     }
     dir = party_dir & 3;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    raw = dm2_v1_dungeon_get_tile_raw(dd,
-                                      rt->dungeon_level,
-                                      party_x + dx[dir],
-                                      party_y + dy[dir]);
-    if (raw < 0) return;
-    type = raw & DM2_SQUARE_TYPE_MASK;
-    if (type == DM2_SQUARE_DOOR) {
-        DM2_ViewSquare *front = &viewport->squares[DM2_SQ_D0C];
-        front->square_type = DM2_SQUARE_DOOR;
-        front->flags |= DM2_SQF_HAS_DOOR | DM2_SQF_HAS_WALL;
-        front->door_open_pct = (uint8_t)(dm2_runtime_door_state((uint16_t)raw) * 25);
+    for (size_t i = 0; i < sizeof(center_doors) / sizeof(center_doors[0]); ++i) {
+        int raw = dm2_v1_dungeon_get_tile_raw(
+            dd,
+            rt->dungeon_level,
+            party_x + dx[dir] * center_doors[i].forward,
+            party_y + dy[dir] * center_doors[i].forward);
+        int type;
+        if (raw < 0) continue;
+        type = raw & DM2_SQUARE_TYPE_MASK;
+        if (type == DM2_SQUARE_DOOR) {
+            DM2_ViewSquare *door = &viewport->squares[center_doors[i].square];
+            door->square_type = DM2_SQUARE_DOOR;
+            door->flags |= DM2_SQF_HAS_DOOR | DM2_SQF_HAS_WALL;
+            door->door_open_pct =
+                (uint8_t)(dm2_runtime_door_state((uint16_t)raw) * 25);
+        }
     }
 }
 

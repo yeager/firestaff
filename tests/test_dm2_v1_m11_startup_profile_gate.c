@@ -508,6 +508,14 @@ int main(void) {
                         (DM2_V1_DungeonData *)profile->dungeon_data,
                         0, 15, 14, 2u) == 0,
                     "DM2 M11 draw seeds a front door tile for asset-backed door-frame proof");
+        expect_true(dm2_v1_dungeon_set_tile_raw(
+                        (DM2_V1_DungeonData *)profile->dungeon_data,
+                        0, 15, 13, 2u) == 0,
+                    "DM2 M11 draw seeds a D1C door tile for asset-backed door-frame proof");
+        expect_true(dm2_v1_dungeon_set_tile_raw(
+                        (DM2_V1_DungeonData *)profile->dungeon_data,
+                        0, 15, 12, 2u) == 0,
+                    "DM2 M11 draw seeds a D2C door tile for asset-backed door-frame proof");
     }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
@@ -523,9 +531,9 @@ int main(void) {
     expect_true(dm2_v1_runtime_last_asset_wall_count() == 10 &&
                 dm2_v1_runtime_last_fallback_wall_count() == 0,
                 "M11 DM2 draw uses real GRAPHICSSET GDAT viewport-cell wall images");
-    expect_true(dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
+    expect_true(dm2_v1_runtime_last_asset_door_frame_count() == 3 &&
                 dm2_v1_runtime_last_fallback_door_count() == 0,
-                "M11 DM2 draw uses a real GRAPHICSSET GDAT front door-frame image");
+                "M11 DM2 draw uses real GRAPHICSSET GDAT D0C/D1C/D2C door-frame images");
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;
