@@ -151,6 +151,21 @@ static void test_floor_ceiling_asset_provider(void)
           framebuffer[0] == 15 &&
               framebuffer[223] == 1 &&
               framebuffer[(135 * 320)] == 2);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D1C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D2C].flags |= DM2_SQF_HAS_DOOR;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_doors(&viewport);
+    CHECK("door pass fetches front, D1C and D2C frame assets",
+          s_asset_fetch_calls == 3 &&
+              viewport.asset_door_frame_drawn_count == 3 &&
+              viewport.fallback_door_drawn_count == 0);
 }
 
 int main(void)
