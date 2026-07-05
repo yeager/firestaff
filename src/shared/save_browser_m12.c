@@ -887,7 +887,7 @@ static int save_browser_has_path(const M12_SaveBrowserState* state,
     return 0;
 }
 
-static int save_browser_scan_dir(M12_SaveBrowserState* state,
+int save_browser_scan_dir(M12_SaveBrowserState* state,
                                  const char* dirPath) {
     DIR* dir;
     struct dirent* ent;
