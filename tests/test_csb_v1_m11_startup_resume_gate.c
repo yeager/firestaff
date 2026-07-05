@@ -1155,6 +1155,27 @@ int main(void) {
     M11_GameView_Shutdown(&view);
 
     fill_csb_launch_spec(&spec, data_dir, NULL);
+    spec.entranceResumeSavePath = quick_save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB new-game start with invalid entrance resume path succeeds");
+    expect_true(view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_resume_available == 0 &&
+                    view.csbState.startup_entrance_resume_path[0] == '\0',
+                "M11 CSB entrance rejects an invalid resume path before showing Resume as available");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    245,
+                    80,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1,
+                "M11 CSB entrance invalid resume path stays on startup");
+    expect_true(strcmp(view.lastOutcome, "CSB RESUME UNAVAILABLE") == 0,
+                "M11 CSB entrance invalid resume path reports unavailable status");
+    M11_GameView_Shutdown(&view);
+
+    fill_csb_launch_spec(&spec, data_dir, NULL);
     spec.entranceResumeSavePath = save_path;
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),

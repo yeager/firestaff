@@ -3891,6 +3891,18 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
     return csb_v1_runtime_apply_csbwin_resume_file(profile, path, 0u) == 0;
 }
 
+static int m11_csb_runtime_can_load_resume_path(
+    const CSB_V1_RuntimeProfile *profile,
+    const char *path)
+{
+    CSB_V1_RuntimeProfile probe;
+    if (!profile || !path || path[0] == '\0') {
+        return 0;
+    }
+    probe = *profile;
+    return m11_csb_runtime_load_resume_path(&probe, path);
+}
+
 static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
                                             const CSB_V1_RuntimeProfile *profile)
 {
@@ -10227,8 +10239,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                               "%s",
                               spec->entranceResumeSavePath);
             if (rc > 0 &&
-                rc < (int)sizeof(state->csbState.startup_entrance_resume_path)) {
+                rc < (int)sizeof(state->csbState.startup_entrance_resume_path) &&
+                m11_csb_runtime_can_load_resume_path(
+                    &profile->runtime,
+                    state->csbState.startup_entrance_resume_path)) {
                 state->csbState.startup_entrance_resume_available = 1;
+            } else {
+                state->csbState.startup_entrance_resume_path[0] = '\0';
             }
         }
         m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
