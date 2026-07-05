@@ -8370,6 +8370,35 @@ int csb_v1_runtime_throw_action_hand(
     return 1;
 }
 
+int csb_v1_runtime_record_champion_action(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int action_index)
+{
+    CSB_V1_Champion *champion;
+
+    if (!profile || !profile->party_state_valid) return 0;
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        action_index < 0 ||
+        action_index > 255) {
+        return 0;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+    if (csb_v1_champion_is_dead(champion) ||
+        champion->CurrentHealth <= 0) {
+        return 0;
+    }
+
+    /* ReDMCSB MENU.C F0407 records the selected action in the champion action
+     * state before the common action tail.  M11 owns the visible action-disable
+     * countdown, but CSB runtime saves/resume need the selected source action
+     * to stay on the CSB party snapshot instead of being lost in DM1 state. */
+    champion->ActionIndex = (uint8_t)action_index;
+    return 1;
+}
+
 int csb_v1_runtime_load_object_names_m564(
     CSB_V1_RuntimeProfile *profile,
     const uint8_t *bytes,

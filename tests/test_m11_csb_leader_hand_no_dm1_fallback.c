@@ -172,6 +172,29 @@ int main(void)
               "CSB THROW projectile is champion-owned");
         check(profile.runtime.timeline_queue.eventCount > 0,
               "CSB THROW schedules first projectile movement event");
+        state.actionDisabledTicks[0] = 0;
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+            dagger;
+        state.world.party.champions[0].stamina.current = 100;
+        profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+            dagger;
+        profile.runtime.party_state.Champions[0].CurrentStamina = 100;
+        check(M11_GameView_SetActingChampion(&state, 0),
+              "CSB action menu reopens for melee action without DM1 world.things");
+        check(M11_GameView_TriggerActionRow(&state, 1) == 1,
+              "CSB dagger STAB action records through CSB runtime without DM1 attack tick");
+        check(profile.runtime.party_state.Champions[0].ActionIndex == actions[1],
+              "CSB STAB stores selected action index on runtime champion");
+        check(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] ==
+                  dagger,
+              "CSB STAB keeps action-hand object in M11 mirror");
+        check(profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] ==
+                  dagger,
+              "CSB STAB keeps action-hand object in runtime slot");
+        check(profile.runtime.projectiles.count == 1,
+              "CSB STAB does not allocate a projectile");
+        check(profile.runtime.party_state.Champions[0].CurrentStamina < 100,
+              "CSB STAB writes M11 stamina cost back to runtime");
 
         M11_GameView_ClearV1LeaderHandObject(&state);
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =

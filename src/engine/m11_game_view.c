@@ -26683,6 +26683,35 @@ static int m11_perform_csb_throw_action(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_perform_csb_melee_action(M11_GameViewState* state,
+                                        int championIndex,
+                                        unsigned char chosen)
+{
+    CSB_V1_RuntimeProfile* runtime;
+    struct ChampionState_Compat* champ;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return 0;
+    runtime = m11_mutable_csb_runtime_profile(state);
+    if (!runtime) return 0;
+    if (championIndex < 0 ||
+        championIndex >= state->world.party.championCount ||
+        championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current == 0) return 0;
+
+    m11_set_champion_direction_to_party_f0406(state, champ);
+    if (!csb_v1_runtime_record_champion_action(
+            runtime,
+            championIndex,
+            (int)chosen)) {
+        return 0;
+    }
+    m11_write_csb_runtime_champion_vitals(state, championIndex);
+    return 1;
+}
+
 static int m11_perform_non_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen,
@@ -27518,6 +27547,17 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     if (m11_action_is_melee_contact(chosen)) {
         unsigned char disabledTicks = m11_action_disabled_ticks_f0407(chosen);
         int timelineCountBeforeAttack = state->world.timeline.count;
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+            performed = m11_perform_csb_melee_action(
+                state, championIndex, chosen);
+            if (!performed) {
+                disabledTicks >>= 1;
+                actionExperienceGain >>= 1;
+            }
+            m11_disable_champion_action_after_action_ticks(
+                state, championIndex, chosen, disabledTicks);
+            goto action_tail_award_and_clear;
+        }
         /* Advance one tick with CMD_ATTACK while preserving F0391's chosen
          * F0407 action index.  M10 owns front-square group/creature
          * selection through its ReDMCSB F0177/F0229 auto-target bridge. */
@@ -27598,6 +27638,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                 CHAMPION_SLOT_ACTION_HAND;
         }
     }
+action_tail_award_and_clear:
     m11_award_action_xp_f0407(
         state, championIndex, chosen, actionExperienceGain);
 
