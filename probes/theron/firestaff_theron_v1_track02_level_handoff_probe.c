@@ -443,6 +443,57 @@ static void write_initial_candidate_fixture(uint8_t *candidate,
     candidate[12 + 2u * candidate_width + 2u] = THERON_SQUARE_EXIT;
 }
 
+static void probe_synthetic_initial_candidate_user_data_offsets(void) {
+    enum {
+        raw_sector_count = 2u,
+        candidate_offset = THERON_TRACK02_RAW_SECTOR_BYTES +
+            THERON_TRACK02_RAW_USER_DATA_OFFSET + 0x40u,
+        candidate_width = 32u,
+        candidate_height = 27u,
+        expected_user_offset = THERON_TRACK02_RAW_USER_DATA_BYTES + 0x40u
+    };
+    uint8_t track[raw_sector_count * THERON_TRACK02_RAW_SECTOR_BYTES];
+    Theron_Track02LevelCandidateCatalog catalog;
+    Theron_Track02SignalStatus signal_status;
+    Theron_Track02LevelHandoffStatus status;
+
+    memset(track, 0, sizeof(track));
+    write_initial_candidate_fixture(track + candidate_offset,
+                                    candidate_width,
+                                    candidate_height);
+
+    status = theron_v1_track02_scan_level_candidates(track,
+                                                     sizeof(track),
+                                                     &catalog);
+    check_int("synthetic user-data candidate scan status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("synthetic user-data candidate count",
+               catalog.candidate_count,
+               1u);
+    signal_status = theron_v1_track02_bind_level_candidate_user_offsets(
+        sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
+        &catalog);
+    check_int("synthetic user-data bind status",
+              signal_status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("synthetic user-data candidate offset valid",
+              catalog.candidates[0].user_data_offset_valid,
+              1);
+    check_size("synthetic user-data candidate offset",
+               catalog.candidates[0].user_data_offset,
+               expected_user_offset);
+
+    signal_status = theron_v1_track02_bind_level_candidate_user_offsets(
+        sizeof(track),
+        THERON_TRACK02_MD5_US_ISO,
+        &catalog);
+    check_int("synthetic ISO user-data candidate bind unsupported",
+              signal_status,
+              THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+}
+
 static void probe_synthetic_multiple_initial_candidates_rejected(void) {
     enum {
         descriptor_offset = 0xc000u,
@@ -601,7 +652,9 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02InitialCandidateBinding binding;
     Theron_Track02LevelHandoffStatus status;
+    Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
+    size_t expected_user_data_offset = 0u;
 
     path_to_read = (env_path && env_path[0]) ? env_path : NULL;
     if (!path_to_read) {
@@ -666,6 +719,23 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate anchor match",
               catalog.candidates[0].matches_initial_anchor,
               1);
+    expected_user_data_offset =
+        (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) == 0)
+            ? 0x619914u
+            : 0x619114u;
+    user_offset_status = theron_v1_track02_bind_level_candidate_user_offsets(
+        size,
+        local_md5,
+        &catalog);
+    check_int("real initial candidate user-data bind status",
+              user_offset_status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("real initial candidate user-data offset valid",
+              catalog.candidates[0].user_data_offset_valid,
+              1);
+    check_size("real initial candidate user-data offset",
+               catalog.candidates[0].user_data_offset,
+               expected_user_data_offset);
     status = theron_v1_track02_bind_initial_level_candidate(
         data,
         size,
@@ -877,6 +947,7 @@ int main(void) {
     probe_synthetic_positive_handoff();
     probe_synthetic_initial_candidate_handoff();
     probe_synthetic_initial_candidate_wrong_anchor_rejected();
+    probe_synthetic_initial_candidate_user_data_offsets();
     probe_synthetic_multiple_initial_candidates_rejected();
     probe_negative_handoffs();
     probe_real_data_if_present();
