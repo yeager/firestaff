@@ -100,7 +100,8 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir);
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
-                                    const char* verifiedMd5);
+                                    const char* verifiedMd5,
+                                    const char* savePath);
 static void m11_set_status(M11_GameViewState* state,
                            const char* title,
                            const char* detail);
@@ -9764,7 +9765,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         ok = M11_GameView_StartTheron(state,
                                       dd,
                                       spec->verifiedAssetPath,
-                                      spec->verifiedAssetMd5);
+                                      spec->verifiedAssetMd5,
+                                      spec->savePath);
         if (ok) {
             state->presentationMode = spec->presentationMode;
             state->presentationWidth = spec->presentationWidth;
@@ -11346,7 +11348,8 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
-                                    const char* verifiedMd5) {
+                                    const char* verifiedMd5,
+                                    const char* savePath) {
     Theron_V1_BootProfile* profile = NULL;
     Theron_V1_World* world = NULL;
     Theron_V1_Viewport* viewport = NULL;
@@ -11356,6 +11359,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     Theron_StartupFlow startupFlow;
     Theron_V1StartupSaveResume saveResume;
     int saveResumeReady = 0;
+    int requestedSaveSlot = -1;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
@@ -11387,9 +11391,63 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         m11_set_status(state, "BOOT", "THERON TRACK 02 MISSING");
         goto fail;
     }
-    theron_v1_boot_set_save_root(profile, NULL);
+    if (savePath && savePath[0] != '\0') {
+        char saveRoot[512];
+        const char* slash = strrchr(savePath, '/');
+        const char* base;
+#ifdef _WIN32
+        {
+            const char* backslash = strrchr(savePath, '\\');
+            if (!slash || (backslash && backslash > slash)) {
+                slash = backslash;
+            }
+        }
+#endif
+        base = slash ? slash + 1 : savePath;
+        if (base &&
+            base[0] == 's' &&
+            base[1] == 'l' &&
+            base[2] == 'o' &&
+            base[3] == 't' &&
+            base[4] >= '0' && base[4] <= '7' &&
+            strcmp(base + 5, ".tqsv") == 0) {
+            requestedSaveSlot = base[4] - '0';
+        }
+        if (slash && slash > savePath) {
+            size_t len = (size_t)(slash - savePath);
+            if (len >= sizeof(saveRoot)) {
+                len = sizeof(saveRoot) - 1u;
+            }
+            memcpy(saveRoot, savePath, len);
+            saveRoot[len] = '\0';
+            theron_v1_boot_set_save_root(profile, saveRoot);
+        } else {
+            theron_v1_boot_set_save_root(profile, NULL);
+        }
+    } else {
+        theron_v1_boot_set_save_root(profile, NULL);
+    }
     memset(&saveResume, 0, sizeof(saveResume));
     saveResumeReady = theron_v1_boot_startup_save_resume(profile, &saveResume);
+    if (requestedSaveSlot >= 0 &&
+        requestedSaveSlot < THERON_SAVE_SLOT_COUNT &&
+        theron_v1_save_verify_slot(profile->save_root, requestedSaveSlot)) {
+        saveResume.tqsv_active_slot = requestedSaveSlot;
+        if (saveResume.tqsv_valid_slots <= 0) {
+            saveResume.tqsv_valid_slots = 1;
+        }
+        if (saveResume.resume_claim == THERON_V1_STARTUP_RESUME_NONE) {
+            saveResume.resume_claim = THERON_V1_STARTUP_RESUME_TQSV;
+        } else if (saveResume.resume_claim == THERON_V1_STARTUP_RESUME_SRM) {
+            saveResume.resume_claim = THERON_V1_STARTUP_RESUME_DUAL;
+        }
+        snprintf(saveResume.resume_claim_name,
+                 sizeof(saveResume.resume_claim_name),
+                 "%s",
+                 theron_v1_startup_save_resume_claim_name(
+                     saveResume.resume_claim));
+        saveResumeReady = 1;
+    }
 
     assetResult = tr_asset_load(profile->graphics_path, assets);
     if (assetResult != TR_ASSET_OK) {

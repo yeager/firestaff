@@ -12,6 +12,8 @@
 #include "nexus_v1_champions.h"
 #include "nexus_v1_save.h"
 #include "nexus_v1_world.h"
+#include "theron_v1_dungeon_progression.h"
+#include "theron_v1_save_load.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -139,6 +141,30 @@ static void force_nexus_available(M12_StartupMenuState* state) {
     state->assetStatus.versions[3][0].shortLabel = "SAT";
     state->assetStatus.versions[3][0].matched = 1;
     state->gameOptions[3].versionIndex = 0;
+    state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    state->view = M12_MENU_VIEW_MAIN;
+    state->activatedIndex = -1;
+    state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
+    state->messageLine1 = "";
+    state->messageLine2 = "";
+    state->messageLine3 = "";
+}
+
+static void force_theron_available(M12_StartupMenuState* state) {
+    state->entries[4].title = "THERON'S QUEST";
+    state->entries[4].gameId = "theron";
+    state->entries[4].kind = M12_MENU_ENTRY_GAME;
+    state->entries[4].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
+    state->entries[4].available = 1;
+    state->assetStatus.theronAvailable = 1;
+    state->assetStatus.versions[4][0].gameId = "theron";
+    state->assetStatus.versions[4][0].versionId = "pce-us";
+    state->assetStatus.versions[4][0].label = "PC Engine US";
+    state->assetStatus.versions[4][0].shortLabel = "PCE US";
+    state->assetStatus.versions[4][0].matched = 1;
+    state->gameOptions[4].versionIndex = 0;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
     state->view = M12_MENU_VIEW_MAIN;
@@ -664,6 +690,34 @@ static int write_nexus_fnxs_save(const char* path) {
     return result == NEXUS_SAVE_OK;
 }
 
+static int write_theron_tqsv_save(const char* root,
+                                  int slot,
+                                  char* outPath,
+                                  size_t outPathSize) {
+    unsigned char championData[
+        THERON_SAVE_CHAMPION_COUNT * THERON_SAVE_CHAMPION_BLOCK_SIZE];
+    Theron_DungeonProgression progression;
+    if (!root || !outPath || outPathSize == 0u) {
+        return 0;
+    }
+    memset(championData, 0x31, sizeof(championData));
+    theron_v1_dungeon_progression_init(&progression);
+    progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    progression.current_level = 1;
+    progression.dungeon_playtime_seconds = 4321u;
+    progression.quest_items_collected = 0x03u;
+    if (theron_v1_save_to_slot(root,
+                               slot,
+                               championData,
+                               sizeof(championData),
+                               &progression,
+                               "M12 Theron") != 0) {
+        return 0;
+    }
+    theron_v1_save_slot_path(root, slot, outPath, outPathSize);
+    return 1;
+}
+
 static int select_save_entry(M12_StartupMenuState* state,
                              const char* filename) {
     int i;
@@ -696,6 +750,8 @@ int main(void) {
     char nexusSavePath[512];
     char nexusBrowserSavePath[512];
     char nexusSlotSavePath[512];
+    char theronSaveRoot[512];
+    char theronSlotSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -1318,6 +1374,52 @@ int main(void) {
                 intent.savePath &&
                 strcmp(intent.savePath, nexusSlotSavePath) == 0,
                 "save browser Nexus manager slot should carry exact path")) return 1;
+
+    snprintf(theronSaveRoot, sizeof(theronSaveRoot),
+             "%s/saves/theron", tmpTemplate);
+    if (!expect(write_theron_tqsv_save(theronSaveRoot,
+                                       4,
+                                       theronSlotSavePath,
+                                       sizeof(theronSlotSavePath)),
+                "should write Theron .tqsv browser slot")) return 1;
+    M12_Config_SetLastSavePath(theronSlotSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_theron_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "Theron .tqsv slot must enable quick Resume")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "theron") == 0,
+                "Theron .tqsv quick Resume should identify theron")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "theron") == 0 &&
+                intent.savePath &&
+                strcmp(intent.savePath, theronSlotSavePath) == 0,
+                "Theron quick Resume should carry exact .tqsv path")) return 1;
+
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_theron_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for Theron .tqsv slots")) return 1;
+    if (!expect(select_save_entry(&state, "slot4.tqsv"),
+                "save browser should list Theron slot4.tqsv")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark Theron .tqsv loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "theron") == 0,
+                "save browser should classify Theron .tqsv as theron")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].mapLevel == 3,
+                "save browser should expose Theron saved dungeon")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "theron") == 0 &&
+                intent.savePath &&
+                strcmp(intent.savePath, theronSlotSavePath) == 0,
+                "save browser Theron launch intent should carry exact .tqsv path")) return 1;
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);

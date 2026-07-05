@@ -19,6 +19,7 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "nexus_v1_save.h"
 #include "render_sdl_m11.h"
+#include "theron_v1_save_load.h"
 #include "color_presets_m11.h"
 #include "ui_scale_m11.h"
 #include "ambient_layer_m11.h"
@@ -2120,10 +2121,76 @@ static int m12_is_valid_nexus_quick_resume_path(const char* path) {
     return result == NEXUS_SAVE_OK;
 }
 
+static int m12_theron_tqsv_root_and_slot_from_path(const char* path,
+                                                   char* outRoot,
+                                                   size_t outRootCap,
+                                                   int* outSlot) {
+    const char* slash;
+    const char* base;
+    size_t len;
+    int slot;
+
+    if (!path || !outRoot || outRootCap == 0u || !outSlot) {
+        return 0;
+    }
+    slash = strrchr(path, '/');
+#ifdef _WIN32
+    {
+        const char* backslash = strrchr(path, '\\');
+        if (!slash || (backslash && backslash > slash)) {
+            slash = backslash;
+        }
+    }
+#endif
+    base = slash ? slash + 1 : path;
+    if (!base ||
+        base[0] != 's' ||
+        base[1] != 'l' ||
+        base[2] != 'o' ||
+        base[3] != 't' ||
+        base[4] < '0' || base[4] > '7' ||
+        strcmp(base + 5, ".tqsv") != 0) {
+        return 0;
+    }
+    slot = base[4] - '0';
+    if (slot < 0 || slot >= THERON_SAVE_SLOT_COUNT) {
+        return 0;
+    }
+    if (!slash || slash == path) {
+        if (outRootCap < 2u) {
+            return 0;
+        }
+        outRoot[0] = '.';
+        outRoot[1] = '\0';
+    } else {
+        len = (size_t)(slash - path);
+        if (len >= outRootCap) {
+            return 0;
+        }
+        memcpy(outRoot, path, len);
+        outRoot[len] = '\0';
+    }
+    *outSlot = slot;
+    return 1;
+}
+
+static int m12_is_valid_theron_quick_resume_path(const char* path) {
+    char saveRoot[512];
+    int slot = -1;
+    if (!m12_theron_tqsv_root_and_slot_from_path(path,
+                                                saveRoot,
+                                                sizeof(saveRoot),
+                                                &slot)) {
+        return 0;
+    }
+    return theron_v1_save_verify_slot(saveRoot, slot) ? 1 : 0;
+}
+
 static int m12_is_quick_resume_game_supported(const char* gameId) {
     return gameId && (strcmp(gameId, "dm1") == 0 ||
                       strcmp(gameId, "csb") == 0 ||
-                      strcmp(gameId, "nexus") == 0);
+                      strcmp(gameId, "nexus") == 0 ||
+                      strcmp(gameId, "theron") == 0);
 }
 
 static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
@@ -2139,6 +2206,9 @@ static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
     }
     if (strcmp(gameId, "nexus") == 0) {
         return m12_is_valid_nexus_quick_resume_path(path);
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return m12_is_valid_theron_quick_resume_path(path);
     }
     return 0;
 }
@@ -2283,6 +2353,19 @@ static int m12_infer_quick_resume_game_id(const char* path,
     if (m12_is_nexus_save_slot_basename(base) &&
         m12_try_quick_resume_candidate("nexus", path, outId, outSize)) {
         return 1;
+    }
+    {
+        char tqsvRoot[512];
+        int tqsvSlot = -1;
+        if (m12_theron_tqsv_root_and_slot_from_path(path,
+                                                   tqsvRoot,
+                                                   sizeof(tqsvRoot),
+                                                   &tqsvSlot) &&
+            m12_try_quick_resume_candidate("theron", path, outId, outSize)) {
+            (void)tqsvRoot;
+            (void)tqsvSlot;
+            return 1;
+        }
     }
     if (m12_try_quick_resume_candidate("dm1", path, outId, outSize)) {
         return 1;
