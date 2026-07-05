@@ -469,6 +469,118 @@ static void check_raw_user_data_contract(
         check_size("raw user-data catalog initial role count",
                    initial_roles,
                    1u);
+
+        {
+            uint8_t role_copy[12u + 32u * 27u];
+            Theron_Track02UserDataWindow window;
+            size_t role_copied = 0u;
+
+            status = theron_v1_track02_copy_user_data_window_by_role(
+                data,
+                size,
+                md5_hex,
+                THERON_TRACK02_USER_DATA_WINDOW_BANK_DESCRIPTOR_TABLE,
+                0u,
+                role_copy,
+                sizeof(role_copy),
+                &role_copied,
+                &window);
+            check_int("raw user-data role descriptor copy status",
+                      status,
+                      THERON_TRACK02_SIGNAL_OK);
+            check_size("raw user-data role descriptor copy bytes",
+                       role_copied,
+                       sizeof(g_descriptor));
+            check_size("raw user-data role descriptor raw offset",
+                       window.raw_offset,
+                       descriptor_offsets[0]);
+            check_bytes("raw user-data role descriptor copy payload",
+                        role_copy,
+                        g_descriptor,
+                        sizeof(g_descriptor));
+
+            status = theron_v1_track02_copy_user_data_window_by_role(
+                data,
+                size,
+                md5_hex,
+                THERON_TRACK02_USER_DATA_WINDOW_POST_BOUNDARY_SPAN,
+                0u,
+                role_copy,
+                sizeof(role_copy),
+                &role_copied,
+                &window);
+            check_int("raw user-data role span copy status",
+                      status,
+                      THERON_TRACK02_SIGNAL_OK);
+            check_size("raw user-data role span copy bytes",
+                       role_copied,
+                       sizeof(g_post_boundary_span));
+            check_size("raw user-data role span raw offset",
+                       window.raw_offset,
+                       span_offsets[0]);
+            check_bytes("raw user-data role span copy payload",
+                        role_copy,
+                        g_post_boundary_span,
+                        sizeof(g_post_boundary_span));
+
+            status = theron_v1_track02_copy_user_data_window_by_role(
+                data,
+                size,
+                md5_hex,
+                THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE,
+                0u,
+                role_copy,
+                sizeof(role_copy),
+                &role_copied,
+                &window);
+            check_int("raw user-data role initial copy status",
+                      status,
+                      THERON_TRACK02_SIGNAL_OK);
+            check_size("raw user-data role initial copy bytes",
+                       role_copied,
+                       12u + 32u * 27u);
+            check_int("raw user-data role initial width hi", role_copy[0], 0);
+            check_int("raw user-data role initial width lo", role_copy[1], 32);
+            check_int("raw user-data role initial height hi", role_copy[2], 0);
+            check_int("raw user-data role initial height lo", role_copy[3], 27);
+            check_int("raw user-data role initial seed marker",
+                      role_copy[4],
+                      1);
+            check_int("raw user-data role initial level marker",
+                      role_copy[8],
+                      0);
+            check_int("raw user-data role initial level value",
+                      role_copy[9],
+                      38);
+
+            status = theron_v1_track02_copy_user_data_window_by_role(
+                data,
+                size,
+                md5_hex,
+                THERON_TRACK02_USER_DATA_WINDOW_BANK_DESCRIPTOR_TABLE,
+                THERON_TRACK02_MAX_BANK_ANCHORS,
+                role_copy,
+                sizeof(role_copy),
+                &role_copied,
+                &window);
+            check_int("raw user-data role missing occurrence",
+                      status,
+                      THERON_TRACK02_SIGNAL_NOT_FOUND);
+
+            status = theron_v1_track02_copy_user_data_window_by_role(
+                data,
+                size,
+                md5_hex,
+                THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE,
+                0u,
+                role_copy,
+                16u,
+                &role_copied,
+                &window);
+            check_int("raw user-data role capacity guard",
+                      status,
+                      THERON_TRACK02_SIGNAL_BAD_INPUT);
+        }
     }
 
     free(user_data);
