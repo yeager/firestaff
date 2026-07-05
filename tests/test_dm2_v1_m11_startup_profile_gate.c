@@ -506,15 +506,15 @@ int main(void) {
     if (profile && profile->dungeon_data) {
         expect_true(dm2_v1_dungeon_set_tile_raw(
                         (DM2_V1_DungeonData *)profile->dungeon_data,
-                        0, 15, 14, 2u) == 0,
+                        0, 15, 14, 4u) == 0,
                     "DM2 M11 draw seeds a front door tile for asset-backed door-frame proof");
         expect_true(dm2_v1_dungeon_set_tile_raw(
                         (DM2_V1_DungeonData *)profile->dungeon_data,
-                        0, 15, 13, 2u) == 0,
+                        0, 15, 13, 4u) == 0,
                     "DM2 M11 draw seeds a D1C door tile for asset-backed door-frame proof");
         expect_true(dm2_v1_dungeon_set_tile_raw(
                         (DM2_V1_DungeonData *)profile->dungeon_data,
-                        0, 15, 12, 2u) == 0,
+                        0, 15, 12, 4u) == 0,
                     "DM2 M11 draw seeds a D2C door tile for asset-backed door-frame proof");
     }
     memset(framebuffer, 0, sizeof(framebuffer));
