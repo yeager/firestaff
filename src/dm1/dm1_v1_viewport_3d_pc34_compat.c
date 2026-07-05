@@ -178,6 +178,20 @@ static const DM1_ViewportDrawStep s_draw_order[] = {
     { DM1_VIEW_SQUARE_D0C, 0,  0, "F0127_DUNGEONVIEW_DrawSquareD0C", "DUNVIEW.C:8542" },
 };
 
+static void dm1_viewport_3d_notify_pre_square_draw(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int relative_forward,
+    int relative_side)
+{
+    if (state && state->pre_square_draw_callback) {
+        state->pre_square_draw_callback(state->pre_square_draw_user_data,
+                                        square,
+                                        relative_forward,
+                                        relative_side);
+    }
+}
+
 /* ReDMCSB DUNVIEW.C F0128 lines 8466-8477 draw D4L, D4R, then D4C by
  * resolving relative map coordinates and calling F0115 with
  * F0162_DUNGEON_GetSquareFirstObject(...), M598/M599/M597 and
@@ -1032,6 +1046,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:6446-6454 (D3L left) + 6582-6590 (D3R right mirror). */
     {
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3L);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D3L, 3, -1);
         if (fr && bm_base) {
             /* DUNVIEW.C:6446 MEDIA720_I34E -- F0104(G2120, C718) left native */
             dm1_viewport_3d_draw_wall(state, bm_base + 20 * BMP_STRIDE, fr);
@@ -1045,6 +1061,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:6582-6590. */
     {
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3R);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D3R, 3, 1);
         if (fr && bm_base) {
             /* DUNVIEW.C:6582-6590 MEDIA720_I34E -- F0105(G2120, C721) right mirror */
             dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 20 * BMP_STRIDE, fr);
@@ -1055,6 +1073,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:6725-6739. */
     {
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3C);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D3C, 3, 0);
         if (fr && bm_base) {
             /* DUNVIEW.C:6725 MEDIA720_I34E -- F0104(G2119, C722) left native */
             dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr);
@@ -1069,6 +1089,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:6991-6998. */
     {
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D2L, 2, -1);
         if (fr && bm_base) {
             /* DUNVIEW.C:6991 MEDIA720_I34E -- F0104(G2114, C729) */
             dm1_viewport_3d_draw_wall(state, bm_base + 18 * BMP_STRIDE, fr);
@@ -1079,6 +1101,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:7184-7191. */
     {
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2R);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D2R, 2, 1);
         if (fr && bm_base) {
             /* DUNVIEW.C:7184 MEDIA720_I34E -- F0104(G2113, C731) */
             dm1_viewport_3d_draw_wall(state, bm_base + 17 * BMP_STRIDE, fr);
@@ -1090,6 +1114,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
     {
         const DM1_WallFrame *fr_top  = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2C);
         const DM1_WallFrame *fr_side = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D2C, 2, 0);
         if (fr_top && bm_base) {
             /* DUNVIEW.C:7317 MEDIA720_I34E -- F0104(G2115, C730) top bar */
             dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr_top);
@@ -1108,6 +1134,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:7496-7504. */
     {
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1L);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D1L, 1, -1);
         if (fr && bm_base) {
             /* DUNVIEW.C:7496 MEDIA720_I34E -- F0104(G2110, C734) */
             dm1_viewport_3d_draw_wall(state, bm_base + 14 * BMP_STRIDE, fr);
@@ -1118,6 +1146,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:7664-7672. */
     {
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1R);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D1R, 1, 1);
         if (fr && bm_base) {
             /* DUNVIEW.C:7664 MEDIA720_I34E -- F0104(G2110, C734) */
             dm1_viewport_3d_draw_wall(state, bm_base + 14 * BMP_STRIDE, fr);
@@ -1129,6 +1159,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
     {
         const DM1_WallFrame *fr_top   = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1C);
         const DM1_WallFrame *fr_side = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1L);
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, DM1_VIEW_SQUARE_D1C, 1, 0);
         if (fr_top && bm_base) {
             /* DUNVIEW.C:7877 MEDIA720_I34E -- F0104(G2112, C733) top bar */
             dm1_viewport_3d_draw_wall(state, bm_base + 16 * BMP_STRIDE, fr_top);
@@ -1190,6 +1222,9 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
             dm1_viewport_3d_get_wall_draw_spec_for_square(step->square);
         if (!spec) continue;
         if (!bm_base) continue;
+
+        dm1_viewport_3d_notify_pre_square_draw(
+            state, step->square, step->rel_depth, step->rel_lateral);
 
         /* ── CSB-specific squares (D3L2, D3R2, D2L2, D2R2) ──────────────────
          * These squares use element-specific routing via F0676/F0677/F0678/F0679.

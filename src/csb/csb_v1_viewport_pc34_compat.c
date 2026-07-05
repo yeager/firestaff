@@ -1394,7 +1394,8 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
     CSB_V1_ViewportConfig *cfg,
     int party_dir,
     int party_x,
-    int party_y)
+    int party_y,
+    int preserve_existing)
 {
     const int viewport_word_stride = DM1_VIEWPORT_WIDTH / 8;
     const size_t viewport_word_count =
@@ -1423,10 +1424,13 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
     }
     plan = (const CSB_V1_CSBGraphicsM11RuntimePlan *)cfg->csbgraphics_plan;
     cache = (const CSB_V1_CSBGraphicsDatRealCache *)cfg->csbgraphics_cache;
-    cfg->custom_background_selected_skin_num = 0;
-    cfg->custom_background_used_default_skin = 0;
-    cfg->custom_background_applied_room_mask = 0u;
-    cfg->custom_background_last_room_num = -1;
+    if (!preserve_existing) {
+        cfg->custom_background_selected_skin_num = 0;
+        cfg->custom_background_used_default_skin = 0;
+        cfg->custom_background_applied_room_mask = 0u;
+        cfg->custom_background_last_room_num = -1;
+        cfg->custom_background_applied_count = 0;
+    }
 
     room_contract = csb_v1_viewport_custom_backgrounds_room_slot_contract_pc34();
     if (cfg->custom_background_room_num >= 0) {
@@ -1457,6 +1461,11 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
                 continue;
             }
             room_num = slot->room_num;
+        }
+        if (preserve_existing && room_num >= 0 && room_num < 32 &&
+            (cfg->custom_background_applied_room_mask &
+             ((uint32_t)1u << (uint32_t)room_num)) != 0u) {
+            continue;
         }
 
         CSB_V1_CustomBackgroundsRoomSlotSelection selection;
@@ -1571,8 +1580,69 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
         }
         free(viewport_words);
     }
-    cfg->custom_background_applied_count = applied;
+    if (preserve_existing) {
+        cfg->custom_background_applied_count += applied;
+    } else {
+        cfg->custom_background_applied_count = applied;
+    }
     return applied;
+}
+
+typedef struct {
+    CSB_V1_ViewportConfig *cfg;
+    int party_dir;
+    int party_x;
+    int party_y;
+} CSB_V1_CustomBackgroundsPreSquareDrawContext;
+
+static int csb_v1_viewport_custom_background_room_for_square(
+    DM1_ViewSquareIndex square)
+{
+    if (square == DM1_VIEW_SQUARE_D3L2) return 0;
+    if (square == DM1_VIEW_SQUARE_D3R2) return 1;
+    if (square == DM1_VIEW_SQUARE_D3L) return 2;
+    if (square == DM1_VIEW_SQUARE_D3R) return 3;
+    if (square == DM1_VIEW_SQUARE_D3C) return 4;
+    if (square == DM1_VIEW_SQUARE_D2L2) return 5;
+    if (square == DM1_VIEW_SQUARE_D2R2) return 6;
+    if (square == DM1_VIEW_SQUARE_D2L) return 7;
+    if (square == DM1_VIEW_SQUARE_D2R) return 8;
+    if (square == DM1_VIEW_SQUARE_D2C) return 9;
+    return -1;
+}
+
+static void csb_v1_viewport_apply_custom_backgrounds_before_square(
+    void *user_data,
+    DM1_ViewSquareIndex square,
+    int relative_forward,
+    int relative_side)
+{
+    CSB_V1_CustomBackgroundsPreSquareDrawContext *ctx =
+        (CSB_V1_CustomBackgroundsPreSquareDrawContext *)user_data;
+    CSB_V1_ViewportConfig *cfg;
+    int room_num;
+    int original_room_num;
+
+    (void)relative_forward;
+    (void)relative_side;
+    if (!ctx || !ctx->cfg) {
+        return;
+    }
+    cfg = ctx->cfg;
+    room_num = csb_v1_viewport_custom_background_room_for_square(square);
+    if (room_num < 0) {
+        return;
+    }
+    if (cfg->custom_background_room_num >= 0 &&
+        cfg->custom_background_room_num != room_num) {
+        return;
+    }
+
+    original_room_num = cfg->custom_background_room_num;
+    cfg->custom_background_room_num = room_num;
+    (void)csb_v1_viewport_apply_configured_custom_backgrounds(
+        cfg, ctx->party_dir, ctx->party_x, ctx->party_y, 1);
+    cfg->custom_background_room_num = original_room_num;
 }
 
 /* csb_v1_viewport_render_frame — integration entry point
@@ -1602,6 +1672,7 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * sub-region 224×136 at screen row 33) so the DM1 draw primitives
      * work without modification. */
     DM1_Viewport3DState vp;
+    CSB_V1_CustomBackgroundsPreSquareDrawContext custom_bg_ctx;
     memset(&vp, 0, sizeof(vp));
     vp.viewport_pixels = cfg->viewport_pixels;
     vp.viewport_stride = cfg->viewport_stride > 0 ? cfg->viewport_stride : 320;
@@ -1624,6 +1695,21 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     vp.dungeon_width  = cfg->dungeon_width;
     vp.dungeon_height = cfg->dungeon_height;
 
+    cfg->custom_background_selected_skin_num = 0;
+    cfg->custom_background_used_default_skin = 0;
+    cfg->custom_background_applied_room_mask = 0u;
+    cfg->custom_background_last_room_num = -1;
+    cfg->custom_background_applied_count = 0;
+
+    memset(&custom_bg_ctx, 0, sizeof(custom_bg_ctx));
+    custom_bg_ctx.cfg = cfg;
+    custom_bg_ctx.party_dir = party_dir;
+    custom_bg_ctx.party_x = party_x;
+    custom_bg_ctx.party_y = party_y;
+    vp.pre_square_draw_callback =
+        csb_v1_viewport_apply_custom_backgrounds_before_square;
+    vp.pre_square_draw_user_data = &custom_bg_ctx;
+
     /* Wall set index — CSB may use a different wall set than DM1.
      * ReDMCSB DUNVIEW.C F0096 loads wall set based on current map index.
      * Here we accept the index from config; 0 = default CSB wall set. */
@@ -1639,7 +1725,7 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * dm1_viewport_3d_draw_frame wall loop for D3L2/D3R2/D2L2/D2R2 positions. */
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
     (void)csb_v1_viewport_apply_configured_custom_backgrounds(
-        cfg, party_dir, party_x, party_y);
+        cfg, party_dir, party_x, party_y, 1);
     csb_v1_viewport_draw_runtime_projectile_overlays(
         cfg, party_dir, party_x, party_y);
     csb_v1_viewport_draw_runtime_explosion_overlays(
