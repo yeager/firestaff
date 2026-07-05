@@ -226,17 +226,11 @@ static int try_parse_csb_runtime_entry(M12_SaveBrowserEntry* entry) {
     /*
      * ReDMCSB LOADSAVE.C F0435 and CSBWin SaveGame.cpp both restore CSB
      * through the CSB namespace, not the DM1 save loader.  Keep the M12
-     * browser on the same path as quick-resume/M11: Firestaff-native CSB
-     * runtime saves first, then raw CSBGAME roster fallback, then verified
-     * CSBWin body handoff.
+     * browser on the same unified runtime path as quick-resume/M11:
+     * Firestaff-native saves, verified CSBWin GAMEBLOCK1/body saves, and
+     * raw CSBGAME roster handoffs are classified by one loader.
      */
     rc = csb_v1_runtime_load_game_from_path(&runtime, entry->fullPath);
-    if (rc != CSB_V1_LOAD_OK) {
-        rc = (csb_v1_runtime_apply_csbwin_resume_file(
-                  &runtime, entry->fullPath, 0u) == 0)
-                 ? CSB_V1_LOAD_OK
-                 : rc;
-    }
     if (rc != CSB_V1_LOAD_OK) {
         csb_v1_runtime_cleanup(&runtime);
         return 0;

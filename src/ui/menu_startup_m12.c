@@ -2029,18 +2029,10 @@ static int m12_is_valid_csb_quick_resume_path(const char* path) {
     csb_v1_runtime_init(&profile, NULL);
     /* ReDMCSB LOADSAVE.C F0435 restores CSB GLOBAL_DATA, party state,
      * events, and timeline through the CSB save path.  Match the M11
-     * resume gate here by validating the same CSB runtime payload, not
-     * just a header-shaped CSB save container.  CSBWin SaveGame.cpp
-     * stores a separate 512-byte GAMEBLOCK1 + body stream; accept it
-     * only after the checksum verifier can apply the bounded runtime
-     * handoff. */
+     * resume gate here by validating the unified CSB runtime payload:
+     * Firestaff-native saves, verified CSBWin GAMEBLOCK1/body saves, and
+     * raw CSBGAME roster handoffs all enter through the same loader. */
     rc = csb_v1_runtime_load_game_from_path(&profile, path);
-    if (rc != CSB_V1_LOAD_OK) {
-        rc = (csb_v1_runtime_apply_csbwin_resume_file(
-                  &profile, path, 0u) == 0)
-                 ? CSB_V1_LOAD_OK
-                 : rc;
-    }
     csb_v1_runtime_cleanup(&profile);
     return rc == CSB_V1_LOAD_OK;
 }
