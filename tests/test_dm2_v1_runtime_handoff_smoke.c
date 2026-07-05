@@ -43,6 +43,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
 {
     DM2_V1_BootProfile profile;
     DM2_V1_GameState *state;
+    DM2_V1_SessionState session;
 
     make_synthetic_verified_profile(&profile);
     CHECK(dm2_v1_boot_enter_game(&profile) == 0,
@@ -67,15 +68,38 @@ static void test_first_tick_after_boot_profile_handoff(void)
           dm2_v1_runtime_get_party_dir() == 0,
           "runtime accessors read the handoff party snapshot");
 
+    memset(&session, 0, sizeof(session));
+    dm2_v1_session_new(&session);
+    session.game_tick = 77;
+    session.party_level = 2;
+    session.party_x = 19;
+    session.party_y = 12;
+    session.party_dir = 3;
+    session.outdoor_mode = 1;
+    session.time_of_day_minutes = 1080;
+    session.rain_intensity = 64;
+    CHECK(dm2_v1_runtime_apply_session(&session) == 0,
+          "runtime accepts a bounded DM2 startup session after handoff");
+    CHECK(state->party_x == 19 && state->party_y == 12 &&
+          state->party_dir == 3 && state->current_level == 2 &&
+          state->outdoor == 1,
+          "session apply updates the boot-owned DM2 game state");
+    CHECK(dm2_v1_runtime_get_tick_count() == 77 &&
+          dm2_v1_runtime_get_party_x() == 19 &&
+          dm2_v1_runtime_get_party_y() == 12 &&
+          dm2_v1_runtime_get_party_dir() == 3,
+          "session apply updates runtime tick and party accessors");
+    CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_RAIN &&
+          dm2_v1_runtime_get_weather_intensity() == 64,
+          "session apply updates runtime weather state");
+
     dm2_v1_runtime_tick();
-    CHECK(dm2_v1_runtime_get_tick_count() == 1,
+    CHECK(dm2_v1_runtime_get_tick_count() == 78,
           "first deterministic DM2 V1 runtime tick is observable");
-    CHECK(dm2_v1_runtime_get_party_x() == 15 &&
-          dm2_v1_runtime_get_party_y() == 15 &&
-          dm2_v1_runtime_get_party_dir() == 0,
-          "first tick preserves the snapped launch party state");
-    CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_CLEAR,
-          "first indoor tick does not claim outdoor weather progression");
+    CHECK(dm2_v1_runtime_get_party_x() == 19 &&
+          dm2_v1_runtime_get_party_y() == 12 &&
+          dm2_v1_runtime_get_party_dir() == 3,
+          "first tick preserves the resumed snapped party state");
 
     dm2_v1_boot_cleanup(&profile);
 }

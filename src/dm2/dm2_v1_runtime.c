@@ -526,6 +526,81 @@ void dm2_v1_runtime_set_stairs_callback(DM2_V2_StairsCallback cb) {
     g_dm2_runtime.stairs_callback = cb;
 }
 
+/* ── Interaction / square helpers ─────────────────────────────────── */
+
+int dm2_v1_runtime_get_square_type(int level, int x, int y) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dd;
+
+    if (!rt->boot || !rt->boot->dungeon_data) return -1;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    return dm2_v1_dungeon_get_square_type(dd, level, x, y);
+}
+
+int dm2_v1_runtime_is_passable(int level, int x, int y) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dd;
+    int raw;
+    int tile_type;
+
+    if (!rt->boot || !rt->boot->dungeon_data) return 0;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
+    if (raw < 0) return 0;
+
+    tile_type = raw & 0x001F;
+    if (tile_type == 0 || tile_type == 5 ||
+        tile_type == 11 || tile_type == 13) {
+        return 0;
+    }
+    if (tile_type == 4 && (raw & 0x0007) != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+int dm2_v1_runtime_enter_shop(int level, int x, int y) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_GameState *gs;
+
+    if (!rt->boot || !rt->boot->dm2_state) return -1;
+    if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
+    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+    if (!rt->outdoor && !gs->outdoor) return -1;
+    gs->time_of_day = rt->time_of_day_minutes;
+    return 0;
+}
+
+int dm2_v1_runtime_npc_interact(int level, int x, int y) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_GameState *gs;
+
+    if (!rt->boot || !rt->boot->dm2_state) return -1;
+    if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
+    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+    if (!rt->outdoor && !gs->outdoor) return -1;
+    if (gs->reputation < 9999) {
+        gs->reputation++;
+    }
+    return 0;
+}
+
+int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
+                                   DM2_ActuatorType type, uint16_t flag) {
+    (void)flag;
+    if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
+    if (type == DM2_ACTUATOR_SHOP_PANEL) {
+        return dm2_v1_runtime_enter_shop(level, x, y);
+    }
+    if (type == DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH ||
+        type == DM2_ACTUATOR_WALL_SWITCH ||
+        type == DM2_ACTUATOR_2_STATE_WALL_SWITCH ||
+        type == DM2_ACTUATOR_DM1_WALL_SWITCH) {
+        return 0;
+    }
+    return 0;
+}
+
 /* ── Source evidence ──────────────────────────────────────────────── */
 
 const char *dm2_v1_runtime_source_evidence(void) {
