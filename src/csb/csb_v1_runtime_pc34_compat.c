@@ -22,6 +22,7 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
@@ -2319,6 +2320,7 @@ static void csb_v1_runtime_set_active_group_aspect_attacking(
     int level,
     int map_x,
     int map_y,
+    int creature_type,
     int creature_index,
     int attacking);
 static void csb_v1_runtime_compact_active_group_state_after_kill(
@@ -2520,6 +2522,7 @@ static void csb_v1_runtime_apply_creature_aspect_timeline_record(
                 record->mapIndex,
                 record->mapX,
                 record->mapY,
+                (int)thing_record[4],
                 creature_index,
                 0);
             csb_v1_runtime_schedule_c38_attack_event(
@@ -5441,10 +5444,14 @@ static void csb_v1_runtime_set_active_group_aspect_attacking(
     int level,
     int map_x,
     int map_y,
+    int creature_type,
     int creature_index,
     int attacking)
 {
     CSB_V1_RuntimeActiveGroupState *state;
+    struct RngState_Compat rng;
+    uint32_t seed;
+    int random_value;
 
     if (!profile || creature_index < 0 || creature_index > 3) return;
     state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
@@ -5458,13 +5465,36 @@ static void csb_v1_runtime_set_active_group_aspect_attacking(
             1);
     }
     if (!state) return;
-    if (attacking) {
-        state->aspect[creature_index] =
-            (uint8_t)(state->aspect[creature_index] | 0x80u);
-    } else {
-        state->aspect[creature_index] =
-            (uint8_t)(state->aspect[creature_index] & ~0x80u);
+
+    if (creature_type < 0 || creature_type >= DM1_CREATURE_TYPE_COUNT) {
+        if (attacking) {
+            state->aspect[creature_index] =
+                (uint8_t)(state->aspect[creature_index] | 0x80u);
+        } else {
+            state->aspect[creature_index] =
+                (uint8_t)(state->aspect[creature_index] & ~0x80u);
+        }
+        return;
     }
+
+    /* ReDMCSB GROUP.C F0179 lines 222-305 rewrites ActiveGroup.Aspect
+     * with horizontal/vertical offset bits plus attack/non-attack flip
+     * state, preserving only IS_ATTACKING and FLIP_BITMAP from the previous
+     * value before the update. Firestaff reuses the shared DM1/CSB creature
+     * graphic-info helper for that bit layout and keeps the RNG local to
+     * this bounded runtime slice. */
+    seed = profile->dungeon_seed ^
+           (uint32_t)(profile->game_time * 2654435761u) ^
+           ((uint32_t)group_thing << 10) ^
+           ((uint32_t)(creature_index & 3) << 4) ^
+           (attacking ? 0xA17Au : 0x51C3u);
+    F0730_COMBAT_RngInit_Compat(&rng, seed);
+    random_value = F0732_COMBAT_RngRandom_Compat(&rng, 65536);
+    state->aspect[creature_index] = dm1_creature_cycle_aspect_frame(
+        creature_type,
+        state->aspect[creature_index],
+        attacking,
+        random_value);
 }
 
 static void csb_v1_runtime_set_active_group_direction_all(
@@ -6591,6 +6621,7 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                 record->mapIndex,
                 record->mapX,
                 record->mapY,
+                (int)thing_record[4],
                 creature_index,
                 1);
             if ((int)thing_record[4] == DM1_CREATURE_TYPE_GIGGLER) {
