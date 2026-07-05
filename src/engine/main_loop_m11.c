@@ -22,7 +22,6 @@
 #include "dm1_v1_automap_pc34_compat.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "title_frontend_v1.h"
-#include "dm1_v1_save_load.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 #include "dm1_v1_vblank_timing.h"
@@ -2281,23 +2280,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_F5: {
                     /* F5 = quick save */
                     if (gameView && gameView->active) {
-                        char savePath[512];
-                        const char* sid = (gameView->sourceId[0] != '\0')
-                                         ? gameView->sourceId : "dm1";
-                        int rc = snprintf(savePath, sizeof(savePath),
-                                         "firestaff-%s-dm1save.sav", sid);
-                        if (rc > 0 && rc < (int)sizeof(savePath)) {
-                            int saveResult = DM1_SaveGame(&gameView->world,
-                                                         savePath,
-                                                         gameView->dm1GameID,
-                                                         1,
-                                                         gameView->dm1MusicOn);
-                            if (saveResult == DM1_SAVE_OK) {
-                                fprintf(stderr, "SAVE: saved to %s\n", savePath);
-                            } else {
-                                fprintf(stderr, "SAVE FAILED: %s\n",
-                                        DM1_SaveLoadErrorString(saveResult));
-                            }
+                        if (M11_GameView_QuickSave(gameView)) {
+                            fprintf(stderr, "SAVE: quicksave written\n");
+                        } else {
+                            fprintf(stderr, "SAVE FAILED: quicksave rejected\n");
                         }
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                     }
@@ -2306,21 +2292,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_F9: {
                     /* F9 = quick load */
                     if (gameView && gameView->active) {
-                        char savePath[512];
-                        const char* sid = (gameView->sourceId[0] != '\0')
-                                         ? gameView->sourceId : "dm1";
-                        snprintf(savePath, sizeof(savePath),
-                                "firestaff-%s-dm1save.sav", sid);
-                        int usedBackup = 0;
-                        if (M11_GameView_LoadDm1SavePath(gameView,
-                                                         savePath,
-                                                         &usedBackup)) {
-                            fprintf(stderr, "LOAD: loaded from %s%s\n",
-                                    savePath, usedBackup ? " (backup)" : "");
+                        if (M11_GameView_QuickLoad(gameView)) {
+                            fprintf(stderr, "LOAD: quicksave restored\n");
                             if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                         } else {
-                            fprintf(stderr, "LOAD FAILED: no save found at %s\n",
-                                    savePath);
+                            fprintf(stderr, "LOAD FAILED: quicksave rejected\n");
                         }
                     }
                     return M12_MENU_INPUT_NONE;
@@ -2611,23 +2587,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_F5: {
                     /* F5 = quick save */
                     if (gameView && gameView->active) {
-                        char savePath[512];
-                        const char* sid = (gameView->sourceId[0] != '\0')
-                                         ? gameView->sourceId : "dm1";
-                        int rc = snprintf(savePath, sizeof(savePath),
-                                         "firestaff-%s-dm1save.sav", sid);
-                        if (rc > 0 && rc < (int)sizeof(savePath)) {
-                            int saveResult = DM1_SaveGame(&gameView->world,
-                                                         savePath,
-                                                         gameView->dm1GameID,
-                                                         1,
-                                                         gameView->dm1MusicOn);
-                            if (saveResult == DM1_SAVE_OK) {
-                                fprintf(stderr, "SAVE: saved to %s\n", savePath);
-                            } else {
-                                fprintf(stderr, "SAVE FAILED: %s\n",
-                                        DM1_SaveLoadErrorString(saveResult));
-                            }
+                        if (M11_GameView_QuickSave(gameView)) {
+                            fprintf(stderr, "SAVE: quicksave written\n");
+                        } else {
+                            fprintf(stderr, "SAVE FAILED: quicksave rejected\n");
                         }
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                     }
@@ -2636,21 +2599,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_F9: {
                     /* F9 = quick load */
                     if (gameView && gameView->active) {
-                        char savePath[512];
-                        const char* sid = (gameView->sourceId[0] != '\0')
-                                         ? gameView->sourceId : "dm1";
-                        snprintf(savePath, sizeof(savePath),
-                                "firestaff-%s-dm1save.sav", sid);
-                        int usedBackup = 0;
-                        if (M11_GameView_LoadDm1SavePath(gameView,
-                                                         savePath,
-                                                         &usedBackup)) {
-                            fprintf(stderr, "LOAD: loaded from %s%s\n",
-                                    savePath, usedBackup ? " (backup)" : "");
+                        if (M11_GameView_QuickLoad(gameView)) {
+                            fprintf(stderr, "LOAD: quicksave restored\n");
                             if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                         } else {
-                            fprintf(stderr, "LOAD FAILED: no save found at %s\n",
-                                    savePath);
+                            fprintf(stderr, "LOAD FAILED: quicksave rejected\n");
                         }
                     }
                     return M12_MENU_INPUT_NONE;
