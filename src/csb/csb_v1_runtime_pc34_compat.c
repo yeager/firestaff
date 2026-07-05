@@ -100,6 +100,8 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     int level,
     int map_x,
     int map_y);
+static uint16_t csb_v1_runtime_csbwin_item16_group_thing(
+    uint16_t monster_index);
 
 typedef struct {
     const CSB_V1_RuntimeProfile *profile;
@@ -4534,9 +4536,53 @@ static int csb_v1_runtime_f0190_smoke_attack_for_creature(int creature_type)
     return 255;
 }
 
+static void csb_v1_runtime_write_f0190_flee_delay_to_item16(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int flee_delay)
+{
+    uint16_t i;
+    uint8_t delay;
+
+    if (!profile || flee_delay <= 0) return;
+    delay = (uint8_t)(flee_delay > 255 ? 255 : flee_delay);
+
+    for (i = 0u; i < profile->csbwin_runtime_item16_count; ++i) {
+        CSB_V1_CSBWinRuntimeItem16 *item =
+            &profile->csbwin_runtime_item16[i];
+        if (!item->valid ||
+            !item->live_ai_owned ||
+            item->live_ai_group_thing != group_thing ||
+            item->live_ai_map_index != level ||
+            item->live_ai_map_x != map_x ||
+            item->live_ai_map_y != map_y) {
+            continue;
+        }
+        item->delay_or_flee_timer = delay;
+    }
+
+    if (!profile->csbwin_body_runtime_summary_valid) return;
+    for (i = 0u; i < profile->csbwin_item16_summary_count; ++i) {
+        CSB_V1_CSBWin512Item16Summary *item =
+            &profile->csbwin_item16[i];
+        if (!item->valid ||
+            csb_v1_runtime_csbwin_item16_group_thing(item->monster_index) !=
+                group_thing ||
+            item->current_x != (uint8_t)map_x ||
+            item->current_y != (uint8_t)map_y) {
+            continue;
+        }
+        item->ubyte5 = delay;
+    }
+}
+
 static void csb_v1_runtime_apply_f0190_fear_after_partial_kill(
     CSB_V1_RuntimeProfile *profile,
     uint8_t *group_record,
+    uint16_t group_thing,
     uint16_t *inout_flags,
     int creature_type,
     int creature_count,
@@ -4564,10 +4610,10 @@ static void csb_v1_runtime_apply_f0190_fear_after_partial_kill(
     ctx.creatureInfo.properties = creature_profile->properties;
 
     /* ReDMCSB GROUP.C F0190 lines 887-890 tests fear only for attacking
-     * groups on the party map.  The original also stores DelayFleeingFromTarget
-     * on ACTIVE_GROUP; Firestaff's current CSB bridge owns the real-format
-     * GROUP record here, so this slice commits the source C5 flee behavior
-     * and leaves full active-group delay state for the broader AI runtime. */
+     * groups on the party map, stores DelayFleeingFromTarget on ACTIVE_GROUP,
+     * and switches GROUP.Behavior to C5.  Firestaff's CSB native active-group
+     * array is still bounded, but a CSBWin-imported ITEM16 record that has
+     * claimed this live C04 group is the matching active-monster side state. */
     if (F0821_DM1_GROUP_ShouldFrighten_Compat(
             &ctx,
             creature_count,
@@ -4575,9 +4621,15 @@ static void csb_v1_runtime_apply_f0190_fear_after_partial_kill(
             &should_flee,
             &flee_delay) &&
         should_flee) {
-        (void)flee_delay;
         *inout_flags = (uint16_t)((*inout_flags & ~(uint16_t)0x000Fu) | 5u);
         csb_v1_runtime_write_u16(group_record + 14, *inout_flags);
+        csb_v1_runtime_write_f0190_flee_delay_to_item16(
+            profile,
+            group_thing,
+            level,
+            map_x,
+            map_y,
+            flee_delay);
     }
 }
 
@@ -4708,6 +4760,7 @@ static void csb_v1_runtime_pack_dead_group_creature(
         csb_v1_runtime_apply_f0190_fear_after_partial_kill(
             profile,
             group_record,
+            group_thing,
             &flags,
             creature_type,
             creature_count,
