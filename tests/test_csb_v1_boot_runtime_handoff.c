@@ -437,7 +437,31 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
 
     csb_v1_util_flow_init(&ctx);
     csb_v1_util_flow_set_dm1_path(&ctx, save_path);
-    ctx.state = CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS;
+    csb_v1_util_flow_mark_utility_disk_verified(&ctx, 1);
+
+    CHECK(csb_v1_util_flow_step(&ctx) == 0,
+          "utility flow INIT enters the utility disk prompt");
+    CHECK(ctx.state == CSB_V1_UTIL_FLOW_INSERT_DISK,
+          "utility flow reaches INSERT_DISK before verification");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0,
+          "utility flow advances from disk prompt to verification");
+    CHECK(ctx.state == CSB_V1_UTIL_FLOW_VERIFY_DISK,
+          "utility flow reaches VERIFY_DISK");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0,
+          "verified startup utility disk advances to DISK_OK");
+    CHECK(ctx.state == CSB_V1_UTIL_FLOW_DISK_OK,
+          "utility flow preserves source-visible DISK_OK boundary");
+    CHECK(ctx.disk_result == CSB_V1_UTIL_DISK_OK,
+          "utility flow records an OK disk result from startup verification");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0,
+          "utility flow advances from DISK_OK to action selection");
+    CHECK(ctx.state == CSB_V1_UTIL_FLOW_SELECT_ACTION,
+          "utility flow reaches SELECT_ACTION from INIT path");
+    csb_v1_util_flow_set_action(&ctx, CSB_V1_UTIL_ACTION_IMPORT);
+    CHECK(csb_v1_util_flow_step(&ctx) == 0,
+          "utility flow import action enters IMPORT_CHAMPIONS");
+    CHECK(ctx.state == CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS,
+          "utility flow reaches IMPORT_CHAMPIONS from action selection");
 
     CHECK(csb_v1_util_flow_step(&ctx) == 0,
           "utility flow import step parses DM1 save");

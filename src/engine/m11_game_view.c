@@ -3929,7 +3929,23 @@ static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
      * by the launcher utility path. */
     csb_v1_util_flow_init(&flow);
     csb_v1_util_flow_set_dm1_path(&flow, path);
-    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    csb_v1_util_flow_mark_utility_disk_verified(&flow, 1);
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_INSERT_DISK) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_VERIFY_DISK) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_DISK_OK) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
+        return 0;
+    }
     csb_v1_util_flow_set_action(&flow, CSB_V1_UTIL_ACTION_IMPORT);
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS) {

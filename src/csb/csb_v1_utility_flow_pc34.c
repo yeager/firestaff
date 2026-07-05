@@ -71,8 +71,10 @@ void csb_v1_util_flow_init(CSB_V1_UtilFlowContext *ctx)
     ctx->disk_result = CSB_V1_UTIL_DISK_MISSING;
     ctx->attempts = 0;
     ctx->max_attempts = CSB_V1_UTIL_MAX_ATTEMPTS;
+    ctx->utility_disk_verified = 0;
     ctx->import_confirmed = 0;
     ctx->last_error = 0;
+    memset(ctx->utility_disk_path, 0, sizeof(ctx->utility_disk_path));
     memset(ctx->dm1_save_path, 0, sizeof(ctx->dm1_save_path));
     memset(ctx->csb_save_path, 0, sizeof(ctx->csb_save_path));
 }
@@ -142,6 +144,26 @@ void csb_v1_util_flow_set_csb_path(CSB_V1_UtilFlowContext *ctx,
     if (!ctx || !path) return;
     strncpy(ctx->csb_save_path, path, sizeof(ctx->csb_save_path) - 1);
     ctx->csb_save_path[sizeof(ctx->csb_save_path) - 1] = '\0';
+}
+
+void csb_v1_util_flow_set_utility_disk_path(CSB_V1_UtilFlowContext *ctx,
+                                            const char *path)
+{
+    if (!ctx || !path) return;
+    strncpy(ctx->utility_disk_path,
+            path,
+            sizeof(ctx->utility_disk_path) - 1);
+    ctx->utility_disk_path[sizeof(ctx->utility_disk_path) - 1] = '\0';
+}
+
+void csb_v1_util_flow_mark_utility_disk_verified(CSB_V1_UtilFlowContext *ctx,
+                                                 int verified)
+{
+    if (!ctx) return;
+    ctx->utility_disk_verified = verified ? 1 : 0;
+    if (ctx->utility_disk_verified) {
+        ctx->disk_result = CSB_V1_UTIL_DISK_OK;
+    }
 }
 
 /* ── Confirm import ─────────────────────────────────────────────────── */
@@ -230,20 +252,11 @@ static int do_import(CSB_V1_UtilFlowContext *ctx, CSB_V1_PartyState *party)
  *     INIT → INSERT_DISK → VERIFY_DISK → DISK_OK →
  *     SELECT_ACTION → (IMPORT_CHAMPIONS | LOAD_GAME | NEW_GAME) → DONE
  *
- *   In Firestaff, the "drive_path" for disk checks is simulated.
- *   On non-FDOS platforms, disk checks always succeed with a simulated disk.
+ *   Firestaff startup may mark the utility disk as already verified by the
+ *   asset scanner, or may pass an explicit utility disk/file path to check.
  */
 int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
 {
-    /* Simulated drive path for disk checks.
-     * On macOS/Linux, this path doesn't exist, so csb_v1_util_check_disk
-     * returns -1 (error), simulating no floppy drive.
-     *
-     * In a real Firestaff implementation, the UI would handle disk
-     * prompts via a file-picker dialog. The drive_path here is a
-     * placeholder for the platform-specific floppy/SD card path. */
-    static const char *simulated_drive_path = "/dev/sd0";
-
     if (!ctx) return -1;
 
     switch (ctx->state) {
@@ -272,14 +285,17 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
          * ReDMCSB F0428: RequireGameDiskInDrive
          * F0452: GetDiskTypeInDrive_CPSB returns CSB_V1_DISK_TYPE_UTILITY_DISK.
          *
-         * On desktop platforms (macOS, Linux, Windows without floppy),
-         * we simulate the disk check. The disk is "correct" if:
-         *   - drive_path is a real readable device with CSB_UTIL_DISK_SERIAL, OR
-         *   - drive_path is the simulated path "/dev/sd0" (always succeeds)
-         *
-         * In a real implementation, the UI would show a file-picker or
-         * path input. Here we use a simulated path. */
-        ctx->disk_result = check_disk_type(simulated_drive_path);
+         * Modern startup usually proves the required utility/media asset
+         * before this state machine runs.  In that case the UI marks the
+         * disk as verified and we keep the source-visible DISK_OK state
+         * transition without probing a nonexistent floppy device. */
+        if (ctx->utility_disk_verified) {
+            ctx->disk_result = CSB_V1_UTIL_DISK_OK;
+        } else if (ctx->utility_disk_path[0] != '\0') {
+            ctx->disk_result = check_disk_type(ctx->utility_disk_path);
+        } else {
+            ctx->disk_result = CSB_V1_UTIL_DISK_MISSING;
+        }
         ctx->attempts++;
 
         if (ctx->disk_result == CSB_V1_UTIL_DISK_OK) {

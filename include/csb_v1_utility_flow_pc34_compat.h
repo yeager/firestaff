@@ -60,8 +60,10 @@ typedef struct {
     CSB_V1_UtilDiskResult disk_result;  /* last disk check result */
     int                  attempts;     /* disk check attempts */
     int                  max_attempts; /* max disk check attempts (default 5) */
+    char                 utility_disk_path[256]; /* verified utility disk/file path */
     char                 dm1_save_path[256]; /* path to DM1 save for import */
     char                 csb_save_path[256]; /* path to CSB save */
+    int                  utility_disk_verified; /* startup/asset scanner already proved it */
     int                  import_confirmed; /* import confirmed by user */
     int                  last_error;    /* last error code */
     CSB_V1_PartyState    imported_party; /* full DM1-imported party preview/handoff */
@@ -88,6 +90,14 @@ void csb_v1_util_flow_set_dm1_path(CSB_V1_UtilFlowContext *ctx,
 /* ── Set CSB save path for load ─────────────────────────────────────── */
 void csb_v1_util_flow_set_csb_path(CSB_V1_UtilFlowContext *ctx,
                                      const char *path);
+
+/* Set an explicit CSB utility disk/file path for the disk-check phase. */
+void csb_v1_util_flow_set_utility_disk_path(CSB_V1_UtilFlowContext *ctx,
+                                            const char *path);
+
+/* Mark the utility disk as already verified by the launcher/asset scanner. */
+void csb_v1_util_flow_mark_utility_disk_verified(CSB_V1_UtilFlowContext *ctx,
+                                                 int verified);
 
 /* ── Confirm import (after showing preview) ────────────────────────── */
 void csb_v1_util_flow_confirm_import(CSB_V1_UtilFlowContext *ctx,
