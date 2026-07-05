@@ -1464,6 +1464,9 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     CHECK(expected_c38_poison == 0 &&
               profile.party_state.Champions[1].PoisonEventCount == 0,
           "bounded non-poison C38 attack leaves poison state clear");
+    CHECK(profile.active_group_state_count == 1u &&
+              (profile.active_group_state[0].aspect[0] & 0x80u) != 0u,
+          "bounded C38 attack sets native active-group attack aspect bit");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event queues the source C33 aspect wrapper");
     c33_event_index =
@@ -1484,6 +1487,9 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
                   DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
               dispatch.records[0].effect == 13,
           "bounded C33 aspect dispatch carries remaining C38 ticks");
+    CHECK(profile.active_group_state_count == 1u &&
+              (profile.active_group_state[0].aspect[0] & 0x80u) == 0u,
+          "bounded C33 aspect handoff clears native active-group attack aspect bit");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C33 aspect dispatch expands into the next C38 cadence");
     c38_event_index =
@@ -3156,6 +3162,10 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
     profile.active_group_state[0].home_map_x = 2;
     profile.active_group_state[0].home_map_y = 2;
     profile.active_group_state[0].last_move_time = 41u;
+    profile.active_group_state[0].aspect[0] = 0x80u;
+    profile.active_group_state[0].aspect[1] = 0x41u;
+    profile.active_group_state[0].aspect[2] = 0x02u;
+    profile.active_group_state[0].aspect[3] = 0x03u;
     profile.active_group_state[0].delay_fleeing_from_target = 77u;
 
     memset(&projectile_input, 0, sizeof(projectile_input));
@@ -3243,6 +3253,10 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
               loaded.active_group_state[0].prior_map_x == 1 &&
               loaded.active_group_state[0].home_map_y == 2 &&
               loaded.active_group_state[0].last_move_time == 41u &&
+              loaded.active_group_state[0].aspect[0] == 0x80u &&
+              loaded.active_group_state[0].aspect[1] == 0x41u &&
+              loaded.active_group_state[0].aspect[2] == 0x02u &&
+              loaded.active_group_state[0].aspect[3] == 0x03u &&
               loaded.active_group_state[0].delay_fleeing_from_target == 77u,
           "CSB runtime load restores native active-group side state");
     CHECK(count_queued_event_type(&loaded, DM1_EVENT_EXPLOSION) == 1,

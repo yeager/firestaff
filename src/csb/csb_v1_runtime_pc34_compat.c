@@ -255,7 +255,32 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 8u
+#define CSB_V1_RUNTIME_SAVE_VERSION 9u
+
+typedef struct {
+    int valid;
+    uint16_t group_thing;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint8_t delay_fleeing_from_target;
+} CSB_V1_RuntimeActiveGroupStateV7;
+
+typedef struct {
+    int valid;
+    uint16_t group_thing;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint8_t cells;
+    uint16_t directions;
+    int prior_map_x;
+    int prior_map_y;
+    int home_map_x;
+    int home_map_y;
+    uint32_t last_move_time;
+    uint8_t delay_fleeing_from_target;
+} CSB_V1_RuntimeActiveGroupStateV8;
 
 typedef struct {
     uint32_t magic;
@@ -325,7 +350,17 @@ typedef struct {
  * an older image; version 8 is the first one that preserves the wider table. */
 #define CSB_V1_RUNTIME_SAVE_V7_SIZE \
     (CSB_V1_RUNTIME_SAVE_V6_SIZE + 4u + \
-     (CSB_V1_RUNTIME_ACTIVE_GROUP_CAP * 24u))
+     (CSB_V1_RUNTIME_ACTIVE_GROUP_CAP * \
+      (uint32_t)sizeof(CSB_V1_RuntimeActiveGroupStateV7)))
+#define CSB_V1_RUNTIME_SAVE_V8_SIZE \
+    (CSB_V1_RUNTIME_SAVE_V6_SIZE + 4u + \
+     (CSB_V1_RUNTIME_ACTIVE_GROUP_CAP * \
+      (uint32_t)sizeof(CSB_V1_RuntimeActiveGroupStateV8)))
+
+_Static_assert(sizeof(CSB_V1_RuntimeActiveGroupStateV7) == 24u,
+               "CSB native save v7 active-group entry size drifted");
+_Static_assert(sizeof(CSB_V1_RuntimeActiveGroupStateV8) == 48u,
+               "CSB native save v8 active-group entry size drifted");
 
 static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
@@ -746,6 +781,117 @@ static int csb_v1_runtime_validate_active_group_state(
     return active == image->active_group_state_count;
 }
 
+static int csb_v1_runtime_active_group_state_entry_valid(
+    const CSB_V1_RuntimeActiveGroupState *state)
+{
+    if (!state) return 0;
+    if (!state->valid) return 1;
+    if (state->map_index < 0 ||
+        state->map_x < 0 ||
+        state->map_y < 0 ||
+        ((state->group_thing >> 10) & 0x0Fu) != 4u) {
+        return 0;
+    }
+    return 1;
+}
+
+static int csb_v1_runtime_apply_active_group_state_from_save_image(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeSaveImageV1 *image)
+{
+    uint16_t i;
+    uint16_t active = 0u;
+    const uint8_t *base;
+
+    if (!profile || !image) return -1;
+    profile->active_group_state_count = 0u;
+    memset(profile->active_group_state, 0,
+           sizeof(profile->active_group_state));
+
+    if (image->byte_size < CSB_V1_RUNTIME_SAVE_V6_SIZE + 4u) {
+        return 0;
+    }
+    if (image->active_group_state_count >
+        CSB_V1_RUNTIME_ACTIVE_GROUP_CAP) {
+        return -1;
+    }
+
+    base = ((const uint8_t *)image) +
+           offsetof(CSB_V1_RuntimeSaveImageV1, active_group_state);
+    if (image->version == 7u &&
+        image->byte_size == CSB_V1_RUNTIME_SAVE_V7_SIZE) {
+        const CSB_V1_RuntimeActiveGroupStateV7 *legacy =
+            (const CSB_V1_RuntimeActiveGroupStateV7 *)base;
+        for (i = 0u; i < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP; ++i) {
+            CSB_V1_RuntimeActiveGroupState *state =
+                &profile->active_group_state[i];
+            if (!legacy[i].valid) continue;
+            state->valid = legacy[i].valid;
+            state->group_thing = legacy[i].group_thing;
+            state->map_index = legacy[i].map_index;
+            state->map_x = legacy[i].map_x;
+            state->map_y = legacy[i].map_y;
+            state->prior_map_x = legacy[i].map_x;
+            state->prior_map_y = legacy[i].map_y;
+            state->home_map_x = legacy[i].map_x;
+            state->home_map_y = legacy[i].map_y;
+            state->delay_fleeing_from_target =
+                legacy[i].delay_fleeing_from_target;
+            if (!csb_v1_runtime_active_group_state_entry_valid(state)) {
+                return -1;
+            }
+            ++active;
+        }
+    } else if (image->version == 8u &&
+               image->byte_size == CSB_V1_RUNTIME_SAVE_V8_SIZE) {
+        const CSB_V1_RuntimeActiveGroupStateV8 *legacy =
+            (const CSB_V1_RuntimeActiveGroupStateV8 *)base;
+        for (i = 0u; i < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP; ++i) {
+            CSB_V1_RuntimeActiveGroupState *state =
+                &profile->active_group_state[i];
+            if (!legacy[i].valid) continue;
+            state->valid = legacy[i].valid;
+            state->group_thing = legacy[i].group_thing;
+            state->map_index = legacy[i].map_index;
+            state->map_x = legacy[i].map_x;
+            state->map_y = legacy[i].map_y;
+            state->cells = legacy[i].cells;
+            state->directions = legacy[i].directions;
+            state->prior_map_x = legacy[i].prior_map_x;
+            state->prior_map_y = legacy[i].prior_map_y;
+            state->home_map_x = legacy[i].home_map_x;
+            state->home_map_y = legacy[i].home_map_y;
+            state->last_move_time = legacy[i].last_move_time;
+            state->delay_fleeing_from_target =
+                legacy[i].delay_fleeing_from_target;
+            if (!csb_v1_runtime_active_group_state_entry_valid(state)) {
+                return -1;
+            }
+            ++active;
+        }
+    } else if (image->byte_size >=
+               offsetof(CSB_V1_RuntimeSaveImageV1, active_group_state) +
+                   sizeof(image->active_group_state)) {
+        if (!csb_v1_runtime_validate_active_group_state(image)) {
+            return -1;
+        }
+        profile->active_group_state_count =
+            image->active_group_state_count;
+        memcpy(profile->active_group_state,
+               image->active_group_state,
+               sizeof(profile->active_group_state));
+        return 0;
+    }
+
+    if (active != image->active_group_state_count) {
+        memset(profile->active_group_state, 0,
+               sizeof(profile->active_group_state));
+        return -1;
+    }
+    profile->active_group_state_count = active;
+    return 0;
+}
+
 static int csb_v1_runtime_apply_save_image(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_RuntimeSaveImageV1 *image,
@@ -766,6 +912,8 @@ static int csb_v1_runtime_apply_save_image(
            image->byte_size == CSB_V1_RUNTIME_SAVE_V6_SIZE) ||
           (image->version == 7u &&
            image->byte_size == CSB_V1_RUNTIME_SAVE_V7_SIZE) ||
+          (image->version == 8u &&
+           image->byte_size == CSB_V1_RUNTIME_SAVE_V8_SIZE) ||
           (image->version == CSB_V1_RUNTIME_SAVE_VERSION &&
            image->byte_size == sizeof(*image)))) {
         return -1;
@@ -882,21 +1030,10 @@ static int csb_v1_runtime_apply_save_image(
         memset(profile->csbwin_appended_tail, 0,
                sizeof(profile->csbwin_appended_tail));
     }
-    if (image->byte_size >=
-        offsetof(CSB_V1_RuntimeSaveImageV1, active_group_state) +
-            sizeof(image->active_group_state)) {
-        if (!csb_v1_runtime_validate_active_group_state(image)) {
-            return -1;
-        }
-        profile->active_group_state_count =
-            image->active_group_state_count;
-        memcpy(profile->active_group_state,
-               image->active_group_state,
-               sizeof(profile->active_group_state));
-    } else {
-        profile->active_group_state_count = 0u;
-        memset(profile->active_group_state, 0,
-               sizeof(profile->active_group_state));
+    if (csb_v1_runtime_apply_active_group_state_from_save_image(
+            profile,
+            image) != 0) {
+        return -1;
     }
 
     profile->party_state.PartyMapX = profile->party_x;
@@ -1993,6 +2130,23 @@ static int csb_v1_runtime_creature_attack_ticks(int creature_type)
     return (int)attack_ticks[creature_type];
 }
 
+static void csb_v1_runtime_set_active_group_aspect_attacking(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int creature_index,
+    int attacking);
+static void csb_v1_runtime_compact_active_group_aspect_after_kill(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int creature_index,
+    int creature_count);
+
 static void csb_v1_runtime_schedule_c37_group_event(
     CSB_V1_RuntimeProfile *profile,
     int map_index,
@@ -2135,8 +2289,17 @@ static void csb_v1_runtime_apply_creature_aspect_timeline_record(
              * aspect events by preparing the matching C38..C41 behavior
              * event.  F0208 lines 1820-1834 stores the remaining behavior
              * delay in C.Ticks; Firestaff's V1 queue carries it in
-             * c_effect/record->effect.  Live aspect sprite mutation remains
-             * a later ActiveGroup slice. */
+             * c_effect/record->effect.  Mirror the native ActiveGroup
+             * attack-bit transition here; broader flip/offset RNG remains a
+             * later sprite-exact slice. */
+            csb_v1_runtime_set_active_group_aspect_attacking(
+                profile,
+                (uint16_t)thing,
+                record->mapIndex,
+                record->mapX,
+                record->mapY,
+                creature_index,
+                0);
             csb_v1_runtime_schedule_c38_attack_event(
                 profile,
                 record->mapIndex,
@@ -4802,8 +4965,8 @@ static void csb_v1_runtime_sync_active_group_state_from_record(
     int existed;
 
     /* ReDMCSB GROUP.C F0183/F0184/F0200 keeps active-group Cells,
-     * Directions, GroupThingIndex, Prior/Home map coordinates, and
-     * LastMoveTime beside the raw C04 group record. */
+     * Directions, Aspect[4], GroupThingIndex, Prior/Home map coordinates,
+     * and LastMoveTime beside the raw C04 group record. */
     if (!profile || !group_record) return;
     flags = csb_v1_runtime_read_u16(group_record + 14);
     direction = (int)((flags >> 8) & 0x03u);
@@ -4841,6 +5004,66 @@ static void csb_v1_runtime_sync_active_group_state_from_record(
     state->last_move_time = moved
         ? profile->game_time
         : (profile->game_time >= 127u ? profile->game_time - 127u : 0u);
+}
+
+static void csb_v1_runtime_set_active_group_aspect_attacking(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int creature_index,
+    int attacking)
+{
+    CSB_V1_RuntimeActiveGroupState *state;
+
+    if (!profile || creature_index < 0 || creature_index > 3) return;
+    state = csb_v1_runtime_active_group_state_for(
+        profile,
+        group_thing,
+        level,
+        map_x,
+        map_y,
+        1);
+    if (!state) return;
+    if (attacking) {
+        state->aspect[creature_index] =
+            (uint8_t)(state->aspect[creature_index] | 0x80u);
+    } else {
+        state->aspect[creature_index] =
+            (uint8_t)(state->aspect[creature_index] & ~0x80u);
+    }
+}
+
+static void csb_v1_runtime_compact_active_group_aspect_after_kill(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int creature_index,
+    int creature_count)
+{
+    CSB_V1_RuntimeActiveGroupState *state;
+    int i;
+
+    if (!profile || creature_index < 0 || creature_index >= creature_count) {
+        return;
+    }
+    state = csb_v1_runtime_active_group_state_for(
+        profile,
+        group_thing,
+        level,
+        map_x,
+        map_y,
+        0);
+    if (!state) return;
+    for (i = creature_index; i < creature_count - 1 && i < 3; ++i) {
+        state->aspect[i] = state->aspect[i + 1];
+    }
+    if (creature_count > 0 && creature_count <= 4) {
+        state->aspect[creature_count - 1] = 0u;
+    }
 }
 
 static void csb_v1_runtime_write_f0190_flee_delay_to_active_group(
@@ -5115,8 +5338,17 @@ static void csb_v1_runtime_pack_dead_group_creature(
 
     /* ReDMCSB GROUP.C F0190 lines 892-905 compacts Health, directions,
      * cells, active aspect, then decrements GROUP.Count.  CSB's bounded
-     * real-format bridge owns Health and Cells here; directions/aspect event
-     * rewriting remain with the wider active-group runtime work. */
+     * real-format bridge owns Health/Cells and mirrors native active-group
+     * Aspect compaction here; broader direction writeback remains with the
+     * wider active-group runtime work. */
+    csb_v1_runtime_compact_active_group_aspect_after_kill(
+        profile,
+        group_thing,
+        level,
+        map_x,
+        map_y,
+        creature_index,
+        creature_count);
     for (i = creature_index; i < creature_count - 1; ++i) {
         uint16_t next_hp =
             csb_v1_runtime_read_u16(group_record + 6 + (i + 1) * 2);
@@ -5627,6 +5859,14 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     csb_v1_runtime_first_living_champion(&profile->party_state);
             }
             if (champion_index < 0) return;
+            csb_v1_runtime_set_active_group_aspect_attacking(
+                profile,
+                (uint16_t)thing,
+                record->mapIndex,
+                record->mapX,
+                record->mapY,
+                creature_index,
+                1);
             if ((int)thing_record[4] == DM1_CREATURE_TYPE_GIGGLER) {
                 (void)csb_v1_runtime_apply_giggler_steal_timeline_record(
                     profile,
