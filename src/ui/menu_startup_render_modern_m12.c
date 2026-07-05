@@ -2075,7 +2075,9 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
             break;
         case M12_MENU_VIEW_MESSAGE:
             draw_message_view(&c, state);
-            footerLeft = "ENTER OR ESC RETURNS TO MENU";
+            footerLeft = state->dataDirScanActive
+                             ? "ENTER OR ESC CANCELS SCAN"
+                             : "ENTER OR ESC RETURNS TO MENU";
             break;
         case M12_MENU_VIEW_MAIN:
         default:

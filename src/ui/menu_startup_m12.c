@@ -1428,6 +1428,8 @@ static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
     }
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_enter_message_view(state);
+    state->messageReturnView = M12_MENU_VIEW_MAIN;
+    state->messageReturnNavLevel = (int)M12_NAV_MAIN;
     m12_set_buffered_message(state,
                              changed ? m12_tr(state, "DATA DIRECTORY UPDATED")
                                      : m12_tr(state, "DATA DIRECTORY UNCHANGED"),
@@ -1435,8 +1437,53 @@ static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
                              line3);
 }
 
+static void m12_format_data_scan_progress_line(
+    const M12_AssetScanProgress* progress,
+    char* out,
+    size_t outSize) {
+    size_t pct = 0U;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (progress && progress->totalSteps > 0U) {
+        pct = (progress->completedSteps * 100U) / progress->totalSteps;
+        if (pct > 100U) {
+            pct = 100U;
+        }
+    }
+    if (progress && progress->currentGameId[0] != '\0') {
+        snprintf(out, outSize, "%s %zu%%  %s",
+                 progress->currentGameId, pct, progress->currentTask);
+    } else if (progress && progress->currentTask[0] != '\0') {
+        snprintf(out, outSize, "%zu%%  %s", pct, progress->currentTask);
+    } else {
+        snprintf(out, outSize, "%zu%%", pct);
+    }
+}
+
+static int m12_data_dir_scan_progress_callback(
+    const M12_AssetScanProgress* progress,
+    void* userData) {
+    M12_StartupMenuState* state = (M12_StartupMenuState*)userData;
+    char line2[256];
+    char line3[160];
+    if (!state || !progress) {
+        return 1;
+    }
+    state->dataDirScanProgress = *progress;
+    m12_format_data_scan_progress_line(progress, line2, sizeof(line2));
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    m12_set_buffered_message(state,
+                             m12_tr(state, "SCANNING GAME DATA"),
+                             line2,
+                             line3);
+    return state->dataDirScanCancelRequested ? 0 : 1;
+}
+
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir) {
+    M12_AssetStatusScanOptions scanOptions;
+    int scanOk;
     if (!state || !dataDir || dataDir[0] == '\0') {
         return 0;
     }
@@ -1450,7 +1497,35 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                  line3);
         return 0;
     }
-    M12_AssetStatus_Scan(&state->assetStatus, dataDir);
+    state->dataDirScanActive = 1;
+    state->dataDirScanCancelRequested = 0;
+    state->dataDirScanCancelled = 0;
+    memset(&state->dataDirScanProgress, 0, sizeof(state->dataDirScanProgress));
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_tr(state, "SCANNING GAME DATA"),
+                             m12_tr(state, "STARTING"),
+                             dataDir);
+    memset(&scanOptions, 0, sizeof(scanOptions));
+    scanOptions.progressFn = m12_data_dir_scan_progress_callback;
+    scanOptions.progressUserData = state;
+    scanOptions.cancelFlag = &state->dataDirScanCancelRequested;
+    scanOk = M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                             dataDir,
+                                             &scanOptions);
+    state->dataDirScanProgress = *M12_AssetStatus_GetScanProgress(&state->assetStatus);
+    state->dataDirScanActive = 0;
+    state->dataDirScanCancelled = scanOk ? 0 : state->dataDirScanProgress.cancelled;
+    if (!scanOk && state->dataDirScanCancelled) {
+        char line3[160];
+        m12_format_data_dir_line(state, line3, sizeof(line3));
+        m12_enter_message_view(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "DATA SCAN CANCELLED"),
+                                 m12_tr(state, "GAME AVAILABILITY WAS NOT UPDATED"),
+                                 line3);
+        return 0;
+    }
     m12_sync_entries_from_assets(state);
     m12_publish_game_availability(state);
     m12_sync_card_art(state);
@@ -2299,6 +2374,10 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine3 = "";
     state->messageReturnView = M12_MENU_VIEW_MAIN;
     state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    state->dataDirScanActive = 0;
+    state->dataDirScanCancelRequested = 0;
+    state->dataDirScanCancelled = 0;
+    memset(&state->dataDirScanProgress, 0, sizeof(state->dataDirScanProgress));
     m12_show_no_game_data_popup(state);
     state->frameTick = 0;
     state->hoverX = -1;
@@ -3287,6 +3366,20 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
 
     if (state->view == M12_MENU_VIEW_MESSAGE) {
         if (state->dataDirPickerActive) {
+            return;
+        }
+        if (state->dataDirScanActive) {
+            if (input == M12_MENU_INPUT_BACK ||
+                input == M12_MENU_INPUT_ACCEPT ||
+                input == M12_MENU_INPUT_ACTION) {
+                state->dataDirScanCancelRequested = 1;
+                M12_AssetStatus_RequestCancel(&state->assetStatus);
+                m12_set_buffered_message(
+                    state,
+                    m12_tr(state, "CANCELLING DATA SCAN"),
+                    m12_tr(state, "WAITING FOR CURRENT FILE CHECK TO FINISH"),
+                    state->messageLine3);
+            }
             return;
         }
         if (input == M12_MENU_INPUT_BACK ||
@@ -5647,7 +5740,7 @@ static void m12_draw_message_view(const M12_StartupMenuState* state,
                            framebufferWidth,
                            framebufferHeight,
                            150,
-                           "OK",
+                           state->dataDirScanActive ? "CANCEL" : "OK",
                            &g_textSmallAccent);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
@@ -8043,7 +8136,7 @@ static void m12_draw_message_view_modern(const M12_StartupMenuState* state,
                   framebufferHeight,
                   boxX + 190,
                   contentY + 111,
-                  "OK",
+                  state->dataDirScanActive ? "CANCEL" : "OK",
                   &g_textSmallAccent);
     m12_draw_footer(framebuffer,
                     framebufferWidth,

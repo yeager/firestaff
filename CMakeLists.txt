@@ -24794,6 +24794,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_no_data_popup_once_gate.c"
     )
 endif()
 
+# M12 data-directory picker/scan cancel gate: regression for cancelling the
+# native folder picker and for mapping message-view Enter/Esc to scan cancel
+# while a game-data scan is active.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_data_dir_cancel.c")
+    add_executable(test_m12_data_dir_cancel
+        tests/test_m12_data_dir_cancel.c
+    )
+    target_link_libraries(test_m12_data_dir_cancel PRIVATE firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m12_data_dir_cancel PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_data_dir_cancel
+        COMMAND test_m12_data_dir_cancel
+    )
+endif()
+
 # M11 gameplay-side screen reader / accessibility state manifest
 # regression. Pins the new m11_screen_reader_update_ex() surface
 # (include/m11_game_view_a11y.h + src/engine/m11_game_view_a11y.c)

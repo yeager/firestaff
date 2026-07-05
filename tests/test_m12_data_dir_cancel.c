@@ -184,6 +184,8 @@ static void check_cancel_preserves_no_data_state(void) {
     CHECK(dialogCalls == 1);
     CHECK(strcmp(dialogDefaultLocation, beforeDataDir) == 0);
     CHECK(state.dataDirPickerActive == 0);
+    CHECK(state.dataDirScanActive == 0);
+    CHECK(state.dataDirScanCancelRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") == 0);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), beforeDataDir) == 0);
@@ -245,6 +247,7 @@ static void check_active_picker_blocks_message_reentry(void) {
     CHECK(dialogPendingCallback != NULL);
     CHECK(dialogPendingUserdata == &state);
     CHECK(state.dataDirPickerActive == 1);
+    CHECK(state.dataDirScanActive == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "CHOOSE GAME DATA FOLDER") == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
@@ -265,6 +268,8 @@ static void check_active_picker_blocks_message_reentry(void) {
 
     complete_pending_dialog_cancel();
     CHECK(state.dataDirPickerActive == 0);
+    CHECK(state.dataDirScanActive == 0);
+    CHECK(state.dataDirScanCancelRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
@@ -275,10 +280,39 @@ static void check_active_picker_blocks_message_reentry(void) {
     CHECK(state.quickResumeLaunchRequested == 0);
 }
 
+static void check_active_scan_message_requests_cancel(void) {
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    if (failures) {
+        return;
+    }
+
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+
+    state.view = M12_MENU_VIEW_MESSAGE;
+    state.messageReturnView = M12_MENU_VIEW_SETTINGS;
+    state.dataDirScanActive = 1;
+    state.dataDirScanCancelRequested = 0;
+    state.dataDirScanCancelled = 0;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.dataDirScanActive == 1);
+    CHECK(state.dataDirScanCancelRequested == 1);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "CANCELLING DATA SCAN") == 0);
+}
+
 int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
     check_cancel_preserves_no_data_state();
     check_active_picker_blocks_message_reentry();
+    check_active_scan_message_requests_cancel();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
