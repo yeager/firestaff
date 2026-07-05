@@ -3,6 +3,7 @@
 
 #include "menu_startup_m12.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 /*
@@ -141,6 +142,16 @@ int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
 
 /* Runtime keyboard guard for the current click-only entrance semantics. */
 int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode);
+
+/* Resolve the save path used by the DM1 entrance RESUME button.  The launcher
+   may already have a validated quick-resume path; use it for DM1 before
+   falling back to the historical source-id quicksave filename. */
+int M11_Entrance_ResolveDm1ResumeSavePath(const char* sourceId,
+                                          int quickResumeAvailable,
+                                          const char* quickResumeGameId,
+                                          const char* quickResumeSavePath,
+                                          char* outPath,
+                                          size_t outPathBytes);
 
 #ifdef __cplusplus
 }

@@ -35,6 +35,30 @@ static int expect_key(const char* label, int key, int want) {
     return 1;
 }
 
+static int expect_resume_path(const char* label,
+                              const char* sourceId,
+                              int quickAvailable,
+                              const char* quickGameId,
+                              const char* quickPath,
+                              const char* want) {
+    char path[512];
+    int got;
+    memset(path, 0, sizeof(path));
+    got = M11_Entrance_ResolveDm1ResumeSavePath(sourceId,
+                                                quickAvailable,
+                                                quickGameId,
+                                                quickPath,
+                                                path,
+                                                sizeof(path));
+    if (!got || strcmp(path, want) != 0) {
+        fprintf(stderr, "%s: got ok=%d path=%s want=%s\n",
+                label, got, path, want);
+        return 0;
+    }
+    printf("%s=%s\n", label, path);
+    return 1;
+}
+
 int main(void) {
     const char* evidence = ENTRANCE_Compat_GetMouseRouteEvidence();
     int ok = 1;
@@ -79,6 +103,32 @@ int main(void) {
                      M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
     ok &= expect_key("escape_quit", SDLK_ESCAPE,
                      M11_ENTRANCE_RUNTIME_COMMAND_QUIT);
+
+    ok &= expect_resume_path("resume_dm1_quick_path",
+                             "dm1",
+                             1,
+                             "dm1",
+                             "/tmp/firestaff-dm1-current.sav",
+                             "/tmp/firestaff-dm1-current.sav");
+    ok &= expect_resume_path("resume_foreign_quick_path_ignored",
+                             "dm1",
+                             1,
+                             "csb",
+                             "/tmp/csb-save.sav",
+                             "firestaff-dm1-dm1save.sav");
+    ok &= expect_resume_path("resume_default_source_id",
+                             "",
+                             0,
+                             NULL,
+                             NULL,
+                             "firestaff-dm1-dm1save.sav");
+    {
+        char tiny[8];
+        memset(tiny, 0, sizeof(tiny));
+        ok &= M11_Entrance_ResolveDm1ResumeSavePath(
+                  "dm1", 1, "dm1", "/tmp/too-long-for-buffer.sav",
+                  tiny, sizeof(tiny)) == 0;
+    }
 
     printf("entranceRuntimeDispatchInvariantOk=%d\n", ok);
     return ok ? 0 : 1;

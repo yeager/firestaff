@@ -679,6 +679,32 @@ int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
     }
 }
 
+int M11_Entrance_ResolveDm1ResumeSavePath(const char* sourceId,
+                                          int quickResumeAvailable,
+                                          const char* quickResumeGameId,
+                                          const char* quickResumeSavePath,
+                                          char* outPath,
+                                          size_t outPathBytes) {
+    const char* sid;
+    int rc;
+    if (!outPath || outPathBytes == 0U) {
+        return 0;
+    }
+    outPath[0] = '\0';
+    sid = (sourceId && sourceId[0] != '\0') ? sourceId : "dm1";
+    if (quickResumeAvailable &&
+        quickResumeGameId && strcmp(quickResumeGameId, "dm1") == 0 &&
+        quickResumeSavePath && quickResumeSavePath[0] != '\0') {
+        rc = snprintf(outPath, outPathBytes, "%s", quickResumeSavePath);
+        return rc > 0 && rc < (int)outPathBytes;
+    }
+    /* ReDMCSB COMMAND.C M566 enters saved-game load from the entrance.  This
+     * fallback preserves Firestaff's pre-existing source-id quicksave name
+     * for users who have no launcher-resolved quick resume path. */
+    rc = snprintf(outPath, outPathBytes, "firestaff-%s-dm1save.sav", sid);
+    return rc > 0 && rc < (int)outPathBytes;
+}
+
 static M11_EntranceCommand m11_entrance_command_path_from_source_command(int commandId) {
     switch (commandId) {
     case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON:
@@ -1474,20 +1500,25 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             }
             if (entranceResult == M11_ENTRANCE_COMMAND_RESUME) {
                 /* ReDMCSB COMMAND.C M566: RESUME loads the saved game.
-                 * Look for save file matching this game's source id. */
+                 * Prefer the launcher's already validated DM1 quick-resume
+                 * path, then fall back to Firestaff's historical source-id
+                 * save filename. */
                 char savePath[512];
-                const char* sid = (gameView->sourceId[0] != '\0')
-                                  ? gameView->sourceId : "dm1";
                 int usedBackup = 0;
-                int rc = snprintf(savePath, sizeof(savePath),
-                                  "firestaff-%s-dm1save.sav", sid);
-                if (rc > 0 && rc < (int)sizeof(savePath) &&
+                if (M11_Entrance_ResolveDm1ResumeSavePath(
+                        gameView->sourceId,
+                        menuState->quickResumeAvailable,
+                        menuState->quickResumeGameId,
+                        menuState->quickResumeSavePath,
+                        savePath,
+                        sizeof(savePath)) &&
                     M11_GameView_LoadDm1SavePath(gameView, savePath, &usedBackup)) {
                     gameView->active = 1;
                     fprintf(stderr, "RESUME: loaded save from %s%s\n", savePath,
                             usedBackup ? " backup" : "");
                 } else {
-                    fprintf(stderr, "RESUME: no save found at %s, starting new game\n", savePath);
+                    fprintf(stderr, "RESUME: no save found at %s, starting new game\n",
+                            savePath[0] ? savePath : "(unresolved)");
                 }
             } else if (!entranceResult) {
                 /* Non-fatal: skip entrance animation but continue to game.
