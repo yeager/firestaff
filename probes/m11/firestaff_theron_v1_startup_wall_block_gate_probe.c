@@ -124,9 +124,9 @@ static void record(InvTally* t, const char* id, int ok, const char* msg) {
  * same byte stream so the room semantics are byte-identical and the
  * wall-block boundary can be proven without real Track 02 data.
  *
- *   bytes 0-1:  width  = 8  (LE)
- *   bytes 2-3:  height = 8  (LE)
- *   bytes 4-7:  dungeon_seed = 0x00000139 (313)
+ *   bytes 0-1:  width  = 8  (BE, theron_v1_world.c rb16)
+ *   bytes 2-3:  height = 8  (BE, theron_v1_world.c rb16)
+ *   bytes 4-7:  dungeon_seed = 0x00000139 (BE, theron_v1_world.c rb32)
  *   bytes 8-9:  level_index  = 0
  *   bytes 10-11: reserved     = 0
  *   bytes 12+:  8x8 grid:
@@ -136,9 +136,9 @@ static void record(InvTally* t, const char* id, int ok, const char* msg) {
  */
 static const uint8_t kStartupLevelData[12 + 8 * 8] = {
     /* header */
-    0x08, 0x00,                                     /* width  = 8 LE */
-    0x08, 0x00,                                     /* height = 8 LE */
-    0x39, 0x01, 0x00, 0x00,                         /* seed   = 313 LE */
+    0x00, 0x08,                                     /* width  = 8 BE */
+    0x00, 0x08,                                     /* height = 8 BE */
+    0x00, 0x00, 0x01, 0x39,                         /* seed   = 313 BE */
     0x00, 0x00,                                     /* level_index = 0 */
     0x00, 0x00,                                     /* reserved    = 0 */
     /* grid (8 rows of 8) */
