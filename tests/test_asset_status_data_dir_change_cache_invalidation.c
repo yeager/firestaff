@@ -144,6 +144,31 @@ static int setup_theron_dir(const char* root,
     return 1;
 }
 
+static int setup_dm1_recommended_dir(const char* root,
+                                     char* outGraphicsPath,
+                                     size_t outGraphicsPathSize,
+                                     char* outGraphicsMd5,
+                                     char* outDungeonPath,
+                                     size_t outDungeonPathSize,
+                                     char* outDungeonMd5) {
+    char dm1Dir[M12_ASSET_DATA_DIR_CAPACITY];
+    static const char graphicsPayload[] =
+        "Firestaff synthetic DM1 GRAPHICS.DAT fixture for recommended layout\n";
+    static const char dungeonPayload[] =
+        "Firestaff synthetic DM1 DUNGEON.DAT fixture for recommended layout\n";
+    if (!FSP_JoinPath(dm1Dir, sizeof(dm1Dir), root, "dm1") ||
+        !FSP_CreateDirectoryRecursive(dm1Dir) ||
+        !FSP_JoinPath(outGraphicsPath, outGraphicsPathSize, dm1Dir, "GRAPHICS.DAT") ||
+        !FSP_JoinPath(outDungeonPath, outDungeonPathSize, dm1Dir, "DUNGEON.DAT") ||
+        !write_text(outGraphicsPath, graphicsPayload) ||
+        !write_text(outDungeonPath, dungeonPayload) ||
+        !m12_file_md5_hex(outGraphicsPath, outGraphicsMd5) ||
+        !m12_file_md5_hex(outDungeonPath, outDungeonMd5)) {
+        return 0;
+    }
+    return 1;
+}
+
 static void check_no_game_available(const M12_AssetStatus* status) {
     static const char* const gameIds[] = {"dm1", "csb", "dm2", "nexus", "theron"};
     size_t gi;
@@ -490,6 +515,78 @@ static void check_legacy_fallback_dir_refreshes(const char* homeRoot,
     }
 }
 
+#ifndef _WIN32
+static void check_symlinked_recommended_dm1_layout(const char* homeRoot) {
+    char targetRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char linkRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char expectedGraphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char expectedDungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char expectedDm1Dir[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    M12_AssetStatus status;
+    const M12_AssetRequiredFileStatus* graphicsRequired = NULL;
+    const M12_AssetRequiredFileStatus* dungeonRequired = NULL;
+    size_t i;
+    size_t count;
+
+    if (!FSP_JoinPath(targetRoot, sizeof(targetRoot), homeRoot, "dm1-symlink-target") ||
+        !FSP_CreateDirectoryRecursive(targetRoot) ||
+        !FSP_JoinPath(linkRoot, sizeof(linkRoot), homeRoot, "dm1-symlink-data") ||
+        !setup_dm1_recommended_dir(targetRoot,
+                                   graphicsPath, sizeof(graphicsPath), graphicsMd5,
+                                   dungeonPath, sizeof(dungeonPath), dungeonMd5)) {
+        fprintf(stderr, "FAIL: cannot seed symlink DM1 recommended-layout fixture\n");
+        ++g_failures;
+        return;
+    }
+    unlink(linkRoot);
+    if (symlink(targetRoot, linkRoot) != 0) {
+        fprintf(stderr, "FAIL: cannot create symlinked DM1 data root\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
+    memset(&status, 0, sizeof(status));
+    scan_in_isolated_env(homeRoot, linkRoot, &status);
+    if (!FSP_JoinPath(expectedDm1Dir, sizeof(expectedDm1Dir), linkRoot, "dm1") ||
+        !FSP_JoinPath(expectedGraphicsPath, sizeof(expectedGraphicsPath),
+                      expectedDm1Dir, "GRAPHICS.DAT") ||
+        !FSP_JoinPath(expectedDungeonPath, sizeof(expectedDungeonPath),
+                      expectedDm1Dir, "DUNGEON.DAT")) {
+        fprintf(stderr, "FAIL: cannot build expected symlink DM1 paths\n");
+        ++g_failures;
+        return;
+    }
+
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm1") == 1,
+              "symlink DM1 recommended layout must be available");
+    count = M12_AssetStatus_GetRequiredFileCount(&status, "dm1");
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetRequiredFileStatus* r =
+            M12_AssetStatus_GetRequiredFile(&status, "dm1", i);
+        if (r && r->roleId && strcmp(r->roleId, "graphics") == 0) {
+            graphicsRequired = r;
+        } else if (r && r->roleId && strcmp(r->roleId, "dungeon") == 0) {
+            dungeonRequired = r;
+        }
+    }
+    check_int(graphicsRequired && graphicsRequired->matched &&
+              strcmp(graphicsRequired->matchedPath, expectedGraphicsPath) == 0,
+              "symlink DM1 graphics must resolve through data/dm1/GRAPHICS.DAT");
+    check_int(dungeonRequired && dungeonRequired->matched &&
+              strcmp(dungeonRequired->matchedPath, expectedDungeonPath) == 0,
+              "symlink DM1 dungeon must resolve through data/dm1/DUNGEON.DAT");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1"), linkRoot) == 0,
+              "symlink DM1 runtime root must stay on requested data root");
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+#endif
+
 int main(void) {
     char home[M12_ASSET_DATA_DIR_CAPACITY];
     char dirA[M12_ASSET_DATA_DIR_CAPACITY];
@@ -518,8 +615,12 @@ int main(void) {
     check_round_trip_resolves_new_path(home, dirA, dirB);
     check_different_payload_different_hash(home, dirA, dirC);
     check_legacy_fallback_dir_refreshes(home, dirA, dirB);
+#ifndef _WIN32
+    check_symlinked_recommended_dm1_layout(home);
+#endif
 
     /* Release all test hooks. */
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetTheronSyntheticHash(NULL);
     test_setenv("FIRESTAFF_DATA", NULL);
     test_setenv("XDG_DATA_HOME", NULL);

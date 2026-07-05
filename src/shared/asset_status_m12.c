@@ -537,6 +537,47 @@ static int m12_path_tail_equals(const char* path, const char* name) {
     return m12_ascii_equals_ignore_case(m12_basename_ptr(path), name);
 }
 
+static const char* const* m12_fast_candidate_subdirs_for_game(const char* gameId) {
+    static const char* const dm1Subdirs[] = {"dm1", "dm1-multilingual", "", NULL};
+    static const char* const csbSubdirs[] = {"csb", "", NULL};
+    static const char* const dm2Subdirs[] = {"dm2", "", NULL};
+    static const char* const nexusSubdirs[] = {"nexus", "", NULL};
+    static const char* const theronSubdirs[] = {"theron", "theron/jp", "theron/us", "", NULL};
+    if (!gameId) {
+        return NULL;
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return dm1Subdirs;
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return csbSubdirs;
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return dm2Subdirs;
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return nexusSubdirs;
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return theronSubdirs;
+    }
+    return NULL;
+}
+
+static int m12_join_optional_subdir(char* out,
+                                    size_t outSize,
+                                    const char* root,
+                                    const char* subdir) {
+    if (!out || outSize == 0U || !root || root[0] == '\0') {
+        return 0;
+    }
+    if (!subdir || subdir[0] == '\0') {
+        m12_copy_string(out, outSize, root);
+        return 1;
+    }
+    return FSP_JoinPath(out, outSize, root, subdir);
+}
+
 static int m12_path_is_virtual_asset(const char* path) {
     return path && strstr(path, "::") != NULL;
 }
@@ -982,6 +1023,55 @@ static int m12_try_match_version(const char* root,
     return 1;
 }
 
+static int m12_try_match_version_fast_candidates(
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount,
+    const M12_VersionSpec* spec,
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
+    char matchedMd5[M12_ASSET_MD5_CAPACITY],
+    size_t* matchedRootIndex) {
+    const char* const* subdirs;
+    const char* md5 = m12_effective_version_md5(spec);
+    size_t rootIndex;
+    if (matchedRootIndex) {
+        *matchedRootIndex = rootCount;
+    }
+    if (!roots || !spec || !spec->names || !md5 || md5[0] == '\0') {
+        return 0;
+    }
+    subdirs = m12_fast_candidate_subdirs_for_game(spec->gameId);
+    if (!subdirs) {
+        return 0;
+    }
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        size_t subdirIndex;
+        for (subdirIndex = 0U; subdirs[subdirIndex] != NULL; ++subdirIndex) {
+            char dir[M12_ASSET_DATA_DIR_CAPACITY];
+            size_t nameIndex;
+            if (!m12_join_optional_subdir(dir, sizeof(dir),
+                                          roots[rootIndex],
+                                          subdirs[subdirIndex])) {
+                continue;
+            }
+            for (nameIndex = 0U; spec->names[nameIndex] != NULL; ++nameIndex) {
+                char path[M12_ASSET_DATA_DIR_CAPACITY];
+                if (!FSP_JoinPath(path, sizeof(path), dir, spec->names[nameIndex])) {
+                    continue;
+                }
+                if (m12_file_md5_matches_spec(path, md5)) {
+                    m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+                    m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5);
+                    if (matchedRootIndex) {
+                        *matchedRootIndex = rootIndex;
+                    }
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static int m12_theron_version_index_for_md5(const char* md5) {
     size_t i;
     if (!md5) {
@@ -1175,28 +1265,54 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
     }
     memset(rootMatchedPaths, 0, sizeof(rootMatchedPaths));
     memset(rootMatched, 0, sizeof(rootMatched));
-    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        const char* md5List[M12_ASSET_MAX_VERSIONS_PER_GAME + 1U];
-        size_t md5Index;
-        size_t md5Count;
-        for (md5Index = 0U;
-             md5Index < gameSpec->versionCount &&
-             md5Index < M12_ASSET_MAX_VERSIONS_PER_GAME;
-             ++md5Index) {
-            md5List[md5Index] = m12_effective_version_md5(&gameSpec->versions[md5Index]);
+    for (i = 0U; i < gameSpec->versionCount; ++i) {
+        size_t fastRootIndex = rootCount;
+        char fastPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char fastMd5[M12_ASSET_MD5_CAPACITY];
+        if (i >= M12_ASSET_MAX_VERSIONS_PER_GAME) {
+            break;
         }
-        md5Count = md5Index;
-        md5List[md5Index] = NULL;
-#ifdef FIRESTAFF_ASSET_STATUS_TESTING
-        g_m12ScanMetrics.versionHashLookups++;
-#endif
-        (void)asset_find_all_by_md5_list(roots[rootIndex],
-                                         md5List,
-                                         rootMatchedPaths[rootIndex],
-                                         rootMatched[rootIndex],
-                                         (int)md5Count,
-                                         32);
+        fastPath[0] = '\0';
+        fastMd5[0] = '\0';
+        if (m12_try_match_version_fast_candidates(roots,
+                                                  rootCount,
+                                                  &gameSpec->versions[i],
+                                                  fastPath,
+                                                  fastMd5,
+                                                  &fastRootIndex) &&
+            fastRootIndex < rootCount) {
+            m12_copy_string(rootMatchedPaths[fastRootIndex][i],
+                            sizeof(rootMatchedPaths[fastRootIndex][i]),
+                            fastPath);
+            rootMatched[fastRootIndex][i] = 1;
+            matchedAny = 1;
+        }
     }
+    if (!matchedAny) {
+        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+            const char* md5List[M12_ASSET_MAX_VERSIONS_PER_GAME + 1U];
+            size_t md5Index;
+            size_t md5Count;
+            for (md5Index = 0U;
+                 md5Index < gameSpec->versionCount &&
+                 md5Index < M12_ASSET_MAX_VERSIONS_PER_GAME;
+                 ++md5Index) {
+                md5List[md5Index] = m12_effective_version_md5(&gameSpec->versions[md5Index]);
+            }
+            md5Count = md5Index;
+            md5List[md5Index] = NULL;
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+            g_m12ScanMetrics.versionHashLookups++;
+#endif
+            (void)asset_find_all_by_md5_list(roots[rootIndex],
+                                             md5List,
+                                             rootMatchedPaths[rootIndex],
+                                             rootMatched[rootIndex],
+                                             (int)md5Count,
+                                             32);
+        }
+    }
+    matchedAny = 0;
     for (i = 0U; i < gameSpec->versionCount; ++i) {
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
         const M12_VersionSpec* spec = &gameSpec->versions[i];
@@ -1337,6 +1453,43 @@ static int m12_required_hash_matches_any_root(const char roots[M12_SEARCH_ROOT_C
     return 0;
 }
 
+static int m12_required_hash_matches_fast_candidates(
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount,
+    const M12_RequiredFileSpec* spec,
+    const char* md5,
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
+    char matchedHash[M12_ASSET_MD5_CAPACITY]) {
+    const char* const* subdirs;
+    size_t rootIndex;
+    if (!roots || !spec || !spec->label || !md5 || md5[0] == '\0') {
+        return 0;
+    }
+    subdirs = m12_fast_candidate_subdirs_for_game(spec->gameId);
+    if (!subdirs) {
+        return 0;
+    }
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        size_t subdirIndex;
+        for (subdirIndex = 0U; subdirs[subdirIndex] != NULL; ++subdirIndex) {
+            char dir[M12_ASSET_DATA_DIR_CAPACITY];
+            char path[M12_ASSET_DATA_DIR_CAPACITY];
+            if (!m12_join_optional_subdir(dir, sizeof(dir),
+                                          roots[rootIndex],
+                                          subdirs[subdirIndex]) ||
+                !FSP_JoinPath(path, sizeof(path), dir, spec->label)) {
+                continue;
+            }
+            if (m12_file_md5_matches_spec(path, md5)) {
+                m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+                m12_copy_string(matchedHash, M12_ASSET_MD5_CAPACITY, md5);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static int m12_fill_required_files(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -1393,7 +1546,14 @@ static int m12_fill_required_files(M12_AssetStatus* status,
                 m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), version->matchedPath);
                 m12_copy_string(fileStatus->matchedHash, sizeof(fileStatus->matchedHash), version->matchedMd5);
             }
-        } else if (m12_required_hash_matches_any_root(roots,
+        } else if (m12_required_hash_matches_fast_candidates(
+                       roots,
+                       rootCount,
+                       spec,
+                       m12_effective_required_md5(spec),
+                       fileStatus->matchedPath,
+                       fileStatus->matchedHash) ||
+                   m12_required_hash_matches_any_root(roots,
                                                       rootCount,
                                                       m12_effective_required_md5(spec),
                                                       fileStatus->matchedPath,
