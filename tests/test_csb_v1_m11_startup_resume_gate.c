@@ -566,6 +566,10 @@ static int build_runtime_resume_save(const char* data_dir,
     boot.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_STR]
                                                 [CSB_V1_STAT_MAX] = 48;
     boot.runtime.party_state.Champions[0].Skills[0] = 3;
+    for (int i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
+        boot.runtime.party_state.Champions[0].Portrait[i] =
+            (uint8_t)((i * 7 + 0x23) & 0xffu);
+    }
     boot.runtime.party_state.Champions[1].CurrentHealth = 100;
     boot.runtime.party_state.Champions[1].MaximumHealth = 100;
     boot.runtime.party_state.Champions[1].CurrentStamina = 70;
@@ -792,6 +796,13 @@ int main(void) {
                 view.world.party.champions[0].attributeMaximums[0] == 48 &&
                 view.world.party.champions[0].skillLevels[0] == 3,
                 "M11 CSB party mirror copies stats and skills");
+    expect_true(view.world.party.champions[0].portraitBitmapValid == 1 &&
+                memcmp(view.world.party.champions[0].portraitBitmap,
+                       expected.party_state.Champions[0].Portrait,
+                       CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT) == 0,
+                "M11 CSB party mirror copies compatible portrait bitmap");
+    expect_true(view.world.party.champions[1].portraitBitmapValid == 0,
+                "M11 CSB party mirror leaves empty portrait invalid");
 
     profile = (CSB_V1_BootProfile*)view.csbBootProfile;
     if (profile) {
