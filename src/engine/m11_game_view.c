@@ -132,6 +132,17 @@ static void m11_csb_pack_text(unsigned char *dst, int dst_len,
     }
 }
 
+static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
+{
+    if (!state) {
+        return;
+    }
+    state->dm2State.party_x = dm2_v1_runtime_get_party_x();
+    state->dm2State.party_y = dm2_v1_runtime_get_party_y();
+    state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
+    state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
+}
+
 static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
                               int current,
                               int maximum)
@@ -9007,10 +9018,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->dm2BootProfile = profile;
         state->dm2World = profile->dm2_state;
         state->dm2State.level_loaded = 1;
-        state->dm2State.party_x = dm2_v1_runtime_get_party_x();
-        state->dm2State.party_y = dm2_v1_runtime_get_party_y();
-        state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
-        state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
+        m11_sync_dm2_state_from_runtime(state);
         m11_set_status(state, "BOOT", "DM2 READY");
         m11_set_inspect_readout(state, "READY",
                                 "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
@@ -10590,10 +10598,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         dm2_v1_runtime_tick();
-        state->dm2State.party_x = dm2_v1_runtime_get_party_x();
-        state->dm2State.party_y = dm2_v1_runtime_get_party_y();
-        state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
-        state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
+        m11_sync_dm2_state_from_runtime(state);
         return M11_GAME_INPUT_REDRAW;
     }
     /* Nexus V1: use the Nexus tick function instead of DM1's m11_apply_tick.
@@ -12164,18 +12169,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_REDRAW;
     }
 
-    /* DM2 V1: minimal input bridge.
-     * DM2 owns its own command queue + input system (dm2_v1_*), but the
-     * DM2 public API does not yet expose a command-post entry point that
-     * M11 can call from a generic M12_MenuInput. Until that bridge lands,
-     * DM2 via --game accepts only BACK (return to menu) and ignores
-     * everything else — the game tick continues through dm2_v1_runtime_tick()
-     * in the idle-tick branch above. This mirrors how CSB's hand-off
-     * behaves with the same minimal input contract; both games are
-     * expected to grow a fuller input bridge as DM2/CSB-specific input
-     * APIs stabilise. Source: dm2_v1_runtime.c dm2_v1_runtime_tick(),
-     * dm2_v1_boot.c. */
+    /* DM2 V1 input bridge.  M11 receives normalized keyboard/touch tokens;
+     * DM2 owns the runtime movement and collision result.  Turn input is a
+     * turn-only boundary instead of dm2_v1_runtime_move() so Q/E/Home/End do
+     * not walk into the side cell.  Source: SKULL.ASM T048 input dispatch,
+     * SKULL.ASM T520 party movement. */
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        int dir;
+        int result;
         if (!state->dm2World) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -12183,11 +12184,55 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
-        /* Forward-compat: a future bridge will translate
-         * M12_MENU_INPUT_UP / DOWN / TURN_* into DM2 command-queue
-         * entries here. For now, DM2 keeps ticking via the idle-tick
-         * branch above; UI input is intentionally accepted-but-ignored
-         * so the player can still reach BACK. */
+        dir = dm2_v1_runtime_get_party_dir() & 3;
+        if (input == M12_MENU_INPUT_TURN_LEFT ||
+            input == M12_MENU_INPUT_LEFT) {
+            result = dm2_v1_runtime_turn(-1);
+            if (result == 0) {
+                m11_sync_dm2_state_from_runtime(state);
+                m11_set_status(state, "TURN", "DM2 LEFT");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_TURN_RIGHT ||
+            input == M12_MENU_INPUT_RIGHT) {
+            result = dm2_v1_runtime_turn(1);
+            if (result == 0) {
+                m11_sync_dm2_state_from_runtime(state);
+                m11_set_status(state, "TURN", "DM2 RIGHT");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_UP) {
+            result = dm2_v1_runtime_move(dir);
+            m11_sync_dm2_state_from_runtime(state);
+            m11_set_status(state, "MOVE",
+                           result == 0 ? "DM2 FORWARD" : "BLOCKED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_DOWN) {
+            result = dm2_v1_runtime_move((dir + 2) & 3);
+            m11_sync_dm2_state_from_runtime(state);
+            m11_set_status(state, "MOVE",
+                           result == 0 ? "DM2 BACKSTEP" : "BLOCKED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_STRAFE_LEFT) {
+            result = dm2_v1_runtime_move((dir + 3) & 3);
+            m11_sync_dm2_state_from_runtime(state);
+            m11_set_status(state, "MOVE",
+                           result == 0 ? "DM2 STRAFE LEFT" : "BLOCKED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_STRAFE_RIGHT) {
+            result = dm2_v1_runtime_move((dir + 1) & 3);
+            m11_sync_dm2_state_from_runtime(state);
+            m11_set_status(state, "MOVE",
+                           result == 0 ? "DM2 STRAFE RIGHT" : "BLOCKED");
+            return M11_GAME_INPUT_REDRAW;
+        }
         return M11_GAME_INPUT_IGNORED;
     }
 

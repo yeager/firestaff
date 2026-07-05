@@ -381,6 +381,34 @@ int dm2_v1_runtime_move(int dir) {
     return blocked ? -1 : 0;
 }
 
+/*
+ * dm2_v1_runtime_turn — rotate the party in place without attempting a
+ * movement step. M11 keyboard input maps Q/E/Home/End to this boundary so
+ * DM2 does not treat turning as a sidestep through dm2_v1_runtime_move().
+ *
+ * Source: SKULL.ASM T048 dispatches separate turn commands before the
+ * T520 party-position update. The existing V2 turn callback is kept as the
+ * single animation hand-off, matching the callback used by move().
+ */
+int dm2_v1_runtime_turn(int delta) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_GameState *gs;
+    int old_dir;
+    int new_dir;
+
+    if (!rt->boot || !rt->boot->dm2_state) return -1;
+    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+    old_dir = gs->party_dir & 3;
+    new_dir = (old_dir + (delta < 0 ? 3 : 1)) & 3;
+
+    if (new_dir != old_dir && rt->turn_callback) {
+        rt->turn_callback(old_dir, new_dir);
+    }
+    gs->party_dir = new_dir;
+    rt->view_dir = new_dir;
+    return 0;
+}
+
 /* ── Outdoor/Dungeon mode ─────────────────────────────────────────── */
 
 /*
