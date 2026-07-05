@@ -28,24 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static int dm2_runtime_door_state(uint16_t square_raw) {
-    return (int)(square_raw & 0x0007u);
-}
-
-static uint16_t dm2_runtime_door_set_state(uint16_t square_raw, int state) {
-    return (uint16_t)((square_raw & ~0x0007u) | (uint16_t)(state & 0x0007));
-}
-
-static int dm2_runtime_door_step(int current_state, int action) {
-    if (current_state == 5) return 5;
-    if (action == 1) {
-        if (current_state >= 4) return 4;
-        return current_state + 1;
-    }
-    if (current_state <= 0) return 0;
-    return current_state - 1;
-}
-
 /* ── DM2 V1 Runtime State ─────────────────────────────────────────── */
 
 typedef struct {
@@ -73,6 +55,138 @@ typedef struct {
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
+
+static int dm2_runtime_door_state(uint16_t square_raw) {
+    return (int)(square_raw & 0x0007u);
+}
+
+static uint16_t dm2_runtime_door_set_state(uint16_t square_raw, int state) {
+    return (uint16_t)((square_raw & ~0x0007u) | (uint16_t)(state & 0x0007));
+}
+
+static int dm2_runtime_door_step(int current_state, int action) {
+    if (current_state == 5) return 5;
+    if (action == 1) {
+        if (current_state >= 4) return 4;
+        return current_state + 1;
+    }
+    if (current_state <= 0) return 0;
+    return current_state - 1;
+}
+
+static int dm2_runtime_set_target_door_state(DM2_V1_RuntimeState *rt,
+                                             int level,
+                                             int x,
+                                             int y,
+                                             int state) {
+    DM2_V1_DungeonData *dd;
+    int raw;
+
+    if (!rt || !rt->boot || !rt->boot->dungeon_data) return -1;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
+    if (raw < 0) return -1;
+    return dm2_v1_dungeon_set_tile_raw(
+        dd, level, x, y,
+        dm2_runtime_door_set_state((uint16_t)raw, state));
+}
+
+static void dm2_runtime_apply_trigger_target(DM2_V1_RuntimeState *rt,
+                                             const DM2_V1_Trigger *trigger) {
+    DM2_V1_GameState *gs;
+    int raw;
+    int state;
+    int next_state;
+
+    if (!rt || !trigger) return;
+    if (!rt->boot || !rt->boot->dm2_state) return;
+    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+
+    switch (trigger->target) {
+        case DM2_TRIGGER_TARGET_DOOR_OPEN:
+            dm2_runtime_set_target_door_state(rt, trigger->target_level,
+                                              trigger->target_x,
+                                              trigger->target_y, 0);
+            break;
+        case DM2_TRIGGER_TARGET_DOOR_CLOSE:
+            dm2_runtime_set_target_door_state(rt, trigger->target_level,
+                                              trigger->target_x,
+                                              trigger->target_y, 4);
+            break;
+        case DM2_TRIGGER_TARGET_DOOR_TOGGLE:
+            if (rt->boot->dungeon_data) {
+                DM2_V1_DungeonData *dd =
+                    (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+                raw = dm2_v1_dungeon_get_tile_raw(dd, trigger->target_level,
+                                                  trigger->target_x,
+                                                  trigger->target_y);
+                if (raw >= 0) {
+                    state = dm2_runtime_door_state((uint16_t)raw);
+                    next_state = state == 0 ? 4 : 0;
+                    dm2_runtime_set_target_door_state(rt,
+                                                      trigger->target_level,
+                                                      trigger->target_x,
+                                                      trigger->target_y,
+                                                      next_state);
+                }
+            }
+            break;
+        case DM2_TRIGGER_TARGET_TELEPORT_PARTY:
+            gs->current_level = trigger->target_level;
+            gs->party_x = trigger->target_x;
+            gs->party_y = trigger->target_y;
+            rt->dungeon_level = trigger->target_level;
+            break;
+        default:
+            break;
+    }
+}
+
+static void dm2_runtime_apply_plate_target(DM2_V1_RuntimeState *rt,
+                                           const DM2_V1_PressurePlate *plate) {
+    int raw;
+    int state;
+    int next_state;
+
+    if (!rt || !plate) return;
+    switch (plate->target_kind) {
+        case DM2_PLATE_TARGET_DOOR_OPEN:
+            dm2_runtime_set_target_door_state(rt, plate->target_level,
+                                              plate->target_x,
+                                              plate->target_y, 0);
+            break;
+        case DM2_PLATE_TARGET_DOOR_CLOSE:
+            dm2_runtime_set_target_door_state(rt, plate->target_level,
+                                              plate->target_x,
+                                              plate->target_y, 4);
+            break;
+        case DM2_PLATE_TARGET_DOOR_TOGGLE:
+            if (rt->boot && rt->boot->dungeon_data) {
+                DM2_V1_DungeonData *dd =
+                    (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+                raw = dm2_v1_dungeon_get_tile_raw(dd, plate->target_level,
+                                                  plate->target_x,
+                                                  plate->target_y);
+                if (raw >= 0) {
+                    state = dm2_runtime_door_state((uint16_t)raw);
+                    next_state = state == 0 ? 4 : 0;
+                    dm2_runtime_set_target_door_state(rt,
+                                                      plate->target_level,
+                                                      plate->target_x,
+                                                      plate->target_y,
+                                                      next_state);
+                }
+            }
+            break;
+        case DM2_PLATE_TARGET_PIT_TOGGLE:
+            dm2_runtime_set_target_door_state(rt, plate->target_level,
+                                              plate->target_x,
+                                              plate->target_y, 0);
+            break;
+        default:
+            break;
+    }
+}
 
 /* ── Runtime init ──────────────────────────────────────────────────── */
 
@@ -433,14 +547,28 @@ int dm2_v1_runtime_move(int dir) {
         }
         gs->party_x = nx;
         gs->party_y = ny;
-        dm2_v1_trigger_signal_square_entered(nx, ny, rt->dungeon_level);
+        for (int i = 1; i <= dm2_v1_trigger_get_builtin_count(); ++i) {
+            const DM2_V1_Trigger *trigger =
+                dm2_v1_trigger_get_builtin(i);
+            if (trigger &&
+                trigger->kind == DM2_TRIGGER_KIND_SQUARE_ENTERED &&
+                trigger->arg_map_x == nx &&
+                trigger->arg_map_y == ny &&
+                trigger->arg_map_level == rt->dungeon_level &&
+                dm2_v1_trigger_fire(trigger->trigger_id) ==
+                    (int)DM2_TRIGGER_RESULT_OK) {
+                dm2_runtime_apply_trigger_target(rt, trigger);
+            }
+        }
         dm2_v1_plate_set_party_position(nx, ny, rt->dungeon_level);
         for (int i = 1; i <= dm2_v1_plate_get_builtin_count(); ++i) {
             const DM2_V1_PressurePlate *plate =
                 dm2_v1_plate_get_builtin(i);
             if (plate && plate->map_x == nx && plate->map_y == ny &&
-                plate->map_level == rt->dungeon_level) {
-                dm2_v1_plate_check(i, rt->tick_count);
+                plate->map_level == rt->dungeon_level &&
+                dm2_v1_plate_check(i, rt->tick_count) ==
+                    (int)DM2_PLATE_RESULT_OK) {
+                dm2_runtime_apply_plate_target(rt, plate);
             }
         }
     }

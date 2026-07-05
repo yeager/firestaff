@@ -459,9 +459,15 @@ int main(void) {
         }
     }
     if (world) {
+        DM2_V1_DungeonData *dd =
+            profile ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
         dm2_v1_trigger_reset_state();
         dm2_v1_plate_reset_state();
         dm2_v1_plate_set_party_weight(500);
+        if (dd) {
+            dm2_v1_dungeon_set_tile_raw(dd, 0, 16, 8, 4);
+            dm2_v1_dungeon_set_tile_raw(dd, 0, 13, 8, 4);
+        }
         dm2_v1_runtime_set_position(0, 15, 9, 0);
         dm2_v1_runtime_set_outdoor(1);
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
@@ -472,6 +478,10 @@ int main(void) {
         expect_true(view.dm2State.party_x == 15 &&
                     view.dm2State.party_y == 8,
                     "M11 DM2 mirror follows trigger-square movement");
+        if (dd) {
+            expect_true(dm2_v1_dungeon_get_tile_raw(dd, 0, 16, 8) == 0,
+                        "DM2 square-entered trigger applies door-open target");
+        }
         dm2_v1_runtime_set_position(0, 12, 9, 0);
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                         M11_GAME_INPUT_REDRAW,
@@ -480,6 +490,10 @@ int main(void) {
                     "DM2 runtime movement evaluates party pressure plate");
         expect_true(dm2_v1_plate_fire_total() >= 1,
                     "DM2 runtime movement records pressure-plate fire total");
+        if (dd) {
+            expect_true(dm2_v1_dungeon_get_tile_raw(dd, 0, 13, 8) == 0,
+                        "DM2 pressure plate applies door-toggle target");
+        }
         dm2_v1_runtime_set_position(0, 15, 15, 0);
         dm2_v1_runtime_set_outdoor(0);
     }
