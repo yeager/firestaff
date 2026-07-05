@@ -35,6 +35,7 @@
 #include "asset_find_by_hash.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
+#include "main_loop_m11.h"
 #include "m11_game_view_a11y.h"  /* m11_screen_reader_update_ex gameplay manifest */
 #include "fs_portable_compat.h"
 #include "m11_v2_vertical_slice_assets.h"
@@ -2473,6 +2474,30 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
+    if (state->csbState.startup_entrance_credits_active) {
+        const M11_AssetSlot *credits = NULL;
+        if (state->assetsAvailable) {
+            credits = M11_AssetLoader_Load(
+                (M11_AssetLoader *)&state->assetLoader, 5u);
+        }
+        if (credits && credits->width == 320u && credits->height == 200u) {
+            M11_AssetLoader_Blit(credits,
+                                 framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 0,
+                                 0,
+                                 -1);
+        } else {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          38, 42, "CHAOS STRIKES BACK", &g_text_title);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          38, 68, "CREDITS", &g_text_shadow);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          38, 154, "PRESS ENTER", &g_text_small);
+        }
+        return;
+    }
     if (state->assetsAvailable) {
         entrance = M11_AssetLoader_Load(
             (M11_AssetLoader *)&state->assetLoader, 4u);
@@ -2517,6 +2542,42 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           38, 154, "PRESS ENTER", &g_text_shadow);
         }
+    }
+}
+
+static M11_GameInputResult m11_csb_startup_handle_entrance_command(
+    M11_GameViewState *state,
+    int commandId)
+{
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbState.startup_entrance_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (state->csbState.startup_entrance_credits_active) {
+        state->csbState.startup_entrance_credits_active = 0;
+        m11_set_status(state, "BOOT", "CSB ENTRANCE");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    state->csbState.startup_entrance_last_command = commandId;
+    switch (commandId) {
+        case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON:
+        case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON:
+            state->csbState.startup_entrance_active = 0;
+            state->csbState.startup_entrance_dismissed = 1;
+            m11_set_status(state, "BOOT", "CSB READY");
+            return M11_GAME_INPUT_REDRAW;
+        case M11_ENTRANCE_RUNTIME_COMMAND_RESUME:
+            m11_set_status(state, "BOOT", "CSB RESUME REQUESTED");
+            return M11_GAME_INPUT_REDRAW;
+        case M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS:
+            state->csbState.startup_entrance_credits_active = 1;
+            m11_set_status(state, "BOOT", "CSB CREDITS");
+            return M11_GAME_INPUT_REDRAW;
+        case M11_ENTRANCE_RUNTIME_COMMAND_QUIT:
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        default:
+            return M11_GAME_INPUT_IGNORED;
     }
 }
 
@@ -10021,6 +10082,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_frame = 0;
         state->csbState.startup_entrance_dismissed =
             state->csbState.startup_entrance_active ? 0 : 1;
+        state->csbState.startup_entrance_last_command =
+            M11_ENTRANCE_RUNTIME_COMMAND_NONE;
+        state->csbState.startup_entrance_credits_active = 0;
         m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
@@ -13584,15 +13648,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         state->csbState.startup_entrance_active) {
         if (input == M12_MENU_INPUT_BACK) {
-            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
-            return M11_GAME_INPUT_RETURN_TO_MENU;
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                state->csbState.startup_entrance_credits_active
+                    ? M11_ENTRANCE_RUNTIME_COMMAND_NONE
+                    : M11_ENTRANCE_RUNTIME_COMMAND_QUIT);
         }
         if (input == M12_MENU_INPUT_ACCEPT ||
             input == M12_MENU_INPUT_ACTION) {
-            state->csbState.startup_entrance_active = 0;
-            state->csbState.startup_entrance_dismissed = 1;
-            m11_set_status(state, "BOOT", "CSB READY");
-            return M11_GAME_INPUT_REDRAW;
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
+        }
+        if (input == M12_MENU_INPUT_DISK_MENU) {
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
         }
         return M11_GAME_INPUT_IGNORED;
     }
@@ -14688,6 +14759,18 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
         M11_GameView_DismissDialogOverlay(state);
         return M11_GAME_INPUT_REDRAW;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbState.startup_entrance_active &&
+        (buttonMask & M11_DM1_MOUSE_MASK_LEFT)) {
+        int command = state->csbState.startup_entrance_credits_active
+            ? M11_ENTRANCE_RUNTIME_COMMAND_NONE
+            : M11_Entrance_DispatchSourceLockedPointerCommand(
+                  x,
+                  y,
+                  M11_DM1_MOUSE_MASK_LEFT);
+        return m11_csb_startup_handle_entrance_command(state, command);
     }
 
     {
