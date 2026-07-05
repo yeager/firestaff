@@ -2479,6 +2479,13 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
               profile.csbwin_item16[0].ubyte5 ==
                   profile.csbwin_runtime_item16[0].delay_or_flee_timer,
           "C25 F0190 fear writes DelayFleeingFromTarget to owned ITEM16 state");
+    CHECK(profile.active_group_state_count == 1u &&
+              profile.active_group_state[0].valid &&
+              profile.active_group_state[0].group_thing ==
+                  (uint16_t)(4u << 10) &&
+              profile.active_group_state[0].delay_fleeing_from_target ==
+                  profile.csbwin_runtime_item16[0].delay_or_flee_timer,
+          "C25 F0190 fear writes DelayFleeingFromTarget to native active-group state");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;
@@ -3104,6 +3111,13 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
     profile.current_level = 5;
     profile.game_time = 42u;
     profile.timeline_queue.gameTick = profile.game_time;
+    profile.active_group_state_count = 1u;
+    profile.active_group_state[0].valid = 1;
+    profile.active_group_state[0].group_thing = (uint16_t)(4u << 10);
+    profile.active_group_state[0].map_index = 5;
+    profile.active_group_state[0].map_x = 2;
+    profile.active_group_state[0].map_y = 3;
+    profile.active_group_state[0].delay_fleeing_from_target = 77u;
 
     memset(&projectile_input, 0, sizeof(projectile_input));
     projectile_input.category = PROJECTILE_CATEGORY_MAGICAL;
@@ -3180,6 +3194,13 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
               loaded.explosions.entries[explosion_slot].creatorProjectileSlot ==
                   projectile_slot,
           "CSB runtime load restores live explosion slot state");
+    CHECK(loaded.active_group_state_count == 1u &&
+              loaded.active_group_state[0].valid &&
+              loaded.active_group_state[0].group_thing ==
+                  (uint16_t)(4u << 10) &&
+              loaded.active_group_state[0].map_index == 5 &&
+              loaded.active_group_state[0].delay_fleeing_from_target == 77u,
+          "CSB runtime load restores native active-group side state");
     CHECK(count_queued_event_type(&loaded, DM1_EVENT_EXPLOSION) == 1,
           "CSB runtime load preserves queued C25 explosion event");
     remove(path);
