@@ -255,7 +255,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 7u
+#define CSB_V1_RUNTIME_SAVE_VERSION 8u
 
 typedef struct {
     uint32_t magic;
@@ -320,6 +320,12 @@ typedef struct {
     ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, csbwin_appended_tail_valid))
 #define CSB_V1_RUNTIME_SAVE_V6_SIZE \
     ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, active_group_state_count))
+/* Version 7 carried the first active-group side-state table before Cells,
+ * Directions, Prior/Home, and LastMoveTime were added.  Keep it loadable as
+ * an older image; version 8 is the first one that preserves the wider table. */
+#define CSB_V1_RUNTIME_SAVE_V7_SIZE \
+    (CSB_V1_RUNTIME_SAVE_V6_SIZE + 4u + \
+     (CSB_V1_RUNTIME_ACTIVE_GROUP_CAP * 24u))
 
 static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
@@ -758,6 +764,8 @@ static int csb_v1_runtime_apply_save_image(
            image->byte_size == CSB_V1_RUNTIME_SAVE_V5_SIZE) ||
           (image->version == 6u &&
            image->byte_size == CSB_V1_RUNTIME_SAVE_V6_SIZE) ||
+          (image->version == 7u &&
+           image->byte_size == CSB_V1_RUNTIME_SAVE_V7_SIZE) ||
           (image->version == CSB_V1_RUNTIME_SAVE_VERSION &&
            image->byte_size == sizeof(*image)))) {
         return -1;
@@ -2436,6 +2444,15 @@ static int csb_v1_runtime_apply_group_fall_damage(
     int map_index,
     int map_x,
     int map_y);
+static void csb_v1_runtime_sync_active_group_state_from_record(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    const uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int preserve_home,
+    int moved);
 
 static uint16_t csb_v1_runtime_repeated_group_direction_pack(int direction)
 {
@@ -2700,13 +2717,34 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
         *inout_map_y = teleporter.target_map_y;
         moved_count++;
     }
+    if (moved_count > 0 && (!out_group_alive || *out_group_alive)) {
+        int thing_type = -1;
+        int thing_size = 0;
+        uint8_t *group_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            group_thing,
+            &thing_type,
+            &thing_size);
+        if (group_record && thing_type == 4 && thing_size >= 16) {
+            csb_v1_runtime_sync_active_group_state_from_record(
+                profile,
+                group_thing,
+                group_record,
+                *inout_map_index,
+                *inout_map_x,
+                *inout_map_y,
+                1,
+                moved_count > 0);
+        }
+    }
     /* ReDMCSB MOVESENS.C F0267 lines 493-617 moves C04 groups through
      * creature-scope teleporters and open pits in the same PC34 100-step
      * chain. Teleporters call F0262 for direction/cell rotation; pits call
      * DUNGEON.C F0154 to resolve the lower target map/coordinate. This
      * bounded CSB runtime bridge handles generated groups with raw C04
-     * records; ActiveGroup side state, buzz audio, and full F0191 fall-damage
-     * aftermath remain separate work. */
+     * records and mirrors the surviving group's native active-group side
+     * state; buzz audio and full F0191 fall-damage aftermath remain separate
+     * work. */
     return moved_count;
 }
 
@@ -2835,6 +2873,15 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             0);
                         deferred = 1;
                     } else {
+                        csb_v1_runtime_sync_active_group_state_from_record(
+                            profile,
+                            group_thing,
+                            thing_record,
+                            record->mapIndex,
+                            record->mapX,
+                            record->mapY,
+                            0,
+                            0);
                         moved = csb_v1_runtime_move_group_thing_to_square(
                             dungeon,
                             group_thing,
@@ -2856,6 +2903,23 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             &group_alive);
                         if (!group_alive) {
                             return;
+                        }
+                        thing_record = csb_v1_runtime_mutable_thing_record(
+                            dungeon,
+                            group_thing,
+                            &thing_type,
+                            &thing_size);
+                        if (thing_record && thing_type == 4 &&
+                            thing_size >= 16) {
+                            csb_v1_runtime_sync_active_group_state_from_record(
+                                profile,
+                                group_thing,
+                                thing_record,
+                                target_map_index,
+                                target_x,
+                                target_y,
+                                1,
+                                1);
                         }
                     }
                 }
@@ -2936,6 +3000,26 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
             record->eventType == DM1_EVENT_MOVE_GROUP_AUDIBLE);
         return;
     }
+    {
+        int thing_type = -1;
+        int thing_size = 0;
+        uint8_t *group_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            group_thing,
+            &thing_type,
+            &thing_size);
+        if (group_record && thing_type == 4 && thing_size >= 16) {
+            csb_v1_runtime_sync_active_group_state_from_record(
+                profile,
+                group_thing,
+                group_record,
+                source_level,
+                source_x,
+                source_y,
+                0,
+                0);
+        }
+    }
     if (!csb_v1_runtime_move_group_thing_to_square(
             dungeon,
             group_thing,
@@ -2959,6 +3043,26 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
         &target_x,
         &target_y,
         &group_alive);
+    if (group_alive) {
+        int thing_type = -1;
+        int thing_size = 0;
+        uint8_t *group_record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            group_thing,
+            &thing_type,
+            &thing_size);
+        if (group_record && thing_type == 4 && thing_size >= 16) {
+            csb_v1_runtime_sync_active_group_state_from_record(
+                profile,
+                group_thing,
+                group_record,
+                target_level,
+                target_x,
+                target_y,
+                1,
+                1);
+        }
+    }
 }
 
 static int csb_v1_runtime_stat_or_default(
@@ -4658,6 +4762,85 @@ static void csb_v1_runtime_clear_active_group_state(
     if (profile->active_group_state_count > 0u) {
         --profile->active_group_state_count;
     }
+}
+
+static CSB_V1_RuntimeActiveGroupState *
+csb_v1_runtime_active_group_state_for_thing(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing)
+{
+    uint16_t i;
+
+    if (!profile || ((group_thing >> 10) & 0x0Fu) != 4u) {
+        return NULL;
+    }
+    for (i = 0u; i < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP; ++i) {
+        CSB_V1_RuntimeActiveGroupState *state =
+            &profile->active_group_state[i];
+        if (state->valid && state->group_thing == group_thing) {
+            return state;
+        }
+    }
+    return NULL;
+}
+
+static void csb_v1_runtime_sync_active_group_state_from_record(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    const uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int preserve_home,
+    int moved)
+{
+    CSB_V1_RuntimeActiveGroupState *state;
+    uint16_t flags;
+    uint16_t directions;
+    int direction;
+    uint8_t cells;
+    int existed;
+
+    /* ReDMCSB GROUP.C F0183/F0184/F0200 keeps active-group Cells,
+     * Directions, GroupThingIndex, Prior/Home map coordinates, and
+     * LastMoveTime beside the raw C04 group record. */
+    if (!profile || !group_record) return;
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    direction = (int)((flags >> 8) & 0x03u);
+    cells = group_record[5];
+    directions = csb_v1_runtime_repeated_group_direction_pack(direction);
+
+    state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
+    existed = state ? 1 : 0;
+    if (!state) {
+        state = csb_v1_runtime_active_group_state_for(
+            profile,
+            group_thing,
+            level,
+            map_x,
+            map_y,
+            1);
+    }
+    if (!state) return;
+    if (moved) {
+        state->prior_map_x = state->map_x;
+        state->prior_map_y = state->map_y;
+    } else {
+        state->prior_map_x = map_x;
+        state->prior_map_y = map_y;
+    }
+    state->map_index = level;
+    state->map_x = map_x;
+    state->map_y = map_y;
+    if (!preserve_home || !existed) {
+        state->home_map_x = map_x;
+        state->home_map_y = map_y;
+    }
+    state->cells = cells;
+    state->directions = directions;
+    state->last_move_time = moved
+        ? profile->game_time
+        : (profile->game_time >= 127u ? profile->game_time - 127u : 0u);
 }
 
 static void csb_v1_runtime_write_f0190_flee_delay_to_active_group(
@@ -8030,6 +8213,15 @@ static void csb_v1_runtime_materialize_corridor_generator_group(
                              ((result.spawnedDirection & 0x03) << 8));
     csb_v1_runtime_write_u16(group_record + 14, group_flags);
     csb_v1_runtime_write_u16(first_thing_ptr, group_thing);
+    csb_v1_runtime_sync_active_group_state_from_record(
+        profile,
+        group_thing,
+        group_record,
+        record->mapIndex,
+        record->mapX,
+        record->mapY,
+        0,
+        0);
     /* ReDMCSB GROUP.C F0180 lines 311-340 starts wandering by scheduling
      * C37 at game_time + 1 and prioritizes faster creatures as
      * 255 - MovementTicks. */

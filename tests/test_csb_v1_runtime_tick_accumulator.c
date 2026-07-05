@@ -1362,6 +1362,18 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     group_flags = (uint16_t)(raw[96] | ((uint16_t)raw[97] << 8));
     CHECK(((group_flags >> 5) & 0x03u) == 0u,
           "materialized single-creature group stores source 0-based count");
+    CHECK(profile.active_group_state_count == 1u &&
+              profile.active_group_state[0].valid &&
+              profile.active_group_state[0].group_thing ==
+                  (uint16_t)(4u << 10) &&
+              profile.active_group_state[0].map_x == 1 &&
+              profile.active_group_state[0].map_y == 0 &&
+              profile.active_group_state[0].home_map_x == 1 &&
+              profile.active_group_state[0].home_map_y == 0 &&
+              profile.active_group_state[0].cells == raw[87] &&
+              (profile.active_group_state[0].directions & 0x0003u) ==
+                  ((group_flags >> 8) & 0x03u),
+          "C05 generator initializes native active-group cells/directions/home state");
     CHECK(profile.timeline_queue.eventCount == 2,
           "C05 C006 generator schedules C37 wander plus delayed C65 re-enable");
 
@@ -1389,6 +1401,15 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "approach C37 links the group at the next square toward the party");
     CHECK((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) == 0xfffeu,
           "moved group preserves the destination's previous thing chain");
+    CHECK(profile.active_group_state_count == 1u &&
+              profile.active_group_state[0].map_x == 1 &&
+              profile.active_group_state[0].map_y == 1 &&
+              profile.active_group_state[0].prior_map_x == 1 &&
+              profile.active_group_state[0].prior_map_y == 0 &&
+              profile.active_group_state[0].home_map_x == 1 &&
+              profile.active_group_state[0].home_map_y == 0 &&
+              profile.active_group_state[0].last_move_time <= profile.game_time,
+          "C37 approach updates native active-group current/prior state");
     CHECK(profile.timeline_queue.eventCount == 2,
           "C65 and the future approach C37 remain queued after movement");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
@@ -1585,6 +1606,17 @@ static void test_c37_group_approach_creates_empty_destination_thing_list(void)
     CHECK(test_get_le16(raw, 60 + 1 * 2) == 2u &&
               test_get_le16(raw, 60 + 2 * 2) == 2u,
           "C37 empty-destination move increments later column first-thing counts");
+    CHECK(profile.active_group_state_count == 1u &&
+              profile.active_group_state[0].valid &&
+              profile.active_group_state[0].group_thing ==
+                  (uint16_t)(4u << 10) &&
+              profile.active_group_state[0].map_x == 0 &&
+              profile.active_group_state[0].map_y == 1 &&
+              profile.active_group_state[0].prior_map_x == 0 &&
+              profile.active_group_state[0].prior_map_y == 0 &&
+              profile.active_group_state[0].home_map_x == 0 &&
+              profile.active_group_state[0].home_map_y == 0,
+          "C37 empty-destination move creates native active-group current/prior/home state");
     event_index = find_queued_event_type(&profile,
                                          DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
     CHECK(event_index >= 0 &&
@@ -3117,6 +3149,13 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
     profile.active_group_state[0].map_index = 5;
     profile.active_group_state[0].map_x = 2;
     profile.active_group_state[0].map_y = 3;
+    profile.active_group_state[0].cells = 0xffu;
+    profile.active_group_state[0].directions = 0x0055u;
+    profile.active_group_state[0].prior_map_x = 1;
+    profile.active_group_state[0].prior_map_y = 3;
+    profile.active_group_state[0].home_map_x = 2;
+    profile.active_group_state[0].home_map_y = 2;
+    profile.active_group_state[0].last_move_time = 41u;
     profile.active_group_state[0].delay_fleeing_from_target = 77u;
 
     memset(&projectile_input, 0, sizeof(projectile_input));
@@ -3199,6 +3238,11 @@ static void test_runtime_save_roundtrips_projectiles_and_explosions(void)
               loaded.active_group_state[0].group_thing ==
                   (uint16_t)(4u << 10) &&
               loaded.active_group_state[0].map_index == 5 &&
+              loaded.active_group_state[0].cells == 0xffu &&
+              loaded.active_group_state[0].directions == 0x0055u &&
+              loaded.active_group_state[0].prior_map_x == 1 &&
+              loaded.active_group_state[0].home_map_y == 2 &&
+              loaded.active_group_state[0].last_move_time == 41u &&
               loaded.active_group_state[0].delay_fleeing_from_target == 77u,
           "CSB runtime load restores native active-group side state");
     CHECK(count_queued_event_type(&loaded, DM1_EVENT_EXPLOSION) == 1,
