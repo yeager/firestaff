@@ -15,6 +15,7 @@
 
 #include "theron_v1_track02.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #define TQR_US_ISO_BANK_STRIDE_OFFSET 0x1584u
@@ -470,6 +471,26 @@ static void catalog_add_startup_text_marker(
     marker->occurrence_index = occurrence_index;
 }
 
+static void catalog_add_startup_roster_name(
+    Theron_Track02StartupRosterNameCatalog *catalog,
+    const char *name,
+    size_t raw_offset,
+    size_t user_data_offset) {
+
+    Theron_Track02StartupRosterName *entry;
+    if (!catalog || !name || !name[0]) {
+        return;
+    }
+    if (catalog->name_count >= THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES) {
+        ++catalog->overflow_count;
+        return;
+    }
+    entry = &catalog->names[catalog->name_count++];
+    snprintf(entry->name, sizeof(entry->name), "%s", name);
+    entry->raw_offset = raw_offset;
+    entry->user_data_offset = user_data_offset;
+}
+
 static int bytes_find(const uint8_t *data,
                       size_t data_size,
                       const uint8_t *needle,
@@ -709,6 +730,85 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
 
     return out_catalog->marker_count > 0u ? THERON_TRACK02_SIGNAL_OK
                                           : THERON_TRACK02_SIGNAL_NOT_FOUND;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02StartupRosterNameCatalog *out_catalog) {
+
+    static const char *required_names[] = {
+        "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN"
+    };
+    Theron_Track02StartupTextMarkerCatalog text_catalog;
+    Theron_Track02Variant variant;
+    const Theron_Track02StartupTextMarker *marker = NULL;
+    size_t cluster_available;
+
+    if (out_catalog) {
+        memset(out_catalog, 0, sizeof(*out_catalog));
+    }
+    if (!track02_data || track02_size == 0u || !out_catalog) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    out_catalog->variant = variant;
+    if (variant != THERON_TRACK02_VARIANT_JP_BIN) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+
+    if (theron_v1_track02_catalog_startup_text_markers(
+            track02_data,
+            track02_size,
+            md5_hex,
+            &text_catalog) != THERON_TRACK02_SIGNAL_OK ||
+        text_catalog.marker_count == 0u) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    marker = &text_catalog.markers[0];
+    if (marker->raw_offset >= track02_size) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    cluster_available = track02_size - marker->raw_offset;
+    if (cluster_available > 768u) {
+        cluster_available = 768u;
+    }
+
+    for (size_t i = 0u;
+         i < sizeof(required_names) / sizeof(required_names[0]);
+         ++i) {
+        const uint8_t *cluster = track02_data + marker->raw_offset;
+        const char *name = required_names[i];
+        size_t name_offset = 0u;
+        size_t user_offset = 0u;
+        Theron_Track02SignalStatus status;
+
+        if (!bytes_find(cluster,
+                        cluster_available,
+                        (const uint8_t *)name,
+                        strlen(name),
+                        &name_offset)) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        status = theron_v1_track02_raw_offset_to_user_offset(
+            marker->raw_offset + name_offset,
+            track02_size,
+            md5_hex,
+            &user_offset);
+        if (status != THERON_TRACK02_SIGNAL_OK) {
+            return status;
+        }
+        catalog_add_startup_roster_name(out_catalog,
+                                        name,
+                                        marker->raw_offset + name_offset,
+                                        user_offset);
+    }
+
+    return out_catalog->name_count > 0u ? THERON_TRACK02_SIGNAL_OK
+                                        : THERON_TRACK02_SIGNAL_NOT_FOUND;
 }
 
 Theron_Track02SignalStatus theron_v1_track02_copy_user_data_window_by_role(

@@ -23,6 +23,8 @@
 #define THERON_TRACK02_MAX_LEVEL_CANDIDATES 32u
 #define THERON_TRACK02_MAX_USER_DATA_WINDOWS 8u
 #define THERON_TRACK02_MAX_STARTUP_TEXT_MARKERS 8u
+#define THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES 8u
+#define THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY 16u
 #define THERON_TRACK02_RAW_SECTOR_BYTES 2352u
 #define THERON_TRACK02_RAW_USER_DATA_OFFSET 0x10u
 #define THERON_TRACK02_RAW_USER_DATA_BYTES 2048u
@@ -241,6 +243,26 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
 
 const char *theron_v1_track02_startup_text_marker_kind_name(
     Theron_Track02StartupTextMarkerKind kind);
+
+typedef struct {
+    char name[THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
+    size_t raw_offset;
+    size_t user_data_offset;
+} Theron_Track02StartupRosterName;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t name_count;
+    size_t overflow_count;
+    Theron_Track02StartupRosterName
+        names[THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES];
+} Theron_Track02StartupRosterNameCatalog;
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02StartupRosterNameCatalog *out_catalog);
 
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
