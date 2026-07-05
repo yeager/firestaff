@@ -351,9 +351,13 @@ int main(void)
             bow;
         state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
             arrow;
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_3] =
+            arrow;
         profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
             bow;
         profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] =
+            arrow;
+        profile.runtime.party_state.Champions[0].Slots[12] =
             arrow;
         profile.runtime.party_state.Champions[0].CurrentStamina = 100;
         check(M11_GameView_SetActingChampion(&state, 0),
@@ -389,6 +393,29 @@ int main(void)
               "CSB SHOOT clears runtime ready-hand slot");
         check(state.world.projectiles.count == 0,
               "CSB SHOOT does not allocate into DM1 M11 projectile list");
+        check(state.pendingShootReadyHandRefill[0] == 1u,
+              "CSB SHOOT arms delayed ready-hand refill");
+        {
+            int tick;
+            for (tick = 0;
+                 tick < 20 && state.actionDisabledTicks[0] > 0;
+                 ++tick) {
+                (void)M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
+            }
+        }
+        check(state.actionDisabledTicks[0] == 0,
+              "CSB mapped input ages SHOOT action cooldown");
+        check(profile.runtime.party_state.Champions[0].Slots[12] ==
+                  THING_NONE,
+              "CSB SHOOT refill clears source C12 quiver slot");
+        check(profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] ==
+                  arrow,
+              "CSB SHOOT refill moves compatible ammunition to runtime ready hand");
+        check(state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] ==
+                  arrow,
+              "CSB SHOOT refill mirrors ammunition to M11 ready hand");
+        check(state.pendingShootReadyHandRefill[0] == 0u,
+              "CSB SHOOT refill clears pending flag after cooldown");
         state.actionDisabledTicks[0] = 0;
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
             ven_potion;
