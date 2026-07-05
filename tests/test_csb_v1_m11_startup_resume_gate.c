@@ -1132,6 +1132,38 @@ int main(void) {
     fill_csb_launch_spec(&spec, data_dir, NULL);
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB quit-pointer start fixture succeeds");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    245,
+                    112,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_RETURN_TO_MENU,
+                "M11 CSB entrance quit button returns to launcher");
+    expect_true(view.csbState.startup_entrance_last_command ==
+                    M11_ENTRANCE_RUNTIME_COMMAND_QUIT,
+                "M11 CSB entrance records the source quit command");
+    expect_true(strcmp(view.lastOutcome, "BACK TO LAUNCHER") == 0,
+                "M11 CSB entrance quit button reports launcher return");
+    M11_GameView_Shutdown(&view);
+
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB Back-key quit start fixture succeeds");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+                    M11_GAME_INPUT_RETURN_TO_MENU,
+                "M11 CSB entrance Back input returns to launcher");
+    expect_true(view.csbState.startup_entrance_last_command ==
+                    M11_ENTRANCE_RUNTIME_COMMAND_QUIT,
+                "M11 CSB entrance Back input records the source quit command");
+    expect_true(strcmp(view.lastOutcome, "BACK TO LAUNCHER") == 0,
+                "M11 CSB entrance Back input reports launcher return");
+    M11_GameView_Shutdown(&view);
+
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
                 "M11 CSB bonus-dungeon start fixture succeeds");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
