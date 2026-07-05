@@ -11,6 +11,7 @@
 
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -195,6 +196,29 @@ int main(void)
               "CSB STAB does not allocate a projectile");
         check(profile.runtime.party_state.Champions[0].CurrentStamina < 100,
               "CSB STAB writes M11 stamina cost back to runtime");
+        state.actionDisabledTicks[0] = 0;
+        state.world.party.champions[0].mana.current = 20;
+        profile.runtime.party_state.Champions[0].CurrentMana = 20;
+        check(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state,
+                  0,
+                  DM1_ACTION_FIREBALL) == 1,
+              "CSB FIREBALL action spawns through CSB runtime without DM1 projectile list");
+        check(profile.runtime.projectiles.count == 2,
+              "CSB FIREBALL allocates one additional runtime projectile");
+        check(profile.runtime.projectiles.entries[1].projectileCategory ==
+                  PROJECTILE_CATEGORY_MAGICAL,
+              "CSB FIREBALL projectile is magical");
+        check(profile.runtime.projectiles.entries[1].projectileSubtype ==
+                  PROJECTILE_SUBTYPE_FIREBALL,
+              "CSB FIREBALL projectile keeps source subtype");
+        check(profile.runtime.party_state.Champions[0].ActionIndex ==
+                  DM1_ACTION_FIREBALL,
+              "CSB FIREBALL stores selected action index on runtime champion");
+        check(profile.runtime.party_state.Champions[0].CurrentMana < 20,
+              "CSB FIREBALL writes mana cost back to runtime");
+        check(state.world.projectiles.count == 0,
+              "CSB FIREBALL does not allocate into DM1 M11 projectile list");
 
         M11_GameView_ClearV1LeaderHandObject(&state);
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =

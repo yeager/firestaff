@@ -26712,6 +26712,46 @@ static int m11_perform_csb_melee_action(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_spawn_csb_champion_projectile(
+    M11_GameViewState* state,
+    int championIndex,
+    unsigned char actionIndex,
+    int projectileSubtype,
+    int projectileCategory,
+    int kineticEnergy,
+    int attack,
+    int attackTypeCode,
+    int stepEnergy,
+    unsigned short associatedThing,
+    int poisonAttack,
+    int potionPower)
+{
+    CSB_V1_RuntimeProfile* runtime;
+    int projectileSlot = -1;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return 0;
+    runtime = m11_mutable_csb_runtime_profile(state);
+    if (!runtime) return 0;
+    if (!csb_v1_runtime_spawn_champion_projectile(
+            runtime,
+            championIndex,
+            (int)actionIndex,
+            projectileSubtype,
+            projectileCategory,
+            kineticEnergy,
+            attack,
+            attackTypeCode,
+            stepEnergy,
+            associatedThing,
+            poisonAttack,
+            potionPower,
+            &projectileSlot)) {
+        return 0;
+    }
+    (void)projectileSlot;
+    return 1;
+}
+
 static int m11_perform_non_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen,
@@ -27186,11 +27226,18 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                     champ->mana.current = 0;
                 }
             }
-            spawned = m11_spawn_action_projectile_ex(
-                state, championIndex, subtype, PROJECTILE_CATEGORY_MAGICAL,
-                actualEnergy, 90, attackType, -1, -1, stepEnergy,
-                90,
-                THING_NONE, 0);
+            if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                spawned = m11_spawn_csb_champion_projectile(
+                    state, championIndex, chosen, subtype,
+                    PROJECTILE_CATEGORY_MAGICAL, actualEnergy, 90,
+                    attackType, stepEnergy, THING_NONE, 0, 0);
+            } else {
+                spawned = m11_spawn_action_projectile_ex(
+                    state, championIndex, subtype, PROJECTILE_CATEGORY_MAGICAL,
+                    actualEnergy, 90, attackType, -1, -1, stepEnergy,
+                    90,
+                    THING_NONE, 0);
+            }
             m11_decrement_action_hand_charges_f0405(state, championIndex);
             m11_log_event(state,
                           chosen == 23 ? M11_COLOR_LIGHT_CYAN :
@@ -27301,11 +27348,22 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                     champ->mana.current = 0;
                 }
             }
-            spawned = m11_spawn_action_projectile_ex(
-                state, championIndex, subtype, PROJECTILE_CATEGORY_MAGICAL,
-                actualEnergy, 90, attackType, -1, -1, stepEnergy,
-                90,
-                THING_NONE, 0);
+            if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                int poisonAttack = (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
+                                    subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
+                                       ? 90
+                                       : 0;
+                spawned = m11_spawn_csb_champion_projectile(
+                    state, championIndex, chosen, subtype,
+                    PROJECTILE_CATEGORY_MAGICAL, actualEnergy, 90,
+                    attackType, stepEnergy, THING_NONE, poisonAttack, 0);
+            } else {
+                spawned = m11_spawn_action_projectile_ex(
+                    state, championIndex, subtype, PROJECTILE_CATEGORY_MAGICAL,
+                    actualEnergy, 90, attackType, -1, -1, stepEnergy,
+                    90,
+                    THING_NONE, 0);
+            }
             m11_decrement_action_hand_charges_f0405(state, championIndex);
             m11_log_event(state, M11_COLOR_MAGENTA,
                           "T%u: %s INVOKES %s",
