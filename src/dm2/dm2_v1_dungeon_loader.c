@@ -12,18 +12,25 @@
  *   - Byte-sized map squares are stored in the trailing map-data block
  *   - Square type is stored in the high three bits, column-major
  *
- *   DUNGEON_HEADER fields (44 bytes, LE):
+ *   PC English G1 preamble fields:
  *     offset 0:  uint16_t reserved (0x0000)
  *     offset 2:  uint16_t magic ('G1')
  *     offset 4:  uint16_t first_data_offset (=44)
  *     offset 6:  uint8_t  map_count (=28)
  *     offset 8:  uint16_t dungeon_seed
- *     offset 10: uint16_t ornament_random_seed
- *     offset 12: uint16_t raw_map_data_byte_count
- *     offset 14: uint16_t text_data_word_count
- *     offset 16: uint16_t initial_party_location
- *     offset 18: uint16_t square_first_thing_count
- *     offset 20: uint16_t thing_count[16]
+ *     offset 10: uint16_t initial_party_location / flags
+ *     offset 12: uint16_t ground-stack list size
+ *     offset 14: uint16_t thing_count[dbDoor]
+ *     offset 16: uint16_t thing_count[dbTeleporter]
+ *     ...
+ *     offset 42: uint16_t thing_count[dbCloud]
+ *
+ *   The seed/count profile is effectively the skproject File_header shifted
+ *   two bytes after the leading reserved word/G1 marker, while map
+ *   definitions still start at byte 44.  Firestaff currently treats the
+ *   real-data DB pool bases as unproven because the bytes between the
+ *   skproject-sized DB pools and the trailing map-data block contain an
+ *   additional PC G1 block that still needs source proof.
  *
  *   PC G1 MAP DEFINITION (16 bytes each; source-compatible with
  *   skproject SKWIN/DME.h Map_definitions for offset + w8 dimensions):
@@ -243,11 +250,11 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     out->column_index_base = -1;
     out->square_first_thing_base = -1;
     out->text_data_base = -1;
-    out->square_first_thing_count = (int)RD16(dat + 18);
-    out->text_word_count = (int)RD16(dat + 14);
+    out->square_first_thing_count = (int)RD16(dat + 12);
+    out->text_word_count = (int)RD16(dat + 8);
     for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
         out->thing_data_bases[i] = -1;
-        out->thing_type_counts[i] = 0;
+        out->thing_type_counts[i] = (int)RD16(dat + 14 + i * 2);
     }
 
     for (int i = 0; i < map_count; ++i) {
@@ -283,7 +290,10 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
      * G1 map bytes after the object pools, i.e. as the trailing cbMapData
      * block. DME.h Map_definitions::w8 stores (width-1,height-1); the
      * square type is the high three bits and bit 0x10 marks a thing-list
-     * square. */
+     * square. Header text/list/count metadata follows the same source
+     * File_header shape shifted behind the leading G1 marker, but the exact
+     * PC English DB-pool bases remain disabled until the extra pre-map block
+     * is identified. */
     out->raw_data = (uint8_t *)malloc((size_t)size);
     if (!out->raw_data) return -1;
     memcpy(out->raw_data, dat, (size_t)size);
