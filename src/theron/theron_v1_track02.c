@@ -1092,6 +1092,35 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
         : THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
 }
 
+int theron_v1_track02_bind_level_candidate_anchor(
+    size_t descriptor_offset,
+    Theron_Track02LevelCandidateCatalog *catalog) {
+
+    size_t expected_offset = 0u;
+    int expected_ok;
+
+    if (!catalog) {
+        return 0;
+    }
+
+    expected_ok = theron_v1_track02_initial_candidate_expected_offset(
+        descriptor_offset,
+        &expected_offset);
+    for (size_t i = 0; i < catalog->candidate_count; ++i) {
+        Theron_Track02LevelCandidate *candidate = &catalog->candidates[i];
+        candidate->descriptor_delta = 0u;
+        candidate->matches_initial_anchor = 0;
+        if (descriptor_offset >= candidate->absolute_offset) {
+            candidate->descriptor_delta =
+                descriptor_offset - candidate->absolute_offset;
+        }
+        if (expected_ok && candidate->absolute_offset == expected_offset) {
+            candidate->matches_initial_anchor = 1;
+        }
+    }
+    return 1;
+}
+
 int theron_v1_track02_initial_candidate_expected_offset(
     size_t descriptor_offset,
     size_t *out_candidate_offset) {

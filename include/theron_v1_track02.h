@@ -402,6 +402,8 @@ typedef struct {
     int start_x;
     int start_y;
     int start_dir;
+    size_t descriptor_delta;
+    int matches_initial_anchor;
     int loaded;
 } Theron_Track02LevelCandidate;
 
@@ -466,6 +468,20 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
     const uint8_t *track02_data,
     size_t track02_size,
     Theron_Track02LevelCandidateCatalog *out_catalog);
+
+/* Annotate a candidate catalog with the candidate->descriptor distance.
+ *
+ * The scanner intentionally does not require a descriptor offset because it
+ * can be used on raw byte fixtures.  Call this after scanning when the
+ * hash-verified descriptor anchor is known.  It fills
+ * descriptor_delta for every candidate whose offset precedes the descriptor
+ * and marks matches_initial_anchor only for the current source-locked raw
+ * Track 02 startup relation used by
+ * theron_v1_track02_load_initial_level_candidate().
+ */
+int theron_v1_track02_bind_level_candidate_anchor(
+    size_t descriptor_offset,
+    Theron_Track02LevelCandidateCatalog *catalog);
 
 /* Expected raw Track 02 startup candidate offset for one descriptor anchor.
  *
