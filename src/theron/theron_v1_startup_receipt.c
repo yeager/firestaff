@@ -535,6 +535,8 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         Theron_V1_Level initial_level;
         Theron_Track02LevelHandoff initial_handoff;
         Theron_Track02LevelHandoffStatus initial_status;
+        Theron_Track02LevelHandoffStatus initial_bind_status;
+        Theron_Track02InitialCandidateBinding initial_binding;
 
         initial_status = theron_v1_track02_load_initial_level_candidate(
             data,
@@ -550,6 +552,27 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
             (uint64_t)initial_handoff.candidate_count;
         receipt->initial_candidate_expected_offset =
             (uint64_t)initial_handoff.expected_offset;
+        initial_bind_status = theron_v1_track02_bind_initial_level_candidate(
+            data,
+            size,
+            signal.descriptor_offsets[0],
+            &initial_binding);
+        if (initial_bind_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
+            Theron_Track02LevelCandidateCatalog catalog;
+            memset(&catalog, 0, sizeof(catalog));
+            catalog.candidate_count = 1u;
+            catalog.scanned_bytes = size;
+            catalog.candidates[0] = initial_binding.candidate;
+            if (theron_v1_track02_bind_level_candidate_user_offsets(
+                    size,
+                    expected_md5,
+                    &catalog) == THERON_TRACK02_SIGNAL_OK &&
+                catalog.candidates[0].user_data_offset_valid) {
+                receipt->initial_candidate_user_data_offset_valid = 1;
+                receipt->initial_candidate_user_data_offset =
+                    (uint64_t)catalog.candidates[0].user_data_offset;
+            }
+        }
         if (initial_status == THERON_TRACK02_LEVEL_HANDOFF_OK &&
             initial_handoff.binding_status ==
                 THERON_TRACK02_LEVEL_HANDOFF_OK &&
@@ -684,6 +707,10 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->initial_candidate_count), h);
     h = fnv1a_32(&receipt->initial_candidate_expected_offset,
                  sizeof(receipt->initial_candidate_expected_offset), h);
+    h = fnv1a_32(&receipt->initial_candidate_user_data_offset_valid,
+                 sizeof(receipt->initial_candidate_user_data_offset_valid), h);
+    h = fnv1a_32(&receipt->initial_candidate_user_data_offset,
+                 sizeof(receipt->initial_candidate_user_data_offset), h);
     h = fnv1a_32(&receipt->startup_mirror_count,
                  sizeof(receipt->startup_mirror_count), h);
     h = fnv1a_32(&receipt->startup_companion_limit,
@@ -749,6 +776,7 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "initial_start=(%d,%d,%d) initial_delta=0x%llx "
                  "initial_anchor=%d initial_bind=%d initial_bind_name=%s "
                  "initial_count=%llu initial_expected=0x%llx "
+                 "initial_user_valid=%d initial_user_off=0x%llx "
                  "mirrors=%u companions=%u portrait_range=%u..%u "
                  "class_mask=0x%x mirror_fallback_labels=%u "
                  "mirror_decoded_art=%u chapter=\"%s\" "
@@ -799,6 +827,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                          receipt->initial_candidate_binding_status),
                  (unsigned long long)receipt->initial_candidate_count,
                  (unsigned long long)receipt->initial_candidate_expected_offset,
+                 receipt->initial_candidate_user_data_offset_valid,
+                 (unsigned long long)receipt->initial_candidate_user_data_offset,
                  (unsigned)receipt->startup_mirror_count,
                  (unsigned)receipt->startup_companion_limit,
                  (unsigned)receipt->startup_portrait_min,
