@@ -143,6 +143,20 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int depthIndex,
                                        int sideHint,
                                        int creatureDir);
+static int m11_draw_item_sprite(const M11_GameViewState* state,
+                                unsigned char* framebuffer,
+                                int fbW,
+                                int fbH,
+                                int x,
+                                int y,
+                                int w,
+                                int h,
+                                int thingType,
+                                int subtype,
+                                int relativeCell,
+                                int pileIndex,
+                                int depthIndex,
+                                int sourceZoneRow);
 static int m11_creature_coordinate_set(int creatureType);
 static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
 static int m11_c2500_object_raw_zone_point(int rowIndex,
@@ -802,6 +816,47 @@ static int m11_csb_thing_type_is_floor_object(int thing_type)
            thing_type == THING_TYPE_JUNK;
 }
 
+static int m11_csb_runtime_object_subtype_from_record(
+    int thing_type,
+    const uint8_t *record,
+    int size)
+{
+    unsigned int word;
+    int subtype;
+
+    if (!record || size < 4) {
+        return -1;
+    }
+    if (thing_type == THING_TYPE_SCROLL) {
+        return 0;
+    }
+    if (thing_type == THING_TYPE_CONTAINER) {
+        if (size < 8) return -1;
+        /* ReDMCSB DEFS.H CONTAINER: Next +0, Slot +2, Type +4.
+         * Match the CSB runtime ObjectInfo decode so a non-empty chest
+         * cannot change its visible subtype through the contained Slot. */
+        word = (unsigned int)record[4] | ((unsigned int)record[5] << 8);
+        subtype = (int)((word >> 1) & 0x03u);
+        return subtype > 0 ? 0 : subtype;
+    }
+    word = (unsigned int)record[2] | ((unsigned int)record[3] << 8);
+    if (thing_type == THING_TYPE_POTION) {
+        subtype = (int)((word >> 8) & 0x7Fu);
+        return subtype <= 20 ? subtype : -1;
+    }
+    subtype = (int)(word & 0x7Fu);
+    if (thing_type == THING_TYPE_WEAPON) {
+        return subtype <= 45 ? subtype : -1;
+    }
+    if (thing_type == THING_TYPE_ARMOUR) {
+        return subtype <= 57 ? subtype : -1;
+    }
+    if (thing_type == THING_TYPE_JUNK) {
+        return subtype <= 52 ? subtype : -1;
+    }
+    return -1;
+}
+
 static int m11_csb_runtime_group_direction(const uint8_t *record, int size)
 {
     unsigned int flags;
@@ -1003,11 +1058,24 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                    safety++ < 64) {
                 int type = (int)THING_GET_TYPE(thing);
                 if (m11_csb_thing_type_is_floor_object(type)) {
+                    int record_type = -1;
+                    int record_size = 0;
+                    const uint8_t *record =
+                        csb_v1_dungeon_get_thing_record(dungeon,
+                                                        thing,
+                                                        &record_type,
+                                                        NULL,
+                                                        &record_size);
                     int icon = csb_v1_runtime_object_icon_index(runtime, thing);
                     int rel_cell = ((int)THING_GET_CELL(thing) -
                                     runtime->party_dir) & 3;
                     int x = 0;
                     int y = 0;
+                    int row = m11_dm1_f0115_c2500_c2900_row(forward, side);
+                    int subtype =
+                        m11_csb_runtime_object_subtype_from_record(type,
+                                                                   record,
+                                                                   record_size);
                     int marker_x = x;
                     int marker_y = y;
                     (void)m11_csb_runtime_object_overlay_position(forward,
@@ -1020,6 +1088,24 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                     if (rel_cell == 0 || rel_cell == 2) x -= 5;
                     if (rel_cell == 1 || rel_cell == 3) x += 5;
                     if (rel_cell >= 2) y += 3;
+                    if (record_type == type &&
+                        subtype >= 0 &&
+                        m11_draw_item_sprite(state,
+                                             framebuffer,
+                                             framebuffer_width,
+                                             framebuffer_height,
+                                             0,
+                                             33,
+                                             224,
+                                             136,
+                                             type,
+                                             subtype,
+                                             rel_cell,
+                                             0,
+                                             forward - 1,
+                                             row)) {
+                        break;
+                    }
                     if (icon >= 0 &&
                         m11_draw_dm_object_icon_index(
                             state,
