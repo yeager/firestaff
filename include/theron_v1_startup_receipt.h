@@ -103,6 +103,10 @@ typedef enum {
  *   - post_boundary_span_offset        : first post-boundary span offset (0 if N/A)
  *   - post_boundary_span_size          : 44 for raw BIN / ISO when matched
  *   - next_nonzero_offset              : first nonzero byte after descriptor
+ *   - descriptor_role_*                : bounded byte-role summary for the
+ *                                        9 descriptor windows (zero/pre/post/
+ *                                        descriptor-table only; no graphics or
+ *                                        dungeon semantic claim)
  *   - initial_candidate_*              : hash/anchor-gated startup level
  *                                        candidate receipt when raw Track 02
  *                                        exposes the bounded 32x27 payload
@@ -142,6 +146,17 @@ typedef struct {
     uint64_t post_boundary_span_offset;
     uint64_t post_boundary_span_size;
     uint64_t next_nonzero_offset;
+
+    /* ── Track 02 descriptor-entry role summary ───────────────── */
+    uint32_t descriptor_role_zero_fill_count;
+    uint32_t descriptor_role_pre_data_count;
+    uint32_t descriptor_role_post_data_count;
+    uint32_t descriptor_role_descriptor_table_count;
+    int32_t  descriptor_window_entry_index;
+    uint32_t descriptor_byte_before;
+    int      descriptor_byte_before_is_rts;
+    uint64_t descriptor_first_nonzero_after;
+    int      descriptor_all_zero_after;
 
     /* ── Track 02 startup-level candidate summary ─────────────── */
     int      initial_candidate_found;
