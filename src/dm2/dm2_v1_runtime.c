@@ -66,6 +66,45 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.stairs_callback = NULL;
 }
 
+int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_GameState *gs;
+
+    if (!session || !rt->boot || !rt->boot->dm2_state) {
+        return -1;
+    }
+    if (!dm2_v1_session_validate(session)) {
+        return -1;
+    }
+    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+
+    /* skproject SKWINSPX/src/v4/skgame.cpp SELECT_LOAD_GAME and
+     * skfileop.cpp READ_SAVEGAMES_FILENAMES route startup resume through a
+     * chosen SKSAVE digit after validating the 0xBEEF/0xDEAD slot header.
+     * Firestaff's bounded session importer applies the startup-owned fields
+     * already modeled by DM2_V1_GameState/RuntimeState; broader dungeon DB
+     * pools stay owned by the later full SKSave importer. */
+    gs->party_x = (int)session->party_x;
+    gs->party_y = (int)session->party_y;
+    gs->party_dir = (int)(session->party_dir & 3u);
+    gs->current_level = (int)session->party_level;
+    gs->outdoor = session->outdoor_mode ? 1 : 0;
+    gs->gold = (int)session->gold;
+    gs->reputation = (int)session->reputation;
+    gs->time_of_day = (int)session->time_of_day_minutes;
+
+    rt->tick_count = (int)session->game_tick;
+    rt->outdoor = gs->outdoor;
+    rt->time_of_day_minutes = gs->time_of_day;
+    rt->dungeon_level = gs->current_level;
+    rt->view_dir = gs->party_dir;
+    dm2_v1_weather_set(&rt->weather, session->rain_intensity > 0
+                                      ? DM2_WEATHER_RAIN
+                                      : DM2_WEATHER_CLEAR);
+    rt->weather.weather_intensity = (int)session->rain_intensity;
+    return 0;
+}
+
 /* ── V1 Game Tick ──────────────────────────────────────────────────── */
 
 /* Module-static projectile drain cache (refreshed each tick).
