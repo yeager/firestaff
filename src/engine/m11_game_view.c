@@ -9569,6 +9569,7 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     TrAssetBundle* assets;
     Theron_StartupFlow flow;
     Theron_StartupResult result;
+    Theron_V1_Champion persistedTheron;
     char flowReceipt[128];
     char levelReceipt[160];
 
@@ -9598,6 +9599,8 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
+    memset(&persistedTheron, 0, sizeof(persistedTheron));
+    persistedTheron = world->party.champions[THERON_CHAMPION_SLOT_THERON];
     result = theron_v1_startup_enter_forcefield(&flow, &world->party);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
@@ -9607,6 +9610,9 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
                      theron_v1_startup_result_name(result));
         }
         return 0;
+    }
+    if (persistedTheron.name[0] != '\0') {
+        world->party.champions[THERON_CHAMPION_SLOT_THERON] = persistedTheron;
     }
 
     if (theron_v1_dungeon_enter(&world->progression, flow.selected_dungeon) != 0) {
@@ -9647,6 +9653,107 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
                  world->party.champion_count,
                  (int)flow.companion_count,
                  levelReceipt);
+    }
+    return 1;
+}
+
+static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
+                                            char* receipt,
+                                            size_t receipt_cap) {
+    Theron_V1_World* world;
+    Theron_V1_BootProfile* profile;
+    Theron_SaveSlot slotInfo;
+    Theron_DungeonProgression loadedProgression;
+    unsigned char championData[
+        THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
+    Theron_StartupFlow flow;
+    int slot;
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!state) {
+        return 0;
+    }
+    world = (Theron_V1_World*)state->theronWorld;
+    profile = (Theron_V1_BootProfile*)state->theronBootProfile;
+    if (!world || !profile) {
+        return 0;
+    }
+    if (state->theronState.save_resume_claim != THERON_V1_STARTUP_RESUME_TQSV &&
+        state->theronState.save_resume_claim != THERON_V1_STARTUP_RESUME_DUAL) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Continue requires a .tqsv slot");
+        }
+        return 0;
+    }
+
+    slot = state->theronState.save_resume_active_slot;
+    if (slot < 0 || slot >= THERON_SAVE_SLOT_COUNT) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "No .tqsv slot selected");
+        }
+        return 0;
+    }
+
+    memset(&slotInfo, 0, sizeof(slotInfo));
+    memset(&loadedProgression, 0, sizeof(loadedProgression));
+    memset(championData, 0, sizeof(championData));
+    if (theron_v1_save_load_from_slot(profile->save_root,
+                                      slot,
+                                      championData,
+                                      sizeof(championData),
+                                      &loadedProgression,
+                                      sizeof(loadedProgression),
+                                      &slotInfo) != 0 ||
+        !slotInfo.valid) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Continue slot %d failed", slot);
+        }
+        return 0;
+    }
+
+    world->progression = loadedProgression;
+    world->current_dungeon = (int)loadedProgression.current_dungeon;
+    world->current_level = loadedProgression.current_level > 0
+        ? (int)loadedProgression.current_level - 1
+        : 0;
+    world->object_count = 0;
+    world->timer_count = 0;
+    world->transition_pending = 0;
+    world->quest_items_in_dungeon =
+        loadedProgression.quest_items_in_current_dungeon;
+    world->dungeon_complete = 0;
+    memset(world->level_loaded, 0, sizeof(world->level_loaded));
+    if (theron_v1_party_unpack(&world->party,
+                               championData,
+                               sizeof(championData)) != 0) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Continue party decode failed");
+        }
+        return 0;
+    }
+    world->party.champion_count = 1;
+    world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+
+    theron_v1_startup_flow_init(&flow);
+    flow.selected_dungeon = loadedProgression.current_dungeon;
+    m11_theron_sync_startup_state(state, &flow);
+    state->theronState.level_loaded = 0;
+    state->theronState.startup_cursor = 0;
+    state->theronState.save_resume_continue_focus = 0;
+    state->theronState.party_x = world->party.leader_x;
+    state->theronState.party_y = world->party.leader_y;
+    state->theronState.party_dir = world->party.leader_dir;
+    state->theronState.tick_count = (int)world->world_tick;
+
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 "continued slot=%d dungeon=%d label=%s",
+                 slot,
+                 (int)loadedProgression.current_dungeon,
+                 slotInfo.label[0] ? slotInfo.label : "TQSV");
     }
     return 1;
 }
@@ -9692,6 +9799,7 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
     state->theronState.startup_cursor = 0;
+    state->theronState.save_resume_continue_focus = 0;
     state->theronState.party_x = world->party.leader_x;
     state->theronState.party_y = world->party.leader_y;
     state->theronState.party_dir = world->party.leader_dir;
@@ -9792,6 +9900,9 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         saveResumeReady ? (int)saveResume.verdict : -1;
     state->theronState.save_resume_claim =
         saveResumeReady ? (int)saveResume.resume_claim : -1;
+    state->theronState.save_resume_active_slot =
+        saveResumeReady ? saveResume.tqsv_active_slot : -1;
+    state->theronState.save_resume_continue_focus = 0;
     state->theronState.save_resume_tqsv_slots =
         saveResumeReady ? saveResume.tqsv_valid_slots : 0;
     state->theronState.save_resume_srm_slots =
@@ -11604,6 +11715,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     (Theron_DungeonID)state->theronState.selected_dungeon;
                 m11_theron_sync_startup_state(state, &flow);
                 state->theronState.startup_cursor = 0;
+                state->theronState.save_resume_continue_focus = 0;
                 m11_set_status(state, "STARTUP", "STAGE SELECT");
                 return M11_GAME_INPUT_REDRAW;
             }
@@ -11614,20 +11726,32 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             !state->theronState.level_loaded) {
             if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
                 int selected = state->theronState.selected_dungeon;
+                int has_tqsv_continue =
+                    state->theronState.save_resume_active_slot >= 0 &&
+                    (state->theronState.save_resume_claim ==
+                        THERON_V1_STARTUP_RESUME_TQSV ||
+                     state->theronState.save_resume_claim ==
+                        THERON_V1_STARTUP_RESUME_DUAL);
                 if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
                     selected > THERON_DUNGEON_COUNT) {
                     selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
                 }
                 if (input == M12_MENU_INPUT_UP) {
-                    if (selected > THERON_DUNGEON_1_HALL_OF_RECORDS) {
+                    if (state->theronState.save_resume_continue_focus) {
+                        state->theronState.save_resume_continue_focus = 0;
+                    } else if (selected > THERON_DUNGEON_1_HALL_OF_RECORDS) {
                         --selected;
+                    } else if (has_tqsv_continue) {
+                        state->theronState.save_resume_continue_focus = 1;
                     }
                     state->theronState.selected_dungeon = selected;
                     m11_set_status(state, "STARTUP", "STAGE CURSOR");
                     return M11_GAME_INPUT_REDRAW;
                 }
                 if (input == M12_MENU_INPUT_DOWN) {
-                    if (selected < THERON_DUNGEON_COUNT) {
+                    if (state->theronState.save_resume_continue_focus) {
+                        state->theronState.save_resume_continue_focus = 0;
+                    } else if (selected < THERON_DUNGEON_COUNT) {
                         ++selected;
                     }
                     state->theronState.selected_dungeon = selected;
@@ -11638,6 +11762,18 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     input == M12_MENU_INPUT_ACTION) {
                     Theron_StartupFlow flow;
                     char receipt[96];
+                    if (state->theronState.save_resume_continue_focus) {
+                        if (!m11_theron_continue_tqsv_startup(state,
+                                                              receipt,
+                                                              sizeof(receipt))) {
+                            m11_set_status(state, "STARTUP",
+                                           receipt[0] ? receipt : "CONTINUE FAILED");
+                            return M11_GAME_INPUT_REDRAW;
+                        }
+                        m11_set_status(state, "STARTUP", "CONTINUE LOADED");
+                        m11_set_inspect_readout(state, "STARTUP", receipt);
+                        return M11_GAME_INPUT_REDRAW;
+                    }
                     state->theronState.selected_dungeon = selected;
                     receipt[0] = '\0';
                     if (!m11_theron_rebuild_startup_flow(state,
@@ -11651,6 +11787,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     }
                     m11_theron_sync_startup_state(state, &flow);
                     state->theronState.startup_cursor = 0;
+                    state->theronState.save_resume_continue_focus = 0;
                     m11_set_status(state, "STARTUP", "SOUL ROOM");
                     return M11_GAME_INPUT_REDRAW;
                 }
@@ -34827,6 +34964,13 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                   34, 22, "THERON'S QUEST", &g_text_title);
 
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        int rowY = 58;
+        int has_tqsv_continue =
+            state->theronState.save_resume_active_slot >= 0 &&
+            (state->theronState.save_resume_claim ==
+                THERON_V1_STARTUP_RESUME_TQSV ||
+             state->theronState.save_resume_claim ==
+                THERON_V1_STARTUP_RESUME_DUAL);
         selected = state->theronState.selected_dungeon;
         if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
             selected > THERON_DUNGEON_COUNT) {
@@ -34834,6 +34978,20 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       34, 44, "CHOOSE A STAGE", &g_text_shadow);
+        if (has_tqsv_continue) {
+            char continueRow[96];
+            snprintf(continueRow,
+                     sizeof(continueRow),
+                     "%c CONTINUE  SLOT %d",
+                     state->theronState.save_resume_continue_focus ? '>' : ' ',
+                     state->theronState.save_resume_active_slot);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          40, rowY, continueRow,
+                          state->theronState.save_resume_continue_focus
+                              ? &active
+                              : &picked);
+            rowY += 12;
+        }
         for (i = THERON_DUNGEON_1_HALL_OF_RECORDS;
              i <= THERON_DUNGEON_COUNT; ++i) {
             const Theron_DungeonMeta* meta = theron_v1_dungeon_meta((Theron_DungeonID)i);
@@ -34845,12 +35003,17 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                      meta ? meta->name : "Unknown",
                      available ? "" : "  LOCKED");
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          40, 58 + (i - 1) * 14, row,
-                          (i == selected) ? &active :
+                          40, rowY + (i - 1) * 13, row,
+                          (i == selected &&
+                           !state->theronState.save_resume_continue_focus)
+                              ? &active :
                           (available ? &muted : &locked));
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      34, 166, "UP/DOWN SELECT  ENTER OPEN SOUL ROOM",
+                      34, 166,
+                      has_tqsv_continue
+                          ? "UP/DOWN SELECT  ENTER CONTINUE/STAGE"
+                          : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM",
                       &g_text_small);
         return;
     }

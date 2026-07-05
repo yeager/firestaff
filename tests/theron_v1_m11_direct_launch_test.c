@@ -12,6 +12,7 @@
 
 #include "m11_game_view.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_save_load.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_world.h"
 
@@ -65,6 +66,16 @@ static int make_temp_dir(char out[512]) {
 #endif
 }
 
+static int test_set_home(const char* path) {
+#if defined(_WIN32)
+    char envbuf[1024];
+    snprintf(envbuf, sizeof(envbuf), "HOME=%s", path ? path : "");
+    return _putenv(envbuf) == 0;
+#else
+    return path ? setenv("HOME", path, 1) == 0 : unsetenv("HOME") == 0;
+#endif
+}
+
 static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     int n = 0;
     size_t i;
@@ -82,6 +93,11 @@ int main(void) {
     char temp_dir[512];
     char theron_dir[512];
     char track_path[512];
+    char save_root[512];
+    unsigned char saved_champions[
+        THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
+    Theron_V1_Party saved_party;
+    Theron_DungeonProgression saved_progression;
     unsigned char framebuffer[FB_W * FB_H];
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
@@ -100,6 +116,31 @@ int main(void) {
              "Theron's Quest (US) (Track 02).bin");
     expect_true(write_file(track_path, "fake-track02-without-bank-markers"),
                 "fake Track 02 file written");
+    expect_true(test_set_home(temp_dir), "test HOME points at Theron temp root");
+
+    theron_v1_party_init(&saved_party, THERON_DUNGEON_1_HALL_OF_RECORDS);
+    saved_party.champions[0].health = 77;
+    saved_party.champions[0].max_health = 88;
+    memset(saved_champions, 0, sizeof(saved_champions));
+    expect_true(theron_v1_party_pack(&saved_party,
+                                     saved_champions,
+                                     sizeof(saved_champions)) ==
+                    theron_v1_party_pack_size(),
+                "test packs Theron champion save data");
+    theron_v1_dungeon_progression_init(&saved_progression);
+    saved_progression.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    saved_progression.current_level = 1;
+    saved_progression.dungeon_playtime_seconds = 1234;
+    snprintf(save_root, sizeof(save_root),
+             "%s%ssaves%stheron",
+             temp_dir, PATH_SEP, PATH_SEP);
+    expect_true(theron_v1_save_to_slot(save_root,
+                                       2,
+                                       saved_champions,
+                                       sizeof(saved_champions),
+                                       &saved_progression,
+                                       "Continue Test") == 0,
+                "test writes a valid Theron .tqsv continue slot");
 
     memset(&spec, 0, sizeof(spec));
     spec.title = "THERON'S QUEST";
@@ -164,6 +205,9 @@ int main(void) {
                 "M11 Theron direct launch evaluates startup save/resume verdict");
     expect_true(view.theronState.save_resume_claim >= 0,
                 "M11 Theron direct launch evaluates startup save/resume claim");
+    expect_true(view.theronState.save_resume_active_slot == 2 &&
+                view.theronState.save_resume_tqsv_slots == 1,
+                "M11 Theron direct launch exposes active .tqsv continue slot");
     expect_true(strstr(view.inspectDetail, "SAVE ") != NULL,
                 "M11 Theron startup inspect readout reports save/resume claim");
 
@@ -172,6 +216,22 @@ int main(void) {
     render_pixels = count_nonzero_pixels(framebuffer, sizeof(framebuffer));
     expect_true(render_pixels > 1000,
                 "M11 Theron startup screen produces a nonblank framebuffer");
+
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron stage cursor can focus Continue");
+    expect_true(view.theronState.save_resume_continue_focus == 1,
+                "M11 Theron Continue row receives focus");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Continue loads active .tqsv slot");
+    expect_true(view.theronState.save_resume_continue_focus == 0 &&
+                view.theronState.startup_phase ==
+                    THERON_STARTUP_PHASE_STAGE_SELECT,
+                "M11 Theron Continue returns to stage select");
+    expect_true(world->progression.dungeon_playtime_seconds == 1234 &&
+                world->party.champions[0].health == 77,
+                "M11 Theron Continue applies progression and Theron champion data");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                 M11_GAME_INPUT_REDRAW,
@@ -224,7 +284,8 @@ int main(void) {
                 "M11 loaded the initial Theron level after forcefield");
     expect_true(world != NULL &&
                 world->party.champion_count == 4 &&
-                strcmp(world->party.champions[0].name, "Theron") == 0,
+                strcmp(world->party.champions[0].name, "Theron") == 0 &&
+                world->party.champions[0].health == 77,
                 "M11 forcefield materializes Theron plus selected mirrors");
     expect_true(strcmp(world->party.champions[1].name, "Sorcerer Mirror") == 0 &&
                 strcmp(world->party.champions[2].name, "Fighter Mirror") == 0 &&
