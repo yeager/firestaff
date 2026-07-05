@@ -8,31 +8,32 @@
  * theron_v1_dungeon_progression.c is deterministic across many runs.
  * Each dungeon has a state (LOCKED / AVAILABLE / COMPLETE) and the
  * advance() operation transitions current -> next, marking the
- * previous COMPLETE and the next AVAILABLE. After dungeon 7,
- * quest_complete becomes 1 and further advances return
- * THERON_DUNGEON_INVALID.
+ * previous COMPLETE, unlocks the original stage-select set, and moves focus
+ * to the first available incomplete dungeon. After dungeon 7, quest_complete
+ * becomes 1 and further advances return THERON_DUNGEON_INVALID.
  *
  * Source-lock:
  *   - THQUEST.ASM T080 (between-dungeon save/load)
  *   - ReDMCSB analogue siblings GROUP.C / CLIKMENU.C
  *   - src/theron/theron_v1_dungeon_progression.c
  *
- * Coverage (10/10 invariants):
+ * Coverage (11/11 invariants):
  *   1. Init: dungeon 1 AVAILABLE, others LOCKED, quest_complete=0.
  *   2. Init NULL-safety.
- *   3. Advance 1->2 marks 1 COMPLETE, 2 AVAILABLE.
- *   4. Advance 7->8 sets quest_complete=1, returns INVALID.
- *   5. Advance NULL-safety.
- *   6. theron_v1_dungeon_next invalid input returns INVALID.
- *   7. Full 1..7 progression reaches COMPLETE for all 7.
- *   8. Final state is quest_complete=1, current_dungeon=8 (INVALID sentinel).
- *   9. Reset (init) after full progression restores dungeon 1 AVAILABLE.
- *  10. Determinism: 50 full progressions produce identical state hash.
+ *   3. Advance 1 marks 1 COMPLETE, unlocks 2..6, keeps 7 LOCKED.
+ *   4. After six completed dungeons, dungeon 7 becomes AVAILABLE.
+ *   5. Advance 7->end sets quest_complete=1, returns INVALID.
+ *   6. Advance NULL-safety.
+ *   7. theron_v1_dungeon_next invalid input returns INVALID.
+ *   8. Full 1..7 progression reaches COMPLETE for all 7.
+ *   9. Final state is quest_complete=1.
+ *  10. Reset (init) after full progression restores dungeon 1 AVAILABLE.
+ *  11. Determinism: 50 full progressions produce identical state hash.
  *
  * Run:
  *   ./build/firestaff_theron_v1_dungeon_progression_determinism_probe
  *
- * Pass: 10/10 invariants.
+ * Pass: 11/11 invariants.
  */
 
 #include <stdio.h>
@@ -91,20 +92,41 @@ int main(void) {
         CHECK(1, "init(NULL) is a safe no-op");
     }
 
-    /* 3. Advance 1->2 marks 1 COMPLETE, 2 AVAILABLE. */
+    /* 3. Advance 1 marks 1 COMPLETE, unlocks 2..6, keeps 7 LOCKED. */
     {
         Theron_DungeonProgression prog;
+        int middle_available = 0;
         theron_v1_dungeon_progression_init(&prog);
         Theron_DungeonID next = theron_v1_dungeon_advance(&prog);
         CHECK(next == THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
-              "advance 1->2: returns dungeon 2");
+              "advance 1: focus returns dungeon 2");
         CHECK(prog.dungeon_states[0] == THERON_DUNGEON_STATE_COMPLETE,
-              "advance 1->2: dungeon 1 marked COMPLETE");
-        CHECK(prog.dungeon_states[1] == THERON_DUNGEON_STATE_AVAILABLE,
-              "advance 1->2: dungeon 2 marked AVAILABLE");
+              "advance 1: dungeon 1 marked COMPLETE");
+        for (int i = 1; i <= 5; ++i) {
+            if (prog.dungeon_states[i] == THERON_DUNGEON_STATE_AVAILABLE) {
+                ++middle_available;
+            }
+        }
+        CHECK(middle_available == 5,
+              "advance 1: dungeons 2..6 marked AVAILABLE");
+        CHECK(prog.dungeon_states[6] == THERON_DUNGEON_STATE_LOCKED,
+              "advance 1: dungeon 7 remains LOCKED");
     }
 
-    /* 4. Advance 7->8 sets quest_complete=1, returns INVALID. */
+    /* 4. After six completed dungeons, dungeon 7 becomes AVAILABLE. */
+    {
+        Theron_DungeonProgression prog;
+        theron_v1_dungeon_progression_init(&prog);
+        for (int i = 0; i < THERON_DUNGEON_COUNT - 1; ++i) {
+            theron_v1_dungeon_advance(&prog);
+        }
+        CHECK(prog.dungeon_states[6] == THERON_DUNGEON_STATE_AVAILABLE,
+              "after six advances: dungeon 7 AVAILABLE");
+        CHECK(prog.current_dungeon == THERON_DUNGEON_7_TOWER_OF_EPILOGUE,
+              "after six advances: focus moves to dungeon 7");
+    }
+
+    /* 5. Advance 7->end sets quest_complete=1, returns INVALID. */
     {
         Theron_DungeonProgression prog;
         theron_v1_dungeon_progression_init(&prog);
@@ -122,14 +144,14 @@ int main(void) {
               "advance 7->end: dungeon 7 marked COMPLETE");
     }
 
-    /* 5. Advance NULL-safety. */
+    /* 6. Advance NULL-safety. */
     {
         Theron_DungeonID next = theron_v1_dungeon_advance(NULL);
         CHECK(next == THERON_DUNGEON_INVALID,
               "advance(NULL) returns INVALID");
     }
 
-    /* 6. theron_v1_dungeon_next invalid input returns INVALID. */
+    /* 7. theron_v1_dungeon_next invalid input returns INVALID. */
     {
         Theron_DungeonID next = theron_v1_dungeon_next(0);   /* below range */
         CHECK(next == THERON_DUNGEON_INVALID,

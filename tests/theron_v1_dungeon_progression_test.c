@@ -321,8 +321,14 @@ static int test_save_restore(void) {
                "dungeon state wrong after restore");
     }
 
-    /* Dungeon 5+ should be LOCKED */
-    for (int i = 4; i < THERON_DUNGEON_COUNT; i++) {
+    /* Dungeons 5-6 are available once dungeon 1 has been completed. */
+    for (int i = 4; i <= 5; i++) {
+        ASSERT(restored.dungeon_states[i] == THERON_DUNGEON_STATE_AVAILABLE,
+               "middle dungeon state wrong after restore");
+    }
+
+    /* Dungeon 7 stays locked until the first six dungeons are complete. */
+    for (int i = 6; i < THERON_DUNGEON_COUNT; i++) {
         ASSERT(restored.dungeon_states[i] == THERON_DUNGEON_STATE_LOCKED,
                "dungeon state wrong after restore");
     }

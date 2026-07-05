@@ -168,6 +168,74 @@ const Theron_DungeonMeta *theron_v1_dungeon_meta(Theron_DungeonID id) {
     return &g_dungeon_table[id - 1];
 }
 
+static int tqr_dungeon_is_complete(const Theron_DungeonProgression *prog,
+                                   Theron_DungeonID id) {
+    if (!prog || id < 1 || id > THERON_DUNGEON_COUNT) {
+        return 0;
+    }
+    return prog->dungeon_states[id - 1] == THERON_DUNGEON_STATE_COMPLETE ||
+           (prog->quest_items_collected & THERON_QUEST_ITEM_MASK_FROM_DUNGEON(id)) != 0;
+}
+
+static int tqr_first_six_complete(const Theron_DungeonProgression *prog) {
+    int id;
+    for (id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+         id <= THERON_DUNGEON_6_CASTLE_OF_FATE;
+         ++id) {
+        if (!tqr_dungeon_is_complete(prog, (Theron_DungeonID)id)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void tqr_unlock_available_dungeons(Theron_DungeonProgression *prog) {
+    int id;
+    if (!prog) {
+        return;
+    }
+
+    if (!tqr_dungeon_is_complete(prog, THERON_DUNGEON_1_HALL_OF_RECORDS)) {
+        return;
+    }
+
+    /* Original Theron's Quest stage select: first dungeon completion unlocks
+     * the five middle dungeons; the final dungeon stays locked until the
+     * other six are complete. Sources: Theron's Quest manual and Dungeon
+     * Master forum Theron's Quest RTC thread, post 2006-12-22. */
+    for (id = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+         id <= THERON_DUNGEON_6_CASTLE_OF_FATE;
+         ++id) {
+        if (prog->dungeon_states[id - 1] == THERON_DUNGEON_STATE_LOCKED) {
+            prog->dungeon_states[id - 1] = THERON_DUNGEON_STATE_AVAILABLE;
+        }
+    }
+
+    if (tqr_first_six_complete(prog) &&
+        prog->dungeon_states[THERON_DUNGEON_7_TOWER_OF_EPILOGUE - 1] ==
+            THERON_DUNGEON_STATE_LOCKED) {
+        prog->dungeon_states[THERON_DUNGEON_7_TOWER_OF_EPILOGUE - 1] =
+            THERON_DUNGEON_STATE_AVAILABLE;
+    }
+}
+
+static Theron_DungeonID tqr_first_available_dungeon(
+    const Theron_DungeonProgression *prog) {
+    int id;
+    if (!prog) {
+        return THERON_DUNGEON_INVALID;
+    }
+    for (id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+         id <= THERON_DUNGEON_COUNT;
+         ++id) {
+        if (prog->dungeon_states[id - 1] == THERON_DUNGEON_STATE_AVAILABLE ||
+            prog->dungeon_states[id - 1] == THERON_DUNGEON_STATE_IN_PROGRESS) {
+            return (Theron_DungeonID)id;
+        }
+    }
+    return THERON_DUNGEON_INVALID;
+}
+
 Theron_DungeonID theron_v1_dungeon_next(Theron_DungeonID current) {
     if (current < 1 || current >= THERON_DUNGEON_COUNT) {
         return THERON_DUNGEON_INVALID;
@@ -185,16 +253,17 @@ Theron_DungeonID theron_v1_dungeon_advance(Theron_DungeonProgression *prog) {
         prog->dungeon_states[current - 1] = THERON_DUNGEON_STATE_COMPLETE;
     }
 
-    /* Advance to next */
-    Theron_DungeonID next = theron_v1_dungeon_next(current);
+    tqr_unlock_available_dungeons(prog);
+
+    /* Advance UI focus to the first selectable incomplete dungeon. The stage
+     * select can still choose any AVAILABLE dungeon. */
+    Theron_DungeonID next = tqr_first_available_dungeon(prog);
     if (next == THERON_DUNGEON_INVALID) {
         /* All dungeons complete — quest done */
         prog->quest_complete = 1;
         return THERON_DUNGEON_INVALID;
     }
 
-    /* Set next as available (between-dungeon state) */
-    prog->dungeon_states[next - 1] = THERON_DUNGEON_STATE_AVAILABLE;
     prog->current_dungeon = next;
     prog->quest_items_in_current_dungeon = 0;
     prog->item_reset_applied = 0;
@@ -349,6 +418,8 @@ void theron_v1_dungeon_progression_restore(Theron_DungeonProgression *prog,
         }
     }
 
+    tqr_unlock_available_dungeons(prog);
+
     prog->item_reset_applied = 0;
     prog->champion_stats_persist = 1;
     prog->champion_inv_persist = 0;
@@ -436,8 +507,12 @@ const char *theron_v1_dungeon_progression_source_evidence(void) {
         "THQUEST.ASM T520  — party placement / start position\n"
         "THQUEST.ASM T560  — dungeon loading (header parsing, dungeon_seed)\n"
         "THQUEST.ASM T800  — champion persistence between dungeons\n"
-        "TQR: 7 mini-dungeons, 3 levels each max; champion inv reset per dungeon;\n"
-        "  Theron persists with stats/skills; 7 quest items one per dungeon;\n"
+        "TQR: 7 mini-dungeons, 3 levels each max; dungeon 1 first, dungeons\n"
+        "  2..6 unlocked after the first quest item, dungeon 7 after the first six;\n"
+        "  champion inv reset per dungeon; Theron persists with stats/skills;\n"
+        "  7 quest items one per dungeon;\n"
+        "Manual/dmweb/forum: stage select, Shield Defiant unlocks middle stages,\n"
+        "  final stage locked until the other stages are complete;\n"
         "  no in-dungeon saves; between-dungeon saves only (saves/theron/)\n"
         "Phase 0 provenance: docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md\n"
         "  JP MD5: b7afb338ad31be1025b53f9aff12d73a\n"

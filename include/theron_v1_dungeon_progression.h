@@ -6,11 +6,13 @@
 /* ══════════════════════════════════════════════════════════════════════
  * Theron V1 Phase 6 — Dungeon Progression
  *
- * Implements the 7-dungeon sequence for Theron's Quest, per-dungeon
- * item reset semantics, and seven-quest-item retrieval goal.
+ * Implements the 7-dungeon stage-select progression for Theron's Quest,
+ * per-dungeon item reset semantics, and seven-quest-item retrieval goal.
  *
  * Key design constraints (from TQR provenance):
  *   - 7 mini-dungeons, 3 levels each (max).
+ *   - Dungeon 1 is available first; completing it unlocks dungeons 2..6;
+ *     dungeon 7 unlocks after the first six are complete.
  *   - Between-dungeon saves only (no in-dungeon save).
  *   - Champion inventory resets each dungeon; Theron's stats/skills persist.
  *   - 7 quest items must be collected across the sequence.
@@ -28,9 +30,8 @@
 
 /* ── Dungeon IDs ─────────────────────────────────────────────────── */
 
-/* Theron's Quest 7-dungeon sequence.
- * Order mirrors the original PC Engine game progression.
- * Each dungeon has a distinct theme and 1-2 quest items associated. */
+/* Theron's Quest 7-dungeon stage set. Dungeon 1 is first, dungeons 2..6
+ * become selectable together, and dungeon 7 is final. */
 typedef enum {
     THERON_DUNGEON_1_HALL_OF_RECORDS   = 1,  /* Tutorial dungeon — 1 quest item */
     THERON_DUNGEON_2_CRYPT_OF_SHADOWS  = 2,  /* 1 quest item */
