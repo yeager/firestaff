@@ -10769,6 +10769,61 @@ static void m11_theron_capture_track02_startup_roster(
     state->theronState.startup_roster_name_count = (int)i;
 }
 
+static void m11_theron_capture_track02_startup_text(
+    M11_GameViewState* state,
+    const TrAssetBundle* assets,
+    const char* md5_hex) {
+    Theron_Track02StartupTextMarkerCatalog catalog;
+    Theron_Track02SignalStatus status;
+
+    if (!state) {
+        return;
+    }
+    state->theronState.startup_text_prompt_count = 0;
+    state->theronState.startup_text_prompt_status =
+        (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
+    state->theronState.startup_text_prompt[0] = '\0';
+    if (!assets || !assets->hucard_rom || assets->hucard_rom_size == 0u ||
+        !md5_hex || md5_hex[0] == '\0') {
+        return;
+    }
+
+    memset(&catalog, 0, sizeof(catalog));
+    status = theron_v1_track02_catalog_startup_text_markers(
+        assets->hucard_rom,
+        assets->hucard_rom_size,
+        md5_hex,
+        &catalog);
+    state->theronState.startup_text_prompt_status = (int)status;
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return;
+    }
+
+    for (size_t i = 0u; i < catalog.marker_count; ++i) {
+        const Theron_Track02StartupTextMarker *marker = &catalog.markers[i];
+        size_t text_len;
+        if (marker->kind !=
+            THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT) {
+            continue;
+        }
+        if (marker->raw_offset >= assets->hucard_rom_size ||
+            marker->byte_count == 0u) {
+            continue;
+        }
+        text_len = marker->byte_count;
+        if (text_len >= sizeof(state->theronState.startup_text_prompt)) {
+            text_len = sizeof(state->theronState.startup_text_prompt) - 1u;
+        }
+        memcpy(state->theronState.startup_text_prompt,
+               assets->hucard_rom + marker->raw_offset,
+               text_len);
+        state->theronState.startup_text_prompt[text_len] = '\0';
+        state->theronState.startup_text_prompt_count =
+            (int)catalog.marker_count;
+        return;
+    }
+}
+
 static int m11_theron_load_initial_level(Theron_V1_World* world,
                                          const TrAssetBundle* assets,
                                          const char* md5_hex,
@@ -11667,19 +11722,26 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     m11_theron_capture_track02_startup_roster(state,
                                               assets,
                                               profile->graphics_md5);
+    m11_theron_capture_track02_startup_text(state,
+                                            assets,
+                                            profile->graphics_md5);
     m11_set_status(state, "BOOT", "THERON STARTUP");
     {
         char inspect[256];
         snprintf(inspect,
                  sizeof(inspect),
-                 "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; roster_names=%d status=%s; CHOOSE A STAGE",
+                 "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; roster_names=%d status=%s text_prompts=%d text_status=%s; CHOOSE A STAGE",
                  saveResumeReady ? saveResume.resume_claim_name : "UNKNOWN",
                  saveResumeReady ? saveResume.tqsv_valid_slots : 0,
                  saveResumeReady ? saveResume.srm_recognized_slots : 0,
                  state->theronState.startup_roster_name_count,
                  theron_v1_track02_signal_status_name(
                      (Theron_Track02SignalStatus)
-                         state->theronState.startup_roster_name_status));
+                         state->theronState.startup_roster_name_status),
+                 state->theronState.startup_text_prompt_count,
+                 theron_v1_track02_signal_status_name(
+                     (Theron_Track02SignalStatus)
+                         state->theronState.startup_text_prompt_status));
         m11_theron_set_chapter_inspect(state, inspect);
     }
     m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON STARTUP READY");
@@ -37749,7 +37811,10 @@ int M11_GameView_GetTheronStartupRenderRows(
     }
     snprintf(rows[count++],
              M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-             "THERON WAITS AT THE FORCEFIELD");
+             "%s",
+             state->theronState.startup_text_prompt[0] != '\0'
+                 ? state->theronState.startup_text_prompt
+                 : "THERON WAITS AT THE FORCEFIELD");
     if (count >= maxRows) {
         return count;
     }
@@ -37898,7 +37963,11 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   34, 52, "SOUL ROOM", &g_text_shadow);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  34, 64, "THERON WAITS AT THE FORCEFIELD", &g_text_small);
+                  34, 64,
+                  state->theronState.startup_text_prompt[0] != '\0'
+                      ? state->theronState.startup_text_prompt
+                      : "THERON WAITS AT THE FORCEFIELD",
+                  &g_text_small);
     for (i = 0; i < element_count; ++i) {
         const M11_TheronStartupElement *e = &elements[i];
         char row[80];
