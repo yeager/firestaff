@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 DM2 leader-hand startup accessors: M11 now exposes the DM2 runtime/resume leader-hand ObjectID through DM2-specific public accessors and reports whether that ObjectID has a GDAT-backed icon available from the boot-owned GRAPHICS.DAT provider, without casting it to a DM1/CSB `THING`. Verification: `test_dm2_v1_m11_startup_profile_gate` now proves direct-start ObjectID handoff, GDAT icon availability, rendered icon pixels, saved resume ObjectID exposure, and the existing no-fake-V1-icon guard.
+
 - ✅ 2026-07-05 CSB M11 entrance real-art presentation: the CSB startup gate now lets a real GRAPHICS.DAT entrance bitmap carry the screen without drawing Firestaff's synthetic yellow debug frame, title, runtime-ready row, or blinking prompt over it. The fallback debug panel remains only for missing entrance art. Verification: `test_csb_v1_m11_startup_resume_gate` now proves the real entrance remains visible, runtime ticks stay blocked before confirm, and the synthetic debug frame is absent on the real-art path.
 
 - ✅ 2026-07-05 DM1 V1 entrance Resume quick-path handoff: the M11 entrance RESUME command now prefers the launcher's already validated DM1 `quickResumeSavePath` instead of always probing the old local `firestaff-<source>-dm1save.sav` filename. Foreign-game quick-resume paths are ignored, and the historical fallback remains for users without launcher resume metadata. Verification: `test_entrance_runtime_dispatch_source_lock` covers DM1 quick path, foreign path rejection, fallback path, and buffer rejection; `test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat` still passes.

@@ -679,6 +679,9 @@ int main(void) {
         dm2_v1_runtime_set_leader_hand_object(dm2_db_make_handle(10, 0x0033));
         view.dm2State.leader_hand_object =
             dm2_v1_runtime_get_leader_hand_object();
+        expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
+                        dm2_db_make_handle(10, 0x0033),
+                    "M11 DM2 exposes the leader-hand ObjectID without V1 THING casting");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         expect_true(M11_GameView_GetV1LeaderHandObjectNameZone(&name_x,
@@ -705,6 +708,11 @@ int main(void) {
             dm2_v1_runtime_set_leader_hand_object(icon_handle);
             view.dm2State.leader_hand_object =
                 dm2_v1_runtime_get_leader_hand_object();
+            expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
+                            icon_handle,
+                        "M11 DM2 leader-hand ObjectID accessor follows runtime icon handle");
+            expect_true(M11_GameView_Dm2LeaderHandObjectIconAvailable(&view),
+                        "M11 DM2 reports GDAT-backed leader-hand icon availability");
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             expect_true(M11_GameView_GetDm2LeaderHandObjectIconZone(&icon_x,
@@ -910,6 +918,9 @@ int main(void) {
     expect_true(view.dm2State.leader_hand_object ==
                     dm2_db_make_handle(10, 0x0033),
                 "M11 DM2 resume mirrors saved leader-hand ObjectID");
+    expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
+                    dm2_db_make_handle(10, 0x0033),
+                "M11 DM2 resume exposes saved leader-hand ObjectID through public accessor");
     {
         char leader_name[32];
 
