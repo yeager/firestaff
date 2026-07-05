@@ -337,8 +337,31 @@ int main(void) {
     expect_true(startup_rows_contain(startup_rows, startup_row_count,
                                      "Pental") &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "RESURRECTED"),
-                "M11 Theron Soul Room render rows show selected mirror state");
+                                     "RESURRECTED #1"),
+                "M11 Theron Soul Room render rows show selected mirror order");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room selected mirror accept deselects companion");
+    expect_true(view.theronState.startup_phase ==
+                THERON_STARTUP_PHASE_SOUL_ROOM &&
+                view.theronState.companion_count == 0 &&
+                (view.theronState.selected_mirrors_mask & (1 << 6)) == 0,
+                "M11 Theron Soul Room deselect clears mirror mask and returns to soul-room phase");
+    startup_row_count = M11_GameView_GetTheronStartupRenderRows(
+        &view, startup_rows, 16);
+    expect_true(startup_rows_contain(startup_rows, startup_row_count,
+                                     "Pental") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "AVAILABLE"),
+                "M11 Theron Soul Room render rows show deselected mirror as available");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room mirror 7 can be reselected after deselect");
+    expect_true(view.theronState.startup_phase ==
+                THERON_STARTUP_PHASE_READY &&
+                view.theronState.companion_count == 1 &&
+                view.theronState.selected_mirror_order[0] == 6,
+                "M11 Theron Soul Room reselect restores first selected mirror order");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron Soul Room cursor moves to forcefield");
