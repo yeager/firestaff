@@ -2130,6 +2130,11 @@ static int csb_v1_runtime_creature_attack_ticks(int creature_type)
     return (int)attack_ticks[creature_type];
 }
 
+static int csb_v1_runtime_direction_from_source_to_destination(
+    int source_x,
+    int source_y,
+    int dest_x,
+    int dest_y);
 static void csb_v1_runtime_set_active_group_aspect_attacking(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
@@ -2146,6 +2151,14 @@ static void csb_v1_runtime_compact_active_group_aspect_after_kill(
     int map_y,
     int creature_index,
     int creature_count);
+static void csb_v1_runtime_set_active_group_direction_all(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int direction);
 
 static void csb_v1_runtime_schedule_c37_group_event(
     CSB_V1_RuntimeProfile *profile,
@@ -2967,6 +2980,18 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 flags = (uint16_t)((flags & 0xFFF0u) |
                                    (uint16_t)(next_behavior & 0x0F));
                 csb_v1_runtime_write_u16(thing_record + 14, flags);
+                csb_v1_runtime_set_active_group_direction_all(
+                    profile,
+                    group_thing,
+                    thing_record,
+                    record->mapIndex,
+                    record->mapX,
+                    record->mapY,
+                    csb_v1_runtime_direction_from_source_to_destination(
+                        record->mapX,
+                        record->mapY,
+                        profile->party_x,
+                        profile->party_y));
                 if (next_behavior == 6) {
                     csb_v1_runtime_schedule_c38_attack_events(
                         profile,
@@ -2997,12 +3022,25 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 int target_y = record->mapY;
                 int moved = 0;
                 int deferred = 0;
+                int initial_move_direction = 0;
 
                 movement_ticks = csb_v1_runtime_creature_movement_ticks(
                     (int)thing_record[4]);
                 if (distance_x + distance_y <= 1) {
                     flags = (uint16_t)((flags & 0xFFF0u) | 6u);
                     csb_v1_runtime_write_u16(thing_record + 14, flags);
+                    csb_v1_runtime_set_active_group_direction_all(
+                        profile,
+                        group_thing,
+                        thing_record,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        csb_v1_runtime_direction_from_source_to_destination(
+                            record->mapX,
+                            record->mapY,
+                            profile->party_x,
+                            profile->party_y));
                     csb_v1_runtime_schedule_c38_attack_events(
                         profile,
                         record->mapIndex,
@@ -3017,6 +3055,12 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 } else if (distance_x > 0) {
                     target_x += (profile->party_x > record->mapX) ? 1 : -1;
                 }
+                initial_move_direction =
+                    csb_v1_runtime_direction_from_source_to_destination(
+                        record->mapX,
+                        record->mapY,
+                        target_x,
+                        target_y);
                 if (!csb_v1_runtime_group_destination_is_blocked(
                         dungeon,
                         record->mapIndex,
@@ -3057,7 +3101,8 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                     }
                     if (moved) {
                         int group_alive = 1;
-                        (void)csb_v1_runtime_apply_group_consequences_at_square(
+                        int consequence_moves =
+                            csb_v1_runtime_apply_group_consequences_at_square(
                             profile,
                             group_thing,
                             &target_map_index,
@@ -3074,6 +3119,16 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             &thing_size);
                         if (thing_record && thing_type == 4 &&
                             thing_size >= 16) {
+                            if (consequence_moves == 0) {
+                                csb_v1_runtime_set_active_group_direction_all(
+                                    profile,
+                                    group_thing,
+                                    thing_record,
+                                    target_map_index,
+                                    target_x,
+                                    target_y,
+                                    initial_move_direction);
+                            }
                             csb_v1_runtime_sync_active_group_state_from_record(
                                 profile,
                                 group_thing,
@@ -5018,13 +5073,16 @@ static void csb_v1_runtime_set_active_group_aspect_attacking(
     CSB_V1_RuntimeActiveGroupState *state;
 
     if (!profile || creature_index < 0 || creature_index > 3) return;
-    state = csb_v1_runtime_active_group_state_for(
-        profile,
-        group_thing,
-        level,
-        map_x,
-        map_y,
-        1);
+    state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
+    if (!state) {
+        state = csb_v1_runtime_active_group_state_for(
+            profile,
+            group_thing,
+            level,
+            map_x,
+            map_y,
+            1);
+    }
     if (!state) return;
     if (attacking) {
         state->aspect[creature_index] =
@@ -5033,6 +5091,44 @@ static void csb_v1_runtime_set_active_group_aspect_attacking(
         state->aspect[creature_index] =
             (uint8_t)(state->aspect[creature_index] & ~0x80u);
     }
+}
+
+static void csb_v1_runtime_set_active_group_direction_all(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int direction)
+{
+    CSB_V1_RuntimeActiveGroupState *state;
+    uint16_t flags;
+
+    if (!profile || !group_record) return;
+    direction &= 3;
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 8)) |
+                       (uint16_t)(direction << 8));
+    csb_v1_runtime_write_u16(group_record + 14, flags);
+
+    state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
+    if (!state) {
+        state = csb_v1_runtime_active_group_state_for(
+            profile,
+            group_thing,
+            level,
+            map_x,
+            map_y,
+            1);
+    }
+    if (!state) return;
+    /* ReDMCSB GROUP.C F0205/F0206 mutate ActiveGroup.Directions as a
+     * 2-bit per-creature field, and F0184 normalizes it back into the GROUP
+     * record when the active group is removed.  This bounded CSB bridge
+     * writes the shared group facing into all four slots while Firestaff's
+     * raw C04 record can still store only the normalized direction. */
+    state->directions = csb_v1_runtime_repeated_group_direction_pack(direction);
 }
 
 static void csb_v1_runtime_compact_active_group_aspect_after_kill(
@@ -5859,6 +5955,18 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     csb_v1_runtime_first_living_champion(&profile->party_state);
             }
             if (champion_index < 0) return;
+            csb_v1_runtime_set_active_group_direction_all(
+                profile,
+                (uint16_t)thing,
+                thing_record,
+                record->mapIndex,
+                record->mapX,
+                record->mapY,
+                csb_v1_runtime_direction_from_source_to_destination(
+                    record->mapX,
+                    record->mapY,
+                    profile->party_x,
+                    profile->party_y));
             csb_v1_runtime_set_active_group_aspect_attacking(
                 profile,
                 (uint16_t)thing,

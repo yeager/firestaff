@@ -1391,6 +1391,9 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     group_flags = (uint16_t)(raw[96] | ((uint16_t)raw[97] << 8));
     CHECK((group_flags & 0x000fu) == 7u,
           "generated group C37 mutates visible wander behavior to approach");
+    CHECK(((group_flags >> 8) & 0x03u) == 2u &&
+              (profile.active_group_state[0].directions & 0x0003u) == 2u,
+          "generated group C37 faces native active group toward visible party");
     CHECK(profile.timeline_queue.eventCount == 2,
           "C37 approach behavior queues the next group behavior tick beside C65");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
@@ -1408,6 +1411,7 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
               profile.active_group_state[0].prior_map_y == 0 &&
               profile.active_group_state[0].home_map_x == 1 &&
               profile.active_group_state[0].home_map_y == 0 &&
+              (profile.active_group_state[0].directions & 0x0003u) == 2u &&
               profile.active_group_state[0].last_move_time <= profile.game_time,
           "C37 approach updates native active-group current/prior state");
     CHECK(profile.timeline_queue.eventCount == 2,
@@ -1426,6 +1430,9 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     group_flags = (uint16_t)(raw[96] | ((uint16_t)raw[97] << 8));
     CHECK((group_flags & 0x000fu) == 6u,
           "adjacent C7 approach C37 mutates the generated group to attack");
+    CHECK(((group_flags >> 8) & 0x03u) == 2u &&
+              (profile.active_group_state[0].directions & 0x0003u) == 2u,
+          "adjacent C7 attack transition preserves source-facing direction state");
     CHECK((uint16_t)(raw[68] | ((uint16_t)raw[69] << 8)) == (uint16_t)(4u << 10),
           "adjacent attack transition does not move the group onto the party square");
     CHECK(profile.timeline_queue.eventCount == 1,
@@ -1621,7 +1628,8 @@ static void test_c37_group_approach_creates_empty_destination_thing_list(void)
               profile.active_group_state[0].prior_map_x == 0 &&
               profile.active_group_state[0].prior_map_y == 0 &&
               profile.active_group_state[0].home_map_x == 0 &&
-              profile.active_group_state[0].home_map_y == 0,
+              profile.active_group_state[0].home_map_y == 0 &&
+              (profile.active_group_state[0].directions & 0x0003u) == 2u,
           "C37 empty-destination move creates native active-group current/prior/home state");
     event_index = find_queued_event_type(&profile,
                                          DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
