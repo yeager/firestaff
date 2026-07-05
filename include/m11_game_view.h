@@ -55,6 +55,8 @@ typedef struct {
     int w;
     int h;
     char label[M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
+    char decodedName[16];
+    char decodedTitle[32];
 } M11_TheronStartupElement;
 
 typedef enum {

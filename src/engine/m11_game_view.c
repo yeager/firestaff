@@ -36752,6 +36752,49 @@ static void m11_theron_startup_layout_set_rect(
     element->h = h;
 }
 
+static int m11_theron_startup_decoded_roster_index_for_mirror(
+    int mirror_index) {
+    static const int kMirrorToRosterIndex[THERON_STARTUP_HERO_MIRROR_COUNT] = {
+        4, /* Hakar -> HAKAR */
+        1, /* Mara -> MARA */
+        5, /* Tiran -> TIRAN */
+        2, /* Linos -> LINOS */
+        6, /* Dotan -> DOTAN */
+        3, /* Hexa -> HEXA */
+        7  /* Pental fallback label -> raw Track 02 PENTAI */
+    };
+    if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
+        return -1;
+    }
+    return kMirrorToRosterIndex[mirror_index];
+}
+
+static void m11_theron_startup_layout_bind_decoded_roster(
+    const M11_GameViewState* state,
+    M11_TheronStartupElement* element,
+    int mirror_index) {
+    int roster_index;
+    if (!state || !element) {
+        return;
+    }
+    roster_index =
+        m11_theron_startup_decoded_roster_index_for_mirror(mirror_index);
+    if (roster_index < 0 ||
+        roster_index >= state->theronState.startup_roster_name_count ||
+        roster_index >= (int)(sizeof(state->theronState.startup_roster_names) /
+                              sizeof(state->theronState.startup_roster_names[0]))) {
+        return;
+    }
+    snprintf(element->decodedName,
+             sizeof(element->decodedName),
+             "%s",
+             state->theronState.startup_roster_names[roster_index]);
+    snprintf(element->decodedTitle,
+             sizeof(element->decodedTitle),
+             "%s",
+             state->theronState.startup_roster_titles[roster_index]);
+}
+
 static void m11_theron_startup_chapter_label(
     const M11_GameViewState* state,
     char* out,
@@ -36900,6 +36943,10 @@ int M11_GameView_GetTheronStartupLayout(
         m11_theron_startup_layout_set_label(
             &elements[count],
             meta ? meta->name : "Hero Mirror");
+        m11_theron_startup_layout_bind_decoded_roster(
+            state,
+            &elements[count],
+            i);
         m11_theron_startup_layout_set_rect(
             &elements[count], 46, 78 + i * 11, 230, 10);
         ++count;
@@ -37056,11 +37103,22 @@ int M11_GameView_GetTheronStartupRenderRows(
     for (i = 0; i < element_count && count < maxRows; ++i) {
         const M11_TheronStartupElement *e = &elements[i];
         if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
+            char display_name[48];
+            if (e->decodedName[0] != '\0' &&
+                strcmp(e->decodedName, e->label) != 0) {
+                snprintf(display_name,
+                         sizeof(display_name),
+                         "%s/%s",
+                         e->label,
+                         e->decodedName);
+            } else {
+                snprintf(display_name, sizeof(display_name), "%s", e->label);
+            }
             snprintf(rows[count++],
                      M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "%c %-15s %-7s %s",
+                     "%c %-22s %-7s %s",
                      e->cursor ? '>' : ' ',
-                     e->label,
+                     display_name,
                      e->primaryClass >= 0
                         ? theron_v1_startup_class_name(
                               (Theron_ChampionClass)e->primaryClass)
@@ -37203,9 +37261,20 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         const M11_TheronStartupElement *e = &elements[i];
         char row[80];
         if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
-            snprintf(row, sizeof(row), "%c %-15s %-7s %s",
+            char display_name[48];
+            if (e->decodedName[0] != '\0' &&
+                strcmp(e->decodedName, e->label) != 0) {
+                snprintf(display_name,
+                         sizeof(display_name),
+                         "%s/%s",
+                         e->label,
+                         e->decodedName);
+            } else {
+                snprintf(display_name, sizeof(display_name), "%s", e->label);
+            }
+            snprintf(row, sizeof(row), "%c %-22s %-7s %s",
                      e->cursor ? '>' : ' ',
-                     e->label,
+                     display_name,
                      e->primaryClass >= 0
                         ? theron_v1_startup_class_name(
                               (Theron_ChampionClass)e->primaryClass)
