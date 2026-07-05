@@ -3175,14 +3175,16 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                         if (thing_record && thing_type == 4 &&
                             thing_size >= 16) {
                             if (consequence_moves == 0) {
-                                csb_v1_runtime_set_active_group_direction_all(
+                                csb_v1_runtime_set_active_group_direction_group(
                                     profile,
                                     group_thing,
                                     thing_record,
                                     target_map_index,
                                     target_x,
                                     target_y,
-                                    initial_move_direction);
+                                    initial_move_direction,
+                                    creature_count,
+                                    creature_size);
                             }
                             csb_v1_runtime_sync_active_group_state_from_record(
                                 profile,
