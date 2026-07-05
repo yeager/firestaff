@@ -2180,6 +2180,16 @@ static void csb_v1_runtime_set_active_group_direction_group(
     int direction,
     int creature_count,
     int creature_size);
+static void csb_v1_runtime_turn_active_group_toward_attack(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int direction,
+    int creature_count,
+    int creature_size);
 
 static void csb_v1_runtime_schedule_c37_group_event(
     CSB_V1_RuntimeProfile *profile,
@@ -3009,19 +3019,21 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 flags = (uint16_t)((flags & 0xFFF0u) |
                                    (uint16_t)(next_behavior & 0x0F));
                 csb_v1_runtime_write_u16(thing_record + 14, flags);
-                csb_v1_runtime_set_active_group_direction_all(
-                    profile,
-                    group_thing,
-                    thing_record,
-                    record->mapIndex,
-                    record->mapX,
-                    record->mapY,
-                    csb_v1_runtime_direction_from_source_to_destination(
+                if (next_behavior == 6) {
+                    csb_v1_runtime_turn_active_group_toward_attack(
+                        profile,
+                        group_thing,
+                        thing_record,
+                        record->mapIndex,
                         record->mapX,
                         record->mapY,
-                        profile->party_x,
-                        profile->party_y));
-                if (next_behavior == 6) {
+                        csb_v1_runtime_direction_from_source_to_destination(
+                            record->mapX,
+                            record->mapY,
+                            profile->party_x,
+                            profile->party_y),
+                        creature_count,
+                        creature_size);
                     csb_v1_runtime_schedule_c38_attack_events(
                         profile,
                         record->mapIndex,
@@ -3031,6 +3043,18 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                         flags);
                 }
                 if (next_behavior == 7) {
+                    csb_v1_runtime_set_active_group_direction_all(
+                        profile,
+                        group_thing,
+                        thing_record,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        csb_v1_runtime_direction_from_source_to_destination(
+                            record->mapX,
+                            record->mapY,
+                            profile->party_x,
+                            profile->party_y));
                     /* ReDMCSB GROUP.C F0209 lines 2135-2140 sets behavior
                      * C7 approach and increments the next C37 time by one
                      * tick; lines 2450-2463 then add C37 through F0208 with
@@ -3058,7 +3082,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 if (distance_x + distance_y <= 1) {
                     flags = (uint16_t)((flags & 0xFFF0u) | 6u);
                     csb_v1_runtime_write_u16(thing_record + 14, flags);
-                    csb_v1_runtime_set_active_group_direction_all(
+                    csb_v1_runtime_turn_active_group_toward_attack(
                         profile,
                         group_thing,
                         thing_record,
@@ -3069,7 +3093,9 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             record->mapX,
                             record->mapY,
                             profile->party_x,
-                            profile->party_y));
+                            profile->party_y),
+                        creature_count,
+                        creature_size);
                     csb_v1_runtime_schedule_c38_attack_events(
                         profile,
                         record->mapIndex,
@@ -5353,6 +5379,74 @@ static void csb_v1_runtime_set_active_group_direction_group(
                 two_half_square_creatures);
         }
     } while (creature_index-- > 0);
+}
+
+static void csb_v1_runtime_turn_active_group_toward_attack(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int direction,
+    int creature_count,
+    int creature_size)
+{
+    CSB_V1_RuntimeActiveGroupState *state;
+    struct RngState_Compat rng;
+    int i;
+    int two_half_square_creatures;
+
+    if (!profile || !group_record) return;
+    if (creature_count < 1) creature_count = 1;
+    if (creature_count > 4) creature_count = 4;
+    direction &= 3;
+
+    csb_v1_runtime_sync_active_group_state_from_record(
+        profile,
+        group_thing,
+        group_record,
+        level,
+        map_x,
+        map_y,
+        0,
+        0);
+    state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
+    if (!state) return;
+
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)group_thing << 3) ^
+            ((uint32_t)direction << 21) ^
+            0xF0209u);
+
+    /* ReDMCSB GROUP.C F0209 lines 2114-2128 turns attacking groups toward
+     * G0382_i_CurrentGroupPrimaryDirectionToParty per creature, only always
+     * selecting creature 0; F0205 lines 1609-1621 then performs the one-step
+     * opposite-turn clamp and mirrors two half-square pairs. */
+    for (i = creature_count - 1; i >= 0; --i) {
+        if (csb_v1_runtime_group_direction_value(state->directions, i) ==
+            direction) {
+            continue;
+        }
+        if (i != 0 && F0732_COMBAT_RngRandom_Compat(&rng, 2) != 0) {
+            continue;
+        }
+        two_half_square_creatures =
+            (i != 0 && creature_size == 1) ? 1 : 0;
+        csb_v1_runtime_set_active_group_direction_creature(
+            profile,
+            group_thing,
+            group_record,
+            level,
+            map_x,
+            map_y,
+            direction,
+            i,
+            creature_count,
+            two_half_square_creatures);
+    }
 }
 
 static void csb_v1_runtime_compact_active_group_state_after_kill(
