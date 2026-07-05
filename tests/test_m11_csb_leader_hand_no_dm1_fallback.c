@@ -41,7 +41,9 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     dungeon->raw_data = raw;
     dungeon->raw_size = (int)raw_size;
     dungeon->thing_type_counts[THING_TYPE_WEAPON] = 1;
+    dungeon->thing_type_counts[THING_TYPE_CONTAINER] = 1;
     dungeon->thing_data_bases[THING_TYPE_WEAPON] = 0;
+    dungeon->thing_data_bases[THING_TYPE_CONTAINER] = 8;
 }
 
 int main(void)
@@ -90,19 +92,31 @@ int main(void)
         CSB_V1_BootProfile profile;
         CSB_V1_DungeonData dungeon;
         unsigned char actions[3];
-        unsigned char raw[16];
+        unsigned char raw[32];
         unsigned short dagger =
             (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        unsigned short chest =
+            (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+        int sx = 0, sy = 0, sw = 0, sh = 0;
 
         memset(&state, 0, sizeof(state));
         memset(&profile, 0, sizeof(profile));
         init_csb_dungeon(&dungeon, raw, sizeof(raw));
         write_u16(raw + 0, THING_ENDOFLIST);
         write_u16(raw + 2, 8u); /* ReDMCSB OBJECT.C F0033 dagger icon C032. */
+        write_u16(raw + 8, THING_ENDOFLIST);
+        write_u16(raw + 10, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
 
         profile.runtime.dungeon_handle = &dungeon;
+        profile.runtime.party_state_valid = 1;
+        profile.runtime.party_state.ChampionCount = 1;
+        profile.runtime.party_state.LeaderHandThing = THING_NONE;
+        profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+            dagger;
         state.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
         state.csbBootProfile = &profile;
+        state.active = 1;
+        state.inventoryPanelActive = 1;
         state.world.party.championCount = 1;
         state.world.party.activeChampionIndex = 0;
         state.world.party.champions[0].present = 1;
@@ -132,6 +146,47 @@ int main(void)
               "CSB action rows resolve through runtime object action-set");
         check(actions[0] == 42 && actions[1] == 9 && actions[2] == 28,
               "CSB dagger exposes THROW/STAB/SLASH action rows");
+
+        M11_GameView_ClearV1LeaderHandObject(&state);
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+            chest;
+        profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+            chest;
+        check(M11_GameView_GetV1InventorySourceSlotBoxZone(
+                  9, &sx, &sy, &sw, &sh),
+              "C508 action-hand slot zone is available for CSB inventory click");
+        check(M11_GameView_HandlePointerButton(
+                  &state,
+                  sx + sw / 2,
+                  33 + sy + sh / 2,
+                  M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+              "CSB action-hand slot click picks container into leader hand");
+        check(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] ==
+                  THING_NONE,
+              "CSB action-hand M11 mirror is empty after pickup");
+        check(profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] ==
+                  THING_NONE,
+              "CSB runtime action-hand slot is empty after pickup");
+        check(M11_GameView_GetV1LeaderHandThing(&state) == chest,
+              "CSB leader hand holds picked-up container");
+        check(profile.runtime.party_state.LeaderHandThing == chest,
+              "CSB runtime leader hand holds picked-up container");
+        check(M11_GameView_HandlePointerButton(
+                  &state,
+                  sx + sw / 2,
+                  33 + sy + sh / 2,
+                  M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+              "CSB action-hand slot click places container from leader hand");
+        check(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] ==
+                  chest,
+              "CSB action-hand M11 mirror stores placed container");
+        check(profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] ==
+                  chest,
+              "CSB runtime action-hand slot stores placed container");
+        check(M11_GameView_GetV1LeaderHandThing(&state) == THING_NONE,
+              "CSB leader hand is empty after placing container");
+        check(profile.runtime.party_state.LeaderHandThing == THING_NONE,
+              "CSB runtime leader hand is empty after placing container");
     }
 
     if (g_failures != 0) {

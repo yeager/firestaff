@@ -192,6 +192,25 @@ static int m11_csb_mapped_inventory_slot(int csb_slot)
     return -1;
 }
 
+static int m11_csb_slot_for_m11_inventory_slot(int championSlot)
+{
+    if (championSlot == CHAMPION_SLOT_HAND_LEFT) return CSB_V1_SLOT_READY_HAND;
+    if (championSlot == CHAMPION_SLOT_ACTION_HAND) return CSB_V1_SLOT_ACTION_HAND;
+    if (championSlot >= CHAMPION_SLOT_POUCH_1 &&
+        championSlot <= CHAMPION_SLOT_POUCH_1 + 3) {
+        return CSB_V1_SLOT_BELT_1 + (championSlot - CHAMPION_SLOT_POUCH_1);
+    }
+    if (championSlot >= CHAMPION_SLOT_BACKPACK_1 &&
+        championSlot <= CHAMPION_SLOT_BACKPACK_8) {
+        return CSB_V1_SLOT_PACK_1 + (championSlot - CHAMPION_SLOT_BACKPACK_1);
+    }
+    if (championSlot >= CHAMPION_SLOT_BACKPACK_9 &&
+        championSlot <= CHAMPION_SLOT_BACKPACK_12) {
+        return CSB_V1_SLOT_PACK_9 + (championSlot - CHAMPION_SLOT_BACKPACK_9);
+    }
+    return -1;
+}
+
 static void m11_sync_csb_party_from_runtime(M11_GameViewState *state,
                                             const CSB_V1_RuntimeProfile *runtime)
 {
@@ -21844,6 +21863,83 @@ static unsigned int m11_allowed_slots_for_thing(const struct DungeonThings_Compa
     return (unsigned int)kObjectInfoAllowedSlots[objectInfoIndex];
 }
 
+static unsigned int m11_csb_allowed_slots_for_thing(
+    const M11_GameViewState* state,
+    unsigned short thingId)
+{
+    const CSB_V1_BootProfile* profile;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile ||
+        thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
+    return (unsigned int)csb_v1_runtime_object_allowed_slots(
+        &profile->runtime,
+        thingId);
+}
+
+static unsigned int m11_allowed_slots_for_state_thing(
+    const M11_GameViewState* state,
+    unsigned short thingId)
+{
+    if (!state) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        return m11_csb_allowed_slots_for_thing(state, thingId);
+    }
+    return m11_allowed_slots_for_thing(state->world.things, thingId);
+}
+
+static CSB_V1_RuntimeProfile* m11_mutable_csb_runtime_profile(
+    M11_GameViewState* state)
+{
+    CSB_V1_BootProfile* profile;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile) {
+        return NULL;
+    }
+    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
+    return &profile->runtime;
+}
+
+static int m11_write_csb_runtime_inventory_slot(
+    M11_GameViewState* state,
+    int championIndex,
+    int championSlot,
+    unsigned short thing)
+{
+    CSB_V1_RuntimeProfile* runtime = m11_mutable_csb_runtime_profile(state);
+    int csbSlot = m11_csb_slot_for_m11_inventory_slot(championSlot);
+    if (!runtime) return 1;
+    if (!runtime->party_state_valid) return 0;
+    if (championIndex < 0 ||
+        championIndex >= runtime->party_state.ChampionCount ||
+        championIndex >= CSB_V1_MAX_CHAMPIONS ||
+        csbSlot < 0 ||
+        csbSlot >= CSB_V1_SLOT_COUNT) {
+        return 0;
+    }
+    /* ReDMCSB: CHAMPION.C F0302 mutates M516 champion slots directly.  CSB M11
+     * keeps `world.party` as a mirror, so inventory clicks must write the same
+     * THING value back into the CSB runtime party snapshot before any later
+     * startup/resume/input sync can refresh the mirror. */
+    runtime->party_state.Champions[championIndex].Slots[csbSlot] = thing;
+    return 1;
+}
+
+static void m11_write_csb_runtime_leader_hand(
+    M11_GameViewState* state,
+    unsigned short thing)
+{
+    CSB_V1_RuntimeProfile* runtime = m11_mutable_csb_runtime_profile(state);
+    if (!runtime || !runtime->party_state_valid) return;
+    if (thing == THING_ENDOFLIST) thing = THING_NONE;
+    runtime->party_state.LeaderHandThing = thing;
+    if (runtime->csbwin_gameblock2_summary_valid) {
+        runtime->csbwin_object_in_hand = thing;
+    }
+}
+
 static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex) {
     switch (sourceSlotBoxIndex) {
         case 0:
@@ -21919,23 +22015,37 @@ static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
     }
     if (leaderThing != THING_NONE && leaderThing != THING_ENDOFLIST) {
         unsigned int allowedSlots =
-            m11_allowed_slots_for_thing(state->world.things, leaderThing);
+            m11_allowed_slots_for_state_thing(state, leaderThing);
         unsigned int slotMask =
             m11_v1_inventory_source_slot_box_mask(slotBoxIndex & 1);
         if ((allowedSlots & slotMask) == 0) {
             return 0;
         }
         champ->inventory[championSlot] = leaderThing;
+        if (!m11_write_csb_runtime_inventory_slot(
+                state, championIndex, championSlot, leaderThing)) {
+            champ->inventory[championSlot] = slotThing;
+            return 0;
+        }
         M11_GameView_ClearV1LeaderHandObject(state);
         if (slotThing != THING_NONE && slotThing != THING_ENDOFLIST &&
             !M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
             champ->inventory[championSlot] = slotThing;
+            (void)m11_write_csb_runtime_inventory_slot(
+                state, championIndex, championSlot, slotThing);
             return 0;
         }
     } else {
         champ->inventory[championSlot] = THING_NONE;
+        if (!m11_write_csb_runtime_inventory_slot(
+                state, championIndex, championSlot, THING_NONE)) {
+            champ->inventory[championSlot] = slotThing;
+            return 0;
+        }
         if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
             champ->inventory[championSlot] = slotThing;
+            (void)m11_write_csb_runtime_inventory_slot(
+                state, championIndex, championSlot, slotThing);
             return 0;
         }
     }
@@ -27864,6 +27974,7 @@ int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
     }
     state->leaderHandObjectPresent = 1;
     state->leaderHandThing = thing;
+    m11_write_csb_runtime_leader_hand(state, thing);
     state->leaderHandIconIndex = m11_object_icon_index_for_thing(
         state, state->world.things, thing);
     state->leaderHandObjectName[0] = '\0';
@@ -27889,6 +28000,7 @@ void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state) {
     }
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
+    m11_write_csb_runtime_leader_hand(state, THING_NONE);
     state->leaderHandIconIndex = -1;
     state->leaderHandObjectName[0] = '\0';
     state->v1ScrollPanelActive = 0;
@@ -29531,7 +29643,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             char junkName[64];
             char junkState[64];
             char junkAttributes[64];
-            unsigned int allowedSlots = m11_allowed_slots_for_thing(state->world.things, thing);
+            unsigned int allowedSlots = m11_allowed_slots_for_state_thing(state, thing);
             if (state->world.things &&
                 thingIndex >= 0 &&
                 thingIndex < state->world.things->junkCount) {
@@ -29606,7 +29718,7 @@ static int m11_process_v1_chest_slot_box_click(M11_GameViewState* state,
         return 0;
     }
     if (leaderThing != THING_NONE && leaderThing != THING_ENDOFLIST &&
-        (m11_allowed_slots_for_thing(state->world.things, leaderThing) & 0x0400u) == 0) {
+        (m11_allowed_slots_for_state_thing(state, leaderThing) & 0x0400u) == 0) {
         return 0;
     }
 
@@ -29647,15 +29759,22 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     slotThing = champ->inventory[championSlot];
     if (M11_GameView_GetV1LeaderHandThing(state) != THING_NONE) {
         unsigned short leaderThing = M11_GameView_GetV1LeaderHandThing(state);
-        unsigned int allowedSlots = m11_allowed_slots_for_thing(state->world.things,
-                                                                leaderThing);
+        unsigned int allowedSlots = m11_allowed_slots_for_state_thing(state,
+                                                                      leaderThing);
         unsigned int slotMask = m11_v1_inventory_source_slot_box_mask(sourceSlotBoxIndex);
         if ((allowedSlots & slotMask) == 0) return 0;
         champ->inventory[championSlot] = leaderThing;
+        if (!m11_write_csb_runtime_inventory_slot(
+                state, championIndex, championSlot, leaderThing)) {
+            champ->inventory[championSlot] = slotThing;
+            return 0;
+        }
         M11_GameView_ClearV1LeaderHandObject(state);
         if (slotThing != THING_NONE && slotThing != THING_ENDOFLIST &&
             !M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
             champ->inventory[championSlot] = slotThing;
+            (void)m11_write_csb_runtime_inventory_slot(
+                state, championIndex, championSlot, slotThing);
             return 0;
         }
         if (championSlot == CHAMPION_SLOT_ACTION_HAND) {
@@ -29666,8 +29785,15 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     }
     if (slotThing == THING_NONE || slotThing == THING_ENDOFLIST) return 0;
     champ->inventory[championSlot] = THING_NONE;
+    if (!m11_write_csb_runtime_inventory_slot(
+            state, championIndex, championSlot, THING_NONE)) {
+        champ->inventory[championSlot] = slotThing;
+        return 0;
+    }
     if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
         champ->inventory[championSlot] = slotThing;
+        (void)m11_write_csb_runtime_inventory_slot(
+            state, championIndex, championSlot, slotThing);
         return 0;
     }
     if (championSlot == CHAMPION_SLOT_ACTION_HAND) {

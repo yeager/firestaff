@@ -148,6 +148,12 @@ int main(void)
     check_int("empty thing has no action set",
               csb_v1_runtime_object_action_set_index(&profile, THING_NONE),
               0);
+    check_int("dagger allowed slots",
+              csb_v1_runtime_object_allowed_slots(&profile, dagger),
+              0x05c0);
+    check_int("empty thing has no allowed slots",
+              csb_v1_runtime_object_allowed_slots(&profile, THING_NONE),
+              0);
 
     {
         char name[32];
