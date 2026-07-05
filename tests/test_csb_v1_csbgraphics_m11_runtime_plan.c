@@ -762,8 +762,31 @@ static void test_custom_background_aligned_mask_apply(void)
     check_int("custom_bg_apply.word0", (int)viewport[30], (int)0xaa34aa78u);
     check_int("custom_bg_apply.word1", (int)viewport[31], (int)0xbb65bb21u);
 
+    mask.src_x = 16;
+    mask.dst_x = 24;
+    for (i = 0u; i < sizeof(viewport) / sizeof(viewport[0]); ++i) {
+        viewport[i] = 0xccccccccu;
+    }
+    viewport[30] = 0xaaaaaaaau;
+    viewport[31] = 0xbbbbbbbbu;
+    check_int("custom_bg_apply.unaligned_apply",
+              csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
+                  &plan,
+                  &cache,
+                  100u,
+                  &mask,
+                  viewport,
+                  sizeof(viewport) / sizeof(viewport[0]),
+                  224),
+              CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK);
+    check_int("custom_bg_apply.unaligned_word0",
+              (int)viewport[30], (int)0x34aa78aau);
+    check_int("custom_bg_apply.unaligned_word1",
+              (int)viewport[31], (int)0x65bb21bbu);
+
     mask.src_x = 8;
-    check_int("custom_bg_apply.unaligned_deferred",
+    mask.dst_x = 16;
+    check_int("custom_bg_apply.unaligned_csbwin_not_implemented",
               csb_v1_csbgraphics_m11_runtime_plan_apply_custom_background_entry(
                   &plan,
                   &cache,

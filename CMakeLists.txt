@@ -17139,6 +17139,35 @@ if(BUILD_TESTING)
         LABELS "tier2;csb;csbwin_custom_resource;m11;data_free"
     )
 
+    add_executable(test_csb_v1_viewport_custom_background_mask_pc34_compat
+        tests/test_csb_v1_viewport_custom_background_mask_pc34_compat.c
+        src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
+        src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+        src/csb/csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.c
+        src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
+        src/csb/csb_v1_csbgraphics_dat_real_scan.c
+        src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_custom_background_mask_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_custom_background_mask_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_custom_background_mask_pc34_compat
+        COMMAND test_csb_v1_viewport_custom_background_mask_pc34_compat
+    )
+    set_tests_properties(csb_v1_viewport_custom_background_mask_pc34_compat PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;m11;viewport;data_free"
+    )
+
     # CSB V1 CSBgraphics.dat M11 runtime plan. This is the startup-facing
     # manifest layer between the hash-owned real-scan cache and the
     # decode/apply handoff: it records which CSBgraphics.dat entries have
