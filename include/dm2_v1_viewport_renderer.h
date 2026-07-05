@@ -119,6 +119,18 @@ int dm2_v1_viewport_door_panel_graphic_index_for_square(int view_square);
 int dm2_v1_viewport_door_button_field_for_state(int pushed);
 int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed);
 
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} DM2_V1_ViewportRect;
+
+int dm2_v1_viewport_door_panel_rect_for_square(int view_square,
+                                               DM2_V1_ViewportRect *out_rect);
+int dm2_v1_viewport_door_button_rect_for_square(int view_square,
+                                                DM2_V1_ViewportRect *out_rect);
+
 /* ── View square state ──────────────────────────────────────────── */
 typedef struct {
     uint8_t  square_type;     /* 5-bit tile type */

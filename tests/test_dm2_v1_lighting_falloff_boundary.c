@@ -76,6 +76,50 @@ static int test_dm2_asset_fetch(void *user,
     return 0;
 }
 
+static int rect_equals(const DM2_V1_ViewportRect *rect,
+                       int x,
+                       int y,
+                       int w,
+                       int h)
+{
+    return rect &&
+        rect->x == x &&
+        rect->y == y &&
+        rect->w == w &&
+        rect->h == h;
+}
+
+static void test_door_rect_contracts(void)
+{
+    DM2_V1_ViewportRect rect;
+
+    CHECK("DM2 D0C door panel rect is the startup front-door bound",
+          dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D0C, &rect) &&
+              rect_equals(&rect, 80, 0, 160, 135));
+    CHECK("DM2 D1C door panel rect is the startup near-door bound",
+          dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D1C, &rect) &&
+              rect_equals(&rect, 60, 9, 104, 110));
+    CHECK("DM2 D2C door panel rect is the startup mid-door bound",
+          dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D2C, &rect) &&
+              rect_equals(&rect, 60, 20, 103, 71));
+    CHECK("DM2 non-center squares do not expose a door panel rect",
+          !dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D0L, &rect) &&
+              rect_equals(&rect, 0, 0, 0, 0));
+
+    CHECK("DM2 D0C default door button rect follows the front panel",
+          dm2_v1_viewport_door_button_rect_for_square(DM2_SQ_D0C, &rect) &&
+              rect_equals(&rect, 212, 58, 16, 18));
+    CHECK("DM2 D1C default door button rect follows the near panel",
+          dm2_v1_viewport_door_button_rect_for_square(DM2_SQ_D1C, &rect) &&
+              rect_equals(&rect, 142, 57, 12, 14));
+    CHECK("DM2 D2C default door button rect follows the mid panel",
+          dm2_v1_viewport_door_button_rect_for_square(DM2_SQ_D2C, &rect) &&
+              rect_equals(&rect, 147, 51, 8, 9));
+    CHECK("DM2 non-center squares do not expose a door button rect",
+          !dm2_v1_viewport_door_button_rect_for_square(DM2_SQ_D0R, &rect) &&
+              rect_equals(&rect, 0, 0, 0, 0));
+}
+
 static void test_floor_ceiling_asset_provider(void)
 {
     uint8_t framebuffer[320 * 200];
@@ -233,6 +277,7 @@ int main(void)
         CHECK("source evidence cites DM2 palette documentation",
               e != NULL && strstr(e, "docs/dm2_palette.md") != NULL);
     }
+    test_door_rect_contracts();
     test_floor_ceiling_asset_provider();
 
     printf("\nDM2 V1 Lighting/Palette Runtime Gate: %d/%d passed\n",
