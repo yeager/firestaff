@@ -7,12 +7,13 @@
 /* ══════════════════════════════════════════════════════════════════════
  * Theron V1 Phase 3 — Champion State & Persistence
  *
- * Champion structs for Theron's Quest: Theron + 3 companions.
+ * Champion structs for Theron's Quest: Theron + up to 3 companions.
  * Key TQR persistence rule:
  *   - Theron  (slot 0): stats AND skills AND equipped items PERSIST
  *                       across dungeons.
- *   - Companions (slots 1-3): stats/skills persist; inventories RESET
- *                             each dungeon; gold persists.
+ *   - Companions (slots 1-3): chosen from Soul Room mirrors for a dungeon;
+ *                             stats/skills persist where save data carries
+ *                             them, but inventories reset each dungeon.
  *
  * Source references:
  *   THQUEST.ASM T520  — party placement / start position
@@ -162,7 +163,7 @@ typedef struct {
  * Gold is shared and persists for all champions. */
 typedef struct {
     Theron_V1_Champion champions[THERON_MAX_CHAMPIONS];
-    int                champion_count;   /* 0..4, starts at 4 */
+    int                champion_count;   /* 1..4 after startup selection */
     int                active_slot;       /* 0-based index of leader */
     uint32_t           gold;             /* shared party gold */
     /* Leader (party front) position and facing direction.
@@ -193,13 +194,13 @@ typedef enum {
 
 /* ── API — party management ─────────────────────────────────────── */
 
-/* Init party to fresh state: 1 Theron + 3 blank companion slots.
+/* Init party to fresh state: 1 Theron + 3 blank companion templates.
  * dungeon_index = 1..7 (THERON_DUNGEON_1..THERON_DUNGEON_7). */
 void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index);
 
 /* Dungeon entry: apply per-dungeon inventory reset for companions.
  * Call on dungeon entry after level load.
- *   - Companions (slots 1-3): clear inventory + equipment
+ *   - selected companions (slots 1-3): clear inventory + equipment
  *   - Theron (slot 0): unchanged
  *   - max_load is recalculated for all champions. */
 void theron_v1_party_dungeon_entry_reset(Theron_V1_Party *party);

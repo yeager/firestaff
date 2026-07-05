@@ -1,7 +1,7 @@
 /*
  * theron_v1_champions.c — Theron's Quest V1 Phase 7: Champion State & Pack/Unpack
  *
- * Champion structs for Theron's Quest: Theron + 3 companions.
+ * Champion structs for Theron's Quest: Theron + up to 3 companions.
  * Companion persistence: THQUEST.ASM T800.
  *
  * Phase 7 additions:
@@ -171,7 +171,9 @@ int theron_v1_party_unpack(Theron_V1_Party *party, const void *buf, size_t bufsi
      * they are restored separately by the save/load caller via the
      * dungeon_progression or dedicated gold slot.  Here we only restore
      * the champion arrays. */
-    /* champion_count is always 4 for TQR; active_slot is always 0 */
+    /* Legacy save blocks do not carry the startup mirror selection, so keep
+     * all decoded champion templates available until the startup/save path
+     * supplies a narrower selected party count. */
     party->champion_count = THERON_MAX_CHAMPIONS;
     party->active_slot    = THERON_CHAMPION_SLOT_THERON;
     return 0;

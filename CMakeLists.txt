@@ -625,6 +625,31 @@ set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
     LABELS "tier4;theron;dungeon;determinism"
 )
 
+# Theron V1 startup stage/Soul Room/forcefield gate.
+# Source refs:
+#   - Theron's Quest manual: stage select, Soul Room, seven mirrors,
+#     up to three resurrected heroes, central forcefield dungeon entry.
+#   - dmweb Theron's Quest: Theron + three champions and per-dungeon reset.
+add_executable(firestaff_theron_v1_startup_flow_probe
+    probes/theron/firestaff_theron_v1_startup_flow_probe.c
+)
+target_include_directories(firestaff_theron_v1_startup_flow_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_startup_flow_probe
+    PRIVATE firestaff_theron firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_startup_flow_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_startup_flow_probe
+    COMMAND firestaff_theron_v1_startup_flow_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_startup_flow_probe PROPERTIES
+    LABELS "tier4;theron;startup;soul-room;stage-select"
+)
+
 # Theron V1 chapter/progression startup marker probe.
 # Pass scope: theron_startup_chapter_progression_marker_gate.
 # Bounded, headless, asset-free: synthesises a boot profile + dungeon
