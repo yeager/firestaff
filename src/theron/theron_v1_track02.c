@@ -25,8 +25,9 @@
 #define TQR_US_ISO_BANK_BOUNDARY_OFFSET 0x3000u
 #define TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES 16u
 #define TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES 44u
-#define TQR_RAW_SECTOR_BYTES 2352u
-#define TQR_RAW_SECTOR_USER_DATA_OFFSET 0x10u
+#define TQR_RAW_SECTOR_BYTES THERON_TRACK02_RAW_SECTOR_BYTES
+#define TQR_RAW_SECTOR_USER_DATA_OFFSET THERON_TRACK02_RAW_USER_DATA_OFFSET
+#define TQR_RAW_SECTOR_USER_DATA_BYTES THERON_TRACK02_RAW_USER_DATA_BYTES
 #define TQR_RAW_BIN_BANK_ANCHOR_COUNT 3u
 #define TQR_RAW_INITIAL_LEVEL_WIDTH 32u
 #define TQR_RAW_INITIAL_LEVEL_HEIGHT 27u
@@ -193,6 +194,123 @@ static int track_is_all_zero(const uint8_t *data, size_t size) {
         if (data[i] != 0) return 0;
     }
     return 1;
+}
+
+static int variant_is_raw_bin(Theron_Track02Variant variant) {
+    return variant == THERON_TRACK02_VARIANT_US_BIN ||
+           variant == THERON_TRACK02_VARIANT_JP_BIN;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_raw_user_data_size(
+    size_t track02_size,
+    const char *md5_hex,
+    size_t *out_sector_count,
+    size_t *out_user_data_size) {
+
+    Theron_Track02Variant variant = theron_v1_track02_variant_for_md5(md5_hex);
+    size_t sector_count;
+
+    if (out_sector_count) *out_sector_count = 0u;
+    if (out_user_data_size) *out_user_data_size = 0u;
+    if (track02_size == 0u || !out_sector_count || !out_user_data_size) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    if (!variant_is_raw_bin(variant)) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+    if ((track02_size % TQR_RAW_SECTOR_BYTES) != 0u) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    sector_count = track02_size / TQR_RAW_SECTOR_BYTES;
+    *out_sector_count = sector_count;
+    *out_user_data_size = sector_count * TQR_RAW_SECTOR_USER_DATA_BYTES;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_raw_offset_to_user_offset(
+    size_t raw_offset,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t *out_user_offset) {
+
+    size_t sector_count = 0u;
+    size_t user_data_size = 0u;
+    size_t sector;
+    size_t within_sector;
+    Theron_Track02SignalStatus status;
+
+    if (out_user_offset) *out_user_offset = 0u;
+    if (!out_user_offset) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    status = theron_v1_track02_raw_user_data_size(track02_size,
+                                                  md5_hex,
+                                                  &sector_count,
+                                                  &user_data_size);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+    if (raw_offset >= track02_size) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    sector = raw_offset / TQR_RAW_SECTOR_BYTES;
+    within_sector = raw_offset % TQR_RAW_SECTOR_BYTES;
+    if (within_sector < TQR_RAW_SECTOR_USER_DATA_OFFSET ||
+        within_sector >=
+            TQR_RAW_SECTOR_USER_DATA_OFFSET + TQR_RAW_SECTOR_USER_DATA_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    *out_user_offset =
+        sector * TQR_RAW_SECTOR_USER_DATA_BYTES +
+        (within_sector - TQR_RAW_SECTOR_USER_DATA_OFFSET);
+    (void)sector_count;
+    (void)user_data_size;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    uint8_t *out_user_data,
+    size_t out_user_data_capacity,
+    size_t *out_user_data_size) {
+
+    size_t sector_count = 0u;
+    size_t user_data_size = 0u;
+    size_t sector;
+    Theron_Track02SignalStatus status;
+
+    if (out_user_data_size) *out_user_data_size = 0u;
+    if (!track02_data || !out_user_data || !out_user_data_size) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    status = theron_v1_track02_raw_user_data_size(track02_size,
+                                                  md5_hex,
+                                                  &sector_count,
+                                                  &user_data_size);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+    if (out_user_data_capacity < user_data_size) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    for (sector = 0u; sector < sector_count; ++sector) {
+        const size_t raw_offset = sector * TQR_RAW_SECTOR_BYTES;
+        const size_t user_offset = sector * TQR_RAW_SECTOR_USER_DATA_BYTES;
+        memcpy(out_user_data + user_offset,
+               track02_data + raw_offset + TQR_RAW_SECTOR_USER_DATA_OFFSET,
+               TQR_RAW_SECTOR_USER_DATA_BYTES);
+    }
+
+    *out_user_data_size = user_data_size;
+    return THERON_TRACK02_SIGNAL_OK;
 }
 
 static int range_is_all_zero(const uint8_t *data, size_t size) {
@@ -583,9 +701,13 @@ const char *theron_v1_track02_source_evidence(void) {
            "a hash-gated Track 02 scan finds exactly one loader-compatible "
            "32x27 startup payload with seed 0x0108e938 and level index 0x0026 "
            "in each raw image: US offset 0x7015b4 and JP offset 0x700c84.  "
-           "This is a bounded initial-level handoff, not a full dungeon-record "
-           "decoder, object-table decoder, ADPCM decode, CD-DA decode, or "
-           "runtime playback proof.";
+           "Raw-sector user-data bridge: JP/US raw BINs are MODE1/2352 sector "
+           "images; descriptor/span payload offsets map into the 2048-byte "
+           "user-data stream, while the audio-bank id words sit outside "
+           "user-data immediately before the span.  This is a bounded "
+           "initial-level and raw-sector handoff, not a full dungeon-record "
+           "decoder, object-table decoder, graphics/menu-art decoder, ADPCM "
+           "decode, CD-DA decode, or runtime playback proof.";
 }
 
 /* ── Semantic dungeon-descriptor table decoder ──────────────────── */
