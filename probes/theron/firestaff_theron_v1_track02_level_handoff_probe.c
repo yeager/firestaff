@@ -192,6 +192,100 @@ static void probe_synthetic_positive_handoff(void) {
               THERON_SQUARE_EXIT);
 }
 
+static void probe_synthetic_initial_candidate_handoff(void) {
+    enum {
+        descriptor_offset = 0xc000u,
+        base_offset = descriptor_offset - 0x1584u,
+        candidate_offset = base_offset - 0x92ceu,
+        candidate_width = 32u,
+        candidate_height = 27u,
+        candidate_size = 12u + (candidate_width * candidate_height)
+    };
+    uint8_t track[0xd000u];
+    uint8_t *candidate;
+    Theron_V1_Level level;
+    Theron_Track02LevelHandoff handoff;
+    Theron_Track02LevelHandoffStatus status;
+
+    memset(track, 0, sizeof(track));
+    memcpy(track + descriptor_offset, g_canonical_descriptor, sizeof(g_canonical_descriptor));
+    candidate = track + candidate_offset;
+    write_be16(candidate + 0, candidate_width);
+    write_be16(candidate + 2, candidate_height);
+    write_be32(candidate + 4, 0x0108e938u);
+    write_be16(candidate + 8, 0x0026u);
+    candidate[10] = 0u;
+    candidate[11] = 0u;
+    memset(candidate + 12, THERON_SQUARE_WALL, candidate_width * candidate_height);
+    candidate[12 + 1u * candidate_width + 1u] = THERON_SQUARE_FLOOR;
+    candidate[12 + 1u * candidate_width + 2u] = THERON_SQUARE_FLOOR;
+    candidate[12 + 2u * candidate_width + 2u] = THERON_SQUARE_EXIT;
+
+    status = theron_v1_track02_load_initial_level_candidate(
+        track,
+        sizeof(track),
+        descriptor_offset,
+        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        0,
+        &level,
+        &handoff);
+
+    printf("synthetic initial candidate: status=%s map=%d offset=0x%zx size=%zu header=%ux%u seed=0x%08x\n",
+           theron_v1_track02_level_handoff_status_name(status),
+           handoff.map_status,
+           handoff.absolute_offset,
+           handoff.byte_count,
+           (unsigned)handoff.header_width,
+           (unsigned)handoff.header_height,
+           (unsigned)handoff.header_seed);
+
+    check_int("synthetic initial candidate status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("synthetic initial candidate offset",
+               handoff.absolute_offset,
+               candidate_offset);
+    check_size("synthetic initial candidate size",
+               handoff.byte_count,
+               candidate_size);
+    check_u16("synthetic initial candidate width",
+              handoff.header_width,
+              candidate_width);
+    check_u16("synthetic initial candidate height",
+              handoff.header_height,
+              candidate_height);
+    check_u32("synthetic initial candidate seed",
+              handoff.header_seed,
+              0x0108e938u);
+    check_u16("synthetic initial candidate level index",
+              handoff.header_level_index,
+              0x0026u);
+    check_int("synthetic initial candidate loaded",
+              handoff.loaded,
+              1);
+    check_int("synthetic initial candidate level width",
+              level.width,
+              (int)candidate_width);
+    check_int("synthetic initial candidate level height",
+              level.height,
+              (int)candidate_height);
+    check_int("synthetic initial candidate start x", level.start_x, 1);
+    check_int("synthetic initial candidate start y", level.start_y, 1);
+
+    candidate[4] = 0x11u; /* corrupt the source-locked seed gate */
+    status = theron_v1_track02_load_initial_level_candidate(
+        track,
+        sizeof(track),
+        descriptor_offset,
+        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        0,
+        &level,
+        &handoff);
+    check_int("synthetic initial candidate rejects wrong header",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL);
+}
+
 static void probe_negative_handoffs(void) {
     uint8_t track[0x3000u];
     Theron_V1_Level level;
@@ -256,6 +350,98 @@ static void probe_negative_handoffs(void) {
     check_int("truncated track rejected",
               status,
               THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND);
+}
+
+static void probe_real_data_initial_candidate(const char *label,
+                                              const char *md5_hex,
+                                              const char *env_name,
+                                              const char *default_file) {
+    char path[512];
+    const char *env_path = getenv(env_name);
+    const char *path_to_read;
+    uint8_t *data = NULL;
+    size_t size = 0;
+    char local_md5[33] = {0};
+    Theron_Track02BankSignal signal;
+    Theron_Track02SignalStatus signal_status;
+    Theron_V1_Level level;
+    Theron_Track02LevelHandoff handoff;
+    Theron_Track02LevelHandoffStatus status;
+
+    path_to_read = (env_path && env_path[0]) ? env_path : NULL;
+    if (!path_to_read) {
+        default_data_path(default_file, path);
+        path_to_read = path;
+    }
+
+    if (!file_exists(path_to_read)) {
+        printf("SKIP %s initial candidate: no Track 02 image at %s\n",
+               label, path_to_read);
+        ++g_skip;
+        return;
+    }
+    if (!m12_file_md5_hex(path_to_read, local_md5)) {
+        printf("FAIL %s initial candidate: could not compute MD5 for %s\n",
+               label, path_to_read);
+        ++g_fail;
+        return;
+    }
+    if (strcmp(local_md5, md5_hex) != 0) {
+        printf("FAIL %s initial candidate: MD5 %s does not match expected %s\n",
+               label, local_md5, md5_hex);
+        ++g_fail;
+        return;
+    }
+    if (!read_file(path_to_read, &data, &size)) {
+        printf("FAIL %s initial candidate: could not read %s\n",
+               label, path_to_read);
+        ++g_fail;
+        return;
+    }
+
+    signal_status = theron_v1_track02_find_bank_signal(data, size, local_md5, &signal);
+    if (signal_status != THERON_TRACK02_SIGNAL_OK || signal.anchor_count == 0u) {
+        printf("FAIL %s initial candidate: bank signal status %s anchors=%zu\n",
+               label,
+               theron_v1_track02_signal_status_name(signal_status),
+               signal.anchor_count);
+        ++g_fail;
+        free(data);
+        return;
+    }
+
+    status = theron_v1_track02_load_initial_level_candidate(
+        data,
+        size,
+        signal.descriptor_offsets[0],
+        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        0,
+        &level,
+        &handoff);
+    printf("%s initial candidate: status=%s map=%d offset=0x%zx size=%zu header=%ux%u seed=0x%08x start=(%d,%d)\n",
+           label,
+           theron_v1_track02_level_handoff_status_name(status),
+           handoff.map_status,
+           handoff.absolute_offset,
+           handoff.byte_count,
+           (unsigned)handoff.header_width,
+           (unsigned)handoff.header_height,
+           (unsigned)handoff.header_seed,
+           level.start_x,
+           level.start_y);
+
+    check_int("real initial candidate status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_u16("real initial candidate width", handoff.header_width, 32u);
+    check_u16("real initial candidate height", handoff.header_height, 27u);
+    check_u32("real initial candidate seed", handoff.header_seed, 0x0108e938u);
+    check_u16("real initial candidate level", handoff.header_level_index, 0x0026u);
+    check_int("real initial candidate loaded", handoff.loaded, 1);
+    check_int("real initial candidate level width", level.width, 32);
+    check_int("real initial candidate level height", level.height, 27);
+
+    free(data);
 }
 
 static void probe_real_data_handoff(const char *label,
@@ -348,6 +534,17 @@ static void probe_real_data_handoff(const char *label,
 }
 
 static void probe_real_data_if_present(void) {
+    probe_real_data_initial_candidate(
+        "US raw BIN",
+        THERON_TRACK02_MD5_US_BIN,
+        "FIRESTAFF_THERON_TRACK02_US_BIN",
+        "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin");
+    probe_real_data_initial_candidate(
+        "JP raw BIN",
+        THERON_TRACK02_MD5_JP_BIN,
+        "FIRESTAFF_THERON_TRACK02_JP_BIN",
+        "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin");
+
     probe_real_data_handoff("US ISO descriptor handoff",
                             THERON_TRACK02_MD5_US_ISO,
                             "FIRESTAFF_THERON_TRACK02_US",
@@ -367,6 +564,7 @@ int main(void) {
     printf("%s\n", theron_v1_track02_source_evidence());
 
     probe_synthetic_positive_handoff();
+    probe_synthetic_initial_candidate_handoff();
     probe_negative_handoffs();
     probe_real_data_if_present();
 

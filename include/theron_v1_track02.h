@@ -408,6 +408,28 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
     Theron_V1_Level *out_level,
     Theron_Track02LevelHandoff *out_handoff);
 
+/* Hash/anchor-gated initial-level candidate handoff.
+ *
+ * The raw JP/US Track 02 BINs both carry a loader-compatible 32x27 level-like
+ * payload at a stable offset relative to the descriptor-bank base:
+ *
+ *   candidate_offset = (descriptor_offset - 0x1584) - 0x92ce
+ *
+ * The function first decodes the 9-word descriptor table at descriptor_offset,
+ * then validates the candidate header shape before handing the bytes to
+ * theron_v1_level_load().  This is narrower than a full dungeon parser: it
+ * promotes one real startup candidate and keeps all other Track 02 map/object
+ * semantics unclaimed.
+ */
+Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    int dungeon_id,
+    int sub_level_index,
+    Theron_V1_Level *out_level,
+    Theron_Track02LevelHandoff *out_handoff);
+
 const char *theron_v1_track02_level_handoff_status_name(
     Theron_Track02LevelHandoffStatus status);
 

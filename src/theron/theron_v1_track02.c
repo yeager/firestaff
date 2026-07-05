@@ -28,6 +28,11 @@
 #define TQR_RAW_SECTOR_BYTES 2352u
 #define TQR_RAW_SECTOR_USER_DATA_OFFSET 0x10u
 #define TQR_RAW_BIN_BANK_ANCHOR_COUNT 3u
+#define TQR_RAW_INITIAL_LEVEL_RELATIVE_BACK_OFFSET 0x92ceu
+#define TQR_RAW_INITIAL_LEVEL_WIDTH 32u
+#define TQR_RAW_INITIAL_LEVEL_HEIGHT 27u
+#define TQR_RAW_INITIAL_LEVEL_SEED 0x0108e938u
+#define TQR_RAW_INITIAL_LEVEL_INDEX 0x0026u
 
 /* Audio-bank marker fingerprint (raw Track 02 BIN only).
  *
@@ -573,9 +578,13 @@ const char *theron_v1_track02_source_evidence(void) {
            "at every post-boundary span anchor; US ids are 0x01725800, "
            "0x01600801, 0x01122401 at offsets 0x2d53dc, 0x47d03c, "
            "0x71283c; JP ids are 0x01530301, 0x01411301, 0x01682801 at "
-           "offsets 0x2d4aac, 0x47c70c, 0x711f0c.  This is a byte-level "
-           "audio-bank receipt only, not ADPCM decode, CD-DA decode, or "
-           "runtime playback proof.";
+           "offsets 0x2d4aac, 0x47c70c, 0x711f0c.  Initial level candidate: "
+           "raw US anchor 0 descriptor_base-0x92ce is offset 0x7015b4 and "
+           "raw JP anchor 0 descriptor_base-0x92ce is offset 0x700c84; both "
+           "carry a loader-compatible 32x27 header with seed 0x0108e938 and "
+           "level index 0x0026.  This is a bounded initial-level handoff, not "
+           "a full dungeon-record decoder, object-table decoder, ADPCM decode, "
+           "CD-DA decode, or runtime playback proof.";
 }
 
 /* ── Semantic dungeon-descriptor table decoder ──────────────────── */
@@ -1024,6 +1033,97 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
     map_status = theron_v1_level_load(out_level,
                                       level_bytes,
                                       (int)window->byte_count,
+                                      dungeon_id,
+                                      sub_level_index);
+    out_handoff->map_status = map_status;
+    if (map_status != THERON_MAP_OK) {
+        return THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED;
+    }
+
+    out_handoff->loaded = 1;
+    return THERON_TRACK02_LEVEL_HANDOFF_OK;
+}
+
+Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    int dungeon_id,
+    int sub_level_index,
+    Theron_V1_Level *out_level,
+    Theron_Track02LevelHandoff *out_handoff) {
+
+    Theron_Track02DescriptorTable table;
+    Theron_Track02TableDecodeStatus table_status;
+    size_t base_offset;
+    size_t candidate_offset;
+    size_t candidate_size;
+    const uint8_t *level_bytes;
+    Theron_MapLoadResult map_status;
+
+    if (out_handoff) {
+        memset(out_handoff, 0, sizeof(*out_handoff));
+        out_handoff->map_status = THERON_MAP_ERR_NULL;
+    }
+    if (out_level) {
+        memset(out_level, 0, sizeof(*out_level));
+    }
+
+    if (!track02_data || track02_size == 0u || !out_level || !out_handoff) {
+        return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+    }
+    if (descriptor_offset < TQR_US_ISO_BANK_STRIDE_OFFSET ||
+        descriptor_offset > track02_size ||
+        TQR_US_ISO_BANK_STRIDE_BYTES > track02_size - descriptor_offset) {
+        return THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
+    }
+
+    table_status = theron_v1_track02_decode_descriptor_table(
+        track02_data + descriptor_offset,
+        TQR_US_ISO_BANK_STRIDE_BYTES,
+        TQR_US_ISO_BANK_STRIDE_STEP,
+        &table);
+    if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
+        return THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
+    }
+
+    base_offset = descriptor_offset - TQR_US_ISO_BANK_STRIDE_OFFSET;
+    if (base_offset < TQR_RAW_INITIAL_LEVEL_RELATIVE_BACK_OFFSET) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+    candidate_offset = base_offset - TQR_RAW_INITIAL_LEVEL_RELATIVE_BACK_OFFSET;
+    candidate_size =
+        12u + (TQR_RAW_INITIAL_LEVEL_WIDTH * TQR_RAW_INITIAL_LEVEL_HEIGHT);
+    if (candidate_offset > track02_size ||
+        candidate_size > track02_size - candidate_offset) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+
+    level_bytes = track02_data + candidate_offset;
+    out_handoff->entry_index = THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES;
+    out_handoff->absolute_offset = candidate_offset;
+    out_handoff->byte_count = candidate_size;
+    out_handoff->window_kind = THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
+    out_handoff->header_width = rd16be(level_bytes + 0);
+    out_handoff->header_height = rd16be(level_bytes + 2);
+    out_handoff->header_seed = rd32be(level_bytes + 4);
+    out_handoff->header_level_index = rd16be(level_bytes + 8);
+
+    /* Real raw JP/US Track 02 candidate gate.  These four header fields
+     * are identical in the hash-verified JP and US raw BINs at
+     * descriptor_base - 0x92ce.  They deliberately keep this handoff
+     * narrower than a broad scan, avoiding tiny false-positive headers
+     * that also exist near the same bank. */
+    if (out_handoff->header_width != TQR_RAW_INITIAL_LEVEL_WIDTH ||
+        out_handoff->header_height != TQR_RAW_INITIAL_LEVEL_HEIGHT ||
+        out_handoff->header_seed != TQR_RAW_INITIAL_LEVEL_SEED ||
+        out_handoff->header_level_index != TQR_RAW_INITIAL_LEVEL_INDEX) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+
+    map_status = theron_v1_level_load(out_level,
+                                      level_bytes,
+                                      (int)candidate_size,
                                       dungeon_id,
                                       sub_level_index);
     out_handoff->map_status = map_status;
