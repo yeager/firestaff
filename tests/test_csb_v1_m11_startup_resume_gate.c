@@ -20,6 +20,7 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_graphics_loader_pc34_compat.h"
+#include "entrance_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "m11_game_view.h"
 
@@ -1120,7 +1121,30 @@ int main(void) {
         expect_true(view.csbState.startup_entrance_last_command ==
                         M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
                     "M11 CSB entrance records the enter-dungeon command");
+        expect_true(view.csbState.startup_entrance_bonus_requested == 0,
+                    "M11 CSB normal enter does not mark bonus dungeon");
     }
+    M11_GameView_Shutdown(&view);
+
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB bonus-dungeon start fixture succeeds");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    245,
+                    46,
+                    ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 CSB entrance accepts the source bonus-dungeon button mask");
+    expect_true(view.csbState.startup_entrance_active == 0 &&
+                    view.csbState.startup_entrance_dismissed == 1,
+                "M11 CSB bonus-dungeon command dismisses to runtime");
+    expect_true(view.csbState.startup_entrance_last_command ==
+                    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON,
+                "M11 CSB entrance records the bonus-dungeon command");
+    expect_true(view.csbState.startup_entrance_bonus_requested == 1,
+                "M11 CSB entrance preserves the bonus-dungeon request");
     M11_GameView_Shutdown(&view);
 
     fill_csb_launch_spec(&spec, data_dir, NULL);
