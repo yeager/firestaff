@@ -38,6 +38,8 @@
 
 #include "theron_v1_startup_receipt.h"
 #include "asset_status_m12.h"
+#include "theron_v1_chapter_marker.h"
+#include "theron_v1_startup_flow.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,9 +124,66 @@ static void set_variant(Theron_V1_StartupReceipt *receipt,
                   theron_v1_track02_variant_name(variant));
 }
 
+static void populate_startup_mirror_summary(Theron_V1_StartupReceipt *receipt) {
+    uint32_t portrait_min = 0u;
+    uint32_t portrait_max = 0u;
+    uint32_t class_mask = 0u;
+    int i;
+
+    if (!receipt) return;
+    receipt->startup_mirror_count = THERON_STARTUP_HERO_MIRROR_COUNT;
+    receipt->startup_companion_limit = THERON_STARTUP_MAX_COMPANIONS;
+
+    for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
+        const Theron_StartupMirrorMeta *meta =
+            theron_v1_startup_mirror_meta(i);
+        uint32_t portrait;
+        if (!meta) continue;
+        portrait = (uint32_t)meta->portrait_index;
+        if (portrait_min == 0u || portrait < portrait_min) {
+            portrait_min = portrait;
+        }
+        if (portrait > portrait_max) {
+            portrait_max = portrait;
+        }
+        if (meta->primary_class >= 0 &&
+            meta->primary_class < THERON_CLASS_COUNT) {
+            class_mask |= (uint32_t)(1u << (uint32_t)meta->primary_class);
+        }
+    }
+
+    receipt->startup_portrait_min = portrait_min;
+    receipt->startup_portrait_max = portrait_max;
+    receipt->startup_class_mask = class_mask;
+}
+
+static void populate_startup_chapter_summary(
+    Theron_V1_StartupReceipt *receipt,
+    const Theron_V1_BootProfile *profile) {
+    Theron_ChapterMarker marker;
+
+    if (!receipt) return;
+    theron_v1_chapter_marker_compute(profile, NULL, NULL, &marker);
+    safe_str_copy(receipt->startup_chapter_label,
+                  sizeof(receipt->startup_chapter_label),
+                  marker.chapter_label);
+    safe_str_copy(receipt->startup_quest_summary,
+                  sizeof(receipt->startup_quest_summary),
+                  marker.quest_summary);
+    safe_str_copy(receipt->startup_next_dungeon_hint,
+                  sizeof(receipt->startup_next_dungeon_hint),
+                  marker.next_dungeon_hint);
+    receipt->startup_quest_item_total =
+        (uint32_t)marker.quest_item_total;
+    receipt->startup_quest_items_collected =
+        (uint32_t)marker.quest_items_collected;
+}
+
 void theron_v1_startup_receipt_set_placeholder(Theron_V1_StartupReceipt *receipt) {
     if (!receipt) return;
     theron_v1_startup_receipt_reset(receipt);
+    populate_startup_mirror_summary(receipt);
+    populate_startup_chapter_summary(receipt, NULL);
 
     set_verdict(receipt,
                 THERON_V1_STARTUP_RECEIPT_NO_DATA_PLACEHOLDER,
@@ -217,6 +276,8 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
 
     if (!receipt) return 0;
     theron_v1_startup_receipt_reset(receipt);
+    populate_startup_mirror_summary(receipt);
+    populate_startup_chapter_summary(receipt, NULL);
 
     /* Empty / NULL inputs downgrade to a placeholder with a clear note.
      * We intentionally still emit a placeholder receipt rather than
@@ -340,6 +401,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     receipt->boot_profile_max_champions    = profile.deterministic.max_champions;
     receipt->boot_profile_dungeon_count    = profile.deterministic.dungeon_count;
     receipt->boot_profile_dungeon_seed     = profile.deterministic.dungeon_seed;
+    populate_startup_chapter_summary(receipt, &profile);
 
     /* M11 dispatch is recorded as a *kind marker* only.  The full M11
      * start would require SDL + Theron world allocation which is out of
@@ -471,7 +533,6 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         Theron_V1_Level initial_level;
         Theron_Track02LevelHandoff initial_handoff;
         Theron_Track02LevelHandoffStatus initial_status;
-        size_t expected_offset = 0u;
 
         initial_status = theron_v1_track02_load_initial_level_candidate(
             data,
@@ -481,11 +542,17 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
             0,
             &initial_level,
             &initial_handoff);
+        receipt->initial_candidate_binding_status =
+            initial_handoff.binding_status;
+        receipt->initial_candidate_count =
+            (uint64_t)initial_handoff.candidate_count;
+        receipt->initial_candidate_expected_offset =
+            (uint64_t)initial_handoff.expected_offset;
         if (initial_status == THERON_TRACK02_LEVEL_HANDOFF_OK &&
-            theron_v1_track02_initial_candidate_expected_offset(
-                signal.descriptor_offsets[0],
-                &expected_offset) != 0 &&
-            initial_handoff.absolute_offset == expected_offset) {
+            initial_handoff.binding_status ==
+                THERON_TRACK02_LEVEL_HANDOFF_OK &&
+            initial_handoff.absolute_offset ==
+                initial_handoff.expected_offset) {
             receipt->initial_candidate_found = 1;
             receipt->initial_candidate_offset =
                 (uint64_t)initial_handoff.absolute_offset;
@@ -502,11 +569,9 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
             receipt->initial_candidate_start_y = initial_level.start_y;
             receipt->initial_candidate_start_dir = initial_level.start_dir;
             receipt->initial_candidate_descriptor_delta =
-                signal.descriptor_offsets[0] >= initial_handoff.absolute_offset
-                    ? (uint64_t)(signal.descriptor_offsets[0] -
-                                 initial_handoff.absolute_offset)
-                    : 0u;
-            receipt->initial_candidate_anchor_match = 1;
+                (uint64_t)initial_handoff.descriptor_delta;
+            receipt->initial_candidate_anchor_match =
+                initial_handoff.matches_initial_anchor;
         }
     }
 
@@ -611,6 +676,29 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->initial_candidate_descriptor_delta), h);
     h = fnv1a_32(&receipt->initial_candidate_anchor_match,
                  sizeof(receipt->initial_candidate_anchor_match), h);
+    h = fnv1a_32(&receipt->initial_candidate_binding_status,
+                 sizeof(receipt->initial_candidate_binding_status), h);
+    h = fnv1a_32(&receipt->initial_candidate_count,
+                 sizeof(receipt->initial_candidate_count), h);
+    h = fnv1a_32(&receipt->initial_candidate_expected_offset,
+                 sizeof(receipt->initial_candidate_expected_offset), h);
+    h = fnv1a_32(&receipt->startup_mirror_count,
+                 sizeof(receipt->startup_mirror_count), h);
+    h = fnv1a_32(&receipt->startup_companion_limit,
+                 sizeof(receipt->startup_companion_limit), h);
+    h = fnv1a_32(&receipt->startup_portrait_min,
+                 sizeof(receipt->startup_portrait_min), h);
+    h = fnv1a_32(&receipt->startup_portrait_max,
+                 sizeof(receipt->startup_portrait_max), h);
+    h = fnv1a_32(&receipt->startup_class_mask,
+                 sizeof(receipt->startup_class_mask), h);
+    h = fnv1a_str(h, receipt->startup_chapter_label);
+    h = fnv1a_str(h, receipt->startup_quest_summary);
+    h = fnv1a_str(h, receipt->startup_next_dungeon_hint);
+    h = fnv1a_32(&receipt->startup_quest_item_total,
+                 sizeof(receipt->startup_quest_item_total), h);
+    h = fnv1a_32(&receipt->startup_quest_items_collected,
+                 sizeof(receipt->startup_quest_items_collected), h);
     h = fnv1a_32(&receipt->boot_profile_platform,
                  sizeof(receipt->boot_profile_platform), h);
     h = fnv1a_str(h, receipt->boot_profile_version_id);
@@ -653,7 +741,12 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "initial_size=%llu initial_header=%ux%u "
                  "initial_seed=0x%x initial_level=0x%x "
                  "initial_start=(%d,%d,%d) initial_delta=0x%llx "
-                 "initial_anchor=%d "
+                 "initial_anchor=%d initial_bind=%d initial_bind_name=%s "
+                 "initial_count=%llu initial_expected=0x%llx "
+                 "mirrors=%u companions=%u portrait_range=%u..%u "
+                 "class_mask=0x%x chapter=\"%s\" "
+                 "quest=\"%s\" next=\"%s\" quest_total=%u "
+                 "quest_items=0x%x "
                  "boot_platform=%d boot_version=%s boot_verified=%d "
                  "tick_hz=%u champions=%u dungeons=%u seed=%u "
                  "m11_kind=%d m11_active=%d m11_world=%d "
@@ -693,6 +786,25 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  receipt->initial_candidate_start_dir,
                  (unsigned long long)receipt->initial_candidate_descriptor_delta,
                  receipt->initial_candidate_anchor_match,
+                 (int)receipt->initial_candidate_binding_status,
+                 theron_v1_track02_level_handoff_status_name(
+                     (Theron_Track02LevelHandoffStatus)
+                         receipt->initial_candidate_binding_status),
+                 (unsigned long long)receipt->initial_candidate_count,
+                 (unsigned long long)receipt->initial_candidate_expected_offset,
+                 (unsigned)receipt->startup_mirror_count,
+                 (unsigned)receipt->startup_companion_limit,
+                 (unsigned)receipt->startup_portrait_min,
+                 (unsigned)receipt->startup_portrait_max,
+                 (unsigned)receipt->startup_class_mask,
+                 receipt->startup_chapter_label[0]
+                    ? receipt->startup_chapter_label : "(none)",
+                 receipt->startup_quest_summary[0]
+                    ? receipt->startup_quest_summary : "(none)",
+                 receipt->startup_next_dungeon_hint[0]
+                    ? receipt->startup_next_dungeon_hint : "(none)",
+                 (unsigned)receipt->startup_quest_item_total,
+                 (unsigned)receipt->startup_quest_items_collected,
                  (int)receipt->boot_profile_platform,
                  receipt->boot_profile_version_id[0]
                     ? receipt->boot_profile_version_id : "(none)",

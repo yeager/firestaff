@@ -206,6 +206,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     Theron_V1_Level level;
     Theron_Track02LevelHandoff handoff;
     Theron_Track02LevelCandidateCatalog catalog;
+    Theron_Track02InitialCandidateBinding binding;
     Theron_Track02LevelHandoffStatus status;
     size_t expected_candidate_offset = 0u;
 
@@ -255,6 +256,29 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     check_size("synthetic initial candidate expected offset",
                expected_candidate_offset,
                candidate_offset);
+    status = theron_v1_track02_bind_initial_level_candidate(
+        track,
+        sizeof(track),
+        descriptor_offset,
+        &binding);
+    check_int("synthetic initial candidate binding status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("synthetic initial candidate binding count",
+               binding.candidate_count,
+               1u);
+    check_size("synthetic initial candidate binding index",
+               binding.candidate_index,
+               0u);
+    check_size("synthetic initial candidate binding offset",
+               binding.candidate.absolute_offset,
+               candidate_offset);
+    check_size("synthetic initial candidate binding expected offset",
+               binding.expected_offset,
+               candidate_offset);
+    check_int("synthetic initial candidate binding anchor match",
+              binding.matches_initial_anchor,
+              1);
 
     status = theron_v1_track02_load_initial_level_candidate(
         track,
@@ -295,6 +319,21 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     check_u16("synthetic initial candidate level index",
               handoff.header_level_index,
               0x0026u);
+    check_int("synthetic initial candidate handoff binding status",
+              handoff.binding_status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("synthetic initial candidate handoff count",
+               handoff.candidate_count,
+               1u);
+    check_size("synthetic initial candidate handoff expected offset",
+               handoff.expected_offset,
+               candidate_offset);
+    check_size("synthetic initial candidate handoff descriptor delta",
+               handoff.descriptor_delta,
+               0xa852u);
+    check_int("synthetic initial candidate handoff anchor match",
+              handoff.matches_initial_anchor,
+              1);
     check_int("synthetic initial candidate loaded",
               handoff.loaded,
               1);
@@ -387,6 +426,98 @@ static void probe_synthetic_initial_candidate_wrong_anchor_rejected(void) {
               0);
 }
 
+static void write_initial_candidate_fixture(uint8_t *candidate,
+                                            size_t candidate_width,
+                                            size_t candidate_height) {
+    write_be16(candidate + 0, (uint16_t)candidate_width);
+    write_be16(candidate + 2, (uint16_t)candidate_height);
+    write_be32(candidate + 4, 0x0108e938u);
+    write_be16(candidate + 8, 0x0026u);
+    candidate[10] = 0u;
+    candidate[11] = 0u;
+    memset(candidate + 12,
+           THERON_SQUARE_WALL,
+           candidate_width * candidate_height);
+    candidate[12 + 1u * candidate_width + 1u] = THERON_SQUARE_FLOOR;
+    candidate[12 + 1u * candidate_width + 2u] = THERON_SQUARE_FLOOR;
+    candidate[12 + 2u * candidate_width + 2u] = THERON_SQUARE_EXIT;
+}
+
+static void probe_synthetic_multiple_initial_candidates_rejected(void) {
+    enum {
+        descriptor_offset = 0xc000u,
+        base_offset = descriptor_offset - 0x1584u,
+        candidate_offset = base_offset - 0x92ceu,
+        extra_candidate_offset = 0x2400u,
+        candidate_width = 32u,
+        candidate_height = 27u
+    };
+    uint8_t track[0xd000u];
+    Theron_V1_Level level;
+    Theron_Track02LevelHandoff handoff;
+    Theron_Track02LevelCandidateCatalog catalog;
+    Theron_Track02InitialCandidateBinding binding;
+    Theron_Track02LevelHandoffStatus status;
+
+    memset(track, 0, sizeof(track));
+    memcpy(track + descriptor_offset,
+           g_canonical_descriptor,
+           sizeof(g_canonical_descriptor));
+    write_initial_candidate_fixture(track + candidate_offset,
+                                    candidate_width,
+                                    candidate_height);
+    write_initial_candidate_fixture(track + extra_candidate_offset,
+                                    candidate_width,
+                                    candidate_height);
+
+    status = theron_v1_track02_scan_level_candidates(
+        track,
+        sizeof(track),
+        &catalog);
+    check_int("synthetic multi-candidate scan status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("synthetic multi-candidate scan count",
+               catalog.candidate_count,
+               2u);
+
+    status = theron_v1_track02_bind_initial_level_candidate(
+        track,
+        sizeof(track),
+        descriptor_offset,
+        &binding);
+    check_int("synthetic multi-candidate binding rejected",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_AMBIGUOUS_CANDIDATES);
+    check_size("synthetic multi-candidate binding count",
+               binding.candidate_count,
+               2u);
+    check_size("synthetic multi-candidate binding index sentinel",
+               binding.candidate_index,
+               (size_t)-1);
+
+    status = theron_v1_track02_load_initial_level_candidate(
+        track,
+        sizeof(track),
+        descriptor_offset,
+        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        0,
+        &level,
+        &handoff);
+    check_int("synthetic multi-candidate handoff rejected",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_AMBIGUOUS_CANDIDATES);
+    check_int("synthetic multi-candidate handoff binding status",
+              handoff.binding_status,
+              THERON_TRACK02_LEVEL_HANDOFF_AMBIGUOUS_CANDIDATES);
+    check_size("synthetic multi-candidate handoff count",
+               handoff.candidate_count,
+               2u);
+    check_int("synthetic multi-candidate handoff not loaded",
+              handoff.loaded,
+              0);
+}
+
 static void probe_negative_handoffs(void) {
     uint8_t track[0x3000u];
     Theron_V1_Level level;
@@ -468,6 +599,7 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_V1_Level level;
     Theron_Track02LevelHandoff handoff;
     Theron_Track02LevelCandidateCatalog catalog;
+    Theron_Track02InitialCandidateBinding binding;
     Theron_Track02LevelHandoffStatus status;
     size_t expected_candidate_offset = 0u;
 
@@ -534,6 +666,29 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate anchor match",
               catalog.candidates[0].matches_initial_anchor,
               1);
+    status = theron_v1_track02_bind_initial_level_candidate(
+        data,
+        size,
+        signal.descriptor_offsets[0],
+        &binding);
+    check_int("real initial candidate binding status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("real initial candidate binding count",
+               binding.candidate_count,
+               1u);
+    check_size("real initial candidate binding index",
+               binding.candidate_index,
+               0u);
+    check_size("real initial candidate binding offset",
+               binding.candidate.absolute_offset,
+               catalog.candidates[0].absolute_offset);
+    check_size("real initial candidate binding expected offset",
+               binding.expected_offset,
+               catalog.candidates[0].absolute_offset);
+    check_int("real initial candidate binding anchor match",
+              binding.matches_initial_anchor,
+              1);
 
     status = theron_v1_track02_load_initial_level_candidate(
         data,
@@ -563,6 +718,19 @@ static void probe_real_data_initial_candidate(const char *label,
     check_u16("real initial candidate height", handoff.header_height, 27u);
     check_u32("real initial candidate seed", handoff.header_seed, 0x0108e938u);
     check_u16("real initial candidate level", handoff.header_level_index, 0x0026u);
+    check_int("real initial candidate handoff binding status",
+              handoff.binding_status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("real initial candidate handoff count", handoff.candidate_count, 1u);
+    check_size("real initial candidate handoff expected offset",
+               handoff.expected_offset,
+               handoff.absolute_offset);
+    check_size("real initial candidate handoff descriptor delta",
+               handoff.descriptor_delta,
+               0xa852u);
+    check_int("real initial candidate handoff anchor match",
+              handoff.matches_initial_anchor,
+              1);
     check_int("real initial candidate loaded", handoff.loaded, 1);
     check_int("real initial candidate level width", level.width, 32);
     check_int("real initial candidate level height", level.height, 27);
@@ -709,6 +877,7 @@ int main(void) {
     probe_synthetic_positive_handoff();
     probe_synthetic_initial_candidate_handoff();
     probe_synthetic_initial_candidate_wrong_anchor_rejected();
+    probe_synthetic_multiple_initial_candidates_rejected();
     probe_negative_handoffs();
     probe_real_data_if_present();
 

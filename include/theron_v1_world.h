@@ -354,6 +354,17 @@ size_t theron_v1_first_room_synthesize(uint8_t *out_buf,
                                         uint32_t dungeon_seed,
                                         Theron_V1_Level *out_level);
 
+/* Build the bounded startup fallback room for a selected Theron's Quest
+ * stage.  Used when Track 02 bank promotion cannot yet decode a stronger
+ * level record for that stage.  The returned buffer uses the same 12-byte
+ * header and grid contract as theron_v1_level_load(); out_level receives a
+ * preview with stage-specific dimensions, start pose, exit, and marker tile.
+ * Returns bytes written, or 0 on invalid input. */
+size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
+                                                   size_t buf_size,
+                                                   Theron_DungeonID dungeon_id,
+                                                   Theron_V1_Level *out_level);
+
 /* ── Startup runtime readiness (skip-safe) ──────────────────────────── */
 
 typedef enum {

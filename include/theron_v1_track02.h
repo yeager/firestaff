@@ -375,7 +375,8 @@ typedef enum {
     THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT = -1,
     THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND = -2,
     THERON_TRACK02_LEVEL_HANDOFF_WINDOW_NOT_DATA = -3,
-    THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED = -4
+    THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED = -4,
+    THERON_TRACK02_LEVEL_HANDOFF_AMBIGUOUS_CANDIDATES = -5
 } Theron_Track02LevelHandoffStatus;
 
 typedef struct {
@@ -388,6 +389,11 @@ typedef struct {
     uint16_t header_height;
     uint32_t header_seed;
     uint16_t header_level_index;
+    int32_t binding_status;
+    size_t candidate_count;
+    size_t expected_offset;
+    size_t descriptor_delta;
+    int matches_initial_anchor;
     int loaded;
 } Theron_Track02LevelHandoff;
 
@@ -414,6 +420,17 @@ typedef struct {
     Theron_Track02LevelCandidate
         candidates[THERON_TRACK02_MAX_LEVEL_CANDIDATES];
 } Theron_Track02LevelCandidateCatalog;
+
+typedef struct {
+    Theron_Track02LevelHandoffStatus status;
+    size_t descriptor_offset;
+    size_t candidate_count;
+    size_t candidate_index;
+    size_t expected_offset;
+    int expected_offset_valid;
+    int matches_initial_anchor;
+    Theron_Track02LevelCandidate candidate;
+} Theron_Track02InitialCandidateBinding;
 
 /* Bounded Track 02 -> V1 level-loader handoff.
  *
@@ -482,6 +499,21 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
 int theron_v1_track02_bind_level_candidate_anchor(
     size_t descriptor_offset,
     Theron_Track02LevelCandidateCatalog *catalog);
+
+/* Bind the hash/anchor-gated initial startup candidate without loading it
+ * into a Theron_V1_Level.
+ *
+ * This is the shared evidence contract used by the runtime loader and receipt
+ * surfaces: the descriptor table must decode, the level-like scanner must find
+ * exactly one candidate, and that candidate must sit at the source-locked
+ * offset relation to the descriptor anchor.  It does not claim other Track 02
+ * windows or candidates as dungeon records.
+ */
+Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    Theron_Track02InitialCandidateBinding *out_binding);
 
 /* Expected raw Track 02 startup candidate offset for one descriptor anchor.
  *

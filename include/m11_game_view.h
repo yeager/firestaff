@@ -30,6 +30,7 @@ enum {
 
 typedef enum {
     M11_THERON_STARTUP_ELEMENT_TITLE = 1,
+    M11_THERON_STARTUP_ELEMENT_CHAPTER,
     M11_THERON_STARTUP_ELEMENT_CONTINUE,
     M11_THERON_STARTUP_ELEMENT_STAGE,
     M11_THERON_STARTUP_ELEMENT_MIRROR,
@@ -45,6 +46,8 @@ typedef struct {
     int dungeonId;
     int mirrorIndex;
     int selectedOrder;
+    int portraitIndex; /* Theron startup mirror/champion portrait ordinal, -1 when absent. */
+    int primaryClass;  /* Theron_ChampionClass for mirror rows, -1 when absent. */
     int saveKind; /* 0=none, 1=TQSV, 2=SRM */
     int saveSlot;
     int x;

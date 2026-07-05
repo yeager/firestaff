@@ -829,6 +829,101 @@ size_t theron_v1_first_room_synthesize(uint8_t *out_buf,
     return needed;
 }
 
+size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
+                                                   size_t buf_size,
+                                                   Theron_DungeonID dungeon_id,
+                                                   Theron_V1_Level *out_level) {
+    typedef struct {
+        uint8_t width;
+        uint8_t height;
+        uint8_t start_x;
+        uint8_t start_y;
+        uint8_t start_dir;
+        uint8_t exit_x;
+        uint8_t exit_y;
+        uint8_t marker_x;
+        uint8_t marker_y;
+        uint8_t marker_tile;
+    } TheronFallbackRoomSpec;
+    static const TheronFallbackRoomSpec fallback_specs[THERON_DUNGEON_COUNT] = {
+        { 8, 8, 3, 5, 0, 3, 1, 0, 0, THERON_SQUARE_FLOOR },
+        { 8, 8, 3, 5, 0, 4, 1, 6, 4, THERON_SQUARE_POOL },
+        { 9, 8, 3, 5, 0, 5, 1, 6, 3, THERON_SQUARE_PIT },
+        { 8, 9, 3, 5, 0, 4, 1, 5, 6, THERON_SQUARE_TRIGGER },
+        { 9, 9, 3, 5, 0, 5, 1, 6, 6, THERON_SQUARE_TELEPORTER },
+        {10, 8, 3, 5, 0, 6, 1, 7, 4, THERON_SQUARE_ALARM },
+        {10,10, 3, 5, 0, 6, 1, 7, 7, THERON_SQUARE_STAIRS_DOWN }
+    };
+    const TheronFallbackRoomSpec *spec;
+    const Theron_DungeonMeta *meta;
+    uint8_t *grid;
+    size_t needed;
+    uint32_t seed;
+    int width;
+    int height;
+    int x;
+    int y;
+
+    if (!out_buf || !out_level) return 0;
+    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT) {
+        return 0;
+    }
+
+    spec = &fallback_specs[(int)dungeon_id - 1];
+    width = spec->width;
+    height = spec->height;
+    needed = theron_v1_first_room_buffer_size(width, height);
+    if (needed == 0u || buf_size < needed) return 0;
+
+    meta = theron_v1_dungeon_meta(dungeon_id);
+    seed = meta ? meta->dungeon_seed : 313u;
+    memset(out_buf, 0, needed);
+    out_buf[0] = (uint8_t)((width >> 8) & 0xFFu);
+    out_buf[1] = (uint8_t)(width & 0xFFu);
+    out_buf[2] = (uint8_t)((height >> 8) & 0xFFu);
+    out_buf[3] = (uint8_t)(height & 0xFFu);
+    out_buf[4] = (uint8_t)((seed >> 24) & 0xFFu);
+    out_buf[5] = (uint8_t)((seed >> 16) & 0xFFu);
+    out_buf[6] = (uint8_t)((seed >> 8) & 0xFFu);
+    out_buf[7] = (uint8_t)(seed & 0xFFu);
+    out_buf[8] = 0u;
+    out_buf[9] = 0u;
+    out_buf[10] = 0u;
+    out_buf[11] = 0u;
+
+    grid = out_buf + THERON_V1_FIRST_ROOM_HEADER_BYTES;
+    for (y = 0; y < height; ++y) {
+        for (x = 0; x < width; ++x) {
+            grid[y * width + x] =
+                (x == 0 || y == 0 || x == width - 1 || y == height - 1)
+                    ? THERON_SQUARE_WALL
+                    : THERON_SQUARE_FLOOR;
+        }
+    }
+    grid[spec->exit_y * width + spec->exit_x] = THERON_SQUARE_EXIT;
+    if (spec->marker_x > 0u && spec->marker_y > 0u &&
+        spec->marker_x < (uint8_t)(width - 1) &&
+        spec->marker_y < (uint8_t)(height - 1)) {
+        grid[spec->marker_y * width + spec->marker_x] = spec->marker_tile;
+    }
+
+    memset(out_level, 0, sizeof(*out_level));
+    out_level->level_index = 0;
+    out_level->width = width;
+    out_level->height = height;
+    out_level->start_x = spec->start_x;
+    out_level->start_y = spec->start_y;
+    out_level->start_dir = spec->start_dir;
+    for (y = 0; y < height; ++y) {
+        for (x = 0; x < width; ++x) {
+            out_level->squares[y][x] = grid[y * width + x];
+        }
+    }
+
+    return needed;
+}
+
 /* ── libcs-only MD5 (RFC 1321) ──────────────────────────────────────
  * We bundle a tiny MD5 implementation here so the readiness gate can
  * hash staged Track 02 files without depending on OpenSSL.  It is

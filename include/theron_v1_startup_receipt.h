@@ -34,6 +34,7 @@
 #include <stdint.h>
 
 #include "theron_v1_boot.h"
+#include "theron_v1_chapter_marker.h"
 #include "theron_v1_track02.h"
 
 #ifdef __cplusplus
@@ -110,6 +111,17 @@ typedef enum {
  *   - initial_candidate_*              : hash/anchor-gated startup level
  *                                        candidate receipt when raw Track 02
  *                                        exposes the bounded 32x27 payload
+ *   - startup_mirror_*                 : public Soul Room mirror contract
+ *                                        from theron_v1_startup_flow.c, so
+ *                                        receipt/probe consumers can verify
+ *                                        seven mirrors, portrait ordinals 1..7,
+ *                                        class coverage, and the three-companion
+ *                                        resurrection cap without decoding art
+ *   - startup_chapter_*                : public chapter/progression startup
+ *                                        contract from theron_v1_chapter_marker.c,
+ *                                        so receipt/probe consumers can verify
+ *                                        the visible chapter row and quest-item
+ *                                        count without entering M11
  *   - boot_profile_platform            : detected platform enum
  *   - boot_profile_version_id          : copy of profile->version_id
  *   - boot_profile_assets_verified     : 1 when the direct launch marked assets_verified
@@ -171,6 +183,23 @@ typedef struct {
     int      initial_candidate_start_dir;
     uint64_t initial_candidate_descriptor_delta;
     int      initial_candidate_anchor_match;
+    int32_t  initial_candidate_binding_status;
+    uint64_t initial_candidate_count;
+    uint64_t initial_candidate_expected_offset;
+
+    /* ── startup Soul Room mirror summary ─────────────────────── */
+    uint32_t startup_mirror_count;
+    uint32_t startup_companion_limit;
+    uint32_t startup_portrait_min;
+    uint32_t startup_portrait_max;
+    uint32_t startup_class_mask;
+
+    /* ── startup chapter/progression summary ─────────────────── */
+    char     startup_chapter_label[THERON_CHAPTER_MARKER_LABEL_MAX];
+    char     startup_quest_summary[THERON_CHAPTER_MARKER_LABEL_MAX];
+    char     startup_next_dungeon_hint[THERON_CHAPTER_MARKER_LABEL_MAX];
+    uint32_t startup_quest_item_total;
+    uint32_t startup_quest_items_collected;
 
     /* ── boot profile summary (after direct launch) ───────────── */
     Theron_Platform boot_profile_platform;

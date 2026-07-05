@@ -4,6 +4,7 @@
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_viewport.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
@@ -10387,9 +10388,16 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
             if (receipt && receipt_cap > 0u) {
                 snprintf(receipt,
                          receipt_cap,
-                         "Track 02 initial level anchor=%zu offset=0x%zx header=%ux%u seed=0x%08x start=(%d,%d,%d)",
+                         "Track 02 initial level bind=%s anchor=%zu offset=0x%zx expected=0x%zx delta=0x%zx candidates=%zu match=%d header=%ux%u seed=0x%08x start=(%d,%d,%d)",
+                         theron_v1_track02_level_handoff_status_name(
+                             (Theron_Track02LevelHandoffStatus)
+                                 initial_handoff.binding_status),
                          anchor,
                          initial_handoff.absolute_offset,
+                         initial_handoff.expected_offset,
+                         initial_handoff.descriptor_delta,
+                         initial_handoff.candidate_count,
+                         initial_handoff.matches_initial_anchor,
                          (unsigned)initial_handoff.header_width,
                          (unsigned)initial_handoff.header_height,
                          (unsigned)initial_handoff.header_seed,
@@ -10454,10 +10462,12 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
                                          Theron_DungeonID dungeon_id,
                                          char* receipt,
                                          size_t receipt_cap) {
-    uint8_t level_data[12 + 8 * 8];
+    uint8_t level_data[12 + 10 * 10];
+    const Theron_DungeonMeta* meta;
+    Theron_V1_Level preview;
+    size_t level_size;
     int dungeon_index;
-    int x;
-    int y;
+    uint32_t seed;
     Theron_MapLoadResult r;
     if (!world) {
         return 0;
@@ -10479,35 +10489,36 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
     /* Small deterministic launch room used until the real Track 02 dungeon
      * bank offsets are promoted into the parser. It still enters through
      * theron_v1_level_load(), so runtime movement/rendering consume the same
-     * Theron world model as parsed maps. Source: THQUEST.ASM T400/T520/T560. */
-    memset(level_data, 0, sizeof(level_data));
-    level_data[1] = 8;  /* width, big-endian */
-    level_data[3] = 8;  /* height, big-endian */
-    level_data[6] = 0x01;
-    level_data[7] = 0x39; /* seed 313 */
-    for (y = 0; y < 8; ++y) {
-        for (x = 0; x < 8; ++x) {
-            level_data[12 + y * 8 + x] =
-                (x == 0 || y == 0 || x == 7 || y == 7)
-                    ? THERON_SQUARE_WALL
-                    : THERON_SQUARE_FLOOR;
-        }
+     * Theron world model as parsed maps.  Stage 1 is intentionally kept at
+     * the long-standing 8x8 pose; stages 2..7 get bounded distinct room
+     * metadata so the startup handoff stays stage-specific while Track 02
+     * bank promotion is still pending. Source: THQUEST.ASM T400/T520/T560. */
+    meta = theron_v1_dungeon_meta(dungeon_id);
+    seed = meta ? meta->dungeon_seed : 313u;
+    memset(&preview, 0, sizeof(preview));
+    level_size = theron_v1_startup_fallback_room_synthesize(
+        level_data,
+        sizeof(level_data),
+        dungeon_id,
+        &preview);
+    if (level_size == 0u) {
+        return 0;
     }
-    level_data[12 + 1 * 8 + 3] = THERON_SQUARE_EXIT;
 
     world->current_dungeon = dungeon_id;
     world->current_level = 0;
     r = theron_v1_level_load(&world->levels[dungeon_index][0],
                              level_data,
-                             (int)sizeof(level_data),
+                             (int)level_size,
                              (int)world->current_dungeon,
                              world->current_level);
     if (r != THERON_MAP_OK) {
         return 0;
     }
-    world->levels[dungeon_index][0].start_x = 3;
-    world->levels[dungeon_index][0].start_y = 5;
-    world->levels[dungeon_index][0].start_dir = 0; /* THQUEST.ASM T520: north */
+    world->levels[dungeon_index][0].start_x = preview.start_x;
+    world->levels[dungeon_index][0].start_y = preview.start_y;
+    world->levels[dungeon_index][0].start_dir =
+        preview.start_dir; /* THQUEST.ASM T520: north */
     world->level_loaded[dungeon_index][0] = 1;
     theron_v1_party_place(world,
                           world->levels[dungeon_index][0].start_x,
@@ -10516,8 +10527,14 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
     if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
         snprintf(receipt,
                  receipt_cap,
-                 "Track 02 descriptor scan unavailable; fallback room stage=%d",
-                 (int)dungeon_id);
+                 "Track 02 descriptor scan unavailable; fallback room stage=%d size=%dx%d seed=%u start=(%d,%d,%d)",
+                 (int)dungeon_id,
+                 preview.width,
+                 preview.height,
+                 (unsigned)seed,
+                 (int)preview.start_x,
+                 (int)preview.start_y,
+                 (int)preview.start_dir);
     }
     return 1;
 }
@@ -10835,6 +10852,35 @@ static int m11_theron_tqsv_continue_available(const M11_GameViewState* state) {
                 THERON_V1_STARTUP_RESUME_DUAL);
 }
 
+static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
+                                           const char* prefix) {
+    Theron_V1_BootProfile* profile;
+    Theron_V1_World* world;
+    Theron_ChapterMarker marker;
+    char markerLine[192];
+    char detail[320];
+
+    if (!state) {
+        return;
+    }
+    profile = (Theron_V1_BootProfile*)state->theronBootProfile;
+    world = (Theron_V1_World*)state->theronWorld;
+    theron_v1_chapter_marker_compute(profile,
+                                      world ? &world->progression : NULL,
+                                      NULL,
+                                      &marker);
+    markerLine[0] = '\0';
+    theron_v1_chapter_marker_format(&marker,
+                                     markerLine,
+                                     sizeof(markerLine));
+    if (prefix && prefix[0]) {
+        snprintf(detail, sizeof(detail), "%s; %s", prefix, markerLine);
+    } else {
+        snprintf(detail, sizeof(detail), "%s", markerLine);
+    }
+    m11_set_inspect_readout(state, "STARTUP", detail);
+}
+
 static int m11_theron_continue_srm_startup(M11_GameViewState* state,
                                            char* receipt,
                                            size_t receipt_cap) {
@@ -11135,7 +11181,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                  saveResumeReady ? saveResume.resume_claim_name : "UNKNOWN",
                  saveResumeReady ? saveResume.tqsv_valid_slots : 0,
                  saveResumeReady ? saveResume.srm_recognized_slots : 0);
-        m11_set_inspect_readout(state, "STARTUP", inspect);
+        m11_theron_set_chapter_inspect(state, inspect);
     }
     m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON STARTUP READY");
     return 1;
@@ -12989,7 +13035,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                             return M11_GAME_INPUT_REDRAW;
                         }
                         m11_set_status(state, "STARTUP", "CONTINUE LOADED");
-                        m11_set_inspect_readout(state, "STARTUP", receipt);
+                        m11_theron_set_chapter_inspect(state, receipt);
                         return M11_GAME_INPUT_REDRAW;
                     }
                     state->theronState.selected_dungeon = selected;
@@ -13132,7 +13178,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                                                  receipt,
                                                                  sizeof(receipt))) {
                     m11_set_status(state, "STARTUP", receipt);
-                    m11_set_inspect_readout(state, "STARTUP", receipt);
+                    m11_theron_set_chapter_inspect(state, receipt);
                     return M11_GAME_INPUT_REDRAW;
                 }
                 m11_set_status(state, "MOVE",
@@ -13152,7 +13198,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                                                  receipt,
                                                                  sizeof(receipt))) {
                     m11_set_status(state, "STARTUP", receipt);
-                    m11_set_inspect_readout(state, "STARTUP", receipt);
+                    m11_theron_set_chapter_inspect(state, receipt);
                     return M11_GAME_INPUT_REDRAW;
                 }
                 m11_set_status(state, "MOVE",
@@ -36582,6 +36628,35 @@ static void m11_theron_startup_layout_set_rect(
     element->h = h;
 }
 
+static void m11_theron_startup_chapter_label(
+    const M11_GameViewState* state,
+    char* out,
+    size_t out_size) {
+    const Theron_V1_BootProfile* profile;
+    const Theron_V1_World* world;
+    Theron_ChapterMarker marker;
+
+    if (!out || out_size == 0) {
+        return;
+    }
+    out[0] = '\0';
+    if (!state) {
+        snprintf(out, out_size, "Chapter ?");
+        return;
+    }
+
+    profile = (const Theron_V1_BootProfile*)state->theronBootProfile;
+    world = (const Theron_V1_World*)state->theronWorld;
+    theron_v1_chapter_marker_compute(profile,
+                                      world ? &world->progression : NULL,
+                                      NULL,
+                                      &marker);
+    snprintf(out,
+             out_size,
+             "%s",
+             marker.chapter_label[0] ? marker.chapter_label : "Chapter ?");
+}
+
 int M11_GameView_GetTheronStartupLayout(
     const M11_GameViewState* state,
     M11_TheronStartupElement* elements,
@@ -36600,6 +36675,10 @@ int M11_GameView_GetTheronStartupLayout(
     }
     world = (const Theron_V1_World*)state->theronWorld;
     memset(elements, 0, (size_t)maxElements * sizeof(elements[0]));
+    for (i = 0; i < maxElements; ++i) {
+        elements[i].portraitIndex = -1;
+        elements[i].primaryClass = -1;
+    }
 
     elements[count].kind = M11_THERON_STARTUP_ELEMENT_TITLE;
     elements[count].phase = state->theronState.startup_phase;
@@ -36609,11 +36688,23 @@ int M11_GameView_GetTheronStartupLayout(
     ++count;
     if (count >= maxElements) return count;
 
+    elements[count].kind = M11_THERON_STARTUP_ELEMENT_CHAPTER;
+    elements[count].phase = state->theronState.startup_phase;
+    elements[count].enabled = 1;
+    {
+        char chapter[M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
+        m11_theron_startup_chapter_label(state, chapter, sizeof(chapter));
+        m11_theron_startup_layout_set_label(&elements[count], chapter);
+    }
+    m11_theron_startup_layout_set_rect(&elements[count], 34, 38, 220, 10);
+    ++count;
+    if (count >= maxElements) return count;
+
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
         int has_srm_continue = m11_theron_srm_continue_available(state);
         int has_continue = has_tqsv_continue || has_srm_continue;
-        int rowY = 58;
+        int rowY = 66;
 
         selected = state->theronState.selected_dungeon;
         if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
@@ -36680,11 +36771,13 @@ int M11_GameView_GetTheronStartupLayout(
         elements[count].mirrorIndex = i;
         elements[count].selectedOrder =
             m11_theron_selected_mirror_order(state, i);
+        elements[count].portraitIndex = meta ? meta->portrait_index : -1;
+        elements[count].primaryClass = meta ? (int)meta->primary_class : -1;
         m11_theron_startup_layout_set_label(
             &elements[count],
             meta ? meta->name : "Hero Mirror");
         m11_theron_startup_layout_set_rect(
-            &elements[count], 46, 76 + i * 11, 230, 10);
+            &elements[count], 46, 78 + i * 11, 230, 10);
         ++count;
     }
     if (count < maxElements) {
@@ -36698,7 +36791,7 @@ int M11_GameView_GetTheronStartupLayout(
                 : 0;
         elements[count].selected = elements[count].cursor;
         m11_theron_startup_layout_set_label(&elements[count], "FORCEFIELD");
-        m11_theron_startup_layout_set_rect(&elements[count], 46, 158, 154, 10);
+        m11_theron_startup_layout_set_rect(&elements[count], 46, 160, 154, 10);
         ++count;
     }
     return count;
@@ -36708,11 +36801,10 @@ int M11_GameView_GetTheronStartupRenderRows(
     const M11_GameViewState* state,
     char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
     int maxRows) {
-    const Theron_V1_World* world;
+    M11_TheronStartupElement elements[16];
+    int element_count;
     int count = 0;
     int i;
-    int selected;
-    const int forcefield_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
 
     if (!state || !rows || maxRows <= 0) {
         return 0;
@@ -36721,53 +36813,60 @@ int M11_GameView_GetTheronStartupRenderRows(
         return 0;
     }
 
-    world = (const Theron_V1_World*)state->theronWorld;
-    snprintf(rows[count++],
-             M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-             "THERON'S QUEST");
-    if (count >= maxRows) {
-        return count;
+    element_count = M11_GameView_GetTheronStartupLayout(
+        state,
+        elements,
+        (int)(sizeof(elements) / sizeof(elements[0])));
+    for (i = 0; i < element_count && count < maxRows; ++i) {
+        if (elements[i].kind == M11_THERON_STARTUP_ELEMENT_TITLE) {
+            snprintf(rows[count++],
+                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%s",
+                     elements[i].label);
+            break;
+        }
     }
+    if (count >= maxRows) return count;
+    for (i = 0; i < element_count && count < maxRows; ++i) {
+        if (elements[i].kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
+            snprintf(rows[count++],
+                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%s",
+                     elements[i].label);
+            break;
+        }
+    }
+    if (count >= maxRows) return count;
 
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
         int has_srm_continue = m11_theron_srm_continue_available(state);
         int has_continue = has_tqsv_continue || has_srm_continue;
-        selected = state->theronState.selected_dungeon;
-        if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
-            selected > THERON_DUNGEON_COUNT) {
-            selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
-        }
+
         snprintf(rows[count++],
                  M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
                  "CHOOSE A STAGE");
         if (count >= maxRows) {
             return count;
         }
-        if (has_continue) {
-            snprintf(rows[count++],
-                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "%c CONTINUE  %s SLOT %d",
-                     state->theronState.save_resume_continue_focus ? '>' : ' ',
-                     has_tqsv_continue ? "TQSV" : "SRM",
-                     has_tqsv_continue
-                        ? state->theronState.save_resume_active_slot
-                        : state->theronState.save_resume_srm_active_slot);
-            if (count >= maxRows) {
-                return count;
+        for (i = 0; i < element_count && count < maxRows; ++i) {
+            const M11_TheronStartupElement *e = &elements[i];
+            if (e->kind == M11_THERON_STARTUP_ELEMENT_CONTINUE) {
+                snprintf(rows[count++],
+                         M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                         "%c CONTINUE  %s SLOT %d",
+                         e->cursor ? '>' : ' ',
+                         e->saveKind == 1 ? "TQSV" : "SRM",
+                         e->saveSlot);
+            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_STAGE) {
+                snprintf(rows[count++],
+                         M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                         "%c %d  %s%s",
+                         e->cursor ? '>' : ' ',
+                         e->dungeonId,
+                         e->label,
+                         e->enabled ? "" : "  LOCKED");
             }
-        }
-        for (i = THERON_DUNGEON_1_HALL_OF_RECORDS;
-             i <= THERON_DUNGEON_COUNT && count < maxRows; ++i) {
-            const Theron_DungeonMeta* meta = theron_v1_dungeon_meta((Theron_DungeonID)i);
-            int available = m11_theron_stage_available_for_startup(world, i);
-            snprintf(rows[count++],
-                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "%c %d  %s%s",
-                     (i == selected) ? '>' : ' ',
-                     i,
-                     meta ? meta->name : "Unknown",
-                     available ? "" : "  LOCKED");
         }
         if (count < maxRows) {
             snprintf(rows[count++],
@@ -36792,31 +36891,30 @@ int M11_GameView_GetTheronStartupRenderRows(
     if (count >= maxRows) {
         return count;
     }
-    for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT && count < maxRows; ++i) {
-        const Theron_StartupMirrorMeta *meta = theron_v1_startup_mirror_meta(i);
-        int selected_mirror = (state->theronState.selected_mirrors_mask &
-                               (1 << i)) != 0;
-        int selected_order = m11_theron_selected_mirror_order(state, i);
-        snprintf(rows[count++],
-                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                 "%c %-15s %-7s %s",
-                 (state->theronState.startup_cursor == i) ? '>' : ' ',
-                 meta ? meta->name : "Hero Mirror",
-                 meta ? theron_v1_startup_class_name(meta->primary_class) : "UNKNOWN",
-                 selected_mirror
-                    ? (selected_order == 1 ? "RESURRECTED #1" :
-                       selected_order == 2 ? "RESURRECTED #2" :
-                       selected_order == 3 ? "RESURRECTED #3" :
-                                             "RESURRECTED")
-                    : "AVAILABLE");
-    }
-    if (count < maxRows) {
-        snprintf(rows[count++],
-                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                 "%s",
-                 (state->theronState.startup_cursor == forcefield_cursor)
-                    ? "> ENTER FORCEFIELD"
-                    : "  ENTER FORCEFIELD");
+    for (i = 0; i < element_count && count < maxRows; ++i) {
+        const M11_TheronStartupElement *e = &elements[i];
+        if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
+            snprintf(rows[count++],
+                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%c %-15s %-7s %s",
+                     e->cursor ? '>' : ' ',
+                     e->label,
+                     e->primaryClass >= 0
+                        ? theron_v1_startup_class_name(
+                              (Theron_ChampionClass)e->primaryClass)
+                        : "UNKNOWN",
+                     e->selected
+                        ? (e->selectedOrder == 1 ? "RESURRECTED #1" :
+                           e->selectedOrder == 2 ? "RESURRECTED #2" :
+                           e->selectedOrder == 3 ? "RESURRECTED #3" :
+                                                   "RESURRECTED")
+                        : "AVAILABLE");
+        } else if (e->kind == M11_THERON_STARTUP_ELEMENT_FORCEFIELD) {
+            snprintf(rows[count++],
+                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%c ENTER FORCEFIELD",
+                     e->cursor ? '>' : ' ');
+        }
     }
     if (count < maxRows) {
         snprintf(rows[count++],
@@ -36832,14 +36930,14 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                            int framebufferWidth,
                                            int framebufferHeight) {
     int i;
-    int selected;
-    int y;
-    const int forcefield_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
+    M11_TheronStartupElement elements[16];
+    int element_count;
     M11_TextStyle muted = g_text_small;
     M11_TextStyle active = g_text_shadow;
     M11_TextStyle locked = g_text_small;
     M11_TextStyle picked = g_text_shadow;
 
+    (void)world;
     muted.color = M11_COLOR_LIGHT_GRAY;
     active.color = M11_COLOR_YELLOW;
     locked.color = M11_COLOR_DARK_GRAY;
@@ -36853,57 +36951,49 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                   0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                   12, 10, 296, 180, M11_COLOR_YELLOW);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  34, 22, "THERON'S QUEST", &g_text_title);
+    element_count = M11_GameView_GetTheronStartupLayout(
+        state,
+        elements,
+        (int)(sizeof(elements) / sizeof(elements[0])));
 
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
-        int rowY = 58;
         int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
         int has_srm_continue = m11_theron_srm_continue_available(state);
         int has_continue = has_tqsv_continue || has_srm_continue;
-        selected = state->theronState.selected_dungeon;
-        if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
-            selected > THERON_DUNGEON_COUNT) {
-            selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
-        }
+
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      34, 44, "CHOOSE A STAGE", &g_text_shadow);
-        if (has_continue) {
-            char continueRow[96];
-            snprintf(continueRow,
-                     sizeof(continueRow),
-                     "%c CONTINUE  %s SLOT %d",
-                     state->theronState.save_resume_continue_focus ? '>' : ' ',
-                     has_tqsv_continue ? "TQSV" : "SRM",
-                     has_tqsv_continue
-                        ? state->theronState.save_resume_active_slot
-                        : state->theronState.save_resume_srm_active_slot);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          40, rowY, continueRow,
-                          state->theronState.save_resume_continue_focus
-                              ? &active
-                              : &picked);
-            rowY += 12;
-        }
-        for (i = THERON_DUNGEON_1_HALL_OF_RECORDS;
-             i <= THERON_DUNGEON_COUNT; ++i) {
-            const Theron_DungeonMeta* meta = theron_v1_dungeon_meta((Theron_DungeonID)i);
-            int available = m11_theron_stage_available_for_startup(world, i);
+                      34, 52, "CHOOSE A STAGE", &g_text_shadow);
+        for (i = 0; i < element_count; ++i) {
+            const M11_TheronStartupElement *e = &elements[i];
             char row[96];
-            snprintf(row, sizeof(row), "%c %d  %s%s",
-                     (i == selected) ? '>' : ' ',
-                     i,
-                     meta ? meta->name : "Unknown",
-                     available ? "" : "  LOCKED");
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          40, rowY + (i - 1) * 13, row,
-                          (i == selected &&
-                           !state->theronState.save_resume_continue_focus)
-                              ? &active :
-                          (available ? &muted : &locked));
+            if (e->kind == M11_THERON_STARTUP_ELEMENT_TITLE) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              e->x, e->y, e->label, &g_text_title);
+            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              e->x, e->y, e->label, &g_text_small);
+            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_CONTINUE) {
+                snprintf(row, sizeof(row), "%c CONTINUE  %s SLOT %d",
+                         e->cursor ? '>' : ' ',
+                         e->saveKind == 1 ? "TQSV" : "SRM",
+                         e->saveSlot);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              e->x, e->y, row,
+                              e->cursor ? &active : &picked);
+            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_STAGE) {
+                snprintf(row, sizeof(row), "%c %d  %s%s",
+                         e->cursor ? '>' : ' ',
+                         e->dungeonId,
+                         e->label,
+                         e->enabled ? "" : "  LOCKED");
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              e->x, e->y, row,
+                              e->cursor ? &active :
+                              (e->enabled ? &muted : &locked));
+            }
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      34, 166,
+                      34, 176,
                       has_continue
                           ? "UP/DOWN SELECT  ENTER CONTINUE/STAGE"
                           : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM",
@@ -36911,39 +37001,48 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         return;
     }
 
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  34, 44, "SOUL ROOM", &g_text_shadow);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  34, 58, "THERON WAITS AT THE FORCEFIELD", &g_text_small);
-    for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
-        char row[80];
-        const Theron_StartupMirrorMeta *meta = theron_v1_startup_mirror_meta(i);
-        int selected_mirror = (state->theronState.selected_mirrors_mask &
-                               (1 << i)) != 0;
-        int selected_order = m11_theron_selected_mirror_order(state, i);
-        snprintf(row, sizeof(row), "%c %-15s %-7s %s",
-                 (state->theronState.startup_cursor == i) ? '>' : ' ',
-                 meta ? meta->name : "Hero Mirror",
-                 meta ? theron_v1_startup_class_name(meta->primary_class) : "UNKNOWN",
-                 selected_mirror
-                    ? (selected_order == 1 ? "RESURRECTED #1" :
-                       selected_order == 2 ? "RESURRECTED #2" :
-                       selected_order == 3 ? "RESURRECTED #3" :
-                                             "RESURRECTED")
-                    : "AVAILABLE");
-        y = 76 + i * 11;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      46, y, row,
-                      selected_mirror ? &picked :
-                      ((state->theronState.startup_cursor == i) ? &active : &muted));
+    for (i = 0; i < element_count; ++i) {
+        const M11_TheronStartupElement *e = &elements[i];
+        if (e->kind == M11_THERON_STARTUP_ELEMENT_TITLE) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          e->x, e->y, e->label, &g_text_title);
+        } else if (e->kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          e->x, e->y, e->label, &g_text_small);
+        }
     }
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  46, 158,
-                  (state->theronState.startup_cursor == forcefield_cursor)
-                      ? "> ENTER FORCEFIELD"
-                      : "  ENTER FORCEFIELD",
-                  (state->theronState.startup_cursor == forcefield_cursor)
-                      ? &active : &muted);
+                  34, 52, "SOUL ROOM", &g_text_shadow);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  34, 64, "THERON WAITS AT THE FORCEFIELD", &g_text_small);
+    for (i = 0; i < element_count; ++i) {
+        const M11_TheronStartupElement *e = &elements[i];
+        char row[80];
+        if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
+            snprintf(row, sizeof(row), "%c %-15s %-7s %s",
+                     e->cursor ? '>' : ' ',
+                     e->label,
+                     e->primaryClass >= 0
+                        ? theron_v1_startup_class_name(
+                              (Theron_ChampionClass)e->primaryClass)
+                        : "UNKNOWN",
+                     e->selected
+                        ? (e->selectedOrder == 1 ? "RESURRECTED #1" :
+                           e->selectedOrder == 2 ? "RESURRECTED #2" :
+                           e->selectedOrder == 3 ? "RESURRECTED #3" :
+                                                   "RESURRECTED")
+                        : "AVAILABLE");
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          e->x, e->y, row,
+                          e->selected ? &picked :
+                          (e->cursor ? &active : &muted));
+        } else if (e->kind == M11_THERON_STARTUP_ELEMENT_FORCEFIELD) {
+            snprintf(row, sizeof(row), "%c ENTER FORCEFIELD",
+                     e->cursor ? '>' : ' ');
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          e->x, e->y, row, e->cursor ? &active : &muted);
+        }
+    }
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   34, 176, "ENTER SELECTS MIRROR  ACTION ENTERS",
                   &g_text_small);
