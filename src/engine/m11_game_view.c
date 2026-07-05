@@ -9294,6 +9294,41 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
     }
 
     for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
+        Theron_Track02LevelHandoff initial_handoff;
+        Theron_Track02LevelHandoffStatus initial_status;
+        Theron_V1_Level initial_candidate;
+
+        initial_status = theron_v1_track02_load_initial_level_candidate(
+            assets->hucard_rom,
+            assets->hucard_rom_size,
+            signal.descriptor_offsets[anchor],
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            &initial_candidate,
+            &initial_handoff);
+        ++tried;
+        if (initial_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
+            world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+            world->current_level = 0;
+            world->levels[0][0] = initial_candidate;
+            world->level_loaded[0][0] = 1;
+            theron_v1_party_place(world,
+                                  world->levels[0][0].start_x,
+                                  world->levels[0][0].start_y,
+                                  world->levels[0][0].start_dir);
+            if (receipt && receipt_cap > 0u) {
+                snprintf(receipt,
+                         receipt_cap,
+                         "Track 02 initial level anchor=%zu offset=0x%zx header=%ux%u seed=0x%08x",
+                         anchor,
+                         initial_handoff.absolute_offset,
+                         (unsigned)initial_handoff.header_width,
+                         (unsigned)initial_handoff.header_height,
+                         (unsigned)initial_handoff.header_seed);
+            }
+            return 1;
+        }
+
         for (entry = 0u; entry < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++entry) {
             Theron_Track02LevelHandoff handoff;
             Theron_Track02LevelHandoffStatus level_status;

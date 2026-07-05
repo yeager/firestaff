@@ -73,6 +73,33 @@ The JP offsets are exactly one 2352-byte raw CD sector before the US offsets.
 This is a bank-anchor parity signal only; it still does not decode the table
 or promote the runtime dungeon loader.
 
+## Initial Level Candidate
+
+The raw JP/US Track 02 BINs also carry a loader-compatible startup candidate
+at a stable offset relative to the first raw descriptor anchor:
+
+```text
+descriptor_base = descriptor_offset - 0x1584
+candidate       = descriptor_base - 0x92ce
+```
+
+For the US raw BIN this resolves to `0x7015b4`. For the JP raw BIN this
+resolves to `0x700c84`. Both candidates have the same 12-byte header shape:
+
+```text
+width       = 32
+height      = 27
+dungeonSeed = 0x0108e938
+levelIndex  = 0x0026
+payload     = 864 grid bytes
+```
+
+`theron_v1_track02_load_initial_level_candidate()` only accepts this exact
+header after the descriptor table at the related anchor has decoded
+successfully. This is a bounded startup handoff. It does not claim a complete
+Track 02 dungeon-record format, object table, text table, palette table, or
+all-level parser.
+
 ## Regression Gate
 
 `firestaff_theron_v1_track02_bank_probe` verifies:
@@ -96,8 +123,19 @@ or promote the runtime dungeon loader.
 
 The probe skips real-data assertions when the Track 02 images are absent.
 
+`firestaff_theron_v1_track02_level_handoff_probe` additionally verifies:
+
+- the synthetic descriptor-window to level-loader positive handoff
+- the synthetic initial-level candidate positive handoff
+- a corrupted initial-level header rejection fixture
+- real US raw BIN candidate `0x7015b4` loading as 32x27
+- real JP raw BIN candidate `0x700c84` loading as 32x27
+- the older descriptor-window handoff remains no-claim on real JP/US raw BIN
+  descriptor windows until the actual per-window semantics are decoded
+
 ## Remaining Risk
 
-This is a bank-stride anchor signal, not a decoded dungeon map. Later work
-still needs to connect the bank signal to loader code and find actual dungeon
-descriptors, map grids, object tables, and party/champion seed data.
+This now includes one bounded initial-level startup handoff, but not a decoded
+full dungeon map. Later work still needs to decode the surrounding dungeon
+records, all levels, object tables, transitions, text/palette payloads, and
+party/champion seed data.
