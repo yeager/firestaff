@@ -21,6 +21,7 @@
 #define THERON_TRACK02_MD5_US_ISO      "3d8b78571dcd0e6eb8eb4b01eeb7fbba"
 
 #define THERON_TRACK02_MAX_LEVEL_CANDIDATES 32u
+#define THERON_TRACK02_MAX_USER_DATA_WINDOWS 8u
 #define THERON_TRACK02_RAW_SECTOR_BYTES 2352u
 #define THERON_TRACK02_RAW_USER_DATA_OFFSET 0x10u
 #define THERON_TRACK02_RAW_USER_DATA_BYTES 2048u
@@ -164,6 +165,39 @@ Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data_range(
     uint8_t *out_bytes,
     size_t out_bytes_capacity,
     size_t *out_user_data_offset);
+
+typedef enum {
+    THERON_TRACK02_USER_DATA_WINDOW_UNKNOWN = 0,
+    THERON_TRACK02_USER_DATA_WINDOW_BANK_DESCRIPTOR_TABLE,
+    THERON_TRACK02_USER_DATA_WINDOW_POST_BOUNDARY_SPAN,
+    THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE
+} Theron_Track02UserDataWindowRole;
+
+typedef struct {
+    Theron_Track02UserDataWindowRole role;
+    size_t raw_offset;
+    size_t user_data_offset;
+    size_t byte_count;
+    size_t anchor_index;
+    size_t candidate_index;
+} Theron_Track02UserDataWindow;
+
+typedef struct {
+    Theron_Track02Variant variant;
+    size_t entry_count;
+    size_t overflow_count;
+    Theron_Track02UserDataWindow
+        entries[THERON_TRACK02_MAX_USER_DATA_WINDOWS];
+} Theron_Track02UserDataWindowCatalog;
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02UserDataWindowCatalog *out_catalog);
+
+const char *theron_v1_track02_user_data_window_role_name(
+    Theron_Track02UserDataWindowRole role);
 
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);

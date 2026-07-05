@@ -398,6 +398,79 @@ static void check_raw_user_data_contract(
         (void)audio_bank_ids;
     }
 
+    {
+        Theron_Track02UserDataWindowCatalog catalog;
+        size_t descriptor_roles = 0u;
+        size_t span_roles = 0u;
+        size_t initial_roles = 0u;
+
+        status = theron_v1_track02_catalog_user_data_windows(data,
+                                                             size,
+                                                             md5_hex,
+                                                             &catalog);
+        check_int("raw user-data window catalog status",
+                  status,
+                  THERON_TRACK02_SIGNAL_OK);
+        check_size("raw user-data window catalog entries",
+                   catalog.entry_count,
+                   7u);
+        check_size("raw user-data window catalog overflow",
+                   catalog.overflow_count,
+                   0u);
+        for (i = 0; i < catalog.entry_count; ++i) {
+            const Theron_Track02UserDataWindow *entry = &catalog.entries[i];
+            char name[128];
+            size_t expected_user_offset = 0u;
+
+            status = theron_v1_track02_raw_offset_to_user_offset(
+                entry->raw_offset,
+                size,
+                md5_hex,
+                &expected_user_offset);
+            snprintf(name, sizeof(name), "%s catalog entry user offset[%zu]",
+                     label, i);
+            check_int(name, status, THERON_TRACK02_SIGNAL_OK);
+            snprintf(name, sizeof(name), "%s catalog entry offset match[%zu]",
+                     label, i);
+            check_size(name, entry->user_data_offset, expected_user_offset);
+
+            if (entry->role ==
+                THERON_TRACK02_USER_DATA_WINDOW_BANK_DESCRIPTOR_TABLE) {
+                ++descriptor_roles;
+                check_size("raw user-data catalog descriptor bytes",
+                           entry->byte_count,
+                           sizeof(g_descriptor));
+            } else if (entry->role ==
+                       THERON_TRACK02_USER_DATA_WINDOW_POST_BOUNDARY_SPAN) {
+                ++span_roles;
+                check_size("raw user-data catalog span bytes",
+                           entry->byte_count,
+                           sizeof(g_post_boundary_span));
+            } else if (entry->role ==
+                       THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE) {
+                ++initial_roles;
+                check_size("raw user-data catalog initial candidate bytes",
+                           entry->byte_count,
+                           12u + 32u * 27u);
+            } else {
+                printf("FAIL %s catalog unexpected role[%zu]=%s\n",
+                       label,
+                       i,
+                       theron_v1_track02_user_data_window_role_name(entry->role));
+                ++g_fail;
+            }
+        }
+        check_size("raw user-data catalog descriptor role count",
+                   descriptor_roles,
+                   THERON_TRACK02_MAX_BANK_ANCHORS);
+        check_size("raw user-data catalog span role count",
+                   span_roles,
+                   THERON_TRACK02_MAX_BANK_ANCHORS);
+        check_size("raw user-data catalog initial role count",
+                   initial_roles,
+                   1u);
+    }
+
     free(user_data);
 }
 
