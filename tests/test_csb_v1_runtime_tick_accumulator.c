@@ -14,6 +14,7 @@
 
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
@@ -783,6 +784,33 @@ static uint32_t expected_c38_seed(uint32_t game_time,
     return (seed != 0u) ? seed : 1u;
 }
 
+static uint8_t expected_active_group_aspect_after_update(
+    uint32_t dungeon_seed,
+    uint32_t game_time,
+    uint16_t group_thing,
+    int creature_type,
+    int creature_index,
+    uint8_t previous_aspect,
+    int attacking)
+{
+    struct RngState_Compat rng;
+    uint32_t seed;
+    int random_value;
+
+    seed = dungeon_seed ^
+           (uint32_t)(game_time * 2654435761u) ^
+           ((uint32_t)group_thing << 10) ^
+           ((uint32_t)(creature_index & 3) << 4) ^
+           (attacking ? 0xA17Au : 0x51C3u);
+    F0730_COMBAT_RngInit_Compat(&rng, seed);
+    random_value = F0732_COMBAT_RngRandom_Compat(&rng, 65536);
+    return dm1_creature_cycle_aspect_frame(
+        creature_type,
+        previous_aspect,
+        attacking,
+        random_value);
+}
+
 static int expected_c38_shared_combat_damage(
     const CSB_V1_Champion *champion,
     int champion_index,
@@ -1300,6 +1328,8 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     int expected_c38_damage;
     int expected_c38_wounds;
     int expected_c38_poison;
+    uint8_t expected_attack_aspect;
+    uint8_t expected_non_attack_aspect;
     int i;
 
     make_real_format_corridor_text_generator_dungeon(
@@ -1474,6 +1504,16 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     CHECK(profile.active_group_state_count == 1u &&
               (profile.active_group_state[0].aspect[0] & 0x80u) != 0u,
           "bounded C38 attack sets native active-group attack aspect bit");
+    expected_attack_aspect = expected_active_group_aspect_after_update(
+        profile.dungeon_seed,
+        c38_dispatch_time,
+        (uint16_t)(4u << 10),
+        9,
+        0,
+        0u,
+        1);
+    CHECK(profile.active_group_state[0].aspect[0] == expected_attack_aspect,
+          "bounded C38 attack applies F0179-style attack aspect bits");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event queues the source C33 aspect wrapper");
     c33_event_index =
@@ -1497,6 +1537,16 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     CHECK(profile.active_group_state_count == 1u &&
               (profile.active_group_state[0].aspect[0] & 0x80u) == 0u,
           "bounded C33 aspect handoff clears native active-group attack aspect bit");
+    expected_non_attack_aspect = expected_active_group_aspect_after_update(
+        profile.dungeon_seed,
+        c38_dispatch_time + 1U,
+        (uint16_t)(4u << 10),
+        9,
+        0,
+        expected_attack_aspect,
+        0);
+    CHECK(profile.active_group_state[0].aspect[0] == expected_non_attack_aspect,
+          "bounded C33 handoff applies F0179-style non-attack aspect bits");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C33 aspect dispatch expands into the next C38 cadence");
     c38_event_index =
