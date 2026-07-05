@@ -15,6 +15,7 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_hud_runtime.h"
@@ -93,6 +94,9 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
                                     const char* verifiedMd5);
+static void m11_set_status(M11_GameViewState* state,
+                           const char* title,
+                           const char* detail);
 static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
@@ -141,6 +145,85 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.party_y = dm2_v1_runtime_get_party_y();
     state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
     state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
+}
+
+static int m11_dm2_save_path_to_root_slot(const char *save_path,
+                                          char *out_root,
+                                          size_t out_root_cap,
+                                          unsigned char *out_slot)
+{
+    const char *base;
+    const char *slash;
+    int slot;
+
+    if (!save_path || !save_path[0] || !out_root || out_root_cap == 0u ||
+        !out_slot) {
+        return 0;
+    }
+    slash = strrchr(save_path, '/');
+#ifdef _WIN32
+    {
+        const char *backslash = strrchr(save_path, '\\');
+        if (!slash || (backslash && backslash > slash)) {
+            slash = backslash;
+        }
+    }
+#endif
+    base = slash ? slash + 1 : save_path;
+    if (strncmp(base, "SKSave", 6) != 0 ||
+        base[6] < '0' || base[6] > '9' ||
+        base[7] < '0' || base[7] > '9' ||
+        strcmp(base + 8, ".dat") != 0) {
+        return 0;
+    }
+    slot = (base[6] - '0') * 10 + (base[7] - '0');
+    if (slot < 0 || slot >= 10) {
+        return 0;
+    }
+    if (slash) {
+        size_t len = (size_t)(slash - save_path);
+        if (len == 0u || len >= out_root_cap) {
+            return 0;
+        }
+        memcpy(out_root, save_path, len);
+        out_root[len] = '\0';
+    } else {
+        if (out_root_cap < 2u) {
+            return 0;
+        }
+        out_root[0] = '.';
+        out_root[1] = '\0';
+    }
+    *out_slot = (unsigned char)slot;
+    return 1;
+}
+
+static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
+                                         DM2_V1_BootProfile *profile,
+                                         const char *save_path)
+{
+    char save_root[M11_GAME_VIEW_PATH_CAPACITY];
+    unsigned char slot = 0u;
+    DM2_V1_SessionState session;
+
+    if (!state || !profile || !save_path || !save_path[0]) {
+        return 0;
+    }
+    if (!m11_dm2_save_path_to_root_slot(save_path,
+                                        save_root,
+                                        sizeof(save_root),
+                                        &slot)) {
+        m11_set_status(state, "BOOT", "DM2 RESUME PATH INVALID");
+        return 0;
+    }
+    dm2_v1_boot_set_save_root(profile, save_root);
+    memset(&session, 0, sizeof(session));
+    if (dm2_v1_session_load_slot(profile->save_root, slot, &session) != 0 ||
+        dm2_v1_runtime_apply_session(&session) != 0) {
+        m11_set_status(state, "BOOT", "DM2 RESUME FAILED");
+        return 0;
+    }
+    return 1;
 }
 
 static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
@@ -8999,6 +9082,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * no booted DM2 state. Source: dm2_v1_runtime.c
          * dm2_v1_runtime_init(), SKULL.ASM T520/T560 boot boundary. */
         dm2_v1_runtime_init(profile);
+        if (spec->savePath && spec->savePath[0] != '\0') {
+            if (!m11_dm2_resume_from_save_path(state, profile, spec->savePath)) {
+                m11_log_event(state, M11_COLOR_RED,
+                              "T0: DM2 RESUME FAILED: %s",
+                              spec->savePath);
+                dm2_v1_boot_cleanup(profile);
+                free(profile);
+                return 0;
+            }
+        }
         /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         dm2_v2_runtime_init(2);
         dm2_v2_hud_runtime_init();
@@ -9019,15 +9112,24 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->dm2World = profile->dm2_state;
         state->dm2State.level_loaded = 1;
         m11_sync_dm2_state_from_runtime(state);
-        m11_set_status(state, "BOOT", "DM2 READY");
+        m11_set_status(state, "BOOT",
+                       (spec->savePath && spec->savePath[0] != '\0')
+                           ? "DM2 RESUMED"
+                           : "DM2 READY");
         m11_set_inspect_readout(state, "READY",
                                 "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
-        m11_log_event(state, M11_COLOR_YELLOW, "T0: DM2 LOADED");
+        m11_log_event(state, M11_COLOR_YELLOW,
+                      (spec->savePath && spec->savePath[0] != '\0')
+                          ? "T0: DM2 RESUMED"
+                          : "T0: DM2 LOADED");
         /* Tier 1 launch smoke: keep the DM2 direct-launch milestone
          * observable to headless probes, matching the CSB stderr-pipe above.
          * The boot itself stays owned by the DM2 V1 branch documented in
          * dm2_v1_boot.h and firestaff_game_loop.c. */
-        fprintf(stderr, "DM2 READY: gameId=dm2 dataDir=%s\n",
+        fprintf(stderr,
+                (spec->savePath && spec->savePath[0] != '\0')
+                    ? "DM2 RESUMED: gameId=dm2 dataDir=%s\n"
+                    : "DM2 READY: gameId=dm2 dataDir=%s\n",
                 spec->dataDir ? spec->dataDir : "(null)");
         return 1;
     }

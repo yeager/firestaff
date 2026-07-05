@@ -12,6 +12,7 @@
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_game.h"
+#include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
 #include "m11_game_view.h"
 
@@ -88,6 +89,35 @@ static void remove_temp_dm2_root(const char* root, const char* dm2_dir) {
     remove(graphics);
     remove(dungeon);
     (void)TEST_RMDIR(dm2_dir);
+    (void)TEST_RMDIR(root);
+}
+
+static int make_temp_save_root(char root[512]) {
+#ifdef _WIN32
+    snprintf(root, 512, ".\\firestaff_dm2_m11_resume_%lu",
+             (unsigned long)rand());
+    return TEST_MKDIR(root) == 0;
+#else
+    char tmpl[] = "/tmp/firestaff_dm2_m11_resume_XXXXXX";
+    char* made = mkdtemp(tmpl);
+    if (!made) {
+        return 0;
+    }
+    snprintf(root, 512, "%s", made);
+    return 1;
+#endif
+}
+
+static void remove_temp_save_root(const char* root) {
+    char path[512];
+    int i;
+    for (i = 0; i < 10; ++i) {
+        snprintf(path, sizeof(path), "%s%sSKSave%02d.dat",
+                 root, TEST_PATH_SEP, i);
+        remove(path);
+    }
+    snprintf(path, sizeof(path), "%s%sSKSave.bak", root, TEST_PATH_SEP);
+    remove(path);
     (void)TEST_RMDIR(root);
 }
 
@@ -186,6 +216,9 @@ int main(void) {
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
+    char save_root[512];
+    char save_path[512];
+    DM2_V1_SessionState resume_session;
 
     check_incomplete_required_files_block_m11(
         "M11 blocks DM2 launch when GRAPHICS.DAT is present without DUNGEON.DAT",
@@ -301,6 +334,66 @@ int main(void) {
     M11_GameView_Shutdown(&view);
     expect_true(view.dm2BootProfile == NULL && view.dm2World == NULL,
                 "M11 shutdown clears DM2 boot ownership");
+
+    expect_true(make_temp_save_root(save_root),
+                "created isolated DM2 resume save root");
+    memset(&resume_session, 0, sizeof(resume_session));
+    dm2_v1_session_new(&resume_session);
+    resume_session.game_tick = 42;
+    resume_session.party_x = 23;
+    resume_session.party_y = 11;
+    resume_session.party_dir = 2;
+    resume_session.party_level = 1;
+    resume_session.outdoor_mode = 1;
+    resume_session.time_of_day_minutes = 990;
+    resume_session.rain_intensity = 60;
+    expect_true(dm2_v1_session_save_slot(save_root,
+                                         3,
+                                         "M11 Resume",
+                                         &resume_session) == 0,
+                "wrote DM2 SKSave03.dat resume fixture");
+    snprintf(save_path, sizeof(save_path), "%s%sSKSave03.dat",
+             save_root, TEST_PATH_SEP);
+
+    fill_dm2_launch_spec(&spec, data_dir);
+    spec.savePath = save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 DM2 savePath resume succeeds");
+    expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
+                "M11 DM2 savePath resume reports resumed status");
+    expect_true(view.dm2State.party_x == 23 &&
+                view.dm2State.party_y == 11 &&
+                view.dm2State.party_dir == 2,
+                "M11 DM2 resume mirrors saved party pose");
+    expect_true(view.dm2State.tick_count == 42,
+                "M11 DM2 resume mirrors saved game tick");
+    expect_true(dm2_v1_runtime_get_party_x() == 23 &&
+                dm2_v1_runtime_get_party_y() == 11 &&
+                dm2_v1_runtime_get_party_dir() == 2,
+                "DM2 runtime resume applies saved party pose");
+    expect_true(dm2_v1_runtime_get_tick_count() == 42,
+                "DM2 runtime resume applies saved tick");
+    world = (DM2_V1_GameState*)view.dm2World;
+    expect_true(world && world->current_level == 1 && world->outdoor == 1,
+                "DM2 world resume applies saved level and outdoor flag");
+    expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
+                "resumed DM2 idle tick still dispatches through runtime");
+    expect_true(view.dm2State.tick_count == 43,
+                "resumed DM2 tick advances from saved tick");
+    M11_GameView_Shutdown(&view);
+
+    fill_dm2_launch_spec(&spec, data_dir);
+    spec.savePath = save_root;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec) == 0,
+                "M11 DM2 rejects invalid savePath shape");
+    expect_true(strstr(view.lastOutcome, "DM2 RESUME PATH INVALID") != NULL,
+                "M11 DM2 invalid savePath reports path blocker");
+    expect_true(view.active == 0,
+                "M11 DM2 invalid savePath leaves view inactive");
+    M11_GameView_Shutdown(&view);
+    remove_temp_save_root(save_root);
 
     if (g_failures) {
         fprintf(stderr, "DM2 V1 M11 startup/profile gate FAILED (%d failures)\n",
