@@ -33,6 +33,7 @@
 #define DM2_GDAT_GFXSET_CEIL  0x01
 #define DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL 0x01
 #define DM2_GDAT_WALL_FIELD_CACHE_LIMIT 0x40
+#define DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT 0x20
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -59,6 +60,9 @@ typedef struct {
     uint8_t *wall_pixels[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
     int wall_w[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
     int wall_h[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
+    uint8_t *door_frame_pixels[DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT];
+    int door_frame_w[DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT];
+    int door_frame_h[DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT];
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -190,6 +194,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     dm2_v1_asset_free_pixels(gfx->floor_pixels);
     for (int i = 0; i < DM2_GDAT_WALL_FIELD_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->wall_pixels[i]);
+    }
+    for (int i = 0; i < DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT; ++i) {
+        dm2_v1_asset_free_pixels(gfx->door_frame_pixels[i]);
     }
     dm2_v1_asset_loader_free(&gfx->loader);
     free(gfx->bytes);
@@ -738,7 +745,8 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         field = DM2_GDAT_GFXSET_FLOOR;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
-                   DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) {
+                   DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
+               gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE) {
         field = DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index;
         if (field < 0 || field >= DM2_GDAT_WALL_FIELD_CACHE_LIMIT) {
             return -1;
@@ -746,6 +754,19 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_pixels = &gfx->wall_pixels[field];
         cache_w = &gfx->wall_w[field];
         cache_h = &gfx->wall_h[field];
+        category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+        index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE -
+                   DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT) {
+        field = DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - gdat_index;
+        if (field < 0 ||
+            field >= DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT) {
+            return -1;
+        }
+        cache_pixels = &gfx->door_frame_pixels[field];
+        cache_w = &gfx->door_frame_w[field];
+        cache_h = &gfx->door_frame_h[field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
     } else {

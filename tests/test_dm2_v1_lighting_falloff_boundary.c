@@ -34,6 +34,7 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t ceiling[4] = { 2, 3, 4, 5 };
     static const uint8_t floor[4] = { 6, 7, 8, 9 };
     static const uint8_t wall[4] = { 11, 12, 13, 14 };
+    static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
     (void)user;
     ++s_asset_fetch_calls;
     if (gdat_index == -2) {
@@ -45,6 +46,11 @@ static int test_dm2_asset_fetch(void *user,
                    DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
                DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index < 0x40) {
         if (out_pixels) *out_pixels = wall;
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE -
+                   DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT &&
+               DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - gdat_index < 0x20) {
+        if (out_pixels) *out_pixels = door_frame;
     } else {
         if (out_pixels) *out_pixels = NULL;
         if (out_w) *out_w = 0;
@@ -120,6 +126,31 @@ static void test_floor_ceiling_asset_provider(void)
               framebuffer[(135 * 320)] == 13 &&
               framebuffer[192] == 11 &&
               framebuffer[223] == 12);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    dm2_v1_render_doors(&viewport);
+    CHECK("door fallback counts when no asset provider is installed",
+          viewport.asset_door_frame_drawn_count == 0 &&
+              viewport.fallback_door_drawn_count == 1);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_doors(&viewport);
+    CHECK("door pass fetches the DM2 front door-frame asset",
+          s_asset_fetch_calls == 1 &&
+              viewport.asset_door_frame_drawn_count == 1 &&
+              viewport.fallback_door_drawn_count == 0);
+    CHECK("front door-frame asset is scaled into the forward cell",
+          framebuffer[0] == 15 &&
+              framebuffer[223] == 1 &&
+              framebuffer[(135 * 320)] == 2);
 }
 
 int main(void)

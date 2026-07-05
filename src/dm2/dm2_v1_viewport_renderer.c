@@ -375,6 +375,27 @@ int dm2_v1_viewport_wall_graphic_index_for_square(int view_square)
     return DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - field;
 }
 
+int dm2_v1_viewport_door_frame_field_for_square(int view_square)
+{
+    switch (view_square) {
+    case DM2_SQ_D0C:
+        return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT;
+    case DM2_SQ_D1C:
+        return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_D1C;
+    case DM2_SQ_D2C:
+        return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_D2C;
+    default:
+        return -1;
+    }
+}
+
+int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square)
+{
+    int field = dm2_v1_viewport_door_frame_field_for_square(view_square);
+    if (field < 0) return 0;
+    return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
+}
+
 /* ── Internal blit helper ─────────────────────────────────────────── */
 
 static void __attribute__((unused)) dm2_blit_bitmap (
@@ -926,6 +947,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
+    int door_asset_count = 0;
+    int door_fallback_count = 0;
 
     /* DM2 door rendering: overlays on wall squares.
      * Source: DUNVIEW.C:3082-3095 F0102_DrawDoorBitmap,
@@ -961,6 +984,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 vp[dy * stride + x] = DM2_COL_MIDGRAY;
                 vp[(dy + dh - 1) * stride + x] = DM2_COL_MIDGRAY;
             }
+            ++door_fallback_count;
         } else if (i == DM2_SQ_D1C) {
             int dx = 60, dy = 9, dw = 104, dh = 110;
             for (int y = dy; y < dy + dh; y++) {
@@ -973,6 +997,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 vp[y * stride + dx] = DM2_COL_MIDGRAY;
                 vp[y * stride + dx + dw - 1] = DM2_COL_MIDGRAY;
             }
+            ++door_fallback_count;
         } else if (i == DM2_SQ_D2C) {
             int dx = 60, dy = 20, dw = 103, dh = 71;
             for (int y = dy; y < dy + dh; y++) {
@@ -985,8 +1010,57 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 vp[y * stride + dx] = DM2_COL_MIDGRAY;
                 vp[y * stride + dx + dw - 1] = DM2_COL_MIDGRAY;
             }
+            ++door_fallback_count;
+        }
+        {
+            const uint8_t *door_pixels = NULL;
+            int door_w = 0;
+            int door_h = 0;
+            int door_stride = 0;
+            int gdat_index =
+                dm2_v1_viewport_door_frame_graphic_index_for_square(i);
+            const DM2_WallFrame *frame = dm2_v1_get_wall_frame(i);
+            int dst_x = frame ? frame->left_x : 0;
+            int dst_y = frame ? frame->top_y : 0;
+            int dst_w = frame
+                ? (int)frame->right_x - (int)frame->left_x + 1
+                : 0;
+            int dst_h = frame
+                ? (int)frame->bottom_y - (int)frame->top_y + 1
+                : 0;
+
+            if (gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s,
+                                            gdat_index,
+                                            &door_pixels,
+                                            &door_w,
+                                            &door_h,
+                                            &door_stride) == 0 &&
+                door_pixels && door_w > 0 && door_h > 0 &&
+                dst_w > 0 && dst_h > 0) {
+                /* skproject GRAPHICSSET fields 0x06/0x07/0x09 are the
+                 * first boot-bound door-frame images for front, D1C and D2C.
+                 * This pass scales them into the current bounded DM2 frame
+                 * rectangles; exact DRAW_DUNGEON_GRAPHIC offsets remain open. */
+                dm2_v1_blit_scaled_bitmap(vp,
+                                          stride,
+                                          dst_x,
+                                          dst_y,
+                                          dst_w,
+                                          dst_h,
+                                          door_pixels,
+                                          door_w,
+                                          door_h,
+                                          door_stride > 0 ? door_stride : door_w,
+                                          DM2_COLOR_TRANSPARENT);
+                ++door_asset_count;
+            }
         }
         (void)vs;
+    }
+    s->asset_door_frame_drawn_count += door_asset_count;
+    if (door_asset_count == 0) {
+        s->fallback_door_drawn_count += door_fallback_count;
     }
 }
 
@@ -1355,6 +1429,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->fallback_floor_ceiling_drawn_count = 0;
     s->asset_wall_drawn_count = 0;
     s->fallback_wall_drawn_count = 0;
+    s->asset_door_frame_drawn_count = 0;
+    s->fallback_door_drawn_count = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view

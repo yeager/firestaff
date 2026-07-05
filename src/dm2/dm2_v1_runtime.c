@@ -26,6 +26,7 @@
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_trigger.h"
+#include "dm2_v1_world_model.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -63,6 +64,8 @@ static int g_dm2_last_asset_floor_ceiling_count = 0;
 static int g_dm2_last_fallback_floor_ceiling_count = 0;
 static int g_dm2_last_asset_wall_count = 0;
 static int g_dm2_last_fallback_wall_count = 0;
+static int g_dm2_last_asset_door_frame_count = 0;
+static int g_dm2_last_fallback_door_count = 0;
 
 static int dm2_runtime_door_state(uint16_t square_raw) {
     return (int)(square_raw & 0x0007u);
@@ -80,6 +83,38 @@ static int dm2_runtime_door_step(int current_state, int action) {
     }
     if (current_state <= 0) return 0;
     return current_state - 1;
+}
+
+static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
+                                              DM2_V1_ViewportState *viewport,
+                                              int party_dir,
+                                              int party_x,
+                                              int party_y) {
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    DM2_V1_DungeonData *dd;
+    int dir;
+    int raw;
+    int type;
+
+    if (!rt || !viewport || rt->outdoor || !rt->boot ||
+        !rt->boot->dungeon_data) {
+        return;
+    }
+    dir = party_dir & 3;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dd,
+                                      rt->dungeon_level,
+                                      party_x + dx[dir],
+                                      party_y + dy[dir]);
+    if (raw < 0) return;
+    type = raw & DM2_SQUARE_TYPE_MASK;
+    if (type == DM2_SQUARE_DOOR) {
+        DM2_ViewSquare *front = &viewport->squares[DM2_SQ_D0C];
+        front->square_type = DM2_SQUARE_DOOR;
+        front->flags |= DM2_SQF_HAS_DOOR | DM2_SQF_HAS_WALL;
+        front->door_open_pct = (uint8_t)(dm2_runtime_door_state((uint16_t)raw) * 25);
+    }
 }
 
 static int dm2_runtime_set_target_door_state(DM2_V1_RuntimeState *rt,
@@ -382,6 +417,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_time(
         &viewport,
         (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
+    dm2_runtime_populate_front_square(rt, &viewport, party_dir, party_x, party_y);
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
@@ -393,6 +429,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.fallback_floor_ceiling_drawn_count;
     g_dm2_last_asset_wall_count = viewport.asset_wall_drawn_count;
     g_dm2_last_fallback_wall_count = viewport.fallback_wall_drawn_count;
+    g_dm2_last_asset_door_frame_count =
+        viewport.asset_door_frame_drawn_count;
+    g_dm2_last_fallback_door_count = viewport.fallback_door_drawn_count;
 
     return 0;
 }
@@ -418,6 +457,14 @@ int dm2_v1_runtime_last_asset_wall_count(void) {
 
 int dm2_v1_runtime_last_fallback_wall_count(void) {
     return g_dm2_last_fallback_wall_count;
+}
+
+int dm2_v1_runtime_last_asset_door_frame_count(void) {
+    return g_dm2_last_asset_door_frame_count;
+}
+
+int dm2_v1_runtime_last_fallback_door_count(void) {
+    return g_dm2_last_fallback_door_count;
 }
 
 /* ── Movement ──────────────────────────────────────────────────────── */
