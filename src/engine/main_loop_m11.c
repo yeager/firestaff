@@ -29,6 +29,7 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "csb_v1_keyboard_commands_pc34_compat.h"
 #include "input_remap_m11.h"
+#include "gamepad_config_m12.h"
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "screenshot_m11.h"
@@ -1902,6 +1903,154 @@ static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {
     return m11_menu_input_for_m11_action(action);
 }
 
+static M12_MenuInput m11_menu_input_for_m12_gamepad_action(M12_InputAction action,
+                                                           int gameplayActive) {
+    switch (action) {
+        case M12_ACTION_MOVE_FORWARD:
+            return M12_MENU_INPUT_UP;
+        case M12_ACTION_MOVE_BACKWARD:
+            return M12_MENU_INPUT_DOWN;
+        case M12_ACTION_TURN_LEFT:
+            return gameplayActive ? M12_MENU_INPUT_TURN_LEFT : M12_MENU_INPUT_LEFT;
+        case M12_ACTION_TURN_RIGHT:
+            return gameplayActive ? M12_MENU_INPUT_TURN_RIGHT : M12_MENU_INPUT_RIGHT;
+        case M12_ACTION_STRAFE_LEFT:
+            return gameplayActive ? M12_MENU_INPUT_STRAFE_LEFT : M12_MENU_INPUT_LEFT;
+        case M12_ACTION_STRAFE_RIGHT:
+            return gameplayActive ? M12_MENU_INPUT_STRAFE_RIGHT : M12_MENU_INPUT_RIGHT;
+        case M12_ACTION_ACCEPT:
+            return M12_MENU_INPUT_ACCEPT;
+        case M12_ACTION_BACK:
+            return M12_MENU_INPUT_BACK;
+        case M12_ACTION_ACTION:
+            return M12_MENU_INPUT_ACTION;
+        case M12_ACTION_CYCLE_CHAMPION:
+            return M12_MENU_INPUT_CYCLE_CHAMPION;
+        case M12_ACTION_REST_TOGGLE:
+            return M12_MENU_INPUT_REST_TOGGLE;
+        case M12_ACTION_USE_STAIRS:
+            return M12_MENU_INPUT_USE_STAIRS;
+        case M12_ACTION_PICKUP_ITEM:
+            return M12_MENU_INPUT_PICKUP_ITEM;
+        case M12_ACTION_DROP_ITEM:
+            return M12_MENU_INPUT_DROP_ITEM;
+        case M12_ACTION_SPELL_RUNE_1:
+            return M12_MENU_INPUT_SPELL_RUNE_1;
+        case M12_ACTION_SPELL_RUNE_2:
+            return M12_MENU_INPUT_SPELL_RUNE_2;
+        case M12_ACTION_SPELL_RUNE_3:
+            return M12_MENU_INPUT_SPELL_RUNE_3;
+        case M12_ACTION_SPELL_RUNE_4:
+            return M12_MENU_INPUT_SPELL_RUNE_4;
+        case M12_ACTION_SPELL_RUNE_5:
+            return M12_MENU_INPUT_SPELL_RUNE_5;
+        case M12_ACTION_SPELL_RUNE_6:
+            return M12_MENU_INPUT_SPELL_RUNE_6;
+        case M12_ACTION_SPELL_CAST:
+            return M12_MENU_INPUT_SPELL_CAST;
+        case M12_ACTION_SPELL_CLEAR:
+            return M12_MENU_INPUT_SPELL_CLEAR;
+        case M12_ACTION_USE_ITEM:
+            return M12_MENU_INPUT_ACTION;
+        case M12_ACTION_MAP_TOGGLE:
+            return M12_MENU_INPUT_MAP_TOGGLE;
+        case M12_ACTION_INVENTORY_TOGGLE:
+            return M12_MENU_INPUT_INVENTORY_TOGGLE;
+        case M12_ACTION_QUICK_SAVE:
+            return M12_MENU_INPUT_SAVE_GAME;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
+static M12_MenuInput m11_gamepad_button_input(const M12_GamepadMap* map,
+                                              SDL_GamepadButton button,
+                                              int gameplayActive) {
+    M12_InputAction action;
+    if (!map || !map->enabled) return M12_MENU_INPUT_NONE;
+    action = M12_GamepadMap_ActionForButton(map, button);
+    if (action == M12_ACTION_COUNT) return M12_MENU_INPUT_NONE;
+    return m11_menu_input_for_m12_gamepad_action(action, gameplayActive);
+}
+
+static M12_MenuInput m11_gamepad_axis_input(const M12_GamepadMap* map,
+                                            SDL_GamepadAxis axis,
+                                            int rawValue,
+                                            int gameplayActive) {
+    const M12_GamepadAxisConfig* cfg;
+    int value;
+    if (!map || !map->enabled) return M12_MENU_INPUT_NONE;
+    cfg = M12_GamepadMap_GetAxisConfig(map, axis);
+    if (!cfg) return M12_MENU_INPUT_NONE;
+    value = M12_GamepadAxis_Process(cfg, rawValue);
+    if (value > -16000 && value < 16000) return M12_MENU_INPUT_NONE;
+
+    if (cfg->role == M12_AXIS_ROLE_MOVE) {
+        if (axis == SDL_GAMEPAD_AXIS_LEFTY || axis == SDL_GAMEPAD_AXIS_RIGHTY) {
+            return value < 0 ? M12_MENU_INPUT_UP : M12_MENU_INPUT_DOWN;
+        }
+        if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_RIGHTX) {
+            if (gameplayActive) {
+                return value < 0 ? M12_MENU_INPUT_STRAFE_LEFT
+                                 : M12_MENU_INPUT_STRAFE_RIGHT;
+            }
+            return value < 0 ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
+        }
+    } else if (cfg->role == M12_AXIS_ROLE_TURN) {
+        if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_RIGHTX) {
+            if (gameplayActive) {
+                return value < 0 ? M12_MENU_INPUT_TURN_LEFT
+                                 : M12_MENU_INPUT_TURN_RIGHT;
+            }
+            return value < 0 ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
+        }
+    }
+    return M12_MENU_INPUT_NONE;
+}
+
+static M12_MenuInput m11_held_motion_input_from_gamepad(
+    const M11_GameViewState* gameView,
+    const M12_GamepadStatus* gamepadStatus,
+    const M12_GamepadMap* gamepadMap) {
+    static const SDL_GamepadButton preferredButtons[] = {
+        SDL_GAMEPAD_BUTTON_DPAD_UP,
+        SDL_GAMEPAD_BUTTON_DPAD_DOWN,
+        SDL_GAMEPAD_BUTTON_DPAD_LEFT,
+        SDL_GAMEPAD_BUTTON_DPAD_RIGHT,
+        SDL_GAMEPAD_BUTTON_LEFT_SHOULDER,
+        SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER
+    };
+    static const SDL_GamepadAxis preferredAxes[] = {
+        SDL_GAMEPAD_AXIS_LEFTY,
+        SDL_GAMEPAD_AXIS_LEFTX,
+        SDL_GAMEPAD_AXIS_RIGHTX
+    };
+    size_t i;
+    int gameplayActive = gameView && gameView->active;
+    if (!gamepadStatus || !gamepadStatus->handle ||
+        !gamepadMap || !gamepadMap->enabled) {
+        return M12_MENU_INPUT_NONE;
+    }
+    for (i = 0; i < sizeof(preferredButtons) / sizeof(preferredButtons[0]); ++i) {
+        SDL_GamepadButton button = preferredButtons[i];
+        if (SDL_GetGamepadButton(gamepadStatus->handle, button)) {
+            M12_MenuInput input =
+                m11_gamepad_button_input(gamepadMap, button, gameplayActive);
+            if (input != M12_MENU_INPUT_NONE) return input;
+        }
+    }
+    for (i = 0; i < sizeof(preferredAxes) / sizeof(preferredAxes[0]); ++i) {
+        SDL_GamepadAxis axis = preferredAxes[i];
+        M12_MenuInput input =
+            m11_gamepad_axis_input(gamepadMap,
+                                   axis,
+                                   SDL_GetGamepadAxis(gamepadStatus->handle, axis),
+                                   gameplayActive);
+        if (input != M12_MENU_INPUT_NONE) return input;
+    }
+    return M12_MENU_INPUT_NONE;
+}
+
 static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState* gameView) {
     int count = 0;
     int i;
@@ -2080,6 +2229,8 @@ m11_dm1_rename_handle_keydown(M11_GameViewState* gameView,
 
 static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          M12_StartupMenuState* menuState,
+                                         const M12_GamepadMap* gamepadMap,
+                                         M12_GamepadStatus* gamepadStatus,
                                          int useModernLauncher,
                                          M11_GameInputResult* gameViewResult,
                                          int* quitRequested,
@@ -2110,6 +2261,34 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             if (gameView && gameView->active && gameViewResult) {
                 *gameViewResult = M11_GAME_INPUT_REDRAW;
+            }
+            continue;
+        }
+        if (ev.type == SDL_EVENT_GAMEPAD_ADDED ||
+            ev.type == SDL_EVENT_GAMEPAD_REMOVED) {
+            if (gamepadStatus) {
+                M12_GamepadStatus_Update(gamepadStatus);
+            }
+            continue;
+        }
+        if (ev.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
+            M12_MenuInput gpadInput =
+                m11_gamepad_button_input(gamepadMap,
+                                         (SDL_GamepadButton)ev.gbutton.button,
+                                         gameView && gameView->active);
+            if (gpadInput != M12_MENU_INPUT_NONE) {
+                return gpadInput;
+            }
+            continue;
+        }
+        if (ev.type == SDL_EVENT_GAMEPAD_AXIS_MOTION) {
+            M12_MenuInput gpadInput =
+                m11_gamepad_axis_input(gamepadMap,
+                                       (SDL_GamepadAxis)ev.gaxis.axis,
+                                       ev.gaxis.value,
+                                       gameView && gameView->active);
+            if (gpadInput != M12_MENU_INPUT_NONE) {
+                return gpadInput;
             }
             continue;
         }
@@ -2427,6 +2606,34 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        if (ev.type == SDL_CONTROLLERDEVICEADDED ||
+            ev.type == SDL_CONTROLLERDEVICEREMOVED) {
+            if (gamepadStatus) {
+                M12_GamepadStatus_Update(gamepadStatus);
+            }
+            continue;
+        }
+        if (ev.type == SDL_CONTROLLERBUTTONDOWN) {
+            M12_MenuInput gpadInput =
+                m11_gamepad_button_input(gamepadMap,
+                                         (SDL_GamepadButton)ev.cbutton.button,
+                                         gameView && gameView->active);
+            if (gpadInput != M12_MENU_INPUT_NONE) {
+                return gpadInput;
+            }
+            continue;
+        }
+        if (ev.type == SDL_CONTROLLERAXISMOTION) {
+            M12_MenuInput gpadInput =
+                m11_gamepad_axis_input(gamepadMap,
+                                       (SDL_GamepadAxis)ev.caxis.axis,
+                                       ev.caxis.value,
+                                       gameView && gameView->active);
+            if (gpadInput != M12_MENU_INPUT_NONE) {
+                return gpadInput;
+            }
+            continue;
+        }
         if (ev.type == SDL_MOUSEMOTION &&
             menuState && useModernLauncher &&
             (!gameView || !gameView->active)) {
@@ -2723,6 +2930,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int useModern = 0;
     int quitRequested = 0;
     uint32_t idleAccumulatorMs = 0;
+    M12_GamepadMap gamepadMap;
+    M12_GamepadStatus gamepadStatus;
     enum { M11_DM1_V1_PENDING_MOTION_CAPACITY = 7 };
     M12_MenuInput pendingDm1V1MotionInputs[M11_DM1_V1_PENDING_MOTION_CAPACITY];
     int pendingDm1V1MotionHead = 0;
@@ -2772,6 +2981,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
     }
     M11_GameView_Init(&gameView);
+    M12_GamepadMap_SetDefaults(&gamepadMap);
+    (void)M12_GamepadMap_Load(&gamepadMap);
+    memset(&gamepadStatus, 0, sizeof(gamepadStatus));
+    M12_GamepadStatus_Update(&gamepadStatus);
     int launchedEver = 0;
     int inputRedrawDrawCount = 0;
     int inputRedrawAfterViewportDirtyCount = 0;
@@ -2889,6 +3102,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (input == M12_MENU_INPUT_NONE) {
             input = m11_poll_menu_input(&gameView,
                                         &menuState,
+                                        &gamepadMap,
+                                        &gamepadStatus,
                                         useModern,
                                         &pointerResult,
                                         &quitRequested,
@@ -2962,6 +3177,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 pendingDm1V1MotionCount--;
             } else {
                 input = m11_held_motion_input_from_keyboard(&gameView);
+                if (input == M12_MENU_INPUT_NONE) {
+                    input = m11_held_motion_input_from_gamepad(&gameView,
+                                                               &gamepadStatus,
+                                                               &gamepadMap);
+                }
             }
         }
         if (input != M12_MENU_INPUT_NONE) {
@@ -3118,6 +3338,7 @@ cleanup:
                                      inputRedrawAfterViewportDirtyCount,
                                      lastInputRedrawAfterViewportDirty);
     m11_sync_and_save_window_size(&menuState);
+    M12_GamepadStatus_Close(&gamepadStatus);
     M11_GameView_Shutdown(&gameView);
     free(launcherFramebuffer);
     if (modernRgba) {
