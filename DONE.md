@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 CSB entrance DM1 utility-import startup handoff: `M11_GameLaunchSpec` now accepts a CSB-specific DM1 save import candidate, imports that party into the CSB runtime before the entrance screen, exposes import readiness/count in CSB startup state, mirrors imported champion names through the M11 party/HUD model, and keeps the imported party alive after the source-locked entrance Enter command starts the dungeon. Verification: `test_csb_v1_m11_startup_resume_gate` direct run and CTest both pass locally with hash-verified CSB data.
+
 - ✅ 2026-07-05 CSB entrance Resume save-variant proof: the M11 CSB entrance gate now proves side-effect-free Resume availability for native Firestaff CSB saves, verified CSBWin save bodies, and raw CSBGAME roster imports. CSBWin and CSBGAME candidates are marked available without applying party pose before the player presses Resume, and the CSBWin entrance Resume click then applies the verified GAMEBLOCK2 pose through the runtime loader. Verification: `test_csb_v1_m11_startup_resume_gate` direct run and CTest both pass locally with hash-verified CSB data.
 
 - ✅ 2026-07-05 CSB entrance Resume side-effect-free validation: M11 now decides entrance Resume availability through header/body/import verification instead of applying the save to a copied runtime profile. Valid Resume paths no longer mutate the startup runtime before the player presses Resume. Verification: `test_csb_v1_m11_startup_resume_gate` passes locally with hash-verified CSB data.

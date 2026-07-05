@@ -116,6 +116,9 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 static void m11_nexus_release_title(M11_GameViewState* state);
 static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
                                             const char *path);
+static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
+                                                 const char *path,
+                                                 int *out_count);
 static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
                                             const CSB_V1_RuntimeProfile *profile);
 static void m11_award_magic_xp(M11_GameViewState* state,
@@ -3895,6 +3898,37 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
      * streams.  Startup/F9 accepts CSBWin only after the verifier can
      * apply the bounded runtime handoff from disk. */
     return csb_v1_runtime_apply_csbwin_resume_file(profile, path, 0u) == 0;
+}
+
+static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
+                                                 const char *path,
+                                                 int *out_count)
+{
+    CSB_V1_PartyState party;
+    int count;
+
+    if (out_count) {
+        *out_count = 0;
+    }
+    if (!profile || !path || path[0] == '\0') {
+        return 0;
+    }
+
+    memset(&party, 0, sizeof(party));
+    /* ReDMCSB/CSBWin utility startup imports a DM1 party before the
+     * CSB dungeon starts.  Keep this as a runtime-party handoff rather
+     * than a Resume save: the entrance still owns the final Enter click. */
+    count = csb_v1_character_import_dm1_save(&party, path);
+    if (count <= 0) {
+        return 0;
+    }
+    if (csb_v1_runtime_set_party_state(profile, &party) != 0) {
+        return 0;
+    }
+    if (out_count) {
+        *out_count = count;
+    }
+    return 1;
 }
 
 static int m11_csb_can_load_resume_path(const char *path)
@@ -10240,6 +10274,21 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 free(profile);
                 return 0;
             }
+        } else if (spec->csbImportDm1SavePath &&
+                   spec->csbImportDm1SavePath[0] != '\0') {
+            int imported_count = 0;
+            if (!m11_csb_runtime_import_dm1_party_path(
+                    &profile->runtime,
+                    spec->csbImportDm1SavePath,
+                    &imported_count)) {
+                m11_set_status(state, "BOOT", "CSB IMPORT FAILED");
+                m11_log_event(state, M11_COLOR_RED,
+                              "T0: CSB DM1 IMPORT FAILED: %s",
+                              spec->csbImportDm1SavePath);
+                csb_v1_boot_cleanup(profile);
+                free(profile);
+                return 0;
+            }
         }
         state->active = 1;
         state->startedFromLauncher = 1;
@@ -10282,6 +10331,31 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_credits_remaining_ticks = 0;
         state->csbState.startup_entrance_resume_available = 0;
         state->csbState.startup_entrance_resume_path[0] = '\0';
+        state->csbState.startup_import_available = 0;
+        state->csbState.startup_import_champion_count = 0;
+        state->csbState.startup_import_dm1_save_path[0] = '\0';
+        if ((!spec->savePath || spec->savePath[0] == '\0') &&
+            spec->csbImportDm1SavePath &&
+            spec->csbImportDm1SavePath[0] != '\0') {
+            CSB_V1_PartyState imported_party;
+            int rc = snprintf(state->csbState.startup_import_dm1_save_path,
+                              sizeof(state->csbState.startup_import_dm1_save_path),
+                              "%s",
+                              spec->csbImportDm1SavePath);
+            memset(&imported_party, 0, sizeof(imported_party));
+            if (rc > 0 &&
+                rc < (int)sizeof(state->csbState.startup_import_dm1_save_path) &&
+                csb_v1_runtime_get_party_state(&profile->runtime,
+                                               &imported_party) >= 0 &&
+                imported_party.ImportedFromDM1 &&
+                imported_party.ChampionCount > 0) {
+                state->csbState.startup_import_available = 1;
+                state->csbState.startup_import_champion_count =
+                    imported_party.ChampionCount;
+            } else {
+                state->csbState.startup_import_dm1_save_path[0] = '\0';
+            }
+        }
         if ((!spec->savePath || spec->savePath[0] == '\0') &&
             spec->entranceResumeSavePath &&
             spec->entranceResumeSavePath[0] != '\0') {
