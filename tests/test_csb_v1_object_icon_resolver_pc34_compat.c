@@ -39,6 +39,46 @@ static void write_u16(unsigned char *p, unsigned int value)
     p[1] = (unsigned char)((value >> 8) & 0xffu);
 }
 
+static size_t append_m564_name(unsigned char *dst,
+                               size_t offset,
+                               size_t cap,
+                               const char *name)
+{
+    size_t i;
+
+    if (!dst || !name || cap == 0U) return offset;
+    for (i = 0U; name[i] != '\0'; ++i) {
+        if (offset >= cap) return offset;
+        dst[offset++] = (unsigned char)name[i];
+    }
+    if (offset > 0U) {
+        dst[offset - 1U] = (unsigned char)(dst[offset - 1U] | 0x80U);
+    } else if (offset < cap) {
+        dst[offset++] = 0x80U;
+    }
+    return offset;
+}
+
+static size_t make_m564_names(unsigned char *dst,
+                              size_t cap,
+                              const char *icon7_name,
+                              const char *icon32_name)
+{
+    size_t offset = 0U;
+    int i;
+
+    for (i = 0; i < CSB_V1_OBJECT_NAME_COUNT; ++i) {
+        const char *name = "X";
+        if (i == 7) {
+            name = icon7_name;
+        } else if (i == 32) {
+            name = icon32_name;
+        }
+        offset = append_m564_name(dst, offset, cap, name);
+    }
+    return offset;
+}
+
 static void init_dungeon(CSB_V1_DungeonData *dungeon,
                          unsigned char *raw,
                          size_t raw_size)
@@ -116,6 +156,48 @@ int main(void)
                   csb_v1_runtime_object_name(&profile, THING_NONE, name, sizeof(name)),
                   0);
         check_str("invalid thing leaves name blank", name, "");
+    }
+
+    {
+        unsigned char object_names[4096];
+        size_t object_names_size;
+        char name[32];
+
+        memset(object_names, 0, sizeof(object_names));
+        object_names_size = make_m564_names(object_names,
+                                            sizeof(object_names),
+                                            "SOURCE TORCH",
+                                            "SOURCE DAGGER");
+        check_int("M564 object names load",
+                  csb_v1_runtime_load_object_names_m564(
+                      &profile,
+                      object_names,
+                      object_names_size),
+                  1);
+
+        memset(name, 0, sizeof(name));
+        check_int("M564 dagger has icon-indexed name",
+                  csb_v1_runtime_object_name(&profile, dagger, name, sizeof(name)),
+                  1);
+        check_str("M564 dagger name", name, "SOURCE DAGGER");
+
+        memset(name, 0, sizeof(name));
+        check_int("M564 lit torch uses resolved icon name",
+                  csb_v1_runtime_object_name(&profile, lit_torch, name, sizeof(name)),
+                  1);
+        check_str("M564 lit torch name", name, "SOURCE TORCH");
+
+        check_int("truncated M564 object names reject",
+                  csb_v1_runtime_load_object_names_m564(
+                      &profile,
+                      object_names,
+                      object_names_size - 1U),
+                  0);
+        memset(name, 0, sizeof(name));
+        check_int("fallback survives rejected M564 table",
+                  csb_v1_runtime_object_name(&profile, dagger, name, sizeof(name)),
+                  1);
+        check_str("fallback after rejected M564 table", name, "DAGGER");
     }
 
     if (g_failures != 0) return 1;
