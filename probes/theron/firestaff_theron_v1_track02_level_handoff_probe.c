@@ -207,6 +207,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     Theron_Track02LevelHandoff handoff;
     Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02LevelHandoffStatus status;
+    size_t expected_candidate_offset = 0u;
 
     memset(track, 0, sizeof(track));
     memcpy(track + descriptor_offset, g_canonical_descriptor, sizeof(g_canonical_descriptor));
@@ -234,6 +235,14 @@ static void probe_synthetic_initial_candidate_handoff(void) {
                1u);
     check_size("synthetic initial candidate scan offset",
                catalog.candidates[0].absolute_offset,
+               candidate_offset);
+    check_int("synthetic initial candidate expected offset ok",
+              theron_v1_track02_initial_candidate_expected_offset(
+                  descriptor_offset,
+                  &expected_candidate_offset),
+              1);
+    check_size("synthetic initial candidate expected offset",
+               expected_candidate_offset,
                candidate_offset);
 
     status = theron_v1_track02_load_initial_level_candidate(
@@ -300,6 +309,63 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     check_int("synthetic initial candidate rejects wrong header",
               status,
               THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL);
+}
+
+static void probe_synthetic_initial_candidate_wrong_anchor_rejected(void) {
+    enum {
+        descriptor_offset = 0xc000u,
+        wrong_candidate_offset = 0x2000u,
+        candidate_width = 32u,
+        candidate_height = 27u
+    };
+    uint8_t track[0xd000u];
+    uint8_t *candidate;
+    Theron_V1_Level level;
+    Theron_Track02LevelHandoff handoff;
+    Theron_Track02LevelCandidateCatalog catalog;
+    Theron_Track02LevelHandoffStatus status;
+
+    memset(track, 0, sizeof(track));
+    memcpy(track + descriptor_offset, g_canonical_descriptor, sizeof(g_canonical_descriptor));
+    candidate = track + wrong_candidate_offset;
+    write_be16(candidate + 0, candidate_width);
+    write_be16(candidate + 2, candidate_height);
+    write_be32(candidate + 4, 0x0108e938u);
+    write_be16(candidate + 8, 0x0026u);
+    candidate[10] = 0u;
+    candidate[11] = 0u;
+    memset(candidate + 12, THERON_SQUARE_WALL, candidate_width * candidate_height);
+    candidate[12 + 1u * candidate_width + 1u] = THERON_SQUARE_FLOOR;
+    candidate[12 + 1u * candidate_width + 2u] = THERON_SQUARE_FLOOR;
+
+    status = theron_v1_track02_scan_level_candidates(
+        track,
+        sizeof(track),
+        &catalog);
+    check_int("synthetic wrong-anchor candidate scan status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("synthetic wrong-anchor candidate scan count",
+               catalog.candidate_count,
+               1u);
+    check_size("synthetic wrong-anchor candidate scan offset",
+               catalog.candidates[0].absolute_offset,
+               wrong_candidate_offset);
+
+    status = theron_v1_track02_load_initial_level_candidate(
+        track,
+        sizeof(track),
+        descriptor_offset,
+        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        0,
+        &level,
+        &handoff);
+    check_int("synthetic wrong-anchor candidate handoff rejected",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL);
+    check_int("synthetic undersized descriptor offset rejected",
+              theron_v1_track02_initial_candidate_expected_offset(0x100u, NULL),
+              0);
 }
 
 static void probe_negative_handoffs(void) {
@@ -384,6 +450,7 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02LevelHandoff handoff;
     Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02LevelHandoffStatus status;
+    size_t expected_candidate_offset = 0u;
 
     path_to_read = (env_path && env_path[0]) ? env_path : NULL;
     if (!path_to_read) {
@@ -474,6 +541,14 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate start dir", level.start_dir, 1);
     check_size("real initial candidate scan/loader offset",
                catalog.candidates[0].absolute_offset,
+               handoff.absolute_offset);
+    check_int("real initial candidate expected offset ok",
+              theron_v1_track02_initial_candidate_expected_offset(
+                  signal.descriptor_offsets[0],
+                  &expected_candidate_offset),
+              1);
+    check_size("real initial candidate expected offset",
+               expected_candidate_offset,
                handoff.absolute_offset);
     check_size("real initial candidate scan/loader size",
                catalog.candidates[0].byte_count,
@@ -603,6 +678,7 @@ int main(void) {
 
     probe_synthetic_positive_handoff();
     probe_synthetic_initial_candidate_handoff();
+    probe_synthetic_initial_candidate_wrong_anchor_rejected();
     probe_negative_handoffs();
     probe_real_data_if_present();
 
