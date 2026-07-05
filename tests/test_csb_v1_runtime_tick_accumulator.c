@@ -3337,6 +3337,43 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 3u,
           "remote wall-gate effect reaches the target door and starts opening");
 
+    make_real_format_sensor_dungeon(
+        &dungeon,
+        raw,
+        sizeof(raw),
+        0,
+        0,
+        (uint8_t)(0u << 5),
+        (uint16_t)((0x10u << 7) | 5u), /* C005 gate, ref mask bit 0 */
+        (uint16_t)((1u << 2) | (DM1_EFFECT_SET << 3) | (1u << 11)),
+        (uint16_t)DM1_EFFECT_TOGGLE);
+    dungeon.thing_type_counts[3] = 2;
+    test_put_le16(raw, 68, (uint16_t)((3u << 10) | 1u));
+    test_put_le16(raw, 76, 0xfffeu);
+    test_put_le16(raw, 78, (uint16_t)((0x10u << 7) | 5u));
+    test_put_le16(raw, 80, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 82, make_sensor_target(1, 0, 0));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    queue_square_cell_event(
+        &profile,
+        DM1_EVENT_WALL,
+        DM1_EFFECT_SET,
+        0,
+        0,
+        0);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C06 wall local-effect gate event fires on the current tick");
+    CHECK(test_get_le16(raw, 66) == (uint16_t)((3u << 10) | 1u) &&
+              test_get_le16(raw, 68) == 0xfffeu &&
+              test_get_le16(raw, 76) == (uint16_t)(3u << 10),
+          "C06 wall local-effect gate rotates same-cell sensors");
+    CHECK((test_get_le16(raw, 70) & 0x007fu) == 0u,
+          "C06 wall local-effect once-only gate disables the triggering sensor");
+    CHECK(profile.timeline_queue.eventCount == 0,
+          "C06 wall local-effect gate queues no remote square effect");
+
     make_real_format_wall_text_dungeon(
         &dungeon,
         raw,

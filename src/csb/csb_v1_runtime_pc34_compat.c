@@ -6495,7 +6495,9 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_type,
             &thing_size);
         if (!record || thing_size < 2) return 0;
-        if (thing_type == 3 && ((thing & 3) == (cell & 3))) {
+        if (thing_type == 3 &&
+            csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+                (cell & 3)) {
             first_sensor_thing = thing;
             first_sensor_record = record;
             break;
@@ -6516,7 +6518,9 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_type,
             &thing_size);
         if (!record || thing_size < 2) return 0;
-        if (thing_type == 3 && ((thing & 3) == (cell & 3))) {
+        if (thing_type == 3 &&
+            csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+                (cell & 3)) {
             last_sensor_record = record;
             break;
         }
@@ -6535,7 +6539,8 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
             &thing_type,
             &thing_size);
         if (!record || thing_size < 2 || thing_type != 3) break;
-        if ((thing & 3) == (cell & 3)) {
+        if (csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+            (cell & 3)) {
             last_sensor_record = record;
         }
         thing = csb_v1_runtime_read_u16(record);
@@ -8726,8 +8731,9 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
      * TextString visibility, then lines 1198-1308 handles wall C006
      * countdown and C005 AND/OR gate sensors by mutating M040_DATA and
      * feeding matching remote effects back through F0272_SENSOR_TriggerEffect.
-     * Lines 1317-1339 handle C018 endgame sensors. Projectile launchers and
-     * rotation side effects remain separate runtime work. */
+     * Lines 1317-1339 handle C018 endgame sensors.  F0272 lines 1191-1197
+     * also disables once-only triggered sensors and routes LocalEffect
+     * sensors through F0270/F0271 instead of queuing a remote square event. */
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
         uint8_t *sensor;
         int thing_type;
@@ -8743,6 +8749,9 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
         int target_x;
         int target_y;
         int target_cell;
+        int local_effect;
+        int local_multiple;
+        int once_only;
         int trigger = 0;
         int trigger_effect = DM1_EFFECT_SET;
 
@@ -8773,6 +8782,9 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             sensor_data = (int)(type_data >> 7);
             sensor_effect = (int)((flags_word >> 3) & 0x03u);
             revert_effect = (int)((flags_word >> 5) & 0x01u);
+            once_only = (int)((flags_word >> 2) & 0x01u);
+            local_effect = (int)((flags_word >> 11) & 0x01u);
+            local_multiple = (int)(target_word & 0x0FFFu);
             target_cell = (int)((target_word >> 4) & 0x03u);
             target_x = (int)((target_word >> 6) & 0x1Fu);
             target_y = (int)((target_word >> 11) & 0x1Fu);
@@ -8990,13 +9002,29 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             }
 
             if (trigger) {
-                csb_v1_runtime_trigger_remote_sensor_event(
-                    profile,
-                    record->mapIndex,
-                    trigger_effect,
-                    target_x,
-                    target_y,
-                    target_cell);
+                if (once_only) {
+                    type_data = (uint16_t)(type_data & 0xFF80u);
+                    csb_v1_runtime_write_u16(sensor + 2, type_data);
+                }
+                if (local_effect) {
+                    if (local_multiple == DM1_EFFECT_CLEAR ||
+                        local_multiple == DM1_EFFECT_TOGGLE) {
+                        (void)csb_v1_runtime_rotate_wall_cell_sensors(
+                            dungeon,
+                            record->mapIndex,
+                            record->mapX,
+                            record->mapY,
+                            record->cell);
+                    }
+                } else {
+                    csb_v1_runtime_trigger_remote_sensor_event(
+                        profile,
+                        record->mapIndex,
+                        trigger_effect,
+                        target_x,
+                        target_y,
+                        target_cell);
+                }
             }
         }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
