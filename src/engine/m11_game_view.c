@@ -1005,6 +1005,51 @@ static int m11_csb_runtime_group_overlay_position(
     return 0;
 }
 
+static void m11_csb_runtime_overlay_stats_reset(
+    const M11_GameViewState *state)
+{
+    M11_GameViewState *mutable_state = (M11_GameViewState *)state;
+
+    if (!mutable_state) {
+        return;
+    }
+    mutable_state->csbState.runtime_object_sprite_drawn_count = 0;
+    mutable_state->csbState.runtime_object_icon_drawn_count = 0;
+    mutable_state->csbState.runtime_object_marker_drawn_count = 0;
+    mutable_state->csbState.runtime_group_sprite_drawn_count = 0;
+    mutable_state->csbState.runtime_group_marker_drawn_count = 0;
+}
+
+static void m11_csb_runtime_overlay_stats_add_object_sprite(
+    const M11_GameViewState *state)
+{
+    ((M11_GameViewState *)state)->csbState.runtime_object_sprite_drawn_count++;
+}
+
+static void m11_csb_runtime_overlay_stats_add_object_icon(
+    const M11_GameViewState *state)
+{
+    ((M11_GameViewState *)state)->csbState.runtime_object_icon_drawn_count++;
+}
+
+static void m11_csb_runtime_overlay_stats_add_object_marker(
+    const M11_GameViewState *state)
+{
+    ((M11_GameViewState *)state)->csbState.runtime_object_marker_drawn_count++;
+}
+
+static void m11_csb_runtime_overlay_stats_add_group_sprite(
+    const M11_GameViewState *state)
+{
+    ((M11_GameViewState *)state)->csbState.runtime_group_sprite_drawn_count++;
+}
+
+static void m11_csb_runtime_overlay_stats_add_group_marker(
+    const M11_GameViewState *state)
+{
+    ((M11_GameViewState *)state)->csbState.runtime_group_marker_drawn_count++;
+}
+
 static void m11_draw_csb_runtime_floor_object_overlays(
     const M11_GameViewState *state,
     const CSB_V1_BootProfile *profile,
@@ -1104,6 +1149,7 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                                              0,
                                              forward - 1,
                                              row)) {
+                        m11_csb_runtime_overlay_stats_add_object_sprite(state);
                         break;
                     }
                     if (icon >= 0 &&
@@ -1116,6 +1162,7 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                             x - 8,
                             y - 8,
                             0)) {
+                        m11_csb_runtime_overlay_stats_add_object_icon(state);
                         break;
                     }
                     if (marker_x >= 1 && marker_x + 1 < framebuffer_width &&
@@ -1127,6 +1174,7 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                         framebuffer[marker_y * framebuffer_width + marker_x + 1] = color;
                         framebuffer[(marker_y - 1) * framebuffer_width + marker_x] = color;
                         framebuffer[(marker_y + 1) * framebuffer_width + marker_x] = color;
+                        m11_csb_runtime_overlay_stats_add_object_marker(state);
                     }
                     break;
                 }
@@ -1246,6 +1294,7 @@ static void m11_draw_csb_runtime_group_overlays(
                                                     depth_index,
                                                     side,
                                                     creature_dir)) {
+                        m11_csb_runtime_overlay_stats_add_group_sprite(state);
                         break;
                     }
                     m11_csb_mark_runtime_group(framebuffer,
@@ -1253,6 +1302,7 @@ static void m11_draw_csb_runtime_group_overlays(
                                                framebuffer_height,
                                                x,
                                                y);
+                    m11_csb_runtime_overlay_stats_add_group_marker(state);
                     break;
                 }
                 thing = m11_csb_runtime_next_thing(dungeon, thing);
@@ -1286,6 +1336,7 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     if (!profile->runtime.dungeon_handle) {
         return 0;
     }
+    m11_csb_runtime_overlay_stats_reset(state);
 
     (void)m11_csb_build_viewport_grid(dungeon_grid);
     memset(&cfg, 0, sizeof(cfg));
@@ -28487,6 +28538,40 @@ int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
     if (outExplosionCount) *outExplosionCount = cell.summary.explosions;
     if (outFirstProjectileGfx) *outFirstProjectileGfx = cell.firstProjectileGfxIndex;
     if (outFirstExplosionType) *outFirstExplosionType = cell.firstExplosionType;
+    return 1;
+}
+
+int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+    const M11_GameViewState* state,
+    int* outObjectSpriteCount,
+    int* outObjectIconCount,
+    int* outObjectMarkerCount,
+    int* outGroupSpriteCount,
+    int* outGroupMarkerCount)
+{
+    if (!state) {
+        return 0;
+    }
+    if (outObjectSpriteCount) {
+        *outObjectSpriteCount =
+            state->csbState.runtime_object_sprite_drawn_count;
+    }
+    if (outObjectIconCount) {
+        *outObjectIconCount =
+            state->csbState.runtime_object_icon_drawn_count;
+    }
+    if (outObjectMarkerCount) {
+        *outObjectMarkerCount =
+            state->csbState.runtime_object_marker_drawn_count;
+    }
+    if (outGroupSpriteCount) {
+        *outGroupSpriteCount =
+            state->csbState.runtime_group_sprite_drawn_count;
+    }
+    if (outGroupMarkerCount) {
+        *outGroupMarkerCount =
+            state->csbState.runtime_group_marker_drawn_count;
+    }
     return 1;
 }
 
