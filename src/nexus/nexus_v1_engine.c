@@ -61,6 +61,9 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     int i;
     uint8_t *face_data;
     if (!engine) return;
+    engine->ui_faces_loaded = 0;
+    engine->ui_faces_expected = 0;
+    engine->ui_faces_fallback = 0;
     face_data = nexus_v1_read_file(engine, "FACE.BIN", &face_size);
     if (!face_data) return;
 
@@ -70,16 +73,21 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
      * or still-unmapped entries. */
     for (i = 0; i < engine->champions.champion_count && i < 24; ++i) {
         const int portrait_index = engine->champions.champions[i].portrait_index;
+        int load_result;
         if (portrait_index < 0 || portrait_index >= 24) continue;
-        if (nexus_ui_load_faces(&engine->ui,
-                                face_data,
-                                portrait_index * 48 * 48,
-                                face_size,
-                                portrait_index,
-                                48,
-                                48,
-                                NULL) == 0) {
+        engine->ui_faces_expected++;
+        load_result = nexus_ui_load_faces(&engine->ui,
+                                          face_data,
+                                          portrait_index * 48 * 48,
+                                          face_size,
+                                          portrait_index,
+                                          48,
+                                          48,
+                                          NULL);
+        if (load_result > 0) {
             engine->ui_faces_loaded++;
+        } else if (load_result == 0) {
+            engine->ui_faces_fallback++;
         }
     }
     free(face_data);
@@ -323,4 +331,23 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
         nexus_iso_close(&engine->iso);
     memset(engine, 0, sizeof(*engine));
     printf("Nexus V1 engine shut down\n");
+}
+
+int nexus_v1_startup_faces_loaded_count(const Nexus_V1_Engine *engine) {
+    return engine ? engine->ui_faces_loaded : 0;
+}
+
+int nexus_v1_startup_faces_expected_count(const Nexus_V1_Engine *engine) {
+    return engine ? engine->ui_faces_expected : 0;
+}
+
+int nexus_v1_startup_faces_fallback_count(const Nexus_V1_Engine *engine) {
+    return engine ? engine->ui_faces_fallback : 0;
+}
+
+int nexus_v1_startup_faces_ready(const Nexus_V1_Engine *engine) {
+    if (!engine) return 0;
+    return engine->ui_faces_expected > 0 &&
+           engine->ui_faces_loaded == engine->ui_faces_expected &&
+           engine->ui_faces_fallback == 0;
 }

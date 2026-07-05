@@ -434,6 +434,16 @@ static void probe_real_data_launch(const char *data_dir)
     CHECK(engine.source == NEXUS_SRC_ISO || engine.source == NEXUS_SRC_EXTRACTED,
           "engine reports ISO or EXTRACTED data source");
     CHECK(engine.initialized == 1, "engine.initialized == 1 after init");
+    CHECK(nexus_v1_startup_faces_expected_count(&engine) ==
+              engine.champions.champion_count,
+          "startup FACE.BIN expected portrait count matches roster");
+    CHECK(nexus_v1_startup_faces_loaded_count(&engine) ==
+              nexus_v1_startup_faces_expected_count(&engine),
+          "startup FACE.BIN loaded all roster portraits");
+    CHECK(nexus_v1_startup_faces_fallback_count(&engine) == 0,
+          "startup FACE.BIN loaded without portrait fallbacks");
+    CHECK(nexus_v1_startup_faces_ready(&engine) == 1,
+          "startup FACE.BIN receipt is ready");
 
     /* Phase 2: real file reader rejects a non-existent file. */
     int non_size = 0;

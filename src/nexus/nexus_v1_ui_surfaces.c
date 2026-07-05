@@ -202,6 +202,7 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
     const uint32_t *palette)
 {
     int entry_size;
+    int copied_real = 0;
     Nexus_UI_Surface *surf;
     (void)palette;
 
@@ -226,6 +227,7 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
         surf->data = (uint8_t *)malloc(entry_size);
         if (surf->data) {
             memcpy(surf->data, data + data_of_face, entry_size);
+            copied_real = 1;
         } else {
             surf->data = (uint8_t *)calloc(entry_size, 1);
         }
@@ -243,7 +245,7 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
         if (surf->data) surface_clear_gray(surf);
     }
     /* Face surfaces are stored individually in the manager */
-    return 0;
+    return copied_real ? 1 : 0;
 }
 
 void nexus_ui_surface_free(Nexus_UI_Manager *mgr,
