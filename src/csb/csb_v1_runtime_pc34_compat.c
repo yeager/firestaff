@@ -2418,6 +2418,26 @@ static void csb_v1_runtime_request_creature_attack_sound(
     (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
 }
 
+static void csb_v1_runtime_request_buzz_sound(
+    CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y)
+{
+    CsbV1AudioRequest request;
+
+    if (!profile) return;
+    memset(&request, 0, sizeof(request));
+    request.soundIndex = CSB_V1_SOUND_BUZZ;
+    request.mapX = (int16_t)map_x;
+    request.mapY = (int16_t)map_y;
+    request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+    request.volume = 64;
+    request.priority = 4u;
+    /* ReDMCSB GROUP.C F0209 line 2283 requests M560_SOUND_BUZZ at the
+     * archenemy double-move destination with C01_MODE_PLAY_IF_PRIORITIZED. */
+    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+}
+
 static int csb_v1_runtime_direction_from_source_to_destination(
     int source_x,
     int source_y,
@@ -3378,6 +3398,9 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 int moved = 0;
                 int deferred = 0;
                 int initial_move_direction = 0;
+                int is_archenemy = creature_profile &&
+                    ((creature_profile->attributes &
+                      CREATURE_ATTR_MASK_ARCHENEMY) != 0);
 
                 movement_ticks = csb_v1_runtime_creature_movement_ticks(
                     (int)thing_record[4]);
@@ -3549,35 +3572,135 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                         }
                     }
                 } else {
-                    csb_v1_runtime_sync_active_group_state_from_record(
-                        profile,
-                        group_thing,
-                        thing_record,
-                        record->mapIndex,
-                        record->mapX,
-                        record->mapY,
-                        0,
-                        0);
-                    csb_v1_runtime_set_active_group_direction_group(
-                        profile,
-                        group_thing,
-                        thing_record,
-                        record->mapIndex,
-                        record->mapX,
-                        record->mapY,
-                        initial_move_direction,
-                        creature_count,
-                        creature_size);
+                    int double_target_x = record->mapX;
+                    int double_target_y = record->mapY;
+                    if (initial_move_direction == 0) {
+                        double_target_y -= 2;
+                    } else if (initial_move_direction == 1) {
+                        double_target_x += 2;
+                    } else if (initial_move_direction == 2) {
+                        double_target_y += 2;
+                    } else {
+                        double_target_x -= 2;
+                    }
+                    if (is_archenemy &&
+                        !csb_v1_runtime_group_destination_is_blocked(
+                            dungeon,
+                            record->mapIndex,
+                            double_target_x,
+                            double_target_y) &&
+                        !csb_v1_runtime_group_destination_has_party_or_group(
+                            profile,
+                            record->mapIndex,
+                            double_target_x,
+                            double_target_y)) {
+                        target_x = double_target_x;
+                        target_y = double_target_y;
+                        csb_v1_runtime_sync_active_group_state_from_record(
+                            profile,
+                            group_thing,
+                            thing_record,
+                            record->mapIndex,
+                            record->mapX,
+                            record->mapY,
+                            0,
+                            0);
+                        moved = csb_v1_runtime_move_group_thing_to_square(
+                            dungeon,
+                            group_thing,
+                            record->mapIndex,
+                            record->mapX,
+                            record->mapY,
+                            record->mapIndex,
+                            target_x,
+                            target_y);
+                    }
+                    if (moved) {
+                        int group_alive = 1;
+                        int consequence_moves;
+                        csb_v1_runtime_request_buzz_sound(
+                            profile,
+                            target_x,
+                            target_y);
+                        csb_v1_runtime_request_creature_movement_sound(
+                            profile,
+                            (int)thing_record[4],
+                            target_x,
+                            target_y);
+                        consequence_moves =
+                            csb_v1_runtime_apply_group_consequences_at_square(
+                            profile,
+                            group_thing,
+                            &target_map_index,
+                            &target_x,
+                            &target_y,
+                            &group_alive);
+                        if (!group_alive) {
+                            return;
+                        }
+                        thing_record = csb_v1_runtime_mutable_thing_record(
+                            dungeon,
+                            group_thing,
+                            &thing_type,
+                            &thing_size);
+                        if (thing_record && thing_type == 4 &&
+                            thing_size >= 16) {
+                            if (consequence_moves == 0) {
+                                csb_v1_runtime_set_active_group_direction_group(
+                                    profile,
+                                    group_thing,
+                                    thing_record,
+                                    target_map_index,
+                                    target_x,
+                                    target_y,
+                                    initial_move_direction,
+                                    creature_count,
+                                    creature_size);
+                            }
+                            csb_v1_runtime_sync_active_group_state_from_record(
+                                profile,
+                                group_thing,
+                                thing_record,
+                                target_map_index,
+                                target_x,
+                                target_y,
+                                1,
+                                1);
+                        }
+                    } else {
+                        csb_v1_runtime_sync_active_group_state_from_record(
+                            profile,
+                            group_thing,
+                            thing_record,
+                            record->mapIndex,
+                            record->mapX,
+                            record->mapY,
+                            0,
+                            0);
+                        csb_v1_runtime_set_active_group_direction_group(
+                            profile,
+                            group_thing,
+                            thing_record,
+                            record->mapIndex,
+                            record->mapX,
+                            record->mapY,
+                            initial_move_direction,
+                            creature_count,
+                            creature_size);
+                    }
                 }
                 /* ReDMCSB GROUP.C F0209 lines 2228-2272 walks C7 approach
                  * toward the target using F0202 movement checks, then lines
+                 * 2273-2284 allow an archenemy double-square move that ignores
+                 * the first square and requests M560_SOUND_BUZZ at the second
+                 * square before moving the group. Lines
                  * 2450-2463 schedule the next C37.  This bounded bridge
                  * relinks a real-format C04 group, creates destination
                  * square-first slots through the bounded F0163 bridge when
                  * needed, schedules C60/C61-style retry when blocked by
                  * party/group occupancy, then applies bounded creature-scope
-                 * teleporter/pit chains. Full F0202 occupancy breadth,
-                 * archenemy buzz, and attack expansion remain separate work. */
+                 * teleporter/pit chains. Full F0202 occupancy breadth and
+                 * attack expansion remain separate work. */
                 if (!deferred) {
                     csb_v1_runtime_schedule_c37_group_event(
                         profile,

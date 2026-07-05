@@ -1778,6 +1778,89 @@ static void test_c37_group_approach_turns_moved_group_per_creature(void)
           "C37 moved-group applies F0206/F0205 one-step turn to creature 0");
 }
 
+static void test_c37_archenemy_double_move_requests_buzz(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[144];
+    struct DM1_Event_V1 ev;
+    int event_index;
+
+    printf("\n-- CSB C37 archenemy double-move buzz --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 3;
+    dungeon.thing_data_bases[4] = 72;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(0, 1)] = 0u; /* Wall blocks first step. */
+    raw[real_format_square_offset(0, 2)] = (uint8_t)(1u << 5);
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 60 + 1 * 2, 1);
+    test_put_le16(raw, 60 + 2 * 2, 1);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 68, 0xffffu);
+    test_put_le16(raw, 70, 0xffffu);
+    test_put_le16(raw, 72, 0xfffeu);
+    test_put_le16(raw, 74, 0u);
+    raw[76] = 23u;   /* C23 Lord Chaos: ARCHENEMY in G0243. */
+    raw[77] = 0xffu; /* Single centered creature. */
+    test_put_le16(raw, 78, 210u);
+    test_put_le16(raw, 86, (uint16_t)((0u << 5) | 7u)); /* C7, dir north. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 3;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Attributes = 0;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    ev.priority = 234u;
+    ev.b_mapX = 0;
+    ev.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "C37 archenemy double-move fixture queues the approach event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C37 archenemy double-move fixture dispatches the approach event");
+
+    CHECK(test_get_le16(raw, 66) == 0xfffeu &&
+              csb_v1_dungeon_get_first_thing(
+                  &dungeon,
+                  0,
+                  0,
+                  2) == (int)(4u << 10),
+          "C37 archenemy double-move skips the blocked first square and lands two squares away");
+    CHECK(profile.audio_runtime.pendingSoundIndex == CSB_V1_SOUND_BUZZ &&
+              profile.audio_runtime.totalRequests == 1u,
+          "C37 archenemy double-move requests prioritized M560 buzz at the landing square");
+    CHECK(profile.active_group_state_count == 1u &&
+              profile.active_group_state[0].valid &&
+              profile.active_group_state[0].map_x == 0 &&
+              profile.active_group_state[0].map_y == 2 &&
+              profile.active_group_state[0].prior_map_x == 0 &&
+              profile.active_group_state[0].prior_map_y == 0,
+          "C37 archenemy double-move updates native active-group current and prior square");
+    event_index = find_queued_event_type(&profile,
+                                         DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
+    CHECK(event_index >= 0 &&
+              profile.timeline_queue.events[event_index].b_mapX == 0 &&
+              profile.timeline_queue.events[event_index].b_mapY == 2,
+          "C37 archenemy double-move requeues behavior from the landing square");
+}
+
 static void test_c37_group_approach_uses_stored_target_without_party_sight(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -6249,6 +6332,7 @@ int main(void)
     test_timeline_corridor_text_and_generator_mutations();
     test_c37_group_approach_creates_empty_destination_thing_list();
     test_c37_group_approach_turns_moved_group_per_creature();
+    test_c37_archenemy_double_move_requests_buzz();
     test_c37_group_approach_uses_stored_target_without_party_sight();
     test_c37_group_approach_defers_when_destination_has_group();
     test_c37_blocked_wall_updates_group_direction();
