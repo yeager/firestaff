@@ -138,6 +138,11 @@ int main(void)
         unsigned short chest =
             (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
         int sx = 0, sy = 0, sw = 0, sh = 0;
+        int f0115_row = 0;
+        int object_marker_x = 112;
+        int object_marker_y = 117;
+        int group_marker_x = 112;
+        int group_marker_y = 144;
 
         memset(&state, 0, sizeof(state));
         memset(&profile, 0, sizeof(profile));
@@ -233,21 +238,43 @@ int main(void)
               "CSB dagger exposes THROW/STAB/SLASH action rows");
         {
             unsigned char framebuffer[320 * 200];
+            check(M11_GameView_GetViewportRect(&sx, &sy, &sw, &sh),
+                  "CSB draw checks can resolve source viewport geometry");
+            check(sx == 0 && sy == 33 && sw == 224 && sh == 136,
+                  "CSB draw checks use the source 224x136 viewport at y=33");
+            f0115_row = M11_GameView_GetF0115C2500C2900Row(1, 0);
+            check(f0115_row >= 0 &&
+                      M11_GameView_GetC2500ObjectRawZonePoint(
+                          f0115_row,
+                          3,
+                          &object_marker_x,
+                          &object_marker_y),
+                  "CSB draw checks resolve front-square object marker through C2500");
+            object_marker_y += sy;
+            check(M11_GameView_GetC3200CreatureZonePoint(
+                      0,
+                      0,
+                      1,
+                      0,
+                      &group_marker_x,
+                      &group_marker_y),
+                  "CSB draw checks resolve front-square group marker through C3200");
+            group_marker_y += sy;
             write_u16(raw + 96, dagger);
             raw[67] = 0x10u; /* wall with thing-list-present: overlays must stay hidden. */
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(framebuffer[95 * 320 + 112] != 0x0D,
+            check(framebuffer[group_marker_y * 320 + group_marker_x] != 0x0D,
                   "CSB M11 draw hides runtime groups on blocking wall squares");
-            check(framebuffer[117 * 320 + 112] !=
+            check(framebuffer[object_marker_y * 320 + object_marker_x] !=
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
                   "CSB M11 draw hides runtime floor objects on blocking wall squares");
             raw[67] = (unsigned char)((1u << 5) | 0x10u);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
-            check(framebuffer[95 * 320 + 112] == 0x0D,
+            check(framebuffer[group_marker_y * 320 + group_marker_x] == 0x0D,
                   "CSB M11 draw marks a runtime group from CSB square thing chain without DM1 world.things");
-            check(framebuffer[117 * 320 + 112] ==
+            check(framebuffer[object_marker_y * 320 + object_marker_x] ==
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
                   "CSB M11 draw marks a runtime floor object from CSB square thing chain without DM1 world.things");
         }
