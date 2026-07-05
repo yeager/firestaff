@@ -499,12 +499,15 @@ int main(void) {
     }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(framebuffer[0] == 7,
-                "M11 DM2 draw uses runtime viewport border, not text placeholder");
+    expect_true(framebuffer[0] == 1,
+                "M11 DM2 draw uses runtime viewport HUD/chrome, not text placeholder");
     expect_true(framebuffer[(199 * 320) + 319] == 1,
                 "M11 DM2 draw preserves the runtime HUD strip after border draw");
     expect_true(framebuffer[(100 * 320) + 160] != 0,
                 "M11 DM2 draw fills the runtime viewport body");
+    expect_true(dm2_v1_runtime_last_asset_floor_ceiling_count() == 0 &&
+                dm2_v1_runtime_last_fallback_floor_ceiling_count() == 2,
+                "M11 DM2 draw routes through the shared V1 viewport floor/ceiling pass");
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;
