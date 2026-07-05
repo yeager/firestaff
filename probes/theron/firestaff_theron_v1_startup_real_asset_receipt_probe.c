@@ -156,10 +156,16 @@ static void check_startup_mirror_summary(const Theron_V1_StartupReceipt *r,
     snprintf(name, sizeof(name), "%s class mask covers all four classes",
              prefix);
     check(r->startup_class_mask == expected_class_mask, name);
-    snprintf(name, sizeof(name), "%s mirror art still uses fallback labels",
+    snprintf(name, sizeof(name), "%s mirror labels cover all seven slots",
              prefix);
-    check(r->startup_fallback_label_count == THERON_STARTUP_HERO_MIRROR_COUNT,
+    check(r->startup_fallback_label_count +
+              r->startup_decoded_label_count ==
+          THERON_STARTUP_HERO_MIRROR_COUNT,
           name);
+    snprintf(name, sizeof(name), "%s decoded mirror labels stay bounded",
+             prefix);
+    check(r->startup_decoded_label_count <=
+          THERON_STARTUP_HERO_MIRROR_COUNT, name);
     snprintf(name, sizeof(name), "%s decoded mirror art count starts at zero",
              prefix);
     check(r->startup_decoded_art_count == 0u, name);
@@ -313,6 +319,8 @@ static void check_placeholder_fields(void) {
                        "rendered line contains portrait range");
     check_str_contains(line, "mirror_fallback_labels=7",
                        "rendered line contains fallback mirror art count");
+    check_str_contains(line, "mirror_decoded_labels=0",
+                       "rendered line contains decoded mirror label count");
     check_str_contains(line, "mirror_decoded_art=0",
                        "rendered line contains decoded mirror art count");
     check_str_contains(line, "chapter=\"Chapter ?",
@@ -606,6 +614,10 @@ static void check_real_asset_path(void) {
                           r.startup_roster_title_count == 0u &&
                           r.startup_roster_overflow_count == 0u,
                           "US raw Track 02 receipt has no decoded roster yet");
+                    check(r.startup_fallback_label_count == 7u &&
+                          r.startup_decoded_label_count == 0u &&
+                          r.startup_decoded_art_count == 0u,
+                          "US raw Track 02 receipt keeps label/art fallback split");
                 } else {
                     check(r.startup_text_us_prompt_count == 0u,
                           "JP raw Track 02 receipt has no US prompt markers");
@@ -617,6 +629,10 @@ static void check_real_asset_path(void) {
                           "JP raw Track 02 receipt has 7 decoded roster titles");
                     check(r.startup_roster_overflow_count == 0u,
                           "JP raw Track 02 receipt has no roster overflow");
+                    check(r.startup_fallback_label_count == 0u &&
+                          r.startup_decoded_label_count == 7u &&
+                          r.startup_decoded_art_count == 0u,
+                          "JP raw Track 02 receipt uses decoded labels but no decoded art");
                 }
             }
             check(r.descriptor_window_entry_index >= 0 &&
@@ -686,6 +702,10 @@ static void check_real_asset_path(void) {
                                        "JP raw Track 02 rendered line names roster count");
                     check_str_contains(line, "startup_roster_titles=7",
                                        "JP raw Track 02 rendered line names title count");
+                    check_str_contains(line, "mirror_fallback_labels=0",
+                                       "JP raw Track 02 rendered line clears fallback labels");
+                    check_str_contains(line, "mirror_decoded_labels=7",
+                                       "JP raw Track 02 rendered line names decoded labels");
                 }
             }
         } else {

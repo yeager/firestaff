@@ -121,8 +121,8 @@ typedef enum {
  *                                        from theron_v1_startup_flow.c, so
  *                                        receipt/probe consumers can verify
      *                                        seven mirrors, portrait ordinals 1..7,
-     *                                        class coverage, fallback-vs-decoded-art
-     *                                        counts, and the three-companion
+     *                                        class coverage, fallback-vs-decoded
+     *                                        label/art counts, and the three-companion
      *                                        resurrection cap without copying art
  *   - startup_chapter_*                : public chapter/progression startup
  *                                        contract from theron_v1_chapter_marker.c,
@@ -219,6 +219,7 @@ typedef struct {
     uint32_t startup_portrait_max;
     uint32_t startup_class_mask;
     uint32_t startup_fallback_label_count;
+    uint32_t startup_decoded_label_count;
     uint32_t startup_decoded_art_count;
 
     /* ── startup chapter/progression summary ─────────────────── */
