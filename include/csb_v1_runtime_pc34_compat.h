@@ -714,6 +714,12 @@ int csb_v1_runtime_object_action_set_index(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing);
 
+/* Resolve a CSB runtime object thing to the ReDMCSB DUNGLOB.C ObjectInfo
+ * AllowedSlots mask used by CHAMPION.C F0302 inventory placement. */
+uint16_t csb_v1_runtime_object_allowed_slots(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing);
+
 /* Load ReDMCSB OBJECT.C F0031 PC object names from M564_GRAPHIC_OBJECT_NAMES.
  * The PC stream terminates each name by setting bit 7 on the final byte. */
 int csb_v1_runtime_load_object_names_m564(
