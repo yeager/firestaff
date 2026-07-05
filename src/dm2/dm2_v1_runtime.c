@@ -26,6 +26,24 @@
 #include <stdio.h>
 #include <string.h>
 
+static int dm2_runtime_door_state(uint16_t square_raw) {
+    return (int)(square_raw & 0x0007u);
+}
+
+static uint16_t dm2_runtime_door_set_state(uint16_t square_raw, int state) {
+    return (uint16_t)((square_raw & ~0x0007u) | (uint16_t)(state & 0x0007));
+}
+
+static int dm2_runtime_door_step(int current_state, int action) {
+    if (current_state == 5) return 5;
+    if (action == 1) {
+        if (current_state >= 4) return 4;
+        return current_state + 1;
+    }
+    if (current_state <= 0) return 0;
+    return current_state - 1;
+}
+
 /* ── DM2 V1 Runtime State ─────────────────────────────────────────── */
 
 typedef struct {
@@ -577,6 +595,47 @@ int dm2_v1_runtime_is_passable(int level, int x, int y) {
         return 0;
     }
     return 1;
+}
+
+int dm2_v1_runtime_door_action(int level,
+                               int x,
+                               int y,
+                               int facing_dir,
+                               int action) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dd;
+    int raw;
+    int tile_type;
+    int state;
+    int next_state;
+
+    (void)facing_dir;
+    if (!rt->boot || !rt->boot->dungeon_data) return -1;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
+    if (raw < 0) return -1;
+    tile_type = raw & 0x001F;
+    if (tile_type != 4) return -1;
+
+    state = dm2_runtime_door_state((uint16_t)raw);
+    next_state = dm2_runtime_door_step(state, action);
+    if (next_state == state) return 0;
+
+    return dm2_v1_dungeon_set_tile_raw(
+        dd, level, x, y,
+        dm2_runtime_door_set_state((uint16_t)raw, next_state));
+}
+
+int dm2_v1_runtime_get_door_state(int level, int x, int y) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dd;
+    int raw;
+
+    if (!rt->boot || !rt->boot->dungeon_data) return -1;
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
+    if (raw < 0 || (raw & 0x001F) != 4) return -1;
+    return dm2_runtime_door_state((uint16_t)raw);
 }
 
 int dm2_v1_runtime_enter_shop(int level, int x, int y) {

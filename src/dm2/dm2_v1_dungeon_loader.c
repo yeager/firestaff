@@ -220,6 +220,28 @@ int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d,
     return RD16(d->raw_data + offset);
 }
 
+int dm2_v1_dungeon_set_tile_raw(DM2_V1_DungeonData *d,
+                                int level,
+                                int x,
+                                int y,
+                                uint16_t raw) {
+    int offset, w, h;
+
+    if (!d || !d->raw_data) return -1;
+    if (level < 0 || level >= d->level_count) return -1;
+
+    w = d->level_widths[level];
+    h = d->level_heights[level];
+    if (x < 0 || x >= w || y < 0 || y >= h) return -1;
+
+    offset = DM2_TILE_DATA_START + d->level_offsets[level] + ((x * h + y) << 1);
+    if (offset < 0 || offset + 1 >= d->raw_size) return -1;
+
+    d->raw_data[offset] = (uint8_t)(raw & 0xffu);
+    d->raw_data[offset + 1] = (uint8_t)((raw >> 8) & 0xffu);
+    return 0;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;

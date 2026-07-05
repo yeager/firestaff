@@ -12531,6 +12531,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     state->dm2ShopSelectedStockIndex = 0;
                     state->dm2ShopSelectedInventoryIndex = 0;
                     m11_set_status(state, "ACTION", "DM2 SHOP");
+                } else if (square == 4 &&
+                           dm2_v1_runtime_door_action(level, fx, fy,
+                                                       dir, 0) == 0) {
+                    m11_set_status(state, "ACTION", "DM2 DOOR");
                 } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
                     const char *npc_name =
                         dm2_v1_npc_get_name(DM2_NPC_MERCHANT_FRIENDLY);
