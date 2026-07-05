@@ -2573,6 +2573,31 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     profile.dungeon_seed = 0xC5B10738u;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
+    queue_future_creature_event(
+        &profile,
+        DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
+        1,
+        1,
+        100u);
+    queue_future_creature_event(
+        &profile,
+        DM1_EVENT_UPDATE_BEHAVIOR_GROUP,
+        1,
+        1,
+        100u);
+    queue_future_creature_event(
+        &profile,
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+        1,
+        1,
+        100u);
+    CHECK(count_queued_event_type(&profile,
+                                  DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE) == 1 &&
+              count_queued_event_type(&profile,
+                                      DM1_EVENT_UPDATE_BEHAVIOR_GROUP) == 1 &&
+              count_queued_event_type(&profile,
+                                      DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0) == 1,
+          "C25 final-creature fixture starts with queued C29/C37/C38 group events");
 
     memset(&input, 0, sizeof(input));
     input.explosionType = C000_EXPLOSION_FIREBALL;
@@ -2613,6 +2638,13 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 final group kill leaves the C05 teleporter chain terminated");
     CHECK((uint16_t)(raw[104] | ((uint16_t)raw[105] << 8)) == 0xfffeu,
           "C25 final group kill terminates the dropped carried thing chain");
+    CHECK(count_queued_event_type(&profile,
+                                  DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE) == 0 &&
+              count_queued_event_type(&profile,
+                                      DM1_EVENT_UPDATE_BEHAVIOR_GROUP) == 0 &&
+              count_queued_event_type(&profile,
+                                      DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0) == 0,
+          "C25 final group kill deletes stale C29..C41 group events");
     slot = find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE);
     CHECK(slot >= 0 &&
               profile.explosions.entries[slot].attack == 255 &&
