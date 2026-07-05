@@ -461,9 +461,9 @@ int main(void) {
                     forcefield->enabled == 1,
                     "M11 Theron startup layout exposes selected mirror order and enabled forcefield");
     }
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+    expect_true(M11_GameView_HandlePointer(&view, 46 + 115, 142 + 5, 1) ==
                 M11_GAME_INPUT_REDRAW,
-                "M11 Theron Soul Room selected mirror accept deselects companion");
+                "M11 Theron Soul Room selected mirror click deselects companion");
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_SOUL_ROOM &&
                 view.theronState.companion_count == 0 &&
@@ -476,9 +476,9 @@ int main(void) {
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "AVAILABLE"),
                 "M11 Theron Soul Room render rows show deselected mirror as available");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+    expect_true(M11_GameView_HandlePointer(&view, 46 + 115, 142 + 5, 1) ==
                 M11_GAME_INPUT_REDRAW,
-                "M11 Theron Soul Room mirror 7 can be reselected after deselect");
+                "M11 Theron Soul Room mirror 7 click can reselect after deselect");
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_READY &&
                 view.theronState.companion_count == 1 &&
@@ -508,9 +508,9 @@ int main(void) {
     expect_true(view.theronState.companion_count == 3 &&
                 view.theronState.selected_mirror_order[2] == 2,
                 "M11 Theron Soul Room records third selected mirror order");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+    expect_true(M11_GameView_HandlePointer(&view, 46 + 77, 158 + 5, 1) ==
                 M11_GAME_INPUT_REDRAW,
-                "M11 Theron forcefield action loads the dungeon");
+                "M11 Theron forcefield click loads the dungeon");
     expect_true(world != NULL && world->level_loaded[0][0] == 1,
                 "M11 loaded the initial Theron level after forcefield");
     expect_true(world != NULL &&

@@ -12563,6 +12563,54 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
 static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
                                                      int slotBoxIndex);
 
+static M11_GameInputResult m11_theron_handle_startup_pointer(
+    M11_GameViewState* state,
+    int x,
+    int y) {
+    M11_TheronStartupElement elements[16];
+    int count;
+    int i;
+
+    if (!state ||
+        state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        state->theronState.startup_phase == THERON_STARTUP_PHASE_IN_DUNGEON ||
+        state->theronState.level_loaded) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    count = M11_GameView_GetTheronStartupLayout(
+        state,
+        elements,
+        (int)(sizeof(elements) / sizeof(elements[0])));
+    for (i = 0; i < count; ++i) {
+        const M11_TheronStartupElement *e = &elements[i];
+        if (e->w <= 0 || e->h <= 0 ||
+            !m11_point_in_rect(x, y, e->x, e->y, e->w, e->h)) {
+            continue;
+        }
+        if (e->kind == M11_THERON_STARTUP_ELEMENT_CONTINUE && e->enabled) {
+            state->theronState.save_resume_continue_focus = 1;
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+        }
+        if (e->kind == M11_THERON_STARTUP_ELEMENT_STAGE && e->enabled) {
+            state->theronState.selected_dungeon = e->dungeonId;
+            state->theronState.save_resume_continue_focus = 0;
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+        }
+        if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR && e->enabled) {
+            state->theronState.startup_cursor = e->mirrorIndex;
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+        }
+        if (e->kind == M11_THERON_STARTUP_ELEMENT_FORCEFIELD && e->enabled) {
+            state->theronState.startup_cursor =
+                THERON_STARTUP_HERO_MIRROR_COUNT;
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {
     if (!state) return;
     state->v1MouthVisualIconIndex = 0;
@@ -12699,6 +12747,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
         M11_GameView_DismissDialogOverlay(state);
         return M11_GAME_INPUT_REDRAW;
+    }
+
+    {
+        M11_GameInputResult theronStartupPointer =
+            m11_theron_handle_startup_pointer(state, x, y);
+        if (theronStartupPointer != M11_GAME_INPUT_IGNORED) {
+            return theronStartupPointer;
+        }
     }
 
     /* Endgame restart/quit controls.  ReDMCSB ENDGAME.C F0444 lines
