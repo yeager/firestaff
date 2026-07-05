@@ -11714,6 +11714,7 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->party_dir = CSB_V1_START_PARTY_DIR;
 
     profile->state     = CSB_STATE_TITLE;
+    profile->load_bonus_dungeon = 0;
     profile->paused    = 0;
     profile->victory   = 0;
     profile->game_over = 0;
@@ -11815,6 +11816,24 @@ int csb_v1_runtime_custom_background_skin_grid(
     if (out_loaded_level) *out_loaded_level = level;
     if (out_default_skin) *out_default_skin = (int)default_skin;
     return has_skin;
+}
+
+int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
+                                          int enabled)
+{
+    if (!profile) return 0;
+    /* ReDMCSB COMMAND.C lines 2438-2445 sets G1147_B_LoadBonusDungeon when
+     * C201_COMMAND_ENTRANCE_ENTER_BONUS_DUNGEON is selected.  LOADSAVE.C
+     * lines 2316-2334 later consumes that flag while trying the platform's
+     * bonus dungeon filename before falling back to the normal dungeon path. */
+    profile->load_bonus_dungeon = enabled ? 1 : 0;
+    return 1;
+}
+
+int csb_v1_runtime_get_load_bonus_dungeon(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    return (profile && profile->load_bonus_dungeon) ? 1 : 0;
 }
 
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
