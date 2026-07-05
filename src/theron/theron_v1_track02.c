@@ -536,6 +536,80 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_copy_user_data_window_by_role(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02UserDataWindowRole role,
+    size_t occurrence_index,
+    uint8_t *out_bytes,
+    size_t out_bytes_capacity,
+    size_t *out_byte_count,
+    Theron_Track02UserDataWindow *out_window) {
+
+    Theron_Track02UserDataWindowCatalog catalog;
+    Theron_Track02SignalStatus status;
+    size_t seen = 0u;
+
+    if (out_byte_count) {
+        *out_byte_count = 0u;
+    }
+    if (out_window) {
+        memset(out_window, 0, sizeof(*out_window));
+    }
+    if (!track02_data || track02_size == 0u || !out_bytes ||
+        !out_byte_count || role == THERON_TRACK02_USER_DATA_WINDOW_UNKNOWN) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    status = theron_v1_track02_catalog_user_data_windows(track02_data,
+                                                          track02_size,
+                                                          md5_hex,
+                                                          &catalog);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+
+    for (size_t i = 0u; i < catalog.entry_count; ++i) {
+        const Theron_Track02UserDataWindow *entry = &catalog.entries[i];
+        size_t user_data_offset = 0u;
+
+        if (entry->role != role) {
+            continue;
+        }
+        if (seen++ != occurrence_index) {
+            continue;
+        }
+        if (out_bytes_capacity < entry->byte_count) {
+            return THERON_TRACK02_SIGNAL_BAD_INPUT;
+        }
+
+        status = theron_v1_track02_copy_raw_user_data_range(
+            track02_data,
+            track02_size,
+            md5_hex,
+            entry->raw_offset,
+            entry->byte_count,
+            out_bytes,
+            out_bytes_capacity,
+            &user_data_offset);
+        if (status != THERON_TRACK02_SIGNAL_OK) {
+            return status;
+        }
+        if (user_data_offset != entry->user_data_offset) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+
+        *out_byte_count = entry->byte_count;
+        if (out_window) {
+            *out_window = *entry;
+        }
+        return THERON_TRACK02_SIGNAL_OK;
+    }
+
+    return THERON_TRACK02_SIGNAL_NOT_FOUND;
+}
+
 static int range_is_all_zero(const uint8_t *data, size_t size) {
     size_t i;
     for (i = 0; i < size; ++i) {

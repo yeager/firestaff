@@ -196,6 +196,17 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
     const char *md5_hex,
     Theron_Track02UserDataWindowCatalog *out_catalog);
 
+Theron_Track02SignalStatus theron_v1_track02_copy_user_data_window_by_role(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02UserDataWindowRole role,
+    size_t occurrence_index,
+    uint8_t *out_bytes,
+    size_t out_bytes_capacity,
+    size_t *out_byte_count,
+    Theron_Track02UserDataWindow *out_window);
+
 const char *theron_v1_track02_user_data_window_role_name(
     Theron_Track02UserDataWindowRole role);
 
