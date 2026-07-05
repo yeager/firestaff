@@ -255,7 +255,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 6u
+#define CSB_V1_RUNTIME_SAVE_VERSION 7u
 
 typedef struct {
     uint32_t magic;
@@ -306,6 +306,10 @@ typedef struct {
     uint32_t csbwin_appended_tail_fnv1a;
     int32_t csbwin_appended_tail_truncated;
     uint8_t csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
+    uint16_t active_group_state_count;
+    uint16_t active_group_state_reserved0;
+    CSB_V1_RuntimeActiveGroupState
+        active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
 } CSB_V1_RuntimeSaveImageV1;
 
 #define CSB_V1_RUNTIME_SAVE_V1_SIZE \
@@ -314,6 +318,8 @@ typedef struct {
     ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, csbwin_header_tail_valid))
 #define CSB_V1_RUNTIME_SAVE_V5_SIZE \
     ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, csbwin_appended_tail_valid))
+#define CSB_V1_RUNTIME_SAVE_V6_SIZE \
+    ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, active_group_state_count))
 
 static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
@@ -650,6 +656,10 @@ static void csb_v1_runtime_capture_save_image(
     memcpy(image->csbwin_appended_tail,
            profile->csbwin_appended_tail,
            sizeof(image->csbwin_appended_tail));
+    image->active_group_state_count = profile->active_group_state_count;
+    memcpy(image->active_group_state,
+           profile->active_group_state,
+           sizeof(image->active_group_state));
 }
 
 static int csb_v1_runtime_validate_projectile_list(
@@ -704,6 +714,32 @@ static int csb_v1_runtime_validate_explosion_list(
     return active_count == list->count;
 }
 
+static int csb_v1_runtime_validate_active_group_state(
+    const CSB_V1_RuntimeSaveImageV1 *image)
+{
+    uint16_t i;
+    uint16_t active = 0u;
+
+    if (!image) return 0;
+    if (image->active_group_state_count >
+        CSB_V1_RUNTIME_ACTIVE_GROUP_CAP) {
+        return 0;
+    }
+    for (i = 0u; i < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP; ++i) {
+        const CSB_V1_RuntimeActiveGroupState *state =
+            &image->active_group_state[i];
+        if (!state->valid) continue;
+        if (state->map_index < 0 ||
+            state->map_x < 0 ||
+            state->map_y < 0 ||
+            ((state->group_thing >> 10) & 0x0Fu) != 4u) {
+            return 0;
+        }
+        ++active;
+    }
+    return active == image->active_group_state_count;
+}
+
 static int csb_v1_runtime_apply_save_image(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_RuntimeSaveImageV1 *image,
@@ -720,6 +756,8 @@ static int csb_v1_runtime_apply_save_image(
            image->byte_size == CSB_V1_RUNTIME_SAVE_V4_SIZE) ||
           (image->version == 5u &&
            image->byte_size == CSB_V1_RUNTIME_SAVE_V5_SIZE) ||
+          (image->version == 6u &&
+           image->byte_size == CSB_V1_RUNTIME_SAVE_V6_SIZE) ||
           (image->version == CSB_V1_RUNTIME_SAVE_VERSION &&
            image->byte_size == sizeof(*image)))) {
         return -1;
@@ -835,6 +873,22 @@ static int csb_v1_runtime_apply_save_image(
         profile->csbwin_appended_tail_truncated = 0;
         memset(profile->csbwin_appended_tail, 0,
                sizeof(profile->csbwin_appended_tail));
+    }
+    if (image->byte_size >=
+        offsetof(CSB_V1_RuntimeSaveImageV1, active_group_state) +
+            sizeof(image->active_group_state)) {
+        if (!csb_v1_runtime_validate_active_group_state(image)) {
+            return -1;
+        }
+        profile->active_group_state_count =
+            image->active_group_state_count;
+        memcpy(profile->active_group_state,
+               image->active_group_state,
+               sizeof(profile->active_group_state));
+    } else {
+        profile->active_group_state_count = 0u;
+        memset(profile->active_group_state, 0,
+               sizeof(profile->active_group_state));
     }
 
     profile->party_state.PartyMapX = profile->party_x;
@@ -4536,6 +4590,99 @@ static int csb_v1_runtime_f0190_smoke_attack_for_creature(int creature_type)
     return 255;
 }
 
+static CSB_V1_RuntimeActiveGroupState *
+csb_v1_runtime_active_group_state_for(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int create)
+{
+    uint16_t i;
+    int first_empty = -1;
+
+    if (!profile || ((group_thing >> 10) & 0x0Fu) != 4u) {
+        return NULL;
+    }
+    for (i = 0u; i < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP; ++i) {
+        CSB_V1_RuntimeActiveGroupState *state =
+            &profile->active_group_state[i];
+        if (!state->valid) {
+            if (first_empty < 0) first_empty = (int)i;
+            continue;
+        }
+        if (state->group_thing == group_thing &&
+            state->map_index == level &&
+            state->map_x == map_x &&
+            state->map_y == map_y) {
+            return state;
+        }
+    }
+    if (!create || first_empty < 0 ||
+        profile->active_group_state_count >=
+            CSB_V1_RUNTIME_ACTIVE_GROUP_CAP) {
+        return NULL;
+    }
+    {
+        CSB_V1_RuntimeActiveGroupState *state =
+            &profile->active_group_state[first_empty];
+        memset(state, 0, sizeof(*state));
+        state->valid = 1;
+        state->group_thing = group_thing;
+        state->map_index = level;
+        state->map_x = map_x;
+        state->map_y = map_y;
+        ++profile->active_group_state_count;
+        return state;
+    }
+}
+
+static void csb_v1_runtime_clear_active_group_state(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y)
+{
+    CSB_V1_RuntimeActiveGroupState *state =
+        csb_v1_runtime_active_group_state_for(
+            profile,
+            group_thing,
+            level,
+            map_x,
+            map_y,
+            0);
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    if (profile->active_group_state_count > 0u) {
+        --profile->active_group_state_count;
+    }
+}
+
+static void csb_v1_runtime_write_f0190_flee_delay_to_active_group(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int flee_delay)
+{
+    CSB_V1_RuntimeActiveGroupState *state;
+
+    if (!profile || flee_delay <= 0) return;
+    state = csb_v1_runtime_active_group_state_for(
+        profile,
+        group_thing,
+        level,
+        map_x,
+        map_y,
+        1);
+    if (!state) return;
+    state->delay_fleeing_from_target =
+        (uint8_t)(flee_delay > 255 ? 255 : flee_delay);
+}
+
 static void csb_v1_runtime_write_f0190_flee_delay_to_item16(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
@@ -4623,6 +4770,13 @@ static void csb_v1_runtime_apply_f0190_fear_after_partial_kill(
         should_flee) {
         *inout_flags = (uint16_t)((*inout_flags & ~(uint16_t)0x000Fu) | 5u);
         csb_v1_runtime_write_u16(group_record + 14, *inout_flags);
+        csb_v1_runtime_write_f0190_flee_delay_to_active_group(
+            profile,
+            group_thing,
+            level,
+            map_x,
+            map_y,
+            flee_delay);
         csb_v1_runtime_write_f0190_flee_delay_to_item16(
             profile,
             group_thing,
@@ -4735,6 +4889,12 @@ static void csb_v1_runtime_pack_dead_group_creature(
             map_y);
         csb_v1_runtime_delete_group_events_at_square(
             profile,
+            level,
+            map_x,
+            map_y);
+        csb_v1_runtime_clear_active_group_state(
+            profile,
+            group_thing,
             level,
             map_x,
             map_y);

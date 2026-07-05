@@ -65,6 +65,7 @@ extern "C" {
 
 #define CSB_V1_MAX_PARTY_X  32
 #define CSB_V1_MAX_PARTY_Y  32
+#define CSB_V1_RUNTIME_ACTIVE_GROUP_CAP 110
 
 /* ── Deterministic tick config ────────────────────────────────────────── */
 /*
@@ -212,6 +213,15 @@ typedef struct {
     uint8_t single_monster_status[4];
 } CSB_V1_CSBWinRuntimeItem16;
 
+typedef struct {
+    int valid;
+    uint16_t group_thing;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint8_t delay_fleeing_from_target;
+} CSB_V1_RuntimeActiveGroupState;
+
 /* ── Runtime profile ─────────────────────────────────────────────────── */
 /*
  * CSB V1 runtime profile: everything that distinguishes CSB from DM1.
@@ -324,6 +334,9 @@ typedef struct {
     uint16_t                csbwin_timer_queue_summary_count;
     uint16_t                csbwin_timer_queue_summary_total;
     uint16_t                csbwin_timer_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
+    uint16_t                active_group_state_count;
+    CSB_V1_RuntimeActiveGroupState
+                            active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
     struct DM1_EventQueue_V1 timeline_queue;  /* ReDMCSB TIMELINE.C heap */
     struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
     uint32_t                timeline_dispatch_count;
