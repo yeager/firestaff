@@ -45,6 +45,7 @@ typedef struct {
     /* Dungeon state */
     int dungeon_level;
     int view_dir;
+    uint32_t leader_hand_object;
     int last_npc_level;
     int last_npc_x;
     int last_npc_y;
@@ -330,6 +331,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.time_of_day_minutes = 720;  /* noon */
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
+    g_dm2_runtime.leader_hand_object = 0u;
     g_dm2_runtime.last_npc_level = -1;
     g_dm2_runtime.last_npc_x = -1;
     g_dm2_runtime.last_npc_y = -1;
@@ -374,6 +376,7 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->time_of_day_minutes = gs->time_of_day;
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
+    rt->leader_hand_object = session->original_leader_hand_object;
     dm2_v1_weather_set(&rt->weather, session->rain_intensity > 0
                                       ? DM2_WEATHER_RAIN
                                       : DM2_WEATHER_CLEAR);
@@ -790,6 +793,14 @@ int dm2_v1_runtime_get_weather(void) {
 
 int dm2_v1_runtime_get_weather_intensity(void) {
     return g_dm2_runtime.weather.weather_intensity;
+}
+
+uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
+    return g_dm2_runtime.leader_hand_object;
+}
+
+void dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
+    g_dm2_runtime.leader_hand_object = object;
 }
 
 uint32_t dm2_v1_runtime_get_weather_seed(void) {
