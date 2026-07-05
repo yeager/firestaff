@@ -15328,6 +15328,11 @@ int m11_point_in_source_box(int px, int py, const int box[4]) {
     return px >= box[0] && px <= box[1] && py >= box[2] && py <= box[3];
 }
 
+static int m11_csb_f0329_throw_leader_hand(
+    M11_GameViewState* state,
+    int championIndex,
+    unsigned short leaderThing);
+
 /* Grab the first floor item from the front cell into the leader hand.
  * Mirrors ReDMCSB CLIKVIEW.C F0373. */
 static int m11_c080_grab_leader_hand(M11_GameViewState* state,
@@ -15459,11 +15464,37 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         !state->csbBootProfile) {
         return M11_GAME_INPUT_IGNORED;
     }
+    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
+    if (M11_GameView_GetV1LeaderHandThing(state) != THING_NONE &&
+        localY >= 14 && localY <= 69) {
+        unsigned short throwThing = M11_GameView_GetV1LeaderHandThing(state);
+        int championIndex = state->world.party.activeChampionIndex;
+        int throwSide = (localX < 112) ? 0 : 1;
+
+        if (!m11_csb_f0329_throw_leader_hand(
+                state,
+                championIndex,
+                throwThing)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        M11_GameView_ClearV1LeaderHandObject(state);
+        m11_sync_csb_state_from_profile(state, profile);
+        m11_set_status(state, "THROW",
+                       throwSide ? "THROWN RIGHT" : "THROWN LEFT");
+        /* ReDMCSB CLIKVIEW.C F0375 lines 243-285: accepted leader-hand
+         * throws consume the waiting input frame after F0329/F0328 creates
+         * the projectile.  Keep CSB runtime throws on the same C080 boundary
+         * without routing through DM1 GameWorld projectile storage. */
+        (void)m11_apply_tick(state, CMD_NONE, "THROW");
+        m11_set_status(state, "THROW",
+                       throwSide ? "THROWN RIGHT" : "THROWN LEFT");
+        m11_refresh_hash(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
     if (!m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
         return M11_GAME_INPUT_IGNORED;
     }
 
-    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
     switch (profile->runtime.party_dir & 3) {
         case 0: dy = -1; break;
         case 1: dx = 1; break;
@@ -22920,6 +22951,55 @@ static void m11_write_csb_runtime_leader_hand(
     if (runtime->csbwin_gameblock2_summary_valid) {
         runtime->csbwin_object_in_hand = thing;
     }
+}
+
+static int m11_csb_f0329_throw_leader_hand(
+    M11_GameViewState* state,
+    int championIndex,
+    unsigned short leaderThing)
+{
+    CSB_V1_RuntimeProfile* runtime;
+    CSB_V1_Champion* champion;
+    unsigned short savedActionHand;
+    int projectileSlot = -1;
+
+    if (!state ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        leaderThing == THING_NONE ||
+        leaderThing == THING_ENDOFLIST) {
+        return 0;
+    }
+    runtime = m11_mutable_csb_runtime_profile(state);
+    if (!runtime || !runtime->party_state_valid) return 0;
+    if (championIndex < 0 ||
+        championIndex >= runtime->party_state.ChampionCount ||
+        championIndex >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    champion = &runtime->party_state.Champions[championIndex];
+
+    /* ReDMCSB CHAMPION.C F0329 lines 2196-2208 temporarily routes the
+     * transient leader-hand object through C01 action hand before calling
+     * F0328, then restores the champion slot.  Keep CSB-owned runtime state
+     * on that same boundary instead of sending CSB throws through DM1
+     * GameWorld.projectiles/thing arrays. */
+    savedActionHand = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
+    champion->Slots[CSB_V1_SLOT_ACTION_HAND] = leaderThing;
+    if (!csb_v1_runtime_throw_action_hand(
+            runtime,
+            championIndex,
+            &projectileSlot)) {
+        champion->Slots[CSB_V1_SLOT_ACTION_HAND] = savedActionHand;
+        return 0;
+    }
+    champion->Slots[CSB_V1_SLOT_ACTION_HAND] = savedActionHand;
+    if (championIndex < state->world.party.championCount &&
+        championIndex < CHAMPION_MAX_PARTY) {
+        state->world.party.champions[championIndex]
+            .inventory[CHAMPION_SLOT_ACTION_HAND] = savedActionHand;
+    }
+    (void)projectileSlot;
+    return 1;
 }
 
 static void m11_write_csb_runtime_champion_vitals(

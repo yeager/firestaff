@@ -8361,7 +8361,11 @@ static int csb_v1_runtime_object_weight_for_thing(
         int total = 50;
         int guard = 0;
         if (record_size < 8) return total;
-        child = csb_v1_runtime_read_u16(record + 4);
+        /* ReDMCSB DEFS.H CONTAINER stores contained-object head in Slot at
+         * +2; +4 is the container Type word.  F0328/F0312 object-weight
+         * arithmetic must include live chest contents, not reinterpret Type
+         * bits as a child THING. */
+        child = csb_v1_runtime_read_u16(record + 2);
         while (child != THING_NONE &&
                child != THING_ENDOFLIST &&
                guard++ < DM1_SENSOR_POSSESSION_MAX_SCAN_STEPS) {
