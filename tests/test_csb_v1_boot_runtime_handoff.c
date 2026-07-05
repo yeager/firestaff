@@ -443,6 +443,9 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
           "utility flow INIT enters the utility disk prompt");
     CHECK(ctx.state == CSB_V1_UTIL_FLOW_INSERT_DISK,
           "utility flow reaches INSERT_DISK before verification");
+    CHECK(strstr(csb_v1_util_flow_prompt(&ctx),
+                 "CHAOS STRIKES BACK UTILITY DISK") != NULL,
+          "utility flow exposes the source utility disk prompt");
     CHECK(csb_v1_util_flow_step(&ctx) == 0,
           "utility flow advances from disk prompt to verification");
     CHECK(ctx.state == CSB_V1_UTIL_FLOW_VERIFY_DISK,
@@ -453,10 +456,18 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
           "utility flow preserves source-visible DISK_OK boundary");
     CHECK(ctx.disk_result == CSB_V1_UTIL_DISK_OK,
           "utility flow records an OK disk result from startup verification");
+    CHECK(strstr(csb_v1_util_flow_prompt(&ctx),
+                 "THAT'S THE CHAOS STRIKES BACK UTILITY DISK") != NULL,
+          "utility flow exposes the source disk-ok prompt");
     CHECK(csb_v1_util_flow_step(&ctx) == 0,
           "utility flow advances from DISK_OK to action selection");
     CHECK(ctx.state == CSB_V1_UTIL_FLOW_SELECT_ACTION,
           "utility flow reaches SELECT_ACTION from INIT path");
+    CHECK(strstr(csb_v1_util_flow_prompt(&ctx),
+                 "IMPORT CHAMPIONS FROM DUNGEON MASTER SAVE") != NULL &&
+              strstr(csb_v1_util_flow_prompt(&ctx),
+                     "START NEW GAME") != NULL,
+          "utility flow exposes the source action menu text");
     csb_v1_util_flow_set_action(&ctx, CSB_V1_UTIL_ACTION_IMPORT);
     CHECK(csb_v1_util_flow_step(&ctx) == 0,
           "utility flow import action enters IMPORT_CHAMPIONS");
@@ -467,6 +478,9 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
           "utility flow import step parses DM1 save");
     CHECK(ctx.state == CSB_V1_UTIL_FLOW_CONFIRM_IMPORT,
           "utility flow enters CONFIRM_IMPORT after successful import");
+    CHECK(strstr(csb_v1_util_flow_prompt(&ctx),
+                 "IMPORT THESE CHAMPIONS") != NULL,
+          "utility flow exposes the import confirmation prompt");
 
     csb_v1_util_flow_confirm_import(&ctx, 1);
     CHECK(csb_v1_util_flow_step(&ctx) == 0,

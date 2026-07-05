@@ -106,6 +106,9 @@ void csb_v1_util_flow_confirm_import(CSB_V1_UtilFlowContext *ctx,
 /* ── Get current state name for UI ──────────────────────────────────── */
 const char *csb_v1_util_flow_state_name(CSB_V1_UtilFlowState state);
 
+/* Get the source-style prompt/menu text for the current utility state. */
+const char *csb_v1_util_flow_prompt(const CSB_V1_UtilFlowContext *ctx);
+
 /* ── Get last error string ──────────────────────────────────────────── */
 const char *csb_v1_util_flow_last_error(CSB_V1_UtilFlowContext *ctx);
 
