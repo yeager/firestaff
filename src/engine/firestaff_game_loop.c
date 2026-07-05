@@ -466,9 +466,14 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
         dm2_v1_boot_print_summary(&s_dm2_boot);
         /* Enter game: allocate dungeon data and DM2 game state */
         (void)dm2_v1_boot_enter_game(&s_dm2_boot);
+        dm2_v1_runtime_init(&s_dm2_boot);
         /* Phase 5: init DM2 V2 runtime (smooth movement + V2 viewport).
          * Scale 2 = V2.0 EPX mode.  Source: dm2_v2_runtime.c */
         dm2_v2_runtime_init(2);
+        if (s_dm2_boot.graphics_dat) {
+            dm2_v1_runtime_set_viewport_asset_provider(
+                dm2_v1_boot_viewport_asset_fetch, &s_dm2_boot);
+        }
         /* Phase 3: init DM2 V2 HUD runtime (compass, depth, gold,
          * champion bars, action strip).  Gated on phase gate.
          * Source: dm2_v2_hud_runtime.c */
