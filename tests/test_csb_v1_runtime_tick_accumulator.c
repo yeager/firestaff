@@ -5054,6 +5054,90 @@ static void test_input_forward_c008_party_possession_sensor(void)
           "C008 negative fixture queues no timeline event");
 }
 
+static void make_two_level_current_stairs_fixture(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    uint8_t *raw,
+    size_t raw_size)
+{
+    make_real_format_square_event_dungeon(dungeon, raw, raw_size);
+    dungeon->level_count = 2;
+    dungeon->level_widths[1] = 3;
+    dungeon->level_heights[1] = 3;
+    dungeon->level_offsets[1] = 9;
+    raw[dungeon->level_offsets[0] + real_format_square_offset(1, 1)] =
+        (uint8_t)(3u << 5);
+    raw[dungeon->level_offsets[1] + real_format_square_offset(1, 1)] =
+        (uint8_t)((3u << 5) | 0x04u);
+
+    csb_v1_runtime_init(profile, NULL);
+    profile->chaos_magic.magic_initialized = 1;
+    profile->dungeon_handle = dungeon;
+    profile->current_level = 0;
+    profile->party_x = 1;
+    profile->party_y = 1;
+    profile->party_dir = CSB_V1_DIR_NORTH;
+}
+
+static void test_input_current_stairs_turn_and_back_take_stairs(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+    uint8_t raw[128];
+
+    /* ReDMCSB CLIKMENU.C F0365 lines 164-168 routes turns on a
+     * current stairs square to F0364_COMMAND_TakeStairs instead of
+     * rotation. F0366 lines 264-266 applies the same rule to MOVE_BACKWARD.
+     */
+    make_two_level_current_stairs_fixture(
+        &profile, &dungeon, raw, sizeof(raw));
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+              &queue,
+              DM1_V1_COMMAND_TURN_RIGHT,
+              0,
+              0) == 1,
+          "current-stairs fixture queues TURN_RIGHT");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "TURN_RIGHT on current stairs is consumed");
+    CHECK(result.stair_transition_applied == 1 &&
+              result.deferred_new_party_map_index_valid == 1 &&
+              result.deferred_new_party_map_index == 1,
+          "TURN_RIGHT on current stairs applies the deferred stairs transition");
+    CHECK(profile.current_level == 1 &&
+              result.old_party_level == 0 &&
+              result.new_party_level == 1,
+          "TURN_RIGHT on current stairs moves from level 0 to level 1");
+    CHECK(result.movement_step_applied == 0 &&
+              result.runtime_state_changed == 1,
+          "TURN_RIGHT on current stairs does not claim an ordinary movement step");
+
+    make_two_level_current_stairs_fixture(
+        &profile, &dungeon, raw, sizeof(raw));
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+              &queue,
+              DM1_V1_COMMAND_MOVE_BACKWARD,
+              0,
+              0) == 1,
+          "current-stairs fixture queues MOVE_BACKWARD");
+    CHECK(csb_v1_runtime_process_input_queue(
+              &profile, &queue, 0, 0, 0, &result) == 1,
+          "MOVE_BACKWARD on current stairs is consumed");
+    CHECK(result.stair_transition_applied == 1 &&
+              result.movement_step_attempted == 1 &&
+              result.movement_step_applied == 0,
+          "MOVE_BACKWARD on current stairs uses TakeStairs instead of bounded step");
+    CHECK(profile.current_level == 1 &&
+              profile.party_x == 1 &&
+              profile.party_y == 1 &&
+              result.disabled_movement_ticks_after == 1,
+          "MOVE_BACKWARD on current stairs lands on the matching lower stairs");
+}
+
 static void test_input_command_queue_turn_reaches_runtime_party_state(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -6045,6 +6129,7 @@ int main(void)
     test_explosion_c25_door_destruction_writeback();
     test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_forward_c008_party_possession_sensor();
+    test_input_current_stairs_turn_and_back_take_stairs();
     test_input_command_queue_turn_reaches_runtime_party_state();
     test_input_command_queue_move_boundary_does_not_claim_movement();
     test_csbwin_gameblock2_summary_applies_runtime_handoff();
