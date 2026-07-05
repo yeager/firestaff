@@ -155,26 +155,83 @@ static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
     int shop_id;
     int result;
     const DM2_V1_ShopState *shop_state;
+    const DM2_V1_ShopDescriptor *shop;
     DM2_V1_GameState *world;
 
     if (!dm2_v1_shop_is_active()) {
         return M11_GAME_INPUT_IGNORED;
     }
     shop_id = dm2_v1_shop_get_active_shop();
+    shop = dm2_v1_shop_get_builtin(shop_id);
+    shop_state = dm2_v1_shop_get_state();
+    if (state->dm2ShopSelectedStockIndex < 0) {
+        state->dm2ShopSelectedStockIndex = 0;
+    }
+    if (state->dm2ShopSelectedInventoryIndex < 0) {
+        state->dm2ShopSelectedInventoryIndex = 0;
+    }
+    if (shop && shop->stock_count > 0 &&
+        state->dm2ShopSelectedStockIndex >= shop->stock_count) {
+        state->dm2ShopSelectedStockIndex = shop->stock_count - 1;
+    }
+    if (shop_state && shop_state->inventory_count > 0 &&
+        state->dm2ShopSelectedInventoryIndex >= shop_state->inventory_count) {
+        state->dm2ShopSelectedInventoryIndex = shop_state->inventory_count - 1;
+    }
     if (input == M12_MENU_INPUT_BACK) {
         if (dm2_v1_shop_leave(shop_id)) {
+            state->dm2ShopSelectedStockIndex = 0;
+            state->dm2ShopSelectedInventoryIndex = 0;
             m11_set_status(state, "SHOP", "DM2 SHOP LEAVE");
             return M11_GAME_INPUT_REDRAW;
         }
         m11_set_status(state, "SHOP", "DM2 SHOP LEAVE FAILED");
         return M11_GAME_INPUT_REDRAW;
     }
+    if (input == M12_MENU_INPUT_UP) {
+        if (state->dm2ShopSelectedStockIndex > 0) {
+            --state->dm2ShopSelectedStockIndex;
+        }
+        m11_set_status(state, "SHOP", "DM2 SHOP STOCK");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_DOWN) {
+        if (shop && state->dm2ShopSelectedStockIndex + 1 < shop->stock_count) {
+            ++state->dm2ShopSelectedStockIndex;
+        }
+        m11_set_status(state, "SHOP", "DM2 SHOP STOCK");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_LEFT ||
+        input == M12_MENU_INPUT_TURN_LEFT) {
+        if (state->dm2ShopSelectedInventoryIndex > 0) {
+            --state->dm2ShopSelectedInventoryIndex;
+        }
+        m11_set_status(state, "SHOP", "DM2 SHOP INVENTORY");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_RIGHT ||
+        input == M12_MENU_INPUT_TURN_RIGHT) {
+        if (shop_state &&
+            state->dm2ShopSelectedInventoryIndex + 1 <
+                shop_state->inventory_count) {
+            ++state->dm2ShopSelectedInventoryIndex;
+        }
+        m11_set_status(state, "SHOP", "DM2 SHOP INVENTORY");
+        return M11_GAME_INPUT_REDRAW;
+    }
     if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
-        result = dm2_v1_shop_buy(shop_id, 0);
+        result = dm2_v1_shop_buy(shop_id, state->dm2ShopSelectedStockIndex);
         shop_state = dm2_v1_shop_get_state();
         world = (DM2_V1_GameState *)state->dm2World;
         if (world && shop_state) {
             world->gold = (int)shop_state->party_gold;
+        }
+        if (shop_state && shop_state->inventory_count > 0 &&
+            state->dm2ShopSelectedInventoryIndex >=
+                shop_state->inventory_count) {
+            state->dm2ShopSelectedInventoryIndex =
+                shop_state->inventory_count - 1;
         }
         m11_sync_dm2_state_from_runtime(state);
         m11_set_status(state, "SHOP",
@@ -182,11 +239,20 @@ static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
         return M11_GAME_INPUT_REDRAW;
     }
     if (input == M12_MENU_INPUT_DROP_ITEM) {
-        result = dm2_v1_shop_sell(shop_id, 0);
+        result = dm2_v1_shop_sell(shop_id,
+                                  state->dm2ShopSelectedInventoryIndex);
         shop_state = dm2_v1_shop_get_state();
         world = (DM2_V1_GameState *)state->dm2World;
         if (world && shop_state) {
             world->gold = (int)shop_state->party_gold;
+        }
+        if (shop_state && shop_state->inventory_count > 0 &&
+            state->dm2ShopSelectedInventoryIndex >=
+                shop_state->inventory_count) {
+            state->dm2ShopSelectedInventoryIndex =
+                shop_state->inventory_count - 1;
+        } else if (!shop_state || shop_state->inventory_count <= 0) {
+            state->dm2ShopSelectedInventoryIndex = 0;
         }
         m11_sync_dm2_state_from_runtime(state);
         m11_set_status(state, "SHOP",
@@ -12424,6 +12490,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
             if (square >= 0) {
                 if (dm2_v1_runtime_enter_shop(level, fx, fy) == 0) {
+                    state->dm2ShopSelectedStockIndex = 0;
+                    state->dm2ShopSelectedInventoryIndex = 0;
                     m11_set_status(state, "ACTION", "DM2 SHOP");
                 } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
                     m11_set_status(state, "ACTION", "DM2 INTERACT");

@@ -570,6 +570,8 @@ typedef struct {
         int party_x, party_y, party_dir;
         int tick_count;
     } dm2State;
+    int dm2ShopSelectedStockIndex;
+    int dm2ShopSelectedInventoryIndex;
 
     /* Accessibility: in-game font size scale (1..3).
      * Set from M12 launcher's fontScale setting via M11_GameLaunchSpec.fontScale.

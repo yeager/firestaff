@@ -412,33 +412,69 @@ int main(void) {
         expect_true(view.dm2State.party_x == 10 && view.dm2State.party_y == 6 &&
                     view.dm2State.party_dir == 0,
                     "M11 DM2 shop action mirrors the runtime shop-facing pose");
+        expect_true(view.dm2ShopSelectedStockIndex == 0 &&
+                    view.dm2ShopSelectedInventoryIndex == 0,
+                    "M11 DM2 shop entry resets stock and inventory selection");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    view.dm2ShopSelectedStockIndex == 1,
+                    "M11 DM2 shop down selects the next stock row");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    view.dm2ShopSelectedStockIndex == 2,
+                    "M11 DM2 shop down selects a later stock row");
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 shop action buys the first stocked item");
+                    "M11 DM2 shop action buys the selected stocked item");
         expect_true(strstr(view.lastOutcome, "DM2 SHOP BUY") != NULL,
                     "M11 DM2 shop buy reports transaction status");
         {
-            int first_price =
-                dm2_v1_shop_get_effective_price(DM2_SHOP_ID_GENERAL, 0);
-            int sell_price =
-                dm2_v1_shop_get_sell_price(DM2_SHOP_ID_GENERAL, 0);
-            uint32_t expected_gold = 375u - (uint32_t)first_price;
+            int mana_price =
+                dm2_v1_shop_get_effective_price(DM2_SHOP_ID_GENERAL, 2);
+            int heal_price =
+                dm2_v1_shop_get_effective_price(DM2_SHOP_ID_GENERAL, 1);
+            int heal_sell_price;
+            uint32_t expected_gold = 375u - (uint32_t)mana_price;
             expect_true(dm2_v1_shop_get_party_gold() == expected_gold &&
-                    dm2_v1_shop_get_state()->inventory_count == 1 &&
-                    dm2_v1_shop_buy_count() == 1,
-                    "DM2 shop buy mutates gold, inventory, and buy counter");
+                        dm2_v1_shop_get_state()->inventory_count == 1 &&
+                        dm2_v1_shop_get_state()->inventory_item[0] == 201u &&
+                        dm2_v1_shop_buy_count() == 1,
+                    "DM2 shop selected buy mutates gold, inventory item, and buy counter");
             expect_true(world->gold == (int)expected_gold,
                     "M11 DM2 shop buy mirrors gold back to the boot-owned world");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                            M11_GAME_INPUT_REDRAW &&
+                        view.dm2ShopSelectedStockIndex == 1,
+                        "M11 DM2 shop up selects the previous stock row");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 shop action buys the newly selected stock row");
+            expected_gold -= (uint32_t)heal_price;
+            expect_true(dm2_v1_shop_get_party_gold() == expected_gold &&
+                        dm2_v1_shop_get_state()->inventory_count == 2 &&
+                        dm2_v1_shop_get_state()->inventory_item[0] == 201u &&
+                        dm2_v1_shop_get_state()->inventory_item[1] == 200u &&
+                        dm2_v1_shop_buy_count() == 2,
+                        "DM2 shop second selected buy appends the chosen item");
+            expect_true(M11_GameView_HandleInput(&view,
+                                                 M12_MENU_INPUT_RIGHT) ==
+                            M11_GAME_INPUT_REDRAW &&
+                        view.dm2ShopSelectedInventoryIndex == 1,
+                        "M11 DM2 shop right selects the next inventory row");
+            heal_sell_price =
+                dm2_v1_shop_get_sell_price(DM2_SHOP_ID_GENERAL, 1);
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DROP_ITEM) ==
                             M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 shop drop-item sells the first inventory item");
+                        "M11 DM2 shop drop-item sells the selected inventory item");
             expect_true(strstr(view.lastOutcome, "DM2 SHOP SELL") != NULL,
                         "M11 DM2 shop sell reports transaction status");
-            expected_gold += (uint32_t)sell_price;
+            expected_gold += (uint32_t)heal_sell_price;
             expect_true(dm2_v1_shop_get_party_gold() == expected_gold &&
-                        dm2_v1_shop_get_state()->inventory_count == 0 &&
+                        dm2_v1_shop_get_state()->inventory_count == 1 &&
+                        dm2_v1_shop_get_state()->inventory_item[0] == 201u &&
+                        view.dm2ShopSelectedInventoryIndex == 0 &&
                         dm2_v1_shop_sell_count() == 1,
-                        "DM2 shop sell mutates gold, inventory, and sell counter");
+                        "DM2 selected shop sell mutates gold, inventory, selection, and sell counter");
             expect_true(world->gold == (int)expected_gold,
                         "M11 DM2 shop sell mirrors gold back to the boot-owned world");
         }
