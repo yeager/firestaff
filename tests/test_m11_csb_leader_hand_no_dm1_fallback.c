@@ -236,6 +236,8 @@ int main(void)
             write_u16(raw + 96, dagger);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
+            check(framebuffer[95 * 320 + 112] == 0x0D,
+                  "CSB M11 draw marks a runtime group from CSB square thing chain without DM1 world.things");
             check(framebuffer[117 * 320 + 112] ==
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
                   "CSB M11 draw marks a runtime floor object from CSB square thing chain without DM1 world.things");

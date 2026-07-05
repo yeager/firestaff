@@ -131,6 +131,18 @@ static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          int dstX,
                                          int dstY,
                                          int applyActionPalette);
+static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int fbW,
+                                       int fbH,
+                                       int x,
+                                       int y,
+                                       int w,
+                                       int h,
+                                       int creatureType,
+                                       int depthIndex,
+                                       int sideHint,
+                                       int creatureDir);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -771,6 +783,19 @@ static int m11_csb_thing_type_is_floor_object(int thing_type)
            thing_type == THING_TYPE_JUNK;
 }
 
+static int m11_csb_runtime_group_direction(const uint8_t *record, int size)
+{
+    unsigned int flags;
+
+    if (!record || size < 16) {
+        return 0;
+    }
+    /* ReDMCSB GROUP.C stores the shared primary group direction in
+     * GROUP.Dir bits 8..9 for non-active C04 records. */
+    flags = (unsigned int)record[14] | ((unsigned int)record[15] << 8);
+    return (int)((flags >> 8) & 0x03u);
+}
+
 static void m11_csb_map_from_relative(int party_dir,
                                       int party_x,
                                       int party_y,
@@ -889,6 +914,119 @@ static void m11_draw_csb_runtime_floor_object_overlays(
     }
 }
 
+static void m11_csb_mark_runtime_group(unsigned char *framebuffer,
+                                       int framebuffer_width,
+                                       int framebuffer_height,
+                                       int x,
+                                       int y)
+{
+    static const unsigned char color = 0x0Du;
+
+    if (!framebuffer || x < 2 || x + 2 >= framebuffer_width ||
+        y < 2 || y + 2 >= framebuffer_height) {
+        return;
+    }
+    framebuffer[y * framebuffer_width + x] = color;
+    framebuffer[(y - 1) * framebuffer_width + x] = color;
+    framebuffer[(y + 1) * framebuffer_width + x] = color;
+    framebuffer[y * framebuffer_width + x - 1] = color;
+    framebuffer[y * framebuffer_width + x + 1] = color;
+    framebuffer[(y - 2) * framebuffer_width + x] = color;
+    framebuffer[(y + 2) * framebuffer_width + x] = color;
+}
+
+static void m11_draw_csb_runtime_group_overlays(
+    const M11_GameViewState *state,
+    const CSB_V1_BootProfile *profile,
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height)
+{
+    const CSB_V1_RuntimeProfile *runtime;
+    const CSB_V1_DungeonData *dungeon;
+    int forward;
+    int side;
+
+    if (!state || !profile || !framebuffer ||
+        framebuffer_width <= 0 || framebuffer_height <= 0) {
+        return;
+    }
+    runtime = &profile->runtime;
+    dungeon = runtime->dungeon_handle;
+    if (!dungeon) return;
+
+    for (forward = 3; forward >= 1; --forward) {
+        for (side = -1; side <= 1; ++side) {
+            int map_x;
+            int map_y;
+            int first_thing;
+            unsigned short thing;
+            int safety = 0;
+
+            m11_csb_map_from_relative(runtime->party_dir,
+                                      runtime->party_x,
+                                      runtime->party_y,
+                                      forward,
+                                      side,
+                                      &map_x,
+                                      &map_y);
+            first_thing = csb_v1_dungeon_get_first_thing(
+                dungeon,
+                runtime->current_level,
+                map_x,
+                map_y);
+            if (first_thing < 0) continue;
+            thing = (unsigned short)first_thing;
+            while (thing != THING_ENDOFLIST && thing != THING_NONE &&
+                   safety++ < 64) {
+                int type = -1;
+                int size = 0;
+                const uint8_t *record =
+                    csb_v1_dungeon_get_thing_record(dungeon,
+                                                    thing,
+                                                    &type,
+                                                    NULL,
+                                                    &size);
+                if (type == THING_TYPE_GROUP && record && size >= 16) {
+                    int creature_type = (int)record[4];
+                    int creature_dir =
+                        m11_csb_runtime_group_direction(record, size);
+                    int depth_index = forward - 1;
+                    int x = 112 + side * 42;
+                    int y = 33 + 86 - forward * 24;
+                    int sprite_w = 54 - depth_index * 12;
+                    int sprite_h = 70 - depth_index * 14;
+
+                    if (sprite_w < 20) sprite_w = 20;
+                    if (sprite_h < 28) sprite_h = 28;
+                    if (creature_type >= 0 &&
+                        m11_draw_creature_sprite_ex(state,
+                                                    framebuffer,
+                                                    framebuffer_width,
+                                                    framebuffer_height,
+                                                    x - sprite_w / 2,
+                                                    y - sprite_h / 2,
+                                                    sprite_w,
+                                                    sprite_h,
+                                                    creature_type,
+                                                    depth_index,
+                                                    side,
+                                                    creature_dir)) {
+                        break;
+                    }
+                    m11_csb_mark_runtime_group(framebuffer,
+                                               framebuffer_width,
+                                               framebuffer_height,
+                                               x,
+                                               y);
+                    break;
+                }
+                thing = m11_csb_runtime_next_thing(dungeon, thing);
+            }
+        }
+    }
+}
+
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -979,6 +1117,12 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                 &binding);
         }
     }
+    m11_draw_csb_runtime_group_overlays(
+        state,
+        profile,
+        framebuffer,
+        framebufferWidth,
+        framebufferHeight);
     m11_draw_csb_runtime_floor_object_overlays(
         state,
         profile,
