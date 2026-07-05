@@ -12369,7 +12369,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             int square = dm2_v1_runtime_get_square_type(level, fx, fy);
 
             if (square >= 0) {
-                if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
+                if (dm2_v1_runtime_enter_shop(level, fx, fy) == 0) {
+                    m11_set_status(state, "ACTION", "DM2 SHOP");
+                } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
                     m11_set_status(state, "ACTION", "DM2 INTERACT");
                 } else if (dm2_v1_runtime_invoke_actuator(
                                level, fx, fy,

@@ -14,6 +14,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_shop.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -295,7 +296,8 @@ int main(void) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 action input redraws through runtime interaction");
-        expect_true(strstr(view.lastOutcome, "DM2 INTERACT") != NULL ||
+        expect_true(strstr(view.lastOutcome, "DM2 SHOP") != NULL ||
+                    strstr(view.lastOutcome, "DM2 INTERACT") != NULL ||
                     strstr(view.lastOutcome, "DM2 ACTUATOR") != NULL ||
                     strstr(view.lastOutcome, "DM2 NO TARGET") != NULL,
                     "M11 DM2 action reports a bounded runtime action status");
@@ -337,6 +339,23 @@ int main(void) {
                     "DM2 V1 world starts at the source-locked boot pose");
         expect_true(world->current_level == 0,
                     "DM2 V1 world starts on level zero");
+        world->gold = 375;
+        dm2_v1_shop_reset_state();
+        dm2_v1_runtime_set_position(0, 10, 6, 0);
+        dm2_v1_runtime_set_outdoor(1);
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 action opens a runtime shop from the front square");
+        expect_true(strstr(view.lastOutcome, "DM2 SHOP") != NULL,
+                    "M11 DM2 shop action reports shop status");
+        expect_true(dm2_v1_shop_is_active() == 1 &&
+                    dm2_v1_shop_get_active_shop() == DM2_SHOP_ID_GENERAL,
+                    "DM2 runtime shop action activates General Store");
+        expect_true(dm2_v1_shop_get_party_gold() == 375u,
+                    "DM2 runtime shop action syncs party gold into shop state");
+        expect_true(view.dm2State.party_x == 10 && view.dm2State.party_y == 6 &&
+                    view.dm2State.party_dir == 0,
+                    "M11 DM2 shop action mirrors the runtime shop-facing pose");
     }
 
     expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,

@@ -19,6 +19,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_shop.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -93,13 +94,29 @@ static void test_first_tick_after_boot_profile_handoff(void)
           dm2_v1_runtime_get_weather_intensity() == 64,
           "session apply updates runtime weather state");
 
+    state->gold = 240;
+    dm2_v1_shop_reset_state();
+    dm2_v1_runtime_set_position(0, 10, 6, 0);
+    dm2_v1_runtime_set_outdoor(1);
+    CHECK(dm2_v1_runtime_enter_shop(0, 10, 5) == 0,
+          "runtime enters a catalog-backed DM2 shop by map position");
+    CHECK(dm2_v1_shop_is_active() == 1 &&
+          dm2_v1_shop_get_active_shop() == DM2_SHOP_ID_GENERAL,
+          "runtime shop entry activates the General Store");
+    CHECK(dm2_v1_shop_get_party_gold() == 240u,
+          "runtime shop entry syncs party gold into shop state");
+    CHECK(state->party_x == 10 && state->party_y == 6 &&
+          state->party_dir == 0 && state->current_level == 0 &&
+          state->outdoor == 1,
+          "runtime position/outdoor setters update boot-owned game state");
+
     dm2_v1_runtime_tick();
     CHECK(dm2_v1_runtime_get_tick_count() == 78,
           "first deterministic DM2 V1 runtime tick is observable");
-    CHECK(dm2_v1_runtime_get_party_x() == 19 &&
-          dm2_v1_runtime_get_party_y() == 12 &&
-          dm2_v1_runtime_get_party_dir() == 3,
-          "first tick preserves the resumed snapped party state");
+    CHECK(dm2_v1_runtime_get_party_x() == 10 &&
+          dm2_v1_runtime_get_party_y() == 6 &&
+          dm2_v1_runtime_get_party_dir() == 0,
+          "first tick preserves the shop-facing snapped party state");
 
     dm2_v1_boot_cleanup(&profile);
 }
