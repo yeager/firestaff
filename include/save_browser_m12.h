@@ -79,8 +79,10 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
     char* outPath,
     int outPathSize);
 
-/* Import a firestaff-*.sav file into dataDir. Existing destination files
- * are preserved. Returns 0 on success and optionally writes the target path. */
+/* Import a launcher-visible save into dataDir. Firestaff names are copied
+ * by basename; known original/CSBWin CSB basenames must validate through
+ * the CSB runtime loader first. Existing destination files are preserved.
+ * Returns 0 on success and optionally writes the target path. */
 int M12_SaveBrowser_ImportFile(const char* dataDir,
                                const char* importPath,
                                char* outPath,

@@ -1,4 +1,5 @@
 #include "save_browser_m12.h"
+#include "csbwin_resume_fixture.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_save_load.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
@@ -489,6 +490,37 @@ int main(void) {
     check(write_bytes(badPath, "NOPE"), "wrote bad import fixture");
     check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath, (int)sizeof(outPath)) == -1,
           "non firestaff save filename rejected");
+    snprintf(badPath, sizeof(badPath), "%s/DMSAVE.DAT", backupDir);
+    check(write_bytes(badPath, "NOT-A-CSBWIN-SAVE"),
+          "wrote invalid original-name CSB save fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == -1,
+          "invalid original-name CSB save import rejected before copy");
+    snprintf(badPath, sizeof(badPath), "%s/CSBGAME.DAT", backupDir);
+    check(firestaff_test_write_csbwin_resume_fixture(badPath, 0),
+          "wrote valid CSBWin original-name import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == 0,
+          "valid original-name CSB save import accepted");
+    check(strstr(outPath, "/data/CSBGAME.DAT") != NULL,
+          "original-name CSB import reports data-dir destination");
+    check(M12_SaveBrowser_Scan(&state, dataDir) >= 1,
+          "scan runs after original-name CSB import");
+    {
+        const M12_SaveBrowserEntry* imported =
+            find_entry(&state, "CSBGAME.DAT");
+        check(imported != NULL, "imported original-name CSB entry present");
+        if (imported) {
+            check(imported->valid == 1,
+                  "imported original-name CSB entry is loadable");
+            check(strcmp(imported->gameId, "csb") == 0,
+                  "imported original-name CSB entry is classified as CSB");
+        }
+    }
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, NULL, 0) == -1,
+          "duplicate original-name CSB import preserves existing destination");
+    check(unlink(outPath) == 0,
+          "removed imported original-name CSB save before manifest scan");
     check(M12_SaveBrowser_ExportSelected(NULL, backupDir, outPath, (int)sizeof(outPath)) == -1,
           "NULL export state rejected");
 

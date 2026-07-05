@@ -114,6 +114,17 @@ static int is_csb_original_save_basename(const char* name) {
            ascii_equal_ci(name, "DMSAVE.BAK");
 }
 
+static int validate_csb_original_save_import_path(const char* path) {
+    CSB_V1_RuntimeProfile runtime;
+    int rc;
+
+    if (!path || !*path) return 0;
+    csb_v1_runtime_init(&runtime, NULL);
+    rc = csb_v1_runtime_load_game_from_path(&runtime, path);
+    csb_v1_runtime_cleanup(&runtime);
+    return rc == CSB_V1_LOAD_OK;
+}
+
 /* Check if filename matches a launcher-visible save candidate. */
 static int is_save_file(const char* name) {
     size_t len;
@@ -937,6 +948,10 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
     }
     base = path_basename(importPath);
     if (!is_save_file(base)) {
+        return -1;
+    }
+    if (is_csb_original_save_basename(base) &&
+        !validate_csb_original_save_import_path(importPath)) {
         return -1;
     }
     snprintf(dst, sizeof(dst), "%s/%s", dataDir, base);

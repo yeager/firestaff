@@ -24698,6 +24698,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/save_browser_m12.c")
     add_executable(test_save_browser_export_import_m12
         tests/test_save_browser_export_import_m12.c
+        tests/csbwin_resume_fixture.c
         src/shared/save_browser_m12.c
         src/dm1/dm1_v1_save_load.c
     )
