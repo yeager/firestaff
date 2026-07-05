@@ -334,10 +334,18 @@ int main(void) {
                     cont != NULL &&
                     cont->saveKind == 1 &&
                     cont->saveSlot == 2 &&
+                    cont->x == 40 &&
+                    cont->y == 58 &&
+                    cont->w > 0 &&
+                    cont->h > 0 &&
                     stage1 != NULL &&
                     stage1->enabled == 1 &&
                     stage1->selected == 1 &&
-                    stage1->cursor == 1,
+                    stage1->cursor == 1 &&
+                    stage1->x == 40 &&
+                    stage1->y == 70 &&
+                    stage1->w > 0 &&
+                    stage1->h > 0,
                     "M11 Theron startup layout exposes machine-readable stage state");
     }
 
@@ -394,9 +402,17 @@ int main(void) {
                     mirror0 != NULL &&
                     mirror0->cursor == 1 &&
                     mirror0->selected == 0 &&
+                    mirror0->x == 46 &&
+                    mirror0->y == 76 &&
+                    mirror0->w > 0 &&
+                    mirror0->h > 0 &&
                     strcmp(mirror0->label, "Hakar") == 0 &&
                     forcefield != NULL &&
-                    forcefield->enabled == 0,
+                    forcefield->enabled == 0 &&
+                    forcefield->x == 46 &&
+                    forcefield->y == 158 &&
+                    forcefield->w > 0 &&
+                    forcefield->h > 0,
                     "M11 Theron startup layout exposes Soul Room mirrors and gated forcefield");
     }
     for (i = 0; i < 6; ++i) {
@@ -437,6 +453,10 @@ int main(void) {
                     pental->selected == 1 &&
                     pental->selectedOrder == 1 &&
                     pental->cursor == 1 &&
+                    pental->x == 46 &&
+                    pental->y == 142 &&
+                    pental->w > 0 &&
+                    pental->h > 0 &&
                     forcefield != NULL &&
                     forcefield->enabled == 1,
                     "M11 Theron startup layout exposes selected mirror order and enabled forcefield");

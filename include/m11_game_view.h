@@ -47,6 +47,10 @@ typedef struct {
     int selectedOrder;
     int saveKind; /* 0=none, 1=TQSV, 2=SRM */
     int saveSlot;
+    int x;
+    int y;
+    int w;
+    int h;
     char label[M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
 } M11_TheronStartupElement;
 

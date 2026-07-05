@@ -35400,6 +35400,19 @@ static void m11_theron_startup_layout_set_label(
              label ? label : "");
 }
 
+static void m11_theron_startup_layout_set_rect(
+    M11_TheronStartupElement* element,
+    int x,
+    int y,
+    int w,
+    int h) {
+    if (!element) return;
+    element->x = x;
+    element->y = y;
+    element->w = w;
+    element->h = h;
+}
+
 int M11_GameView_GetTheronStartupLayout(
     const M11_GameViewState* state,
     M11_TheronStartupElement* elements,
@@ -35423,6 +35436,7 @@ int M11_GameView_GetTheronStartupLayout(
     elements[count].phase = state->theronState.startup_phase;
     elements[count].enabled = 1;
     m11_theron_startup_layout_set_label(&elements[count], "THERON'S QUEST");
+    m11_theron_startup_layout_set_rect(&elements[count], 34, 22, 152, 12);
     ++count;
     if (count >= maxElements) return count;
 
@@ -35430,6 +35444,7 @@ int M11_GameView_GetTheronStartupLayout(
         int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
         int has_srm_continue = m11_theron_srm_continue_available(state);
         int has_continue = has_tqsv_continue || has_srm_continue;
+        int rowY = 58;
 
         selected = state->theronState.selected_dungeon;
         if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
@@ -35451,7 +35466,10 @@ int M11_GameView_GetTheronStartupLayout(
             m11_theron_startup_layout_set_label(
                 &elements[count],
                 has_tqsv_continue ? "CONTINUE TQSV" : "CONTINUE SRM");
+            m11_theron_startup_layout_set_rect(
+                &elements[count], 40, rowY, 168, 10);
             ++count;
+            rowY += 12;
         }
         for (i = THERON_DUNGEON_1_HALL_OF_RECORDS;
              i <= THERON_DUNGEON_COUNT && count < maxElements;
@@ -35470,6 +35488,8 @@ int M11_GameView_GetTheronStartupLayout(
             m11_theron_startup_layout_set_label(
                 &elements[count],
                 meta ? meta->name : "Unknown");
+            m11_theron_startup_layout_set_rect(
+                &elements[count], 40, rowY + (i - 1) * 13, 220, 10);
             ++count;
         }
         return count;
@@ -35494,6 +35514,8 @@ int M11_GameView_GetTheronStartupLayout(
         m11_theron_startup_layout_set_label(
             &elements[count],
             meta ? meta->name : "Hero Mirror");
+        m11_theron_startup_layout_set_rect(
+            &elements[count], 46, 76 + i * 11, 230, 10);
         ++count;
     }
     if (count < maxElements) {
@@ -35507,6 +35529,7 @@ int M11_GameView_GetTheronStartupLayout(
                 : 0;
         elements[count].selected = elements[count].cursor;
         m11_theron_startup_layout_set_label(&elements[count], "FORCEFIELD");
+        m11_theron_startup_layout_set_rect(&elements[count], 46, 158, 154, 10);
         ++count;
     }
     return count;
