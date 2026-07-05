@@ -84,6 +84,29 @@ static int dm2_runtime_raw_is_door_square(uint16_t square_raw) {
            square_type == DM2_RUNTIME_DOOR_RAW_CLOSED_SENTINEL;
 }
 
+static int dm2_runtime_square_type_at(const DM2_V1_DungeonData *dd,
+                                      int level,
+                                      int x,
+                                      int y,
+                                      int raw) {
+    int square_type;
+
+    if (!dd) return raw & DM2_SQUARE_TYPE_MASK;
+    square_type = dm2_v1_dungeon_get_square_type(dd, level, x, y);
+    if (square_type >= 0) return square_type;
+    return raw & DM2_SQUARE_TYPE_MASK;
+}
+
+static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
+                                  int level,
+                                  int x,
+                                  int y,
+                                  int raw) {
+    int square_type = dm2_runtime_square_type_at(dd, level, x, y, raw);
+    return square_type == DM2_SQUARE_DOOR ||
+           dm2_runtime_raw_is_door_square((uint16_t)raw);
+}
+
 static void dm2_runtime_apply_door_record_metadata(
     DM2_V1_DungeonData *dd,
     int level,
@@ -602,11 +625,13 @@ int dm2_v1_runtime_move(int dir) {
         if (raw < 0) {
             blocked = 1;
         } else {
-            int tile_type = raw & 0x001F;
+            int tile_type = dm2_runtime_square_type_at(
+                dd, rt->dungeon_level, nx, ny, raw);
             /* Impassable tile types: wall (0), pit (5), lava (11), inaccessible (13) */
             if (tile_type == 0 || tile_type == 5 || tile_type == 11 || tile_type == 13) {
                 blocked = 1;
-            } else if (dm2_runtime_raw_is_door_square((uint16_t)raw)) {
+            } else if (dm2_runtime_is_door_at(
+                           dd, rt->dungeon_level, nx, ny, raw)) {
                 /* Door tile: door state in lower 3 bits.
                  * DM2_DOOR_STATE_OPEN=0 (passable), DM2_DOOR_STATE_CLOSED=4 (impassable).
                  * Source: dm2_v1_object_model.h DM2_DoorState enum.
@@ -819,12 +844,12 @@ int dm2_v1_runtime_is_passable(int level, int x, int y) {
     raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
     if (raw < 0) return 0;
 
-    tile_type = raw & 0x001F;
+    tile_type = dm2_runtime_square_type_at(dd, level, x, y, raw);
     if (tile_type == 0 || tile_type == 5 ||
         tile_type == 11 || tile_type == 13) {
         return 0;
     }
-    if (dm2_runtime_raw_is_door_square((uint16_t)raw) &&
+    if (dm2_runtime_is_door_at(dd, level, x, y, raw) &&
         (raw & 0x0007) != 0) {
         return 0;
     }
@@ -847,7 +872,7 @@ int dm2_v1_runtime_door_action(int level,
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
     if (raw < 0) return -1;
-    if (!dm2_runtime_raw_is_door_square((uint16_t)raw)) return -1;
+    if (!dm2_runtime_is_door_at(dd, level, x, y, raw)) return -1;
 
     state = dm2_runtime_door_state((uint16_t)raw);
     next_state = dm2_runtime_door_step(state, action);
@@ -866,7 +891,7 @@ int dm2_v1_runtime_get_door_state(int level, int x, int y) {
     if (!rt->boot || !rt->boot->dungeon_data) return -1;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
-    if (raw < 0 || !dm2_runtime_raw_is_door_square((uint16_t)raw)) return -1;
+    if (raw < 0 || !dm2_runtime_is_door_at(dd, level, x, y, raw)) return -1;
     return dm2_runtime_door_state((uint16_t)raw);
 }
 

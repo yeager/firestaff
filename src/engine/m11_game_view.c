@@ -13260,12 +13260,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             int fy = dm2_v1_runtime_get_party_y() + dy[dir];
             int square = dm2_v1_runtime_get_square_type(level, fx, fy);
 
-            if (square >= 0) {
-                if (dm2_v1_runtime_enter_shop(level, fx, fy) == 0) {
-                    state->dm2ShopSelectedStockIndex = 0;
-                    state->dm2ShopSelectedInventoryIndex = 0;
-                    m11_set_status(state, "ACTION", "DM2 SHOP");
-                } else if (square == 4 &&
+            if (dm2_v1_runtime_enter_shop(level, fx, fy) == 0) {
+                state->dm2ShopSelectedStockIndex = 0;
+                state->dm2ShopSelectedInventoryIndex = 0;
+                m11_set_status(state, "ACTION", "DM2 SHOP");
+                m11_sync_dm2_state_from_runtime(state);
+                return M11_GAME_INPUT_REDRAW;
+            } else if (square >= 0) {
+                if (square == 4 &&
                            dm2_v1_runtime_door_action(level, fx, fy,
                                                        dir, 0) == 0) {
                     m11_set_status(state, "ACTION", "DM2 DOOR");

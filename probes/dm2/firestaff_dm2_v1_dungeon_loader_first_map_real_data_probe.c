@@ -5,13 +5,13 @@
  * test_dm2_v1_dungeon_loader_first_map_gate. It finds the canonical DM2
  * DUNGEON.DAT by MD5 under a user data root, materializes archive-backed
  * matches into a temporary file when needed, and pins the loader's map-0
- * metadata plus a few deterministic tile reads.
+ * metadata plus a few deterministic byte-square reads.
  *
  * Source-lock:
  *   ReDMCSB DEFS.H lines 989-998: DUNGEON_HEADER.MapCount.
- *   ReDMCSB DEFS.H lines 1049-1116: MAP.RawMapDataByteOffset.
- *   dm2_v1_dungeon_loader.c: DM2 PC G1 preamble, 28 descriptors, and
- *   column-major uint16 square-word access for the first map.
+ *   skproject SKWIN/DME.h Map_definitions: map offset and w8 dimensions.
+ *   dm2_v1_dungeon_loader.c: DM2 PC G1 preamble, 28 map definitions, and
+ *   column-major byte-square access for the first map.
  *
  * Exit code: 0 on PASS or SKIP, 1 on a verified-data regression.
  */
@@ -186,6 +186,10 @@ static void probe_first_map(const unsigned char *raw, int size)
           "map count byte is 28");
     CHECK(read16le(raw + DM2_HEADER_SIZE) == 0U,
           "map-0 RawMapDataByteOffset is zero");
+    CHECK((((read16le(raw + DM2_HEADER_SIZE + 8) >> 6) & 0x1fU) + 1U) == 7U,
+          "map-0 skproject width is 7");
+    CHECK((((read16le(raw + DM2_HEADER_SIZE + 8) >> 11) & 0x1fU) + 1U) == 10U,
+          "map-0 skproject height is 10");
 
     load_rc = dm2_v1_dungeon_load(&dungeon, raw, size);
     CHECK(load_rc == 0, "dm2_v1_dungeon_load accepts verified real data");
@@ -195,31 +199,35 @@ static void probe_first_map(const unsigned char *raw, int size)
           "loader preserves the 28-level map count");
     CHECK(dungeon.level_offsets[0] == 0,
           "loader preserves map-0 tile-data offset");
-    CHECK(dungeon.level_widths[0] == 64,
-          "loader reports map-0 width as 64");
-    CHECK(dungeon.level_heights[0] == 64,
-          "loader reports map-0 height as 64");
+    CHECK(dungeon.square_bytes == 1,
+          "loader selects the PC G1 byte-square layout");
+    CHECK(dungeon.raw_map_data_base == DM2_TILE_DATA_START,
+          "loader starts byte-square data immediately after map definitions");
+    CHECK(dungeon.level_widths[0] == 7,
+          "loader reports map-0 width from Map_definitions.w8");
+    CHECK(dungeon.level_heights[0] == 10,
+          "loader reports map-0 height from Map_definitions.w8");
     CHECK(dm2_v1_dungeon_is_outdoor(&dungeon, 0) == 1,
           "map 0 is classified as outdoor");
     CHECK(dungeon.raw_size == size && dungeon.raw_data != NULL,
           "loader retains raw dungeon bytes for tile lookups");
 
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 0) == 0x1e62,
-          "map-0 tile(0,0) raw word is stable");
-    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 0) == 2,
-          "map-0 tile(0,0) type masks to 2");
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 1) == 0x0002,
-          "map-0 tile(0,1) raw word is stable");
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x251c,
-          "map-0 tile(1,0) confirms column-major stepping");
-    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 1, 0) == 28,
-          "map-0 tile(1,0) type masks to 28");
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 63, 63) == 0x0044,
-          "map-0 tile(63,63) last in-bounds raw word is stable");
-    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 64, 0) == -1,
-          "map-0 x=64 is rejected");
-    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 64) == -1,
-          "map-0 y=64 is rejected");
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 0) == 0x62,
+          "map-0 tile(0,0) raw byte is stable");
+    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 0) == 3,
+          "map-0 tile(0,0) type comes from high three bits");
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 1) == 0x1e,
+          "map-0 tile(0,1) raw byte is stable");
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x03,
+          "map-0 tile(1,0) confirms byte column-major stepping");
+    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 1, 0) == 0,
+          "map-0 tile(1,0) type comes from high three bits");
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 6, 9) == 0x00,
+          "map-0 tile(6,9) last in-bounds raw byte is stable");
+    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 7, 0) == -1,
+          "map-0 x=7 is rejected");
+    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 10) == -1,
+          "map-0 y=10 is rejected");
     CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 28, 0, 0) == -1,
           "level 28 is rejected");
 
