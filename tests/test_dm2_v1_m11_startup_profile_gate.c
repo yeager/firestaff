@@ -467,6 +467,12 @@ int main(void) {
         expect_true(view.dm2ShopSelectedStockIndex == 0 &&
                     view.dm2ShopSelectedInventoryIndex == 0,
                     "M11 DM2 shop entry resets stock and inventory selection");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(framebuffer[(24 * 320) + 16] == 11,
+                    "M11 DM2 active shop draws a yellow panel frame");
+        expect_true(framebuffer[(57 * 320) + 23] == 12,
+                    "M11 DM2 active shop draws selected stock row background");
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                         M11_GAME_INPUT_REDRAW &&
                     view.dm2ShopSelectedStockIndex == 1,
@@ -475,6 +481,10 @@ int main(void) {
                         M11_GAME_INPUT_REDRAW &&
                     view.dm2ShopSelectedStockIndex == 2,
                     "M11 DM2 shop down selects a later stock row");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(framebuffer[(79 * 320) + 23] == 12,
+                    "M11 DM2 shop panel follows selected stock row");
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 shop action buys the selected stocked item");
@@ -513,6 +523,10 @@ int main(void) {
                             M11_GAME_INPUT_REDRAW &&
                         view.dm2ShopSelectedInventoryIndex == 1,
                         "M11 DM2 shop right selects the next inventory row");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(framebuffer[(68 * 320) + 163] == 12,
+                        "M11 DM2 shop panel follows selected inventory row");
             heal_sell_price =
                 dm2_v1_shop_get_sell_price(DM2_SHOP_ID_GENERAL, 1);
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DROP_ITEM) ==
