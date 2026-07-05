@@ -102,6 +102,7 @@ typedef struct {
     int item_on_floor_id;
     int item_floor_x, item_floor_y, item_floor_level;
     DM2_V1_PlateState states[DM2_PLATE_NUM_BUILTIN];
+    DM2_V1_PlateEvent last_event;
     int fire_total;
 } DM2_V1_PlateRuntime;
 
@@ -225,6 +226,23 @@ static int compute_door_state_after_fire(const DM2_V1_PressurePlate *p) {
     }
 }
 
+static void record_plate_event(int idx, int now_ms) {
+    const DM2_V1_PressurePlate *p;
+    if (idx < 0 || idx >= DM2_PLATE_NUM_BUILTIN) return;
+    p = &g_builtin_plates[idx];
+    s_runtime.last_event.valid = 1;
+    s_runtime.last_event.plate_id = p->plate_id;
+    s_runtime.last_event.kind = p->kind;
+    s_runtime.last_event.target_kind = p->target_kind;
+    s_runtime.last_event.target_x = p->target_x;
+    s_runtime.last_event.target_y = p->target_y;
+    s_runtime.last_event.target_level = p->target_level;
+    s_runtime.last_event.door_state_after_fire = compute_door_state_after_fire(p);
+    s_runtime.last_event.now_ms = now_ms;
+    s_runtime.last_event.fire_count = s_runtime.states[idx].fired_count;
+    s_runtime.last_event.message = g_builtin_messages[idx];
+}
+
 /* ── Internal: condition evaluator ────────────────────────────── */
 static int evaluate_condition(const DM2_V1_PressurePlate *p, int now_ms) {
     if (!p || !p->enabled) return 0;
@@ -290,6 +308,7 @@ int dm2_v1_plate_check(int plate_id, int now_ms) {
     s_runtime.states[idx].fired_count++;
     s_runtime.states[idx].last_fire_ms = now_ms;
     s_runtime.fire_total++;
+    record_plate_event(idx, now_ms);
     /* For one-way plates, deactivate on party departure is handled in
      * set_party_position. */
     return (int)DM2_PLATE_RESULT_OK;
@@ -302,6 +321,7 @@ int dm2_v1_plate_force_fire(int plate_id) {
     s_runtime.states[idx].active = 1;
     s_runtime.states[idx].fired_count++;
     s_runtime.fire_total++;
+    record_plate_event(idx, s_runtime.states[idx].last_fire_ms);
     return (int)DM2_PLATE_RESULT_OK;
 }
 
@@ -347,6 +367,18 @@ const char *dm2_v1_plate_get_target_message(int plate_id) {
     int idx = dm2_v1_plate_lookup_index(plate_id);
     if (idx < 0 || idx >= DM2_PLATE_NUM_BUILTIN) return NULL;
     return g_builtin_messages[idx];
+}
+
+const DM2_V1_PlateEvent *dm2_v1_plate_last_event(void) {
+    ensure_init();
+    return s_runtime.last_event.valid ? &s_runtime.last_event : NULL;
+}
+
+int dm2_v1_plate_copy_last_event(DM2_V1_PlateEvent *out) {
+    ensure_init();
+    if (!out || !s_runtime.last_event.valid) return 0;
+    *out = s_runtime.last_event;
+    return 1;
 }
 
 /* ── Observability ──────────────────────────────────────────────── */

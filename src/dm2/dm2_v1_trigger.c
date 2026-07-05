@@ -101,6 +101,7 @@ static const DM2_V1_Trigger g_builtin_triggers[DM2_TRIGGER_NUM_BUILTIN] = {
 typedef struct {
     int now_ms;
     DM2_V1_TriggerState states[DM2_TRIGGER_NUM_BUILTIN];
+    DM2_V1_TriggerEvent last_event;
     int total_fires;
     int total_signals;
 } DM2_V1_TriggerRuntime;
@@ -180,6 +181,17 @@ static int do_fire(int idx) {
     s_runtime.states[idx].fired_count++;
     s_runtime.states[idx].last_fire_ms = s_runtime.now_ms;
     s_runtime.total_fires++;
+    s_runtime.last_event.valid = 1;
+    s_runtime.last_event.trigger_id = t->trigger_id;
+    s_runtime.last_event.kind = t->kind;
+    s_runtime.last_event.target = t->target;
+    s_runtime.last_event.target_x = t->target_x;
+    s_runtime.last_event.target_y = t->target_y;
+    s_runtime.last_event.target_level = t->target_level;
+    s_runtime.last_event.arg_creature_id = t->arg_creature_id;
+    s_runtime.last_event.now_ms = s_runtime.now_ms;
+    s_runtime.last_event.fire_count = s_runtime.states[idx].fired_count;
+    s_runtime.last_event.message = t->message;
     s_runtime.states[idx].firing_now = 0;
     return (int)DM2_TRIGGER_RESULT_OK;
 }
@@ -296,6 +308,18 @@ const DM2_V1_TriggerState *dm2_v1_trigger_get_state(int trigger_id) {
     int idx = dm2_v1_trigger_lookup_index(trigger_id);
     if (idx < 0) return NULL;
     return &s_runtime.states[idx];
+}
+
+const DM2_V1_TriggerEvent *dm2_v1_trigger_last_event(void) {
+    ensure_init();
+    return s_runtime.last_event.valid ? &s_runtime.last_event : NULL;
+}
+
+int dm2_v1_trigger_copy_last_event(DM2_V1_TriggerEvent *out) {
+    ensure_init();
+    if (!out || !s_runtime.last_event.valid) return 0;
+    *out = s_runtime.last_event;
+    return 1;
 }
 
 /* ── Observability ──────────────────────────────────────────────── */
