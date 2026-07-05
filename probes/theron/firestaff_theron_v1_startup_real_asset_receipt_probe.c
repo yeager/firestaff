@@ -240,7 +240,7 @@ static void check_placeholder_determinism(void) {
 
 static void check_placeholder_fields(void) {
     Theron_V1_StartupReceipt r;
-    char line[1024];
+    char line[2048];
     size_t n;
 
     theron_v1_startup_receipt_set_placeholder(&r);
@@ -279,6 +279,9 @@ static void check_placeholder_fields(void) {
           "placeholder leaves m11_dispatch_source_kind at -1");
     check(r.boot_profile_assets_verified == 0,
           "placeholder leaves boot_profile_assets_verified 0");
+    check(r.initial_candidate_user_data_offset_valid == 0 &&
+          r.initial_candidate_user_data_offset == 0u,
+          "placeholder leaves initial user-data offset empty");
     check_startup_mirror_summary(&r, "placeholder startup");
     check_startup_chapter_placeholder(&r, "placeholder startup");
 
@@ -601,11 +604,22 @@ static void check_real_asset_path(void) {
             check(r.initial_candidate_expected_offset ==
                       r.initial_candidate_offset,
                   "raw Track 02 initial candidate expected offset matches");
+            check(r.initial_candidate_user_data_offset_valid == 1,
+                  "raw Track 02 initial candidate user-data offset is valid");
+            if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
+                check(r.initial_candidate_user_data_offset == 0x619914u,
+                      "US raw Track 02 initial candidate user-data offset is locked");
+            } else {
+                check(r.initial_candidate_user_data_offset == 0x619114u,
+                      "JP raw Track 02 initial candidate user-data offset is locked");
+            }
             {
-                char line[1024];
+                char line[2048];
                 theron_v1_startup_receipt_to_line(&r, line, sizeof(line));
                 check_str_contains(line, "initial_bind_name=ok",
                                    "raw Track 02 rendered line names bind status");
+                check_str_contains(line, "initial_user_valid=1",
+                                   "raw Track 02 rendered line marks user-data offset valid");
             }
         } else {
             check(r.initial_candidate_found == 0,

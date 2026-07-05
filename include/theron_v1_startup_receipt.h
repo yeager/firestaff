@@ -108,9 +108,11 @@ typedef enum {
  *                                        9 descriptor windows (zero/pre/post/
  *                                        descriptor-table only; no graphics or
  *                                        dungeon semantic claim)
- *   - initial_candidate_*              : hash/anchor-gated startup level
- *                                        candidate receipt when raw Track 02
- *                                        exposes the bounded 32x27 payload
+     *   - initial_candidate_*              : hash/anchor-gated startup level
+     *                                        candidate receipt when raw Track 02
+     *                                        exposes the bounded 32x27 payload,
+     *                                        including both raw and logical
+     *                                        MODE1/2048 user-data offsets
  *   - startup_mirror_*                 : public Soul Room mirror contract
  *                                        from theron_v1_startup_flow.c, so
  *                                        receipt/probe consumers can verify
@@ -187,6 +189,8 @@ typedef struct {
     int32_t  initial_candidate_binding_status;
     uint64_t initial_candidate_count;
     uint64_t initial_candidate_expected_offset;
+    int      initial_candidate_user_data_offset_valid;
+    uint64_t initial_candidate_user_data_offset;
 
     /* ── startup Soul Room mirror summary ─────────────────────── */
     uint32_t startup_mirror_count;
