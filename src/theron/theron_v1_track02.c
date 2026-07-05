@@ -1309,6 +1309,7 @@ int theron_v1_track02_initial_candidate_expected_offset(
 Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     const uint8_t *track02_data,
     size_t track02_size,
+    const char *md5_hex,
     size_t descriptor_offset,
     Theron_Track02InitialCandidateBinding *out_binding) {
 
@@ -1367,6 +1368,9 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     }
 
     theron_v1_track02_bind_level_candidate_anchor(descriptor_offset, &catalog);
+    (void)theron_v1_track02_bind_level_candidate_user_offsets(track02_size,
+                                                              md5_hex,
+                                                              &catalog);
     expected_ok = theron_v1_track02_initial_candidate_expected_offset(
         descriptor_offset,
         &expected_candidate_offset);
@@ -1484,6 +1488,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     const uint8_t *track02_data,
     size_t track02_size,
+    const char *md5_hex,
     size_t descriptor_offset,
     int dungeon_id,
     int sub_level_index,
@@ -1510,6 +1515,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     binding_status = theron_v1_track02_bind_initial_level_candidate(
         track02_data,
         track02_size,
+        md5_hex,
         descriptor_offset,
         &binding);
     out_handoff->binding_status = (int32_t)binding_status;
@@ -1518,6 +1524,9 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     out_handoff->matches_initial_anchor = binding.matches_initial_anchor;
     if (binding.candidate_count == 1u) {
         out_handoff->descriptor_delta = binding.candidate.descriptor_delta;
+        out_handoff->user_data_offset = binding.candidate.user_data_offset;
+        out_handoff->user_data_offset_valid =
+            binding.candidate.user_data_offset_valid;
     }
     if (binding_status != THERON_TRACK02_LEVEL_HANDOFF_OK) {
         return binding_status;

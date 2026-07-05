@@ -259,6 +259,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     status = theron_v1_track02_bind_initial_level_candidate(
         track,
         sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
         &binding);
     check_int("synthetic initial candidate binding status",
@@ -283,6 +284,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     status = theron_v1_track02_load_initial_level_candidate(
         track,
         sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
         THERON_DUNGEON_1_HALL_OF_RECORDS,
         0,
@@ -351,6 +353,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     status = theron_v1_track02_load_initial_level_candidate(
         track,
         sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
         THERON_DUNGEON_1_HALL_OF_RECORDS,
         0,
@@ -413,6 +416,7 @@ static void probe_synthetic_initial_candidate_wrong_anchor_rejected(void) {
     status = theron_v1_track02_load_initial_level_candidate(
         track,
         sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
         THERON_DUNGEON_1_HALL_OF_RECORDS,
         0,
@@ -535,6 +539,7 @@ static void probe_synthetic_multiple_initial_candidates_rejected(void) {
     status = theron_v1_track02_bind_initial_level_candidate(
         track,
         sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
         &binding);
     check_int("synthetic multi-candidate binding rejected",
@@ -550,6 +555,7 @@ static void probe_synthetic_multiple_initial_candidates_rejected(void) {
     status = theron_v1_track02_load_initial_level_candidate(
         track,
         sizeof(track),
+        THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
         THERON_DUNGEON_1_HALL_OF_RECORDS,
         0,
@@ -739,6 +745,7 @@ static void probe_real_data_initial_candidate(const char *label,
     status = theron_v1_track02_bind_initial_level_candidate(
         data,
         size,
+        local_md5,
         signal.descriptor_offsets[0],
         &binding);
     check_int("real initial candidate binding status",
@@ -763,6 +770,7 @@ static void probe_real_data_initial_candidate(const char *label,
     status = theron_v1_track02_load_initial_level_candidate(
         data,
         size,
+        local_md5,
         signal.descriptor_offsets[0],
         THERON_DUNGEON_1_HALL_OF_RECORDS,
         0,
@@ -801,6 +809,12 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate handoff anchor match",
               handoff.matches_initial_anchor,
               1);
+    check_int("real initial candidate handoff user-data offset valid",
+              handoff.user_data_offset_valid,
+              1);
+    check_size("real initial candidate handoff user-data offset",
+               handoff.user_data_offset,
+               expected_user_data_offset);
     check_int("real initial candidate loaded", handoff.loaded, 1);
     check_int("real initial candidate level width", level.width, 32);
     check_int("real initial candidate level height", level.height, 27);

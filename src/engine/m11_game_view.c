@@ -10370,6 +10370,7 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
         initial_status = theron_v1_track02_load_initial_level_candidate(
             assets->hucard_rom,
             assets->hucard_rom_size,
+            md5_hex,
             signal.descriptor_offsets[anchor],
             THERON_DUNGEON_1_HALL_OF_RECORDS,
             0,
@@ -10388,12 +10389,14 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
             if (receipt && receipt_cap > 0u) {
                 snprintf(receipt,
                          receipt_cap,
-                         "Track 02 initial level bind=%s anchor=%zu offset=0x%zx expected=0x%zx delta=0x%zx candidates=%zu match=%d header=%ux%u seed=0x%08x start=(%d,%d,%d)",
+                         "Track 02 initial level bind=%s anchor=%zu offset=0x%zx user_valid=%d user=0x%zx expected=0x%zx delta=0x%zx candidates=%zu match=%d header=%ux%u seed=0x%08x start=(%d,%d,%d)",
                          theron_v1_track02_level_handoff_status_name(
                              (Theron_Track02LevelHandoffStatus)
                                  initial_handoff.binding_status),
                          anchor,
                          initial_handoff.absolute_offset,
+                         initial_handoff.user_data_offset_valid,
+                         initial_handoff.user_data_offset,
                          initial_handoff.expected_offset,
                          initial_handoff.descriptor_delta,
                          initial_handoff.candidate_count,

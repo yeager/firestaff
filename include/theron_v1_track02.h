@@ -432,6 +432,8 @@ typedef struct {
     size_t expected_offset;
     size_t descriptor_delta;
     int matches_initial_anchor;
+    size_t user_data_offset;
+    int user_data_offset_valid;
     int loaded;
 } Theron_Track02LevelHandoff;
 
@@ -505,6 +507,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     const uint8_t *track02_data,
     size_t track02_size,
+    const char *md5_hex,
     size_t descriptor_offset,
     int dungeon_id,
     int sub_level_index,
@@ -572,6 +575,7 @@ Theron_Track02SignalStatus theron_v1_track02_bind_level_candidate_user_offsets(
 Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     const uint8_t *track02_data,
     size_t track02_size,
+    const char *md5_hex,
     size_t descriptor_offset,
     Theron_Track02InitialCandidateBinding *out_binding);
 

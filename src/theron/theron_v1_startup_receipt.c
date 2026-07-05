@@ -535,12 +535,11 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         Theron_V1_Level initial_level;
         Theron_Track02LevelHandoff initial_handoff;
         Theron_Track02LevelHandoffStatus initial_status;
-        Theron_Track02LevelHandoffStatus initial_bind_status;
-        Theron_Track02InitialCandidateBinding initial_binding;
 
         initial_status = theron_v1_track02_load_initial_level_candidate(
             data,
             size,
+            expected_md5,
             signal.descriptor_offsets[0],
             THERON_DUNGEON_1_HALL_OF_RECORDS,
             0,
@@ -552,27 +551,10 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
             (uint64_t)initial_handoff.candidate_count;
         receipt->initial_candidate_expected_offset =
             (uint64_t)initial_handoff.expected_offset;
-        initial_bind_status = theron_v1_track02_bind_initial_level_candidate(
-            data,
-            size,
-            signal.descriptor_offsets[0],
-            &initial_binding);
-        if (initial_bind_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
-            Theron_Track02LevelCandidateCatalog catalog;
-            memset(&catalog, 0, sizeof(catalog));
-            catalog.candidate_count = 1u;
-            catalog.scanned_bytes = size;
-            catalog.candidates[0] = initial_binding.candidate;
-            if (theron_v1_track02_bind_level_candidate_user_offsets(
-                    size,
-                    expected_md5,
-                    &catalog) == THERON_TRACK02_SIGNAL_OK &&
-                catalog.candidates[0].user_data_offset_valid) {
-                receipt->initial_candidate_user_data_offset_valid = 1;
-                receipt->initial_candidate_user_data_offset =
-                    (uint64_t)catalog.candidates[0].user_data_offset;
-            }
-        }
+        receipt->initial_candidate_user_data_offset_valid =
+            initial_handoff.user_data_offset_valid;
+        receipt->initial_candidate_user_data_offset =
+            (uint64_t)initial_handoff.user_data_offset;
         if (initial_status == THERON_TRACK02_LEVEL_HANDOFF_OK &&
             initial_handoff.binding_status ==
                 THERON_TRACK02_LEVEL_HANDOFF_OK &&
