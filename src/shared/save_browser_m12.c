@@ -116,8 +116,22 @@ static int is_csb_original_save_basename(const char* name) {
 }
 
 static int dm2_sksave_slot_from_basename(const char* name,
-                                         unsigned char* outSlot) {
+                                         unsigned char* outSlot,
+                                         int* outLastSession) {
     int slot;
+    if (outLastSession) {
+        *outLastSession = 0;
+    }
+    if (ascii_equal_ci(name, "SKSave.dat") ||
+        ascii_equal_ci(name, "SKSave.bak")) {
+        if (outSlot) {
+            *outSlot = 0u;
+        }
+        if (outLastSession) {
+            *outLastSession = 1;
+        }
+        return 1;
+    }
     if (!name ||
         ascii_lower((unsigned char)name[0]) != 's' ||
         ascii_lower((unsigned char)name[1]) != 'k' ||
@@ -147,7 +161,8 @@ static int dm2_sksave_slot_from_basename(const char* name,
 static int dm2_sksave_root_from_path(const char* path,
                                      char* outRoot,
                                      size_t outRootCap,
-                                     unsigned char* outSlot) {
+                                     unsigned char* outSlot,
+                                     int* outLastSession) {
     const char* slash;
     const char* base;
     size_t len;
@@ -165,7 +180,7 @@ static int dm2_sksave_root_from_path(const char* path,
     }
 #endif
     base = slash ? slash + 1 : path;
-    if (!dm2_sksave_slot_from_basename(base, outSlot)) {
+    if (!dm2_sksave_slot_from_basename(base, outSlot, outLastSession)) {
         return 0;
     }
     if (!slash) {
@@ -201,7 +216,7 @@ static int is_save_file(const char* name) {
     size_t len;
     if (!name) return 0;
     if (is_csb_original_save_basename(name)) return 1;
-    if (dm2_sksave_slot_from_basename(name, NULL)) return 1;
+    if (dm2_sksave_slot_from_basename(name, NULL, NULL)) return 1;
     len = strlen(name);
     if (len < 15) return 0; /* "firestaff-.sav" minimum */
     if (strncmp(name, "firestaff-", 10) != 0) return 0;
@@ -221,7 +236,7 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
         snprintf(outId, (size_t)outSize, "csb");
         return;
     }
-    if (dm2_sksave_slot_from_basename(filename, NULL)) {
+    if (dm2_sksave_slot_from_basename(filename, NULL, NULL)) {
         snprintf(outId, (size_t)outSize, "dm2");
         return;
     }
@@ -352,6 +367,7 @@ static int try_parse_dm2_session_entry(M12_SaveBrowserEntry* entry) {
     char saveRoot[512];
     char nameBuf[32];
     unsigned char slot = 0u;
+    int lastSession = 0;
     int offset;
     int i;
 
@@ -363,7 +379,8 @@ static int try_parse_dm2_session_entry(M12_SaveBrowserEntry* entry) {
     if (!dm2_sksave_root_from_path(entry->fullPath,
                                    saveRoot,
                                    sizeof(saveRoot),
-                                   &slot)) {
+                                   &slot,
+                                   &lastSession)) {
         return 0;
     }
 
@@ -375,7 +392,9 @@ static int try_parse_dm2_session_entry(M12_SaveBrowserEntry* entry) {
      * dungeon DB pools remain owned by the later full importer.
      */
     memset(&session, 0, sizeof(session));
-    if (dm2_v1_session_load_slot(saveRoot, slot, &session) != 0 ||
+    if ((lastSession
+            ? dm2_v1_session_load_last_session(saveRoot, &session)
+            : dm2_v1_session_load_slot(saveRoot, slot, &session)) != 0 ||
         !dm2_v1_session_validate(&session)) {
         return 0;
     }
@@ -410,14 +429,26 @@ static int try_parse_dm2_session_entry(M12_SaveBrowserEntry* entry) {
     }
 
     if (entry->championCount > 0 && entry->champions[0] != '\0') {
+        if (lastSession) {
+            snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                     "%s  L%d  [%s]  (DM2 last session)",
+                     entry->gameId, entry->mapLevel, entry->champions);
+        } else {
         snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
                  "%s  L%d  [%s]  (DM2 slot %u)",
                  entry->gameId, entry->mapLevel, entry->champions,
                  (unsigned)slot);
+        }
     } else {
+        if (lastSession) {
+            snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                     "%s  L%d  (DM2 last session)",
+                     entry->gameId, entry->mapLevel);
+        } else {
         snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
                  "%s  L%d  (DM2 slot %u)",
                  entry->gameId, entry->mapLevel, (unsigned)slot);
+        }
     }
     return 1;
 }

@@ -715,8 +715,15 @@ int main(void) {
                                        "Nested DM2",
                                        &dm2Session) == 0,
               "wrote sibling DM2 SKSave slot fixture");
-        check(M12_SaveBrowser_Scan(&state, nestedData) == 2,
-              "scan finds sibling CSB and DM2 save entries from data root");
+        dm2Session.party_level = 7u;
+        dm2Session.party_x = 23u;
+        dm2Session.party_y = 14u;
+        check(dm2_v1_session_save_last_session(nestedDm2Saves,
+                                               "Nested DM2 Last",
+                                               &dm2Session) == 0,
+              "wrote sibling DM2 SKSave.dat fixture");
+        check(M12_SaveBrowser_Scan(&state, nestedData) == 3,
+              "scan finds sibling CSB plus DM2 slot and last-session entries");
         nested = find_entry(&state, "firestaff-csb-sibling.sav");
         check(nested != NULL, "sibling CSB save entry present");
         if (nested) {
@@ -736,6 +743,16 @@ int main(void) {
                   "sibling DM2 SKSave exposes champion names");
             check(strstr(nested->fullPath, "/saves/dm2/SKSave06.dat") != NULL,
                   "sibling DM2 SKSave records actual save-root path");
+        }
+        nested = find_entry(&state, "SKSave.dat");
+        check(nested != NULL, "sibling DM2 SKSave.dat entry present");
+        if (nested) {
+            check(strcmp(nested->gameId, "dm2") == 0,
+                  "sibling DM2 SKSave.dat keeps game id");
+            check(nested->valid == 1 && nested->mapLevel == 7,
+                  "sibling DM2 SKSave.dat is loadable with saved level");
+            check(strstr(nested->fullPath, "/saves/dm2/SKSave.dat") != NULL,
+                  "sibling DM2 SKSave.dat records actual save-root path");
         }
     }
 

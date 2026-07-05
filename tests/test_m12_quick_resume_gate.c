@@ -190,6 +190,29 @@ static int write_dm2_slot_save(const char* root,
     return 1;
 }
 
+static int write_dm2_last_session_save(const char* root,
+                                       char* outPath,
+                                       size_t outPathSize) {
+    DM2_V1_SessionState session;
+
+    if (!root || !outPath || outPathSize == 0u) {
+        return 0;
+    }
+    dm2_v1_session_new(&session);
+    session.game_tick = 91u;
+    session.party_x = 17u;
+    session.party_y = 8u;
+    session.party_dir = 2u;
+    session.party_level = 6u;
+    session.outdoor_mode = 0u;
+    if (dm2_v1_session_save_last_session(root, "M12 DM2 Last",
+                                         &session) != 0) {
+        return 0;
+    }
+    snprintf(outPath, outPathSize, "%s/SKSave.dat", root);
+    return 1;
+}
+
 static void fill_raw_csbgame_champion(CSB_V1_Champion* champ,
                                       const char* name,
                                       int hp,
@@ -615,6 +638,7 @@ int main(void) {
     char originalDmSaveBrowserSavePath[512];
     char originalDm1SavePath[512];
     char dm2SlotSavePath[512];
+    char dm2LastSessionSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -1112,6 +1136,33 @@ int main(void) {
     if (!expect(intent.savePath &&
                 strcmp(intent.savePath, dm2SlotSavePath) == 0,
                 "save browser DM2 launch intent should carry exact SKSave path")) return 1;
+
+    if (!expect(write_dm2_last_session_save(tmpTemplate,
+                                            dm2LastSessionSavePath,
+                                            sizeof(dm2LastSessionSavePath)),
+                "should write DM2 SKSave.dat browser last-session")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_dm2_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for DM2 SKSave.dat")) return 1;
+    if (!expect(select_save_entry(&state, "SKSave.dat"),
+                "save browser should list DM2 SKSave.dat")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark DM2 SKSave.dat loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "dm2") == 0,
+                "save browser should classify SKSave.dat as dm2")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].mapLevel == 6,
+                "save browser should expose DM2 last-session level")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "dm2") == 0,
+                "save browser DM2 SKSave.dat launch intent should identify DM2")) return 1;
+    if (!expect(intent.savePath &&
+                strcmp(intent.savePath, dm2LastSessionSavePath) == 0,
+                "save browser DM2 SKSave.dat launch intent should carry exact path")) return 1;
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);

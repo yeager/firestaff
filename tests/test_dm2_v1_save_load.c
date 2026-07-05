@@ -303,6 +303,67 @@ static int test_backup_fallback(void)
     return 1;
 }
 
+static int test_last_session_backup_fallback(void)
+{
+    printf("  Last-session SKSave.dat/.bak fallback...\n");
+    char tmpdir[256];
+    char p_dat[256], p_bak[256];
+    uint8_t gs[64];
+    uint8_t out[64];
+    size_t out_sz = 0;
+    int r;
+
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_last_%d", FS_GETPID());
+    FS_MKDIR(tmpdir);
+    memset(gs, 0, sizeof(gs));
+    gs[0] = 0x77;
+    gs[1] = 0x33;
+
+    r = dm2_sl_save_last_session(tmpdir, "Last Session", gs, sizeof(gs));
+    if (r != 0) {
+        printf("    FAIL: save last-session returned %d\n", r);
+        FS_RMDIR(tmpdir);
+        return 0;
+    }
+    if (!dm2_v1_save_has_valid_last_session(tmpdir)) {
+        printf("    FAIL: last-session validity probe failed\n");
+        cleanup_one_slot_dir(tmpdir, 0);
+        FS_RMDIR(tmpdir);
+        return 0;
+    }
+    r = dm2_sl_load_last_session(tmpdir, out, sizeof(out), &out_sz);
+    if (r != 0 || out_sz != sizeof(gs) || out[0] != 0x77 || out[1] != 0x33) {
+        printf("    FAIL: primary last-session load r=%d size=%lu bytes=%02X/%02X\n",
+               r, (unsigned long)out_sz, out[0], out[1]);
+        cleanup_one_slot_dir(tmpdir, 0);
+        FS_RMDIR(tmpdir);
+        return 0;
+    }
+
+    snprintf(p_dat, sizeof(p_dat), "%s/SKSave.dat", tmpdir);
+    snprintf(p_bak, sizeof(p_bak), "%s/SKSave.bak", tmpdir);
+    if (rename(p_dat, p_bak) != 0) {
+        printf("    FAIL: rotate last-session primary to backup\n");
+        cleanup_one_slot_dir(tmpdir, 0);
+        FS_RMDIR(tmpdir);
+        return 0;
+    }
+    memset(out, 0, sizeof(out));
+    out_sz = 0;
+    r = dm2_sl_load_last_session(tmpdir, out, sizeof(out), &out_sz);
+    if (r != 0 || out_sz != sizeof(gs) || out[0] != 0x77 || out[1] != 0x33) {
+        printf("    FAIL: backup last-session load r=%d size=%lu bytes=%02X/%02X\n",
+               r, (unsigned long)out_sz, out[0], out[1]);
+        (void)remove(p_bak);
+        FS_RMDIR(tmpdir);
+        return 0;
+    }
+    (void)remove(p_bak);
+    FS_RMDIR(tmpdir);
+    printf("    PASS: last-session primary and backup fallback work\n");
+    return 1;
+}
+
 /* ── Test 7: Cross-version diagnostics ─────────────────────── */
 
 static int test_cross_version_diagnostics(void)
@@ -1090,14 +1151,15 @@ int main(void)
     RUN(4,  test_slot_scan);
     RUN(5,  test_save_load_roundtrip);
     RUN(6,  test_backup_fallback);
-    RUN(7,  test_cross_version_diagnostics);
-    RUN(8,  test_suppress_self_test);
-    RUN(9,  test_champion_mask);
-    RUN(10, test_db_handle_roundtrip);
-    RUN(11, test_invalid_slot_header_rejected);
-    RUN(12, test_stale_fixture_metadata_guard);
-    RUN(13, test_resume_smoke_gate_position_facing_inventory);
-    RUN(14, test_champion_death_permanence_source_lock);
+    RUN(7,  test_last_session_backup_fallback);
+    RUN(8,  test_cross_version_diagnostics);
+    RUN(9,  test_suppress_self_test);
+    RUN(10, test_champion_mask);
+    RUN(11, test_db_handle_roundtrip);
+    RUN(12, test_invalid_slot_header_rejected);
+    RUN(13, test_stale_fixture_metadata_guard);
+    RUN(14, test_resume_smoke_gate_position_facing_inventory);
+    RUN(15, test_champion_death_permanence_source_lock);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

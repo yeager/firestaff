@@ -524,6 +524,20 @@ int dm2_v1_session_save_slot(const char *save_base, uint8_t slot,
                         buf, (size_t)sz);
 }
 
+int dm2_v1_session_save_last_session(const char *save_base,
+                                      const char *name,
+                                      const DM2_V1_SessionState *session)
+{
+    if (!save_base || !session) return -1;
+    if (!dm2_v1_session_validate(session)) return -1;
+
+    uint8_t buf[DM2_SESSION_MAX_SIZE];
+    int sz = dm2_v1_session_serialize(session, buf, sizeof(buf));
+    if (sz < 0) return -1;
+
+    return dm2_sl_save_last_session(save_base, name, buf, (size_t)sz);
+}
+
 int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
                                DM2_V1_SessionState *session)
 {
@@ -536,6 +550,24 @@ int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
     if (r != 0) return r;
 
     /* Deserialize into session */
+    r = dm2_v1_session_deserialize(session, buf, out_size);
+    if (r != 0) return r;
+
+    if (!dm2_v1_session_validate(session)) return -1;
+
+    return 0;
+}
+
+int dm2_v1_session_load_last_session(const char *save_base,
+                                      DM2_V1_SessionState *session)
+{
+    if (!save_base || !session) return -1;
+
+    uint8_t buf[DM2_SESSION_MAX_SIZE];
+    size_t out_size = 0;
+    int r = dm2_sl_load_last_session(save_base, buf, sizeof(buf), &out_size);
+    if (r != 0) return r;
+
     r = dm2_v1_session_deserialize(session, buf, out_size);
     if (r != 0) return r;
 
