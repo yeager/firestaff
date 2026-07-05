@@ -353,7 +353,9 @@ static const M12_RequiredFileSpec g_requiredFiles[] = {
 
 static const char* const g_assetCandidateSubdirs[] = {
     "dm1", "", "csb", "dm2", "nexus",
-    "dm1-multilingual", "theron", "theron/jp", "theron/us", NULL
+    "dm1-multilingual",
+    "theron-extras/japan", "theron-extras/usa",
+    "theron", "theron/jp", "theron/us", NULL
 };
 
 static const char* const g_originalCandidateNames[] = {
@@ -651,7 +653,10 @@ static const char* const* m12_fast_candidate_subdirs_for_game(const char* gameId
     static const char* const csbSubdirs[] = {"csb", "", NULL};
     static const char* const dm2Subdirs[] = {"dm2", "", NULL};
     static const char* const nexusSubdirs[] = {"nexus", "", NULL};
-    static const char* const theronSubdirs[] = {"theron", "theron/jp", "theron/us", "", NULL};
+    static const char* const theronSubdirs[] = {
+        "theron-extras/japan", "theron-extras/usa",
+        "theron", "theron/jp", "theron/us", "", NULL
+    };
     if (!gameId) {
         return NULL;
     }
@@ -1262,6 +1267,11 @@ static int m12_path_is_theron_specific_dir(const char* path) {
     if ((m12_path_tail_equals(path, "jp") ||
          m12_path_tail_equals(path, "us")) &&
         m12_path_tail_equals(parent, "theron")) {
+        return 1;
+    }
+    if ((m12_path_tail_equals(path, "japan") ||
+         m12_path_tail_equals(path, "usa")) &&
+        m12_path_tail_equals(parent, "theron-extras")) {
         return 1;
     }
     return 0;
@@ -2029,6 +2039,16 @@ static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
         !FSP_DirExists(requestedDataDir)) {
         return 0;
     }
+    /* Prefer raw Track 02 captures when the user points at the broad
+     * data root: the Rev1 ISO files under theron/ are valid hash
+     * markers, but the raw BINs in theron-extras/ currently carry the
+     * useful startup bank anchors consumed by src/theron/theron_v1_track02.c. */
+    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron-extras", "japan")) {
+        return 1;
+    }
+    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron-extras", "usa")) {
+        return 1;
+    }
     if (m12_scan_theron_child_dir(status, requestedDataDir, "theron", NULL)) {
         return 1;
     }
@@ -2036,12 +2056,6 @@ static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
         return 1;
     }
     if (m12_scan_theron_child_dir(status, requestedDataDir, "theron", "us")) {
-        return 1;
-    }
-    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron-extras", "japan")) {
-        return 1;
-    }
-    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron-extras", "usa")) {
         return 1;
     }
     return 0;

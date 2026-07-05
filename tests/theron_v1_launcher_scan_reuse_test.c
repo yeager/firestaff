@@ -75,10 +75,14 @@ int main(void) {
         "Firestaff synthetic Theron launcher scan reuse fixture v1\n";
     char root[512];
     char theronDir[512];
+    char extrasDir[512];
+    char extrasJapanDir[512];
     char trackPath[512];
+    char extrasTrackPath[512];
     char trackMd5[M12_ASSET_MD5_CAPACITY];
     M12_AssetStatus status;
     M12_AssetStatus directRootStatus;
+    M12_AssetStatus specificTheronStatus;
     M12_AssetStatusScanMetrics directRootMetrics;
     M12_AssetStatusScanMetrics firstMetrics;
     M12_AssetStatusScanMetrics refreshMetrics;
@@ -90,9 +94,18 @@ int main(void) {
     snprintf(theronDir, sizeof(theronDir), "%s/theron", root);
     check_int(make_dir_if_needed(theronDir),
               "theron fixture directory created");
+    snprintf(extrasDir, sizeof(extrasDir), "%s/theron-extras", root);
+    check_int(make_dir_if_needed(extrasDir),
+              "theron-extras fixture directory created");
+    snprintf(extrasJapanDir, sizeof(extrasJapanDir), "%s/japan", extrasDir);
+    check_int(make_dir_if_needed(extrasJapanDir),
+              "theron-extras/japan fixture directory created");
     snprintf(trackPath, sizeof(trackPath), "%s/track02.bin", theronDir);
     check_int(write_file(trackPath, trackPayload),
               "synthetic Theron Track 02 fixture written");
+    snprintf(extrasTrackPath, sizeof(extrasTrackPath), "%s/track02.bin", extrasJapanDir);
+    check_int(write_file(extrasTrackPath, trackPayload),
+              "synthetic Theron raw Track 02 fixture written");
     check_int(m12_file_md5_hex(trackPath, trackMd5),
               "synthetic Theron Track 02 MD5 computed");
     check_int(test_setenv("HOME", root) &&
@@ -111,22 +124,35 @@ int main(void) {
     check_int(strcmp(M12_AssetStatus_GetDataDir(&directRootStatus), root) == 0,
               "Theron direct-launch scan preserves the configured data root");
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&directRootStatus, "theron"),
-                     theronDir) == 0,
-              "Theron direct-launch scan keeps root/theron as the runtime dir only");
+                     extrasJapanDir) == 0,
+              "Theron direct-launch scan prefers raw theron-extras Track 02 runtime dir");
     version = M12_AssetStatus_GetVersion(&directRootStatus, "theron", 0U);
     check_int(version && version->matched &&
-                  strcmp(version->matchedPath, trackPath) == 0 &&
+                  strcmp(version->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
-              "Theron direct-launch scan records the verified Track 02 child path");
+              "Theron direct-launch scan records the verified raw Track 02 child path");
     required = M12_AssetStatus_GetRequiredFile(&directRootStatus, "theron", 0U);
     check_int(required && required->matched &&
-                  strcmp(required->matchedPath, trackPath) == 0 &&
+                  strcmp(required->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(required->matchedHash, trackMd5) == 0,
-              "Theron direct-launch scan propagates the Track 02 required marker");
+              "Theron direct-launch scan propagates the raw Track 02 required marker");
     check_int(directRootMetrics.rootCount == 0U,
               "Theron direct-launch scan skips root-wide search-root construction");
     check_int(directRootMetrics.requiredHashLookups == 0U,
               "Theron direct-launch scan skips root-wide required-file hash lookups");
+
+    memset(&specificTheronStatus, 0, sizeof(specificTheronStatus));
+    M12_AssetStatus_ScanGame(&specificTheronStatus, theronDir, "theron");
+    check_int(M12_AssetStatus_GameAvailable(&specificTheronStatus, "theron") == 1,
+              "Theron specific-directory scan still accepts an explicit theron/ root");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&specificTheronStatus, "theron"),
+                     theronDir) == 0,
+              "Theron specific-directory scan keeps the explicit theron/ runtime dir");
+    version = M12_AssetStatus_GetVersion(&specificTheronStatus, "theron", 0U);
+    check_int(version && version->matched &&
+                  strcmp(version->matchedPath, trackPath) == 0 &&
+                  strcmp(version->matchedMd5, trackMd5) == 0,
+              "Theron specific-directory scan records the explicit theron/ Track 02 path");
 
     M12_AssetStatus_TestResetScanMetrics();
     M12_AssetStatus_Scan(&status, root);
@@ -136,14 +162,14 @@ int main(void) {
               "initial launcher scan marks synthetic Theron Track 02 available");
     version = M12_AssetStatus_GetVersion(&status, "theron", 0U);
     check_int(version && version->matched &&
-                  strcmp(version->matchedPath, trackPath) == 0 &&
+                  strcmp(version->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
-              "initial launcher scan records the verified Theron path and hash");
+              "initial launcher scan records the verified raw Theron path and hash");
     required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0U);
     check_int(required && required->matched &&
-                  strcmp(required->matchedPath, trackPath) == 0 &&
+                  strcmp(required->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(required->matchedHash, trackMd5) == 0,
-              "initial launcher scan records the required Theron Track 02 marker");
+              "initial launcher scan records the required raw Theron Track 02 marker");
     check_int(firstMetrics.rootCount > 0U,
               "initial launcher scan builds search roots");
     check_int(firstMetrics.versionHashLookups > 0U,
@@ -157,14 +183,14 @@ int main(void) {
               "repeat launcher refresh keeps Theron available");
     version = M12_AssetStatus_GetVersion(&status, "theron", 0U);
     check_int(version && version->matched &&
-                  strcmp(version->matchedPath, trackPath) == 0 &&
+                  strcmp(version->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
-              "repeat launcher refresh reuses the verified Theron path and hash");
+              "repeat launcher refresh reuses the verified raw Theron path and hash");
     required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0U);
     check_int(required && required->matched &&
-                  strcmp(required->matchedPath, trackPath) == 0 &&
+                  strcmp(required->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(required->matchedHash, trackMd5) == 0,
-              "repeat launcher refresh keeps the required Theron Track 02 marker");
+              "repeat launcher refresh keeps the required raw Theron Track 02 marker");
     check_int(refreshMetrics.reusableTheronRefreshes == 1U,
               "repeat launcher refresh hits the verified Theron reuse gate once");
     check_int(refreshMetrics.rootCount == 0U,
