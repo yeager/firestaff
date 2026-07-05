@@ -79,11 +79,25 @@ int dm2_sl_save(const char *save_base, uint8_t slot,
                  const char *name,
                  const uint8_t *data, size_t data_size);
 
+/* Save original-style last-session file SKSave.dat and rotate the old
+ * primary to SKSave.bak. */
+int dm2_sl_save_last_session(const char *save_base,
+                             const char *name,
+                             const uint8_t *data,
+                             size_t data_size);
+
 /* Load from slot N: tries SKSave%02u.dat first, falls back to SKSave.bak
  * when the primary file is missing, truncated, or fails the DM2 slot-header
  * magic check. Returns 0 on success; sets *out_size to bytes read. */
 int dm2_sl_load(const char *save_base, uint8_t slot,
                  uint8_t *data, size_t max_size, size_t *out_size);
+
+/* Load the original-style resume file SKSave.dat, falling back to
+ * SKSave.bak when the primary is missing, truncated, or has a bad header. */
+int dm2_sl_load_last_session(const char *save_base,
+                             uint8_t *data,
+                             size_t max_size,
+                             size_t *out_size);
 
 /* Delete slot N (removes both .dat and .bak). */
 int dm2_sl_delete(const char *save_base, uint8_t slot);
@@ -97,6 +111,9 @@ bool   dm2_v1_save_slot_valid(uint8_t slot);
 
 /* True if SKSave%02u.dat has valid 0xBEEF/0xDEAD slot header. */
 bool dm2_v1_save_has_valid_slot(const char *save_base, uint8_t slot);
+
+/* True if SKSave.dat or SKSave.bak has a valid 0xBEEF/0xDEAD header. */
+bool dm2_v1_save_has_valid_last_session(const char *save_base);
 
 /* Run dm2_suppress_self_verification; returns true on success. */
 bool dm2_v1_save_suppress_self_test(void);

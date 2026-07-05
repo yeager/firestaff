@@ -383,6 +383,39 @@ int main(void) {
                 "resumed DM2 tick advances from saved tick");
     M11_GameView_Shutdown(&view);
 
+    resume_session.game_tick = 70;
+    resume_session.party_x = 31;
+    resume_session.party_y = 9;
+    resume_session.party_dir = 3;
+    resume_session.party_level = 2;
+    resume_session.outdoor_mode = 0;
+    resume_session.time_of_day_minutes = 450;
+    resume_session.rain_intensity = 0;
+    expect_true(dm2_v1_session_save_last_session(save_root,
+                                                 "M11 Last",
+                                                 &resume_session) == 0,
+                "wrote DM2 SKSave.dat last-session fixture");
+    snprintf(save_path, sizeof(save_path), "%s%sSKSave.dat",
+             save_root, TEST_PATH_SEP);
+
+    fill_dm2_launch_spec(&spec, data_dir);
+    spec.savePath = save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 DM2 SKSave.dat resume succeeds");
+    expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
+                "M11 DM2 SKSave.dat reports resumed status");
+    expect_true(view.dm2State.party_x == 31 &&
+                view.dm2State.party_y == 9 &&
+                view.dm2State.party_dir == 3,
+                "M11 DM2 SKSave.dat mirrors saved party pose");
+    expect_true(view.dm2State.tick_count == 70,
+                "M11 DM2 SKSave.dat mirrors saved game tick");
+    world = (DM2_V1_GameState*)view.dm2World;
+    expect_true(world && world->current_level == 2 && world->outdoor == 0,
+                "DM2 world SKSave.dat resume applies saved level");
+    M11_GameView_Shutdown(&view);
+
     fill_dm2_launch_spec(&spec, data_dir);
     spec.savePath = save_root;
     M11_GameView_Init(&view);

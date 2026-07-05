@@ -300,6 +300,45 @@ int dm2_sl_save(const char *save_base, uint8_t slot,
     return 0;
 }
 
+int dm2_sl_save_last_session(const char *save_base,
+                             const char *name,
+                             const uint8_t *data,
+                             size_t data_size)
+{
+    if (!save_base || !data || data_size == 0) return -1;
+
+    char path_dat[256], path_bak[256];
+    snprintf(path_dat, sizeof(path_dat), "%s/SKSave.dat", save_base);
+    snprintf(path_bak, sizeof(path_bak), "%s/SKSave.bak", save_base);
+
+    /* ReDMCSB/SKWin resume uses SKSave.dat as the direct last-session
+     * target and rotates the previous primary to SKSave.bak before write. */
+    (void)remove(path_bak);
+    (void)rename(path_dat, path_bak);
+
+    FILE *f = fopen(path_dat, "wb");
+    if (!f) return -2;
+
+    uint8_t hdr[42] = {0};
+    hdr[0] = 1; hdr[1] = 0;
+    if (name) {
+        size_t nlen = strlen(name);
+        if (nlen > 33) nlen = 33;
+        memcpy(hdr + 2, name, nlen);
+    }
+    hdr[36] = 0x30;
+    hdr[37] = 0;
+    hdr[38] = (uint8_t)(DM2_SLOT_MAGIC_1 & 0xFF);
+    hdr[39] = (uint8_t)((DM2_SLOT_MAGIC_1 >> 8) & 0xFF);
+    hdr[40] = (uint8_t)(DM2_SLOT_MAGIC_2 & 0xFF);
+    hdr[41] = (uint8_t)((DM2_SLOT_MAGIC_2 >> 8) & 0xFF);
+
+    if (fwrite(hdr, 42, 1, f) != 1) { fclose(f); return -3; }
+    if (fwrite(data, 1, data_size, f) != data_size) { fclose(f); return -3; }
+    fclose(f);
+    return 0;
+}
+
 int dm2_sl_load(const char *save_base, uint8_t slot,
                  uint8_t *data, size_t max_size, size_t *out_size)
 {
@@ -317,6 +356,32 @@ int dm2_sl_load(const char *save_base, uint8_t slot,
          * ReDMCSB LOADSAVE.C F0435 lines 2560-2583 tries the backup save after
          * primary-open failure; Firestaff extends the same safety net to
          * invalid DM2 slot headers so runtime load never accepts stale data. */
+        f = dm2_sl_open_valid_payload(bak, &status);
+        if (!f) return status ? status : -2;
+    }
+
+    size_t got = fread(data, 1, max_size, f);
+    fclose(f);
+    *out_size = got;
+    return 0;
+}
+
+int dm2_sl_load_last_session(const char *save_base,
+                             uint8_t *data,
+                             size_t max_size,
+                             size_t *out_size)
+{
+    if (!save_base || !data || !out_size) return -1;
+
+    char path[256], bak[256];
+    snprintf(path, sizeof(path), "%s/SKSave.dat", save_base);
+    snprintf(bak,  sizeof(bak),  "%s/SKSave.bak", save_base);
+
+    int status = 0;
+    FILE *f = dm2_sl_open_valid_payload(path, &status);
+    if (!f) {
+        /* SKWin/DM2 resume path: last-session primary first, backup second,
+         * then caller may fall back to a fresh dungeon start. */
         f = dm2_sl_open_valid_payload(bak, &status);
         if (!f) return status ? status : -2;
     }
@@ -359,6 +424,25 @@ bool dm2_v1_save_has_valid_slot(const char *save_base, uint8_t slot)
               && ((uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8)) == DM2_SLOT_MAGIC_2;
     fclose(f);
     return ok;
+}
+
+bool dm2_v1_save_has_valid_last_session(const char *save_base)
+{
+    int status = 0;
+    FILE *f;
+    char path[256];
+    if (!save_base) return false;
+    snprintf(path, sizeof(path), "%s/SKSave.dat", save_base);
+    f = dm2_sl_open_valid_payload(path, &status);
+    if (!f) {
+        snprintf(path, sizeof(path), "%s/SKSave.bak", save_base);
+        f = dm2_sl_open_valid_payload(path, &status);
+    }
+    if (!f) {
+        return false;
+    }
+    fclose(f);
+    return true;
 }
 
 bool dm2_v1_save_suppress_self_test(void)

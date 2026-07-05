@@ -253,12 +253,22 @@ int dm2_v1_session_save_slot(const char *save_base, uint8_t slot,
                                const char *name,
                                const DM2_V1_SessionState *session);
 
+/* Save session to original-style last-session SKSave.dat.
+ * Rotates any existing SKSave.dat to SKSave.bak. */
+int dm2_v1_session_save_last_session(const char *save_base,
+                                      const char *name,
+                                      const DM2_V1_SessionState *session);
+
 /* Load session from slot N using the slot manager.
  * Combines dm2_sl_load + deserialize.
  * Returns 0 on success.
  * Source: dm2_v1_save_load.h dm2_sl_load() */
 int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
                                DM2_V1_SessionState *session);
+
+/* Load original-style last-session SKSave.dat, falling back to SKSave.bak. */
+int dm2_v1_session_load_last_session(const char *save_base,
+                                      DM2_V1_SessionState *session);
 
 /* Delete a saved session in slot N.
  * Returns 0 on success. */
