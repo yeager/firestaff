@@ -9693,6 +9693,8 @@ static void m11_nexus_release_title(M11_GameViewState* state) {
     state->nexusState.title_active = 0;
     state->nexusState.title_loaded = 0;
     state->nexusState.title_frame = 0;
+    state->nexusState.champion_select_active = 0;
+    state->nexusState.champion_cursor = 0;
 }
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
@@ -12134,6 +12136,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             ++state->nexusState.title_frame;
             return M11_GAME_INPUT_REDRAW;
         }
+        if (state->nexusState.champion_select_active) {
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
         nexus_v1_tick(state->nexusEngine);
         if (state->nexusEngine->mechanics) {
             state->nexusEngine->game.party_x =
@@ -13447,8 +13452,51 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             state->nexusState.title_active = 0;
             state->nexusState.title_frame = 0;
-            m11_set_status(state, "BOOT", "NEXUS READY");
+            state->nexusState.champion_select_active = 1;
+            state->nexusState.champion_cursor = 0;
+            m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
             return M11_GAME_INPUT_REDRAW;
+        }
+        if (state->nexusState.champion_select_active) {
+            Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+            int cursor = state->nexusState.champion_cursor;
+            if (pool->champion_count <= 0) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            if (cursor < 0 || cursor >= pool->champion_count) {
+                cursor = 0;
+            }
+            if (input == M12_MENU_INPUT_UP) {
+                cursor = (cursor + pool->champion_count - 1) %
+                         pool->champion_count;
+                state->nexusState.champion_cursor = cursor;
+                m11_set_status(state, "STARTUP", "NEXUS CHAMPION CURSOR");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input == M12_MENU_INPUT_DOWN) {
+                cursor = (cursor + 1) % pool->champion_count;
+                state->nexusState.champion_cursor = cursor;
+                m11_set_status(state, "STARTUP", "NEXUS CHAMPION CURSOR");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input == M12_MENU_INPUT_ACCEPT) {
+                if (nexus_v1_champion_recruit(pool, cursor) >= 0) {
+                    m11_set_status(state, "STARTUP", "NEXUS CHAMPION ADDED");
+                } else {
+                    m11_set_status(state, "STARTUP", "NEXUS CHAMPION SKIPPED");
+                }
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input == M12_MENU_INPUT_ACTION) {
+                if (pool->party_count <= 0) {
+                    m11_set_status(state, "STARTUP", "NEXUS NEEDS CHAMPION");
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                state->nexusState.champion_select_active = 0;
+                m11_set_status(state, "BOOT", "NEXUS READY");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
         }
         switch (input) {
             case M12_MENU_INPUT_UP:
@@ -37894,21 +37942,65 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int y;
         int copyW = framebufferWidth < NEXUS_FB_W ? framebufferWidth : NEXUS_FB_W;
         int copyH = framebufferHeight < NEXUS_FB_H ? framebufferHeight : NEXUS_FB_H;
+        int directDraw = 0;
         nexus_fb_init(&nexusFb);
         if (state->nexusState.title_active) {
             nexus_render_title((const Nexus_TitleScreen*)state->nexusTitleScreen,
                                &nexusFb,
                                state->nexusState.title_frame);
+        } else if (state->nexusState.champion_select_active &&
+                   state->nexusEngine) {
+            const Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+            int i;
+            int yText = 38;
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 14, "DUNGEON MASTER NEXUS",
+                          &g_text_title);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 28, "SELECT CHAMPIONS",
+                          &g_text_shadow);
+            directDraw = 1;
+            for (i = 0; i < pool->champion_count && i < 12; ++i) {
+                char row[96];
+                int inParty = 0;
+                int p;
+                for (p = 0; p < pool->party_count; ++p) {
+                    if (pool->party[p] == i) {
+                        inParty = 1;
+                        break;
+                    }
+                }
+                snprintf(row, sizeof(row), "%c %s %s HP %d MP %d",
+                         i == state->nexusState.champion_cursor ? '>' : ' ',
+                         inParty ? "*" : " ",
+                         pool->champions[i].name_ascii,
+                         pool->champions[i].max_health,
+                         pool->champions[i].max_mana);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              22, yText + i * 11, row,
+                              i == state->nexusState.champion_cursor
+                                  ? &g_text_shadow : &g_text_small);
+            }
+            {
+                char footer[80];
+                snprintf(footer, sizeof(footer),
+                         "PARTY %d/%d  ACCEPT ADD  ACTION START",
+                         pool->party_count, NEXUS_MAX_PARTY);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              18, 184, footer, &g_text_small);
+            }
         } else if (state->nexusEngine) {
             Nexus_Viewport vp;
             nexus_viewport_init(&vp);
             nexus_viewport_render(&vp, state->nexusEngine);
             memcpy(&nexusFb, &vp.fb, sizeof(nexusFb));
         }
-        for (y = 0; y < copyH; ++y) {
-            memcpy(&framebuffer[y * framebufferWidth],
-                   &nexusFb.color_buffer[y * NEXUS_FB_W],
-                   (size_t)copyW);
+        if (!directDraw) {
+            for (y = 0; y < copyH; ++y) {
+                memcpy(&framebuffer[y * framebufferWidth],
+                       &nexusFb.color_buffer[y * NEXUS_FB_W],
+                       (size_t)copyW);
+            }
         }
         if (!state->nexusEngine) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,

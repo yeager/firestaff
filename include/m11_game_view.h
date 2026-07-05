@@ -515,6 +515,8 @@ typedef struct {
         int title_active;
         int title_loaded;
         int title_frame;
+        int champion_select_active;
+        int champion_cursor;
     } nexusState;
 
     /* Theron's Quest V1 runtime — active when sourceKind ==
