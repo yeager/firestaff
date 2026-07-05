@@ -1578,6 +1578,32 @@ int main(void) {
     M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
     force_dm1_available(&state);
     force_csb_available(&state);
+    state.selectedIndex = 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACTION);
+    if (!expect(state.view == M12_MENU_VIEW_SAVE_BROWSER,
+                "main CSB action should open utility save browser")) return 1;
+    if (!expect(state.saveBrowserReturnView == M12_MENU_VIEW_MAIN,
+                "main CSB utility save browser should remember main return view")) return 1;
+    if (!expect(state.saveBrowser.entryCount > 0 &&
+                state.saveBrowser.selectedIndex >= 0 &&
+                state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1 &&
+                strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "dm1") == 0,
+                "main CSB action should preselect a DM1 import candidate")) return 1;
+    if (!expect(state.launchRequested == 0 &&
+                state.csbImportDm1LaunchRequested == 0,
+                "main CSB action should not launch before import confirmation")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                "main CSB utility save browser Back should return to main")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                state.activatedIndex == 1,
+                "main CSB accept should still open normal CSB options")) return 1;
+
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_dm1_available(&state);
+    force_csb_available(&state);
     if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
                 "startup should open save browser for CSB DM1 import")) return 1;
     if (!expect(select_save_entry(&state, "firestaff-dm1-browser.sav"),
