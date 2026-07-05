@@ -10520,6 +10520,52 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
     return 0;
 }
 
+static void m11_theron_capture_track02_startup_roster(
+    M11_GameViewState* state,
+    const TrAssetBundle* assets,
+    const char* md5_hex) {
+    Theron_Track02StartupRosterNameCatalog catalog;
+    Theron_Track02SignalStatus status;
+    size_t i;
+
+    if (!state) {
+        return;
+    }
+    state->theronState.startup_roster_name_count = 0;
+    state->theronState.startup_roster_name_status =
+        (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
+    memset(state->theronState.startup_roster_names,
+           0,
+           sizeof(state->theronState.startup_roster_names));
+    if (!assets || !assets->hucard_rom || assets->hucard_rom_size == 0u ||
+        !md5_hex || md5_hex[0] == '\0') {
+        return;
+    }
+
+    memset(&catalog, 0, sizeof(catalog));
+    status = theron_v1_track02_catalog_startup_roster_names(
+        assets->hucard_rom,
+        assets->hucard_rom_size,
+        md5_hex,
+        &catalog);
+    state->theronState.startup_roster_name_status = (int)status;
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return;
+    }
+
+    for (i = 0u;
+         i < catalog.name_count &&
+         i < sizeof(state->theronState.startup_roster_names) /
+                 sizeof(state->theronState.startup_roster_names[0]);
+         ++i) {
+        snprintf(state->theronState.startup_roster_names[i],
+                 sizeof(state->theronState.startup_roster_names[i]),
+                 "%s",
+                 catalog.names[i].name);
+    }
+    state->theronState.startup_roster_name_count = (int)i;
+}
+
 static int m11_theron_load_initial_level(Theron_V1_World* world,
                                          const TrAssetBundle* assets,
                                          const char* md5_hex,
@@ -11236,15 +11282,22 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         saveResumeReady ? saveResume.tqsv_valid_slots : 0;
     state->theronState.save_resume_srm_slots =
         saveResumeReady ? saveResume.srm_recognized_slots : 0;
+    m11_theron_capture_track02_startup_roster(state,
+                                              assets,
+                                              profile->graphics_md5);
     m11_set_status(state, "BOOT", "THERON STARTUP");
     {
         char inspect[256];
         snprintf(inspect,
                  sizeof(inspect),
-                 "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; CHOOSE A STAGE",
+                 "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; roster_names=%d status=%s; CHOOSE A STAGE",
                  saveResumeReady ? saveResume.resume_claim_name : "UNKNOWN",
                  saveResumeReady ? saveResume.tqsv_valid_slots : 0,
-                 saveResumeReady ? saveResume.srm_recognized_slots : 0);
+                 saveResumeReady ? saveResume.srm_recognized_slots : 0,
+                 state->theronState.startup_roster_name_count,
+                 theron_v1_track02_signal_status_name(
+                     (Theron_Track02SignalStatus)
+                         state->theronState.startup_roster_name_status));
         m11_theron_set_chapter_inspect(state, inspect);
     }
     m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON STARTUP READY");
@@ -36913,6 +36966,32 @@ int M11_GameView_GetTheronStartupRenderRows(
         if (count >= maxRows) {
             return count;
         }
+        if (state->theronState.startup_roster_name_count > 0) {
+            int written = snprintf(rows[count],
+                                   M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                                   "TRACK 02 ROSTER:");
+            int j;
+            for (j = 0;
+                 j < state->theronState.startup_roster_name_count &&
+                 j < (int)(sizeof(state->theronState.startup_roster_names) /
+                           sizeof(state->theronState.startup_roster_names[0]));
+                 ++j) {
+                if (written < 0 ||
+                    written >= M11_THERON_STARTUP_RENDER_ROW_CAPACITY) {
+                    break;
+                }
+                written += snprintf(
+                    rows[count] + written,
+                    (size_t)M11_THERON_STARTUP_RENDER_ROW_CAPACITY -
+                        (size_t)written,
+                    " %s",
+                    state->theronState.startup_roster_names[j]);
+            }
+            ++count;
+            if (count >= maxRows) {
+                return count;
+            }
+        }
         for (i = 0; i < element_count && count < maxRows; ++i) {
             const M11_TheronStartupElement *e = &elements[i];
             if (e->kind == M11_THERON_STARTUP_ELEMENT_CONTINUE) {
@@ -37027,6 +37106,28 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
 
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       34, 52, "CHOOSE A STAGE", &g_text_shadow);
+        if (state->theronState.startup_roster_name_count > 0) {
+            char roster_row[128];
+            int written = snprintf(roster_row,
+                                   sizeof(roster_row),
+                                   "ROSTER:");
+            int j;
+            for (j = 0;
+                 j < state->theronState.startup_roster_name_count &&
+                 j < (int)(sizeof(state->theronState.startup_roster_names) /
+                           sizeof(state->theronState.startup_roster_names[0]));
+                 ++j) {
+                if (written < 0 || written >= (int)sizeof(roster_row)) {
+                    break;
+                }
+                written += snprintf(roster_row + written,
+                                    sizeof(roster_row) - (size_t)written,
+                                    " %s",
+                                    state->theronState.startup_roster_names[j]);
+            }
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          34, 164, roster_row, &g_text_small);
+        }
         for (i = 0; i < element_count; ++i) {
             const M11_TheronStartupElement *e = &elements[i];
             char row[96];

@@ -314,6 +314,35 @@ int main(void) {
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "> 1  Hall of Records"),
                 "M11 Theron startup render rows expose stage selection state");
+    view.theronState.startup_roster_name_count = 7;
+    snprintf(view.theronState.startup_roster_names[0],
+             sizeof(view.theronState.startup_roster_names[0]),
+             "THERON");
+    snprintf(view.theronState.startup_roster_names[1],
+             sizeof(view.theronState.startup_roster_names[1]),
+             "MARA");
+    snprintf(view.theronState.startup_roster_names[2],
+             sizeof(view.theronState.startup_roster_names[2]),
+             "LINOS");
+    snprintf(view.theronState.startup_roster_names[3],
+             sizeof(view.theronState.startup_roster_names[3]),
+             "HEXA");
+    snprintf(view.theronState.startup_roster_names[4],
+             sizeof(view.theronState.startup_roster_names[4]),
+             "HAKAR");
+    snprintf(view.theronState.startup_roster_names[5],
+             sizeof(view.theronState.startup_roster_names[5]),
+             "TIRAN");
+    snprintf(view.theronState.startup_roster_names[6],
+             sizeof(view.theronState.startup_roster_names[6]),
+             "DOTAN");
+    startup_row_count = M11_GameView_GetTheronStartupRenderRows(
+        &view, startup_rows, 16);
+    expect_true(startup_rows_contain(startup_rows,
+                                     startup_row_count,
+                                     "TRACK 02 ROSTER: THERON MARA LINOS HEXA HAKAR TIRAN DOTAN"),
+                "M11 Theron startup render rows expose decoded Track 02 roster names");
+    view.theronState.startup_roster_name_count = 0;
     startup_layout_count = M11_GameView_GetTheronStartupLayout(
         &view, startup_layout, 16);
     {
