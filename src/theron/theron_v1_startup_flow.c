@@ -24,11 +24,39 @@ static const Theron_StartupMirrorMeta g_tqr_mirror_meta[THERON_STARTUP_HERO_MIRR
     { "Pental", THERON_CLASS_FIGHTER, 7 }
 };
 
+static const int g_tqr_mirror_to_track02_roster_index[THERON_STARTUP_HERO_MIRROR_COUNT] = {
+    4, /* Hakar -> HAKAR */
+    1, /* Mara -> MARA */
+    5, /* Tiran -> TIRAN */
+    2, /* Linos -> LINOS */
+    6, /* Dotan -> DOTAN */
+    3, /* Hexa -> HEXA */
+    7  /* Pental fallback label -> raw Track 02 PENTAI */
+};
+
 const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index) {
     if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
         return NULL;
     }
     return &g_tqr_mirror_meta[mirror_index];
+}
+
+int theron_v1_startup_roster_index_for_mirror(int mirror_index) {
+    if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
+        return -1;
+    }
+    return g_tqr_mirror_to_track02_roster_index[mirror_index];
+}
+
+int theron_v1_startup_mirror_index_for_roster(int roster_index) {
+    int mirror;
+
+    for (mirror = 0; mirror < THERON_STARTUP_HERO_MIRROR_COUNT; ++mirror) {
+        if (g_tqr_mirror_to_track02_roster_index[mirror] == roster_index) {
+            return mirror;
+        }
+    }
+    return -1;
 }
 
 const char *theron_v1_startup_class_name(Theron_ChampionClass cls) {
@@ -234,6 +262,8 @@ const char *theron_v1_startup_flow_source_evidence(void) {
            "resurrect up to three heroes, enter central forcefield; "
            "manual/dmweb champion list: Hakar, Mara, Tiran, Linos, Dotan, "
            "Hexa, Pental as the seven selectable heroes; "
+           "raw JP Track 02 roster order: THERON, MARA, LINOS, HEXA, "
+           "HAKAR, TIRAN, DOTAN, PENTAI; "
            "dmweb Theron's Quest: Theron plus three champions, companions reset "
            "after dungeon completion; PC Engine Software Bible: console control "
            "profile for Dungeon Master: Theron's Quest.";
