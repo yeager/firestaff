@@ -1608,6 +1608,12 @@ static int csb_v1_viewport_custom_background_room_for_square(
     if (square == DM1_VIEW_SQUARE_D2L) return 7;
     if (square == DM1_VIEW_SQUARE_D2R) return 8;
     if (square == DM1_VIEW_SQUARE_D2C) return 9;
+    if (square == DM1_VIEW_SQUARE_D1L) return 10;
+    if (square == DM1_VIEW_SQUARE_D1R) return 11;
+    if (square == DM1_VIEW_SQUARE_D1C) return 12;
+    if (square == DM1_VIEW_SQUARE_D0L) return 13;
+    if (square == DM1_VIEW_SQUARE_D0R) return 14;
+    if (square == DM1_VIEW_SQUARE_D0C) return 15;
     return -1;
 }
 
