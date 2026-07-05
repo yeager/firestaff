@@ -680,6 +680,8 @@ int main(void) {
                 dm2_v1_dungeon_set_tile_raw(dd, 0, 13, 8, 4) == 0;
         }
         if (trigger_targets_valid) {
+            DM2_V1_TriggerEvent trigger_event;
+            DM2_V1_PlateEvent plate_event;
             dm2_v1_runtime_set_position(0, 15, 9, 0);
             dm2_v1_runtime_set_outdoor(1);
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
@@ -687,6 +689,13 @@ int main(void) {
                         "M11 DM2 forward move reaches square-trigger route");
             expect_true(dm2_v1_trigger_get_fire_count(1) == 1,
                         "DM2 runtime movement signals square-entered trigger");
+            expect_true(dm2_v1_trigger_copy_last_event(&trigger_event) &&
+                            trigger_event.trigger_id == 1 &&
+                            trigger_event.target == DM2_TRIGGER_TARGET_DOOR_OPEN &&
+                            trigger_event.target_x == 16 &&
+                            trigger_event.target_y == 8 &&
+                            trigger_event.target_level == 0,
+                        "DM2 runtime movement exposes square-trigger target receipt");
             expect_true(view.dm2State.party_x == 15 &&
                         view.dm2State.party_y == 8,
                         "M11 DM2 mirror follows trigger-square movement");
@@ -700,6 +709,13 @@ int main(void) {
                         "DM2 runtime movement evaluates party pressure plate");
             expect_true(dm2_v1_plate_fire_total() >= 1,
                         "DM2 runtime movement records pressure-plate fire total");
+            expect_true(dm2_v1_plate_copy_last_event(&plate_event) &&
+                            plate_event.plate_id == 1 &&
+                            plate_event.target_kind == DM2_PLATE_TARGET_DOOR_TOGGLE &&
+                            plate_event.target_x == 13 &&
+                            plate_event.target_y == 8 &&
+                            plate_event.target_level == 0,
+                        "DM2 runtime movement exposes pressure-plate target receipt");
             expect_true(dm2_v1_dungeon_get_tile_raw(dd, 0, 13, 8) == 0,
                         "DM2 pressure plate applies door-toggle target");
         }
