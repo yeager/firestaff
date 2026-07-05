@@ -397,6 +397,9 @@ static void test_skproject_actuator_wall_gfx_ordinal(void)
     size_t size = build_skproject_actuator_wall_gfx_fixture(dat, sizeof(dat));
     int thing;
     int ordinal = -1;
+    int index = -1;
+    int field = -1;
+    static const uint8_t wall_gfx_list[4] = { 0x10, 0x20, 0x2a, 0x30 };
 
     CHECK(size > 0, "skproject actuator wall-gfx fixture is complete");
     CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
@@ -411,6 +414,15 @@ static void test_skproject_actuator_wall_gfx_ordinal(void)
     CHECK(dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
               &dungeon, (uint16_t)thing, 1, 2, 8, &ordinal) == -1,
           "actuator wall-gfx helper requires the requested relative side");
+    CHECK(dm2_v1_dungeon_resolve_actuator_wall_gfx(
+              &dungeon, (uint16_t)thing, 0, 2, 8,
+              wall_gfx_list, 4, &index, &field) == 0 &&
+              index == 0x2a && field == 1,
+          "actuator wall-gfx resolver maps one-based ordinal through map list");
+    CHECK(dm2_v1_dungeon_resolve_actuator_wall_gfx(
+              &dungeon, (uint16_t)thing, 0, 2, 8,
+              wall_gfx_list, 2, &index, &field) == -1,
+          "actuator wall-gfx resolver rejects missing map-list ordinal");
 
     dm2_v1_dungeon_free(&dungeon);
 }

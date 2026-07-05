@@ -95,6 +95,16 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     int side_index,
     int max_steps,
     int *out_wall_gfx_ordinal);
+int dm2_v1_dungeon_resolve_actuator_wall_gfx(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    int *out_wall_gfx_index,
+    int *out_wall_gfx_field);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,
