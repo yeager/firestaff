@@ -30,6 +30,16 @@ static void check_true(const char *label, int value)
     check_int(label, value ? 1 : 0, 1);
 }
 
+static int test_projectile_material_resolver(
+    void *user,
+    const struct ProjectileInstance_Compat *projectile)
+{
+    int *seen_thing = (int *)user;
+    if (!projectile) return -1;
+    if (seen_thing) *seen_thing = projectile->reserved1;
+    return 32;
+}
+
 static void test_config_defaults_and_setters(void)
 {
     CSB_V1_ViewportConfig cfg;
@@ -97,11 +107,31 @@ static void test_runtime_projectile_and_explosion_overlays(void)
     projectiles.entries[0].mapY = 1;
     projectiles.entries[0].cell = 2;
     projectiles.entries[0].direction = 0;
+    projectiles.entries[0].reserved1 = 0x1400;
 
     csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
     center_offset = (DM1_VIEWPORT_SCREEN_Y + 88) * 320 + 112;
     check_int("runtime.projectile_overlay.center",
               framebuffer[center_offset], 0x0E);
+    check_int("runtime.projectile_overlay.default_material_count",
+              cfg.runtime_projectile_material_resolved_count, 0);
+
+    {
+        int seen_thing = 0;
+        int material_color =
+            csb_v1_viewport_projectile_material_overlay_color(32);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        cfg.projectile_material_resolver = test_projectile_material_resolver;
+        cfg.projectile_material_user = &seen_thing;
+        cfg.runtime_projectile_material_resolved_count = 0;
+        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+        check_int("runtime.projectile_overlay.material_color",
+                  framebuffer[center_offset], material_color);
+        check_int("runtime.projectile_overlay.material_count",
+                  cfg.runtime_projectile_material_resolved_count, 1);
+        check_int("runtime.projectile_overlay.material_thing",
+                  seen_thing, 0x1400);
+    }
 
     memset(framebuffer, 0, sizeof(framebuffer));
     cfg.runtime_explosions = &explosions;

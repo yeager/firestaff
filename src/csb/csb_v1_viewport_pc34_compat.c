@@ -229,6 +229,12 @@ static void csb_v1_viewport_draw_runtime_overlay_cross(
     }
 }
 
+int csb_v1_viewport_projectile_material_overlay_color(int material_icon_index)
+{
+    if (material_icon_index < 0) return 0x0E;
+    return 0x06 + (material_icon_index & 0x07);
+}
+
 static int csb_v1_viewport_runtime_overlay_position(
     int party_dir,
     int party_x,
@@ -378,6 +384,8 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
         const struct ProjectileInstance_Compat *projectile =
             &cfg->runtime_projectiles->entries[i];
         CSB_V1_ViewportRuntimeProjectileOverlayPlacement placement;
+        int material_icon_index = -1;
+        uint8_t color = 0x0Eu;
 
         if (projectile->reserved3 == 0 || projectile->slotIndex < 0) {
             continue;
@@ -395,12 +403,23 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
         /* ReDMCSB DUNVIEW.C F0115 lines 5668-5683 map projectiles through
          * G2028 and C2900_ZONE_ + row*4 + ViewCell.  The bitmap binding is
          * still bounded, but D3L2/D3R2 runtime markers now use the same
-         * source-zone placement and front-cell rejection as the real route. */
+         * source-zone placement, front-cell rejection, and caller-supplied
+         * OBJECT.C F0032/F0033 material identity as the real route. */
+        if (cfg->projectile_material_resolver) {
+            material_icon_index = cfg->projectile_material_resolver(
+                cfg->projectile_material_user,
+                projectile);
+            if (material_icon_index >= 0) {
+                ++cfg->runtime_projectile_material_resolved_count;
+            }
+        }
+        color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
+            material_icon_index);
         csb_v1_viewport_draw_runtime_overlay_cross(
             cfg,
             placement.viewport_x,
             placement.viewport_y,
-            0x0Eu,
+            color,
             placement.source_zone >= 0 ? 2 : 1);
     }
 }
