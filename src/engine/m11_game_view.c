@@ -10355,8 +10355,10 @@ static int m11_disable_front_mirror_route(M11_GameViewState* state,
         case DIR_SOUTH: mapY += 1; break;
         default:        mapX -= 1; break;
     }
-    thing = m11_get_first_square_thing(&state->world, state->world.party.mapIndex,
-                                       mapX, mapY);
+    thing = m11_get_viewport_static_first_thing(&state->world,
+                                                state->world.party.mapIndex,
+                                                mapX,
+                                                mapY);
     while (thing != THING_ENDOFLIST && thing != THING_NONE) {
         int thingType = THING_GET_TYPE(thing);
         int thingIndex = THING_GET_INDEX(thing);
@@ -14814,7 +14816,10 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
      * MOVESENS.C still uses the C127 sensorData for REVIVE.C F0280.  Accept
      * only the concrete front-facing C127 + valid catalog ordinal here; do
      * not promote arbitrary corridor ornaments or payload objects. */
-    thing = frontCell.firstThing;
+    thing = m11_get_viewport_static_first_thing(&state->world,
+                                                state->world.party.mapIndex,
+                                                frontCell.mapX,
+                                                frontCell.mapY);
     while (thing != THING_ENDOFLIST && thing != THING_NONE) {
         int thingType = THING_GET_TYPE(thing);
         int thingIndex = THING_GET_INDEX(thing);
@@ -14831,6 +14836,10 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
                 thing = m11_raw_next_thing(state->world.things, thing);
                 continue;
             }
+            /* ReDMCSB stores SquareFirstThings as a compact table keyed by
+             * MASK0x0010_THING_LIST_PRESENT squares.  Use the same source
+             * lookup as the HoC viewport path; dense map indexing can miss
+             * the real C127 carrier or read unrelated payload data. */
             /* sensorData is a 0-based portrait ordinal within the C026
              * graphic (24 portraits, 8 cols x 3 rows).  Clamp to a
              * valid catalog range. */
