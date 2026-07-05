@@ -226,6 +226,8 @@ typedef struct {
     int home_map_x;
     int home_map_y;
     uint32_t last_move_time;
+    int target_map_x;
+    int target_map_y;
     uint8_t aspect[4];
     uint8_t delay_fleeing_from_target;
 } CSB_V1_RuntimeActiveGroupState;

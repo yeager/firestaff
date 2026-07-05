@@ -255,7 +255,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 9u
+#define CSB_V1_RUNTIME_SAVE_VERSION 10u
 
 typedef struct {
     int valid;
@@ -281,6 +281,23 @@ typedef struct {
     uint32_t last_move_time;
     uint8_t delay_fleeing_from_target;
 } CSB_V1_RuntimeActiveGroupStateV8;
+
+typedef struct {
+    int valid;
+    uint16_t group_thing;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint8_t cells;
+    uint16_t directions;
+    int prior_map_x;
+    int prior_map_y;
+    int home_map_x;
+    int home_map_y;
+    uint32_t last_move_time;
+    uint8_t aspect[4];
+    uint8_t delay_fleeing_from_target;
+} CSB_V1_RuntimeActiveGroupStateV9;
 
 typedef struct {
     uint32_t magic;
@@ -347,7 +364,8 @@ typedef struct {
     ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, active_group_state_count))
 /* Version 7 carried the first active-group side-state table before Cells,
  * Directions, Prior/Home, and LastMoveTime were added.  Keep it loadable as
- * an older image; version 8 is the first one that preserves the wider table. */
+ * an older image; version 8 preserves the wider table, version 9 adds
+ * Aspect[4], and version 10 adds ReDMCSB ActiveGroup.TargetMapX/Y. */
 #define CSB_V1_RUNTIME_SAVE_V7_SIZE \
     (CSB_V1_RUNTIME_SAVE_V6_SIZE + 4u + \
      (CSB_V1_RUNTIME_ACTIVE_GROUP_CAP * \
@@ -356,11 +374,17 @@ typedef struct {
     (CSB_V1_RUNTIME_SAVE_V6_SIZE + 4u + \
      (CSB_V1_RUNTIME_ACTIVE_GROUP_CAP * \
       (uint32_t)sizeof(CSB_V1_RuntimeActiveGroupStateV8)))
+#define CSB_V1_RUNTIME_SAVE_V9_SIZE \
+    (CSB_V1_RUNTIME_SAVE_V6_SIZE + 4u + \
+     (CSB_V1_RUNTIME_ACTIVE_GROUP_CAP * \
+      (uint32_t)sizeof(CSB_V1_RuntimeActiveGroupStateV9)))
 
 _Static_assert(sizeof(CSB_V1_RuntimeActiveGroupStateV7) == 24u,
                "CSB native save v7 active-group entry size drifted");
 _Static_assert(sizeof(CSB_V1_RuntimeActiveGroupStateV8) == 48u,
                "CSB native save v8 active-group entry size drifted");
+_Static_assert(sizeof(CSB_V1_RuntimeActiveGroupStateV9) == 52u,
+               "CSB native save v9 active-group entry size drifted");
 
 static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
@@ -372,6 +396,18 @@ static int csb_v1_runtime_target_champion_for_adjacent_attack(
     int attacker_x,
     int attacker_y,
     int creature_cell);
+static CSB_V1_RuntimeActiveGroupState *
+csb_v1_runtime_active_group_state_for_thing(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing);
+static void csb_v1_runtime_set_active_group_target(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int target_x,
+    int target_y);
 
 static void csb_v1_init_save_dir(void)
 {
@@ -773,6 +809,8 @@ static int csb_v1_runtime_validate_active_group_state(
         if (state->map_index < 0 ||
             state->map_x < 0 ||
             state->map_y < 0 ||
+            state->target_map_x < 0 ||
+            state->target_map_y < 0 ||
             ((state->group_thing >> 10) & 0x0Fu) != 4u) {
             return 0;
         }
@@ -789,6 +827,8 @@ static int csb_v1_runtime_active_group_state_entry_valid(
     if (state->map_index < 0 ||
         state->map_x < 0 ||
         state->map_y < 0 ||
+        state->target_map_x < 0 ||
+        state->target_map_y < 0 ||
         ((state->group_thing >> 10) & 0x0Fu) != 4u) {
         return 0;
     }
@@ -835,6 +875,8 @@ static int csb_v1_runtime_apply_active_group_state_from_save_image(
             state->prior_map_y = legacy[i].map_y;
             state->home_map_x = legacy[i].map_x;
             state->home_map_y = legacy[i].map_y;
+            state->target_map_x = legacy[i].map_x;
+            state->target_map_y = legacy[i].map_y;
             state->delay_fleeing_from_target =
                 legacy[i].delay_fleeing_from_target;
             if (!csb_v1_runtime_active_group_state_entry_valid(state)) {
@@ -862,6 +904,38 @@ static int csb_v1_runtime_apply_active_group_state_from_save_image(
             state->home_map_x = legacy[i].home_map_x;
             state->home_map_y = legacy[i].home_map_y;
             state->last_move_time = legacy[i].last_move_time;
+            state->target_map_x = legacy[i].map_x;
+            state->target_map_y = legacy[i].map_y;
+            state->delay_fleeing_from_target =
+                legacy[i].delay_fleeing_from_target;
+            if (!csb_v1_runtime_active_group_state_entry_valid(state)) {
+                return -1;
+            }
+            ++active;
+        }
+    } else if (image->version == 9u &&
+               image->byte_size == CSB_V1_RUNTIME_SAVE_V9_SIZE) {
+        const CSB_V1_RuntimeActiveGroupStateV9 *legacy =
+            (const CSB_V1_RuntimeActiveGroupStateV9 *)base;
+        for (i = 0u; i < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP; ++i) {
+            CSB_V1_RuntimeActiveGroupState *state =
+                &profile->active_group_state[i];
+            if (!legacy[i].valid) continue;
+            state->valid = legacy[i].valid;
+            state->group_thing = legacy[i].group_thing;
+            state->map_index = legacy[i].map_index;
+            state->map_x = legacy[i].map_x;
+            state->map_y = legacy[i].map_y;
+            state->cells = legacy[i].cells;
+            state->directions = legacy[i].directions;
+            state->prior_map_x = legacy[i].prior_map_x;
+            state->prior_map_y = legacy[i].prior_map_y;
+            state->home_map_x = legacy[i].home_map_x;
+            state->home_map_y = legacy[i].home_map_y;
+            state->last_move_time = legacy[i].last_move_time;
+            state->target_map_x = legacy[i].map_x;
+            state->target_map_y = legacy[i].map_y;
+            memcpy(state->aspect, legacy[i].aspect, sizeof(state->aspect));
             state->delay_fleeing_from_target =
                 legacy[i].delay_fleeing_from_target;
             if (!csb_v1_runtime_active_group_state_entry_valid(state)) {
@@ -2970,7 +3044,6 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
     if (record->mapIndex != profile->current_level) return;
     distance_x = abs(profile->party_x - record->mapX);
     distance_y = abs(profile->party_y - record->mapY);
-    if (distance_x != 0 && distance_y != 0) return;
 
     dungeon = profile->dungeon_handle;
     thing = csb_v1_dungeon_get_first_thing(
@@ -3014,11 +3087,20 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
             creature_size = creature_profile
                 ? (int)(creature_profile->attributes & 0x0003u)
                 : 0;
-            if (behavior == 0 || behavior == 2 || behavior == 3) {
+            if ((behavior == 0 || behavior == 2 || behavior == 3) &&
+                (distance_x == 0 || distance_y == 0)) {
                 next_behavior = (distance_x + distance_y <= 1) ? 6 : 7;
                 flags = (uint16_t)((flags & 0xFFF0u) |
                                    (uint16_t)(next_behavior & 0x0F));
                 csb_v1_runtime_write_u16(thing_record + 14, flags);
+                csb_v1_runtime_set_active_group_target(
+                    profile,
+                    group_thing,
+                    record->mapIndex,
+                    record->mapX,
+                    record->mapY,
+                    profile->party_x,
+                    profile->party_y);
                 if (next_behavior == 6) {
                     csb_v1_runtime_turn_active_group_toward_attack(
                         profile,
@@ -3070,18 +3152,30 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 return;
             }
             if (behavior == 7) {
+                CSB_V1_RuntimeActiveGroupState *active_state;
+                int party_visible = (distance_x == 0 || distance_y == 0);
                 int target_map_index = record->mapIndex;
                 int target_x = record->mapX;
                 int target_y = record->mapY;
+                int approach_target_x = profile->party_x;
+                int approach_target_y = profile->party_y;
                 int moved = 0;
                 int deferred = 0;
                 int initial_move_direction = 0;
 
                 movement_ticks = csb_v1_runtime_creature_movement_ticks(
                     (int)thing_record[4]);
-                if (distance_x + distance_y <= 1) {
+                if (party_visible && distance_x + distance_y <= 1) {
                     flags = (uint16_t)((flags & 0xFFF0u) | 6u);
                     csb_v1_runtime_write_u16(thing_record + 14, flags);
+                    csb_v1_runtime_set_active_group_target(
+                        profile,
+                        group_thing,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        profile->party_x,
+                        profile->party_y);
                     csb_v1_runtime_turn_active_group_toward_attack(
                         profile,
                         group_thing,
@@ -3105,10 +3199,45 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                         flags);
                     return;
                 }
-                if (distance_y > 0) {
-                    target_y += (profile->party_y > record->mapY) ? 1 : -1;
-                } else if (distance_x > 0) {
-                    target_x += (profile->party_x > record->mapX) ? 1 : -1;
+                if (party_visible) {
+                    csb_v1_runtime_set_active_group_target(
+                        profile,
+                        group_thing,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        profile->party_x,
+                        profile->party_y);
+                } else {
+                    active_state = csb_v1_runtime_active_group_state_for_thing(
+                        profile,
+                        group_thing);
+                    if (!active_state) return;
+                    approach_target_x = active_state->target_map_x;
+                    approach_target_y = active_state->target_map_y;
+                    if (approach_target_x == record->mapX &&
+                        approach_target_y == record->mapY) {
+                        flags = (uint16_t)(flags & 0xFFF0u);
+                        csb_v1_runtime_write_u16(thing_record + 14, flags);
+                        csb_v1_runtime_set_active_group_direction_group(
+                            profile,
+                            group_thing,
+                            thing_record,
+                            record->mapIndex,
+                            record->mapX,
+                            record->mapY,
+                            (int)((flags >> 8) & 0x03u),
+                            creature_count,
+                            creature_size);
+                        return;
+                    }
+                }
+                if (approach_target_y != record->mapY) {
+                    target_y += (approach_target_y > record->mapY) ? 1 : -1;
+                } else if (approach_target_x != record->mapX) {
+                    target_x += (approach_target_x > record->mapX) ? 1 : -1;
+                } else {
+                    return;
                 }
                 initial_move_direction =
                     csb_v1_runtime_direction_from_source_to_destination(
@@ -3226,8 +3355,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                  * needed, schedules C60/C61-style retry when blocked by
                  * party/group occupancy, then applies bounded creature-scope
                  * teleporter/pit chains. Full F0202 occupancy breadth,
-                 * ActiveGroup side state, sounds, and attack expansion remain
-                 * separate work. */
+                 * sounds, and attack expansion remain separate work. */
                 if (!deferred) {
                     csb_v1_runtime_schedule_c37_group_event(
                         profile,
@@ -5053,6 +5181,8 @@ csb_v1_runtime_active_group_state_for(
         state->map_index = level;
         state->map_x = map_x;
         state->map_y = map_y;
+        state->target_map_x = map_x;
+        state->target_map_y = map_y;
         ++profile->active_group_state_count;
         return state;
     }
@@ -5155,6 +5285,10 @@ static void csb_v1_runtime_sync_active_group_state_from_record(
     state->map_index = level;
     state->map_x = map_x;
     state->map_y = map_y;
+    if (!existed) {
+        state->target_map_x = map_x;
+        state->target_map_y = map_y;
+    }
     if (!preserve_home || !existed) {
         state->home_map_x = map_x;
         state->home_map_y = map_y;
@@ -5164,6 +5298,37 @@ static void csb_v1_runtime_sync_active_group_state_from_record(
     state->last_move_time = moved
         ? profile->game_time
         : (profile->game_time >= 127u ? profile->game_time - 127u : 0u);
+}
+
+static void csb_v1_runtime_set_active_group_target(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int target_x,
+    int target_y)
+{
+    CSB_V1_RuntimeActiveGroupState *state;
+
+    if (!profile || target_x < 0 || target_y < 0) return;
+    state = csb_v1_runtime_active_group_state_for_thing(profile, group_thing);
+    if (!state) {
+        state = csb_v1_runtime_active_group_state_for(
+            profile,
+            group_thing,
+            level,
+            map_x,
+            map_y,
+            1);
+    }
+    if (!state) return;
+    /* ReDMCSB GROUP.C F0209 lines 2111-2112, 2137-2138, and
+     * 2247-2252 keep ActiveGroup.TargetMapX/Y as the last visible party
+     * square so C7 approach can continue walking after the party is no
+     * longer visible. */
+    state->target_map_x = target_x;
+    state->target_map_y = target_y;
 }
 
 static void csb_v1_runtime_set_active_group_aspect_attacking(
