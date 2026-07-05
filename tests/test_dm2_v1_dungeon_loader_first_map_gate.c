@@ -208,6 +208,14 @@ static void test_skproject_layout_first_thing_and_door_record(void)
     thing = dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0);
     CHECK(thing == 0x0000,
           "skproject first-thing lookup returns the door ObjectID");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, (uint16_t)thing) == 0xfffe,
+          "skproject ObjectID chain reads the record w0 next link");
+    CHECK(dm2_v1_dungeon_find_thing_of_type(
+              &dungeon, (uint16_t)thing, 0, 8) == 0x0000,
+          "skproject ObjectID chain search finds the DB0 door record");
+    CHECK(dm2_v1_dungeon_find_thing_of_type(
+              &dungeon, (uint16_t)thing, 3, 8) == -1,
+          "skproject ObjectID chain search stops at the end marker");
     record = dm2_v1_dungeon_get_thing_record(
         &dungeon, (uint16_t)thing, &type, &index, &record_size);
     CHECK(record != NULL && type == 0 && index == 0 && record_size == 4,

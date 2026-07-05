@@ -119,6 +119,7 @@ static void dm2_runtime_apply_door_record_metadata(
     int y,
     DM2_ViewSquare *door) {
     int thing;
+    int door_thing;
     int type = -1;
     int index = -1;
     int size = 0;
@@ -128,8 +129,10 @@ static void dm2_runtime_apply_door_record_metadata(
     if (!dd || !door) return;
     thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
     if (thing < 0) return;
+    door_thing = dm2_v1_dungeon_find_thing_of_type(dd, (uint16_t)thing, 0, 8);
+    if (door_thing < 0) return;
     record = dm2_v1_dungeon_get_thing_record(
-        dd, (uint16_t)thing, &type, &index, &size);
+        dd, (uint16_t)door_thing, &type, &index, &size);
     (void)index;
     if (!record || type != 0 || size < 4) return;
     w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
