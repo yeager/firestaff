@@ -34,6 +34,7 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t ceiling[4] = { 2, 3, 4, 5 };
     static const uint8_t floor[4] = { 6, 7, 8, 9 };
     static const uint8_t wall[4] = { 11, 12, 13, 14 };
+    static const uint8_t door_panel[4] = { 8, 9, 10, 11 };
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
     (void)user;
     ++s_asset_fetch_calls;
@@ -51,6 +52,11 @@ static int test_dm2_asset_fetch(void *user,
                    DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT &&
                DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - gdat_index < 0x20) {
         if (out_pixels) *out_pixels = door_frame;
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE -
+                   DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT &&
+               DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - gdat_index < 0x04) {
+        if (out_pixels) *out_pixels = door_panel;
     } else {
         if (out_pixels) *out_pixels = NULL;
         if (out_w) *out_w = 0;
@@ -143,8 +149,9 @@ static void test_floor_ceiling_asset_provider(void)
                                        test_dm2_asset_fetch,
                                        NULL);
     dm2_v1_render_doors(&viewport);
-    CHECK("door pass fetches the DM2 front door-frame asset",
-          s_asset_fetch_calls == 1 &&
+    CHECK("door pass fetches the DM2 front panel and door-frame assets",
+          s_asset_fetch_calls == 2 &&
+              viewport.asset_door_panel_drawn_count == 1 &&
               viewport.asset_door_frame_drawn_count == 1 &&
               viewport.fallback_door_drawn_count == 0);
     CHECK("front door-frame asset is scaled into the forward cell",
@@ -162,8 +169,9 @@ static void test_floor_ceiling_asset_provider(void)
                                        test_dm2_asset_fetch,
                                        NULL);
     dm2_v1_render_doors(&viewport);
-    CHECK("door pass fetches front, D1C and D2C frame assets",
-          s_asset_fetch_calls == 3 &&
+    CHECK("door pass fetches D0C/D1C/D2C panel and frame assets",
+          s_asset_fetch_calls == 6 &&
+              viewport.asset_door_panel_drawn_count == 3 &&
               viewport.asset_door_frame_drawn_count == 3 &&
               viewport.fallback_door_drawn_count == 0);
 }
