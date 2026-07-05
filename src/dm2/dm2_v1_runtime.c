@@ -23,6 +23,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
+#include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_trigger.h"
 #include <stdio.h>
@@ -55,6 +56,8 @@ typedef struct {
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
+static int g_dm2_last_asset_floor_ceiling_count = 0;
+static int g_dm2_last_fallback_floor_ceiling_count = 0;
 
 static int dm2_runtime_door_state(uint16_t square_raw) {
     return (int)(square_raw & 0x0007u);
@@ -355,109 +358,39 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                                   uint8_t *framebuffer, int fb_stride,
                                   int view_w, int view_h) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    int x, y;
-    (void)party_dir;  /* party state lives in g_dm2_runtime (rt->party_*) */
-    (void)party_x;
-    (void)party_y;
+    DM2_V1_ViewportState viewport;
 
-    if (!framebuffer) return -1;
-
-    /* Clear to black */
-    memset(framebuffer, 0, fb_stride * view_h);
-
-    if (rt->outdoor) {
-        /* DM2 outdoor: sky gradient with horizon line.
-         * Sky color: deep blue (index 9) to dark cyan (index 3).
-         * This is distinct from DM1/CSB which have no outdoor mode. */
-        for (y = 0; y < view_h / 2; y++) {
-            int sky_index = (y < view_h / 4) ? 9 : 3;
-            for (x = 0; x < view_w; x++) {
-                framebuffer[y * fb_stride + x] = (uint8_t)sky_index;
-            }
-        }
-        /* Ground/horizon bottom half */
-        for (y = view_h / 2; y < view_h; y++) {
-            for (x = 0; x < view_w; x++) {
-                framebuffer[y * fb_stride + x] = 6;  /* brown */
-            }
-        }
-
-        /* Weather overlay (rain) */
-        if (rt->weather.weather_intensity > 20) {
-            for (y = 0; y < view_h; y++) {
-                for (x = 0; x < view_w; x += 3) {
-                    if ((x + y + rt->tick_count) % 7 < rt->weather.weather_intensity / 20) {
-                        framebuffer[y * fb_stride + x] = 15;  /* white streak */
-                    }
-                }
-            }
-        }
-    } else {
-        /* DM2 dungeon: first-person view.
-         * Distinct from DM1: different wall set, ceiling color,
-         * and no corridor (DM2 has rooms, not corridors). */
-        /* Ceiling: dark gray */
-        for (y = 0; y < view_h / 2; y++) {
-            for (x = 0; x < view_w; x++) {
-                framebuffer[y * fb_stride + x] = 8;
-            }
-        }
-        /* Floor: darker brown */
-        for (y = view_h / 2; y < view_h; y++) {
-            for (x = 0; x < view_w; x++) {
-                framebuffer[y * fb_stride + x] = 5;
-            }
-        }
-
-        /* DM2 distinctive: dungeon wall frame outline.
-         * DM2 rooms are wider than DM1 corridors. */
-        int frame_thickness = 4;
-        for (y = 0; y < frame_thickness; y++) {
-            for (x = 0; x < view_w; x++) {
-                framebuffer[y * fb_stride + x] = 7;
-                framebuffer[(view_h - 1 - y) * fb_stride + x] = 7;
-            }
-        }
-        for (y = 0; y < view_h; y++) {
-            for (x = 0; x < frame_thickness; x++) {
-                framebuffer[y * fb_stride + x] = 7;
-                framebuffer[y * fb_stride + (view_w - 1 - x)] = 7;
-            }
-        }
-
-        /* Center "room" indicator — DM2 marks room presence */
-        {
-            int cx = view_w / 2;
-            int cy = view_h / 2;
-            int r = 8;
-            for (y = cy - r; y <= cy + r; y++) {
-                for (x = cx - r; x <= cx + r; x++) {
-                    if (y >= 0 && y < view_h && x >= 0 && x < view_w) {
-                        int dist = (x - cx) * (x - cx) + (y - cy) * (y - cy);
-                        if (dist <= r * r && dist > (r - 2) * (r - 2)) {
-                            framebuffer[y * fb_stride + x] = 10;  /* green — room */
-                        }
-                    }
-                }
-            }
-        }
+    if (!framebuffer || fb_stride <= 0 ||
+        view_w < DM2_VP_WIDTH || view_h < DM2_VP_HEIGHT) {
+        return -1;
     }
 
-    /* HUD bottom strip: DM2 gold display (vs DM1 empty) */
-    int hud_y = view_h - 16;
-    for (y = hud_y; y < view_h; y++) {
-        for (x = 0; x < view_w; x++) {
-            framebuffer[y * fb_stride + x] = 1;  /* dark blue */
-        }
-    }
-
-    /* DM2 marker text area — shows "DM2" in debug */
-    {
-        /* Placeholder: DM2 label at bottom-right of HUD */
-        (void)0;
-    }
+    dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
+    dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
+    dm2_v1_viewport_set_level(&viewport, rt->dungeon_level);
+    dm2_v1_viewport_set_outdoor(&viewport, rt->outdoor);
+    dm2_v1_viewport_set_weather(&viewport,
+                                rt->outdoor ? 1 : 0,
+                                rt->weather.weather_intensity);
+    dm2_v1_viewport_set_time(
+        &viewport,
+        (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
+    viewport.tick_count = rt->tick_count;
+    dm2_v1_viewport_render(&viewport);
+    g_dm2_last_asset_floor_ceiling_count =
+        viewport.asset_floor_ceiling_drawn_count;
+    g_dm2_last_fallback_floor_ceiling_count =
+        viewport.fallback_floor_ceiling_drawn_count;
 
     return 0;
+}
+
+int dm2_v1_runtime_last_asset_floor_ceiling_count(void) {
+    return g_dm2_last_asset_floor_ceiling_count;
+}
+
+int dm2_v1_runtime_last_fallback_floor_ceiling_count(void) {
+    return g_dm2_last_fallback_floor_ceiling_count;
 }
 
 /* ── Movement ──────────────────────────────────────────────────────── */

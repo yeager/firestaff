@@ -68,6 +68,8 @@ int  dm2_v1_runtime_get_projectile_drain(DM2_V1_DrainedProjectile **out_list);
 int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                                   uint8_t *framebuffer, int fb_stride,
                                   int view_w, int view_h);
+int dm2_v1_runtime_last_asset_floor_ceiling_count(void);
+int dm2_v1_runtime_last_fallback_floor_ceiling_count(void);
 
 /* ── Party position accessors ─────────────────────────────────────── */
 
