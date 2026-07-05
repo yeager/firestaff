@@ -7994,6 +7994,54 @@ static int csb_v1_runtime_object_icon_from_object_info(
     return (int)kObjectInfoIcon[object_info_index];
 }
 
+static int csb_v1_runtime_object_action_set_from_object_info(
+    int object_info_index)
+{
+    static const unsigned char kPotionActionSet[20] = {
+         0, 0, 0, 42, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 42
+    };
+    static const unsigned char kWeaponActionSet[46] = {
+        43,  7,  5,  6,  8,  9, 10, 11, 12, 13,
+        13, 14, 15, 15, 16, 17, 18, 19, 20, 21,
+        22, 22, 23, 24, 24, 27, 27, 26, 26, 27,
+        42, 40, 42,  5,  5, 28, 29, 30, 31, 32,
+        33,  5, 35, 36, 27,  1
+    };
+    static const unsigned char kArmourActionSet[58] = {
+         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0,  0,  0,  0,  0,  0,  0, 41, 41,
+        41, 41,  0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0, 41,  0,  0,  0,  0, 41,  0,  0,
+         0,  0, 41,  0,  0,  0,  0,  0
+    };
+    static const unsigned char kJunkActionSet[53] = {
+         0,  0,  0,  0,  0,  0, 37, 37, 37,  0,
+         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0, 38, 38,  0, 39,  0,  0,  0,  0,
+         0,  0,  0
+    };
+
+    /* ReDMCSB: DUNGLOB.C G0237 supplies ObjectInfo.ActionSetIndex;
+     * MENU.C F0386/F0389 consumes it for action icons and action menus. */
+    if (object_info_index >= 2 && object_info_index < 22) {
+        return (int)kPotionActionSet[object_info_index - 2];
+    }
+    if (object_info_index >= 23 && object_info_index < 69) {
+        return (int)kWeaponActionSet[object_info_index - 23];
+    }
+    if (object_info_index >= 69 && object_info_index < 127) {
+        return (int)kArmourActionSet[object_info_index - 69];
+    }
+    if (object_info_index >= 127 && object_info_index < 180) {
+        return (int)kJunkActionSet[object_info_index - 127];
+    }
+    return 0;
+}
+
 static const char *csb_v1_runtime_object_name_from_record(
     int thing_type,
     const uint8_t *record,
@@ -8155,6 +8203,38 @@ int csb_v1_runtime_object_icon_index(
         }
     }
     return icon_index;
+}
+
+int csb_v1_runtime_object_action_set_index(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    int thing_type;
+    int record_size;
+    int object_info_index;
+
+    if (!profile) return 0;
+    dungeon = (const CSB_V1_DungeonData *)profile->dungeon_handle;
+    if (!dungeon ||
+        thing == THING_NONE ||
+        thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record) return 0;
+    object_info_index = csb_v1_runtime_object_info_index_from_record(
+        thing_type,
+        record,
+        record_size);
+    return csb_v1_runtime_object_action_set_from_object_info(
+        object_info_index);
 }
 
 int csb_v1_runtime_load_object_names_m564(

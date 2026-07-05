@@ -89,6 +89,7 @@ int main(void)
     {
         CSB_V1_BootProfile profile;
         CSB_V1_DungeonData dungeon;
+        unsigned char actions[3];
         unsigned char raw[16];
         unsigned short dagger =
             (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
@@ -105,6 +106,8 @@ int main(void)
         state.world.party.championCount = 1;
         state.world.party.activeChampionIndex = 0;
         state.world.party.champions[0].present = 1;
+        state.world.party.champions[0].hp.current = 10;
+        state.world.party.champions[0].hp.maximum = 10;
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
             dagger;
 
@@ -123,6 +126,12 @@ int main(void)
               "CSB leader-hand name resolves through CSB runtime object binding");
         check(strcmp(name, "DAGGER") == 0,
               "CSB leader-hand name comes from CSB runtime resolver");
+        check(M11_GameView_SetActingChampion(&state, 0),
+              "CSB action menu opens from runtime object action-set without DM1 world.things");
+        check(M11_GameView_GetActingActionIndices(&state, actions),
+              "CSB action rows resolve through runtime object action-set");
+        check(actions[0] == 42 && actions[1] == 9 && actions[2] == 28,
+              "CSB dagger exposes THROW/STAB/SLASH action rows");
     }
 
     if (g_failures != 0) {

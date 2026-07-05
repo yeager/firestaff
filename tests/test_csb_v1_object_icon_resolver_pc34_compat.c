@@ -133,6 +133,21 @@ int main(void)
                   &profile,
                   (uint16_t)((THING_TYPE_WEAPON << 10) | 31u)),
               -1);
+    check_int("dagger action set",
+              csb_v1_runtime_object_action_set_index(&profile, dagger),
+              12);
+    check_int("lit torch action set",
+              csb_v1_runtime_object_action_set_index(&profile, lit_torch),
+              5);
+    check_int("scroll has no action set",
+              csb_v1_runtime_object_action_set_index(&profile, scroll_open),
+              0);
+    check_int("compass has no action set",
+              csb_v1_runtime_object_action_set_index(&profile, compass),
+              0);
+    check_int("empty thing has no action set",
+              csb_v1_runtime_object_action_set_index(&profile, THING_NONE),
+              0);
 
     {
         char name[32];

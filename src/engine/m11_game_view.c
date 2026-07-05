@@ -21628,6 +21628,36 @@ static unsigned int m11_action_set_index_for_thing(
     }
 }
 
+static unsigned int m11_csb_action_set_index_for_thing(
+    const M11_GameViewState* state,
+    unsigned short thingId)
+{
+    const CSB_V1_BootProfile* profile;
+    int setIdx;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile ||
+        thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
+    setIdx = csb_v1_runtime_object_action_set_index(
+        &profile->runtime,
+        thingId);
+    return setIdx > 0 ? (unsigned int)setIdx : 0U;
+}
+
+static unsigned int m11_action_set_index_for_state_thing(
+    const M11_GameViewState* state,
+    unsigned short thingId)
+{
+    if (!state) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        return m11_csb_action_set_index_for_thing(state, thingId);
+    }
+    return m11_action_set_index_for_thing(state->world.things, thingId);
+}
+
 static int m11_object_info_index_for_thing(const struct DungeonThings_Compat* things,
                                            unsigned short thingId) {
     int thingType, thingIndex, subtype;
@@ -22169,8 +22199,7 @@ static unsigned int m11_resolve_action_set_for_champion(
         /* DM1 F0389: "Actions Punch, Kick and War Cry". */
         return 2;
     }
-    if (!state->world.things) return 0;
-    setIdx = m11_action_set_index_for_thing(state->world.things, handThing);
+    setIdx = m11_action_set_index_for_state_thing(state, handThing);
     /* If ActionSetIndex == 0, DM1 F0389 returns without setting
      * the acting ordinal.  We propagate 0 here so callers can
      * treat it as "not activatable". */
@@ -30124,7 +30153,9 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 M11_DM_OBJECT_ICON_EMPTY_HAND,
                 innerX, innerY, 1);
-        } else if (state->assetsAvailable && state->world.things) {
+        } else if (state->assetsAvailable &&
+                   (state->world.things ||
+                    state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)) {
             /* F0386 branch: only objects with a non-zero
              * ActionSetIndex get an icon blitted; everything else
              * (food, plain potions, armour, keys, chests, scrolls,
@@ -30133,8 +30164,8 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
              * exactly: when ActionSetIndex==0 the code fills the
              * icon bitmap with C04_COLOR_CYAN and jumps past
              * F0036_OBJECT_ExtractIconFromBitmap (no icon blit). */
-            unsigned int actionSet = m11_action_set_index_for_thing(
-                state->world.things, handThing);
+            unsigned int actionSet = m11_action_set_index_for_state_thing(
+                state, handThing);
             if (actionSet != 0) {
                 int iconIndex = m11_object_icon_index_for_thing(
                     state, state->world.things, handThing);
