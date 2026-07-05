@@ -1145,6 +1145,10 @@ int main(void) {
                 "M11 CSB entrance records the bonus-dungeon command");
     expect_true(view.csbState.startup_entrance_bonus_requested == 1,
                 "M11 CSB entrance preserves the bonus-dungeon request");
+    expect_true(view.csbBootProfile != NULL &&
+                    csb_v1_runtime_get_load_bonus_dungeon(
+                        &((CSB_V1_BootProfile *)view.csbBootProfile)->runtime) == 1,
+                "M11 CSB entrance hands C201 through to runtime bonus-dungeon flag");
     M11_GameView_Shutdown(&view);
 
     fill_csb_launch_spec(&spec, data_dir, NULL);

@@ -2572,12 +2572,22 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     switch (commandId) {
         case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON:
             state->csbState.startup_entrance_bonus_requested = 0;
+            if (state->csbBootProfile) {
+                CSB_V1_BootProfile *profile =
+                    (CSB_V1_BootProfile *)state->csbBootProfile;
+                csb_v1_runtime_set_load_bonus_dungeon(&profile->runtime, 0);
+            }
             state->csbState.startup_entrance_active = 0;
             state->csbState.startup_entrance_dismissed = 1;
             m11_set_status(state, "BOOT", "CSB READY");
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON:
             state->csbState.startup_entrance_bonus_requested = 1;
+            if (state->csbBootProfile) {
+                CSB_V1_BootProfile *profile =
+                    (CSB_V1_BootProfile *)state->csbBootProfile;
+                csb_v1_runtime_set_load_bonus_dungeon(&profile->runtime, 1);
+            }
             state->csbState.startup_entrance_active = 0;
             state->csbState.startup_entrance_dismissed = 1;
             m11_set_status(state, "BOOT", "CSB BONUS");

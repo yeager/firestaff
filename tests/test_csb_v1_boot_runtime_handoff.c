@@ -1087,6 +1087,15 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
           "V2-labeled profile loads the V1 dungeon during handoff");
     CHECK(p.runtime.entrance_map_index == 255U && p.runtime.start_map_index == 0U,
           "V2-labeled profile keeps the V1 entrance/start map boundary");
+    CHECK(csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 0,
+          "V1 runtime starts with the bonus-dungeon load flag clear");
+    CHECK(csb_v1_runtime_set_load_bonus_dungeon(&p.runtime, 1) == 1,
+          "runtime accepts source C201 bonus-dungeon load request");
+    CHECK(csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 1,
+          "runtime exposes source C201 bonus-dungeon load request");
+    CHECK(csb_v1_runtime_set_load_bonus_dungeon(&p.runtime, 0) == 1 &&
+              csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 0,
+          "runtime can clear the bonus-dungeon load request for normal enter");
 
     csb_v1_boot_cleanup(&p);
 }

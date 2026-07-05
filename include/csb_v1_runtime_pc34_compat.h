@@ -280,6 +280,7 @@ typedef struct {
 
     /* ── State machine ─────────────────────────── */
     int                     state;   /* CSB_STATE_* enum */
+    int                     load_bonus_dungeon; /* ReDMCSB G1147_B_LoadBonusDungeon */
     int                     paused;
     int                     victory;
     int                     game_over;
@@ -481,6 +482,10 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
                                    const CSB_V1_PartyState *party);
 int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
                                    CSB_V1_PartyState *out_party);
+int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
+                                          int enabled);
+int csb_v1_runtime_get_load_bonus_dungeon(
+    const CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_get_champion_skill_level(
     const CSB_V1_RuntimeProfile *profile,
     int champion_index,
