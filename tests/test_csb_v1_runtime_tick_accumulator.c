@@ -1514,6 +1514,10 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
         1);
     CHECK(profile.active_group_state[0].aspect[0] == expected_attack_aspect,
           "bounded C38 attack applies F0179-style attack aspect bits");
+    CHECK(profile.audio_runtime.pendingSoundIndex ==
+              CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM &&
+              profile.audio_runtime.totalRequests == 1u,
+          "bounded C38 attack requests source-mapped prioritized attack sound");
     CHECK(profile.timeline_queue.eventCount == 1,
           "bounded C38 attack event queues the source C33 aspect wrapper");
     c33_event_index =
@@ -1528,6 +1532,10 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
           "bounded C38 schedules C33 aspect update with F0208 remaining ticks");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "next tick dispatches the bounded C33 aspect wrapper");
+    CHECK(profile.audio_runtime.lastPlayedSoundIndex ==
+              CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM &&
+              profile.audio_runtime.pendingSoundIndex == CSB_V1_SOUND_NONE,
+          "next tick flushes pending C38 attack sound before C33 dispatch");
     CHECK(csb_v1_runtime_get_last_timeline_dispatch(&profile, &dispatch) == 1 &&
               dispatch.count == 1 &&
               dispatch.records[0].eventType ==
