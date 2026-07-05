@@ -24746,7 +24746,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
         src/shared/save_browser_m12.c
         src/dm1/dm1_v1_save_load.c
     )
-    target_link_libraries(test_save_browser_export_import_m12 PRIVATE firestaff_m10 firestaff_dm2)
+    target_link_libraries(test_save_browser_export_import_m12 PRIVATE firestaff_m10 firestaff_dm2 firestaff_nexus)
     if(NOT MSVC)
         target_compile_options(test_save_browser_export_import_m12 PRIVATE -Wall -Wextra -O2)
     endif()

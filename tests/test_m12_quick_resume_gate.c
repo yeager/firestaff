@@ -9,6 +9,9 @@
 #include "dm2_v1_new_game.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "nexus_v1_champions.h"
+#include "nexus_v1_save.h"
+#include "nexus_v1_world.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -112,6 +115,30 @@ static void force_dm2_available(M12_StartupMenuState* state) {
     state->assetStatus.requiredFiles[2][1].required = 1;
     state->assetStatus.requiredFiles[2][1].matched = 1;
     state->gameOptions[2].versionIndex = 0;
+    state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    state->view = M12_MENU_VIEW_MAIN;
+    state->activatedIndex = -1;
+    state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
+    state->messageLine1 = "";
+    state->messageLine2 = "";
+    state->messageLine3 = "";
+}
+
+static void force_nexus_available(M12_StartupMenuState* state) {
+    state->entries[3].title = "DUNGEON MASTER NEXUS";
+    state->entries[3].gameId = "nexus";
+    state->entries[3].kind = M12_MENU_ENTRY_GAME;
+    state->entries[3].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
+    state->entries[3].available = 1;
+    state->assetStatus.nexusAvailable = 1;
+    state->assetStatus.versions[3][0].gameId = "nexus";
+    state->assetStatus.versions[3][0].versionId = "saturn";
+    state->assetStatus.versions[3][0].label = "Saturn";
+    state->assetStatus.versions[3][0].shortLabel = "SAT";
+    state->assetStatus.versions[3][0].matched = 1;
+    state->gameOptions[3].versionIndex = 0;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
     state->view = M12_MENU_VIEW_MAIN;
@@ -610,6 +637,33 @@ static int write_native_dm1_save(const char* path) {
     return rc == DM1_SAVE_OK;
 }
 
+static int write_nexus_fnxs_save(const char* path) {
+    Nexus_V1_ChampionPool pool;
+    Nexus_V1_World world;
+    Nexus_SaveResult result;
+
+    if (!path) {
+        return 0;
+    }
+    nexus_v1_champions_init(&pool);
+    pool.party_count = 0;
+    pool.leader_index = -1;
+    nexus_v1_world_init(&world);
+    nexus_v1_party_place(&world, 2, 18, 12, 3);
+    nexus_v1_world_tick(&world);
+
+    result = nexus_v1_save_full_to_path(path,
+                                        world.party_level,
+                                        world.party_x,
+                                        world.party_y,
+                                        world.party_dir,
+                                        (uint32_t)world.world_tick,
+                                        world.state_hash,
+                                        &pool,
+                                        &world);
+    return result == NEXUS_SAVE_OK;
+}
+
 static int select_save_entry(M12_StartupMenuState* state,
                              const char* filename) {
     int i;
@@ -639,6 +693,8 @@ int main(void) {
     char originalDm1SavePath[512];
     char dm2SlotSavePath[512];
     char dm2LastSessionSavePath[512];
+    char nexusSavePath[512];
+    char nexusBrowserSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -1163,6 +1219,63 @@ int main(void) {
     if (!expect(intent.savePath &&
                 strcmp(intent.savePath, dm2LastSessionSavePath) == 0,
                 "save browser DM2 SKSave.dat launch intent should carry exact path")) return 1;
+
+    snprintf(nexusSavePath, sizeof(nexusSavePath),
+             "%s/firestaff-nexus-quicksave.sav", tmpTemplate);
+    if (!expect(write_nexus_fnxs_save(nexusSavePath),
+                "should write Nexus FNXS quick Resume save")) return 1;
+    M12_Config_SetLastSavePath(nexusSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_nexus_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "Nexus FNXS save must enable quick Resume")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "nexus") == 0,
+                "Nexus FNXS quick Resume should identify nexus")) return 1;
+    if (!expect(strcmp(state.quickResumeSavePath, nexusSavePath) == 0,
+                "Nexus FNXS quick Resume should retain save path")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(state.launchRequested == 1 &&
+                state.quickResumeLaunchRequested == 1,
+                "Nexus quick Resume accept should request save-path launch")) return 1;
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "nexus") == 0,
+                "Nexus quick Resume launch intent should identify Nexus")) return 1;
+    if (!expect(intent.savePath &&
+                strcmp(intent.savePath, nexusSavePath) == 0,
+                "Nexus quick Resume launch intent should carry exact FNXS path")) return 1;
+
+    snprintf(nexusBrowserSavePath, sizeof(nexusBrowserSavePath),
+             "%s/firestaff-nexus-browser.sav", tmpTemplate);
+    if (!expect(write_nexus_fnxs_save(nexusBrowserSavePath),
+                "should write Nexus FNXS browser save")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_nexus_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for Nexus FNXS saves")) return 1;
+    if (!expect(select_save_entry(&state, "firestaff-nexus-browser.sav"),
+                "save browser should list Nexus FNXS save")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark Nexus FNXS save loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "nexus") == 0,
+                "save browser should classify FNXS save as nexus")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].mapLevel == 2,
+                "save browser should expose Nexus saved level")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(state.launchRequested == 1 &&
+                state.quickResumeLaunchRequested == 1,
+                "save browser Nexus accept should request save-path launch")) return 1;
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "nexus") == 0,
+                "save browser Nexus launch intent should identify Nexus")) return 1;
+    if (!expect(intent.savePath &&
+                strcmp(intent.savePath, nexusBrowserSavePath) == 0,
+                "save browser Nexus launch intent should carry exact FNXS path")) return 1;
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);

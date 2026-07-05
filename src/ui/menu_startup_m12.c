@@ -17,6 +17,7 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "nexus_v1_save.h"
 #include "render_sdl_m11.h"
 #include "color_presets_m11.h"
 #include "ui_scale_m11.h"
@@ -2068,9 +2069,61 @@ static int m12_is_valid_csb_quick_resume_path(const char* path) {
     return rc == CSB_V1_LOAD_OK;
 }
 
+static int m12_is_valid_nexus_quick_resume_path(const char* path) {
+    Nexus_V1_SaveHeader header;
+    unsigned char* champion_buf;
+    unsigned char* world_buf;
+    size_t champion_cap;
+    size_t world_cap;
+    size_t champion_read = 0u;
+    size_t world_read = 0u;
+    char diagnostic[256];
+    Nexus_SaveResult result;
+
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+
+    champion_cap = nexus_v1_save_max_champion_pool_size();
+    world_cap = nexus_v1_save_max_world_size();
+    champion_buf = (unsigned char*)malloc(champion_cap);
+    world_buf = (unsigned char*)malloc(world_cap);
+    if (!champion_buf || !world_buf) {
+        free(champion_buf);
+        free(world_buf);
+        return 0;
+    }
+
+    memset(&header, 0, sizeof(header));
+    memset(diagnostic, 0, sizeof(diagnostic));
+    /*
+     * Nexus M11 resume consumes Firestaff-native FNXS saves through
+     * nexus_v1_load_full_from_path_with_runtime().  Use the same
+     * header/data/CRC envelope here so Continue never offers an
+     * unsupported Saturn memory-card body or random Firestaff-named file.
+     */
+    result = nexus_v1_load_from_path(path,
+                                     &header,
+                                     champion_buf,
+                                     champion_cap,
+                                     &champion_read,
+                                     world_buf,
+                                     world_cap,
+                                     &world_read,
+                                     diagnostic,
+                                     sizeof(diagnostic));
+    free(champion_buf);
+    free(world_buf);
+    (void)header;
+    (void)champion_read;
+    (void)world_read;
+    return result == NEXUS_SAVE_OK;
+}
+
 static int m12_is_quick_resume_game_supported(const char* gameId) {
     return gameId && (strcmp(gameId, "dm1") == 0 ||
-                      strcmp(gameId, "csb") == 0);
+                      strcmp(gameId, "csb") == 0 ||
+                      strcmp(gameId, "nexus") == 0);
 }
 
 static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
@@ -2083,6 +2136,9 @@ static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
     }
     if (strcmp(gameId, "csb") == 0) {
         return m12_is_valid_csb_quick_resume_path(path);
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return m12_is_valid_nexus_quick_resume_path(path);
     }
     return 0;
 }
@@ -2200,7 +2256,10 @@ static int m12_infer_quick_resume_game_id(const char* path,
     if (m12_try_quick_resume_candidate("dm1", path, outId, outSize)) {
         return 1;
     }
-    return m12_try_quick_resume_candidate("csb", path, outId, outSize);
+    if (m12_try_quick_resume_candidate("csb", path, outId, outSize)) {
+        return 1;
+    }
+    return m12_try_quick_resume_candidate("nexus", path, outId, outSize);
 }
 
 static void m12_probe_quick_resume(M12_StartupMenuState* state) {
