@@ -118,6 +118,9 @@ int dm2_v1_viewport_door_panel_field_for_square(int view_square);
 int dm2_v1_viewport_door_panel_graphic_index_for_square(int view_square);
 int dm2_v1_viewport_door_button_field_for_state(int pushed);
 int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed);
+int dm2_v1_viewport_skproject_cell_for_square(int view_square);
+int dm2_v1_viewport_door_button_rectno_for_square(int view_square);
+int dm2_v1_viewport_door_button_clickable_for_square(int view_square);
 
 typedef struct {
     int x;

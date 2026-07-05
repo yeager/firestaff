@@ -93,6 +93,24 @@ static void test_door_rect_contracts(void)
 {
     DM2_V1_ViewportRect rect;
 
+    CHECK("DM2 D0C maps to skproject viewport cell 0",
+          dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D0C) == 0);
+    CHECK("DM2 D1C maps to skproject viewport cell 3",
+          dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D1C) == 3);
+    CHECK("DM2 D2C maps to skproject viewport cell 6",
+          dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D2C) == 6);
+    CHECK("DM2 side squares are not default-door-button cells",
+          dm2_v1_viewport_skproject_cell_for_square(DM2_SQ_D1L) < 0 &&
+              dm2_v1_viewport_door_button_rectno_for_square(DM2_SQ_D1L) < 0);
+    CHECK("DM2 D0C/D1C/D2C default buttons use skproject rectnos",
+          dm2_v1_viewport_door_button_rectno_for_square(DM2_SQ_D0C) == 4 &&
+              dm2_v1_viewport_door_button_rectno_for_square(DM2_SQ_D1C) == 3 &&
+              dm2_v1_viewport_door_button_rectno_for_square(DM2_SQ_D2C) == 2);
+    CHECK("DM2 default door clickability follows skproject rectno gate",
+          dm2_v1_viewport_door_button_clickable_for_square(DM2_SQ_D0C) &&
+              dm2_v1_viewport_door_button_clickable_for_square(DM2_SQ_D1C) &&
+              !dm2_v1_viewport_door_button_clickable_for_square(DM2_SQ_D2C));
+
     CHECK("DM2 D0C door panel rect is the startup front-door bound",
           dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D0C, &rect) &&
               rect_equals(&rect, 80, 0, 160, 135));
@@ -106,13 +124,13 @@ static void test_door_rect_contracts(void)
           !dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D0L, &rect) &&
               rect_equals(&rect, 0, 0, 0, 0));
 
-    CHECK("DM2 D0C default door button rect follows the front panel",
+    CHECK("DM2 D0C default door button rect follows skproject rectno 4",
           dm2_v1_viewport_door_button_rect_for_square(DM2_SQ_D0C, &rect) &&
               rect_equals(&rect, 212, 58, 16, 18));
-    CHECK("DM2 D1C default door button rect follows the near panel",
+    CHECK("DM2 D1C default door button rect follows skproject rectno 3",
           dm2_v1_viewport_door_button_rect_for_square(DM2_SQ_D1C, &rect) &&
               rect_equals(&rect, 142, 57, 12, 14));
-    CHECK("DM2 D2C default door button rect follows the mid panel",
+    CHECK("DM2 D2C default door button rect follows skproject rectno 2",
           dm2_v1_viewport_door_button_rect_for_square(DM2_SQ_D2C, &rect) &&
               rect_equals(&rect, 147, 51, 8, 9));
     CHECK("DM2 non-center squares do not expose a door button rect",

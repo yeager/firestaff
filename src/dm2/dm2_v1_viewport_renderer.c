@@ -432,6 +432,50 @@ int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed)
     return DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - field;
 }
 
+static const int8_t s_dm2_square_to_skproject_cell[DM2_SQ_COUNT] = {
+    /* Firestaff D3/D2/D1/D0 center rows do not have the same ordinal as
+     * skproject's tblCellTilesRoom viewport cells.  skproject SKWINSPX
+     * kskval1.h line 62 defines tlbRectnoDoorButton for cells 0,3,6,11,13;
+     * SkWinCore.cpp DRAW_DOOR_TILE lines ~46650-46700 dispatches center-door
+     * cells 0,3,6 through DRAW_DOOR for the D0/D1/D2 startup path. */
+    /* D3C */ -1, /* D3L */ -1, /* D3R */ -1,
+    /* D2C */  6, /* D2L */ -1, /* D2R */ -1,
+    /* D1C */  3, /* D1L */ -1, /* D1R */ -1,
+    /* D0C */  0, /* D0L */ -1, /* D0R */ -1,
+};
+
+static const int8_t s_dm2_skproject_rectno_door_button[14] = {
+    /* skproject SKWINSPX/src/v4/kskval1.h line 62:
+     * tlbRectnoDoorButton =
+     *   {4,-1,-1,3,-1,-1,2,-1,-1,-1,-1,1,-1,0}. */
+     4, -1, -1,  3, -1, -1,  2,
+    -1, -1, -1, -1,  1, -1,  0,
+};
+
+int dm2_v1_viewport_skproject_cell_for_square(int view_square)
+{
+    if (view_square < 0 || view_square >= DM2_SQ_COUNT) return -1;
+    return s_dm2_square_to_skproject_cell[view_square];
+}
+
+int dm2_v1_viewport_door_button_rectno_for_square(int view_square)
+{
+    int cell = dm2_v1_viewport_skproject_cell_for_square(view_square);
+    if (cell < 0 || cell >= (int)(sizeof s_dm2_skproject_rectno_door_button /
+                                  sizeof s_dm2_skproject_rectno_door_button[0])) {
+        return -1;
+    }
+    return s_dm2_skproject_rectno_door_button[cell];
+}
+
+int dm2_v1_viewport_door_button_clickable_for_square(int view_square)
+{
+    int rectno = dm2_v1_viewport_door_button_rectno_for_square(view_square);
+    /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON lines
+     * ~46261-46264 calls MAKE_BUTTON_CLICKABLE only for rectno 3 and 4. */
+    return rectno == 3 || rectno == 4;
+}
+
 static void dm2_v1_viewport_clear_rect(DM2_V1_ViewportRect *out_rect)
 {
     if (!out_rect) return;
@@ -479,6 +523,7 @@ int dm2_v1_viewport_door_button_rect_for_square(int view_square,
                                                 DM2_V1_ViewportRect *out_rect)
 {
     DM2_V1_ViewportRect panel;
+    int rectno;
 
     if (!out_rect) return 0;
     dm2_v1_viewport_clear_rect(out_rect);
@@ -486,20 +531,21 @@ int dm2_v1_viewport_door_button_rect_for_square(int view_square,
         return 0;
     }
 
-    switch (view_square) {
-    case DM2_SQ_D0C:
+    rectno = dm2_v1_viewport_door_button_rectno_for_square(view_square);
+    switch (rectno) {
+    case 4:
         out_rect->w = 16;
         out_rect->h = 18;
         out_rect->x = panel.x + panel.w - 28;
         out_rect->y = panel.y + (panel.h / 2) - 9;
         return 1;
-    case DM2_SQ_D1C:
+    case 3:
         out_rect->w = 12;
         out_rect->h = 14;
         out_rect->x = panel.x + panel.w - 22;
         out_rect->y = panel.y + (panel.h / 2) - 7;
         return 1;
-    case DM2_SQ_D2C:
+    case 2:
         out_rect->w = 8;
         out_rect->h = 9;
         out_rect->x = panel.x + panel.w - 16;
