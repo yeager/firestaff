@@ -327,6 +327,42 @@ static int test_periodic_after_long_idle(void) {
     return dm2_v1_trigger_get_fire_count(6) == 3;
 }
 
+static int test_last_event_empty_after_reset(void) {
+    setup_clean();
+    return dm2_v1_trigger_last_event() == NULL
+        && dm2_v1_trigger_copy_last_event(NULL) == 0;
+}
+
+static int test_last_event_records_square_target(void) {
+    DM2_V1_TriggerEvent ev;
+    setup_clean();
+    dm2_v1_trigger_set_now_ms(1234);
+    if (dm2_v1_trigger_signal_square_entered(15, 8, 0) != 1) return 0;
+    if (!dm2_v1_trigger_copy_last_event(&ev)) return 0;
+    return ev.valid == 1
+        && ev.trigger_id == 1
+        && ev.kind == DM2_TRIGGER_KIND_SQUARE_ENTERED
+        && ev.target == DM2_TRIGGER_TARGET_DOOR_OPEN
+        && ev.target_x == 16
+        && ev.target_y == 8
+        && ev.target_level == 0
+        && ev.now_ms == 1234
+        && ev.fire_count == 1
+        && ev.message == NULL;
+}
+
+static int test_last_event_records_message_target(void) {
+    const DM2_V1_TriggerEvent *ev;
+    setup_clean();
+    if (dm2_v1_trigger_signal_item_used(1001) != 1) return 0;
+    ev = dm2_v1_trigger_last_event();
+    return ev != NULL
+        && ev->trigger_id == 3
+        && ev->target == DM2_TRIGGER_TARGET_DISPLAY_MSG
+        && ev->message != NULL
+        && strstr(ev->message, "flickering light") != NULL;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -398,6 +434,9 @@ int main(void) {
     /* TIME first call */
     TEST(time_elapsed_first_call_uses_now);
     TEST(periodic_after_long_idle);
+    TEST(last_event_empty_after_reset);
+    TEST(last_event_records_square_target);
+    TEST(last_event_records_message_target);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;

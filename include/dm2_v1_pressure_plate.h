@@ -96,6 +96,20 @@ typedef struct {
     int   last_fire_ms;    /* last fire time (ms) */
 } DM2_V1_PlateState;
 
+typedef struct {
+    int   valid;
+    int   plate_id;
+    int   kind;
+    int   target_kind;
+    int   target_x;
+    int   target_y;
+    int   target_level;
+    int   door_state_after_fire;
+    int   now_ms;
+    int   fire_count;
+    const char *message;
+} DM2_V1_PlateEvent;
+
 /* Result codes */
 typedef enum {
     DM2_PLATE_RESULT_OK = 0,
@@ -132,6 +146,8 @@ int  dm2_v1_plate_get_fire_count(int plate_id);
 int  dm2_v1_plate_get_door_state_after_fire(int plate_id); /* 0..5 */
 const DM2_V1_PlateState *dm2_v1_plate_get_state(int plate_id);
 const char *dm2_v1_plate_get_target_message(int plate_id);
+const DM2_V1_PlateEvent *dm2_v1_plate_last_event(void);
+int  dm2_v1_plate_copy_last_event(DM2_V1_PlateEvent *out);
 
 /* ── Observability ──────────────────────────────────────────────── */
 int  dm2_v1_plate_fire_total(void);

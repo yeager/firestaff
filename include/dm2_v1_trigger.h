@@ -106,6 +106,23 @@ typedef struct {
     int  last_fire_ms;
 } DM2_V1_TriggerState;
 
+/* Last fired target receipt.  This is the startup/runtime handoff shape:
+ * callers can observe which target family fired without reaching into the
+ * builtin catalog or inferring behavior from counters alone. */
+typedef struct {
+    int  valid;
+    int  trigger_id;
+    int  kind;
+    int  target;
+    int  target_x;
+    int  target_y;
+    int  target_level;
+    int  arg_creature_id;
+    int  now_ms;
+    int  fire_count;
+    const char *message;
+} DM2_V1_TriggerEvent;
+
 /* ── Lifecycle / state ──────────────────────────────────────────── */
 void dm2_v1_trigger_reset_state(void);
 void dm2_v1_trigger_set_now_ms(int now_ms);
@@ -127,6 +144,8 @@ int  dm2_v1_trigger_signal_combat_ended(int victory);
 int  dm2_v1_trigger_get_fire_count(int trigger_id);
 int  dm2_v1_trigger_is_active(int trigger_id);
 const DM2_V1_TriggerState *dm2_v1_trigger_get_state(int trigger_id);
+const DM2_V1_TriggerEvent *dm2_v1_trigger_last_event(void);
+int  dm2_v1_trigger_copy_last_event(DM2_V1_TriggerEvent *out);
 
 /* ── Observability ──────────────────────────────────────────────── */
 int  dm2_v1_trigger_total_fires(void);

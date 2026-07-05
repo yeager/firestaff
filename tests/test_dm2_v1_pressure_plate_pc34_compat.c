@@ -393,6 +393,43 @@ static int test_target_message_for_other_plate(void) {
     return dm2_v1_plate_get_target_message(1) == NULL;  /* no message */
 }
 
+static int test_last_event_empty_after_reset(void) {
+    setup_clean();
+    return dm2_v1_plate_last_event() == NULL
+        && dm2_v1_plate_copy_last_event(NULL) == 0;
+}
+
+static int test_last_event_records_weight_target(void) {
+    DM2_V1_PlateEvent ev;
+    setup_clean();
+    dm2_v1_plate_set_party_weight(500);
+    if (dm2_v1_plate_check(1, 4321) != (int)DM2_PLATE_RESULT_OK) return 0;
+    if (!dm2_v1_plate_copy_last_event(&ev)) return 0;
+    return ev.valid == 1
+        && ev.plate_id == 1
+        && ev.kind == DM2_PLATE_KIND_WEIGHT
+        && ev.target_kind == DM2_PLATE_TARGET_DOOR_TOGGLE
+        && ev.target_x == 13
+        && ev.target_y == 8
+        && ev.target_level == 0
+        && ev.door_state_after_fire == DM2_DOOR_STATE_OPEN
+        && ev.now_ms == 4321
+        && ev.fire_count == 1
+        && ev.message == NULL;
+}
+
+static int test_last_event_records_message_target(void) {
+    const DM2_V1_PlateEvent *ev;
+    setup_clean();
+    if (dm2_v1_plate_check(3, 1000) != (int)DM2_PLATE_RESULT_OK) return 0;
+    ev = dm2_v1_plate_last_event();
+    return ev != NULL
+        && ev->plate_id == 3
+        && ev->target_kind == DM2_PLATE_TARGET_MESSAGE
+        && ev->message != NULL
+        && strstr(ev->message, "distant rumble") != NULL;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -472,6 +509,9 @@ int main(void) {
     TEST(weight_plate_zero_threshold);
     TEST(target_message_for_time_plate);
     TEST(target_message_for_other_plate);
+    TEST(last_event_empty_after_reset);
+    TEST(last_event_records_weight_target);
+    TEST(last_event_records_message_target);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;
