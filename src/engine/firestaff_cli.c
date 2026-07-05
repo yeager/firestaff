@@ -231,9 +231,10 @@ int fs_cli_run(const FS_CLIOptions *opts) {
     if (opts->list_saves) {
         printf("Save slots for %s:\n", game_names[opts->game]);
         for (int i = 0; i < 10; i++) {
-            if (fs_save_exists(opts->game, i)) {
+            if (fs_save_exists_in_dir(opts->save_dir, opts->game, i)) {
                 char path[256];
-                fs_save_slot_path(opts->game, i, path, sizeof(path));
+                fs_save_slot_path_in_dir(opts->save_dir, opts->game,
+                                         i, path, sizeof(path));
                 printf("  Slot %d: %s\n", i, path);
             }
         }
