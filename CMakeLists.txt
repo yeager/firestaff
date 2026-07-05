@@ -6017,6 +6017,8 @@ if(BUILD_TESTING)
     target_include_directories(test_csb_v1_save_import_path_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_v1_save_import_path_pc34_compat
+        PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_save_import_path_pc34_compat
             PRIVATE -Wall -Wextra -O2)

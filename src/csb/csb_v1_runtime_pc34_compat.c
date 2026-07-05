@@ -921,6 +921,7 @@ int csb_v1_runtime_import_csbgame_roster_from_path(
     profile->party_z = pose_z;
     profile->party_dir = pose_dir;
     profile->current_level = pose_level;
+    csb_v1_dungeon_set_current_level(profile->current_level);
     profile->difficulty =
         (CSB_V1_Difficulty)csb_v1_runtime_calc_difficulty(imported);
     profile->party_state.PartyMapX = pose_x;
@@ -8604,6 +8605,7 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     profile->party_y = (int)summary->party_y;
     profile->party_z = (int)summary->party_level;
     profile->current_level = (int)summary->party_level;
+    csb_v1_dungeon_set_current_level(profile->current_level);
     profile->party_dir = (int)(summary->party_facing & 3u);
     profile->champion_count = (int)summary->num_character;
     profile->leader_index = (summary->hand_char < summary->num_character)

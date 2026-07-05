@@ -281,6 +281,7 @@ int main(void) {
         runtime.party_z = 0;
         runtime.party_dir = 2;
         runtime.current_level = 4;
+        csb_v1_dungeon_set_current_level(1);
         runtime.game_time = 1234;
         CHECK(csb_v1_runtime_import_csbgame_roster_from_path(&runtime, path)
                   == CSB_V1_LOAD_OK,
@@ -292,6 +293,8 @@ int main(void) {
         CHECK(runtime.party_x == 11 && runtime.party_y == 7 &&
               runtime.party_dir == 2 && runtime.current_level == 4,
               "runtime CSBGAME import preserves booted dungeon pose");
+        CHECK(csb_v1_dungeon_get_current_level() == 4,
+              "runtime CSBGAME import keeps dungeon singleton on booted level");
         CHECK(runtime.party_state.PartyMapX == 11 &&
               runtime.party_state.PartyMapY == 7 &&
               runtime.party_state.PartyDirection == 2,

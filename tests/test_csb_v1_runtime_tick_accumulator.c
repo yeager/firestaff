@@ -4544,6 +4544,8 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.party_z == 4 && profile.current_level == 4 &&
               profile.party_dir == 3,
           "CSBWin summary updates party pose and current level");
+    CHECK(csb_v1_dungeon_get_current_level() == 4,
+          "CSBWin summary publishes current level to dungeon singleton");
     CHECK(profile.champion_count == 2 &&
               profile.leader_index == 1 &&
               profile.magic_caster_index == 0,
@@ -4814,10 +4816,13 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
         CHECK(resume_profile.game_time == 123456u &&
                   resume_profile.party_x == 12 &&
                   resume_profile.party_y == 7 &&
+                  resume_profile.current_level == 4 &&
                   resume_profile.party_dir == 3 &&
                   resume_profile.party_state_valid == 1 &&
                   resume_profile.party_state.ChampionCount == 2,
               "CSBWin resume report applies GAMEBLOCK2 and champion state");
+        CHECK(csb_v1_dungeon_get_current_level() == 4,
+              "CSBWin resume report keeps dungeon singleton on resumed level");
         CHECK(resume_profile.csbwin_runtime_item16_count == 2u &&
                   resume_profile.csbwin_runtime_item16[0].monster_index == 0x1234u,
               "CSBWin resume report materializes ITEM16 active-monster state");
