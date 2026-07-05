@@ -145,34 +145,31 @@ int main(int argc, char **argv) {
     PROBE_ASSERT(strstr(name, "Unknown") != NULL,
                  "Field 0x999999 = UnknownField");
 
-    /* ── Test image loading (stub) ── */
-    fprintf(stderr, "\n--- Testing dm2_v1_asset_load_image (stub) --- \n");
+    /* ── Test image loading boundary ── */
+    fprintf(stderr, "\n--- Testing dm2_v1_asset_load_image boundary --- \n");
     if (raw) {
         int w = 0, h = 0;
         DM2_ImageFormat fmt = DM2_IMG_FMT_UNKNOWN;
         uint8_t *pixels = dm2_v1_asset_load_image(&loader, 0, 0, &w, &h, &fmt);
-        if (pixels) {
-            PROBE_ASSERT(w > 0 && h > 0,
-                         "Stub image load: w=%d h=%d", w, h);
-            PROBE_ASSERT(fmt == DM2_IMG_FMT_IMG3 || fmt == DM2_IMG_FMT_UNKNOWN,
-                         "Stub image format is valid");
-            dm2_v1_asset_free_pixels(pixels);
-        } else {
-            fprintf(stderr, "NOTE: dm2_v1_asset_load_image returned NULL (expected for stub)\n");
-        }
+        PROBE_ASSERT(pixels == NULL && w == 0 && h == 0 && fmt == DM2_IMG_FMT_UNKNOWN,
+                     "GDAT image decode is not faked before IMG realization lands");
     }
 
-    /* ── Test category entry count (deferred) ── */
-    fprintf(stderr, "\n--- Testing dm2_v1_asset_category_entry_count (deferred) --- \n");
-    int count = dm2_v1_asset_category_entry_count(&loader, 0);
-    (void)count; /* Deferred - just verify it doesn't crash */
-    PROBE_ASSERT(1, "dm2_v1_asset_category_entry_count doesn't crash");
+    /* ── Test category entry count ── */
+    fprintf(stderr, "\n--- Testing dm2_v1_asset_category_entry_count --- \n");
+    int count = dm2_v1_asset_category_entry_count(&loader, DM2_GDAT_CATEGORY_GRAPHICSSET);
+    PROBE_ASSERT(count > 0,
+                 "GDAT graphics-set category has indexed entries: %d", count);
+    PROBE_ASSERT(dm2_v1_asset_category_entry_count(&loader, DM2_GDAT_CATEGORY_WALL_GFX) > 0,
+                 "GDAT wall graphics category has indexed entries");
+    PROBE_ASSERT(dm2_v1_asset_category_entry_count(&loader, DM2_GDAT_CATEGORY_FLOOR_GFX) > 0,
+                 "GDAT floor graphics category has indexed entries");
 
-    /* ── Test asset load API (deferred) ── */
-    fprintf(stderr, "\n--- Testing dm2_v1_asset_load (deferred) --- \n");
-    const uint8_t *asset = dm2_v1_asset_load(&loader, 0, 0, 0);
-    (void)asset; /* Deferred - just verify it doesn't crash */
-    PROBE_ASSERT(1, "dm2_v1_asset_load doesn't crash");
+    /* ── Test asset load API ── */
+    fprintf(stderr, "\n--- Testing dm2_v1_asset_load --- \n");
+    const uint8_t *asset = dm2_v1_asset_load(&loader, DM2_GDAT_CATEGORY_TECHDATA, 0, 0);
+    PROBE_ASSERT(asset != NULL,
+                 "GDAT raw lookup resolves category/index/field data");
 
     /* ── Null guards ── */
     dm2_v1_asset_loader_free(NULL); /* must not crash */
