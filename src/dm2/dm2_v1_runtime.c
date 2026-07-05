@@ -64,6 +64,7 @@ static int g_dm2_last_asset_floor_ceiling_count = 0;
 static int g_dm2_last_fallback_floor_ceiling_count = 0;
 static int g_dm2_last_asset_wall_count = 0;
 static int g_dm2_last_fallback_wall_count = 0;
+static int g_dm2_last_asset_door_panel_count = 0;
 static int g_dm2_last_asset_door_frame_count = 0;
 static int g_dm2_last_fallback_door_count = 0;
 
@@ -440,6 +441,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.fallback_floor_ceiling_drawn_count;
     g_dm2_last_asset_wall_count = viewport.asset_wall_drawn_count;
     g_dm2_last_fallback_wall_count = viewport.fallback_wall_drawn_count;
+    g_dm2_last_asset_door_panel_count =
+        viewport.asset_door_panel_drawn_count;
     g_dm2_last_asset_door_frame_count =
         viewport.asset_door_frame_drawn_count;
     g_dm2_last_fallback_door_count = viewport.fallback_door_drawn_count;
@@ -468,6 +471,10 @@ int dm2_v1_runtime_last_asset_wall_count(void) {
 
 int dm2_v1_runtime_last_fallback_wall_count(void) {
     return g_dm2_last_fallback_wall_count;
+}
+
+int dm2_v1_runtime_last_asset_door_panel_count(void) {
+    return g_dm2_last_asset_door_panel_count;
 }
 
 int dm2_v1_runtime_last_asset_door_frame_count(void) {

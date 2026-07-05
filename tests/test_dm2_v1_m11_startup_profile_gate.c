@@ -531,6 +531,8 @@ int main(void) {
     expect_true(dm2_v1_runtime_last_asset_wall_count() == 10 &&
                 dm2_v1_runtime_last_fallback_wall_count() == 0,
                 "M11 DM2 draw uses real GRAPHICSSET GDAT viewport-cell wall images");
+    expect_true(dm2_v1_runtime_last_asset_door_panel_count() == 3,
+                "M11 DM2 draw uses real DOORS GDAT D0C/D1C/D2C door-panel images");
     expect_true(dm2_v1_runtime_last_asset_door_frame_count() == 3 &&
                 dm2_v1_runtime_last_fallback_door_count() == 0,
                 "M11 DM2 draw uses real GRAPHICSSET GDAT D0C/D1C/D2C door-frame images");
