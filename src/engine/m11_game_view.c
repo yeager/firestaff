@@ -146,6 +146,36 @@ static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
     dst->shifted = (unsigned short)(shifted > 65535u ? 65535u : shifted);
 }
 
+static int m11_csb_copy_portrait_compat(struct ChampionState_Compat *dst,
+                                        const CSB_V1_Champion *src)
+{
+    int i;
+    int nonzero = 0;
+    if (!dst || !src) return 0;
+    for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
+        if (src->Portrait[i] != 0u) {
+            nonzero = 1;
+            break;
+        }
+    }
+    if (!nonzero) {
+        dst->portraitBitmapValid = 0;
+        memset(dst->portraitBitmap, 0, sizeof(dst->portraitBitmap));
+        return 0;
+    }
+
+    /* ReDMCSB: PANEL.C F0354 draws status-box portraits from
+     * M516_CHAMPIONS[i].Portrait. Utility Disk CMP import and DM1 save import
+     * keep the DM1-compatible 32x29x4bpp packed portrait in the first 464
+     * bytes; PORTRAIT.C F0515 owns wider Amiga/ST conversion, so the 3712-byte
+     * CSB buffer is not treated as a different M11 bitmap format here. */
+    memcpy(dst->portraitBitmap,
+           src->Portrait,
+           CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
+    dst->portraitBitmapValid = 1;
+    return 1;
+}
+
 static int m11_csb_mapped_inventory_slot(int csb_slot)
 {
     if (csb_slot == CSB_V1_SLOT_READY_HAND) return CHAMPION_SLOT_HAND_LEFT;
@@ -258,7 +288,7 @@ static void m11_sync_csb_party_from_runtime(M11_GameViewState *state,
         dst->water = src->Water;
         dst->actionDefense = 0;
         dst->actionIndex = src->ActionIndex;
-        dst->portraitBitmapValid = 0;
+        (void)m11_csb_copy_portrait_compat(dst, src);
     }
 }
 
