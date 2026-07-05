@@ -9265,9 +9265,6 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
     }
-    state->active = 1;
-    state->startedFromLauncher = 1;
-    state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
     snprintf(state->title, sizeof(state->title), "DUNGEON MASTER NEXUS");
     snprintf(state->sourceId, sizeof(state->sourceId), "nexus");
 
@@ -9279,16 +9276,28 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     if (nexus_v1_launcher_init(dataDir) != 0) {
         m11_set_status(state, "BOOT", "NEXUS DATA ERROR");
         m11_log_event(state, M11_COLOR_RED, "T0: NEXUS INIT FAILED");
+        state->active = 0;
+        state->startedFromLauncher = 0;
+        state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
         return 0;
     }
     /* Load level 0 (entrance dungeon) as the default starting level */
     if (nexus_v1_launcher_load_level(0) != 0) {
         m11_set_status(state, "BOOT", "NEXUS LEVEL ERROR");
         m11_log_event(state, M11_COLOR_RED, "T0: NEXUS LEV00 LOAD FAILED");
+        nexus_v1_launcher_shutdown();
+        state->active = 0;
+        state->startedFromLauncher = 0;
+        state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
         return 0;
     }
 
     state->nexusEngine = nexus_v1_launcher_get_engine();
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
+    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s/LEV00.DGN",
+             dataDir);
     nexus_v1_light_runtime_init(&state->nexusLightRuntime, /*guard_rejects=*/0);
     state->nexusLightRuntimeReady = 1;
     if (state->nexusEngine) {
@@ -9300,6 +9309,7 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     }
     m11_set_status(state, "BOOT", "NEXUS READY");
     m11_log_event(state, M11_COLOR_YELLOW, "T0: NEXUS LOADED");
+    fprintf(stderr, "NEXUS READY: gameId=nexus dataDir=%s\n", dataDir);
     return 1;
 }
 
