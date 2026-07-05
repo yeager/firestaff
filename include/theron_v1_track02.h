@@ -245,6 +245,17 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
 const char *theron_v1_track02_startup_text_marker_kind_name(
     Theron_Track02StartupTextMarkerKind kind);
 
+Theron_Track02SignalStatus theron_v1_track02_copy_startup_text_marker(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02StartupTextMarkerKind kind,
+    size_t occurrence_index,
+    char *out_text,
+    size_t out_text_capacity,
+    size_t *out_byte_count,
+    Theron_Track02StartupTextMarker *out_marker);
+
 typedef struct {
     char name[THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
     char title[THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];

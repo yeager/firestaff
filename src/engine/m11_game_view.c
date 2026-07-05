@@ -11348,6 +11348,8 @@ static void m11_theron_capture_track02_startup_text(
     const char* md5_hex) {
     Theron_Track02StartupTextMarkerCatalog catalog;
     Theron_Track02SignalStatus status;
+    size_t text_len = 0u;
+    Theron_Track02StartupTextMarker marker;
 
     if (!state) {
         return;
@@ -11372,28 +11374,20 @@ static void m11_theron_capture_track02_startup_text(
         return;
     }
 
-    for (size_t i = 0u; i < catalog.marker_count; ++i) {
-        const Theron_Track02StartupTextMarker *marker = &catalog.markers[i];
-        size_t text_len;
-        if (marker->kind !=
-            THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT) {
-            continue;
-        }
-        if (marker->raw_offset >= assets->hucard_rom_size ||
-            marker->byte_count == 0u) {
-            continue;
-        }
-        text_len = marker->byte_count;
-        if (text_len >= sizeof(state->theronState.startup_text_prompt)) {
-            text_len = sizeof(state->theronState.startup_text_prompt) - 1u;
-        }
-        memcpy(state->theronState.startup_text_prompt,
-               assets->hucard_rom + marker->raw_offset,
-               text_len);
-        state->theronState.startup_text_prompt[text_len] = '\0';
+    status = theron_v1_track02_copy_startup_text_marker(
+        assets->hucard_rom,
+        assets->hucard_rom_size,
+        md5_hex,
+        THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT,
+        0u,
+        state->theronState.startup_text_prompt,
+        sizeof(state->theronState.startup_text_prompt),
+        &text_len,
+        &marker);
+    if (status == THERON_TRACK02_SIGNAL_OK && text_len > 0u &&
+        marker.kind == THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT) {
         state->theronState.startup_text_prompt_count =
             (int)catalog.marker_count;
-        return;
     }
 }
 
