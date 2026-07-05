@@ -744,6 +744,38 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     return -1;
 }
 
+int dm2_v1_dungeon_resolve_actuator_wall_gfx(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    int *out_wall_gfx_index,
+    int *out_wall_gfx_field) {
+    int ordinal = -1;
+
+    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
+    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+    if (!wall_gfx_list || wall_gfx_count <= 0 ||
+        !out_wall_gfx_index || !out_wall_gfx_field) {
+        return -1;
+    }
+    if (dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
+            d, first_thing, view_dir, side_index, max_steps, &ordinal) != 0) {
+        return -1;
+    }
+    /* skproject GET_WALL_DECORATION_OF_ACTUATOR treats GraphicNumber() as
+     * one-based and returns current_map_wall_gfx_list[ordinal - 1].  The
+     * DRAW_DOOR_FRAMES custom-button path then uses field high-byte + 1;
+     * a plain resolved actuator graphic has no animation frame here. */
+    if (ordinal <= 0 || ordinal > wall_gfx_count) return -1;
+    *out_wall_gfx_index = (int)wall_gfx_list[ordinal - 1];
+    *out_wall_gfx_field = 1;
+    return 0;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;
