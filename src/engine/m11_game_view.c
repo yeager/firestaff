@@ -3,7 +3,9 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
+#include "nexus_v1_movement.h"
 #include "nexus_v1_save.h"
+#include "nexus_v1_title.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_world.h"
 #include "theron_v1_boot.h"
@@ -107,6 +109,7 @@ static void m11_set_status(M11_GameViewState* state,
                            const char* detail);
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
                                            const char* savePath);
+static void m11_nexus_release_title(M11_GameViewState* state);
 static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
@@ -9631,6 +9634,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    m11_nexus_release_title(state);
     if (state->theronViewport) {
         theron_vp_free((Theron_V1_Viewport*)state->theronViewport);
         free(state->theronViewport);
@@ -9675,6 +9679,20 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     }
     M11_Audio_Shutdown(&state->audioState);
     memset(state, 0, sizeof(*state));
+}
+
+static void m11_nexus_release_title(M11_GameViewState* state) {
+    Nexus_TitleScreen* title;
+    if (!state || !state->nexusTitleScreen) {
+        return;
+    }
+    title = (Nexus_TitleScreen*)state->nexusTitleScreen;
+    nexus_title_free(title);
+    free(title);
+    state->nexusTitleScreen = NULL;
+    state->nexusState.title_active = 0;
+    state->nexusState.title_loaded = 0;
+    state->nexusState.title_frame = 0;
 }
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
@@ -10366,6 +10384,7 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     }
 
     state->nexusEngine = engine;
+    m11_nexus_release_title(state);
     state->nexusState.level_loaded = engine->level_loaded;
     state->nexusState.party_x = engine->game.party_x;
     state->nexusState.party_y = engine->game.party_y;
@@ -10425,14 +10444,29 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     nexus_v1_light_runtime_init(&state->nexusLightRuntime, /*guard_rejects=*/0);
     state->nexusLightRuntimeReady = 1;
     if (state->nexusEngine) {
+        Nexus_TitleScreen* title =
+            (Nexus_TitleScreen*)calloc(1u, sizeof(Nexus_TitleScreen));
         state->nexusState.level_loaded = state->nexusEngine->level_loaded;
         state->nexusState.party_x = state->nexusEngine->game.party_x;
         state->nexusState.party_y = state->nexusEngine->game.party_y;
         state->nexusState.party_dir = state->nexusEngine->game.party_dir;
         state->nexusState.tick_count = state->nexusEngine->game.tick_count;
+        state->nexusState.title_active = 1;
+        state->nexusState.title_frame = 0;
+        if (title) {
+            state->nexusState.title_loaded =
+                nexus_title_load(title, state->nexusEngine) == 0 &&
+                title->loaded;
+            state->nexusTitleScreen = title;
+        } else {
+            state->nexusState.title_loaded = 0;
+        }
     }
-    m11_set_status(state, "BOOT", "NEXUS READY");
-    m11_log_event(state, M11_COLOR_YELLOW, "T0: NEXUS LOADED");
+    m11_set_status(state, "BOOT", "NEXUS TITLE");
+    m11_log_event(state, M11_COLOR_YELLOW,
+                  state->nexusState.title_loaded
+                      ? "T0: NEXUS TITLE LOADED"
+                      : "T0: NEXUS TITLE FALLBACK");
     fprintf(stderr, "NEXUS READY: gameId=nexus dataDir=%s\n", dataDir);
     return 1;
 }
@@ -12096,7 +12130,19 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             /* Engine not available — do not tick. */
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
+        if (state->nexusState.title_active) {
+            ++state->nexusState.title_frame;
+            return M11_GAME_INPUT_REDRAW;
+        }
         nexus_v1_tick(state->nexusEngine);
+        if (state->nexusEngine->mechanics) {
+            state->nexusEngine->game.party_x =
+                state->nexusEngine->mechanics->party_x;
+            state->nexusEngine->game.party_y =
+                state->nexusEngine->mechanics->party_y;
+            state->nexusEngine->game.party_dir =
+                state->nexusEngine->mechanics->party_dir;
+        }
         (void)nexus_v1_light_runtime_tick(&state->nexusLightRuntime, 1);
         /* Sync nexusState mirror so external callers (render loop,
          * UI overlays, save/load) always read consistent data. */
@@ -13384,6 +13430,73 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        int cmd = NEXUS_CMD_NONE;
+        if (!state->nexusEngine) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_BACK) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (state->nexusState.title_active) {
+            if (input == M12_MENU_INPUT_NONE) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->nexusState.title_active = 0;
+            state->nexusState.title_frame = 0;
+            m11_set_status(state, "BOOT", "NEXUS READY");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        switch (input) {
+            case M12_MENU_INPUT_UP:
+                cmd = NEXUS_CMD_FORWARD;
+                break;
+            case M12_MENU_INPUT_DOWN:
+                cmd = NEXUS_CMD_BACKWARD;
+                break;
+            case M12_MENU_INPUT_TURN_LEFT:
+                cmd = NEXUS_CMD_TURN_LEFT;
+                break;
+            case M12_MENU_INPUT_TURN_RIGHT:
+                cmd = NEXUS_CMD_TURN_RIGHT;
+                break;
+            case M12_MENU_INPUT_LEFT:
+            case M12_MENU_INPUT_STRAFE_LEFT:
+                cmd = NEXUS_CMD_STRAFE_LEFT;
+                break;
+            case M12_MENU_INPUT_RIGHT:
+            case M12_MENU_INPUT_STRAFE_RIGHT:
+                cmd = NEXUS_CMD_STRAFE_RIGHT;
+                break;
+            default:
+                break;
+        }
+        if (cmd == NEXUS_CMD_NONE || !state->nexusEngine->mechanics) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (nexus_mechanics_push_command(state->nexusEngine->mechanics,
+                                         cmd) != 0) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        nexus_v1_tick(state->nexusEngine);
+        if (state->nexusEngine->mechanics) {
+            state->nexusEngine->game.party_x =
+                state->nexusEngine->mechanics->party_x;
+            state->nexusEngine->game.party_y =
+                state->nexusEngine->mechanics->party_y;
+            state->nexusEngine->game.party_dir =
+                state->nexusEngine->mechanics->party_dir;
+        }
+        state->nexusState.tick_count = state->nexusEngine->game.tick_count;
+        state->nexusState.level_loaded = state->nexusEngine->level_loaded;
+        state->nexusState.party_x = state->nexusEngine->game.party_x;
+        state->nexusState.party_y = state->nexusEngine->game.party_y;
+        state->nexusState.party_dir = state->nexusEngine->game.party_dir;
+        m11_set_status(state, "MOVE", "NEXUS COMMAND");
+        return M11_GAME_INPUT_REDRAW;
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
@@ -37769,6 +37882,39 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           &g_text_title);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 36, boot_status, &g_text_shadow);
+        }
+        g_drawState = NULL;
+        g_activeOriginalFont = NULL;
+        g_m11_font_scale_override = 0;
+        return;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        Nexus_Framebuffer nexusFb;
+        int y;
+        int copyW = framebufferWidth < NEXUS_FB_W ? framebufferWidth : NEXUS_FB_W;
+        int copyH = framebufferHeight < NEXUS_FB_H ? framebufferHeight : NEXUS_FB_H;
+        nexus_fb_init(&nexusFb);
+        if (state->nexusState.title_active) {
+            nexus_render_title((const Nexus_TitleScreen*)state->nexusTitleScreen,
+                               &nexusFb,
+                               state->nexusState.title_frame);
+        } else if (state->nexusEngine) {
+            Nexus_Viewport vp;
+            nexus_viewport_init(&vp);
+            nexus_viewport_render(&vp, state->nexusEngine);
+            memcpy(&nexusFb, &vp.fb, sizeof(nexusFb));
+        }
+        for (y = 0; y < copyH; ++y) {
+            memcpy(&framebuffer[y * framebufferWidth],
+                   &nexusFb.color_buffer[y * NEXUS_FB_W],
+                   (size_t)copyW);
+        }
+        if (!state->nexusEngine) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 18, "DUNGEON MASTER NEXUS", &g_text_title);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 36, "NEXUS RUNTIME NOT READY", &g_text_shadow);
         }
         g_drawState = NULL;
         g_activeOriginalFont = NULL;

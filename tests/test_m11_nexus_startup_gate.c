@@ -73,6 +73,20 @@ static int write_file(const char* path, const char* bytes) {
     return ok;
 }
 
+static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
+    size_t i;
+    int nonzero = 0;
+    if (!pixels) {
+        return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        if (pixels[i] != 0u) {
+            ++nonzero;
+        }
+    }
+    return nonzero;
+}
+
 static void fill_nexus_spec(M11_GameLaunchSpec* spec, const char* data_dir) {
     memset(spec, 0, sizeof(*spec));
     spec->title = "DUNGEON MASTER NEXUS";
@@ -159,6 +173,7 @@ int main(void) {
             Nexus_V1_World resume_world;
             Nexus_SaveResult save_result;
             int resume_fixture_ready = 0;
+            unsigned char framebuffer[320 * 200];
 
             expect_true(view.active == 1,
                         "real Nexus startup leaves M11 active");
@@ -170,6 +185,21 @@ int main(void) {
                         "real Nexus startup loads level zero");
             expect_true(strstr(view.dungeonPath, "LEV00.DGN") != NULL,
                         "real Nexus startup exposes level path");
+            expect_true(view.nexusState.title_active == 1,
+                        "real Nexus startup enters title phase");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
+                        "real Nexus title phase draws a nonblank frame");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus title phase dismisses on accept");
+            expect_true(view.nexusState.title_active == 0,
+                        "real Nexus title phase clears after input");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 100,
+                        "real Nexus dungeon phase draws a nonblank frame");
 
             if (view.nexusEngine && make_temp_root(save_root)) {
                 snprintf(save_path, sizeof(save_path), "%s%snexus_resume.fnxs",
@@ -207,6 +237,8 @@ int main(void) {
                             "resumed Nexus startup claims Nexus sourceKind");
                 expect_true(strstr(view.lastOutcome, "NEXUS RESUMED") != NULL,
                             "resumed Nexus startup reports resumed status");
+                expect_true(view.nexusState.title_active == 0,
+                            "resumed Nexus startup skips title phase");
                 expect_true(view.nexusState.party_x == 18 &&
                             view.nexusState.party_y == 12 &&
                             view.nexusState.party_dir == 3,

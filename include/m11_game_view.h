@@ -505,12 +505,16 @@ typedef struct {
     /* Nexus V1 engine — active when sourceKind == M11_GAME_SOURCE_NEXUS_DGN.
      * Owned by nexus_v1_launcher.c (singleton). */
     struct Nexus_V1_Engine *nexusEngine;
+    void *nexusTitleScreen; /* Nexus_TitleScreen*, owned by M11 startup. */
     Nexus_V1_LightRuntime nexusLightRuntime;
     int nexusLightRuntimeReady;
     struct {
         int level_loaded;
         int party_x, party_y, party_dir;
         int tick_count;
+        int title_active;
+        int title_loaded;
+        int title_frame;
     } nexusState;
 
     /* Theron's Quest V1 runtime — active when sourceKind ==
