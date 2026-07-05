@@ -24,12 +24,12 @@
  *   Byte offset 14: uint16_le: 0x00d9 (217) — ???
  *   Byte offset 16: uint16_le: 0x0240 (576) — ???
  *   ...
- *   MAP descriptors follow the 44-byte header, 16 bytes each:
- *     bytes[0-1]: raw map data byte offset
- *     bytes[4-5]: DM1 bitfield A
- *     bytes[12-15]: DM2 width/height overrides when present
- *   Tile data: column-major uint16[level_width * level_height]
- *   Square type stored in lower 5 bits (0x1F mask).
+ *   The bounded legacy loader path still accepts the older Firestaff
+ *   synthetic 16-bit map fixtures.  The skproject-compatible path follows
+ *   SKWIN/DME.h File_header + Map_definitions: 16-byte map headers,
+ *   column object indexes, square-first object links, text data, DB pools,
+ *   then byte-sized column-major map data.  In that path tile type is
+ *   stored in the high three bits and bit 0x10 marks a thing-list square.
  *
  *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
  *   Confirmed loader contract: level_count/map_count is byte offset 6. */
@@ -49,6 +49,19 @@ typedef struct {
     int level_widths[DM2_V1_MAX_LEVELS];
     int level_heights[DM2_V1_MAX_LEVELS];
     int level_offsets[DM2_V1_MAX_LEVELS];
+    int map_offset_x[DM2_V1_MAX_LEVELS];
+    int map_offset_y[DM2_V1_MAX_LEVELS];
+    int map_door_set0[DM2_V1_MAX_LEVELS];
+    int map_door_set1[DM2_V1_MAX_LEVELS];
+    int square_bytes;
+    int raw_map_data_base;
+    int column_index_base;
+    int square_first_thing_base;
+    int square_first_thing_count;
+    int text_data_base;
+    int text_word_count;
+    int thing_data_bases[16];
+    int thing_type_counts[16];
     uint8_t *raw_data;
     int raw_size;
     /* DM2 outdoor extension */
@@ -60,6 +73,13 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out, const uint8_t *dat, int size);
 int dm2_v1_dungeon_get_square_type(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_set_tile_raw(DM2_V1_DungeonData *d, int level, int x, int y, uint16_t raw);
+int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d, int level, int x, int y);
+const uint8_t *dm2_v1_dungeon_get_thing_record(
+    const DM2_V1_DungeonData *d,
+    uint16_t thing,
+    int *out_type,
+    int *out_index,
+    int *out_size);
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);

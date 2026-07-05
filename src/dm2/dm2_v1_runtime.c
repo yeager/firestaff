@@ -84,6 +84,37 @@ static int dm2_runtime_raw_is_door_square(uint16_t square_raw) {
            square_type == DM2_RUNTIME_DOOR_RAW_CLOSED_SENTINEL;
 }
 
+static void dm2_runtime_apply_door_record_metadata(
+    DM2_V1_DungeonData *dd,
+    int level,
+    int x,
+    int y,
+    DM2_ViewSquare *door) {
+    int thing;
+    int type = -1;
+    int index = -1;
+    int size = 0;
+    const uint8_t *record;
+    uint16_t w2;
+
+    if (!dd || !door) return;
+    thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
+    if (thing < 0) return;
+    record = dm2_v1_dungeon_get_thing_record(
+        dd, (uint16_t)thing, &type, &index, &size);
+    (void)index;
+    if (!record || type != 0 || size < 4) return;
+    w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    /* skproject SKWIN/DME.h Door::Button/ButtonState/DoorType/
+     * OpeningDir expose these fields from the DB0 door record's w2 word;
+     * SkWinCore.cpp DRAW_DOOR_FRAMES lines ~46340-46349 uses Button()
+     * and ButtonState() to choose the default button image. */
+    door->door_button = (uint8_t)((w2 >> 6) & 1u);
+    door->door_button_state = (uint8_t)((w2 >> 11) & 1u);
+    door->door_record_type = (uint8_t)(w2 & 1u);
+    door->door_opening_dir = (uint8_t)((w2 >> 5) & 1u);
+}
+
 static uint16_t dm2_runtime_door_set_state(uint16_t square_raw, int state) {
     return (uint16_t)((square_raw & ~0x0007u) | (uint16_t)(state & 0x0007));
 }
@@ -128,15 +159,23 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
             rt->dungeon_level,
             party_x + dx[dir] * center_doors[i].forward,
             party_y + dy[dir] * center_doors[i].forward);
+        int map_x = party_x + dx[dir] * center_doors[i].forward;
+        int map_y = party_y + dy[dir] * center_doors[i].forward;
+        int square_type = dm2_v1_dungeon_get_square_type(
+            dd, rt->dungeon_level, map_x, map_y);
         int type;
         if (raw < 0) continue;
         type = raw & DM2_SQUARE_TYPE_MASK;
-        if (dm2_runtime_raw_is_door_square((uint16_t)raw)) {
+        if (dm2_runtime_raw_is_door_square((uint16_t)raw) ||
+            square_type == 4) {
             DM2_ViewSquare *door = &viewport->squares[center_doors[i].square];
-            door->square_type = (uint8_t)type;
+            door->square_type =
+                (uint8_t)(square_type >= 0 ? square_type : type);
             door->flags |= DM2_SQF_HAS_DOOR | DM2_SQF_HAS_WALL;
             door->door_open_pct =
                 (uint8_t)(dm2_runtime_door_state((uint16_t)raw) * 25);
+            dm2_runtime_apply_door_record_metadata(
+                dd, rt->dungeon_level, map_x, map_y, door);
         }
     }
 }
