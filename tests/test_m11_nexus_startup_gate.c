@@ -11,6 +11,9 @@
 
 #include "m11_game_view.h"
 #include "nexus_v1_launcher.h"
+#include "nexus_v1_mechanics.h"
+#include "nexus_v1_save.h"
+#include "nexus_v1_world.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,6 +154,12 @@ int main(void) {
         fill_nexus_spec(&spec, real_dir);
         M11_GameView_Init(&view);
         if (M11_GameView_Start(&view, &spec)) {
+            char save_root[512];
+            char save_path[512];
+            Nexus_V1_World resume_world;
+            Nexus_SaveResult save_result;
+            int resume_fixture_ready = 0;
+
             expect_true(view.active == 1,
                         "real Nexus startup leaves M11 active");
             expect_true(view.sourceKind == M11_GAME_SOURCE_NEXUS_DGN,
@@ -161,11 +170,65 @@ int main(void) {
                         "real Nexus startup loads level zero");
             expect_true(strstr(view.dungeonPath, "LEV00.DGN") != NULL,
                         "real Nexus startup exposes level path");
+
+            if (view.nexusEngine && make_temp_root(save_root)) {
+                snprintf(save_path, sizeof(save_path), "%s%snexus_resume.fnxs",
+                         save_root, TEST_PATH_SEP);
+                nexus_v1_world_init(&resume_world);
+                nexus_v1_party_place(&resume_world, 0, 18, 12, 3);
+                resume_world.world_tick = 77u;
+                resume_world.state_hash = nexus_v1_world_hash(&resume_world);
+                save_result = nexus_v1_save_full_to_path(
+                    save_path,
+                    resume_world.party_level,
+                    resume_world.party_x,
+                    resume_world.party_y,
+                    resume_world.party_dir,
+                    (uint32_t)resume_world.world_tick,
+                    resume_world.state_hash,
+                    &view.nexusEngine->champions,
+                    &resume_world);
+                expect_true(save_result == NEXUS_SAVE_OK,
+                            "wrote Nexus FNXS resume fixture");
+                resume_fixture_ready = (save_result == NEXUS_SAVE_OK);
+            }
+            M11_GameView_Shutdown(&view);
+            nexus_v1_launcher_shutdown();
+
+            if (resume_fixture_ready) {
+                fill_nexus_spec(&spec, real_dir);
+                spec.savePath = save_path;
+                M11_GameView_Init(&view);
+                expect_true(M11_GameView_Start(&view, &spec),
+                            "M11 Nexus FNXS resume succeeds");
+                expect_true(view.active == 1,
+                            "resumed Nexus startup leaves M11 active");
+                expect_true(view.sourceKind == M11_GAME_SOURCE_NEXUS_DGN,
+                            "resumed Nexus startup claims Nexus sourceKind");
+                expect_true(strstr(view.lastOutcome, "NEXUS RESUMED") != NULL,
+                            "resumed Nexus startup reports resumed status");
+                expect_true(view.nexusState.party_x == 18 &&
+                            view.nexusState.party_y == 12 &&
+                            view.nexusState.party_dir == 3,
+                            "resumed Nexus startup mirrors saved party pose");
+                expect_true(view.nexusState.tick_count == 77,
+                            "resumed Nexus startup mirrors saved tick");
+                expect_true(view.nexusEngine &&
+                            view.nexusEngine->mechanics &&
+                            view.nexusEngine->mechanics->party_x == 18 &&
+                            view.nexusEngine->mechanics->party_y == 12 &&
+                            view.nexusEngine->mechanics->party_dir == 3,
+                            "resumed Nexus startup applies mechanics pose");
+                M11_GameView_Shutdown(&view);
+                nexus_v1_launcher_shutdown();
+                remove(save_path);
+                (void)TEST_RMDIR(save_root);
+            }
         } else {
             printf("skip: no launchable Nexus V1 data at %s\n", real_dir);
+            M11_GameView_Shutdown(&view);
+            nexus_v1_launcher_shutdown();
         }
-        M11_GameView_Shutdown(&view);
-        nexus_v1_launcher_shutdown();
     }
 
     if (g_failures) {

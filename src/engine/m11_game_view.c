@@ -2,7 +2,10 @@
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v1_launcher.h"
+#include "nexus_v1_mechanics.h"
+#include "nexus_v1_save.h"
 #include "nexus_v1_viewport.h"
+#include "nexus_v1_world.h"
 #include "theron_v1_boot.h"
 #include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_flow.h"
@@ -101,6 +104,8 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
 static void m11_set_status(M11_GameViewState* state,
                            const char* title,
                            const char* detail);
+static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
+                                           const char* savePath);
 static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
@@ -9796,6 +9801,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         {
             int ok = M11_GameView_StartNexus(state, dd);
             if (ok) {
+                if (spec->savePath && spec->savePath[0] != '\0' &&
+                    !m11_nexus_resume_from_save_path(state, spec->savePath)) {
+                    nexus_v1_launcher_shutdown();
+                    state->nexusEngine = NULL;
+                    state->active = 0;
+                    state->startedFromLauncher = 0;
+                    state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+                    return 0;
+                }
                 state->presentationMode = spec->presentationMode;
                 state->presentationWidth = spec->presentationWidth;
                 state->presentationHeight = spec->presentationHeight;
@@ -10257,6 +10271,111 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
     spec.fontScale = 0; /* use built-in default scale */
     return M11_GameView_Start(state, &spec);
+}
+
+static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
+                                           const char* savePath) {
+    Nexus_V1_SaveHeader header;
+    Nexus_V1_ChampionPool champions;
+    Nexus_V1_World world;
+    Nexus_V1_Engine* engine;
+    char diagnostic[256];
+    char ngltDiagnostic[256];
+    int ngltDecoded = 0;
+    Nexus_SaveResult result;
+    int level;
+
+    if (!state || !savePath || !savePath[0] || !state->nexusEngine) {
+        return 0;
+    }
+
+    memset(&header, 0, sizeof(header));
+    memset(&champions, 0, sizeof(champions));
+    memset(&world, 0, sizeof(world));
+    memset(diagnostic, 0, sizeof(diagnostic));
+    memset(ngltDiagnostic, 0, sizeof(ngltDiagnostic));
+
+    result = nexus_v1_load_full_from_path_with_runtime(
+        savePath,
+        &header,
+        &champions,
+        &world,
+        state->nexusLightRuntimeReady ? &state->nexusLightRuntime : NULL,
+        &ngltDecoded,
+        ngltDiagnostic,
+        sizeof(ngltDiagnostic),
+        diagnostic,
+        sizeof(diagnostic));
+    if (result != NEXUS_SAVE_OK) {
+        m11_set_status(state, "BOOT", "NEXUS RESUME FAILED");
+        m11_log_event(state, M11_COLOR_RED,
+                      "T0: NEXUS RESUME FAILED: %s",
+                      diagnostic[0] ? diagnostic : nexus_v1_save_strerror(result));
+        return 0;
+    }
+
+    level = world.party_level;
+    if (level < 0 || level > 15) {
+        level = header.current_level;
+    }
+    if (level < 0 || level > 15) {
+        m11_set_status(state, "BOOT", "NEXUS RESUME LEVEL INVALID");
+        m11_log_event(state, M11_COLOR_RED,
+                      "T0: NEXUS RESUME BAD LEVEL %d", level);
+        return 0;
+    }
+    if (world.party_dir < 0 || world.party_dir > 3) {
+        m11_set_status(state, "BOOT", "NEXUS RESUME DIR INVALID");
+        m11_log_event(state, M11_COLOR_RED,
+                      "T0: NEXUS RESUME BAD DIR %d", world.party_dir);
+        return 0;
+    }
+
+    if (nexus_v1_launcher_load_level(level) != 0) {
+        m11_set_status(state, "BOOT", "NEXUS RESUME LEVEL ERROR");
+        m11_log_event(state, M11_COLOR_RED,
+                      "T0: NEXUS RESUME LEV%02d LOAD FAILED", level);
+        return 0;
+    }
+
+    engine = nexus_v1_launcher_get_engine();
+    if (!engine) {
+        m11_set_status(state, "BOOT", "NEXUS RESUME ENGINE LOST");
+        return 0;
+    }
+
+    engine->champions = champions;
+    engine->game.current_level = level;
+    engine->game.party_x = world.party_x;
+    engine->game.party_y = world.party_y;
+    engine->game.party_dir = world.party_dir;
+    engine->game.tick_count = (int)header.game_time;
+    if (engine->mechanics) {
+        engine->mechanics->map_index = level;
+        engine->mechanics->party_x = world.party_x;
+        engine->mechanics->party_y = world.party_y;
+        engine->mechanics->party_dir = world.party_dir;
+        engine->mechanics->total_ticks = header.game_time;
+        engine->mechanics->pending_level_change = -1;
+        engine->mechanics->pending_teleport = 0;
+        engine->mechanics->input_head = 0;
+        engine->mechanics->input_tail = 0;
+        engine->mechanics->input_count = 0;
+    }
+
+    state->nexusEngine = engine;
+    state->nexusState.level_loaded = engine->level_loaded;
+    state->nexusState.party_x = engine->game.party_x;
+    state->nexusState.party_y = engine->game.party_y;
+    state->nexusState.party_dir = engine->game.party_dir;
+    state->nexusState.tick_count = engine->game.tick_count;
+    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s/LEV%02d.DGN",
+             engine->data_dir, level);
+    m11_set_status(state, "BOOT", "NEXUS RESUMED");
+    m11_log_event(state, M11_COLOR_YELLOW,
+                  ngltDecoded ? "T0: NEXUS RESUMED + LIGHT RUNTIME"
+                              : "T0: NEXUS RESUMED");
+    return 1;
 }
 
 int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
