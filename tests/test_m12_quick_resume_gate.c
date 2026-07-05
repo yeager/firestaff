@@ -546,6 +546,8 @@ int main(void) {
     char csbBrowserSavePath[512];
     char csbWinBrowserSavePath[512];
     char importedCsbWinBrowserSavePath[512];
+    char importedCsbWinQuickResumePath[512];
+    char wrongKnownGameQuickResumePath[512];
     char originalCsbGameBrowserSavePath[512];
     char originalDmSaveBrowserSavePath[512];
     char originalDm1SavePath[512];
@@ -691,6 +693,25 @@ int main(void) {
                 strcmp(intent.savePath, originalDm1SavePath) == 0,
                 "original PC34 DM1 Resume launch intent must carry exact path")) return 1;
 
+    snprintf(originalDm1SavePath, sizeof(originalDm1SavePath),
+             "%s/DMSAVE.DAT", tmpTemplate);
+    if (!expect(write_original_pc34_dm1_save_file(originalDm1SavePath),
+                "should write original PC34 DM1 DMSAVE.DAT fixture")) return 1;
+    M12_Config_SetLastSavePath(originalDm1SavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_dm1_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "original DM1 DMSAVE.DAT must enable quick Resume by content")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "dm1") == 0,
+                "original DM1 DMSAVE.DAT quick Resume should identify dm1")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.savePath &&
+                strcmp(intent.savePath, originalDm1SavePath) == 0,
+                "original DM1 DMSAVE.DAT Resume must carry exact path")) return 1;
+
     snprintf(csbSavePath, sizeof(csbSavePath),
              "%s/firestaff-csb-quicksave.sav", tmpTemplate);
     if (!expect(write_fake_quicksave(csbSavePath),
@@ -724,6 +745,27 @@ int main(void) {
     if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
                 "raw CSBGAME quick Resume launch intent must carry exact save path")) return 1;
 
+    snprintf(originalCsbGameBrowserSavePath, sizeof(originalCsbGameBrowserSavePath),
+             "%s/CSBGAME.DAT", tmpTemplate);
+    if (!expect(write_raw_csbgame_roster_quicksave(originalCsbGameBrowserSavePath),
+                "should write original-name CSBGAME.DAT quick Resume fixture")) return 1;
+    M12_Config_SetLastSavePath(originalCsbGameBrowserSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "CSBGAME.DAT must enable CSB quick Resume by content")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
+                "CSBGAME.DAT quick Resume should identify csb")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "csb") == 0 &&
+                intent.savePath &&
+                strcmp(intent.savePath, originalCsbGameBrowserSavePath) == 0,
+                "CSBGAME.DAT quick Resume launch intent should carry exact CSB path")) return 1;
+
     if (!expect(firestaff_test_write_csbwin_resume_fixture(csbSavePath, 0),
                 "should write CSBWin verified-body quicksave")) return 1;
     M12_Config_SetLastSavePath(csbSavePath);
@@ -746,6 +788,41 @@ int main(void) {
                 "CSBWin quick Resume launch intent should identify CSB")) return 1;
     if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
                 "CSBWin quick Resume launch intent must carry exact save path")) return 1;
+
+    snprintf(importedCsbWinQuickResumePath,
+             sizeof(importedCsbWinQuickResumePath),
+             "%s/firestaff-imported-csbwin.sav", tmpTemplate);
+    if (!expect(firestaff_test_write_csbwin_resume_fixture(
+                    importedCsbWinQuickResumePath, 0),
+                "should write imported-name CSBWin quicksave")) return 1;
+    M12_Config_SetLastSavePath(importedCsbWinQuickResumePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "unknown firestaff save name should enable CSB quick Resume by content")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
+                "unknown firestaff save name should classify CSB by content")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "csb") == 0 &&
+                intent.savePath &&
+                strcmp(intent.savePath, importedCsbWinQuickResumePath) == 0,
+                "unknown firestaff CSB quick Resume should carry exact path")) return 1;
+
+    snprintf(wrongKnownGameQuickResumePath,
+             sizeof(wrongKnownGameQuickResumePath),
+             "%s/firestaff-dm2-imported-csbwin.sav", tmpTemplate);
+    if (!expect(firestaff_test_write_csbwin_resume_fixture(
+                    wrongKnownGameQuickResumePath, 0),
+                "should write known-other-game CSBWin quicksave")) return 1;
+    M12_Config_SetLastSavePath(wrongKnownGameQuickResumePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 0,
+                "known DM2 firestaff name must not be reclassified as CSB")) return 1;
 
     if (!expect(firestaff_test_write_csbwin_resume_fixture(csbSavePath, 1),
                 "should write corrupt CSBWin quicksave")) return 1;

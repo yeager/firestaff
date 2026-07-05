@@ -2087,6 +2087,122 @@ static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
     return 0;
 }
 
+static int m12_ascii_lower(int c) {
+    return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
+}
+
+static int m12_ascii_equal_ci(const char* a, const char* b) {
+    if (!a || !b) return 0;
+    while (*a && *b) {
+        if (m12_ascii_lower((unsigned char)*a) !=
+            m12_ascii_lower((unsigned char)*b)) {
+            return 0;
+        }
+        ++a;
+        ++b;
+    }
+    return *a == '\0' && *b == '\0';
+}
+
+static int m12_is_csb_original_save_basename(const char* name) {
+    return m12_ascii_equal_ci(name, "CSBGAME.DAT") ||
+           m12_ascii_equal_ci(name, "CSBGAME.BAK") ||
+           m12_ascii_equal_ci(name, "DMSAVE.DAT") ||
+           m12_ascii_equal_ci(name, "DMSAVE.BAK");
+}
+
+static int m12_parse_firestaff_save_game_id(const char* base,
+                                            char* outId,
+                                            int outSize) {
+    const char* prefix = "firestaff-";
+    const char* start;
+    const char* end;
+    int len;
+
+    if (!base || !outId || outSize <= 0) {
+        return 0;
+    }
+    outId[0] = '\0';
+    if (strncmp(base, prefix, strlen(prefix)) != 0) {
+        return 0;
+    }
+    start = base + strlen(prefix);
+    end = strchr(start, '-');
+    if (!end) {
+        end = strstr(start, ".sav");
+    }
+    if (!end) {
+        return 0;
+    }
+    len = (int)(end - start);
+    if (len <= 0 || len >= outSize) {
+        return 0;
+    }
+    memcpy(outId, start, (size_t)len);
+    outId[len] = '\0';
+    return 1;
+}
+
+static int m12_try_quick_resume_candidate(const char* gameId,
+                                          const char* path,
+                                          char* outId,
+                                          int outSize) {
+    if (!gameId || !path || !outId || outSize <= 0) {
+        return 0;
+    }
+    if (!m12_is_valid_quick_resume_path_for_game(gameId, path)) {
+        return 0;
+    }
+    snprintf(outId, (size_t)outSize, "%s", gameId);
+    return 1;
+}
+
+static int m12_is_known_firestaff_game_id(const char* gameId) {
+    return gameId && (strcmp(gameId, "dm1") == 0 ||
+                      strcmp(gameId, "csb") == 0 ||
+                      strcmp(gameId, "dm2") == 0 ||
+                      strcmp(gameId, "nexus") == 0 ||
+                      strcmp(gameId, "theron") == 0);
+}
+
+static int m12_infer_quick_resume_game_id(const char* path,
+                                          char* outId,
+                                          int outSize) {
+    const char* base;
+    char firestaffId[32];
+
+    if (!path || !outId || outSize <= 0) {
+        return 0;
+    }
+    outId[0] = '\0';
+    base = strrchr(path, '/');
+    if (!base) {
+        base = path;
+    } else {
+        ++base;
+    }
+
+    if (m12_parse_firestaff_save_game_id(base, firestaffId,
+                                         (int)sizeof(firestaffId))) {
+        if (m12_is_quick_resume_game_supported(firestaffId)) {
+            return m12_try_quick_resume_candidate(firestaffId, path,
+                                                  outId, outSize);
+        }
+        if (m12_is_known_firestaff_game_id(firestaffId)) {
+            return 0;
+        }
+    }
+
+    if (m12_is_csb_original_save_basename(base) &&
+        m12_try_quick_resume_candidate("csb", path, outId, outSize)) {
+        return 1;
+    }
+    if (m12_try_quick_resume_candidate("dm1", path, outId, outSize)) {
+        return 1;
+    }
+    return m12_try_quick_resume_candidate("csb", path, outId, outSize);
+}
+
 static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     M12_Config config;
     if (!state) {
@@ -2104,31 +2220,9 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
         return;
     }
 
-    /* Extract game id from save path pattern: firestaff-{id}-*.sav */
-    {
-        const char* base = strrchr(config.lastSavePath, '/');
-        const char* prefix = "firestaff-";
-        const char* start;
-        const char* end;
-        if (!base) {
-            base = config.lastSavePath;
-        } else {
-            ++base;
-        }
-        if (strncmp(base, prefix, strlen(prefix)) != 0) {
-            return;
-        }
-        start = base + strlen(prefix);
-        end = strchr(start, '-');
-        if (!end || (size_t)(end - start) >= sizeof(state->quickResumeGameId)) {
-            return;
-        }
-        memcpy(state->quickResumeGameId, start, (size_t)(end - start));
-        state->quickResumeGameId[end - start] = '\0';
-    }
-
-    if (!m12_is_valid_quick_resume_path_for_game(state->quickResumeGameId,
-                                                 config.lastSavePath)) {
+    if (!m12_infer_quick_resume_game_id(config.lastSavePath,
+                                        state->quickResumeGameId,
+                                        (int)sizeof(state->quickResumeGameId))) {
         return;
     }
 
