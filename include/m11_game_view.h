@@ -541,7 +541,7 @@ typedef struct {
         int save_resume_srm_slots;
         int startup_roster_name_count;
         int startup_roster_name_status;
-        char startup_roster_names[7][16];
+        char startup_roster_names[8][16];
     } theronState;
 
     /* CSB (Chaos Strikes Back) V1 runtime — active when sourceKind ==
