@@ -14,8 +14,10 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_trigger.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -455,6 +457,31 @@ int main(void) {
             dm2_v1_runtime_set_position(0, 15, 15, 0);
             dm2_v1_runtime_set_outdoor(0);
         }
+    }
+    if (world) {
+        dm2_v1_trigger_reset_state();
+        dm2_v1_plate_reset_state();
+        dm2_v1_plate_set_party_weight(500);
+        dm2_v1_runtime_set_position(0, 15, 9, 0);
+        dm2_v1_runtime_set_outdoor(1);
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 forward move reaches square-trigger route");
+        expect_true(dm2_v1_trigger_get_fire_count(1) == 1,
+                    "DM2 runtime movement signals square-entered trigger");
+        expect_true(view.dm2State.party_x == 15 &&
+                    view.dm2State.party_y == 8,
+                    "M11 DM2 mirror follows trigger-square movement");
+        dm2_v1_runtime_set_position(0, 12, 9, 0);
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 forward move reaches pressure-plate route");
+        expect_true(dm2_v1_plate_get_fire_count(1) == 1,
+                    "DM2 runtime movement evaluates party pressure plate");
+        expect_true(dm2_v1_plate_fire_total() >= 1,
+                    "DM2 runtime movement records pressure-plate fire total");
+        dm2_v1_runtime_set_position(0, 15, 15, 0);
+        dm2_v1_runtime_set_outdoor(0);
     }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
