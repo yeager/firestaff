@@ -40,7 +40,10 @@ static int test_dm2_asset_fetch(void *user,
         if (out_pixels) *out_pixels = ceiling;
     } else if (gdat_index == -1) {
         if (out_pixels) *out_pixels = floor;
-    } else if (gdat_index == -3) {
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
+                   DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
+               DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index < 0x40) {
         if (out_pixels) *out_pixels = wall;
     } else {
         if (out_pixels) *out_pixels = NULL;
@@ -107,14 +110,16 @@ static void test_floor_ceiling_asset_provider(void)
                                        test_dm2_asset_fetch,
                                        NULL);
     dm2_v1_render_walls(&viewport);
-    CHECK("wall pass fetches the DM2 front wall asset",
-          s_asset_fetch_calls == 1 &&
-              viewport.asset_wall_drawn_count == 1 &&
+    CHECK("wall pass fetches the DM2 viewport-cell wall assets",
+          s_asset_fetch_calls == 10 &&
+              viewport.asset_wall_drawn_count == 10 &&
               viewport.fallback_wall_drawn_count == 0);
-    CHECK("wall asset is scaled into the bounded dungeon wall region",
-          framebuffer[(20 * 320)] == 11 &&
-              framebuffer[(20 * 320) + 112] == 12 &&
-              framebuffer[(116 * 320) + 1] == 13);
+    CHECK("wall assets are scaled into the left and right forward cells",
+          framebuffer[0] == 11 &&
+              framebuffer[31] == 12 &&
+              framebuffer[(135 * 320)] == 13 &&
+              framebuffer[192] == 11 &&
+              framebuffer[223] == 12);
 }
 
 int main(void)

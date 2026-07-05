@@ -157,9 +157,8 @@ static const int16_t __attribute__((unused)) s_dm2_door_frames [6] = {
 
 /* Cached wall/floor/ceiling graphic index pairs (DM2 uses -1/-2 like DM1).
  * Source: DUNVIEW.C:126-127, G2108_Floor=-1, G2109_Ceiling=-2 */
-#define DM2_GRAPHIC_FLOOR   (-1)
-#define DM2_GRAPHIC_CEILING (-2)
-#define DM2_GRAPHIC_WALL_FRONT (-3)
+#define DM2_GRAPHIC_FLOOR   DM2_V1_VIEWPORT_GFX_FLOOR
+#define DM2_GRAPHIC_CEILING DM2_V1_VIEWPORT_GFX_CEILING
 
 /* DM2 draw order — back-to-front, same 12 view squares as DM1.
  * Depth 3 (D3) → Depth 2 (D2) → Depth 1 (D1) → Depth 0 (D0).
@@ -351,6 +350,29 @@ const DM2_WallFrame *dm2_v1_get_wall_frame(int view_square)
 {
     if (view_square < 0 || view_square >= DM2_SQ_COUNT) return NULL;
     return &g_dm2_wall_frames[view_square];
+}
+
+int dm2_v1_viewport_wall_field_for_square(int view_square)
+{
+    if (view_square < 0 || view_square >= DM2_SQ_COUNT) return -1;
+    if (g_dm2_wall_frames[view_square].byte_width == 0 ||
+        g_dm2_wall_frames[view_square].height == 0) {
+        return -1;
+    }
+    if (view_square == DM2_SQ_D3C) return -1;
+    /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/QUERY_TEMP_PICST
+     * lines ~47373-47474 maps normal wall cells through
+     * `iViewportCell + 0x22`.  The PC English startup graphics set has
+     * real fields from 0x23 upward for this first visible-cell pass; D3C's
+     * enum-local 0x22 slot is absent and remains on the fallback backdrop. */
+    return DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST + view_square;
+}
+
+int dm2_v1_viewport_wall_graphic_index_for_square(int view_square)
+{
+    int field = dm2_v1_viewport_wall_field_for_square(view_square);
+    if (field < 0) return 0;
+    return DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - field;
 }
 
 /* ── Internal blit helper ─────────────────────────────────────────── */
@@ -707,18 +729,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
-    const uint8_t *wall_pixels = NULL;
-    int wall_w = 0;
-    int wall_h = 0;
-    int wall_stride = 0;
-    int wall_asset =
-        dm2_v1_fetch_viewport_asset(s,
-                                    DM2_GRAPHIC_WALL_FRONT,
-                                    &wall_pixels,
-                                    &wall_w,
-                                    &wall_h,
-                                    &wall_stride) == 0 &&
-        wall_pixels && wall_w > 0 && wall_h > 0;
+    int wall_asset_count = 0;
 
     /* DM2 wall rendering: draw back-to-front (D3→D2→D1→D0).
      * For each depth level, draw side walls first (L,R), then center (C).
@@ -860,25 +871,49 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         }
     }
 
-    if (wall_asset) {
-        /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/DRAW_WALL_TILE routes
-         * GRAPHICSSET wall cells through QUERY_TEMP_PICST and
-         * DRAW_DUNGEON_GRAPHIC.  This first startup binding draws the
-         * decoded map graphics set's front wall plate over the bounded
-         * placeholder wall pass while the exact per-cell placement tables are
-         * still being wired. */
+    for (int step = 0; step < DM2_STEP_COUNT; ++step) {
+        int square = s_step_to_square[step];
+        const DM2_WallFrame *frame = dm2_v1_get_wall_frame(square);
+        const uint8_t *wall_pixels = NULL;
+        int wall_w = 0;
+        int wall_h = 0;
+        int wall_stride = 0;
+        int gdat_index = dm2_v1_viewport_wall_graphic_index_for_square(square);
+        int dst_w;
+        int dst_h;
+
+        if (!frame || frame->byte_width == 0 || frame->height == 0 ||
+            gdat_index == 0) {
+            continue;
+        }
+        if (dm2_v1_fetch_viewport_asset(s,
+                                        gdat_index,
+                                        &wall_pixels,
+                                        &wall_w,
+                                        &wall_h,
+                                        &wall_stride) != 0 ||
+            !wall_pixels || wall_w <= 0 || wall_h <= 0) {
+            continue;
+        }
+
+        dst_w = (int)frame->right_x - (int)frame->left_x + 1;
+        dst_h = (int)frame->bottom_y - (int)frame->top_y + 1;
         dm2_v1_blit_scaled_bitmap(vp,
                                   stride,
-                                  0,
-                                  20,
-                                  224,
-                                  97,
+                                  frame->left_x,
+                                  frame->top_y,
+                                  dst_w,
+                                  dst_h,
                                   wall_pixels,
                                   wall_w,
                                   wall_h,
                                   wall_stride > 0 ? wall_stride : wall_w,
-                                  -1);
-        ++s->asset_wall_drawn_count;
+                                  DM2_COLOR_TRANSPARENT);
+        ++wall_asset_count;
+    }
+
+    if (wall_asset_count > 0) {
+        s->asset_wall_drawn_count += wall_asset_count;
     } else {
         ++s->fallback_wall_drawn_count;
     }
