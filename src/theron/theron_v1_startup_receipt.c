@@ -206,6 +206,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     Theron_V1_BootProfile profile;
     Theron_Track02BankSignal signal;
     Theron_Track02SignalStatus signal_status;
+    Theron_Track02LevelCandidateCatalog candidate_catalog;
     uint8_t *data = NULL;
     size_t size = 0;
     char md5_hex[33];
@@ -379,10 +380,9 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
                      (receipt->variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
                       (signal_status == THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE ||
                        signal_status == THERON_TRACK02_SIGNAL_OK));
-    free(data);
-    data = NULL;
 
     if (!bank_signal_ok) {
+        free(data);
         set_verdict(receipt,
                     THERON_V1_STARTUP_RECEIPT_SKIPPED,
                     "skipped");
@@ -410,6 +410,39 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     }
     receipt->post_boundary_span_size   = (uint64_t)signal.post_boundary_span_size;
     receipt->next_nonzero_offset       = (uint64_t)signal.next_nonzero_offset;
+
+    memset(&candidate_catalog, 0, sizeof(candidate_catalog));
+    if (signal.anchor_count > 0u &&
+        theron_v1_track02_scan_level_candidates(
+            data, size, &candidate_catalog) == THERON_TRACK02_LEVEL_HANDOFF_OK &&
+        theron_v1_track02_bind_level_candidate_anchor(
+            signal.descriptor_offsets[0], &candidate_catalog) != 0 &&
+        candidate_catalog.candidate_count == 1u &&
+        candidate_catalog.candidates[0].matches_initial_anchor) {
+        const Theron_Track02LevelCandidate *candidate =
+            &candidate_catalog.candidates[0];
+        receipt->initial_candidate_found = 1;
+        receipt->initial_candidate_offset =
+            (uint64_t)candidate->absolute_offset;
+        receipt->initial_candidate_size = (uint64_t)candidate->byte_count;
+        receipt->initial_candidate_width =
+            (uint32_t)candidate->header_width;
+        receipt->initial_candidate_height =
+            (uint32_t)candidate->header_height;
+        receipt->initial_candidate_seed = candidate->header_seed;
+        receipt->initial_candidate_level_index =
+            (uint32_t)candidate->header_level_index;
+        receipt->initial_candidate_start_x = candidate->start_x;
+        receipt->initial_candidate_start_y = candidate->start_y;
+        receipt->initial_candidate_start_dir = candidate->start_dir;
+        receipt->initial_candidate_descriptor_delta =
+            (uint64_t)candidate->descriptor_delta;
+        receipt->initial_candidate_anchor_match =
+            candidate->matches_initial_anchor;
+    }
+
+    free(data);
+    data = NULL;
 
     set_verdict(receipt,
                 THERON_V1_STARTUP_RECEIPT_REAL_ASSET_RECEIPT,
@@ -467,6 +500,30 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->post_boundary_span_size), h);
     h = fnv1a_32(&receipt->next_nonzero_offset,
                  sizeof(receipt->next_nonzero_offset), h);
+    h = fnv1a_32(&receipt->initial_candidate_found,
+                 sizeof(receipt->initial_candidate_found), h);
+    h = fnv1a_32(&receipt->initial_candidate_offset,
+                 sizeof(receipt->initial_candidate_offset), h);
+    h = fnv1a_32(&receipt->initial_candidate_size,
+                 sizeof(receipt->initial_candidate_size), h);
+    h = fnv1a_32(&receipt->initial_candidate_width,
+                 sizeof(receipt->initial_candidate_width), h);
+    h = fnv1a_32(&receipt->initial_candidate_height,
+                 sizeof(receipt->initial_candidate_height), h);
+    h = fnv1a_32(&receipt->initial_candidate_seed,
+                 sizeof(receipt->initial_candidate_seed), h);
+    h = fnv1a_32(&receipt->initial_candidate_level_index,
+                 sizeof(receipt->initial_candidate_level_index), h);
+    h = fnv1a_32(&receipt->initial_candidate_start_x,
+                 sizeof(receipt->initial_candidate_start_x), h);
+    h = fnv1a_32(&receipt->initial_candidate_start_y,
+                 sizeof(receipt->initial_candidate_start_y), h);
+    h = fnv1a_32(&receipt->initial_candidate_start_dir,
+                 sizeof(receipt->initial_candidate_start_dir), h);
+    h = fnv1a_32(&receipt->initial_candidate_descriptor_delta,
+                 sizeof(receipt->initial_candidate_descriptor_delta), h);
+    h = fnv1a_32(&receipt->initial_candidate_anchor_match,
+                 sizeof(receipt->initial_candidate_anchor_match), h);
     h = fnv1a_32(&receipt->boot_profile_platform,
                  sizeof(receipt->boot_profile_platform), h);
     h = fnv1a_str(h, receipt->boot_profile_version_id);
@@ -502,6 +559,11 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "descriptor_off=0x%llx descriptor_size=%llu "
                  "value_count=%llu stride=0x%x anchors=%llu "
                  "span_off=0x%llx span_size=%llu next_nonzero=0x%llx "
+                 "initial_candidate=%d initial_off=0x%llx "
+                 "initial_size=%llu initial_header=%ux%u "
+                 "initial_seed=0x%x initial_level=0x%x "
+                 "initial_start=(%d,%d,%d) initial_delta=0x%llx "
+                 "initial_anchor=%d "
                  "boot_platform=%d boot_version=%s boot_verified=%d "
                  "tick_hz=%u champions=%u dungeons=%u seed=%u "
                  "m11_kind=%d m11_active=%d m11_world=%d "
@@ -520,6 +582,18 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned long long)receipt->post_boundary_span_offset,
                  (unsigned long long)receipt->post_boundary_span_size,
                  (unsigned long long)receipt->next_nonzero_offset,
+                 receipt->initial_candidate_found,
+                 (unsigned long long)receipt->initial_candidate_offset,
+                 (unsigned long long)receipt->initial_candidate_size,
+                 (unsigned)receipt->initial_candidate_width,
+                 (unsigned)receipt->initial_candidate_height,
+                 (unsigned)receipt->initial_candidate_seed,
+                 (unsigned)receipt->initial_candidate_level_index,
+                 receipt->initial_candidate_start_x,
+                 receipt->initial_candidate_start_y,
+                 receipt->initial_candidate_start_dir,
+                 (unsigned long long)receipt->initial_candidate_descriptor_delta,
+                 receipt->initial_candidate_anchor_match,
                  (int)receipt->boot_profile_platform,
                  receipt->boot_profile_version_id[0]
                     ? receipt->boot_profile_version_id : "(none)",

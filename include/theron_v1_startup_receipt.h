@@ -103,6 +103,9 @@ typedef enum {
  *   - post_boundary_span_offset        : first post-boundary span offset (0 if N/A)
  *   - post_boundary_span_size          : 44 for raw BIN / ISO when matched
  *   - next_nonzero_offset              : first nonzero byte after descriptor
+ *   - initial_candidate_*              : hash/anchor-gated startup level
+ *                                        candidate receipt when raw Track 02
+ *                                        exposes the bounded 32x27 payload
  *   - boot_profile_platform            : detected platform enum
  *   - boot_profile_version_id          : copy of profile->version_id
  *   - boot_profile_assets_verified     : 1 when the direct launch marked assets_verified
@@ -139,6 +142,20 @@ typedef struct {
     uint64_t post_boundary_span_offset;
     uint64_t post_boundary_span_size;
     uint64_t next_nonzero_offset;
+
+    /* ── Track 02 startup-level candidate summary ─────────────── */
+    int      initial_candidate_found;
+    uint64_t initial_candidate_offset;
+    uint64_t initial_candidate_size;
+    uint32_t initial_candidate_width;
+    uint32_t initial_candidate_height;
+    uint32_t initial_candidate_seed;
+    uint32_t initial_candidate_level_index;
+    int      initial_candidate_start_x;
+    int      initial_candidate_start_y;
+    int      initial_candidate_start_dir;
+    uint64_t initial_candidate_descriptor_delta;
+    int      initial_candidate_anchor_match;
 
     /* ── boot profile summary (after direct launch) ───────────── */
     Theron_Platform boot_profile_platform;
