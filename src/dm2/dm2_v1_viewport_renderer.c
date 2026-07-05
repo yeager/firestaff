@@ -432,6 +432,84 @@ int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed)
     return DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - field;
 }
 
+static void dm2_v1_viewport_clear_rect(DM2_V1_ViewportRect *out_rect)
+{
+    if (!out_rect) return;
+    out_rect->x = 0;
+    out_rect->y = 0;
+    out_rect->w = 0;
+    out_rect->h = 0;
+}
+
+int dm2_v1_viewport_door_panel_rect_for_square(int view_square,
+                                               DM2_V1_ViewportRect *out_rect)
+{
+    if (!out_rect) return 0;
+    dm2_v1_viewport_clear_rect(out_rect);
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR routes D0C/D1C/D2C through
+     * viewport-cell door graphics. These are the current bounded startup
+     * rectangles; exact tlbRectnoDoorButton/panel-table replacement stays
+     * isolated behind this API. */
+    switch (view_square) {
+    case DM2_SQ_D0C:
+        out_rect->x = 80;
+        out_rect->y = 0;
+        out_rect->w = 160;
+        out_rect->h = 135;
+        return 1;
+    case DM2_SQ_D1C:
+        out_rect->x = 60;
+        out_rect->y = 9;
+        out_rect->w = 104;
+        out_rect->h = 110;
+        return 1;
+    case DM2_SQ_D2C:
+        out_rect->x = 60;
+        out_rect->y = 20;
+        out_rect->w = 103;
+        out_rect->h = 71;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+int dm2_v1_viewport_door_button_rect_for_square(int view_square,
+                                                DM2_V1_ViewportRect *out_rect)
+{
+    DM2_V1_ViewportRect panel;
+
+    if (!out_rect) return 0;
+    dm2_v1_viewport_clear_rect(out_rect);
+    if (!dm2_v1_viewport_door_panel_rect_for_square(view_square, &panel)) {
+        return 0;
+    }
+
+    switch (view_square) {
+    case DM2_SQ_D0C:
+        out_rect->w = 16;
+        out_rect->h = 18;
+        out_rect->x = panel.x + panel.w - 28;
+        out_rect->y = panel.y + (panel.h / 2) - 9;
+        return 1;
+    case DM2_SQ_D1C:
+        out_rect->w = 12;
+        out_rect->h = 14;
+        out_rect->x = panel.x + panel.w - 22;
+        out_rect->y = panel.y + (panel.h / 2) - 7;
+        return 1;
+    case DM2_SQ_D2C:
+        out_rect->w = 8;
+        out_rect->h = 9;
+        out_rect->x = panel.x + panel.w - 16;
+        out_rect->y = panel.y + (panel.h / 2) - 4;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 /* ── Internal blit helper ─────────────────────────────────────────── */
 
 static void __attribute__((unused)) dm2_blit_bitmap (
@@ -1006,13 +1084,13 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
          *   D0C: front door - centered, full-height (lines 0-135)
          *   D1C: near door - centered, high strip (lines 9-119)
          *   D2C: mid door - centered, mid strip (lines 20-90) */
+        DM2_V1_ViewportRect panel_rect;
         int dx = 0, dy = 0, dw = 0, dh = 0;
-        if (i == DM2_SQ_D0C) {
-            dx = 80; dy = 0; dw = 160; dh = 135;
-        } else if (i == DM2_SQ_D1C) {
-            dx = 60; dy = 9; dw = 104; dh = 110;
-        } else if (i == DM2_SQ_D2C) {
-            dx = 60; dy = 20; dw = 103; dh = 71;
+        if (dm2_v1_viewport_door_panel_rect_for_square(i, &panel_rect)) {
+            dx = panel_rect.x;
+            dy = panel_rect.y;
+            dw = panel_rect.w;
+            dh = panel_rect.h;
         }
         if (dw > 0 && dh > 0) {
             const uint8_t *panel_pixels = NULL;
@@ -1136,32 +1214,15 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int button_w = 0;
             int button_h = 0;
             int button_stride = 0;
+            DM2_V1_ViewportRect button_rect;
             int button_index =
                 dm2_v1_viewport_door_button_graphic_index_for_state(
                     vs->door_button_state != 0);
-            int button_dst_w = 0;
-            int button_dst_h = 0;
-            int button_dst_x = 0;
-            int button_dst_y = 0;
+            int has_button_rect =
+                dm2_v1_viewport_door_button_rect_for_square(i, &button_rect);
 
-            if (i == DM2_SQ_D0C) {
-                button_dst_w = 16;
-                button_dst_h = 18;
-                button_dst_x = dx + dw - 28;
-                button_dst_y = dy + (dh / 2) - 9;
-            } else if (i == DM2_SQ_D1C) {
-                button_dst_w = 12;
-                button_dst_h = 14;
-                button_dst_x = dx + dw - 22;
-                button_dst_y = dy + (dh / 2) - 7;
-            } else if (i == DM2_SQ_D2C) {
-                button_dst_w = 8;
-                button_dst_h = 9;
-                button_dst_x = dx + dw - 16;
-                button_dst_y = dy + (dh / 2) - 4;
-            }
-
-            if (button_dst_w > 0 && button_dst_h > 0 &&
+            if (has_button_rect &&
+                button_rect.w > 0 && button_rect.h > 0 &&
                 button_index != 0 &&
                 dm2_v1_fetch_viewport_asset(s,
                                             button_index,
@@ -1173,14 +1234,14 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON
                  * lines ~46243-46264 sources GDAT_CATEGORY_DOOR_BUTTONS
                  * index 0, field state*5. Exact tlbRectnoDoorButton
-                 * viewport-cell placement remains for the door-record pass;
-                 * this hook keeps rendering asset-backed and stateful. */
+                 * viewport-cell placement is isolated in
+                 * dm2_v1_viewport_door_button_rect_for_square(). */
                 dm2_v1_blit_scaled_bitmap(vp,
                                           stride,
-                                          button_dst_x,
-                                          button_dst_y,
-                                          button_dst_w,
-                                          button_dst_h,
+                                          button_rect.x,
+                                          button_rect.y,
+                                          button_rect.w,
+                                          button_rect.h,
                                           button_pixels,
                                           button_w,
                                           button_h,
