@@ -1515,6 +1515,31 @@ int main(void) {
 
     expect_true(firestaff_test_write_csbwin_resume_fixture(csbwin_save_path, 0),
                 "built verified CSBWin resume save fixture");
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    spec.entranceResumeSavePath = csbwin_save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB entrance start accepts verified CSBWin resume path");
+    expect_true(view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_resume_available == 1,
+                "M11 CSB entrance marks verified CSBWin Resume available");
+    expect_true(view.csbState.party_x == CSB_V1_START_PARTY_X &&
+                    view.csbState.party_y == CSB_V1_START_PARTY_Y &&
+                    view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
+                "M11 CSB entrance CSBWin validation does not apply the save before Resume");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    245,
+                    80,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 CSB entrance Resume loads the verified CSBWin path");
+    expect_true(view.csbState.party_x == 12 &&
+                view.csbState.party_y == 7 &&
+                view.csbState.party_dir == 3,
+                "M11 CSB entrance CSBWin Resume mirrors GAMEBLOCK2 party pose");
+    M11_GameView_Shutdown(&view);
+
     fill_csb_launch_spec(&spec, data_dir, csbwin_save_path);
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
@@ -1576,6 +1601,20 @@ int main(void) {
 
     expect_true(write_raw_csbgame_roster_save(roster_save_path),
                 "built raw CSBGAME roster save fixture");
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    spec.entranceResumeSavePath = roster_save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB entrance start accepts raw CSBGAME roster resume path");
+    expect_true(view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_resume_available == 1,
+                "M11 CSB entrance marks raw CSBGAME roster Resume available");
+    expect_true(view.csbState.party_x == CSB_V1_START_PARTY_X &&
+                    view.csbState.party_y == CSB_V1_START_PARTY_Y &&
+                    view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
+                "M11 CSB entrance CSBGAME validation does not apply the roster before Resume");
+    M11_GameView_Shutdown(&view);
+
     fill_csb_launch_spec(&spec, data_dir, roster_save_path);
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
