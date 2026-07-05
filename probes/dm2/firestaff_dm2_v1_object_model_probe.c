@@ -38,6 +38,49 @@ static int passed = 0;
     } \
 } while (0)
 
+static void put16le(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+}
+
+static size_t build_skproject_chain_fixture(uint8_t *buf, size_t cap) {
+    const int w = 2;
+    const int h = 2;
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + (size_t)w * 2u;
+    const size_t thing_base = sft_base + 2u;
+    const size_t raw_map_base = thing_base + 4u;
+    uint8_t *desc;
+    uint16_t door_bits;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+
+    buf[4] = 1;          /* skproject File_header.nMaps */
+    put16le(buf + 10, 1); /* File_header.cwListSize */
+    put16le(buf + 12, 1); /* nRecords[dbDoor] */
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0);
+    put16le(desc + 8, (uint16_t)(((w - 1) << 6) | ((h - 1) << 11)));
+
+    put16le(buf + column_base + 0, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x0000); /* ObjectID: dbDoor, index 0 */
+
+    put16le(buf + thing_base, 0xfffe); /* record w0: end marker */
+    door_bits = (uint16_t)((1u << 6) | (1u << 11) | (1u << 5) | 1u);
+    put16le(buf + thing_base + 2, door_bits);
+
+    buf[raw_map_base + 0] = 0x20; /* x=0,y=0: floor */
+    buf[raw_map_base + 1] = 0x20; /* x=0,y=1: floor */
+    buf[raw_map_base + 2] = 0x90; /* x=1,y=0: ttDoor + thing-list flag */
+    buf[raw_map_base + 3] = 0x20; /* x=1,y=1: floor */
+    return raw_map_base + 4u;
+}
+
 static const char *thing_type_name(int t) {
     switch (t) {
         case 0: return "Door";
@@ -127,6 +170,33 @@ int main(int argc, char **argv) {
     PROBE_ASSERT(dm2_v1_tile_get_door_state(0x0004) == 4, "Door state 4 = CLOSED");
     PROBE_ASSERT(dm2_v1_tile_get_door_state(0x0007) == 7, "Door state 7 wraps (max)");
     PROBE_ASSERT(dm2_v1_tile_get_door_state(0xFFFF) == 7, "Door state masked to 7");
+
+    fprintf(stderr, "\n--- Testing loader-backed object-chain loading --- \n");
+    {
+        uint8_t fixture[128];
+        DM2_ObjectModel chain_model;
+        size_t fixture_size = build_skproject_chain_fixture(
+            fixture, sizeof(fixture));
+        memset(&chain_model, 0, sizeof(chain_model));
+        PROBE_ASSERT(fixture_size > 0,
+                     "synthetic skproject object-chain fixture is complete");
+        PROBE_ASSERT(dm2_v1_object_model_load(
+                         &chain_model, fixture, (int)fixture_size, 0) == 0,
+                     "object model accepts loader-backed skproject fixture");
+        PROBE_ASSERT(chain_model.object_count == 1,
+                     "object model follows square first-thing chain");
+        if (chain_model.object_count == 1) {
+            PROBE_ASSERT(chain_model.objects[0].type == DM2_THING_DOOR,
+                         "loader-backed object is a door");
+            PROBE_ASSERT(chain_model.objects[0].x == 1 &&
+                             chain_model.objects[0].y == 0,
+                         "loader-backed object keeps tile coordinates");
+            PROBE_ASSERT(chain_model.objects[0].data[0] == 0xfe &&
+                             chain_model.objects[0].data[1] == 0xff,
+                         "loader-backed object preserves record w0 next link");
+        }
+        dm2_v1_object_model_free(&chain_model);
+    }
 
     /* ── Test object model loading (level 0 = outdoor) ── */
     fprintf(stderr, "\n--- Testing dm2_v1_object_model_load --- \n");
