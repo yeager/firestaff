@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 DM2 known-item leader-hand names: the DM2 tech/magic startup catalog now carries display names for its known item ids, and M11 uses that catalog to name carried DM2 leader-hand ObjectIDs when the handle index matches a known item. Unknown handles still use the lossless `DM2 <POOL> <INDEX>` fallback. Verification: `test_dm2_v1_m11_startup_profile_gate` proves `DM2 MISC 51` fallback stays intact while `DM2_ITEM_HEAL_POTION` renders as `HEAL POTION` through the leader-hand name accessor.
+
 - ✅ 2026-07-05 DM2 leader-hand cursor placement: M11 now stores the latest in-game pointer position, feeds pointer motion from the SDL game loop while a game view is active, and draws a carried DM2 GDAT-backed leader-hand icon at the pointer-clamped 320x200 cursor zone instead of only at the fixed fallback status zone. Keyboard/headless paths keep the existing fixed fallback when no pointer position is known. Verification: `test_dm2_v1_m11_startup_profile_gate` proves pointer motion redraw, pointer-coordinate icon placement, edge clamping, and the existing startup/resume leader-hand ObjectID route with real local DM2 data.
 
 - ✅ 2026-07-05 DM2 leader-hand startup accessors: M11 now exposes the DM2 runtime/resume leader-hand ObjectID through DM2-specific public accessors and reports whether that ObjectID has a GDAT-backed icon available from the boot-owned GRAPHICS.DAT provider, without casting it to a DM1/CSB `THING`. Verification: `test_dm2_v1_m11_startup_profile_gate` now proves direct-start ObjectID handoff, GDAT icon availability, rendered icon pixels, saved resume ObjectID exposure, and the existing no-fake-V1-icon guard.

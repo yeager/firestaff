@@ -14,16 +14,16 @@
  * Magic: flame orb, potions.
  */
 static const DM2_V1_TechMagicItem g_known_items[] = {
-    { DM2_ITEM_CROSSBOW,      DM2_ITEM_TECH,   0, 0, DM2_POWER_MANUAL,  -1 },  /* unlimited */
-    { DM2_ITEM_PISTOL,        DM2_ITEM_TECH,   1, 0, DM2_POWER_BATTERY, 10 },
-    { DM2_ITEM_RIFLE,         DM2_ITEM_TECH,   2, 0, DM2_POWER_BATTERY,  8 },
-    { DM2_ITEM_BOMB_THROW,    DM2_ITEM_TECH,   1, 0, DM2_POWER_MANUAL,   3 },
-    { DM2_ITEM_BOMB_REMOTE,   DM2_ITEM_HYBRID, 2, 1, DM2_POWER_HYBRID,   2 },
-    { DM2_ITEM_LANTERN,       DM2_ITEM_TECH,   0, 0, DM2_POWER_BATTERY, 50 },
-    { DM2_ITEM_MAGIC_BATTERY, DM2_ITEM_HYBRID, 1, 1, DM2_POWER_HYBRID,   5 },
-    { DM2_ITEM_FLAME_ORB,     DM2_ITEM_MAGIC,  0, 2, DM2_POWER_MANA,    -1 },  /* unlimited w/ mana */
-    { DM2_ITEM_HEAL_POTION,   DM2_ITEM_MAGIC,  0, 1, DM2_POWER_MANA,     1 },
-    { DM2_ITEM_MANA_POTION,   DM2_ITEM_MAGIC,  0, 2, DM2_POWER_MANA,     1 },
+    { DM2_ITEM_CROSSBOW,      "CROSSBOW",      DM2_ITEM_TECH,   0, 0, DM2_POWER_MANUAL,  -1 },  /* unlimited */
+    { DM2_ITEM_PISTOL,        "PISTOL",        DM2_ITEM_TECH,   1, 0, DM2_POWER_BATTERY, 10 },
+    { DM2_ITEM_RIFLE,         "RIFLE",         DM2_ITEM_TECH,   2, 0, DM2_POWER_BATTERY,  8 },
+    { DM2_ITEM_BOMB_THROW,    "THROW BOMB",    DM2_ITEM_TECH,   1, 0, DM2_POWER_MANUAL,   3 },
+    { DM2_ITEM_BOMB_REMOTE,   "REMOTE BOMB",   DM2_ITEM_HYBRID, 2, 1, DM2_POWER_HYBRID,   2 },
+    { DM2_ITEM_LANTERN,       "LANTERN",       DM2_ITEM_TECH,   0, 0, DM2_POWER_BATTERY, 50 },
+    { DM2_ITEM_MAGIC_BATTERY, "MAGIC BATTERY", DM2_ITEM_HYBRID, 1, 1, DM2_POWER_HYBRID,   5 },
+    { DM2_ITEM_FLAME_ORB,     "FLAME ORB",     DM2_ITEM_MAGIC,  0, 2, DM2_POWER_MANA,    -1 },  /* unlimited w/ mana */
+    { DM2_ITEM_HEAL_POTION,   "HEAL POTION",   DM2_ITEM_MAGIC,  0, 1, DM2_POWER_MANA,     1 },
+    { DM2_ITEM_MANA_POTION,   "MANA POTION",   DM2_ITEM_MAGIC,  0, 2, DM2_POWER_MANA,     1 },
 };
 
 #define DM2_KNOWN_ITEM_COUNT \
@@ -67,6 +67,14 @@ int dm2_v1_tech_magic_lookup(int item_id, DM2_V1_TechMagicItem *out) {
     return 0;
 }
 
+const char *dm2_v1_tech_magic_item_name(int item_id) {
+    DM2_V1_TechMagicItem item;
+    if (!dm2_v1_tech_magic_lookup(item_id, &item)) {
+        return NULL;
+    }
+    return item.name;
+}
+
 int dm2_v1_tech_magic_consume_charge(DM2_V1_TechMagicItem *item) {
     if (!item) return 0;
     if (item->charges == 0) return 0;       /* already empty */
@@ -97,4 +105,3 @@ const char *dm2_v1_tech_magic_source_evidence(void) {
         "DM2 feature: tech weapons need tech_level>=1, magic_items need magic_level>=1\n"
         "DM2 feature: hybrid power = tech_level*25 + magic_level*25, capped at 100\n";
 }
-
