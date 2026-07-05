@@ -119,6 +119,51 @@ static size_t build_skproject_layout_fixture(uint8_t *buf, size_t cap)
     return raw_map_base + 4u;
 }
 
+static size_t build_skproject_chained_door_fixture(uint8_t *buf, size_t cap)
+{
+    const int w = 2;
+    const int h = 2;
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + (size_t)w * 2u;
+    const size_t thing_base = sft_base + 2u;
+    const size_t door_base = thing_base;
+    const size_t text_base = door_base + 4u;
+    const size_t raw_map_base = text_base + 4u;
+    uint8_t *desc;
+    uint16_t door_bits;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+
+    buf[4] = 1; /* skproject File_header.nMaps */
+    put16le(buf + 10, 1); /* File_header.cwListSize */
+    put16le(buf + 12, 1); /* nRecords[dbDoor] */
+    put16le(buf + 16, 1); /* nRecords[dbText] */
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0);
+    put16le(desc + 8, (uint16_t)(((w - 1) << 6) | ((h - 1) << 11)));
+
+    put16le(buf + column_base + 0, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x0800); /* ObjectID: dbText, index 0 */
+
+    put16le(buf + door_base, 0xfffe);
+    door_bits = (uint16_t)((1u << 6) | (1u << 11) | (1u << 5) | 1u);
+    put16le(buf + door_base + 2, door_bits);
+
+    put16le(buf + text_base, 0x0000); /* text.next -> dbDoor index 0 */
+    put16le(buf + text_base + 2, 0x0000);
+
+    buf[raw_map_base + 0] = 0x20;
+    buf[raw_map_base + 1] = 0x20;
+    buf[raw_map_base + 2] = 0x90;
+    buf[raw_map_base + 3] = 0x20;
+    return raw_map_base + 4u;
+}
+
 static void test_first_map_metadata_and_tiles(void)
 {
     uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
@@ -229,6 +274,31 @@ static void test_skproject_layout_first_thing_and_door_record(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_chained_first_thing_finds_door_record(void)
+{
+    uint8_t dat[160];
+    DM2_V1_DungeonData dungeon;
+    size_t size = build_skproject_chained_door_fixture(dat, sizeof(dat));
+    int thing;
+
+    CHECK(size > 0, "skproject chained door fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts a skproject tile chain with text before door");
+    thing = dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0);
+    CHECK(thing == 0x0800,
+          "skproject chained tile starts with DB2 text ObjectID");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, (uint16_t)thing) == 0x0000,
+          "skproject chained tile text record links to DB0 door");
+    CHECK(dm2_v1_dungeon_find_thing_of_type(
+              &dungeon, (uint16_t)thing, 0, 8) == 0x0000,
+          "skproject chained tile search finds the door after text");
+    CHECK(dm2_v1_dungeon_find_thing_of_type(
+              &dungeon, (uint16_t)thing, 0, 1) == -1,
+          "skproject chained tile search respects the bounded step limit");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Dungeon Loader First-Map Gate ===\n\n");
@@ -237,6 +307,7 @@ int main(void)
     test_truncated_first_map_rejected();
     test_shifted_first_map_offset_rejected();
     test_skproject_layout_first_thing_and_door_record();
+    test_skproject_chained_first_thing_finds_door_record();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

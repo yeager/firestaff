@@ -144,7 +144,9 @@ static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
     const size_t column_base = header_size + map_desc_size;
     const size_t sft_base = column_base + 4u;
     const size_t thing_base = sft_base + 2u;
-    const size_t raw_map_base = thing_base + 4u;
+    const size_t door_base = thing_base;
+    const size_t text_base = door_base + 4u;
+    const size_t raw_map_base = text_base + 4u;
     uint8_t *desc;
     uint16_t door_bits;
 
@@ -153,14 +155,17 @@ static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
     buf[4] = 1;
     put16le(buf + 10, 1);
     put16le(buf + 12, 1);
+    put16le(buf + 16, 1);
     desc = buf + header_size;
     put16le(desc + 8, (uint16_t)((1u << 6) | (1u << 11)));
     put16le(buf + column_base, 0);
     put16le(buf + column_base + 2, 0);
-    put16le(buf + sft_base, 0x0000);
-    put16le(buf + thing_base, 0xfffe);
+    put16le(buf + sft_base, 0x0800);
+    put16le(buf + door_base, 0xfffe);
     door_bits = (uint16_t)((1u << 6) | (1u << 11) | (1u << 5) | 1u);
-    put16le(buf + thing_base + 2, door_bits);
+    put16le(buf + door_base + 2, door_bits);
+    put16le(buf + text_base, 0x0000);
+    put16le(buf + text_base + 2, 0x0000);
     buf[raw_map_base + 0] = 0x20;
     buf[raw_map_base + 1] = 0x20;
     buf[raw_map_base + 2] = 0x90;
