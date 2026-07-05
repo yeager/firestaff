@@ -70,6 +70,14 @@ static int write_blob(const char* path, const unsigned char* bytes, int len) {
     return 1;
 }
 
+static int append_blob(unsigned char* dst, size_t cap, size_t* pos,
+                       const void* src, size_t n) {
+    if (!dst || !pos || !src || *pos > cap || n > cap - *pos) return 0;
+    memcpy(dst + *pos, src, n);
+    *pos += n;
+    return 1;
+}
+
 static void wr16le(unsigned char* p, uint16_t v) {
     p[0] = (unsigned char)(v & 0xffu);
     p[1] = (unsigned char)((v >> 8) & 0xffu);
@@ -78,6 +86,43 @@ static void wr16le(unsigned char* p, uint16_t v) {
 static void wr32le(unsigned char* p, uint32_t v) {
     wr16le(p, (uint16_t)(v & 0xffffu));
     wr16le(p + 2, (uint16_t)((v >> 16) & 0xffffu));
+}
+
+static int write_dm2_suppress_resume_slot(const char* saveRoot,
+                                          unsigned char slot,
+                                          const char* name,
+                                          const DM2_GameStateBlock* gs,
+                                          const DM2_ChampionRecord* champ) {
+    unsigned char payload[768];
+    unsigned char encGs[DM2_GAME_STATE_BLOCK_SIZE];
+    unsigned char champMask[261];
+    unsigned char encChamp[261];
+    unsigned char sizeBytes[4];
+    size_t pos = 0u;
+    int gsN;
+    int champN;
+
+    if (!saveRoot || !gs || !champ) return 0;
+    gsN = dm2_suppress_encode_gamestate(gs, encGs, sizeof(encGs));
+    if (gsN <= 0) return 0;
+    dm2_suppress_champion_mask(champMask);
+    champN = dm2_suppress_encode_champion(champ,
+                                          champMask,
+                                          encChamp,
+                                          sizeof(encChamp));
+    if (champN <= 0) return 0;
+
+    if (!append_blob(payload, sizeof(payload), &pos, "D2RS", 4u)) return 0;
+    wr32le(sizeBytes, (uint32_t)gsN);
+    if (!append_blob(payload, sizeof(payload), &pos, sizeBytes, 4u)) return 0;
+    if (!append_blob(payload, sizeof(payload), &pos, encGs,
+                     (size_t)gsN)) return 0;
+    wr32le(sizeBytes, (uint32_t)champN);
+    if (!append_blob(payload, sizeof(payload), &pos, sizeBytes, 4u)) return 0;
+    if (!append_blob(payload, sizeof(payload), &pos, encChamp,
+                     (size_t)champN)) return 0;
+
+    return dm2_sl_save(saveRoot, slot, name, payload, pos) == 0;
 }
 
 static uint16_t rd16le(const unsigned char* p) {
@@ -691,7 +736,10 @@ int main(void) {
         char nestedDm2Saves[512];
         char nestedSavePath[512];
         const M12_SaveBrowserEntry* nested;
+        const M12_SaveBrowserEntry* nestedSuppress;
         DM2_V1_SessionState dm2Session;
+        DM2_GameStateBlock dm2SuppressState;
+        DM2_ChampionRecord dm2SuppressChampion;
 
         snprintf(nestedRoot, sizeof(nestedRoot), "%s/nested", root);
         snprintf(nestedData, sizeof(nestedData), "%s/data", nestedRoot);
@@ -722,8 +770,29 @@ int main(void) {
                                                "Nested DM2 Last",
                                                &dm2Session) == 0,
               "wrote sibling DM2 SKSave.dat fixture");
-        check(M12_SaveBrowser_Scan(&state, nestedData) == 3,
-              "scan finds sibling CSB plus DM2 slot and last-session entries");
+        memset(&dm2SuppressState, 0, sizeof(dm2SuppressState));
+        dm2SuppressState.dwGameTick = 1234u;
+        dm2SuppressState.dwRandomSeed = 0x4321u;
+        dm2SuppressState.wChampionsCount = 1u;
+        dm2SuppressState.wPlayerPosX = 17u;
+        dm2SuppressState.wPlayerPosY = 9u;
+        dm2SuppressState.wPlayerDir = 2u;
+        dm2SuppressState.wPlayerMap = 8u;
+        dm2SuppressState.wChampionLeader = 0u;
+        memset(&dm2SuppressChampion, 0, sizeof(dm2SuppressChampion));
+        memcpy(dm2SuppressChampion.first_name, "TORHAM", 6);
+        dm2SuppressChampion.absolute_direction = dm2SuppressState.wPlayerDir;
+        dm2SuppressChampion.squad_position = 0;
+        dm2SuppressChampion.cur_hp = 88u;
+        dm2SuppressChampion.max_hp = 99u;
+        check(write_dm2_suppress_resume_slot(nestedDm2Saves,
+                                             8u,
+                                             "Nested SUPPRESS",
+                                             &dm2SuppressState,
+                                             &dm2SuppressChampion),
+              "wrote sibling DM2 SUPPRESS SKSave slot fixture");
+        check(M12_SaveBrowser_Scan(&state, nestedData) == 4,
+              "scan finds sibling CSB plus DM2 session/SUPPRESS entries");
         nested = find_entry(&state, "firestaff-csb-sibling.sav");
         check(nested != NULL, "sibling CSB save entry present");
         if (nested) {
@@ -753,6 +822,21 @@ int main(void) {
                   "sibling DM2 SKSave.dat is loadable with saved level");
             check(strstr(nested->fullPath, "/saves/dm2/SKSave.dat") != NULL,
                   "sibling DM2 SKSave.dat records actual save-root path");
+        }
+        nestedSuppress = find_entry(&state, "SKSave08.dat");
+        check(nestedSuppress != NULL,
+              "sibling DM2 SUPPRESS SKSave entry present");
+        if (nestedSuppress) {
+            check(strcmp(nestedSuppress->gameId, "dm2") == 0,
+                  "sibling DM2 SUPPRESS SKSave keeps game id");
+            check(nestedSuppress->valid == 1 &&
+                      nestedSuppress->mapLevel == 8,
+                  "sibling DM2 SUPPRESS SKSave is loadable with saved level");
+            check(strstr(nestedSuppress->champions, "TORHAM") != NULL,
+                  "sibling DM2 SUPPRESS SKSave exposes champion name");
+            check(strstr(nestedSuppress->fullPath,
+                         "/saves/dm2/SKSave08.dat") != NULL,
+                  "sibling DM2 SUPPRESS SKSave records actual save-root path");
         }
     }
 
