@@ -155,6 +155,8 @@ static void populate_startup_mirror_summary(Theron_V1_StartupReceipt *receipt) {
     receipt->startup_portrait_min = portrait_min;
     receipt->startup_portrait_max = portrait_max;
     receipt->startup_class_mask = class_mask;
+    receipt->startup_fallback_label_count = THERON_STARTUP_HERO_MIRROR_COUNT;
+    receipt->startup_decoded_art_count = 0u;
 }
 
 static void populate_startup_chapter_summary(
@@ -692,6 +694,10 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->startup_portrait_max), h);
     h = fnv1a_32(&receipt->startup_class_mask,
                  sizeof(receipt->startup_class_mask), h);
+    h = fnv1a_32(&receipt->startup_fallback_label_count,
+                 sizeof(receipt->startup_fallback_label_count), h);
+    h = fnv1a_32(&receipt->startup_decoded_art_count,
+                 sizeof(receipt->startup_decoded_art_count), h);
     h = fnv1a_str(h, receipt->startup_chapter_label);
     h = fnv1a_str(h, receipt->startup_quest_summary);
     h = fnv1a_str(h, receipt->startup_next_dungeon_hint);
@@ -744,7 +750,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "initial_anchor=%d initial_bind=%d initial_bind_name=%s "
                  "initial_count=%llu initial_expected=0x%llx "
                  "mirrors=%u companions=%u portrait_range=%u..%u "
-                 "class_mask=0x%x chapter=\"%s\" "
+                 "class_mask=0x%x mirror_fallback_labels=%u "
+                 "mirror_decoded_art=%u chapter=\"%s\" "
                  "quest=\"%s\" next=\"%s\" quest_total=%u "
                  "quest_items=0x%x "
                  "boot_platform=%d boot_version=%s boot_verified=%d "
@@ -797,6 +804,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned)receipt->startup_portrait_min,
                  (unsigned)receipt->startup_portrait_max,
                  (unsigned)receipt->startup_class_mask,
+                 (unsigned)receipt->startup_fallback_label_count,
+                 (unsigned)receipt->startup_decoded_art_count,
                  receipt->startup_chapter_label[0]
                     ? receipt->startup_chapter_label : "(none)",
                  receipt->startup_quest_summary[0]

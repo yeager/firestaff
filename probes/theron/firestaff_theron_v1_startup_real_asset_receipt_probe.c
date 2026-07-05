@@ -156,6 +156,13 @@ static void check_startup_mirror_summary(const Theron_V1_StartupReceipt *r,
     snprintf(name, sizeof(name), "%s class mask covers all four classes",
              prefix);
     check(r->startup_class_mask == expected_class_mask, name);
+    snprintf(name, sizeof(name), "%s mirror art still uses fallback labels",
+             prefix);
+    check(r->startup_fallback_label_count == THERON_STARTUP_HERO_MIRROR_COUNT,
+          name);
+    snprintf(name, sizeof(name), "%s decoded mirror art count starts at zero",
+             prefix);
+    check(r->startup_decoded_art_count == 0u, name);
 }
 
 static void check_startup_chapter_placeholder(
@@ -286,6 +293,10 @@ static void check_placeholder_fields(void) {
                        "rendered line contains startup mirror count");
     check_str_contains(line, "portrait_range=1..7",
                        "rendered line contains portrait range");
+    check_str_contains(line, "mirror_fallback_labels=7",
+                       "rendered line contains fallback mirror art count");
+    check_str_contains(line, "mirror_decoded_art=0",
+                       "rendered line contains decoded mirror art count");
     check_str_contains(line, "chapter=\"Chapter ?",
                        "rendered line contains startup chapter marker");
     check_str_contains(line, "quest_total=7",

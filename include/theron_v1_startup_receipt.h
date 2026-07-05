@@ -114,9 +114,10 @@ typedef enum {
  *   - startup_mirror_*                 : public Soul Room mirror contract
  *                                        from theron_v1_startup_flow.c, so
  *                                        receipt/probe consumers can verify
- *                                        seven mirrors, portrait ordinals 1..7,
- *                                        class coverage, and the three-companion
- *                                        resurrection cap without decoding art
+     *                                        seven mirrors, portrait ordinals 1..7,
+     *                                        class coverage, fallback-vs-decoded-art
+     *                                        counts, and the three-companion
+     *                                        resurrection cap without copying art
  *   - startup_chapter_*                : public chapter/progression startup
  *                                        contract from theron_v1_chapter_marker.c,
  *                                        so receipt/probe consumers can verify
@@ -193,6 +194,8 @@ typedef struct {
     uint32_t startup_portrait_min;
     uint32_t startup_portrait_max;
     uint32_t startup_class_mask;
+    uint32_t startup_fallback_label_count;
+    uint32_t startup_decoded_art_count;
 
     /* ── startup chapter/progression summary ─────────────────── */
     char     startup_chapter_label[THERON_CHAPTER_MARKER_LABEL_MAX];
