@@ -12,6 +12,7 @@
 
 #include "m11_game_view.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_startup_flow.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -150,6 +151,18 @@ int main(void) {
                 "boot profile carries the verified path");
     expect_true(world != NULL && world->level_loaded[0][0] == 1,
                 "M11 loaded the initial Theron level");
+    expect_true(world != NULL &&
+                world->party.champion_count == 1 &&
+                strcmp(world->party.champions[0].name, "Theron") == 0,
+                "M11 direct launch enters through startup flow with Theron only");
+    expect_true(view.theronState.selected_dungeon ==
+                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                "M11 mirrors startup selected dungeon");
+    expect_true(view.theronState.companion_count == 0,
+                "M11 mirrors startup companion count");
+    expect_true(view.theronState.startup_phase ==
+                THERON_STARTUP_PHASE_IN_DUNGEON,
+                "M11 mirrors startup forcefield handoff phase");
     expect_true(view.theronState.party_x == 3 &&
                 view.theronState.party_y == 5 &&
                 view.theronState.party_dir == 0 &&
