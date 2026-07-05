@@ -45,6 +45,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "asset_find_by_hash.h"
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
@@ -377,6 +378,7 @@ typedef struct {
     const char             *save_dir;  /* resolved at init via _save_dir_x() */
     const char             *dungeon_path;
     const char             *graphics_path;
+    char                    bonus_dungeon_path[ASSET_PATH_MAX];
 
     /* ── Dungeon data (owned) ─────────────────────── */
     /* Heap-allocated dungeon loaded by csb_v1_runtime_boot().
@@ -485,6 +487,9 @@ int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
 int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
                                           int enabled);
 int csb_v1_runtime_get_load_bonus_dungeon(
+    const CSB_V1_RuntimeProfile *profile);
+int csb_v1_runtime_try_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile);
+const char *csb_v1_runtime_get_bonus_dungeon_path(
     const CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_get_champion_skill_level(
     const CSB_V1_RuntimeProfile *profile,
