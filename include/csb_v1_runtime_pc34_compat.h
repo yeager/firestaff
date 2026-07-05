@@ -730,6 +730,15 @@ int csb_v1_runtime_throw_action_hand(
     int champion_index,
     int *out_projectile_slot);
 
+/* Record the currently selected F0407 champion action in the CSB runtime party
+ * snapshot.  This is the M11 action-row bridge for actions whose exact combat
+ * effects are still bounded elsewhere; it avoids dispatching CSB actions
+ * through DM1 GameWorld attack state. */
+int csb_v1_runtime_record_champion_action(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int action_index);
+
 /* Load ReDMCSB OBJECT.C F0031 PC object names from M564_GRAPHIC_OBJECT_NAMES.
  * The PC stream terminates each name by setting bit 7 on the final byte. */
 int csb_v1_runtime_load_object_names_m564(
