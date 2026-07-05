@@ -1360,6 +1360,43 @@ static int csb_v1_runtime_sample_destination_square(
     return level;
 }
 
+static int csb_v1_runtime_current_square_is_stairs(
+    CSB_V1_RuntimeProfile *profile,
+    int *out_raw_square,
+    int *out_level)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int raw_square;
+    int square_type;
+
+    if (out_raw_square) *out_raw_square = -1;
+    if (out_level) *out_level = -1;
+    if (!profile) return 0;
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) return 0;
+    level = profile->current_level;
+    if (level < 0 || level >= dungeon->level_count) {
+        level = csb_v1_dungeon_get_current_level();
+    }
+    if (level < 0 || level >= dungeon->level_count) return 0;
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        level,
+        profile->party_x,
+        profile->party_y);
+    if (raw_square < 0) return 0;
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    if (square_type != 3) return 0;
+    if (out_raw_square) *out_raw_square = raw_square;
+    if (out_level) *out_level = level;
+    return 1;
+}
+
 static int csb_v1_runtime_decode_destination_teleporter(
     const CSB_V1_DungeonData *dungeon,
     int level,
@@ -1561,6 +1598,73 @@ static void csb_v1_runtime_apply_destination_stairs(
     result->stair_up = stair_up;
     result->old_party_level = profile->current_level;
     result->new_party_level = profile->current_level;
+    if (!csb_v1_runtime_location_after_level_change(
+            dungeon,
+            level,
+            stair_up ? -1 : 1,
+            &target_x,
+            &target_y,
+            &target_level)) {
+        return;
+    }
+
+    profile->current_level = target_level;
+    profile->party_x = target_x;
+    profile->party_y = target_y;
+    profile->party_state.PartyMapX = target_x;
+    profile->party_state.PartyMapY = target_y;
+    csb_v1_dungeon_set_current_level(target_level);
+    exit_direction = csb_v1_runtime_stairs_exit_direction(
+        dungeon,
+        target_level,
+        target_x,
+        target_y);
+    (void)csb_v1_runtime_rotate_party(profile, exit_direction);
+    result->new_party_level = target_level;
+    result->stair_transition_applied = 1;
+}
+
+static void csb_v1_runtime_take_current_stairs(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int raw_square;
+    int stair_up;
+    int target_level;
+    int target_x;
+    int target_y;
+    int exit_direction;
+
+    if (!profile || !result) return;
+    dungeon = (profile->dungeon_handle)
+        ? (const CSB_V1_DungeonData *)profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) return;
+    if (!csb_v1_runtime_current_square_is_stairs(
+            profile,
+            &raw_square,
+            &level)) {
+        return;
+    }
+
+    /* ReDMCSB: CLIKMENU.C F0365 lines 164-168 and F0366 lines 264-266
+     * route turning on stairs and moving backward on stairs to
+     * F0364_COMMAND_TakeStairs instead of applying the requested turn or
+     * one-square backward step.  F0364 lines 135-138 processes party removal
+     * from the stairs square, resolves DUNGEON.C F0154, then applies
+     * F0155/F0284 exit direction. */
+    stair_up = (raw_square & 0x04) ? 1 : 0;
+    target_x = profile->party_x;
+    target_y = profile->party_y;
+    result->movement_destination_x = profile->party_x;
+    result->movement_destination_y = profile->party_y;
+    result->movement_destination_raw_square = raw_square;
+    result->movement_destination_square_type = 3;
+    result->old_party_level = profile->current_level;
+    result->new_party_level = profile->current_level;
+    result->stair_up = stair_up;
     if (!csb_v1_runtime_location_after_level_change(
             dungeon,
             level,
@@ -6600,6 +6704,7 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
 
 static void csb_v1_runtime_trigger_floor_sensor_event(
     CSB_V1_RuntimeProfile *profile,
+    int level,
     int sensor_effect,
     int target_x,
     int target_y,
@@ -6617,10 +6722,11 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
         ? (const CSB_V1_DungeonData *)profile->dungeon_handle
         : csb_v1_dungeon_get_current();
     if (!dungeon || !dungeon->raw_data) return;
+    if (level < 0 || level >= dungeon->level_count) return;
 
     raw_square = csb_v1_dungeon_get_raw_square(
         dungeon,
-        profile->current_level,
+        level,
         target_x,
         target_y);
     if (raw_square < 0) return;
@@ -6632,7 +6738,7 @@ static void csb_v1_runtime_trigger_floor_sensor_event(
 
     memset(&event, 0, sizeof(event));
     event.map_time = DM1_MAP_TIME_MAKE(
-        profile->current_level,
+        level,
         profile->game_time);
     event.type = (uint8_t)event_type;
     event.b_mapX = (uint8_t)target_x;
@@ -7852,8 +7958,9 @@ static int csb_v1_runtime_party_has_possession_object_type(
     return 0;
 }
 
-static void csb_v1_runtime_process_party_floor_sensors_at(
+static void csb_v1_runtime_process_party_floor_sensors_at_level(
     CSB_V1_RuntimeProfile *profile,
+    int level,
     int map_x,
     int map_y,
     int add_party,
@@ -7869,11 +7976,12 @@ static void csb_v1_runtime_process_party_floor_sensors_at(
         ? (const CSB_V1_DungeonData *)profile->dungeon_handle
         : csb_v1_dungeon_get_current();
     if (!dungeon || !dungeon->raw_data) return;
+    if (level < 0 || level >= dungeon->level_count) return;
     if (map_x < 0 || map_y < 0) return;
 
     first_thing = csb_v1_dungeon_get_first_thing(
         dungeon,
-        profile->current_level,
+        level,
         map_x,
         map_y);
     if (first_thing < 0 || first_thing == 0xFFFE) return;
@@ -7939,7 +8047,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at(
             {
                 int raw_square = csb_v1_dungeon_get_raw_square(
                     dungeon,
-                    profile->current_level,
+                    level,
                     map_x,
                     map_y);
                 int square_type = (raw_square < 0) ? -1 :
@@ -7990,6 +8098,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at(
         result->sensor_last_target_cell = target_cell;
         csb_v1_runtime_trigger_floor_sensor_event(
             profile,
+            level,
             sensor_effect,
             target_x,
             target_y,
@@ -8000,19 +8109,49 @@ static void csb_v1_runtime_process_party_floor_sensors_at(
     }
 }
 
+static void csb_v1_runtime_process_party_floor_sensors_at(
+    CSB_V1_RuntimeProfile *profile,
+    int map_x,
+    int map_y,
+    int add_party,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    if (!profile) return;
+    csb_v1_runtime_process_party_floor_sensors_at_level(
+        profile,
+        profile->current_level,
+        map_x,
+        map_y,
+        add_party,
+        result);
+}
+
 static void csb_v1_runtime_apply_party_floor_sensor_consequences(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_InputCommandRuntimeResult *result)
 {
-    if (!profile || !result || !result->movement_step_applied) return;
+    if (!profile || !result) return;
+    if (!result->movement_step_applied && !result->stair_transition_applied) {
+        return;
+    }
 
     result->sensor_source_remove_checked = 1;
-    csb_v1_runtime_process_party_floor_sensors_at(
+    csb_v1_runtime_process_party_floor_sensors_at_level(
         profile,
+        result->old_party_level,
         result->old_party_x,
         result->old_party_y,
         0,
         result);
+    if (result->stair_transition_applied && result->movement_step_applied) {
+        csb_v1_runtime_process_party_floor_sensors_at_level(
+            profile,
+            result->old_party_level,
+            result->movement_destination_x,
+            result->movement_destination_y,
+            0,
+            result);
+    }
     if (result->new_party_level == result->old_party_level) {
         result->sensor_destination_add_checked = 1;
         csb_v1_runtime_process_party_floor_sensors_at(
@@ -8027,7 +8166,11 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
 static void csb_v1_runtime_mark_deferred_new_party_map_index(
     CSB_V1_InputCommandRuntimeResult *result)
 {
-    if (!result || !result->movement_step_applied) return;
+    if (!result ||
+        (!result->movement_step_applied &&
+         !result->stair_transition_applied)) {
+        return;
+    }
     if (result->new_party_level == result->old_party_level) return;
 
     /* ReDMCSB MOVESENS.C F0267 lines 830-842: when party movement ends on
@@ -11254,12 +11397,28 @@ int csb_v1_runtime_process_input_queue(
 
     switch (local_result.queue_result.command) {
     case DM1_V1_COMMAND_TURN_LEFT:
+        if (csb_v1_runtime_current_square_is_stairs(profile, NULL, NULL)) {
+            csb_v1_runtime_take_current_stairs(profile, &local_result);
+            csb_v1_runtime_mark_deferred_new_party_map_index(&local_result);
+            csb_v1_runtime_apply_party_floor_sensor_consequences(
+                profile,
+                &local_result);
+            break;
+        }
         target_dir = (profile->party_dir + 3) & 3;
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
             local_result.unsupported_runtime_command = 1;
         }
         break;
     case DM1_V1_COMMAND_TURN_RIGHT:
+        if (csb_v1_runtime_current_square_is_stairs(profile, NULL, NULL)) {
+            csb_v1_runtime_take_current_stairs(profile, &local_result);
+            csb_v1_runtime_mark_deferred_new_party_map_index(&local_result);
+            csb_v1_runtime_apply_party_floor_sensor_consequences(
+                profile,
+                &local_result);
+            break;
+        }
         target_dir = (profile->party_dir + 1) & 3;
         if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
             local_result.unsupported_runtime_command = 1;
@@ -11272,6 +11431,11 @@ int csb_v1_runtime_process_input_queue(
         {
             CSB_V1_MovementCommandStepRuntimeResultPc34Compat step_result;
             int step_status =
+                (local_result.queue_result.command ==
+                     DM1_V1_COMMAND_MOVE_BACKWARD &&
+                 csb_v1_runtime_current_square_is_stairs(profile, NULL, NULL))
+                    ? 0
+                    :
                 csb_v1_movement_command_step_runtime_apply_pc34_compat(
                     profile,
                     local_result.queue_result.command,
@@ -11281,26 +11445,40 @@ int csb_v1_runtime_process_input_queue(
             if (step_status < 0) {
                 return -1;
             }
-            local_result.unsupported_runtime_command =
-                step_result.unsupported_runtime_command;
-            local_result.movement_command_handled = step_result.command_handled;
-            local_result.movement_step_attempted = step_result.step_attempted;
-            local_result.movement_step_applied = step_result.step_applied;
-            local_result.movement_blocked_by_wall = step_result.blocked_by_wall;
-            local_result.movement_destination_x = step_result.destination_x;
-            local_result.movement_destination_y = step_result.destination_y;
-            local_result.disabled_movement_ticks_after =
-                step_result.disabled_movement_ticks_after;
-            csb_v1_runtime_sample_destination_square(profile, &local_result);
-            if (local_result.movement_blocked_by_wall) {
-                if (local_result.movement_destination_square_type == 4) {
-                    local_result.movement_blocked_by_door = 1;
-                } else if (local_result.movement_destination_square_type == 6) {
-                    local_result.movement_blocked_by_fakewall = 1;
+            if (local_result.queue_result.command ==
+                    DM1_V1_COMMAND_MOVE_BACKWARD &&
+                csb_v1_runtime_current_square_is_stairs(profile, NULL, NULL)) {
+                local_result.movement_command_handled = 1;
+                local_result.movement_step_attempted = 1;
+                local_result.disabled_movement_ticks_after = 1;
+                csb_v1_runtime_take_current_stairs(profile, &local_result);
+            } else {
+                local_result.unsupported_runtime_command =
+                    step_result.unsupported_runtime_command;
+                local_result.movement_command_handled =
+                    step_result.command_handled;
+                local_result.movement_step_attempted =
+                    step_result.step_attempted;
+                local_result.movement_step_applied = step_result.step_applied;
+                local_result.movement_blocked_by_wall =
+                    step_result.blocked_by_wall;
+                local_result.movement_destination_x =
+                    step_result.destination_x;
+                local_result.movement_destination_y =
+                    step_result.destination_y;
+                local_result.disabled_movement_ticks_after =
+                    step_result.disabled_movement_ticks_after;
+                csb_v1_runtime_sample_destination_square(profile, &local_result);
+                if (local_result.movement_blocked_by_wall) {
+                    if (local_result.movement_destination_square_type == 4) {
+                        local_result.movement_blocked_by_door = 1;
+                    } else if (local_result.movement_destination_square_type == 6) {
+                        local_result.movement_blocked_by_fakewall = 1;
+                    }
                 }
+                csb_v1_runtime_apply_destination_chain(profile, &local_result);
+                csb_v1_runtime_apply_destination_stairs(profile, &local_result);
             }
-            csb_v1_runtime_apply_destination_chain(profile, &local_result);
-            csb_v1_runtime_apply_destination_stairs(profile, &local_result);
             csb_v1_runtime_mark_deferred_new_party_map_index(&local_result);
             csb_v1_runtime_apply_party_floor_sensor_consequences(
                 profile,

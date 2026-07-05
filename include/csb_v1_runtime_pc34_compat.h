@@ -634,10 +634,10 @@ int csb_v1_runtime_get_last_timeline_dispatch(
  * CSB shares the DM1/CSB ReDMCSB command queue ids and queue mechanics.
  * This entrypoint intentionally does not claim broad movement/playability;
  * csb_v1_runtime_process_one_input_command() currently applies the
- * source-locked turn boundary and bounded one-cell movement step, but does
- * now also covers bounded movement consequences for stairs, pits,
- * teleporters, doors/fake walls, and party floor sensors. It still does not
- * claim full sensors, inventory, or action handling.
+ * source-locked turn boundary, bounded one-cell movement step, and bounded
+ * movement consequences for stairs, pits, teleporters, doors/fake walls, and
+ * party floor sensors. It still does not claim full inventory or action
+ * handling.
  * Source: ReDMCSB COMMAND.C F0380 lines 2075-2127 and 2150-2156. */
 int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
                                          int command,
@@ -645,12 +645,13 @@ int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
                                          int y);
 
 /* Process one queued CSB V1 input command.
- * TURN_LEFT/TURN_RIGHT dispatch through csb_v1_runtime_rotate_party(),
- * matching CLIKMENU.C F0365 lines 156-173 and CHAMPION.C F0284 lines
- * 117-130.  MOVE_* commands dispatch through the bounded one-cell runtime
- * movement helper with a live dungeon wall probe.  This gate still does not
- * claim full CSB movement/runtime playability: wall-click/object/group/
- * projectile sensors, inventory, and action side effects remain separate
+ * TURN_LEFT/TURN_RIGHT dispatch through csb_v1_runtime_rotate_party(), except
+ * on a current stairs square where CLIKMENU.C F0365 lines 164-168 routes them
+ * through F0364_COMMAND_TakeStairs.  MOVE_* commands dispatch through the
+ * bounded one-cell runtime movement helper with a live dungeon wall probe,
+ * except MOVE_BACKWARD on current stairs follows CLIKMENU.C F0366 lines
+ * 264-266. This gate still does not claim full CSB movement/runtime
+ * playability: inventory and action side effects remain separate
  * source-locked boundaries.
  * Returns 1 when a command was processed/dequeued, 0 when the queue was
  * empty or movement cooldown blocked dequeue, and -1 on invalid input. */
