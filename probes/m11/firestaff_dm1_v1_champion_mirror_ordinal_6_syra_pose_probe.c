@@ -12,7 +12,7 @@
  * d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85,
  * 33357 bytes) ordinal 6 (SYRA / "CHILD OF NATURE") has exactly one
  * reachable front-cell mirror pose and it is not NORTH-facing:
- *   map=0 pose=(2,4) dir=EAST front=(3,4) C127 sensor data=6
+ *   map=0 pose=(15,4) dir=EAST front=(16,4) C127 sensor data=6
  * No (1,*) NORTH pose resolves to ordinal 6 under
  * M11_GameView_GetFrontMirrorOrdinal.  We advance the slice to the
  * actual ordinal-6 pose (east-facing side-room entry) and pin the
@@ -39,7 +39,7 @@
  *     ReDMCSB REVIVE.C:704 F0282 processes the resurrect-panel click.
  *
  * Verified invariants:
- *   1. (2,4) EAST front-cell mirror ordinal == 6 (SYRA, "CHILD OF
+ *   1. (15,4) EAST front-cell mirror ordinal == 6 (SYRA, "CHILD OF
  *      NATURE" per Firestaff-local mirror catalog decoders
  *      F0660_CHAMPION_MirrorCatalogGetName_Compat and
  *      F0661_CHAMPION_MirrorCatalogGetTitle_Compat — these are
@@ -171,13 +171,13 @@ static int check_syra_pose(M11_GameViewState* game,
     int port_nonzero;
     int x, y;
 
-    printf("  TEST: hall_syra_2_4_east_ordinal_6 ... ");
+    printf("  TEST: hall_syra_15_4_east_ordinal_6 ... ");
 
     /* ReDMCSB DUNGEON.C:2573 + 2608-2612: ordinal 6 lives on C127
-     * sensor (3,4) with sensorData=6, visible wall cell = WEST of
-     * (3,4) when party faces EAST at (2,4). */
+     * sensor (16,4) with sensorData=6, visible wall cell = WEST of
+     * (16,4) when party faces EAST at (15,4). */
     game->world.party.mapIndex = 0;
-    game->world.party.mapX = 2;
+    game->world.party.mapX = 15;
     game->world.party.mapY = 4;
     game->world.party.direction = 1; /* DIR_EAST */
     game->showDebugHUD = 0;
@@ -258,10 +258,10 @@ static int check_syra_no_floating_side_walls(M11_GameViewState* game) {
     int southWarm;
     int portWarm;
 
-    printf("  TEST: hall_syra_2_4_east_no_floating_side_walls ... ");
+    printf("  TEST: hall_syra_15_4_east_no_floating_side_walls ... ");
 
     game->world.party.mapIndex = 0;
-    game->world.party.mapX = 2;
+    game->world.party.mapX = 15;
     game->world.party.mapY = 4;
     game->world.party.direction = 1; /* DIR_EAST */
     game->showDebugHUD = 0;
@@ -273,7 +273,7 @@ static int check_syra_no_floating_side_walls(M11_GameViewState* game) {
     M11_GameView_Draw(game, fb, FB_W, FB_H);
 
     /* For an EAST-facing pose, the side walls are the corridor
-     * walls (north and south of the EAST-going corridor at (2,4)).
+     * walls (north and south of the EAST-going corridor at (15,4)).
      * Sample a 64x29 viewport-local band on the left half (which is
      * where the corridor walls render, not the front D1C east wall)
      * and assert it has very few warm pixels (no floating portrait
@@ -320,7 +320,7 @@ static int check_syra_resurrect_round_trip(M11_GameViewState* game) {
     printf("  TEST: hall_syra_resurrect_round_trip ... ");
 
     game->world.party.mapIndex = 0;
-    game->world.party.mapX = 2;
+    game->world.party.mapX = 15;
     game->world.party.mapY = 4;
     game->world.party.direction = 1; /* DIR_EAST */
     game->showDebugHUD = 0;
