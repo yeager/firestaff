@@ -462,6 +462,10 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
           "party.ChampionCount is preserved through NEW_GAME handoff");
     CHECK(party.LeaderIndex == 0,
           "LeaderIndex is preserved through NEW_GAME handoff");
+    CHECK(party.ImportedFromDM1 == 1,
+          "ImportedFromDM1 is preserved through utility flow handoff");
+    CHECK(memcmp(party.Champions[0].Name, "ALPHA   ", 8u) == 0,
+          "full champion name is preserved through utility flow handoff");
 }
 
 static void test_enter_game_with_verified_profile_loads_dungeon(void)

@@ -21,6 +21,7 @@
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_game.h"
@@ -118,7 +119,8 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
                                             const char *path);
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                                  const char *path,
-                                                 int *out_count);
+                                                 int *out_count,
+                                                 int *out_utility_state);
 static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
                                             const CSB_V1_RuntimeProfile *profile);
 static void m11_award_magic_xp(M11_GameViewState* state,
@@ -3902,24 +3904,56 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
 
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                                  const char *path,
-                                                 int *out_count)
+                                                 int *out_count,
+                                                 int *out_utility_state)
 {
+    CSB_V1_UtilFlowContext flow;
     CSB_V1_PartyState party;
     int count;
 
     if (out_count) {
         *out_count = 0;
     }
+    if (out_utility_state) {
+        *out_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
+    }
     if (!profile || !path || path[0] == '\0') {
         return 0;
     }
 
-    memset(&party, 0, sizeof(party));
     /* ReDMCSB/CSBWin utility startup imports a DM1 party before the
      * CSB dungeon starts.  Keep this as a runtime-party handoff rather
-     * than a Resume save: the entrance still owns the final Enter click. */
-    count = csb_v1_character_import_dm1_save(&party, path);
-    if (count <= 0) {
+     * than a Resume save: the entrance still owns the final Enter click.
+     * Drive the CSB utility setup state machine so the runtime handoff
+     * follows the same IMPORT -> CONFIRM_IMPORT -> NEW_GAME surface used
+     * by the launcher utility path. */
+    csb_v1_util_flow_init(&flow);
+    csb_v1_util_flow_set_dm1_path(&flow, path);
+    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    csb_v1_util_flow_set_action(&flow, CSB_V1_UTIL_ACTION_IMPORT);
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_CONFIRM_IMPORT) {
+        return 0;
+    }
+    csb_v1_util_flow_confirm_import(&flow, 1);
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_NEW_GAME) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 1 ||
+        flow.state != CSB_V1_UTIL_FLOW_DONE) {
+        return 0;
+    }
+    if (out_utility_state) {
+        *out_utility_state = (int)flow.state;
+    }
+    memset(&party, 0, sizeof(party));
+    count = csb_v1_util_flow_get_party(&flow, &party);
+    if (count <= 0 || !party.ImportedFromDM1) {
         return 0;
     }
     if (csb_v1_runtime_set_party_state(profile, &party) != 0) {
@@ -10277,10 +10311,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         } else if (spec->csbImportDm1SavePath &&
                    spec->csbImportDm1SavePath[0] != '\0') {
             int imported_count = 0;
+            int utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
             if (!m11_csb_runtime_import_dm1_party_path(
                     &profile->runtime,
                     spec->csbImportDm1SavePath,
-                    &imported_count)) {
+                    &imported_count,
+                    &utility_state)) {
                 m11_set_status(state, "BOOT", "CSB IMPORT FAILED");
                 m11_log_event(state, M11_COLOR_RED,
                               "T0: CSB DM1 IMPORT FAILED: %s",
@@ -10289,6 +10325,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 free(profile);
                 return 0;
             }
+            state->csbState.startup_import_utility_state = utility_state;
         }
         state->active = 1;
         state->startedFromLauncher = 1;
@@ -10333,6 +10370,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_resume_path[0] = '\0';
         state->csbState.startup_import_available = 0;
         state->csbState.startup_import_champion_count = 0;
+        if (state->csbState.startup_import_utility_state !=
+            (int)CSB_V1_UTIL_FLOW_DONE) {
+            state->csbState.startup_import_utility_state =
+                (int)CSB_V1_UTIL_FLOW_INIT;
+        }
         state->csbState.startup_import_dm1_save_path[0] = '\0';
         if ((!spec->savePath || spec->savePath[0] == '\0') &&
             spec->csbImportDm1SavePath &&

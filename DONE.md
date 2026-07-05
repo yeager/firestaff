@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 CSB utility-flow startup import handoff: M11 CSB DM1 startup import now drives the CSB utility flow through IMPORT, CONFIRM_IMPORT, NEW_GAME, and DONE before setting the runtime party. The utility-flow context now preserves the full imported party body instead of only metadata, and M11 records DONE in startup state so the launcher-to-runtime path proves the same utility boundary as the direct CSB boot handoff. Verification: `test_csb_v1_boot_runtime_handoff` direct run passed 197 checks, `test_csb_v1_m11_startup_resume_gate` passed, and focused CTest for both gates passed locally.
+
 - ✅ 2026-07-05 CSB utility import missing-DM1 blocker: the CSB main-menu ACTION utility shortcut now gives a deterministic blocker when saves exist but none are valid DM1 import candidates. The message returns to the main menu and never arms launch/import state, while the existing DM1-import happy path still preselects a valid DM1 save and continues to confirmation. Verification: `test_m12_quick_resume_gate` direct run and focused CTest with `csb_v1_m11_startup_resume_gate` both pass locally.
 
 - ✅ 2026-07-05 CSB main-menu utility import shortcut: ACTION on the CSB card in the launcher now opens the save browser directly in DM1-import selection mode, preselects a valid DM1 save candidate when one exists, keeps normal ACCEPT/RIGHT behavior on CSB as the game-options path, and returns to the main menu from that browser instead of falling back to Settings. Verification: `test_m12_quick_resume_gate` direct run and focused CTest with `csb_v1_m11_startup_resume_gate` both pass locally.
