@@ -1245,6 +1245,9 @@ int main(void) {
     expect_true(view.csbState.startup_import_utility_state ==
                     CSB_V1_UTIL_FLOW_DONE,
                 "M11 CSB startup import completes the CSB utility flow");
+    expect_true(strstr(view.csbState.startup_import_utility_prompt,
+                       "CHAOS STRIKES BACK READY") != NULL,
+                "M11 CSB startup import exposes the final utility prompt");
     expect_true(view.world.party.championCount == 2 &&
                     memcmp(view.world.party.champions[0].name,
                            "ALPHA   ", 8u) == 0 &&
@@ -1286,6 +1289,9 @@ int main(void) {
         expect_true(view.csbState.startup_import_utility_state ==
                         CSB_V1_UTIL_FLOW_DONE,
                     "M11 CSB menu-entry launch completes the CSB utility flow");
+        expect_true(strstr(view.csbState.startup_import_utility_prompt,
+                           "CHAOS STRIKES BACK READY") != NULL,
+                    "M11 CSB menu-entry launch exposes the final utility prompt");
         expect_true(view.world.party.championCount == 2 &&
                         memcmp(view.world.party.champions[0].name,
                                "ALPHA   ", 8u) == 0 &&

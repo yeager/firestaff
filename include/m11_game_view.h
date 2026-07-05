@@ -595,6 +595,7 @@ typedef struct {
         int startup_import_champion_count;
         int startup_import_utility_state;
         char startup_import_dm1_save_path[512];
+        char startup_import_utility_prompt[192];
     } csbState;
 
     /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==
