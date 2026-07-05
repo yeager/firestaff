@@ -145,6 +145,14 @@ typedef struct {
     uint8_t  palette_shift;   /* light/color modifier */
 } DM2_Projectile;
 
+typedef int (*DM2_V1_ViewportAssetFetch)(
+    void *user,
+    int gdat_index,
+    const uint8_t **out_pixels,
+    int *out_w,
+    int *out_h,
+    int *out_stride);
+
 /* ── Viewport state ────────────────────────────────────────────── */
 typedef struct {
     /* View geometry */
@@ -179,6 +187,11 @@ typedef struct {
     /* Rendering state */
     int dirty;                 /* 1=viewport needs full redraw */
     int tick_count;           /* frame counter for weather animation */
+
+    DM2_V1_ViewportAssetFetch asset_fetch;
+    void *asset_user;
+    int asset_floor_ceiling_drawn_count;
+    int fallback_floor_ceiling_drawn_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
@@ -188,6 +201,9 @@ void dm2_v1_viewport_set_outdoor(DM2_V1_ViewportState *s, int is_outdoor);
 void dm2_v1_viewport_set_level(DM2_V1_ViewportState *s, int level);
 void dm2_v1_viewport_set_weather(DM2_V1_ViewportState *s, int weather, int rain_intensity);
 void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day);
+void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
+                                        DM2_V1_ViewportAssetFetch fetch,
+                                        void *user);
 
 /* ── Lighting helpers ─────────────────────────────────────────── */
 /* dm2_v1_viewport_object_light_level — compute object light intensity

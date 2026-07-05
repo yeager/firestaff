@@ -334,6 +334,16 @@ void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day)
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
+                                        DM2_V1_ViewportAssetFetch fetch,
+                                        void *user)
+{
+    if (!s) return;
+    s->asset_fetch = fetch;
+    s->asset_user = user;
+    s->dirty = 1;
+}
+
 /* ── Wall frame lookup ────────────────────────────────────────────── */
 
 const DM2_WallFrame *dm2_v1_get_wall_frame(int view_square)
@@ -375,6 +385,67 @@ static void __attribute__((unused)) dm2_blit_bitmap (
             }
         }
         (void)parity_flip;
+    }
+}
+
+static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
+                                       int gdat_index,
+                                       const uint8_t **out_pixels,
+                                       int *out_w,
+                                       int *out_h,
+                                       int *out_stride)
+{
+    if (out_pixels) *out_pixels = NULL;
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    if (out_stride) *out_stride = 0;
+    if (s && s->asset_fetch &&
+        s->asset_fetch(s->asset_user,
+                       gdat_index,
+                       out_pixels,
+                       out_w,
+                       out_h,
+                       out_stride) == 0) {
+        return 0;
+    }
+    return dm2_v1_gfx_fetch(gdat_index, out_pixels, out_w, out_h, out_stride);
+}
+
+static void dm2_v1_blit_tiled_bitmap(uint8_t *dst,
+                                     int dst_stride,
+                                     int dst_x,
+                                     int dst_y,
+                                     int dst_w,
+                                     int dst_h,
+                                     const uint8_t *src,
+                                     int src_w,
+                                     int src_h,
+                                     int src_stride,
+                                     int transparent_color)
+{
+    int y;
+
+    if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
+        src_w <= 0 || src_h <= 0 || src_stride < src_w) {
+        return;
+    }
+    for (y = 0; y < dst_h; ++y) {
+        int sy = y % src_h;
+        int fy = dst_y + y;
+        int x;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (x = 0; x < dst_w; ++x) {
+            int sx = x % src_w;
+            int fx = dst_x + x;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
+            pixel = src[sy * src_stride + sx];
+            if (transparent_color >= 0 &&
+                pixel == (uint8_t)transparent_color) {
+                continue;
+            }
+            dst[fy * dst_stride + fx] = pixel;
+        }
     }
 }
 
@@ -504,6 +575,30 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
+    const uint8_t *ceiling_pixels = NULL;
+    const uint8_t *floor_pixels = NULL;
+    int ceiling_w = 0;
+    int ceiling_h_src = 0;
+    int ceiling_stride = 0;
+    int floor_w = 0;
+    int floor_h_src = 0;
+    int floor_stride = 0;
+    int ceiling_asset =
+        dm2_v1_fetch_viewport_asset(s,
+                                    DM2_GRAPHIC_CEILING,
+                                    &ceiling_pixels,
+                                    &ceiling_w,
+                                    &ceiling_h_src,
+                                    &ceiling_stride) == 0 &&
+        ceiling_pixels && ceiling_w > 0 && ceiling_h_src > 0;
+    int floor_asset =
+        dm2_v1_fetch_viewport_asset(s,
+                                    DM2_GRAPHIC_FLOOR,
+                                    &floor_pixels,
+                                    &floor_w,
+                                    &floor_h_src,
+                                    &floor_stride) == 0 &&
+        floor_pixels && floor_w > 0 && floor_h_src > 0;
 
     /* DM2 uses the same floor (G2108=-1) and ceiling (G2109=-2) indices as DM1.
      * Source: DUNVIEW.C:126-127 (G2108_Floor=-1, G2109_Ceiling=-2).
@@ -511,22 +606,54 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
      * Actual floor/ceiling graphics are provided by dm2_v1_gfx_fetch().
      * For now: fill with solid color (actual graphics deferred to asset system). */
 
-    /* Ceiling region: dark gray (matches DM2 darker dungeon atmosphere)
-     * Source: DUNVIEW.C:2996-3015 (PC34 ceiling blit path) */
     int ceiling_h = DM2_CEILING_H;
-    for (int y = 0; y < ceiling_h; y++) {
-        /* DM2 ceiling is slightly darker than DM1 (gray-8 vs gray-9) */
-        memset(vp + y * stride, DM2_COL_DKGRAY, (size_t)DM2_VP_WIDTH);
+    if (ceiling_asset) {
+        dm2_v1_blit_tiled_bitmap(vp,
+                                 stride,
+                                 0,
+                                 0,
+                                 DM2_VP_WIDTH,
+                                 ceiling_h,
+                                 ceiling_pixels,
+                                 ceiling_w,
+                                 ceiling_h_src,
+                                 ceiling_stride > 0 ? ceiling_stride : ceiling_w,
+                                 -1);
+        ++s->asset_floor_ceiling_drawn_count;
+    } else {
+        /* Ceiling region: dark gray (matches DM2 darker dungeon atmosphere)
+         * Source: DUNVIEW.C:2996-3015 (PC34 ceiling blit path) */
+        for (int y = 0; y < ceiling_h; y++) {
+            /* DM2 ceiling is slightly darker than DM1 (gray-8 vs gray-9) */
+            memset(vp + y * stride, DM2_COL_DKGRAY, (size_t)DM2_VP_WIDTH);
+        }
+        ++s->fallback_floor_ceiling_drawn_count;
     }
 
-    /* Floor region: brown (matches DM2 floor color)
-     * Source: DUNVIEW.C:3016-3047 (PC34 floor blit path) */
     int floor_y = DM2_FLOOR_Y;
     int floor_h = DM2_FLOOR_H;
-    for (int y = floor_y; y < floor_y + floor_h; y++) {
-        if (y < DM2_VP_HEIGHT) {
-            memset(vp + y * stride, 5, (size_t)DM2_VP_WIDTH);  /* brown */
+    if (floor_asset) {
+        dm2_v1_blit_tiled_bitmap(vp,
+                                 stride,
+                                 0,
+                                 floor_y,
+                                 DM2_VP_WIDTH,
+                                 floor_h,
+                                 floor_pixels,
+                                 floor_w,
+                                 floor_h_src,
+                                 floor_stride > 0 ? floor_stride : floor_w,
+                                 -1);
+        ++s->asset_floor_ceiling_drawn_count;
+    } else {
+        /* Floor region: brown (matches DM2 floor color)
+         * Source: DUNVIEW.C:3016-3047 (PC34 floor blit path) */
+        for (int y = floor_y; y < floor_y + floor_h; y++) {
+            if (y < DM2_VP_HEIGHT) {
+                memset(vp + y * stride, 5, (size_t)DM2_VP_WIDTH);  /* brown */
+            }
         }
+        ++s->fallback_floor_ceiling_drawn_count;
     }
 
     /* DM2 distinctive: vertical wall frame area between ceiling and floor.
@@ -1115,6 +1242,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
      * For Phase 3, always render when called (dirty flag tracking
      * is wired but full optimization deferred to Phase 4). */
     if (!s->dirty && !s->framebuffer) return;
+    s->asset_floor_ceiling_drawn_count = 0;
+    s->fallback_floor_ceiling_drawn_count = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view
