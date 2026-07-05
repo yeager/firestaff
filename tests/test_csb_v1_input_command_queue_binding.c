@@ -185,6 +185,8 @@ static void test_forward_command_applies_open_runtime_step(void)
           "runtime result exposes open-step destination");
     CHECK(result.disabled_movement_ticks_after == 1,
           "runtime result exposes movement cooldown after open step");
+    CHECK(result.deferred_new_party_map_index_valid == 0,
+          "open same-level movement does not publish NewPartyMapIndex");
     CHECK(result.runtime_state_changed == 1,
           "CSB runtime reports a coordinate state mutation");
     CHECK(profile.party_x == CSB_V1_START_PARTY_X,
@@ -531,6 +533,9 @@ static void test_forward_command_applies_real_format_stairs(void)
           "stair-down result reports downward direction");
     CHECK(result.old_party_level == 0 && result.new_party_level == 1,
           "stair-down movement changes runtime level 0 to 1");
+    CHECK(result.deferred_new_party_map_index_valid == 1 &&
+          result.deferred_new_party_map_index == 1,
+          "stair-down movement exposes deferred NewPartyMapIndex");
     CHECK(profile.current_level == 1 && csb_v1_dungeon_get_current_level() == 1,
           "stair-down movement updates profile and dungeon current level");
 
@@ -554,6 +559,9 @@ static void test_forward_command_applies_real_format_stairs(void)
           "stair-up result reports upward direction");
     CHECK(result.old_party_level == 1 && result.new_party_level == 0,
           "stair-up movement changes runtime level 1 to 0");
+    CHECK(result.deferred_new_party_map_index_valid == 1 &&
+          result.deferred_new_party_map_index == 0,
+          "stair-up movement exposes deferred NewPartyMapIndex");
     CHECK(profile.current_level == 0 && csb_v1_dungeon_get_current_level() == 0,
           "stair-up movement updates profile and dungeon current level");
 }
@@ -660,6 +668,9 @@ static void test_forward_command_handles_real_format_door_fakewall_and_pit(void)
           "open-pit movement restricts fall wounds to legs/feet");
     CHECK(result.old_party_level == 0 && result.new_party_level == 1,
           "open-pit movement changes runtime level 0 to 1");
+    CHECK(result.deferred_new_party_map_index_valid == 1 &&
+          result.deferred_new_party_map_index == 1,
+          "open-pit movement exposes deferred NewPartyMapIndex");
     CHECK(profile.current_level == 1 && csb_v1_dungeon_get_current_level() == 1,
           "open-pit movement updates profile and dungeon current level");
     CHECK(profile.party_x == 1 && profile.party_y == 0,
@@ -707,6 +718,9 @@ static void test_forward_command_applies_real_format_teleporter(void)
           "open-teleporter movement exposes relative audible rotation");
     CHECK(result.old_party_level == 0 && result.new_party_level == 1,
           "open-teleporter movement changes runtime level 0 to 1");
+    CHECK(result.deferred_new_party_map_index_valid == 1 &&
+          result.deferred_new_party_map_index == 1,
+          "open-teleporter movement exposes deferred NewPartyMapIndex");
     CHECK(profile.party_x == 2 && profile.party_y == 2,
           "open-teleporter movement updates party coordinates to target");
     CHECK(profile.current_level == 1 && csb_v1_dungeon_get_current_level() == 1,
@@ -755,6 +769,9 @@ static void test_forward_command_chains_real_format_pits(void)
           "chained-pit movement stops before the F0267 chain limit");
     CHECK(result.old_party_level == 0 && result.new_party_level == 2,
           "chained-pit movement changes runtime level 0 to 2");
+    CHECK(result.deferred_new_party_map_index_valid == 1 &&
+          result.deferred_new_party_map_index == 2,
+          "chained-pit movement exposes final deferred NewPartyMapIndex");
     CHECK(profile.current_level == 2 && csb_v1_dungeon_get_current_level() == 2,
           "chained-pit movement updates profile and dungeon to final level");
     CHECK(profile.party_x == 1 && profile.party_y == 0,
@@ -788,6 +805,9 @@ static void test_forward_command_uses_f0154_offset_maps_for_level_changes(void)
           "offset-map stair-down applies a level transition");
     CHECK(result.old_party_level == 0 && result.new_party_level == 2,
           "offset-map stair-down chooses F0154 target map over map_index+1");
+    CHECK(result.deferred_new_party_map_index_valid == 1 &&
+          result.deferred_new_party_map_index == 2,
+          "offset-map stair-down exposes deferred NewPartyMapIndex");
     CHECK(profile.current_level == 2 && csb_v1_dungeon_get_current_level() == 2,
           "offset-map stair-down updates profile and dungeon current map");
     CHECK(profile.party_x == 1 && profile.party_y == 0,
@@ -812,6 +832,9 @@ static void test_forward_command_uses_f0154_offset_maps_for_level_changes(void)
           "offset-map pit applies a fall transition");
     CHECK(result.old_party_level == 0 && result.new_party_level == 2,
           "offset-map pit chooses F0154 target map over map_index+1");
+    CHECK(result.deferred_new_party_map_index_valid == 1 &&
+          result.deferred_new_party_map_index == 2,
+          "offset-map pit exposes deferred NewPartyMapIndex");
     CHECK(profile.current_level == 2 && csb_v1_dungeon_get_current_level() == 2,
           "offset-map pit updates profile and dungeon current map");
     CHECK(profile.party_x == 1 && profile.party_y == 0,
@@ -854,6 +877,9 @@ static void test_forward_command_chains_real_format_teleporters(void)
           "chained-teleporter result preserves first teleporter metadata");
     CHECK(result.old_party_level == 0 && result.new_party_level == 2,
           "chained-teleporter movement changes runtime level 0 to 2");
+    CHECK(result.deferred_new_party_map_index_valid == 1 &&
+          result.deferred_new_party_map_index == 2,
+          "chained-teleporter movement exposes final deferred NewPartyMapIndex");
     CHECK(profile.party_x == 2 && profile.party_y == 2,
           "chained-teleporter movement reaches final target coordinates");
     CHECK(profile.current_level == 2 && csb_v1_dungeon_get_current_level() == 2,

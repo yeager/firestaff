@@ -6644,6 +6644,22 @@ static void csb_v1_runtime_apply_party_floor_sensor_consequences(
     }
 }
 
+static void csb_v1_runtime_mark_deferred_new_party_map_index(
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    if (!result || !result->movement_step_applied) return;
+    if (result->new_party_level == result->old_party_level) return;
+
+    /* ReDMCSB MOVESENS.C F0267 lines 830-842: when party movement ends on
+     * another map, the source engine does not run destination party sensors
+     * immediately; it publishes G0327_i_NewPartyMapIndex for the outer game
+     * loop/map handoff. Firestaff's bounded CSB runtime already updates the
+     * active map directly, but it also exposes the source handoff signal so
+     * M11/startup callers can observe the same boundary explicitly. */
+    result->deferred_new_party_map_index_valid = 1;
+    result->deferred_new_party_map_index = result->new_party_level;
+}
+
 static void csb_v1_runtime_trigger_remote_sensor_event(
     CSB_V1_RuntimeProfile *profile,
     int level,
@@ -9873,6 +9889,7 @@ int csb_v1_runtime_process_input_queue(
             }
             csb_v1_runtime_apply_destination_chain(profile, &local_result);
             csb_v1_runtime_apply_destination_stairs(profile, &local_result);
+            csb_v1_runtime_mark_deferred_new_party_map_index(&local_result);
             csb_v1_runtime_apply_party_floor_sensor_consequences(
                 profile,
                 &local_result);
