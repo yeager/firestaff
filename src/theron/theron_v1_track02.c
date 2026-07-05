@@ -313,6 +313,85 @@ Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data_range(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t raw_offset,
+    size_t byte_count,
+    uint8_t *out_bytes,
+    size_t out_bytes_capacity,
+    size_t *out_user_data_offset) {
+
+    size_t copied = 0u;
+    size_t first_user_offset = 0u;
+    Theron_Track02SignalStatus status;
+
+    if (out_user_data_offset) {
+        *out_user_data_offset = 0u;
+    }
+    if (!track02_data || !out_bytes || !out_user_data_offset ||
+        byte_count == 0u || out_bytes_capacity < byte_count) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    if (raw_offset >= track02_size || byte_count > track02_size - raw_offset) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    status = theron_v1_track02_raw_offset_to_user_offset(raw_offset,
+                                                         track02_size,
+                                                         md5_hex,
+                                                         &first_user_offset);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+
+    while (copied < byte_count) {
+        size_t sector = raw_offset / TQR_RAW_SECTOR_BYTES;
+        size_t within = raw_offset % TQR_RAW_SECTOR_BYTES;
+        size_t sector_user_end =
+            TQR_RAW_SECTOR_USER_DATA_OFFSET + TQR_RAW_SECTOR_USER_DATA_BYTES;
+        size_t chunk;
+        size_t user_offset = 0u;
+
+        status = theron_v1_track02_raw_offset_to_user_offset(raw_offset,
+                                                             track02_size,
+                                                             md5_hex,
+                                                             &user_offset);
+        if (status != THERON_TRACK02_SIGNAL_OK) {
+            return status;
+        }
+        if (user_offset != first_user_offset + copied) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        if (within < TQR_RAW_SECTOR_USER_DATA_OFFSET ||
+            within >= sector_user_end) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+
+        chunk = sector_user_end - within;
+        if (chunk > byte_count - copied) {
+            chunk = byte_count - copied;
+        }
+        if (raw_offset > track02_size || chunk > track02_size - raw_offset) {
+            return THERON_TRACK02_SIGNAL_BAD_INPUT;
+        }
+
+        memcpy(out_bytes + copied, track02_data + raw_offset, chunk);
+        copied += chunk;
+        if (copied < byte_count) {
+            raw_offset = (sector + 1u) * TQR_RAW_SECTOR_BYTES +
+                         TQR_RAW_SECTOR_USER_DATA_OFFSET;
+            if (raw_offset >= track02_size) {
+                return THERON_TRACK02_SIGNAL_BAD_INPUT;
+            }
+        }
+    }
+
+    *out_user_data_offset = first_user_offset;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 static int range_is_all_zero(const uint8_t *data, size_t size) {
     size_t i;
     for (i = 0; i < size; ++i) {
@@ -1404,8 +1483,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_copy_initial_level_user_data_
 
     Theron_Track02InitialCandidateBinding binding;
     Theron_Track02LevelHandoffStatus status;
-    size_t raw_offset;
-    size_t copied = 0u;
+    size_t user_data_offset = 0u;
 
     if (out_byte_count) {
         *out_byte_count = 0u;
@@ -1434,40 +1512,21 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_copy_initial_level_user_data_
         return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
     }
 
-    raw_offset = binding.candidate.absolute_offset;
-    while (copied < binding.candidate.byte_count) {
-        size_t sector = raw_offset / TQR_RAW_SECTOR_BYTES;
-        size_t within = raw_offset % TQR_RAW_SECTOR_BYTES;
-        size_t sector_user_end =
-            TQR_RAW_SECTOR_USER_DATA_OFFSET + TQR_RAW_SECTOR_USER_DATA_BYTES;
-        size_t chunk;
-        size_t user_offset = 0u;
-
-        if (within < TQR_RAW_SECTOR_USER_DATA_OFFSET ||
-            within >= sector_user_end ||
-            theron_v1_track02_raw_offset_to_user_offset(raw_offset,
-                                                        track02_size,
-                                                        md5_hex,
-                                                        &user_offset) !=
-                THERON_TRACK02_SIGNAL_OK ||
-            user_offset != binding.candidate.user_data_offset + copied) {
+    if (theron_v1_track02_copy_raw_user_data_range(
+            track02_data,
+            track02_size,
+            md5_hex,
+            binding.candidate.absolute_offset,
+            binding.candidate.byte_count,
+            out_bytes,
+            out_bytes_capacity,
+            &user_data_offset) != THERON_TRACK02_SIGNAL_OK ||
+        user_data_offset != binding.candidate.user_data_offset) {
             return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
-        }
-
-        chunk = sector_user_end - within;
-        if (chunk > binding.candidate.byte_count - copied) {
-            chunk = binding.candidate.byte_count - copied;
-        }
-        if (raw_offset > track02_size || chunk > track02_size - raw_offset) {
-            return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
-        }
-        memcpy(out_bytes + copied, track02_data + raw_offset, chunk);
-        copied += chunk;
-        raw_offset = sector * TQR_RAW_SECTOR_BYTES + within + chunk;
     }
 
     *out_byte_count = binding.candidate.byte_count;
-    *out_user_data_offset = binding.candidate.user_data_offset;
+    *out_user_data_offset = user_data_offset;
     return THERON_TRACK02_LEVEL_HANDOFF_OK;
 }
 
