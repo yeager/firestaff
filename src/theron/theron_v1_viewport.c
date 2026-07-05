@@ -198,6 +198,92 @@ static const int g_tile_table[16][TQR_VP_DEPTH][2] = {
     },
 };
 
+/* -- Small fallback UI font ----------------------------------------- */
+
+static uint8_t tqr_ui_glyph_row(char ch, int row) {
+    static const uint8_t letters[26][5] = {
+        {0x02, 0x05, 0x07, 0x05, 0x05}, /* A */
+        {0x06, 0x05, 0x06, 0x05, 0x06}, /* B */
+        {0x03, 0x04, 0x04, 0x04, 0x03}, /* C */
+        {0x06, 0x05, 0x05, 0x05, 0x06}, /* D */
+        {0x07, 0x04, 0x06, 0x04, 0x07}, /* E */
+        {0x07, 0x04, 0x06, 0x04, 0x04}, /* F */
+        {0x03, 0x04, 0x05, 0x05, 0x03}, /* G */
+        {0x05, 0x05, 0x07, 0x05, 0x05}, /* H */
+        {0x07, 0x02, 0x02, 0x02, 0x07}, /* I */
+        {0x01, 0x01, 0x01, 0x05, 0x02}, /* J */
+        {0x05, 0x05, 0x06, 0x05, 0x05}, /* K */
+        {0x04, 0x04, 0x04, 0x04, 0x07}, /* L */
+        {0x05, 0x07, 0x07, 0x05, 0x05}, /* M */
+        {0x05, 0x07, 0x07, 0x07, 0x05}, /* N */
+        {0x02, 0x05, 0x05, 0x05, 0x02}, /* O */
+        {0x06, 0x05, 0x06, 0x04, 0x04}, /* P */
+        {0x02, 0x05, 0x05, 0x07, 0x03}, /* Q */
+        {0x06, 0x05, 0x06, 0x05, 0x05}, /* R */
+        {0x03, 0x04, 0x02, 0x01, 0x06}, /* S */
+        {0x07, 0x02, 0x02, 0x02, 0x02}, /* T */
+        {0x05, 0x05, 0x05, 0x05, 0x07}, /* U */
+        {0x05, 0x05, 0x05, 0x05, 0x02}, /* V */
+        {0x05, 0x05, 0x07, 0x07, 0x05}, /* W */
+        {0x05, 0x05, 0x02, 0x05, 0x05}, /* X */
+        {0x05, 0x05, 0x02, 0x02, 0x02}, /* Y */
+        {0x07, 0x01, 0x02, 0x04, 0x07}, /* Z */
+    };
+    static const uint8_t digits[10][5] = {
+        {0x07, 0x05, 0x05, 0x05, 0x07}, /* 0 */
+        {0x02, 0x06, 0x02, 0x02, 0x07}, /* 1 */
+        {0x07, 0x01, 0x07, 0x04, 0x07}, /* 2 */
+        {0x07, 0x01, 0x03, 0x01, 0x07}, /* 3 */
+        {0x05, 0x05, 0x07, 0x01, 0x01}, /* 4 */
+        {0x07, 0x04, 0x07, 0x01, 0x07}, /* 5 */
+        {0x07, 0x04, 0x07, 0x05, 0x07}, /* 6 */
+        {0x07, 0x01, 0x02, 0x02, 0x02}, /* 7 */
+        {0x07, 0x05, 0x07, 0x05, 0x07}, /* 8 */
+        {0x07, 0x05, 0x07, 0x01, 0x07}, /* 9 */
+    };
+
+    if (row < 0 || row >= 5) return 0;
+    if (ch >= 'a' && ch <= 'z') ch = (char)(ch - 'a' + 'A');
+    if (ch >= 'A' && ch <= 'Z') return letters[(unsigned)(ch - 'A')][row];
+    if (ch >= '0' && ch <= '9') return digits[(unsigned)(ch - '0')][row];
+    if (ch == '-') return row == 2 ? 0x07 : 0x00;
+    if (ch == ':') return (row == 1 || row == 3) ? 0x02 : 0x00;
+    return 0;
+}
+
+static void tqr_ui_draw_char(TQR_PlanarFramebuffer *fb,
+                             int x, int y,
+                             char ch,
+                             uint8_t color) {
+    if (!fb || !fb->data) return;
+    for (int row = 0; row < 5; row++) {
+        uint8_t bits = tqr_ui_glyph_row(ch, row);
+        for (int col = 0; col < 3; col++) {
+            if ((bits & (uint8_t)(1u << (2 - col))) == 0) continue;
+            int px = x + col;
+            int py = y + row;
+            if (px >= 0 && px < fb->w && py >= 0 && py < fb->h) {
+                fb->data[py * fb->stride + px] = color;
+            }
+        }
+    }
+}
+
+static void tqr_ui_draw_text(TQR_PlanarFramebuffer *fb,
+                             int x, int y,
+                             const char *text,
+                             int max_chars,
+                             uint8_t color) {
+    if (!fb || !text || max_chars <= 0) return;
+    int dx = x;
+    for (int i = 0; text[i] != '\0' && i < max_chars; i++) {
+        if (text[i] != ' ') {
+            tqr_ui_draw_char(fb, dx, y, text[i], color);
+        }
+        dx += 4;
+    }
+}
+
 /* ── Tile blt helpers ─────────────────────────────────────────────── */
 /*
  * Blt a decoded 8×8 tile row into the planar framebuffer.
@@ -506,7 +592,7 @@ void theron_vp_draw_bar(TQR_PlanarFramebuffer *fb,
 }
 
 /* Get dungeon display name */
-static __attribute__((unused)) const char *theron_dungeon_name(int dungeon_id) {
+static const char *theron_dungeon_name(int dungeon_id) {
     static const char *names[THERON_DUNGEON_COUNT + 1] = {
         [1] = "Hall of Records",
         [2] = "Catacombs",
@@ -528,7 +614,6 @@ static void render_topbar(TQR_PlanarFramebuffer *fb,
     /* Top bar: y=0..TQR_TOPBAR_H within the planar fb (after y_margin) */
     int y = y_offset;
     uint8_t dark_gray = 12;   /* palette index for dark gray */
-    uint8_t light_gray = 2;   /* palette index for light gray */
 
     /* Background */
     for (int row = 0; row < TQR_TOPBAR_H; row++) {
@@ -538,25 +623,16 @@ static void render_topbar(TQR_PlanarFramebuffer *fb,
         }
     }
 
-    /* Dungeon name text: rendered as raw pixel dump using font tiles.
-     * Phase 5: full font rendering.  For Phase 4, we draw a simple
-     * bar indicator showing dungeon number. */
     int dungeon_id = world->current_dungeon;
     int quest_items = world->quest_items_in_dungeon;
+    char right[16];
 
-    /* Simple pixel indicator: draw colored squares representing dungeon/quest */
-    int x = 8;
-    /* Dungeon ID as colored pixel block */
-    for (int i = 0; i < dungeon_id && x + 4 < fb->w; i++, x += 6) {
-        for (int row = 4; row < 12 && y + row < y + TQR_TOPBAR_H; row++) {
-            uint8_t *row_ptr = fb->data + (y + row) * fb->stride;
-            for (int col = 0; col < 4; col++) {
-                row_ptr[x + col] = (uint8_t)(10 + (i % 4));  /* tan/skin color */
-            }
-        }
-    }
-    (void)quest_items;
-    (void)light_gray;
+    /* Source: THQUEST.ASM T600 UI overlay zones. Until Track 02 font tiles
+     * are decoded for V1 chrome, this fallback draws readable indexed glyphs
+     * instead of the earlier anonymous block indicators. */
+    tqr_ui_draw_text(fb, 8, y + 5, theron_dungeon_name(dungeon_id), 28, 15);
+    snprintf(right, sizeof(right), "Q:%d", quest_items);
+    tqr_ui_draw_text(fb, fb->w - 32, y + 5, right, 4, 10);
 }
 
 /* Render the right panel: Theron stats + compass */
@@ -689,19 +765,13 @@ void theron_vp_draw_champion_slot(TQR_PlanarFramebuffer *fb,
         }
     }
 
-    /* Name: simple text bar (Phase 5: font tiles) */
+    /* Name: readable fallback glyphs until Track 02 UI font tiles are wired. */
     int name_x = x + 24;
     int name_y = y + 6;
-    /* Draw name as colored bar (placeholder) */
     {
         char name_buf[16];
         champ_slot_name(name_buf, sizeof(name_buf), champion);
-        (void)name_buf;
-        /* For Phase 4: draw a colored name bar */
-        for (int c2 = 0; c2 < 50 && name_x + c2 < fb->w; c2++) {
-            uint8_t *row_ptr = fb->data + (name_y) * fb->stride;
-            row_ptr[name_x + c2] = name_color;
-        }
+        tqr_ui_draw_text(fb, name_x, name_y, name_buf, 12, name_color);
     }
 
     /* HP bar */

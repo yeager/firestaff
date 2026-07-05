@@ -348,6 +348,14 @@ static int test_vp_render_ui_zones(void) {
         }
     }
     ASSERT(topbar_ok, "TQR_UI_TOPBAR should fill top 24 rows");
+    int topbar_text_pixels = 0;
+    for (int y = 21; y < 26; y++) {
+        for (int x = 8; x < 140; x++) {
+            if (vp.fb.data[y * vp.fb.stride + x] == 15) topbar_text_pixels++;
+        }
+    }
+    ASSERT(topbar_text_pixels >= 12,
+           "TQR_UI_TOPBAR should render readable dungeon-name glyph pixels");
 
     /* RIGHT_PANEL zone: x = 256-96=160..255, y = 16..176 */
     theron_vp_clear(&vp, 0);
@@ -668,6 +676,23 @@ static int test_vp_draw_champion_slot(void) {
         }
     }
     ASSERT(slot_has_data, "Live champion slot should have non-zero pixels");
+    int name_glyph_pixels = 0;
+    int solid_placeholder_row = 1;
+    for (int y = 190; y < 195; y++) {
+        for (int x = 24; x < 74; x++) {
+            if (fb.data[y * fb.stride + x] == 15) name_glyph_pixels++;
+        }
+    }
+    for (int x = 24; x < 74; x++) {
+        if (fb.data[190 * fb.stride + x] != 15) {
+            solid_placeholder_row = 0;
+            break;
+        }
+    }
+    ASSERT(name_glyph_pixels >= 18,
+           "Live champion slot should render champion-name glyph pixels");
+    ASSERT(!solid_placeholder_row,
+           "Live champion slot name should not be the old solid placeholder bar");
 
     /* Dead champion — X mark */
     memset(fb.data, 0, 320 * 240);
