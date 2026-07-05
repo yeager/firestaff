@@ -730,6 +730,15 @@ int csb_v1_runtime_throw_action_hand(
     int champion_index,
     int *out_projectile_slot);
 
+/* Bounded champion ready-hand SHOOT boundary for M11 CSB playability.
+ * Resolves action-hand bow/sling and ready-hand ammunition from the CSB
+ * dungeon object records, removes the ready-hand object on success, and
+ * schedules a champion-owned kinetic projectile in the CSB runtime. */
+int csb_v1_runtime_shoot_ready_hand(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int *out_projectile_slot);
+
 /* Create a champion-owned projectile from CSB runtime party pose/champion cell.
  * This is the CSB counterpart to the shared F0810 projectile create path used
  * by M11 action rows, without allocating into DM1 GameWorld.projectiles. */
