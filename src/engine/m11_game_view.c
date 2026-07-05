@@ -104,6 +104,164 @@ static void m11_award_magic_xp(M11_GameViewState* state,
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
 
+static unsigned short m11_csb_clamp_u16(int value)
+{
+    if (value <= 0) return 0u;
+    if (value > 65535) return 65535u;
+    return (unsigned short)value;
+}
+
+static void m11_csb_pack_text(unsigned char *dst, int dst_len,
+                              const char *src, int src_len)
+{
+    int i;
+    if (!dst || dst_len <= 0) {
+        return;
+    }
+    for (i = 0; i < dst_len; ++i) {
+        dst[i] = ' ';
+    }
+    if (!src || src_len <= 0) {
+        return;
+    }
+    for (i = 0; i < dst_len && i < src_len && src[i] != '\0'; ++i) {
+        unsigned char ch = (unsigned char)src[i];
+        dst[i] = (ch >= 0x20u && ch <= 0x7eu) ? ch : ' ';
+    }
+}
+
+static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
+                              int current,
+                              int maximum)
+{
+    unsigned short max_value = m11_csb_clamp_u16(maximum);
+    unsigned int shifted;
+    if (!dst) return;
+    if (max_value == 0u) {
+        max_value = m11_csb_clamp_u16(current);
+    }
+    dst->current = m11_csb_clamp_u16(current);
+    dst->maximum = max_value;
+    shifted = (unsigned int)max_value << 1;
+    dst->shifted = (unsigned short)(shifted > 65535u ? 65535u : shifted);
+}
+
+static int m11_csb_mapped_inventory_slot(int csb_slot)
+{
+    if (csb_slot == CSB_V1_SLOT_READY_HAND) return CHAMPION_SLOT_HAND_LEFT;
+    if (csb_slot == CSB_V1_SLOT_ACTION_HAND) return CHAMPION_SLOT_ACTION_HAND;
+    if (csb_slot >= CSB_V1_SLOT_BELT_1 && csb_slot <= CSB_V1_SLOT_BELT_4) {
+        return CHAMPION_SLOT_POUCH_1 + (csb_slot - CSB_V1_SLOT_BELT_1);
+    }
+    if (csb_slot >= CSB_V1_SLOT_PACK_1 && csb_slot <= CSB_V1_SLOT_PACK_8) {
+        return CHAMPION_SLOT_BACKPACK_1 + (csb_slot - CSB_V1_SLOT_PACK_1);
+    }
+    if (csb_slot >= CSB_V1_SLOT_PACK_9 && csb_slot <= CSB_V1_SLOT_PACK_12) {
+        return CHAMPION_SLOT_BACKPACK_9 + (csb_slot - CSB_V1_SLOT_PACK_9);
+    }
+    return -1;
+}
+
+static void m11_sync_csb_party_from_runtime(M11_GameViewState *state,
+                                            const CSB_V1_RuntimeProfile *runtime)
+{
+    const CSB_V1_PartyState *src_party;
+    int count;
+    int leader;
+    int i;
+
+    if (!state || !runtime) {
+        return;
+    }
+
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&state->world.party.champions[i]);
+    }
+    state->world.party.championCount = 0;
+    state->world.party.mapIndex = runtime->current_level;
+    state->world.party.mapX = runtime->party_x;
+    state->world.party.mapY = runtime->party_y;
+    state->world.party.direction = runtime->party_dir & 3;
+    state->world.party.activeChampionIndex = -1;
+
+    if (!runtime->party_state_valid) {
+        return;
+    }
+
+    src_party = &runtime->party_state;
+    count = src_party->ChampionCount;
+    if (count < 0) count = 0;
+    if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
+    state->world.party.championCount = count;
+
+    leader = runtime->leader_index;
+    if (leader < 0 || leader >= count) {
+        leader = src_party->LeaderIndex;
+    }
+    if (leader < 0 || leader >= count) {
+        leader = (count > 0) ? 0 : -1;
+    }
+    state->world.party.activeChampionIndex = leader;
+
+    for (i = 0; i < count; ++i) {
+        const CSB_V1_Champion *src = &src_party->Champions[i];
+        struct ChampionState_Compat *dst = &state->world.party.champions[i];
+        int attr;
+        int skill;
+        int csb_slot;
+
+        F0600_CHAMPION_InitEmpty_Compat(dst);
+        dst->present = 1;
+        dst->portraitIndex = i;
+        m11_csb_pack_text(dst->name,
+                          CHAMPION_NAME_LENGTH,
+                          src->Name,
+                          CSB_V1_MAX_NAME_LEN);
+        m11_csb_pack_text(dst->title,
+                          CHAMPION_TITLE_LENGTH,
+                          src->Title,
+                          CSB_V1_MAX_TITLE_LEN);
+        m11_csb_copy_stat(&dst->hp, src->CurrentHealth, src->MaximumHealth);
+        m11_csb_copy_stat(&dst->stamina,
+                          src->CurrentStamina,
+                          src->MaximumStamina);
+        m11_csb_copy_stat(&dst->mana, src->CurrentMana, src->MaximumMana);
+        for (attr = 0; attr < CHAMPION_ATTR_COUNT &&
+                       attr < CSB_V1_STAT_COUNT; ++attr) {
+            dst->attributes[attr] =
+                m11_csb_clamp_u16((int)src->Statistics[attr][CSB_V1_STAT_CUR]);
+            dst->attributeMaximums[attr] =
+                m11_csb_clamp_u16((int)src->Statistics[attr][CSB_V1_STAT_MAX]);
+        }
+        for (skill = 0; skill < CHAMPION_SKILL_COUNT &&
+                        skill < CSB_V1_SKILL_COUNT; ++skill) {
+            dst->skillLevels[skill] = src->Skills[skill];
+        }
+        /* ReDMCSB: DEFS.H C00_SLOT_READY_HAND/C01_SLOT_ACTION_HAND and
+         * PANEL.C F0354 status boxes read champion slots by semantic slot, not
+         * by Firestaff's unified DM1 body-slot enum.  Only the storage slots
+         * with a clear M11 equivalent are mirrored here; CSB chest slots stay
+         * runtime-owned until the chest panel has a source-locked CSB bridge. */
+        for (csb_slot = 0; csb_slot < CSB_V1_SLOT_COUNT; ++csb_slot) {
+            int dst_slot = m11_csb_mapped_inventory_slot(csb_slot);
+            if (dst_slot >= 0 && dst_slot < CHAMPION_SLOT_COUNT) {
+                dst->inventory[dst_slot] = src->Slots[csb_slot];
+            }
+        }
+        dst->load = src->Load;
+        dst->maxLoad = 0u;
+        dst->cell = (unsigned char)(src->Cell & 3u);
+        dst->direction = (unsigned char)(src->Direction & 3u);
+        dst->wounds = src->Wounds;
+        dst->poisonDose = src->PoisonDose;
+        dst->food = src->Food;
+        dst->water = src->Water;
+        dst->actionDefense = 0;
+        dst->actionIndex = src->ActionIndex;
+        dst->portraitBitmapValid = 0;
+    }
+}
+
 static int m11_csb_build_viewport_grid(uint8_t grid[32 * 32])
 {
     const CSB_V1_DungeonData *dungeon = csb_v1_dungeon_get_current();
@@ -241,6 +399,7 @@ static void m11_sync_csb_state_from_profile(M11_GameViewState *state,
     state->csbState.party_y = profile->runtime.party_y;
     state->csbState.party_dir = profile->runtime.party_dir;
     state->csbState.tick_count = (int)profile->runtime.tick_count;
+    m11_sync_csb_party_from_runtime(state, &profile->runtime);
 }
 
 static void m11_theron_render_v2_hud(const M11_GameViewState* state,

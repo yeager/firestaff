@@ -557,8 +557,19 @@ static int build_runtime_resume_save(const char* data_dir,
     boot.runtime.party_state.Champions[1].Direction = boot.runtime.party_dir;
     boot.runtime.party_state.Champions[0].CurrentHealth = 100;
     boot.runtime.party_state.Champions[0].MaximumHealth = 100;
+    boot.runtime.party_state.Champions[0].CurrentStamina = 80;
+    boot.runtime.party_state.Champions[0].MaximumStamina = 90;
+    boot.runtime.party_state.Champions[0].CurrentMana = 12;
+    boot.runtime.party_state.Champions[0].MaximumMana = 20;
+    boot.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_STR]
+                                                [CSB_V1_STAT_CUR] = 42;
+    boot.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_STR]
+                                                [CSB_V1_STAT_MAX] = 48;
+    boot.runtime.party_state.Champions[0].Skills[0] = 3;
     boot.runtime.party_state.Champions[1].CurrentHealth = 100;
     boot.runtime.party_state.Champions[1].MaximumHealth = 100;
+    boot.runtime.party_state.Champions[1].CurrentStamina = 70;
+    boot.runtime.party_state.Champions[1].MaximumStamina = 75;
     boot.runtime.party_state_valid = 1;
     boot.runtime.champion_count = boot.runtime.party_state.ChampionCount;
 
@@ -756,6 +767,31 @@ int main(void) {
                 "M11 CSB mirror state follows resumed current level");
     expect_true(view.csbState.tick_count == (int)expected.tick_count,
                 "M11 CSB mirror state follows resumed tick count");
+    expect_true(view.world.party.championCount ==
+                    expected.party_state.ChampionCount,
+                "M11 CSB party mirror exposes imported champion count");
+    expect_true(view.world.party.activeChampionIndex ==
+                    expected.leader_index,
+                "M11 CSB party mirror exposes runtime leader");
+    expect_true(view.world.party.mapX == expected.party_x &&
+                view.world.party.mapY == expected.party_y &&
+                view.world.party.direction == expected.party_dir,
+                "M11 CSB party mirror follows runtime map pose");
+    expect_true(view.world.party.champions[0].present == 1 &&
+                view.world.party.champions[1].present == 1,
+                "M11 CSB party mirror marks resumed champions present");
+    expect_true(memcmp(view.world.party.champions[0].name, "TESTA", 5) == 0 &&
+                memcmp(view.world.party.champions[1].name, "TESTB", 5) == 0,
+                "M11 CSB party mirror packs champion names");
+    expect_true(view.world.party.champions[0].hp.current == 100 &&
+                view.world.party.champions[0].hp.maximum == 100 &&
+                view.world.party.champions[0].stamina.current == 80 &&
+                view.world.party.champions[0].mana.maximum == 20,
+                "M11 CSB party mirror copies champion vitals");
+    expect_true(view.world.party.champions[0].attributes[0] == 42 &&
+                view.world.party.champions[0].attributeMaximums[0] == 48 &&
+                view.world.party.champions[0].skillLevels[0] == 3,
+                "M11 CSB party mirror copies stats and skills");
 
     profile = (CSB_V1_BootProfile*)view.csbBootProfile;
     if (profile) {
@@ -844,6 +880,8 @@ int main(void) {
                     profile->runtime.party_dir == target_dir &&
                     profile->runtime.party_state.PartyDirection == target_dir,
                     "M11 CSB turn-right updates mirrored and runtime party direction");
+        expect_true(view.world.party.direction == target_dir,
+                    "M11 CSB turn-right updates the M11 party mirror direction");
         expect_true(M11_GameView_HandleInput(&view,
                                              M12_MENU_INPUT_UP) ==
                         M11_GAME_INPUT_REDRAW,
@@ -853,6 +891,10 @@ int main(void) {
                     view.csbState.current_level ==
                         profile->runtime.current_level,
                     "M11 CSB movement input keeps state mirrors aligned");
+        expect_true(view.world.party.mapX == profile->runtime.party_x &&
+                    view.world.party.mapY == profile->runtime.party_y &&
+                    view.world.party.mapIndex == profile->runtime.current_level,
+                    "M11 CSB movement input keeps party mirror pose aligned");
     }
 
     expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
