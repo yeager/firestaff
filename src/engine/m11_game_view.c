@@ -2691,7 +2691,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                 m11_set_status(state, "BOOT", "CSB RESUME FAILED");
                 return M11_GAME_INPUT_REDRAW;
             }
-            m11_set_status(state, "BOOT", "CSB RESUME REQUESTED");
+            m11_set_status(state, "BOOT", "CSB RESUME UNAVAILABLE");
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS:
             state->csbState.startup_entrance_credits_active = 1;
