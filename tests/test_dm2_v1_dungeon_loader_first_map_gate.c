@@ -78,6 +78,47 @@ static size_t build_first_map_fixture(uint8_t *buf, size_t cap)
     return DM2_TEST_TILE_DATA_START + sizeof(raw_tiles);
 }
 
+static size_t build_skproject_layout_fixture(uint8_t *buf, size_t cap)
+{
+    const int w = 2;
+    const int h = 2;
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + (size_t)w * 2u;
+    const size_t thing_base = sft_base + 2u;
+    const size_t raw_map_base = thing_base + 4u;
+    uint8_t *desc;
+    uint16_t door_bits;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+
+    buf[4] = 1; /* skproject File_header.nMaps */
+    put16le(buf + 10, 1); /* File_header.cwListSize */
+    put16le(buf + 12, 1); /* nRecords[dbDoor] */
+
+    desc = buf + header_size;
+    put16le(desc + 0, 0); /* map data offset */
+    desc[6] = 0;
+    desc[7] = 0;
+    put16le(desc + 8, (uint16_t)(((w - 1) << 6) | ((h - 1) << 11)));
+
+    put16le(buf + column_base + 0, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x0000); /* ObjectID: dbDoor, index 0 */
+
+    put16le(buf + thing_base, 0xfffe); /* next link/end marker */
+    door_bits = (uint16_t)((1u << 6) | (1u << 11) | (1u << 5) | 1u);
+    put16le(buf + thing_base + 2, door_bits);
+
+    buf[raw_map_base + 0] = 0x20; /* x=0,y=0: floor */
+    buf[raw_map_base + 1] = 0x20; /* x=0,y=1: floor */
+    buf[raw_map_base + 2] = 0x90; /* x=1,y=0: ttDoor + thing-list flag */
+    buf[raw_map_base + 3] = 0x20; /* x=1,y=1: floor */
+    return raw_map_base + 4u;
+}
+
 static void test_first_map_metadata_and_tiles(void)
 {
     uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
@@ -142,6 +183,44 @@ static void test_shifted_first_map_offset_rejected(void)
           "rejected map-0 offset does not retain raw dungeon data");
 }
 
+static void test_skproject_layout_first_thing_and_door_record(void)
+{
+    uint8_t dat[128];
+    DM2_V1_DungeonData dungeon;
+    size_t size = build_skproject_layout_fixture(dat, sizeof(dat));
+    int thing;
+    int type = -1;
+    int index = -1;
+    int record_size = 0;
+    const uint8_t *record;
+
+    CHECK(size > 0, "skproject layout fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts skproject byte-square layout");
+    CHECK(dungeon.square_bytes == 1,
+          "skproject layout uses byte-sized map squares");
+    CHECK(dungeon.level_widths[0] == 2 && dungeon.level_heights[0] == 2,
+          "skproject map dimensions come from Map_definitions.w8");
+    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 1, 0) == 4,
+          "byte-square door type is read from the high three bits");
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x90,
+          "byte-square raw tile preserves the thing-list flag");
+    thing = dm2_v1_dungeon_get_first_thing(&dungeon, 0, 1, 0);
+    CHECK(thing == 0x0000,
+          "skproject first-thing lookup returns the door ObjectID");
+    record = dm2_v1_dungeon_get_thing_record(
+        &dungeon, (uint16_t)thing, &type, &index, &record_size);
+    CHECK(record != NULL && type == 0 && index == 0 && record_size == 4,
+          "door ObjectID resolves to DB0 record 0");
+    CHECK(record != NULL &&
+              (((uint16_t)record[2] | ((uint16_t)record[3] << 8)) &
+               ((1u << 6) | (1u << 11) | (1u << 5) | 1u)) ==
+                  ((1u << 6) | (1u << 11) | (1u << 5) | 1u),
+          "door record exposes button, pushed state, opening dir and type bits");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Dungeon Loader First-Map Gate ===\n\n");
@@ -149,6 +228,7 @@ int main(void)
     test_first_map_metadata_and_tiles();
     test_truncated_first_map_rejected();
     test_shifted_first_map_offset_rejected();
+    test_skproject_layout_first_thing_and_door_record();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

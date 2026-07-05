@@ -134,6 +134,8 @@ typedef struct {
     uint8_t  door_open_pct;    /* 0–100 door open percentage */
     uint8_t  door_button;      /* 0=no default button, 1=draw default button */
     uint8_t  door_button_state;/* skproject door->ButtonState(): 0=released, 1=pushed */
+    uint8_t  door_record_type; /* skproject door->DoorType() */
+    uint8_t  door_opening_dir; /* skproject door->OpeningDir() */
     int16_t  sprite_depth;    /* depth sort key */
 } DM2_ViewSquare;
 
