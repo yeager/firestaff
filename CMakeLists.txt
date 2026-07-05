@@ -650,6 +650,46 @@ set_tests_properties(theron_v1_startup_flow_probe PROPERTIES
     LABELS "tier4;theron;startup;soul-room;stage-select"
 )
 
+add_executable(firestaff_theron_v1_startup_save_resume_probe
+    probes/theron/firestaff_theron_v1_startup_save_resume_probe.c
+)
+target_include_directories(firestaff_theron_v1_startup_save_resume_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_startup_save_resume_probe
+    PRIVATE firestaff_theron firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_startup_save_resume_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_startup_save_resume_probe
+    COMMAND firestaff_theron_v1_startup_save_resume_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_startup_save_resume_probe PROPERTIES
+    LABELS "tier4;theron;startup;save;resume"
+)
+
+add_executable(test_theron_v1_startup_save_resume_pc34
+    tests/test_theron_v1_startup_save_resume_pc34.c
+)
+target_include_directories(test_theron_v1_startup_save_resume_pc34 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(test_theron_v1_startup_save_resume_pc34
+    PRIVATE firestaff_theron firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(test_theron_v1_startup_save_resume_pc34 PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_startup_save_resume_pc34
+    COMMAND test_theron_v1_startup_save_resume_pc34
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_startup_save_resume_pc34 PROPERTIES
+    LABELS "tier4;theron;startup;save;resume"
+)
+
 # Theron V1 chapter/progression startup marker probe.
 # Pass scope: theron_startup_chapter_progression_marker_gate.
 # Bounded, headless, asset-free: synthesises a boot profile + dungeon

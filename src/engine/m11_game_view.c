@@ -9719,6 +9719,8 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     int savedDebugHUD;
     TrAssetResult assetResult;
     Theron_StartupFlow startupFlow;
+    Theron_V1StartupSaveResume saveResume;
+    int saveResumeReady = 0;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
@@ -9751,6 +9753,8 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         goto fail;
     }
     theron_v1_boot_set_save_root(profile, NULL);
+    memset(&saveResume, 0, sizeof(saveResume));
+    saveResumeReady = theron_v1_boot_startup_save_resume(profile, &saveResume);
 
     assetResult = tr_asset_load(profile->graphics_path, assets);
     if (assetResult != TR_ASSET_OK) {
@@ -9784,9 +9788,25 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     startupFlow.selected_dungeon = world->progression.current_dungeon;
     m11_theron_sync_startup_state(state, &startupFlow);
     state->theronState.startup_cursor = 0;
+    state->theronState.save_resume_verdict =
+        saveResumeReady ? (int)saveResume.verdict : -1;
+    state->theronState.save_resume_claim =
+        saveResumeReady ? (int)saveResume.resume_claim : -1;
+    state->theronState.save_resume_tqsv_slots =
+        saveResumeReady ? saveResume.tqsv_valid_slots : 0;
+    state->theronState.save_resume_srm_slots =
+        saveResumeReady ? saveResume.srm_recognized_slots : 0;
     m11_set_status(state, "BOOT", "THERON STARTUP");
-    m11_set_inspect_readout(state, "STARTUP",
-                            "THERON TRACK 02 VERIFIED; CHOOSE A STAGE");
+    {
+        char inspect[256];
+        snprintf(inspect,
+                 sizeof(inspect),
+                 "THERON TRACK 02 VERIFIED; SAVE %s tqsv=%d srm=%d; CHOOSE A STAGE",
+                 saveResumeReady ? saveResume.resume_claim_name : "UNKNOWN",
+                 saveResumeReady ? saveResume.tqsv_valid_slots : 0,
+                 saveResumeReady ? saveResume.srm_recognized_slots : 0);
+        m11_set_inspect_readout(state, "STARTUP", inspect);
+    }
     m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON STARTUP READY");
     return 1;
 

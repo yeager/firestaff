@@ -497,6 +497,10 @@ typedef struct {
         int startup_cursor;
         int selected_mirrors_mask;
         int selected_mirror_order[3];
+        int save_resume_verdict;
+        int save_resume_claim;
+        int save_resume_tqsv_slots;
+        int save_resume_srm_slots;
     } theronState;
 
     /* CSB (Chaos Strikes Back) V1 runtime — active when sourceKind ==
