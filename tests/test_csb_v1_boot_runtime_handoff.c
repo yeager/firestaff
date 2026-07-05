@@ -50,6 +50,244 @@ static int failed;
     else { failed++; printf("  FAIL: %s\n", msg); } \
 } while (0)
 
+#define TEST_LZW_CLEAR_CODE 256
+#define TEST_LZW_END_CODE 257
+#define TEST_LZW_FIRST_CODE 258
+#define TEST_LZW_MAX_CODE 4096
+#define TEST_CSB_OBJECT_NAMES_INDEX 564u
+#define TEST_CSB_OBJECT_NAME_COUNT 199
+
+typedef struct {
+    uint8_t *buf;
+    size_t cap;
+    size_t bit_pos;
+} TestBitWriter;
+
+typedef struct {
+    uint8_t dict_first[TEST_LZW_MAX_CODE];
+    uint16_t dict_prefix[TEST_LZW_MAX_CODE];
+    int dict_count;
+    int code_bits;
+} TestLZW;
+
+static void write_le16(uint8_t *buf, size_t off, uint16_t value)
+{
+    buf[off] = (uint8_t)(value & 0xffu);
+    buf[off + 1u] = (uint8_t)((value >> 8) & 0xffu);
+}
+
+static void bw_init(TestBitWriter *bw)
+{
+    bw->cap = 1024u;
+    bw->buf = (uint8_t *)calloc(1u, bw->cap);
+    bw->bit_pos = 0u;
+}
+
+static int bw_grow(TestBitWriter *bw)
+{
+    size_t old_cap = bw->cap;
+    size_t new_cap = old_cap * 2u;
+    uint8_t *new_buf = (uint8_t *)realloc(bw->buf, new_cap);
+    if (!new_buf) {
+        free(bw->buf);
+        bw->buf = NULL;
+        bw->cap = 0u;
+        return 0;
+    }
+    memset(new_buf + old_cap, 0, new_cap - old_cap);
+    bw->buf = new_buf;
+    bw->cap = new_cap;
+    return 1;
+}
+
+static int bw_write_bits(TestBitWriter *bw, uint32_t value, int n_bits)
+{
+    int i;
+    for (i = 0; i < n_bits; ++i) {
+        size_t bp = bw->bit_pos++;
+        size_t byte_idx;
+        int bit_in_byte;
+        if ((bp >> 3) >= bw->cap && !bw_grow(bw)) {
+            return 0;
+        }
+        byte_idx = bp >> 3;
+        bit_in_byte = (int)(bp & 7u);
+        if (value & (1u << (uint32_t)i)) {
+            bw->buf[byte_idx] |= (uint8_t)(1u << (uint32_t)bit_in_byte);
+        }
+    }
+    return 1;
+}
+
+static void test_lzw_init(TestLZW *e)
+{
+    int i;
+    e->dict_count = TEST_LZW_FIRST_CODE;
+    e->code_bits = 9;
+    for (i = 0; i < 256; ++i) {
+        e->dict_first[i] = (uint8_t)i;
+        e->dict_prefix[i] = 0xffffu;
+    }
+}
+
+static int test_lzw_find_or_add(TestLZW *e, uint16_t prefix, uint8_t append)
+{
+    int i;
+    for (i = TEST_LZW_FIRST_CODE; i < e->dict_count; ++i) {
+        if (e->dict_prefix[i] == prefix && e->dict_first[i] == append) {
+            return i;
+        }
+    }
+    if (e->dict_count >= TEST_LZW_MAX_CODE) {
+        return -1;
+    }
+    e->dict_prefix[e->dict_count] = prefix;
+    e->dict_first[e->dict_count] = append;
+    ++e->dict_count;
+    return -1;
+}
+
+static void test_lzw_maybe_grow(TestLZW *e)
+{
+    if (e->dict_count > ((1 << e->code_bits) - 1) && e->code_bits < 12) {
+        ++e->code_bits;
+    }
+}
+
+static int test_lzw_encode(const uint8_t *input, size_t in_size,
+                           uint8_t **out_buf, size_t *out_size)
+{
+    TestBitWriter bw;
+    TestLZW e;
+    uint16_t prefix_code;
+    size_t i;
+
+    if (!input || !out_buf || !out_size || in_size == 0u) {
+        return -1;
+    }
+    *out_buf = NULL;
+    *out_size = 0u;
+    bw_init(&bw);
+    if (!bw.buf) {
+        return -1;
+    }
+    test_lzw_init(&e);
+    if (!bw_write_bits(&bw, TEST_LZW_CLEAR_CODE, e.code_bits)) {
+        free(bw.buf);
+        return -1;
+    }
+    prefix_code = input[0];
+    for (i = 1u; i < in_size; ++i) {
+        uint8_t next_byte = input[i];
+        int existing = test_lzw_find_or_add(&e, prefix_code, next_byte);
+        if (existing >= 0) {
+            prefix_code = (uint16_t)existing;
+        } else {
+            if (!bw_write_bits(&bw, prefix_code, e.code_bits)) {
+                free(bw.buf);
+                return -1;
+            }
+            test_lzw_maybe_grow(&e);
+            prefix_code = next_byte;
+        }
+    }
+    if (!bw_write_bits(&bw, prefix_code, e.code_bits) ||
+        !bw_write_bits(&bw, TEST_LZW_END_CODE, e.code_bits)) {
+        free(bw.buf);
+        return -1;
+    }
+    *out_buf = bw.buf;
+    *out_size = (bw.bit_pos + 7u) / 8u;
+    return 0;
+}
+
+static int build_m564_object_name_stream(uint8_t *buf, size_t buf_size,
+                                         size_t *out_size)
+{
+    size_t pos = 0u;
+    int i;
+    for (i = 0; i < TEST_CSB_OBJECT_NAME_COUNT; i++) {
+        char name[32];
+        size_t len;
+        size_t j;
+        snprintf(name, sizeof(name), "%c", (char)('A' + (i % 26)));
+        if (i == 0) {
+            snprintf(name, sizeof(name), "%s", "DAGGER");
+        } else if (i == 7) {
+            snprintf(name, sizeof(name), "%s", "SOURCE TORCH");
+        }
+        len = strlen(name);
+        if (len == 0u || pos + len > buf_size) {
+            return -1;
+        }
+        for (j = 0u; j < len; j++) {
+            uint8_t ch = (uint8_t)name[j];
+            if (j + 1u == len) {
+                ch |= 0x80u;
+            }
+            buf[pos++] = ch;
+        }
+    }
+    if (out_size) {
+        *out_size = pos;
+    }
+    return 0;
+}
+
+static int write_synthetic_graphics_dat_with_m564(const char *path)
+{
+    uint8_t decoded[4096];
+    size_t decoded_size = 0u;
+    uint8_t *compressed = NULL;
+    size_t compressed_size = 0u;
+    uint16_t count = (uint16_t)(TEST_CSB_OBJECT_NAMES_INDEX + 1u);
+    size_t header_size = 4u + (size_t)count * 8u;
+    uint8_t *file_bytes;
+    FILE *f;
+    size_t n;
+
+    if (build_m564_object_name_stream(decoded, sizeof(decoded),
+                                      &decoded_size) != 0 ||
+        test_lzw_encode(decoded, decoded_size, &compressed,
+                        &compressed_size) != 0 ||
+        compressed_size == 0u || compressed_size > 65535u ||
+        decoded_size > 65535u) {
+        free(compressed);
+        return -1;
+    }
+    file_bytes = (uint8_t *)calloc(1u, header_size + compressed_size);
+    if (!file_bytes) {
+        free(compressed);
+        return -1;
+    }
+    write_le16(file_bytes, 0u, 0x8001u);
+    write_le16(file_bytes, 2u, count);
+    write_le16(file_bytes, 4u + TEST_CSB_OBJECT_NAMES_INDEX * 2u,
+               (uint16_t)compressed_size);
+    write_le16(file_bytes,
+               4u + (size_t)count * 2u + TEST_CSB_OBJECT_NAMES_INDEX * 2u,
+               (uint16_t)decoded_size);
+    write_le16(file_bytes,
+               4u + (size_t)count * 4u + TEST_CSB_OBJECT_NAMES_INDEX * 4u,
+               1u);
+    write_le16(file_bytes,
+               4u + (size_t)count * 4u + TEST_CSB_OBJECT_NAMES_INDEX * 4u + 2u,
+               (uint16_t)decoded_size);
+    memcpy(file_bytes + header_size, compressed, compressed_size);
+
+    f = fopen(path, "wb");
+    if (!f) {
+        free(file_bytes);
+        free(compressed);
+        return -1;
+    }
+    n = fwrite(file_bytes, 1u, header_size + compressed_size, f);
+    fclose(f);
+    free(file_bytes);
+    free(compressed);
+    return (n == header_size + compressed_size) ? 0 : -1;
+}
+
 /* Build a minimal valid CSB V1 DUNGEON.DAT buffer. Mirrors the
  * synthetic builder in test_csb_v1_phase7_verification.c so the
  * fixture shape matches the legacy loader (square_bytes == 2,
@@ -416,6 +654,46 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CHECK(runtime_party.Champions[1].Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] == 56 &&
               runtime_party.Champions[1].Statistics[CSB_V1_STAT_WIS][CSB_V1_STAT_CUR] == 78,
           "leader switch preserves imported champion 1 STR/WIS current stats");
+
+    csb_v1_boot_cleanup(&p);
+}
+
+static void test_enter_game_loads_m564_object_names_from_graphics_dat(void)
+{
+    CSB_V1_BootProfile p;
+    char dungeon_path[ASSET_PATH_MAX];
+    char graphics_path[ASSET_PATH_MAX];
+    const char *tmp_dir = "/tmp/firestaff-csb-v1-m564-object-names";
+
+    (void)TEST_MKDIR(tmp_dir);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+    snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
+          "synthetic DUNGEON.DAT written for M564 boot handoff");
+    CHECK(write_synthetic_graphics_dat_with_m564(graphics_path) == 0,
+          "synthetic GRAPHICS.DAT written with LZW-compressed M564 object names");
+
+    memset(&p, 0, sizeof(p));
+    csb_v1_boot_profile_init(&p);
+    snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", graphics_path);
+    p.dungeon_verified = 1;
+    p.graphics_verified = 1;
+    p.assets_verified = 1;
+    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+    p.entrance_map_index = 255U;
+    p.start_map_index = 0U;
+
+    CHECK(csb_v1_boot_enter_game(&p) == 0,
+          "enter_game succeeds with a GRAPHICS.DAT M564 payload");
+    CHECK(p.runtime.object_name_table_valid == 1,
+          "runtime owns the decoded C199 M564 object-name table after boot");
+    CHECK(strcmp(p.runtime.object_names[0], "DAGGER") == 0,
+          "M564 entry 0 decodes as DAGGER");
+    CHECK(strcmp(p.runtime.object_names[7], "SOURCE TORCH") == 0,
+          "M564 entry 7 decodes as SOURCE TORCH");
 
     csb_v1_boot_cleanup(&p);
 }
@@ -817,6 +1095,7 @@ int main(void)
 {
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
     test_enter_game_with_verified_profile_loads_dungeon();
+    test_enter_game_loads_m564_object_names_from_graphics_dat();
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
@@ -832,6 +1111,8 @@ int main(void)
         puts("sourceEvidence=ReDMCSB SAVEGAME.C F0100-F0120 import state; ReDMCSB ENTRANCE.C F0806 startup flow");
         puts("ok: CSB V1 verified boot handoff preserves an imported two-champion party and supports a deterministic leader switch");
         puts("sourceEvidence=ReDMCSB LOADSAVE.C F0435 lines 2728-2734 imports party globals; CLIKCHAM.C F0368 lines 51-68; CHAMPION.C F0284 lines 117-130");
+        puts("ok: CSB V1 verified boot handoff decodes GRAPHICS.DAT M564 object names into the runtime-owned icon-indexed name table");
+        puts("sourceEvidence=ReDMCSB OBJECT.C F0031 M564_GRAPHIC_OBJECT_NAMES; OBJECT.C F0033 icon-indexed object names");
         puts("ok: CSB V1 verified boot handoff rotates an imported four-champion party through the source-locked F0284 delta-mod-4 invariant on every champion's Cell and Direction");
         puts("sourceEvidence=ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130 (MEDIA182 C source); CLIKCHAM.C F0368 line 67 (leader-switch alignment to G0308_i_PartyDirection)");
         puts("ok: CSB V2 profile labels do not alter V1 runtime handoff paths, media kind, title state, or required dungeon load");

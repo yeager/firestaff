@@ -62,6 +62,331 @@ static const char *const g_csb_boot_dungeon_hashes[] = {
  *       ReDMCSB LOADSAVE.C F0435 line 1940-1944 sets map 0 for new games. */
 static const char *g_csb_assume_last_reason = "csb_boot/assume_no_dm1_runtime: ok";
 
+#define CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX 564u
+#define CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES 65535u
+#define CSB_V1_GRAPHICS_LZW_MAX_CODE 4096
+#define CSB_V1_GRAPHICS_LZW_CLEAR_CODE 256
+#define CSB_V1_GRAPHICS_LZW_END_CODE 257
+#define CSB_V1_GRAPHICS_LZW_FIRST_CODE 258
+
+typedef struct {
+    const uint8_t *bytes;
+    size_t size;
+    size_t byte_pos;
+    uint8_t chunk[12];
+    int chunk_bit_idx;
+    int chunk_bit_count;
+    int needs_refill;
+} CSB_V1_GraphicsBitReader;
+
+static uint16_t csb_v1_graphics_read_le16(const uint8_t *bytes)
+{
+    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
+static int csb_v1_graphics_read_bits(CSB_V1_GraphicsBitReader *br,
+                                     int bit_count,
+                                     uint16_t *out_code)
+{
+    static const uint8_t lsb_masks[9] = {
+        0x00u, 0x01u, 0x03u, 0x07u, 0x0fu, 0x1fu, 0x3fu, 0x7fu, 0xffu
+    };
+    uint32_t value = 0u;
+    int bit_index;
+    int required;
+    const uint8_t *p;
+    if (!br || !out_code || bit_count <= 0 || bit_count > 12) {
+        return -1;
+    }
+    /* ReDMCSB LZW.C F0495 reads codeBitCount bytes into a chunk and
+     * extracts up to eight variable-width codes from that chunk. Width
+     * changes force a refill instead of continuing through a flat stream. */
+    if (br->needs_refill || br->chunk_bit_idx >= br->chunk_bit_count) {
+        int chunk_bytes = bit_count;
+        if (br->byte_pos + (size_t)chunk_bytes > br->size) {
+            chunk_bytes = (int)(br->size - br->byte_pos);
+        }
+        if (chunk_bytes <= 0) {
+            return -1;
+        }
+        memset(br->chunk, 0, sizeof(br->chunk));
+        memcpy(br->chunk, br->bytes + br->byte_pos, (size_t)chunk_bytes);
+        br->byte_pos += (size_t)chunk_bytes;
+        br->chunk_bit_idx = 0;
+        br->chunk_bit_count = (chunk_bytes << 3) - (bit_count - 1);
+        br->needs_refill = 0;
+    }
+    bit_index = br->chunk_bit_idx;
+    required = bit_count;
+    p = br->chunk + (bit_index >> 3);
+    bit_index &= 7;
+
+    value = (uint32_t)(*p++ >> bit_index);
+    required -= (8 - bit_index);
+    bit_index = 8 - bit_index;
+    if (required >= 8) {
+        value |= (uint32_t)(*p++) << bit_index;
+        bit_index += 8;
+        required -= 8;
+    }
+    if (required > 0) {
+        value |= (uint32_t)(*p & lsb_masks[required]) << bit_index;
+    }
+    br->chunk_bit_idx += bit_count;
+    *out_code = (uint16_t)value;
+    return 0;
+}
+
+static void csb_v1_graphics_lzw_reset(uint16_t *prefix,
+                                      uint8_t *append,
+                                      int *next_code,
+                                      int *code_bits)
+{
+    int i;
+    for (i = 0; i < 256; i++) {
+        prefix[i] = 0xffffu;
+        append[i] = (uint8_t)i;
+    }
+    *next_code = CSB_V1_GRAPHICS_LZW_FIRST_CODE;
+    *code_bits = 9;
+}
+
+static int csb_v1_graphics_lzw_emit(uint16_t code,
+                                    const uint16_t *prefix,
+                                    const uint8_t *append,
+                                    uint8_t *stack,
+                                    uint8_t *out,
+                                    size_t out_capacity,
+                                    size_t *out_pos,
+                                    uint8_t *out_first)
+{
+    int stack_len = 0;
+    uint16_t cursor = code;
+
+    while (cursor >= 256u) {
+        if (cursor >= CSB_V1_GRAPHICS_LZW_MAX_CODE ||
+            prefix[cursor] == 0xffffu ||
+            stack_len >= CSB_V1_GRAPHICS_LZW_MAX_CODE) {
+            return -1;
+        }
+        stack[stack_len++] = append[cursor];
+        cursor = prefix[cursor];
+    }
+    if (cursor >= 256u) {
+        return -1;
+    }
+    if (out_first) {
+        *out_first = (uint8_t)cursor;
+    }
+    if (*out_pos >= out_capacity) {
+        return -1;
+    }
+    out[(*out_pos)++] = (uint8_t)cursor;
+    while (stack_len > 0) {
+        if (*out_pos >= out_capacity) {
+            return -1;
+        }
+        out[(*out_pos)++] = stack[--stack_len];
+    }
+    return 0;
+}
+
+static int csb_v1_graphics_lzw_decode(const uint8_t *input,
+                                      size_t input_size,
+                                      uint8_t *out,
+                                      size_t out_capacity,
+                                      size_t *out_size)
+{
+    uint16_t prefix[CSB_V1_GRAPHICS_LZW_MAX_CODE];
+    uint8_t append[CSB_V1_GRAPHICS_LZW_MAX_CODE];
+    uint8_t stack[CSB_V1_GRAPHICS_LZW_MAX_CODE];
+    CSB_V1_GraphicsBitReader br;
+    int next_code;
+    int code_bits;
+    int old_code = -1;
+    uint8_t old_first = 0u;
+    size_t out_pos = 0u;
+
+    if (!input || !out || !out_size || input_size == 0u) {
+        return -1;
+    }
+    br.bytes = input;
+    br.size = input_size;
+    br.byte_pos = 0u;
+    br.chunk_bit_idx = 0;
+    br.chunk_bit_count = 0;
+    br.needs_refill = 1;
+    csb_v1_graphics_lzw_reset(prefix, append, &next_code, &code_bits);
+
+    for (;;) {
+        uint16_t code;
+        uint8_t first = 0u;
+        if (csb_v1_graphics_read_bits(&br, code_bits, &code) != 0) {
+            return -1;
+        }
+        if (code == CSB_V1_GRAPHICS_LZW_CLEAR_CODE) {
+            csb_v1_graphics_lzw_reset(prefix, append, &next_code, &code_bits);
+            old_code = -1;
+            continue;
+        }
+        if (code == CSB_V1_GRAPHICS_LZW_END_CODE) {
+            *out_size = out_pos;
+            return 0;
+        }
+        if (code < (uint16_t)next_code) {
+            if (csb_v1_graphics_lzw_emit(code, prefix, append, stack,
+                                         out, out_capacity, &out_pos,
+                                         &first) != 0) {
+                return -1;
+            }
+        } else if (code == (uint16_t)next_code && old_code >= 0) {
+            first = old_first;
+            if (csb_v1_graphics_lzw_emit((uint16_t)old_code, prefix, append,
+                                         stack, out, out_capacity, &out_pos,
+                                         NULL) != 0 ||
+                out_pos >= out_capacity) {
+                return -1;
+            }
+            out[out_pos++] = first;
+        } else {
+            return -1;
+        }
+
+        if (old_code >= 0 && next_code < CSB_V1_GRAPHICS_LZW_MAX_CODE) {
+            prefix[next_code] = (uint16_t)old_code;
+            append[next_code] = first;
+            next_code++;
+            if (next_code > ((1 << code_bits) - 1) && code_bits < 12) {
+                code_bits++;
+                br.needs_refill = 1;
+            }
+        }
+        old_code = (int)code;
+        old_first = first;
+    }
+}
+
+static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
+                                             size_t file_size,
+                                             uint8_t *out,
+                                             size_t out_capacity,
+                                             size_t *out_size)
+{
+    uint16_t signature;
+    uint16_t count;
+    size_t compressed_table;
+    size_t decompressed_table;
+    size_t dimensions_table;
+    size_t payload_offset;
+    size_t entry_offset;
+    size_t i;
+    uint16_t compressed_size;
+    uint16_t decompressed_size;
+    size_t decoded_size = 0u;
+
+    if (!file_bytes || !out || !out_size || file_size < 4u) {
+        return -1;
+    }
+    *out_size = 0u;
+    signature = csb_v1_graphics_read_le16(file_bytes);
+    count = csb_v1_graphics_read_le16(file_bytes + 2u);
+    if ((signature & 0x8000u) == 0u ||
+        count <= CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX) {
+        return -1;
+    }
+    compressed_table = 4u;
+    decompressed_table = compressed_table + (size_t)count * 2u;
+    dimensions_table = decompressed_table + (size_t)count * 2u;
+    payload_offset = dimensions_table + (size_t)count * 4u;
+    if (payload_offset > file_size) {
+        return -1;
+    }
+
+    entry_offset = payload_offset;
+    for (i = 0u; i < CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX; i++) {
+        entry_offset +=
+            (size_t)csb_v1_graphics_read_le16(file_bytes + compressed_table + i * 2u);
+        if (entry_offset > file_size) {
+            return -1;
+        }
+    }
+    compressed_size = csb_v1_graphics_read_le16(
+        file_bytes + compressed_table + CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX * 2u);
+    decompressed_size = csb_v1_graphics_read_le16(
+        file_bytes + decompressed_table + CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX * 2u);
+    if (compressed_size == 0u || decompressed_size == 0u ||
+        decompressed_size > out_capacity ||
+        entry_offset + (size_t)compressed_size > file_size) {
+        return -1;
+    }
+
+    if (csb_v1_graphics_lzw_decode(file_bytes + entry_offset,
+                                   (size_t)compressed_size,
+                                   out,
+                                   (size_t)decompressed_size,
+                                   &decoded_size) != 0 ||
+        decoded_size != (size_t)decompressed_size) {
+        return -1;
+    }
+    *out_size = decoded_size;
+    return 0;
+}
+
+static int csb_v1_boot_load_object_names_m564(CSB_V1_BootProfile *profile)
+{
+    FILE *file;
+    long file_len;
+    uint8_t *file_bytes = NULL;
+    uint8_t *decoded = NULL;
+    size_t read_count;
+    size_t decoded_size = 0u;
+    int ok = 0;
+
+    if (!profile || profile->graphics_path[0] == '\0') {
+        return 0;
+    }
+    file = fopen(profile->graphics_path, "rb");
+    if (!file) {
+        return 0;
+    }
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fclose(file);
+        return 0;
+    }
+    file_len = ftell(file);
+    if (file_len <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    file_bytes = (uint8_t *)malloc((size_t)file_len);
+    decoded = (uint8_t *)malloc(CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES);
+    if (!file_bytes || !decoded) {
+        free(decoded);
+        free(file_bytes);
+        fclose(file);
+        return 0;
+    }
+    read_count = fread(file_bytes, 1u, (size_t)file_len, file);
+    fclose(file);
+    if (read_count == (size_t)file_len &&
+        csb_v1_graphics_decode_entry_m564(
+            file_bytes,
+            (size_t)file_len,
+            decoded,
+            CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES,
+            &decoded_size) == 0) {
+        /* ReDMCSB OBJECT.C F0031 loads M564_GRAPHIC_OBJECT_NAMES from
+         * GRAPHICS.DAT and decodes C199 high-bit-terminated object names
+         * before object UI asks F0033 for icon-indexed names. */
+        ok = csb_v1_runtime_load_object_names_m564(&profile->runtime,
+                                                   decoded,
+                                                   decoded_size);
+    }
+    free(decoded);
+    free(file_bytes);
+    return ok == 1 ? 1 : 0;
+}
+
 const char *csb_v1_boot_last_assumption_reason(void)
 {
     return g_csb_assume_last_reason;
@@ -535,6 +860,7 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
         (void)csb_v1_runtime_set_party_state(&profile->runtime,
                                              &profile->imported_party);
     }
+    (void)csb_v1_boot_load_object_names_m564(profile);
     /* Load the verified DUNGEON.DAT into the runtime so that the
      * dungeon-layer accessors (csb_v1_dungeon_get_current_level,
      * csb_v1_dungeon_get_square_type, ...) become live immediately
