@@ -405,6 +405,21 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
          * still bounded, but D3L2/D3R2 runtime markers now use the same
          * source-zone placement, front-cell rejection, and caller-supplied
          * OBJECT.C F0032/F0033 material identity as the real route. */
+        if (cfg->projectile_sprite_drawer &&
+            cfg->projectile_sprite_drawer(
+                cfg->projectile_sprite_user,
+                projectile,
+                placement.forward,
+                placement.side,
+                placement.view_cell,
+                placement.source_zone,
+                placement.viewport_x,
+                placement.viewport_y,
+                cfg->viewport_pixels,
+                cfg->viewport_stride)) {
+            ++cfg->runtime_projectile_sprite_drawn_count;
+            continue;
+        }
         if (cfg->projectile_material_resolver) {
             material_icon_index = cfg->projectile_material_resolver(
                 cfg->projectile_material_user,

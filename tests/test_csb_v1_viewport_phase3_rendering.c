@@ -40,6 +40,31 @@ static int test_projectile_material_resolver(
     return 32;
 }
 
+static int test_projectile_sprite_drawer(
+    void *user,
+    const struct ProjectileInstance_Compat *projectile,
+    int forward,
+    int side,
+    int view_cell,
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    int *calls = (int *)user;
+    (void)projectile;
+    (void)forward;
+    (void)side;
+    (void)view_cell;
+    (void)source_zone;
+    if (!screen_pixels || screen_stride <= 0) return 0;
+    if (calls) ++*calls;
+    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + viewport_y) * screen_stride +
+                  DM1_VIEWPORT_SCREEN_X + viewport_x] = 0x05u;
+    return 1;
+}
+
 static void test_config_defaults_and_setters(void)
 {
     CSB_V1_ViewportConfig cfg;
@@ -131,6 +156,25 @@ static void test_runtime_projectile_and_explosion_overlays(void)
                   cfg.runtime_projectile_material_resolved_count, 1);
         check_int("runtime.projectile_overlay.material_thing",
                   seen_thing, 0x1400);
+    }
+
+    {
+        int sprite_calls = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        cfg.projectile_sprite_drawer = test_projectile_sprite_drawer;
+        cfg.projectile_sprite_user = &sprite_calls;
+        cfg.runtime_projectile_sprite_drawn_count = 0;
+        cfg.runtime_projectile_material_resolved_count = 0;
+        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+        check_int("runtime.projectile_sprite.center",
+                  framebuffer[center_offset], 0x05);
+        check_int("runtime.projectile_sprite.calls", sprite_calls, 1);
+        check_int("runtime.projectile_sprite.drawn_count",
+                  cfg.runtime_projectile_sprite_drawn_count, 1);
+        check_int("runtime.projectile_sprite.skips_material_count",
+                  cfg.runtime_projectile_material_resolved_count, 0);
+        cfg.projectile_sprite_drawer = NULL;
+        cfg.projectile_sprite_user = NULL;
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));
