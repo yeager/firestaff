@@ -476,6 +476,19 @@ int dm2_v1_viewport_door_button_clickable_for_square(int view_square)
     return rectno == 3 || rectno == 4;
 }
 
+int dm2_v1_viewport_wall_button_graphic_index(int wall_gfx_index,
+                                              int wall_gfx_field)
+{
+    int packed;
+    if (wall_gfx_index < 0 || wall_gfx_index > 0xFF ||
+        wall_gfx_field < 0 || wall_gfx_field > 0xFF) {
+        return 0;
+    }
+    packed = (wall_gfx_index << DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT) |
+             (wall_gfx_field & DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_MASK);
+    return DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - packed;
+}
+
 static void dm2_v1_viewport_clear_rect(DM2_V1_ViewportRect *out_rect)
 {
     if (!out_rect) return;
@@ -1255,17 +1268,30 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 ++door_asset_count;
             }
         }
-        if (vs->door_button) {
+        if (vs->door_button || vs->door_wall_button) {
             const uint8_t *button_pixels = NULL;
             int button_w = 0;
             int button_h = 0;
             int button_stride = 0;
             DM2_V1_ViewportRect button_rect;
-            int button_index =
-                dm2_v1_viewport_door_button_graphic_index_for_state(
-                    vs->door_button_state != 0);
+            int button_index;
             int has_button_rect =
                 dm2_v1_viewport_door_button_rect_for_square(i, &button_rect);
+
+            if (vs->door_button) {
+                button_index =
+                    dm2_v1_viewport_door_button_graphic_index_for_state(
+                        vs->door_button_state != 0);
+            } else {
+                /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES lines
+                 * ~46346-46350 draws a custom wall-gfx button only when the
+                 * DB0 door has no default button and tblCellTilesRoom[cell]
+                 * w6[2] is present: category WALL_GFX, index low byte,
+                 * field high byte + 1. */
+                button_index = dm2_v1_viewport_wall_button_graphic_index(
+                    vs->door_wall_button_index,
+                    vs->door_wall_button_field);
+            }
 
             if (has_button_rect &&
                 button_rect.w > 0 && button_rect.h > 0 &&
@@ -1278,8 +1304,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                             &button_stride) == 0 &&
                 button_pixels && button_w > 0 && button_h > 0) {
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON
-                 * lines ~46243-46264 sources GDAT_CATEGORY_DOOR_BUTTONS
-                 * index 0, field state*5. Exact tlbRectnoDoorButton
+                 * lines ~46243-46264 renders both default door buttons and
+                 * custom wall-gfx buttons through the same rectno path. Exact
                  * viewport-cell placement is isolated in
                  * dm2_v1_viewport_door_button_rect_for_square(). */
                 dm2_v1_blit_scaled_bitmap(vp,

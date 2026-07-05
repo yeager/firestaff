@@ -16,6 +16,7 @@
 static int s_tests_run = 0;
 static int s_tests_passed = 0;
 static int s_asset_fetch_calls = 0;
+static int s_last_asset_index = 0;
 
 #define CHECK(name_, cond_) do { \
     printf("  %s...\n", name_); \
@@ -37,8 +38,10 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t door_panel[4] = { 8, 9, 10, 11 };
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
     static const uint8_t door_button[4] = { 4, 5, 6, 7 };
+    static const uint8_t wall_button[4] = { 12, 13, 14, 15 };
     (void)user;
     ++s_asset_fetch_calls;
+    s_last_asset_index = gdat_index;
     if (gdat_index == -2) {
         if (out_pixels) *out_pixels = ceiling;
     } else if (gdat_index == -1) {
@@ -63,6 +66,10 @@ static int test_dm2_asset_fetch(void *user,
                    DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT &&
                DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - gdat_index < 0x04) {
         if (out_pixels) *out_pixels = door_panel;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index <
+                   (0x100 << DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT)) {
+        if (out_pixels) *out_pixels = wall_button;
     } else {
         if (out_pixels) *out_pixels = NULL;
         if (out_w) *out_w = 0;
@@ -110,6 +117,13 @@ static void test_door_rect_contracts(void)
           dm2_v1_viewport_door_button_clickable_for_square(DM2_SQ_D0C) &&
               dm2_v1_viewport_door_button_clickable_for_square(DM2_SQ_D1C) &&
               !dm2_v1_viewport_door_button_clickable_for_square(DM2_SQ_D2C));
+    CHECK("DM2 custom wall button asset index packs WALL_GFX index and field",
+          dm2_v1_viewport_wall_button_graphic_index(0x2a, 0x07) ==
+              DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE -
+                  ((0x2a << DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT) | 0x07));
+    CHECK("DM2 custom wall button asset index rejects invalid arguments",
+          dm2_v1_viewport_wall_button_graphic_index(-1, 0) == 0 &&
+              dm2_v1_viewport_wall_button_graphic_index(0, 0x100) == 0);
 
     CHECK("DM2 D0C door panel rect is the startup front-door bound",
           dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D0C, &rect) &&
@@ -246,6 +260,30 @@ static void test_floor_ceiling_asset_provider(void)
     CHECK("default door button is scaled onto the front door",
           framebuffer[(58 * 320) + 212] == 4 &&
               framebuffer[(58 * 320) + 213] == 4);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_button = 0;
+    viewport.squares[DM2_SQ_D0C].door_wall_button = 1;
+    viewport.squares[DM2_SQ_D0C].door_wall_button_index = 0x2a;
+    viewport.squares[DM2_SQ_D0C].door_wall_button_field = 0x07;
+    s_asset_fetch_calls = 0;
+    s_last_asset_index = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_doors(&viewport);
+    CHECK("door pass fetches a custom WALL_GFX button asset when no default button exists",
+          s_asset_fetch_calls == 3 &&
+              s_last_asset_index ==
+                  dm2_v1_viewport_wall_button_graphic_index(0x2a, 0x07) &&
+              viewport.asset_door_panel_drawn_count == 1 &&
+              viewport.asset_door_frame_drawn_count == 1 &&
+              viewport.asset_door_button_drawn_count == 1);
+    CHECK("custom wall-gfx door button is scaled through the same rectno path",
+          framebuffer[(58 * 320) + 212] == 12 &&
+              framebuffer[(58 * 320) + 213] == 12);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

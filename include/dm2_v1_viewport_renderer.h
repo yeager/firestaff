@@ -109,6 +109,9 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE (-0x400)
 #define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED 0x00
 #define DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_PUSHED 0x05
+#define DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE (-0x500)
+#define DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT 8
+#define DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_MASK 0xFF
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -121,6 +124,8 @@ int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed);
 int dm2_v1_viewport_skproject_cell_for_square(int view_square);
 int dm2_v1_viewport_door_button_rectno_for_square(int view_square);
 int dm2_v1_viewport_door_button_clickable_for_square(int view_square);
+int dm2_v1_viewport_wall_button_graphic_index(int wall_gfx_index,
+                                              int wall_gfx_field);
 
 typedef struct {
     int x;
@@ -149,6 +154,9 @@ typedef struct {
     uint8_t  door_open_pct;    /* 0–100 door open percentage */
     uint8_t  door_button;      /* 0=no default button, 1=draw default button */
     uint8_t  door_button_state;/* skproject door->ButtonState(): 0=released, 1=pushed */
+    uint8_t  door_wall_button; /* 1=draw custom wall-gfx button when no default button */
+    uint8_t  door_wall_button_index; /* skproject tblCellTilesRoom[cell].w6[2] low byte */
+    uint8_t  door_wall_button_field; /* skproject tblCellTilesRoom[cell].w6[2] high byte + 1 */
     uint8_t  door_record_type; /* skproject door->DoorType() */
     uint8_t  door_opening_dir; /* skproject door->OpeningDir() */
     int16_t  sprite_depth;    /* depth sort key */
