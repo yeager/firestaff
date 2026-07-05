@@ -491,6 +491,9 @@ typedef struct {
         int level_loaded;
         int party_x, party_y, party_dir;
         int tick_count;
+        int selected_dungeon;
+        int companion_count;
+        int startup_phase;
     } theronState;
 
     /* CSB (Chaos Strikes Back) V1 runtime — active when sourceKind ==

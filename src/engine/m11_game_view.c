@@ -4,6 +4,7 @@
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_viewport.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_startup_flow.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
@@ -9443,6 +9444,73 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
     return 1;
 }
 
+static int m11_theron_apply_startup_flow(Theron_V1_World* world,
+                                         Theron_StartupFlow* flow,
+                                         char* receipt,
+                                         size_t receipt_cap) {
+    Theron_StartupResult result;
+    Theron_DungeonID selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!world || !flow) {
+        return 0;
+    }
+
+    if (world->progression.current_dungeon >= THERON_DUNGEON_1_HALL_OF_RECORDS &&
+        world->progression.current_dungeon <= THERON_DUNGEON_COUNT) {
+        selected = world->progression.current_dungeon;
+    }
+
+    theron_v1_startup_flow_init(flow);
+    result = theron_v1_startup_choose_stage(flow, &world->progression, selected);
+    if (result != THERON_STARTUP_OK) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "startup-flow stage failed: %s",
+                     theron_v1_startup_result_name(result));
+        }
+        return 0;
+    }
+
+    /* Until visible Soul Room mirror selection is wired into M11/M12, direct
+     * launch follows the original gate with only Theron resurrected. The
+     * startup-flow model still records the selected stage and forcefield
+     * handoff so later UI can add mirror selections without bypassing this
+     * boundary. */
+    result = theron_v1_startup_enter_forcefield(flow, &world->party);
+    if (result != THERON_STARTUP_OK) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "startup-flow forcefield failed: %s",
+                     theron_v1_startup_result_name(result));
+        }
+        return 0;
+    }
+
+    if (theron_v1_dungeon_enter(&world->progression, flow->selected_dungeon) != 0) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "startup-flow dungeon enter failed");
+        }
+        return 0;
+    }
+
+    world->current_dungeon = flow->selected_dungeon;
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 "startup-flow stage=%d phase=%s party=%d companions=%d",
+                 (int)flow->selected_dungeon,
+                 theron_v1_startup_phase_name(flow->phase),
+                 world->party.champion_count,
+                 (int)flow->companion_count);
+    }
+    return 1;
+}
+
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
@@ -9454,11 +9522,14 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     int savedDebugHUD;
     TrAssetResult assetResult;
     char levelReceipt[160];
+    char startupReceipt[128];
+    Theron_StartupFlow startupFlow;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
     }
     levelReceipt[0] = '\0';
+    startupReceipt[0] = '\0';
 
     savedDebugHUD = state->showDebugHUD;
     M11_GameView_Shutdown(state);
@@ -9496,6 +9567,13 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     }
 
     theron_v1_world_init(world);
+    if (!m11_theron_apply_startup_flow(world,
+                                       &startupFlow,
+                                       startupReceipt,
+                                       sizeof(startupReceipt))) {
+        m11_set_status(state, "BOOT", "THERON STARTUP FLOW FAILED");
+        goto fail;
+    }
     if (!m11_theron_load_initial_level(world,
                                        assets,
                                        profile->graphics_md5,
@@ -9525,14 +9603,30 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     state->theronState.party_y = world->party.leader_y;
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
+    state->theronState.selected_dungeon = (int)startupFlow.selected_dungeon;
+    state->theronState.companion_count = (int)startupFlow.companion_count;
+    state->theronState.startup_phase = (int)startupFlow.phase;
     m11_set_status(state, "BOOT", "THERON READY");
-    if (levelReceipt[0] != '\0') {
+    if (startupReceipt[0] != '\0' && levelReceipt[0] != '\0') {
+        char combinedReceipt[256];
+        snprintf(combinedReceipt,
+                 sizeof(combinedReceipt),
+                 "%s; %s",
+                 startupReceipt,
+                 levelReceipt);
+        m11_set_inspect_readout(state, "READY", combinedReceipt);
+    } else if (levelReceipt[0] != '\0') {
         m11_set_inspect_readout(state, "READY", levelReceipt);
+    } else if (startupReceipt[0] != '\0') {
+        m11_set_inspect_readout(state, "READY", startupReceipt);
     } else {
         m11_set_inspect_readout(state, "READY",
                                 "THERON TRACK 02 VERIFIED; V1 RUNTIME READY");
     }
     m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON LOADED");
+    if (startupReceipt[0] != '\0') {
+        m11_log_event(state, M11_COLOR_YELLOW, startupReceipt);
+    }
     if (levelReceipt[0] != '\0') {
         m11_log_event(state, M11_COLOR_YELLOW, levelReceipt);
     }
