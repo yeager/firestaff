@@ -101,6 +101,8 @@ static uint32_t fnv1a_str(uint32_t h, const char *s) {
 void theron_v1_startup_receipt_reset(Theron_V1_StartupReceipt *receipt) {
     if (!receipt) return;
     memset(receipt, 0, sizeof(*receipt));
+    receipt->descriptor_window_entry_index = -1;
+    receipt->m11_dispatch_source_kind = -1;
 }
 
 static void set_verdict(Theron_V1_StartupReceipt *receipt,
@@ -410,6 +412,61 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     receipt->post_boundary_span_size   = (uint64_t)signal.post_boundary_span_size;
     receipt->next_nonzero_offset       = (uint64_t)signal.next_nonzero_offset;
 
+    if (signal.descriptor_offset != 0u &&
+        signal.descriptor_size >=
+            THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES * 2u &&
+        signal.descriptor_offset < size) {
+        Theron_Track02DescriptorTable table;
+        Theron_Track02DescriptorEntrySemanticBinding entries[
+            THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+        Theron_Track02TableDecodeStatus table_status;
+        size_t i;
+
+        table_status = theron_v1_track02_decode_descriptor_table(
+            data + signal.descriptor_offset,
+            size - signal.descriptor_offset,
+            (uint16_t)signal.stride,
+            &table);
+        if (table_status == THERON_TRACK02_TABLE_DECODE_OK &&
+            theron_v1_track02_bind_descriptor_entry_roles(
+                data,
+                size,
+                signal.descriptor_offset,
+                &table,
+                entries) == THERON_TRACK02_TABLE_DECODE_OK) {
+            receipt->descriptor_window_entry_index =
+                (int32_t)theron_v1_track02_find_descriptor_window_entry_index(
+                    entries,
+                    table.entry_count);
+            for (i = 0; i < table.entry_count; ++i) {
+                switch (entries[i].role) {
+                case THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_RESERVED_ZERO_FILL:
+                    ++receipt->descriptor_role_zero_fill_count;
+                    break;
+                case THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_PRE_DESCRIPTOR_DATA:
+                    ++receipt->descriptor_role_pre_data_count;
+                    break;
+                case THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_POST_DESCRIPTOR_DATA:
+                    ++receipt->descriptor_role_post_data_count;
+                    break;
+                case THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_CONTAINS_DESCRIPTOR_TABLE:
+                    ++receipt->descriptor_role_descriptor_table_count;
+                    receipt->descriptor_byte_before =
+                        (uint32_t)entries[i].byte_before_descriptor;
+                    receipt->descriptor_byte_before_is_rts =
+                        entries[i].byte_before_descriptor_is_rts;
+                    receipt->descriptor_first_nonzero_after =
+                        (uint64_t)entries[i].first_nonzero_after_descriptor;
+                    receipt->descriptor_all_zero_after =
+                        entries[i].all_zero_after_descriptor;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
     if (signal.anchor_count > 0u) {
         Theron_V1_Level initial_level;
         Theron_Track02LevelHandoff initial_handoff;
@@ -512,6 +569,24 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->post_boundary_span_size), h);
     h = fnv1a_32(&receipt->next_nonzero_offset,
                  sizeof(receipt->next_nonzero_offset), h);
+    h = fnv1a_32(&receipt->descriptor_role_zero_fill_count,
+                 sizeof(receipt->descriptor_role_zero_fill_count), h);
+    h = fnv1a_32(&receipt->descriptor_role_pre_data_count,
+                 sizeof(receipt->descriptor_role_pre_data_count), h);
+    h = fnv1a_32(&receipt->descriptor_role_post_data_count,
+                 sizeof(receipt->descriptor_role_post_data_count), h);
+    h = fnv1a_32(&receipt->descriptor_role_descriptor_table_count,
+                 sizeof(receipt->descriptor_role_descriptor_table_count), h);
+    h = fnv1a_32(&receipt->descriptor_window_entry_index,
+                 sizeof(receipt->descriptor_window_entry_index), h);
+    h = fnv1a_32(&receipt->descriptor_byte_before,
+                 sizeof(receipt->descriptor_byte_before), h);
+    h = fnv1a_32(&receipt->descriptor_byte_before_is_rts,
+                 sizeof(receipt->descriptor_byte_before_is_rts), h);
+    h = fnv1a_32(&receipt->descriptor_first_nonzero_after,
+                 sizeof(receipt->descriptor_first_nonzero_after), h);
+    h = fnv1a_32(&receipt->descriptor_all_zero_after,
+                 sizeof(receipt->descriptor_all_zero_after), h);
     h = fnv1a_32(&receipt->initial_candidate_found,
                  sizeof(receipt->initial_candidate_found), h);
     h = fnv1a_32(&receipt->initial_candidate_offset,
@@ -571,6 +646,9 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "descriptor_off=0x%llx descriptor_size=%llu "
                  "value_count=%llu stride=0x%x anchors=%llu "
                  "span_off=0x%llx span_size=%llu next_nonzero=0x%llx "
+                 "roles=z%u/pre%u/post%u/desc%u desc_entry=%d "
+                 "desc_prev=0x%x desc_prev_rts=%d "
+                 "desc_first_after=0x%llx desc_zero_after=%d "
                  "initial_candidate=%d initial_off=0x%llx "
                  "initial_size=%llu initial_header=%ux%u "
                  "initial_seed=0x%x initial_level=0x%x "
@@ -594,6 +672,15 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned long long)receipt->post_boundary_span_offset,
                  (unsigned long long)receipt->post_boundary_span_size,
                  (unsigned long long)receipt->next_nonzero_offset,
+                 (unsigned)receipt->descriptor_role_zero_fill_count,
+                 (unsigned)receipt->descriptor_role_pre_data_count,
+                 (unsigned)receipt->descriptor_role_post_data_count,
+                 (unsigned)receipt->descriptor_role_descriptor_table_count,
+                 (int)receipt->descriptor_window_entry_index,
+                 (unsigned)receipt->descriptor_byte_before,
+                 receipt->descriptor_byte_before_is_rts,
+                 (unsigned long long)receipt->descriptor_first_nonzero_after,
+                 receipt->descriptor_all_zero_after,
                  receipt->initial_candidate_found,
                  (unsigned long long)receipt->initial_candidate_offset,
                  (unsigned long long)receipt->initial_candidate_size,

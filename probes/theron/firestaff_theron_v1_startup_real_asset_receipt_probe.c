@@ -190,6 +190,13 @@ static void check_placeholder_fields(void) {
           "placeholder leaves track02_md5_hex empty");
     check(r.track02_byte_count == 0u,
           "placeholder leaves track02_byte_count zero");
+    check(r.descriptor_window_entry_index == -1,
+          "placeholder leaves descriptor window index at -1");
+    check(r.descriptor_role_zero_fill_count == 0u &&
+          r.descriptor_role_pre_data_count == 0u &&
+          r.descriptor_role_post_data_count == 0u &&
+          r.descriptor_role_descriptor_table_count == 0u,
+          "placeholder leaves descriptor role summary empty");
     check(r.m11_dispatch_source_kind == -1,
           "placeholder leaves m11_dispatch_source_kind at -1");
     check(r.boot_profile_assets_verified == 0,
@@ -449,6 +456,24 @@ static void check_real_asset_path(void) {
                   "real receipt carries the documented 0x0400 stride");
             check(r.anchor_count >= 1u,
                   "real receipt reports at least one bank-signal anchor");
+            check(r.descriptor_role_descriptor_table_count == 1u,
+                  "real receipt reports exactly one descriptor-table role");
+            check(r.descriptor_role_zero_fill_count +
+                  r.descriptor_role_pre_data_count +
+                  r.descriptor_role_post_data_count +
+                  r.descriptor_role_descriptor_table_count == 9u,
+                  "real receipt descriptor role summary covers all 9 entries");
+            check(r.descriptor_window_entry_index >= 0 &&
+                  r.descriptor_window_entry_index < 9,
+                  "real receipt descriptor window index is in range");
+            if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_ISO) == 0) {
+                check(r.descriptor_byte_before == 0x60u,
+                      "US ISO descriptor byte-before is RTS");
+                check(r.descriptor_byte_before_is_rts == 1,
+                      "US ISO descriptor RTS marker is recognized");
+                check(r.descriptor_all_zero_after == 1,
+                      "US ISO descriptor window is zero after descriptor");
+            }
         }
         if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0 ||
             strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
