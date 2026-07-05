@@ -288,6 +288,11 @@ static void check_placeholder_fields(void) {
           r.user_data_window_initial_count == 0u &&
           r.user_data_window_overflow_count == 0u,
           "placeholder leaves user-data window catalog empty");
+    check(r.startup_text_marker_count == 0u &&
+          r.startup_text_us_prompt_count == 0u &&
+          r.startup_text_jp_roster_count == 0u &&
+          r.startup_text_marker_overflow_count == 0u,
+          "placeholder leaves startup text marker catalog empty");
     check_startup_mirror_summary(&r, "placeholder startup");
     check_startup_chapter_placeholder(&r, "placeholder startup");
 
@@ -312,6 +317,8 @@ static void check_placeholder_fields(void) {
                        "rendered line contains quest total");
     check_str_contains(line, "initial_bind_name=no-level",
                        "rendered line contains placeholder bind status name");
+    check_str_contains(line, "startup_text_markers=0",
+                       "rendered line contains placeholder text marker count");
 }
 
 /* ── Invariant 3: MD5 recognition gate ───────────────────────────── */
@@ -580,6 +587,21 @@ static void check_real_asset_path(void) {
                       "raw Track 02 receipt has 1 initial-candidate user-data window");
                 check(r.user_data_window_overflow_count == 0u,
                       "raw Track 02 receipt has no user-data window overflow");
+                check(r.startup_text_marker_count == 7u,
+                      "raw Track 02 receipt has 7 startup text markers");
+                check(r.startup_text_marker_overflow_count == 0u,
+                      "raw Track 02 receipt has no startup text marker overflow");
+                if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
+                    check(r.startup_text_us_prompt_count == 7u,
+                          "US raw Track 02 receipt has 7 resurrect prompt markers");
+                    check(r.startup_text_jp_roster_count == 0u,
+                          "US raw Track 02 receipt has no JP roster markers");
+                } else {
+                    check(r.startup_text_us_prompt_count == 0u,
+                          "JP raw Track 02 receipt has no US prompt markers");
+                    check(r.startup_text_jp_roster_count == 7u,
+                          "JP raw Track 02 receipt has 7 roster markers");
+                }
             }
             check(r.descriptor_window_entry_index >= 0 &&
                   r.descriptor_window_entry_index < 9,
@@ -641,6 +663,8 @@ static void check_real_asset_path(void) {
                                    "raw Track 02 rendered line marks user-data offset valid");
                 check_str_contains(line, "user_windows=7",
                                    "raw Track 02 rendered line names user-data catalog count");
+                check_str_contains(line, "startup_text_markers=7",
+                                   "raw Track 02 rendered line names text marker count");
             }
         } else {
             check(r.initial_candidate_found == 0,
