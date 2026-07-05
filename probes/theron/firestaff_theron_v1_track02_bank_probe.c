@@ -111,6 +111,16 @@ static void check_u32(const char *label, uint32_t got, uint32_t want) {
     }
 }
 
+static void check_str_eq(const char *got, const char *want, const char *label) {
+    if (!got || !want || strcmp(got, want) != 0) {
+        printf("FAIL %s: got \"%s\" want \"%s\"\n",
+               label,
+               got ? got : "(null)",
+               want ? want : "(null)");
+        ++g_fail;
+    }
+}
+
 static void check_bytes(const char *label,
                         const uint8_t *got,
                         const uint8_t *want,
@@ -653,6 +663,63 @@ static void check_raw_user_data_contract(
             check_size("raw startup text marker first raw offset",
                        text_catalog.markers[0].raw_offset,
                        expected_first_raw_offset);
+        }
+    }
+
+    {
+        Theron_Track02StartupRosterNameCatalog roster_catalog;
+        status = theron_v1_track02_catalog_startup_roster_names(
+            data,
+            size,
+            md5_hex,
+            &roster_catalog);
+        if (strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) == 0) {
+            static const char *expected_names[] = {
+                "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN"
+            };
+            static const size_t expected_raw_offsets[] = {
+                0xb3d98u, 0xb3dd1u, 0xb3e1au, 0xb3e5eu,
+                0xb3ea3u, 0xb3ee4u, 0xb3f2eu
+            };
+            check_int("JP startup roster name catalog status",
+                      status,
+                      THERON_TRACK02_SIGNAL_OK);
+            check_size("JP startup roster name count",
+                       roster_catalog.name_count,
+                       sizeof(expected_names) / sizeof(expected_names[0]));
+            check_size("JP startup roster name overflow",
+                       roster_catalog.overflow_count,
+                       0u);
+            for (i = 0u;
+                 i < sizeof(expected_names) / sizeof(expected_names[0]);
+                 ++i) {
+                char name[128];
+                size_t expected_user_offset = 0u;
+
+                snprintf(name, sizeof(name), "JP roster name[%zu]", i);
+                check_str_eq(roster_catalog.names[i].name,
+                             expected_names[i],
+                             name);
+                snprintf(name, sizeof(name), "JP roster raw offset[%zu]", i);
+                check_size(name,
+                           roster_catalog.names[i].raw_offset,
+                           expected_raw_offsets[i]);
+                status = theron_v1_track02_raw_offset_to_user_offset(
+                    expected_raw_offsets[i],
+                    size,
+                    md5_hex,
+                    &expected_user_offset);
+                snprintf(name, sizeof(name), "JP roster raw->user[%zu]", i);
+                check_int(name, status, THERON_TRACK02_SIGNAL_OK);
+                snprintf(name, sizeof(name), "JP roster user offset[%zu]", i);
+                check_size(name,
+                           roster_catalog.names[i].user_data_offset,
+                           expected_user_offset);
+            }
+        } else if (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) == 0) {
+            check_int("US startup roster name catalog unsupported",
+                      status,
+                      THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
         }
     }
 
