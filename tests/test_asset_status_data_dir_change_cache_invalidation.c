@@ -265,6 +265,102 @@ static void scan_in_isolated_env(const char* homeRoot,
     M12_AssetStatus_Scan(status, dataRoot);
 }
 
+typedef struct {
+    size_t callbacks;
+    size_t cancelAtStep;
+    char lastTask[64];
+    char lastGame[16];
+} CancelScanProbe;
+
+static int cancel_scan_progress_cb(const M12_AssetScanProgress* progress,
+                                   void* userData) {
+    CancelScanProbe* probe = (CancelScanProbe*)userData;
+    if (!probe || !progress) {
+        return 1;
+    }
+    ++probe->callbacks;
+    snprintf(probe->lastTask, sizeof(probe->lastTask), "%s",
+             progress->currentTask);
+    snprintf(probe->lastGame, sizeof(probe->lastGame), "%s",
+             progress->currentGameId);
+    if (probe->cancelAtStep > 0U &&
+        progress->completedSteps >= probe->cancelAtStep) {
+        return 0;
+    }
+    return 1;
+}
+
+static void check_scan_progress_cancel_contract(const char* homeRoot,
+                                                const char* dataRoot) {
+    M12_AssetStatus status;
+    M12_AssetStatusScanOptions options;
+    const M12_AssetScanProgress* progress;
+    CancelScanProbe probe;
+    int rc;
+
+    memset(&status, 0, sizeof(status));
+    memset(&options, 0, sizeof(options));
+    memset(&probe, 0, sizeof(probe));
+    probe.cancelAtStep = 4U;
+    options.progressFn = cancel_scan_progress_cb;
+    options.progressUserData = &probe;
+
+    test_setenv("HOME", homeRoot);
+    test_setenv("FIRESTAFF_DATA", dataRoot);
+    test_setenv("XDG_DATA_HOME", homeRoot);
+    test_setenv("APPDATA", homeRoot);
+    M12_AssetStatus_TestResetScanMetrics();
+    rc = M12_AssetStatus_ScanWithOptions(&status, dataRoot, &options);
+    progress = M12_AssetStatus_GetScanProgress(&status);
+
+    check_int(rc == 0, "progress cancel: ScanWithOptions must report cancel");
+    check_int(progress && progress->cancelled == 1,
+              "progress cancel: status must publish cancelled=1");
+    check_int(progress && progress->complete == 0,
+              "progress cancel: cancelled scan must not publish complete=1");
+    check_int(progress && progress->active == 0,
+              "progress cancel: cancelled scan must not remain active");
+    check_int(probe.callbacks >= 1U,
+              "progress cancel: callback must be invoked before cancel");
+    check_no_game_available(&status);
+    check_required_metadata_preserved(&status);
+}
+
+static void check_scan_progress_complete_contract(const char* homeRoot,
+                                                  const char* dataRoot) {
+    M12_AssetStatus status;
+    M12_AssetStatusScanOptions options;
+    const M12_AssetScanProgress* progress;
+    CancelScanProbe probe;
+    int rc;
+
+    memset(&status, 0, sizeof(status));
+    memset(&options, 0, sizeof(options));
+    memset(&probe, 0, sizeof(probe));
+    options.progressFn = cancel_scan_progress_cb;
+    options.progressUserData = &probe;
+
+    test_setenv("HOME", homeRoot);
+    test_setenv("FIRESTAFF_DATA", dataRoot);
+    test_setenv("XDG_DATA_HOME", homeRoot);
+    test_setenv("APPDATA", homeRoot);
+    M12_AssetStatus_TestResetScanMetrics();
+    rc = M12_AssetStatus_ScanWithOptions(&status, dataRoot, &options);
+    progress = M12_AssetStatus_GetScanProgress(&status);
+
+    check_int(rc == 1, "progress complete: ScanWithOptions must report success");
+    check_int(progress && progress->complete == 1,
+              "progress complete: status must publish complete=1");
+    check_int(progress && progress->cancelled == 0,
+              "progress complete: status must not publish cancelled=1");
+    check_int(progress && progress->active == 0,
+              "progress complete: scan must no longer be active");
+    check_int(progress && progress->completedSteps == progress->totalSteps,
+              "progress complete: completed steps must reach total steps");
+    check_int(probe.callbacks >= progress->totalSteps,
+              "progress complete: callback must cover coarse scan steps");
+}
+
 static void check_first_scan_then_empty_scan(const char* homeRoot,
                                              const char* dirA,
                                              const char* dirB) {
@@ -615,6 +711,8 @@ int main(void) {
     check_round_trip_resolves_new_path(home, dirA, dirB);
     check_different_payload_different_hash(home, dirA, dirC);
     check_legacy_fallback_dir_refreshes(home, dirA, dirB);
+    check_scan_progress_cancel_contract(home, dirB);
+    check_scan_progress_complete_contract(home, dirB);
 #ifndef _WIN32
     check_symlinked_recommended_dm1_layout(home);
 #endif

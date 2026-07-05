@@ -49,6 +49,115 @@ typedef struct {
 static const M12_AssetVersionStatus* m12_first_matched_version(
     const M12_AssetStatus* status,
     int gameIndex);
+static void m12_copy_string(char* out, size_t outSize, const char* value);
+static void m12_init_version_metadata(M12_AssetStatus* status);
+static void m12_init_required_file_metadata(M12_AssetStatus* status,
+                                            int gameIndex);
+
+typedef struct {
+    M12_AssetStatus* status;
+    const M12_AssetStatusScanOptions* options;
+} M12_ScanProgressContext;
+
+static void m12_scan_progress_init(M12_AssetScanProgress* progress) {
+    if (!progress) {
+        return;
+    }
+    memset(progress, 0, sizeof(*progress));
+    progress->active = 1;
+    progress->totalSteps = 4U + (size_t)M12_ASSET_GAME_COUNT * 3U;
+    snprintf(progress->currentTask, sizeof(progress->currentTask),
+             "starting");
+}
+
+static int m12_scan_progress_update(M12_ScanProgressContext* ctx,
+                                    const char* task,
+                                    const char* gameId,
+                                    const char* path,
+                                    int advanceStep) {
+    M12_AssetScanProgress* progress;
+    if (!ctx || !ctx->status) {
+        return 1;
+    }
+    progress = &ctx->status->scanProgress;
+    if (!progress->active && !progress->complete && !progress->cancelled) {
+        m12_scan_progress_init(progress);
+    }
+    if (advanceStep && progress->completedSteps < progress->totalSteps) {
+        ++progress->completedSteps;
+    }
+    snprintf(progress->currentTask, sizeof(progress->currentTask),
+             "%s", task ? task : "");
+    snprintf(progress->currentGameId, sizeof(progress->currentGameId),
+             "%s", gameId ? gameId : "");
+    snprintf(progress->currentPath, sizeof(progress->currentPath),
+             "%s", path ? path : "");
+    if (ctx->options && ctx->options->cancelFlag &&
+        *ctx->options->cancelFlag) {
+        progress->cancelRequested = 1;
+    }
+    if (ctx->options && ctx->options->progressFn &&
+        !ctx->options->progressFn(progress, ctx->options->progressUserData)) {
+        progress->cancelRequested = 1;
+    }
+    if (progress->cancelRequested) {
+        progress->active = 0;
+        progress->cancelled = 1;
+        progress->complete = 0;
+        return 0;
+    }
+    return 1;
+}
+
+static void m12_scan_progress_finish(M12_AssetStatus* status,
+                                     int complete,
+                                     int cancelled) {
+    M12_AssetScanProgress* progress;
+    if (!status) {
+        return;
+    }
+    progress = &status->scanProgress;
+    if (!progress->active && !progress->cancelRequested && !progress->cancelled) {
+        m12_scan_progress_init(progress);
+    }
+    progress->active = 0;
+    progress->cancelled = cancelled ? 1 : 0;
+    progress->complete = complete ? 1 : 0;
+    if (complete && progress->completedSteps < progress->totalSteps) {
+        progress->completedSteps = progress->totalSteps;
+    }
+    snprintf(progress->currentTask, sizeof(progress->currentTask),
+             "%s", cancelled ? "cancelled" : "complete");
+    progress->currentGameId[0] = '\0';
+    progress->currentPath[0] = '\0';
+}
+
+static void m12_scan_publish_cancelled_status(M12_AssetStatus* status,
+                                              const char* requestedDataDir,
+                                              const char* legacyFallbackDir) {
+    M12_AssetScanProgress progress;
+    int i;
+    if (!status) {
+        return;
+    }
+    progress = status->scanProgress;
+    memset(status, 0, sizeof(*status));
+    status->scanProgress = progress;
+    FirestaffTheronMedia_Init(&status->theronMedia);
+    if (requestedDataDir && requestedDataDir[0] != '\0') {
+        m12_copy_string(status->dataDir, sizeof(status->dataDir), requestedDataDir);
+    }
+    if (legacyFallbackDir && legacyFallbackDir[0] != '\0') {
+        m12_copy_string(status->legacyFallbackDir,
+                        sizeof(status->legacyFallbackDir),
+                        legacyFallbackDir);
+    }
+    m12_init_version_metadata(status);
+    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        m12_init_required_file_metadata(status, i);
+    }
+    m12_scan_progress_finish(status, 0, 1);
+}
 
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
 static M12_AssetStatusScanMetrics g_m12ScanMetrics;
@@ -1939,25 +2048,76 @@ static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
 }
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir) {
+    (void)M12_AssetStatus_ScanWithOptions(status, requestedDataDir, NULL);
+}
+
+int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
+                                    const char* requestedDataDir,
+                                    const M12_AssetStatusScanOptions* options) {
     char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
+    char legacyFallbackSnapshot[M12_ASSET_DATA_DIR_CAPACITY];
+    M12_ScanProgressContext progressCtx;
     size_t rootCount;
     int dataDirResolvedToMatchedRoot = 0;
     int i;
     if (!status) {
-        return;
+        return 0;
+    }
+    progressCtx.status = status;
+    progressCtx.options = options;
+    m12_scan_progress_init(&status->scanProgress);
+    if (!m12_scan_progress_update(&progressCtx,
+                                  "checking cached resume paths",
+                                  NULL,
+                                  requestedDataDir,
+                                  0)) {
+        m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
+        return 0;
     }
     if (m12_reuse_verified_theron_refresh(status, requestedDataDir)) {
-        return;
+        m12_scan_progress_finish(status, 1, 0);
+        return 1;
+    }
+    if (!m12_scan_progress_update(&progressCtx,
+                                  "checking direct launch path",
+                                  "theron",
+                                  requestedDataDir,
+                                  1)) {
+        m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
+        return 0;
     }
     if (m12_scan_direct_theron_request(status, requestedDataDir, NULL)) {
-        return;
+        m12_scan_progress_finish(status, 1, 0);
+        return 1;
+    }
+    if (!m12_scan_progress_update(&progressCtx,
+                                  "checking explicit file request",
+                                  NULL,
+                                  requestedDataDir,
+                                  1)) {
+        m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
+        return 0;
     }
     if (m12_scan_explicit_file_request(status, requestedDataDir)) {
-        return;
+        m12_scan_progress_finish(status, 1, 0);
+        return 1;
     }
     memset(status, 0, sizeof(*status));
+    m12_scan_progress_init(&status->scanProgress);
+    progressCtx.status = status;
     FirestaffTheronMedia_Init(&status->theronMedia);
     rootCount = m12_build_search_roots(roots, requestedDataDir, status->legacyFallbackDir);
+    m12_copy_string(legacyFallbackSnapshot, sizeof(legacyFallbackSnapshot),
+                    status->legacyFallbackDir);
+    if (!m12_scan_progress_update(&progressCtx,
+                                  "building search roots",
+                                  NULL,
+                                  rootCount > 0U ? roots[0] : requestedDataDir,
+                                  1)) {
+        m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                          legacyFallbackSnapshot);
+        return 0;
+    }
     if (requestedDataDir && requestedDataDir[0] != '\0') {
         m12_copy_string(status->dataDir, sizeof(status->dataDir), requestedDataDir);
     } else if (rootCount > 0U) {
@@ -1968,13 +2128,40 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
                         sizeof(status->runtimeDataDirs[i]),
                         status->dataDir);
     }
+    if (!m12_scan_progress_update(&progressCtx,
+                                  "checking original file candidates",
+                                  NULL,
+                                  status->dataDir,
+                                  1)) {
+        m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                          legacyFallbackSnapshot);
+        return 0;
+    }
     m12_scan_original_candidates(status, roots, rootCount);
     int userExplicitDataDir = (requestedDataDir && requestedDataDir[0] != '\0') ? 1 : 0;
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        if (!m12_scan_progress_update(&progressCtx,
+                                      "matching game versions",
+                                      g_games[i].gameId,
+                                      status->dataDir,
+                                      1)) {
+            m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                              legacyFallbackSnapshot);
+            return 0;
+        }
         m12_fill_game_versions(status, i, roots, rootCount, &dataDirResolvedToMatchedRoot, userExplicitDataDir);
     }
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         int reqMatch = m12_fill_required_files(status, i, roots, rootCount);
+        if (!m12_scan_progress_update(&progressCtx,
+                                      "matching required files",
+                                      g_games[i].gameId,
+                                      status->dataDir,
+                                      1)) {
+            m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                              legacyFallbackSnapshot);
+            return 0;
+        }
         m12_apply_required_game_availability(status, i, reqMatch);
         if (!status->originalFileCandidateFound) {
             size_t fileIndex;
@@ -1985,14 +2172,34 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
                 }
             }
         }
+        if (!m12_scan_progress_update(&progressCtx,
+                                      "materializing launch cache",
+                                      g_games[i].gameId,
+                                      status->runtimeDataDirs[i],
+                                      1)) {
+            m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                              legacyFallbackSnapshot);
+            return 0;
+        }
         if (!m12_materialize_runtime_cache_for_game(status, i)) {
             m12_apply_required_game_availability(status, i, 0);
         }
+    }
+    if (!m12_scan_progress_update(&progressCtx,
+                                  "refreshing media metadata",
+                                  NULL,
+                                  status->dataDir,
+                                  1)) {
+        m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                          legacyFallbackSnapshot);
+        return 0;
     }
     m12_refresh_theron_media_status(status, roots, rootCount);
 
     m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     m12_refresh_v22_modern_asset_status(status);
+    m12_scan_progress_finish(status, 1, 0);
+    return 1;
 }
 
 void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
@@ -2010,6 +2217,18 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
         }
     }
     M12_AssetStatus_Scan(status, requestedDataDir);
+}
+
+const M12_AssetScanProgress* M12_AssetStatus_GetScanProgress(
+    const M12_AssetStatus* status) {
+    return status ? &status->scanProgress : NULL;
+}
+
+void M12_AssetStatus_RequestCancel(M12_AssetStatus* status) {
+    if (!status) {
+        return;
+    }
+    status->scanProgress.cancelRequested = 1;
 }
 
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,

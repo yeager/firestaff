@@ -58,6 +58,28 @@ typedef struct {
 } M12_NexusBpkTrailerMetadata;
 
 typedef struct {
+    int active;
+    int cancelRequested;
+    int cancelled;
+    int complete;
+    size_t totalSteps;
+    size_t completedSteps;
+    char currentGameId[16];
+    char currentTask[64];
+    char currentPath[M12_ASSET_DATA_DIR_CAPACITY];
+} M12_AssetScanProgress;
+
+typedef int (*M12_AssetStatusScanProgressFn)(
+    const M12_AssetScanProgress* progress,
+    void* userData);
+
+typedef struct {
+    M12_AssetStatusScanProgressFn progressFn;
+    void* progressUserData;
+    const int* cancelFlag;
+} M12_AssetStatusScanOptions;
+
+typedef struct {
     char dataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char legacyFallbackDir[M12_ASSET_DATA_DIR_CAPACITY];
     int dm1Available;
@@ -79,12 +101,19 @@ typedef struct {
     char runtimeDataDirs[M12_ASSET_GAME_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     M12_NexusBpkTrailerMetadata nexusBpkTrailer;
     FirestaffTheronMediaStatus theronMedia;
+    M12_AssetScanProgress scanProgress;
 } M12_AssetStatus;
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir);
+int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
+                                    const char* requestedDataDir,
+                                    const M12_AssetStatusScanOptions* options);
 void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
                               const char* requestedDataDir,
                               const char* gameId);
+const M12_AssetScanProgress* M12_AssetStatus_GetScanProgress(
+    const M12_AssetStatus* status);
+void M12_AssetStatus_RequestCancel(M12_AssetStatus* status);
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
                                   const char* gameId);
 int M12_AssetStatus_HasOriginalFileCandidate(const M12_AssetStatus* status);
