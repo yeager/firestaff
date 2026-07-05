@@ -206,7 +206,6 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     Theron_V1_BootProfile profile;
     Theron_Track02BankSignal signal;
     Theron_Track02SignalStatus signal_status;
-    Theron_Track02LevelCandidateCatalog candidate_catalog;
     uint8_t *data = NULL;
     size_t size = 0;
     char md5_hex[33];
@@ -411,34 +410,47 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     receipt->post_boundary_span_size   = (uint64_t)signal.post_boundary_span_size;
     receipt->next_nonzero_offset       = (uint64_t)signal.next_nonzero_offset;
 
-    memset(&candidate_catalog, 0, sizeof(candidate_catalog));
-    if (signal.anchor_count > 0u &&
-        theron_v1_track02_scan_level_candidates(
-            data, size, &candidate_catalog) == THERON_TRACK02_LEVEL_HANDOFF_OK &&
-        theron_v1_track02_bind_level_candidate_anchor(
-            signal.descriptor_offsets[0], &candidate_catalog) != 0 &&
-        candidate_catalog.candidate_count == 1u &&
-        candidate_catalog.candidates[0].matches_initial_anchor) {
-        const Theron_Track02LevelCandidate *candidate =
-            &candidate_catalog.candidates[0];
-        receipt->initial_candidate_found = 1;
-        receipt->initial_candidate_offset =
-            (uint64_t)candidate->absolute_offset;
-        receipt->initial_candidate_size = (uint64_t)candidate->byte_count;
-        receipt->initial_candidate_width =
-            (uint32_t)candidate->header_width;
-        receipt->initial_candidate_height =
-            (uint32_t)candidate->header_height;
-        receipt->initial_candidate_seed = candidate->header_seed;
-        receipt->initial_candidate_level_index =
-            (uint32_t)candidate->header_level_index;
-        receipt->initial_candidate_start_x = candidate->start_x;
-        receipt->initial_candidate_start_y = candidate->start_y;
-        receipt->initial_candidate_start_dir = candidate->start_dir;
-        receipt->initial_candidate_descriptor_delta =
-            (uint64_t)candidate->descriptor_delta;
-        receipt->initial_candidate_anchor_match =
-            candidate->matches_initial_anchor;
+    if (signal.anchor_count > 0u) {
+        Theron_V1_Level initial_level;
+        Theron_Track02LevelHandoff initial_handoff;
+        Theron_Track02LevelHandoffStatus initial_status;
+        size_t expected_offset = 0u;
+
+        initial_status = theron_v1_track02_load_initial_level_candidate(
+            data,
+            size,
+            signal.descriptor_offsets[0],
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            &initial_level,
+            &initial_handoff);
+        if (initial_status == THERON_TRACK02_LEVEL_HANDOFF_OK &&
+            theron_v1_track02_initial_candidate_expected_offset(
+                signal.descriptor_offsets[0],
+                &expected_offset) != 0 &&
+            initial_handoff.absolute_offset == expected_offset) {
+            receipt->initial_candidate_found = 1;
+            receipt->initial_candidate_offset =
+                (uint64_t)initial_handoff.absolute_offset;
+            receipt->initial_candidate_size =
+                (uint64_t)initial_handoff.byte_count;
+            receipt->initial_candidate_width =
+                (uint32_t)initial_handoff.header_width;
+            receipt->initial_candidate_height =
+                (uint32_t)initial_handoff.header_height;
+            receipt->initial_candidate_seed = initial_handoff.header_seed;
+            receipt->initial_candidate_level_index =
+                (uint32_t)initial_handoff.header_level_index;
+            receipt->initial_candidate_start_x = initial_level.start_x;
+            receipt->initial_candidate_start_y = initial_level.start_y;
+            receipt->initial_candidate_start_dir = initial_level.start_dir;
+            receipt->initial_candidate_descriptor_delta =
+                signal.descriptor_offsets[0] >= initial_handoff.absolute_offset
+                    ? (uint64_t)(signal.descriptor_offsets[0] -
+                                 initial_handoff.absolute_offset)
+                    : 0u;
+            receipt->initial_candidate_anchor_match = 1;
+        }
     }
 
     free(data);

@@ -129,12 +129,12 @@ static int file_exists_nonempty(const char *path) {
     return path && path[0] && stat(path, &st) == 0 && st.st_size > 0;
 }
 
-static void default_path_for(const char *relative_name,
-                             char out_path[512]) {
+static void default_data_path_for(const char *relative_name,
+                                  char out_path[512]) {
     const char *home = getenv("HOME");
     if (!home || !home[0]) home = ".";
-    snprintf(out_path, 512, "%s%s.firestaff%sdata%stheron%s%s",
-             home, PATH_SEP, PATH_SEP, PATH_SEP, PATH_SEP, relative_name);
+    snprintf(out_path, 512, "%s%s.firestaff%sdata%s%s",
+             home, PATH_SEP, PATH_SEP, PATH_SEP, relative_name);
 }
 
 /* ── Invariant 1: determinism of placeholder receipts ─────────────── */
@@ -322,28 +322,28 @@ static const struct real_asset_case g_real_cases[] = {
     {
         "JP Track 02 BIN",
         "FIRESTAFF_THERON_TRACK02_JP_BIN",
-        "track02_jp.bin",
+        "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
         THERON_TRACK02_MD5_JP_BIN,
         1
     },
     {
         "US Track 02 BIN",
         "FIRESTAFF_THERON_TRACK02_US_BIN",
-        "track02_us.bin",
+        "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
         THERON_TRACK02_MD5_US_BIN,
         1
     },
     {
         "JP Rev 1 Track 02 ISO",
         "FIRESTAFF_THERON_TRACK02_JP_REV1_ISO",
-        "track02_jp_rev1.iso",
+        "theron/track02_jp_rev1.iso",
         THERON_TRACK02_MD5_JP_REV1_ISO,
         1
     },
     {
         "US Track 02 ISO",
         "FIRESTAFF_THERON_TRACK02_US_ISO",
-        "track02_us.iso",
+        "theron/track02_us.iso",
         THERON_TRACK02_MD5_US_ISO,
         1
     },
@@ -364,7 +364,7 @@ static void check_real_asset_path(void) {
         if (env_path && env_path[0]) {
             snprintf(path, sizeof(path), "%s", env_path);
         } else {
-            default_path_for(c->default_relative, path);
+            default_data_path_for(c->default_relative, path);
         }
         present = file_exists_nonempty(path);
 
