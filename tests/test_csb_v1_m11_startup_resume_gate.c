@@ -18,6 +18,7 @@
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_graphics_loader_pc34_compat.h"
 #include "m11_game_view.h"
 
@@ -1149,6 +1150,39 @@ int main(void) {
                     view.world.party.mapY == profile->runtime.party_y &&
                     view.world.party.mapIndex == profile->runtime.current_level,
                     "M11 CSB movement input keeps party mirror pose aligned");
+
+        {
+            unsigned short throw_thing =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0u);
+            int projectile_count_before = profile->runtime.projectiles.count;
+            profile->runtime.party_state.Champions[0]
+                .Slots[CSB_V1_SLOT_ACTION_HAND] = throw_thing;
+            view.world.party.champions[0]
+                .inventory[CHAMPION_SLOT_ACTION_HAND] = throw_thing;
+            view.world.party.champions[0].stamina.current =
+                view.world.party.champions[0].stamina.maximum;
+            profile->runtime.party_state.Champions[0].CurrentStamina =
+                profile->runtime.party_state.Champions[0].MaximumStamina;
+            view.actionDisabledTicks[0] = 0;
+
+            expect_true(M11_GameView_TriggerNonMeleeActionByIndex(
+                            &view, 0, DM1_ACTION_THROW) == 1,
+                        "M11 CSB startup direct THROW dispatches through CSB runtime");
+            expect_true(profile->runtime.projectiles.count ==
+                            projectile_count_before + 1,
+                        "M11 CSB startup THROW allocates a runtime projectile");
+            expect_true(profile->runtime.projectiles
+                            .entries[projectile_count_before]
+                            .reserved1 == throw_thing,
+                        "M11 CSB startup THROW preserves thrown thing identity");
+            expect_true(profile->runtime.party_state.Champions[0]
+                            .Slots[CSB_V1_SLOT_ACTION_HAND] == THING_NONE,
+                        "M11 CSB startup THROW clears runtime action hand");
+            expect_true(view.world.party.champions[0]
+                            .inventory[CHAMPION_SLOT_ACTION_HAND] ==
+                            THING_NONE,
+                        "M11 CSB startup THROW clears M11 action-hand mirror");
+        }
     }
 
     expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
@@ -1174,6 +1208,20 @@ int main(void) {
                 "M11 CSB quicksave preserves mirrored current level");
     expect_true(quick_loaded.tick_count == (uint32_t)view.csbState.tick_count,
                 "M11 CSB quicksave preserves mirrored tick count");
+    if (profile) {
+        expect_true(quick_loaded.projectiles.count ==
+                        profile->runtime.projectiles.count,
+                    "M11 CSB quicksave preserves runtime projectile count");
+        if (profile->runtime.projectiles.count > 0) {
+            int projectile_index = profile->runtime.projectiles.count - 1;
+            expect_true(quick_loaded.projectiles.entries[projectile_index]
+                            .reserved1 ==
+                            profile->runtime.projectiles
+                                .entries[projectile_index]
+                                .reserved1,
+                        "M11 CSB quicksave preserves thrown thing identity");
+        }
+    }
     csb_v1_runtime_cleanup(&quick_loaded);
     if (profile) {
         int saved_x = view.csbState.party_x;
