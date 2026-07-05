@@ -728,6 +728,38 @@ int main(void) {
                                                      icon_w,
                                                      icon_h),
                         "M11 DM2 draw overlays a GDAT-backed leader-hand icon when available");
+            expect_true(M11_GameView_HandlePointerMove(&view, 120, 80) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 pointer motion redraws while carrying a GDAT-backed object");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
+                            &view,
+                            &icon_x,
+                            &icon_y,
+                            &icon_w,
+                            &icon_h) &&
+                            icon_x == 120 && icon_y == 80,
+                        "M11 DM2 leader-hand cursor icon follows pointer source coordinates");
+            expect_true(framebuffer_zone_has_nonzero(framebuffer,
+                                                     320,
+                                                     200,
+                                                     icon_x,
+                                                     icon_y,
+                                                     icon_w,
+                                                     icon_h),
+                        "M11 DM2 draw overlays the GDAT-backed leader-hand icon at the pointer");
+            expect_true(M11_GameView_HandlePointerMove(&view, 319, 199) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 pointer motion redraws at the framebuffer edge");
+            expect_true(M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
+                            &view,
+                            &icon_x,
+                            &icon_y,
+                            &icon_w,
+                            &icon_h) &&
+                            icon_x == 306 && icon_y == 186,
+                        "M11 DM2 leader-hand cursor icon clamps to the framebuffer edge");
             dm2_v1_runtime_set_leader_hand_object(0u);
             view.dm2State.leader_hand_object = 0u;
         }

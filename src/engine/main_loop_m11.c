@@ -2415,6 +2415,26 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_EVENT_MOUSE_MOTION &&
+            gameView && gameView->active) {
+            if (gameViewResult &&
+                M11_Render_MapWindowToFramebuffer((int)ev.motion.x,
+                                                  (int)ev.motion.y,
+                                                  &mappedX,
+                                                  &mappedY)) {
+                m11_map_presented_game_point_to_source(gameView,
+                                                       &mappedX,
+                                                       &mappedY);
+                *gameViewResult = M11_GameView_HandlePointerMove(
+                    gameView,
+                    mappedX,
+                    mappedY);
+                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    return M12_MENU_INPUT_NONE;
+                }
+            }
+            continue;
+        }
+        if (ev.type == SDL_EVENT_MOUSE_MOTION &&
             menuState && useModernLauncher &&
             (!gameView || !gameView->active)) {
             int lx, ly;
@@ -2753,6 +2773,26 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                        gameView && gameView->active);
             if (gpadInput != M12_MENU_INPUT_NONE) {
                 return gpadInput;
+            }
+            continue;
+        }
+        if (ev.type == SDL_MOUSEMOTION &&
+            gameView && gameView->active) {
+            if (gameViewResult &&
+                M11_Render_MapWindowToFramebuffer(ev.motion.x,
+                                                  ev.motion.y,
+                                                  &mappedX,
+                                                  &mappedY)) {
+                m11_map_presented_game_point_to_source(gameView,
+                                                       &mappedX,
+                                                       &mappedY);
+                *gameViewResult = M11_GameView_HandlePointerMove(
+                    gameView,
+                    mappedX,
+                    mappedY);
+                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    return M12_MENU_INPUT_NONE;
+                }
             }
             continue;
         }

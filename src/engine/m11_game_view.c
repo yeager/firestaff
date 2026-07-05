@@ -14620,6 +14620,23 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
     return r;
 }
 
+M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
+                                                   int x,
+                                                   int y) {
+    if (!state || !state->active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    state->pointerPositionKnown = 1;
+    state->pointerX = x;
+    state->pointerY = y;
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        state->dm2State.leader_hand_object != 0u &&
+        M11_GameView_Dm2LeaderHandObjectIconAvailable(state)) {
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int x,
                                                      int y,
@@ -14629,6 +14646,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     if (!state || !state->active || buttonMask == 0) {
         return M11_GAME_INPUT_IGNORED;
     }
+    state->pointerPositionKnown = 1;
+    state->pointerX = x;
+    state->pointerY = y;
 
     /* Click dismisses normal dialogs; return-to-menu confirm acts on YES/NO. */
     if (state->dialogOverlayActive) {
@@ -31338,6 +31358,35 @@ int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
     return 1;
 }
 
+int M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
+    const M11_GameViewState* state,
+    int* outX,
+    int* outY,
+    int* outW,
+    int* outH) {
+    int x;
+    int y;
+    int w = 14;
+    int h = 14;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !state->pointerPositionKnown) {
+        return M11_GameView_GetDm2LeaderHandObjectIconZone(
+            outX, outY, outW, outH);
+    }
+    x = state->pointerX;
+    y = state->pointerY;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x > M11_FB_WIDTH - w) x = M11_FB_WIDTH - w;
+    if (y > M11_FB_HEIGHT - h) y = M11_FB_HEIGHT - h;
+    if (outX) *outX = x;
+    if (outY) *outY = y;
+    if (outW) *outW = w;
+    if (outH) *outH = h;
+    return 1;
+}
+
 uint32_t M11_GameView_GetDm2LeaderHandObject(const M11_GameViewState* state) {
     if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT) {
         return 0u;
@@ -34464,7 +34513,8 @@ static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
     if (!state || !framebuffer ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
         state->dm2State.leader_hand_object == 0u ||
-        !M11_GameView_GetDm2LeaderHandObjectIconZone(&dstX, &dstY, &dstW, &dstH)) {
+        !M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
+            state, &dstX, &dstY, &dstW, &dstH)) {
         return;
     }
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
