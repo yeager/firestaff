@@ -87,6 +87,9 @@ extern "C" {
 #define CSB_V1_START_PARTY_Z      0    /* ground floor */
 #define CSB_V1_START_PARTY_DIR    0    /* 0=North, 1=East, 2=South, 3=West */
 
+#define CSB_V1_OBJECT_NAME_COUNT 199
+#define CSB_V1_OBJECT_NAME_MAX_CHARS 31
+
 /* ── Difficulty ───────────────────────────────────────────────────────── */
 /*
  * CSB difficulty scale: each champion fight gets +25% effective stats.
@@ -358,6 +361,9 @@ typedef struct {
     struct ExplosionList_Compat explosions;
     CsbV1AudioRuntime audio_runtime;
     CSB_V1_SkinCache skin_cache;
+    int                     object_name_table_valid;
+    char                    object_names[CSB_V1_OBJECT_NAME_COUNT]
+                                            [CSB_V1_OBJECT_NAME_MAX_CHARS + 1];
     struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
     struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
     uint32_t                input_dispatch_count;
@@ -700,6 +706,13 @@ int csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
 int csb_v1_runtime_object_icon_index(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing);
+
+/* Load ReDMCSB OBJECT.C F0031 PC object names from M564_GRAPHIC_OBJECT_NAMES.
+ * The PC stream terminates each name by setting bit 7 on the final byte. */
+int csb_v1_runtime_load_object_names_m564(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t *bytes,
+    size_t byte_count);
 
 /* Resolve a CSB runtime object thing to the leader-hand object name from
  * CSB dungeon records, without using DM1 M11 world tables. */

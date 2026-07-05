@@ -8157,6 +8157,50 @@ int csb_v1_runtime_object_icon_index(
     return icon_index;
 }
 
+int csb_v1_runtime_load_object_names_m564(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t *bytes,
+    size_t byte_count)
+{
+    size_t offset = 0u;
+    int name_index;
+
+    if (!profile || !bytes || byte_count == 0u) return 0;
+    memset(profile->object_names, 0, sizeof(profile->object_names));
+    profile->object_name_table_valid = 0;
+
+    /* ReDMCSB OBJECT.C F0031 lines ~58-109 loads
+     * M564_GRAPHIC_OBJECT_NAMES for PC media as C199 icon-indexed strings.
+     * Each string ends when the source byte has bit 7 set; the stored
+     * character is byte & 0x7f, followed by a C null terminator. */
+    for (name_index = 0;
+         name_index < CSB_V1_OBJECT_NAME_COUNT;
+         ++name_index) {
+        size_t written = 0u;
+        int terminated = 0;
+
+        while (offset < byte_count) {
+            unsigned char c = bytes[offset++];
+            if (written < (size_t)CSB_V1_OBJECT_NAME_MAX_CHARS) {
+                profile->object_names[name_index][written++] =
+                    (char)(c & 0x7fu);
+            }
+            if ((c & 0x80u) != 0u) {
+                terminated = 1;
+                break;
+            }
+        }
+        profile->object_names[name_index][written] = '\0';
+        if (!terminated) {
+            memset(profile->object_names, 0, sizeof(profile->object_names));
+            return 0;
+        }
+    }
+
+    profile->object_name_table_valid = 1;
+    return 1;
+}
+
 int csb_v1_runtime_object_name(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing,
@@ -8168,6 +8212,7 @@ int csb_v1_runtime_object_name(
     const char *name;
     int thing_type;
     int record_size;
+    int icon_index;
 
     if (!out || out_size == 0U) return 0;
     out[0] = '\0';
@@ -8186,10 +8231,18 @@ int csb_v1_runtime_object_name(
     if (!record) return 0;
 
     /* ReDMCSB OBJECT.C F0031 loads C199 icon-indexed names and F0034 draws
-     * the leader-hand object name after F0033 icon resolution.  Firestaff
-     * keeps this CSB-owned bridge record/subtype based until CSBGRAPH object
-     * name decoding is bound, so CSB never falls back to M11's DM1 thing
-     * arrays. */
+     * the leader-hand object name after F0033 icon resolution.  Prefer the
+     * CSB-owned decoded M564 table; the subtype fallback is retained only for
+     * startup/probe paths before CSBGRAPH has been bound. */
+    icon_index = csb_v1_runtime_object_icon_index(profile, thing);
+    if (profile->object_name_table_valid &&
+        icon_index >= 0 &&
+        icon_index < CSB_V1_OBJECT_NAME_COUNT &&
+        profile->object_names[icon_index][0] != '\0') {
+        snprintf(out, out_size, "%s", profile->object_names[icon_index]);
+        return out[0] != '\0';
+    }
+
     name = csb_v1_runtime_object_name_from_record(
         thing_type,
         record,
