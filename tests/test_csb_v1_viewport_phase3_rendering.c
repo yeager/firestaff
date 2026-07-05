@@ -140,6 +140,8 @@ static void test_runtime_projectile_and_explosion_overlays(void)
               framebuffer[center_offset], 0x0E);
     check_int("runtime.projectile_overlay.default_material_count",
               cfg.runtime_projectile_material_resolved_count, 0);
+    check_int("runtime.projectile_overlay.default_marker_count",
+              cfg.runtime_projectile_marker_drawn_count, 1);
 
     {
         int seen_thing = 0;
@@ -149,11 +151,14 @@ static void test_runtime_projectile_and_explosion_overlays(void)
         cfg.projectile_material_resolver = test_projectile_material_resolver;
         cfg.projectile_material_user = &seen_thing;
         cfg.runtime_projectile_material_resolved_count = 0;
+        cfg.runtime_projectile_marker_drawn_count = 0;
         csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
         check_int("runtime.projectile_overlay.material_color",
                   framebuffer[center_offset], material_color);
         check_int("runtime.projectile_overlay.material_count",
                   cfg.runtime_projectile_material_resolved_count, 1);
+        check_int("runtime.projectile_overlay.material_marker_count",
+                  cfg.runtime_projectile_marker_drawn_count, 1);
         check_int("runtime.projectile_overlay.material_thing",
                   seen_thing, 0x1400);
     }
@@ -165,6 +170,7 @@ static void test_runtime_projectile_and_explosion_overlays(void)
         cfg.projectile_sprite_user = &sprite_calls;
         cfg.runtime_projectile_sprite_drawn_count = 0;
         cfg.runtime_projectile_material_resolved_count = 0;
+        cfg.runtime_projectile_marker_drawn_count = 0;
         csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
         check_int("runtime.projectile_sprite.center",
                   framebuffer[center_offset], 0x05);
@@ -173,6 +179,8 @@ static void test_runtime_projectile_and_explosion_overlays(void)
                   cfg.runtime_projectile_sprite_drawn_count, 1);
         check_int("runtime.projectile_sprite.skips_material_count",
                   cfg.runtime_projectile_material_resolved_count, 0);
+        check_int("runtime.projectile_sprite.skips_marker_count",
+                  cfg.runtime_projectile_marker_drawn_count, 0);
         cfg.projectile_sprite_drawer = NULL;
         cfg.projectile_sprite_user = NULL;
     }

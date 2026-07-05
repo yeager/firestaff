@@ -555,6 +555,9 @@ typedef struct {
         int runtime_object_marker_drawn_count;
         int runtime_group_sprite_drawn_count;
         int runtime_group_marker_drawn_count;
+        int runtime_projectile_sprite_drawn_count;
+        int runtime_projectile_material_resolved_count;
+        int runtime_projectile_marker_drawn_count;
     } csbState;
 
     /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==
@@ -706,7 +709,10 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     int* outObjectIconCount,
     int* outObjectMarkerCount,
     int* outGroupSpriteCount,
-    int* outGroupMarkerCount);
+    int* outGroupMarkerCount,
+    int* outProjectileSpriteCount,
+    int* outProjectileMaterialCount,
+    int* outProjectileMarkerCount);
 int M11_GameView_ProbeDm1V2LiveEffectSeedCount(const M11_GameViewState* state);
 int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
                                         int relForward,

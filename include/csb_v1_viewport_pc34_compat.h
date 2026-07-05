@@ -75,6 +75,7 @@ typedef struct {
     CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
     void *projectile_sprite_user;
     int runtime_projectile_sprite_drawn_count;
+    int runtime_projectile_marker_drawn_count;
 
     /* Optional CSBgraphics.dat CustomBackgrounds bridge. The CSB boot layer
      * owns the plan/cache/skin-def bytes; the viewport can select a
