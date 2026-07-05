@@ -1,9 +1,10 @@
 /*
  * save_browser_m12.c — Save Game Browser for the Firestaff launcher.
  *
- * Scans a data directory for firestaff-*.sav files, reads their
- * binary headers to extract party metadata (champion names, dungeon
- * level), and exposes a navigable list with load/delete actions.
+ * Scans a data directory for Firestaff save files plus known
+ * original/CSBWin save basenames, reads their binary headers to extract
+ * party metadata (champion names, dungeon level), and exposes a
+ * navigable list with load/delete actions.
  *
  * Depends on: memory_savegame_pc34_compat.h (SaveGameHeader, F0786).
  */
@@ -89,10 +90,35 @@ static void build_pc34_export_basename(const char* srcName,
 /*  Internal helpers                                                   */
 /* ------------------------------------------------------------------ */
 
-/* Check if filename matches firestaff-*.sav pattern. */
+static int ascii_lower(int c) {
+    return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
+}
+
+static int ascii_equal_ci(const char* a, const char* b) {
+    if (!a || !b) return 0;
+    while (*a && *b) {
+        if (ascii_lower((unsigned char)*a) !=
+            ascii_lower((unsigned char)*b)) {
+            return 0;
+        }
+        ++a;
+        ++b;
+    }
+    return *a == '\0' && *b == '\0';
+}
+
+static int is_csb_original_save_basename(const char* name) {
+    return ascii_equal_ci(name, "CSBGAME.DAT") ||
+           ascii_equal_ci(name, "CSBGAME.BAK") ||
+           ascii_equal_ci(name, "DMSAVE.DAT") ||
+           ascii_equal_ci(name, "DMSAVE.BAK");
+}
+
+/* Check if filename matches a launcher-visible save candidate. */
 static int is_save_file(const char* name) {
     size_t len;
     if (!name) return 0;
+    if (is_csb_original_save_basename(name)) return 1;
     len = strlen(name);
     if (len < 15) return 0; /* "firestaff-.sav" minimum */
     if (strncmp(name, "firestaff-", 10) != 0) return 0;
@@ -108,6 +134,10 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
     int len;
 
     outId[0] = '\0';
+    if (is_csb_original_save_basename(filename)) {
+        snprintf(outId, (size_t)outSize, "csb");
+        return;
+    }
     if (strncmp(filename, "firestaff-", 10) != 0) return;
     start = filename + 10;
 

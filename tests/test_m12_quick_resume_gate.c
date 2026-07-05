@@ -331,6 +331,8 @@ int main(void) {
     char csbBrowserSavePath[512];
     char csbWinBrowserSavePath[512];
     char importedCsbWinBrowserSavePath[512];
+    char originalCsbGameBrowserSavePath[512];
+    char originalDmSaveBrowserSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -637,6 +639,65 @@ int main(void) {
     if (!expect(intent.savePath &&
                 strcmp(intent.savePath, importedCsbWinBrowserSavePath) == 0,
                 "save browser imported CSBWin launch intent should carry exact path")) return 1;
+
+    snprintf(originalCsbGameBrowserSavePath,
+             sizeof(originalCsbGameBrowserSavePath),
+             "%s/CSBGAME.DAT", tmpTemplate);
+    if (!expect(write_raw_csbgame_roster_quicksave(
+                    originalCsbGameBrowserSavePath),
+                "should write original-name CSBGAME browser save")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_csb_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for original CSBGAME name")) return 1;
+    if (!expect(select_save_entry(&state, "CSBGAME.DAT"),
+                "save browser should list CSBGAME.DAT")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark CSBGAME.DAT loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "csb") == 0,
+                "save browser should classify CSBGAME.DAT as csb")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "csb") == 0,
+                "save browser CSBGAME.DAT launch intent should identify CSB")) return 1;
+    if (!expect(intent.savePath &&
+                strcmp(intent.savePath, originalCsbGameBrowserSavePath) == 0,
+                "save browser CSBGAME.DAT launch intent should carry exact path")) return 1;
+
+    snprintf(originalDmSaveBrowserSavePath,
+             sizeof(originalDmSaveBrowserSavePath),
+             "%s/DMSAVE.DAT", tmpTemplate);
+    if (!expect(firestaff_test_write_csbwin_resume_fixture(
+                    originalDmSaveBrowserSavePath, 0),
+                "should write original-name CSBWin DMSAVE browser save")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_csb_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for original DMSAVE name")) return 1;
+    if (!expect(select_save_entry(&state, "DMSAVE.DAT"),
+                "save browser should list DMSAVE.DAT")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark DMSAVE.DAT loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "csb") == 0,
+                "save browser should classify DMSAVE.DAT as csb")) return 1;
+    if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
+                       "TIGGY") != NULL &&
+                strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
+                       "BORIS") != NULL,
+                "save browser should expose DMSAVE.DAT champion names")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "csb") == 0,
+                "save browser DMSAVE.DAT launch intent should identify CSB")) return 1;
+    if (!expect(intent.savePath &&
+                strcmp(intent.savePath, originalDmSaveBrowserSavePath) == 0,
+                "save browser DMSAVE.DAT launch intent should carry exact path")) return 1;
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);
