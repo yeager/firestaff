@@ -47,6 +47,8 @@ typedef struct {
     int view_dir;
     uint32_t leader_hand_object;
     uint32_t champion_inventory_objects[4][30];
+    int session_snapshot_valid;
+    DM2_V1_SessionState session_snapshot;
     DM2_MinionTable minions;
     int last_npc_level;
     int last_npc_x;
@@ -336,6 +338,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.leader_hand_object = 0u;
     memset(g_dm2_runtime.champion_inventory_objects, 0,
            sizeof(g_dm2_runtime.champion_inventory_objects));
+    dm2_v1_session_new(&g_dm2_runtime.session_snapshot);
+    g_dm2_runtime.session_snapshot_valid = 1;
     memset(&g_dm2_runtime.minions, 0, sizeof(g_dm2_runtime.minions));
     g_dm2_runtime.last_npc_level = -1;
     g_dm2_runtime.last_npc_x = -1;
@@ -360,6 +364,8 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
         return -1;
     }
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
+    rt->session_snapshot = *session;
+    rt->session_snapshot_valid = 1;
 
     /* skproject SKWINSPX/src/v4/skgame.cpp SELECT_LOAD_GAME and
      * skfileop.cpp READ_SAVEGAMES_FILENAMES route startup resume through a
@@ -852,6 +858,37 @@ int dm2_v1_runtime_export_inventory_to_session(DM2_V1_SessionState *session) {
                 g_dm2_runtime.champion_inventory_objects[c][slot];
         }
     }
+    return 0;
+}
+
+int dm2_v1_runtime_export_session(DM2_V1_SessionState *session) {
+    DM2_V1_GameState *gs;
+    if (!session || !g_dm2_runtime.session_snapshot_valid) {
+        return -1;
+    }
+    *session = g_dm2_runtime.session_snapshot;
+    if (g_dm2_runtime.boot && g_dm2_runtime.boot->dm2_state) {
+        gs = (DM2_V1_GameState *)g_dm2_runtime.boot->dm2_state;
+        session->party_x = (uint16_t)gs->party_x;
+        session->party_y = (uint16_t)gs->party_y;
+        session->party_dir = (uint8_t)(gs->party_dir & 3);
+        session->party_level = (uint8_t)gs->current_level;
+        session->outdoor_mode = (uint8_t)(gs->outdoor ? 1 : 0);
+        session->gold = (uint32_t)gs->gold;
+        session->reputation = (int16_t)gs->reputation;
+        session->time_of_day_minutes = (uint16_t)gs->time_of_day;
+    }
+    session->game_tick = (uint32_t)g_dm2_runtime.tick_count;
+    session->rain_intensity =
+        (uint8_t)g_dm2_runtime.weather.weather_intensity;
+    session->original_minions = g_dm2_runtime.minions;
+    if (dm2_v1_runtime_export_inventory_to_session(session) != 0) {
+        return -1;
+    }
+    if (!dm2_v1_session_validate(session)) {
+        return -1;
+    }
+    g_dm2_runtime.session_snapshot = *session;
     return 0;
 }
 

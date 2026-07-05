@@ -12100,6 +12100,51 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         M12_Config_SetLastSavePath(path);
         return 1;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        DM2_V1_BootProfile *profile =
+            (DM2_V1_BootProfile *)state->dm2BootProfile;
+        DM2_V1_SessionState session;
+        char savePath[M11_GAME_VIEW_PATH_CAPACITY];
+        int rc;
+        if (!profile) {
+            m11_set_status(state, "SAVE", "DM2 PROFILE MISSING");
+            return 0;
+        }
+        if (!profile->save_root[0]) {
+            dm2_v1_boot_set_save_root(profile, NULL);
+        }
+        if (!FSP_CreateDirectoryRecursive(profile->save_root)) {
+            m11_set_status(state, "SAVE", "DM2 SAVE DIR FAILED");
+            return 0;
+        }
+        memset(&session, 0, sizeof(session));
+        if (dm2_v1_runtime_export_session(&session) != 0) {
+            m11_set_status(state, "SAVE", "DM2 EXPORT FAILED");
+            return 0;
+        }
+        if (dm2_v1_session_save_last_session(profile->save_root,
+                                             "Firestaff DM2",
+                                             &session) != 0) {
+            m11_set_status(state, "SAVE", "DM2 WRITE FAILED");
+            return 0;
+        }
+        rc = FSP_JoinPath(savePath, sizeof(savePath),
+                          profile->save_root, "SKSave.dat");
+        if (rc) {
+            M12_Config_SetLastSavePath(savePath);
+        }
+        m11_dm2_mirror_session_party(state, &session);
+        m11_sync_dm2_state_from_runtime(state);
+        state->lastSaveTick = (uint32_t)state->dm2State.tick_count;
+        m11_set_status(state, "SAVE", "DM2 SKSAVE WRITTEN");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "DM2 SAVE SLOT READY");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "RESUME TICK %u FROM %s",
+                 (unsigned int)state->dm2State.tick_count,
+                 profile->save_root);
+        return 1;
+    }
 
     /* ReDMCSB LOADSAVE.C:2721-2731 restores the party position and facing.
      * Firestaff keeps the explored-cell presentation state in a sidecar so
@@ -14271,6 +14316,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             state->mapOverlayActive = 0;
             M11_GameView_ToggleInventoryPanel(state);
             return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_SAVE_GAME) {
+            return M11_GameView_QuickSave(state)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
         }
         if (state->inventoryPanelActive) {
             return input == M12_MENU_INPUT_NONE

@@ -1108,6 +1108,22 @@ int main(void) {
         expect_true(dm2_v1_runtime_get_champion_inventory_object(
                         0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
                     "M11 DM2 resume slot place writes ObjectID back to runtime inventory");
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_SAVE_GAME) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 resume save command writes runtime inventory session");
+        snprintf(save_path, sizeof(save_path), "%s%sSKSave.dat",
+                 save_root, TEST_PATH_SEP);
+        memset(&resume_session, 0, sizeof(resume_session));
+        expect_true(dm2_v1_session_load_last_session(save_root,
+                                                     &resume_session) == 0,
+                    "M11 DM2 resume save command writes loadable SKSave.dat");
+        expect_true(resume_session.original_leader_hand_object == 0u,
+                    "M11 DM2 saved session preserves cleared leader hand");
+        expect_true(((DM2_ChampionRecord *)resume_session.champion_data[0])
+                        ->inventory[CHAMPION_SLOT_HEAD] ==
+                        loadable_icon_handle,
+                    "M11 DM2 saved session preserves runtime inventory slot ObjectID");
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 resume Back closes inventory slot ObjectID panel");
