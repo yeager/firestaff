@@ -1629,14 +1629,88 @@ static void test_c37_group_approach_creates_empty_destination_thing_list(void)
               profile.active_group_state[0].prior_map_y == 0 &&
               profile.active_group_state[0].home_map_x == 0 &&
               profile.active_group_state[0].home_map_y == 0 &&
-              (profile.active_group_state[0].directions & 0x0003u) == 2u,
-          "C37 empty-destination move creates native active-group current/prior/home state");
+              (((profile.active_group_state[0].directions & 0x0003u) == 1u) ||
+               ((profile.active_group_state[0].directions & 0x0003u) == 3u)),
+          "C37 empty-destination move creates native active-group state with F0205 one-step turn");
     event_index = find_queued_event_type(&profile,
                                          DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
     CHECK(event_index >= 0 &&
               profile.timeline_queue.events[event_index].b_mapX == 0 &&
               profile.timeline_queue.events[event_index].b_mapY == 1,
           "C37 empty-destination move requeues behavior from the created target list");
+}
+
+static void test_c37_group_approach_turns_moved_group_per_creature(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[144];
+    struct DM1_Event_V1 ev;
+    uint16_t directions;
+
+    printf("\n-- CSB C37 moved-group per-creature turn --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[4] = 70;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(0, 1)] = (uint8_t)(1u << 5);
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 60 + 1 * 2, 1);
+    test_put_le16(raw, 60 + 2 * 2, 1);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 68, 0xffffu);
+    test_put_le16(raw, 70, 0xfffeu);
+    test_put_le16(raw, 72, 0u);
+    raw[74] = 9u;    /* Mummy: ordinary two-creature group. */
+    raw[75] = 0x04u; /* creature 0 cell 0, creature 1 cell 1. */
+    test_put_le16(raw, 76, 40u);
+    test_put_le16(raw, 78, 40u);
+    test_put_le16(raw, 84, (uint16_t)((1u << 5) | 7u)); /* C7, dir north. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 0;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    ev.priority = 234u;
+    ev.b_mapX = 0;
+    ev.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "C37 moved-group turn fixture queues the approach event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C37 moved-group turn fixture dispatches the approach event");
+
+    directions = profile.active_group_state[0].directions;
+    CHECK(test_get_le16(raw, 66) == 0xfffeu &&
+              test_get_le16(raw, 68) == (uint16_t)(4u << 10),
+          "C37 moved-group turn fixture moves the group to the target square");
+    CHECK(((test_get_le16(raw, 84) >> 8) & 0x03u) == 2u,
+          "C37 moved-group turn fixture writes raw C04 target-facing direction");
+    CHECK(profile.active_group_state_count == 1u &&
+              profile.active_group_state[0].valid &&
+              profile.active_group_state[0].map_x == 0 &&
+              profile.active_group_state[0].map_y == 1 &&
+              ((directions & 0x0003u) == 1u ||
+               (directions & 0x0003u) == 3u),
+          "C37 moved-group applies F0206/F0205 one-step turn to creature 0");
 }
 
 static void test_c37_group_approach_defers_when_destination_has_group(void)
@@ -5869,6 +5943,7 @@ int main(void)
     test_timeline_square_events_mutate_real_format_map_bytes();
     test_timeline_corridor_text_and_generator_mutations();
     test_c37_group_approach_creates_empty_destination_thing_list();
+    test_c37_group_approach_turns_moved_group_per_creature();
     test_c37_group_approach_defers_when_destination_has_group();
     test_c37_blocked_wall_updates_group_direction();
     test_c37_blocked_wall_mirrors_half_square_pair_direction();
