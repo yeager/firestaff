@@ -13,6 +13,7 @@
 #include "m11_game_view.h"
 #include "theron_v1_boot.h"
 #include "theron_v1_save_load.h"
+#include "theron_v1_srm_classifier.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_world.h"
 
@@ -29,6 +30,10 @@
 #include <unistd.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
 #define PATH_SEP "/"
+#endif
+
+#ifndef FIRESTAFF_HAS_ZLIB
+#define FIRESTAFF_HAS_ZLIB 0
 #endif
 
 unsigned short G2157_;
@@ -49,6 +54,21 @@ static int write_file(const char* path, const char* text) {
     if (!fp) return 0;
     if (text && text[0]) {
         fwrite(text, 1, strlen(text), fp);
+    }
+    fclose(fp);
+    return 1;
+}
+
+static int write_bytes(const char* path,
+                       const unsigned char* bytes,
+                       size_t size) {
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (size > 0 && bytes) {
+        if (fwrite(bytes, 1, size, fp) != size) {
+            fclose(fp);
+            return 0;
+        }
     }
     fclose(fp);
     return 1;
@@ -75,6 +95,23 @@ static int test_set_home(const char* path) {
     return path ? setenv("HOME", path, 1) == 0 : unsetenv("HOME") == 0;
 #endif
 }
+
+static int test_setenv_name(const char* name, const char* value) {
+#if defined(_WIN32)
+    return _putenv_s(name, value ? value : "") == 0;
+#else
+    return value ? setenv(name, value, 1) == 0 : unsetenv(name) == 0;
+#endif
+}
+
+static const unsigned char g_valid_gzip_srm[] = {
+    0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff,
+    0x73, 0x0b, 0x0e, 0x09, 0x0c, 0x08, 0x72, 0x37, 0x64, 0x64,
+    0x66, 0x66, 0xd4, 0x61, 0x64, 0x60, 0x60, 0x14, 0x60, 0x60,
+    0x60, 0x02, 0x62, 0x66, 0x20, 0x66, 0x01, 0x62, 0x56, 0x20,
+    0x66, 0x03, 0x62, 0x76, 0x20, 0x06, 0x00, 0x50, 0x8a, 0x0c,
+    0xc3, 0x2c, 0x00, 0x00, 0x00
+};
 
 static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     int n = 0;
@@ -417,6 +454,90 @@ int main(void) {
                 "M11 Theron stage 2 forcefield starts with current Soul Room selection");
 
     M11_GameView_Shutdown(&view);
+
+#if FIRESTAFF_HAS_ZLIB
+    {
+        char srm_temp_dir[512];
+        char srm_theron_dir[512];
+        char srm_track_path[512];
+        char srm_root[512];
+        char srm_slot_path[512];
+        M11_GameViewState srm_view;
+        Theron_V1_World* srm_world;
+
+        expect_true(make_temp_dir(srm_temp_dir),
+                    "SRM temporary root created");
+        snprintf(srm_theron_dir,
+                 sizeof(srm_theron_dir),
+                 "%s%stheron",
+                 srm_temp_dir,
+                 PATH_SEP);
+        expect_true(TEST_MKDIR(srm_theron_dir) == 0,
+                    "SRM theron subdir created");
+        snprintf(srm_track_path,
+                 sizeof(srm_track_path),
+                 "%s%s%s",
+                 srm_theron_dir,
+                 PATH_SEP,
+                 "Theron's Quest (US) (Track 02).bin");
+        expect_true(write_file(srm_track_path,
+                               "fake-track02-without-bank-markers"),
+                    "SRM fake Track 02 file written");
+        snprintf(srm_root,
+                 sizeof(srm_root),
+                 "%s%ssrm",
+                 srm_temp_dir,
+                 PATH_SEP);
+        expect_true(TEST_MKDIR(srm_root) == 0,
+                    "SRM save root created");
+        snprintf(srm_slot_path,
+                 sizeof(srm_slot_path),
+                 "%s%sslot1.srm",
+                 srm_root,
+                 PATH_SEP);
+        expect_true(write_bytes(srm_slot_path,
+                                g_valid_gzip_srm,
+                                sizeof(g_valid_gzip_srm)) == 1,
+                    "SRM slot 1 written");
+        expect_true(test_setenv_name("FIRESTAFF_THERON_SRM_DIR", srm_root),
+                    "SRM env root set");
+
+        memset(&spec, 0, sizeof(spec));
+        spec.title = "THERON'S QUEST";
+        spec.gameId = "theron";
+        spec.sourceId = "theron";
+        spec.dataDir = srm_temp_dir;
+        spec.verifiedAssetPath = srm_track_path;
+        spec.verifiedAssetMd5 = "f23601102138f87c33025877767ebf76";
+        spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
+        spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+        spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+
+        M11_GameView_Init(&srm_view);
+        expect_true(M11_GameView_Start(&srm_view, &spec),
+                    "M11 Theron SRM start succeeds");
+        srm_world = (Theron_V1_World*)srm_view.theronWorld;
+        expect_true(srm_view.theronState.save_resume_claim ==
+                        THERON_V1_STARTUP_RESUME_SRM &&
+                    srm_view.theronState.save_resume_srm_active_slot == 1 &&
+                    srm_view.theronState.save_resume_srm_import_status ==
+                        THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                    "M11 Theron exposes decoded SRM Continue slot");
+        expect_true(M11_GameView_HandleInput(&srm_view, M12_MENU_INPUT_UP) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    srm_view.theronState.save_resume_continue_focus == 1,
+                    "M11 Theron SRM Continue row receives focus");
+        expect_true(M11_GameView_HandleInput(&srm_view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW,
+                    "M11 Theron SRM Continue loads decoded envelope");
+        expect_true(srm_world != NULL &&
+                    srm_world->progression.current_dungeon ==
+                        THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                    srm_world->progression.quest_items_collected == 0x03,
+                    "M11 Theron SRM Continue applies decoded progression");
+        M11_GameView_Shutdown(&srm_view);
+    }
+#endif
 
     if (g_failures) {
         fprintf(stderr, "Theron V1 M11 direct-launch checks FAILED (%d failures)\n",

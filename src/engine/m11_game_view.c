@@ -9758,6 +9758,157 @@ static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_theron_srm_continue_available(const M11_GameViewState* state) {
+    if (!state) {
+        return 0;
+    }
+    return state->theronState.save_resume_srm_active_slot >= 0 &&
+           state->theronState.save_resume_srm_import_status ==
+                THERON_V1_SRM_PROGRESS_IMPORT_OK;
+}
+
+static int m11_theron_tqsv_continue_available(const M11_GameViewState* state) {
+    if (!state) {
+        return 0;
+    }
+    return state->theronState.save_resume_active_slot >= 0 &&
+           (state->theronState.save_resume_claim ==
+                THERON_V1_STARTUP_RESUME_TQSV ||
+            state->theronState.save_resume_claim ==
+                THERON_V1_STARTUP_RESUME_DUAL);
+}
+
+static int m11_theron_continue_srm_startup(M11_GameViewState* state,
+                                           char* receipt,
+                                           size_t receipt_cap) {
+    Theron_V1_World* world;
+    char root[THERON_V1_SRM_PATH_MAX];
+    char path[THERON_V1_SRM_PATH_MAX];
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    Theron_V1SrmEnvelopeReceipt envelope;
+    Theron_V1SrmEnvelopeKind kind;
+    Theron_StartupFlow flow;
+    int slot;
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!state) {
+        return 0;
+    }
+    world = (Theron_V1_World*)state->theronWorld;
+    if (!world) {
+        return 0;
+    }
+    if (!m11_theron_srm_continue_available(state)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Continue requires decoded SRM progress");
+        }
+        return 0;
+    }
+    slot = state->theronState.save_resume_srm_active_slot;
+    if (!theron_v1_srm_default_root(root) ||
+        !theron_v1_srm_slot_path(root, slot, path)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "SRM slot path failed");
+        }
+        return 0;
+    }
+
+    memset(scratch, 0, sizeof(scratch));
+    memset(&envelope, 0, sizeof(envelope));
+    kind = theron_v1_srm_decode_path(path,
+                                     slot,
+                                     scratch,
+                                     sizeof(scratch),
+                                     &envelope);
+    if (kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION &&
+        kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "SRM decode unsupported: %s",
+                     theron_v1_srm_envelope_kind_name(kind));
+        }
+        return 0;
+    }
+    if (!envelope.progression.restored) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "SRM progression missing");
+        }
+        return 0;
+    }
+
+    theron_v1_dungeon_progression_init(&world->progression);
+    world->progression.current_dungeon = envelope.progression.current_dungeon;
+    world->progression.current_level = envelope.progression.current_level;
+    world->progression.quest_items_collected =
+        envelope.progression.quest_items_bitmask;
+    world->progression.dungeon_playtime_seconds =
+        envelope.progression.dungeon_playtime_seconds;
+    for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
+        world->progression.dungeon_seeds[i] =
+            envelope.progression.dungeon_seeds[i];
+    }
+    if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY &&
+        envelope.party.restored) {
+        /* The SRM decoder imports the bounded Firestaff readiness
+         * party body only.  Unknown real Save Disk bodies never reach
+         * this branch. */
+        Theron_DungeonProgression decodedProgression;
+        Theron_V1_Party decodedParty;
+        Theron_V1SrmPartyImportReceipt partyReceipt;
+        uint8_t *payload = scratch;
+        size_t payload_size = envelope.inflate_payload_size;
+        if (theron_v1_srm_decode_progression_party_payload(
+                payload,
+                payload_size,
+                &decodedProgression,
+                &decodedParty,
+                &partyReceipt) == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
+            world->progression = decodedProgression;
+            world->party = decodedParty;
+            world->party.champion_count = 1;
+            world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+        }
+    } else {
+        world->party.champion_count = 1;
+        world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+    }
+    world->current_dungeon = (int)world->progression.current_dungeon;
+    world->current_level = world->progression.current_level > 0
+        ? (int)world->progression.current_level - 1
+        : 0;
+    world->object_count = 0;
+    world->timer_count = 0;
+    world->transition_pending = 0;
+    world->quest_items_in_dungeon =
+        world->progression.quest_items_in_current_dungeon;
+    world->dungeon_complete = 0;
+    memset(world->level_loaded, 0, sizeof(world->level_loaded));
+
+    theron_v1_startup_flow_init(&flow);
+    flow.selected_dungeon = world->progression.current_dungeon;
+    m11_theron_sync_startup_state(state, &flow);
+    state->theronState.level_loaded = 0;
+    state->theronState.startup_cursor = 0;
+    state->theronState.save_resume_continue_focus = 0;
+    state->theronState.party_x = world->party.leader_x;
+    state->theronState.party_y = world->party.leader_y;
+    state->theronState.party_dir = world->party.leader_dir;
+    state->theronState.tick_count = (int)world->world_tick;
+
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 "continued srm slot=%d kind=%s dungeon=%d",
+                 slot,
+                 theron_v1_srm_envelope_kind_name(kind),
+                 (int)world->progression.current_dungeon);
+    }
+    return 1;
+}
+
 static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state,
                                                         char* receipt,
                                                         size_t receipt_cap) {
@@ -9902,6 +10053,17 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         saveResumeReady ? (int)saveResume.resume_claim : -1;
     state->theronState.save_resume_active_slot =
         saveResumeReady ? saveResume.tqsv_active_slot : -1;
+    state->theronState.save_resume_srm_active_slot =
+        saveResumeReady ? saveResume.srm_first_recognized_slot : -1;
+    state->theronState.save_resume_srm_import_status =
+        saveResumeReady ? (int)saveResume.srm_progress_import_status
+                        : (int)THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    state->theronState.save_resume_srm_current_dungeon =
+        saveResumeReady ? saveResume.srm_progress_current_dungeon : -1;
+    state->theronState.save_resume_srm_current_level =
+        saveResumeReady ? saveResume.srm_progress_current_level : -1;
+    state->theronState.save_resume_srm_quest_mask =
+        saveResumeReady ? saveResume.srm_progress_quest_mask : -1;
     state->theronState.save_resume_continue_focus = 0;
     state->theronState.save_resume_tqsv_slots =
         saveResumeReady ? saveResume.tqsv_valid_slots : 0;
@@ -11726,12 +11888,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             !state->theronState.level_loaded) {
             if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
                 int selected = state->theronState.selected_dungeon;
-                int has_tqsv_continue =
-                    state->theronState.save_resume_active_slot >= 0 &&
-                    (state->theronState.save_resume_claim ==
-                        THERON_V1_STARTUP_RESUME_TQSV ||
-                     state->theronState.save_resume_claim ==
-                        THERON_V1_STARTUP_RESUME_DUAL);
+                int has_continue =
+                    m11_theron_tqsv_continue_available(state) ||
+                    m11_theron_srm_continue_available(state);
                 if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
                     selected > THERON_DUNGEON_COUNT) {
                     selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
@@ -11741,7 +11900,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                         state->theronState.save_resume_continue_focus = 0;
                     } else if (selected > THERON_DUNGEON_1_HALL_OF_RECORDS) {
                         --selected;
-                    } else if (has_tqsv_continue) {
+                    } else if (has_continue) {
                         state->theronState.save_resume_continue_focus = 1;
                     }
                     state->theronState.selected_dungeon = selected;
@@ -11763,9 +11922,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     Theron_StartupFlow flow;
                     char receipt[96];
                     if (state->theronState.save_resume_continue_focus) {
-                        if (!m11_theron_continue_tqsv_startup(state,
+                        int continued = m11_theron_tqsv_continue_available(state)
+                            ? m11_theron_continue_tqsv_startup(state,
+                                                               receipt,
+                                                               sizeof(receipt))
+                            : m11_theron_continue_srm_startup(state,
                                                               receipt,
-                                                              sizeof(receipt))) {
+                                                              sizeof(receipt));
+                        if (!continued) {
                             m11_set_status(state, "STARTUP",
                                            receipt[0] ? receipt : "CONTINUE FAILED");
                             return M11_GAME_INPUT_REDRAW;
@@ -34965,12 +35129,9 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
 
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         int rowY = 58;
-        int has_tqsv_continue =
-            state->theronState.save_resume_active_slot >= 0 &&
-            (state->theronState.save_resume_claim ==
-                THERON_V1_STARTUP_RESUME_TQSV ||
-             state->theronState.save_resume_claim ==
-                THERON_V1_STARTUP_RESUME_DUAL);
+        int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
+        int has_srm_continue = m11_theron_srm_continue_available(state);
+        int has_continue = has_tqsv_continue || has_srm_continue;
         selected = state->theronState.selected_dungeon;
         if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
             selected > THERON_DUNGEON_COUNT) {
@@ -34978,13 +35139,16 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       34, 44, "CHOOSE A STAGE", &g_text_shadow);
-        if (has_tqsv_continue) {
+        if (has_continue) {
             char continueRow[96];
             snprintf(continueRow,
                      sizeof(continueRow),
-                     "%c CONTINUE  SLOT %d",
+                     "%c CONTINUE  %s SLOT %d",
                      state->theronState.save_resume_continue_focus ? '>' : ' ',
-                     state->theronState.save_resume_active_slot);
+                     has_tqsv_continue ? "TQSV" : "SRM",
+                     has_tqsv_continue
+                        ? state->theronState.save_resume_active_slot
+                        : state->theronState.save_resume_srm_active_slot);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           40, rowY, continueRow,
                           state->theronState.save_resume_continue_focus
@@ -35011,7 +35175,7 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       34, 166,
-                      has_tqsv_continue
+                      has_continue
                           ? "UP/DOWN SELECT  ENTER CONTINUE/STAGE"
                           : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM",
                       &g_text_small);

@@ -500,6 +500,11 @@ typedef struct {
         int save_resume_verdict;
         int save_resume_claim;
         int save_resume_active_slot;
+        int save_resume_srm_active_slot;
+        int save_resume_srm_import_status;
+        int save_resume_srm_current_dungeon;
+        int save_resume_srm_current_level;
+        int save_resume_srm_quest_mask;
         int save_resume_continue_focus;
         int save_resume_tqsv_slots;
         int save_resume_srm_slots;
