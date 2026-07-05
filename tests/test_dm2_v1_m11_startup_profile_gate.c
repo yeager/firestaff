@@ -1070,6 +1070,38 @@ int main(void) {
                         slot_w,
                         slot_h),
                     "M11 DM2 resume inventory draws GDAT-backed slot ObjectID icon");
+        dm2_v1_runtime_set_leader_hand_object(0u);
+        view.dm2State.leader_hand_object = 0u;
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        viewport_x + slot_x + (slot_w / 2),
+                        viewport_y + slot_y + (slot_h / 2),
+                        M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 resume inventory click picks up a slot ObjectID");
+        expect_true(M11_GameView_GetDm2InventoryObject(
+                        &view, 0, CHAMPION_SLOT_HEAD) == 0u,
+                    "M11 DM2 resume slot pickup clears the ObjectID slot");
+        expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
+                        loadable_icon_handle,
+                    "M11 DM2 resume slot pickup moves ObjectID to leader hand");
+        expect_true(dm2_v1_runtime_get_leader_hand_object() ==
+                        loadable_icon_handle,
+                    "M11 DM2 resume slot pickup mirrors ObjectID into runtime leader hand");
+        expect_true(M11_GameView_GetV1LeaderHandObjectIconIndex(&view) == -1,
+                    "M11 DM2 resume slot pickup does not synthesize a V1 leader-hand icon");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        viewport_x + slot_x + (slot_w / 2),
+                        viewport_y + slot_y + (slot_h / 2),
+                        M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 resume inventory click places leader-hand ObjectID back into slot");
+        expect_true(M11_GameView_GetDm2InventoryObject(
+                        &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                    "M11 DM2 resume slot place restores the ObjectID slot");
+        expect_true(M11_GameView_GetDm2LeaderHandObject(&view) == 0u,
+                    "M11 DM2 resume slot place clears leader-hand ObjectID");
+        expect_true(dm2_v1_runtime_get_leader_hand_object() == 0u,
+                    "M11 DM2 resume slot place clears runtime leader hand");
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 resume Back closes inventory slot ObjectID panel");
@@ -1077,6 +1109,9 @@ int main(void) {
     {
         char leader_name[32];
 
+        dm2_v1_runtime_set_leader_hand_object(dm2_db_make_handle(10, 0x0033));
+        view.dm2State.leader_hand_object =
+            dm2_v1_runtime_get_leader_hand_object();
         expect_true(M11_GameView_GetV1LeaderHandObjectIconIndex(&view) == -1,
                     "M11 DM2 leader-hand does not fake a V1 object icon");
         expect_true(M11_GameView_GetV1LeaderHandObjectName(&view,
