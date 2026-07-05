@@ -11,6 +11,7 @@
 
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_runtime_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -495,6 +496,92 @@ int main(void)
         check((unsigned short)(raw[12] | ((unsigned short)raw[13] << 8)) ==
                   THING_ENDOFLIST,
               "CSB returned chest object terminates the compact runtime chain");
+
+        {
+            int empty_projectile;
+            int full_projectile;
+            int empty_energy;
+            int full_energy;
+            int projectile_count_before_m11;
+            int route_space = M11_DM1_MOUSE_SPACE_NONE;
+            int route_zone = 0;
+            int route_command;
+
+            state.actionDisabledTicks[0] = 0;
+            profile.runtime.game_time = 200;
+            profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+                chest;
+            write_u16(raw + 18, THING_ENDOFLIST);
+            check(csb_v1_runtime_throw_action_hand(
+                      &profile.runtime,
+                      0,
+                      &empty_projectile) == 1,
+                  "CSB runtime can throw an empty chest from action hand");
+            empty_energy =
+                profile.runtime.projectiles.entries[empty_projectile].kineticEnergy;
+
+            profile.runtime.game_time = 200;
+            profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+                chest;
+            write_u16(raw + 18, ven_potion);
+            check(csb_v1_runtime_throw_action_hand(
+                      &profile.runtime,
+                      0,
+                      &full_projectile) == 1,
+                  "CSB runtime can throw a filled chest from action hand");
+            full_energy =
+                profile.runtime.projectiles.entries[full_projectile].kineticEnergy;
+            check(full_energy != empty_energy,
+                  "CSB filled-chest THROW energy includes CONTAINER.Slot contents");
+
+            projectile_count_before_m11 = profile.runtime.projectiles.count;
+            state.inventoryPanelActive = 0;
+            state.v1ObjectDescriptionPanelActive = 0;
+            state.dialogOverlayActive = 0;
+            state.actingChampionOrdinal = 0;
+            state.showDebugHUD = 0;
+            state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+                dagger;
+            profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+                dagger;
+            write_u16(raw + 18, ven_potion);
+            check(M11_GameView_SetV1LeaderHandObject(&state, chest),
+                  "CSB leader hand can hold a filled chest before viewport throw");
+            route_command = M11_GameView_GetV1MouseCommandForPoint(
+                M11_DM1_MOUSE_LIST_MOVEMENT,
+                100,
+                33 + 20,
+                M11_DM1_MOUSE_MASK_LEFT,
+                &route_space,
+                &route_zone);
+            check(route_command == 80 &&
+                      route_space == M11_DM1_MOUSE_SPACE_SCREEN &&
+                      route_zone == 7,
+                  "CSB viewport throw test point resolves to C080/C007");
+            check(M11_GameView_HandlePointerButton(
+                      &state,
+                      100,
+                      33 + 20,
+                      M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+                  "CSB viewport leader-hand throw routes through CSB runtime");
+            check(M11_GameView_GetV1LeaderHandThing(&state) == THING_NONE,
+                  "CSB leader hand clears after accepted viewport throw");
+            check(profile.runtime.party_state.Champions[0]
+                      .Slots[CSB_V1_SLOT_ACTION_HAND] == dagger,
+                  "CSB leader-hand throw restores runtime action hand");
+            check(state.world.party.champions[0]
+                      .inventory[CHAMPION_SLOT_ACTION_HAND] == dagger,
+                  "CSB leader-hand throw restores M11 action-hand mirror");
+            check(profile.runtime.projectiles.count ==
+                      projectile_count_before_m11 + 1,
+                  "CSB leader-hand throw creates one runtime projectile");
+            check(profile.runtime.projectiles
+                      .entries[projectile_count_before_m11]
+                      .reserved1 == chest,
+                  "CSB leader-hand throw projectile preserves chest identity");
+            check(state.world.projectiles.count == 0,
+                  "CSB leader-hand throw does not allocate DM1 projectiles");
+        }
     }
 
     if (g_failures != 0) {
