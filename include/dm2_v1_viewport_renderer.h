@@ -94,6 +94,14 @@ typedef struct {
  * Sourced from SKULLWIN c_gui_vp.cpp wall geometry constants. */
 extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 
+#define DM2_V1_VIEWPORT_GFX_FLOOR   (-1)
+#define DM2_V1_VIEWPORT_GFX_CEILING (-2)
+#define DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE (-0x100)
+#define DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST 0x22
+
+int dm2_v1_viewport_wall_field_for_square(int view_square);
+int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
+
 /* ── View square state ──────────────────────────────────────────── */
 typedef struct {
     uint8_t  square_type;     /* 5-bit tile type */

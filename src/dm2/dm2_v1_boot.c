@@ -22,6 +22,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <string.h>
@@ -30,9 +31,8 @@
 
 #define DM2_GDAT_GFXSET_FLOOR 0x00
 #define DM2_GDAT_GFXSET_CEIL  0x01
-#define DM2_GDAT_GFXSET_FRONT_WALL 0x00
 #define DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL 0x01
-#define DM2_GRAPHIC_WALL_FRONT (-3)
+#define DM2_GDAT_WALL_FIELD_CACHE_LIMIT 0x40
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -56,9 +56,9 @@ typedef struct {
     uint8_t *floor_pixels;
     int floor_w;
     int floor_h;
-    uint8_t *wall_pixels;
-    int wall_w;
-    int wall_h;
+    uint8_t *wall_pixels[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
+    int wall_w[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
+    int wall_h[DM2_GDAT_WALL_FIELD_CACHE_LIMIT];
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -188,7 +188,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     if (!gfx) return;
     dm2_v1_asset_free_pixels(gfx->ceiling_pixels);
     dm2_v1_asset_free_pixels(gfx->floor_pixels);
-    dm2_v1_asset_free_pixels(gfx->wall_pixels);
+    for (int i = 0; i < DM2_GDAT_WALL_FIELD_CACHE_LIMIT; ++i) {
+        dm2_v1_asset_free_pixels(gfx->wall_pixels[i]);
+    }
     dm2_v1_asset_loader_free(&gfx->loader);
     free(gfx->bytes);
     memset(gfx, 0, sizeof(*gfx));
@@ -720,27 +722,32 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     if (!profile || !profile->graphics_dat) return -1;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
 
-    if (gdat_index == -2) {
+    if (gdat_index == DM2_V1_VIEWPORT_GFX_CEILING) {
         cache_pixels = &gfx->ceiling_pixels;
         cache_w = &gfx->ceiling_w;
         cache_h = &gfx->ceiling_h;
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = 0;
         field = DM2_GDAT_GFXSET_CEIL;
-    } else if (gdat_index == -1) {
+    } else if (gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
         cache_pixels = &gfx->floor_pixels;
         cache_w = &gfx->floor_w;
         cache_h = &gfx->floor_h;
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = 0;
         field = DM2_GDAT_GFXSET_FLOOR;
-    } else if (gdat_index == DM2_GRAPHIC_WALL_FRONT) {
-        cache_pixels = &gfx->wall_pixels;
-        cache_w = &gfx->wall_w;
-        cache_h = &gfx->wall_h;
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
+                   DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) {
+        field = DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index;
+        if (field < 0 || field >= DM2_GDAT_WALL_FIELD_CACHE_LIMIT) {
+            return -1;
+        }
+        cache_pixels = &gfx->wall_pixels[field];
+        cache_w = &gfx->wall_w[field];
+        cache_h = &gfx->wall_h[field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
-        field = DM2_GDAT_GFXSET_FRONT_WALL;
     } else {
         return -1;
     }

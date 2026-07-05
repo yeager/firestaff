@@ -21,6 +21,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +71,10 @@ static int synthetic_viewport_asset_fetch(void *user,
         if (out_stride) *out_stride = 16;
         return 0;
     }
-    if (gdat_index == -3) {
+    if (gdat_index <=
+        DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
+            DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
+        DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index < 0x40) {
         if (out_pixels) *out_pixels = s_wall_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
@@ -159,14 +163,14 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   dm2_v1_runtime_get_party_y(),
                   framebuffer, 320, 320, 200) == 0,
               "runtime renders through an injected viewport asset provider");
-        CHECK(fetch_count == 3,
-              "runtime viewport provider receives ceiling, floor and wall fetches");
+        CHECK(fetch_count == 12,
+              "runtime viewport provider receives ceiling, floor and viewport-cell wall fetches");
         CHECK(dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
               dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0,
               "runtime records asset-backed floor/ceiling draw counts");
-        CHECK(dm2_v1_runtime_last_asset_wall_count() == 1 &&
+        CHECK(dm2_v1_runtime_last_asset_wall_count() == 10 &&
               dm2_v1_runtime_last_fallback_wall_count() == 0,
-              "runtime records asset-backed wall draw counts");
+              "runtime records asset-backed viewport-cell wall draw counts");
         CHECK(framebuffer[0] == 1,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);

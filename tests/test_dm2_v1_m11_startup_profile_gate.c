@@ -508,9 +508,9 @@ int main(void) {
     expect_true(dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
                 dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0,
                 "M11 DM2 draw uses real GRAPHICSSET GDAT floor/ceiling strips");
-    expect_true(dm2_v1_runtime_last_asset_wall_count() == 1 &&
+    expect_true(dm2_v1_runtime_last_asset_wall_count() == 10 &&
                 dm2_v1_runtime_last_fallback_wall_count() == 0,
-                "M11 DM2 draw uses a real GRAPHICSSET GDAT wall image");
+                "M11 DM2 draw uses real GRAPHICSSET GDAT viewport-cell wall images");
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;
