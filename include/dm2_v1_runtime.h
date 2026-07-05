@@ -94,6 +94,8 @@ int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
 int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
+uint32_t dm2_v1_runtime_get_leader_hand_object(void);
+void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 uint32_t dm2_v1_runtime_get_weather_seed(void);
 void dm2_v1_runtime_set_weather_seed(uint32_t seed);
 

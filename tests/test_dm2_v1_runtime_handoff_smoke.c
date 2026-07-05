@@ -202,6 +202,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
     session.outdoor_mode = 1;
     session.time_of_day_minutes = 1080;
     session.rain_intensity = 64;
+    session.original_leader_hand_object = 0x08000034u;
     CHECK(dm2_v1_runtime_apply_session(&session) == 0,
           "runtime accepts a bounded DM2 startup session after handoff");
     CHECK(state->party_x == 19 && state->party_y == 12 &&
@@ -216,6 +217,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
     CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_RAIN &&
           dm2_v1_runtime_get_weather_intensity() == 64,
           "session apply updates runtime weather state");
+    CHECK(dm2_v1_runtime_get_leader_hand_object() ==
+              session.original_leader_hand_object,
+          "session apply updates runtime leader-hand object");
 
     {
         uint8_t framebuffer[320 * 200];
