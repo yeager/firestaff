@@ -59,6 +59,11 @@ typedef struct {
     /* Dungeon state */
     int dungeon_level;
     int view_dir;
+    int last_npc_level;
+    int last_npc_x;
+    int last_npc_y;
+    int last_npc_id;
+    int last_npc_dialog_line;
     /* V2 smooth movement callbacks — registered by dm2_v2_runtime */
     DM2_V2_MoveCallback  move_callback;
     DM2_V2_TurnCallback  turn_callback;
@@ -80,6 +85,11 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.time_of_day_minutes = 720;  /* noon */
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
+    g_dm2_runtime.last_npc_level = -1;
+    g_dm2_runtime.last_npc_x = -1;
+    g_dm2_runtime.last_npc_y = -1;
+    g_dm2_runtime.last_npc_id = DM2_NPC_MERCHANT_FRIENDLY;
+    g_dm2_runtime.last_npc_dialog_line = -1;
     g_dm2_runtime.move_callback  = NULL;
     g_dm2_runtime.turn_callback  = NULL;
     g_dm2_runtime.stairs_callback = NULL;
@@ -664,15 +674,38 @@ int dm2_v1_runtime_enter_shop(int level, int x, int y) {
 int dm2_v1_runtime_npc_interact(int level, int x, int y) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;
+    int same_npc_square;
 
     if (!rt->boot || !rt->boot->dm2_state) return -1;
     if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
     if (!rt->outdoor && !gs->outdoor) return -1;
+
+    same_npc_square = rt->last_npc_level == level &&
+                      rt->last_npc_x == x &&
+                      rt->last_npc_y == y;
+    rt->last_npc_id = DM2_NPC_MERCHANT_FRIENDLY;
+    rt->last_npc_level = level;
+    rt->last_npc_x = x;
+    rt->last_npc_y = y;
+    if (same_npc_square && rt->last_npc_dialog_line >= 0) {
+        rt->last_npc_dialog_line =
+            (rt->last_npc_dialog_line + 1) % DM2_NPC_DIALOG_LINES;
+    } else {
+        rt->last_npc_dialog_line = 0;
+    }
     if (gs->reputation < 9999) {
         gs->reputation++;
     }
     return 0;
+}
+
+int dm2_v1_runtime_get_last_npc_id(void) {
+    return g_dm2_runtime.last_npc_id;
+}
+
+int dm2_v1_runtime_get_last_npc_dialog_line(void) {
+    return g_dm2_runtime.last_npc_dialog_line;
 }
 
 int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
