@@ -1165,6 +1165,23 @@ int main(void) {
                 "resumed DM2 tick advances from saved tick");
     M11_GameView_Shutdown(&view);
 
+    fill_dm2_launch_spec(&spec, data_dir);
+    spec.savePath = save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 DM2 saved SKSave.dat inventory resume succeeds");
+    expect_true(M11_GameView_GetDm2InventoryObject(
+                    &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                "M11 DM2 saved SKSave.dat restores slot ObjectID into view state");
+    expect_true(M11_GameView_GetDm2LeaderHandObject(&view) == 0u,
+                "M11 DM2 saved SKSave.dat restores cleared leader hand into view state");
+    expect_true(dm2_v1_runtime_get_champion_inventory_object(
+                    0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                "M11 DM2 saved SKSave.dat restores slot ObjectID into runtime");
+    expect_true(dm2_v1_runtime_get_leader_hand_object() == 0u,
+                "M11 DM2 saved SKSave.dat restores cleared runtime leader hand");
+    M11_GameView_Shutdown(&view);
+
     resume_session.game_tick = 70;
     resume_session.party_x = 31;
     resume_session.party_y = 9;
