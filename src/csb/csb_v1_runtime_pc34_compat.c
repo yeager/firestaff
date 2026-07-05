@@ -2170,6 +2170,16 @@ static void csb_v1_runtime_set_active_group_direction_creature(
     int creature_index,
     int creature_count,
     int creature_size);
+static void csb_v1_runtime_set_active_group_direction_group(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int direction,
+    int creature_count,
+    int creature_size);
 
 static void csb_v1_runtime_schedule_c37_group_event(
     CSB_V1_RuntimeProfile *profile,
@@ -2974,7 +2984,10 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
         int behavior;
         int next_behavior;
         int movement_ticks;
+        int creature_count;
+        int creature_size;
         uint16_t group_thing;
+        const struct CreatureBehaviorProfile_Compat *creature_profile;
 
         thing_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -2986,6 +2999,11 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
             flags = csb_v1_runtime_read_u16(thing_record + 14);
             behavior = (int)(flags & 0x000Fu);
             group_thing = (uint16_t)thing;
+            creature_count = (int)((flags >> 5) & 0x03u) + 1;
+            creature_profile = CREATURE_GetProfile_Compat((int)thing_record[4]);
+            creature_size = creature_profile
+                ? (int)(creature_profile->attributes & 0x0003u)
+                : 0;
             if (behavior == 0 || behavior == 2 || behavior == 3) {
                 next_behavior = (distance_x + distance_y <= 1) ? 6 : 7;
                 flags = (uint16_t)((flags & 0xFFF0u) |
@@ -3151,6 +3169,26 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                                 1);
                         }
                     }
+                } else {
+                    csb_v1_runtime_sync_active_group_state_from_record(
+                        profile,
+                        group_thing,
+                        thing_record,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        0,
+                        0);
+                    csb_v1_runtime_set_active_group_direction_group(
+                        profile,
+                        group_thing,
+                        thing_record,
+                        record->mapIndex,
+                        record->mapX,
+                        record->mapY,
+                        initial_move_direction,
+                        creature_count,
+                        creature_size);
                 }
                 /* ReDMCSB GROUP.C F0209 lines 2228-2272 walks C7 approach
                  * toward the target using F0202 movement checks, then lines
@@ -5245,6 +5283,57 @@ static void csb_v1_runtime_set_active_group_direction_creature(
             creature_index ^ 1,
             final_direction);
     }
+}
+
+static void csb_v1_runtime_set_active_group_direction_group(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    uint8_t *group_record,
+    int level,
+    int map_x,
+    int map_y,
+    int direction,
+    int creature_count,
+    int creature_size)
+{
+    struct RngState_Compat rng;
+    int creature_index;
+    int two_half_square_creatures;
+
+    if (!profile || !group_record) return;
+    if (creature_count < 1) creature_count = 1;
+    if (creature_count > 4) creature_count = 4;
+    creature_index = creature_count - 1;
+    two_half_square_creatures =
+        (creature_index != 0 && creature_size == 1) ? 1 : 0;
+    if (two_half_square_creatures) {
+        creature_index--;
+    }
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^ profile->game_time ^
+            ((uint32_t)group_thing << 5) ^
+            ((uint32_t)direction << 19) ^
+            0xF0206u);
+    do {
+        /* ReDMCSB GROUP.C F0206 lines 1632-1645 always lets creature 0 turn
+         * and randomly includes higher slots.  This bounded runtime bridge
+         * keeps the same shape with Firestaff's deterministic local stream. */
+        if (creature_index == 0 ||
+            F0732_COMBAT_RngRandom_Compat(&rng, 2) != 0) {
+            csb_v1_runtime_set_active_group_direction_creature(
+                profile,
+                group_thing,
+                group_record,
+                level,
+                map_x,
+                map_y,
+                direction,
+                creature_index,
+                creature_count,
+                two_half_square_creatures ? 1 : creature_size);
+        }
+    } while (creature_index-- > 0);
 }
 
 static void csb_v1_runtime_compact_active_group_state_after_kill(
@@ -9151,7 +9240,6 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     }
                 }
             }
-
             if (trigger) {
                 if (once_only) {
                     type_data = (uint16_t)(type_data & 0xFF80u);

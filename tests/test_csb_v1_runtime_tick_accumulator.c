@@ -1729,6 +1729,77 @@ static void test_c37_group_approach_defers_when_destination_has_group(void)
           "C60 retry consumes the deferred move event after movement succeeds");
 }
 
+static void test_c37_blocked_wall_updates_group_direction(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[128];
+    struct DM1_Event_V1 ev;
+    int event_index;
+
+    printf("\n-- CSB C37 blocked-wall direction update --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 68;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(0, 1)] = 0u; /* wall blocks C7 approach */
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 60 + 1 * 2, 1);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 68, 0xfffeu);
+    test_put_le16(raw, 70, 0u);
+    raw[72] = 9u;
+    raw[73] = 0xffu;
+    test_put_le16(raw, 74, 40u);
+    test_put_le16(raw, 82, 7u);
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Attributes = 0;
+    profile.party_state.Champions[0].Cell = 0;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    ev.priority = 234u;
+    ev.b_mapX = 0;
+    ev.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "C37 blocked-wall fixture queues the approach event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C37 blocked-wall fixture dispatches the approach event");
+    CHECK(test_get_le16(raw, 66) == (uint16_t)(4u << 10),
+          "C37 blocked-wall fixture keeps the group on the source square");
+    CHECK(profile.active_group_state_count == 1u &&
+              profile.active_group_state[0].valid &&
+              profile.active_group_state[0].map_x == 0 &&
+              profile.active_group_state[0].map_y == 0 &&
+              (((profile.active_group_state[0].directions & 0x0003u) == 1u) ||
+               ((profile.active_group_state[0].directions & 0x0003u) == 3u)),
+          "C37 blocked-wall fixture applies F0205 opposite-turn direction clamp");
+    event_index = find_queued_event_type(&profile,
+                                         DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
+    CHECK(event_index >= 0 &&
+              profile.timeline_queue.events[event_index].b_mapX == 0 &&
+              profile.timeline_queue.events[event_index].b_mapY == 0,
+          "C37 blocked-wall fixture requeues behavior on the source square");
+}
+
 static void test_c38_poison_followup_and_c75_tick(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -5592,6 +5663,7 @@ int main(void)
     test_timeline_corridor_text_and_generator_mutations();
     test_c37_group_approach_creates_empty_destination_thing_list();
     test_c37_group_approach_defers_when_destination_has_group();
+    test_c37_blocked_wall_updates_group_direction();
     test_c38_poison_followup_and_c75_tick();
     test_c38_giggler_steals_hand_slots_into_group_slot_chain();
     test_c38_updates_only_attacking_creature_direction();
