@@ -36793,6 +36793,9 @@ static void m11_theron_startup_layout_bind_decoded_roster(
              sizeof(element->decodedTitle),
              "%s",
              state->theronState.startup_roster_titles[roster_index]);
+    if (element->decodedName[0] != '\0') {
+        m11_theron_startup_layout_set_label(element, element->decodedName);
+    }
 }
 
 static void m11_theron_startup_chapter_label(
@@ -37103,22 +37106,11 @@ int M11_GameView_GetTheronStartupRenderRows(
     for (i = 0; i < element_count && count < maxRows; ++i) {
         const M11_TheronStartupElement *e = &elements[i];
         if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
-            char display_name[48];
-            if (e->decodedName[0] != '\0' &&
-                strcmp(e->decodedName, e->label) != 0) {
-                snprintf(display_name,
-                         sizeof(display_name),
-                         "%s/%s",
-                         e->label,
-                         e->decodedName);
-            } else {
-                snprintf(display_name, sizeof(display_name), "%s", e->label);
-            }
             snprintf(rows[count++],
                      M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
                      "%c %-22s %-7s %s",
                      e->cursor ? '>' : ' ',
-                     display_name,
+                     e->label,
                      e->primaryClass >= 0
                         ? theron_v1_startup_class_name(
                               (Theron_ChampionClass)e->primaryClass)
@@ -37261,20 +37253,9 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         const M11_TheronStartupElement *e = &elements[i];
         char row[80];
         if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
-            char display_name[48];
-            if (e->decodedName[0] != '\0' &&
-                strcmp(e->decodedName, e->label) != 0) {
-                snprintf(display_name,
-                         sizeof(display_name),
-                         "%s/%s",
-                         e->label,
-                         e->decodedName);
-            } else {
-                snprintf(display_name, sizeof(display_name), "%s", e->label);
-            }
             snprintf(row, sizeof(row), "%c %-22s %-7s %s",
                      e->cursor ? '>' : ' ',
-                     display_name,
+                     e->label,
                      e->primaryClass >= 0
                         ? theron_v1_startup_class_name(
                               (Theron_ChampionClass)e->primaryClass)

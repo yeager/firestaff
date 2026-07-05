@@ -441,14 +441,14 @@ int main(void) {
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "SOUL ROOM") &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "> Hakar") &&
+                                     "> HAKAR") &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "Mara") &&
+                                     "MARA") &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "Pental") &&
+                                     "PENTAI") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "ENTER FORCEFIELD"),
-                "M11 Theron Soul Room render rows expose original mirror names");
+                "M11 Theron Soul Room render rows expose decoded Track 02 mirror names");
     startup_layout_count = M11_GameView_GetTheronStartupLayout(
         &view, startup_layout, 16);
     {
@@ -472,7 +472,7 @@ int main(void) {
                     mirror0->h > 0 &&
                     mirror0->portraitIndex == 1 &&
                     mirror0->primaryClass == THERON_CLASS_FIGHTER &&
-                    strcmp(mirror0->label, "Hakar") == 0 &&
+                    strcmp(mirror0->label, "HAKAR") == 0 &&
                     strcmp(mirror0->decodedName, "HAKAR") == 0 &&
                     strcmp(mirror0->decodedTitle, "THE BRAVE") == 0 &&
                     forcefield != NULL &&
@@ -500,10 +500,10 @@ int main(void) {
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(startup_rows_contain(startup_rows, startup_row_count,
-                                     "Pental/PENTAI") &&
+                                     "PENTAI") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "RESURRECTED #1"),
-                "M11 Theron Soul Room render rows show selected mirror order");
+                "M11 Theron Soul Room render rows show selected decoded mirror order");
     startup_layout_count = M11_GameView_GetTheronStartupLayout(
         &view, startup_layout, 16);
     {
@@ -544,10 +544,10 @@ int main(void) {
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(startup_rows_contain(startup_rows, startup_row_count,
-                                     "Pental") &&
+                                     "PENTAI") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "AVAILABLE"),
-                "M11 Theron Soul Room render rows show deselected mirror as available");
+                "M11 Theron Soul Room render rows show deselected decoded mirror as available");
     expect_true(M11_GameView_HandlePointer(&view, 46 + 115, 144 + 5, 1) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron Soul Room mirror 7 click can reselect after deselect");
