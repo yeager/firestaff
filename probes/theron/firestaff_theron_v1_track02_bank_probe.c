@@ -660,9 +660,49 @@ static void check_raw_user_data_contract(
                         expected_text_size);
         }
         if (text_catalog.marker_count > 0u) {
+            char copied_text[1024];
+            size_t copied_text_bytes = 0u;
+            Theron_Track02StartupTextMarker copied_marker;
+
             check_size("raw startup text marker first raw offset",
                        text_catalog.markers[0].raw_offset,
                        expected_first_raw_offset);
+            status = theron_v1_track02_copy_startup_text_marker(
+                data,
+                size,
+                md5_hex,
+                expected_kind,
+                0u,
+                copied_text,
+                sizeof(copied_text),
+                &copied_text_bytes,
+                &copied_marker);
+            check_int("raw startup text marker copy status",
+                      status,
+                      THERON_TRACK02_SIGNAL_OK);
+            check_size("raw startup text marker copy bytes",
+                       copied_text_bytes,
+                       text_catalog.markers[0].byte_count);
+            check_size("raw startup text marker copy raw offset",
+                       copied_marker.raw_offset,
+                       text_catalog.markers[0].raw_offset);
+            check_bytes("raw startup text marker copy payload prefix",
+                        (const uint8_t *)copied_text,
+                        (const uint8_t *)expected_text,
+                        expected_text_size);
+            status = theron_v1_track02_copy_startup_text_marker(
+                data,
+                size,
+                md5_hex,
+                expected_kind,
+                0u,
+                copied_text,
+                expected_text_size,
+                &copied_text_bytes,
+                &copied_marker);
+            check_int("raw startup text marker copy capacity guard",
+                      status,
+                      THERON_TRACK02_SIGNAL_BAD_INPUT);
         }
     }
 

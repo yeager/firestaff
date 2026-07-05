@@ -740,6 +740,85 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
                                           : THERON_TRACK02_SIGNAL_NOT_FOUND;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_copy_startup_text_marker(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02StartupTextMarkerKind kind,
+    size_t occurrence_index,
+    char *out_text,
+    size_t out_text_capacity,
+    size_t *out_byte_count,
+    Theron_Track02StartupTextMarker *out_marker) {
+
+    Theron_Track02StartupTextMarkerCatalog catalog;
+    Theron_Track02SignalStatus status;
+    size_t seen = 0u;
+
+    if (out_text && out_text_capacity > 0u) {
+        out_text[0] = '\0';
+    }
+    if (out_byte_count) {
+        *out_byte_count = 0u;
+    }
+    if (out_marker) {
+        memset(out_marker, 0, sizeof(*out_marker));
+    }
+    if (!track02_data || track02_size == 0u || !out_text ||
+        out_text_capacity == 0u || !out_byte_count ||
+        kind == THERON_TRACK02_STARTUP_TEXT_UNKNOWN) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    status = theron_v1_track02_catalog_startup_text_markers(track02_data,
+                                                             track02_size,
+                                                             md5_hex,
+                                                             &catalog);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        return status;
+    }
+
+    for (size_t i = 0u; i < catalog.marker_count; ++i) {
+        const Theron_Track02StartupTextMarker *marker = &catalog.markers[i];
+        size_t user_data_offset = 0u;
+
+        if (marker->kind != kind) {
+            continue;
+        }
+        if (seen++ != occurrence_index) {
+            continue;
+        }
+        if (out_text_capacity <= marker->byte_count) {
+            return THERON_TRACK02_SIGNAL_BAD_INPUT;
+        }
+        status = theron_v1_track02_copy_raw_user_data_range(
+            track02_data,
+            track02_size,
+            md5_hex,
+            marker->raw_offset,
+            marker->byte_count,
+            (uint8_t *)out_text,
+            out_text_capacity - 1u,
+            &user_data_offset);
+        if (status != THERON_TRACK02_SIGNAL_OK) {
+            out_text[0] = '\0';
+            return status;
+        }
+        if (user_data_offset != marker->user_data_offset) {
+            out_text[0] = '\0';
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        out_text[marker->byte_count] = '\0';
+        *out_byte_count = marker->byte_count;
+        if (out_marker) {
+            *out_marker = *marker;
+        }
+        return THERON_TRACK02_SIGNAL_OK;
+    }
+
+    return THERON_TRACK02_SIGNAL_NOT_FOUND;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
     const uint8_t *track02_data,
     size_t track02_size,
