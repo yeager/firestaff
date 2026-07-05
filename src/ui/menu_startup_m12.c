@@ -1379,6 +1379,8 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
     m12_enter_message_view(state);
     state->launchRequested = 0;
     state->quickResumeLaunchRequested = 0;
+    state->csbImportDm1LaunchRequested = 0;
+    state->csbImportDm1SavePath[0] = '\0';
     m12_set_buffered_message(state, line1, line2, line3);
 }
 
@@ -2475,6 +2477,8 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     state->quickResumeLaunchRequested = 0;
     state->quickResumeGameId[0] = '\0';
     state->quickResumeSavePath[0] = '\0';
+    state->csbImportDm1LaunchRequested = 0;
+    state->csbImportDm1SavePath[0] = '\0';
 
     M12_Config_SetDefaults(&config);
     M12_Config_Load(&config, NULL);
@@ -2911,6 +2915,8 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     }
     state->launchRequested = 0;
     state->quickResumeLaunchRequested = 0;
+    state->csbImportDm1LaunchRequested = 0;
+    state->csbImportDm1SavePath[0] = '\0';
     state->activatedIndex = -1;
     state->view = M12_MENU_VIEW_MAIN;
     state->messageLine1 = "";
@@ -3896,6 +3902,45 @@ static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
                              m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
 }
 
+static void m12_save_browser_request_csb_import(M12_StartupMenuState* state) {
+    const M12_SaveBrowserEntry* entry;
+    int csbSlot;
+    int pmode;
+
+    if (!state) {
+        return;
+    }
+    entry = M12_SaveBrowser_GetSelected(&state->saveBrowser);
+    if (!entry || !entry->valid || strcmp(entry->gameId, "dm1") != 0) {
+        (void)M12_SaveBrowser_HandleInput(&state->saveBrowser, 7);
+        return;
+    }
+    csbSlot = m12_game_slot_from_id("csb");
+    if (csbSlot < 0 || csbSlot >= m12_entry_count() ||
+        !state->entries[csbSlot].available) {
+        m12_show_missing_game_data_popup(state, "csb");
+        return;
+    }
+
+    pmode = m12_clamp_index(state->settings.graphicsIndex,
+                            M12_PRESENTATION_MODE_COUNT);
+    state->activatedIndex = csbSlot;
+    m12_normalize_game_version_index(state, csbSlot);
+    m12_enforce_mode_constraints(&state->gameOptions[csbSlot], pmode);
+    snprintf(state->csbImportDm1SavePath,
+             sizeof(state->csbImportDm1SavePath),
+             "%s",
+             entry->fullPath);
+    state->csbImportDm1LaunchRequested = 1;
+    state->quickResumeLaunchRequested = 0;
+    state->launchRequested = 1;
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_tr(state, "IMPORTING PARTY"),
+                             entry->filename,
+                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+}
+
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input) {
     int count;
@@ -4295,7 +4340,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 }
                 break;
             case M12_MENU_INPUT_ACTION:
-                (void)M12_SaveBrowser_HandleInput(&state->saveBrowser, 7);
+                m12_save_browser_request_csb_import(state);
                 break;
             case M12_MENU_INPUT_VALUE_RIGHT:
             case M12_MENU_INPUT_SAVE_GAME:
@@ -9088,6 +9133,12 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         intent.gameId &&
         strcmp(state->quickResumeGameId, intent.gameId) == 0) {
         intent.savePath = state->quickResumeSavePath;
+    }
+    if (state->csbImportDm1LaunchRequested &&
+        state->csbImportDm1SavePath[0] != '\0' &&
+        intent.gameId &&
+        strcmp(intent.gameId, "csb") == 0) {
+        intent.csbImportDm1SavePath = state->csbImportDm1SavePath;
     }
     /* Enforce constraints on the returned options */
     m12_enforce_mode_constraints(&intent.options, pmode);

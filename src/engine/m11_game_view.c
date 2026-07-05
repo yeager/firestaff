@@ -10684,6 +10684,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     if (menuState->launchRequested) {
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;
+        spec.csbImportDm1SavePath = intent.csbImportDm1SavePath;
         spec.presentationMode = intent.presentationMode;
         spec.presentationWidth = intent.resolutionWidth;
         spec.presentationHeight = intent.resolutionHeight;

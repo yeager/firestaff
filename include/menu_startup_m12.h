@@ -287,6 +287,7 @@ typedef struct {
     int resolutionHeight;
     int valid;
     const char* savePath;  /* Non-NULL when launching via quick resume */
+    const char* csbImportDm1SavePath; /* Non-NULL when CSB utility-imports a DM1 save */
 } M12_LaunchIntent;
 
 
@@ -422,6 +423,8 @@ typedef struct M12_StartupMenuState {
     int quickResumeLaunchRequested;
     char quickResumeGameId[32];
     char quickResumeSavePath[256];
+    int csbImportDm1LaunchRequested;
+    char csbImportDm1SavePath[256];
     int dataDirPickerActive;
     int dataDirScanActive;
     int dataDirScanCancelRequested;
