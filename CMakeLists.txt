@@ -6068,6 +6068,7 @@ if(BUILD_TESTING)
 
     add_executable(test_csb_v1_save_import_path_pc34_compat
         tests/test_csb_v1_save_import_path_pc34_compat.c
+        tests/csbwin_resume_fixture.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_save_import_path_pc34_compat.c
         src/csb/csb_v1_save_load_pc34_compat.c

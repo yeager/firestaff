@@ -18,6 +18,7 @@
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csbwin_resume_fixture.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -314,6 +315,40 @@ int main(void) {
         CHECK(runtime.party_x == 6 && runtime.party_y == 6 &&
               runtime.party_dir == 1,
               "runtime load fallback preserves booted pose");
+        remove(path);
+    }
+
+    /* ── Runtime handoff from verified CSBWin 512-byte save ── */
+    {
+        CSB_V1_RuntimeProfile runtime;
+        const char* path = "firestaff-csbwin-runtime-import.csb";
+
+        CHECK(firestaff_test_write_csbwin_resume_fixture(path, 0),
+              "write verified CSBWin runtime import fixture");
+        csb_v1_runtime_init(&runtime, NULL);
+        runtime.party_x = 1;
+        runtime.party_y = 1;
+        runtime.party_dir = 0;
+        runtime.current_level = 0;
+        CHECK(csb_v1_runtime_load_game_from_path(&runtime, path)
+                  == CSB_V1_LOAD_OK,
+              "runtime load accepts verified CSBWin 512-byte save body");
+        CHECK(runtime.game_time == 0x01020304u,
+              "runtime CSBWin load imports GAMEBLOCK2 game time");
+        CHECK(runtime.party_x == 12 && runtime.party_y == 7 &&
+              runtime.party_dir == 3 && runtime.current_level == 4,
+              "runtime CSBWin load imports GAMEBLOCK2 party pose");
+        CHECK(runtime.party_state_valid == 1 &&
+              runtime.party_state.ChampionCount == 2 &&
+              strcmp(runtime.party_state.Champions[0].Name, "TIGGY") == 0 &&
+              strcmp(runtime.party_state.Champions[1].Name, "BORIS") == 0,
+              "runtime CSBWin load imports champion summaries");
+        CHECK(runtime.party_state.LeaderHandThing == 0x4321u,
+              "runtime CSBWin load imports object-in-hand");
+        CHECK(runtime.csbwin_runtime_item16_count == 2u,
+              "runtime CSBWin load materializes ITEM16 summaries");
+        CHECK(runtime.timeline_queue.eventCount == 3,
+              "runtime CSBWin load materializes timer queue");
         remove(path);
     }
 
