@@ -12494,7 +12494,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     state->dm2ShopSelectedInventoryIndex = 0;
                     m11_set_status(state, "ACTION", "DM2 SHOP");
                 } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
+                    const char *npc_name =
+                        dm2_v1_npc_get_name(DM2_NPC_MERCHANT_FRIENDLY);
+                    const char *npc_line =
+                        dm2_v1_npc_get_dialog(DM2_NPC_MERCHANT_FRIENDLY, 0);
                     m11_set_status(state, "ACTION", "DM2 INTERACT");
+                    m11_set_inspect_readout(state,
+                                            npc_name ? npc_name : "DM2 NPC",
+                                            npc_line ? npc_line :
+                                                       "WELCOME, TRAVELER.");
                 } else if (dm2_v1_runtime_invoke_actuator(
                                level, fx, fy,
                                DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH, 0u) == 0) {

@@ -366,6 +366,58 @@ int main(void) {
                         "DM2 runtime interaction mutates the boot-owned world");
         }
     }
+    if (world) {
+        int found_npc_square = 0;
+        int target_x = 0;
+        int target_y = 0;
+        for (int y = 0; y < 31 && !found_npc_square; ++y) {
+            for (int x = 0; x < 32 && !found_npc_square; ++x) {
+                int is_shop = 0;
+                if (dm2_v1_runtime_get_square_type(0, x, y) < 0) {
+                    continue;
+                }
+                for (int sid = 1; sid <= DM2_NUM_BUILTIN_SHOPS; ++sid) {
+                    const DM2_V1_ShopDescriptor *shop =
+                        dm2_v1_shop_get_builtin(sid);
+                    if (shop && shop->map_level == 0 &&
+                        shop->map_x == x && shop->map_y == y) {
+                        is_shop = 1;
+                        break;
+                    }
+                }
+                if (!is_shop) {
+                    found_npc_square = 1;
+                    target_x = x;
+                    target_y = y;
+                }
+            }
+        }
+        expect_true(found_npc_square,
+                    "found a bounded non-shop DM2 square for NPC interaction");
+        if (found_npc_square) {
+            int reputation_before = world->reputation;
+            dm2_v1_runtime_set_position(0, target_x, target_y + 1, 0);
+            dm2_v1_runtime_set_outdoor(1);
+            expect_true(M11_GameView_HandleInput(&view,
+                                                 M12_MENU_INPUT_ACTION) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 action drives bounded NPC interaction");
+            expect_true(strstr(view.lastOutcome, "DM2 INTERACT") != NULL,
+                        "M11 DM2 NPC interaction reports interact status");
+            expect_true(world->reputation == reputation_before + 1,
+                        "M11 DM2 NPC interaction mutates reputation");
+            expect_true(strcmp(view.inspectTitle,
+                               dm2_v1_npc_get_name(
+                                   DM2_NPC_MERCHANT_FRIENDLY)) == 0,
+                        "M11 DM2 NPC interaction exposes NPC name");
+            expect_true(strcmp(view.inspectDetail,
+                               dm2_v1_npc_get_dialog(
+                                   DM2_NPC_MERCHANT_FRIENDLY, 0)) == 0,
+                        "M11 DM2 NPC interaction exposes NPC dialog line");
+            dm2_v1_runtime_set_position(0, 15, 15, 0);
+            dm2_v1_runtime_set_outdoor(0);
+        }
+    }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(framebuffer[0] == 7,
