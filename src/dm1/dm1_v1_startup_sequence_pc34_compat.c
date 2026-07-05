@@ -28,6 +28,10 @@ int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     DM1_V1_StartupLaunchPath_PC34 path) {
     switch (path) {
         case DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34:
+        case DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_CLI_PC34:
+            /* Firestaff --game dm1 bypasses only the M12 launcher surface.
+             * main_loop_m11.c still routes through the source-visible
+             * SWSH -> TITLE -> ENTRANCE startup sequence before gameplay. */
             return 0;
         case DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34:
             /* M11_GameView_StartDm1() is a focused test/dev entry point.

@@ -16,7 +16,8 @@ typedef enum DM1_V1_StartupStage_PC34 {
 
 typedef enum DM1_V1_StartupLaunchPath_PC34 {
     DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34 = 1,
-    DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34 = 2
+    DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_CLI_PC34 = 2,
+    DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34 = 3
 } DM1_V1_StartupLaunchPath_PC34;
 
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage);

@@ -213,6 +213,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
              dm1_v1_startup_launch_path_bypasses_intro_pc34(
                  DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34),
              0);
+    expect_i("direct CLI launch path does not bypass source-visible intro",
+             dm1_v1_startup_launch_path_bypasses_intro_pc34(
+                 DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_CLI_PC34),
+             0);
     expect_i("direct game-view path bypasses intro",
              dm1_v1_startup_launch_path_bypasses_intro_pc34(
                  DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34),
