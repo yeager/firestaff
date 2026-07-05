@@ -102,9 +102,18 @@ int main(void)
         profile.runtime.dungeon_handle = &dungeon;
         state.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
         state.csbBootProfile = &profile;
+        state.world.party.championCount = 1;
+        state.world.party.activeChampionIndex = 0;
+        state.world.party.champions[0].present = 1;
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+            dagger;
 
         check(M11_GameView_GetObjectIconIndexForThing(&state, dagger) == 32,
               "CSB object icon accessor uses CSB runtime dungeon records without DM1 world.things");
+        check(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state,
+                  CHAMPION_SLOT_ACTION_HAND) == 32,
+              "CSB inventory slot icon accessor uses CSB runtime records without DM1 world.things");
         check(M11_GameView_SetV1LeaderHandObject(&state, dagger),
               "CSB leader-hand set accepts runtime-owned object binding");
         check(M11_GameView_GetV1LeaderHandObjectIconIndex(&state) == 32,
