@@ -189,6 +189,10 @@ typedef struct {
     uint32_t startup_text_us_prompt_count;
     uint32_t startup_text_jp_roster_count;
     uint32_t startup_text_marker_overflow_count;
+    int32_t  startup_text_first_copy_status;
+    uint32_t startup_text_first_kind;
+    uint32_t startup_text_first_byte_count;
+    uint64_t startup_text_first_user_data_offset;
     uint32_t startup_roster_name_count;
     uint32_t startup_roster_title_count;
     uint32_t startup_roster_overflow_count;

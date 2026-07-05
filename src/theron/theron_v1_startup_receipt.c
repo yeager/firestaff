@@ -588,6 +588,36 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
                 }
             }
         }
+        if (receipt->startup_text_us_prompt_count > 0u ||
+            receipt->startup_text_jp_roster_count > 0u) {
+            char copied_text[1024];
+            size_t copied_bytes = 0u;
+            Theron_Track02StartupTextMarker copied_marker;
+            Theron_Track02StartupTextMarkerKind copy_kind =
+                receipt->startup_text_us_prompt_count > 0u
+                    ? THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT
+                    : THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER;
+            Theron_Track02SignalStatus copy_status =
+                theron_v1_track02_copy_startup_text_marker(
+                    data,
+                    size,
+                    expected_md5,
+                    copy_kind,
+                    0u,
+                    copied_text,
+                    sizeof(copied_text),
+                    &copied_bytes,
+                    &copied_marker);
+            receipt->startup_text_first_copy_status = (int32_t)copy_status;
+            if (copy_status == THERON_TRACK02_SIGNAL_OK) {
+                receipt->startup_text_first_kind =
+                    (uint32_t)copied_marker.kind;
+                receipt->startup_text_first_byte_count =
+                    (uint32_t)copied_bytes;
+                receipt->startup_text_first_user_data_offset =
+                    (uint64_t)copied_marker.user_data_offset;
+            }
+        }
     }
     {
         Theron_Track02StartupRosterNameCatalog roster_catalog;
@@ -772,6 +802,14 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->startup_text_jp_roster_count), h);
     h = fnv1a_32(&receipt->startup_text_marker_overflow_count,
                  sizeof(receipt->startup_text_marker_overflow_count), h);
+    h = fnv1a_32(&receipt->startup_text_first_copy_status,
+                 sizeof(receipt->startup_text_first_copy_status), h);
+    h = fnv1a_32(&receipt->startup_text_first_kind,
+                 sizeof(receipt->startup_text_first_kind), h);
+    h = fnv1a_32(&receipt->startup_text_first_byte_count,
+                 sizeof(receipt->startup_text_first_byte_count), h);
+    h = fnv1a_32(&receipt->startup_text_first_user_data_offset,
+                 sizeof(receipt->startup_text_first_user_data_offset), h);
     h = fnv1a_32(&receipt->startup_roster_name_count,
                  sizeof(receipt->startup_roster_name_count), h);
     h = fnv1a_32(&receipt->startup_roster_title_count,
@@ -877,6 +915,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "user_initial=%u user_overflow=%u "
                  "startup_text_markers=%u startup_text_us=%u "
                  "startup_text_jp=%u startup_text_overflow=%u "
+                 "startup_text_copy=%d startup_text_kind=%u "
+                 "startup_text_bytes=%u startup_text_user=0x%llx "
                  "startup_roster_names=%u startup_roster_titles=%u "
                  "startup_roster_overflow=%u "
                  "initial_candidate=%d initial_off=0x%llx "
@@ -927,6 +967,10 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned)receipt->startup_text_us_prompt_count,
                  (unsigned)receipt->startup_text_jp_roster_count,
                  (unsigned)receipt->startup_text_marker_overflow_count,
+                 (int)receipt->startup_text_first_copy_status,
+                 (unsigned)receipt->startup_text_first_kind,
+                 (unsigned)receipt->startup_text_first_byte_count,
+                 (unsigned long long)receipt->startup_text_first_user_data_offset,
                  (unsigned)receipt->startup_roster_name_count,
                  (unsigned)receipt->startup_roster_title_count,
                  (unsigned)receipt->startup_roster_overflow_count,

@@ -299,6 +299,11 @@ static void check_placeholder_fields(void) {
           r.startup_text_jp_roster_count == 0u &&
           r.startup_text_marker_overflow_count == 0u,
           "placeholder leaves startup text marker catalog empty");
+    check(r.startup_text_first_copy_status == 0 &&
+          r.startup_text_first_kind == 0u &&
+          r.startup_text_first_byte_count == 0u &&
+          r.startup_text_first_user_data_offset == 0u,
+          "placeholder leaves startup text copy receipt empty");
     check(r.startup_roster_name_count == 0u &&
           r.startup_roster_title_count == 0u &&
           r.startup_roster_overflow_count == 0u,
@@ -610,6 +615,12 @@ static void check_real_asset_path(void) {
                           "US raw Track 02 receipt has 7 resurrect prompt markers");
                     check(r.startup_text_jp_roster_count == 0u,
                           "US raw Track 02 receipt has no JP roster markers");
+                    check(r.startup_text_first_copy_status ==
+                              THERON_TRACK02_SIGNAL_OK &&
+                          r.startup_text_first_kind ==
+                              THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT &&
+                          r.startup_text_first_byte_count == 28u,
+                          "US raw Track 02 receipt copies first startup prompt");
                     check(r.startup_roster_name_count == 0u &&
                           r.startup_roster_title_count == 0u &&
                           r.startup_roster_overflow_count == 0u,
@@ -623,6 +634,12 @@ static void check_real_asset_path(void) {
                           "JP raw Track 02 receipt has no US prompt markers");
                     check(r.startup_text_jp_roster_count == 7u,
                           "JP raw Track 02 receipt has 7 roster markers");
+                    check(r.startup_text_first_copy_status ==
+                              THERON_TRACK02_SIGNAL_OK &&
+                          r.startup_text_first_kind ==
+                              THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER &&
+                          r.startup_text_first_byte_count == 411u,
+                          "JP raw Track 02 receipt copies first roster cluster");
                     check(r.startup_roster_name_count == 8u,
                           "JP raw Track 02 receipt has 8 decoded roster names");
                     check(r.startup_roster_title_count == 7u,
@@ -697,6 +714,8 @@ static void check_real_asset_path(void) {
                                    "raw Track 02 rendered line names user-data catalog count");
                 check_str_contains(line, "startup_text_markers=7",
                                    "raw Track 02 rendered line names text marker count");
+                check_str_contains(line, "startup_text_copy=1",
+                                   "raw Track 02 rendered line names text copy status");
                 if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
                     check_str_contains(line, "startup_roster_names=8",
                                        "JP raw Track 02 rendered line names roster count");
