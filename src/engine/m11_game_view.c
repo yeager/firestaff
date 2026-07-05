@@ -2624,6 +2624,24 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           38, 96, row, &g_text_small);
         }
+        if (state->csbState.startup_import_available) {
+            char row[96];
+            snprintf(row,
+                     sizeof(row),
+                     "DM1 IMPORT READY: %d CHAMPIONS",
+                     state->csbState.startup_import_champion_count);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          38, 112, row, &g_text_small);
+            if (state->csbState.startup_import_utility_prompt[0] != '\0') {
+                m11_draw_text(framebuffer,
+                              framebufferWidth,
+                              framebufferHeight,
+                              38,
+                              124,
+                              state->csbState.startup_import_utility_prompt,
+                              &g_text_small);
+            }
+        }
         blink_on = ((state->csbState.startup_entrance_frame / 12) & 1) == 0;
         if (blink_on) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,

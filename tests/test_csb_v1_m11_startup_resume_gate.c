@@ -1258,6 +1258,14 @@ int main(void) {
                     ((CSB_V1_BootProfile *)view.csbBootProfile)
                         ->runtime.party_state.ImportedFromDM1 == 1,
                 "M11 CSB runtime marks the startup party as imported from DM1");
+    {
+        unsigned char fb[320 * 200];
+        memset(fb, 0, sizeof(fb));
+        view.assetsAvailable = 0;
+        M11_GameView_Draw(&view, fb, 320, 200);
+        expect_true(count_color_rect(fb, 320, 38, 112, 230, 25, 15u) > 20,
+                    "M11 CSB fallback entrance renders the utility import prompt");
+    }
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     245,
