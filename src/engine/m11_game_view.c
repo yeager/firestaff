@@ -143,6 +143,25 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int depthIndex,
                                        int sideHint,
                                        int creatureDir);
+static int m11_creature_coordinate_set(int creatureType);
+static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
+static int m11_c2500_object_raw_zone_point(int rowIndex,
+                                           int relativeCell,
+                                           int* outX,
+                                           int* outY);
+static int m11_c3200_creature_zone_point(int coordSet,
+                                         int depthIndex,
+                                         int visibleCount,
+                                         int slotIndex,
+                                         int* outX,
+                                         int* outY);
+static int m11_c3200_creature_side_zone_point(int coordSet,
+                                              int depthIndex,
+                                              int sideHint,
+                                              int visibleCount,
+                                              int slotIndex,
+                                              int* outX,
+                                              int* outY);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -869,6 +888,68 @@ static void m11_csb_map_from_relative(int party_dir,
     if (out_y) *out_y = y;
 }
 
+static int m11_csb_runtime_object_overlay_position(
+    int forward,
+    int side,
+    int relative_cell,
+    int *out_x,
+    int *out_y)
+{
+    int row;
+    int zone_x = 0;
+    int zone_y = 0;
+
+    row = m11_dm1_f0115_c2500_c2900_row(forward, side);
+    if (row >= 0 &&
+        m11_c2500_object_raw_zone_point(row, relative_cell, &zone_x, &zone_y)) {
+        if (out_x) *out_x = zone_x;
+        if (out_y) *out_y = 33 + zone_y;
+        return 1;
+    }
+    if (out_x) *out_x = 112 + side * 42;
+    if (out_y) *out_y = 33 + 108 - forward * 24;
+    return 0;
+}
+
+static int m11_csb_runtime_group_overlay_position(
+    int forward,
+    int side,
+    int creature_type,
+    int *out_x,
+    int *out_y)
+{
+    int coord_set = m11_creature_coordinate_set(creature_type);
+    int depth_index = forward - 1;
+    int zone_x = 0;
+    int zone_y = 0;
+    int ok;
+
+    if (side < 0 || side > 0) {
+        ok = m11_c3200_creature_side_zone_point(coord_set,
+                                                depth_index,
+                                                side,
+                                                1,
+                                                0,
+                                                &zone_x,
+                                                &zone_y);
+    } else {
+        ok = m11_c3200_creature_zone_point(coord_set,
+                                           depth_index,
+                                           1,
+                                           0,
+                                           &zone_x,
+                                           &zone_y);
+    }
+    if (ok) {
+        if (out_x) *out_x = zone_x;
+        if (out_y) *out_y = 33 + zone_y;
+        return 1;
+    }
+    if (out_x) *out_x = 112 + side * 42;
+    if (out_y) *out_y = 33 + 86 - forward * 24;
+    return 0;
+}
+
 static void m11_draw_csb_runtime_floor_object_overlays(
     const M11_GameViewState *state,
     const CSB_V1_BootProfile *profile,
@@ -925,10 +1006,17 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                     int icon = csb_v1_runtime_object_icon_index(runtime, thing);
                     int rel_cell = ((int)THING_GET_CELL(thing) -
                                     runtime->party_dir) & 3;
-                    int x = 112 + side * 42;
-                    int y = 33 + 108 - forward * 24;
+                    int x = 0;
+                    int y = 0;
                     int marker_x = x;
                     int marker_y = y;
+                    (void)m11_csb_runtime_object_overlay_position(forward,
+                                                                  side,
+                                                                  rel_cell,
+                                                                  &x,
+                                                                  &y);
+                    marker_x = x;
+                    marker_y = y;
                     if (rel_cell == 0 || rel_cell == 2) x -= 5;
                     if (rel_cell == 1 || rel_cell == 3) x += 5;
                     if (rel_cell >= 2) y += 3;
@@ -1047,20 +1135,25 @@ static void m11_draw_csb_runtime_group_overlays(
                     int creature_dir =
                         m11_csb_runtime_group_direction(record, size);
                     int depth_index = forward - 1;
-                    int x = 112 + side * 42;
-                    int y = 33 + 86 - forward * 24;
+                    int x = 0;
+                    int y = 0;
                     int sprite_w = 54 - depth_index * 12;
                     int sprite_h = 70 - depth_index * 14;
 
                     if (sprite_w < 20) sprite_w = 20;
                     if (sprite_h < 28) sprite_h = 28;
+                    (void)m11_csb_runtime_group_overlay_position(forward,
+                                                                 side,
+                                                                 creature_type,
+                                                                 &x,
+                                                                 &y);
                     if (creature_type >= 0 &&
                         m11_draw_creature_sprite_ex(state,
                                                     framebuffer,
                                                     framebuffer_width,
                                                     framebuffer_height,
                                                     x - sprite_w / 2,
-                                                    y - sprite_h / 2,
+                                                    y - sprite_h,
                                                     sprite_w,
                                                     sprite_h,
                                                     creature_type,
