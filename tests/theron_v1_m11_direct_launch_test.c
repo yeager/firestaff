@@ -90,6 +90,7 @@ int main(void) {
     unsigned long rescans_before;
     unsigned long rescans_after;
     int render_pixels;
+    int i;
 
     expect_true(make_temp_dir(temp_dir), "temporary root created");
     snprintf(theron_dir, sizeof(theron_dir), "%s%stheron", temp_dir, PATH_SEP);
@@ -172,23 +173,57 @@ int main(void) {
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_SOUL_ROOM,
                 "M11 Theron startup enters Soul Room before dungeon");
+    for (i = 0; i < 6; ++i) {
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                    M11_GAME_INPUT_REDRAW,
+                    "M11 Theron Soul Room cursor moves to mirror 7");
+    }
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                 M11_GAME_INPUT_REDRAW,
-                "M11 Theron Soul Room mirror accept selects a companion");
+                "M11 Theron Soul Room mirror 7 accept selects a companion");
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_READY &&
                 view.theronState.companion_count == 1 &&
-                (view.theronState.selected_mirrors_mask & 1) != 0,
-                "M11 Theron Soul Room records selected mirror");
+                (view.theronState.selected_mirrors_mask & (1 << 6)) != 0 &&
+                view.theronState.selected_mirror_order[0] == 6,
+                "M11 Theron Soul Room records first selected mirror order");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room cursor moves to forcefield");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room cursor wraps to mirror 1");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room mirror 1 accept selects a companion");
+    expect_true(view.theronState.companion_count == 2 &&
+                view.theronState.selected_mirror_order[1] == 0,
+                "M11 Theron Soul Room records second selected mirror order");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room cursor moves to mirror 2");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room cursor moves to mirror 3");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room mirror 3 accept selects a companion");
+    expect_true(view.theronState.companion_count == 3 &&
+                view.theronState.selected_mirror_order[2] == 2,
+                "M11 Theron Soul Room records third selected mirror order");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron forcefield action loads the dungeon");
     expect_true(world != NULL && world->level_loaded[0][0] == 1,
                 "M11 loaded the initial Theron level after forcefield");
     expect_true(world != NULL &&
-                world->party.champion_count == 2 &&
+                world->party.champion_count == 4 &&
                 strcmp(world->party.champions[0].name, "Theron") == 0,
-                "M11 forcefield materializes Theron plus selected mirror");
+                "M11 forcefield materializes Theron plus selected mirrors");
+    expect_true(strcmp(world->party.champions[1].name, "Sorcerer Mirror") == 0 &&
+                strcmp(world->party.champions[2].name, "Fighter Mirror") == 0 &&
+                strcmp(world->party.champions[3].name, "Ninja Mirror") == 0,
+                "M11 forcefield preserves Soul Room resurrection order");
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_IN_DUNGEON,
                 "M11 mirrors startup forcefield handoff phase");

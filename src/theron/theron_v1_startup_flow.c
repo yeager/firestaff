@@ -43,10 +43,14 @@ const char *theron_v1_startup_class_name(Theron_ChampionClass cls) {
 }
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow) {
+    int i;
     if (!flow) {
         return;
     }
     memset(flow, 0, sizeof(*flow));
+    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        flow->selected_mirror_order[i] = 0xffu;
+    }
     flow->phase = THERON_STARTUP_PHASE_STAGE_SELECT;
 }
 
@@ -68,6 +72,9 @@ Theron_StartupResult theron_v1_startup_choose_stage(
     flow->selected_dungeon = dungeon_id;
     flow->selected_mirrors_mask = 0;
     flow->companion_count = 0;
+    for (int i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        flow->selected_mirror_order[i] = 0xffu;
+    }
     flow->theron_present = 1;
     flow->forcefield_entered = 0;
     flow->phase = THERON_STARTUP_PHASE_SOUL_ROOM;
@@ -99,6 +106,7 @@ Theron_StartupResult theron_v1_startup_select_mirror(
     }
 
     flow->selected_mirrors_mask |= bit;
+    flow->selected_mirror_order[flow->companion_count] = (uint8_t)mirror_index;
     flow->companion_count++;
     flow->phase = THERON_STARTUP_PHASE_READY;
     return THERON_STARTUP_OK;
@@ -123,10 +131,12 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
     }
 
     theron_v1_party_init(party, (int)flow->selected_dungeon);
-    for (mirror = 0;
-         mirror < THERON_STARTUP_HERO_MIRROR_COUNT && slot < THERON_MAX_CHAMPIONS;
-         ++mirror) {
-        if ((flow->selected_mirrors_mask & (uint8_t)(1u << mirror)) != 0u) {
+    for (int order = 0;
+         order < flow->companion_count && slot < THERON_MAX_CHAMPIONS;
+         ++order) {
+        mirror = flow->selected_mirror_order[order];
+        if (mirror >= 0 && mirror < THERON_STARTUP_HERO_MIRROR_COUNT &&
+            (flow->selected_mirrors_mask & (uint8_t)(1u << mirror)) != 0u) {
             const Theron_StartupMirrorMeta *meta = theron_v1_startup_mirror_meta(mirror);
             Theron_V1_Champion *champion = &party->champions[slot];
             snprintf(champion->name,

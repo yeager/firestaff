@@ -43,6 +43,7 @@ typedef struct {
     Theron_DungeonID selected_dungeon;
     uint8_t selected_mirrors_mask; /* bit 0..6 */
     uint8_t companion_count;       /* 0..3 */
+    uint8_t selected_mirror_order[THERON_STARTUP_MAX_COMPANIONS];
     uint8_t theron_present;
     uint8_t forcefield_entered;
 } Theron_StartupFlow;

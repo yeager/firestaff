@@ -496,6 +496,7 @@ typedef struct {
         int startup_phase;
         int startup_cursor;
         int selected_mirrors_mask;
+        int selected_mirror_order[3];
     } theronState;
 
     /* CSB (Chaos Strikes Back) V1 runtime — active when sourceKind ==

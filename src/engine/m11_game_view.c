@@ -9467,6 +9467,7 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
 
 static void m11_theron_sync_startup_state(M11_GameViewState* state,
                                           const Theron_StartupFlow* flow) {
+    int i;
     if (!state || !flow) {
         return;
     }
@@ -9475,6 +9476,12 @@ static void m11_theron_sync_startup_state(M11_GameViewState* state,
     state->theronState.startup_phase = (int)flow->phase;
     state->theronState.selected_mirrors_mask =
         (int)flow->selected_mirrors_mask;
+    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        state->theronState.selected_mirror_order[i] =
+            flow->selected_mirror_order[i] == 0xffu
+                ? -1
+                : (int)flow->selected_mirror_order[i];
+    }
 }
 
 static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
@@ -9485,6 +9492,8 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
     Theron_StartupResult result;
     Theron_DungeonID selected;
     int mirror;
+    int slot;
+    int replayed_mask = 0;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -9511,8 +9520,32 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
         return 0;
     }
 
+    for (slot = 0; slot < state->theronState.companion_count &&
+         slot < THERON_STARTUP_MAX_COMPANIONS; ++slot) {
+        mirror = state->theronState.selected_mirror_order[slot];
+        if (mirror < 0 || mirror >= THERON_STARTUP_HERO_MIRROR_COUNT ||
+            (replayed_mask & (1 << mirror)) != 0 ||
+            (state->theronState.selected_mirrors_mask & (1 << mirror)) == 0) {
+            continue;
+        }
+        result = theron_v1_startup_select_mirror(flow, mirror);
+        if (result != THERON_STARTUP_OK) {
+            if (receipt && receipt_cap > 0u) {
+                snprintf(receipt,
+                         receipt_cap,
+                         "startup-flow mirror failed: %s",
+                         theron_v1_startup_result_name(result));
+            }
+            return 0;
+        }
+        replayed_mask |= (1 << mirror);
+    }
+
     for (mirror = 0; mirror < THERON_STARTUP_HERO_MIRROR_COUNT; ++mirror) {
         if ((state->theronState.selected_mirrors_mask & (1 << mirror)) != 0) {
+            if ((replayed_mask & (1 << mirror)) != 0) {
+                continue;
+            }
             result = theron_v1_startup_select_mirror(flow, mirror);
             if (result != THERON_STARTUP_OK) {
                 if (receipt && receipt_cap > 0u) {
