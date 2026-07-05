@@ -202,9 +202,12 @@ static int do_import(CSB_V1_UtilFlowContext *ctx, CSB_V1_PartyState *party)
                                               ctx->dm1_save_path,
                                               &import_result);
     if (count < 0) {
-        ctx->last_error = -3;
-        ctx->state = CSB_V1_UTIL_FLOW_ERROR;
-        return -1;
+        count = csb_v1_character_import_dm1_save(party, ctx->dm1_save_path);
+        if (count <= 0) {
+            ctx->last_error = -3;
+            ctx->state = CSB_V1_UTIL_FLOW_ERROR;
+            return -1;
+        }
     }
 
     if (count == 0) {
@@ -232,10 +235,6 @@ static int do_import(CSB_V1_UtilFlowContext *ctx, CSB_V1_PartyState *party)
  */
 int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
 {
-    static CSB_V1_PartyState party;
-    /* Static party to persist across multiple step calls */
-    static int party_initialized = 0;
-
     /* Simulated drive path for disk checks.
      * On macOS/Linux, this path doesn't exist, so csb_v1_util_check_disk
      * returns -1 (error), simulating no floppy drive.
@@ -253,10 +252,8 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
         /* Initialize utility flow.
          * ReDMCSB CEDTINC7.C: "PLEASE PUT THE CSB UTILITY DISK IN ~"
          * First step: prompt for disk insertion. */
-        if (!party_initialized) {
-            csb_v1_character_init_default(&party);
-            party_initialized = 1;
-        }
+        csb_v1_character_init_default(&ctx->imported_party);
+        ctx->imported_champion_count = 0;
         ctx->state = CSB_V1_UTIL_FLOW_INSERT_DISK;
         ctx->attempts = 0;
         ctx->last_error = 0;
@@ -334,7 +331,7 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
             break;
         case CSB_V1_UTIL_ACTION_NEW:
             /* New game requires champions first (import or load) */
-            if (party.ChampionCount == 0) {
+            if (ctx->imported_party.ChampionCount == 0) {
                 ctx->last_error = -8;  /* no champions */
                 ctx->state = CSB_V1_UTIL_FLOW_ERROR;
             } else {
@@ -366,11 +363,16 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
         }
 
         {
-            int count = do_import(ctx, &party);
+            CSB_V1_PartyState party;
+            int count;
+            csb_v1_character_init_default(&party);
+            count = do_import(ctx, &party);
             if (count < 0) {
                 /* Error already set in ctx->last_error and ctx->state */
                 return 0;
             }
+            ctx->imported_party = party;
+            ctx->imported_champion_count = count;
             /* Import successful — show confirmation preview */
             ctx->state = CSB_V1_UTIL_FLOW_CONFIRM_IMPORT;
         }
@@ -467,10 +469,11 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
         /* Store party metadata in ctx->reserved for get_party().
          * reserved[0] = ChampionCount, reserved[1] = LeaderIndex,
          * reserved[2] = ImportedFromDM1.
-         * Full party data requires a future get_party_v2() API. */
-        ctx->reserved[0] = party.ChampionCount;
-        ctx->reserved[1] = party.LeaderIndex;
-        ctx->reserved[2] = party.ImportedFromDM1;
+         * The full party body is kept in ctx->imported_party so M11 can
+         * hand the exact utility-import result to the CSB runtime. */
+        ctx->reserved[0] = ctx->imported_party.ChampionCount;
+        ctx->reserved[1] = ctx->imported_party.LeaderIndex;
+        ctx->reserved[2] = ctx->imported_party.ImportedFromDM1;
         ctx->state = CSB_V1_UTIL_FLOW_DONE;
         return 1;  /* done */
 
@@ -496,15 +499,16 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
  *   Returns the imported/loaded party state.
  *   Call this after flow is done (returns 1) to get the party for the game.
  *
- *   Implementation: step() stores party metadata in ctx->reserved[]
- *   before transitioning to DONE:
+ *   Implementation: step() keeps the full imported party body in
+ *   ctx->imported_party before transitioning to DONE.  The reserved[]
+ *   metadata remains as a compatibility fallback for older callers:
  *     reserved[0] = ChampionCount
  *     reserved[1] = LeaderIndex
  *     reserved[2] = ImportedFromDM1
  *
  *   Returns: champion count (>= 0) on success, -1 on error.
- *   On success, out_party->ChampionCount / LeaderIndex / ImportedFromDM1
- *   are populated. Full champion data requires a future v2 API.
+ *   On success, out_party receives the imported champion records plus
+ *   ChampionCount / LeaderIndex / ImportedFromDM1.
  */
 int csb_v1_util_flow_get_party(CSB_V1_UtilFlowContext *ctx,
                                 CSB_V1_PartyState *out_party)
@@ -519,10 +523,12 @@ int csb_v1_util_flow_get_party(CSB_V1_UtilFlowContext *ctx,
         return -1;  /* flow not complete */
     }
 
-    /* Read metadata stored by step() in the NEW_GAME case. */
-    out_party->ChampionCount = ctx->reserved[0];
-    out_party->LeaderIndex   = ctx->reserved[1];
-    out_party->ImportedFromDM1 = ctx->reserved[2];
+    *out_party = ctx->imported_party;
+    if (out_party->ChampionCount == 0 && ctx->reserved[0] > 0) {
+        out_party->ChampionCount = ctx->reserved[0];
+        out_party->LeaderIndex = ctx->reserved[1];
+        out_party->ImportedFromDM1 = ctx->reserved[2];
+    }
 
     return out_party->ChampionCount;
 }

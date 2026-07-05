@@ -17,6 +17,7 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_graphics_loader_pc34_compat.h"
@@ -1241,6 +1242,9 @@ int main(void) {
                     view.csbState.startup_import_available == 1 &&
                     view.csbState.startup_import_champion_count == 2,
                 "M11 CSB entrance keeps imported DM1 party ready before dungeon entry");
+    expect_true(view.csbState.startup_import_utility_state ==
+                    CSB_V1_UTIL_FLOW_DONE,
+                "M11 CSB startup import completes the CSB utility flow");
     expect_true(view.world.party.championCount == 2 &&
                     memcmp(view.world.party.champions[0].name,
                            "ALPHA   ", 8u) == 0 &&
@@ -1279,6 +1283,9 @@ int main(void) {
                         view.csbState.startup_import_available == 1 &&
                         view.csbState.startup_import_champion_count == 2,
                     "M11 CSB menu-entry launch forwards the DM1 import intent");
+        expect_true(view.csbState.startup_import_utility_state ==
+                        CSB_V1_UTIL_FLOW_DONE,
+                    "M11 CSB menu-entry launch completes the CSB utility flow");
         expect_true(view.world.party.championCount == 2 &&
                         memcmp(view.world.party.champions[0].name,
                                "ALPHA   ", 8u) == 0 &&

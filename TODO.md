@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-06 CSB utility startup follow-up: current local work now routes M11 CSB DM1 startup import through the CSB utility-flow state machine and preserves the full imported party body in that flow. Remaining startup work is fuller original utility presentation/content, broader real DM1/CSB save corpus proof, and the real CSBWin/original utility-save byte paths beyond the bounded startup handoff.
+
 - 🔧 2026-07-05 Nexus startup/title follow-up: current local work now gives M11 a bounded Nexus title phase before LEV00 dungeon rendering, using real `TITLE.CG` when available and a deterministic fallback when missing, with input dismissal and FNXS resume skipping the title. Remaining Nexus startup work is the full Saturn 3D animated title/camera/text parity, richer title palette/timing proof, and broader in-game action/UI startup flow beyond the bounded movement-command handoff.
   - 2026-07-05 update: current local work now also inserts a bounded champion-selection phase after the title and before dungeon entry, using the existing Nexus roster/recruit path so normal startup no longer enters the dungeon with an empty party. Remaining Nexus startup presentation work is real Saturn menu art/portrait layout/input affordances and full original title animation parity.
   - 2026-07-05 update: current local work now also gives that champion-selection phase pointer/touch row routing, pointer footer start, duplicate-skipping cursor movement, and post-recruit auto-advance. Remaining Nexus startup work is real FACE.BIN-backed portrait/menu layout and the full original animated title/menu presentation.

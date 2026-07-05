@@ -593,6 +593,7 @@ typedef struct {
         char startup_entrance_resume_path[512];
         int startup_import_available;
         int startup_import_champion_count;
+        int startup_import_utility_state;
         char startup_import_dm1_save_path[512];
     } csbState;
 

@@ -64,6 +64,8 @@ typedef struct {
     char                 csb_save_path[256]; /* path to CSB save */
     int                  import_confirmed; /* import confirmed by user */
     int                  last_error;    /* last error code */
+    CSB_V1_PartyState    imported_party; /* full DM1-imported party preview/handoff */
+    int                  imported_champion_count;
     int                  reserved[8];   /* future expansion */
 } CSB_V1_UtilFlowContext;
 
