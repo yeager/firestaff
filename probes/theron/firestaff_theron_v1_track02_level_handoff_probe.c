@@ -205,6 +205,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     uint8_t *candidate;
     Theron_V1_Level level;
     Theron_Track02LevelHandoff handoff;
+    Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02LevelHandoffStatus status;
 
     memset(track, 0, sizeof(track));
@@ -220,6 +221,20 @@ static void probe_synthetic_initial_candidate_handoff(void) {
     candidate[12 + 1u * candidate_width + 1u] = THERON_SQUARE_FLOOR;
     candidate[12 + 1u * candidate_width + 2u] = THERON_SQUARE_FLOOR;
     candidate[12 + 2u * candidate_width + 2u] = THERON_SQUARE_EXIT;
+
+    status = theron_v1_track02_scan_level_candidates(
+        track,
+        sizeof(track),
+        &catalog);
+    check_int("synthetic initial candidate scan status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("synthetic initial candidate scan count",
+               catalog.candidate_count,
+               1u);
+    check_size("synthetic initial candidate scan offset",
+               catalog.candidates[0].absolute_offset,
+               candidate_offset);
 
     status = theron_v1_track02_load_initial_level_candidate(
         track,
@@ -367,6 +382,7 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02SignalStatus signal_status;
     Theron_V1_Level level;
     Theron_Track02LevelHandoff handoff;
+    Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02LevelHandoffStatus status;
 
     path_to_read = (env_path && env_path[0]) ? env_path : NULL;
@@ -411,6 +427,17 @@ static void probe_real_data_initial_candidate(const char *label,
         return;
     }
 
+    status = theron_v1_track02_scan_level_candidates(
+        data,
+        size,
+        &catalog);
+    check_int("real initial candidate scan status",
+              status,
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    check_size("real initial candidate scan count",
+               catalog.candidate_count,
+               1u);
+
     status = theron_v1_track02_load_initial_level_candidate(
         data,
         size,
@@ -445,6 +472,12 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate start x", level.start_x, 2);
     check_int("real initial candidate start y", level.start_y, 1);
     check_int("real initial candidate start dir", level.start_dir, 1);
+    check_size("real initial candidate scan/loader offset",
+               catalog.candidates[0].absolute_offset,
+               handoff.absolute_offset);
+    check_size("real initial candidate scan/loader size",
+               catalog.candidates[0].byte_count,
+               handoff.byte_count);
 
     free(data);
 }

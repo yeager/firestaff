@@ -20,6 +20,8 @@
 #define THERON_TRACK02_MD5_JP_REV1_ISO "397039af02d50d15c70b74088eb8a1cb"
 #define THERON_TRACK02_MD5_US_ISO      "3d8b78571dcd0e6eb8eb4b01eeb7fbba"
 
+#define THERON_TRACK02_MAX_LEVEL_CANDIDATES 32u
+
 typedef enum {
     THERON_TRACK02_VARIANT_UNKNOWN = 0,
     THERON_TRACK02_VARIANT_JP_BIN,
@@ -389,6 +391,28 @@ typedef struct {
     int loaded;
 } Theron_Track02LevelHandoff;
 
+typedef struct {
+    size_t absolute_offset;
+    size_t byte_count;
+    uint16_t header_width;
+    uint16_t header_height;
+    uint32_t header_seed;
+    uint16_t header_level_index;
+    Theron_MapLoadResult map_status;
+    int start_x;
+    int start_y;
+    int start_dir;
+    int loaded;
+} Theron_Track02LevelCandidate;
+
+typedef struct {
+    size_t candidate_count;
+    size_t overflow_count;
+    size_t scanned_bytes;
+    Theron_Track02LevelCandidate
+        candidates[THERON_TRACK02_MAX_LEVEL_CANDIDATES];
+} Theron_Track02LevelCandidateCatalog;
+
 /* Bounded Track 02 -> V1 level-loader handoff.
  *
  * Decodes the 9-word descriptor table at `descriptor_offset`, binds the
@@ -411,15 +435,13 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
 /* Hash/anchor-gated initial-level candidate handoff.
  *
  * The raw JP/US Track 02 BINs both carry a loader-compatible 32x27 level-like
- * payload at a stable offset relative to the descriptor-bank base:
+ * payload with seed 0x0108e938 and level index 0x0026.  The handoff first
+ * validates the descriptor table at `descriptor_offset`, then scans Track 02
+ * for exactly one matching startup candidate before handing those bytes to
+ * theron_v1_level_load().
  *
- *   candidate_offset = (descriptor_offset - 0x1584) - 0x92ce
- *
- * The function first decodes the 9-word descriptor table at descriptor_offset,
- * then validates the candidate header shape before handing the bytes to
- * theron_v1_level_load().  This is narrower than a full dungeon parser: it
- * promotes one real startup candidate and keeps all other Track 02 map/object
- * semantics unclaimed.
+ * This is narrower than a full dungeon parser: it promotes one real startup
+ * candidate and keeps all other Track 02 map/object semantics unclaimed.
  */
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     const uint8_t *track02_data,
@@ -429,6 +451,21 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_initial_level_candidate(
     int sub_level_index,
     Theron_V1_Level *out_level,
     Theron_Track02LevelHandoff *out_handoff);
+
+/* Bounded raw Track 02 level-like payload catalog.
+ *
+ * This scanner finds the known loader-compatible startup payload in a
+ * hash-verified Track 02 byte image.  It is intentionally conservative:
+ * candidate headers must match the current 32x27 startup shape, seed, and
+ * level index, and theron_v1_level_load() must accept the payload.  The
+ * catalog is evidence and future routing infrastructure; it does not yet
+ * assign candidates to named dungeons, levels, object tables, palettes, text,
+ * or music.
+ */
+Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    Theron_Track02LevelCandidateCatalog *out_catalog);
 
 const char *theron_v1_track02_level_handoff_status_name(
     Theron_Track02LevelHandoffStatus status);
