@@ -193,9 +193,26 @@ int main(void) {
                         "real Nexus title phase draws a nonblank frame");
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
-                        "real Nexus title phase dismisses on accept");
+                        "real Nexus title phase advances on accept");
             expect_true(view.nexusState.title_active == 0,
                         "real Nexus title phase clears after input");
+            expect_true(view.nexusState.champion_select_active == 1,
+                        "real Nexus startup enters champion selection");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
+                        "real Nexus champion selection draws a nonblank frame");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus champion selection recruits selected champion");
+            expect_true(view.nexusEngine &&
+                            view.nexusEngine->champions.party_count == 1,
+                        "real Nexus champion selection fills party");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus champion selection starts dungeon");
+            expect_true(view.nexusState.champion_select_active == 0,
+                        "real Nexus champion selection clears for dungeon");
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 100,
@@ -239,6 +256,8 @@ int main(void) {
                             "resumed Nexus startup reports resumed status");
                 expect_true(view.nexusState.title_active == 0,
                             "resumed Nexus startup skips title phase");
+                expect_true(view.nexusState.champion_select_active == 0,
+                            "resumed Nexus startup skips champion selection");
                 expect_true(view.nexusState.party_x == 18 &&
                             view.nexusState.party_y == 12 &&
                             view.nexusState.party_dir == 3,
