@@ -64,6 +64,14 @@ typedef struct {
     int last_spawn_y;
     int last_spawn_level;
     int spawn_count;
+    int last_actuator_type;
+    int last_actuator_x;
+    int last_actuator_y;
+    int last_actuator_level;
+    int actuator_count;
+    uint32_t last_generated_object;
+    int last_projectile_slot;
+    int projectile_actuator_count;
     /* V2 smooth movement callbacks — registered by dm2_v2_runtime */
     DM2_V2_MoveCallback  move_callback;
     DM2_V2_TurnCallback  turn_callback;
@@ -544,6 +552,14 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.last_spawn_y = -1;
     g_dm2_runtime.last_spawn_level = -1;
     g_dm2_runtime.spawn_count = 0;
+    g_dm2_runtime.last_actuator_type = -1;
+    g_dm2_runtime.last_actuator_x = -1;
+    g_dm2_runtime.last_actuator_y = -1;
+    g_dm2_runtime.last_actuator_level = -1;
+    g_dm2_runtime.actuator_count = 0;
+    g_dm2_runtime.last_generated_object = 0u;
+    g_dm2_runtime.last_projectile_slot = -1;
+    g_dm2_runtime.projectile_actuator_count = 0;
     dm2_v1_trigger_reset_state();
     dm2_v1_plate_reset_state();
     dm2_v1_timeline_reset_state();
@@ -1363,10 +1379,60 @@ int dm2_v1_runtime_get_spawn_count(void) {
     return g_dm2_runtime.spawn_count;
 }
 
+int dm2_v1_runtime_get_last_actuator_type(void) {
+    return g_dm2_runtime.last_actuator_type;
+}
+
+int dm2_v1_runtime_get_last_actuator_x(void) {
+    return g_dm2_runtime.last_actuator_x;
+}
+
+int dm2_v1_runtime_get_last_actuator_y(void) {
+    return g_dm2_runtime.last_actuator_y;
+}
+
+int dm2_v1_runtime_get_last_actuator_level(void) {
+    return g_dm2_runtime.last_actuator_level;
+}
+
+int dm2_v1_runtime_get_actuator_count(void) {
+    return g_dm2_runtime.actuator_count;
+}
+
+uint32_t dm2_v1_runtime_get_last_generated_object(void) {
+    return g_dm2_runtime.last_generated_object;
+}
+
+int dm2_v1_runtime_get_last_projectile_slot(void) {
+    return g_dm2_runtime.last_projectile_slot;
+}
+
+int dm2_v1_runtime_get_projectile_actuator_count(void) {
+    return g_dm2_runtime.projectile_actuator_count;
+}
+
+static void dm2_runtime_record_actuator(DM2_V1_RuntimeState *rt,
+                                        int level,
+                                        int x,
+                                        int y,
+                                        DM2_ActuatorType type) {
+    if (!rt) return;
+    rt->last_actuator_type = (int)type;
+    rt->last_actuator_x = x;
+    rt->last_actuator_y = y;
+    rt->last_actuator_level = level;
+    rt->actuator_count++;
+}
+
 int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
                                    DM2_ActuatorType type, uint16_t flag) {
-    (void)flag;
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    int projectile_slot;
+    int projectile_category;
+    int projectile_subtype;
+
     if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
+    dm2_runtime_record_actuator(rt, level, x, y, type);
     if (type == DM2_ACTUATOR_SHOP_PANEL) {
         return dm2_v1_runtime_enter_shop(level, x, y);
     }
@@ -1374,6 +1440,47 @@ int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
         type == DM2_ACTUATOR_WALL_SWITCH ||
         type == DM2_ACTUATOR_2_STATE_WALL_SWITCH ||
         type == DM2_ACTUATOR_DM1_WALL_SWITCH) {
+        return 0;
+    }
+    if (type == DM2_ACTUATOR_CREATURE_GENERATOR) {
+        int ai = flag ? (int)flag : DM2_AI_DRAGOTH_MINION;
+        dm2_runtime_record_spawn(rt, ai, level, x, y);
+        return rt->last_spawn_instance_id >= 0 ? 0 : -1;
+    }
+    if (type == DM2_ACTUATOR_ITEM_GENERATOR ||
+        type == DM2_ACTUATOR_ITEM_CAPTURE ||
+        type == DM2_ACTUATOR_ITEM_RECYCLER ||
+        type == DM2_ACTUATOR_FLYING_ITEM_CATCHER ||
+        type == DM2_ACTUATOR_FLYING_ITEM_TELEPORTER) {
+        rt->last_generated_object = flag ? (uint32_t)flag : 0x0A000001u;
+        return 0;
+    }
+    if (type == DM2_ACTUATOR_MISSILE_SHOOTER ||
+        type == DM2_ACTUATOR_WEAPON_SHOOTER ||
+        type == DM2_ACTUATOR_ITEM_SHOOTER) {
+        projectile_category = PROJECTILE_CATEGORY_KINETIC;
+        projectile_subtype = DM2_PROJ_SUBTYPE_KINETIC_ARROW;
+        if (type == DM2_ACTUATOR_MISSILE_SHOOTER) {
+            projectile_category = PROJECTILE_CATEGORY_MAGICAL;
+            projectile_subtype = flag ? (int)flag : DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL;
+        } else if (type == DM2_ACTUATOR_ITEM_SHOOTER) {
+            projectile_subtype = flag ? (int)flag : DM2_PROJ_SUBTYPE_BOMB;
+        }
+        projectile_slot = dm2_v1_projectile_dispatch_synthetic(
+            projectile_category, projectile_subtype, x, y, level,
+            g_dm2_runtime.view_dir);
+        rt->last_projectile_slot = projectile_slot;
+        if (projectile_slot >= 0) rt->projectile_actuator_count++;
+        return projectile_slot >= 0 ? 0 : -1;
+    }
+    if (type == DM2_ACTUATOR_CROSS_MAP ||
+        type == DM2_ACTUATOR_RELAY_1 ||
+        type == DM2_ACTUATOR_RELAY_2 ||
+        type == DM2_ACTUATOR_WORK_TIMER ||
+        type == DM2_ACTUATOR_TICK_GENERATOR ||
+        type == DM2_ACTUATOR_COUNTER ||
+        type == DM2_ACTUATOR_ARRIVAL_DEPARTURE ||
+        type == DM2_ACTUATOR_SWITCH_SIGN_FOR_CREATURE) {
         return 0;
     }
     return 0;

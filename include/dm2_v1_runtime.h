@@ -285,6 +285,14 @@ int dm2_v1_runtime_get_last_spawn_x(void);
 int dm2_v1_runtime_get_last_spawn_y(void);
 int dm2_v1_runtime_get_last_spawn_level(void);
 int dm2_v1_runtime_get_spawn_count(void);
+int dm2_v1_runtime_get_last_actuator_type(void);
+int dm2_v1_runtime_get_last_actuator_x(void);
+int dm2_v1_runtime_get_last_actuator_y(void);
+int dm2_v1_runtime_get_last_actuator_level(void);
+int dm2_v1_runtime_get_actuator_count(void);
+uint32_t dm2_v1_runtime_get_last_generated_object(void);
+int dm2_v1_runtime_get_last_projectile_slot(void);
+int dm2_v1_runtime_get_projectile_actuator_count(void);
 
 /* ── Special squares ──────────────────────────────────────────────── */
 
