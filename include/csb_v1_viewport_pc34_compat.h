@@ -334,6 +334,17 @@ typedef struct {
 } CSB_V1_ViewportProjectileBlitSpec;
 
 typedef struct {
+    int visible;
+    int forward;
+    int side;
+    int view_square;
+    int view_cell;
+    int source_zone;
+    int viewport_x;
+    int viewport_y;
+} CSB_V1_ViewportRuntimeProjectileOverlayPlacement;
+
+typedef struct {
     int view_square;
     int redmcsb_view_square_index;
     int view_depth;
@@ -530,6 +541,14 @@ const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spe
 const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spec_for_square(int view_square);
 int csb_v1_viewport_projectile_blit_zone(const CSB_V1_ViewportProjectileBlitSpec *spec,
                                          unsigned char view_cell);
+int csb_v1_viewport_runtime_projectile_overlay_placement(
+    int party_dir,
+    int party_x,
+    int party_y,
+    int projectile_map_x,
+    int projectile_map_y,
+    int projectile_cell,
+    CSB_V1_ViewportRuntimeProjectileOverlayPlacement *out_placement);
 int csb_v1_viewport_projectile_blit_pixels(const CSB_V1_ViewportProjectileBlitSpec *spec,
                                            int flip_flags,
                                            const uint8_t *source,

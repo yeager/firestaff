@@ -251,6 +251,120 @@ static int csb_v1_viewport_runtime_overlay_position(
     return 1;
 }
 
+static int csb_v1_viewport_c2900_source_zone_point(
+    int row_index,
+    int view_cell,
+    int *out_x,
+    int *out_y)
+{
+    static const short k_c2900_raw[12][4][2] = {
+        {{  0,  0}, {  0,  0}, {129, 47}, { 95, 47}},
+        {{  0,  0}, {  0,  0}, { 62, 47}, { 25, 47}},
+        {{  0,  0}, {  0,  0}, {200, 47}, {162, 47}},
+        {{  0,  0}, {  0,  0}, {  2, 47}, {-35, 47}},
+        {{  0,  0}, {  0,  0}, {258, 47}, {202, 47}},
+        {{ 92, 47}, {132, 46}, {136, 47}, { 88, 47}},
+        {{ 10, 47}, { 53, 47}, { 41, 47}, {-14, 47}},
+        {{171, 47}, {218, 47}, {236, 47}, {183, 47}},
+        {{ 83, 47}, {140, 47}, {148, 47}, { 76, 47}},
+        {{-40, 47}, { 26, 47}, {  5, 47}, {-79, 47}},
+        {{197, 47}, {262, 47}, {301, 47}, {220, 47}},
+        {{ 66, 47}, {158, 47}, {  0,  0}, {  0,  0}}
+    };
+    int x;
+    int y;
+
+    if (row_index < 0 || row_index >= 12 ||
+        view_cell < 0 || view_cell > 3) {
+        return 0;
+    }
+    x = (int)k_c2900_raw[row_index][view_cell][0];
+    y = (int)k_c2900_raw[row_index][view_cell][1];
+    if (x == 0 && y == 0) {
+        return 0;
+    }
+    if (out_x) *out_x = x;
+    if (out_y) *out_y = y;
+    return 1;
+}
+
+int csb_v1_viewport_runtime_projectile_overlay_placement(
+    int party_dir,
+    int party_x,
+    int party_y,
+    int projectile_map_x,
+    int projectile_map_y,
+    int projectile_cell,
+    CSB_V1_ViewportRuntimeProjectileOverlayPlacement *out_placement)
+{
+    CSB_V1_ViewportRuntimeProjectileOverlayPlacement placement;
+    const CSB_V1_ViewportProjectileBlitSpec *spec = NULL;
+    int x;
+    int y;
+
+    memset(&placement, 0, sizeof(placement));
+    placement.view_square = -1;
+    placement.view_cell = projectile_cell;
+    placement.source_zone = -1;
+    placement.viewport_x = 0;
+    placement.viewport_y = 0;
+    csb_v1_viewport_runtime_relative_position(
+        party_dir,
+        party_x,
+        party_y,
+        projectile_map_x,
+        projectile_map_y,
+        &placement.forward,
+        &placement.side);
+    if (placement.forward < 0 || placement.forward > 4 ||
+        placement.side < -2 || placement.side > 2 ||
+        projectile_cell < 0 || projectile_cell > 3) {
+        if (out_placement) *out_placement = placement;
+        return 0;
+    }
+
+    if (placement.forward == 3 &&
+        (placement.side == -2 || placement.side == 2)) {
+        placement.view_square =
+            placement.side < 0 ? (int)DM1_VIEW_SQUARE_D3L2
+                               : (int)DM1_VIEW_SQUARE_D3R2;
+        spec = csb_v1_viewport_get_projectile_blit_spec_for_square(
+            placement.view_square);
+        placement.source_zone =
+            csb_v1_viewport_projectile_blit_zone(
+                spec, (unsigned char)projectile_cell);
+        if (placement.source_zone < 0 ||
+            !csb_v1_viewport_c2900_source_zone_point(
+                spec ? spec->projectile_visibility_row : -1,
+                projectile_cell,
+                &placement.viewport_x,
+                &placement.viewport_y)) {
+            if (out_placement) *out_placement = placement;
+            return 0;
+        }
+        placement.visible = 1;
+        if (out_placement) *out_placement = placement;
+        return 1;
+    }
+
+    if (!csb_v1_viewport_runtime_overlay_position(
+            party_dir,
+            party_x,
+            party_y,
+            projectile_map_x,
+            projectile_map_y,
+            &x,
+            &y)) {
+        if (out_placement) *out_placement = placement;
+        return 0;
+    }
+    placement.visible = 1;
+    placement.viewport_x = x;
+    placement.viewport_y = y;
+    if (out_placement) *out_placement = placement;
+    return 1;
+}
+
 static void csb_v1_viewport_draw_runtime_projectile_overlays(
     CSB_V1_ViewportConfig *cfg,
     int party_dir,
@@ -263,27 +377,31 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat *projectile =
             &cfg->runtime_projectiles->entries[i];
-        int x;
-        int y;
+        CSB_V1_ViewportRuntimeProjectileOverlayPlacement placement;
 
         if (projectile->reserved3 == 0 || projectile->slotIndex < 0) {
             continue;
         }
-        if (!csb_v1_viewport_runtime_overlay_position(
+        if (!csb_v1_viewport_runtime_projectile_overlay_placement(
                 party_dir,
                 party_x,
                 party_y,
                 projectile->mapX,
                 projectile->mapY,
-                &x,
-                &y)) {
+                projectile->cell,
+                &placement)) {
             continue;
         }
-        /* ReDMCSB DUNVIEW.C F0115 lines 5645-5913 draws projectiles
-         * before restarting the thing list for explosions.  This bounded
-         * CSB runtime bridge marks live projectile state until the full
-         * CSBgraphics/F0791 sprite path is wired. */
-        csb_v1_viewport_draw_runtime_overlay_cross(cfg, x, y, 0x0Eu, 1);
+        /* ReDMCSB DUNVIEW.C F0115 lines 5668-5683 map projectiles through
+         * G2028 and C2900_ZONE_ + row*4 + ViewCell.  The bitmap binding is
+         * still bounded, but D3L2/D3R2 runtime markers now use the same
+         * source-zone placement and front-cell rejection as the real route. */
+        csb_v1_viewport_draw_runtime_overlay_cross(
+            cfg,
+            placement.viewport_x,
+            placement.viewport_y,
+            0x0Eu,
+            placement.source_zone >= 0 ? 2 : 1);
     }
 }
 

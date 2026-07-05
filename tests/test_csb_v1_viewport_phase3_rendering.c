@@ -1546,6 +1546,78 @@ static void test_csb_f0115_projectile_blit_contracts(void)
     }
 
     {
+        CSB_V1_ViewportRuntimeProjectileOverlayPlacement placement;
+
+        memset(&placement, 0, sizeof(placement));
+        check_int("csb.projectile_overlay.d3l2_cell2.visible",
+                  csb_v1_viewport_runtime_projectile_overlay_placement(
+                      0, 10, 10, 8, 7, 2, &placement),
+                  1);
+        check_int("csb.projectile_overlay.d3l2_cell2.square",
+                  placement.view_square, (int)DM1_VIEW_SQUARE_D3L2);
+        check_int("csb.projectile_overlay.d3l2_cell2.zone",
+                  placement.source_zone, 2914);
+        check_int("csb.projectile_overlay.d3l2_cell2.x",
+                  placement.viewport_x, 2);
+        check_int("csb.projectile_overlay.d3l2_cell2.y",
+                  placement.viewport_y, 47);
+
+        memset(&placement, 0, sizeof(placement));
+        check_int("csb.projectile_overlay.d3l2_cell3.visible",
+                  csb_v1_viewport_runtime_projectile_overlay_placement(
+                      0, 10, 10, 8, 7, 3, &placement),
+                  1);
+        check_int("csb.projectile_overlay.d3l2_cell3.zone",
+                  placement.source_zone, 2915);
+        check_int("csb.projectile_overlay.d3l2_cell3.x",
+                  placement.viewport_x, -35);
+
+        memset(&placement, 0, sizeof(placement));
+        check_int("csb.projectile_overlay.d3r2_cell2.visible",
+                  csb_v1_viewport_runtime_projectile_overlay_placement(
+                      0, 10, 10, 12, 7, 2, &placement),
+                  1);
+        check_int("csb.projectile_overlay.d3r2_cell2.square",
+                  placement.view_square, (int)DM1_VIEW_SQUARE_D3R2);
+        check_int("csb.projectile_overlay.d3r2_cell2.zone",
+                  placement.source_zone, 2918);
+        check_int("csb.projectile_overlay.d3r2_cell2.x",
+                  placement.viewport_x, 258);
+        check_int("csb.projectile_overlay.d3r2_cell2.y",
+                  placement.viewport_y, 47);
+
+        memset(&placement, 0, sizeof(placement));
+        check_int("csb.projectile_overlay.d3r2_cell3.visible",
+                  csb_v1_viewport_runtime_projectile_overlay_placement(
+                      0, 10, 10, 12, 7, 3, &placement),
+                  1);
+        check_int("csb.projectile_overlay.d3r2_cell3.zone",
+                  placement.source_zone, 2919);
+        check_int("csb.projectile_overlay.d3r2_cell3.x",
+                  placement.viewport_x, 202);
+
+        memset(&placement, 0, sizeof(placement));
+        check_int("csb.projectile_overlay.d3l2_front_cell_hidden",
+                  csb_v1_viewport_runtime_projectile_overlay_placement(
+                      0, 10, 10, 8, 7, 1, &placement),
+                  0);
+        check_int("csb.projectile_overlay.d3l2_front_cell_zone",
+                  placement.source_zone, -1);
+
+        memset(&placement, 0, sizeof(placement));
+        check_int("csb.projectile_overlay.fallback_visible",
+                  csb_v1_viewport_runtime_projectile_overlay_placement(
+                      0, 10, 10, 10, 8, 2, &placement),
+                  1);
+        check_int("csb.projectile_overlay.fallback_zone",
+                  placement.source_zone, -1);
+        check_int("csb.projectile_overlay.fallback_x",
+                  placement.viewport_x, 112);
+        check_int("csb.projectile_overlay.fallback_y",
+                  placement.viewport_y, 70);
+    }
+
+    {
         const uint8_t source[6] = { 1, 10, 2, 3, 4, 5 };
         uint8_t destination[6] = { 88, 88, 88, 88, 88, 88 };
         const CSB_V1_ViewportProjectileBlitSpec *spec =
