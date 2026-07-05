@@ -629,16 +629,78 @@ static int compare_entries(const void* a, const void* b) {
     return strcmp(ea->filename, eb->filename);
 }
 
+static int save_browser_has_path(const M12_SaveBrowserState* state,
+                                 const char* fullPath) {
+    int i;
+    if (!state || !fullPath) return 0;
+    for (i = 0; i < state->entryCount; ++i) {
+        if (strcmp(state->entries[i].fullPath, fullPath) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int save_browser_scan_dir(M12_SaveBrowserState* state,
+                                 const char* dirPath) {
+    DIR* dir;
+    struct dirent* ent;
+    struct stat st;
+    M12_SaveBrowserEntry* entry;
+    char fullPath[512];
+    int added = 0;
+    int n;
+
+    if (!state || !dirPath || dirPath[0] == '\0') return 0;
+    dir = opendir(dirPath);
+    if (!dir) return 0;
+
+    while ((ent = readdir(dir)) != NULL) {
+        if (state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) break;
+        if (!is_save_file(ent->d_name)) continue;
+
+        n = snprintf(fullPath, sizeof(fullPath), "%s/%s",
+                     dirPath, ent->d_name);
+        if (n <= 0 || n >= (int)sizeof(fullPath)) continue;
+        if ((size_t)n >= SAVE_BROWSER_FILENAME_MAX) continue;
+        if (save_browser_has_path(state, fullPath)) continue;
+
+        entry = &state->entries[state->entryCount];
+        snprintf(entry->filename, SAVE_BROWSER_FILENAME_MAX,
+                 "%s", ent->d_name);
+        snprintf(entry->fullPath, SAVE_BROWSER_FILENAME_MAX,
+                 "%s", fullPath);
+
+        extract_game_id(ent->d_name, entry->gameId,
+                        (int)sizeof(entry->gameId));
+
+        if (stat(fullPath, &st) == 0) {
+            entry->fileModTime = st.st_mtime;
+            entry->fileSize = (long)st.st_size;
+        } else {
+            entry->fileModTime = 0;
+            entry->fileSize = 0;
+        }
+
+        parse_save_entry(entry);
+        ++state->entryCount;
+        ++added;
+    }
+    closedir(dir);
+    return added;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Public API                                                         */
 /* ------------------------------------------------------------------ */
 
 int M12_SaveBrowser_Scan(M12_SaveBrowserState* state, const char* dataDir) {
-    DIR* dir;
-    struct dirent* ent;
-    struct stat st;
-    M12_SaveBrowserEntry* entry;
-    char pathBuf[512];
+    static const char* const games[] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
+    char saveDir[512];
+    int i;
+    int n;
 
     if (!state || !dataDir) return 0;
 
@@ -647,38 +709,29 @@ int M12_SaveBrowser_Scan(M12_SaveBrowserState* state, const char* dataDir) {
     state->scrollOffset = 0;
     state->confirmDelete = 0;
 
-    dir = opendir(dataDir);
-    if (!dir) return 0;
+    (void)save_browser_scan_dir(state, dataDir);
 
-    while ((ent = readdir(dir)) != NULL) {
+    /*
+     * Runtime saves are not game data.  The launcher still receives the
+     * data root, so bridge the common Firestaff layout where saves live
+     * beside the data tree: ~/.firestaff/data/../saves/{game}/.  Also
+     * accept an embedded data-root saves/{game}/ directory for imported
+     * portable bundles.
+     */
+    for (i = 0; i < (int)(sizeof(games) / sizeof(games[0])); ++i) {
         if (state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) break;
-        if (!is_save_file(ent->d_name)) continue;
-
-        entry = &state->entries[state->entryCount];
-        snprintf(entry->filename, SAVE_BROWSER_FILENAME_MAX,
-                 "%s", ent->d_name);
-        snprintf(entry->fullPath, SAVE_BROWSER_FILENAME_MAX,
-                 "%s/%s", dataDir, ent->d_name);
-
-        extract_game_id(ent->d_name, entry->gameId,
-                        (int)sizeof(entry->gameId));
-
-        /* Get file metadata */
-        snprintf(pathBuf, sizeof(pathBuf), "%s/%s", dataDir, ent->d_name);
-        if (stat(pathBuf, &st) == 0) {
-            entry->fileModTime = st.st_mtime;
-            entry->fileSize = (long)st.st_size;
-        } else {
-            entry->fileModTime = 0;
-            entry->fileSize = 0;
+        n = snprintf(saveDir, sizeof(saveDir), "%s/../saves/%s",
+                     dataDir, games[i]);
+        if (n > 0 && n < (int)sizeof(saveDir)) {
+            (void)save_browser_scan_dir(state, saveDir);
         }
-
-        /* Parse save header for game metadata */
-        parse_save_entry(entry);
-
-        state->entryCount++;
+        if (state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) break;
+        n = snprintf(saveDir, sizeof(saveDir), "%s/saves/%s",
+                     dataDir, games[i]);
+        if (n > 0 && n < (int)sizeof(saveDir)) {
+            (void)save_browser_scan_dir(state, saveDir);
+        }
     }
-    closedir(dir);
 
     /* Sort by modification time (newest first) */
     if (state->entryCount > 1) {
