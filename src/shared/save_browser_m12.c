@@ -9,6 +9,8 @@
  */
 
 #include "save_browser_m12.h"
+#include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_save_load.h"
 #include "memory_savegame_pc34_compat.h"
@@ -205,6 +207,85 @@ static void classify_pc34_manifest(M12_SaveBrowserEntry* entry) {
 
 static void format_champion_name(const unsigned char packed[8],
                                  char* out, int outSize);
+static void format_csb_champion_name(const char packed[16],
+                                     char* out, int outSize);
+
+static int try_parse_csb_runtime_entry(M12_SaveBrowserEntry* entry) {
+    CSB_V1_RuntimeProfile runtime;
+    CSB_V1_PartyState party;
+    char nameBuf[32];
+    int rc;
+    int i;
+    int offset;
+
+    if (!entry || entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_CSB) {
+        return 0;
+    }
+
+    csb_v1_runtime_init(&runtime, NULL);
+    /*
+     * ReDMCSB LOADSAVE.C F0435 and CSBWin SaveGame.cpp both restore CSB
+     * through the CSB namespace, not the DM1 save loader.  Keep the M12
+     * browser on the same path as quick-resume/M11: Firestaff-native CSB
+     * runtime saves first, then raw CSBGAME roster fallback, then verified
+     * CSBWin body handoff.
+     */
+    rc = csb_v1_runtime_load_game_from_path(&runtime, entry->fullPath);
+    if (rc != CSB_V1_LOAD_OK) {
+        rc = (csb_v1_runtime_apply_csbwin_resume_file(
+                  &runtime, entry->fullPath, 0u) == 0)
+                 ? CSB_V1_LOAD_OK
+                 : rc;
+    }
+    if (rc != CSB_V1_LOAD_OK) {
+        csb_v1_runtime_cleanup(&runtime);
+        return 0;
+    }
+
+    memset(&party, 0, sizeof(party));
+    (void)csb_v1_runtime_get_party_state(&runtime, &party);
+    entry->valid = 1;
+    entry->mapLevel = runtime.current_level;
+    entry->championCount = runtime.champion_count;
+    if (entry->championCount <= 0 && party.ChampionCount > 0) {
+        entry->championCount = party.ChampionCount;
+    }
+    entry->champions[0] = '\0';
+    offset = 0;
+    for (i = 0; i < party.ChampionCount && i < CSB_V1_MAX_CHAMPIONS; ++i) {
+        format_csb_champion_name(party.Champions[i].Name,
+                                 nameBuf, (int)sizeof(nameBuf));
+        if (nameBuf[0] == '\0' &&
+            party.Champions[i].MaximumHealth <= 0 &&
+            party.Champions[i].CurrentHealth <= 0) {
+            continue;
+        }
+        if (nameBuf[0] == '\0') {
+            snprintf(nameBuf, sizeof(nameBuf), "CHAMPION %d", i + 1);
+        }
+        if (offset > 0) {
+            offset += snprintf(entry->champions + offset,
+                               sizeof(entry->champions) - (size_t)offset,
+                               ", ");
+        }
+        offset += snprintf(entry->champions + offset,
+                           sizeof(entry->champions) - (size_t)offset,
+                           "%s", nameBuf);
+    }
+
+    if (entry->championCount > 0 && entry->champions[0] != '\0') {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  [%s]  (CSB runtime save)",
+                 entry->gameId, entry->mapLevel, entry->champions);
+    } else {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  (CSB runtime save)",
+                 entry->gameId, entry->mapLevel);
+    }
+
+    csb_v1_runtime_cleanup(&runtime);
+    return 1;
+}
 
 static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     FILE* fp;
@@ -403,6 +484,26 @@ static void format_champion_name(const unsigned char packed[8],
     out[end] = '\0';
 }
 
+static void format_csb_champion_name(const char packed[16],
+                                     char* out, int outSize) {
+    int i;
+    int end;
+    if (outSize <= 0) return;
+    end = 16;
+    while (end > 0 &&
+           (packed[end - 1] == ' ' || packed[end - 1] == '\0')) {
+        --end;
+    }
+    if (end == 0 || end >= outSize) {
+        out[0] = '\0';
+        return;
+    }
+    for (i = 0; i < end; ++i) {
+        out[i] = packed[i];
+    }
+    out[end] = '\0';
+}
+
 /* Parse save file and fill entry metadata. Returns 1 on success. */
 static int parse_save_entry(M12_SaveBrowserEntry* entry) {
     struct SaveGame_Compat sg;
@@ -415,6 +516,9 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
     memset(&sg, 0, sizeof(sg));
     rc = F0786_SAVEGAME_LoadFromFile_Compat(entry->fullPath, &sg);
     if (rc != SAVEGAME_OK) {
+        if (try_parse_csb_runtime_entry(entry)) {
+            return 1;
+        }
         if (try_parse_dm1_native_entry(entry)) {
             return 1;
         }
