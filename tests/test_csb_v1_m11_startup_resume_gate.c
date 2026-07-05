@@ -77,6 +77,18 @@ static void write_be16(unsigned char *buf, size_t off, unsigned short value) {
     buf[off + 1u] = (unsigned char)(value & 0xffu);
 }
 
+static void write_le16(unsigned char *buf, size_t off, unsigned short value) {
+    buf[off] = (unsigned char)(value & 0xffu);
+    buf[off + 1u] = (unsigned char)((value >> 8) & 0xffu);
+}
+
+static void write_le32(unsigned char *buf, size_t off, unsigned int value) {
+    buf[off] = (unsigned char)(value & 0xffu);
+    buf[off + 1u] = (unsigned char)((value >> 8) & 0xffu);
+    buf[off + 2u] = (unsigned char)((value >> 16) & 0xffu);
+    buf[off + 3u] = (unsigned char)((value >> 24) & 0xffu);
+}
+
 static void test_bw_init(TestBitWriter *bw) {
     bw->cap = 1024u;
     bw->buf = (unsigned char*)calloc(1u, bw->cap);
@@ -231,6 +243,92 @@ static unsigned char *build_csbgraphics_single_entry(
     memcpy(buf + header_size, compressed, compressed_size);
     *out_size = header_size + compressed_size;
     free(compressed);
+    return buf;
+}
+
+typedef struct {
+    unsigned short entry_index;
+    const unsigned char *decoded;
+    size_t decoded_size;
+} CsbGraphicsEntryFixture;
+
+static unsigned char *build_csbgraphics_entries_compressed(
+    const CsbGraphicsEntryFixture *entries,
+    size_t entry_count,
+    size_t *out_size) {
+    unsigned short max_entry = 0u;
+    unsigned int count;
+    size_t header_size;
+    size_t payload_size = 0u;
+    size_t payload_cursor;
+    size_t i;
+    unsigned char **compressed = NULL;
+    size_t *compressed_sizes = NULL;
+    unsigned char *buf = NULL;
+
+    if (!entries || entry_count == 0u || !out_size) {
+        return NULL;
+    }
+    for (i = 0u; i < entry_count; ++i) {
+        if (entries[i].entry_index > max_entry) {
+            max_entry = entries[i].entry_index;
+        }
+    }
+    compressed = (unsigned char**)calloc(entry_count, sizeof(compressed[0]));
+    compressed_sizes = (size_t*)calloc(entry_count, sizeof(compressed_sizes[0]));
+    if (!compressed || !compressed_sizes) {
+        free(compressed);
+        free(compressed_sizes);
+        return NULL;
+    }
+    for (i = 0u; i < entry_count; ++i) {
+        if (!entries[i].decoded || entries[i].decoded_size == 0u ||
+            entries[i].decoded_size > 65535u ||
+            test_lzw_encode(entries[i].decoded,
+                            entries[i].decoded_size,
+                            &compressed[i],
+                            &compressed_sizes[i]) != 0 ||
+            !compressed[i] ||
+            compressed_sizes[i] == 0u ||
+            compressed_sizes[i] > 65535u) {
+            goto cleanup;
+        }
+        payload_size += compressed_sizes[i];
+    }
+
+    count = (unsigned int)max_entry + 1u;
+    header_size = 2u + (size_t)count * 4u;
+    buf = (unsigned char*)calloc(1u, header_size + payload_size);
+    if (!buf) {
+        goto cleanup;
+    }
+    write_be16(buf, 0u, (unsigned short)count);
+    for (i = 0u; i < entry_count; ++i) {
+        unsigned short id = entries[i].entry_index;
+        write_be16(buf, 2u + (size_t)id * 2u,
+                   (unsigned short)compressed_sizes[i]);
+        write_be16(buf, 2u + (size_t)count * 2u + (size_t)id * 2u,
+                   (unsigned short)entries[i].decoded_size);
+    }
+    payload_cursor = header_size;
+    for (unsigned int id = 0u; id < count; ++id) {
+        for (i = 0u; i < entry_count; ++i) {
+            if (entries[i].entry_index == id) {
+                memcpy(buf + payload_cursor, compressed[i], compressed_sizes[i]);
+                payload_cursor += compressed_sizes[i];
+            }
+        }
+    }
+    *out_size = header_size + payload_size;
+
+cleanup:
+    if (compressed) {
+        for (i = 0u; i < entry_count; ++i) {
+            free(compressed[i]);
+        }
+    }
+    free(compressed);
+    free(compressed_sizes);
     return buf;
 }
 
@@ -403,6 +501,133 @@ static int inject_synthetic_csbgraphics_viewport_override(
             &profile->csbgraphics_m11_plan);
     return profile->csbgraphics_plan_result ==
            CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK;
+}
+
+static int inject_synthetic_csbgraphics_custom_background(
+    CSB_V1_BootProfile *profile) {
+    unsigned char skin_def_decoded[42u];
+    unsigned char bitmap_decoded[12u];
+    unsigned char mask_decoded[86u];
+    CsbGraphicsEntryFixture entries[3];
+    unsigned char *bytes;
+    size_t size = 0u;
+    const CSB_V1_DungeonData *dungeon;
+    int width;
+    int height;
+    int level;
+    int x;
+    int y;
+
+    if (!profile || !profile->runtime.dungeon_handle) {
+        return 0;
+    }
+    dungeon = profile->runtime.dungeon_handle;
+    level = profile->runtime.current_level;
+    if (level < 0 || level >= dungeon->level_count) {
+        return 0;
+    }
+    width = dungeon->level_widths[level];
+    height = dungeon->level_heights[level];
+    if (width <= 0 || height <= 0) {
+        return 0;
+    }
+
+    memset(skin_def_decoded, 0, sizeof(skin_def_decoded));
+    write_le16(skin_def_decoded, 0u, 2u);
+    write_le16(skin_def_decoded, 2u, 6u);
+    write_le16(skin_def_decoded, 4u, 24u);
+    write_le16(skin_def_decoded, 6u, 100u);
+    write_le16(skin_def_decoded, 14u, 104u);
+    write_le16(skin_def_decoded, 24u, 100u);
+    write_le16(skin_def_decoded, 32u, 104u);
+
+    memset(bitmap_decoded, 0, sizeof(bitmap_decoded));
+    write_le32(bitmap_decoded, 0u, 16u);
+    write_le32(bitmap_decoded, 4u, 0x11223344u);
+    write_le32(bitmap_decoded, 8u, 0x55667788u);
+
+    memset(mask_decoded, 0, sizeof(mask_decoded));
+    write_le32(mask_decoded, 0u, 16u);
+    for (x = 0; x < 16; ++x) {
+        write_le32(mask_decoded, 4u + (size_t)x * 4u, 68u);
+    }
+    write_le16(mask_decoded, 68u, 0u);
+    write_le16(mask_decoded, 70u, 0u);
+    write_le16(mask_decoded, 72u, 0u);
+    write_le16(mask_decoded, 74u, 0u);
+    write_le16(mask_decoded, 76u, 16u);
+    write_le16(mask_decoded, 78u, 1u);
+    write_le16(mask_decoded, 80u, 0xffffu);
+
+    entries[0].entry_index = 1u;
+    entries[0].decoded = skin_def_decoded;
+    entries[0].decoded_size = sizeof(skin_def_decoded);
+    entries[1].entry_index = 100u;
+    entries[1].decoded = bitmap_decoded;
+    entries[1].decoded_size = sizeof(bitmap_decoded);
+    entries[2].entry_index = 104u;
+    entries[2].decoded = mask_decoded;
+    entries[2].decoded_size = sizeof(mask_decoded);
+    bytes = build_csbgraphics_entries_compressed(entries,
+                                                 sizeof(entries) / sizeof(entries[0]),
+                                                 &size);
+    if (!bytes) {
+        return 0;
+    }
+
+    csb_v1_csbgraphics_dat_real_cache_free(&profile->csbgraphics_cache);
+    csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
+    csb_v1_csbgraphics_m11_runtime_plan_init(&profile->csbgraphics_m11_plan);
+    profile->csbgraphics_cache.file_buffer = bytes;
+    profile->csbgraphics_cache.file_size = size;
+    profile->csbgraphics_cache.loaded = 1;
+    snprintf(profile->csbgraphics_cache.resolved_path,
+             sizeof(profile->csbgraphics_cache.resolved_path),
+             "/synthetic/CSBgraphics.dat");
+    snprintf(profile->csbgraphics_cache.matched_md5,
+             sizeof(profile->csbgraphics_cache.matched_md5),
+             "00000000000000000000000000000001");
+    snprintf(profile->csbgraphics_cache.matched_label,
+             sizeof(profile->csbgraphics_cache.matched_label),
+             "synthetic-m11-custom-background");
+    if (csb_v1_csbgraphics_dat_classify(
+            profile->csbgraphics_cache.file_buffer,
+            profile->csbgraphics_cache.file_size,
+            &profile->csbgraphics_cache.index) !=
+        CSB_V1_CSBGRAPHICS_CLASSIFY_OK) {
+        return 0;
+    }
+    profile->csbgraphics_scan_attempted = 1;
+    profile->csbgraphics_scan_result = CSB_V1_CSBGRAPHICS_DAT_REAL_OK;
+    profile->csbgraphics_skin_def_loaded = 1;
+    profile->csbgraphics_skin_def_word_count = 7u;
+    memset(profile->csbgraphics_skin_def_words, 0,
+           sizeof(profile->csbgraphics_skin_def_words));
+    profile->csbgraphics_skin_def_words[0] = 100u;
+    profile->csbgraphics_skin_def_words[4] = 104u;
+    profile->csbgraphics_plan_result =
+        csb_v1_csbgraphics_m11_runtime_plan_add_custom_background_skin_def(
+            &profile->csbgraphics_cache,
+            profile->csbgraphics_skin_def_words,
+            profile->csbgraphics_skin_def_word_count,
+            &profile->csbgraphics_m11_plan);
+    if (profile->csbgraphics_plan_result !=
+        CSB_V1_CSBGRAPHICS_M11_RUNTIME_PLAN_OK) {
+        return 0;
+    }
+
+    for (y = 0; y < height; ++y) {
+        for (x = 0; x < width; ++x) {
+            (void)csb_v1_skin_cache_set_skin(&profile->runtime.skin_cache,
+                                             level,
+                                             width,
+                                             height,
+                                             x,
+                                             y,
+                                             1u);
+        }
+    }
+    return 1;
 }
 
 static int write_tiny_file(const char* path, const char* bytes) {
@@ -887,6 +1112,14 @@ int main(void) {
                         "M11 CSB draw applies ready CSBgraphics plan entries");
             expect_true(fb[32 * 320] == 0,
                         "M11 CSBgraphics draw preserves pixels outside route");
+            expect_true(inject_synthetic_csbgraphics_custom_background(profile),
+                        "test injects CSBgraphics custom-background skin data");
+            memset(fb, 0, sizeof(fb));
+            M11_GameView_Draw(&view, fb, 320, 200);
+            expect_true(count_diff_rect(expected_fb, fb, 320, 0, 33, 16, 1) > 0,
+                        "M11 CSB draw applies runtime-selected custom-background masks");
+            expect_true(fb[32 * 320] == 0,
+                        "M11 CSB custom-background draw preserves pixels outside viewport");
         }
     }
 
