@@ -28,6 +28,8 @@
 
 static int passed;
 static int failed;
+static uint8_t s_ceiling_pixels[16 * 8];
+static uint8_t s_floor_pixels[16 * 8];
 
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
@@ -40,6 +42,34 @@ static void make_synthetic_verified_profile(DM2_V1_BootProfile *profile)
     profile->assets_verified = 1;
     snprintf(profile->asset_root, sizeof(profile->asset_root),
              "synthetic-dm2-v1-runtime-handoff");
+}
+
+static int synthetic_viewport_asset_fetch(void *user,
+                                          int gdat_index,
+                                          const uint8_t **out_pixels,
+                                          int *out_w,
+                                          int *out_h,
+                                          int *out_stride)
+{
+    int *fetch_count = (int *)user;
+    if (fetch_count) {
+        ++*fetch_count;
+    }
+    if (gdat_index == -2) {
+        if (out_pixels) *out_pixels = s_ceiling_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index == -1) {
+        if (out_pixels) *out_pixels = s_floor_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    return -1;
 }
 
 static void test_first_tick_after_boot_profile_handoff(void)
@@ -104,6 +134,31 @@ static void test_first_tick_after_boot_profile_handoff(void)
     CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_RAIN &&
           dm2_v1_runtime_get_weather_intensity() == 64,
           "session apply updates runtime weather state");
+
+    {
+        uint8_t framebuffer[320 * 200];
+        int fetch_count = 0;
+        memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
+        memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_runtime_set_outdoor(0);
+        dm2_v1_runtime_set_viewport_asset_provider(
+            synthetic_viewport_asset_fetch, &fetch_count);
+        CHECK(dm2_v1_runtime_render_frame(
+                  dm2_v1_runtime_get_party_dir(),
+                  dm2_v1_runtime_get_party_x(),
+                  dm2_v1_runtime_get_party_y(),
+                  framebuffer, 320, 320, 200) == 0,
+              "runtime renders through an injected viewport asset provider");
+        CHECK(fetch_count == 2,
+              "runtime viewport provider receives ceiling and floor fetches");
+        CHECK(dm2_v1_runtime_last_asset_floor_ceiling_count() == 2 &&
+              dm2_v1_runtime_last_fallback_floor_ceiling_count() == 0,
+              "runtime records asset-backed floor/ceiling draw counts");
+        CHECK(framebuffer[0] == 1,
+              "runtime asset-provider frame completes the shared viewport render pass");
+        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+    }
 
     state->gold = 240;
     dm2_v1_shop_reset_state();
