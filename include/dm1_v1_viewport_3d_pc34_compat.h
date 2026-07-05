@@ -170,6 +170,12 @@ typedef enum {
     DM1_VP_VIEW_SQUARE_COUNT
 } DM1_ViewSquareIndex;
 
+typedef void (*DM1_ViewportPreSquareDrawCallback)(
+    void *user_data,
+    DM1_ViewSquareIndex square,
+    int relative_forward,
+    int relative_side);
+
 /* Wall set bitmap indices — from DUNVIEW.C G2107_WallSet[15] (I34E) */
 typedef enum {
     DM1_WALL_D0R = 0,
@@ -696,6 +702,12 @@ typedef struct {
     const uint8_t *dungeon_grid;
     int            dungeon_width;
     int            dungeon_height;
+
+    /* Optional integration hook for source-lineage extensions that must draw
+     * immediately before a room pass. CSB CustomBackgrounds uses this to match
+     * CSBWin Viewport.cpp:6926-7045 without changing DM1 default behavior. */
+    DM1_ViewportPreSquareDrawCallback pre_square_draw_callback;
+    void *pre_square_draw_user_data;
 
 } DM1_Viewport3DState;
 
