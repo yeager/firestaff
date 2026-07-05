@@ -176,6 +176,13 @@ typedef struct {
     int      descriptor_byte_before_is_rts;
     uint64_t descriptor_first_nonzero_after;
     int      descriptor_all_zero_after;
+    int32_t  descriptor_semantic_status;
+    uint32_t descriptor_semantic_role;
+    uint32_t descriptor_semantic_entry_index;
+    uint32_t descriptor_semantic_window_kind;
+    int      descriptor_semantic_seed_shape_ok;
+    uint32_t descriptor_semantic_seed_first;
+    uint32_t descriptor_semantic_seed_last;
 
     /* ── Track 02 logical user-data window catalog summary ────── */
     uint32_t user_data_window_count;

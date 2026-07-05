@@ -281,6 +281,14 @@ static void check_placeholder_fields(void) {
           r.descriptor_role_post_data_count == 0u &&
           r.descriptor_role_descriptor_table_count == 0u,
           "placeholder leaves descriptor role summary empty");
+    check(r.descriptor_semantic_status == 0 &&
+          r.descriptor_semantic_role == 0u &&
+          r.descriptor_semantic_entry_index == 0u &&
+          r.descriptor_semantic_window_kind == 0u &&
+          r.descriptor_semantic_seed_shape_ok == 0 &&
+          r.descriptor_semantic_seed_first == 0u &&
+          r.descriptor_semantic_seed_last == 0u,
+          "placeholder leaves descriptor semantic summary empty");
     check(r.m11_dispatch_source_kind == -1,
           "placeholder leaves m11_dispatch_source_kind at -1");
     check(r.boot_profile_assets_verified == 0,
@@ -594,6 +602,25 @@ static void check_real_asset_path(void) {
                   r.descriptor_role_post_data_count +
                   r.descriptor_role_descriptor_table_count == 9u,
                   "real receipt descriptor role summary covers all 9 entries");
+            check(r.descriptor_semantic_entry_index == 0u,
+                  "real receipt semantic binding checks descriptor entry 0");
+            check(r.descriptor_semantic_role ==
+                      THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE,
+                  "real receipt semantic role is dungeon seed table");
+            check(r.descriptor_semantic_status !=
+                      THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT,
+                  "real receipt semantic binding reaches decoded window");
+            check(r.descriptor_semantic_window_kind !=
+                      THERON_TRACK02_DESCRIPTOR_WINDOW_UNKNOWN,
+                  "real receipt semantic binding reports a window kind");
+            {
+                char line[2048];
+                theron_v1_startup_receipt_to_line(&r, line, sizeof(line));
+                check_str_contains(line, "semantic_role=dungeon-seed-table",
+                                   "real receipt line names semantic role");
+                check_str_contains(line, "semantic_name=",
+                                   "real receipt line names semantic status");
+            }
             if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0 ||
                 strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
                 check(r.user_data_window_count == 7u,
