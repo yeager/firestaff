@@ -1237,9 +1237,10 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
     int dispatched;
 
     /* Source: ReDMCSB GAMELOOP.C F0002 lines 69-124 calls
-     * F0261_TIMELINE_Process_CPSEF() before incrementing
-     * G0313_ul_GameTime.  TIMELINE.C F0240 lines 702-708 expires the
-     * first heap event when event_time <= G0313_ul_GameTime. */
+     * F0065_SOUND_ProcessPendingSound before F0261_TIMELINE_Process_CPSEF()
+     * and then increments G0313_ul_GameTime.  TIMELINE.C F0240 lines
+     * 702-708 expires the first heap event when event_time <= G0313_ul_GameTime. */
+    (void)csb_v1_audio_runtime_flush_pending(&profile->audio_runtime);
     profile->timeline_queue.gameTick = profile->game_time;
     memset(&profile->last_timeline_dispatch, 0,
            sizeof(profile->last_timeline_dispatch));
@@ -2307,6 +2308,53 @@ static int csb_v1_runtime_creature_attack_ticks(int creature_type)
     };
     if (creature_type < 0 || creature_type >= 27) return 1;
     return (int)attack_ticks[creature_type];
+}
+
+static int csb_v1_runtime_creature_attack_sound_index(int creature_type)
+{
+    static const signed char attack_sound_ordinal[27] = {
+        4, 0, 6, 0, 1, 0, 3, 7, 2,
+        10, 2, 0, 11, 9, 0, 5, 10, 0,
+        11, 0, 8, 3, 0, 0, 1, 0, 0
+    };
+    static const signed char creature_sounds_attack[18] = {
+        23, 25, 19, 20, 21, 22, 24, 26, 27,
+        CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM,
+        CSB_V1_SOUND_COMBAT, CSB_V1_SOUND_COMBAT, 25, -1, -1, -1, -1, 23
+    };
+    int ordinal;
+
+    if (creature_type < 0 || creature_type >= 27) return CSB_V1_SOUND_NONE;
+    ordinal = (int)attack_sound_ordinal[creature_type];
+    if (ordinal <= 0 || ordinal > 18) return CSB_V1_SOUND_NONE;
+    return (int)creature_sounds_attack[ordinal - 1];
+}
+
+static void csb_v1_runtime_request_creature_attack_sound(
+    CSB_V1_RuntimeProfile *profile,
+    int creature_type,
+    int map_x,
+    int map_y)
+{
+    CsbV1AudioRequest request;
+    int sound_index;
+
+    if (!profile) return;
+    sound_index = csb_v1_runtime_creature_attack_sound_index(creature_type);
+    if (sound_index == CSB_V1_SOUND_NONE) return;
+
+    memset(&request, 0, sizeof(request));
+    request.soundIndex = (int16_t)sound_index;
+    request.mapX = (int16_t)map_x;
+    request.mapY = (int16_t)map_y;
+    request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+    request.volume = 64;
+    request.priority = 6u;
+    /* ReDMCSB GROUP.C F0207 lines 1807-1808 maps
+     * CreatureInfo.AttackSoundOrdinal through DUNGEON.C
+     * G2003_aauc_CreatureSounds[][C0_ATTACK_SOUND], then requests
+     * SOUND.C F0064 with C01_MODE_PLAY_IF_PRIORITIZED. */
+    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
 }
 
 static int csb_v1_runtime_direction_from_source_to_destination(
@@ -6573,8 +6621,8 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
      * CHAMPION.C F0321).  CSB keeps the real-format group lookup and target
      * selection here, then delegates the bounded damage roll to the shared
      * M10 combat resolver used by DM1.  Full CSB runtime RNG state, poison,
-     * armor inventory, rest wake, active-group side state, sounds, and aspect
-     * timing remain later slices. */
+     * armor inventory, rest wake, ranged attacks, and broader aspect timing
+     * remain later slices. */
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
         thing_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -6624,6 +6672,11 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                 (int)thing_record[4],
                 creature_index,
                 1);
+            csb_v1_runtime_request_creature_attack_sound(
+                profile,
+                (int)thing_record[4],
+                record->mapX,
+                record->mapY);
             if ((int)thing_record[4] == DM1_CREATURE_TYPE_GIGGLER) {
                 (void)csb_v1_runtime_apply_giggler_steal_timeline_record(
                     profile,
@@ -9892,6 +9945,7 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->total_play_ms = 0;
     profile->tick_count    = 0;
     dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
+    csb_v1_audio_runtime_init(&profile->audio_runtime);
     memset(&profile->last_timeline_dispatch, 0,
            sizeof(profile->last_timeline_dispatch));
     profile->timeline_dispatch_count = 0;

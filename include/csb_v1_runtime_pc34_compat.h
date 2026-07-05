@@ -50,6 +50,7 @@
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
+#include "csb_v1_audio_runtime_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
@@ -355,6 +356,7 @@ typedef struct {
     uint32_t                timeline_dispatch_count;
     struct ProjectileList_Compat projectiles;
     struct ExplosionList_Compat explosions;
+    CsbV1AudioRuntime audio_runtime;
     CSB_V1_SkinCache skin_cache;
     struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
     struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
