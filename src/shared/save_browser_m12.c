@@ -14,6 +14,7 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_save_load.h"
+#include "dm2_v1_new_game.h"
 #include "memory_savegame_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
@@ -114,6 +115,76 @@ static int is_csb_original_save_basename(const char* name) {
            ascii_equal_ci(name, "DMSAVE.BAK");
 }
 
+static int dm2_sksave_slot_from_basename(const char* name,
+                                         unsigned char* outSlot) {
+    int slot;
+    if (!name ||
+        ascii_lower((unsigned char)name[0]) != 's' ||
+        ascii_lower((unsigned char)name[1]) != 'k' ||
+        ascii_lower((unsigned char)name[2]) != 's' ||
+        ascii_lower((unsigned char)name[3]) != 'a' ||
+        ascii_lower((unsigned char)name[4]) != 'v' ||
+        ascii_lower((unsigned char)name[5]) != 'e' ||
+        name[6] < '0' || name[6] > '9' ||
+        name[7] < '0' || name[7] > '9' ||
+        name[8] != '.' ||
+        ascii_lower((unsigned char)name[9]) != 'd' ||
+        ascii_lower((unsigned char)name[10]) != 'a' ||
+        ascii_lower((unsigned char)name[11]) != 't' ||
+        name[12] != '\0') {
+        return 0;
+    }
+    slot = (name[6] - '0') * 10 + (name[7] - '0');
+    if (slot < 0 || slot >= DM2_SLOT_MAX) {
+        return 0;
+    }
+    if (outSlot) {
+        *outSlot = (unsigned char)slot;
+    }
+    return 1;
+}
+
+static int dm2_sksave_root_from_path(const char* path,
+                                     char* outRoot,
+                                     size_t outRootCap,
+                                     unsigned char* outSlot) {
+    const char* slash;
+    const char* base;
+    size_t len;
+
+    if (!path || !outRoot || outRootCap == 0u) {
+        return 0;
+    }
+    slash = strrchr(path, '/');
+#ifdef _WIN32
+    {
+        const char* backslash = strrchr(path, '\\');
+        if (!slash || (backslash && backslash > slash)) {
+            slash = backslash;
+        }
+    }
+#endif
+    base = slash ? slash + 1 : path;
+    if (!dm2_sksave_slot_from_basename(base, outSlot)) {
+        return 0;
+    }
+    if (!slash) {
+        if (outRootCap < 2u) {
+            return 0;
+        }
+        outRoot[0] = '.';
+        outRoot[1] = '\0';
+        return 1;
+    }
+    len = (size_t)(slash - path);
+    if (len == 0u || len >= outRootCap) {
+        return 0;
+    }
+    memcpy(outRoot, path, len);
+    outRoot[len] = '\0';
+    return 1;
+}
+
 static int validate_csb_original_save_import_path(const char* path) {
     CSB_V1_RuntimeProfile runtime;
     int rc;
@@ -130,6 +201,7 @@ static int is_save_file(const char* name) {
     size_t len;
     if (!name) return 0;
     if (is_csb_original_save_basename(name)) return 1;
+    if (dm2_sksave_slot_from_basename(name, NULL)) return 1;
     len = strlen(name);
     if (len < 15) return 0; /* "firestaff-.sav" minimum */
     if (strncmp(name, "firestaff-", 10) != 0) return 0;
@@ -147,6 +219,10 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
     outId[0] = '\0';
     if (is_csb_original_save_basename(filename)) {
         snprintf(outId, (size_t)outSize, "csb");
+        return;
+    }
+    if (dm2_sksave_slot_from_basename(filename, NULL)) {
+        snprintf(outId, (size_t)outSize, "dm2");
         return;
     }
     if (strncmp(filename, "firestaff-", 10) != 0) return;
@@ -250,6 +326,101 @@ static void format_champion_name(const unsigned char packed[8],
                                  char* out, int outSize);
 static void format_csb_champion_name(const char packed[16],
                                      char* out, int outSize);
+
+static void format_dm2_champion_name(const char packed[8],
+                                     char* out, int outSize) {
+    int i;
+    int end;
+    if (!out || outSize <= 0) return;
+    end = 8;
+    while (end > 0 &&
+           (packed[end - 1] == ' ' || packed[end - 1] == '\0')) {
+        --end;
+    }
+    if (end == 0 || end >= outSize) {
+        out[0] = '\0';
+        return;
+    }
+    for (i = 0; i < end; ++i) {
+        out[i] = packed[i];
+    }
+    out[end] = '\0';
+}
+
+static int try_parse_dm2_session_entry(M12_SaveBrowserEntry* entry) {
+    DM2_V1_SessionState session;
+    char saveRoot[512];
+    char nameBuf[32];
+    unsigned char slot = 0u;
+    int offset;
+    int i;
+
+    if (!entry ||
+        (entry->expectedGameCode != 0 &&
+         entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_DM2)) {
+        return 0;
+    }
+    if (!dm2_sksave_root_from_path(entry->fullPath,
+                                   saveRoot,
+                                   sizeof(saveRoot),
+                                   &slot)) {
+        return 0;
+    }
+
+    /*
+     * skproject SKWINSPX/src/v4/skfileop.cpp READ_SAVEGAMES_FILENAMES
+     * treats SKSAVE digit slots as the launcher-visible save surface after
+     * the 0xBEEF/0xDEAD header check.  This bounded Firestaff path reads
+     * the modeled DM2_V1_SessionState payload; broader original SKSAVE
+     * dungeon DB pools remain owned by the later full importer.
+     */
+    memset(&session, 0, sizeof(session));
+    if (dm2_v1_session_load_slot(saveRoot, slot, &session) != 0 ||
+        !dm2_v1_session_validate(&session)) {
+        return 0;
+    }
+
+    snprintf(entry->gameId, sizeof(entry->gameId), "dm2");
+    entry->expectedGameCode = SAVEGAME_PC34_GAME_CODE_DM2;
+    entry->valid = 1;
+    entry->mapLevel = (int)session.party_level;
+    entry->championCount = (int)session.champion_count;
+    entry->champions[0] = '\0';
+    offset = 0;
+    for (i = 0; i < session.champion_count && i < 4; ++i) {
+        const DM2_ChampionRecord* rec =
+            (const DM2_ChampionRecord*)session.champion_data[i];
+        if (!rec || rec->max_hp == 0) {
+            continue;
+        }
+        format_dm2_champion_name(rec->first_name,
+                                 nameBuf,
+                                 (int)sizeof(nameBuf));
+        if (nameBuf[0] == '\0') {
+            snprintf(nameBuf, sizeof(nameBuf), "CHAMPION %d", i + 1);
+        }
+        if (offset > 0) {
+            offset += snprintf(entry->champions + offset,
+                               sizeof(entry->champions) - (size_t)offset,
+                               ", ");
+        }
+        offset += snprintf(entry->champions + offset,
+                           sizeof(entry->champions) - (size_t)offset,
+                           "%s", nameBuf);
+    }
+
+    if (entry->championCount > 0 && entry->champions[0] != '\0') {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  [%s]  (DM2 slot %u)",
+                 entry->gameId, entry->mapLevel, entry->champions,
+                 (unsigned)slot);
+    } else {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  (DM2 slot %u)",
+                 entry->gameId, entry->mapLevel, (unsigned)slot);
+    }
+    return 1;
+}
 
 static int try_parse_csb_runtime_entry(M12_SaveBrowserEntry* entry) {
     CSB_V1_RuntimeProfile runtime;
@@ -557,6 +728,9 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
     memset(&sg, 0, sizeof(sg));
     rc = F0786_SAVEGAME_LoadFromFile_Compat(entry->fullPath, &sg);
     if (rc != SAVEGAME_OK) {
+        if (try_parse_dm2_session_entry(entry)) {
+            return 1;
+        }
         if (try_parse_csb_runtime_entry(entry)) {
             return 1;
         }
