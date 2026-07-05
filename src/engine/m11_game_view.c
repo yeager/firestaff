@@ -10325,9 +10325,12 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
     Theron_Track02BankSignal signal;
     Theron_Track02SignalStatus signal_status;
     Theron_Track02UserDataWindowCatalog user_window_catalog;
+    Theron_Track02StartupTextMarkerCatalog text_marker_catalog;
     size_t user_window_descriptor_count = 0u;
     size_t user_window_span_count = 0u;
     size_t user_window_initial_count = 0u;
+    size_t startup_text_us_count = 0u;
+    size_t startup_text_jp_count = 0u;
     size_t anchor;
     size_t entry;
     int tried = 0;
@@ -10391,6 +10394,28 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
         }
     }
 
+    memset(&text_marker_catalog, 0, sizeof(text_marker_catalog));
+    if (theron_v1_track02_catalog_startup_text_markers(
+            assets->hucard_rom,
+            assets->hucard_rom_size,
+            md5_hex,
+            &text_marker_catalog) == THERON_TRACK02_SIGNAL_OK) {
+        size_t i;
+        for (i = 0u; i < text_marker_catalog.marker_count; ++i) {
+            switch (text_marker_catalog.markers[i].kind) {
+            case THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT:
+                ++startup_text_us_count;
+                break;
+            case THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER:
+                ++startup_text_jp_count;
+                break;
+            case THERON_TRACK02_STARTUP_TEXT_UNKNOWN:
+            default:
+                break;
+            }
+        }
+    }
+
     for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
         Theron_Track02LevelHandoff initial_handoff;
         Theron_Track02LevelHandoffStatus initial_status;
@@ -10418,7 +10443,7 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
             if (receipt && receipt_cap > 0u) {
                 snprintf(receipt,
                          receipt_cap,
-                         "Track 02 initial level bind=%s anchor=%zu offset=0x%zx user_valid=%d user=0x%zx user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu expected=0x%zx delta=0x%zx candidates=%zu match=%d header=%ux%u seed=0x%08x start=(%d,%d,%d)",
+                         "Track 02 initial level bind=%s anchor=%zu offset=0x%zx user_valid=%d user=0x%zx user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu text_markers=%zu text_us=%zu text_jp=%zu expected=0x%zx delta=0x%zx candidates=%zu match=%d header=%ux%u seed=0x%08x start=(%d,%d,%d)",
                          theron_v1_track02_level_handoff_status_name(
                              (Theron_Track02LevelHandoffStatus)
                                  initial_handoff.binding_status),
@@ -10430,6 +10455,9 @@ static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
                          user_window_descriptor_count,
                          user_window_span_count,
                          user_window_initial_count,
+                         text_marker_catalog.marker_count,
+                         startup_text_us_count,
+                         startup_text_jp_count,
                          initial_handoff.expected_offset,
                          initial_handoff.descriptor_delta,
                          initial_handoff.candidate_count,
