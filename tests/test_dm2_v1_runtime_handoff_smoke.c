@@ -32,6 +32,7 @@ static int failed;
 static uint8_t s_ceiling_pixels[16 * 8];
 static uint8_t s_floor_pixels[16 * 8];
 static uint8_t s_wall_pixels[16 * 8];
+static uint8_t s_door_frame_pixels[16 * 8];
 
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
@@ -76,6 +77,16 @@ static int synthetic_viewport_asset_fetch(void *user,
             DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
         DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index < 0x40) {
         if (out_pixels) *out_pixels = s_wall_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index <=
+        DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE -
+            DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT &&
+        DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - gdat_index < 0x20) {
+        if (out_pixels) *out_pixels = s_door_frame_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -171,6 +182,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_asset_wall_count() == 10 &&
               dm2_v1_runtime_last_fallback_wall_count() == 0,
               "runtime records asset-backed viewport-cell wall draw counts");
+        CHECK(dm2_v1_runtime_last_asset_door_frame_count() == 0 &&
+              dm2_v1_runtime_last_fallback_door_count() == 0,
+              "runtime records no door-frame draw when no front door is visible");
         CHECK(framebuffer[0] == 1,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
@@ -197,6 +211,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
         int door_x = 0;
         int door_y = 0;
         int found_door_site = 0;
+        uint8_t framebuffer[320 * 200];
+        int fetch_count = 0;
         for (int y = 0; y < 63 && !found_door_site; ++y) {
             for (int x = 0; x < 64 && !found_door_site; ++x) {
                 if (dm2_v1_dungeon_get_tile_raw(
@@ -227,6 +243,27 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   (DM2_V1_DungeonData *)profile.dungeon_data,
                   0, door_x, door_y) == 3,
           "runtime door action writes the stepped raw tile state");
+        memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
+        memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
+        memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
+        memset(s_door_frame_pixels, 15, sizeof(s_door_frame_pixels));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        fetch_count = 0;
+        dm2_v1_dungeon_set_tile_raw(
+            (DM2_V1_DungeonData *)profile.dungeon_data,
+            0, door_x, door_y, 2u);
+        dm2_v1_runtime_set_viewport_asset_provider(
+            synthetic_viewport_asset_fetch, &fetch_count);
+        CHECK(dm2_v1_runtime_render_frame(
+                  dm2_v1_runtime_get_party_dir(),
+                  dm2_v1_runtime_get_party_x(),
+                  dm2_v1_runtime_get_party_y(),
+                  framebuffer, 320, 320, 200) == 0,
+              "runtime renders a front door through the viewport asset provider");
+        CHECK(dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
+              dm2_v1_runtime_last_fallback_door_count() == 0,
+              "runtime records asset-backed front door-frame draw counts");
+        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
     }
 
     dm2_v1_runtime_tick();

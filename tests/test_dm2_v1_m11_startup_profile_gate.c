@@ -389,6 +389,9 @@ int main(void) {
                         0, 15, 14) == 3,
                     "M11 DM2 front-door action writes stepped door state");
         dm2_v1_runtime_set_position(0, 15, 15, 0);
+        view.dm2State.party_x = 15;
+        view.dm2State.party_y = 15;
+        view.dm2State.party_dir = 0;
         dm2_v1_runtime_set_outdoor(0);
     }
     if (world) {
@@ -495,7 +498,16 @@ int main(void) {
                         "DM2 pressure plate applies door-toggle target");
         }
         dm2_v1_runtime_set_position(0, 15, 15, 0);
+        view.dm2State.party_x = 15;
+        view.dm2State.party_y = 15;
+        view.dm2State.party_dir = 0;
         dm2_v1_runtime_set_outdoor(0);
+    }
+    if (profile && profile->dungeon_data) {
+        expect_true(dm2_v1_dungeon_set_tile_raw(
+                        (DM2_V1_DungeonData *)profile->dungeon_data,
+                        0, 15, 14, 2u) == 0,
+                    "DM2 M11 draw seeds a front door tile for asset-backed door-frame proof");
     }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
@@ -511,6 +523,9 @@ int main(void) {
     expect_true(dm2_v1_runtime_last_asset_wall_count() == 10 &&
                 dm2_v1_runtime_last_fallback_wall_count() == 0,
                 "M11 DM2 draw uses real GRAPHICSSET GDAT viewport-cell wall images");
+    expect_true(dm2_v1_runtime_last_asset_door_frame_count() == 1 &&
+                dm2_v1_runtime_last_fallback_door_count() == 0,
+                "M11 DM2 draw uses a real GRAPHICSSET GDAT front door-frame image");
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;

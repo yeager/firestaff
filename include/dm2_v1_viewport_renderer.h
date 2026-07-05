@@ -98,9 +98,15 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_CEILING (-2)
 #define DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE (-0x100)
 #define DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST 0x22
+#define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE (-0x200)
+#define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT 0x06
+#define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_D1C 0x07
+#define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_D2C 0x09
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
+int dm2_v1_viewport_door_frame_field_for_square(int view_square);
+int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square);
 
 /* ── View square state ──────────────────────────────────────────── */
 typedef struct {
@@ -202,6 +208,8 @@ typedef struct {
     int fallback_floor_ceiling_drawn_count;
     int asset_wall_drawn_count;
     int fallback_wall_drawn_count;
+    int asset_door_frame_drawn_count;
+    int fallback_door_drawn_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
