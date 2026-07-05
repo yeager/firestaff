@@ -14698,6 +14698,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                             npc_name ? npc_name : "DM2 NPC",
                                             npc_line ? npc_line :
                                                        "WELCOME, TRAVELER.");
+                } else if (dm2_v1_runtime_invoke_square_actuators(
+                               level, fx, fy) > 0) {
+                    m11_set_status(state, "ACTION", "DM2 ACTUATOR");
                 } else if (dm2_v1_runtime_invoke_actuator(
                                level, fx, fy,
                                DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH, 0u) == 0) {

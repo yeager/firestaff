@@ -403,6 +403,18 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       DM2_ACTUATOR_ITEM_GENERATOR &&
                   dm2_v1_runtime_get_last_generated_object() == 0x4567u,
                   "runtime square-first DB3 actuator invokes generated-object target");
+            {
+                int before_actuators = dm2_v1_runtime_get_actuator_count();
+                dm2_v1_runtime_set_position(0, 0, 1, 0);
+                dm2_v1_runtime_set_outdoor(1);
+                CHECK(dm2_v1_runtime_move(0) == 0 &&
+                      dm2_v1_runtime_get_party_x() == 0 &&
+                      dm2_v1_runtime_get_party_y() == 0 &&
+                      dm2_v1_runtime_get_actuator_count() ==
+                          before_actuators + 1 &&
+                      dm2_v1_runtime_get_last_generated_object() == 0x4567u,
+                      "runtime arrival on square-first DB3 actuator invokes generated-object target");
+            }
         } else {
             CHECK(0, "runtime square-actuator fixture loads");
         }
