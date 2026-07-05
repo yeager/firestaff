@@ -7980,31 +7980,40 @@ static int csb_v1_runtime_object_info_index_from_record(
 }
 
 typedef struct {
+    unsigned char weight;
     unsigned char weapon_class;
+    unsigned char strength;
     unsigned char kinetic_energy;
     unsigned char shoot_attack;
 } CSB_V1_RuntimeWeaponInfoPc34;
 
-/* ReDMCSB DUNGEON.C G0238_as_Graphic559_WeaponInfo.  MENU.C F0407 uses
- * Class, KineticEnergy, and M065_SHOOT_ATTACK for C032_ACTION_SHOOT. */
+/* ReDMCSB DUNGEON.C G0238_as_Graphic559_WeaponInfo.  CSB runtime uses the
+ * source fields needed by CHAMPION.C F0312/F0328 and MENU.C F0407. */
 static const CSB_V1_RuntimeWeaponInfoPc34
     g_csb_v1_weapon_info_pc34[46] = {
-    {130,   0,   0}, {131,   0,   0}, {  0,   2,   0},
-    {112,  80,  40}, {129,   7,   0}, {113, 110,  66},
-    {  0,  20,   0}, {255,  10, 255}, {  2,  19,   0},
-    {  0,   8,   0}, {  0,  10,   0}, {  0,  10,   0},
-    {  0,  11,   0}, {  0,  12,   0}, {  0,  14,   0},
-    {  0,  14,   0}, {  0,  13,   0}, {  0,  15,   0},
-    {  2,  33,   0}, {  2,  44,   0}, {  0,  10,   0},
-    {  0,  13,   0}, {  0,  15,   0}, {  0,  10,   0},
-    {  0,  22,   0}, { 20,  50,  50}, { 30, 180, 120},
-    { 10,  10,   0}, { 10,  28,   0}, { 39,  20,  50},
-    { 11,  18,   0}, { 12,  23,   0}, {  1,  19,   0},
-    {  0,   4,   0}, {129,   4,   0}, {130,   0,   0},
-    {140,  20,   0}, {128,   6,   0}, {159,   4,   0},
-    {131,   3,   0}, {136,   7,   0}, {132,   1,   0},
-    {131,   4,   0}, {192,   1,   0}, { 26, 220, 125},
-    {255,  50, 255}
+    {  1, 130,   2,   0,   0}, {  1, 131,   2,   0,   0},
+    { 11,   0,   8,   2,   0}, { 12, 112,  10,  80,  40},
+    {  9, 129,  16,   7,   0}, { 30, 113,  49, 110,  66},
+    { 47,   0,  55,  20,   0}, { 24, 255,  25,  10, 255},
+    {  5,   2,  10,  19,   0}, { 33,   0,  30,   8,   0},
+    { 32,   0,  34,  10,   0}, { 26,   0,  38,  10,   0},
+    { 35,   0,  42,  11,   0}, { 36,   0,  46,  12,   0},
+    { 33,   0,  50,  14,   0}, { 37,   0,  62,  14,   0},
+    { 30,   0,  48,  13,   0}, { 39,   0,  58,  15,   0},
+    { 43,   2,  49,  33,   0}, { 65,   2,  70,  44,   0},
+    { 31,   0,  32,  10,   0}, { 41,   0,  42,  13,   0},
+    { 50,   0,  60,  15,   0}, { 36,   0,  19,  10,   0},
+    {110,   0,  44,  22,   0}, { 10,  20,   1,  50,  50},
+    { 28,  30,   1, 180, 120}, {  2,  10,   2,  10,   0},
+    {  2,  10,   2,  28,   0}, { 19,  39,   5,  20,  50},
+    { 10,  11,   6,  18,   0}, {  3,  12,   7,  23,   0},
+    {  1,   1,   3,  19,   0}, {  8,   0,   4,   4,   0},
+    { 26, 129,  12,   4,   0}, {  1, 130,   0,   0,   0},
+    {  2, 140,   1,  20,   0}, { 35, 128,  18,   6,   0},
+    { 29, 159,   0,   4,   0}, { 21, 131,   0,   3,   0},
+    { 33, 136,   0,   7,   0}, {  8, 132,   3,   1,   0},
+    { 18, 131,   9,   4,   0}, {  8, 192,   1,   1,   0},
+    { 30,  26,   1, 220, 125}, { 36, 255, 100,  50, 255}
 };
 
 static int csb_v1_runtime_weapon_info_for_thing(
@@ -8083,6 +8092,231 @@ static int csb_v1_runtime_shoot_ammunition_matches(
         return ready_class == 11;
     }
     return 0;
+}
+
+static int csb_v1_runtime_stamina_adjusted_value(
+    const CSB_V1_Champion *champion,
+    int value)
+{
+    int half_max;
+    int half_value;
+
+    if (!champion) return 0;
+    half_max = (int)champion->MaximumStamina >> 1;
+    if (half_max > 0 && (int)champion->CurrentStamina < half_max) {
+        half_value = value >> 1;
+        return half_value +
+               (int)(((long)half_value * (long)champion->CurrentStamina) /
+                     (long)half_max);
+    }
+    return value;
+}
+
+static int csb_v1_runtime_object_weight_for_thing(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    int depth)
+{
+    static const unsigned char kArmourWeights[58] = {
+          3,   4,   3,   6,  16,   4,   4,   3,   3,   4,
+          2,   4,   5,   3,   3,   4,   6,   8,  14,   6,
+          5,   5,   5,   4,   6,  11,  14,  15,  11,  10,
+         14,  21,  65,  53,  52,  41,  16,  16,  19, 120,
+         80,  28,  34,  17, 108,  72,  24,  30,  35, 141,
+         90,  31,  40,  14,  57,  81,   3,   2
+    };
+    static const unsigned char kJunkWeights[53] = {
+          1,   3,   2,   2,   4,  15,   1,   1,   1,   2,
+          1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+          1,   1,   1,   1,   1,  81,   2,   3,   2,   4,
+          4,   3,   8,   5,  11,   4,   6,   2,   3,   2,
+          2,   2,   6,   9,   3,  10,   1,   0,   1,   1,
+          2,   0,   8
+    };
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t word;
+    int thing_type;
+    int record_size;
+    int subtype;
+
+    if (!profile ||
+        thing == THING_NONE ||
+        thing == THING_ENDOFLIST ||
+        depth > DM1_SENSOR_POSSESSION_MAX_SCAN_STEPS) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record || record_size < 4) return 0;
+    word = csb_v1_runtime_read_u16(record + 2);
+
+    switch (thing_type) {
+    case THING_TYPE_SCROLL:
+        return 1;
+    case THING_TYPE_POTION:
+        subtype = (int)((word >> 8) & 0x7Fu);
+        return (subtype == 20) ? 1 : 3;
+    case THING_TYPE_WEAPON: {
+        CSB_V1_RuntimeWeaponInfoPc34 info;
+        return csb_v1_runtime_weapon_info_for_thing(profile, thing, &info)
+            ? (int)info.weight
+            : 0;
+    }
+    case THING_TYPE_ARMOUR:
+        subtype = (int)(word & 0x7Fu);
+        return (subtype >= 0 &&
+                subtype < (int)(sizeof(kArmourWeights) /
+                                sizeof(kArmourWeights[0])))
+            ? (int)kArmourWeights[subtype]
+            : 0;
+    case THING_TYPE_JUNK:
+        subtype = (int)(word & 0x7Fu);
+        if (subtype < 0 ||
+            subtype >= (int)(sizeof(kJunkWeights) / sizeof(kJunkWeights[0]))) {
+            return 0;
+        }
+        if (subtype == 1) {
+            return (int)kJunkWeights[subtype] +
+                   (((int)((word >> 14) & 0x03u)) << 1);
+        }
+        return (int)kJunkWeights[subtype];
+    case THING_TYPE_CONTAINER: {
+        uint16_t child;
+        int total = 50;
+        int guard = 0;
+        if (record_size < 8) return total;
+        child = csb_v1_runtime_read_u16(record + 4);
+        while (child != THING_NONE &&
+               child != THING_ENDOFLIST &&
+               guard++ < DM1_SENSOR_POSSESSION_MAX_SCAN_STEPS) {
+            const uint8_t *child_record;
+            total += csb_v1_runtime_object_weight_for_thing(
+                profile, child, depth + 1);
+            child_record = csb_v1_dungeon_get_thing_record(
+                dungeon,
+                child,
+                NULL,
+                NULL,
+                &record_size);
+            if (!child_record || record_size < 2) break;
+            child = csb_v1_runtime_read_u16(child_record);
+        }
+        return total;
+    }
+    default:
+        return 0;
+    }
+}
+
+static int csb_v1_runtime_f0312_action_hand_strength(
+    const CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    const CSB_V1_Champion *champion,
+    uint16_t thing,
+    const CSB_V1_RuntimeWeaponInfoPc34 *weapon_info,
+    struct RngState_Compat *rng)
+{
+    int strength;
+    int object_weight;
+    int max_load;
+    int one_sixteenth_maximum_load;
+    int load_threshold;
+    int weapon_class;
+    int skill_bonus = 0;
+
+    if (!profile || !champion || !rng) return 0;
+    strength = F0732_COMBAT_RngRandom_Compat(rng, 16) +
+               (int)champion->Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR];
+    object_weight = csb_v1_runtime_object_weight_for_thing(profile, thing, 0);
+    max_load = (int)csb_v1_champion_get_maximum_load(champion);
+    if (max_load <= 0) {
+        max_load =
+            ((int)champion->Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] << 3) +
+            100;
+    }
+    one_sixteenth_maximum_load = max_load >> 4;
+    if (object_weight <= one_sixteenth_maximum_load) {
+        strength += object_weight - 12;
+    } else {
+        load_threshold =
+            one_sixteenth_maximum_load +
+            ((one_sixteenth_maximum_load - 12) >> 1);
+        if (object_weight <= load_threshold) {
+            strength += (object_weight - one_sixteenth_maximum_load) >> 1;
+        } else {
+            strength -= (object_weight - load_threshold) << 1;
+        }
+    }
+
+    if (weapon_info && THING_GET_TYPE(thing) == THING_TYPE_WEAPON) {
+        strength += (int)weapon_info->strength;
+        weapon_class = (int)weapon_info->weapon_class;
+        if (weapon_class == 0 || weapon_class == 2) {
+            skill_bonus += csb_v1_runtime_get_champion_skill_level(
+                profile, champion_index, 4);
+        }
+        if (weapon_class != 0 && weapon_class < 16) {
+            skill_bonus += csb_v1_runtime_get_champion_skill_level(
+                profile, champion_index, 10);
+        }
+        if (weapon_class >= 16 && weapon_class < 112) {
+            skill_bonus += csb_v1_runtime_get_champion_skill_level(
+                profile, champion_index, 11);
+        }
+        if (skill_bonus < 0) skill_bonus = 0;
+        strength += skill_bonus << 1;
+    }
+
+    strength = csb_v1_runtime_stamina_adjusted_value(champion, strength);
+    if ((champion->Wounds & COMBAT_WOUND_ACTION_HAND) != 0) {
+        strength >>= 1;
+    }
+    strength >>= 1;
+    if (strength < 0) return 0;
+    if (strength > 100) return 100;
+    return strength;
+}
+
+static int csb_v1_runtime_potion_projectile_subtype(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    int *out_potion_power)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t word;
+    int thing_type;
+    int record_size;
+    int potion_type;
+
+    if (out_potion_power) *out_potion_power = 0;
+    if (!profile || THING_GET_TYPE(thing) != THING_TYPE_POTION) return -1;
+    dungeon = profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record || record_size < 4 || thing_type != THING_TYPE_POTION) {
+        return -1;
+    }
+    word = csb_v1_runtime_read_u16(record + 2);
+    potion_type = (int)((word >> 8) & 0x7Fu);
+    if (out_potion_power) *out_potion_power = (int)(word & 0xFFu);
+    if (potion_type == 3) return PROJECTILE_SUBTYPE_POISON_CLOUD;
+    if (potion_type == 19) return PROJECTILE_SUBTYPE_FIREBALL;
+    return -1;
 }
 
 static int csb_v1_runtime_object_icon_from_object_info(
@@ -8408,12 +8642,23 @@ int csb_v1_runtime_throw_action_hand(
     int *out_projectile_slot)
 {
     CSB_V1_Champion *champion;
+    CSB_V1_RuntimeWeaponInfoPc34 weapon_info;
+    CSB_V1_RuntimeWeaponInfoPc34 *weapon_info_ptr = NULL;
     struct ProjectileCreateInput_Compat input;
     struct TimelineEvent_Compat first_move;
+    struct RngState_Compat rng;
     uint16_t thrown_thing;
     int slot = -1;
     int party_dir;
     int throw_side;
+    int throw_skill_level;
+    int weapon_kinetic_energy = 1;
+    int kinetic_energy;
+    int attack;
+    int step_energy;
+    int projectile_subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    int potion_power = 0;
+    int potion_subtype;
 
     if (out_projectile_slot) *out_projectile_slot = -1;
     if (!profile || !profile->party_state_valid) return 0;
@@ -8433,15 +8678,59 @@ int csb_v1_runtime_throw_action_hand(
     if (thrown_thing == THING_NONE || thrown_thing == THING_ENDOFLIST) {
         return 0;
     }
+    if (csb_v1_runtime_weapon_info_for_thing(
+            profile, thrown_thing, &weapon_info)) {
+        weapon_info_ptr = &weapon_info;
+        if ((int)weapon_info.weapon_class <= 12) {
+            weapon_kinetic_energy = (int)weapon_info.kinetic_energy;
+        }
+    }
+    potion_subtype = csb_v1_runtime_potion_projectile_subtype(
+        profile,
+        thrown_thing,
+        &potion_power);
+    if (potion_subtype >= 0) {
+        projectile_subtype = potion_subtype;
+    }
 
     party_dir = profile->party_dir & 3;
     throw_side = (((int)champion->Cell == ((party_dir + 1) & 3)) ||
                   ((int)champion->Cell == ((party_dir + 2) & 3))) ? 1 : 0;
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^
+            ((uint32_t)profile->game_time * 1103515245u) ^
+            ((uint32_t)(champion_index & 0x03) << 24) ^
+            ((uint32_t)(THING_GET_TYPE(thrown_thing) & 0x0F) << 16) ^
+            ((uint32_t)(THING_GET_INDEX(thrown_thing) & 0x03FF) << 4) ^
+            0xF0328u);
+    kinetic_energy = csb_v1_runtime_f0312_action_hand_strength(
+        profile,
+        champion_index,
+        champion,
+        thrown_thing,
+        weapon_info_ptr,
+        &rng);
+    throw_skill_level = csb_v1_runtime_get_champion_skill_level(
+        profile,
+        champion_index,
+        10);
+    if (throw_skill_level < 0) throw_skill_level = 0;
+    kinetic_energy += weapon_kinetic_energy;
+    kinetic_energy += F0732_COMBAT_RngRandom_Compat(&rng, 16) +
+                      (kinetic_energy >> 1) +
+                      throw_skill_level;
+    attack = (throw_skill_level << 3) +
+             F0732_COMBAT_RngRandom_Compat(&rng, 32);
+    if (attack < 40) attack = 40;
+    if (attack > 200) attack = 200;
+    step_energy = 11 - throw_skill_level;
+    if (step_energy < 5) step_energy = 5;
 
     memset(&input, 0, sizeof(input));
     memset(&first_move, 0, sizeof(first_move));
     input.category = PROJECTILE_CATEGORY_KINETIC;
-    input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    input.subtype = projectile_subtype;
     input.ownerKind = PROJECTILE_OWNER_CHAMPION;
     input.ownerIndex = champion_index;
     input.mapIndex = profile->current_level;
@@ -8449,17 +8738,18 @@ int csb_v1_runtime_throw_action_hand(
     input.mapY = profile->party_y;
     input.cell = (party_dir + throw_side) & 3;
     input.direction = party_dir;
-    /* ReDMCSB CHAMPION.C F0328 ultimately creates the thrown object through
-     * PROJEXPL.C F0212.  This CSB boundary intentionally stops at the runtime
-     * storage contract: no DM1 object-weight/weapon-table lookup is used, so
-     * early CSB action playability does not depend on DM1 GameWorld things. */
-    input.kineticEnergy = 64;
-    input.attack = 40;
+    /* ReDMCSB CHAMPION.C F0328 lines 2158-2189:
+     * F0312 strength + throwable weapon kinetic energy + THROW skill/RNG,
+     * bounded attack 40..200, and step energy max(5, 11 - THROW skill)
+     * are passed to PROJEXPL.C F0212. */
+    input.kineticEnergy = kinetic_energy;
+    input.attack = attack;
     input.launcherStrength = input.attack;
-    input.stepEnergy = 10;
+    input.stepEnergy = step_energy;
     input.currentTick = (int)profile->game_time;
     input.attackTypeCode = COMBAT_ATTACK_NORMAL;
     input.associatedThing = (int)thrown_thing;
+    input.potionPower = potion_power;
     input.firstMoveGraceFlag = 1;
 
     if (!F0810_PROJECTILE_Create_Compat(
