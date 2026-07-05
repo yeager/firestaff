@@ -47,6 +47,12 @@ typedef struct {
     uint8_t forcefield_entered;
 } Theron_StartupFlow;
 
+typedef struct {
+    const char *name;
+    Theron_ChampionClass primary_class;
+    uint8_t portrait_index;
+} Theron_StartupMirrorMeta;
+
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
 Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
@@ -62,6 +68,8 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase);
 const char *theron_v1_startup_result_name(Theron_StartupResult result);
 const char *theron_v1_startup_flow_source_evidence(void);
+const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index);
+const char *theron_v1_startup_class_name(Theron_ChampionClass cls);
 
 #ifdef __cplusplus
 }

@@ -34808,11 +34808,13 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                   34, 58, "THERON WAITS AT THE FORCEFIELD", &g_text_small);
     for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
         char row[80];
+        const Theron_StartupMirrorMeta *meta = theron_v1_startup_mirror_meta(i);
         int selected_mirror = (state->theronState.selected_mirrors_mask &
                                (1 << i)) != 0;
-        snprintf(row, sizeof(row), "%c MIRROR %d  %s",
+        snprintf(row, sizeof(row), "%c %-15s %-7s %s",
                  (state->theronState.startup_cursor == i) ? '>' : ' ',
-                 i + 1,
+                 meta ? meta->name : "Hero Mirror",
+                 meta ? theron_v1_startup_class_name(meta->primary_class) : "UNKNOWN",
                  selected_mirror ? "RESURRECTED" : "AVAILABLE");
         y = 76 + i * 11;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
