@@ -356,6 +356,29 @@ int main(void) {
         expect_true(view.dm2State.party_x == 10 && view.dm2State.party_y == 6 &&
                     view.dm2State.party_dir == 0,
                     "M11 DM2 shop action mirrors the runtime shop-facing pose");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 shop action buys the first stocked item");
+        expect_true(strstr(view.lastOutcome, "DM2 SHOP BUY") != NULL,
+                    "M11 DM2 shop buy reports transaction status");
+        {
+            int first_price =
+                dm2_v1_shop_get_effective_price(DM2_SHOP_ID_GENERAL, 0);
+            uint32_t expected_gold = 375u - (uint32_t)first_price;
+            expect_true(dm2_v1_shop_get_party_gold() == expected_gold &&
+                    dm2_v1_shop_get_state()->inventory_count == 1 &&
+                    dm2_v1_shop_buy_count() == 1,
+                    "DM2 shop buy mutates gold, inventory, and buy counter");
+            expect_true(world->gold == (int)expected_gold,
+                    "M11 DM2 shop buy mirrors gold back to the boot-owned world");
+        }
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 back leaves active shop instead of returning to menu");
+        expect_true(strstr(view.lastOutcome, "DM2 SHOP LEAVE") != NULL,
+                    "M11 DM2 shop leave reports leave status");
+        expect_true(dm2_v1_shop_is_active() == 0,
+                    "DM2 shop leave clears active shop state");
     }
 
     expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,

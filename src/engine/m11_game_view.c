@@ -18,6 +18,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_shop.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_touch_runtime.h"
@@ -146,6 +147,42 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.party_y = dm2_v1_runtime_get_party_y();
     state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
     state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
+}
+
+static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
+                                                     M12_MenuInput input)
+{
+    int shop_id;
+    int result;
+    const DM2_V1_ShopState *shop_state;
+    DM2_V1_GameState *world;
+
+    if (!dm2_v1_shop_is_active()) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    shop_id = dm2_v1_shop_get_active_shop();
+    if (input == M12_MENU_INPUT_BACK) {
+        if (dm2_v1_shop_leave(shop_id)) {
+            m11_set_status(state, "SHOP", "DM2 SHOP LEAVE");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        m11_set_status(state, "SHOP", "DM2 SHOP LEAVE FAILED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+        result = dm2_v1_shop_buy(shop_id, 0);
+        shop_state = dm2_v1_shop_get_state();
+        world = (DM2_V1_GameState *)state->dm2World;
+        if (world && shop_state) {
+            world->gold = (int)shop_state->party_gold;
+        }
+        m11_sync_dm2_state_from_runtime(state);
+        m11_set_status(state, "SHOP",
+                       result == 1 ? "DM2 SHOP BUY" : "DM2 SHOP BUY FAILED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    m11_set_status(state, "SHOP", "DM2 SHOP ACTIVE");
+    return M11_GAME_INPUT_REDRAW;
 }
 
 static int m11_dm2_save_path_to_root_slot(const char *save_path,
@@ -12302,8 +12339,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int dir;
         int result;
+        M11_GameInputResult shop_result;
         if (!state->dm2World) {
             return M11_GAME_INPUT_IGNORED;
+        }
+        shop_result = m11_handle_dm2_shop_input(state, input);
+        if (shop_result != M11_GAME_INPUT_IGNORED) {
+            return shop_result;
         }
         if (input == M12_MENU_INPUT_BACK) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
