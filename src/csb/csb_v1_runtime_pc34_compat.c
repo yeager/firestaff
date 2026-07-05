@@ -7972,6 +7972,11 @@ static int csb_v1_runtime_object_info_index_from_record(
         return 0;
     case THING_TYPE_CONTAINER:
         if (record_size < 8) return -1;
+        /* ReDMCSB DEFS.H CONTAINER stores Next at +0, Slot at +2, and Type
+         * at +4.  Do not derive the chest object-info subtype from Slot; a
+         * non-empty chest would then change icon/action metadata based on
+         * its first contained thing. */
+        word = csb_v1_runtime_read_u16(record + 4);
         subtype = (int)((word >> 1) & 0x03u);
         if (subtype > 0) subtype = 0;
         return 1 + subtype;
@@ -7994,6 +7999,152 @@ static int csb_v1_runtime_object_info_index_from_record(
     default:
         return -1;
     }
+}
+
+int csb_v1_runtime_read_container_slots(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t container_thing,
+    uint16_t out_slots[8])
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t thing;
+    int thing_type;
+    int record_size;
+    int count = 0;
+    int guard = 0;
+    int i;
+
+    if (!out_slots) return -1;
+    for (i = 0; i < 8; ++i) out_slots[i] = THING_NONE;
+    if (!profile ||
+        container_thing == THING_NONE ||
+        container_thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(container_thing) != THING_TYPE_CONTAINER) {
+        return -1;
+    }
+    dungeon = profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        container_thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record || thing_type != THING_TYPE_CONTAINER || record_size < 8) {
+        return -1;
+    }
+
+    /* ReDMCSB CHEST.C F0333 lines 58-75 reads CONTAINER.Slot, follows
+     * F0159_DUNGEON_GetNextThing, and materializes at most C537..C544. */
+    thing = csb_v1_runtime_read_u16(record + 2);
+    while (thing != THING_NONE &&
+           thing != THING_ENDOFLIST &&
+           count < 8 &&
+           guard++ < DM1_SENSOR_POSSESSION_MAX_SCAN_STEPS) {
+        const uint8_t *thing_record = csb_v1_dungeon_get_thing_record(
+            dungeon,
+            thing,
+            NULL,
+            NULL,
+            &record_size);
+        if (!thing_record || record_size < 2) break;
+        out_slots[count++] = thing;
+        thing = csb_v1_runtime_read_u16(thing_record);
+    }
+    return count;
+}
+
+int csb_v1_runtime_set_thing_next(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    uint16_t next_thing)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *record;
+    int record_size;
+
+    if (!profile ||
+        thing == THING_NONE ||
+        thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    dungeon = (CSB_V1_DungeonData *)(profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current());
+    record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        thing,
+        NULL,
+        &record_size);
+    if (!record || record_size < 2) return 0;
+    csb_v1_runtime_write_u16(record, next_thing);
+    return 1;
+}
+
+int csb_v1_runtime_write_container_slots(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t container_thing,
+    const uint16_t slots[8])
+{
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *container_record;
+    uint8_t *records[8];
+    uint16_t things[8];
+    int thing_type;
+    int record_size;
+    int count = 0;
+    int i;
+
+    if (!profile ||
+        !slots ||
+        container_thing == THING_NONE ||
+        container_thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(container_thing) != THING_TYPE_CONTAINER) {
+        return 0;
+    }
+    dungeon = (CSB_V1_DungeonData *)(profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current());
+    container_record = csb_v1_runtime_mutable_thing_record(
+        dungeon,
+        container_thing,
+        &thing_type,
+        &record_size);
+    if (!container_record ||
+        thing_type != THING_TYPE_CONTAINER ||
+        record_size < 8) {
+        return 0;
+    }
+
+    for (i = 0; i < 8; ++i) {
+        uint16_t thing = slots[i];
+        uint8_t *record;
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            thing,
+            NULL,
+            &record_size);
+        if (!record || record_size < 2) return 0;
+        things[count] = thing;
+        records[count] = record;
+        ++count;
+    }
+
+    /* ReDMCSB CHEST.C F0334 lines 112-133 rewrites CONTAINER.Slot from
+     * G0425_aT_ChestSlots only and compacts visible non-empty slots into a
+     * fresh Next chain, truncating any hidden tail beyond slot 8. */
+    csb_v1_runtime_write_u16(container_record + 2, THING_ENDOFLIST);
+    for (i = 0; i < count; ++i) {
+        uint16_t next = (i + 1 < count) ? things[i + 1] : THING_ENDOFLIST;
+        csb_v1_runtime_write_u16(records[i], next);
+        if (i == 0) {
+            csb_v1_runtime_write_u16(container_record + 2, things[i]);
+        }
+    }
+    return 1;
 }
 
 typedef struct {

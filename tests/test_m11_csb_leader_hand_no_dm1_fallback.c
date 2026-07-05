@@ -150,7 +150,9 @@ int main(void)
         write_u16(raw + 12, THING_ENDOFLIST);
         write_u16(raw + 14, (3u << 8) | 80u); /* VEN potion, power 80. */
         write_u16(raw + 16, THING_ENDOFLIST);
-        write_u16(raw + 18, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
+        write_u16(raw + 18, THING_ENDOFLIST); /* CONTAINER.Slot. */
+        write_u16(raw + 20, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
+        write_u16(raw + 22, 0u);
 
         profile.runtime.dungeon_handle = &dungeon;
         profile.runtime.dungeon_seed = 0x1234u;
@@ -418,6 +420,12 @@ int main(void)
             chest;
         profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
             chest;
+        write_u16(raw + 12, THING_ENDOFLIST);
+        write_u16(raw + 18, ven_potion);
+        check(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state,
+                  CHAMPION_SLOT_ACTION_HAND) == 144,
+              "CSB non-empty chest keeps container icon from CONTAINER.Type, not Slot");
         check(M11_GameView_GetV1InventorySourceSlotBoxZone(
                   9, &sx, &sy, &sw, &sh),
               "C508 action-hand slot zone is available for CSB inventory click");
@@ -453,6 +461,40 @@ int main(void)
               "CSB leader hand is empty after placing container");
         check(profile.runtime.party_state.LeaderHandThing == THING_NONE,
               "CSB runtime leader hand is empty after placing container");
+        check(M11_GameView_OpenV1ActionHandChest(&state),
+              "CSB action-hand chest opens from runtime container record");
+        check(M11_GameView_GetV1OpenChestThing(&state) == chest,
+              "CSB open chest state preserves raw container thing");
+        check(M11_GameView_GetV1ChestSlotBoxZone(0, &sx, &sy, &sw, &sh),
+              "C537 first chest slot zone is available");
+        check(M11_GameView_HandlePointerButton(
+                  &state,
+                  sx + sw / 2,
+                  33 + sy + sh / 2,
+                  M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+              "CSB chest slot click picks contained object through runtime container chain");
+        check(M11_GameView_GetV1LeaderHandThing(&state) == ven_potion,
+              "CSB leader hand holds object picked from chest panel");
+        check((unsigned short)(raw[18] | ((unsigned short)raw[19] << 8)) ==
+                  THING_ENDOFLIST,
+              "CSB container Slot is empty after picking the only visible chest object");
+        check((unsigned short)(raw[12] | ((unsigned short)raw[13] << 8)) ==
+                  THING_ENDOFLIST,
+              "CSB picked chest object is detached from the runtime Next chain");
+        check(M11_GameView_HandlePointerButton(
+                  &state,
+                  sx + sw / 2,
+                  33 + sy + sh / 2,
+                  M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+              "CSB chest slot click places leader-hand object back into runtime container");
+        check(M11_GameView_GetV1LeaderHandThing(&state) == THING_NONE,
+              "CSB leader hand is empty after placing object back in chest");
+        check((unsigned short)(raw[18] | ((unsigned short)raw[19] << 8)) ==
+                  ven_potion,
+              "CSB container Slot points at placed object after chest writeback");
+        check((unsigned short)(raw[12] | ((unsigned short)raw[13] << 8)) ==
+                  THING_ENDOFLIST,
+              "CSB returned chest object terminates the compact runtime chain");
     }
 
     if (g_failures != 0) {
