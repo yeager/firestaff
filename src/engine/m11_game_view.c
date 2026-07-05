@@ -35,6 +35,7 @@
 #include "asset_find_by_hash.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
+#include "entrance_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "m11_game_view_a11y.h"  /* m11_screen_reader_update_ex gameplay manifest */
 #include "fs_portable_compat.h"
@@ -2570,10 +2571,16 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     state->csbState.startup_entrance_last_command = commandId;
     switch (commandId) {
         case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON:
-        case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON:
+            state->csbState.startup_entrance_bonus_requested = 0;
             state->csbState.startup_entrance_active = 0;
             state->csbState.startup_entrance_dismissed = 1;
             m11_set_status(state, "BOOT", "CSB READY");
+            return M11_GAME_INPUT_REDRAW;
+        case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON:
+            state->csbState.startup_entrance_bonus_requested = 1;
+            state->csbState.startup_entrance_active = 0;
+            state->csbState.startup_entrance_dismissed = 1;
+            m11_set_status(state, "BOOT", "CSB BONUS");
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_RESUME:
             if (state->csbState.startup_entrance_resume_available &&
@@ -10122,6 +10129,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             state->csbState.startup_entrance_active ? 0 : 1;
         state->csbState.startup_entrance_last_command =
             M11_ENTRANCE_RUNTIME_COMMAND_NONE;
+        state->csbState.startup_entrance_bonus_requested = 0;
         state->csbState.startup_entrance_credits_active = 0;
         state->csbState.startup_entrance_credits_remaining_ticks = 0;
         state->csbState.startup_entrance_resume_available = 0;
@@ -14831,13 +14839,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         state->csbState.startup_entrance_active &&
-        (buttonMask & M11_DM1_MOUSE_MASK_LEFT)) {
+        (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
+                       ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
         int command = state->csbState.startup_entrance_credits_active
             ? M11_ENTRANCE_RUNTIME_COMMAND_NONE
             : M11_Entrance_DispatchSourceLockedPointerCommand(
                   x,
                   y,
-                  M11_DM1_MOUSE_MASK_LEFT);
+                  (unsigned int)buttonMask);
         return m11_csb_startup_handle_entrance_command(state, command);
     }
 

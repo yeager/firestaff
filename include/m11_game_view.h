@@ -585,6 +585,7 @@ typedef struct {
         int startup_entrance_frame;
         int startup_entrance_dismissed;
         int startup_entrance_last_command;
+        int startup_entrance_bonus_requested;
         int startup_entrance_credits_active;
         int startup_entrance_credits_remaining_ticks;
         int startup_entrance_resume_available;
