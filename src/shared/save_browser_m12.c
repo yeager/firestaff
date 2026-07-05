@@ -218,7 +218,9 @@ static int try_parse_csb_runtime_entry(M12_SaveBrowserEntry* entry) {
     int i;
     int offset;
 
-    if (!entry || entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_CSB) {
+    if (!entry ||
+        (entry->expectedGameCode != 0 &&
+         entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_CSB)) {
         return 0;
     }
 
@@ -236,6 +238,10 @@ static int try_parse_csb_runtime_entry(M12_SaveBrowserEntry* entry) {
         return 0;
     }
 
+    if (entry->expectedGameCode == 0 || entry->gameId[0] == '\0') {
+        snprintf(entry->gameId, sizeof(entry->gameId), "csb");
+        entry->expectedGameCode = SAVEGAME_PC34_GAME_CODE_CSB;
+    }
     memset(&party, 0, sizeof(party));
     (void)csb_v1_runtime_get_party_state(&runtime, &party);
     entry->valid = 1;
