@@ -369,12 +369,18 @@ bool dm2_v1_session_validate(const DM2_V1_SessionState *session)
  *   25      1     weather_padding (uint8)
  *   26      1     session_version (uint8, =DM2_SESSION_VERSION)
  *   27      235   reserved
- *   262     261   champion[0] record
- *   523     261   champion[1] record
- *   784     261   champion[2] record
- *   1045    261   champion[3] record
+ *   29      261   champion[0] record
+ *   290     261   champion[1] record
+ *   551     261   champion[2] record
+ *   812     261   champion[3] record
+ *   1073    8     original_global_flags
+ *   1081    64    original_global_bytes
+ *   1145    128   original_global_words
+ *   1273    6     original_spell_effects
+ *   1279    1     original_timer_count
+ *   1280    320   original_timers[32]
  *   ──────  ────
- *   Total:  1306 bytes
+ *   Total:  1600 bytes
  *
  * Champion records are stored raw (261 bytes each, not SUPPRESS-encoded
  * at this level — the SUPPRESS encoding is done per-field by the
@@ -388,9 +394,20 @@ int dm2_v1_session_serialize(const DM2_V1_SessionState *session,
                                uint8_t *buf, size_t buf_size)
 {
     if (!session || !buf) return -1;
-    /* Session state is 1073 bytes: 29 header + 4×261 champion records */
-    enum { DM2_SESSION_SERIALIZED_SIZE = 29 + 4 * 261 };
+    enum {
+        DM2_SESSION_BASE_SERIALIZED_SIZE = 29 + 4 * 261,
+        DM2_SESSION_SERIALIZED_SIZE =
+            DM2_SESSION_BASE_SERIALIZED_SIZE +
+            DM2_GLOBAL_FLAGS_SIZE +
+            DM2_GLOBAL_BYTES_SIZE +
+            DM2_GLOBAL_WORDS_SIZE * 2 +
+            DM2_GLOBAL_SPELL_EFFECTS_SIZE +
+            1 +
+            DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE
+    };
+    uint8_t *ext;
     if (buf_size < (size_t)DM2_SESSION_SERIALIZED_SIZE) return -1;
+    memset(buf, 0, (size_t)DM2_SESSION_SERIALIZED_SIZE);
 
     /* Write header */
     uint8_t *p = buf;
@@ -434,6 +451,39 @@ int dm2_v1_session_serialize(const DM2_V1_SessionState *session,
         chp += 261;
     }
 
+    ext = buf + DM2_SESSION_BASE_SERIALIZED_SIZE;
+    memcpy(ext, session->original_global_flags, DM2_GLOBAL_FLAGS_SIZE);
+    ext += DM2_GLOBAL_FLAGS_SIZE;
+    memcpy(ext, session->original_global_bytes, DM2_GLOBAL_BYTES_SIZE);
+    ext += DM2_GLOBAL_BYTES_SIZE;
+    for (int i = 0; i < DM2_GLOBAL_WORDS_SIZE; i++) {
+        ext[i * 2 + 0] =
+            (uint8_t)(session->original_global_words[i] & 0xFFu);
+        ext[i * 2 + 1] =
+            (uint8_t)((session->original_global_words[i] >> 8) & 0xFFu);
+    }
+    ext += DM2_GLOBAL_WORDS_SIZE * 2;
+    memcpy(ext, session->original_spell_effects,
+           DM2_GLOBAL_SPELL_EFFECTS_SIZE);
+    ext += DM2_GLOBAL_SPELL_EFFECTS_SIZE;
+    *ext++ = session->original_timer_count > DM2_MAX_TIMERS
+                 ? DM2_MAX_TIMERS
+                 : session->original_timer_count;
+    for (int i = 0; i < DM2_MAX_TIMERS; i++) {
+        const DM2_TimerEntry *timer = &session->original_timers[i];
+        ext[0] = (uint8_t)(timer->timer_id & 0xFFu);
+        ext[1] = (uint8_t)((timer->timer_id >> 8) & 0xFFu);
+        ext[2] = (uint8_t)(timer->current_tick & 0xFFu);
+        ext[3] = (uint8_t)((timer->current_tick >> 8) & 0xFFu);
+        ext[4] = (uint8_t)(timer->interval_ticks & 0xFFu);
+        ext[5] = (uint8_t)((timer->interval_ticks >> 8) & 0xFFu);
+        ext[6] = (uint8_t)(timer->flags & 0xFFu);
+        ext[7] = (uint8_t)((timer->flags >> 8) & 0xFFu);
+        ext[8] = (uint8_t)(timer->user_data & 0xFFu);
+        ext[9] = (uint8_t)((timer->user_data >> 8) & 0xFFu);
+        ext += DM2_TIMER_ENTRY_SIZE;
+    }
+
     return DM2_SESSION_SERIALIZED_SIZE;
 }
 
@@ -441,8 +491,20 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
                                  const uint8_t *buf, size_t buf_size)
 {
     if (!session || !buf) return -1;
-    enum { DM2_SESSION_SERIALIZED_SIZE = 29 + 4 * 261 };
-    if (buf_size < (size_t)DM2_SESSION_SERIALIZED_SIZE) return -1;
+    enum {
+        DM2_SESSION_BASE_SERIALIZED_SIZE = 29 + 4 * 261,
+        DM2_SESSION_EXT_SERIALIZED_SIZE =
+            DM2_SESSION_BASE_SERIALIZED_SIZE +
+            DM2_GLOBAL_FLAGS_SIZE +
+            DM2_GLOBAL_BYTES_SIZE +
+            DM2_GLOBAL_WORDS_SIZE * 2 +
+            DM2_GLOBAL_SPELL_EFFECTS_SIZE +
+            1 +
+            DM2_MAX_TIMERS * DM2_TIMER_ENTRY_SIZE
+    };
+    const uint8_t *ext;
+    if (buf_size < (size_t)DM2_SESSION_BASE_SERIALIZED_SIZE) return -1;
+    memset(session, 0, sizeof(*session));
 
     const uint8_t *p = buf;
     session->game_tick =
@@ -486,6 +548,41 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
         chp += 261;
     }
 
+    if (buf_size >= (size_t)DM2_SESSION_EXT_SERIALIZED_SIZE) {
+        ext = buf + DM2_SESSION_BASE_SERIALIZED_SIZE;
+        memcpy(session->original_global_flags, ext, DM2_GLOBAL_FLAGS_SIZE);
+        ext += DM2_GLOBAL_FLAGS_SIZE;
+        memcpy(session->original_global_bytes, ext, DM2_GLOBAL_BYTES_SIZE);
+        ext += DM2_GLOBAL_BYTES_SIZE;
+        for (int i = 0; i < DM2_GLOBAL_WORDS_SIZE; i++) {
+            session->original_global_words[i] =
+                (uint16_t)ext[i * 2 + 0] |
+                ((uint16_t)ext[i * 2 + 1] << 8);
+        }
+        ext += DM2_GLOBAL_WORDS_SIZE * 2;
+        memcpy(session->original_spell_effects, ext,
+               DM2_GLOBAL_SPELL_EFFECTS_SIZE);
+        ext += DM2_GLOBAL_SPELL_EFFECTS_SIZE;
+        session->original_timer_count = *ext++;
+        if (session->original_timer_count > DM2_MAX_TIMERS) {
+            return -1;
+        }
+        for (int i = 0; i < DM2_MAX_TIMERS; i++) {
+            DM2_TimerEntry *timer = &session->original_timers[i];
+            timer->timer_id =
+                (uint16_t)ext[0] | ((uint16_t)ext[1] << 8);
+            timer->current_tick =
+                (uint16_t)ext[2] | ((uint16_t)ext[3] << 8);
+            timer->interval_ticks =
+                (uint16_t)ext[4] | ((uint16_t)ext[5] << 8);
+            timer->flags =
+                (uint16_t)ext[6] | ((uint16_t)ext[7] << 8);
+            timer->user_data =
+                (uint16_t)ext[8] | ((uint16_t)ext[9] << 8);
+            ext += DM2_TIMER_ENTRY_SIZE;
+        }
+    }
+
     /* Validate deserialized session */
     if (!dm2_v1_session_validate(session)) return -1;
 
@@ -508,6 +605,135 @@ static int dm2_v1_read_payload_i32_le(const uint8_t *buf,
     *pos += 4u;
     *out = (int)value;
     return 1;
+}
+
+static int dm2_v1_read_payload_tagged_blob(const uint8_t *buf,
+                                           size_t size,
+                                           size_t *pos,
+                                           const char tag[4],
+                                           const uint8_t **out_data,
+                                           size_t *out_size)
+{
+    int blob_size;
+
+    if (!buf || !pos || !tag || !out_data || !out_size ||
+        *pos > size || size - *pos < 8u) {
+        return 0;
+    }
+    if (memcmp(buf + *pos, tag, 4u) != 0) {
+        return 0;
+    }
+    *pos += 4u;
+    if (!dm2_v1_read_payload_i32_le(buf, size, pos, &blob_size) ||
+        blob_size < 0 ||
+        (size_t)blob_size > size - *pos) {
+        return -1;
+    }
+    *out_data = buf + *pos;
+    *out_size = (size_t)blob_size;
+    *pos += (size_t)blob_size;
+    return 1;
+}
+
+static int dm2_v1_import_original_optional_sections(
+    DM2_V1_SessionState *session,
+    const uint8_t *buf,
+    size_t size,
+    size_t *pos)
+{
+    const uint8_t *blob = NULL;
+    size_t blob_size = 0u;
+    int r;
+
+    if (!session || !buf || !pos) return -1;
+
+    while (*pos < size) {
+        if (size - *pos < 8u) return -1;
+
+        r = dm2_v1_read_payload_tagged_blob(buf, size, pos, "GFLG",
+                                            &blob, &blob_size);
+        if (r < 0) return -1;
+        if (r > 0) {
+            if (dm2_suppress_decode_global_flags(
+                    blob, blob_size, session->original_global_flags, 0) !=
+                (int)blob_size) {
+                return -1;
+            }
+            continue;
+        }
+
+        r = dm2_v1_read_payload_tagged_blob(buf, size, pos, "GBYT",
+                                            &blob, &blob_size);
+        if (r < 0) return -1;
+        if (r > 0) {
+            if (dm2_suppress_decode_global_bytes(
+                    blob, blob_size, session->original_global_bytes, 0) !=
+                (int)blob_size) {
+                return -1;
+            }
+            continue;
+        }
+
+        r = dm2_v1_read_payload_tagged_blob(buf, size, pos, "GWRD",
+                                            &blob, &blob_size);
+        if (r < 0) return -1;
+        if (r > 0) {
+            if (dm2_suppress_decode_global_words(
+                    blob, blob_size, session->original_global_words, 0) !=
+                (int)blob_size) {
+                return -1;
+            }
+            continue;
+        }
+
+        r = dm2_v1_read_payload_tagged_blob(buf, size, pos, "SPFX",
+                                            &blob, &blob_size);
+        if (r < 0) return -1;
+        if (r > 0) {
+            if (dm2_suppress_decode_spell_effects(
+                    blob, blob_size, session->original_spell_effects, 0) !=
+                (int)blob_size) {
+                return -1;
+            }
+            continue;
+        }
+
+        r = dm2_v1_read_payload_tagged_blob(buf, size, pos, "TMR0",
+                                            &blob, &blob_size);
+        if (r < 0) return -1;
+        if (r > 0) {
+            size_t timer_pos = 0u;
+            int timer_count;
+
+            if (!dm2_v1_read_payload_i32_le(blob, blob_size,
+                                            &timer_pos, &timer_count) ||
+                timer_count < 0 ||
+                timer_count > DM2_MAX_TIMERS) {
+                return -1;
+            }
+            session->original_timer_count = (uint8_t)timer_count;
+            for (int i = 0; i < timer_count; i++) {
+                int timer_size;
+                if (!dm2_v1_read_payload_i32_le(blob, blob_size,
+                                                &timer_pos, &timer_size) ||
+                    timer_size <= 0 ||
+                    (size_t)timer_size > blob_size - timer_pos ||
+                    dm2_suppress_decode_timer(
+                        blob + timer_pos,
+                        (size_t)timer_size,
+                        &session->original_timers[i],
+                        0) != timer_size) {
+                    return -1;
+                }
+                timer_pos += (size_t)timer_size;
+            }
+            if (timer_pos != blob_size) return -1;
+            continue;
+        }
+
+        return -1;
+    }
+    return 0;
 }
 
 int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
@@ -578,7 +804,15 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
         decoded_champions++;
     }
 
-    if (decoded_champions <= 0 || pos != buf_size) {
+    if (decoded_champions <= 0) {
+        return -1;
+    }
+    if (pos < buf_size &&
+        dm2_v1_import_original_optional_sections(session, buf,
+                                                 buf_size, &pos) != 0) {
+        return -1;
+    }
+    if (pos != buf_size) {
         return -1;
     }
     session->champion_count = (uint8_t)decoded_champions;

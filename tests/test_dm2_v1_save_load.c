@@ -594,6 +594,29 @@ static int append_blob(uint8_t *dst, size_t cap, size_t *pos,
     return 1;
 }
 
+static void write_i32_le(uint8_t out[4], int value)
+{
+    uint32_t u = (uint32_t)value;
+    out[0] = (uint8_t)(u & 0xFFu);
+    out[1] = (uint8_t)((u >> 8) & 0xFFu);
+    out[2] = (uint8_t)((u >> 16) & 0xFFu);
+    out[3] = (uint8_t)((u >> 24) & 0xFFu);
+}
+
+static int append_tagged_blob(uint8_t *dst, size_t cap, size_t *pos,
+                              const char tag[4],
+                              const uint8_t *blob,
+                              int blob_size)
+{
+    uint8_t size_le[4];
+
+    if (!dst || !pos || !tag || !blob || blob_size < 0) return 0;
+    write_i32_le(size_le, blob_size);
+    return append_blob(dst, cap, pos, tag, 4u) &&
+           append_blob(dst, cap, pos, size_le, sizeof(size_le)) &&
+           append_blob(dst, cap, pos, blob, (size_t)blob_size);
+}
+
 typedef union {
     DM2_GameStateBlock block;
     uint8_t raw[DM2_GAME_STATE_BLOCK_SIZE];
@@ -642,6 +665,12 @@ static int check_resume_state(
 
 static int build_resume_payload(const DM2_GameStateBlock *gs,
                                 const DM2_ChampionRecord *champ,
+                                const uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE],
+                                const uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE],
+                                const uint16_t global_words[DM2_GLOBAL_WORDS_SIZE],
+                                const uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE],
+                                const DM2_TimerEntry *timers,
+                                int timer_count,
                                 uint8_t *payload,
                                 size_t payload_cap,
                                 size_t *payload_size,
@@ -651,6 +680,9 @@ static int build_resume_payload(const DM2_GameStateBlock *gs,
     uint8_t enc_gs[DM2_GAME_STATE_BLOCK_SIZE];
     uint8_t champ_mask[261];
     uint8_t enc_champ[261];
+    uint8_t enc_optional[512];
+    uint8_t enc_timer_block[512];
+    uint8_t size_le[4];
     int gs_n;
     int champ_n;
     size_t pos = 0;
@@ -675,6 +707,70 @@ static int build_resume_payload(const DM2_GameStateBlock *gs,
     if (!append_blob(payload, payload_cap, &pos, enc_gs, (size_t)gs_n)) return 0;
     if (!append_blob(payload, payload_cap, &pos, &champ_n, sizeof(champ_n))) return 0;
     if (!append_blob(payload, payload_cap, &pos, enc_champ, (size_t)champ_n)) return 0;
+
+    if (global_flags) {
+        int n = dm2_suppress_encode_global_flags(global_flags, enc_optional,
+                                                 sizeof(enc_optional));
+        if (n <= 0 ||
+            !append_tagged_blob(payload, payload_cap, &pos, "GFLG",
+                                enc_optional, n)) {
+            return 0;
+        }
+    }
+    if (global_bytes) {
+        int n = dm2_suppress_encode_global_bytes(global_bytes, enc_optional,
+                                                 sizeof(enc_optional));
+        if (n <= 0 ||
+            !append_tagged_blob(payload, payload_cap, &pos, "GBYT",
+                                enc_optional, n)) {
+            return 0;
+        }
+    }
+    if (global_words) {
+        int n = dm2_suppress_encode_global_words(global_words, enc_optional,
+                                                 sizeof(enc_optional));
+        if (n <= 0 ||
+            !append_tagged_blob(payload, payload_cap, &pos, "GWRD",
+                                enc_optional, n)) {
+            return 0;
+        }
+    }
+    if (spell_effects) {
+        int n = dm2_suppress_encode_spell_effects(spell_effects,
+                                                  enc_optional,
+                                                  sizeof(enc_optional));
+        if (n <= 0 ||
+            !append_tagged_blob(payload, payload_cap, &pos, "SPFX",
+                                enc_optional, n)) {
+            return 0;
+        }
+    }
+    if (timers && timer_count > 0) {
+        size_t timer_pos = 0u;
+
+        if (timer_count > DM2_MAX_TIMERS) return 0;
+        write_i32_le(size_le, timer_count);
+        if (!append_blob(enc_timer_block, sizeof(enc_timer_block),
+                         &timer_pos, size_le, sizeof(size_le))) {
+            return 0;
+        }
+        for (int i = 0; i < timer_count; i++) {
+            int n = dm2_suppress_encode_timer(&timers[i], enc_optional,
+                                              sizeof(enc_optional));
+            if (n <= 0) return 0;
+            write_i32_le(size_le, n);
+            if (!append_blob(enc_timer_block, sizeof(enc_timer_block),
+                             &timer_pos, size_le, sizeof(size_le)) ||
+                !append_blob(enc_timer_block, sizeof(enc_timer_block),
+                             &timer_pos, enc_optional, (size_t)n)) {
+                return 0;
+            }
+        }
+        if (!append_tagged_blob(payload, payload_cap, &pos, "TMR0",
+                                enc_timer_block, (int)timer_pos)) {
+            return 0;
+        }
+    }
 
     *payload_size = pos;
     *enc_gs_size = (size_t)gs_n;
@@ -723,15 +819,15 @@ static int read_resume_payload(const uint8_t *payload,
     }
     pos += (size_t)champ_n;
 
-    return pos == payload_size;
+    return pos <= payload_size;
 }
 
 static int test_resume_smoke_gate_position_facing_inventory(void)
 {
     printf("  Resume smoke gate: position/facing/inventory continuity...\n");
     char tmpdir[256];
-    uint8_t payload[768];
-    uint8_t loaded[768];
+    uint8_t payload[2048];
+    uint8_t loaded[2048];
     size_t payload_size = 0;
     size_t loaded_size = 0;
     size_t enc_gs_size = 0;
@@ -742,6 +838,11 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
     DM2_GameStateBlock *resumed = &resumed_store.block;
     DM2_ChampionRecord champ;
     DM2_ChampionRecord resumed_champ;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE];
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE];
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE];
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE];
+    DM2_TimerEntry timers[2];
     DM2_V1_SessionState imported_session;
     DM2_ChampionRecord imported_champ;
     int r;
@@ -771,7 +872,29 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
     champ.inventory[1] = dm2_db_make_handle(5, 0x0034);
     champ.inventory[2] = dm2_db_make_handle(6, 0x0056);
 
-    if (!build_resume_payload(gs, &champ, payload, sizeof(payload),
+    memset(global_flags, 0, sizeof(global_flags));
+    memset(global_bytes, 0, sizeof(global_bytes));
+    memset(global_words, 0, sizeof(global_words));
+    memset(spell_effects, 0, sizeof(spell_effects));
+    memset(timers, 0, sizeof(timers));
+    global_flags[0] = 0x45u;
+    global_flags[7] = 0x12u;
+    global_bytes[3] = 0x22u;
+    global_bytes[63] = 0x5Au;
+    global_words[5] = 0x1234u;
+    global_words[42] = 0x4567u;
+    spell_effects[0] = 0x07u;
+    spell_effects[5] = 0x2Au;
+    timers[0].timer_id = 0x0102u;
+    timers[0].current_tick = 0x002Au;
+    timers[0].interval_ticks = 0x0007u;
+    timers[0].flags = 0x0003u;
+    timers[0].user_data = 0x0044u;
+
+    if (!build_resume_payload(gs, &champ,
+                              global_flags, global_bytes, global_words,
+                              spell_effects, timers, 1,
+                              payload, sizeof(payload),
                               &payload_size, &enc_gs_size, &enc_champ_size)) {
         printf("    FAIL: could not build first resume payload\n");
         cleanup_one_slot_dir(tmpdir, 4);
@@ -829,7 +952,17 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
         imported_session.party_level != (uint8_t)resumed->wPlayerMap ||
         imported_session.leader_index != 0 ||
         imported_champ.inventory[0] != resumed_champ.inventory[0] ||
-        imported_champ.inventory[1] != resumed_champ.inventory[1]) {
+        imported_champ.inventory[1] != resumed_champ.inventory[1] ||
+        imported_session.original_global_flags[0] != global_flags[0] ||
+        imported_session.original_global_flags[7] != global_flags[7] ||
+        imported_session.original_global_bytes[63] != global_bytes[63] ||
+        imported_session.original_global_words[42] !=
+            (global_words[42] & 0x7F7Fu) ||
+        imported_session.original_spell_effects[5] != spell_effects[5] ||
+        imported_session.original_timer_count != 1 ||
+        imported_session.original_timers[0].timer_id != timers[0].timer_id ||
+        imported_session.original_timers[0].user_data !=
+            timers[0].user_data) {
         printf("    FAIL: session loader did not import SUPPRESS resume tuple\n");
         cleanup_one_slot_dir(tmpdir, 4);
         return 0;
@@ -844,7 +977,9 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
     champ.inventory[1] = 0;
     champ.inventory[8] = dm2_db_make_handle(8, 0x0009);
 
-    if (!build_resume_payload(gs, &champ, payload, sizeof(payload),
+    if (!build_resume_payload(gs, &champ,
+                              NULL, NULL, NULL, NULL, NULL, 0,
+                              payload, sizeof(payload),
                               &payload_size, &enc_gs_size, &enc_champ_size)) {
         printf("    FAIL: could not build overwritten resume payload\n");
         cleanup_one_slot_dir(tmpdir, 4);
