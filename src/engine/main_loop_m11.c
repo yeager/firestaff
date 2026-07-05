@@ -581,11 +581,14 @@ int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
 }
 
 int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
-    /* Current Firestaff entrance semantics are intentionally click-only for
-     * activation. ReDMCSB installs keyboard rows at ENTRANCE.C:745, but this
-     * runtime guard preserves the already-fixed Return/Space/KP-Enter behavior
-     * while still allowing the explicit quit keys handled before this pass. */
+    /* ReDMCSB ENTRANCE.C:850-883 PC/F20 path checks raw keyboard input in the
+     * entrance wait loop and maps carriage return to C001_MODE_LOAD_DUNGEON.
+     * Keep Space inert because the PC/F20 source path does not activate the
+     * entrance with Space. */
     switch (keyCode) {
+    case SDLK_RETURN:
+    case SDLK_KP_ENTER:
+        return M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON;
     case SDLK_ESCAPE:
     case SDLK_Q:
         return M11_ENTRANCE_RUNTIME_COMMAND_QUIT;
@@ -808,8 +811,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
-            /* Entrance keyboard: Enter/Space mappings removed — Daniel wants
-             * entrance buttons to only accept mouse clicks.  ESC/Q quit remains. */
+            /* ReDMCSB ENTRANCE.C:850-883 accepts a fresh Return while waiting
+             * at the entrance; Space remains inert on the PC/F20 path. */
             if (ev.type == SDL_EVENT_KEY_DOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
@@ -839,8 +842,8 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             }
 #else
             if (ev.type == SDL_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
-            /* Entrance keyboard: Enter/Space mappings removed — Daniel wants
-             * entrance buttons to only accept mouse clicks.  ESC/Q quit remains. */
+            /* ReDMCSB ENTRANCE.C:850-883 accepts a fresh Return while waiting
+             * at the entrance; Space remains inert on the PC/F20 path. */
             if (ev.type == SDL_KEYDOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(

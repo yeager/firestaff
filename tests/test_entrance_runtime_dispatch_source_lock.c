@@ -71,12 +71,12 @@ int main(void) {
     ok &= expect_command("zero_mask_miss", 244, 45, 0u,
                          M11_ENTRANCE_RUNTIME_COMMAND_NONE);
 
-    ok &= expect_key("return_not_activation", SDLK_RETURN,
-                     M11_ENTRANCE_RUNTIME_COMMAND_NONE);
+    ok &= expect_key("return_enter", SDLK_RETURN,
+                     M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
     ok &= expect_key("space_not_activation", SDLK_SPACE,
                      M11_ENTRANCE_RUNTIME_COMMAND_NONE);
-    ok &= expect_key("keypad_enter_not_activation", SDLK_KP_ENTER,
-                     M11_ENTRANCE_RUNTIME_COMMAND_NONE);
+    ok &= expect_key("keypad_enter", SDLK_KP_ENTER,
+                     M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
     ok &= expect_key("escape_quit", SDLK_ESCAPE,
                      M11_ENTRANCE_RUNTIME_COMMAND_QUIT);
 
