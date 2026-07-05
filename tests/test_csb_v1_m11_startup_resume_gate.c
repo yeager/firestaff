@@ -1105,9 +1105,12 @@ int main(void) {
                         M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_REDRAW &&
                     view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_resume_available == 0 &&
                     view.csbState.startup_entrance_last_command ==
                         M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
-                    "M11 CSB entrance resume button records a source-locked resume request");
+                    "M11 CSB entrance resume without save stays on startup");
+        expect_true(strcmp(view.lastOutcome, "CSB RESUME UNAVAILABLE") == 0,
+                    "M11 CSB entrance resume without save reports unavailable status");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         245,
