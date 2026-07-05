@@ -1221,10 +1221,10 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
         const DM1_ViewportWallDrawSpec *spec =
             dm1_viewport_3d_get_wall_draw_spec_for_square(step->square);
         if (!spec) continue;
-        if (!bm_base) continue;
 
         dm1_viewport_3d_notify_pre_square_draw(
             state, step->square, step->rel_depth, step->rel_lateral);
+        if (!bm_base) continue;
 
         /* ── CSB-specific squares (D3L2, D3R2, D2L2, D2R2) ──────────────────
          * These squares use element-specific routing via F0676/F0677/F0678/F0679.
