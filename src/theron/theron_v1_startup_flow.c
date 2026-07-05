@@ -112,6 +112,52 @@ Theron_StartupResult theron_v1_startup_select_mirror(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_deselect_mirror(
+    Theron_StartupFlow *flow,
+    int mirror_index) {
+
+    uint8_t bit;
+    int write = 0;
+
+    if (!flow) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+    if (flow->selected_dungeon == THERON_DUNGEON_INVALID ||
+        flow->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        return THERON_STARTUP_ERR_NO_STAGE;
+    }
+    if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
+        return THERON_STARTUP_ERR_BAD_MIRROR;
+    }
+
+    bit = (uint8_t)(1u << mirror_index);
+    if ((flow->selected_mirrors_mask & bit) == 0u) {
+        return THERON_STARTUP_ERR_MIRROR_NOT_SELECTED;
+    }
+
+    flow->selected_mirrors_mask = (uint8_t)(flow->selected_mirrors_mask & ~bit);
+    for (int read = 0; read < THERON_STARTUP_MAX_COMPANIONS; ++read) {
+        uint8_t value = flow->selected_mirror_order[read];
+        if (value == 0xffu || value == (uint8_t)mirror_index) {
+            continue;
+        }
+        flow->selected_mirror_order[write++] = value;
+    }
+    while (write < THERON_STARTUP_MAX_COMPANIONS) {
+        flow->selected_mirror_order[write++] = 0xffu;
+    }
+    flow->companion_count = 0;
+    for (int i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        if (flow->selected_mirror_order[i] != 0xffu) {
+            ++flow->companion_count;
+        }
+    }
+    flow->phase = flow->companion_count > 0
+        ? THERON_STARTUP_PHASE_READY
+        : THERON_STARTUP_PHASE_SOUL_ROOM;
+    return THERON_STARTUP_OK;
+}
+
 Theron_StartupResult theron_v1_startup_enter_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party) {
@@ -178,6 +224,7 @@ const char *theron_v1_startup_result_name(Theron_StartupResult result) {
     case THERON_STARTUP_ERR_PARTY_FULL: return "party-full";
     case THERON_STARTUP_ERR_NO_STAGE: return "no-stage";
     case THERON_STARTUP_ERR_NOT_READY: return "not-ready";
+    case THERON_STARTUP_ERR_MIRROR_NOT_SELECTED: return "mirror-not-selected";
     default: return "unknown";
     }
 }

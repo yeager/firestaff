@@ -35,7 +35,8 @@ typedef enum {
     THERON_STARTUP_ERR_DUPLICATE_MIRROR = -5,
     THERON_STARTUP_ERR_PARTY_FULL = -6,
     THERON_STARTUP_ERR_NO_STAGE = -7,
-    THERON_STARTUP_ERR_NOT_READY = -8
+    THERON_STARTUP_ERR_NOT_READY = -8,
+    THERON_STARTUP_ERR_MIRROR_NOT_SELECTED = -9
 } Theron_StartupResult;
 
 typedef struct {
@@ -60,6 +61,9 @@ Theron_StartupResult theron_v1_startup_choose_stage(
     const Theron_DungeonProgression *progression,
     Theron_DungeonID dungeon_id);
 Theron_StartupResult theron_v1_startup_select_mirror(
+    Theron_StartupFlow *flow,
+    int mirror_index);
+Theron_StartupResult theron_v1_startup_deselect_mirror(
     Theron_StartupFlow *flow,
     int mirror_index);
 Theron_StartupResult theron_v1_startup_enter_forcefield(

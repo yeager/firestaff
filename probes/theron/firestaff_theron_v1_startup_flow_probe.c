@@ -80,10 +80,24 @@ int main(void) {
     check_int("mirror 0 accepted second", result, THERON_STARTUP_OK);
     result = theron_v1_startup_select_mirror(&flow, 2);
     check_int("mirror 2 accepted third", result, THERON_STARTUP_OK);
+    result = theron_v1_startup_deselect_mirror(&flow, 0);
+    check_int("mirror 0 deselected", result, THERON_STARTUP_OK);
+    check_int("companion count after middle deselect", flow.companion_count, 2);
+    check_int("first order after middle deselect", flow.selected_mirror_order[0], 6);
+    check_int("second order after middle deselect", flow.selected_mirror_order[1], 2);
+    check_int("third order cleared after middle deselect",
+              flow.selected_mirror_order[2],
+              0xff);
+    result = theron_v1_startup_deselect_mirror(&flow, 0);
+    check_int("unselected mirror deselect rejected",
+              result,
+              THERON_STARTUP_ERR_MIRROR_NOT_SELECTED);
+    result = theron_v1_startup_select_mirror(&flow, 0);
+    check_int("mirror 0 reaccepted third", result, THERON_STARTUP_OK);
     check_int("three companions selected", flow.companion_count, 3);
     check_int("first selected mirror order", flow.selected_mirror_order[0], 6);
-    check_int("second selected mirror order", flow.selected_mirror_order[1], 0);
-    check_int("third selected mirror order", flow.selected_mirror_order[2], 2);
+    check_int("second selected mirror order", flow.selected_mirror_order[1], 2);
+    check_int("third selected mirror order", flow.selected_mirror_order[2], 0);
     check_int("ready phase", flow.phase, THERON_STARTUP_PHASE_READY);
 
     result = theron_v1_startup_select_mirror(&flow, 4);
@@ -98,11 +112,11 @@ int main(void) {
     check_int("leader slot is Theron", party.active_slot, THERON_CHAMPION_SLOT_THERON);
     check_contains("slot 0 name", party.champions[0].name, "Theron");
     check_contains("slot 1 mirror name", party.champions[1].name, "Pental");
-    check_contains("slot 2 mirror name", party.champions[2].name, "Hakar");
-    check_contains("slot 3 mirror name", party.champions[3].name, "Tiran");
+    check_contains("slot 2 mirror name", party.champions[2].name, "Tiran");
+    check_contains("slot 3 mirror name", party.champions[3].name, "Hakar");
     check_int("slot 1 portrait", party.champions[1].portrait_index, 7);
-    check_int("slot 2 portrait", party.champions[2].portrait_index, 1);
-    check_int("slot 3 portrait", party.champions[3].portrait_index, 3);
+    check_int("slot 2 portrait", party.champions[2].portrait_index, 3);
+    check_int("slot 3 portrait", party.champions[3].portrait_index, 1);
     check_int("slot 1 class", party.champions[1].primary_class, THERON_CLASS_FIGHTER);
     check_int("slot 2 class", party.champions[2].primary_class, THERON_CLASS_FIGHTER);
     check_int("slot 3 class", party.champions[3].primary_class, THERON_CLASS_FIGHTER);
@@ -124,6 +138,9 @@ int main(void) {
 
     check_contains("phase name", theron_v1_startup_phase_name(THERON_STARTUP_PHASE_SOUL_ROOM), "soul");
     check_contains("result name", theron_v1_startup_result_name(THERON_STARTUP_ERR_PARTY_FULL), "party");
+    check_contains("deselect result name",
+                   theron_v1_startup_result_name(THERON_STARTUP_ERR_MIRROR_NOT_SELECTED),
+                   "mirror");
     check_contains("source evidence", theron_v1_startup_flow_source_evidence(), "dmweb");
 
     printf("# total=%d passed=%d failed=%d\n", g_pass + g_fail, g_pass, g_fail);

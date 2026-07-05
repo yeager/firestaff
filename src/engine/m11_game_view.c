@@ -12032,14 +12032,23 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                        receipt[0] ? receipt : "SOUL ROOM ERROR");
                         return M11_GAME_INPUT_REDRAW;
                     }
-                    result = theron_v1_startup_select_mirror(&flow, cursor);
+                    if ((state->theronState.selected_mirrors_mask &
+                         (1 << cursor)) != 0) {
+                        result = theron_v1_startup_deselect_mirror(&flow, cursor);
+                    } else {
+                        result = theron_v1_startup_select_mirror(&flow, cursor);
+                    }
                     if (result != THERON_STARTUP_OK) {
                         m11_set_status(state, "STARTUP",
                                        theron_v1_startup_result_name(result));
                         return M11_GAME_INPUT_REDRAW;
                     }
                     m11_theron_sync_startup_state(state, &flow);
-                    m11_set_status(state, "STARTUP", "HERO RESURRECTED");
+                    m11_set_status(state, "STARTUP",
+                                   (state->theronState.selected_mirrors_mask &
+                                    (1 << cursor)) != 0
+                                        ? "HERO RESURRECTED"
+                                        : "HERO RELEASED");
                     return M11_GAME_INPUT_REDRAW;
                 }
                 if ((input == M12_MENU_INPUT_ACCEPT &&
@@ -35203,6 +35212,22 @@ static int m11_theron_stage_available_for_startup(const Theron_V1_World* world,
            state == THERON_DUNGEON_STATE_IN_PROGRESS;
 }
 
+static int m11_theron_selected_mirror_order(
+    const M11_GameViewState* state,
+    int mirror_index) {
+    int i;
+    if (!state || mirror_index < 0 ||
+        mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
+        return 0;
+    }
+    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        if (state->theronState.selected_mirror_order[i] == mirror_index) {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
 int M11_GameView_GetTheronStartupRenderRows(
     const M11_GameViewState* state,
     char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
@@ -35295,13 +35320,19 @@ int M11_GameView_GetTheronStartupRenderRows(
         const Theron_StartupMirrorMeta *meta = theron_v1_startup_mirror_meta(i);
         int selected_mirror = (state->theronState.selected_mirrors_mask &
                                (1 << i)) != 0;
+        int selected_order = m11_theron_selected_mirror_order(state, i);
         snprintf(rows[count++],
                  M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
                  "%c %-15s %-7s %s",
                  (state->theronState.startup_cursor == i) ? '>' : ' ',
                  meta ? meta->name : "Hero Mirror",
                  meta ? theron_v1_startup_class_name(meta->primary_class) : "UNKNOWN",
-                 selected_mirror ? "RESURRECTED" : "AVAILABLE");
+                 selected_mirror
+                    ? (selected_order == 1 ? "RESURRECTED #1" :
+                       selected_order == 2 ? "RESURRECTED #2" :
+                       selected_order == 3 ? "RESURRECTED #3" :
+                                             "RESURRECTED")
+                    : "AVAILABLE");
     }
     if (count < maxRows) {
         snprintf(rows[count++],
@@ -35413,11 +35444,17 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         const Theron_StartupMirrorMeta *meta = theron_v1_startup_mirror_meta(i);
         int selected_mirror = (state->theronState.selected_mirrors_mask &
                                (1 << i)) != 0;
+        int selected_order = m11_theron_selected_mirror_order(state, i);
         snprintf(row, sizeof(row), "%c %-15s %-7s %s",
                  (state->theronState.startup_cursor == i) ? '>' : ' ',
                  meta ? meta->name : "Hero Mirror",
                  meta ? theron_v1_startup_class_name(meta->primary_class) : "UNKNOWN",
-                 selected_mirror ? "RESURRECTED" : "AVAILABLE");
+                 selected_mirror
+                    ? (selected_order == 1 ? "RESURRECTED #1" :
+                       selected_order == 2 ? "RESURRECTED #2" :
+                       selected_order == 3 ? "RESURRECTED #3" :
+                                             "RESURRECTED")
+                    : "AVAILABLE");
         y = 76 + i * 11;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       46, y, row,
