@@ -36,6 +36,7 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t wall[4] = { 11, 12, 13, 14 };
     static const uint8_t door_panel[4] = { 8, 9, 10, 11 };
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
+    static const uint8_t door_button[4] = { 4, 5, 6, 7 };
     (void)user;
     ++s_asset_fetch_calls;
     if (gdat_index == -2) {
@@ -52,6 +53,11 @@ static int test_dm2_asset_fetch(void *user,
                    DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT &&
                DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - gdat_index < 0x20) {
         if (out_pixels) *out_pixels = door_frame;
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE -
+                   DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED &&
+               DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - gdat_index < 0x08) {
+        if (out_pixels) *out_pixels = door_button;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE -
                    DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT &&
@@ -158,6 +164,26 @@ static void test_floor_ceiling_asset_provider(void)
           framebuffer[0] == 15 &&
               framebuffer[223] == 1 &&
               framebuffer[(135 * 320)] == 2);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_button = 1;
+    viewport.squares[DM2_SQ_D0C].door_button_state = 1;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_doors(&viewport);
+    CHECK("door pass fetches a stateful default button asset",
+          s_asset_fetch_calls == 3 &&
+              viewport.asset_door_panel_drawn_count == 1 &&
+              viewport.asset_door_frame_drawn_count == 1 &&
+              viewport.asset_door_button_drawn_count == 1 &&
+              viewport.fallback_door_drawn_count == 0);
+    CHECK("default door button is scaled onto the front door",
+          framebuffer[(58 * 320) + 212] == 4 &&
+              framebuffer[(58 * 320) + 213] == 4);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

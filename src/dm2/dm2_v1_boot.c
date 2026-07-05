@@ -35,6 +35,7 @@
 #define DM2_GDAT_WALL_FIELD_CACHE_LIMIT 0x40
 #define DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT 0x20
 #define DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT 0x04
+#define DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT 0x08
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -67,6 +68,9 @@ typedef struct {
     uint8_t *door_panel_pixels[DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT];
     int door_panel_w[DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT];
     int door_panel_h[DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT];
+    uint8_t *door_button_pixels[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
+    int door_button_w[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
+    int door_button_h[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -204,6 +208,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     }
     for (int i = 0; i < DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->door_panel_pixels[i]);
+    }
+    for (int i = 0; i < DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT; ++i) {
+        dm2_v1_asset_free_pixels(gfx->door_button_pixels[i]);
     }
     dm2_v1_asset_loader_free(&gfx->loader);
     free(gfx->bytes);
@@ -763,6 +770,19 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_h = &gfx->wall_h[field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
+    } else if (gdat_index <=
+               DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE -
+                   DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED) {
+        field = DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - gdat_index;
+        if (field < 0 ||
+            field >= DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT) {
+            return -1;
+        }
+        cache_pixels = &gfx->door_button_pixels[field];
+        cache_w = &gfx->door_button_w[field];
+        cache_h = &gfx->door_button_h[field];
+        category = DM2_GDAT_CATEGORY_DOOR_BUTTONS;
+        index = 0;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE -
                    DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT) {

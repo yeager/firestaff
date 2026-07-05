@@ -417,6 +417,21 @@ int dm2_v1_viewport_door_panel_graphic_index_for_square(int view_square)
     return DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - field;
 }
 
+int dm2_v1_viewport_door_button_field_for_state(int pushed)
+{
+    /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES line ~46342 calls
+     * DRAW_DEFAULT_DOOR_BUTTON(GDAT_CATEGORY_DOOR_BUTTONS, 0,
+     * door->ButtonState() * 5, iViewportCell). */
+    return pushed ? DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_PUSHED
+                  : DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED;
+}
+
+int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed)
+{
+    int field = dm2_v1_viewport_door_button_field_for_state(pushed);
+    return DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - field;
+}
+
 /* ── Internal blit helper ─────────────────────────────────────────── */
 
 static void __attribute__((unused)) dm2_blit_bitmap (
@@ -970,6 +985,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     int stride = s->fb_stride;
     int door_panel_asset_count = 0;
     int door_asset_count = 0;
+    int door_button_asset_count = 0;
     int door_fallback_count = 0;
 
     /* DM2 door rendering: overlays on wall squares.
@@ -1115,11 +1131,70 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 ++door_asset_count;
             }
         }
-        (void)vs;
+        if (vs->door_button) {
+            const uint8_t *button_pixels = NULL;
+            int button_w = 0;
+            int button_h = 0;
+            int button_stride = 0;
+            int button_index =
+                dm2_v1_viewport_door_button_graphic_index_for_state(
+                    vs->door_button_state != 0);
+            int button_dst_w = 0;
+            int button_dst_h = 0;
+            int button_dst_x = 0;
+            int button_dst_y = 0;
+
+            if (i == DM2_SQ_D0C) {
+                button_dst_w = 16;
+                button_dst_h = 18;
+                button_dst_x = dx + dw - 28;
+                button_dst_y = dy + (dh / 2) - 9;
+            } else if (i == DM2_SQ_D1C) {
+                button_dst_w = 12;
+                button_dst_h = 14;
+                button_dst_x = dx + dw - 22;
+                button_dst_y = dy + (dh / 2) - 7;
+            } else if (i == DM2_SQ_D2C) {
+                button_dst_w = 8;
+                button_dst_h = 9;
+                button_dst_x = dx + dw - 16;
+                button_dst_y = dy + (dh / 2) - 4;
+            }
+
+            if (button_dst_w > 0 && button_dst_h > 0 &&
+                button_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s,
+                                            button_index,
+                                            &button_pixels,
+                                            &button_w,
+                                            &button_h,
+                                            &button_stride) == 0 &&
+                button_pixels && button_w > 0 && button_h > 0) {
+                /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON
+                 * lines ~46243-46264 sources GDAT_CATEGORY_DOOR_BUTTONS
+                 * index 0, field state*5. Exact tlbRectnoDoorButton
+                 * viewport-cell placement remains for the door-record pass;
+                 * this hook keeps rendering asset-backed and stateful. */
+                dm2_v1_blit_scaled_bitmap(vp,
+                                          stride,
+                                          button_dst_x,
+                                          button_dst_y,
+                                          button_dst_w,
+                                          button_dst_h,
+                                          button_pixels,
+                                          button_w,
+                                          button_h,
+                                          button_stride > 0 ? button_stride : button_w,
+                                          DM2_COLOR_TRANSPARENT);
+                ++door_button_asset_count;
+            }
+        }
     }
     s->asset_door_panel_drawn_count += door_panel_asset_count;
     s->asset_door_frame_drawn_count += door_asset_count;
-    if (door_asset_count == 0 && door_panel_asset_count == 0) {
+    s->asset_door_button_drawn_count += door_button_asset_count;
+    if (door_asset_count == 0 && door_panel_asset_count == 0 &&
+        door_button_asset_count == 0) {
         s->fallback_door_drawn_count += door_fallback_count;
     }
 }
@@ -1491,6 +1566,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->fallback_wall_drawn_count = 0;
     s->asset_door_panel_drawn_count = 0;
     s->asset_door_frame_drawn_count = 0;
+    s->asset_door_button_drawn_count = 0;
     s->fallback_door_drawn_count = 0;
 
     /* DM2 has two fundamentally different render paths:
