@@ -428,6 +428,7 @@ typedef struct M12_StartupMenuState {
     int csbImportDm1ConfirmActive;
     char csbImportDm1ConfirmPath[256];
     char csbImportDm1ConfirmFilename[128];
+    M12_MenuView saveBrowserReturnView;
     int dataDirPickerActive;
     int dataDirScanActive;
     int dataDirScanCancelRequested;

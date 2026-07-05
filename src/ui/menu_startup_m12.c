@@ -1273,6 +1273,7 @@ static void m12_clear_message_view(M12_StartupMenuState* state) {
     state->messageLine2 = "";
     state->messageLine3 = "";
     state->messageReturnView = M12_MENU_VIEW_MAIN;
+    state->saveBrowserReturnView = M12_MENU_VIEW_SETTINGS;
     state->messageReturnNavLevel = (int)M12_NAV_MAIN;
 }
 
@@ -1870,6 +1871,12 @@ int M12_StartupMenu_OpenSaveBrowser(M12_StartupMenuState* state)
         return -1;
     }
     dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (state->view == M12_MENU_VIEW_MAIN ||
+        state->view == M12_MENU_VIEW_SETTINGS) {
+        state->saveBrowserReturnView = state->view;
+    } else {
+        state->saveBrowserReturnView = M12_MENU_VIEW_SETTINGS;
+    }
     count = M12_SaveBrowser_Scan(&state->saveBrowser, dataDir);
     if (count <= 0) {
         m12_enter_message_view(state);
@@ -1900,6 +1907,29 @@ int M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(M12_StartupMenuState* state
                                                    dataDir,
                                                    outPath,
                                                    outPathSize);
+}
+
+static int m12_save_browser_select_first_game(M12_StartupMenuState* state,
+                                              const char* gameId) {
+    int i;
+    if (!state || !gameId) {
+        return 0;
+    }
+    for (i = 0; i < state->saveBrowser.entryCount; ++i) {
+        if (state->saveBrowser.entries[i].valid &&
+            strcmp(state->saveBrowser.entries[i].gameId, gameId) == 0) {
+            state->saveBrowser.selectedIndex = i;
+            if (state->saveBrowser.selectedIndex < state->saveBrowser.scrollOffset ||
+                state->saveBrowser.selectedIndex >= state->saveBrowser.scrollOffset + 8) {
+                state->saveBrowser.scrollOffset =
+                    state->saveBrowser.selectedIndex > 7
+                        ? state->saveBrowser.selectedIndex - 7
+                        : 0;
+            }
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static void m12_export_save_browser_settings_action(M12_StartupMenuState* state) {
@@ -2934,6 +2964,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine2 = "";
     state->messageLine3 = "";
     state->messageReturnView = M12_MENU_VIEW_MAIN;
+    state->saveBrowserReturnView = M12_MENU_VIEW_SETTINGS;
     state->messageReturnNavLevel = (int)M12_NAV_MAIN;
     state->dataDirScanActive = 0;
     state->dataDirScanCancelRequested = 0;
@@ -3571,6 +3602,69 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     } else {
         m12_show_missing_game_data_popup(state, entry->gameId);
     }
+}
+
+static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
+    if (!state) {
+        return;
+    }
+    if (state->quickResumeAvailable && state->selectedIndex == -1) {
+        int qrSlot = m12_game_slot_from_id(state->quickResumeGameId);
+        if (qrSlot >= 0 && qrSlot < m12_entry_count() &&
+            state->entries[qrSlot].available) {
+            int pmode = m12_clamp_index(state->settings.graphicsIndex,
+                                        M12_PRESENTATION_MODE_COUNT);
+            state->activatedIndex = qrSlot;
+            m12_normalize_game_version_index(state, qrSlot);
+            m12_enforce_mode_constraints(&state->gameOptions[qrSlot], pmode);
+            if (pmode == M12_PRESENTATION_V22_MODERN) {
+                state->launchRequested = 0;
+                state->quickResumeLaunchRequested = 0;
+                m12_enter_message_view(state);
+                state->messageLine1 = "V3 MODERN/3D";
+                state->messageLine2 = "DATA FILES NOT FOUND";
+                state->messageLine3 = "ESC RETURNS TO MENU";
+            } else {
+                state->launchRequested = 1;
+                state->quickResumeLaunchRequested = 1;
+                m12_enter_message_view(state);
+                state->messageLine1 = "RESUMING SAVE";
+                state->messageLine2 = state->entries[qrSlot].title;
+                state->messageLine3 = "ESC RETURNS TO MENU";
+            }
+        } else {
+            m12_show_missing_game_data_popup(state, state->quickResumeGameId);
+        }
+        return;
+    }
+    state->quickResumeLaunchRequested = 0;
+    m12_activate_selected(state);
+}
+
+static int m12_main_action_csb_utility_import(M12_StartupMenuState* state) {
+    const M12_MenuEntry* entry;
+    if (!state || state->selectedIndex < 0) {
+        return 0;
+    }
+    entry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
+    if (!entry || !entry->gameId || strcmp(entry->gameId, "csb") != 0) {
+        return 0;
+    }
+    if (!entry->available) {
+        m12_show_missing_game_data_popup(state, "csb");
+        return 1;
+    }
+    if (M12_StartupMenu_OpenSaveBrowser(state) != 0) {
+        return 1;
+    }
+    if (!m12_save_browser_select_first_game(state, "dm1")) {
+        m12_enter_message_view(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "NO DM1 SAVES FOUND"),
+                                 m12_tr(state, "SAVE OR IMPORT DM1 FIRST"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    }
+    return 1;
 }
 
 static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
@@ -4413,7 +4507,12 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 m12_export_save_browser_settings_action(state);
                 break;
             case M12_MENU_INPUT_BACK:
-                state->view = M12_MENU_VIEW_SETTINGS;
+                if (state->saveBrowserReturnView == M12_MENU_VIEW_MAIN ||
+                    state->saveBrowserReturnView == M12_MENU_VIEW_SETTINGS) {
+                    state->view = state->saveBrowserReturnView;
+                } else {
+                    state->view = M12_MENU_VIEW_SETTINGS;
+                }
                 break;
             case M12_MENU_INPUT_NONE:
             default:
@@ -4557,40 +4656,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 state->selectedIndex = m12_cycle_index(state->selectedIndex, 1, count);
             }
             break;
-        case M12_MENU_INPUT_ACCEPT:
         case M12_MENU_INPUT_ACTION:
-        case M12_MENU_INPUT_RIGHT:
-            if (state->quickResumeAvailable && state->selectedIndex == -1) {
-                /* Quick resume: find the game slot and launch directly */
-                int qrSlot = m12_game_slot_from_id(state->quickResumeGameId);
-                if (qrSlot >= 0 && qrSlot < m12_entry_count() &&
-                    state->entries[qrSlot].available) {
-                    int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
-                    state->activatedIndex = qrSlot;
-                    m12_normalize_game_version_index(state, qrSlot);
-                    m12_enforce_mode_constraints(&state->gameOptions[qrSlot], pmode);
-                    if (pmode == M12_PRESENTATION_V22_MODERN) {
-                        state->launchRequested = 0;
-                        state->quickResumeLaunchRequested = 0;
-                        m12_enter_message_view(state);
-                        state->messageLine1 = "V3 MODERN/3D";
-                        state->messageLine2 = "DATA FILES NOT FOUND";
-                        state->messageLine3 = "ESC RETURNS TO MENU";
-                    } else {
-                        state->launchRequested = 1;
-                        state->quickResumeLaunchRequested = 1;
-                        m12_enter_message_view(state);
-                        state->messageLine1 = "RESUMING SAVE";
-                        state->messageLine2 = state->entries[qrSlot].title;
-                        state->messageLine3 = "ESC RETURNS TO MENU";
-                    }
-                } else {
-                    m12_show_missing_game_data_popup(state, state->quickResumeGameId);
-                }
-            } else {
-                state->quickResumeLaunchRequested = 0;
-                m12_activate_selected(state);
+            if (!m12_main_action_csb_utility_import(state)) {
+                m12_main_resume_or_activate_selected(state);
             }
+            break;
+        case M12_MENU_INPUT_ACCEPT:
+        case M12_MENU_INPUT_RIGHT:
+            m12_main_resume_or_activate_selected(state);
             break;
         case M12_MENU_INPUT_MAP_TOGGLE:
             M12_Changelog_Init(&state->changelog);
