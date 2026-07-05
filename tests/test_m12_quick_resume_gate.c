@@ -6,9 +6,11 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -184,11 +186,115 @@ static int write_raw_csbgame_roster_quicksave(const char* path) {
     return ok;
 }
 
+#define ORIGINAL_PC34_CHAMPION_BYTES 319
+#define ORIGINAL_PC34_PARTY_INFO_BYTES 128
+#define ORIGINAL_PC34_PARTY_BYTES \
+    ((ORIGINAL_PC34_CHAMPION_BYTES * CHAMPION_MAX_PARTY) + \
+     ORIGINAL_PC34_PARTY_INFO_BYTES)
+#define ORIGINAL_PC34_EVENT_BYTES 10
+
+static void wr16le(unsigned char* p, uint16_t v) {
+    p[0] = (unsigned char)(v & 0xffu);
+    p[1] = (unsigned char)((v >> 8) & 0xffu);
+}
+
 static void wr32le(unsigned char* p, uint32_t v) {
     p[0] = (unsigned char)(v & 0xffu);
     p[1] = (unsigned char)((v >> 8) & 0xffu);
     p[2] = (unsigned char)((v >> 16) & 0xffu);
     p[3] = (unsigned char)((v >> 24) & 0xffu);
+}
+
+static uint16_t rd16le(const unsigned char* p) {
+    return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
+static uint16_t original_first_half_checksum(const unsigned char* header) {
+    uint16_t acc = 0;
+    size_t i;
+    for (i = 0; i < 32u; ++i) {
+        acc = (uint16_t)(acc + rd16le(header + (i * 8u) + 0u));
+        acc = (uint16_t)(acc ^ rd16le(header + (i * 8u) + 2u));
+        acc = (uint16_t)(acc - rd16le(header + (i * 8u) + 4u));
+        acc = (uint16_t)(acc ^ rd16le(header + (i * 8u) + 6u));
+    }
+    return acc;
+}
+
+static uint16_t original_second_half_plain_checksum(const unsigned char* header) {
+    uint16_t sum = 0;
+    size_t i;
+    for (i = 128u; i < 256u; ++i) {
+        sum = (uint16_t)(sum + rd16le(header + (i * 2u)));
+    }
+    return sum;
+}
+
+static void xor_original_second_half(unsigned char* header, uint16_t key) {
+    uint16_t rollingKey = key;
+    size_t i;
+    for (i = 128u; i < 256u; ++i) {
+        unsigned char* word = header + (i * 2u);
+        wr16le(word, (uint16_t)(rd16le(word) ^ rollingKey));
+        rollingKey = (uint16_t)(rollingKey + 128u);
+    }
+}
+
+static uint16_t checksum_and_xor_original_words(unsigned char* bytes,
+                                                size_t wordCount,
+                                                uint16_t key) {
+    uint16_t rollingKey = key;
+    uint16_t checksum = key;
+    size_t i;
+    for (i = 0u; i < wordCount; ++i) {
+        unsigned char* word = bytes + i * 2u;
+        uint16_t v = rd16le(word);
+        checksum = (uint16_t)(checksum + v);
+        v = (uint16_t)(v ^ rollingKey);
+        wr16le(word, v);
+        checksum = (uint16_t)(checksum + v);
+        rollingKey = (uint16_t)(rollingKey + (uint16_t)wordCount);
+    }
+    return checksum;
+}
+
+static int write_original_part(unsigned char* dst,
+                               int dstCap,
+                               const unsigned char* plain,
+                               int byteCount,
+                               uint16_t key,
+                               uint16_t* outChecksum) {
+    if (dstCap < 2 + byteCount || (byteCount & 1) != 0) {
+        return -1;
+    }
+    wr16le(dst, (uint16_t)byteCount);
+    if (byteCount > 0 && plain) {
+        memcpy(dst + 2, plain, (size_t)byteCount);
+    }
+    *outChecksum = checksum_and_xor_original_words(
+        dst + 2, (size_t)byteCount / 2u, key);
+    return 2 + byteCount;
+}
+
+static void write_original_champion(unsigned char* dst) {
+    memset(dst, 0, ORIGINAL_PC34_CHAMPION_BYTES);
+    memset(dst + 0, ' ', 8u);
+    memset(dst + 8, ' ', 20u);
+    memcpy(dst + 0, "TIGGY", 5u);
+    memcpy(dst + 8, "APPRENTICE", 10u);
+    dst[28] = DIR_EAST;
+    wr16le(dst + 52, 44u);
+    wr16le(dst + 54, 55u);
+    wr16le(dst + 56, 66u);
+    wr16le(dst + 58, 77u);
+    wr16le(dst + 60, 8u);
+    wr16le(dst + 62, 9u);
+    wr16le(dst + 66, 1500u);
+    wr16le(dst + 68, 1200u);
+    wr16le(dst + 70 + 3u, 33u);
+    wr32le(dst + 91 + 2u, 1000u);
+    wr16le(dst + 211 + (size_t)CHAMPION_SLOT_HAND_RIGHT * 2u, 0x1555u);
+    wr16le(dst + 271, 345u);
 }
 
 static void fill_test_portrait(struct ChampionState_Compat* champ,
@@ -271,6 +377,115 @@ done:
     return ok;
 }
 
+static int write_original_pc34_dm1_save_file(const char* path) {
+    unsigned char buf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
+    unsigned char global[SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT];
+    unsigned char party[ORIGINAL_PC34_PARTY_BYTES];
+    unsigned char event[ORIGINAL_PC34_EVENT_BYTES];
+    unsigned char timeline[2];
+    uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
+    uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT];
+    int cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    int n;
+    int i;
+    FILE* fp;
+
+    memset(buf, 0, sizeof(buf));
+    memset(header, 0, sizeof(header));
+    memset(global, 0, sizeof(global));
+    memset(party, 0, sizeof(party));
+    memset(event, 0, sizeof(event));
+    memset(timeline, 0, sizeof(timeline));
+    memset(checksums, 0, sizeof(checksums));
+
+    for (i = 0; i < 127; ++i) {
+        wr16le(header + (size_t)i * 2u,
+               (uint16_t)(0x5151u + (uint16_t)(i * 11u)));
+    }
+    wr16le(header + 10u * 2u, 0x2468u);
+    header[298] = 1u;
+    header[299] = SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC;
+    wr32le(header + 306u, 0x50433334u);
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        keys[i] = (uint16_t)(0x3000u + (uint16_t)(i * 0x77u));
+    }
+
+    wr32le(global + 0u, 7777u);
+    wr16le(global + 10u, 1u);
+    wr16le(global + 12u, 9u);
+    wr16le(global + 14u, 10u);
+    wr16le(global + 16u, DIR_EAST);
+    wr16le(global + 18u, 4u);
+    wr16le(global + 20u, 0u);
+    wr16le(global + 24u, 0u);
+    wr16le(global + 26u, 0u);
+    wr16le(global + 28u, 1u);
+    wr16le(global + 30u, 0u);
+    wr16le(global + 46u, 0u);
+    write_original_champion(party);
+
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            global, (int)sizeof(global),
+                            keys[SAVEGAME_PC34_PART_GLOBAL_DATA],
+                            &checksums[SAVEGAME_PC34_PART_GLOBAL_DATA]);
+    if (n < 0) return 0;
+    cursor += n;
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            NULL, 0,
+                            keys[SAVEGAME_PC34_PART_ACTIVE_GROUP],
+                            &checksums[SAVEGAME_PC34_PART_ACTIVE_GROUP]);
+    if (n < 0) return 0;
+    cursor += n;
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            party, (int)sizeof(party),
+                            keys[SAVEGAME_PC34_PART_PARTY],
+                            &checksums[SAVEGAME_PC34_PART_PARTY]);
+    if (n < 0) return 0;
+    cursor += n;
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            event, (int)sizeof(event),
+                            keys[SAVEGAME_PC34_PART_EVENTS],
+                            &checksums[SAVEGAME_PC34_PART_EVENTS]);
+    if (n < 0) return 0;
+    cursor += n;
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            timeline, (int)sizeof(timeline),
+                            keys[SAVEGAME_PC34_PART_TIMELINE],
+                            &checksums[SAVEGAME_PC34_PART_TIMELINE]);
+    if (n < 0) return 0;
+    cursor += n;
+
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        wr16le(header + 310u + (size_t)i * 2u, keys[i]);
+        wr16le(header + 342u + (size_t)i * 2u, checksums[i]);
+    }
+    wr16le(header + 374u, SAVEGAME_PC34_PLATFORM_PC);
+    wr16le(header + 376u, SAVEGAME_PC34_DUNGEON_ID_DM);
+    {
+        uint16_t secondSum = original_second_half_plain_checksum(header);
+        uint16_t firstBeforeLast = original_first_half_checksum(header);
+        uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                   firstBeforeLast ^
+                                   secondSum);
+        wr16le(header + 254u, last);
+    }
+    xor_original_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    memcpy(buf, header, sizeof(header));
+
+    fp = fopen(path, "wb");
+    if (!fp) {
+        return 0;
+    }
+    if (fwrite(buf, 1u, (size_t)cursor, fp) != (size_t)cursor) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int write_native_dm1_save(const char* path) {
     struct GameWorld_Compat world;
     int i;
@@ -333,6 +548,7 @@ int main(void) {
     char importedCsbWinBrowserSavePath[512];
     char originalCsbGameBrowserSavePath[512];
     char originalDmSaveBrowserSavePath[512];
+    char originalDm1SavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -450,6 +666,30 @@ int main(void) {
     if (!expect(intent.valid == 1, "normal DM1 launch intent should still be valid")) return 1;
     if (!expect(intent.savePath == NULL,
                 "normal DM1 launch must not inherit quick Resume save path")) return 1;
+
+    snprintf(originalDm1SavePath, sizeof(originalDm1SavePath),
+             "%s/firestaff-dm1-original-pc34.sav", tmpTemplate);
+    if (!expect(write_original_pc34_dm1_save_file(originalDm1SavePath),
+                "should write original PC34 DM1 save fixture")) return 1;
+    M12_Config_SetLastSavePath(originalDm1SavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_dm1_available(&state);
+    if (!expect(state.quickResumeAvailable == 1,
+                "original PC34 DM1 save must enable quick Resume")) return 1;
+    if (!expect(strcmp(state.quickResumeGameId, "dm1") == 0,
+                "original PC34 DM1 quick Resume should identify dm1")) return 1;
+    if (!expect(strcmp(state.quickResumeSavePath, originalDm1SavePath) == 0,
+                "original PC34 DM1 quick Resume should retain save path")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.launchRequested == 1,
+                "original PC34 DM1 Resume accept should request launch")) return 1;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1,
+                "original PC34 DM1 Resume launch intent should be valid")) return 1;
+    if (!expect(intent.savePath &&
+                strcmp(intent.savePath, originalDm1SavePath) == 0,
+                "original PC34 DM1 Resume launch intent must carry exact path")) return 1;
 
     snprintf(csbSavePath, sizeof(csbSavePath),
              "%s/firestaff-csb-quicksave.sav", tmpTemplate);
