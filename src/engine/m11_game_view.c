@@ -2704,6 +2704,10 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             m11_set_status(state, "BOOT", "CSB CREDITS");
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_QUIT:
+            state->csbState.startup_entrance_active = 0;
+            state->csbState.startup_entrance_dismissed = 1;
+            state->csbState.startup_entrance_credits_active = 0;
+            state->csbState.startup_entrance_credits_remaining_ticks = 0;
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         default:

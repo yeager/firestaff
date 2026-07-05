@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-05 CSB entrance Quit state cleanup: the M11 CSB entrance Quit path now clears `startup_entrance_active`, marks the entrance dismissed, and clears any credits subphase before returning to the launcher, matching the other terminal entrance commands. Verification: `test_csb_v1_m11_startup_resume_gate` passes locally with hash-verified CSB data.
+
 - ✅ 2026-07-05 CSB entrance Quit command proof: the M11 CSB startup gate now proves both source-locked pointer Quit and Back-key Quit return `M11_GAME_INPUT_RETURN_TO_MENU`, record `M11_ENTRANCE_RUNTIME_COMMAND_QUIT`, and report `BACK TO LAUNCHER` without entering the dungeon runtime. Verification: `test_csb_v1_m11_startup_resume_gate` passes locally with hash-verified CSB data.
 
 - ✅ 2026-07-05 CSB entrance Resume path validation: M11 now validates `entranceResumeSavePath` against a copied CSB runtime profile before marking the entrance Resume button as available, so invalid/non-loadable paths are cleared and handled as unavailable without mutating the startup runtime behind the entrance. Verification: `test_csb_v1_m11_startup_resume_gate` passes locally with hash-verified CSB data.
