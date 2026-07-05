@@ -37,6 +37,7 @@
 #define DM2_GDAT_DOOR_FRAME_FIELD_CACHE_LIMIT 0x20
 #define DM2_GDAT_DOOR_PANEL_FIELD_CACHE_LIMIT 0x04
 #define DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT 0x08
+#define DM2_GDAT_WALL_BUTTON_CACHE_LIMIT 8
 #define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
@@ -73,6 +74,10 @@ typedef struct {
     uint8_t *door_button_pixels[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
     int door_button_w[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
     int door_button_h[DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT];
+    int wall_button_keys[DM2_GDAT_WALL_BUTTON_CACHE_LIMIT];
+    uint8_t *wall_button_pixels[DM2_GDAT_WALL_BUTTON_CACHE_LIMIT];
+    int wall_button_w[DM2_GDAT_WALL_BUTTON_CACHE_LIMIT];
+    int wall_button_h[DM2_GDAT_WALL_BUTTON_CACHE_LIMIT];
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -213,6 +218,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     }
     for (int i = 0; i < DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->door_button_pixels[i]);
+    }
+    for (int i = 0; i < DM2_GDAT_WALL_BUTTON_CACHE_LIMIT; ++i) {
+        dm2_v1_asset_free_pixels(gfx->wall_button_pixels[i]);
     }
     dm2_v1_asset_loader_free(&gfx->loader);
     free(gfx->bytes);
@@ -737,6 +745,7 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
     int category;
     int index;
     int field;
+    int wall_button_key = 0;
 
     if (out_pixels) *out_pixels = NULL;
     if (out_w) *out_w = 0;
@@ -772,6 +781,37 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_h = &gfx->wall_h[field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE) {
+        int packed = DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index;
+        int slot = -1;
+        if (packed < 0 ||
+            packed >= (0x100 << DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT)) {
+            return -1;
+        }
+        index = (packed >> DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT) & 0xff;
+        field = packed & DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_MASK;
+        wall_button_key = gdat_index;
+        for (int i = 0; i < DM2_GDAT_WALL_BUTTON_CACHE_LIMIT; ++i) {
+            if (gfx->wall_button_pixels[i] && gfx->wall_button_keys[i] == wall_button_key) {
+                slot = i;
+                break;
+            }
+            if (slot < 0 && !gfx->wall_button_pixels[i]) {
+                slot = i;
+            }
+        }
+        if (slot < 0) {
+            slot = (index + field) % DM2_GDAT_WALL_BUTTON_CACHE_LIMIT;
+            dm2_v1_asset_free_pixels(gfx->wall_button_pixels[slot]);
+            gfx->wall_button_pixels[slot] = NULL;
+            gfx->wall_button_w[slot] = 0;
+            gfx->wall_button_h[slot] = 0;
+        }
+        cache_pixels = &gfx->wall_button_pixels[slot];
+        cache_w = &gfx->wall_button_w[slot];
+        cache_h = &gfx->wall_button_h[slot];
+        gfx->wall_button_keys[slot] = wall_button_key;
+        category = DM2_GDAT_CATEGORY_WALL_GFX;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE -
                    DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED) {
