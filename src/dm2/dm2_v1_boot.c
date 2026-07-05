@@ -30,6 +30,9 @@
 
 #define DM2_GDAT_GFXSET_FLOOR 0x00
 #define DM2_GDAT_GFXSET_CEIL  0x01
+#define DM2_GDAT_GFXSET_FRONT_WALL 0x00
+#define DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL 0x01
+#define DM2_GRAPHIC_WALL_FRONT (-3)
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -53,6 +56,9 @@ typedef struct {
     uint8_t *floor_pixels;
     int floor_w;
     int floor_h;
+    uint8_t *wall_pixels;
+    int wall_w;
+    int wall_h;
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -182,6 +188,7 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     if (!gfx) return;
     dm2_v1_asset_free_pixels(gfx->ceiling_pixels);
     dm2_v1_asset_free_pixels(gfx->floor_pixels);
+    dm2_v1_asset_free_pixels(gfx->wall_pixels);
     dm2_v1_asset_loader_free(&gfx->loader);
     free(gfx->bytes);
     memset(gfx, 0, sizeof(*gfx));
@@ -727,14 +734,22 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = 0;
         field = DM2_GDAT_GFXSET_FLOOR;
+    } else if (gdat_index == DM2_GRAPHIC_WALL_FRONT) {
+        cache_pixels = &gfx->wall_pixels;
+        cache_w = &gfx->wall_w;
+        cache_h = &gfx->wall_h;
+        category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+        index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
+        field = DM2_GDAT_GFXSET_FRONT_WALL;
     } else {
         return -1;
     }
 
     if (!*cache_pixels) {
-        /* skproject SKWIN/defines.h lines ~484-485 names GRAPHICSSET
-         * field 0 as floor and field 1 as ceiling; SkWinCore.cpp
-         * lines ~48011-48026 draws those through QUERY_GDAT_IMAGE_ENTRY_BUFF. */
+        /* skproject SKWIN/defines.h lines ~484-490 names GRAPHICSSET
+         * floor/ceiling/front-frame fields; SkWinCore.cpp lines
+         * ~47373-47474 and ~48011-48026 draw those through GDAT image
+         * queries during dungeon tile rendering. */
         *cache_pixels = dm2_v1_asset_load_image_field(&gfx->loader,
                                                       category,
                                                       index,

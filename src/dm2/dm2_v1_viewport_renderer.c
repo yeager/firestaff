@@ -159,6 +159,7 @@ static const int16_t __attribute__((unused)) s_dm2_door_frames [6] = {
  * Source: DUNVIEW.C:126-127, G2108_Floor=-1, G2109_Ceiling=-2 */
 #define DM2_GRAPHIC_FLOOR   (-1)
 #define DM2_GRAPHIC_CEILING (-2)
+#define DM2_GRAPHIC_WALL_FRONT (-3)
 
 /* DM2 draw order — back-to-front, same 12 view squares as DM1.
  * Depth 3 (D3) → Depth 2 (D2) → Depth 1 (D1) → Depth 0 (D0).
@@ -449,6 +450,44 @@ static void dm2_v1_blit_tiled_bitmap(uint8_t *dst,
     }
 }
 
+static void dm2_v1_blit_scaled_bitmap(uint8_t *dst,
+                                      int dst_stride,
+                                      int dst_x,
+                                      int dst_y,
+                                      int dst_w,
+                                      int dst_h,
+                                      const uint8_t *src,
+                                      int src_w,
+                                      int src_h,
+                                      int src_stride,
+                                      int transparent_color)
+{
+    int y;
+
+    if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
+        src_w <= 0 || src_h <= 0 || src_stride < src_w) {
+        return;
+    }
+    for (y = 0; y < dst_h; ++y) {
+        int sy = (y * src_h) / dst_h;
+        int fy = dst_y + y;
+        int x;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (x = 0; x < dst_w; ++x) {
+            int sx = (x * src_w) / dst_w;
+            int fx = dst_x + x;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
+            pixel = src[sy * src_stride + sx];
+            if (transparent_color >= 0 &&
+                pixel == (uint8_t)transparent_color) {
+                continue;
+            }
+            dst[fy * dst_stride + fx] = pixel;
+        }
+    }
+}
+
 /* ── Populate view squares from world model ─────────────────────── */
 
 /*
@@ -668,6 +707,18 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
+    const uint8_t *wall_pixels = NULL;
+    int wall_w = 0;
+    int wall_h = 0;
+    int wall_stride = 0;
+    int wall_asset =
+        dm2_v1_fetch_viewport_asset(s,
+                                    DM2_GRAPHIC_WALL_FRONT,
+                                    &wall_pixels,
+                                    &wall_w,
+                                    &wall_h,
+                                    &wall_stride) == 0 &&
+        wall_pixels && wall_w > 0 && wall_h > 0;
 
     /* DM2 wall rendering: draw back-to-front (D3→D2→D1→D0).
      * For each depth level, draw side walls first (L,R), then center (C).
@@ -807,6 +858,29 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             for (int x = 0; x < 224; x++)
                 vp[y * stride + x] = 2;
         }
+    }
+
+    if (wall_asset) {
+        /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/DRAW_WALL_TILE routes
+         * GRAPHICSSET wall cells through QUERY_TEMP_PICST and
+         * DRAW_DUNGEON_GRAPHIC.  This first startup binding draws the
+         * decoded map graphics set's front wall plate over the bounded
+         * placeholder wall pass while the exact per-cell placement tables are
+         * still being wired. */
+        dm2_v1_blit_scaled_bitmap(vp,
+                                  stride,
+                                  0,
+                                  20,
+                                  224,
+                                  97,
+                                  wall_pixels,
+                                  wall_w,
+                                  wall_h,
+                                  wall_stride > 0 ? wall_stride : wall_w,
+                                  -1);
+        ++s->asset_wall_drawn_count;
+    } else {
+        ++s->fallback_wall_drawn_count;
     }
 }
 
@@ -1244,6 +1318,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     if (!s->dirty && !s->framebuffer) return;
     s->asset_floor_ceiling_drawn_count = 0;
     s->fallback_floor_ceiling_drawn_count = 0;
+    s->asset_wall_drawn_count = 0;
+    s->fallback_wall_drawn_count = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view

@@ -33,12 +33,15 @@ static int test_dm2_asset_fetch(void *user,
 {
     static const uint8_t ceiling[4] = { 2, 3, 4, 5 };
     static const uint8_t floor[4] = { 6, 7, 8, 9 };
+    static const uint8_t wall[4] = { 11, 12, 13, 14 };
     (void)user;
     ++s_asset_fetch_calls;
     if (gdat_index == -2) {
         if (out_pixels) *out_pixels = ceiling;
     } else if (gdat_index == -1) {
         if (out_pixels) *out_pixels = floor;
+    } else if (gdat_index == -3) {
+        if (out_pixels) *out_pixels = wall;
     } else {
         if (out_pixels) *out_pixels = NULL;
         if (out_w) *out_w = 0;
@@ -89,6 +92,29 @@ static void test_floor_ceiling_asset_provider(void)
               framebuffer[(67 * 320)] == 8 &&
               framebuffer[(67 * 320) + 1] == 9 &&
               framebuffer[(66 * 320) + 2] == 6);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_render_walls(&viewport);
+    CHECK("wall fallback counts when no asset provider is installed",
+          viewport.asset_wall_drawn_count == 0 &&
+              viewport.fallback_wall_drawn_count == 1);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_walls(&viewport);
+    CHECK("wall pass fetches the DM2 front wall asset",
+          s_asset_fetch_calls == 1 &&
+              viewport.asset_wall_drawn_count == 1 &&
+              viewport.fallback_wall_drawn_count == 0);
+    CHECK("wall asset is scaled into the bounded dungeon wall region",
+          framebuffer[(20 * 320)] == 11 &&
+              framebuffer[(20 * 320) + 112] == 12 &&
+              framebuffer[(116 * 320) + 1] == 13);
 }
 
 int main(void)
