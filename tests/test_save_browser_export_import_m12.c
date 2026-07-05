@@ -2,6 +2,7 @@
 #include "csbwin_resume_fixture.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_save_load.h"
+#include "dm2_v1_new_game.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -687,23 +688,35 @@ int main(void) {
         char nestedData[512];
         char nestedSaves[512];
         char nestedCsbSaves[512];
+        char nestedDm2Saves[512];
         char nestedSavePath[512];
         const M12_SaveBrowserEntry* nested;
+        DM2_V1_SessionState dm2Session;
 
         snprintf(nestedRoot, sizeof(nestedRoot), "%s/nested", root);
         snprintf(nestedData, sizeof(nestedData), "%s/data", nestedRoot);
         snprintf(nestedSaves, sizeof(nestedSaves), "%s/saves", nestedRoot);
         snprintf(nestedCsbSaves, sizeof(nestedCsbSaves), "%s/csb", nestedSaves);
+        snprintf(nestedDm2Saves, sizeof(nestedDm2Saves), "%s/dm2", nestedSaves);
         check(mkdir_one(nestedRoot), "created nested root");
         check(mkdir_one(nestedData), "created nested data dir");
         check(mkdir_one(nestedSaves), "created sibling saves dir");
         check(mkdir_one(nestedCsbSaves), "created sibling CSB saves dir");
+        check(mkdir_one(nestedDm2Saves), "created sibling DM2 saves dir");
         snprintf(nestedSavePath, sizeof(nestedSavePath),
                  "%s/firestaff-csb-sibling.sav", nestedCsbSaves);
         check(write_bytes(nestedSavePath, "CSB-SIBLING-SAVE"),
               "wrote sibling CSB save fixture");
-        check(M12_SaveBrowser_Scan(&state, nestedData) == 1,
-              "scan finds sibling saves/csb entry from data root");
+        dm2_v1_session_new(&dm2Session);
+        dm2Session.party_level = 5u;
+        dm2Session.party_x = 19u;
+        dm2Session.party_y = 12u;
+        check(dm2_v1_session_save_slot(nestedDm2Saves, 6u,
+                                       "Nested DM2",
+                                       &dm2Session) == 0,
+              "wrote sibling DM2 SKSave slot fixture");
+        check(M12_SaveBrowser_Scan(&state, nestedData) == 2,
+              "scan finds sibling CSB and DM2 save entries from data root");
         nested = find_entry(&state, "firestaff-csb-sibling.sav");
         check(nested != NULL, "sibling CSB save entry present");
         if (nested) {
@@ -711,6 +724,18 @@ int main(void) {
                   "sibling CSB save keeps game id");
             check(strstr(nested->fullPath, "/saves/csb/firestaff-csb-sibling.sav") != NULL,
                   "sibling CSB save records actual save-root path");
+        }
+        nested = find_entry(&state, "SKSave06.dat");
+        check(nested != NULL, "sibling DM2 SKSave entry present");
+        if (nested) {
+            check(strcmp(nested->gameId, "dm2") == 0,
+                  "sibling DM2 SKSave keeps game id");
+            check(nested->valid == 1 && nested->mapLevel == 5,
+                  "sibling DM2 SKSave is loadable with saved level");
+            check(strstr(nested->champions, "Theron") != NULL,
+                  "sibling DM2 SKSave exposes champion names");
+            check(strstr(nested->fullPath, "/saves/dm2/SKSave06.dat") != NULL,
+                  "sibling DM2 SKSave records actual save-root path");
         }
     }
 

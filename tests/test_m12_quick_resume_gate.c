@@ -6,6 +6,7 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "dm2_v1_new_game.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 
@@ -87,6 +88,41 @@ static void force_csb_available(M12_StartupMenuState* state) {
     state->messageLine3 = "";
 }
 
+static void force_dm2_available(M12_StartupMenuState* state) {
+    state->entries[2].title = "DUNGEON MASTER II";
+    state->entries[2].gameId = "dm2";
+    state->entries[2].kind = M12_MENU_ENTRY_GAME;
+    state->entries[2].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
+    state->entries[2].available = 1;
+    state->assetStatus.dm2Available = 1;
+    state->assetStatus.versions[2][0].gameId = "dm2";
+    state->assetStatus.versions[2][0].versionId = "pc-en";
+    state->assetStatus.versions[2][0].label = "PC English";
+    state->assetStatus.versions[2][0].shortLabel = "PC EN";
+    state->assetStatus.versions[2][0].matched = 1;
+    state->assetStatus.requiredFileCounts[2] = 2;
+    state->assetStatus.requiredFiles[2][0].gameId = "dm2";
+    state->assetStatus.requiredFiles[2][0].roleId = "graphics";
+    state->assetStatus.requiredFiles[2][0].label = "GRAPHICS.DAT";
+    state->assetStatus.requiredFiles[2][0].required = 1;
+    state->assetStatus.requiredFiles[2][0].matched = 1;
+    state->assetStatus.requiredFiles[2][1].gameId = "dm2";
+    state->assetStatus.requiredFiles[2][1].roleId = "dungeon";
+    state->assetStatus.requiredFiles[2][1].label = "DUNGEON.DAT";
+    state->assetStatus.requiredFiles[2][1].required = 1;
+    state->assetStatus.requiredFiles[2][1].matched = 1;
+    state->gameOptions[2].versionIndex = 0;
+    state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    state->view = M12_MENU_VIEW_MAIN;
+    state->activatedIndex = -1;
+    state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
+    state->messageLine1 = "";
+    state->messageLine2 = "";
+    state->messageLine3 = "";
+}
+
 static int write_fake_quicksave(const char* path) {
     static const unsigned char hdr[16] = {
         'F','S','M','1','1','Q','S','1',
@@ -125,6 +161,33 @@ static int write_serialized_csb_quicksave(const char* path) {
     rc = csb_v1_runtime_save_game_to_path(&runtime, path);
     csb_v1_runtime_cleanup(&runtime);
     return rc == CSB_V1_SAVE_OK;
+}
+
+static int write_dm2_slot_save(const char* root,
+                               unsigned char slot,
+                               char* outPath,
+                               size_t outPathSize) {
+    DM2_V1_SessionState session;
+
+    if (!root || !outPath || outPathSize == 0u) {
+        return 0;
+    }
+    dm2_v1_session_new(&session);
+    session.game_tick = 77u;
+    session.party_x = 22u;
+    session.party_y = 13u;
+    session.party_dir = 1u;
+    session.party_level = 3u;
+    session.outdoor_mode = 1u;
+    session.time_of_day_minutes = 615u;
+    session.rain_intensity = 40u;
+    if (dm2_v1_session_save_slot(root, slot, "M12 DM2 Slot",
+                                 &session) != 0) {
+        return 0;
+    }
+    snprintf(outPath, outPathSize, "%s/SKSave%02u.dat",
+             root, (unsigned)slot);
+    return 1;
 }
 
 static void fill_raw_csbgame_champion(CSB_V1_Champion* champ,
@@ -551,6 +614,7 @@ int main(void) {
     char originalCsbGameBrowserSavePath[512];
     char originalDmSaveBrowserSavePath[512];
     char originalDm1SavePath[512];
+    char dm2SlotSavePath[512];
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -1015,6 +1079,39 @@ int main(void) {
     if (!expect(intent.savePath &&
                 strcmp(intent.savePath, originalDmSaveBrowserSavePath) == 0,
                 "save browser DMSAVE.DAT launch intent should carry exact path")) return 1;
+
+    if (!expect(write_dm2_slot_save(tmpTemplate, 4u,
+                                    dm2SlotSavePath,
+                                    sizeof(dm2SlotSavePath)),
+                "should write DM2 SKSave browser slot")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_dm2_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser for DM2 SKSave slots")) return 1;
+    if (!expect(select_save_entry(&state, "SKSave04.dat"),
+                "save browser should list DM2 SKSave04.dat")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser should mark DM2 SKSave slot loadable")) return 1;
+    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
+                       "dm2") == 0,
+                "save browser should classify SKSave slot as dm2")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].mapLevel == 3,
+                "save browser should expose DM2 saved level")) return 1;
+    if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
+                       "Theron") != NULL,
+                "save browser should expose DM2 champion names")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(state.launchRequested == 1 &&
+                state.quickResumeLaunchRequested == 1,
+                "save browser DM2 accept should request save-path launch")) return 1;
+    if (!expect(intent.valid == 1 &&
+                intent.gameId &&
+                strcmp(intent.gameId, "dm2") == 0,
+                "save browser DM2 launch intent should identify DM2")) return 1;
+    if (!expect(intent.savePath &&
+                strcmp(intent.savePath, dm2SlotSavePath) == 0,
+                "save browser DM2 launch intent should carry exact SKSave path")) return 1;
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);
