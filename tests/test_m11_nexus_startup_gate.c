@@ -87,6 +87,33 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     return nonzero;
 }
 
+static int count_nonzero_region(const unsigned char* pixels,
+                                int fb_w,
+                                int fb_h,
+                                int x,
+                                int y,
+                                int w,
+                                int h) {
+    int xx;
+    int yy;
+    int nonzero = 0;
+    if (!pixels || fb_w <= 0 || fb_h <= 0 || w <= 0 || h <= 0) {
+        return 0;
+    }
+    for (yy = 0; yy < h; ++yy) {
+        int py = y + yy;
+        if (py < 0 || py >= fb_h) continue;
+        for (xx = 0; xx < w; ++xx) {
+            int px = x + xx;
+            if (px < 0 || px >= fb_w) continue;
+            if (pixels[py * fb_w + px] != 0u) {
+                ++nonzero;
+            }
+        }
+    }
+    return nonzero;
+}
+
 static void fill_nexus_spec(M11_GameLaunchSpec* spec, const char* data_dir) {
     memset(spec, 0, sizeof(*spec));
     spec->title = "DUNGEON MASTER NEXUS";
@@ -202,6 +229,12 @@ int main(void) {
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
                         "real Nexus champion selection draws a nonblank frame");
+            expect_true(view.nexusEngine &&
+                            view.nexusEngine->ui_faces_loaded > 0,
+                        "real Nexus startup loads FACE.BIN champion portraits");
+            expect_true(count_nonzero_region(framebuffer, 320, 200,
+                                             22, 38, 10, 10) > 0,
+                        "real Nexus champion selection draws FACE.BIN portrait pixels");
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
                         "real Nexus champion selection recruits selected champion");

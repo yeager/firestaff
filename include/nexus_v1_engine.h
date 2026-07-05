@@ -22,6 +22,7 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 #include "nexus_v1_text.h"
 #include "nexus_v1_champions.h"
 #include "nexus_v1_creatures.h"
+#include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_sound.h"
 #include <stdint.h>
 
@@ -59,6 +60,10 @@ struct Nexus_V1_Engine {
 
     /* Champion pool — full champion roster + party management */
     Nexus_V1_ChampionPool champions;
+
+    /* Startup UI surfaces. FACE.BIN carries the champion select portraits. */
+    Nexus_UI_Manager ui;
+    int ui_faces_loaded;
 
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;

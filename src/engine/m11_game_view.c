@@ -34312,6 +34312,35 @@ static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
     dm2_v1_boot_object_icon_asset_free(pixels);
 }
 
+static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight,
+                                           int dstX,
+                                           int dstY,
+                                           int dstW,
+                                           int dstH) {
+    int y;
+    if (!surface || !surface->data || !framebuffer ||
+        surface->w <= 0 || surface->h <= 0 ||
+        dstW <= 0 || dstH <= 0) {
+        return;
+    }
+    for (y = 0; y < dstH; ++y) {
+        const int sy = (y * surface->h) / dstH;
+        int x;
+        const int py = dstY + y;
+        if (py < 0 || py >= framebufferHeight) continue;
+        for (x = 0; x < dstW; ++x) {
+            const int sx = (x * surface->w) / dstW;
+            const int px = dstX + x;
+            if (px < 0 || px >= framebufferWidth) continue;
+            framebuffer[py * framebufferWidth + px] =
+                surface->data[sy * surface->w + sx];
+        }
+    }
+}
+
 static void m11_draw_utility_panel(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -38124,11 +38153,27 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 char row[96];
                 int inParty = 0;
                 int p;
+                int rowY = yText + i * 11;
+                int portraitIndex = pool->champions[i].portrait_index;
                 for (p = 0; p < pool->party_count; ++p) {
                     if (pool->party[p] == i) {
                         inParty = 1;
                         break;
                     }
+                }
+                if (state->nexusEngine->ui_faces_loaded > 0 &&
+                    portraitIndex >= 0 && portraitIndex < 24) {
+                    const Nexus_UI_Surface* face =
+                        &state->nexusEngine->ui.surfaces[
+                            NEXUS_SURFACE_FACE0 + portraitIndex];
+                    m11_draw_nexus_portrait_scaled(face,
+                                                   framebuffer,
+                                                   framebufferWidth,
+                                                   framebufferHeight,
+                                                   22,
+                                                   rowY,
+                                                   10,
+                                                   10);
                 }
                 snprintf(row, sizeof(row), "%c %s %s HP %d MP %d",
                          i == state->nexusState.champion_cursor ? '>' : ' ',
@@ -38137,7 +38182,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                          pool->champions[i].max_health,
                          pool->champions[i].max_mana);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              22, yText + i * 11, row,
+                              36, rowY, row,
                               i == state->nexusState.champion_cursor
                                   ? &g_text_shadow : &g_text_small);
             }
