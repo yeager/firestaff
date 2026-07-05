@@ -209,6 +209,18 @@ int main(void)
               "CSB leader-hand name resolves through CSB runtime object binding");
         check(strcmp(name, "DAGGER") == 0,
               "CSB leader-hand name comes from CSB runtime resolver");
+        check(M11_GameView_HandlePointerButton(
+                  &state,
+                  12 + 8,
+                  33 + 13 + 8,
+                  M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+              "CSB inventory eye click inspects leader-hand object through runtime name path");
+        check(strstr(state.inspectTitle, "DAGGER") != NULL,
+              "CSB eye inspect title uses runtime object name");
+        check(state.v1ObjectDescriptionPanelActive == 1 &&
+                  strcmp(state.v1ObjectDescriptionName, "DAGGER") == 0,
+              "CSB object-description panel stores runtime object name");
+        (void)M11_GameView_DismissDialogOverlay(&state);
         check(M11_GameView_SetActingChampion(&state, 0),
               "CSB action menu opens from runtime object action-set without DM1 world.things");
         check(M11_GameView_GetActingActionIndices(&state, actions),

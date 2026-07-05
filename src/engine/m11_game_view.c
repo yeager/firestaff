@@ -30624,6 +30624,20 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         default: typeName = "OBJECT"; break;
         }
 
+        /* ReDMCSB: PANEL.C F0352 asks the active game's object-name path
+         * after OBJECT.C F0033 has resolved the object class.  CSB M11 owns
+         * object names through the CSB runtime DUNGEON.DAT/M564 decoder, so
+         * do not leave the eye panel on the DM1 `world.things` fallback when
+         * the leader hand carries a CSB runtime thing. */
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+            char csbName[64];
+            if (m11_csb_runtime_object_name_for_thing(
+                    state, thing, csbName, sizeof(csbName)) &&
+                csbName[0] != '\0') {
+                snprintf(itemName, sizeof(itemName), "%s", csbName);
+            }
+        }
+
         if (INVENTORY_Compat_ObjectEyePanelRoute((unsigned int)itemType, NULL) ==
             INVENTORY_OBJECT_EYE_PANEL_ROUTE_SCROLL_TEXT_PC34_COMPAT) {
             /* ReDMCSB PANEL.C F0352 -> F0342 keeps scrolls on the inventory
