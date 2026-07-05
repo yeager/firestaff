@@ -185,6 +185,7 @@ int main(void) {
     M11_GameViewState view;
     DM2_V1_BootProfile* profile;
     DM2_V1_GameState* world;
+    unsigned char framebuffer[320 * 200];
 
     check_incomplete_required_files_block_m11(
         "M11 blocks DM2 launch when GRAPHICS.DAT is present without DUNGEON.DAT",
@@ -255,6 +256,14 @@ int main(void) {
     expect_true(view.dm2State.party_x == 15 && view.dm2State.party_y == 15 &&
                 view.dm2State.party_dir == 0,
                 "M11 DM2 turn-left restores boot facing");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(framebuffer[0] == 7,
+                "M11 DM2 draw uses runtime viewport border, not text placeholder");
+    expect_true(framebuffer[(199 * 320) + 319] == 1,
+                "M11 DM2 draw preserves the runtime HUD strip after border draw");
+    expect_true(framebuffer[(100 * 320) + 160] != 0,
+                "M11 DM2 draw fills the runtime viewport body");
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;

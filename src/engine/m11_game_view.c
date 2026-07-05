@@ -35852,37 +35852,43 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         return;
     }
 
-    /* DM2 V1: minimal M11 hand-off render.
-     * The DM2 viewport pipeline (dm2_v1_runtime_render_frame) is owned
-     * by the firestaff_dm2 / firestaff_dm2_v2 libraries and is invoked
-     * by the FS_GAME_DM2 route in firestaff_game_loop.c. The M11 path
-     * does not own DM2's framebuffer, so we render a DM2 boot-screen
-     * placeholder (title + status text) until the DM2 V1 viewport is
-     * wired into the M11 draw path the same way the Theron and Nexus
-     * viewports already are.
-     * Source: dm2_v1_runtime.c dm2_v1_runtime_render_frame(),
-     * firestaff_game_loop.c fs_game_render_viewport(). */
+    /* DM2 V1/V2 M11 render hand-off.  The DM2 runtime renders into the
+     * same indexed framebuffer layout M11 presents for DM1/CSB, so direct
+     * launcher starts can show the actual DM2 viewport boundary instead of
+     * a text placeholder.  Source: dm2_v1_runtime_render_frame(),
+     * dm2_v2_runtime_render_frame(), SKULL.ASM T560/T600 render split. */
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-        const char *boot_status = state->lastOutcome[0]
-            ? state->lastOutcome
-            : "DM2 BOOT READY (M11 HAND-OFF)";
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 18, "DUNGEON MASTER II: SKULLKEEP",
-                      &g_text_title);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 36, boot_status, &g_text_shadow);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 54,
-                      "DM2 viewport pipeline is owned by the FS_GAME_DM2",
-                      &g_text_small);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 64,
-                      "route. Launch via the Firestaff game loop for the",
-                      &g_text_small);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 74,
-                      "full DM2 V1/V2 viewport. ESC returns to the menu.",
-                      &g_text_small);
+        int rendered = -1;
+        if (state->dm2World) {
+            rendered = dm2_v2_runtime_render_frame(
+                state->dm2State.party_dir,
+                state->dm2State.party_x,
+                state->dm2State.party_y,
+                framebuffer,
+                framebufferWidth,
+                framebufferWidth,
+                framebufferHeight);
+            if (rendered != 0) {
+                rendered = dm2_v1_runtime_render_frame(
+                    state->dm2State.party_dir,
+                    state->dm2State.party_x,
+                    state->dm2State.party_y,
+                    framebuffer,
+                    framebufferWidth,
+                    framebufferWidth,
+                    framebufferHeight);
+            }
+        }
+        if (rendered != 0) {
+            const char *boot_status = state->lastOutcome[0]
+                ? state->lastOutcome
+                : "DM2 RUNTIME NOT READY";
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 18, "DUNGEON MASTER II: SKULLKEEP",
+                          &g_text_title);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 36, boot_status, &g_text_shadow);
+        }
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
