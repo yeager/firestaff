@@ -450,6 +450,32 @@ static void check_real_asset_path(void) {
             check(r.anchor_count >= 1u,
                   "real receipt reports at least one bank-signal anchor");
         }
+        if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0 ||
+            strcmp(c->expected_md5, THERON_TRACK02_MD5_US_BIN) == 0) {
+            check(r.initial_candidate_found == 1,
+                  "raw Track 02 receipt has an initial candidate");
+            check(r.initial_candidate_width == 32u,
+                  "raw Track 02 initial candidate width is 32");
+            check(r.initial_candidate_height == 27u,
+                  "raw Track 02 initial candidate height is 27");
+            check(r.initial_candidate_seed == 0x0108e938u,
+                  "raw Track 02 initial candidate seed is source-locked");
+            check(r.initial_candidate_level_index == 0x0026u,
+                  "raw Track 02 initial candidate level index is source-locked");
+            check(r.initial_candidate_start_x == 2,
+                  "raw Track 02 initial candidate start x is runtime-ready");
+            check(r.initial_candidate_start_y == 1,
+                  "raw Track 02 initial candidate start y is runtime-ready");
+            check(r.initial_candidate_start_dir == 1,
+                  "raw Track 02 initial candidate start dir is runtime-ready");
+            check(r.initial_candidate_descriptor_delta == 0xa852u,
+                  "raw Track 02 initial candidate descriptor delta is locked");
+            check(r.initial_candidate_anchor_match == 1,
+                  "raw Track 02 initial candidate anchor relation is locked");
+        } else {
+            check(r.initial_candidate_found == 0,
+                  "non-raw Track 02 receipt makes no initial candidate claim");
+        }
 
         check(r.session_tick_token != 0u,
               "real receipt has a non-zero session_tick_token");
