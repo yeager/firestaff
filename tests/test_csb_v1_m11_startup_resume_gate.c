@@ -1058,6 +1058,8 @@ int main(void) {
                         M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_REDRAW &&
                     view.csbState.startup_entrance_credits_active == 1 &&
+                    view.csbState.startup_entrance_credits_remaining_ticks ==
+                        1800 &&
                     view.csbState.startup_entrance_last_command ==
                         M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS,
                     "M11 CSB entrance credits button opens the startup credits phase");
@@ -1071,6 +1073,30 @@ int main(void) {
                     view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_credits_active == 0,
                     "M11 CSB entrance accepts Enter/Action to leave credits");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        250,
+                        188,
+                        M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_credits_active == 1,
+                    "M11 CSB entrance can reopen credits after returning");
+        for (int i = 0; i < 1799; ++i) {
+            expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 CSB credits idle countdown redraws");
+        }
+        expect_true(view.csbState.tick_count == tick_before &&
+                        view.csbState.startup_entrance_credits_active == 1 &&
+                        view.csbState.startup_entrance_credits_remaining_ticks == 1,
+                    "M11 CSB credits countdown does not tick runtime before timeout");
+        expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_credits_active == 0 &&
+                    view.csbState.startup_entrance_credits_remaining_ticks == 0 &&
+                    view.csbState.tick_count == tick_before,
+                    "M11 CSB credits timeout returns to entrance without runtime tick");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         245,

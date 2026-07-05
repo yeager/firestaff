@@ -586,6 +586,7 @@ typedef struct {
         int startup_entrance_dismissed;
         int startup_entrance_last_command;
         int startup_entrance_credits_active;
+        int startup_entrance_credits_remaining_ticks;
         int startup_entrance_resume_available;
         char startup_entrance_resume_path[512];
     } csbState;

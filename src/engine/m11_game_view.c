@@ -2549,6 +2549,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     }
 }
 
+enum {
+    M11_CSB_ENTRANCE_CREDITS_TICKS_PC34 = 1800
+};
+
 static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     M11_GameViewState *state,
     int commandId)
@@ -2559,6 +2563,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     }
     if (state->csbState.startup_entrance_credits_active) {
         state->csbState.startup_entrance_credits_active = 0;
+        state->csbState.startup_entrance_credits_remaining_ticks = 0;
         m11_set_status(state, "BOOT", "CSB ENTRANCE");
         return M11_GAME_INPUT_REDRAW;
     }
@@ -2587,6 +2592,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                     state->csbState.startup_entrance_active = 0;
                     state->csbState.startup_entrance_dismissed = 1;
                     state->csbState.startup_entrance_credits_active = 0;
+                    state->csbState.startup_entrance_credits_remaining_ticks = 0;
                     m11_set_status(state, "BOOT", "CSB RESUMED");
                     return M11_GAME_INPUT_REDRAW;
                 }
@@ -2597,6 +2603,12 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS:
             state->csbState.startup_entrance_credits_active = 1;
+            /* ReDMCSB ENTRANCE.C F0442 lines 966-1091 draws C005 credits and
+             * waits with L1406_ui_VerticalBlankCount = 1800 before returning
+             * to the entrance loop.  Keep this as presentation time only; CSB
+             * runtime ticks remain blocked while startup_entrance_active. */
+            state->csbState.startup_entrance_credits_remaining_ticks =
+                M11_CSB_ENTRANCE_CREDITS_TICKS_PC34;
             m11_set_status(state, "BOOT", "CSB CREDITS");
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_QUIT:
@@ -10111,6 +10123,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_last_command =
             M11_ENTRANCE_RUNTIME_COMMAND_NONE;
         state->csbState.startup_entrance_credits_active = 0;
+        state->csbState.startup_entrance_credits_remaining_ticks = 0;
         state->csbState.startup_entrance_resume_available = 0;
         state->csbState.startup_entrance_resume_path[0] = '\0';
         if ((!spec->savePath || spec->savePath[0] == '\0') &&
@@ -12371,6 +12384,14 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if (state->csbState.startup_entrance_active) {
             state->csbState.startup_entrance_frame++;
+            if (state->csbState.startup_entrance_credits_active &&
+                state->csbState.startup_entrance_credits_remaining_ticks > 0) {
+                state->csbState.startup_entrance_credits_remaining_ticks--;
+                if (state->csbState.startup_entrance_credits_remaining_ticks == 0) {
+                    state->csbState.startup_entrance_credits_active = 0;
+                    m11_set_status(state, "BOOT", "CSB ENTRANCE");
+                }
+            }
             return M11_GAME_INPUT_REDRAW;
         }
         if (csb_v1_runtime_tick_v1(&profile->runtime) <= 0) {
