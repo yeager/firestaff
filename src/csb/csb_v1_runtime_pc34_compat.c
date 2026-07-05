@@ -52,6 +52,9 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+static void csb_v1_runtime_schedule_projectile_move_event(
+    CSB_V1_RuntimeProfile *profile,
+    const struct TimelineEvent_Compat *event);
 static void csb_v1_runtime_schedule_explosion_advance_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event);
@@ -8291,6 +8294,80 @@ uint16_t csb_v1_runtime_object_allowed_slots(
         record_size);
     return csb_v1_runtime_object_allowed_slots_from_object_info(
         object_info_index);
+}
+
+int csb_v1_runtime_throw_action_hand(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int *out_projectile_slot)
+{
+    CSB_V1_Champion *champion;
+    struct ProjectileCreateInput_Compat input;
+    struct TimelineEvent_Compat first_move;
+    uint16_t thrown_thing;
+    int slot = -1;
+    int party_dir;
+    int throw_side;
+
+    if (out_projectile_slot) *out_projectile_slot = -1;
+    if (!profile || !profile->party_state_valid) return 0;
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+
+    champion = &profile->party_state.Champions[champion_index];
+    if (csb_v1_champion_is_dead(champion) ||
+        champion->CurrentHealth <= 0) {
+        return 0;
+    }
+
+    thrown_thing = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
+    if (thrown_thing == THING_NONE || thrown_thing == THING_ENDOFLIST) {
+        return 0;
+    }
+
+    party_dir = profile->party_dir & 3;
+    throw_side = (((int)champion->Cell == ((party_dir + 1) & 3)) ||
+                  ((int)champion->Cell == ((party_dir + 2) & 3))) ? 1 : 0;
+
+    memset(&input, 0, sizeof(input));
+    memset(&first_move, 0, sizeof(first_move));
+    input.category = PROJECTILE_CATEGORY_KINETIC;
+    input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    input.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    input.ownerIndex = champion_index;
+    input.mapIndex = profile->current_level;
+    input.mapX = profile->party_x;
+    input.mapY = profile->party_y;
+    input.cell = (party_dir + throw_side) & 3;
+    input.direction = party_dir;
+    /* ReDMCSB CHAMPION.C F0328 ultimately creates the thrown object through
+     * PROJEXPL.C F0212.  This CSB boundary intentionally stops at the runtime
+     * storage contract: no DM1 object-weight/weapon-table lookup is used, so
+     * early CSB action playability does not depend on DM1 GameWorld things. */
+    input.kineticEnergy = 64;
+    input.attack = 40;
+    input.launcherStrength = input.attack;
+    input.stepEnergy = 10;
+    input.currentTick = (int)profile->game_time;
+    input.attackTypeCode = COMBAT_ATTACK_NORMAL;
+    input.associatedThing = (int)thrown_thing;
+    input.firstMoveGraceFlag = 1;
+
+    if (!F0810_PROJECTILE_Create_Compat(
+            &input,
+            &profile->projectiles,
+            &slot,
+            &first_move)) {
+        return 0;
+    }
+
+    csb_v1_runtime_schedule_projectile_move_event(profile, &first_move);
+    champion->Slots[CSB_V1_SLOT_ACTION_HAND] = THING_NONE;
+    if (out_projectile_slot) *out_projectile_slot = slot;
+    return 1;
 }
 
 int csb_v1_runtime_load_object_names_m564(

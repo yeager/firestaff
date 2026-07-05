@@ -21940,6 +21940,28 @@ static void m11_write_csb_runtime_leader_hand(
     }
 }
 
+static void m11_write_csb_runtime_champion_vitals(
+    M11_GameViewState* state,
+    int championIndex)
+{
+    CSB_V1_RuntimeProfile* runtime = m11_mutable_csb_runtime_profile(state);
+    const struct ChampionState_Compat* champ;
+    CSB_V1_Champion* csb_champ;
+
+    if (!runtime || !runtime->party_state_valid) return;
+    if (championIndex < 0 ||
+        championIndex >= state->world.party.championCount ||
+        championIndex >= runtime->party_state.ChampionCount ||
+        championIndex >= CSB_V1_MAX_CHAMPIONS) {
+        return;
+    }
+    champ = &state->world.party.champions[championIndex];
+    csb_champ = &runtime->party_state.Champions[championIndex];
+    csb_champ->CurrentHealth = (int16_t)champ->hp.current;
+    csb_champ->CurrentStamina = (int16_t)champ->stamina.current;
+    csb_champ->CurrentMana = (int16_t)champ->mana.current;
+}
+
 static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex) {
     switch (sourceSlotBoxIndex) {
         case 0:
@@ -26618,6 +26640,49 @@ int M11_GameView_GetCreaturePaletteChange(int depthPaletteIndex,
 static int m11_perform_climb_down_f0407(M11_GameViewState* state,
                                         int* outCancelDisable);
 
+static int m11_perform_csb_throw_action(M11_GameViewState* state,
+                                        int championIndex,
+                                        struct ChampionState_Compat* champ,
+                                        const char* champName)
+{
+    CSB_V1_RuntimeProfile* runtime;
+    unsigned short handThing;
+    int projectileSlot = -1;
+
+    if (!state || !champ) return 0;
+    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return 0;
+    runtime = m11_mutable_csb_runtime_profile(state);
+    if (!runtime) return 0;
+
+    handThing = m11_get_action_hand_thing(champ);
+    m11_set_champion_direction_to_party_f0406(state, champ);
+    if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: %s HAS NOTHING TO THROW",
+                      (unsigned int)state->world.gameTick,
+                      champName);
+        return 0;
+    }
+
+    if (!csb_v1_runtime_throw_action_hand(
+            runtime,
+            championIndex,
+            &projectileSlot)) {
+        return 0;
+    }
+
+    champ->inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+    state->world.projectileDisabledMovementTicks = 4;
+    state->world.lastProjectileDisabledMovementDirection =
+        state->world.party.direction;
+    m11_log_event(state, M11_COLOR_YELLOW,
+                  "T%u: %s THROWS",
+                  (unsigned int)state->world.gameTick,
+                  champName);
+    (void)projectileSlot;
+    return 1;
+}
+
 static int m11_perform_non_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen,
@@ -27232,6 +27297,10 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             unsigned short handThing = m11_get_action_hand_thing(champ);
             int throwSide;
             int spawned;
+            if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                return m11_perform_csb_throw_action(
+                    state, championIndex, champ, champName);
+            }
             m11_set_champion_direction_to_party_f0406(state, champ);
             if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
@@ -27441,6 +27510,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     state->world.party.activeChampionIndex = championIndex;
     m11_apply_champion_action_defense_before_action(state, championIndex, chosen);
     (void)m11_apply_action_stamina_cost(state, championIndex, chosen);
+    m11_write_csb_runtime_champion_vitals(state, championIndex);
     if (dm1_v1_action_xp_route((int)chosen, &actionXpRoute) &&
         actionXpRoute.valid) {
         actionExperienceGain = actionXpRoute.experienceGain;
@@ -27487,6 +27557,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                                                  chosen, champName,
                                                  &actionExperienceGain,
                                                  &cancelActionDisable);
+        m11_write_csb_runtime_champion_vitals(state, championIndex);
         /* ReDMCSB ENDGAME.C F0446 lines 890-910 runs its own fuse-sequence
          * update loop after setting game-won.  Do not run the normal ACTION
          * tick over the completed M11 endgame state in the same dispatch. */
@@ -27594,6 +27665,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
         state, championIndex, (unsigned char)actionIndex);
     (void)m11_apply_action_stamina_cost(state, championIndex,
                                         (unsigned char)actionIndex);
+    m11_write_csb_runtime_champion_vitals(state, championIndex);
     if (dm1_v1_action_xp_route(actionIndex, &actionXpRoute) &&
         actionXpRoute.valid) {
         /* ReDMCSB MENU.C F0407 lines 1626-1628 applies the common
@@ -27607,6 +27679,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
                                              champName,
                                              &actionExperienceGain,
                                              &cancelActionDisable);
+    m11_write_csb_runtime_champion_vitals(state, championIndex);
     /* ReDMCSB ENDGAME.C F0446 lines 890-910 owns the fuse-sequence updates
      * after game-won; the direct helper mirrors the action-row boundary. */
     if (!state->gameWon) {
