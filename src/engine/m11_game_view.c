@@ -19,6 +19,7 @@
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_tech_magic.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_touch_runtime.h"
@@ -1694,6 +1695,43 @@ static void m11_draw_text(unsigned char* framebuffer,
             cursor += (5 * effective_scale) + s->tracking;
         }
         i += (size_t)consumed;
+    }
+}
+
+static const char* m11_dm2_item_name(int item_id)
+{
+    switch (item_id) {
+        case DM2_ITEM_CROSSBOW: return "CROSSBOW";
+        case DM2_ITEM_PISTOL: return "PISTOL";
+        case DM2_ITEM_RIFLE: return "RIFLE";
+        case DM2_ITEM_BOMB_THROW: return "BOMB";
+        case DM2_ITEM_BOMB_REMOTE: return "REMOTE BOMB";
+        case DM2_ITEM_LANTERN: return "LANTERN";
+        case DM2_ITEM_MAGIC_BATTERY: return "MAGIC BATTERY";
+        case DM2_ITEM_FLAME_ORB: return "FLAME ORB";
+        case DM2_ITEM_HEAL_POTION: return "HEAL POTION";
+        case DM2_ITEM_MANA_POTION: return "MANA POTION";
+        case 1001: return "TORCH";
+        case 1002: return "BREAD";
+        case 1003: return "WATER";
+        case 1004: return "CHEESE";
+        case 1005: return "FOOT PLATE";
+        case 1006: return "LEG PLATE";
+        default: return NULL;
+    }
+}
+
+static void m11_format_dm2_item_name(int item_id, char* out, size_t out_size)
+{
+    const char* name;
+    if (!out || out_size == 0u) {
+        return;
+    }
+    name = m11_dm2_item_name(item_id);
+    if (name) {
+        snprintf(out, out_size, "%s", name);
+    } else {
+        snprintf(out, out_size, "ITEM %d", item_id);
     }
 }
 
@@ -36119,6 +36157,105 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                   &g_text_small);
 }
 
+static void m11_draw_dm2_shop_panel(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight)
+{
+    const int panel_x = 16;
+    const int panel_y = 24;
+    const int panel_w = 288;
+    const int panel_h = 142;
+    const int stock_x = 26;
+    const int inv_x = 166;
+    int shop_id;
+    int i;
+    char line[72];
+    const DM2_V1_ShopDescriptor* shop;
+    const DM2_V1_ShopState* shop_state;
+    const char* npc_name;
+
+    if (!state || !dm2_v1_shop_is_active()) {
+        return;
+    }
+    shop_id = dm2_v1_shop_get_active_shop();
+    shop = dm2_v1_shop_get_builtin(shop_id);
+    shop_state = dm2_v1_shop_get_state();
+    if (!shop || !shop_state) {
+        return;
+    }
+    npc_name = dm2_v1_npc_get_name(shop->npc_id);
+
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panel_x, panel_y, panel_w, panel_h, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panel_x, panel_y, panel_w, panel_h, M11_COLOR_YELLOW);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  panel_x + 2, panel_y + 2, panel_w - 4, 12,
+                  M11_COLOR_DARK_BROWN);
+    snprintf(line, sizeof(line), "%s", npc_name ? npc_name : "DM2 SHOP");
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  panel_x + 8, panel_y + 4, line, &g_text_shadow);
+
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  stock_x, panel_y + 20, "STOCK", &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  inv_x, panel_y + 20, "PACK", &g_text_small);
+
+    for (i = 0; i < shop->stock_count && i < DM2_SHOP_MAX_STOCK; ++i) {
+        char item_name[32];
+        int y = panel_y + 34 + i * 11;
+        int price = dm2_v1_shop_get_effective_price(shop_id, i);
+        m11_format_dm2_item_name(shop->stock[i].item_id,
+                                 item_name, sizeof(item_name));
+        if (i == state->dm2ShopSelectedStockIndex) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          stock_x - 3, y - 1, 126, 10,
+                          M11_COLOR_DARK_GRAY);
+        }
+        snprintf(line, sizeof(line), "%c %-16s %3d",
+                 i == state->dm2ShopSelectedStockIndex ? '>' : ' ',
+                 item_name,
+                 price);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      stock_x, y, line,
+                      i == state->dm2ShopSelectedStockIndex
+                          ? &g_text_shadow : &g_text_small);
+    }
+
+    if (shop_state->inventory_count <= 0) {
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      inv_x, panel_y + 34, "EMPTY", &g_text_small);
+    } else {
+        int rows = shop_state->inventory_count < 8
+            ? shop_state->inventory_count : 8;
+        for (i = 0; i < rows; ++i) {
+            char item_name[32];
+            int y = panel_y + 34 + i * 11;
+            int price = dm2_v1_shop_get_sell_price(shop_id, i);
+            m11_format_dm2_item_name((int)shop_state->inventory_item[i],
+                                     item_name, sizeof(item_name));
+            if (i == state->dm2ShopSelectedInventoryIndex) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              inv_x - 3, y - 1, 126, 10,
+                              M11_COLOR_DARK_GRAY);
+            }
+            snprintf(line, sizeof(line), "%c %-16s %3d",
+                     i == state->dm2ShopSelectedInventoryIndex ? '>' : ' ',
+                     item_name,
+                     price);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          inv_x, y, line,
+                          i == state->dm2ShopSelectedInventoryIndex
+                              ? &g_text_shadow : &g_text_small);
+        }
+    }
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  panel_x + 8, panel_y + panel_h - 12,
+                  "UP/DOWN STOCK  LEFT/RIGHT PACK  ACTION BUY  DROP SELL",
+                  &g_text_small);
+}
+
 void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
@@ -36251,6 +36388,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 36, boot_status, &g_text_shadow);
         }
+        m11_draw_dm2_shop_panel(state, framebuffer,
+                                framebufferWidth, framebufferHeight);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
