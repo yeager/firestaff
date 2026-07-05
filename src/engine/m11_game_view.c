@@ -26702,10 +26702,11 @@ static int m11_perform_csb_melee_action(M11_GameViewState* state,
     if (!champ->present || champ->hp.current == 0) return 0;
 
     m11_set_champion_direction_to_party_f0406(state, champ);
-    if (!csb_v1_runtime_record_champion_action(
+    if (!csb_v1_runtime_perform_melee_action(
             runtime,
             championIndex,
-            (int)chosen)) {
+            (int)chosen,
+            NULL)) {
         return 0;
     }
     m11_write_csb_runtime_champion_vitals(state, championIndex);

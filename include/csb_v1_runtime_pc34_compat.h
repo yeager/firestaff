@@ -766,6 +766,29 @@ int csb_v1_runtime_record_champion_action(
     int champion_index,
     int action_index);
 
+typedef struct {
+    int action_index;
+    int performed;
+    int target_map_index;
+    int target_map_x;
+    int target_map_y;
+    int target_square_type;
+    int hit_group;
+    int creature_index;
+    int damage;
+    int killed_group;
+} CSB_V1_RuntimeMeleeActionResult;
+
+/* Runtime-owned CSB F0402/F0231 melee-contact bridge. It records the chosen
+ * champion action and applies source-style damage to a real-format C04 group
+ * in the square in front of the party, without routing CSB actions through
+ * DM1 GameWorld thing tables. */
+int csb_v1_runtime_perform_melee_action(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int action_index,
+    CSB_V1_RuntimeMeleeActionResult *out_result);
+
 /* Load ReDMCSB OBJECT.C F0031 PC object names from M564_GRAPHIC_OBJECT_NAMES.
  * The PC stream terminates each name by setting bit 7 on the final byte. */
 int csb_v1_runtime_load_object_names_m564(

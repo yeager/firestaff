@@ -25,6 +25,9 @@
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "firestaff/dm1/v1/G0492_pc34_compat.h"
+#include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
@@ -52,6 +55,7 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static void csb_v1_runtime_schedule_projectile_move_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event);
@@ -8949,6 +8953,295 @@ int csb_v1_runtime_record_champion_action(
      * countdown, but CSB runtime saves/resume need the selected source action
      * to stay on the CSB party snapshot instead of being lost in DM1 state. */
     champion->ActionIndex = (uint8_t)action_index;
+    return 1;
+}
+
+static int csb_v1_runtime_action_is_melee_contact(int action_index)
+{
+    switch (action_index) {
+    case DM1_ACTION_PUNCH:
+    case DM1_ACTION_STAB_NINJA:
+    case DM1_ACTION_STAB_FIGHTER:
+    case DM1_ACTION_THRUST:
+    case DM1_ACTION_JAB:
+    case DM1_ACTION_PARRY:
+    case DM1_ACTION_DISRUPT:
+    case DM1_ACTION_MELEE:
+    case DM1_ACTION_SLASH:
+    case DM1_ACTION_CLEAVE:
+    case DM1_ACTION_STUN:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int csb_v1_runtime_target_group_creature_index(
+    int champion_cell,
+    int cells,
+    int creature_count)
+{
+    int i;
+    if (creature_count < 1) return -1;
+    if (cells == 0xFF) return 0;
+    for (i = 0; i < creature_count; ++i) {
+        if (csb_v1_runtime_group_cell_value(cells, i) ==
+            (champion_cell & 3)) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+static void csb_v1_runtime_build_melee_weapon_profile(
+    int action_index,
+    uint16_t action_thing,
+    const CSB_V1_RuntimeWeaponInfoPc34 *runtime_info,
+    struct WeaponProfile_Compat *out)
+{
+    int hit_probability;
+    int damage_factor;
+
+    memset(out, 0, sizeof(*out));
+    hit_probability =
+        dm1_v1_graphic560_action_hit_probability_get_pc34(action_index);
+    damage_factor =
+        dm1_v1_graphic560_action_damage_factor_get_pc34(action_index);
+    if (hit_probability < 0) hit_probability = 0;
+    if (damage_factor < 0) damage_factor = 0;
+
+    out->weaponType = (int)(action_thing & 0x03FFu);
+    out->weaponClass = runtime_info ? (int)runtime_info->weapon_class : 255;
+    out->weaponStrength = runtime_info ? (int)runtime_info->strength : 0;
+    out->kineticEnergy = runtime_info ? (int)runtime_info->kinetic_energy : 0;
+    out->hitProbability = hit_probability;
+    if (action_index == DM1_ACTION_DISRUPT) {
+        out->hitProbability |= 0x8000;
+    }
+    out->damageFactor = damage_factor;
+}
+
+int csb_v1_runtime_perform_melee_action(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int action_index,
+    CSB_V1_RuntimeMeleeActionResult *out_result)
+{
+    CSB_V1_DungeonData *dungeon;
+    CSB_V1_Champion *champion;
+    CSB_V1_RuntimeWeaponInfoPc34 runtime_weapon;
+    CSB_V1_RuntimeWeaponInfoPc34 *runtime_weapon_ptr = NULL;
+    struct CombatantChampionSnapshot_Compat attacker;
+    struct CombatantCreatureSnapshot_Compat defender;
+    struct WeaponProfile_Compat weapon;
+    struct CombatResult_Compat combat;
+    struct RngState_Compat rng;
+    uint16_t action_thing;
+    int dx = 0;
+    int dy = 0;
+    int target_x;
+    int target_y;
+    int square_type;
+    int first_thing;
+    int thing;
+    int guard;
+
+    if (out_result) memset(out_result, 0, sizeof(*out_result));
+    if (!profile || !profile->party_state_valid || !profile->dungeon_handle) {
+        return 0;
+    }
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        action_index < 0 ||
+        action_index > 255) {
+        return 0;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+    if (csb_v1_champion_is_dead(champion) ||
+        champion->CurrentHealth <= 0) {
+        return 0;
+    }
+    if (!csb_v1_runtime_record_champion_action(
+            profile,
+            champion_index,
+            action_index)) {
+        return 0;
+    }
+
+    dungeon = profile->dungeon_handle;
+    csb_v1_runtime_projectile_step(profile->party_dir, &dx, &dy);
+    target_x = profile->party_x + dx;
+    target_y = profile->party_y + dy;
+    square_type = csb_v1_dungeon_get_square_type(
+        dungeon,
+        profile->current_level,
+        target_x,
+        target_y);
+    if (out_result) {
+        out_result->action_index = action_index;
+        out_result->performed = 1;
+        out_result->target_map_index = profile->current_level;
+        out_result->target_map_x = target_x;
+        out_result->target_map_y = target_y;
+        out_result->target_square_type = square_type;
+    }
+    if (!csb_v1_runtime_action_is_melee_contact(action_index)) return 1;
+
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon,
+        profile->current_level,
+        target_x,
+        target_y);
+    if (first_thing < 0) return 1;
+
+    action_thing = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
+    if (csb_v1_runtime_weapon_info_for_thing(
+            profile,
+            action_thing,
+            &runtime_weapon)) {
+        runtime_weapon_ptr = &runtime_weapon;
+    }
+
+    F0730_COMBAT_RngInit_Compat(
+        &rng,
+        profile->dungeon_seed ^
+            (uint32_t)(profile->game_time * 1103515245u) ^
+            ((uint32_t)(champion_index & 0x03) << 4) ^
+            ((uint32_t)(action_index & 0xFF) << 8) ^
+            ((uint32_t)(target_x & 0xFF) << 16) ^
+            ((uint32_t)(target_y & 0xFF) << 24) ^
+            0xF0231u);
+
+    /* ReDMCSB: MENU.C F0402 lines ~1021-1057 resolves a concrete melee
+     * target creature before calling PROJEXPL.C F0231. This CSB bridge walks
+     * the real-format square thing list and mutates C04 GROUP.Health[4]
+     * directly; active-group drops/aspect/smoke side effects remain separate
+     * CSB runtime slices. */
+    for (guard = 0, thing = first_thing;
+         guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        uint8_t *record;
+        uint16_t flags;
+        uint16_t hp;
+        uint8_t *hp_ptr;
+        int thing_type;
+        int thing_size;
+        int creature_count;
+        int creature_type;
+        int creature_index;
+        int cells;
+
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon,
+            (uint16_t)thing,
+            &thing_type,
+            &thing_size);
+        if (!record || thing_size < 16) return 1;
+        if (thing_type != THING_TYPE_GROUP) {
+            thing = csb_v1_runtime_read_u16(record + 0);
+            continue;
+        }
+
+        flags = csb_v1_runtime_read_u16(record + 14);
+        creature_count = (int)((flags >> 5) & 0x03u) + 1;
+        if (creature_count < 1) creature_count = 1;
+        if (creature_count > 4) creature_count = 4;
+        cells = record[5];
+        creature_type = (int)record[4];
+        creature_index = csb_v1_runtime_target_group_creature_index(
+            champion->Cell,
+            cells,
+            creature_count);
+        if (creature_index < 0 || creature_index >= creature_count) return 1;
+
+        if (!csb_v1_runtime_fill_creature_combat_snapshot(
+                creature_type,
+                creature_index,
+                &defender)) {
+            return 1;
+        }
+        hp_ptr = record + 6 + creature_index * 2;
+        hp = csb_v1_runtime_read_u16(hp_ptr);
+        if (hp == 0) return 1;
+        defender.healthBefore = (int)hp;
+
+        memset(&attacker, 0, sizeof(attacker));
+        attacker.championIndex = champion_index;
+        attacker.currentHealth = champion->CurrentHealth;
+        attacker.dexterity = csb_v1_runtime_stat_or_default(
+            champion,
+            CSB_V1_STAT_DEX,
+            CSB_V1_STAT_CUR);
+        attacker.strengthActionHand =
+            csb_v1_runtime_f0312_action_hand_strength(
+                profile,
+                champion_index,
+                champion,
+                action_thing,
+                runtime_weapon_ptr,
+                &rng);
+        attacker.skillLevelParry =
+            csb_v1_runtime_imported_skill_level(champion, 7);
+        attacker.skillLevelAction =
+            csb_v1_runtime_imported_skill_level(champion, 4);
+        attacker.statisticLuck = csb_v1_runtime_stat_or_default(
+            champion,
+            CSB_V1_STAT_LUCK,
+            CSB_V1_STAT_CUR);
+        attacker.statisticLuckMax = csb_v1_runtime_stat_or_default(
+            champion,
+            CSB_V1_STAT_LUCK,
+            CSB_V1_STAT_MAX);
+        attacker.statisticLuckMin = csb_v1_runtime_stat_or_default(
+            champion,
+            CSB_V1_STAT_LUCK,
+            CSB_V1_STAT_MIN);
+        attacker.wounds = champion->Wounds;
+        csb_v1_runtime_build_melee_weapon_profile(
+            action_index,
+            action_thing,
+            runtime_weapon_ptr,
+            &weapon);
+
+        if (!F0735_COMBAT_ResolveChampionMelee_Compat(
+                &attacker,
+                &weapon,
+                &defender,
+                &rng,
+                &combat)) {
+            return 1;
+        }
+        if (combat.damageApplied > 0) {
+            if (combat.damageApplied >= (int)hp) {
+                csb_v1_runtime_pack_dead_group_creature(
+                    profile,
+                    dungeon,
+                    record,
+                    (uint16_t)thing,
+                    profile->current_level,
+                    target_x,
+                    target_y,
+                    creature_index,
+                    &rng);
+                if (out_result) {
+                    out_result->killed_group =
+                        (csb_v1_runtime_read_u16(record + 0) == 0xFFFFu);
+                }
+            } else {
+                csb_v1_runtime_write_u16(
+                    hp_ptr,
+                    (uint16_t)((int)hp - combat.damageApplied));
+            }
+        }
+        if (out_result) {
+            out_result->hit_group = 1;
+            out_result->creature_index = creature_index;
+            out_result->damage = combat.damageApplied;
+        }
+        return 1;
+    }
+
     return 1;
 }
 
