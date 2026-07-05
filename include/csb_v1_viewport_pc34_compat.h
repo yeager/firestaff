@@ -6,6 +6,10 @@
 
 #include "memory_projectile_pc34_compat.h"
 
+typedef int (*CSB_V1_ViewportProjectileMaterialResolver)(
+    void *user,
+    const struct ProjectileInstance_Compat *projectile);
+
 typedef struct {
     int src_x;
     int src_y;
@@ -53,6 +57,9 @@ typedef struct {
      * the viewport treats NULL as "no live projectile/explosion overlay". */
     const struct ProjectileList_Compat *runtime_projectiles;
     const struct ExplosionList_Compat *runtime_explosions;
+    CSB_V1_ViewportProjectileMaterialResolver projectile_material_resolver;
+    void *projectile_material_user;
+    int runtime_projectile_material_resolved_count;
 
     /* Optional CSBgraphics.dat CustomBackgrounds bridge. The CSB boot layer
      * owns the plan/cache/skin-def bytes; the viewport can select a
@@ -541,6 +548,7 @@ const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spe
 const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spec_for_square(int view_square);
 int csb_v1_viewport_projectile_blit_zone(const CSB_V1_ViewportProjectileBlitSpec *spec,
                                          unsigned char view_cell);
+int csb_v1_viewport_projectile_material_overlay_color(int material_icon_index);
 int csb_v1_viewport_runtime_projectile_overlay_placement(
     int party_dir,
     int party_x,

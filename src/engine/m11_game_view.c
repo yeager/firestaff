@@ -614,6 +614,21 @@ static int m11_csb_build_viewport_grid(uint8_t grid[32 * 32])
     return 1;
 }
 
+static int m11_csb_viewport_projectile_material_resolver(
+    void *user,
+    const struct ProjectileInstance_Compat *projectile)
+{
+    const CSB_V1_BootProfile *profile = (const CSB_V1_BootProfile *)user;
+    unsigned short thing;
+
+    if (!profile || !projectile) return -1;
+    thing = (unsigned short)projectile->reserved1;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return -1;
+    /* ReDMCSB DUNVIEW.C F0115 gets projectile bitmap identity from the
+     * projectile thing; OBJECT.C F0032/F0033 resolves the type-owned icon. */
+    return csb_v1_runtime_object_icon_index(&profile->runtime, thing);
+}
+
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -649,6 +664,9 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     cfg.wall_set_index = 0;
     cfg.runtime_projectiles = &profile->runtime.projectiles;
     cfg.runtime_explosions = &profile->runtime.explosions;
+    cfg.projectile_material_resolver =
+        m11_csb_viewport_projectile_material_resolver;
+    cfg.projectile_material_user = profile;
     plan = csb_v1_boot_csbgraphics_m11_plan(profile);
     cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.csbgraphics_plan = plan;
