@@ -1033,6 +1033,64 @@ int main(void) {
                 view.dm2State.party_y == dm2_v1_runtime_get_party_y() &&
                 view.dm2State.party_dir == dm2_v1_runtime_get_party_dir(),
                 "M11 DM2 mirror state stays aligned with runtime accessors");
+    world = (DM2_V1_GameState*)view.dm2World;
+    profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    if (world && profile) {
+        int saved_gold = world->gold;
+        int saved_reputation = world->reputation;
+        int saved_x = world->party_x;
+        int saved_y = world->party_y;
+        int saved_dir = world->party_dir;
+        int saved_level = world->current_level;
+        int saved_outdoor = world->outdoor;
+
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_SAVE_GAME) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 live startup save command writes mutated world session");
+        memset(&direct_session, 0, sizeof(direct_session));
+        expect_true(dm2_v1_session_load_last_session(direct_save_root,
+                                                     &direct_session) == 0,
+                    "M11 DM2 live startup save command writes loadable mutated session");
+        expect_true((int)direct_session.gold == saved_gold,
+                    "M11 DM2 live quick-save preserves runtime shop gold");
+        expect_true((int)direct_session.reputation == saved_reputation,
+                    "M11 DM2 live quick-save preserves runtime NPC reputation");
+        expect_true(direct_session.party_x == (uint16_t)saved_x &&
+                    direct_session.party_y == (uint16_t)saved_y &&
+                    direct_session.party_dir == (uint8_t)(saved_dir & 3) &&
+                    direct_session.party_level == (uint8_t)saved_level,
+                    "M11 DM2 live quick-save preserves current pose and level");
+        expect_true(direct_session.outdoor_mode ==
+                        (uint8_t)(saved_outdoor ? 1 : 0),
+                    "M11 DM2 live quick-save preserves outdoor mode");
+        expect_true(direct_session.game_tick == 1,
+                    "M11 DM2 live quick-save preserves advanced runtime tick");
+
+        snprintf(direct_save_path, sizeof(direct_save_path), "%s%sSKSave.dat",
+                 direct_save_root, TEST_PATH_SEP);
+        M11_GameView_Shutdown(&view);
+        fill_dm2_launch_spec(&spec, data_dir);
+        spec.savePath = direct_save_path;
+        M11_GameView_Init(&view);
+        expect_true(M11_GameView_Start(&view, &spec),
+                    "M11 DM2 live-mutated SKSave.dat resume succeeds");
+        world = (DM2_V1_GameState*)view.dm2World;
+        expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
+                    "M11 DM2 live-mutated SKSave.dat resume reports resumed status");
+        expect_true(world && world->gold == saved_gold &&
+                    world->reputation == saved_reputation,
+                    "M11 DM2 live-mutated SKSave.dat restores gold and reputation");
+        expect_true(world && world->party_x == saved_x &&
+                    world->party_y == saved_y &&
+                    world->party_dir == saved_dir &&
+                    world->current_level == saved_level &&
+                    world->outdoor == saved_outdoor,
+                    "M11 DM2 live-mutated SKSave.dat restores pose, level, and outdoor mode");
+        expect_true(view.dm2State.tick_count == 1 &&
+                    dm2_v1_runtime_get_tick_count() == 1,
+                    "M11 DM2 live-mutated SKSave.dat restores advanced tick");
+    }
 
     M11_GameView_Shutdown(&view);
     expect_true(view.dm2BootProfile == NULL && view.dm2World == NULL,
