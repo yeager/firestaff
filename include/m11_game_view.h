@@ -502,6 +502,7 @@ typedef struct {
     void *csbBootProfile;     /* CSB_V1_BootProfile* */
     struct {
         int level_loaded;
+        int current_level;
         int party_x, party_y, party_dir;
         int tick_count;
     } csbState;

@@ -736,6 +736,8 @@ int main(void) {
                 view.csbState.party_y == expected.party_y &&
                 view.csbState.party_dir == expected.party_dir,
                 "M11 CSB mirror state follows resumed party pose");
+    expect_true(view.csbState.current_level == expected.current_level,
+                "M11 CSB mirror state follows resumed current level");
     expect_true(view.csbState.tick_count == (int)expected.tick_count,
                 "M11 CSB mirror state follows resumed tick count");
 
@@ -812,7 +814,9 @@ int main(void) {
                         M11_GAME_INPUT_REDRAW,
                     "M11 CSB movement input reaches the source command bridge");
         expect_true(view.csbState.party_x == profile->runtime.party_x &&
-                    view.csbState.party_y == profile->runtime.party_y,
+                    view.csbState.party_y == profile->runtime.party_y &&
+                    view.csbState.current_level ==
+                        profile->runtime.current_level,
                     "M11 CSB movement input keeps state mirrors aligned");
     }
 
@@ -835,6 +839,8 @@ int main(void) {
                 quick_loaded.party_y == view.csbState.party_y &&
                 quick_loaded.party_dir == view.csbState.party_dir,
                 "M11 CSB quicksave preserves mirrored party pose");
+    expect_true(quick_loaded.current_level == view.csbState.current_level,
+                "M11 CSB quicksave preserves mirrored current level");
     expect_true(quick_loaded.tick_count == (uint32_t)view.csbState.tick_count,
                 "M11 CSB quicksave preserves mirrored tick count");
     csb_v1_runtime_cleanup(&quick_loaded);
@@ -842,15 +848,19 @@ int main(void) {
         int saved_x = view.csbState.party_x;
         int saved_y = view.csbState.party_y;
         int saved_dir = view.csbState.party_dir;
+        int saved_level = view.csbState.current_level;
         int saved_tick = view.csbState.tick_count;
         profile->runtime.party_x = saved_x + 1;
         profile->runtime.party_y = saved_y + 1;
         profile->runtime.party_dir = (saved_dir + 1) & 3;
+        profile->runtime.current_level = saved_level + 1;
+        csb_v1_dungeon_set_current_level(profile->runtime.current_level);
         profile->runtime.tick_count += 9U;
         profile->runtime.game_time += 9U;
         view.csbState.party_x = profile->runtime.party_x;
         view.csbState.party_y = profile->runtime.party_y;
         view.csbState.party_dir = profile->runtime.party_dir;
+        view.csbState.current_level = profile->runtime.current_level;
         view.csbState.tick_count = (int)profile->runtime.tick_count;
         expect_true(M11_GameView_QuickLoad(&view),
                     "M11 CSB quickload restores the CSB runtime save");
@@ -858,6 +868,10 @@ int main(void) {
                     view.csbState.party_y == saved_y &&
                     view.csbState.party_dir == saved_dir,
                     "M11 CSB quickload restores saved party pose");
+        expect_true(view.csbState.current_level == saved_level &&
+                    profile->runtime.current_level == saved_level &&
+                    csb_v1_dungeon_get_current_level() == saved_level,
+                    "M11 CSB quickload restores saved current level");
         expect_true(view.csbState.tick_count == saved_tick,
                     "M11 CSB quickload restores saved tick count");
     }
