@@ -475,7 +475,11 @@ static void catalog_add_startup_roster_name(
     Theron_Track02StartupRosterNameCatalog *catalog,
     const char *name,
     size_t raw_offset,
-    size_t user_data_offset) {
+    size_t user_data_offset,
+    const char *title,
+    size_t title_raw_offset,
+    size_t title_user_data_offset,
+    int title_offset_valid) {
 
     Theron_Track02StartupRosterName *entry;
     if (!catalog || !name || !name[0]) {
@@ -487,8 +491,12 @@ static void catalog_add_startup_roster_name(
     }
     entry = &catalog->names[catalog->name_count++];
     snprintf(entry->name, sizeof(entry->name), "%s", name);
+    snprintf(entry->title, sizeof(entry->title), "%s", title ? title : "");
     entry->raw_offset = raw_offset;
     entry->user_data_offset = user_data_offset;
+    entry->title_raw_offset = title_raw_offset;
+    entry->title_user_data_offset = title_user_data_offset;
+    entry->title_offset_valid = title_offset_valid ? 1 : 0;
 }
 
 static int bytes_find(const uint8_t *data,
@@ -742,6 +750,11 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
         "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN",
         "PENTAI"
     };
+    static const char *required_titles[] = {
+        "", "GUARDIAN OF WISDO", "THE RESOLUTE", "LORD OF FEALTY",
+        "THE BRAVE", "KNIGHT OF STRENGT", "MASTER OF THE WIN",
+        "THE SURVIVOR"
+    };
     Theron_Track02StartupTextMarkerCatalog text_catalog;
     Theron_Track02Variant variant;
     const Theron_Track02StartupTextMarker *marker = NULL;
@@ -783,8 +796,12 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
          ++i) {
         const uint8_t *cluster = track02_data + marker->raw_offset;
         const char *name = required_names[i];
+        const char *title = required_titles[i];
         size_t name_offset = 0u;
         size_t user_offset = 0u;
+        size_t title_offset = 0u;
+        size_t title_user_offset = 0u;
+        int title_offset_valid = 0;
         Theron_Track02SignalStatus status;
 
         if (!bytes_find(cluster,
@@ -802,10 +819,34 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
         if (status != THERON_TRACK02_SIGNAL_OK) {
             return status;
         }
+        if (title && title[0] != '\0') {
+            if (!bytes_find(cluster,
+                            cluster_available,
+                            (const uint8_t *)title,
+                            strlen(title),
+                            &title_offset)) {
+                return THERON_TRACK02_SIGNAL_NOT_FOUND;
+            }
+            status = theron_v1_track02_raw_offset_to_user_offset(
+                marker->raw_offset + title_offset,
+                track02_size,
+                md5_hex,
+                &title_user_offset);
+            if (status != THERON_TRACK02_SIGNAL_OK) {
+                return status;
+            }
+            title_offset_valid = 1;
+        }
         catalog_add_startup_roster_name(out_catalog,
                                         name,
                                         marker->raw_offset + name_offset,
-                                        user_offset);
+                                        user_offset,
+                                        title,
+                                        title_offset_valid
+                                            ? marker->raw_offset + title_offset
+                                            : 0u,
+                                        title_user_offset,
+                                        title_offset_valid);
     }
 
     return out_catalog->name_count > 0u ? THERON_TRACK02_SIGNAL_OK

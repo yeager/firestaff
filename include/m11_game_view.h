@@ -542,6 +542,7 @@ typedef struct {
         int startup_roster_name_count;
         int startup_roster_name_status;
         char startup_roster_names[8][16];
+        char startup_roster_titles[8][32];
     } theronState;
 
     /* CSB (Chaos Strikes Back) V1 runtime — active when sourceKind ==

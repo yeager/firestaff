@@ -339,12 +339,22 @@ int main(void) {
     snprintf(view.theronState.startup_roster_names[7],
              sizeof(view.theronState.startup_roster_names[7]),
              "PENTAI");
+    snprintf(view.theronState.startup_roster_titles[1],
+             sizeof(view.theronState.startup_roster_titles[1]),
+             "GUARDIAN OF WISDO");
+    snprintf(view.theronState.startup_roster_titles[7],
+             sizeof(view.theronState.startup_roster_titles[7]),
+             "THE SURVIVOR");
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(startup_rows_contain(startup_rows,
                                      startup_row_count,
                                      "TRACK 02 ROSTER: THERON MARA LINOS HEXA HAKAR TIRAN DOTAN PENTAI"),
                 "M11 Theron startup render rows expose decoded Track 02 roster names");
+    expect_true(startup_rows_contain(startup_rows,
+                                     startup_row_count,
+                                     "TRACK 02 TITLES: MARA=GUARDIAN OF WISDO; PENTAI=THE SURVIVOR"),
+                "M11 Theron startup render rows expose decoded Track 02 roster titles");
     view.theronState.startup_roster_name_count = 0;
     startup_layout_count = M11_GameView_GetTheronStartupLayout(
         &view, startup_layout, 16);

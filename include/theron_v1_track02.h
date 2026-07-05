@@ -25,6 +25,7 @@
 #define THERON_TRACK02_MAX_STARTUP_TEXT_MARKERS 8u
 #define THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES 8u
 #define THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY 16u
+#define THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY 32u
 #define THERON_TRACK02_RAW_SECTOR_BYTES 2352u
 #define THERON_TRACK02_RAW_USER_DATA_OFFSET 0x10u
 #define THERON_TRACK02_RAW_USER_DATA_BYTES 2048u
@@ -246,8 +247,12 @@ const char *theron_v1_track02_startup_text_marker_kind_name(
 
 typedef struct {
     char name[THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
+    char title[THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
     size_t raw_offset;
     size_t user_data_offset;
+    size_t title_raw_offset;
+    size_t title_user_data_offset;
+    int title_offset_valid;
 } Theron_Track02StartupRosterName;
 
 typedef struct {
