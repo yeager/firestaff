@@ -46,6 +46,7 @@ typedef struct {
     int dungeon_level;
     int view_dir;
     uint32_t leader_hand_object;
+    uint32_t champion_inventory_objects[4][30];
     DM2_MinionTable minions;
     int last_npc_level;
     int last_npc_x;
@@ -333,6 +334,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
     g_dm2_runtime.leader_hand_object = 0u;
+    memset(g_dm2_runtime.champion_inventory_objects, 0,
+           sizeof(g_dm2_runtime.champion_inventory_objects));
     memset(&g_dm2_runtime.minions, 0, sizeof(g_dm2_runtime.minions));
     g_dm2_runtime.last_npc_level = -1;
     g_dm2_runtime.last_npc_x = -1;
@@ -379,6 +382,15 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
     rt->leader_hand_object = session->original_leader_hand_object;
+    memset(rt->champion_inventory_objects, 0,
+           sizeof(rt->champion_inventory_objects));
+    for (uint8_t c = 0; c < session->champion_count && c < 4u; ++c) {
+        const DM2_ChampionRecord *champ =
+            (const DM2_ChampionRecord *)session->champion_data[c];
+        for (uint8_t slot = 0; slot < 30u; ++slot) {
+            rt->champion_inventory_objects[c][slot] = champ->inventory[slot];
+        }
+    }
     rt->minions = session->original_minions;
     if (rt->minions.count > DM2_MAX_MINIONS) {
         rt->minions.count = DM2_MAX_MINIONS;
@@ -807,6 +819,24 @@ uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
 
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
     g_dm2_runtime.leader_hand_object = object;
+}
+
+uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
+                                                      uint8_t slot) {
+    if (champion >= 4u || slot >= 30u) {
+        return 0u;
+    }
+    return g_dm2_runtime.champion_inventory_objects[champion][slot];
+}
+
+int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
+                                                 uint8_t slot,
+                                                 uint32_t object) {
+    if (champion >= 4u || slot >= 30u) {
+        return -1;
+    }
+    g_dm2_runtime.champion_inventory_objects[champion][slot] = object;
+    return 0;
 }
 
 uint8_t dm2_v1_runtime_get_minion_count(void) {
