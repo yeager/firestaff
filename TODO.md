@@ -400,6 +400,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### Theron V1
 
 - 🔧 Phase 5 - Mechanics parity hardening: 50-assertion mechanics probe covers movement, click routes, doors, pits, teleporters, altar, combat, drops, and sounds; remaining work is real-asset gameplay traces and broader cross-route runtime evidence.
+- 🔧 Startup presentation hardening: stage/Soul Room render rows are now test-visible and locked to the current mirror metadata; remaining work is real Track 02 startup art/audio decoding and pixel evidence instead of fallback text presentation.
 - 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. Remaining work is a real Track 02 save artifact import/export pass when such a save is available.
 ### Theron V2.0 / V2.1 / V2.2
 

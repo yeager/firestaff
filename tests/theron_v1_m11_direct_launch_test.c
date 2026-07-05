@@ -125,6 +125,22 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     return n;
 }
 
+static int startup_rows_contain(
+    char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int row_count,
+    const char* needle) {
+    int i;
+    if (!rows || !needle) {
+        return 0;
+    }
+    for (i = 0; i < row_count; ++i) {
+        if (strstr(rows[i], needle) != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(void) {
     enum { FB_W = 320, FB_H = 200 };
     char temp_dir[512];
@@ -143,6 +159,8 @@ int main(void) {
     unsigned long rescans_before;
     unsigned long rescans_after;
     int render_pixels;
+    char startup_rows[16][M11_THERON_STARTUP_RENDER_ROW_CAPACITY];
+    int startup_row_count;
     int i;
 
     expect_true(make_temp_dir(temp_dir), "temporary root created");
@@ -253,6 +271,16 @@ int main(void) {
     render_pixels = count_nonzero_pixels(framebuffer, sizeof(framebuffer));
     expect_true(render_pixels > 1000,
                 "M11 Theron startup screen produces a nonblank framebuffer");
+    startup_row_count = M11_GameView_GetTheronStartupRenderRows(
+        &view, startup_rows, 16);
+    expect_true(startup_row_count >= 4 &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "CHOOSE A STAGE") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "CONTINUE  TQSV SLOT 2") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "> 1  Hall of Records"),
+                "M11 Theron startup render rows expose stage selection state");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                 M11_GAME_INPUT_REDRAW,
@@ -276,6 +304,20 @@ int main(void) {
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_SOUL_ROOM,
                 "M11 Theron startup enters Soul Room before dungeon");
+    startup_row_count = M11_GameView_GetTheronStartupRenderRows(
+        &view, startup_rows, 16);
+    expect_true(startup_row_count >= 11 &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "SOUL ROOM") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "> Hakar") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "Mara") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "Pental") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "ENTER FORCEFIELD"),
+                "M11 Theron Soul Room render rows expose original mirror names");
     for (i = 0; i < 6; ++i) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                     M11_GAME_INPUT_REDRAW,
@@ -290,6 +332,13 @@ int main(void) {
                 (view.theronState.selected_mirrors_mask & (1 << 6)) != 0 &&
                 view.theronState.selected_mirror_order[0] == 6,
                 "M11 Theron Soul Room records first selected mirror order");
+    startup_row_count = M11_GameView_GetTheronStartupRenderRows(
+        &view, startup_rows, 16);
+    expect_true(startup_rows_contain(startup_rows, startup_row_count,
+                                     "Pental") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "RESURRECTED"),
+                "M11 Theron Soul Room render rows show selected mirror state");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron Soul Room cursor moves to forcefield");

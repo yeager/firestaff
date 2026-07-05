@@ -23,7 +23,8 @@ extern "C" {
 enum {
     M11_GAME_VIEW_PATH_CAPACITY = 512,
     M11_TORCH_FUEL_CAPACITY = 256,
-    M11_ENDGAME_F0445_REPLAY_CAPACITY = 64
+    M11_ENDGAME_F0445_REPLAY_CAPACITY = 64,
+    M11_THERON_STARTUP_RENDER_ROW_CAPACITY = 80
 };
 
 typedef enum {
@@ -1200,6 +1201,14 @@ int M11_GameView_GetCreatureMaxVerticalOffset(int creatureType);
  * Additional-front slots are only allocated when MASK0x0004_FLIP_NON_ATTACK
  * is clear. */
 int M11_GameView_GetCreatureNativeBitmapCount(int creatureType);
+
+/* Return the text rows currently exposed by the Theron V1 startup renderer.
+ * This is a render-facing test hook: it intentionally mirrors M11 startup
+ * screen labels and cursor/status state without depending on framebuffer OCR. */
+int M11_GameView_GetTheronStartupRenderRows(
+    const M11_GameViewState* state,
+    char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int maxRows);
 
 /* Total derived-bitmap cache slots F460_xxxx_START_CalculateDerivedBitmap-
  * CacheSizes reserves for this creature (Front D3 + Front D2 always,

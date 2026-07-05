@@ -35097,6 +35097,122 @@ static int m11_theron_stage_available_for_startup(const Theron_V1_World* world,
            state == THERON_DUNGEON_STATE_IN_PROGRESS;
 }
 
+int M11_GameView_GetTheronStartupRenderRows(
+    const M11_GameViewState* state,
+    char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int maxRows) {
+    const Theron_V1_World* world;
+    int count = 0;
+    int i;
+    int selected;
+    const int forcefield_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
+
+    if (!state || !rows || maxRows <= 0) {
+        return 0;
+    }
+    if (state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) {
+        return 0;
+    }
+
+    world = (const Theron_V1_World*)state->theronWorld;
+    snprintf(rows[count++],
+             M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+             "THERON'S QUEST");
+    if (count >= maxRows) {
+        return count;
+    }
+
+    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
+        int has_srm_continue = m11_theron_srm_continue_available(state);
+        int has_continue = has_tqsv_continue || has_srm_continue;
+        selected = state->theronState.selected_dungeon;
+        if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+            selected > THERON_DUNGEON_COUNT) {
+            selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        }
+        snprintf(rows[count++],
+                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                 "CHOOSE A STAGE");
+        if (count >= maxRows) {
+            return count;
+        }
+        if (has_continue) {
+            snprintf(rows[count++],
+                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%c CONTINUE  %s SLOT %d",
+                     state->theronState.save_resume_continue_focus ? '>' : ' ',
+                     has_tqsv_continue ? "TQSV" : "SRM",
+                     has_tqsv_continue
+                        ? state->theronState.save_resume_active_slot
+                        : state->theronState.save_resume_srm_active_slot);
+            if (count >= maxRows) {
+                return count;
+            }
+        }
+        for (i = THERON_DUNGEON_1_HALL_OF_RECORDS;
+             i <= THERON_DUNGEON_COUNT && count < maxRows; ++i) {
+            const Theron_DungeonMeta* meta = theron_v1_dungeon_meta((Theron_DungeonID)i);
+            int available = m11_theron_stage_available_for_startup(world, i);
+            snprintf(rows[count++],
+                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%c %d  %s%s",
+                     (i == selected) ? '>' : ' ',
+                     i,
+                     meta ? meta->name : "Unknown",
+                     available ? "" : "  LOCKED");
+        }
+        if (count < maxRows) {
+            snprintf(rows[count++],
+                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%s",
+                     has_continue
+                        ? "UP/DOWN SELECT  ENTER CONTINUE/STAGE"
+                        : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM");
+        }
+        return count;
+    }
+
+    snprintf(rows[count++],
+             M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+             "SOUL ROOM");
+    if (count >= maxRows) {
+        return count;
+    }
+    snprintf(rows[count++],
+             M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+             "THERON WAITS AT THE FORCEFIELD");
+    if (count >= maxRows) {
+        return count;
+    }
+    for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT && count < maxRows; ++i) {
+        const Theron_StartupMirrorMeta *meta = theron_v1_startup_mirror_meta(i);
+        int selected_mirror = (state->theronState.selected_mirrors_mask &
+                               (1 << i)) != 0;
+        snprintf(rows[count++],
+                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                 "%c %-15s %-7s %s",
+                 (state->theronState.startup_cursor == i) ? '>' : ' ',
+                 meta ? meta->name : "Hero Mirror",
+                 meta ? theron_v1_startup_class_name(meta->primary_class) : "UNKNOWN",
+                 selected_mirror ? "RESURRECTED" : "AVAILABLE");
+    }
+    if (count < maxRows) {
+        snprintf(rows[count++],
+                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                 "%s",
+                 (state->theronState.startup_cursor == forcefield_cursor)
+                    ? "> ENTER FORCEFIELD"
+                    : "  ENTER FORCEFIELD");
+    }
+    if (count < maxRows) {
+        snprintf(rows[count++],
+                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                 "ENTER SELECTS MIRROR  ACTION ENTERS");
+    }
+    return count;
+}
+
 static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                            const Theron_V1_World* world,
                                            unsigned char* framebuffer,
