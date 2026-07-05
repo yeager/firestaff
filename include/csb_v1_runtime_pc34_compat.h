@@ -777,6 +777,9 @@ typedef struct {
     int creature_index;
     int damage;
     int killed_group;
+    int hit_door;
+    int door_destroyed;
+    int door_event_scheduled;
 } CSB_V1_RuntimeMeleeActionResult;
 
 /* Runtime-owned CSB F0402/F0231 melee-contact bridge. It records the chosen

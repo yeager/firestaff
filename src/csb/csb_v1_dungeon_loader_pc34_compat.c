@@ -192,12 +192,19 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
                                       i * CSB_DUNGEON_MAP_DESC_SIZE;
             int level_id = 0;
             uint16_t raw_bit_a = rd16(map_desc + 8);
+            uint16_t raw_bit_d = rd16(map_desc + 14);
             csb_decode_map_bitfield_a(raw_bit_a, &level_id,
                                       &out->level_widths[i],
                                       &out->level_heights[i]);
             out->map_levels[i] = level_id;
             out->map_offset_x[i] = (int)map_desc[4];
             out->map_offset_y[i] = (int)map_desc[5];
+            /* ReDMCSB DEFS.H MAP.D for PC/I34E stores FloorSet, WallSet,
+             * DoorSet0, DoorSet1 as low-to-high nibbles in the final map
+             * descriptor word. F0174 copies these into CurrentMapDoorInfo
+             * before PROJEXPL.C F0232 compares door defense. */
+            out->map_door_set0[i] = (int)((raw_bit_d >> 8) & 0x0Fu);
+            out->map_door_set1[i] = (int)((raw_bit_d >> 12) & 0x0Fu);
             if (out->level_widths[i] < 1 ||
                 out->level_widths[i] > CSB_V1_MAX_SQUARE_SIZE ||
                 out->level_heights[i] < 1 ||
@@ -285,6 +292,8 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         out->map_levels[i] = i;
         out->map_offset_x[i] = 0;
         out->map_offset_y[i] = 0;
+        out->map_door_set0[i] = 0;
+        out->map_door_set1[i] = 0;
         offset += 6;
     }
 
