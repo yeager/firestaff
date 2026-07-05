@@ -744,6 +744,7 @@ static int csb_v1_runtime_apply_save_image(
     profile->dungeon_seed = image->dungeon_seed;
     profile->dungeon_game_id = image->dungeon_game_id;
     profile->current_level = image->current_level;
+    csb_v1_dungeon_set_current_level(profile->current_level);
     profile->current_world = image->current_world;
     profile->level_count = image->level_count;
     profile->world_count = image->world_count;

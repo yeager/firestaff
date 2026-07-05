@@ -236,6 +236,7 @@ static void m11_sync_csb_state_from_profile(M11_GameViewState *state,
         return;
     }
     state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
+    state->csbState.current_level = profile->runtime.current_level;
     state->csbState.party_x = profile->runtime.party_x;
     state->csbState.party_y = profile->runtime.party_y;
     state->csbState.party_dir = profile->runtime.party_dir;
@@ -8628,11 +8629,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
                  profile->dungeon_path[0] ? profile->dungeon_path : "DUNGEON.DAT");
         state->csbBootProfile = profile;
-        state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
-        state->csbState.party_x = profile->runtime.party_x;
-        state->csbState.party_y = profile->runtime.party_y;
-        state->csbState.party_dir = profile->runtime.party_dir;
-        state->csbState.tick_count = (int)profile->runtime.tick_count;
+        m11_sync_csb_state_from_profile(state, profile);
         m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
@@ -9226,11 +9223,7 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             m11_set_status(state, "SAVE", "CSB WRITE FAILED");
             return 0;
         }
-        state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
-        state->csbState.party_x = profile->runtime.party_x;
-        state->csbState.party_y = profile->runtime.party_y;
-        state->csbState.party_dir = profile->runtime.party_dir;
-        state->csbState.tick_count = (int)profile->runtime.tick_count;
+        m11_sync_csb_state_from_profile(state, profile);
         state->lastSaveTick = profile->runtime.game_time;
         m11_set_status(state, "SAVE", "CSB QUICKSAVE WRITTEN");
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
@@ -9437,11 +9430,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
             m11_set_status(state, "LOAD", "CSB QUICKSAVE INVALID");
             return 0;
         }
-        state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
-        state->csbState.party_x = profile->runtime.party_x;
-        state->csbState.party_y = profile->runtime.party_y;
-        state->csbState.party_dir = profile->runtime.party_dir;
-        state->csbState.tick_count = (int)profile->runtime.tick_count;
+        m11_sync_csb_state_from_profile(state, profile);
         m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         state->loadGameTick = profile->runtime.game_time;
         state->lastSaveTick = profile->runtime.game_time;
@@ -9624,11 +9613,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (csb_v1_runtime_tick_v1(&profile->runtime) <= 0) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
-        state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
-        state->csbState.party_x = profile->runtime.party_x;
-        state->csbState.party_y = profile->runtime.party_y;
-        state->csbState.party_dir = profile->runtime.party_dir;
-        state->csbState.tick_count = (int)profile->runtime.tick_count;
+        m11_sync_csb_state_from_profile(state, profile);
         return M11_GAME_INPUT_REDRAW;
     }
     /* DM2 V1: use the DM2 tick function instead of DM1's m11_apply_tick.
