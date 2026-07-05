@@ -261,6 +261,7 @@ typedef enum {
 /* Activate an actuator by type+position. Returns 0 on success. */
 int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
                                      DM2_ActuatorType type, uint16_t flag);
+int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y);
 
 /* ── Shops / NPCs ──────────────────────────────────────────────────── */
 
