@@ -650,6 +650,38 @@ int main(void) {
         }
     }
 
+    {
+        char nestedRoot[512];
+        char nestedData[512];
+        char nestedSaves[512];
+        char nestedCsbSaves[512];
+        char nestedSavePath[512];
+        const M12_SaveBrowserEntry* nested;
+
+        snprintf(nestedRoot, sizeof(nestedRoot), "%s/nested", root);
+        snprintf(nestedData, sizeof(nestedData), "%s/data", nestedRoot);
+        snprintf(nestedSaves, sizeof(nestedSaves), "%s/saves", nestedRoot);
+        snprintf(nestedCsbSaves, sizeof(nestedCsbSaves), "%s/csb", nestedSaves);
+        check(mkdir_one(nestedRoot), "created nested root");
+        check(mkdir_one(nestedData), "created nested data dir");
+        check(mkdir_one(nestedSaves), "created sibling saves dir");
+        check(mkdir_one(nestedCsbSaves), "created sibling CSB saves dir");
+        snprintf(nestedSavePath, sizeof(nestedSavePath),
+                 "%s/firestaff-csb-sibling.sav", nestedCsbSaves);
+        check(write_bytes(nestedSavePath, "CSB-SIBLING-SAVE"),
+              "wrote sibling CSB save fixture");
+        check(M12_SaveBrowser_Scan(&state, nestedData) == 1,
+              "scan finds sibling saves/csb entry from data root");
+        nested = find_entry(&state, "firestaff-csb-sibling.sav");
+        check(nested != NULL, "sibling CSB save entry present");
+        if (nested) {
+            check(strcmp(nested->gameId, "csb") == 0,
+                  "sibling CSB save keeps game id");
+            check(strstr(nested->fullPath, "/saves/csb/firestaff-csb-sibling.sav") != NULL,
+                  "sibling CSB save records actual save-root path");
+        }
+    }
+
     cleanup(root);
     if (failures) {
         printf("test_save_browser_export_import_m12: FAIL %d\n", failures);
