@@ -561,6 +561,34 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         }
     }
 
+    {
+        Theron_Track02StartupTextMarkerCatalog text_catalog;
+        if (theron_v1_track02_catalog_startup_text_markers(
+                data,
+                size,
+                expected_md5,
+                &text_catalog) == THERON_TRACK02_SIGNAL_OK) {
+            size_t i;
+            receipt->startup_text_marker_count =
+                (uint32_t)text_catalog.marker_count;
+            receipt->startup_text_marker_overflow_count =
+                (uint32_t)text_catalog.overflow_count;
+            for (i = 0u; i < text_catalog.marker_count; ++i) {
+                switch (text_catalog.markers[i].kind) {
+                case THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT:
+                    ++receipt->startup_text_us_prompt_count;
+                    break;
+                case THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER:
+                    ++receipt->startup_text_jp_roster_count;
+                    break;
+                case THERON_TRACK02_STARTUP_TEXT_UNKNOWN:
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
     if (signal.anchor_count > 0u) {
         Theron_V1_Level initial_level;
         Theron_Track02LevelHandoff initial_handoff;
@@ -699,6 +727,14 @@ uint32_t theron_v1_startup_receipt_session_tick(const Theron_V1_StartupReceipt *
                  sizeof(receipt->user_data_window_initial_count), h);
     h = fnv1a_32(&receipt->user_data_window_overflow_count,
                  sizeof(receipt->user_data_window_overflow_count), h);
+    h = fnv1a_32(&receipt->startup_text_marker_count,
+                 sizeof(receipt->startup_text_marker_count), h);
+    h = fnv1a_32(&receipt->startup_text_us_prompt_count,
+                 sizeof(receipt->startup_text_us_prompt_count), h);
+    h = fnv1a_32(&receipt->startup_text_jp_roster_count,
+                 sizeof(receipt->startup_text_jp_roster_count), h);
+    h = fnv1a_32(&receipt->startup_text_marker_overflow_count,
+                 sizeof(receipt->startup_text_marker_overflow_count), h);
     h = fnv1a_32(&receipt->initial_candidate_found,
                  sizeof(receipt->initial_candidate_found), h);
     h = fnv1a_32(&receipt->initial_candidate_offset,
@@ -794,6 +830,8 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  "desc_first_after=0x%llx desc_zero_after=%d "
                  "user_windows=%u user_desc=%u user_span=%u "
                  "user_initial=%u user_overflow=%u "
+                 "startup_text_markers=%u startup_text_us=%u "
+                 "startup_text_jp=%u startup_text_overflow=%u "
                  "initial_candidate=%d initial_off=0x%llx "
                  "initial_size=%llu initial_header=%ux%u "
                  "initial_seed=0x%x initial_level=0x%x "
@@ -838,6 +876,10 @@ size_t theron_v1_startup_receipt_to_line(const Theron_V1_StartupReceipt *receipt
                  (unsigned)receipt->user_data_window_span_count,
                  (unsigned)receipt->user_data_window_initial_count,
                  (unsigned)receipt->user_data_window_overflow_count,
+                 (unsigned)receipt->startup_text_marker_count,
+                 (unsigned)receipt->startup_text_us_prompt_count,
+                 (unsigned)receipt->startup_text_jp_roster_count,
+                 (unsigned)receipt->startup_text_marker_overflow_count,
                  receipt->initial_candidate_found,
                  (unsigned long long)receipt->initial_candidate_offset,
                  (unsigned long long)receipt->initial_candidate_size,

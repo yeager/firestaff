@@ -184,6 +184,12 @@ typedef struct {
     uint32_t user_data_window_initial_count;
     uint32_t user_data_window_overflow_count;
 
+    /* ── Track 02 startup text marker summary ─────────────────── */
+    uint32_t startup_text_marker_count;
+    uint32_t startup_text_us_prompt_count;
+    uint32_t startup_text_jp_roster_count;
+    uint32_t startup_text_marker_overflow_count;
+
     /* ── Track 02 startup-level candidate summary ─────────────── */
     int      initial_candidate_found;
     uint64_t initial_candidate_offset;
