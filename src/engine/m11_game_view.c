@@ -31177,6 +31177,17 @@ int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
     return 1;
 }
 
+int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    if (outX) *outX = 304;
+    if (outY) *outY = 41;
+    if (outW) *outW = 14;
+    if (outH) *outH = 14;
+    return 1;
+}
+
 /* Source runtime bridge for the object in the DM1 leader hand.
  * The classic engine stores this as the transient mouse-hand object
  * G4055_s_LeaderHandObject, which is separate from every champion
@@ -34247,6 +34258,58 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       nameX, nameY, objectName, &leaderHandNameStyle);
     }
+}
+
+static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
+                                                 unsigned char* framebuffer,
+                                                 int framebufferWidth,
+                                                 int framebufferHeight) {
+    DM2_V1_BootProfile *profile;
+    uint8_t *pixels = NULL;
+    int srcW = 0;
+    int srcH = 0;
+    int srcStride = 0;
+    int dstX = 0;
+    int dstY = 0;
+    int dstW = 0;
+    int dstH = 0;
+    int y;
+
+    if (!state || !framebuffer ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        state->dm2State.leader_hand_object == 0u ||
+        !M11_GameView_GetDm2LeaderHandObjectIconZone(&dstX, &dstY, &dstW, &dstH)) {
+        return;
+    }
+    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
+    if (dm2_v1_boot_object_icon_asset_fetch(profile,
+                                            state->dm2State.leader_hand_object,
+                                            &pixels,
+                                            &srcW,
+                                            &srcH,
+                                            &srcStride) != 0) {
+        return;
+    }
+    if (!pixels || srcW <= 0 || srcH <= 0 || srcStride <= 0) {
+        dm2_v1_boot_object_icon_asset_free(pixels);
+        return;
+    }
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  dstX, dstY, dstW, dstH, M11_COLOR_BLACK);
+    for (y = 0; y < dstH; ++y) {
+        int x;
+        int sy = (y * srcH) / dstH;
+        for (x = 0; x < dstW; ++x) {
+            int sx = (x * srcW) / dstW;
+            uint8_t color = pixels[sy * srcStride + sx];
+            if (color == 0u) continue;
+            if ((unsigned)(dstX + x) < (unsigned)framebufferWidth &&
+                (unsigned)(dstY + y) < (unsigned)framebufferHeight) {
+                framebuffer[(dstY + y) * framebufferWidth + dstX + x] = color;
+            }
+        }
+    }
+    dm2_v1_boot_object_icon_asset_free(pixels);
 }
 
 static void m11_draw_utility_panel(const M11_GameViewState* state,
@@ -38153,6 +38216,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_v1_leader_hand_object_name(state, framebuffer,
                                             framebufferWidth,
                                             framebufferHeight);
+        m11_draw_dm2_leader_hand_object_icon(state, framebuffer,
+                                             framebufferWidth,
+                                             framebufferHeight);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;

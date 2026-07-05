@@ -86,6 +86,64 @@ static int framebuffer_zone_differs(const unsigned char *a,
     return 0;
 }
 
+static int framebuffer_zone_has_nonzero(const unsigned char *fb,
+                                        int width,
+                                        int height,
+                                        int x,
+                                        int y,
+                                        int w,
+                                        int h)
+{
+    int xx;
+    int yy;
+
+    if (!fb || width <= 0 || height <= 0 ||
+        x < 0 || y < 0 || w <= 0 || h <= 0 ||
+        x + w > width || y + h > height) {
+        return 0;
+    }
+    for (yy = 0; yy < h; ++yy) {
+        for (xx = 0; xx < w; ++xx) {
+            if (fb[(y + yy) * width + x + xx] != 0u) return 1;
+        }
+    }
+    return 0;
+}
+
+static int find_loadable_dm2_object_icon_handle(DM2_V1_BootProfile *profile,
+                                                uint32_t *out_handle)
+{
+    static const uint8_t pools[] = {5, 6, 7, 10};
+    size_t p;
+
+    if (out_handle) *out_handle = 0u;
+    if (!profile) return 0;
+    for (p = 0; p < sizeof(pools) / sizeof(pools[0]); ++p) {
+        uint32_t idx;
+        for (idx = 0; idx < 64u; ++idx) {
+            uint8_t *pixels = NULL;
+            int w = 0;
+            int h = 0;
+            int stride = 0;
+            uint32_t handle = dm2_db_make_handle(pools[p], idx);
+
+            if (dm2_v1_boot_object_icon_asset_fetch(profile,
+                                                    handle,
+                                                    &pixels,
+                                                    &w,
+                                                    &h,
+                                                    &stride) == 0 &&
+                pixels && w > 0 && h > 0 && stride > 0) {
+                dm2_v1_boot_object_icon_asset_free(pixels);
+                if (out_handle) *out_handle = handle;
+                return 1;
+            }
+            dm2_v1_boot_object_icon_asset_free(pixels);
+        }
+    }
+    return 0;
+}
+
 static int make_temp_dm2_root(char root[512], char dm2_dir[512]) {
 #ifdef _WIN32
     snprintf(root, 512, ".\\firestaff_dm2_m11_profile_gate_%lu",
@@ -607,10 +665,15 @@ int main(void) {
                 dm2_v1_runtime_last_fallback_door_count() == 0,
                 "M11 DM2 draw uses real GRAPHICSSET GDAT D0C/D1C/D2C door-frame images");
     {
+        uint32_t icon_handle = 0u;
         int name_x = 0;
         int name_y = 0;
         int name_w = 0;
         int name_h = 0;
+        int icon_x = 0;
+        int icon_y = 0;
+        int icon_w = 0;
+        int icon_h = 0;
 
         memcpy(framebuffer_without_hand, framebuffer, sizeof(framebuffer));
         dm2_v1_runtime_set_leader_hand_object(dm2_db_make_handle(10, 0x0033));
@@ -634,6 +697,32 @@ int main(void) {
                     "M11 DM2 draw overlays the leader-hand ObjectID name");
         dm2_v1_runtime_set_leader_hand_object(0u);
         view.dm2State.leader_hand_object = 0u;
+
+        profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+        expect_true(find_loadable_dm2_object_icon_handle(profile, &icon_handle),
+                    "DM2 boot profile can resolve at least one object icon from GRAPHICS.DAT");
+        if (icon_handle != 0u) {
+            dm2_v1_runtime_set_leader_hand_object(icon_handle);
+            view.dm2State.leader_hand_object =
+                dm2_v1_runtime_get_leader_hand_object();
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(M11_GameView_GetDm2LeaderHandObjectIconZone(&icon_x,
+                                                                    &icon_y,
+                                                                    &icon_w,
+                                                                    &icon_h),
+                        "M11 DM2 leader-hand icon zone is available");
+            expect_true(framebuffer_zone_has_nonzero(framebuffer,
+                                                     320,
+                                                     200,
+                                                     icon_x,
+                                                     icon_y,
+                                                     icon_w,
+                                                     icon_h),
+                        "M11 DM2 draw overlays a GDAT-backed leader-hand icon when available");
+            dm2_v1_runtime_set_leader_hand_object(0u);
+            view.dm2State.leader_hand_object = 0u;
+        }
     }
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
