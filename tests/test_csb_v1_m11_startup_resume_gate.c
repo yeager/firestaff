@@ -1221,6 +1221,10 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_resume_available == 1,
                 "M11 CSB entrance stores validated resume path");
+    expect_true(view.csbState.party_x == CSB_V1_START_PARTY_X &&
+                    view.csbState.party_y == CSB_V1_START_PARTY_Y &&
+                    view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
+                "M11 CSB entrance resume validation does not apply the save before Resume");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     245,
