@@ -6,6 +6,7 @@
 #endif
 
 #include "menu_startup_m12.h"
+#include "fs_portable_compat.h"
 
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_timer.h>
@@ -358,12 +359,53 @@ static void check_selected_folder_scans_asynchronously(void) {
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
 }
 
+static void check_default_data_dir_scans_asynchronously(void) {
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char defaultRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    int i;
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(FSP_GetDefaultOriginalsDir(defaultRoot, sizeof(defaultRoot)));
+    if (failures) {
+        return;
+    }
+
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_LEFT);
+
+    CHECK(dialogCalls == 0);
+    CHECK(state.dataDirPickerActive == 0);
+    CHECK(state.dataDirScanActive == 1);
+    CHECK(state.dataDirScanJob != NULL);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "SCANNING GAME DATA") == 0);
+
+    for (i = 0; i < 200 && state.dataDirScanJob != NULL; ++i) {
+        (void)M12_StartupMenu_Update(&state);
+        SDL_Delay(1);
+    }
+
+    CHECK(state.dataDirScanActive == 0);
+    CHECK(state.dataDirScanJob == NULL);
+    CHECK(state.dataDirScanCancelled == 0);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), defaultRoot) == 0);
+}
+
 int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
     check_cancel_preserves_no_data_state();
     check_active_picker_blocks_message_reentry();
     check_active_scan_message_requests_cancel();
     check_selected_folder_scans_asynchronously();
+    check_default_data_dir_scans_asynchronously();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
