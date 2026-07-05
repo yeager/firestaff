@@ -65,6 +65,7 @@ typedef struct {
     char                 csb_save_path[256]; /* path to CSB save */
     int                  utility_disk_verified; /* startup/asset scanner already proved it */
     int                  import_confirmed; /* import confirmed by user */
+    int                  selected_action_index; /* source-menu cursor: 0..3 */
     int                  last_error;    /* last error code */
     CSB_V1_PartyState    imported_party; /* full DM1-imported party preview/handoff */
     int                  imported_champion_count;
@@ -82,6 +83,12 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx);
 /* ── Set the current action ─────────────────────────────────────────── */
 void csb_v1_util_flow_set_action(CSB_V1_UtilFlowContext *ctx,
                                    CSB_V1_UtilFlowAction action);
+int csb_v1_util_flow_move_action_cursor(CSB_V1_UtilFlowContext *ctx,
+                                        int delta);
+CSB_V1_UtilFlowAction csb_v1_util_flow_selected_action(
+    const CSB_V1_UtilFlowContext *ctx);
+int csb_v1_util_flow_accept_selected_action(CSB_V1_UtilFlowContext *ctx);
+const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action);
 
 /* ── Set DM1 save path for import ────────────────────────────────────── */
 void csb_v1_util_flow_set_dm1_path(CSB_V1_UtilFlowContext *ctx,
