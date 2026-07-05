@@ -4,9 +4,10 @@
 /*
  * Save Game Browser — M12 launcher feature.
  *
- * Scans the data directory for firestaff-*.sav files, parses headers
- * to extract metadata (game ID, party level, champion names), and
- * presents a navigable list with load/delete actions.
+ * Scans the data directory for Firestaff save files plus known
+ * original/CSBWin save basenames, parses headers to extract metadata
+ * (game ID, party level, champion names), and presents a navigable list
+ * with load/delete actions.
  */
 
 #include <stdint.h>
@@ -51,8 +52,8 @@ typedef struct {
     int confirmDelete;      /* 1 = awaiting delete confirmation */
 } M12_SaveBrowserState;
 
-/* Scan dataDir for firestaff-*.sav files and populate state.
- * Returns number of entries found. */
+/* Scan dataDir for Firestaff saves and known original/CSBWin save
+ * basenames, then populate state. Returns number of entries found. */
 int M12_SaveBrowser_Scan(M12_SaveBrowserState* state, const char* dataDir);
 
 /* Handle menu input within the save browser. Returns 1 if a load was
