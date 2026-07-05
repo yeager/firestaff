@@ -494,6 +494,8 @@ typedef struct {
         int selected_dungeon;
         int companion_count;
         int startup_phase;
+        int startup_cursor;
+        int selected_mirrors_mask;
     } theronState;
 
     /* CSB (Chaos Strikes Back) V1 runtime — active when sourceKind ==

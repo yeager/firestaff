@@ -149,17 +149,46 @@ int main(void) {
                 "boot profile carries the verified MD5");
     expect_true(strcmp(profile->graphics_path, track_path) == 0,
                 "boot profile carries the verified path");
-    expect_true(world != NULL && world->level_loaded[0][0] == 1,
-                "M11 loaded the initial Theron level");
-    expect_true(world != NULL &&
-                world->party.champion_count == 1 &&
-                strcmp(world->party.champions[0].name, "Theron") == 0,
-                "M11 direct launch enters through startup flow with Theron only");
+    expect_true(world != NULL && world->level_loaded[0][0] == 0,
+                "M11 waits at Theron stage select before level load");
     expect_true(view.theronState.selected_dungeon ==
                 THERON_DUNGEON_1_HALL_OF_RECORDS,
-                "M11 mirrors startup selected dungeon");
+                "M11 stage cursor starts on dungeon 1");
     expect_true(view.theronState.companion_count == 0,
-                "M11 mirrors startup companion count");
+                "M11 startup begins with no companions selected");
+    expect_true(view.theronState.startup_phase ==
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                "M11 direct launch starts at visible stage select");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, FB_W, FB_H);
+    render_pixels = count_nonzero_pixels(framebuffer, sizeof(framebuffer));
+    expect_true(render_pixels > 1000,
+                "M11 Theron startup screen produces a nonblank framebuffer");
+
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron stage accept opens Soul Room");
+    expect_true(view.theronState.startup_phase ==
+                THERON_STARTUP_PHASE_SOUL_ROOM,
+                "M11 Theron startup enters Soul Room before dungeon");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron Soul Room mirror accept selects a companion");
+    expect_true(view.theronState.startup_phase ==
+                THERON_STARTUP_PHASE_READY &&
+                view.theronState.companion_count == 1 &&
+                (view.theronState.selected_mirrors_mask & 1) != 0,
+                "M11 Theron Soul Room records selected mirror");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron forcefield action loads the dungeon");
+    expect_true(world != NULL && world->level_loaded[0][0] == 1,
+                "M11 loaded the initial Theron level after forcefield");
+    expect_true(world != NULL &&
+                world->party.champion_count == 2 &&
+                strcmp(world->party.champions[0].name, "Theron") == 0,
+                "M11 forcefield materializes Theron plus selected mirror");
     expect_true(view.theronState.startup_phase ==
                 THERON_STARTUP_PHASE_IN_DUNGEON,
                 "M11 mirrors startup forcefield handoff phase");
