@@ -572,6 +572,42 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     return d->raw_data + offset;
 }
 
+int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
+                                  uint16_t thing) {
+    const uint8_t *record;
+    int size = 0;
+
+    /* skproject SKWINSPX/src/v4/skcore.cpp GET_NEXT_RECORD_LINK
+     * returns GET_ADDRESS_OF_RECORD(rl)->w0; GenericRecord::w0 is the
+     * first little-endian word in every bounded DB pool record. */
+    record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
+    if (!record || size < 2) return -1;
+    return (int)RD16(record);
+}
+
+int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
+                                      uint16_t first_thing,
+                                      int desired_type,
+                                      int max_steps) {
+    uint16_t thing = first_thing;
+
+    if (!d || desired_type < 0 || desired_type >= DM2_THING_TYPE_COUNT)
+        return -1;
+    if (max_steps <= 0) max_steps = 32;
+    for (int step = 0; step < max_steps; ++step) {
+        int type = -1;
+        int next;
+        if (thing == DM2_THING_END_MARKER) return -1;
+        if (!dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, NULL))
+            return -1;
+        if (type == desired_type) return (int)thing;
+        next = dm2_v1_dungeon_get_next_thing(d, thing);
+        if (next < 0 || next == (int)thing) return -1;
+        thing = (uint16_t)next;
+    }
+    return -1;
+}
+
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
     return d->level_types[level] == DM2_LEVEL_OUTDOOR;
@@ -590,6 +626,7 @@ const char *dm2_v1_dungeon_source_evidence(void) {
         "Source: ReDMCSB DEFS.H:1048-1116 — DM1 MAP descriptor (16 bytes)\n"
         "Source: skproject SKWIN/DME.h File_header/Map_definitions/ObjectID/Door\n"
         "Source: skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE + GET_TILE_RECORD_LINK\n"
+        "Source: skproject SKWINSPX/src/v4/skcore.cpp GET_NEXT_RECORD_LINK reads record w0\n"
         "Fix: level_count from DUNGEON_HEADER.map_count (byte offset 6), not byte offset 0\n"
         "Fix: PC G1 real-data maps use byte squares with high-bit tile types from Map_definitions.w8\n"
         "Fix: skproject layout reads column object indexes, square-first things, text, DB pools, then byte map data\n"

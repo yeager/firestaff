@@ -74,6 +74,12 @@ int dm2_v1_dungeon_get_square_type(const DM2_V1_DungeonData *d, int level, int x
 int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_set_tile_raw(DM2_V1_DungeonData *d, int level, int x, int y, uint16_t raw);
 int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d, int level, int x, int y);
+int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d, uint16_t thing);
+int dm2_v1_dungeon_find_thing_of_type(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int desired_type,
+    int max_steps);
 const uint8_t *dm2_v1_dungeon_get_thing_record(
     const DM2_V1_DungeonData *d,
     uint16_t thing,
