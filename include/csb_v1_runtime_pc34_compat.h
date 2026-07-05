@@ -720,6 +720,24 @@ uint16_t csb_v1_runtime_object_allowed_slots(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing);
 
+/* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
+ * eight visible chest slots from CONTAINER.Slot and write those slots back as
+ * a compact Next chain, without using DM1 GameWorld thing arrays. */
+int csb_v1_runtime_read_container_slots(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t container_thing,
+    uint16_t out_slots[8]);
+
+int csb_v1_runtime_write_container_slots(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t container_thing,
+    const uint16_t slots[8]);
+
+int csb_v1_runtime_set_thing_next(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    uint16_t next_thing);
+
 /* Bounded champion action-hand THROW boundary for M11 CSB playability.
  * Uses the CSB runtime party snapshot and projectile list directly, without
  * DM1 GameWorld thing arrays. On success the champion action-hand slot is

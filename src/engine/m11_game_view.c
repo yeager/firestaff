@@ -22701,6 +22701,9 @@ static void m11_v1_set_thing_next(struct DungeonThings_Compat* things,
     }
 }
 
+static CSB_V1_RuntimeProfile* m11_mutable_csb_runtime_profile(
+    M11_GameViewState* state);
+
 static int m11_v1_open_chest_container_index(const M11_GameViewState* state) {
     unsigned short thing;
     int index;
@@ -22711,6 +22714,26 @@ static int m11_v1_open_chest_container_index(const M11_GameViewState* state) {
     return (index >= 0 && index < state->world.things->containerCount) ? index : -1;
 }
 
+static int m11_v1_open_chest_valid(const M11_GameViewState* state) {
+    unsigned short slots[8];
+    const CSB_V1_BootProfile* profile;
+    if (!state ||
+        state->v1OpenChestThing == THING_NONE ||
+        state->v1OpenChestThing == THING_ENDOFLIST ||
+        THING_GET_TYPE(state->v1OpenChestThing) != THING_TYPE_CONTAINER) {
+        return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        if (!state->csbBootProfile) return 0;
+        profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
+        return csb_v1_runtime_read_container_slots(
+            &profile->runtime,
+            state->v1OpenChestThing,
+            slots) >= 0;
+    }
+    return m11_v1_open_chest_container_index(state) >= 0;
+}
+
 static int m11_v1_read_open_chest_slots(const M11_GameViewState* state,
                                         unsigned short outSlots[8]) {
     int containerIndex;
@@ -22719,6 +22742,16 @@ static int m11_v1_read_open_chest_slots(const M11_GameViewState* state,
     int i;
     if (!outSlots) return 0;
     for (i = 0; i < 8; ++i) outSlots[i] = THING_NONE;
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const CSB_V1_BootProfile* profile;
+        if (!state->csbBootProfile) return 0;
+        profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
+        count = csb_v1_runtime_read_container_slots(
+            &profile->runtime,
+            state->v1OpenChestThing,
+            outSlots);
+        return count >= 0 ? count : 0;
+    }
     containerIndex = m11_v1_open_chest_container_index(state);
     if (containerIndex < 0) return 0;
     thing = state->world.things->containers[containerIndex].slot;
@@ -22735,7 +22768,16 @@ static int m11_v1_write_open_chest_slots(M11_GameViewState* state,
     unsigned short first = THING_ENDOFLIST;
     unsigned short previous = THING_ENDOFLIST;
     int i;
-    if (!state || !state->world.things || !slots) return 0;
+    if (!state || !slots) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_RuntimeProfile* profile = m11_mutable_csb_runtime_profile(state);
+        if (!profile) return 0;
+        return csb_v1_runtime_write_container_slots(
+            profile,
+            state->v1OpenChestThing,
+            slots);
+    }
+    if (!state->world.things) return 0;
     containerIndex = m11_v1_open_chest_container_index(state);
     if (containerIndex < 0) return 0;
     for (i = 0; i < 8; ++i) {
@@ -22752,6 +22794,21 @@ static int m11_v1_write_open_chest_slots(M11_GameViewState* state,
         m11_v1_set_thing_next(state->world.things, previous, THING_ENDOFLIST);
     }
     state->world.things->containers[containerIndex].slot = first;
+    return 1;
+}
+
+static int m11_v1_set_state_thing_next(M11_GameViewState* state,
+                                       unsigned short thing,
+                                       unsigned short next) {
+    CSB_V1_RuntimeProfile* profile;
+    if (!state || thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        profile = m11_mutable_csb_runtime_profile(state);
+        return profile
+            ? csb_v1_runtime_set_thing_next(profile, thing, next)
+            : 0;
+    }
+    m11_v1_set_thing_next(state->world.things, thing, next);
     return 1;
 }
 
@@ -29225,7 +29282,7 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     state->v1OpenChestThing = thing;
     state->v1OpenChestOpenedByEye = 0;
     state->v1FoodWaterPanelActive = 0;
-    if (m11_v1_open_chest_container_index(state) < 0) {
+    if (!m11_v1_open_chest_valid(state)) {
         state->v1OpenChestThing = THING_NONE;
         state->v1OpenChestOpenedByEye = 0;
         return 0;
@@ -29253,7 +29310,7 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
     state->v1OpenChestThing = thing;
     state->v1OpenChestOpenedByEye = 1;
     state->v1FoodWaterPanelActive = 0;
-    if (m11_v1_open_chest_container_index(state) < 0) {
+    if (!m11_v1_open_chest_valid(state)) {
         state->v1OpenChestThing = THING_NONE;
         state->v1OpenChestOpenedByEye = 0;
         return 0;
@@ -29269,7 +29326,7 @@ void M11_GameView_CloseV1OpenChest(M11_GameViewState* state) {
          * rewrite G0426/G0425-equivalent chest state behind that panel. */
         return;
     }
-    if (m11_v1_open_chest_container_index(state) >= 0) {
+    if (m11_v1_open_chest_valid(state)) {
         unsigned short slots[8];
         /* ReDMCSB CHEST.C F0334 lines 112-133 rebuilds the container
          * from G0425_aT_ChestSlots only.  F0333 lines 58-75 populated
@@ -30831,7 +30888,7 @@ static int m11_process_v1_chest_slot_box_click(M11_GameViewState* state,
     int chestOrdinal = sourceSlotBoxIndex - 38;
 
     if (!state || !state->inventoryPanelActive || chestOrdinal < 0 || chestOrdinal >= 8) return 0;
-    if (m11_v1_open_chest_container_index(state) < 0) return 0;
+    if (!m11_v1_open_chest_valid(state)) return 0;
     (void)m11_v1_read_open_chest_slots(state, slots);
     leaderThing = M11_GameView_GetV1LeaderHandThing(state);
     slotThing = slots[chestOrdinal];
@@ -30848,12 +30905,12 @@ static int m11_process_v1_chest_slot_box_click(M11_GameViewState* state,
         slots[chestOrdinal] = leaderThing;
         M11_GameView_ClearV1LeaderHandObject(state);
         if (slotThing != THING_NONE && slotThing != THING_ENDOFLIST) {
-            m11_v1_set_thing_next(state->world.things, slotThing, THING_ENDOFLIST);
+            (void)m11_v1_set_state_thing_next(state, slotThing, THING_ENDOFLIST);
             if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) return 0;
         }
     } else {
         slots[chestOrdinal] = THING_NONE;
-        m11_v1_set_thing_next(state->world.things, slotThing, THING_ENDOFLIST);
+        (void)m11_v1_set_state_thing_next(state, slotThing, THING_ENDOFLIST);
         if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) return 0;
     }
     if (!m11_v1_write_open_chest_slots(state, slots)) return 0;
