@@ -224,6 +224,7 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.surface = CSB_V1_STARTUP_RENDER_NONE_PC34;
     plan.waiting_for_input = 0;
     plan.title_source_step = 0;
+    plan.title_stage = 0;
     plan.blink_prompt_visible = 0;
     plan.opening_step = 0;
     if (!state || !state->entrance_active) {
@@ -235,6 +236,11 @@ int csb_v1_startup_build_render_plan_pc34(
         csb_v1_startup_entrance_wait_stage_pc34();
     if (state->title_active) {
         plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+        /* ReDMCSB TITLE.C F0437 lines 424-463 draws title startup as
+         * PRESENTS, CHAOS zoom, then STRIKES BACK. Keep that stage visible
+         * to render consumers separately from the source blit step. */
+        plan.title_stage =
+            csb_v1_startup_title_stage_for_frame_pc34(state->title_frame);
         plan.title_source_step =
             (int)csb_v1_startup_title_source_step_for_frame_pc34(
                 state->title_frame);

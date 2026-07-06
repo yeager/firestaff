@@ -117,6 +117,7 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     CSB_V1_StartupRenderSurface_PC34 surface;
     int waiting_for_input;
     int title_source_step;
+    int title_stage;
     int blink_prompt_visible;
     int opening_step;
 } CSB_V1_StartupRenderPlan_PC34;
