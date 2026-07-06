@@ -62,12 +62,28 @@ typedef enum {
     CSB_V1_UTIL_INPUT_RESULT_ACTIVATE = 3
 } CSB_V1_UtilInputResultKind;
 
+typedef enum {
+    CSB_V1_UTIL_ACTION_PLAN_IGNORE = 0,
+    CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND = 1,
+    CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY = 2,
+    CSB_V1_UTIL_ACTION_PLAN_VIEW_READY = 3
+} CSB_V1_UtilActionPlanKind;
+
 typedef struct {
     CSB_V1_UtilInputResultKind kind;
     CSB_V1_UtilFlowAction action;
     int selected_action_index;
     int preview_active;
 } CSB_V1_UtilInputResult;
+
+typedef struct {
+    CSB_V1_UtilActionPlanKind kind;
+    CSB_V1_UtilFlowAction action;
+    int entrance_command;
+    int preview_active;
+    const char *status_scope;
+    const char *status;
+} CSB_V1_UtilActionPlan;
 
 typedef struct {
     CSB_V1_UtilFlowAction action;
@@ -174,6 +190,9 @@ int csb_v1_util_flow_retry_error(CSB_V1_UtilFlowContext *ctx);
 const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action);
 int csb_v1_util_flow_entrance_command_for_action(
     CSB_V1_UtilFlowAction action);
+void csb_v1_util_flow_action_plan_init(CSB_V1_UtilActionPlan *plan);
+int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
+                                     CSB_V1_UtilActionPlan *out_plan);
 int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
                                   CSB_V1_UtilInput input,
                                   int preview_active,
