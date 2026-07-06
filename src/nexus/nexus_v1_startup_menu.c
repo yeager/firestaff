@@ -40,6 +40,16 @@ static void nexus_v1_startup_action_clear(Nexus_V1_StartupAction *action)
     action->slot = -1;
 }
 
+static void nexus_v1_startup_save_execution_clear(
+    Nexus_V1_StartupSaveExecution *execution)
+{
+    if (!execution) {
+        return;
+    }
+    memset(execution, 0, sizeof(*execution));
+    execution->kind = NEXUS_V1_STARTUP_SAVE_EXEC_IGNORE;
+}
+
 void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
                                 const char *save_dir)
 {
@@ -361,6 +371,50 @@ int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
     }
     menu->selected_row = hit->row;
     return nexus_v1_startup_menu_activate_selected(menu, out_action);
+}
+
+int nexus_v1_startup_execute_save_action(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupSaveExecution *out_execution)
+{
+    if (!out_execution) {
+        return 0;
+    }
+    nexus_v1_startup_save_execution_clear(out_execution);
+    if (!action) {
+        return 0;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_NONE) {
+        out_execution->kind = NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW;
+        out_execution->status_scope = "STARTUP";
+        out_execution->status = "NEXUS SAVE SELECT";
+        return 1;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT &&
+        action->path[0] != '\0') {
+        out_execution->kind = NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT;
+        out_execution->status_scope = "BOOT";
+        out_execution->status = "NEXUS RESUMED";
+        out_execution->failure_status = "NEXUS LOAD FAILED";
+        snprintf(out_execution->path,
+                 sizeof(out_execution->path),
+                 "%s",
+                 action->path);
+        return 1;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_NEW_GAME) {
+        out_execution->kind = NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_CHAMPIONS;
+        out_execution->status_scope = "STARTUP";
+        out_execution->status = "NEXUS CHAMPIONS";
+        return 1;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE) {
+        out_execution->kind = NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE;
+        out_execution->status_scope = "STARTUP";
+        out_execution->status = "NEXUS TITLE";
+        return 1;
+    }
+    return 0;
 }
 
 int nexus_v1_startup_menu_build_save_render_rows(

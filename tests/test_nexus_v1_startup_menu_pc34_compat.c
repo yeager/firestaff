@@ -73,6 +73,7 @@ int main(void)
     Nexus_V1_World world;
     Nexus_V1_StartupMenu menu;
     Nexus_V1_StartupAction action;
+    Nexus_V1_StartupSaveExecution execution;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
@@ -372,6 +373,13 @@ int main(void)
                action.slot == 3 &&
                strstr(action.path, "nexus_save_03.dat") != NULL,
            "startup menu activation reports load-slot action");
+    expect(nexus_v1_startup_execute_save_action(&action, &execution) &&
+               execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT &&
+               strcmp(execution.status_scope, "BOOT") == 0 &&
+               strcmp(execution.status, "NEXUS RESUMED") == 0 &&
+               strcmp(execution.failure_status, "NEXUS LOAD FAILED") == 0 &&
+               strstr(execution.path, "nexus_save_03.dat") != NULL,
+           "startup save execution resolves load-slot handoff");
     expect(nexus_v1_startup_menu_handle_input(
                &menu,
                NEXUS_V1_STARTUP_INPUT_DOWN,
@@ -380,6 +388,10 @@ int main(void)
            "startup menu Down advances to NEW GAME");
     expect(action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
            "startup menu Down is a navigation-only action");
+    expect(nexus_v1_startup_execute_save_action(&action, &execution) &&
+               execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW &&
+               strcmp(execution.status, "NEXUS SAVE SELECT") == 0,
+           "startup save execution resolves navigation redraw");
     expect(nexus_v1_startup_menu_handle_input(
                &menu,
                NEXUS_V1_STARTUP_INPUT_DOWN,
@@ -421,12 +433,20 @@ int main(void)
                action.slot == -1 &&
                action.path[0] == '\0',
            "startup menu activation reports new-game action");
+    expect(nexus_v1_startup_execute_save_action(&action, &execution) &&
+               execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_CHAMPIONS &&
+               strcmp(execution.status, "NEXUS CHAMPIONS") == 0,
+           "startup save execution resolves new-game champion select");
     expect(nexus_v1_startup_menu_handle_input(
                &menu,
                NEXUS_V1_STARTUP_INPUT_BACK,
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE,
            "startup menu Back reports return-to-title action");
+    expect(nexus_v1_startup_execute_save_action(&action, &execution) &&
+               execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE &&
+               strcmp(execution.status, "NEXUS TITLE") == 0,
+           "startup save execution resolves return-to-title");
     expect(nexus_v1_startup_menu_move_selected(&menu, -5) &&
                menu.selected_row == 0,
            "startup menu move selected clamps at first row");

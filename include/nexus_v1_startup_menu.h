@@ -51,6 +51,22 @@ typedef struct {
     char path[512];
 } Nexus_V1_StartupAction;
 
+typedef enum {
+    NEXUS_V1_STARTUP_SAVE_EXEC_IGNORE = 0,
+    NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW = 1,
+    NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT = 2,
+    NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_CHAMPIONS = 3,
+    NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE = 4
+} Nexus_V1_StartupSaveExecutionKind;
+
+typedef struct {
+    Nexus_V1_StartupSaveExecutionKind kind;
+    const char *status_scope;
+    const char *status;
+    const char *failure_status;
+    char path[512];
+} Nexus_V1_StartupSaveExecution;
+
 typedef struct {
     char save_dir[512];
     unsigned int slot_mask;
@@ -110,6 +126,9 @@ int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
 int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
                                      const Nexus_V1_StartupHit *hit,
                                      Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_execute_save_action(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupSaveExecution *out_execution);
 int nexus_v1_startup_menu_build_save_render_rows(
     const Nexus_V1_StartupMenu *menu,
     Nexus_V1_StartupSaveRenderRow *rows,
