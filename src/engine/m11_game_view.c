@@ -2830,35 +2830,26 @@ static void m11_csb_startup_build_utility_flow(
     const M11_GameViewState *state,
     CSB_V1_UtilFlowContext *flow)
 {
-    int selected;
+    CSB_V1_UtilRuntimeSnapshot snapshot;
 
     if (!flow) {
         return;
     }
-    csb_v1_util_flow_init(flow);
-    flow->state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
-    selected = state ? state->csbState.startup_import_selected_action_index : 0;
-    while (selected < 0) {
-        selected += CSB_V1_UTIL_MENU_ROW_COUNT;
-    }
-    selected %= CSB_V1_UTIL_MENU_ROW_COUNT;
-    flow->selected_action_index = selected;
-    flow->action = csb_v1_util_flow_selected_action(flow);
-    flow->imported_champion_count = state
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.selected_action_index = state
+        ? state->csbState.startup_import_selected_action_index
+        : 0;
+    snapshot.imported_champion_count = state
         ? state->csbState.startup_import_champion_count
         : 0;
     if (state && state->csbBootProfile) {
-        CSB_V1_PartyState party;
-        memset(&party, 0, sizeof(party));
         if (csb_v1_runtime_get_party_state(
                 &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime,
-                &party) >= 0 &&
-            party.ImportedFromDM1 &&
-            party.ChampionCount > 0) {
-            flow->imported_party = party;
-            flow->imported_champion_count = party.ChampionCount;
+                &snapshot.imported_party) >= 0) {
+            snapshot.imported_party_available = 1;
         }
     }
+    (void)csb_v1_util_flow_build_from_runtime_snapshot(&snapshot, flow);
 }
 
 static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,

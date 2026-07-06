@@ -24,6 +24,7 @@ int main(void)
     CSB_V1_UtilInputResult result;
     CSB_V1_UtilActionPlan action_plan;
     CSB_V1_UtilPanelLayout panel;
+    CSB_V1_UtilRuntimeSnapshot snapshot;
     CSB_V1_UtilRenderRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
     CSB_V1_UtilRenderTextRow status_row;
     CSB_V1_UtilRenderTextRow preview_rows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
@@ -53,6 +54,34 @@ int main(void)
               rows[1].label[0] == ' ' &&
               strstr(rows[1].label, "LOAD") != NULL,
           "unselected Load render row owns visible label");
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.selected_action_index = -1;
+    snapshot.imported_champion_count = 1;
+    check(csb_v1_util_flow_build_from_runtime_snapshot(&snapshot, &flow) &&
+              flow.state == CSB_V1_UTIL_FLOW_SELECT_ACTION &&
+              flow.selected_action_index == 3 &&
+              flow.action == CSB_V1_UTIL_ACTION_VIEW &&
+              flow.imported_champion_count == 1,
+          "utility flow builds from runtime snapshot and wraps cursor");
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.selected_action_index = 5;
+    snapshot.imported_champion_count = 1;
+    snapshot.imported_party_available = 1;
+    snapshot.imported_party.ImportedFromDM1 = 1;
+    snapshot.imported_party.ChampionCount = 3;
+    snprintf(snapshot.imported_party.Champions[0].Name,
+             sizeof(snapshot.imported_party.Champions[0].Name),
+             "%s",
+             "GAMMA   ");
+    snapshot.imported_party.Champions[0].CurrentHealth = 17;
+    snapshot.imported_party.Champions[0].MaximumHealth = 29;
+    check(csb_v1_util_flow_build_from_runtime_snapshot(&snapshot, &flow) &&
+              flow.selected_action_index == 1 &&
+              flow.action == CSB_V1_UTIL_ACTION_LOAD &&
+              flow.imported_champion_count == 3 &&
+              flow.imported_party.Champions[0].CurrentHealth == 17,
+          "utility flow snapshot imports party preview state");
     check(csb_v1_util_flow_entrance_command_for_action(
               CSB_V1_UTIL_ACTION_NEW) ==
               CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
@@ -105,6 +134,9 @@ int main(void)
               action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_IGNORE,
           "utility action plan resolves Exit as ignored");
 
+    csb_v1_util_flow_init(&flow);
+    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    flow.selected_action_index = 0;
     check(csb_v1_util_flow_handle_input(
               &flow,
               CSB_V1_UTIL_INPUT_DOWN,
