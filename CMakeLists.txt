@@ -6019,6 +6019,8 @@ if(BUILD_TESTING)
     target_include_directories(test_csb_v1_utility_flow_action_contract PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_v1_utility_flow_action_contract
+        PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_utility_flow_action_contract
             PRIVATE -Wall -Wextra -O2 -ffunction-sections -fdata-sections)
