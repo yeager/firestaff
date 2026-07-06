@@ -1,25 +1,29 @@
 
 # Unreleased
 
-# Firestaff v3.0.44
+# Firestaff v3.0.45
 
-Firestaff v3.0.44 packages the current `main` after the Theron's Quest startup
-pointer-action ownership pass.
+Firestaff v3.0.45 packages the current `main` after the latest DM2 V1 rendering
+handoff work.
 
-## Highlights since v3.0.43
+## Highlights since v3.0.44
 
-- **Theron's Quest startup pointer actions**: Theron's Quest startup pointer
-  action ownership is now on `main` and included in release packaging.
+- **DM2 V1 projectile rendering**: Runtime projectiles now carry direction into
+  the viewport renderer, and wide map-chip atlases select the view-relative
+  directional frame while short atlases keep their animation frame behavior.
+- **DM2 V1 map-chip atlases**: Creature, item and projectile atlas slicing stays
+  covered by the focused render gate before release packaging.
 - **Release metadata**: In-app version strings, CMake metadata and release notes
-  are synchronized to `v3.0.44`.
+  are synchronized to `v3.0.45`.
 
 ## Verification
 
-- Local clean-worktree release verification covers version synchronization and
-  focused startup gates before GitHub Actions packaging.
+- Local release verification covers version synchronization, the focused DM2 V1
+  render gate, the DM2 runtime handoff smoke test and the Phase A probe before
+  GitHub Actions packaging.
 - The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
   Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
-  from the `v3.0.44` release run.
+  from the `v3.0.45` release run.
 
 # Firestaff v3.0.43
 
