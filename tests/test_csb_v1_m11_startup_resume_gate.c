@@ -1276,6 +1276,30 @@ int main(void) {
         expect_true(count_color_rect(fb, 320, 36, 104, 244, 12, 12u) > 20,
                     "M11 CSB fallback entrance renders the selected utility import row");
     }
+    expect_true(view.csbState.startup_import_selected_action_index == 0,
+                "M11 CSB utility keyboard starts on the IMPORT row");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_import_selected_action_index == 1,
+                "M11 CSB utility keyboard DOWN selects LOAD");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_last_command ==
+                        M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
+                "M11 CSB utility keyboard ACCEPT activates selected LOAD row");
+    expect_true(strcmp(view.lastOutcome, "CSB RESUME UNAVAILABLE") == 0,
+                "M11 CSB utility keyboard LOAD reports unavailable resume without save");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_import_selected_action_index == 0,
+                "M11 CSB utility keyboard UP returns to IMPORT");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1,
+                "M11 CSB utility keyboard ACCEPT on IMPORT stays on startup");
+    expect_true(strcmp(view.lastOutcome, "CSB IMPORT READY") == 0,
+                "M11 CSB utility keyboard IMPORT reports import-ready status");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     40,
