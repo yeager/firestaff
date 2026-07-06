@@ -635,12 +635,13 @@ set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
 #   - dmweb Theron's Quest: Theron + three champions and per-dungeon reset.
 add_executable(firestaff_theron_v1_startup_flow_probe
     probes/theron/firestaff_theron_v1_startup_flow_probe.c
+    src/theron/theron_v1_startup_flow.c
+    src/theron/theron_v1_champions.c
+    src/theron/theron_v1_dungeon_progression.c
 )
 target_include_directories(firestaff_theron_v1_startup_flow_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(firestaff_theron_v1_startup_flow_probe
-    PRIVATE firestaff_theron firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_theron_v1_startup_flow_probe PRIVATE -Wall -Wextra -O2)
 endif()

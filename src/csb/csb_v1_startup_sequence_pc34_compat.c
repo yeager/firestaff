@@ -249,6 +249,31 @@ int csb_v1_startup_build_render_plan_pc34(
     return 1;
 }
 
+int csb_v1_startup_init_command_state_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    int skip_startup)
+{
+    if (!state) {
+        return 0;
+    }
+    state->title_active = skip_startup ? 0 : 1;
+    state->title_frame = 0;
+    state->title_source_step = state->title_active
+        ? CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34
+        : 0;
+    state->entrance_active = skip_startup ? 0 : 1;
+    state->entrance_source_step =
+        state->entrance_active && !state->title_active ? 1 : 0;
+    state->entrance_dismissed = state->entrance_active ? 0 : 1;
+    state->credits_active = 0;
+    state->credits_remaining_ticks = 0;
+    state->opening_active = 0;
+    state->opening_delay_ticks = 0;
+    state->opening_step = 0;
+    state->pending_command = 0;
+    return 1;
+}
+
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command)

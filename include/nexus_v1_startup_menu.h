@@ -78,6 +78,7 @@ typedef struct {
 void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
                                 const char *save_dir);
 int nexus_v1_startup_menu_scan(Nexus_V1_StartupMenu *menu);
+int nexus_v1_startup_menu_scan_or_new_game(Nexus_V1_StartupMenu *menu);
 int nexus_v1_startup_menu_refresh(Nexus_V1_StartupMenu *menu,
                                   unsigned int slot_mask);
 int nexus_v1_startup_menu_row_at(const Nexus_V1_StartupMenu *menu,

@@ -103,6 +103,19 @@ int nexus_v1_startup_menu_scan(Nexus_V1_StartupMenu *menu)
     return 0;
 }
 
+int nexus_v1_startup_menu_scan_or_new_game(Nexus_V1_StartupMenu *menu)
+{
+    if (!menu) {
+        return 0;
+    }
+    if (nexus_v1_startup_menu_scan(menu) == 0) {
+        return 1;
+    }
+    menu->slot_mask = 0u;
+    memset(menu->slots, 0, sizeof(menu->slots));
+    return nexus_v1_startup_menu_refresh(menu, 0u);
+}
+
 int nexus_v1_startup_menu_row_at(const Nexus_V1_StartupMenu *menu,
                                  int row,
                                  Nexus_V1_StartupRowKind *out_kind,

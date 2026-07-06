@@ -260,6 +260,33 @@ int main(void)
           "startup render plan owns door-opening frame surface");
 
     memset(&command_state, 0, sizeof(command_state));
+    check(csb_v1_startup_init_command_state_pc34(&command_state, 0) &&
+              command_state.title_active &&
+              command_state.title_frame == 0 &&
+              command_state.title_source_step ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              command_state.entrance_active &&
+              !command_state.entrance_dismissed &&
+              command_state.entrance_source_step == 0 &&
+              !command_state.credits_active &&
+              !command_state.opening_active &&
+              command_state.pending_command == 0,
+          "startup command state initializes new-game title");
+
+    memset(&command_state, 0xff, sizeof(command_state));
+    check(csb_v1_startup_init_command_state_pc34(&command_state, 1) &&
+              !command_state.title_active &&
+              command_state.title_frame == 0 &&
+              command_state.title_source_step == 0 &&
+              !command_state.entrance_active &&
+              command_state.entrance_dismissed &&
+              command_state.entrance_source_step == 0 &&
+              !command_state.credits_active &&
+              !command_state.opening_active &&
+              command_state.pending_command == 0,
+          "startup command state initializes resume runtime");
+
+    memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
     command_state.credits_active = 1;
     command_state.credits_remaining_ticks = 99;

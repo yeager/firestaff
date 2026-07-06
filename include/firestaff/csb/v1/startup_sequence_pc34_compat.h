@@ -117,6 +117,9 @@ int csb_v1_startup_advance_tick_pc34(
 int csb_v1_startup_build_render_plan_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
+int csb_v1_startup_init_command_state_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    int skip_startup);
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command);

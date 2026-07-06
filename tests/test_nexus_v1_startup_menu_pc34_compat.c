@@ -238,6 +238,15 @@ int main(void)
                menu.slot_mask == (1u << 3) &&
                menu.row_count == 2,
            "startup menu refresh restores occupied slot rows");
+    nexus_v1_startup_menu_init(&menu, save_dir);
+    menu.selected_row = 99;
+    expect(nexus_v1_startup_menu_scan_or_new_game(&menu) &&
+               menu.slot_mask == (1u << 3) &&
+               menu.row_count == 2 &&
+               menu.selected_row == 1,
+           "startup menu scan-or-new-game publishes scanned slot rows");
+    expect(nexus_v1_startup_menu_scan_or_new_game(NULL) == 0,
+           "startup menu scan-or-new-game rejects NULL menu");
 
     memset(&action, 0, sizeof(action));
     expect(!nexus_v1_startup_title_handle_input(
