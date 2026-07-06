@@ -1,6 +1,9 @@
 
 # Unreleased
 
+- Nexus missing-data popups now tell users to provide a Nexus ISO/BIN/CUE image
+  or extracted `DM.BIN`, instead of showing the internal Saturn marker label.
+
 - Startup data scanning now handles split CUE layouts more robustly: CUE data
   track modes are case-insensitive, `MODE2/2048` is accepted, and the scanner
   continues across non-matching CUE-referenced payload images before matching
