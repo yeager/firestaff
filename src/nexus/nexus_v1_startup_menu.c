@@ -50,6 +50,16 @@ static void nexus_v1_startup_save_execution_clear(
     execution->kind = NEXUS_V1_STARTUP_SAVE_EXEC_IGNORE;
 }
 
+static void nexus_v1_startup_title_execution_clear(
+    Nexus_V1_StartupTitleExecution *execution)
+{
+    if (!execution) {
+        return;
+    }
+    memset(execution, 0, sizeof(*execution));
+    execution->kind = NEXUS_V1_STARTUP_TITLE_EXEC_IGNORE;
+}
+
 void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
                                 const char *save_dir)
 {
@@ -412,6 +422,47 @@ int nexus_v1_startup_execute_save_action(
         out_execution->kind = NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE;
         out_execution->status_scope = "STARTUP";
         out_execution->status = "NEXUS TITLE";
+        return 1;
+    }
+    return 0;
+}
+
+int nexus_v1_startup_execute_title_action(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupTitleExecution *out_execution)
+{
+    if (!out_execution) {
+        return 0;
+    }
+    nexus_v1_startup_title_execution_clear(out_execution);
+    if (!action) {
+        return 0;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
+        out_execution->kind =
+            NEXUS_V1_STARTUP_TITLE_EXEC_RETURN_TO_LAUNCHER;
+        out_execution->status_scope = "RETURN";
+        out_execution->status = "BACK TO LAUNCHER";
+        return 1;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE) {
+        out_execution->kind = NEXUS_V1_STARTUP_TITLE_EXEC_HOLD_TITLE;
+        out_execution->status_scope = "STARTUP";
+        out_execution->status = "NEXUS TITLE";
+        return 1;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT) {
+        out_execution->kind =
+            NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_SAVE_SELECT;
+        out_execution->status_scope = "STARTUP";
+        out_execution->status = "NEXUS LOAD GAME";
+        return 1;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT) {
+        out_execution->kind =
+            NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_CHAMPIONS;
+        out_execution->status_scope = "STARTUP";
+        out_execution->status = "NEXUS CHAMPIONS";
         return 1;
     }
     return 0;
