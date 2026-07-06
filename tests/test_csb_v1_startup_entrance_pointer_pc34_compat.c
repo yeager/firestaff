@@ -288,6 +288,35 @@ int main(void)
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
+    command_state.title_active = 1;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    check(!csb_v1_startup_entrance_accepts_input_pc34(&command_state),
+          "startup entrance gate blocks title phase input");
+
+    command_state.title_active = 0;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34() - 1;
+    check(!csb_v1_startup_entrance_accepts_input_pc34(&command_state),
+          "startup entrance gate blocks pre-wait input");
+
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    check(csb_v1_startup_entrance_accepts_input_pc34(&command_state),
+          "startup entrance gate accepts wait-loop input");
+
+    command_state.opening_active = 1;
+    check(!csb_v1_startup_entrance_accepts_input_pc34(&command_state),
+          "startup entrance gate blocks door-opening input");
+
+    command_state.opening_active = 0;
+    command_state.credits_active = 1;
+    command_state.entrance_source_step = 0;
+    check(csb_v1_startup_entrance_accepts_input_pc34(&command_state),
+          "startup entrance gate accepts credits-dismiss input");
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
     command_state.credits_active = 1;
     command_state.credits_remaining_ticks = 99;
     check(csb_v1_startup_begin_door_opening_pc34(&command_state, 200) &&

@@ -31,6 +31,15 @@ typedef enum CSB_V1_StartupEntranceAction_PC34 {
     CSB_V1_STARTUP_ENTRANCE_ACTION_QUIT_PC34 = 3
 } CSB_V1_StartupEntranceAction_PC34;
 
+typedef enum CSB_V1_StartupEntranceCommand_PC34 {
+    CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34 = 0,
+    CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 = 200,
+    CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34 = 201,
+    CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 = 202,
+    CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34 = 203,
+    CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 = 216
+} CSB_V1_StartupEntranceCommand_PC34;
+
 typedef struct CSB_V1_StartupTickState_PC34 {
     int entrance_frame;
     int title_active;
@@ -111,6 +120,8 @@ int csb_v1_startup_entrance_credits_ticks_pc34(void);
 int csb_v1_startup_entrance_action_for_input_pc34(
     int credits_active,
     CSB_V1_StartupInput_PC34 input);
+int csb_v1_startup_entrance_command_for_action_pc34(
+    CSB_V1_StartupEntranceAction_PC34 action);
 int csb_v1_startup_advance_tick_pc34(
     CSB_V1_StartupTickState_PC34 *state,
     CSB_V1_StartupTickResult_PC34 *out_result);
@@ -120,6 +131,8 @@ int csb_v1_startup_build_render_plan_pc34(
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int skip_startup);
+int csb_v1_startup_entrance_accepts_input_pc34(
+    const CSB_V1_StartupCommandState_PC34 *state);
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command);
