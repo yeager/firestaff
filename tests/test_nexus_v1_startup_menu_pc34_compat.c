@@ -103,6 +103,44 @@ int main(void)
     expect(menu.row_count == 2,
            "startup menu has one slot row plus NEW GAME");
 
+    memset(&action, 0, sizeof(action));
+    expect(!nexus_v1_startup_title_handle_input(
+               54,
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_NONE,
+               &action),
+           "startup title ignores idle input");
+    expect(action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
+           "startup title idle action remains NONE");
+    expect(nexus_v1_startup_title_handle_input(
+               53,
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_ACCEPT,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE,
+           "startup title holds Accept before start-ready frame");
+    expect(nexus_v1_startup_title_handle_input(
+               54,
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_ACCEPT,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT,
+           "startup title routes ready Accept to save select when slots exist");
+    expect(nexus_v1_startup_title_handle_input(
+               54,
+               0u,
+               NEXUS_V1_STARTUP_INPUT_ACTION,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT,
+           "startup title routes ready Action to champion select without slots");
+    expect(nexus_v1_startup_title_handle_input(
+               12,
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_BACK,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER,
+           "startup title Back returns to launcher");
+
     kind = NEXUS_V1_STARTUP_ROW_NONE;
     slot = -1;
     expect(nexus_v1_startup_menu_row_at(&menu, 0, &kind, &slot),
@@ -117,19 +155,30 @@ int main(void)
     expect(strstr(path, "nexus_save_03.dat") != NULL,
            "startup menu selected path points at nexus_save_03.dat");
     memset(&action, 0, sizeof(action));
-    expect(nexus_v1_startup_menu_activate_selected(&menu, &action),
-           "startup menu selected slot activates");
+    expect(nexus_v1_startup_menu_handle_input(
+               &menu,
+               NEXUS_V1_STARTUP_INPUT_ACCEPT,
+               &action),
+           "startup menu selected slot input activates");
     expect(action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT &&
                action.row == 0 &&
                action.slot == 3 &&
                strstr(action.path, "nexus_save_03.dat") != NULL,
            "startup menu activation reports load-slot action");
-    expect(nexus_v1_startup_menu_move_selected(&menu, 1) &&
+    expect(nexus_v1_startup_menu_handle_input(
+               &menu,
+               NEXUS_V1_STARTUP_INPUT_DOWN,
+               &action) &&
                menu.selected_row == 1,
-           "startup menu move selected advances to NEW GAME");
-    expect(nexus_v1_startup_menu_move_selected(&menu, 1) &&
+           "startup menu Down advances to NEW GAME");
+    expect(action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
+           "startup menu Down is a navigation-only action");
+    expect(nexus_v1_startup_menu_handle_input(
+               &menu,
+               NEXUS_V1_STARTUP_INPUT_DOWN,
+               &action) &&
                menu.selected_row == 1,
-           "startup menu move selected clamps at last row");
+           "startup menu Down clamps at last row");
 
     kind = NEXUS_V1_STARTUP_ROW_NONE;
     slot = -1;
@@ -138,13 +187,22 @@ int main(void)
     expect(kind == NEXUS_V1_STARTUP_ROW_NEW_GAME && slot == -1,
            "startup menu row 1 is NEW GAME");
     memset(&action, 0, sizeof(action));
-    expect(nexus_v1_startup_menu_activate_selected(&menu, &action),
-           "startup menu NEW GAME activates");
+    expect(nexus_v1_startup_menu_handle_input(
+               &menu,
+               NEXUS_V1_STARTUP_INPUT_ACTION,
+               &action),
+           "startup menu NEW GAME action activates");
     expect(action.kind == NEXUS_V1_STARTUP_ACTION_NEW_GAME &&
                action.row == 1 &&
                action.slot == -1 &&
                action.path[0] == '\0',
            "startup menu activation reports new-game action");
+    expect(nexus_v1_startup_menu_handle_input(
+               &menu,
+               NEXUS_V1_STARTUP_INPUT_BACK,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE,
+           "startup menu Back reports return-to-title action");
     expect(nexus_v1_startup_menu_move_selected(&menu, -5) &&
                menu.selected_row == 0,
            "startup menu move selected clamps at first row");

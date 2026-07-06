@@ -11127,6 +11127,26 @@ static void m11_nexus_startup_menu_to_state(
     state->nexusState.startup_save_selected_row = menu->selected_row;
 }
 
+static Nexus_V1_StartupInput m11_nexus_startup_input_from_m12(
+    M12_MenuInput input)
+{
+    switch (input) {
+        case M12_MENU_INPUT_UP:
+            return NEXUS_V1_STARTUP_INPUT_UP;
+        case M12_MENU_INPUT_DOWN:
+            return NEXUS_V1_STARTUP_INPUT_DOWN;
+        case M12_MENU_INPUT_ACCEPT:
+            return NEXUS_V1_STARTUP_INPUT_ACCEPT;
+        case M12_MENU_INPUT_ACTION:
+            return NEXUS_V1_STARTUP_INPUT_ACTION;
+        case M12_MENU_INPUT_BACK:
+            return NEXUS_V1_STARTUP_INPUT_BACK;
+        case M12_MENU_INPUT_NONE:
+        default:
+            return NEXUS_V1_STARTUP_INPUT_NONE;
+    }
+}
+
 static M11_GameInputResult m11_nexus_startup_activate_save_row(
     M11_GameViewState *state)
 {
@@ -11163,39 +11183,51 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
+    Nexus_V1_StartupMenu menu;
+    Nexus_V1_StartupAction action;
+    Nexus_V1_StartupInput startup_input;
+
     if (!state || !state->nexusState.startup_save_select_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (input == M12_MENU_INPUT_UP) {
-        Nexus_V1_StartupMenu menu;
-        m11_nexus_startup_menu_from_state(state, &menu);
-        (void)nexus_v1_startup_menu_move_selected(&menu, -1);
-        m11_nexus_startup_menu_to_state(state, &menu);
+    startup_input = m11_nexus_startup_input_from_m12(input);
+    m11_nexus_startup_menu_from_state(state, &menu);
+    if (!nexus_v1_startup_menu_handle_input(&menu,
+                                            startup_input,
+                                            &action)) {
+        return input == M12_MENU_INPUT_NONE
+                   ? M11_GAME_INPUT_IGNORED
+                   : M11_GAME_INPUT_REDRAW;
+    }
+    m11_nexus_startup_menu_to_state(state, &menu);
+    if (action.kind == NEXUS_V1_STARTUP_ACTION_NONE) {
         m11_set_status(state, "STARTUP", "NEXUS SAVE SELECT");
         return M11_GAME_INPUT_REDRAW;
     }
-    if (input == M12_MENU_INPUT_DOWN) {
-        Nexus_V1_StartupMenu menu;
-        m11_nexus_startup_menu_from_state(state, &menu);
-        (void)nexus_v1_startup_menu_move_selected(&menu, 1);
-        m11_nexus_startup_menu_to_state(state, &menu);
-        m11_set_status(state, "STARTUP", "NEXUS SAVE SELECT");
+    if (action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT) {
+        if (!m11_nexus_resume_from_save_path(state, action.path)) {
+            m11_set_status(state, "STARTUP", "NEXUS LOAD FAILED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        state->nexusState.startup_save_select_active = 0;
+        m11_set_status(state, "BOOT", "NEXUS RESUMED");
         return M11_GAME_INPUT_REDRAW;
     }
-    if (input == M12_MENU_INPUT_ACCEPT ||
-        input == M12_MENU_INPUT_ACTION) {
-        return m11_nexus_startup_activate_save_row(state);
+    if (action.kind == NEXUS_V1_STARTUP_ACTION_NEW_GAME) {
+        state->nexusState.startup_save_select_active = 0;
+        state->nexusState.champion_select_active = 1;
+        state->nexusState.champion_cursor = 0;
+        m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
+        return M11_GAME_INPUT_REDRAW;
     }
-    if (input == M12_MENU_INPUT_BACK) {
+    if (action.kind == NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE) {
         state->nexusState.startup_save_select_active = 0;
         state->nexusState.title_active = 1;
         state->nexusState.title_frame = 0;
         m11_set_status(state, "STARTUP", "NEXUS TITLE");
         return M11_GAME_INPUT_REDRAW;
     }
-    return input == M12_MENU_INPUT_NONE
-               ? M11_GAME_INPUT_IGNORED
-               : M11_GAME_INPUT_REDRAW;
+    return M11_GAME_INPUT_REDRAW;
 }
 
 static M11_GameInputResult m11_nexus_startup_back_from_champions(
@@ -15389,31 +15421,35 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (state->nexusState.title_active) {
-            if (input == M12_MENU_INPUT_BACK) {
+            Nexus_V1_StartupAction action;
+            if (!nexus_v1_startup_title_handle_input(
+                    state->nexusState.title_frame,
+                    state->nexusState.startup_save_slot_mask,
+                    m11_nexus_startup_input_from_m12(input),
+                    &action)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            if (action.kind == NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
                 m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }
-            if (input == M12_MENU_INPUT_NONE) {
-                return M11_GAME_INPUT_IGNORED;
-            }
-            if (input != M12_MENU_INPUT_ACCEPT &&
-                input != M12_MENU_INPUT_ACTION) {
-                return M11_GAME_INPUT_IGNORED;
-            }
-            if (!nexus_title_start_ready(state->nexusState.title_frame)) {
+            if (action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE) {
                 m11_set_status(state, "STARTUP", "NEXUS TITLE");
                 return M11_GAME_INPUT_REDRAW;
             }
             state->nexusState.title_active = 0;
             state->nexusState.title_frame = 0;
-            if (state->nexusState.startup_save_slot_mask != 0u) {
+            if (action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT) {
                 state->nexusState.startup_save_select_active = 1;
                 state->nexusState.startup_save_selected_row = 0;
                 m11_set_status(state, "STARTUP", "NEXUS LOAD GAME");
-            } else {
+            } else if (action.kind ==
+                       NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT) {
                 state->nexusState.champion_select_active = 1;
                 state->nexusState.champion_cursor = 0;
                 m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
+            } else {
+                return M11_GAME_INPUT_IGNORED;
             }
             return M11_GAME_INPUT_REDRAW;
         }
