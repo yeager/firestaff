@@ -75,6 +75,7 @@ int main(void)
     Nexus_V1_StartupAction action;
     Nexus_V1_StartupSaveExecution execution;
     Nexus_V1_StartupTitleExecution title_execution;
+    Nexus_V1_StartupChampionExecution champion_execution;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
@@ -195,6 +196,14 @@ int main(void)
                cursor == 2 &&
                champions.party_count == 1,
            "Nexus champion startup row hit recruits through Nexus-owned action");
+    expect(nexus_v1_startup_execute_champion_action(
+               &action,
+               &champion_execution) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_STATUS_REDRAW &&
+               strcmp(champion_execution.status,
+                      "NEXUS CHAMPION ADDED") == 0,
+           "Nexus champion execution resolves recruited champion redraw");
     hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER;
     hit.row = -1;
     expect(nexus_v1_startup_champion_handle_hit(
@@ -205,6 +214,75 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_START_DUNGEON,
            "Nexus champion startup footer hit starts when party exists");
+    expect(nexus_v1_startup_execute_champion_action(
+               &action,
+               &champion_execution) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON &&
+               strcmp(champion_execution.status, "NEXUS READY") == 0,
+           "Nexus champion execution resolves start-dungeon handoff");
+    action.kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR;
+    action.row = 5;
+    expect(nexus_v1_startup_execute_champion_action(
+               &action,
+               &champion_execution) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR &&
+               champion_execution.cursor == 5 &&
+               strcmp(champion_execution.status,
+                      "NEXUS CHAMPION CURSOR") == 0,
+           "Nexus champion execution resolves cursor movement");
+    action.kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_REMOVED;
+    action.row = 2;
+    expect(nexus_v1_startup_execute_champion_action(
+               &action,
+               &champion_execution) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR &&
+               champion_execution.cursor == 2 &&
+               strcmp(champion_execution.status,
+                      "NEXUS CHAMPION REMOVED") == 0,
+           "Nexus champion execution resolves removal cursor reset");
+    action.kind = NEXUS_V1_STARTUP_ACTION_NEED_CHAMPION;
+    action.row = 0;
+    expect(nexus_v1_startup_execute_champion_action(
+               &action,
+               &champion_execution) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_STATUS_REDRAW &&
+               strcmp(champion_execution.status,
+                      "NEXUS NEEDS CHAMPION") == 0,
+           "Nexus champion execution resolves empty-party warning");
+    action.kind = NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT;
+    expect(nexus_v1_startup_execute_champion_action(
+               &action,
+               &champion_execution) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_SAVE_SELECT &&
+               strcmp(champion_execution.status, "NEXUS LOAD GAME") == 0,
+           "Nexus champion execution resolves back to save select");
+    action.kind = NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE;
+    expect(nexus_v1_startup_execute_champion_action(
+               &action,
+               &champion_execution) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE &&
+               strcmp(champion_execution.status, "NEXUS TITLE") == 0,
+           "Nexus champion execution resolves back to title");
+    action.kind = NEXUS_V1_STARTUP_ACTION_NONE;
+    expect(nexus_v1_startup_execute_champion_action(
+               &action,
+               &champion_execution) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_STATUS_REDRAW &&
+               strcmp(champion_execution.status, "NEXUS CHAMPIONS") == 0,
+           "Nexus champion execution resolves consumed panel redraw");
+    expect(!nexus_v1_startup_execute_champion_action(
+               NULL,
+               &champion_execution),
+           "Nexus champion execution rejects NULL action");
+    expect(!nexus_v1_startup_execute_champion_action(&action, NULL),
+           "Nexus champion execution rejects NULL output");
 
     build_world(&world);
     nexus_v1_save_init(&mgr, save_dir);
