@@ -51,6 +51,7 @@ static uint8_t s_door_frame_pixels[16 * 8];
 static uint8_t s_door_button_pixels[16 * 8];
 static uint8_t s_wall_button_pixels[16 * 8];
 static uint8_t s_item_pixels[16 * 8];
+static uint8_t s_projectile_pixels[16 * 8];
 
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
@@ -126,6 +127,17 @@ static int synthetic_viewport_asset_fetch(void *user,
         (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
           DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) <= 0x15) {
         if (out_pixels) *out_pixels = s_item_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
+        (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
+          DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >= 0x0d &&
+        (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
+          DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) <= 0x10) {
+        if (out_pixels) *out_pixels = s_projectile_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -563,6 +575,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
         memset(s_item_pixels, 6, sizeof(s_item_pixels));
+        memset(s_projectile_pixels, 13, sizeof(s_projectile_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_runtime_set_outdoor(0);
         dm2_v1_runtime_set_leader_hand_object(dm2_db_make_handle(10, 0x0055));
@@ -837,6 +850,42 @@ static void test_first_tick_after_boot_profile_handoff(void)
           dm2_v1_runtime_get_party_y() >= 0 &&
           dm2_v1_runtime_get_party_dir() == 0,
           "first tick preserves the door-facing snapped party state");
+
+    {
+        uint8_t framebuffer[320 * 200];
+        int fetch_count = 0;
+        memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
+        memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
+        memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
+        memset(s_projectile_pixels, 13, sizeof(s_projectile_pixels));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_projectile_test_reset_list();
+        dm2_v1_runtime_set_outdoor(0);
+        dm2_v1_runtime_set_position(0, 10, 6, 0);
+        CHECK(dm2_v1_projectile_dispatch_synthetic(
+                  PROJECTILE_CATEGORY_MAGICAL,
+                  DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL,
+                  10, 4, 0, 0) >= 0,
+              "runtime projectile fixture dispatches two tiles ahead");
+        dm2_v1_runtime_tick();
+        dm2_v1_runtime_set_viewport_asset_provider(
+            synthetic_viewport_asset_fetch, &fetch_count);
+        CHECK(dm2_v1_runtime_render_frame(
+                  dm2_v1_runtime_get_party_dir(),
+                  dm2_v1_runtime_get_party_x(),
+                  dm2_v1_runtime_get_party_y(),
+                  framebuffer, 320, 320, 200) == 0,
+              "runtime renders a drained projectile through the viewport");
+        CHECK(fetch_count == 13,
+              "runtime projectile adds one projectile-map-chip fetch to the viewport pass");
+        CHECK(dm2_v1_runtime_last_asset_projectile_count() == 1 &&
+              dm2_v1_runtime_last_fallback_projectile_count() == 0,
+              "runtime records asset-backed projectile draw");
+        CHECK(framebuffer[(84 * 320) + 112] == 13,
+              "runtime projects the projectile to the depth-1 first-person row");
+        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+        dm2_v1_projectile_test_reset_list();
+    }
 
     dm2_v1_boot_cleanup(&profile);
 }

@@ -94,6 +94,8 @@ static int g_dm2_last_asset_door_button_count = 0;
 static int g_dm2_last_fallback_door_count = 0;
 static int g_dm2_last_asset_carried_item_count = 0;
 static int g_dm2_last_fallback_carried_item_count = 0;
+static int g_dm2_last_asset_projectile_count = 0;
+static int g_dm2_last_fallback_projectile_count = 0;
 
 static int dm2_runtime_door_state(uint16_t square_raw) {
     return (int)(square_raw & 0x0007u);
@@ -640,7 +642,55 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
 static DM2_V1_DrainedProjectile g_dm2_projectile_drain[DM2_DRAIN_MAX_PROJECTILES];
 static int g_dm2_projectile_drain_count = 0;
 
-static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport)
+static int dm2_runtime_projectile_view_position(
+    const DM2_V1_DrainedProjectile *src,
+    int party_dir,
+    int party_x,
+    int party_y,
+    int *out_depth,
+    int *out_x,
+    int *out_y)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    static const int center_x = 112;
+    static const int y_by_depth[4] = { 98, 84, 72, 62 };
+    static const int lateral_step_by_depth[4] = { 48, 40, 30, 22 };
+    int dir;
+    int right;
+    int rel_x;
+    int rel_y;
+    int forward;
+    int lateral;
+    int depth;
+
+    if (!src || !out_depth || !out_x || !out_y) return 0;
+    dir = party_dir & 3;
+    right = (dir + 1) & 3;
+    rel_x = src->map_x - party_x;
+    rel_y = src->map_y - party_y;
+    forward = rel_x * dx[dir] + rel_y * dy[dir];
+    lateral = rel_x * dx[right] + rel_y * dy[right];
+
+    if (forward < 1 || forward > 4 || lateral < -2 || lateral > 2) {
+        return 0;
+    }
+
+    /* skproject/SKWIN renders missiles through the same visible cell order as
+     * dungeon map chips.  This bounded projection converts the drained world
+     * coordinate into the current first-person depth row before the sprite
+     * renderer applies its per-depth scale. */
+    depth = forward - 1;
+    *out_depth = depth;
+    *out_x = center_x + lateral * lateral_step_by_depth[depth];
+    *out_y = y_by_depth[depth];
+    return 1;
+}
+
+static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
+                                             int party_dir,
+                                             int party_x,
+                                             int party_y)
 {
     int count;
     if (!viewport) return;
@@ -658,6 +708,23 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport)
         dst->depth = 0;
         dst->screen_x = (int16_t)src->pixel_x;
         dst->screen_y = (int16_t)src->pixel_y;
+        {
+            int projected_depth = 0;
+            int projected_x = 0;
+            int projected_y = 0;
+            if (dm2_runtime_projectile_view_position(
+                    src,
+                    party_dir,
+                    party_x,
+                    party_y,
+                    &projected_depth,
+                    &projected_x,
+                    &projected_y)) {
+                dst->depth = (int16_t)projected_depth;
+                dst->screen_x = (int16_t)projected_x;
+                dst->screen_y = (int16_t)projected_y;
+            }
+        }
         dst->render_kind =
             (src->subtype == DM2_PROJ_SUBTYPE_MAGICAL_POISON_CLOUD)
                 ? DM2_V1_PROJECTILE_RENDER_CLOUD
@@ -828,7 +895,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
     viewport.random_seed = rt->weather.weather_seed;
     dm2_runtime_populate_front_square(rt, &viewport, party_dir, party_x, party_y);
-    dm2_runtime_populate_projectiles(&viewport);
+    dm2_runtime_populate_projectiles(&viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_carried_item(rt, &viewport);
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
@@ -852,6 +919,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_carried_item_drawn_count;
     g_dm2_last_fallback_carried_item_count =
         viewport.fallback_carried_item_drawn_count;
+    g_dm2_last_asset_projectile_count =
+        viewport.asset_projectile_drawn_count;
+    g_dm2_last_fallback_projectile_count =
+        viewport.fallback_projectile_drawn_count;
     rt->weather.weather_seed = viewport.random_seed;
 
     return 0;
@@ -917,6 +988,14 @@ int dm2_v1_runtime_last_asset_carried_item_count(void) {
 
 int dm2_v1_runtime_last_fallback_carried_item_count(void) {
     return g_dm2_last_fallback_carried_item_count;
+}
+
+int dm2_v1_runtime_last_asset_projectile_count(void) {
+    return g_dm2_last_asset_projectile_count;
+}
+
+int dm2_v1_runtime_last_fallback_projectile_count(void) {
+    return g_dm2_last_fallback_projectile_count;
 }
 
 /* ── Movement ──────────────────────────────────────────────────────── */
