@@ -182,6 +182,7 @@ typedef struct {
     char startupPhase[M11_BOOT_RECEIPT_PHASE_CAPACITY];
     int startupFrame;
     int levelLoaded;
+    int mapIndex;
     int partyX;
     int partyY;
     int partyDir;

@@ -12222,6 +12222,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     }
     memset(out, 0, sizeof(*out));
     snprintf(out->startupPhase, sizeof(out->startupPhase), "%s", "inactive");
+    out->mapIndex = -1;
     out->partyX = -1;
     out->partyY = -1;
     out->partyDir = -1;
@@ -12245,6 +12246,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         CSB_V1_StartupCommandState_PC34 command_state;
         out->levelLoaded = state->csbState.level_loaded;
+        out->mapIndex = state->csbState.current_level;
         out->partyX = state->csbState.party_x;
         out->partyY = state->csbState.party_y;
         out->partyDir = state->csbState.party_dir;
@@ -12263,6 +12265,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         out->levelLoaded = state->dm2State.level_loaded;
+        out->mapIndex = state->world.party.mapIndex;
         out->partyX = state->dm2State.party_x;
         out->partyY = state->dm2State.party_y;
         out->partyDir = state->dm2State.party_dir;
@@ -12278,6 +12281,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
         out->levelLoaded = state->nexusState.level_loaded;
+        out->mapIndex = state->nexusEngine
+            ? state->nexusEngine->game.current_level
+            : -1;
         out->partyX = state->nexusState.party_x;
         out->partyY = state->nexusState.party_y;
         out->partyDir = state->nexusState.party_dir;
@@ -12299,6 +12305,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
         out->levelLoaded = state->theronState.level_loaded;
+        out->mapIndex = state->theronWorld
+            ? ((Theron_V1_World*)state->theronWorld)->current_level
+            : -1;
         out->partyX = state->theronState.party_x;
         out->partyY = state->theronState.party_y;
         out->partyDir = state->theronState.party_dir;
@@ -12315,6 +12324,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     }
 
     out->levelLoaded = state->world.dungeon ? 1 : 0;
+    out->mapIndex = state->world.party.mapIndex;
     out->partyX = state->world.party.mapX;
     out->partyY = state->world.party.mapY;
     out->partyDir = state->world.party.direction;

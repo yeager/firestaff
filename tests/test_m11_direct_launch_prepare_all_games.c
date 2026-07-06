@@ -337,6 +337,8 @@ static void run_real_data_handoff_if_available(void) {
             opts.bootProbeExpectRuntime = 1;
             opts.bootProbeExpectParty = 1;
             opts.bootProbeExpectChampions = 1;
+            opts.bootProbeExpectMap = 1;
+            opts.bootProbeExpectMapIndex = 0;
             opts.bootProbeExpectAssetMd5 = expectedAssetMd5[0] != '\0'
                 ? expectedAssetMd5
                 : NULL;
@@ -386,6 +388,7 @@ static void run_real_data_handoff_if_available(void) {
             } else {
                 opts.bootProbeExpectParty = 0;
                 opts.bootProbeExpectChampions = 0;
+                opts.bootProbeExpectMap = 0;
             }
             test_setenv("SDL_VIDEODRIVER", "dummy");
             expect_true(M11_PhaseA_Run(&opts) == 0,
