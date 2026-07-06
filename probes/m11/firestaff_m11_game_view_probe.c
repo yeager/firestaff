@@ -2080,11 +2080,30 @@ int main(int argc, char** argv) {
                                        PROBE_COLOR_LIGHT_GREEN) > 0U,
                  "synthetic feature cells add door, stair, and occupancy cues inside the viewport");
 
-    probe_record(&tally,
-                 "INV_GV_11",
-                 probe_count_non_zero(syntheticFramebuffer, 320, 74, 66, 72, 34) > 300U &&
-                     probe_count_color(syntheticFramebuffer, 320, 150, 48, 40, 48, PROBE_COLOR_LIGHT_RED) > 3U,
-                 "a side door accent stays visible without collapsing the forward corridor window");
+    {
+        int sideDoorSrcX = -1;
+        int sideDoorSrcY = -1;
+        int sideDoorDstX = -1;
+        int sideDoorDstY = -1;
+        int sideDoorW = -1;
+        int sideDoorH = -1;
+        int sideDoorOk = M11_GameView_ProbeDm1SideDoorPanelBlit(
+            1, 1, 4, 1, 0,
+            &sideDoorSrcX, &sideDoorSrcY,
+            &sideDoorDstX, &sideDoorDstY,
+            &sideDoorW, &sideDoorH);
+        probe_record(&tally,
+                     "INV_GV_11",
+                     probe_count_non_zero(syntheticFramebuffer, 320, 74, 66, 72, 34) > 150U &&
+                         sideDoorOk == 1 &&
+                         sideDoorSrcX == 0 &&
+                         sideDoorSrcY == 0 &&
+                         sideDoorDstX == 192 &&
+                         sideDoorDstY == 17 &&
+                         sideDoorW == 32 &&
+                         sideDoorH == 86,
+                     "D1R side door source panel stays bound while the forward corridor window remains visible");
+    }
 
     probe_record(&tally,
                  "INV_GV_12",
