@@ -34,12 +34,22 @@
 #define TEST_MKDIR(path) _mkdir(path)
 #define TEST_PATH_SEP "\\"
 #define TEST_GETPID() _getpid()
+static void test_setenv(const char* name, const char* value) {
+    (void)_putenv_s(name, value ? value : "");
+}
 #else
 #include <sys/stat.h>
 #include <unistd.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
 #define TEST_PATH_SEP "/"
 #define TEST_GETPID() getpid()
+static void test_setenv(const char* name, const char* value) {
+    if (value) {
+        (void)setenv(name, value, 1);
+    } else {
+        (void)unsetenv(name);
+    }
+}
 #endif
 
 unsigned short G2157_;
@@ -145,6 +155,31 @@ static void run_empty_data_rejection(void) {
     }
 }
 
+static void run_boot_probe_empty_data_rejection(void) {
+    M11_PhaseA_Options opts;
+    char empty_dir[512];
+
+    make_empty_data_dir(empty_dir);
+    expect_true(empty_dir[0] != '\0',
+                "boot-probe empty data dir path was created");
+
+    test_setenv("SDL_VIDEODRIVER", "dummy");
+    M11_PhaseA_SetDefaultOptions(&opts);
+    opts.bootProbe = 1;
+    opts.gameId = "dm1";
+    opts.dataDir = empty_dir;
+    opts.durationMs = 0;
+    expect_true(M11_PhaseA_Run(&opts) == 2,
+                "boot-probe refuses missing game data without entering the loop");
+
+    M11_PhaseA_SetDefaultOptions(&opts);
+    opts.bootProbe = 1;
+    opts.dataDir = empty_dir;
+    opts.durationMs = 0;
+    expect_true(M11_PhaseA_Run(&opts) == 2,
+                "boot-probe refuses missing game id before renderer startup");
+}
+
 static void run_real_data_handoff_if_available(void) {
     size_t i;
     int available_count = 0;
@@ -221,6 +256,7 @@ int main(void) {
     printf("=== M11 direct-launch preparation all-games gate ===\n");
 
     run_empty_data_rejection();
+    run_boot_probe_empty_data_rejection();
     run_real_data_handoff_if_available();
 
     printf("\nM11 direct-launch preparation all-games gate: %d passed, %d failed, %d skipped\n",

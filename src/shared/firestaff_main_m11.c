@@ -35,6 +35,7 @@ static void usage(const char* prog) {
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
             "  --scan-game-data    Alias for --scan-data\n"
+            "  --boot-probe        With --game, verify selected-entry boot handoff and exit\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -161,6 +162,11 @@ int main(int argc, char** argv) {
             scanData = 1;
             continue;
         }
+        if (strcmp(a, "--boot-probe") == 0) {
+            opts.bootProbe = 1;
+            opts.directLaunch = 1;
+            continue;
+        }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
             opts.gameId = argv[++i];
             opts.directLaunch = 1;
@@ -202,6 +208,11 @@ int main(int argc, char** argv) {
 
     if (scanData) {
         return run_data_scan(opts.dataDir);
+    }
+
+    if (opts.bootProbe && !opts.gameId) {
+        fprintf(stderr, "firestaff: --boot-probe requires --game <id>\n");
+        return 2;
     }
 
     int rc = M11_PhaseA_Run(&opts);

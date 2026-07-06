@@ -1609,14 +1609,19 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
             entry->kind == M12_MENU_ENTRY_GAME &&
             entry->gameId &&
             strcmp(entry->gameId, gameId) == 0) {
-            if (!entry->available ||
-                !M12_AssetStatus_GameAvailable(&menuState->assetStatus, gameId)) {
+            M12_LaunchIntent intent;
+            if (!M12_AssetStatus_GameAvailable(&menuState->assetStatus, gameId)) {
                 return 0;
             }
             menuState->selectedIndex = i;
             menuState->activatedIndex = i;
             menuState->launchRequested = 1;
             menuState->quickResumeLaunchRequested = 0;
+            intent = M12_StartupMenu_GetLaunchIntent(menuState);
+            if (!intent.valid) {
+                menuState->launchRequested = 0;
+                return 0;
+            }
             return 1;
         }
     }
@@ -1636,6 +1641,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->dataDir        = NULL;
     opts->gameId         = NULL;
     opts->directLaunch   = 0;
+    opts->bootProbe      = 0;
 }
 
 
@@ -3112,6 +3118,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_PhaseA_Options runtimeOptions;
     const M11_PhaseA_Options* o;
     runtimeOptions = opts ? *opts : defaults;
+    if (runtimeOptions.bootProbe && (!runtimeOptions.gameId || runtimeOptions.gameId[0] == '\0')) {
+        fprintf(stderr, "firestaff: --boot-probe requires --game <id>\n");
+        return 2;
+    }
+    if (runtimeOptions.bootProbe) {
+        runtimeOptions.directLaunch = 1;
+    }
     m11_apply_persisted_window_size(&runtimeOptions);
     /* Enable the disk-backed automation manifest only on request. It writes
      * ~/.firestaff/accessibility.json atomically from M11_GameView_Draw();
@@ -3237,6 +3250,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             goto cleanup;
         }
         launchedEver = 1;
+        if (o->bootProbe) {
+            fprintf(stderr,
+                    "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s\n",
+                    o->gameId ? o->gameId : "",
+                    (int)gameView.sourceKind,
+                    gameView.sourceId,
+                    M12_AssetStatus_GetRuntimeDataDir(&menuState.assetStatus,
+                                                      o->gameId ? o->gameId : ""));
+            goto cleanup;
+        }
         if (exitAfterLaunch) {
             goto cleanup;
         }
