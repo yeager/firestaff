@@ -10,6 +10,7 @@
  */
 
 #include "save_browser_m12.h"
+#include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
@@ -293,10 +294,32 @@ static int dm2_sksave_root_from_path(const char* path,
 }
 
 static int validate_csb_original_save_import_path(const char* path) {
+    CSB_V1_CSBWinSaveDiscoveryResult discovery;
     CSB_V1_RuntimeProfile runtime;
     int rc;
 
     if (!path || !*path) return 0;
+
+    /*
+     * ReDMCSB CEDTINC8.C:101-118 and CSBWin CSBCode.cpp:421-422 route
+     * user-visible CSB utility saves through the CSBGAME/DMSAVE namespace.
+     * Keep M12 import on the explicit loader-boundary classifier so raw
+     * DM1 saves, malformed CSBGAME bytes, and still-undecoded CSBWin
+     * shapes are rejected before the launcher copies them into dataDir.
+     */
+    memset(&discovery, 0, sizeof(discovery));
+    rc = csb_v1_csbwin_save_loader_boundary_classify_file(
+        path, 0u, &discovery);
+    if (!discovery.filename_candidate) {
+        return 0;
+    }
+    if (!discovery.should_attempt_import &&
+        !discovery.xor512_body_valid) {
+        return 0;
+    }
+
+    /* The classifier is the byte-shape gate; the runtime load keeps the
+     * actual M11 quick-resume/utility handoff contract honest. */
     csb_v1_runtime_init(&runtime, NULL);
     rc = csb_v1_runtime_load_game_from_path(&runtime, path);
     csb_v1_runtime_cleanup(&runtime);
