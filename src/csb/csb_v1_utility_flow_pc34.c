@@ -28,7 +28,12 @@
 
 /* Maximum disk check attempts (prevents infinite loops) */
 #define CSB_V1_UTIL_MAX_ATTEMPTS   5
-#define CSB_V1_UTIL_MENU_ACTION_COUNT 4
+#define CSB_V1_UTIL_MENU_ACTION_COUNT CSB_V1_UTIL_MENU_ROW_COUNT
+#define CSB_V1_UTIL_MENU_X 38
+#define CSB_V1_UTIL_MENU_Y 92
+#define CSB_V1_UTIL_MENU_W 244
+#define CSB_V1_UTIL_MENU_ROW_H 12
+#define CSB_V1_UTIL_MENU_H (CSB_V1_UTIL_MENU_ROW_H * CSB_V1_UTIL_MENU_ROW_COUNT)
 
 static const CSB_V1_UtilFlowAction s_csb_v1_util_menu_actions[
     CSB_V1_UTIL_MENU_ACTION_COUNT] = {
@@ -237,6 +242,59 @@ const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action)
     default:
         return "";
     }
+}
+
+int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
+                                 CSB_V1_UtilMenuLayout *out_layout)
+{
+    int i;
+
+    if (!ctx || !out_layout) return 0;
+    memset(out_layout, 0, sizeof(*out_layout));
+    out_layout->prompt = csb_v1_util_flow_prompt(ctx);
+    out_layout->x = CSB_V1_UTIL_MENU_X;
+    out_layout->y = CSB_V1_UTIL_MENU_Y;
+    out_layout->w = CSB_V1_UTIL_MENU_W;
+    out_layout->h = CSB_V1_UTIL_MENU_H;
+    out_layout->row_count = CSB_V1_UTIL_MENU_ACTION_COUNT;
+    out_layout->selected_action_index = ctx->selected_action_index;
+
+    for (i = 0; i < CSB_V1_UTIL_MENU_ACTION_COUNT; ++i) {
+        CSB_V1_UtilMenuRow *row = &out_layout->rows[i];
+        row->action = s_csb_v1_util_menu_actions[i];
+        row->label = csb_v1_util_flow_action_label(row->action);
+        row->x = CSB_V1_UTIL_MENU_X;
+        row->y = CSB_V1_UTIL_MENU_Y + i * CSB_V1_UTIL_MENU_ROW_H;
+        row->w = CSB_V1_UTIL_MENU_W;
+        row->h = CSB_V1_UTIL_MENU_ROW_H;
+        row->selected = (i == ctx->selected_action_index) ? 1 : 0;
+    }
+
+    return 1;
+}
+
+CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
+    const CSB_V1_UtilFlowContext *ctx,
+    int x,
+    int y)
+{
+    CSB_V1_UtilMenuLayout layout;
+    int i;
+
+    if (!csb_v1_util_flow_menu_layout(ctx, &layout)) {
+        return CSB_V1_UTIL_ACTION_EXIT;
+    }
+    if (ctx->state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
+        return CSB_V1_UTIL_ACTION_EXIT;
+    }
+    for (i = 0; i < layout.row_count; ++i) {
+        const CSB_V1_UtilMenuRow *row = &layout.rows[i];
+        if (x >= row->x && x < row->x + row->w &&
+            y >= row->y && y < row->y + row->h) {
+            return row->action;
+        }
+    }
+    return CSB_V1_UTIL_ACTION_EXIT;
 }
 
 /* ── Set paths ──────────────────────────────────────────────────────── */
