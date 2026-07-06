@@ -1211,6 +1211,21 @@ int main(void) {
         expect_true(view.csbState.tick_count == tick_before &&
                     view.csbState.startup_entrance_frame > 0,
                     "M11 CSB entrance does not tick runtime before confirm");
+        expect_true(view.csbState.startup_title_active == 1 &&
+                        view.csbState.startup_title_source_step == 1 &&
+                        view.csbState.startup_entrance_source_step == 0,
+                    "M11 CSB title prelude holds PRESENTS before entrance");
+        for (int i = 0; i < 30 && view.csbState.startup_title_active; ++i) {
+            expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 CSB title prelude zoom warmup redraws");
+            expect_true(view.csbState.tick_count == tick_before,
+                        "M11 CSB title prelude zoom warmup blocks runtime ticks");
+        }
+        expect_true(view.csbState.startup_title_active == 1 &&
+                        view.csbState.startup_title_source_step == 2 &&
+                        view.csbState.startup_entrance_source_step == 0,
+                    "M11 CSB title prelude reaches CHAOS zoom before entrance");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         250,
