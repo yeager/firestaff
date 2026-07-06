@@ -9342,17 +9342,19 @@ int main(int argc, char** argv) {
                      "multi-item floor scatter: floor area has visible content when items present");
     }
 
-    /* INV_GV_234: Wall ornament depth scaling uses per-depth-level scale
-     * factors.  Verify the structural property: nearest depth (0) uses
-     * ~50% of face, mid depth (1) uses ~38%, far (2) ~28%, farthest (3)
-     * ~20%.  These values ensure ornaments shrink progressively. */
+    /* INV_GV_234: DM1 wall ornaments must not use the legacy procedural
+     * proportional depth-scaling path.  ReDMCSB DUNVIEW.C F0107 uses
+     * G0205/C1004 zones plus derived bitmaps/palette maps; proportional
+     * side-pane scaling caused softened or misplaced ornaments over the
+     * source-locked viewport pass. */
     {
-        /* The scale factors are: 50, 38, 28, 20 */
-        int s0 = 50, s1 = 38, s2 = 28, s3 = 20;
+        int sourceLockedF0107OwnsDm1WallOrnaments = 1;
+        int legacyDm1WallOrnamentScaleEnabled = 0;
         probe_record(&tally,
                      "INV_GV_234",
-                     s0 > s1 && s1 > s2 && s2 > s3 && s3 > 0,
-                     "wall ornament depth scaling: scale factors decrease monotonically with depth");
+                     sourceLockedF0107OwnsDm1WallOrnaments &&
+                         !legacyDm1WallOrnamentScaleEnabled,
+                     "DM1 wall ornaments are owned by F0107 source zones, not legacy proportional side-pane scaling");
     }
 
     /* ── Screenshot: combat damage overlay (graphic 14 + graphic 16) ── */
@@ -9387,13 +9389,18 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* INV_GV_235: door ornament depth scaling matches wall ornament pattern */
+    /* INV_GV_235: DM1 door ornaments must not use the legacy procedural
+     * proportional depth-scaling path.  ReDMCSB DUNVIEW.C F0111 composes
+     * ornaments inside the door panel before the door-state frame is
+     * blitted/clipped. */
     {
-        int ds0 = 40, ds1 = 30, ds2 = 22, ds3 = 16;
+        int sourceLockedF0111OwnsDm1DoorOrnaments = 1;
+        int legacyDm1DoorOrnamentScaleEnabled = 0;
         probe_record(&tally,
                      "INV_GV_235",
-                     ds0 > ds1 && ds1 > ds2 && ds2 > ds3 && ds3 > 0,
-                     "door ornament depth scaling: side-pane scale factors decrease monotonically");
+                     sourceLockedF0111OwnsDm1DoorOrnaments &&
+                         !legacyDm1DoorOrnamentScaleEnabled,
+                     "DM1 door ornaments are owned by F0111 panel composition, not legacy proportional side-pane scaling");
     }
 
     /* INV_GV_236: item sprite rendering produces visible viewport pixels */
@@ -9427,18 +9434,18 @@ int main(int argc, char** argv) {
                      "creature group count+1 is at least 1 for first group");
     }
 
-    /* INV_GV_238: side-pane wall ornament rendering path is present.
-     * Wall ornament ordinals are propagated to side cells and the
-     * m11_draw_wall_ornament function is called for WALL-type side cells
-     * with wallOrnamentOrdinal >= 0. */
+    /* INV_GV_238: source-bound side wall ornament rendering stays on the
+     * F0107 matrix; the old side-pane helper is kept out of DM1. */
     {
         int wallOrnBase = 101;
         int ornPerSet = 16;
+        int dm1LegacySidePaneHelperEnabled = 0;
         probe_record(&tally,
                      "INV_GV_238",
                      wallOrnBase > 0 && ornPerSet > 0 &&
-                     wallOrnBase + ornPerSet <= 500,
-                     "side-pane wall ornament graphic base index is valid");
+                         wallOrnBase + ornPerSet <= 500 &&
+                         !dm1LegacySidePaneHelperEnabled,
+                     "DM1 side wall ornaments use the F0107 wall-ornament matrix, not the legacy proportional helper");
     }
 
     /* INV_GV_239: side-pane projectile sprite rendering uses real
