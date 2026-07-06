@@ -197,6 +197,8 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe champion-count expectation is opt-in");
     expect_true(opts.bootProbeExpectRuntimeTickMin == -1,
                 "boot-probe runtime-tick minimum expectation is opt-in");
+    expect_true(opts.bootProbeExpectStartupFrameMin == -1,
+                "boot-probe startup-frame minimum expectation is opt-in");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
@@ -398,6 +400,18 @@ static void run_real_data_handoff_if_available(void) {
                         "boot-probe advances selected-entry startup frames");
             if (strcmp(kCases[i].gameId, "nexus") == 0) {
                 test_setenv("APPDATA", NULL);
+            }
+            if (strcmp(kCases[i].gameId, "csb") == 0) {
+                M11_PhaseA_SetDefaultOptions(&opts);
+                opts.bootProbe = 1;
+                opts.bootProbeFrames = 2;
+                opts.gameId = "csb";
+                opts.dataDir = data_dir;
+                opts.durationMs = 0;
+                opts.bootProbeExpectPhase = "csb-title-1";
+                opts.bootProbeExpectStartupFrameMin = 1;
+                expect_true(M11_PhaseA_Run(&opts) == 0,
+                            "boot-probe proves CSB title startup frame progress before runtime");
             }
         }
     }
