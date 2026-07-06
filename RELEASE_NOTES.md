@@ -1,6 +1,25 @@
 
 # Unreleased
 
+# Firestaff v3.0.37
+
+Firestaff v3.0.37 packages the latest CSB M11 entrance-door boot phase on
+`main` after v3.0.36.
+
+## Highlights since v3.0.36
+
+- **CSB entrance door-opening phase**: CSB new-game, bonus-dungeon,
+  entrance-resume, and utility-import starts now run the source-shaped
+  pre-open delay plus 31-step door-opening schedule before runtime handoff.
+
+## Verification
+
+- Local release-prep verification covered version synchronization, focused CSB
+  startup gates, and the Phase A probe.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.37` release run.
+
 # Firestaff v3.0.36
 
 Firestaff v3.0.36 packages the latest DM1 V1 action-area geometry hardening on
