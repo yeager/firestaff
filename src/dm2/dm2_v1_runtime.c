@@ -661,6 +661,11 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport)
                 ? DM2_V1_PROJECTILE_RENDER_CLOUD
                 : DM2_V1_PROJECTILE_RENDER_MISSILE;
         dst->direction = (uint8_t)(src->direction & 3);
+        dst->object_direction = dst->direction;
+        dst->frame_class =
+            (dst->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD)
+                ? DM2_V1_PROJECTILE_FRAME_CLASS_FRONT_ONLY
+                : DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL;
         switch (src->direction & 3) {
         case 0:
             dst->velocity_y = -3;
