@@ -34,7 +34,7 @@
 
 typedef struct {
     const char* game;
-    const char* path;
+    const char* path_suffix;
     const char* expect_phase;
     const char* script;
     int boot_frames;
@@ -42,43 +42,43 @@ typedef struct {
 } Tier1PathSpec;
 
 static const Tier1PathSpec kPaths[] = {
-    { "dm1",   DEFAULT_DATA_ROOT "/dm1",
+    { "dm1",   "dm1",
       "dm1-runtime", NULL, 2,
       "DM1 canonical" },
-    { "dm1",   DEFAULT_DATA_ROOT "/dm1-extras/legacy-dos",
+    { "dm1",   "dm1-extras/legacy-dos",
       "dm1-runtime", NULL, 2,
       "DM1 legacy-dos (M11 hash-fallback)" },
-    { "csb",   DEFAULT_DATA_ROOT "/csb",
+    { "csb",   "csb",
       "csb-runtime", "enter", 240,
       "CSB canonical (M11 stderr-pipe)" },
-    { "csb",   DEFAULT_DATA_ROOT "/csb-extras/legacy-amiga-dms",
+    { "csb",   "csb-extras/legacy-amiga-dms",
       "csb-runtime", "enter", 240,
       "CSB Amiga 3.3 Meynaf FR (M11 stderr-pipe)" },
-    { "dm2",   DEFAULT_DATA_ROOT "/dm2",
+    { "dm2",   "dm2",
       "dm2-runtime", "enter", 2,
       "DM2 canonical (M11 stderr-pipe)" },
-    { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/dos-en",
+    { "dm2",   "dm2-extras/dos-en",
       "dm2-runtime", "enter", 2,
       "DM2 DOS EN extras data/ layout (M11 stderr-pipe)" },
-    { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/dos-fr",
+    { "dm2",   "dm2-extras/dos-fr",
       "dm2-runtime", "enter", 2,
       "DM2 DOS FR extras data/ layout (M11 stderr-pipe)" },
-    { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/pc-fr",
+    { "dm2",   "dm2-extras/pc-fr",
       "dm2-runtime", "enter", 2,
       "DM2 PC FR extras DATA/ layout (M11 stderr-pipe)" },
-    { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/pc-de",
+    { "dm2",   "dm2-extras/pc-de",
       "dm2-runtime", "enter", 2,
       "DM2 PC DE extras DATA/ layout (M11 stderr-pipe)" },
-    { "nexus", DEFAULT_DATA_ROOT "/nexus",
+    { "nexus", "nexus",
       "nexus-runtime", "wait120,enter,enter,action", 2,
       "Nexus canonical (Saturn ISO/CUE recursive scan)" },
-    { "theron", DEFAULT_DATA_ROOT "/theron",
+    { "theron", "theron",
       "theron-runtime", "enter,enter,action", 2,
       "Theron JP canonical (Track 02.iso)" },
-    { "theron", DEFAULT_DATA_ROOT "/theron-extras/japan",
+    { "theron", "theron-extras/japan",
       "theron-runtime", "enter,enter,action", 2,
       "Theron JP extras (Track 02.bin)" },
-    { "theron", DEFAULT_DATA_ROOT "/theron-extras/usa",
+    { "theron", "theron-extras/usa",
       "theron-runtime", "enter,enter,action", 2,
       "Theron US extras (Track 02.bin, first-matched-version fallback)" },
     /* Sentinel. */
@@ -99,40 +99,129 @@ static const char* firestaff_bin(void) {
     return (env && env[0]) ? env : FIRESTAFF_BIN;
 }
 
-static void run_path(const Tier1PathSpec* spec) {
+static const char* data_root(void) {
+    static char home_root[1024];
+    const char* env = getenv("FIRESTAFF_DATA");
+    const char* home;
+    if (env && env[0]) {
+        return env;
+    }
+    home = getenv("HOME");
+    if (home && home[0]) {
+        snprintf(home_root, sizeof(home_root), "%s/.firestaff/data", home);
+        return home_root;
+    }
+    return DEFAULT_DATA_ROOT;
+}
+
+static int build_path(const char *root,
+                      const char *suffix,
+                      char *out,
+                      size_t out_size) {
+    int rc;
+    if (!root || !suffix || !out || out_size == 0U) {
+        return 0;
+    }
+    rc = snprintf(out, out_size, "%s/%s", root, suffix);
+    return rc > 0 && (size_t)rc < out_size;
+}
+
+static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
+                                    const char *path,
+                                    char *buf,
+                                    size_t buf_size) {
+    int pipefd[2];
+    pid_t pid;
+    char frames[32];
+    const char *argv[20];
+    int argc = 0;
+    size_t used = 0;
+    int status;
+
+    if (!spec || !path || !buf || buf_size == 0U) {
+        return -1;
+    }
+    buf[0] = '\0';
+    snprintf(frames, sizeof(frames), "%d", spec->boot_frames);
+
+    argv[argc++] = "timeout";
+    argv[argc++] = "35";
+    argv[argc++] = firestaff_bin();
+    argv[argc++] = "--game";
+    argv[argc++] = spec->game;
+    argv[argc++] = "--data-dir";
+    argv[argc++] = path;
+    argv[argc++] = "--boot-probe";
+    argv[argc++] = "--boot-probe-frames";
+    argv[argc++] = frames;
+    if (spec->script && spec->script[0] != '\0') {
+        argv[argc++] = "--script";
+        argv[argc++] = spec->script;
+    }
+    argv[argc++] = "--boot-probe-expect-phase";
+    argv[argc++] = spec->expect_phase;
+    argv[argc++] = "--duration";
+    argv[argc++] = "0";
+    argv[argc] = NULL;
+
+    if (pipe(pipefd) != 0) {
+        snprintf(buf, buf_size, "pipe failed");
+        return -1;
+    }
+    pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        snprintf(buf, buf_size, "fork failed");
+        return -1;
+    }
+    if (pid == 0) {
+        (void)setenv("SDL_VIDEODRIVER", "dummy", 1);
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        dup2(pipefd[1], STDERR_FILENO);
+        close(pipefd[1]);
+        execvp("timeout", (char * const *)argv);
+        perror("execvp timeout");
+        _exit(127);
+    }
+
+    close(pipefd[1]);
+    while (used + 1U < buf_size) {
+        ssize_t n = read(pipefd[0], buf + used, buf_size - used - 1U);
+        if (n <= 0) {
+            break;
+        }
+        used += (size_t)n;
+    }
+    buf[used] = '\0';
+    close(pipefd[0]);
+    if (waitpid(pid, &status, 0) < 0) {
+        return -1;
+    }
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
+
+static void run_path(const Tier1PathSpec* spec, const char *root) {
+    char path[1024];
+    char buf[8192];
+    int wait_status;
+
     if (!spec->game) return;
-    if (!path_exists(spec->path)) {
+    if (!build_path(root, spec->path_suffix, path, sizeof(path))) {
+        printf("  FAIL: %s — path too long (%s/%s)\n",
+               spec->label, root ? root : "", spec->path_suffix);
+        ++g_fail;
+        return;
+    }
+    if (!path_exists(path)) {
         printf("  SKIP: %s (%s missing — supply your own data)\n",
-               spec->label, spec->path);
+               spec->label, path);
         ++g_skipped;
         return;
     }
 
-    char cmd[1400];
-    if (spec->script && spec->script[0] != '\0') {
-        snprintf(cmd, sizeof(cmd),
-                 "SDL_VIDEODRIVER=dummy timeout 35 %s --game %s --data-dir '%s' --boot-probe --boot-probe-frames %d --script '%s' --boot-probe-expect-phase %s --duration 0 2>&1",
-                 firestaff_bin(), spec->game, spec->path,
-                 spec->boot_frames, spec->script, spec->expect_phase);
-    } else {
-        snprintf(cmd, sizeof(cmd),
-                 "SDL_VIDEODRIVER=dummy timeout 35 %s --game %s --data-dir '%s' --boot-probe --boot-probe-frames %d --boot-probe-expect-phase %s --duration 0 2>&1",
-                 firestaff_bin(), spec->game, spec->path,
-                 spec->boot_frames, spec->expect_phase);
-    }
-
-    FILE* f = popen(cmd, "r");
-    if (!f) {
-        printf("  FAIL: %s — popen failed\n", spec->label);
-        ++g_fail;
-        return;
-    }
-
-    char buf[8192];
-    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
-    buf[n] = '\0';
-    int rc = pclose(f);
-    int wait_status = WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
+    wait_status = run_firestaff_boot_probe(spec, path, buf, sizeof(buf));
 
     if (wait_status == 0 &&
         strstr(buf, "FIRESTAFF BOOT PROBE READY") != NULL &&
@@ -150,14 +239,14 @@ static void run_path(const Tier1PathSpec* spec) {
     if (strstr(buf, "direct launch failed") != NULL ||
         strstr(buf, "phase-a run failed") != NULL) {
         printf("  FAIL: %s — direct-launch refused (%s)\n",
-               spec->label, spec->path);
+               spec->label, path);
         printf("    captured: %.200s%s\n", buf,
                strlen(buf) > 200 ? "..." : "");
         ++g_fail;
         return;
     }
 
-    if (n == 0) {
+    if (buf[0] == '\0') {
         printf("  FAIL: %s — silent exit (CSB-style launcher issue)\n",
                spec->label);
         ++g_fail;
@@ -171,13 +260,14 @@ static void run_path(const Tier1PathSpec* spec) {
 }
 
 int main(void) {
+    const char *root = data_root();
     printf("=== Firestaff Tier 1 #5 strict boot-probe per path ===\n");
     printf("FIRESTAFF_BIN=%s\n", firestaff_bin());
-    printf("DEFAULT_DATA_ROOT=%s\n\n", DEFAULT_DATA_ROOT);
+    printf("DATA_ROOT=%s\n\n", root);
 
     for (size_t i = 0; kPaths[i].game != NULL; ++i) {
         printf("[%s]\n", kPaths[i].label);
-        run_path(&kPaths[i]);
+        run_path(&kPaths[i], root);
     }
 
     printf("\n# summary: %d passed, %d failed, %d skipped\n",
