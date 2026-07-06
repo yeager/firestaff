@@ -6,6 +6,7 @@
 #endif
 
 #include "menu_startup_m12.h"
+#include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 
 #include <SDL3/SDL_dialog.h>
@@ -140,6 +141,50 @@ static int isolate_home_and_data_root(char dataRoot[M12_ASSET_DATA_DIR_CAPACITY]
     }
     return make_child_dir(home, "empty-data-root", dataRoot);
 #endif
+}
+
+static int write_text_file(const char* path, const char* text) {
+    FILE* fp;
+    size_t len;
+    if (!path) {
+        return 0;
+    }
+    fp = fopen(path, "wb");
+    if (!fp) {
+        return 0;
+    }
+    if (!text) {
+        text = "";
+    }
+    len = strlen(text);
+    if (len > 0U && fwrite(text, 1U, len, fp) != len) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+static int seed_dm1_under_data_root(const char* dataRoot,
+                                    char graphicsMd5[M12_ASSET_MD5_CAPACITY],
+                                    char dungeonMd5[M12_ASSET_MD5_CAPACITY]) {
+    char dm1Dir[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    static const char graphicsPayload[] =
+        "Firestaff M12 synthetic DM1 GRAPHICS.DAT fixture\n";
+    static const char dungeonPayload[] =
+        "Firestaff M12 synthetic DM1 DUNGEON.DAT fixture\n";
+    if (!FSP_JoinPath(dm1Dir, sizeof(dm1Dir), dataRoot, "dm1") ||
+        !FSP_CreateDirectoryRecursive(dm1Dir) ||
+        !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), dm1Dir, "renamed-gfx.payload") ||
+        !FSP_JoinPath(dungeonPath, sizeof(dungeonPath), dm1Dir, "renamed-dungeon.payload") ||
+        !write_text_file(graphicsPath, graphicsPayload) ||
+        !write_text_file(dungeonPath, dungeonPayload) ||
+        !m12_file_md5_hex(graphicsPath, graphicsMd5) ||
+        !m12_file_md5_hex(dungeonPath, dungeonMd5)) {
+        return 0;
+    }
+    return 1;
 }
 
 static const M12_AssetVersionStatus* first_dm1_version(const M12_StartupMenuState* state) {
@@ -399,6 +444,34 @@ static void check_default_data_dir_scans_asynchronously(void) {
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), defaultRoot) == 0);
 }
 
+static void check_start_menu_promotes_saved_game_leaf_to_parent(void) {
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char nexusLeaf[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(FSP_JoinPath(nexusLeaf, sizeof(nexusLeaf), dataRoot, "nexus"));
+    CHECK(FSP_CreateDirectoryRecursive(nexusLeaf));
+    CHECK(seed_dm1_under_data_root(dataRoot, graphicsMd5, dungeonMd5));
+    if (failures) {
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
+    M12_StartupMenu_InitWithDataDir(&state, nexusLeaf, NULL);
+
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataRoot) == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 1);
+    CHECK(M12_AssetStatus_GetRuntimeDataDir(&state.assetStatus, "dm1")[0] != '\0');
+    CHECK(strcmp(M12_AssetStatus_GetRuntimeDataDir(&state.assetStatus, "dm1"),
+                 nexusLeaf) != 0);
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+
 int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
     check_cancel_preserves_no_data_state();
@@ -406,6 +479,7 @@ int main(void) {
     check_active_scan_message_requests_cancel();
     check_selected_folder_scans_asynchronously();
     check_default_data_dir_scans_asynchronously();
+    check_start_menu_promotes_saved_game_leaf_to_parent();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
