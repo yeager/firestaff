@@ -433,7 +433,6 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
                                                         M11_GameViewState* state) {
     const struct DungeonMapDesc_Compat* map;
     const M11_AssetSlot* portraits;
-    int map0Base = 0;
     int seen = 0;
     int assetsAvailable;
     int savedMapIndex;
@@ -461,8 +460,12 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
     assetsAvailable = portraits && portraits->loaded && portraits->pixels;
     for (x = 0; x < (int)map->width; ++x) {
         for (y = 0; y < (int)map->height; ++y) {
-            int squareIndex = map0Base + x * (int)map->height + y;
-            unsigned short thing = state->world.things->squareFirstThings[squareIndex];
+            unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                state->world.dungeon,
+                state->world.things,
+                0,
+                x,
+                y);
             int guard = 0;
             while (thing != THING_ENDOFLIST && thing != THING_NONE && guard++ < 64) {
                 if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
@@ -1257,18 +1260,16 @@ int main(int argc, char** argv) {
              * sensor instead. */
             for (mapIdx = 0; !found && mapIdx < (int)mirrorView.world.dungeon->header.mapCount; ++mapIdx) {
                 const struct DungeonMapDesc_Compat* map = &mirrorView.world.dungeon->maps[mapIdx];
-                int base = 0;
-                int prev;
                 int x;
                 int y;
-                for (prev = 0; prev < mapIdx; ++prev) {
-                    base += (int)mirrorView.world.dungeon->maps[prev].width *
-                            (int)mirrorView.world.dungeon->maps[prev].height;
-                }
                 for (x = 0; !found && x < (int)map->width; ++x) {
                     for (y = 0; !found && y < (int)map->height; ++y) {
-                        int idx = base + x * (int)map->height + y;
-                        unsigned short thing = mirrorView.world.things->squareFirstThings[idx];
+                        unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                            mirrorView.world.dungeon,
+                            mirrorView.world.things,
+                            mapIdx,
+                            x,
+                            y);
                         int guard = 0;
                         while (thing != THING_ENDOFLIST && thing != THING_NONE && guard++ < 8) {
                             int type = THING_GET_TYPE(thing);
@@ -10085,10 +10086,10 @@ int main(int argc, char** argv) {
         int okR = M11_GameView_GetC3200CreatureSideZonePoint(0, 0,  1, 1, 0, &rx, &ry);
         int okS = M11_GameView_GetC3200CreatureSideZonePoint(1, 1, -1, 2, 1, &sx, &sy);
         probe_record(&tally, "INV_GV_256D",
-                     okL && lx == -21 && ly == 111 &&
-                     okR && rx == 244 && ry == 111 &&
-                     okS && sx == 35 && sy == 90,
-                     "side-cell creature placement binds C3200 left/right source zone samples");
+                     okL && lx == 79 && ly == 111 &&
+                     okR && rx == 144 && ry == 111 &&
+                     okS && sx == 135 && sy == 90,
+                     "side-cell creature placement binds ReDMCSB G0224 D1/D2/D3 side-zone samples");
     }
 
     /* ── Floor ornament ordinal query ── */
