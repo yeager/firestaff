@@ -11223,21 +11223,19 @@ static Nexus_V1_StartupInput m11_nexus_startup_input_from_m12(
     }
 }
 
-static M11_GameInputResult m11_nexus_startup_activate_save_row(
-    M11_GameViewState *state)
+static M11_GameInputResult m11_nexus_startup_apply_save_action(
+    M11_GameViewState *state,
+    const Nexus_V1_StartupAction *action)
 {
-    Nexus_V1_StartupMenu menu;
-    Nexus_V1_StartupAction action;
-
-    if (!state || !state->nexusState.startup_save_select_active) {
+    if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_nexus_startup_menu_from_state(state, &menu);
-    if (!nexus_v1_startup_menu_activate_selected(&menu, &action)) {
-        return M11_GAME_INPUT_IGNORED;
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_NONE) {
+        m11_set_status(state, "STARTUP", "NEXUS SAVE SELECT");
+        return M11_GAME_INPUT_REDRAW;
     }
-    if (action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT) {
-        if (!m11_nexus_resume_from_save_path(state, action.path)) {
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT) {
+        if (!m11_nexus_resume_from_save_path(state, action->path)) {
             m11_set_status(state, "STARTUP", "NEXUS LOAD FAILED");
             return M11_GAME_INPUT_REDRAW;
         }
@@ -11245,11 +11243,18 @@ static M11_GameInputResult m11_nexus_startup_activate_save_row(
         m11_set_status(state, "BOOT", "NEXUS RESUMED");
         return M11_GAME_INPUT_REDRAW;
     }
-    if (action.kind == NEXUS_V1_STARTUP_ACTION_NEW_GAME) {
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_NEW_GAME) {
         state->nexusState.startup_save_select_active = 0;
         state->nexusState.champion_select_active = 1;
         state->nexusState.champion_cursor = 0;
         m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (action->kind == NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE) {
+        state->nexusState.startup_save_select_active = 0;
+        state->nexusState.title_active = 1;
+        state->nexusState.title_frame = 0;
+        m11_set_status(state, "STARTUP", "NEXUS TITLE");
         return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
@@ -11276,34 +11281,7 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
                    : M11_GAME_INPUT_REDRAW;
     }
     m11_nexus_startup_menu_to_state(state, &menu);
-    if (action.kind == NEXUS_V1_STARTUP_ACTION_NONE) {
-        m11_set_status(state, "STARTUP", "NEXUS SAVE SELECT");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT) {
-        if (!m11_nexus_resume_from_save_path(state, action.path)) {
-            m11_set_status(state, "STARTUP", "NEXUS LOAD FAILED");
-            return M11_GAME_INPUT_REDRAW;
-        }
-        state->nexusState.startup_save_select_active = 0;
-        m11_set_status(state, "BOOT", "NEXUS RESUMED");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (action.kind == NEXUS_V1_STARTUP_ACTION_NEW_GAME) {
-        state->nexusState.startup_save_select_active = 0;
-        state->nexusState.champion_select_active = 1;
-        state->nexusState.champion_cursor = 0;
-        m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (action.kind == NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE) {
-        state->nexusState.startup_save_select_active = 0;
-        state->nexusState.title_active = 1;
-        state->nexusState.title_frame = 0;
-        m11_set_status(state, "STARTUP", "NEXUS TITLE");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    return M11_GAME_INPUT_REDRAW;
+    return m11_nexus_startup_apply_save_action(state, &action);
 }
 
 static M11_GameInputResult m11_nexus_startup_apply_champion_action(
@@ -11314,6 +11292,8 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
         return M11_GAME_INPUT_IGNORED;
     }
     switch (action->kind) {
+        case NEXUS_V1_STARTUP_ACTION_NONE:
+            return M11_GAME_INPUT_REDRAW;
         case NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR:
             state->nexusState.champion_cursor = action->row;
             m11_set_status(state, "STARTUP", "NEXUS CHAMPION CURSOR");
@@ -16398,6 +16378,8 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     }
     if (state->nexusState.startup_save_select_active) {
         Nexus_V1_StartupHit hit;
+        Nexus_V1_StartupMenu menu;
+        Nexus_V1_StartupAction action;
         if (!nexus_v1_startup_save_hit(
                 state->nexusState.startup_save_row_count,
                 x,
@@ -16405,35 +16387,34 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 &hit)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (hit.kind == NEXUS_V1_STARTUP_HIT_SAVE_ROW) {
-            state->nexusState.startup_save_selected_row = hit.row;
-            return m11_nexus_startup_activate_save_row(state);
+        m11_nexus_startup_menu_from_state(state, &menu);
+        if (!nexus_v1_startup_menu_handle_hit(&menu, &hit, &action)) {
+            return M11_GAME_INPUT_IGNORED;
         }
-        if (hit.kind == NEXUS_V1_STARTUP_HIT_SAVE_PANEL) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-        return M11_GAME_INPUT_IGNORED;
+        m11_nexus_startup_menu_to_state(state, &menu);
+        return m11_nexus_startup_apply_save_action(state, &action);
     }
     if (state->nexusState.champion_select_active) {
         Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
         Nexus_V1_StartupHit hit;
+        Nexus_V1_StartupAction action;
+        int cursor = state->nexusState.champion_cursor;
         if (!nexus_v1_startup_champion_hit(pool->champion_count,
                                            x,
                                            y,
                                            &hit)) {
+                return M11_GAME_INPUT_IGNORED;
+        }
+        if (!nexus_v1_startup_champion_handle_hit(
+                pool,
+                &cursor,
+                state->nexusState.startup_save_slot_mask,
+                &hit,
+                &action)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER) {
-            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
-        }
-        if (hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_ROW) {
-            state->nexusState.champion_cursor = hit.row;
-            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
-        }
-        if (hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_PANEL) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-        return M11_GAME_INPUT_IGNORED;
+        state->nexusState.champion_cursor = cursor;
+        return m11_nexus_startup_apply_champion_action(state, &action);
     }
     return M11_GAME_INPUT_IGNORED;
 }
