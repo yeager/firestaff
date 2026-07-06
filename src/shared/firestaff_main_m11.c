@@ -42,6 +42,7 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-phase <name> Fail unless the boot receipt phase matches\n"
             "  --boot-probe-expect-runtime Fail unless startup is inactive and a level is loaded\n"
             "  --boot-probe-expect-party x,y,dir Fail unless the boot receipt party matches\n"
+            "  --boot-probe-expect-champions <n> Fail unless the boot receipt champion count matches\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -212,6 +213,11 @@ int main(int argc, char** argv) {
                 return 2;
             }
             opts.bootProbeExpectParty = 1;
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-champions") == 0 && i + 1 < argc) {
+            opts.bootProbeExpectChampionCount = atoi(argv[++i]);
+            opts.bootProbeExpectChampions = 1;
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {

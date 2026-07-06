@@ -12209,6 +12209,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->partyX = -1;
     out->partyY = -1;
     out->partyDir = -1;
+    out->championCount = -1;
     if (!state) {
         return 0;
     }
@@ -12227,6 +12228,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyX = state->csbState.party_x;
         out->partyY = state->csbState.party_y;
         out->partyDir = state->csbState.party_dir;
+        out->championCount = state->world.party.championCount;
         out->runtimeTick = state->csbState.tick_count;
         m11_csb_startup_command_state_from_m11(state, &command_state);
         (void)csb_v1_startup_receipt_phase_pc34(
@@ -12244,6 +12246,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyX = state->dm2State.party_x;
         out->partyY = state->dm2State.party_y;
         out->partyDir = state->dm2State.party_dir;
+        out->championCount = state->world.party.championCount;
         out->runtimeTick = state->dm2State.tick_count;
         (void)dm2_v1_startup_receipt_phase(
             state->dm2State.startup_menu_active,
@@ -12258,6 +12261,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyX = state->nexusState.party_x;
         out->partyY = state->nexusState.party_y;
         out->partyDir = state->nexusState.party_dir;
+        out->championCount = state->nexusEngine
+            ? state->nexusEngine->champions.party_count
+            : -1;
         out->runtimeTick = state->nexusState.tick_count;
         (void)nexus_v1_startup_receipt_phase(
             state->nexusState.title_active,
@@ -12276,6 +12282,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyX = state->theronState.party_x;
         out->partyY = state->theronState.party_y;
         out->partyDir = state->theronState.party_dir;
+        out->championCount = state->theronWorld
+            ? ((Theron_V1_World*)state->theronWorld)->party.champion_count
+            : -1;
         out->runtimeTick = state->theronState.tick_count;
         (void)theron_v1_startup_receipt_phase(
             (Theron_StartupPhase)state->theronState.startup_phase,
@@ -12289,6 +12298,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->partyX = state->world.party.mapX;
     out->partyY = state->world.party.mapY;
     out->partyDir = state->world.party.direction;
+    out->championCount = state->world.party.championCount;
     out->runtimeTick = (int)state->world.gameTick;
     if (strcmp(state->sourceId, "dm1") == 0) {
         (void)dm1_v1_startup_receipt_phase_pc34(

@@ -48,6 +48,8 @@ typedef struct {
     int bootProbeExpectPartyX;
     int bootProbeExpectPartyY;
     int bootProbeExpectPartyDir;
+    int bootProbeExpectChampions; /* Require exact champion/party count. */
+    int bootProbeExpectChampionCount;
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
