@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.40  (2026-07-06)",
+    "  - Packages the post-v3.0.39 Nexus save-startup and DM2 startup action work now on main.",
+    "  - Nexus title boot now keeps the title hold under an explicit startup sequence contract.",
+    "  - Nexus save startup now owns its save action routing through a Nexus-specific contract.",
+    "  - DM2 startup now owns its menu action routing through a DM2-specific contract.",
+    "",
     "V3.0.39  (2026-07-06)",
     "  - Packages the post-v3.0.38 Nexus and DM2 startup ownership work now on main.",
     "  - Nexus title boot now advances through frame-dependent reveal timing with a minimum skip gate.",
@@ -425,5 +431,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.39";
+    return "3.0.40";
 }
