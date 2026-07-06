@@ -164,6 +164,14 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int fallback_subtitle_y;
     int fallback_subtitle_style;
     const char *fallback_subtitle_text;
+    int fallback_status_x;
+    int fallback_status_y;
+    int fallback_status_style;
+    const char *fallback_status_text;
+    int fallback_detail_x;
+    int fallback_detail_y;
+    int fallback_detail_style;
+    const char *fallback_detail_text;
     int fallback_prompt_x;
     int fallback_prompt_y;
     int fallback_prompt_style;
