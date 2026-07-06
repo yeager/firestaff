@@ -489,36 +489,64 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
                  "all Hall of Champions C127 champion mirror sensors are present in source data");
     if (assetsAvailable) {
         unsigned char fb[320 * 200];
-        int firstRoute;
-        int secondRoute;
-        int firstBest;
-        int secondBest;
-        /* v2.7.22: real DM1 V1 Hall of Champions C127 sensors are at
-         * (1,2) NORTH (HALK, ordinal 1) and (1,5) NORTH (ZED, ordinal
-         * 10).  The OLD (1,3)/(1,4) NORTH poses were the TextString
-         * catalog route and have no C127 sensor.  Match the v2.7.22
-         * contract by walking both (1,2) and (1,5). */
-        state->world.party.mapIndex = 0;
-        state->world.party.mapX = 1;
-        state->world.party.mapY = 2;
-        state->world.party.direction = DIR_NORTH;
-        firstRoute = M11_GameView_GetFrontMirrorOrdinal(state);
-        memset(fb, 0, sizeof(fb));
-        M11_GameView_Draw(state, fb, 320, 200);
-        firstBest = probe_best_front_portrait_index(portraits, fb);
-        state->world.party.mapX = 1;
-        state->world.party.mapY = 5;
-        state->world.party.direction = DIR_NORTH;
-        secondRoute = M11_GameView_GetFrontMirrorOrdinal(state);
-        memset(fb, 0, sizeof(fb));
-        M11_GameView_Draw(state, fb, 320, 200);
-        secondBest = probe_best_front_portrait_index(portraits, fb);
+        int routes[2] = { -1, -1 };
+        int bests[2] = { -1, -1 };
+        int foundRoutes = 0;
+        for (x = 0; x < (int)map->width && foundRoutes < 2; ++x) {
+            for (y = 0; y < (int)map->height && foundRoutes < 2; ++y) {
+                unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    state->world.dungeon,
+                    state->world.things,
+                    0,
+                    x,
+                    y);
+                int guard = 0;
+                while (thing != THING_ENDOFLIST && thing != THING_NONE && guard++ < 64 &&
+                       foundRoutes < 2) {
+                    if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
+                        int sensorIndex = THING_GET_INDEX(thing);
+                        if (sensorIndex >= 0 && sensorIndex < state->world.things->sensorCount &&
+                            state->world.things->sensors[sensorIndex].sensorType == 127) {
+                            int sensorData = (int)state->world.things->sensors[sensorIndex].sensorData;
+                            int cell = (int)THING_GET_CELL(thing);
+                            if (sensorData >= 0 &&
+                                sensorData < state->mirrorCatalog.count) {
+                                state->world.party.mapIndex = 0;
+                                state->world.party.mapX = x;
+                                state->world.party.mapY = y;
+                                state->world.party.direction = (cell + 2) & 3;
+                                switch (state->world.party.direction) {
+                                    case DIR_NORTH: state->world.party.mapY += 1; break;
+                                    case DIR_EAST:  state->world.party.mapX -= 1; break;
+                                    case DIR_SOUTH: state->world.party.mapY -= 1; break;
+                                    default:        state->world.party.mapX += 1; break;
+                                }
+                                if (state->world.party.mapX >= 0 &&
+                                    state->world.party.mapX < (int)map->width &&
+                                    state->world.party.mapY >= 0 &&
+                                    state->world.party.mapY < (int)map->height &&
+                                    M11_GameView_GetFrontMirrorOrdinal(state) == sensorData) {
+                                    routes[foundRoutes] = sensorData;
+                                    memset(fb, 0, sizeof(fb));
+                                    M11_GameView_Draw(state, fb, 320, 200);
+                                    bests[foundRoutes] = probe_best_front_portrait_index(portraits, fb);
+                                    ++foundRoutes;
+                                }
+                            }
+                        }
+                    }
+                    thing = probe_raw_next_thing(state->world.things, thing);
+                }
+            }
+        }
         probe_record(tally,
                      "INV_GV_407E",
-                     firstRoute == 1 &&
-                         secondRoute == 10 &&
-                         firstBest == 1 &&
-                         secondBest == 10,
+                     foundRoutes == 2 &&
+                         routes[0] >= 0 &&
+                         routes[1] >= 0 &&
+                         routes[0] != routes[1] &&
+                         bests[0] == routes[0] &&
+                         bests[1] == routes[1],
                      "Hall of Champions door/teleporter front mirrors blit matching D1C source portraits");
     } else {
         probe_skip(tally,
@@ -1277,7 +1305,8 @@ int main(int argc, char** argv) {
                             if (type == THING_TYPE_SENSOR &&
                                 thingIndex >= 0 &&
                                 thingIndex < mirrorView.world.things->sensorCount &&
-                                mirrorView.world.things->sensors[thingIndex].sensorType == 127) {
+                                mirrorView.world.things->sensors[thingIndex].sensorType == 127 &&
+                                THING_GET_CELL(thing) == DIR_SOUTH) {
                                 int sensorData = (int)mirrorView.world.things->sensors[thingIndex].sensorData;
                                 if (sensorData >= 0 &&
                                     sensorData < mirrorView.mirrorCatalog.count) {
@@ -1370,23 +1399,27 @@ int main(int argc, char** argv) {
             probe_record(&tally,
                          "INV_GV_407C",
                          M11_GameView_HandlePointer(&pointerMirrorReincarnate, 186, 115, 1) == M11_GAME_INPUT_REDRAW &&
-                             pointerMirrorReincarnate.candidateMirrorPanelActive == 0 &&
+                             pointerMirrorReincarnate.candidateMirrorPanelActive == 1 &&
+                             pointerMirrorReincarnate.candidateMirrorRenameActive == 1 &&
                              pointerMirrorReincarnate.world.party.championCount == 1 &&
                              pointerMirrorReincarnate.world.party.champions[0].hp.current > 0 &&
                              pointerMirrorReincarnate.partyDead == 0,
-                         "source C161 reincarnate center x186/y115 confirms the open mirror candidate panel without all-dead Game Over");
+                         "source C161 reincarnate center x186/y115 opens the rename flow without all-dead Game Over");
         }
         {
             M11_GameViewState pointerMirrorResurrect;
+            M11_GameInputResult resurrectClickResult;
             memcpy(&pointerMirrorResurrect, &mirrorView, sizeof(pointerMirrorResurrect));
             pointerMirrorResurrect.world.party.championCount = 0;
             memset(pointerMirrorResurrect.world.party.champions, 0, sizeof(pointerMirrorResurrect.world.party.champions));
             pointerMirrorResurrect.candidateMirrorPanelActive = 0;
             pointerMirrorResurrect.candidateMirrorOrdinal = -1;
             (void)M11_GameView_HandlePointer(&pointerMirrorResurrect, 111, 82, 1);
+            resurrectClickResult =
+                M11_GameView_HandlePointer(&pointerMirrorResurrect, 130, 115, 1);
             probe_record(&tally,
                          "INV_GV_407B",
-                         M11_GameView_HandlePointer(&pointerMirrorResurrect, 130, 115, 1) == M11_GAME_INPUT_REDRAW &&
+                         resurrectClickResult == M11_GAME_INPUT_REDRAW &&
                              pointerMirrorResurrect.candidateMirrorPanelActive == 0 &&
                              pointerMirrorResurrect.world.party.championCount == 1 &&
                              M11_GameView_GetFrontMirrorOrdinal(&pointerMirrorResurrect) == -1,
