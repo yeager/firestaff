@@ -867,6 +867,15 @@ static int any_menu_game_available(const M12_StartupMenuState* menu) {
             M12_AssetStatus_GameAvailable(&menu->assetStatus, "theron"));
 }
 
+static int ready_game_count_for_status(const M12_AssetStatus* status) {
+    return status ?
+           (M12_AssetStatus_GameAvailable(status, "dm1") ? 1 : 0) +
+           (M12_AssetStatus_GameAvailable(status, "csb") ? 1 : 0) +
+           (M12_AssetStatus_GameAvailable(status, "dm2") ? 1 : 0) +
+           (M12_AssetStatus_GameAvailable(status, "nexus") ? 1 : 0) +
+           (M12_AssetStatus_GameAvailable(status, "theron") ? 1 : 0) : 0;
+}
+
 static void check_start_menu_heals_stale_config_data_dir(const char* homeRoot) {
     char defaultParent[M12_ASSET_DATA_DIR_CAPACITY];
     char defaultDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -932,6 +941,7 @@ static void check_start_menu_prefers_default_root_with_more_games(
     char dungeonMd5[M12_ASSET_MD5_CAPACITY];
     M12_Config config;
     M12_StartupMenuState menu;
+    M12_AssetStatus cliStatus;
 
     if (!FSP_JoinPath(staleDataRoot, sizeof(staleDataRoot),
                       homeRoot, "stale-nexus-only-data") ||
@@ -972,10 +982,16 @@ static void check_start_menu_prefers_default_root_with_more_games(
     check_int(M12_Config_Save(&config) == 1,
               "start menu partial-stale fixture must save startup config");
 
+    memset(&cliStatus, 0, sizeof(cliStatus));
+    M12_AssetStatus_Scan(&cliStatus, defaultDataRoot);
+
     M12_StartupMenu_InitWithDataDir(&menu, NULL, NULL);
     check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
                      defaultDataRoot) == 0,
               "start menu must prefer default root when it verifies more games than saved config");
+    check_int(ready_game_count_for_status(&menu.assetStatus) ==
+                  ready_game_count_for_status(&cliStatus),
+              "start menu default-root rescan must match --scan-data ready-game count");
     check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
               "start menu default-root rescan must expose DM1");
     check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "nexus") == 1,
@@ -986,6 +1002,9 @@ static void check_start_menu_prefers_default_root_with_more_games(
     check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
                      defaultDataRoot) == 0,
               "start menu --game hint without --data-dir must still use the broad default scan root");
+    check_int(ready_game_count_for_status(&menu.assetStatus) ==
+                  ready_game_count_for_status(&cliStatus),
+              "start menu --game hint without --data-dir must match --scan-data ready-game count");
     check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
               "start menu --game hint without --data-dir must not hide sibling DM1 data");
     check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "nexus") == 1,

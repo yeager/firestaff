@@ -269,6 +269,10 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
 static void m12_probe_quick_resume(M12_StartupMenuState* state);
 static void m12_save_config(const M12_StartupMenuState* state);
+static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
+                                          M12_Config* config,
+                                          int hasExplicitDataDirOverride,
+                                          const char* gameId);
 static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
                                     const char* gameId);
@@ -2676,6 +2680,42 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     M12_Config_Save(&config);
 }
 
+static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
+                                          M12_Config* config,
+                                          int hasExplicitDataDirOverride,
+                                          const char* gameId) {
+    if (!state || !config) {
+        return;
+    }
+    if (hasExplicitDataDirOverride && gameId && gameId[0] != '\0') {
+        M12_AssetStatus_ScanGame(&state->assetStatus, config->dataDir, gameId);
+    } else {
+        M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+    }
+    if (!hasExplicitDataDirOverride) {
+        char resolvedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+        if (FSP_ResolveDataDir(resolvedDataDir, sizeof(resolvedDataDir), NULL) &&
+            resolvedDataDir[0] != '\0' &&
+            strcmp(resolvedDataDir, config->dataDir) != 0) {
+            M12_AssetStatus fallbackStatus;
+            int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
+            int fallbackReadyCount;
+            memset(&fallbackStatus, 0, sizeof(fallbackStatus));
+            M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
+            fallbackReadyCount = m12_asset_ready_game_count(&fallbackStatus);
+            if (fallbackReadyCount > currentReadyCount ||
+                (gameId && gameId[0] != '\0' &&
+                 !M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) &&
+                 M12_AssetStatus_GameAvailable(&fallbackStatus, gameId))) {
+                state->assetStatus = fallbackStatus;
+                snprintf(config->dataDir, sizeof(config->dataDir), "%s",
+                         M12_AssetStatus_GetDataDir(&state->assetStatus));
+                M12_Config_Save(config);
+            }
+        }
+    }
+}
+
 static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
                                     const char* gameId) {
@@ -2900,37 +2940,10 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
      * touch the sync root when the flag is off or the root is
      * unusable; see cloud_sync_m12.h for the full contract. */
     M12_CloudSync_ApplyConfig(&config);
-    if (hasExplicitDataDirOverride && gameId && gameId[0] != '\0') {
-        M12_AssetStatus_ScanGame(&state->assetStatus, config.dataDir, gameId);
-    } else {
-        M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
-    }
-    if (!hasExplicitDataDirOverride) {
-        char resolvedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
-        if (FSP_ResolveDataDir(resolvedDataDir, sizeof(resolvedDataDir), NULL) &&
-            resolvedDataDir[0] != '\0' &&
-            strcmp(resolvedDataDir, config.dataDir) != 0) {
-            M12_AssetStatus fallbackStatus;
-            int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
-            int fallbackReadyCount;
-            memset(&fallbackStatus, 0, sizeof(fallbackStatus));
-            if (hasExplicitDataDirOverride && gameId && gameId[0] != '\0') {
-                M12_AssetStatus_ScanGame(&fallbackStatus, resolvedDataDir, gameId);
-            } else {
-                M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
-            }
-            fallbackReadyCount = m12_asset_ready_game_count(&fallbackStatus);
-            if (fallbackReadyCount > currentReadyCount ||
-                (gameId && gameId[0] != '\0' &&
-                 !M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) &&
-                 M12_AssetStatus_GameAvailable(&fallbackStatus, gameId))) {
-                state->assetStatus = fallbackStatus;
-                snprintf(config.dataDir, sizeof(config.dataDir), "%s",
-                         M12_AssetStatus_GetDataDir(&state->assetStatus));
-                M12_Config_Save(&config);
-            }
-        }
-    }
+    m12_scan_startup_asset_status(state,
+                                  &config,
+                                  hasExplicitDataDirOverride,
+                                  gameId);
     /* Mirror V2.2 modern-assets installation state into the config struct
      * so the value is persisted on save (even though it's set by
      * M12_AssetStatus_Scan at runtime, not by the user). */
