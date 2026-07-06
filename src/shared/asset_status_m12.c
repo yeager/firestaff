@@ -648,28 +648,6 @@ static int m12_path_tail_equals(const char* path, const char* name) {
     return m12_ascii_equals_ignore_case(m12_basename_ptr(path), name);
 }
 
-static int m12_path_has_extension(const char* path, const char* ext) {
-    size_t pathLen;
-    size_t extLen;
-    size_t i;
-    if (!path || !ext) {
-        return 0;
-    }
-    pathLen = strlen(path);
-    extLen = strlen(ext);
-    if (pathLen < extLen) {
-        return 0;
-    }
-    path += pathLen - extLen;
-    for (i = 0U; i < extLen; ++i) {
-        if (m12_char_lower((unsigned char)path[i]) !=
-            m12_char_lower((unsigned char)ext[i])) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
 static const char* const* m12_fast_candidate_subdirs_for_game(const char* gameId) {
     static const char* const dm1Subdirs[] = {"dm1", "dm1-multilingual", "", NULL};
     static const char* const csbSubdirs[] = {"csb", "", NULL};
@@ -1433,11 +1411,6 @@ static int m12_try_match_direct_nexus_request(
         return 0;
     }
     if (FSP_FileExists(requestedDataDir)) {
-        if (!m12_path_has_extension(requestedDataDir, ".cue") &&
-            !m12_path_has_extension(requestedDataDir, ".bin") &&
-            !m12_path_has_extension(requestedDataDir, ".iso")) {
-            return 0;
-        }
         if (!FSP_ParentDir(scanRoot, sizeof(scanRoot), requestedDataDir)) {
             m12_copy_string(scanRoot, sizeof(scanRoot), ".");
         }
