@@ -492,6 +492,44 @@ int main(void) {
                                     "M11 Nexus startup slot load mirrors saved tick");
                         M11_GameView_Shutdown(&view);
                         nexus_v1_launcher_shutdown();
+
+                        fill_nexus_spec(&spec, real_dir);
+                        M11_GameView_Init(&view);
+                        expect_true(M11_GameView_Start(&view, &spec),
+                                    "M11 Nexus startup with save slot restarts for NEW GAME");
+                        expect_true(view.nexusState.title_active == 1,
+                                    "M11 Nexus save-slot NEW GAME path starts on title");
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_ACCEPT) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus save-slot NEW GAME path advances title");
+                        expect_true(view.nexusState.startup_save_select_active == 1,
+                                    "M11 Nexus save-slot NEW GAME path exposes save menu");
+                        while (view.nexusState.startup_save_selected_row + 1 <
+                               view.nexusState.startup_save_row_count) {
+                            expect_true(M11_GameView_HandleInput(
+                                            &view, M12_MENU_INPUT_DOWN) ==
+                                            M11_GAME_INPUT_REDRAW,
+                                        "M11 Nexus save-slot NEW GAME path moves down");
+                        }
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_ACCEPT) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus save-slot NEW GAME path accepts NEW GAME");
+                        expect_true(view.nexusState.startup_save_select_active == 0,
+                                    "M11 Nexus save-slot NEW GAME path closes save menu");
+                        expect_true(view.nexusState.champion_select_active == 1,
+                                    "M11 Nexus save-slot NEW GAME path enters champion selection");
+                        expect_true(view.nexusEngine &&
+                                        view.nexusEngine->champions.party_count == 0,
+                                    "M11 Nexus save-slot NEW GAME path keeps empty new party");
+                        memset(framebuffer, 0, sizeof(framebuffer));
+                        M11_GameView_Draw(&view, framebuffer, 320, 200);
+                        expect_true(count_nonzero_pixels(framebuffer,
+                                                         sizeof(framebuffer)) > 500,
+                                    "M11 Nexus save-slot NEW GAME path draws champion select");
+                        M11_GameView_Shutdown(&view);
+                        nexus_v1_launcher_shutdown();
                     }
                     if (old_home[0]) {
                         (void)set_test_home(old_home);
