@@ -1320,6 +1320,16 @@ int main(void) {
                 "M11 CSB utility VIEW row stays on the startup menu");
     expect_true(strcmp(view.lastOutcome, "CSB PARTY READY") == 0,
                 "M11 CSB utility VIEW row reports party-ready status");
+    expect_true(view.csbState.startup_import_preview_active == 1,
+                "M11 CSB utility VIEW row enables the imported-party preview");
+    {
+        unsigned char fb[320 * 200];
+        memset(fb, 0, sizeof(fb));
+        view.assetsAvailable = 0;
+        M11_GameView_Draw(&view, fb, 320, 200);
+        expect_true(count_color_rect(fb, 320, 48, 164, 170, 10, 15u) > 20,
+                    "M11 CSB utility VIEW preview renders the second imported champion row");
+    }
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     40,
@@ -1332,6 +1342,8 @@ int main(void) {
                 "M11 CSB utility LOAD row routes through the resume command");
     expect_true(strcmp(view.lastOutcome, "CSB RESUME UNAVAILABLE") == 0,
                 "M11 CSB utility LOAD row reports unavailable resume without save");
+    expect_true(view.csbState.startup_import_preview_active == 0,
+                "M11 CSB utility LOAD row clears the imported-party preview");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     40,

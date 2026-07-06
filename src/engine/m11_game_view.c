@@ -112,6 +112,9 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
 static void m11_set_status(M11_GameViewState* state,
                            const char* title,
                            const char* detail);
+static void m11_format_champion_name(const unsigned char* raw,
+                                     char* out,
+                                     size_t outSize);
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
                                            const char* savePath);
 static void m11_nexus_release_title(M11_GameViewState* state);
@@ -2627,6 +2630,33 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                       menuRow->label,
                       &g_text_small);
     }
+    if (state->csbState.startup_import_preview_active) {
+        int count = state->world.party.championCount;
+        if (count > 4) {
+            count = 4;
+        }
+        for (i = 0; i < count; ++i) {
+            const struct ChampionState_Compat *champ =
+                &state->world.party.champions[i];
+            char name[32];
+            char preview[80];
+            m11_format_champion_name(champ->name, name, sizeof(name));
+            snprintf(preview,
+                     sizeof(preview),
+                     "%d %s  HP %d/%d",
+                     i + 1,
+                     name[0] ? name : "EMPTY",
+                     (int)champ->hp.current,
+                     (int)champ->hp.maximum);
+            m11_draw_text(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          48,
+                          154 + i * 10,
+                          preview,
+                          &g_text_small);
+        }
+    }
 }
 
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
@@ -2815,6 +2845,38 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     }
 }
 
+static M11_GameInputResult m11_csb_startup_activate_utility_action(
+    M11_GameViewState *state,
+    CSB_V1_UtilFlowAction action)
+{
+    if (!state) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    switch (action) {
+        case CSB_V1_UTIL_ACTION_NEW:
+            state->csbState.startup_import_preview_active = 0;
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
+        case CSB_V1_UTIL_ACTION_LOAD:
+            state->csbState.startup_import_preview_active = 0;
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
+        case CSB_V1_UTIL_ACTION_IMPORT:
+            state->csbState.startup_import_preview_active = 0;
+            m11_set_status(state, "BOOT", "CSB IMPORT READY");
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_UTIL_ACTION_VIEW:
+            state->csbState.startup_import_preview_active = 1;
+            m11_set_status(state, "BOOT", "CSB PARTY READY");
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_UTIL_ACTION_EXIT:
+        default:
+            return M11_GAME_INPUT_IGNORED;
+    }
+}
+
 static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     M11_GameViewState *state,
     int x,
@@ -2846,25 +2908,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
             break;
         }
     }
-    switch (action) {
-        case CSB_V1_UTIL_ACTION_NEW:
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
-        case CSB_V1_UTIL_ACTION_LOAD:
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
-        case CSB_V1_UTIL_ACTION_IMPORT:
-            m11_set_status(state, "BOOT", "CSB IMPORT READY");
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_VIEW:
-            m11_set_status(state, "BOOT", "CSB PARTY READY");
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_EXIT:
-        default:
-            return M11_GAME_INPUT_IGNORED;
-    }
+    return m11_csb_startup_activate_utility_action(state, action);
 }
 
 static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
@@ -2898,25 +2942,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     }
 
     action = csb_v1_util_flow_selected_action(&flow);
-    switch (action) {
-        case CSB_V1_UTIL_ACTION_NEW:
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
-        case CSB_V1_UTIL_ACTION_LOAD:
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
-        case CSB_V1_UTIL_ACTION_IMPORT:
-            m11_set_status(state, "BOOT", "CSB IMPORT READY");
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_VIEW:
-            m11_set_status(state, "BOOT", "CSB PARTY READY");
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_EXIT:
-        default:
-            return M11_GAME_INPUT_IGNORED;
-    }
+    return m11_csb_startup_activate_utility_action(state, action);
 }
 
 static void m11_format_dm2_item_name(int item_id, char* out, size_t out_size)
@@ -10621,6 +10647,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_import_available = 0;
         state->csbState.startup_import_champion_count = 0;
         state->csbState.startup_import_selected_action_index = 0;
+        state->csbState.startup_import_preview_active = 0;
         if (state->csbState.startup_import_utility_state !=
             (int)CSB_V1_UTIL_FLOW_DONE) {
             state->csbState.startup_import_utility_prompt[0] = '\0';
@@ -10650,6 +10677,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 state->csbState.startup_import_champion_count =
                     imported_party.ChampionCount;
                 state->csbState.startup_import_selected_action_index = 0;
+                state->csbState.startup_import_preview_active = 0;
             } else {
                 state->csbState.startup_import_dm1_save_path[0] = '\0';
             }
