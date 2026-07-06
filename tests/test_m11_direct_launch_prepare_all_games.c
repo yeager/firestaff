@@ -300,11 +300,11 @@ static void run_real_data_handoff_if_available(void) {
             if (strcmp(kCases[i].gameId, "dm1") == 0) {
                 opts.bootProbeExpectPhase = "dm1-runtime";
             } else if (strcmp(kCases[i].gameId, "dm2") == 0) {
-                opts.script = "enter";
+                opts.script = "key:enter";
                 opts.bootProbeExpectPhase = "dm2-runtime";
             } else if (strcmp(kCases[i].gameId, "csb") == 0) {
                 opts.bootProbeFrames = 240;
-                opts.script = "enter";
+                opts.script = "key:enter";
                 opts.bootProbeExpectPhase = "csb-runtime";
             } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
                 int rc = snprintf(appdata_dir, sizeof(appdata_dir),
@@ -315,10 +315,10 @@ static void run_real_data_handoff_if_available(void) {
                     (void)TEST_MKDIR(appdata_dir);
                     test_setenv("APPDATA", appdata_dir);
                 }
-                opts.script = "wait120,enter,enter,act";
+                opts.script = "wait120,key:enter,key:enter,key:space";
                 opts.bootProbeExpectPhase = "nexus-runtime";
             } else if (strcmp(kCases[i].gameId, "theron") == 0) {
-                opts.script = "enter,enter,act";
+                opts.script = "key:enter,key:enter,key:space";
                 opts.bootProbeExpectPhase = "theron-runtime";
             }
             test_setenv("SDL_VIDEODRIVER", "dummy");
