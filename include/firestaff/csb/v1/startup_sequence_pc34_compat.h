@@ -128,6 +128,7 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int title_dest_w;
     int title_dest_h;
     int title_special_palette;
+    int special_palette;
     int blink_prompt_visible;
     int opening_step;
     int closed_left_source_x;
