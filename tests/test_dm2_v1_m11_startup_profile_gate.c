@@ -1185,6 +1185,39 @@ int main(void) {
              save_root, TEST_PATH_SEP);
 
     fill_dm2_launch_spec(&spec, data_dir);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 DM2 startup slot-menu fixture launch succeeds");
+    profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    if (profile) {
+        dm2_v1_boot_set_save_root(profile, save_root);
+        view.dm2State.startup_menu_active = 1;
+        view.dm2State.startup_menu_selected_row = 0;
+        view.dm2State.startup_resume_available = 0;
+        view.dm2State.startup_slot_mask = (1u << 3);
+        view.dm2State.startup_menu_row_count = 2;
+        snprintf(view.dm2State.startup_save_root,
+                 sizeof(view.dm2State.startup_save_root),
+                 "%s",
+                 profile->save_root);
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view, 100, 78, M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 startup menu pointer loads SKSave03.dat slot");
+        expect_true(view.dm2State.startup_menu_active == 0,
+                    "M11 DM2 startup slot menu dismisses after pointer load");
+        expect_true(strstr(view.lastOutcome, "DM2 SLOT LOADED") != NULL,
+                    "M11 DM2 startup slot pointer reports slot-loaded status");
+        expect_true(view.dm2State.party_x == 23 &&
+                    view.dm2State.party_y == 11 &&
+                    view.dm2State.party_dir == 2,
+                    "M11 DM2 startup slot pointer mirrors saved party pose");
+        expect_true(view.dm2State.tick_count == 42,
+                    "M11 DM2 startup slot pointer mirrors saved game tick");
+    }
+    M11_GameView_Shutdown(&view);
+
+    fill_dm2_launch_spec(&spec, data_dir);
     spec.savePath = save_path;
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
