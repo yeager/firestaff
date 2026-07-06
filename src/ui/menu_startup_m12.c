@@ -1357,6 +1357,10 @@ static void m12_format_missing_files_for_game(const M12_StartupMenuState* state,
         snprintf(out, outSize, "MISSING: TRACK 02 .BIN/.ISO - DATA DIR BELOW");
         return;
     }
+    if (strcmp(gameId, "nexus") == 0) {
+        snprintf(out, outSize, "MISSING: NEXUS ISO/BIN/CUE OR EXTRACTED DM.BIN");
+        return;
+    }
     snprintf(out, outSize, "MISSING: ");
     count = M12_AssetStatus_GetRequiredFileCount(&state->assetStatus, gameId);
     for (i = 0U; i < count; ++i) {
