@@ -6284,6 +6284,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_startup_menu_action_contract.c
         src/dm2/dm2_v1_startup_menu.c
         src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_save_load.c
     )
     target_include_directories(test_dm2_v1_startup_menu_action_contract PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

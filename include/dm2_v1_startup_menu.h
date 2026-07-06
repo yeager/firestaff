@@ -63,6 +63,7 @@ void dm2_v1_startup_menu_init(DM2_V1_StartupMenu *menu,
                               const char *save_root);
 int dm2_v1_startup_menu_count_rows(int resume_available,
                                    unsigned int slot_mask);
+int dm2_v1_startup_menu_scan_saves(DM2_V1_StartupMenu *menu);
 int dm2_v1_startup_menu_refresh(DM2_V1_StartupMenu *menu,
                                 int resume_available,
                                 unsigned int slot_mask);

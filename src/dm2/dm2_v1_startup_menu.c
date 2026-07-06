@@ -1,4 +1,5 @@
 #include "dm2_v1_startup_menu.h"
+#include "dm2_v1_save_load.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -39,6 +40,28 @@ int dm2_v1_startup_menu_count_rows(int resume_available,
         }
     }
     return count + 1;
+}
+
+int dm2_v1_startup_menu_scan_saves(DM2_V1_StartupMenu *menu)
+{
+    unsigned int slot_mask = 0u;
+    int resume_available;
+    int slot;
+
+    if (!menu) {
+        return 0;
+    }
+    resume_available =
+        dm2_v1_save_has_valid_last_session(menu->save_root) ? 1 : 0;
+    for (slot = 0; slot < 10; ++slot) {
+        if (dm2_v1_save_has_valid_slot(menu->save_root, (uint8_t)slot)) {
+            slot_mask |= (1u << slot);
+        }
+    }
+    return dm2_v1_startup_menu_refresh(
+        menu,
+        resume_available,
+        slot_mask);
 }
 
 int dm2_v1_startup_menu_refresh(DM2_V1_StartupMenu *menu,

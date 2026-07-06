@@ -34,6 +34,20 @@ int main(void)
               menu.row_count == 3 &&
               menu.selected_row == 0,
           "refresh exposes Continue, slot, and New Game rows");
+    check(dm2_v1_startup_menu_scan_saves(&menu) &&
+              menu.resume_available == 0 &&
+              menu.slot_mask == 0u &&
+              menu.row_count == 1 &&
+              menu.selected_row == 0,
+          "scan saves exposes New Game only for empty startup root");
+    check(dm2_v1_startup_menu_scan_saves(NULL) == 0,
+          "scan saves rejects NULL startup menu");
+    check(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 2)) &&
+              menu.resume_available == 1 &&
+              menu.slot_mask == (1u << 2) &&
+              menu.row_count == 3 &&
+              menu.selected_row == 0,
+          "refresh restores Continue, slot, and New Game rows");
     row_count = dm2_v1_startup_menu_build_render_rows(
         &menu,
         rows,

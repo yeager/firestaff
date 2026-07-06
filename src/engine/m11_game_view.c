@@ -548,18 +548,8 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
 static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
                                        DM2_V1_BootProfile *profile)
 {
-    int slot;
-
     if (!state || !profile) {
         return;
-    }
-    state->dm2State.startup_resume_available =
-        dm2_v1_save_has_valid_last_session(profile->save_root) ? 1 : 0;
-    state->dm2State.startup_slot_mask = 0u;
-    for (slot = 0; slot < 10; ++slot) {
-        if (dm2_v1_save_has_valid_slot(profile->save_root, (uint8_t)slot)) {
-            state->dm2State.startup_slot_mask |= (1u << slot);
-        }
     }
     snprintf(state->dm2State.startup_save_root,
              sizeof(state->dm2State.startup_save_root),
@@ -569,10 +559,7 @@ static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
         DM2_V1_StartupMenu menu;
         dm2_v1_startup_menu_init(&menu, profile->save_root);
         menu.selected_row = state->dm2State.startup_menu_selected_row;
-        (void)dm2_v1_startup_menu_refresh(
-            &menu,
-            state->dm2State.startup_resume_available,
-            state->dm2State.startup_slot_mask);
+        (void)dm2_v1_startup_menu_scan_saves(&menu);
         state->dm2State.startup_resume_available = menu.resume_available;
         state->dm2State.startup_slot_mask = menu.slot_mask;
         state->dm2State.startup_menu_row_count = menu.row_count;
