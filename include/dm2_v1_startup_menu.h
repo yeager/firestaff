@@ -43,10 +43,29 @@ typedef struct {
     int selected_row;
 } DM2_V1_StartupMenu;
 
+enum {
+    DM2_V1_STARTUP_ROW_LABEL_CAPACITY = 48
+};
+
+typedef struct {
+    DM2_V1_StartupRowKind kind;
+    int row;
+    int slot;
+    int selected;
+    DM2_V1_StartupRect rect;
+    DM2_V1_StartupRect highlight_rect;
+    int text_x;
+    int text_y;
+    char label[DM2_V1_STARTUP_ROW_LABEL_CAPACITY];
+} DM2_V1_StartupRenderRow;
+
 void dm2_v1_startup_menu_init(DM2_V1_StartupMenu *menu,
                               const char *save_root);
 int dm2_v1_startup_menu_count_rows(int resume_available,
                                    unsigned int slot_mask);
+int dm2_v1_startup_menu_refresh(DM2_V1_StartupMenu *menu,
+                                int resume_available,
+                                unsigned int slot_mask);
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,
                                int row,
                                DM2_V1_StartupRowKind *out_kind,
@@ -62,5 +81,9 @@ int dm2_v1_startup_menu_handle_input(DM2_V1_StartupMenu *menu,
 int dm2_v1_startup_menu_handle_hit(DM2_V1_StartupMenu *menu,
                                    const DM2_V1_StartupHit *hit,
                                    DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_build_render_rows(
+    const DM2_V1_StartupMenu *menu,
+    DM2_V1_StartupRenderRow *rows,
+    int max_rows);
 
 #endif

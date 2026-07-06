@@ -560,14 +560,18 @@ static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
              sizeof(state->dm2State.startup_save_root),
              "%s",
              profile->save_root);
-    state->dm2State.startup_menu_row_count =
-        dm2_v1_startup_menu_count_rows(
+    {
+        DM2_V1_StartupMenu menu;
+        dm2_v1_startup_menu_init(&menu, profile->save_root);
+        menu.selected_row = state->dm2State.startup_menu_selected_row;
+        (void)dm2_v1_startup_menu_refresh(
+            &menu,
             state->dm2State.startup_resume_available,
             state->dm2State.startup_slot_mask);
-    if (state->dm2State.startup_menu_selected_row < 0 ||
-        state->dm2State.startup_menu_selected_row >=
-            state->dm2State.startup_menu_row_count) {
-        state->dm2State.startup_menu_selected_row = 0;
+        state->dm2State.startup_resume_available = menu.resume_available;
+        state->dm2State.startup_slot_mask = menu.slot_mask;
+        state->dm2State.startup_menu_row_count = menu.row_count;
+        state->dm2State.startup_menu_selected_row = menu.selected_row;
     }
 }
 
@@ -583,10 +587,11 @@ static void m11_dm2_startup_menu_from_state(
         state->dm2State.startup_save_root[0]
             ? state->dm2State.startup_save_root
             : NULL);
-    menu->resume_available = state->dm2State.startup_resume_available;
-    menu->slot_mask = state->dm2State.startup_slot_mask;
-    menu->row_count = state->dm2State.startup_menu_row_count;
     menu->selected_row = state->dm2State.startup_menu_selected_row;
+    (void)dm2_v1_startup_menu_refresh(
+        menu,
+        state->dm2State.startup_resume_available,
+        state->dm2State.startup_slot_mask);
 }
 
 static void m11_dm2_startup_menu_to_state(
@@ -657,23 +662,6 @@ static DM2_V1_StartupInput m11_dm2_startup_input_from_m12(
 static M11_GameInputResult m11_dm2_startup_apply_action(
     M11_GameViewState *state,
     const DM2_V1_StartupAction *action);
-
-static M11_GameInputResult m11_dm2_startup_activate_selected(
-    M11_GameViewState *state)
-{
-    DM2_V1_StartupMenu menu;
-    DM2_V1_StartupAction action;
-
-    if (!state || !state->dm2State.startup_menu_active ||
-        !state->dm2BootProfile) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    m11_dm2_startup_menu_from_state(state, &menu);
-    if (!dm2_v1_startup_menu_activate_selected(&menu, &action)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    return m11_dm2_startup_apply_action(state, &action);
-}
 
 static M11_GameInputResult m11_dm2_startup_apply_action(
     M11_GameViewState *state,
@@ -760,7 +748,7 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     if (action.kind == DM2_V1_STARTUP_ACTION_CONTINUE ||
         action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT ||
         action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
-        return m11_dm2_startup_activate_selected(state);
+        return m11_dm2_startup_apply_action(state, &action);
     }
     if (action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
         m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
@@ -3168,25 +3156,29 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           int framebufferHeight)
 {
     const M11_AssetSlot *entrance = NULL;
+    CSB_V1_StartupRenderPlan_PC34 plan;
     int drew_asset = 0;
-    int blink_on = 1;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
         return;
     }
+    if (!m11_csb_startup_build_render_plan(state, &plan)) {
+        return;
+    }
 
-    if (state->csbState.startup_title_active) {
+    if (plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
         m11_draw_csb_startup_title(state,
                                    framebuffer,
                                    framebufferWidth,
-                                   framebufferHeight);
+                                   framebufferHeight,
+                                   plan.title_source_step);
         return;
     }
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
-    if (state->csbState.startup_entrance_credits_active) {
+    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
         const M11_AssetSlot *credits = NULL;
         if (state->assetsAvailable) {
             credits = M11_AssetLoader_Load(
@@ -3210,10 +3202,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         }
         return;
     }
-    if (!m11_csb_startup_entrance_waiting_for_input(state) &&
-        state->csbState.startup_entrance_source_step == 2) {
-        /* ReDMCSB ENTRANCE.C F0441 lines 426-443 fades/curtains to the
-         * entrance black/palette before C004 is redrawn. */
+    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34) {
         return;
     }
     if (state->assetsAvailable) {
@@ -3230,14 +3219,15 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             drew_asset = 1;
         }
     }
-    if (state->csbState.startup_entrance_opening_active) {
+    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
+        plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
         if (drew_asset &&
-            state->csbState.startup_entrance_opening_delay_ticks <= 0) {
+            plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
             EntranceCompatDoorStep door;
             unsigned char dungeonFrame[320 * 200];
             if (framebufferWidth == 320 && framebufferHeight == 200 &&
                 ENTRANCE_Compat_GetDoorAnimationStep(
-                    (unsigned int)state->csbState.startup_entrance_opening_step,
+                    (unsigned int)plan.opening_step,
                     &door)) {
                 memset(dungeonFrame, 0, sizeof(dungeonFrame));
                 if (m11_render_csb_boot_viewport(state,
@@ -3316,13 +3306,12 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           38, 96, row, &g_text_small);
         }
-        blink_on = ((state->csbState.startup_entrance_frame / 12) & 1) == 0;
-        if (blink_on) {
+        if (plan.blink_prompt_visible) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           38, 154, "PRESS ENTER", &g_text_shadow);
         }
     }
-    if (m11_csb_startup_entrance_waiting_for_input(state)) {
+    if (plan.waiting_for_input) {
         m11_draw_csb_startup_utility_panel(state,
                                            framebuffer,
                                            framebufferWidth,
@@ -3330,19 +3319,17 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     }
 }
 
-enum {
-    M11_CSB_ENTRANCE_CREDITS_TICKS_PC34 = 1800
-};
-
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state)
 {
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !state->csbState.startup_entrance_active) {
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
-    return state->csbState.startup_entrance_source_step >=
-        csb_v1_startup_entrance_wait_stage_pc34();
+    if (!m11_csb_startup_build_render_plan(state, &plan)) {
+        return 0;
+    }
+    return plan.waiting_for_input;
 }
 
 static CSB_V1_StartupInput_PC34 m11_csb_startup_input_from_m12(
@@ -3378,42 +3365,95 @@ static int m11_csb_startup_command_from_action(int action)
     }
 }
 
-static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
-                                               int commandId)
+static void m11_csb_startup_command_state_from_m11(
+    const M11_GameViewState *state,
+    CSB_V1_StartupCommandState_PC34 *out_state)
 {
+    if (!out_state) {
+        return;
+    }
+    memset(out_state, 0, sizeof(*out_state));
     if (!state) {
         return;
     }
-    /* ReDMCSB ENTRANCE.C F0806 lines 850-883 waits for the command, line
-     * 935 applies F0022_MAIN_Delay(20), then F0438/F0807 runs 31 one-vblank
-     * door steps.  Keep runtime ticks blocked until this pending command is
-     * committed by m11_csb_startup_finish_door_opening(). */
-    state->csbState.startup_entrance_pending_command = commandId;
-    state->csbState.startup_entrance_opening_active = 1;
-    state->csbState.startup_entrance_source_step = 6;
+    out_state->title_active = state->csbState.startup_title_active;
+    out_state->title_frame = state->csbState.startup_title_frame;
+    out_state->title_source_step = state->csbState.startup_title_source_step;
+    out_state->entrance_active = state->csbState.startup_entrance_active;
+    out_state->entrance_source_step =
+        state->csbState.startup_entrance_source_step;
+    out_state->entrance_dismissed =
+        state->csbState.startup_entrance_dismissed;
+    out_state->credits_active =
+        state->csbState.startup_entrance_credits_active;
+    out_state->credits_remaining_ticks =
+        state->csbState.startup_entrance_credits_remaining_ticks;
+    out_state->opening_active =
+        state->csbState.startup_entrance_opening_active;
+    out_state->opening_delay_ticks =
+        state->csbState.startup_entrance_opening_delay_ticks;
+    out_state->opening_step =
+        state->csbState.startup_entrance_opening_step;
+    out_state->pending_command =
+        state->csbState.startup_entrance_pending_command;
+}
+
+static void m11_csb_startup_command_state_to_m11(
+    M11_GameViewState *state,
+    const CSB_V1_StartupCommandState_PC34 *command_state)
+{
+    if (!state || !command_state) {
+        return;
+    }
+    state->csbState.startup_title_active = command_state->title_active;
+    state->csbState.startup_title_frame = command_state->title_frame;
+    state->csbState.startup_title_source_step =
+        command_state->title_source_step;
+    state->csbState.startup_entrance_active =
+        command_state->entrance_active;
+    state->csbState.startup_entrance_source_step =
+        command_state->entrance_source_step;
+    state->csbState.startup_entrance_dismissed =
+        command_state->entrance_dismissed;
+    state->csbState.startup_entrance_credits_active =
+        command_state->credits_active;
+    state->csbState.startup_entrance_credits_remaining_ticks =
+        command_state->credits_remaining_ticks;
+    state->csbState.startup_entrance_opening_active =
+        command_state->opening_active;
     state->csbState.startup_entrance_opening_delay_ticks =
-        csb_v1_startup_entrance_pre_open_delay_ticks_pc34();
-    state->csbState.startup_entrance_opening_step = 1;
+        command_state->opening_delay_ticks;
+    state->csbState.startup_entrance_opening_step =
+        command_state->opening_step;
+    state->csbState.startup_entrance_pending_command =
+        command_state->pending_command;
+}
+
+static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
+                                               int commandId)
+{
+    CSB_V1_StartupCommandState_PC34 command_state;
+    if (!state) {
+        return;
+    }
+    m11_csb_startup_command_state_from_m11(state, &command_state);
+    (void)csb_v1_startup_begin_door_opening_pc34(
+        &command_state,
+        commandId);
+    m11_csb_startup_command_state_to_m11(state, &command_state);
     state->csbState.startup_import_preview_active = 0;
     m11_set_status(state, "BOOT", "CSB DOORS");
 }
 
 static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
 {
+    CSB_V1_StartupCommandState_PC34 command_state;
     if (!state) {
         return;
     }
-    state->csbState.startup_entrance_opening_active = 0;
-    state->csbState.startup_entrance_opening_delay_ticks = 0;
-    state->csbState.startup_entrance_opening_step = 0;
-    state->csbState.startup_entrance_pending_command =
-        M11_ENTRANCE_RUNTIME_COMMAND_NONE;
-    state->csbState.startup_title_active = 0;
-    state->csbState.startup_title_frame = 0;
-    state->csbState.startup_title_source_step = 0;
-    state->csbState.startup_entrance_active = 0;
-    state->csbState.startup_entrance_source_step = 0;
-    state->csbState.startup_entrance_dismissed = 1;
+    m11_csb_startup_command_state_from_m11(state, &command_state);
+    (void)csb_v1_startup_finish_door_opening_pc34(&command_state);
+    m11_csb_startup_command_state_to_m11(state, &command_state);
 }
 
 static M11_GameInputResult m11_csb_startup_handle_entrance_command(

@@ -281,11 +281,8 @@ static void expect_dm2_startup_layout_contract(void) {
                 "DM2 startup hit ignores outside panel");
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-test-saves");
-    menu.resume_available = 1;
-    menu.slot_mask = (1u << 3);
-    menu.row_count = dm2_v1_startup_menu_count_rows(
-        menu.resume_available,
-        menu.slot_mask);
+    expect_true(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 3)),
+                "DM2 startup menu refresh accepts resume and slot mask");
     expect_true(menu.row_count == 3,
                 "DM2 startup menu counts CONTINUE, slot, and NEW GAME rows");
     expect_true(dm2_v1_startup_menu_row_at(&menu, 0, &row_kind, &slot) &&
@@ -391,6 +388,16 @@ static void expect_dm2_startup_layout_contract(void) {
     expect_true(commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
                     strcmp(commands[8].text, "ENTER/ACTION STARTS") == 0,
                 "DM2 startup presentation owns footer command");
+    menu.selected_row = 9;
+    expect_true(dm2_v1_startup_menu_refresh(&menu, 0, 0u) &&
+                    menu.row_count == 1 &&
+                    menu.selected_row == 0 &&
+                    dm2_v1_startup_menu_handle_input(
+                        &menu,
+                        DM2_V1_STARTUP_INPUT_ACCEPT,
+                        &action) &&
+                    action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME,
+                "DM2 startup refresh clamps stale selection after slots disappear");
 }
 
 static void check_incomplete_required_files_block_m11(const char* label,
