@@ -106,6 +106,27 @@ static void drive_csb_entrance_opening(M11_GameViewState *view,
                 message);
 }
 
+static void drive_csb_entrance_to_wait(M11_GameViewState *view,
+                                       const char *message)
+{
+    int guard = 8;
+    if (!view) {
+        expect_true(0, message);
+        return;
+    }
+    while (guard-- > 0 && view->csbState.startup_entrance_source_step < 4) {
+        int tick_before = view->csbState.tick_count;
+        expect_true(M11_GameView_AdvanceIdleTick(view) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB entrance source prelude redraws");
+        expect_true(view->csbState.tick_count == tick_before,
+                    "M11 CSB entrance source prelude blocks runtime tick aging");
+    }
+    expect_true(view->csbState.startup_entrance_active == 1 &&
+                    view->csbState.startup_entrance_source_step == 4,
+                message);
+}
+
 static void write_be16(unsigned char *buf, size_t off, unsigned short value) {
     buf[off] = (unsigned char)((value >> 8) & 0xffu);
     buf[off + 1u] = (unsigned char)(value & 0xffu);
@@ -1191,6 +1212,16 @@ int main(void) {
                         250,
                         188,
                         M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_IGNORED,
+                    "M11 CSB entrance ignores pointer commands before source wait loop");
+        drive_csb_entrance_to_wait(
+            &view,
+            "M11 CSB entrance reaches source wait loop before command input");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        250,
+                        188,
+                        M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_REDRAW &&
                     view.csbState.startup_entrance_credits_active == 1 &&
                     view.csbState.startup_entrance_credits_remaining_ticks ==
@@ -1287,6 +1318,9 @@ int main(void) {
                     ((CSB_V1_BootProfile *)view.csbBootProfile)
                         ->runtime.party_state.ImportedFromDM1 == 1,
                 "M11 CSB runtime marks the startup party as imported from DM1");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB utility import reaches source wait loop before utility input");
     {
         unsigned char fb[320 * 200];
         memset(fb, 0, sizeof(fb));
@@ -1465,6 +1499,9 @@ int main(void) {
                     view.csbState.startup_import_available == 1 &&
                     view.csbState.startup_entrance_resume_available == 1,
                 "M11 CSB utility start keeps both import and resume available");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB utility resume reaches source wait loop before utility input");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                     M11_GAME_INPUT_REDRAW &&
                     view.csbState.startup_import_selected_action_index == 1,
@@ -1502,6 +1539,9 @@ int main(void) {
         expect_true(view.csbState.startup_import_utility_state ==
                         CSB_V1_UTIL_FLOW_DONE,
                     "M11 CSB menu-entry launch completes the CSB utility flow");
+        drive_csb_entrance_to_wait(
+            &view,
+            "M11 CSB menu-entry import reaches source wait loop before utility input");
         expect_true(strstr(view.csbState.startup_import_utility_prompt,
                            "CHAOS STRIKES BACK READY") != NULL,
                     "M11 CSB menu-entry launch exposes the final utility prompt");
@@ -1535,6 +1575,9 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
                 "M11 CSB quit-pointer start fixture succeeds");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB quit-pointer fixture reaches source wait loop before pointer input");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     245,
@@ -1556,6 +1599,9 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
                 "M11 CSB Back-key quit start fixture succeeds");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB Back-key fixture reaches source wait loop before input");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
                     M11_GAME_INPUT_RETURN_TO_MENU,
                 "M11 CSB entrance Back input returns to launcher");
@@ -1573,6 +1619,9 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
                 "M11 CSB bonus-dungeon start fixture succeeds");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB bonus-dungeon fixture reaches source wait loop before pointer input");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     245,
@@ -1602,6 +1651,9 @@ int main(void) {
                     view.csbState.startup_entrance_resume_available == 0 &&
                     view.csbState.startup_entrance_resume_path[0] == '\0',
                 "M11 CSB entrance rejects an invalid resume path before showing Resume as available");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB invalid-resume fixture reaches source wait loop before pointer input");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     245,
@@ -1626,6 +1678,9 @@ int main(void) {
                     view.csbState.party_y == CSB_V1_START_PARTY_Y &&
                     view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
                 "M11 CSB entrance resume validation does not apply the save before Resume");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB entrance resume fixture reaches source wait loop before pointer input");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     245,
@@ -1928,6 +1983,9 @@ int main(void) {
                     view.csbState.party_y == CSB_V1_START_PARTY_Y &&
                     view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
                 "M11 CSB entrance CSBWin validation does not apply the save before Resume");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB CSBWin Resume fixture reaches source wait loop before pointer input");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     245,

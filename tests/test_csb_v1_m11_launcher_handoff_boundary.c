@@ -112,6 +112,26 @@ static void drive_csb_entrance_opening(M11_GameViewState *view,
                 message);
 }
 
+static void drive_csb_entrance_to_wait(M11_GameViewState *view,
+                                       const char *message) {
+    int guard = 8;
+    if (!view) {
+        expect_true(0, message);
+        return;
+    }
+    while (guard-- > 0 && view->csbState.startup_entrance_source_step < 4) {
+        int tick_before = view->csbState.tick_count;
+        expect_true(M11_GameView_AdvanceIdleTick(view) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB launcher entrance source prelude redraws");
+        expect_true(view->csbState.tick_count == tick_before,
+                    "M11 CSB launcher entrance source prelude blocks runtime ticks");
+    }
+    expect_true(view->csbState.startup_entrance_active == 1 &&
+                    view->csbState.startup_entrance_source_step == 4,
+                message);
+}
+
 static void make_empty_data_dir(char out[512]) {
     int rc = snprintf(out, 512,
                       "%s%sfirestaff_csb_launcher_empty_%ld",
@@ -216,6 +236,8 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_dismissed == 0,
                 "M11 CSB launcher handoff stops at the entrance");
+    expect_true(view.csbState.startup_entrance_source_step == 1,
+                "M11 CSB launcher handoff starts at the source entrance prelude");
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_NONE,
                 "M11 CSB launcher handoff has no recycled entrance command");
@@ -236,6 +258,12 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.startup_entrance_frame ==
                     entrance_frame_before + 1,
                 "M11 CSB launcher entrance advances only entrance frame time");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_IGNORED,
+                "M11 CSB launcher entrance ignores Enter before source wait loop");
+    drive_csb_entrance_to_wait(
+        &view,
+        "M11 CSB launcher entrance reaches source wait loop before commands");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,

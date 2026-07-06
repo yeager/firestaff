@@ -2952,6 +2952,9 @@ static void m11_draw_csb_entrance_door_panel(unsigned char *framebuffer,
                   x + w - 1, y, 1, h, M11_COLOR_BLACK);
 }
 
+static int m11_csb_startup_entrance_waiting_for_input(
+    const M11_GameViewState *state);
+
 static int m11_draw_csb_entrance_closed_doors_asset(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
@@ -3068,6 +3071,12 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         }
         return;
     }
+    if (!m11_csb_startup_entrance_waiting_for_input(state) &&
+        state->csbState.startup_entrance_source_step == 2) {
+        /* ReDMCSB ENTRANCE.C F0441 lines 426-443 fades/curtains to the
+         * entrance black/palette before C004 is redrawn. */
+        return;
+    }
     if (state->assetsAvailable) {
         entrance = M11_AssetLoader_Load(
             (M11_AssetLoader *)&state->assetLoader, 4u);
@@ -3174,16 +3183,30 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                           38, 154, "PRESS ENTER", &g_text_shadow);
         }
     }
-    m11_draw_csb_startup_utility_panel(state,
-                                       framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight);
+    if (m11_csb_startup_entrance_waiting_for_input(state)) {
+        m11_draw_csb_startup_utility_panel(state,
+                                           framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight);
+    }
 }
 
 enum {
     M11_CSB_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
-    M11_CSB_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20
+    M11_CSB_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
+    M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34 = 4
 };
+
+static int m11_csb_startup_entrance_waiting_for_input(
+    const M11_GameViewState *state)
+{
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbState.startup_entrance_active) {
+        return 0;
+    }
+    return state->csbState.startup_entrance_source_step >=
+        M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34;
+}
 
 static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
                                                int commandId)
@@ -3197,6 +3220,7 @@ static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
      * committed by m11_csb_startup_finish_door_opening(). */
     state->csbState.startup_entrance_pending_command = commandId;
     state->csbState.startup_entrance_opening_active = 1;
+    state->csbState.startup_entrance_source_step = 6;
     state->csbState.startup_entrance_opening_delay_ticks =
         M11_CSB_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34;
     state->csbState.startup_entrance_opening_step = 1;
@@ -3215,6 +3239,7 @@ static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
     state->csbState.startup_entrance_pending_command =
         M11_ENTRANCE_RUNTIME_COMMAND_NONE;
     state->csbState.startup_entrance_active = 0;
+    state->csbState.startup_entrance_source_step = 0;
     state->csbState.startup_entrance_dismissed = 1;
 }
 
@@ -3231,6 +3256,12 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         state->csbState.startup_entrance_credits_remaining_ticks = 0;
         m11_set_status(state, "BOOT", "CSB ENTRANCE");
         return M11_GAME_INPUT_REDRAW;
+    }
+    if (!m11_csb_startup_entrance_waiting_for_input(state)) {
+        /* ReDMCSB ENTRANCE.C F0441 lines 739-747 installs entrance input
+         * handlers only after the C004/C002/C003 setup and lines 850-883
+         * enter the wait loop. */
+        return M11_GAME_INPUT_IGNORED;
     }
     if (state->csbState.startup_entrance_opening_active) {
         return M11_GAME_INPUT_IGNORED;
@@ -3297,6 +3328,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         case M11_ENTRANCE_RUNTIME_COMMAND_QUIT:
             state->csbState.startup_entrance_active = 0;
             state->csbState.startup_entrance_dismissed = 1;
+            state->csbState.startup_entrance_source_step = 0;
             state->csbState.startup_entrance_credits_active = 0;
             state->csbState.startup_entrance_credits_remaining_ticks = 0;
             state->csbState.startup_entrance_opening_active = 0;
@@ -11381,6 +11413,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_active =
             (spec->savePath && spec->savePath[0] != '\0') ? 0 : 1;
         state->csbState.startup_entrance_frame = 0;
+        state->csbState.startup_entrance_source_step =
+            state->csbState.startup_entrance_active ? 1 : 0;
         state->csbState.startup_entrance_dismissed =
             state->csbState.startup_entrance_active ? 0 : 1;
         state->csbState.startup_entrance_last_command =
@@ -13783,6 +13817,17 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if (state->csbState.startup_entrance_active) {
             state->csbState.startup_entrance_frame++;
+            if (!state->csbState.startup_entrance_credits_active &&
+                !state->csbState.startup_entrance_opening_active &&
+                state->csbState.startup_entrance_source_step > 0 &&
+                state->csbState.startup_entrance_source_step <
+                    M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34) {
+                state->csbState.startup_entrance_source_step++;
+                if (state->csbState.startup_entrance_source_step ==
+                    M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34) {
+                    m11_set_status(state, "BOOT", "CSB ENTRANCE");
+                }
+            }
             if (state->csbState.startup_entrance_credits_active &&
                 state->csbState.startup_entrance_credits_remaining_ticks > 0) {
                 state->csbState.startup_entrance_credits_remaining_ticks--;
@@ -15184,6 +15229,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         state->csbState.startup_entrance_active) {
+        if (!m11_csb_startup_entrance_waiting_for_input(state)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
         M11_GameInputResult utilityInput =
             m11_csb_startup_handle_utility_keyboard(state, input);
         if (utilityInput != M11_GAME_INPUT_IGNORED) {
@@ -16421,6 +16469,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         state->csbState.startup_entrance_active &&
         (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
                        ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
+        if (!m11_csb_startup_entrance_waiting_for_input(state)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (buttonMask & M11_DM1_MOUSE_MASK_LEFT) {
             M11_GameInputResult utilityResult =
                 m11_csb_startup_handle_utility_pointer(state, x, y);
