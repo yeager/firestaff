@@ -1,4 +1,5 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include <stdio.h>
 #include <string.h>
 
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage) {
@@ -46,6 +47,26 @@ int dm1_v1_startup_launch_path_bypasses_intro_pc34(
 int dm1_v1_startup_intro_bypass_applies_to_source_pc34(const char* sourceId,
                                                        int bypassed) {
     return sourceId && strcmp(sourceId, "dm1") == 0 && bypassed ? 1 : 0;
+}
+
+int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
+                                      int intro_bypassed,
+                                      char* out_phase,
+                                      int out_phase_size) {
+    const char* phase;
+
+    if (!out_phase || out_phase_size <= 0) {
+        return 0;
+    }
+    if (!level_loaded) {
+        phase = "dm1-loading";
+    } else {
+        phase = intro_bypassed
+            ? "dm1-runtime-direct"
+            : "dm1-runtime";
+    }
+    snprintf(out_phase, (size_t)out_phase_size, "%s", phase);
+    return 1;
 }
 
 int dm1_v1_startup_sequence_source_order_valid_pc34(void) {

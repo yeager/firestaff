@@ -257,3 +257,22 @@ int dm2_v1_startup_menu_build_render_rows(
     }
     return count;
 }
+
+int dm2_v1_startup_receipt_phase(int startup_menu_active,
+                                 char *out_phase,
+                                 int out_phase_size,
+                                 int *out_startup_active)
+{
+    const char *phase = startup_menu_active
+        ? "dm2-startup-menu"
+        : "dm2-runtime";
+
+    if (!out_phase || out_phase_size <= 0) {
+        return 0;
+    }
+    snprintf(out_phase, (size_t)out_phase_size, "%s", phase);
+    if (out_startup_active) {
+        *out_startup_active = startup_menu_active ? 1 : 0;
+    }
+    return 1;
+}
