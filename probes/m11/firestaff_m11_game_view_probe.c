@@ -5036,7 +5036,10 @@ int main(int argc, char** argv) {
                          "GetSkillLevel returns -1 for out-of-range champion");
         }
 
-        /* INV_GV_72: EMIT_DAMAGE_DEALT emission triggers combat XP increase */
+        /* INV_GV_72: EMIT_DAMAGE_DEALT is M11 presentation feedback only.
+         * ReDMCSB MENU.C F0402/F0407 and PROJEXPL.C F0231 award source
+         * damage XP at action-hit resolution; the M10 orchestrator owns
+         * that mutation before it emits EMIT_DAMAGE_DEALT. */
         {
             unsigned long expBefore = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_FIGHTER].experience;
 
@@ -5055,8 +5058,8 @@ int main(int argc, char** argv) {
                 unsigned long expAfter = xpView.world.lifecycle.champions[0].skills20[CHAMPION_SKILL_FIGHTER].experience;
                 probe_record(&tally,
                              "INV_GV_72",
-                             expAfter > expBefore,
-                             "EMIT_DAMAGE_DEALT awards combat XP to active champion via lifecycle");
+                             expAfter == expBefore,
+                             "EMIT_DAMAGE_DEALT does not duplicate M10 damage XP");
             }
         }
 
@@ -5070,7 +5073,9 @@ int main(int argc, char** argv) {
             xpView.lastTickResult.emissions[0].payload[0] = 0; /* champIdx */
             xpView.lastTickResult.emissions[0].payload[1] = C2_SPELL_KIND_PROJECTILE_COMPAT; /* kind */
             xpView.lastTickResult.emissions[0].payload[2] = 8; /* type (Fireball) */
-            xpView.lastTickResult.emissions[0].payload[3] = 4; /* power */
+            xpView.lastTickResult.emissions[0].payload[3] =
+                EMIT_SPELL_EFFECT_PACK_POWER_SKILL_XP(
+                    4, LIFECYCLE_SKILL_WIZARD, 33);
 
             M11_GameView_ProcessTickEmissions(&xpView);
 
@@ -5094,7 +5099,9 @@ int main(int argc, char** argv) {
             xpView.lastTickResult.emissions[0].payload[0] = 0; /* champIdx */
             xpView.lastTickResult.emissions[0].payload[1] = C1_SPELL_KIND_POTION_COMPAT; /* kind */
             xpView.lastTickResult.emissions[0].payload[2] = 0; /* type */
-            xpView.lastTickResult.emissions[0].payload[3] = 2; /* power */
+            xpView.lastTickResult.emissions[0].payload[3] =
+                EMIT_SPELL_EFFECT_PACK_POWER_SKILL_XP(
+                    2, LIFECYCLE_SKILL_HEAL, 19);
 
             M11_GameView_ProcessTickEmissions(&xpView);
 
@@ -12432,7 +12439,7 @@ int main(int argc, char** argv) {
         pcIn.mapY               = startY;
         pcIn.cell               = 0;
         pcIn.direction          = 0;   /* NORTH */
-        pcIn.kineticEnergy      = 150;
+        pcIn.kineticEnergy      = 60;
         pcIn.attack             = 60;
         pcIn.stepEnergy         = 1;
         pcIn.currentTick        = (int)flightView.world.gameTick;
