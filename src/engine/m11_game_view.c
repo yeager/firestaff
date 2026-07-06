@@ -23498,25 +23498,9 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
     }
 }
 
-static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
-                                      unsigned char* framebuffer,
-                                      int fbW,
-                                      int fbH,
-                                      const M11_ViewportCell cells[3][3]) {
-    static const M11_DM1ZoneBlit kD1C[] = {
-        {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 61, 12, 102, 4},
-        {M11_GFX_DOOR_SIDE_D1,     0, 0, 44, 13, 25, 94},
-        {M11_GFX_DOOR_SIDE_D1,     0, 0, 155, 13, 25, 94}
-    };
-    static const M11_DM1ZoneBlit kD2C[] = {
-        {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 77, 21, 70, 3},
-        {M11_GFX_DOOR_SIDE_D2,     0, 0, 65, 21, 18, 65},
-        {M11_GFX_DOOR_SIDE_D2,     0, 0, 141, 21, 18, 65}
-    };
-    static const M11_DM1ZoneBlit kD3C[] = {
-        {M11_GFX_DOOR_SIDE_D3, 0, 0, 82, 27, 10, 42},
-        {M11_GFX_DOOR_SIDE_D3, 0, 0, 132, 27, 10, 42}
-    };
+static int m11_dm1_center_door_panel_blit_for_state(int depth,
+                                                    int doorState,
+                                                    M11_DM1ZoneBlit* outBlit) {
     static const M11_DM1ZoneBlit kDoorPanels[3][4] = {
         {
             {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86},
@@ -23536,6 +23520,34 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
             {M11_GFX_DOOR_SET0_D3, 0, 17, 90, 29, 44, 21},
             {M11_GFX_DOOR_SET0_D3, 0, 7,  90, 29, 44, 31}
         }
+    };
+    int panelState;
+    if (!outBlit || depth < 0 || depth >= 3 || doorState == 0) {
+        return 0;
+    }
+    panelState = (doorState >= 1 && doorState <= 3) ? doorState : 0;
+    *outBlit = kDoorPanels[depth][panelState];
+    return 1;
+}
+
+static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
+                                      unsigned char* framebuffer,
+                                      int fbW,
+                                      int fbH,
+                                      const M11_ViewportCell cells[3][3]) {
+    static const M11_DM1ZoneBlit kD1C[] = {
+        {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 61, 12, 102, 4},
+        {M11_GFX_DOOR_SIDE_D1,     0, 0, 44, 13, 25, 94},
+        {M11_GFX_DOOR_SIDE_D1,     0, 0, 155, 13, 25, 94}
+    };
+    static const M11_DM1ZoneBlit kD2C[] = {
+        {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 77, 21, 70, 3},
+        {M11_GFX_DOOR_SIDE_D2,     0, 0, 65, 21, 18, 65},
+        {M11_GFX_DOOR_SIDE_D2,     0, 0, 141, 21, 18, 65}
+    };
+    static const M11_DM1ZoneBlit kD3C[] = {
+        {M11_GFX_DOOR_SIDE_D3, 0, 0, 82, 27, 10, 42},
+        {M11_GFX_DOOR_SIDE_D3, 0, 0, 132, 27, 10, 42}
     };
     static const struct { const M11_DM1ZoneBlit* blits; size_t count; } kByDepth[3] = {
         {kD1C, sizeof(kD1C) / sizeof(kD1C[0])},
@@ -23563,10 +23575,13 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
                                          &kByDepth[depth].blits[i], 10);
         }
         if (!m11_viewport_cell_is_open(cell)) {
-            int panelState = (cell->doorState >= 1 && cell->doorState <= 3) ?
-                cell->doorState : 0;
-            M11_DM1ZoneBlit panel = kDoorPanels[depth][panelState];
+            M11_DM1ZoneBlit panel;
             int panelGraphic = m11_dm1_door_panel_graphic(state, cell, depth);
+            if (!m11_dm1_center_door_panel_blit_for_state(depth,
+                                                          cell->doorState,
+                                                          &panel)) {
+                continue;
+            }
             if (panelGraphic >= 0) {
                 panel.graphicIndex = panelGraphic;
             }
@@ -23582,26 +23597,6 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
                                                int fbW,
                                                int fbH,
                                                const M11_ViewportCell cells[3][3]) {
-    static const M11_DM1ZoneBlit kDoorPanels[3][4] = {
-        {
-            {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86},
-            {M11_GFX_DOOR_SET0_D1, 0, 65, 64, 15, 96, 23},
-            {M11_GFX_DOOR_SET0_D1, 0, 43, 64, 15, 96, 45},
-            {M11_GFX_DOOR_SET0_D1, 0, 21, 64, 15, 96, 67}
-        },
-        {
-            {M11_GFX_DOOR_SET0_D2, 0, 0, 80, 24, 64, 59},
-            {M11_GFX_DOOR_SET0_D2, 0, 44, 80, 24, 64, 17},
-            {M11_GFX_DOOR_SET0_D2, 0, 29, 80, 24, 64, 32},
-            {M11_GFX_DOOR_SET0_D2, 0, 14, 80, 24, 64, 47}
-        },
-        {
-            {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38},
-            {M11_GFX_DOOR_SET0_D3, 0, 27, 90, 29, 44, 11},
-            {M11_GFX_DOOR_SET0_D3, 0, 17, 90, 29, 44, 21},
-            {M11_GFX_DOOR_SET0_D3, 0, 7,  90, 29, 44, 31}
-        }
-    };
     int depth;
     if (!state || !state->assetsAvailable) {
         return;
@@ -23612,14 +23607,16 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
     }
     {
         const M11_ViewportCell* cell = &cells[depth][1];
-        int panelState;
         M11_DM1ZoneBlit panel;
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
             m11_viewport_cell_is_open(cell) || cell->doorOrnamentOrdinal <= 0) {
             return;
         }
-        panelState = (cell->doorState >= 1 && cell->doorState <= 3) ? cell->doorState : 0;
-        panel = kDoorPanels[depth][panelState];
+        if (!m11_dm1_center_door_panel_blit_for_state(depth,
+                                                      cell->doorState,
+                                                      &panel)) {
+            return;
+        }
         m11_draw_dm1_door_ornament_on_panel(state, framebuffer, fbW, fbH,
                                             &panel, depth,
                                             cell->doorOrnamentOrdinal);
@@ -23631,10 +23628,9 @@ static void m11_draw_dm1_center_thieves_eye_mask(const M11_GameViewState* state,
                                                  int fbW,
                                                  int fbH,
                                                  const M11_ViewportCell cells[3][3]) {
-    static const M11_DM1ZoneBlit kDoorPanelD1C =
-        {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86};
     const M11_ViewportCell* cell;
     const M11_AssetSlot* slot;
+    M11_DM1ZoneBlit panel;
     if (!state || !state->assetsAvailable ||
         state->world.lifecycle.status.thievesEyeCount == 0) {
         return;
@@ -23643,7 +23639,7 @@ static void m11_draw_dm1_center_thieves_eye_mask(const M11_GameViewState* state,
         return;
     }
     cell = &cells[0][1];
-    if (cell->doorState == 0) {
+    if (!m11_dm1_center_door_panel_blit_for_state(0, cell->doorState, &panel)) {
         return;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
@@ -23653,14 +23649,24 @@ static void m11_draw_dm1_center_thieves_eye_mask(const M11_GameViewState* state,
     }
     /* ReDMCSB STARTUP2.C maps C16_DOOR_ORNAMENT_THIEVES_EYE_MASK to
      * M649_GRAPHIC_DOOR_MASK_DESTROYED + 1 (GRAPHICS.DAT 440), and
-     * DUNVIEW.C F0111 applies that C16 ornament only for the D1C door. */
-    M11_AssetLoader_BlitScaled(slot,
-                               framebuffer, fbW, fbH,
-                               M11_VIEWPORT_X + kDoorPanelD1C.dstX,
-                               M11_VIEWPORT_Y + kDoorPanelD1C.dstY,
-                               kDoorPanelD1C.width,
-                               kDoorPanelD1C.height,
-                               9);
+     * DUNVIEW.C F0111 applies that C16 ornament to the temporary D1C
+     * door bitmap before F0102 clips/draws the door state.  BUG0_83 in
+     * the source explicitly notes that the hole moves with opening doors. */
+    m11_blit_scaled_palette_map_region(
+        slot,
+        panel.srcX,
+        panel.srcY,
+        panel.width,
+        panel.height,
+        framebuffer,
+        fbW,
+        fbH,
+        M11_VIEWPORT_X + panel.dstX,
+        M11_VIEWPORT_Y + panel.dstY,
+        panel.width,
+        panel.height,
+        9,
+        NULL);
 }
 
 static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* state,
@@ -32018,6 +32024,26 @@ int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
 
 int M11_GameView_ProbeDm1PrimarySideWallMaxForward(int centerMaxVisibleForward) {
     return m11_dm1_primary_side_wall_max_forward(centerMaxVisibleForward);
+}
+
+int M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(int doorState,
+                                               int* outSrcX,
+                                               int* outSrcY,
+                                               int* outDstX,
+                                               int* outDstY,
+                                               int* outWidth,
+                                               int* outHeight) {
+    M11_DM1ZoneBlit panel;
+    if (!m11_dm1_center_door_panel_blit_for_state(0, doorState, &panel)) {
+        return 0;
+    }
+    if (outSrcX) *outSrcX = panel.srcX;
+    if (outSrcY) *outSrcY = panel.srcY;
+    if (outDstX) *outDstX = panel.dstX;
+    if (outDstY) *outDstY = panel.dstY;
+    if (outWidth) *outWidth = panel.width;
+    if (outHeight) *outHeight = panel.height;
+    return 1;
 }
 
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
