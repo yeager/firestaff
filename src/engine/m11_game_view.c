@@ -3093,7 +3093,6 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilMenuLayout layout;
     CSB_V1_UtilFlowAction action;
-    int i;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active ||
@@ -3106,17 +3105,22 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     if (!csb_v1_util_flow_menu_layout(&flow, &layout)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    action = CSB_V1_UTIL_ACTION_EXIT;
-    for (i = 0; i < layout.row_count; ++i) {
-        const CSB_V1_UtilMenuRow *row = &layout.rows[i];
-        if (x >= row->x && x < row->x + row->w &&
-            y >= row->y && y < row->y + row->h) {
-            state->csbState.startup_import_selected_action_index = i;
-            action = row->action;
-            break;
+    action = csb_v1_util_flow_action_at_point(&flow, x, y);
+    if (action != CSB_V1_UTIL_ACTION_EXIT) {
+        int i;
+        for (i = 0; i < layout.row_count; ++i) {
+            if (layout.rows[i].action == action) {
+                state->csbState.startup_import_selected_action_index = i;
+                break;
+            }
         }
+        return m11_csb_startup_activate_utility_action(state, action);
     }
-    return m11_csb_startup_activate_utility_action(state, action);
+    if (x >= layout.x && x < layout.x + layout.w &&
+        y >= 80 && y < layout.y + layout.h) {
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
