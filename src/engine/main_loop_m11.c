@@ -686,6 +686,7 @@ static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
 }
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
+static M12_MenuInput m11_next_script_input(const char** cursor);
 
 int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
                                                     int framebufferY,
@@ -1662,11 +1663,43 @@ static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
     }
 }
 
+static int m11_phase_a_apply_boot_probe_script(M11_GameViewState* gameView,
+                                               const char* script,
+                                               int framesAfterInput) {
+    const char* cursor = script;
+    int applied = 0;
+    if (!gameView || !gameView->active || !script || script[0] == '\0') {
+        return 0;
+    }
+    while (cursor && *cursor != '\0') {
+        M12_MenuInput input = m11_next_script_input(&cursor);
+        M11_GameInputResult result;
+        if (input == M12_MENU_INPUT_NONE) {
+            continue;
+        }
+        result = M11_GameView_HandleInput(gameView, input);
+        applied++;
+        if (result == M11_GAME_INPUT_REDRAW) {
+            M11_GameView_Draw(gameView,
+                              M11_Render_GetFramebuffer(),
+                              M11_FB_WIDTH,
+                              M11_FB_HEIGHT);
+        }
+        if (result == M11_GAME_INPUT_RETURN_TO_MENU ||
+            result == M11_GAME_INPUT_RESTART_GAME) {
+            break;
+        }
+        m11_phase_a_advance_boot_probe_frames(gameView, framesAfterInput);
+    }
+    return applied;
+}
+
 static void m11_phase_a_print_boot_probe_receipt(
     const M11_GameViewState* gameView,
     const M12_StartupMenuState* menuState,
     const char* gameId,
-    int advancedFrames) {
+    int advancedFrames,
+    int scriptInputs) {
     M11_BootProbeReceipt receipt;
     const char* runtimeDir = "";
     if (menuState && gameId && gameId[0] != '\0') {
@@ -1678,21 +1711,23 @@ static void m11_phase_a_print_boot_probe_receipt(
     }
     if (!M11_GameView_GetBootProbeReceipt(gameView, &receipt)) {
         fprintf(stderr,
-                "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d\n",
+                "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d\n",
                 gameId ? gameId : "",
                 gameView ? (int)gameView->sourceKind : 0,
                 gameView ? gameView->sourceId : "",
                 runtimeDir,
-                advancedFrames);
+                advancedFrames,
+                scriptInputs);
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d runtimeTick=%d dm1WorldTick=%u introBypassed=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d runtimeTick=%d dm1WorldTick=%u introBypassed=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
             runtimeDir,
             advancedFrames,
+            scriptInputs,
             receipt.startupPhase,
             receipt.startupActive,
             receipt.levelLoaded,
@@ -3312,11 +3347,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         launchedEver = 1;
         if (o->bootProbe) {
             int frames = o->bootProbeFrames < 0 ? 0 : o->bootProbeFrames;
+            int scriptInputs;
             m11_phase_a_advance_boot_probe_frames(&gameView, frames);
+            scriptInputs = m11_phase_a_apply_boot_probe_script(&gameView,
+                                                               o->script,
+                                                               frames);
             m11_phase_a_print_boot_probe_receipt(&gameView,
                                                  &menuState,
                                                  o->gameId,
-                                                 frames);
+                                                 frames,
+                                                 scriptInputs);
             goto cleanup;
         }
         if (exitAfterLaunch) {

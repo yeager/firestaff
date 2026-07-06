@@ -37,6 +37,7 @@ static void usage(const char* prog) {
             "  --scan-game-data    Alias for --scan-data\n"
             "  --boot-probe        With --game, verify selected-entry boot handoff and exit\n"
             "  --boot-probe-frames <n> Advance n M11 idle frames before probe receipt\n"
+            "                       In boot-probe mode, --script input is applied after those frames\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
