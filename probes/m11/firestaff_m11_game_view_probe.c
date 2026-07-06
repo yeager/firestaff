@@ -10092,10 +10092,10 @@ int main(int argc, char** argv) {
         }
 
         {
-            int outerX, outerY, outerW, outerH;
-            int panelX, panelY, panelW, panelH;
-            int leftX, leftY, leftW, leftH;
-            int rightX, rightY, rightW, rightH;
+            int outerX = 0, outerY = 0, outerW = 0, outerH = 0;
+            int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+            int leftX = 0, leftY = 0, leftW = 0, leftH = 0;
+            int rightX = 0, rightY = 0, rightW = 0, rightH = 0;
             probe_record(&tally, "INV_GV_300AL",
                          M11_GameView_GetV1MovementArrowsZoneId() == 9 &&
                              M11_GameView_GetV1MovementArrowsGraphicId() == 13 &&
@@ -10116,6 +10116,28 @@ int main(int argc, char** argv) {
                              leftX == 234 && leftY == 125 && leftW == 19 && leftH == 21 &&
                              rightX == 291 && rightY == 147 && rightW == 28 && rightH == 21,
                          "movement arrow panel exposes DATA.C outer box, C009/C013, and layout-696 C068-C073 geometry");
+
+            if (leftW > 0 && leftH > 0) {
+                unsigned int whitePerimeter = 0;
+                unsigned int fullRectPerimeter = (unsigned int)(2 * leftW + 2 * (leftH - 2));
+                int px;
+                int py;
+                iconView.v1MovementArrowVisualMask = 1u << 0;
+                iconView.v1MovementArrowVisualTicks = 4;
+                memset(fb, 0, sizeof(fb));
+                M11_GameView_Draw(&iconView, fb, 320, 200);
+                for (px = leftX; px < leftX + leftW; ++px) {
+                    if (fb[leftY * 320 + px] == PROBE_COLOR_WHITE) ++whitePerimeter;
+                    if (fb[(leftY + leftH - 1) * 320 + px] == PROBE_COLOR_WHITE) ++whitePerimeter;
+                }
+                for (py = leftY + 1; py < leftY + leftH - 1; ++py) {
+                    if (fb[py * 320 + leftX] == PROBE_COLOR_WHITE) ++whitePerimeter;
+                    if (fb[py * 320 + leftX + leftW - 1] == PROBE_COLOR_WHITE) ++whitePerimeter;
+                }
+                probe_record(&tally, "INV_GV_300AL2",
+                             whitePerimeter < (fullRectPerimeter / 2),
+                             "movement-arrow visual feedback does not draw an invented full white rectangle around turn zones");
+            }
         }
 
         {
