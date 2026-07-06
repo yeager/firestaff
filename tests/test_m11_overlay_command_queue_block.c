@@ -926,6 +926,74 @@ static void test_runtime_projectiles_use_f0115_c2900_raw_rows(void)
     ASSERT_EQ(y, 47, "D2C front-left projectile raw Y");
 }
 
+static void test_runtime_floor_items_use_f0115_c2500_raw_rows(void)
+{
+    static const struct {
+        int relForward;
+        int relSide;
+        int row;
+        const char* label;
+    } routes[] = {
+        {1, -1,  9, "D1L"},
+        {1,  0,  8, "D1C"},
+        {1,  1, 10, "D1R"},
+        {2, -1,  6, "D2L"},
+        {2,  0,  5, "D2C"},
+        {2,  1,  7, "D2R"},
+        {3, -2,  3, "D3L2"},
+        {3, -1,  1, "D3L"},
+        {3,  0,  0, "D3C"},
+        {3,  1,  2, "D3R"},
+        {3,  2,  4, "D3R2"}
+    };
+    static const short expected[11][4][2] = {
+        {{   0,   0}, {   0,   0}, { 127,  70}, {  98,  70}},
+        {{   0,   0}, {   0,   0}, {  62,  70}, {  25,  70}},
+        {{   0,   0}, {   0,   0}, { 200,  70}, { 162,  70}},
+        {{   0,   0}, {   0,   0}, {   2,  70}, { -35,  70}},
+        {{   0,   0}, {   0,   0}, { 258,  70}, { 222,  70}},
+        {{  94,  78}, { 131,  78}, { 136,  88}, {  89,  88}},
+        {{  10,  78}, {  53,  79}, {  41,  88}, { -14,  89}},
+        {{ 171,  78}, { 218,  78}, { 236,  89}, { 184,  88}},
+        {{  83,  99}, { 141,  99}, { 150, 115}, {  76, 115}},
+        {{ -40, 101}, {  24,  99}, {   5, 114}, { -79, 117}},
+        {{ 200,  99}, { 262, 101}, { 301, 117}, { 220, 114}}
+    };
+    size_t i;
+
+    /* ReDMCSB DUNVIEW.C F0115 lines 4811, 4923, and 5075 select
+     * G2028[viewSquare] and then C2500 + row*4 + viewCell.  The
+     * renderer must use the raw layout-696 C2500 rows for every visible
+     * D1/D2/D3 object route, not the older five-row fallback that has no
+     * front-cell entries for near rows. */
+    for (i = 0; i < sizeof(routes) / sizeof(routes[0]); ++i) {
+        int cell;
+        ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(
+                      routes[i].relForward, routes[i].relSide),
+                  routes[i].row,
+                  routes[i].label);
+        for (cell = 0; cell < 4; ++cell) {
+            int x = -999;
+            int y = -999;
+            int wantPresent = expected[routes[i].row][cell][0] != 0 ||
+                              expected[routes[i].row][cell][1] != 0;
+            ASSERT_EQ(M11_GameView_GetC2500ObjectRawZonePoint(
+                          routes[i].row, cell, &x, &y),
+                      wantPresent,
+                      routes[i].label);
+            if (wantPresent) {
+                ASSERT_EQ(x, expected[routes[i].row][cell][0], routes[i].label);
+                ASSERT_EQ(y, expected[routes[i].row][cell][1], routes[i].label);
+            }
+        }
+    }
+
+    ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(2, -2), -1,
+              "D2L2 must not borrow D2C/D3L2 item rows");
+    ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(2, 2), -1,
+              "D2R2 must not borrow D2C/D3R2 item rows");
+}
+
 static void test_m11_runtime_samples_d2_d3_side_walls(void)
 {
     M11_GameViewState state;
@@ -1165,6 +1233,7 @@ int main(void)
     test_mouse_positive_control_dispatches_without_overlay();
     test_static_dungeon_effects_do_not_render_as_viewport_fireballs();
     test_runtime_projectiles_use_f0115_c2900_raw_rows();
+    test_runtime_floor_items_use_f0115_c2500_raw_rows();
     test_m11_runtime_samples_d2_d3_side_walls();
     test_m11_runtime_draws_far_side_wall_with_near_side_blocker();
     test_m11_runtime_draws_far_side_wall_with_center_blocker();
