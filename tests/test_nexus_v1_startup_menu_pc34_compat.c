@@ -224,6 +224,20 @@ int main(void)
            "startup menu slot mask exposes occupied slot 03");
     expect(menu.row_count == 2,
            "startup menu has one slot row plus NEW GAME");
+    menu.selected_row = 99;
+    expect(nexus_v1_startup_menu_refresh(&menu, menu.slot_mask) &&
+               menu.row_count == 2 &&
+               menu.selected_row == 1,
+           "startup menu refresh clamps stale selected row to last visible row");
+    expect(nexus_v1_startup_menu_refresh(&menu, 0u) &&
+               menu.slot_mask == 0u &&
+               menu.row_count == 1 &&
+               menu.selected_row == 0,
+           "startup menu refresh handles empty save list as NEW GAME only");
+    expect(nexus_v1_startup_menu_refresh(&menu, (1u << 3)) &&
+               menu.slot_mask == (1u << 3) &&
+               menu.row_count == 2,
+           "startup menu refresh restores occupied slot rows");
 
     memset(&action, 0, sizeof(action));
     expect(!nexus_v1_startup_title_handle_input(
@@ -260,6 +274,23 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT,
            "startup title routes ready Accept to save select when slots exist");
+    expect(nexus_v1_startup_title_handle_hit(
+               54,
+               menu.slot_mask,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT,
+           "startup title pointer hit routes through Nexus-owned title action");
+    expect(nexus_v1_startup_title_handle_hit(
+               30,
+               menu.slot_mask,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE,
+           "startup title pointer hit respects hold gate");
+    expect(!nexus_v1_startup_title_handle_hit(
+               54,
+               menu.slot_mask,
+               NULL),
+           "startup title pointer rejects NULL output");
     expect(nexus_v1_startup_title_handle_input(
                54,
                0u,

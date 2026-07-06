@@ -18,6 +18,17 @@ static int nexus_v1_startup_row_count(unsigned int slot_mask)
     return row_count;
 }
 
+static unsigned int nexus_v1_startup_slot_mask_clamp(unsigned int slot_mask)
+{
+    unsigned int mask = 0u;
+    int slot;
+
+    for (slot = 0; slot < NEXUS_SAVE_MAX_SLOTS; ++slot) {
+        mask |= (1u << slot);
+    }
+    return slot_mask & mask;
+}
+
 static void nexus_v1_startup_action_clear(Nexus_V1_StartupAction *action)
 {
     if (!action) {
@@ -44,6 +55,26 @@ void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
     menu->row_count = 1;
 }
 
+int nexus_v1_startup_menu_refresh(Nexus_V1_StartupMenu *menu,
+                                  unsigned int slot_mask)
+{
+    if (!menu) {
+        return 0;
+    }
+    menu->slot_mask = nexus_v1_startup_slot_mask_clamp(slot_mask);
+    menu->row_count = nexus_v1_startup_row_count(menu->slot_mask);
+    if (menu->row_count < 1) {
+        menu->row_count = 1;
+    }
+    if (menu->selected_row < 0) {
+        menu->selected_row = 0;
+    }
+    if (menu->selected_row >= menu->row_count) {
+        menu->selected_row = menu->row_count - 1;
+    }
+    return 1;
+}
+
 int nexus_v1_startup_menu_scan(Nexus_V1_StartupMenu *menu)
 {
     Nexus_V1_SaveManager mgr;
@@ -68,10 +99,7 @@ int nexus_v1_startup_menu_scan(Nexus_V1_StartupMenu *menu)
         menu->slot_mask |= (1u << slot);
         menu->slots[slot] = *save_slot;
     }
-    menu->row_count = nexus_v1_startup_row_count(menu->slot_mask);
-    if (menu->selected_row < 0 || menu->selected_row >= menu->row_count) {
-        menu->selected_row = 0;
-    }
+    (void)nexus_v1_startup_menu_refresh(menu, menu->slot_mask);
     return 0;
 }
 
@@ -262,6 +290,17 @@ int nexus_v1_startup_boot_handle_input(int boot_frame,
     return 1;
 }
 
+int nexus_v1_startup_title_handle_hit(int title_frame,
+                                      unsigned int slot_mask,
+                                      Nexus_V1_StartupAction *out_action)
+{
+    return nexus_v1_startup_title_handle_input(
+        title_frame,
+        slot_mask,
+        NEXUS_V1_STARTUP_INPUT_ACCEPT,
+        out_action);
+}
+
 int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
                                        Nexus_V1_StartupInput input,
                                        Nexus_V1_StartupAction *out_action)
@@ -309,6 +348,54 @@ int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
     }
     menu->selected_row = hit->row;
     return nexus_v1_startup_menu_activate_selected(menu, out_action);
+}
+
+int nexus_v1_startup_menu_build_save_render_rows(
+    const Nexus_V1_StartupMenu *menu,
+    Nexus_V1_StartupSaveRenderRow *rows,
+    int max_rows)
+{
+    int row;
+    int count = 0;
+
+    if (!menu || !rows || max_rows <= 0) {
+        return 0;
+    }
+    memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
+    for (row = 0; row < menu->row_count && count < max_rows; ++row) {
+        Nexus_V1_StartupRowKind kind = NEXUS_V1_STARTUP_ROW_NONE;
+        int slot = -1;
+        Nexus_V1_StartupSaveRenderRow *out = &rows[count];
+
+        if (!nexus_v1_startup_menu_row_at(menu, row, &kind, &slot) ||
+            !nexus_v1_startup_save_row_rect(row, &out->rect)) {
+            continue;
+        }
+        out->kind = kind;
+        out->row = row;
+        out->slot = slot;
+        out->selected = (row == menu->selected_row) ? 1 : 0;
+        out->highlight_rect.x = out->rect.x - 2;
+        out->highlight_rect.y = out->rect.y;
+        out->highlight_rect.w = 160;
+        out->highlight_rect.h = 11;
+        out->text_x = NEXUS_V1_STARTUP_SAVE_ROW_TEXT_X;
+        out->text_y = out->rect.y + 1;
+        if (kind == NEXUS_V1_STARTUP_ROW_SLOT) {
+            snprintf(out->label,
+                     sizeof(out->label),
+                     "%c LOAD SLOT %02d",
+                     out->selected ? '>' : ' ',
+                     slot);
+        } else if (kind == NEXUS_V1_STARTUP_ROW_NEW_GAME) {
+            snprintf(out->label,
+                     sizeof(out->label),
+                     "%c NEW GAME",
+                     out->selected ? '>' : ' ');
+        }
+        ++count;
+    }
+    return count;
 }
 
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
@@ -424,4 +511,39 @@ int nexus_v1_startup_champion_handle_hit(Nexus_V1_ChampionPool *pool,
         slot_mask,
         NEXUS_V1_STARTUP_INPUT_ACCEPT,
         out_action);
+}
+
+int nexus_v1_startup_receipt_phase(int title_active,
+                                   int save_select_active,
+                                   int champion_select_active,
+                                   int title_frame,
+                                   char *out_phase,
+                                   int out_phase_size,
+                                   int *out_startup_active,
+                                   int *out_startup_frame)
+{
+    const char *phase = "nexus-runtime";
+    int active = 0;
+
+    if (!out_phase || out_phase_size <= 0) {
+        return 0;
+    }
+    if (title_active) {
+        phase = "nexus-title";
+        active = 1;
+    } else if (save_select_active) {
+        phase = "nexus-save-select";
+        active = 1;
+    } else if (champion_select_active) {
+        phase = "nexus-champion-select";
+        active = 1;
+    }
+    snprintf(out_phase, (size_t)out_phase_size, "%s", phase);
+    if (out_startup_active) {
+        *out_startup_active = active;
+    }
+    if (out_startup_frame) {
+        *out_startup_frame = title_frame;
+    }
+    return 1;
 }

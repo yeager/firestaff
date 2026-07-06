@@ -59,9 +59,27 @@ typedef struct {
     Nexus_V1_SaveSlot slots[NEXUS_SAVE_MAX_SLOTS];
 } Nexus_V1_StartupMenu;
 
+enum {
+    NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96
+};
+
+typedef struct {
+    Nexus_V1_StartupRowKind kind;
+    int row;
+    int slot;
+    int selected;
+    Nexus_V1_StartupRect rect;
+    Nexus_V1_StartupRect highlight_rect;
+    int text_x;
+    int text_y;
+    char label[NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY];
+} Nexus_V1_StartupSaveRenderRow;
+
 void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
                                 const char *save_dir);
 int nexus_v1_startup_menu_scan(Nexus_V1_StartupMenu *menu);
+int nexus_v1_startup_menu_refresh(Nexus_V1_StartupMenu *menu,
+                                  unsigned int slot_mask);
 int nexus_v1_startup_menu_row_at(const Nexus_V1_StartupMenu *menu,
                                  int row,
                                  Nexus_V1_StartupRowKind *out_kind,
@@ -82,12 +100,19 @@ int nexus_v1_startup_boot_handle_input(int boot_frame,
                                        unsigned int slot_mask,
                                        Nexus_V1_StartupInput input,
                                        Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_title_handle_hit(int title_frame,
+                                      unsigned int slot_mask,
+                                      Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
                                        Nexus_V1_StartupInput input,
                                        Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
                                      const Nexus_V1_StartupHit *hit,
                                      Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_menu_build_save_render_rows(
+    const Nexus_V1_StartupMenu *menu,
+    Nexus_V1_StartupSaveRenderRow *rows,
+    int max_rows);
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
                                            int *cursor,
                                            unsigned int slot_mask,
@@ -98,6 +123,14 @@ int nexus_v1_startup_champion_handle_hit(Nexus_V1_ChampionPool *pool,
                                          unsigned int slot_mask,
                                          const Nexus_V1_StartupHit *hit,
                                          Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_receipt_phase(int title_active,
+                                   int save_select_active,
+                                   int champion_select_active,
+                                   int title_frame,
+                                   char *out_phase,
+                                   int out_phase_size,
+                                   int *out_startup_active,
+                                   int *out_startup_frame);
 
 #ifdef __cplusplus
 }
