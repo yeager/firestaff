@@ -339,6 +339,13 @@ int main(void) {
             expect_true(count_nonzero_region(framebuffer, 320, 200,
                                              22, 38, 10, 10) > 0,
                         "real Nexus champion selection draws FACE.BIN portrait pixels");
+            expect_true(M11_GameView_HandlePointer(&view, 24, 24, 1) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus champion selection panel consumes non-row pointer hits");
+            expect_true(view.nexusState.champion_select_active == 1 &&
+                            view.nexusEngine &&
+                            view.nexusEngine->champions.party_count == 0,
+                        "real Nexus champion selection panel hit does not recruit");
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
                         "real Nexus champion selection recruits selected champion");

@@ -15723,6 +15723,9 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
             state->nexusState.champion_cursor = i;
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
         }
+        if (m11_point_in_rect(x, y, 18, 20, 284, 178)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
         return M11_GAME_INPUT_IGNORED;
     }
     return M11_GAME_INPUT_IGNORED;
