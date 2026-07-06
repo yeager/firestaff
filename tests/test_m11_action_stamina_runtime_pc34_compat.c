@@ -8748,6 +8748,49 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     ASSERT_EQ(height, 71, "D2R runtime blit uses G0163 inclusive height");
 }
 
+static void test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel(void) {
+    int srcX = -1;
+    int srcY = -1;
+    int dstX = -1;
+    int dstY = -1;
+    int width = -1;
+    int height = -1;
+
+    ASSERT_EQ(M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(
+                  0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              0,
+              "open D1C door skips thieves-eye mask like F0111 open-state return");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(
+                  4, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "closed D1C thieves-eye mask resolves");
+    ASSERT_EQ(srcX, 0, "closed D1C mask src x");
+    ASSERT_EQ(srcY, 0, "closed D1C mask src y");
+    ASSERT_EQ(dstX, 64, "closed D1C mask dst x");
+    ASSERT_EQ(dstY, 16, "closed D1C mask dst y");
+    ASSERT_EQ(width, 96, "closed D1C mask width");
+    ASSERT_EQ(height, 86, "closed D1C mask height");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(
+                  2, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "half-open D1C thieves-eye mask resolves through clipped panel");
+    ASSERT_EQ(srcX, 0, "half-open D1C mask src x follows F0111 vertical panel");
+    ASSERT_EQ(srcY, 43, "half-open D1C mask src y follows F0111 vertical panel");
+    ASSERT_EQ(dstX, 64, "half-open D1C mask dst x");
+    ASSERT_EQ(dstY, 15, "half-open D1C mask dst y");
+    ASSERT_EQ(width, 96, "half-open D1C mask width");
+    ASSERT_EQ(height, 45, "half-open D1C mask height");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(
+                  5, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "destroyed D1C thieves-eye mask keeps closed/destroyed panel");
+    ASSERT_EQ(srcY, 0, "destroyed D1C mask uses closed/destroyed src y");
+    ASSERT_EQ(height, 86, "destroyed D1C mask uses closed/destroyed height");
+}
+
 static void test_f0231_zero_damage_emission_skips_hit_feedback(void) {
     M11_GameViewState state;
     int xpBefore;
@@ -8900,6 +8943,7 @@ int main(void) {
     test_fuse_complete_fluxcage_sets_m11_game_won_gate();
     test_endgame_restart_controls_respect_restart_allowed();
     test_dm1_d2_side_walls_sample_and_use_source_rects();
+    test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel();
     test_f0231_zero_damage_emission_skips_hit_feedback();
     test_f0231_positive_damage_emission_skips_duplicate_xp();
     test_melee_action_row_uses_auto_target_and_action_index();
