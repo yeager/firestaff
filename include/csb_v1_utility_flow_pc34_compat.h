@@ -46,6 +46,29 @@ typedef enum {
 
 #define CSB_V1_UTIL_MENU_ROW_COUNT 4
 
+typedef enum {
+    CSB_V1_UTIL_INPUT_NONE = 0,
+    CSB_V1_UTIL_INPUT_UP = 1,
+    CSB_V1_UTIL_INPUT_DOWN = 2,
+    CSB_V1_UTIL_INPUT_ACCEPT = 3,
+    CSB_V1_UTIL_INPUT_ACTION = 4,
+    CSB_V1_UTIL_INPUT_BACK = 5
+} CSB_V1_UtilInput;
+
+typedef enum {
+    CSB_V1_UTIL_INPUT_RESULT_NONE = 0,
+    CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED = 1,
+    CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW = 2,
+    CSB_V1_UTIL_INPUT_RESULT_ACTIVATE = 3
+} CSB_V1_UtilInputResultKind;
+
+typedef struct {
+    CSB_V1_UtilInputResultKind kind;
+    CSB_V1_UtilFlowAction action;
+    int selected_action_index;
+    int preview_active;
+} CSB_V1_UtilInputResult;
+
 typedef struct {
     CSB_V1_UtilFlowAction action;
     const char *label;
@@ -129,6 +152,10 @@ int csb_v1_util_flow_accept_selected_action(CSB_V1_UtilFlowContext *ctx);
 int csb_v1_util_flow_cancel_to_menu(CSB_V1_UtilFlowContext *ctx);
 int csb_v1_util_flow_retry_error(CSB_V1_UtilFlowContext *ctx);
 const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action);
+int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
+                                  CSB_V1_UtilInput input,
+                                  int preview_active,
+                                  CSB_V1_UtilInputResult *out_result);
 int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
                                  CSB_V1_UtilMenuLayout *out_layout);
 int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
