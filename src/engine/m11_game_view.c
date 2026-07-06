@@ -12394,6 +12394,7 @@ static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
     world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
 
     theron_v1_startup_flow_init(&flow);
+    flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
     flow.selected_dungeon = loadedProgression.current_dungeon;
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
@@ -12582,6 +12583,7 @@ static int m11_theron_continue_srm_startup(M11_GameViewState* state,
     memset(world->level_loaded, 0, sizeof(world->level_loaded));
 
     theron_v1_startup_flow_init(&flow);
+    flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
     flow.selected_dungeon = world->progression.current_dungeon;
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
@@ -12640,6 +12642,7 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
     memset(world->level_loaded, 0, sizeof(world->level_loaded));
 
     theron_v1_startup_flow_init(&flow);
+    flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
     flow.selected_dungeon = world->progression.current_dungeon;
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
@@ -12864,6 +12867,12 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
     theron_v1_startup_flow_init(&startupFlow);
+    /* THQUEST.ASM T400 startup handoff: a fresh Track 02 boot must stop at
+     * the visible stage-select screen before Soul Room mirror selection.
+     * theron_v1_startup_choose_stage() intentionally advances to Soul Room,
+     * so M11 seeds only the selected chapter here and waits for explicit
+     * player input before choosing the stage. */
+    startupFlow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
     startupFlow.selected_dungeon = world->progression.current_dungeon;
     m11_theron_sync_startup_state(state, &startupFlow);
     state->theronState.startup_cursor = 0;
@@ -14960,6 +14969,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 state->theronState.startup_phase == THERON_STARTUP_PHASE_READY) {
                 Theron_StartupFlow flow;
                 theron_v1_startup_flow_init(&flow);
+                flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
                 flow.selected_dungeon =
                     (Theron_DungeonID)state->theronState.selected_dungeon;
                 m11_theron_sync_startup_state(state, &flow);
@@ -14973,6 +14983,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
+            if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
+                if (input == M12_MENU_INPUT_ACCEPT ||
+                    input == M12_MENU_INPUT_ACTION) {
+                    Theron_StartupFlow flow;
+                    theron_v1_startup_flow_init(&flow);
+                    flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+                    flow.selected_dungeon =
+                        (Theron_DungeonID)state->theronState.selected_dungeon;
+                    m11_theron_sync_startup_state(state, &flow);
+                    state->theronState.startup_cursor = 0;
+                    state->theronState.save_resume_continue_focus = 0;
+                    m11_set_status(state, "STARTUP", "STAGE SELECT");
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
+            }
             if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
                 int selected = state->theronState.selected_dungeon;
                 int has_continue =
@@ -39265,6 +39291,10 @@ int M11_GameView_GetTheronStartupLayout(
     ++count;
     if (count >= maxElements) return count;
 
+    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
+        return count;
+    }
+
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
         int has_srm_continue = m11_theron_srm_continue_available(state);
@@ -39406,6 +39436,13 @@ int M11_GameView_GetTheronStartupRenderRows(
         }
     }
     if (count >= maxRows) return count;
+
+    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
+        snprintf(rows[count++],
+                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
+                 "PRESS ENTER TO START");
+        return count;
+    }
 
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
@@ -39565,6 +39602,22 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         state,
         elements,
         (int)(sizeof(elements) / sizeof(elements[0])));
+
+    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
+        for (i = 0; i < element_count; ++i) {
+            const M11_TheronStartupElement *e = &elements[i];
+            if (e->kind == M11_THERON_STARTUP_ELEMENT_TITLE) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              e->x, e->y, e->label, &g_text_title);
+            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              e->x, e->y, e->label, &g_text_small);
+            }
+        }
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      34, 76, "PRESS ENTER TO START", &g_text_shadow);
+        return;
+    }
 
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
