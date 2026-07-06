@@ -6392,6 +6392,31 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_runtime_handoff_smoke
     )
 
+    # -- DM1 V1 M12/M11 Launcher Handoff Boundary ------------------
+    # Skip-safe gate: M12 launch intent routes the DM1 catalog entry,
+    # and real staged DM1 data must enter M11 through the production
+    # selected-menu path without marking the direct game-view intro bypass.
+    add_executable(test_dm1_v1_m11_launcher_handoff_boundary
+        tests/test_dm1_v1_m11_launcher_handoff_boundary.c
+    )
+    target_include_directories(test_dm1_v1_m11_launcher_handoff_boundary PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_m11_launcher_handoff_boundary PRIVATE
+        firestaff_m11
+        firestaff_m12
+        firestaff_m10
+        firestaff_m12
+        SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_m11_launcher_handoff_boundary PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_m11_launcher_handoff_boundary
+        COMMAND test_dm1_v1_m11_launcher_handoff_boundary
+    )
+
     # -- CSB V1 M12/M11 Launcher Handoff Boundary ------------------
     # Skip-safe gate: M12 launch intent routes the CSB catalog entry,
     # and real staged CSB data must enter M11 through the production
