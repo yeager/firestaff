@@ -130,6 +130,13 @@ int  M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffe
                                                  int logicalWidth,
                                                  int logicalHeight,
                                                  int specialPalette);
+int  M11_Render_PresentIndexedToResolutionWithSpecialPalette(
+    const unsigned char* framebuffer,
+    int logicalWidth,
+    int logicalHeight,
+    int targetWidth,
+    int targetHeight,
+    int specialPalette);
 
 /* Present a caller-owned 32-bit RGBA framebuffer directly, skipping the
  * VGA palette lookup. Used by the modern high-resolution true-color
