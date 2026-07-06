@@ -562,6 +562,21 @@ int main(void) {
                                     "M11 Nexus save-slot NEW GAME path advances title");
                         expect_true(view.nexusState.startup_save_select_active == 1,
                                     "M11 Nexus save-slot NEW GAME path exposes save menu");
+                        {
+                            int tick_before = view.nexusState.tick_count;
+                            int engine_tick_before = view.nexusEngine
+                                ? view.nexusEngine->game.tick_count
+                                : -1;
+                            expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                                            M11_GAME_INPUT_IGNORED,
+                                        "M11 Nexus save-select blocks idle runtime tick");
+                            expect_true(view.nexusState.startup_save_select_active == 1 &&
+                                            view.nexusState.tick_count == tick_before &&
+                                            view.nexusEngine &&
+                                            view.nexusEngine->game.tick_count ==
+                                                engine_tick_before,
+                                        "M11 Nexus save-select keeps runtime tick frozen");
+                        }
                         while (view.nexusState.startup_save_selected_row + 1 <
                                view.nexusState.startup_save_row_count) {
                             expect_true(M11_GameView_HandleInput(

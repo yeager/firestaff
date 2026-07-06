@@ -13475,6 +13475,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             ++state->nexusState.title_frame;
             return M11_GAME_INPUT_REDRAW;
         }
+        if (state->nexusState.startup_save_select_active) {
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
         if (state->nexusState.champion_select_active) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
