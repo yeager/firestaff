@@ -191,6 +191,8 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe default advances zero startup frames");
     expect_true(opts.bootProbeExpectRuntime == 0,
                 "boot-probe runtime expectation is opt-in");
+    expect_true(opts.bootProbeExpectParty == 0,
+                "boot-probe party expectation is opt-in");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
@@ -297,15 +299,25 @@ static void run_real_data_handoff_if_available(void) {
             opts.dataDir = data_dir;
             opts.durationMs = 0;
             opts.bootProbeExpectRuntime = 1;
+            opts.bootProbeExpectParty = 1;
             if (strcmp(kCases[i].gameId, "dm1") == 0) {
                 opts.bootProbeExpectPhase = "dm1-runtime";
+                opts.bootProbeExpectPartyX = 1;
+                opts.bootProbeExpectPartyY = 3;
+                opts.bootProbeExpectPartyDir = 2;
             } else if (strcmp(kCases[i].gameId, "dm2") == 0) {
                 opts.script = "key:enter";
                 opts.bootProbeExpectPhase = "dm2-runtime";
+                opts.bootProbeExpectPartyX = 15;
+                opts.bootProbeExpectPartyY = 15;
+                opts.bootProbeExpectPartyDir = 0;
             } else if (strcmp(kCases[i].gameId, "csb") == 0) {
                 opts.bootProbeFrames = 240;
                 opts.script = "key:enter";
                 opts.bootProbeExpectPhase = "csb-runtime";
+                opts.bootProbeExpectPartyX = 5;
+                opts.bootProbeExpectPartyY = 5;
+                opts.bootProbeExpectPartyDir = 0;
             } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
                 int rc = snprintf(appdata_dir, sizeof(appdata_dir),
                                   "%s%sfirestaff_nexus_boot_probe_appdata_%ld",
@@ -317,9 +329,17 @@ static void run_real_data_handoff_if_available(void) {
                 }
                 opts.script = "wait120,key:enter,key:enter,key:space";
                 opts.bootProbeExpectPhase = "nexus-runtime";
+                opts.bootProbeExpectPartyX = 11;
+                opts.bootProbeExpectPartyY = 29;
+                opts.bootProbeExpectPartyDir = 0;
             } else if (strcmp(kCases[i].gameId, "theron") == 0) {
                 opts.script = "key:enter,key:enter,key:space";
                 opts.bootProbeExpectPhase = "theron-runtime";
+                opts.bootProbeExpectPartyX = 3;
+                opts.bootProbeExpectPartyY = 5;
+                opts.bootProbeExpectPartyDir = 0;
+            } else {
+                opts.bootProbeExpectParty = 0;
             }
             test_setenv("SDL_VIDEODRIVER", "dummy");
             expect_true(M11_PhaseA_Run(&opts) == 0,
