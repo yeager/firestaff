@@ -442,6 +442,14 @@ int main(void) {
                     "M11 Theron startup layout exposes machine-readable stage state");
     }
 
+    expect_true(M11_GameView_HandlePointer(&view, 36, 24, 1) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron startup panel consumes non-action pointer hits");
+    expect_true(view.theronState.startup_phase ==
+                    THERON_STARTUP_PHASE_STAGE_SELECT &&
+                view.theronState.level_loaded == 0,
+                "M11 Theron startup panel hit does not enter runtime");
+
     {
         M11_GameViewState no_continue_view;
         Theron_V1_World* no_continue_world;

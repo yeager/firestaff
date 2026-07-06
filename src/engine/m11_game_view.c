@@ -15674,7 +15674,10 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
                 THERON_STARTUP_HERO_MIRROR_COUNT;
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
         }
-        return M11_GAME_INPUT_IGNORED;
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (m11_point_in_rect(x, y, 34, 22, 242, 150)) {
+        return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
 }

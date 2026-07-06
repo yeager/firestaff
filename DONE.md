@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 Theron startup pointer ownership: M11 now consumes pointer clicks on non-action Theron startup layout elements and inside the visible startup panel while stage-select/Soul Room is active, preventing title/chapter/panel whitespace from falling through to runtime before a Continue/stage/mirror/forcefield choice is made. Verification: focused build passed for `test_theron_v1_m11_direct_launch`; focused CTest for `theron_v1_m11_direct_launch` plus `theron_v1_startup_save_resume_pc34` passed locally.
+
 - ✅ 2026-07-06 Nexus save-select pointer ownership: M11 now consumes pointer clicks inside the visible Nexus save-select panel even when no row is hit, preventing panel whitespace from falling through to startup/dungeon handlers before Load/New Game is chosen. Verification: focused build passed for `test_m11_nexus_startup_gate`; focused CTest for `m11_nexus_startup_gate` plus `nexus_v1_startup_menu_pc34_compat` passed locally.
 
 - ✅ 2026-07-06 DM2 startup menu pointer ownership: M11 now consumes pointer clicks inside the visible DM2 start-menu panel even when no row is hit, preventing menu whitespace from falling through to runtime input before Continue/slot/New Game is chosen. Verification: focused build passed for `test_dm2_v1_m11_startup_profile_gate`; focused CTest for `dm2_v1_m11_startup_profile_gate` plus `dm2_v1_runtime_handoff_smoke` passed locally.
