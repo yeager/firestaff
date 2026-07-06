@@ -1,6 +1,29 @@
 
 # Unreleased
 
+# Firestaff v3.0.52
+
+Firestaff v3.0.52 packages the current `main` after the latest DM1 V1
+projectile rendering/runtime validation work.
+
+## Highlights since v3.0.51
+
+- **DM1 V1 D4 far projectile prepass**: M11 exposes and validates the D4 far
+  projectile prepass path for the original-resolution renderer.
+- **DM1 V1 runtime projectile effects**: the M11 game-view probe validates
+  runtime projectile-effect coverage for the new prepass route.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.52`.
+
+## Verification
+
+- Local release verification covers version synchronization, the focused M11
+  game-view probe build, projectile invariant output, the Phase A probe and
+  `git diff --check` before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.52` release run.
+
 # Firestaff v3.0.51
 
 Firestaff v3.0.51 packages the current `main` after the latest DM2 V1
