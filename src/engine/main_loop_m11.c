@@ -3629,7 +3629,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M11_Render_Shutdown();
         return M11_RENDER_ERR_TEXTURE;
     }
-    M12_StartupMenu_InitWithDataDir(&menuState, o->dataDir, o->gameId);
+    {
+        M12_StartupMenuInitOptions menuInitOptions;
+        memset(&menuInitOptions, 0, sizeof(menuInitOptions));
+        menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
+        M12_StartupMenu_InitWithOptions(&menuState,
+                                        o->dataDir,
+                                        o->gameId,
+                                        &menuInitOptions);
+    }
     menuState.settings.windowWidth = M11_Render_GetWindowWidth();
     menuState.settings.windowHeight = M11_Render_GetWindowHeight();
     useModern = m11_should_use_modern_launcher(&menuState);

@@ -2999,6 +2999,13 @@ void M12_StartupMenu_Init(M12_StartupMenuState* state) {
 void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
                                      const char* dataDir,
                                      const char* gameId) {
+    M12_StartupMenu_InitWithOptions(state, dataDir, gameId, NULL);
+}
+
+void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
+                                     const char* dataDir,
+                                     const char* gameId,
+                                     const M12_StartupMenuInitOptions* options) {
     if (!state) {
         return;
     }
@@ -3052,7 +3059,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->screenshotGallery.scrollOffset = 0;
     state->screenshotGallery.confirmDelete = 0;
     state->screenshotGallery.mode = M12_SCREENSHOT_MODE_GRID;
-    {
+    if (!options || !options->skipScreenshotGalleryScan) {
         const char* gdir;
         gdir = getenv("FIRESTAFF_SCREENSHOTS_DIR");
         if (!gdir || !gdir[0]) {
