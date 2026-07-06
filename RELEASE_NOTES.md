@@ -1,6 +1,32 @@
 
 # Unreleased
 
+# Firestaff v3.0.31
+
+Firestaff v3.0.31 packages the all-games startup handoff hardening that landed
+after v3.0.30.
+
+## Highlights since v3.0.30
+
+- **All-games direct launch**: CLI/direct launch now uses the same validated
+  M12-to-M11 preparation boundary for DM1, CSB, DM2, Nexus and Theron's Quest.
+
+- **DM2 launcher handoff**: DM2 now has real-data launcher startup proof for
+  normal selected launches, startup-menu freeze behavior and explicit quick
+  resume from `SKSaveNN.dat`.
+
+- **DM1 HoC wall text**: HoC wall inscriptions now select the visible wall cell
+  before decoding ReDMCSB M648 glyph text, improving readability for multi-sided
+  inscription/sensor chains.
+
+## Verification
+
+- Local release-prep verification covered the focused DM2 launcher handoff,
+  DM2 startup-profile, M12 quick-resume and all-games direct-launch gates.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.31` release run.
+
 # Firestaff v3.0.30
 
 Firestaff v3.0.30 packages the DM1 startup handoff hardening that landed after
