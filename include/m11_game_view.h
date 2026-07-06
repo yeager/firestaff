@@ -777,6 +777,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight);
+int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state);
 int M11_GameView_PickupItem(M11_GameViewState* state);
 int M11_GameView_DropItem(M11_GameViewState* state);
 int M11_GameView_CountChampionItems(const M11_GameViewState* state, int championIndex);

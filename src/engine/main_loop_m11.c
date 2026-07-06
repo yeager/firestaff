@@ -230,6 +230,8 @@ static void m11_map_presented_game_point_to_source(const M11_GameViewState* game
 static int m11_present_game_frame(const M11_GameViewState* gameView) {
     int scale = M11_GameView_PresentationIndexedScale(
         gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL);
+    int specialPalette =
+        M11_GameView_GetPresentationSpecialPalette(gameView);
     int targetW = M11_FB_WIDTH;
     int targetH = M11_FB_HEIGHT;
     int requestedFilter = M11_Render_GetScaleFilter();
@@ -249,6 +251,24 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
     if (effectiveFilter != requestedFilter) {
         M11_Render_SetScaleFilter(effectiveFilter);
         restoreFilter = 1;
+    }
+    if (specialPalette >= 0 &&
+        scale == 1 &&
+        !(M11_GameView_PresentationTarget(
+              gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
+              gameView ? gameView->presentationWidth : 0,
+              gameView ? gameView->presentationHeight : 0,
+              &targetW,
+              &targetH))) {
+        result = M11_Render_PresentIndexedWithSpecialPalette(
+            M11_Render_GetFramebuffer(),
+            M11_FB_WIDTH,
+            M11_FB_HEIGHT,
+            specialPalette);
+        if (restoreFilter) {
+            M11_Render_SetScaleFilter(requestedFilter);
+        }
+        return result;
     }
     if (scale > 1) {
         result = M11_Render_PresentScaledIndexed(M11_Render_GetFramebuffer(),

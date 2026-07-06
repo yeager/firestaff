@@ -54,6 +54,7 @@
 #include "m11_game_text_utf8_decoder_pc34_compat.h"
 #include "render_sdl_m11.h"
 #include "title_frontend_v1.h"
+#include "vga_palette_pc34_compat.h"
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -2986,6 +2987,32 @@ static int m11_csb_startup_build_render_plan(
     return csb_v1_startup_build_render_plan_pc34(&render_state, out_plan);
 }
 
+int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
+{
+    CSB_V1_StartupRenderPlan_PC34 plan;
+
+    if (!state || !state->active ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return -1;
+    }
+    if (!m11_csb_startup_build_render_plan(state, &plan)) {
+        return -1;
+    }
+    if (plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+        return plan.title_special_palette;
+    }
+    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
+        return VGA_PALETTE_PC34_SPECIAL_CREDITS;
+    }
+    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34 ||
+        plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
+        plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
+        plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+        return VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+    }
+    return -1;
+}
+
 static int m11_count_nonzero_pixels(const unsigned char *framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight,
@@ -3033,14 +3060,13 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        unsigned char *framebuffer,
                                        int framebufferWidth,
                                        int framebufferHeight,
-                                       int titleSourceStep,
-                                       int titleStage)
+                                       const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
     const M11_AssetSlot *title = NULL;
     V1_TitleFrontendSourceAnimationStep step;
     int hasStep = 0;
 
-    if (!state || !framebuffer || framebufferWidth <= 0 ||
+    if (!state || !framebuffer || !plan || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
         return;
     }
@@ -3055,30 +3081,30 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
          * the 18 shrink/zoom steps described by V1_TitleFrontend, and
          * STRIKES BACK is blitted from source y=80 to screen y=118 before
          * ENTRANCE.C F0806/F0441 takes over. */
-        if (titleSourceStep > 0) {
+        if (plan->title_source_step > 0) {
             hasStep = V1_TitleFrontend_GetSourceAnimationStep(
-                (unsigned int)titleSourceStep,
+                (unsigned int)plan->title_source_step,
                 &step);
         }
-        if (titleStage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
+        if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
             M11_AssetLoader_BlitRegion(title,
-                                       0,
-                                       137,
-                                       320,
-                                       16,
+                                       plan->title_source_x,
+                                       plan->title_source_y,
+                                       plan->title_source_w,
+                                       plan->title_source_h,
                                        framebuffer,
                                        framebufferWidth,
                                        framebufferHeight,
-                                       0,
-                                       90,
+                                       plan->title_dest_x,
+                                       plan->title_dest_y,
                                        -1);
             if (m11_count_nonzero_pixels(framebuffer,
                                          framebufferWidth,
                                          framebufferHeight,
-                                         0,
-                                         90,
-                                         320,
-                                         16) == 0) {
+                                         plan->title_dest_x,
+                                         plan->title_dest_y,
+                                         plan->title_dest_w,
+                                         plan->title_dest_h) == 0) {
                 m11_draw_text(framebuffer,
                               framebufferWidth,
                               framebufferHeight,
@@ -3087,33 +3113,33 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                               "FTL PRESENTS",
                               &g_text_small);
             }
-        } else if (titleStage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+        } else if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
                    hasStep &&
                    step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
             M11_AssetLoader_BlitSubRectScaled(title,
                                               framebuffer,
                                               framebufferWidth,
                                               framebufferHeight,
-                                              (int)step.x,
-                                              (int)step.y,
-                                              (int)step.width,
-                                              (int)step.height,
-                                              0,
-                                              0,
-                                              320,
-                                              80,
+                                              plan->title_source_x,
+                                              plan->title_source_y,
+                                              plan->title_source_w,
+                                              plan->title_source_h,
+                                              plan->title_dest_x,
+                                              plan->title_dest_y,
+                                              plan->title_dest_w,
+                                              plan->title_dest_h,
                                               -1);
         } else {
             M11_AssetLoader_BlitRegion(title,
-                                       0,
-                                       80,
-                                       320,
-                                       57,
+                                       plan->title_source_x,
+                                       plan->title_source_y,
+                                       plan->title_source_w,
+                                       plan->title_source_h,
                                        framebuffer,
                                        framebufferWidth,
                                        framebufferHeight,
-                                       0,
-                                       118,
+                                       plan->title_dest_x,
+                                       plan->title_dest_y,
                                        0);
         }
         return;
@@ -3224,8 +3250,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                    framebuffer,
                                    framebufferWidth,
                                    framebufferHeight,
-                                   plan.title_source_step,
-                                   plan.title_stage);
+                                   &plan);
         return;
     }
 
