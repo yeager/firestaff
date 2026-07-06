@@ -1642,6 +1642,66 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->gameId         = NULL;
     opts->directLaunch   = 0;
     opts->bootProbe      = 0;
+    opts->bootProbeFrames = 0;
+}
+
+static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
+                                                  int frameCount) {
+    int i;
+    if (!gameView || !gameView->active || frameCount <= 0) {
+        return;
+    }
+    for (i = 0; i < frameCount; ++i) {
+        M11_GameInputResult result = M11_GameView_AdvanceIdleTick(gameView);
+        if (result == M11_GAME_INPUT_REDRAW || i == frameCount - 1) {
+            M11_GameView_Draw(gameView,
+                              M11_Render_GetFramebuffer(),
+                              M11_FB_WIDTH,
+                              M11_FB_HEIGHT);
+        }
+    }
+}
+
+static void m11_phase_a_print_boot_probe_receipt(
+    const M11_GameViewState* gameView,
+    const M12_StartupMenuState* menuState,
+    const char* gameId,
+    int advancedFrames) {
+    M11_BootProbeReceipt receipt;
+    const char* runtimeDir = "";
+    if (menuState && gameId && gameId[0] != '\0') {
+        runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
+                                                       gameId);
+    }
+    if (!runtimeDir) {
+        runtimeDir = "";
+    }
+    if (!M11_GameView_GetBootProbeReceipt(gameView, &receipt)) {
+        fprintf(stderr,
+                "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d\n",
+                gameId ? gameId : "",
+                gameView ? (int)gameView->sourceKind : 0,
+                gameView ? gameView->sourceId : "",
+                runtimeDir,
+                advancedFrames);
+        return;
+    }
+    fprintf(stderr,
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d runtimeTick=%d dm1WorldTick=%u introBypassed=%d\n",
+            gameId ? gameId : "",
+            (int)receipt.sourceKind,
+            receipt.sourceId,
+            runtimeDir,
+            advancedFrames,
+            receipt.startupPhase,
+            receipt.startupActive,
+            receipt.levelLoaded,
+            receipt.partyX,
+            receipt.partyY,
+            receipt.partyDir,
+            receipt.runtimeTick,
+            (unsigned int)receipt.dm1WorldTick,
+            receipt.dm1StartupIntroBypassed);
 }
 
 
@@ -3251,13 +3311,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         launchedEver = 1;
         if (o->bootProbe) {
-            fprintf(stderr,
-                    "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s\n",
-                    o->gameId ? o->gameId : "",
-                    (int)gameView.sourceKind,
-                    gameView.sourceId,
-                    M12_AssetStatus_GetRuntimeDataDir(&menuState.assetStatus,
-                                                      o->gameId ? o->gameId : ""));
+            int frames = o->bootProbeFrames < 0 ? 0 : o->bootProbeFrames;
+            m11_phase_a_advance_boot_probe_frames(&gameView, frames);
+            m11_phase_a_print_boot_probe_receipt(&gameView,
+                                                 &menuState,
+                                                 o->gameId,
+                                                 frames);
             goto cleanup;
         }
         if (exitAfterLaunch) {

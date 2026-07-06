@@ -12107,6 +12107,131 @@ int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state) {
         state->dm1StartupIntroBypassed);
 }
 
+int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
+                                     M11_BootProbeReceipt* out) {
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    snprintf(out->startupPhase, sizeof(out->startupPhase), "%s", "inactive");
+    out->partyX = -1;
+    out->partyY = -1;
+    out->partyDir = -1;
+    if (!state) {
+        return 0;
+    }
+
+    out->active = state->active ? 1 : 0;
+    out->sourceKind = state->sourceKind;
+    snprintf(out->sourceId, sizeof(out->sourceId), "%s", state->sourceId);
+    out->startedFromLauncher = state->startedFromLauncher ? 1 : 0;
+    out->dm1StartupIntroBypassed =
+        M11_GameView_Dm1StartupIntroBypassed(state) ? 1 : 0;
+    out->dm1WorldTick = state->world.gameTick;
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        out->levelLoaded = state->csbState.level_loaded;
+        out->partyX = state->csbState.party_x;
+        out->partyY = state->csbState.party_y;
+        out->partyDir = state->csbState.party_dir;
+        out->runtimeTick = state->csbState.tick_count;
+        out->startupActive = state->csbState.startup_entrance_active ? 1 : 0;
+        out->startupFrame = state->csbState.startup_title_active
+            ? state->csbState.startup_title_frame
+            : state->csbState.startup_entrance_frame;
+        if (state->csbState.startup_title_active) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase),
+                     "csb-title-%d", state->csbState.startup_title_source_step);
+        } else if (state->csbState.startup_entrance_opening_active) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase),
+                     "csb-entrance-opening-%d",
+                     state->csbState.startup_entrance_opening_step);
+        } else if (state->csbState.startup_entrance_credits_active) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "csb-credits");
+        } else if (state->csbState.startup_entrance_active) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase),
+                     "csb-entrance-%d",
+                     state->csbState.startup_entrance_source_step);
+        } else {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "csb-runtime");
+        }
+        return 1;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        out->levelLoaded = state->dm2State.level_loaded;
+        out->partyX = state->dm2State.party_x;
+        out->partyY = state->dm2State.party_y;
+        out->partyDir = state->dm2State.party_dir;
+        out->runtimeTick = state->dm2State.tick_count;
+        out->startupActive = state->dm2State.startup_menu_active ? 1 : 0;
+        snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                 state->dm2State.startup_menu_active
+                     ? "dm2-startup-menu"
+                     : "dm2-runtime");
+        return 1;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        out->levelLoaded = state->nexusState.level_loaded;
+        out->partyX = state->nexusState.party_x;
+        out->partyY = state->nexusState.party_y;
+        out->partyDir = state->nexusState.party_dir;
+        out->runtimeTick = state->nexusState.tick_count;
+        out->startupFrame = state->nexusState.title_frame;
+        if (state->nexusState.title_active) {
+            out->startupActive = 1;
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "nexus-title");
+        } else if (state->nexusState.startup_save_select_active) {
+            out->startupActive = 1;
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "nexus-save-select");
+        } else if (state->nexusState.champion_select_active) {
+            out->startupActive = 1;
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "nexus-champion-select");
+        } else {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "nexus-runtime");
+        }
+        return 1;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        out->levelLoaded = state->theronState.level_loaded;
+        out->partyX = state->theronState.party_x;
+        out->partyY = state->theronState.party_y;
+        out->partyDir = state->theronState.party_dir;
+        out->runtimeTick = state->theronState.tick_count;
+        out->startupActive =
+            (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON)
+                ? 1
+                : 0;
+        if (out->startupActive) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase),
+                     "theron-startup-%d", state->theronState.startup_phase);
+        } else {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "theron-runtime");
+        }
+        return 1;
+    }
+
+    out->levelLoaded = state->world.dungeon ? 1 : 0;
+    out->partyX = state->world.party.mapX;
+    out->partyY = state->world.party.mapY;
+    out->partyDir = state->world.party.direction;
+    out->runtimeTick = (int)state->world.gameTick;
+    snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+             out->dm1StartupIntroBypassed
+                 ? "dm1-runtime-direct"
+                 : "dm1-startup-or-runtime");
+    return 1;
+}
+
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
                                            const char* savePath) {
     Nexus_V1_SaveHeader header;
