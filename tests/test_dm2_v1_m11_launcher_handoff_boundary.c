@@ -34,6 +34,9 @@
  *      default Firestaff data root, the production M12 selected-entry
  *      path enters M11 DM2, keeps the startup menu active, blocks idle
  *      tick aging behind that menu, and renders a non-blank first frame.
+ *   7. With the same real data, M12 quick resume carries an exact
+ *      SKSaveNN.dat savePath into M11, skips the startup menu, and mirrors
+ *      the saved DM2 party pose/tick into the live runtime boundary.
  *
  * Source-lock boundary:
  *   - m11_game_view.c lines 6706-6810 (DM2 hand-off branch).
@@ -57,6 +60,7 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
+#include "dm2_v1_new_game.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,6 +142,44 @@ static int count_nonzero_pixels(const unsigned char* framebuffer, size_t size) {
         if (framebuffer[i] != 0) ++count;
     }
     return count;
+}
+
+static int write_dm2_resume_slot(const char* root,
+                                 unsigned char slot,
+                                 char* outPath,
+                                 size_t outPathSize) {
+    DM2_V1_SessionState session;
+    if (!root || !outPath || outPathSize == 0u) {
+        return 0;
+    }
+    if (!make_dir(root)) {
+        /* The per-process temp path may already exist after a previous
+         * interrupted run; save-slot overwrite is acceptable for this gate. */
+        FILE* probe = NULL;
+        char probePath[512];
+        int rc = snprintf(probePath, sizeof(probePath),
+                          "%s%s.write-probe", root, TEST_PATH_SEP);
+        if (rc <= 0 || (size_t)rc >= sizeof(probePath)) return 0;
+        probe = fopen(probePath, "wb");
+        if (!probe) return 0;
+        fclose(probe);
+        remove(probePath);
+    }
+    dm2_v1_session_new(&session);
+    session.game_tick = 88u;
+    session.party_x = 24u;
+    session.party_y = 12u;
+    session.party_dir = 3u;
+    session.party_level = 2u;
+    session.outdoor_mode = 1u;
+    session.time_of_day_minutes = 720u;
+    session.rain_intensity = 35u;
+    if (dm2_v1_session_save_slot(root, slot, "M12 Quick Resume", &session) != 0) {
+        return 0;
+    }
+    snprintf(outPath, outPathSize, "%s%sSKSave%02u.dat",
+             root, TEST_PATH_SEP, (unsigned)slot);
+    return 1;
 }
 
 static const char* kDm2GraphicsPayload =
@@ -418,6 +460,90 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     M12_StartupMenu_Destroy(&menu);
 }
 
+static void run_real_m12_dm2_quick_resume_if_available(void) {
+    M12_StartupMenuState menu;
+    M12_LaunchIntent intent;
+    M11_GameViewState view;
+    const M12_MenuEntry* dm2_entry;
+    char realDataDir[512];
+    char saveRoot[512];
+    char savePath[512];
+    const char* dataDir = default_data_root(realDataDir);
+    int rc;
+
+    if (!dataDir || !dataDir[0]) {
+        expect_skip("HOME is unset; no default Firestaff data root for DM2 quick resume");
+        return;
+    }
+
+    rc = snprintf(saveRoot, sizeof(saveRoot),
+                  "%s%sfirestaff_dm2_m12_quick_resume_%ld",
+                  (getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp"),
+                  TEST_PATH_SEP, (long)TEST_GETPID());
+    if (rc <= 0 || (size_t)rc >= sizeof(saveRoot)) {
+        expect_skip("DM2 quick resume save root path buffer large enough");
+        return;
+    }
+    if (!write_dm2_resume_slot(saveRoot, 5u, savePath, sizeof(savePath))) {
+        expect_skip("could not stage DM2 SKSave05.dat quick-resume fixture");
+        return;
+    }
+
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, "dm2");
+    dismiss_initial_message(&menu);
+    dm2_entry = M12_StartupMenu_GetEntry(&menu, 2 /* DM2 slot */);
+    if (!dm2_entry || !dm2_entry->available ||
+        !M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm2")) {
+        expect_skip("no hash-verified DM2 data under default Firestaff data root for quick resume");
+        M12_StartupMenu_Destroy(&menu);
+        remove(savePath);
+        rmdir(saveRoot);
+        return;
+    }
+
+    menu.quickResumeAvailable = 1;
+    menu.quickResumeLaunchRequested = 0;
+    snprintf(menu.quickResumeGameId, sizeof(menu.quickResumeGameId), "%s", "dm2");
+    snprintf(menu.quickResumeSavePath, sizeof(menu.quickResumeSavePath), "%s", savePath);
+    menu.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    expect_true(menu.launchRequested == 1 &&
+                menu.quickResumeLaunchRequested == 1 &&
+                menu.activatedIndex == 2,
+                "real DM2 quick resume accept arms the DM2 launch slot");
+
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    expect_true(intent.valid == 1,
+                "real DM2 quick resume launch intent is valid");
+    expect_true(intent.gameId && strcmp(intent.gameId, "dm2") == 0,
+                "real DM2 quick resume launch intent keeps gameId=\"dm2\"");
+    expect_true(intent.savePath && strcmp(intent.savePath, savePath) == 0,
+                "real DM2 quick resume launch intent carries exact SKSave path");
+
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                "real DM2 quick resume enters M11 through selected-entry path");
+    expect_true(view.active == 1 &&
+                view.sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+                strcmp(view.sourceId, "dm2") == 0,
+                "real DM2 quick resume reaches active DM2 M11 state");
+    expect_true(view.dm2State.startup_menu_active == 0,
+                "real DM2 quick resume skips the startup menu after explicit resume");
+    expect_true(view.dm2State.party_x == 24 &&
+                view.dm2State.party_y == 12 &&
+                view.dm2State.party_dir == 3,
+                "real DM2 quick resume mirrors saved party pose");
+    expect_true(view.dm2State.tick_count == 88,
+                "real DM2 quick resume mirrors saved game tick");
+    expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
+                "real DM2 quick resume reports resumed status");
+
+    M11_GameView_Shutdown(&view);
+    M12_StartupMenu_Destroy(&menu);
+    remove(savePath);
+    rmdir(saveRoot);
+}
+
 int main(void) {
     printf("=== DM2 V1 M12/M11 launcher handoff boundary ===\n");
 
@@ -425,6 +551,7 @@ int main(void) {
     run_m11_dm2_handoff_branch();
     run_m11_dm2_unverified_happy_path();
     run_real_m12_dm2_handoff_if_available();
+    run_real_m12_dm2_quick_resume_if_available();
 
     printf("\nDM2 V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
            g_passed, g_failures, g_skipped);
