@@ -91,7 +91,10 @@ void nexus_title_free(Nexus_TitleScreen *title) {
 void nexus_render_title(const Nexus_TitleScreen *title,
                         Nexus_Framebuffer *fb, int frame) {
     int y;
-    (void)frame;
+    int reveal_h;
+    int reveal_y0;
+    int reveal_y1;
+    uint8_t edge_color;
     if (!fb) {
         return;
     }
@@ -101,12 +104,29 @@ void nexus_render_title(const Nexus_TitleScreen *title,
         nexus_render_title_fallback(fb, frame);
         return;
     }
-    for (y = 0; y < title->height && y < NEXUS_FB_H; ++y) {
+    /* Nexus boot presentation: keep the real TITLE.CG artwork, but make the
+     * startup title phase frame-dependent instead of a static blit. This is a
+     * bounded Saturn-style reveal until the original VDP1/VDP2 title program
+     * is decoded from NEXUS.BIN. */
+    if (frame < 0) {
+        frame = 0;
+    }
+    reveal_h = 80 + frame * 4;
+    if (reveal_h > NEXUS_FB_H) {
+        reveal_h = NEXUS_FB_H;
+    }
+    reveal_y0 = (NEXUS_FB_H - reveal_h) / 2;
+    reveal_y1 = reveal_y0 + reveal_h;
+    for (y = reveal_y0; y < reveal_y1 && y < title->height &&
+                 y < NEXUS_FB_H; ++y) {
         int copy_w = title->width < NEXUS_FB_W ? title->width : NEXUS_FB_W;
         memcpy(&fb->color_buffer[y * NEXUS_FB_W],
                &title->pixels[y * title->width],
                (size_t)copy_w);
     }
+    edge_color = (uint8_t)(12 + ((frame / 4) & 7));
+    nexus_title_draw_rect(fb, 0, reveal_y0 - 1, NEXUS_FB_W, 1, edge_color);
+    nexus_title_draw_rect(fb, 0, reveal_y1, NEXUS_FB_W, 1, edge_color);
 }
 
 void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame) {

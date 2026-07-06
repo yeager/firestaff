@@ -81,6 +81,22 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     return nonzero;
 }
 
+static int count_diff_pixels(const unsigned char* a,
+                             const unsigned char* b,
+                             size_t count) {
+    size_t i;
+    int diff = 0;
+    if (!a || !b) {
+        return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        if (a[i] != b[i]) {
+            ++diff;
+        }
+    }
+    return diff;
+}
+
 static void make_empty_data_dir(char out[512]) {
     int rc = snprintf(out, 512,
                       "%s%sfirestaff_nexus_launcher_empty_%ld",
@@ -174,6 +190,7 @@ static void run_real_launcher_handoff_if_available(void) {
     char real_dir[512];
     const char* data_dir = default_nexus_data_dir(real_dir);
     unsigned char framebuffer[320 * 200];
+    unsigned char framebuffer_later[320 * 200];
 
     if (!data_dir || !data_dir[0]) {
         expect_skip("HOME is unset; no default Nexus data dir");
@@ -221,6 +238,18 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
                 "M11 Nexus launcher title phase draws a nonblank frame");
+    for (int t = 0; t < 16; ++t) {
+        expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
+                    "M11 Nexus launcher title idle advances title animation");
+    }
+    expect_true(view.nexusState.title_frame >= 16,
+                "M11 Nexus launcher title advances frame counter");
+    memset(framebuffer_later, 0, sizeof(framebuffer_later));
+    M11_GameView_Draw(&view, framebuffer_later, 320, 200);
+    expect_true(count_diff_pixels(framebuffer,
+                                  framebuffer_later,
+                                  sizeof(framebuffer)) > 100,
+                "M11 Nexus launcher title frame changes after idle");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                     M11_GAME_INPUT_IGNORED,
                 "M11 Nexus launcher title ignores movement input");

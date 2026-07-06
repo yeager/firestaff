@@ -15,6 +15,7 @@
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_save.h"
+#include "nexus_v1_title.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_world.h"
 
@@ -116,6 +117,50 @@ static int count_nonzero_region(const unsigned char* pixels,
         }
     }
     return nonzero;
+}
+
+static int count_diff_pixels(const unsigned char* a,
+                             const unsigned char* b,
+                             size_t count) {
+    size_t i;
+    int diff = 0;
+    if (!a || !b) {
+        return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        if (a[i] != b[i]) {
+            ++diff;
+        }
+    }
+    return diff;
+}
+
+static void expect_title_render_is_frame_dependent(void) {
+    Nexus_TitleScreen title;
+    Nexus_Framebuffer frame0;
+    Nexus_Framebuffer frame16;
+    unsigned char pixels[NEXUS_FB_W * NEXUS_FB_H];
+    int i;
+
+    for (i = 0; i < (int)sizeof(pixels); ++i) {
+        pixels[i] = (unsigned char)((i % 251) + 1);
+    }
+    memset(&title, 0, sizeof(title));
+    title.pixels = pixels;
+    title.width = NEXUS_FB_W;
+    title.height = NEXUS_FB_H;
+    title.loaded = 1;
+    nexus_fb_init(&frame0);
+    nexus_fb_init(&frame16);
+    nexus_render_title(&title, &frame0, 0);
+    nexus_render_title(&title, &frame16, 16);
+    expect_true(count_nonzero_pixels(frame0.color_buffer,
+                                     sizeof(frame0.color_buffer)) > 500,
+                "Nexus title reveal frame 0 remains visible");
+    expect_true(count_diff_pixels(frame0.color_buffer,
+                                  frame16.color_buffer,
+                                  sizeof(frame0.color_buffer)) > 500,
+                "Nexus title render changes across startup frames");
 }
 
 static void fill_nexus_spec(M11_GameLaunchSpec* spec, const char* data_dir) {
@@ -253,6 +298,7 @@ int main(void) {
     const char* real_dir;
 
     expect_face_loader_counts_real_vs_fallback();
+    expect_title_render_is_frame_dependent();
 
     if (make_temp_root(empty_root)) {
         expect_failed_start_is_inactive(empty_root, "NEXUS DATA ERROR");
@@ -303,6 +349,26 @@ int main(void) {
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
                         "real Nexus title phase draws a nonblank frame");
+            {
+                unsigned char frame_later[320 * 200];
+                int tick_before = view.nexusState.tick_count;
+                int t;
+                for (t = 0; t < 16; ++t) {
+                    expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                                    M11_GAME_INPUT_REDRAW,
+                                "real Nexus title idle advances title animation");
+                }
+                expect_true(view.nexusState.tick_count == tick_before,
+                            "real Nexus title animation does not tick runtime");
+                expect_true(view.nexusState.title_frame >= 16,
+                            "real Nexus title animation advances frame counter");
+                memset(frame_later, 0, sizeof(frame_later));
+                M11_GameView_Draw(&view, frame_later, 320, 200);
+                expect_true(count_diff_pixels(framebuffer,
+                                              frame_later,
+                                              sizeof(framebuffer)) > 100,
+                            "real Nexus TITLE.CG boot frame changes after idle");
+            }
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                             M11_GAME_INPUT_IGNORED,
                         "real Nexus title ignores movement input before explicit start");
