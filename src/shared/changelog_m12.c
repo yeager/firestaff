@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.34  (2026-07-06)",
+    "  - Packages the post-v3.0.33 startup hardening now on main.",
+    "  - Nexus direct ISO/BIN/CUE media requests now use the normal hash-verified scanner handoff.",
+    "  - Theron's Quest Track 02 descriptor semantic coverage is registered in CMake.",
+    "  - DM1, CSB and DM2 direct ZIP/ISO/BIN requests enter the container-aware scanner path before runtime cache materialization.",
+    "",
     "V3.0.26  (2026-07-04)",
     "  - Packages the launcher language selector as a real button with a flag popup for the full 19-language menu list.",
     "  - Startup defaults now follow the operating-system locale across the supported language codes while preserving explicit saved language choices.",
@@ -394,5 +400,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.33";
+    return "3.0.34";
 }
