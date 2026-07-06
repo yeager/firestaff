@@ -2763,6 +2763,24 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
      * `firestaff --scan-data` for the same data root. */
     M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
     {
+        M12_AssetStatus defaultStatus;
+        int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
+        int defaultReadyCount;
+        memset(&defaultStatus, 0, sizeof(defaultStatus));
+        M12_AssetStatus_Scan(&defaultStatus, NULL);
+        defaultReadyCount = m12_asset_ready_game_count(&defaultStatus);
+        if (defaultReadyCount > currentReadyCount ||
+            (gameId && gameId[0] != '\0' &&
+             !M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) &&
+             M12_AssetStatus_GameAvailable(&defaultStatus, gameId))) {
+            state->assetStatus = defaultStatus;
+            snprintf(config->dataDir, sizeof(config->dataDir), "%s",
+                     M12_AssetStatus_GetDataDir(&state->assetStatus));
+            M12_Config_Save(config);
+            return;
+        }
+    }
+    {
         char resolvedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         if (FSP_ResolveDataDir(resolvedDataDir, sizeof(resolvedDataDir), NULL) &&
             resolvedDataDir[0] != '\0' &&
@@ -2790,16 +2808,13 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
                                     const char* gameId) {
     M12_Config config;
-    const char* envDataDir;
     int gi;
     int hasExplicitDataDirOverride;
     if (!state) {
         return;
     }
-    envDataDir = getenv("FIRESTAFF_DATA");
     hasExplicitDataDirOverride =
-        ((dataDirOverride && dataDirOverride[0] != '\0') ||
-         (envDataDir && envDataDir[0] != '\0')) ? 1 : 0;
+        (dataDirOverride && dataDirOverride[0] != '\0') ? 1 : 0;
     M12_Config_Load(&config, dataDirOverride);
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
                                                     M12_UI_LANGUAGE_COUNT);
