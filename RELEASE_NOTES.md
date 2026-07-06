@@ -1,6 +1,29 @@
 
 # Unreleased
 
+# Firestaff v3.0.30
+
+Firestaff v3.0.30 packages the DM1 startup handoff hardening that landed after
+v3.0.29.
+
+## Highlights since v3.0.29
+
+- **DM1 launcher handoff**: DM1 V1 now has the same bounded
+  launcher-to-runtime startup gate as the other active startup targets, so the
+  M12 selected-game path reaches M11 before dungeon/runtime ownership begins.
+
+- **DM1 startup freeze proof**: the gate now also verifies that startup state
+  does not age runtime ticks while the entrance/startup surface is still active
+  and only enters the dungeon after explicit Accept.
+
+## Verification
+
+- Local release-prep verification covers metadata synchronization before tag
+  push.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.30` release run.
+
 # Firestaff v3.0.29
 
 Firestaff v3.0.29 packages the current `main` startup state after v3.0.28.
