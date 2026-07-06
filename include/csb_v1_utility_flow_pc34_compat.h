@@ -107,7 +107,9 @@ typedef struct {
 } CSB_V1_UtilMenuLayout;
 
 enum {
-    CSB_V1_UTIL_RENDER_ROW_LABEL_CAPACITY = 96
+    CSB_V1_UTIL_RENDER_ROW_LABEL_CAPACITY = 96,
+    CSB_V1_UTIL_RENDER_TEXT_CAPACITY = 96,
+    CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS = 4
 };
 
 typedef struct {
@@ -125,6 +127,13 @@ typedef struct {
     int text_y;
     char label[CSB_V1_UTIL_RENDER_ROW_LABEL_CAPACITY];
 } CSB_V1_UtilRenderRow;
+
+typedef struct {
+    int x;
+    int y;
+    int text_style;
+    char text[CSB_V1_UTIL_RENDER_TEXT_CAPACITY];
+} CSB_V1_UtilRenderTextRow;
 
 typedef struct {
     int x;
@@ -202,6 +211,13 @@ int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
 int csb_v1_util_flow_menu_render_rows(
     const CSB_V1_UtilFlowContext *ctx,
     CSB_V1_UtilRenderRow *rows,
+    int max_rows);
+int csb_v1_util_flow_import_status_render_row(
+    const CSB_V1_UtilFlowContext *ctx,
+    CSB_V1_UtilRenderTextRow *out_row);
+int csb_v1_util_flow_preview_render_rows(
+    const CSB_V1_UtilFlowContext *ctx,
+    CSB_V1_UtilRenderTextRow *rows,
     int max_rows);
 int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
                                   int preview_active,

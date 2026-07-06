@@ -2811,6 +2811,8 @@ static const char* m11_dm2_item_name(int item_id)
     }
 }
 
+static const M11_TextStyle *m11_csb_startup_text_style(int style);
+
 static void m11_csb_startup_build_utility_flow(
     const M11_GameViewState *state,
     CSB_V1_UtilFlowContext *flow)
@@ -2829,6 +2831,21 @@ static void m11_csb_startup_build_utility_flow(
     selected %= CSB_V1_UTIL_MENU_ROW_COUNT;
     flow->selected_action_index = selected;
     flow->action = csb_v1_util_flow_selected_action(flow);
+    flow->imported_champion_count = state
+        ? state->csbState.startup_import_champion_count
+        : 0;
+    if (state && state->csbBootProfile) {
+        CSB_V1_PartyState party;
+        memset(&party, 0, sizeof(party));
+        if (csb_v1_runtime_get_party_state(
+                &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime,
+                &party) >= 0 &&
+            party.ImportedFromDM1 &&
+            party.ChampionCount > 0) {
+            flow->imported_party = party;
+            flow->imported_champion_count = party.ChampionCount;
+        }
+    }
 }
 
 static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
@@ -2839,7 +2856,8 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilRenderRow renderRows[CSB_V1_UTIL_MENU_ROW_COUNT];
-    char row[96];
+    CSB_V1_UtilRenderTextRow statusRow;
+    CSB_V1_UtilRenderTextRow previewRows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
     int renderRowCount;
     int i;
 
@@ -2847,10 +2865,6 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
         return;
     }
 
-    snprintf(row,
-             sizeof(row),
-             "DM1 IMPORT READY: %d CHAMPIONS",
-             state->csbState.startup_import_champion_count);
     m11_csb_startup_build_utility_flow(state, &flow);
     if ((renderRowCount = csb_v1_util_flow_menu_render_rows(
              &flow,
@@ -2859,12 +2873,13 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
         !csb_v1_util_flow_panel_layout(
             &flow,
             state->csbState.startup_import_preview_active,
-            &panel)) {
+            &panel) ||
+        !csb_v1_util_flow_import_status_render_row(&flow, &statusRow)) {
         return;
     }
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  panel.import_status_x, panel.import_status_y, row,
-                  &g_text_small);
+                  statusRow.x, statusRow.y, statusRow.text,
+                  m11_csb_startup_text_style(statusRow.text_style));
     if (state->csbState.startup_import_utility_prompt[0] != '\0') {
         m11_draw_text(framebuffer,
                       framebufferWidth,
@@ -2896,30 +2911,19 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                       &g_text_small);
     }
     if (state->csbState.startup_import_preview_active) {
-        int count = state->world.party.championCount;
-        if (count > 4) {
-            count = 4;
-        }
+        int count = csb_v1_util_flow_preview_render_rows(
+            &flow,
+            previewRows,
+            (int)(sizeof(previewRows) / sizeof(previewRows[0])));
         for (i = 0; i < count; ++i) {
-            const struct ChampionState_Compat *champ =
-                &state->world.party.champions[i];
-            char name[32];
-            char preview[80];
-            m11_format_champion_name(champ->name, name, sizeof(name));
-            snprintf(preview,
-                     sizeof(preview),
-                     "%d %s  HP %d/%d",
-                     i + 1,
-                     name[0] ? name : "EMPTY",
-                     (int)champ->hp.current,
-                     (int)champ->hp.maximum);
             m11_draw_text(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          panel.preview_x,
-                          panel.preview_y + i * panel.preview_row_h,
-                          preview,
-                          &g_text_small);
+                          previewRows[i].x,
+                          previewRows[i].y,
+                          previewRows[i].text,
+                          m11_csb_startup_text_style(
+                              previewRows[i].text_style));
         }
     }
 }
