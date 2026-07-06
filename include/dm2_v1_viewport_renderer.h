@@ -139,6 +139,7 @@ int dm2_v1_viewport_wall_button_graphic_index(int wall_gfx_index,
                                               int wall_gfx_field);
 int dm2_v1_viewport_creature_graphic_index(int creature_type,
                                            int frame_index);
+int dm2_v1_viewport_item_category_for_db_pool(int db_pool);
 int dm2_v1_viewport_item_graphic_index(int item_category,
                                        int item_type,
                                        int frame_index);
@@ -282,6 +283,8 @@ typedef struct {
     int creature_count;
     DM2_ItemSprite items[DM2_MAX_ITEMS_PER_SQ];
     int item_count;
+    DM2_ItemSprite carried_item;
+    int carried_item_present;
     DM2_Projectile projectiles[DM2_MAX_PROJECTILES];
     int projectile_count;
 
@@ -311,6 +314,8 @@ typedef struct {
     int fallback_creature_drawn_count;
     int asset_item_drawn_count;
     int fallback_item_drawn_count;
+    int asset_carried_item_drawn_count;
+    int fallback_carried_item_drawn_count;
     int asset_projectile_drawn_count;
     int fallback_projectile_drawn_count;
 } DM2_V1_ViewportState;
@@ -347,6 +352,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s);
 void dm2_v1_render_doors(DM2_V1_ViewportState *s);
 void dm2_v1_render_creatures(DM2_V1_ViewportState *s);
 void dm2_v1_render_items(DM2_V1_ViewportState *s);
+void dm2_v1_render_carried_item(DM2_V1_ViewportState *s);
 void dm2_v1_render_projectiles(DM2_V1_ViewportState *s);
 void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s);
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s);

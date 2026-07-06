@@ -82,6 +82,8 @@ int dm2_v1_runtime_last_asset_door_panel_count(void);
 int dm2_v1_runtime_last_asset_door_frame_count(void);
 int dm2_v1_runtime_last_asset_door_button_count(void);
 int dm2_v1_runtime_last_fallback_door_count(void);
+int dm2_v1_runtime_last_asset_carried_item_count(void);
+int dm2_v1_runtime_last_fallback_carried_item_count(void);
 
 /* ── Party position accessors ─────────────────────────────────────── */
 
