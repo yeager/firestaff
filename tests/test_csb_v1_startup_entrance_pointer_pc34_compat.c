@@ -356,6 +356,20 @@ int main(void)
               command_state.credits_remaining_ticks == 0,
           "startup command state dismisses credits");
 
+    check(csb_v1_startup_entrance_command_for_action_pc34(
+              CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34) ==
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              csb_v1_startup_entrance_command_for_action_pc34(
+                  CSB_V1_STARTUP_ENTRANCE_ACTION_RESUME_PC34) ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+              csb_v1_startup_entrance_command_for_action_pc34(
+                  CSB_V1_STARTUP_ENTRANCE_ACTION_QUIT_PC34) ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 &&
+              csb_v1_startup_entrance_command_for_action_pc34(
+                  CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34) ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+          "startup entrance actions resolve source command ids");
+
     command_state.title_active = 1;
     command_state.title_frame = 7;
     command_state.title_source_step = 2;
