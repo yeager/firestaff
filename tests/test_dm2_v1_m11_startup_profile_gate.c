@@ -478,6 +478,21 @@ int main(void) {
                 "DM2 V1 runtime accessors report the boot pose");
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "DM2 V1 runtime tick counter starts at zero");
+    if (view.dm2State.startup_menu_active) {
+        while (view.dm2State.startup_menu_selected_row + 1 <
+               view.dm2State.startup_menu_row_count) {
+            expect_true(M11_GameView_HandleInput(&view,
+                                                 M12_MENU_INPUT_DOWN) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 DM2 startup menu moves toward NEW GAME");
+        }
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 startup menu NEW GAME enters runtime");
+        expect_true(view.dm2State.startup_menu_active == 0,
+                    "M11 DM2 startup menu is dismissed after NEW GAME");
+    }
 
     expect_true(make_temp_save_root(direct_save_root),
                 "created isolated DM2 direct-start quick-save root");
@@ -527,6 +542,31 @@ int main(void) {
                 "M11 DM2 direct-start SKSave.dat restores boot tick");
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "M11 DM2 direct-start SKSave.dat restores runtime tick");
+    profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    if (profile) {
+        dm2_v1_boot_set_save_root(profile, direct_save_root);
+        view.dm2State.startup_menu_active = 1;
+        view.dm2State.startup_menu_selected_row = 0;
+        view.dm2State.startup_resume_available = 1;
+        view.dm2State.startup_slot_mask = 0u;
+        view.dm2State.startup_menu_row_count = 2;
+        snprintf(view.dm2State.startup_save_root,
+                 sizeof(view.dm2State.startup_save_root),
+                 "%s",
+                 profile->save_root);
+        expect_true(M11_GameView_HandleInput(&view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 startup menu CONTINUE loads SKSave.dat");
+        expect_true(view.dm2State.startup_menu_active == 0,
+                    "M11 DM2 startup menu dismisses after CONTINUE");
+        expect_true(strstr(view.lastOutcome, "DM2 CONTINUED") != NULL,
+                    "M11 DM2 startup menu CONTINUE reports continued status");
+        expect_true(view.dm2State.party_x == 15 &&
+                    view.dm2State.party_y == 15 &&
+                    view.dm2State.party_dir == 0,
+                    "M11 DM2 startup menu CONTINUE mirrors saved boot pose");
+    }
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
                     M11_GAME_INPUT_REDRAW,
