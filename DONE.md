@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 Nexus V1 launch smoke gate restored: the previously orphaned `probes/nexus_v1_launch_smoke_probe.c` is now a first-class CMake/CTest target again. It skip-cleans without staged Saturn data and, with local real data under `~/.firestaff/data/nexus`, proves `nexus_v1_init()` from extracted media, `LEV00.DGN` load, five engine ticks, and shutdown without crash. Verification: focused build passed for `firestaff_nexus_v1_launch_smoke_probe`; focused CTest `nexus_v1_launch_smoke` passed locally; direct real-data run passed 14/14 with level 0 reported as 64x64.
+
 - ✅ 2026-07-06 CSB utility primary-button gate: M11 now routes CSB startup utility-panel pointer actions only for the primary/left button, so the entrance bonus-dungeon mask cannot activate Import/Load/New/View rows and misses outside the entrance route no longer overwrite the last source command with `NONE`. Verification: focused build passed for `test_csb_v1_m11_startup_resume_gate`; focused CTest for `csb_v1_m11_startup_resume_gate` plus `csb_v1_boot_runtime_handoff` passed locally.
 
 - ✅ 2026-07-06 Startup pointer primary-button gate: M11 now routes Theron, Nexus, and DM2 startup-panel pointer actions only for primary/left-button clicks, so secondary/right pointer input cannot activate title, save, champion, stage, mirror, or start-menu actions before runtime. Verification: focused build passed for `test_m11_nexus_startup_gate`, `test_theron_v1_m11_direct_launch`, and `test_dm2_v1_m11_startup_profile_gate`; focused CTest for those plus `nexus_v1_startup_menu_pc34_compat` passed locally.
