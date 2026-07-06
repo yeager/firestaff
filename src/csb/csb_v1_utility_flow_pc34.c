@@ -374,6 +374,45 @@ int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
     return 1;
 }
 
+int csb_v1_util_flow_menu_render_rows(
+    const CSB_V1_UtilFlowContext *ctx,
+    CSB_V1_UtilRenderRow *rows,
+    int max_rows)
+{
+    CSB_V1_UtilMenuLayout layout;
+    int i;
+    int count = 0;
+
+    if (!ctx || !rows || max_rows <= 0 ||
+        !csb_v1_util_flow_menu_layout(ctx, &layout)) {
+        return 0;
+    }
+    memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
+    for (i = 0; i < layout.row_count && count < max_rows; ++i) {
+        const CSB_V1_UtilMenuRow *menu_row = &layout.rows[i];
+        CSB_V1_UtilRenderRow *out = &rows[count];
+        out->action = menu_row->action;
+        out->selected = menu_row->selected;
+        out->x = menu_row->x;
+        out->y = menu_row->y;
+        out->w = menu_row->w;
+        out->h = menu_row->h;
+        out->highlight_x = menu_row->x - 2;
+        out->highlight_y = menu_row->y;
+        out->highlight_w = menu_row->w;
+        out->highlight_h = menu_row->h;
+        out->text_x = menu_row->x;
+        out->text_y = menu_row->y + 2;
+        snprintf(out->label,
+                 sizeof(out->label),
+                 "%c %s",
+                 menu_row->selected ? '>' : ' ',
+                 menu_row->label ? menu_row->label : "");
+        ++count;
+    }
+    return count;
+}
+
 int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
                                   int preview_active,
                                   CSB_V1_UtilPanelLayout *out_layout)
@@ -433,6 +472,51 @@ CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
         }
     }
     return CSB_V1_UTIL_ACTION_EXIT;
+}
+
+int csb_v1_util_flow_handle_point(CSB_V1_UtilFlowContext *ctx,
+                                  int x,
+                                  int y,
+                                  int preview_active,
+                                  CSB_V1_UtilInputResult *out_result)
+{
+    CSB_V1_UtilMenuLayout layout;
+    int i;
+
+    if (out_result) {
+        memset(out_result, 0, sizeof(*out_result));
+        out_result->kind = CSB_V1_UTIL_INPUT_RESULT_NONE;
+        out_result->action = CSB_V1_UTIL_ACTION_EXIT;
+        out_result->selected_action_index =
+            ctx ? ctx->selected_action_index : 0;
+        out_result->preview_active = preview_active ? 1 : 0;
+    }
+    if (!ctx || !out_result ||
+        ctx->state != CSB_V1_UTIL_FLOW_SELECT_ACTION ||
+        !csb_v1_util_flow_menu_layout(ctx, &layout)) {
+        return 0;
+    }
+    for (i = 0; i < layout.row_count; ++i) {
+        const CSB_V1_UtilMenuRow *row = &layout.rows[i];
+        if (x >= row->x && x < row->x + row->w &&
+            y >= row->y && y < row->y + row->h) {
+            ctx->selected_action_index = i;
+            ctx->action = row->action;
+            out_result->kind = CSB_V1_UTIL_INPUT_RESULT_ACTIVATE;
+            out_result->action = row->action;
+            out_result->selected_action_index = i;
+            out_result->preview_active = 0;
+            return 1;
+        }
+    }
+    if (csb_v1_util_flow_panel_contains_point(ctx, preview_active, x, y)) {
+        out_result->kind = CSB_V1_UTIL_INPUT_RESULT_NONE;
+        out_result->action = CSB_V1_UTIL_ACTION_EXIT;
+        out_result->selected_action_index = ctx->selected_action_index;
+        out_result->preview_active = preview_active ? 1 : 0;
+        return 1;
+    }
+    return 0;
 }
 
 int csb_v1_util_flow_panel_contains_point(const CSB_V1_UtilFlowContext *ctx,

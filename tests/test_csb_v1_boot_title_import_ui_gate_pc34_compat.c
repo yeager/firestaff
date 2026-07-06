@@ -423,6 +423,7 @@ static void test_utility_panel_layout_owns_visible_hit_area(void)
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilMenuLayout menu;
+    CSB_V1_UtilInputResult point_result;
 
     csb_v1_util_flow_init(&flow);
     flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
@@ -458,6 +459,20 @@ static void test_utility_panel_layout_owns_visible_hit_area(void)
           csb_v1_util_flow_panel_contains_point(&flow, 1, 52, 193) == 1 &&
           csb_v1_util_flow_panel_contains_point(&flow, 1, 52, 194) == 0,
           "utility panel consumes preview row clicks without leaking to entrance");
+    CHECK(csb_v1_util_flow_handle_point(&flow, 40, 116, 1, &point_result) &&
+          point_result.kind == CSB_V1_UTIL_INPUT_RESULT_ACTIVATE &&
+          point_result.action == CSB_V1_UTIL_ACTION_LOAD &&
+          point_result.selected_action_index == 1 &&
+          point_result.preview_active == 0 &&
+          flow.selected_action_index == 1,
+          "utility pointer row activates through CSB-owned result");
+    CHECK(csb_v1_util_flow_handle_point(&flow, 40, 92, 1, &point_result) &&
+          point_result.kind == CSB_V1_UTIL_INPUT_RESULT_NONE &&
+          point_result.selected_action_index == 1 &&
+          point_result.preview_active == 1,
+          "utility pointer panel whitespace is consumed through CSB-owned result");
+    CHECK(!csb_v1_util_flow_handle_point(&flow, 2, 2, 0, &point_result),
+          "utility pointer outside panel is ignored by CSB-owned result");
 }
 
 static void test_diagnostic_report_surfaces_title_import_status(void)
