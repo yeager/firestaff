@@ -16,6 +16,19 @@ typedef enum {
     NEXUS_V1_STARTUP_ROW_NEW_GAME = 2
 } Nexus_V1_StartupRowKind;
 
+typedef enum {
+    NEXUS_V1_STARTUP_ACTION_NONE = 0,
+    NEXUS_V1_STARTUP_ACTION_LOAD_SLOT = 1,
+    NEXUS_V1_STARTUP_ACTION_NEW_GAME = 2
+} Nexus_V1_StartupActionKind;
+
+typedef struct {
+    Nexus_V1_StartupActionKind kind;
+    int row;
+    int slot;
+    char path[512];
+} Nexus_V1_StartupAction;
+
 typedef struct {
     char save_dir[512];
     unsigned int slot_mask;
@@ -34,6 +47,11 @@ int nexus_v1_startup_menu_row_at(const Nexus_V1_StartupMenu *menu,
 int nexus_v1_startup_menu_selected_path(const Nexus_V1_StartupMenu *menu,
                                         char *out_path,
                                         size_t out_path_size);
+int nexus_v1_startup_menu_move_selected(Nexus_V1_StartupMenu *menu,
+                                        int delta);
+int nexus_v1_startup_menu_activate_selected(
+    const Nexus_V1_StartupMenu *menu,
+    Nexus_V1_StartupAction *out_action);
 
 #ifdef __cplusplus
 }

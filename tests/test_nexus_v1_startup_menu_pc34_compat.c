@@ -71,6 +71,7 @@ int main(void)
     Nexus_V1_ChampionPool champions;
     Nexus_V1_World world;
     Nexus_V1_StartupMenu menu;
+    Nexus_V1_StartupAction action;
     Nexus_V1_StartupRowKind kind;
     int slot;
 
@@ -115,6 +116,20 @@ int main(void)
            "startup menu selected slot builds load path");
     expect(strstr(path, "nexus_save_03.dat") != NULL,
            "startup menu selected path points at nexus_save_03.dat");
+    memset(&action, 0, sizeof(action));
+    expect(nexus_v1_startup_menu_activate_selected(&menu, &action),
+           "startup menu selected slot activates");
+    expect(action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT &&
+               action.row == 0 &&
+               action.slot == 3 &&
+               strstr(action.path, "nexus_save_03.dat") != NULL,
+           "startup menu activation reports load-slot action");
+    expect(nexus_v1_startup_menu_move_selected(&menu, 1) &&
+               menu.selected_row == 1,
+           "startup menu move selected advances to NEW GAME");
+    expect(nexus_v1_startup_menu_move_selected(&menu, 1) &&
+               menu.selected_row == 1,
+           "startup menu move selected clamps at last row");
 
     kind = NEXUS_V1_STARTUP_ROW_NONE;
     slot = -1;
@@ -122,6 +137,17 @@ int main(void)
            "startup menu row 1 exists");
     expect(kind == NEXUS_V1_STARTUP_ROW_NEW_GAME && slot == -1,
            "startup menu row 1 is NEW GAME");
+    memset(&action, 0, sizeof(action));
+    expect(nexus_v1_startup_menu_activate_selected(&menu, &action),
+           "startup menu NEW GAME activates");
+    expect(action.kind == NEXUS_V1_STARTUP_ACTION_NEW_GAME &&
+               action.row == 1 &&
+               action.slot == -1 &&
+               action.path[0] == '\0',
+           "startup menu activation reports new-game action");
+    expect(nexus_v1_startup_menu_move_selected(&menu, -5) &&
+               menu.selected_row == 0,
+           "startup menu move selected clamps at first row");
 
     snprintf(path, sizeof(path), "%s/nexus_save_03.dat", save_dir);
     TST_UNLINK(path);

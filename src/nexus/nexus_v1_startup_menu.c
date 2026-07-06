@@ -16,6 +16,17 @@ static int nexus_v1_startup_row_count(unsigned int slot_mask)
     return row_count;
 }
 
+static void nexus_v1_startup_action_clear(Nexus_V1_StartupAction *action)
+{
+    if (!action) {
+        return;
+    }
+    memset(action, 0, sizeof(*action));
+    action->kind = NEXUS_V1_STARTUP_ACTION_NONE;
+    action->row = -1;
+    action->slot = -1;
+}
+
 void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
                                 const char *save_dir)
 {
@@ -126,4 +137,57 @@ int nexus_v1_startup_menu_selected_path(const Nexus_V1_StartupMenu *menu,
              menu->save_dir[0] ? menu->save_dir : ".",
              slot);
     return 1;
+}
+
+int nexus_v1_startup_menu_move_selected(Nexus_V1_StartupMenu *menu,
+                                        int delta)
+{
+    int next;
+
+    if (!menu || menu->row_count <= 0) {
+        return 0;
+    }
+    next = menu->selected_row + delta;
+    if (next < 0) {
+        next = 0;
+    }
+    if (next >= menu->row_count) {
+        next = menu->row_count - 1;
+    }
+    menu->selected_row = next;
+    return 1;
+}
+
+int nexus_v1_startup_menu_activate_selected(
+    const Nexus_V1_StartupMenu *menu,
+    Nexus_V1_StartupAction *out_action)
+{
+    Nexus_V1_StartupRowKind row_kind = NEXUS_V1_STARTUP_ROW_NONE;
+    int slot = -1;
+
+    nexus_v1_startup_action_clear(out_action);
+    if (!menu || !out_action ||
+        !nexus_v1_startup_menu_row_at(menu,
+                                      menu->selected_row,
+                                      &row_kind,
+                                      &slot)) {
+        return 0;
+    }
+    out_action->row = menu->selected_row;
+    out_action->slot = slot;
+    if (row_kind == NEXUS_V1_STARTUP_ROW_SLOT) {
+        if (!nexus_v1_startup_menu_selected_path(menu,
+                                                 out_action->path,
+                                                 sizeof(out_action->path))) {
+            nexus_v1_startup_action_clear(out_action);
+            return 0;
+        }
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_LOAD_SLOT;
+        return 1;
+    }
+    if (row_kind == NEXUS_V1_STARTUP_ROW_NEW_GAME) {
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_NEW_GAME;
+        return 1;
+    }
+    return 0;
 }

@@ -11119,51 +11119,50 @@ static int m11_nexus_startup_row_at(const M11_GameViewState *state,
     return nexus_v1_startup_menu_row_at(&menu, row, out_kind, out_slot);
 }
 
-static int m11_nexus_startup_selected_path(M11_GameViewState *state,
-                                           char *out_path,
-                                           size_t out_path_size)
+static void m11_nexus_startup_menu_from_state(
+    const M11_GameViewState *state,
+    Nexus_V1_StartupMenu *menu)
 {
-    Nexus_V1_StartupMenu menu;
-
-    if (!state) {
-        return 0;
+    if (!state || !menu) {
+        return;
     }
     nexus_v1_startup_menu_init(
-        &menu,
+        menu,
         state->nexusState.startup_save_dir[0]
             ? state->nexusState.startup_save_dir
             : NULL);
-    menu.slot_mask = state->nexusState.startup_save_slot_mask;
-    menu.row_count = state->nexusState.startup_save_row_count;
-    menu.selected_row = state->nexusState.startup_save_selected_row;
-    return nexus_v1_startup_menu_selected_path(&menu,
-                                               out_path,
-                                               out_path_size);
+    menu->slot_mask = state->nexusState.startup_save_slot_mask;
+    menu->row_count = state->nexusState.startup_save_row_count;
+    menu->selected_row = state->nexusState.startup_save_selected_row;
+}
+
+static void m11_nexus_startup_menu_to_state(
+    M11_GameViewState *state,
+    const Nexus_V1_StartupMenu *menu)
+{
+    if (!state || !menu) {
+        return;
+    }
+    state->nexusState.startup_save_slot_mask = menu->slot_mask;
+    state->nexusState.startup_save_row_count = menu->row_count;
+    state->nexusState.startup_save_selected_row = menu->selected_row;
 }
 
 static M11_GameInputResult m11_nexus_startup_activate_save_row(
     M11_GameViewState *state)
 {
-    Nexus_V1_StartupRowKind kind = NEXUS_V1_STARTUP_ROW_NONE;
-    int slot = -1;
-    char save_path[M11_GAME_VIEW_PATH_CAPACITY];
+    Nexus_V1_StartupMenu menu;
+    Nexus_V1_StartupAction action;
 
     if (!state || !state->nexusState.startup_save_select_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!m11_nexus_startup_row_at(
-            state,
-            state->nexusState.startup_save_selected_row,
-            &kind,
-            &slot)) {
+    m11_nexus_startup_menu_from_state(state, &menu);
+    if (!nexus_v1_startup_menu_activate_selected(&menu, &action)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (kind == NEXUS_V1_STARTUP_ROW_SLOT) {
-        (void)slot;
-        if (!m11_nexus_startup_selected_path(state,
-                                             save_path,
-                                             sizeof(save_path)) ||
-            !m11_nexus_resume_from_save_path(state, save_path)) {
+    if (action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT) {
+        if (!m11_nexus_resume_from_save_path(state, action.path)) {
             m11_set_status(state, "STARTUP", "NEXUS LOAD FAILED");
             return M11_GAME_INPUT_REDRAW;
         }
@@ -11171,11 +11170,14 @@ static M11_GameInputResult m11_nexus_startup_activate_save_row(
         m11_set_status(state, "BOOT", "NEXUS RESUMED");
         return M11_GAME_INPUT_REDRAW;
     }
-    state->nexusState.startup_save_select_active = 0;
-    state->nexusState.champion_select_active = 1;
-    state->nexusState.champion_cursor = 0;
-    m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
-    return M11_GAME_INPUT_REDRAW;
+    if (action.kind == NEXUS_V1_STARTUP_ACTION_NEW_GAME) {
+        state->nexusState.startup_save_select_active = 0;
+        state->nexusState.champion_select_active = 1;
+        state->nexusState.champion_cursor = 0;
+        m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static M11_GameInputResult m11_nexus_startup_handle_save_input(
@@ -11186,17 +11188,18 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
         return M11_GAME_INPUT_IGNORED;
     }
     if (input == M12_MENU_INPUT_UP) {
-        if (state->nexusState.startup_save_selected_row > 0) {
-            --state->nexusState.startup_save_selected_row;
-        }
+        Nexus_V1_StartupMenu menu;
+        m11_nexus_startup_menu_from_state(state, &menu);
+        (void)nexus_v1_startup_menu_move_selected(&menu, -1);
+        m11_nexus_startup_menu_to_state(state, &menu);
         m11_set_status(state, "STARTUP", "NEXUS SAVE SELECT");
         return M11_GAME_INPUT_REDRAW;
     }
     if (input == M12_MENU_INPUT_DOWN) {
-        if (state->nexusState.startup_save_selected_row + 1 <
-            state->nexusState.startup_save_row_count) {
-            ++state->nexusState.startup_save_selected_row;
-        }
+        Nexus_V1_StartupMenu menu;
+        m11_nexus_startup_menu_from_state(state, &menu);
+        (void)nexus_v1_startup_menu_move_selected(&menu, 1);
+        m11_nexus_startup_menu_to_state(state, &menu);
         m11_set_status(state, "STARTUP", "NEXUS SAVE SELECT");
         return M11_GAME_INPUT_REDRAW;
     }
