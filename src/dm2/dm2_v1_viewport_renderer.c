@@ -534,6 +534,34 @@ int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
     return DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - packed;
 }
 
+int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h)
+{
+    if (src_w <= 0 || src_h <= 0) return 0;
+    /* skproject SKWIN/SkWinCore.cpp DRAW_CHIP_OF_MAGIC_MAP lines
+     * 1001-1037 selects source X as glbMagicMapWidth * frame. DM2's
+     * startup constants set glbMagicMapWidth/glbMagicMapHeight to 7, and
+     * QUERY_DUNGEON_MAP_CHIP_PICT returns atlas_width / glbMagicMapWidth.
+     * Use square tiles for decoded atlases and keep single bitmap fixtures
+     * unchanged. */
+    if (src_w > src_h && (src_w % src_h) == 0) return src_h;
+    return src_w;
+}
+
+int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h)
+{
+    int frame_w = dm2_v1_viewport_map_chip_frame_width(src_w, src_h);
+    if (frame_w <= 0 || src_w <= 0) return 0;
+    return src_w / frame_w;
+}
+
+int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
+                                         int frame_count)
+{
+    if (frame_count <= 0) return 0;
+    if (requested_frame < 0) return 0;
+    return requested_frame % frame_count;
+}
+
 static void dm2_v1_viewport_clear_rect(DM2_V1_ViewportRect *out_rect)
 {
     if (!out_rect) return;
@@ -747,6 +775,65 @@ static void dm2_v1_blit_scaled_bitmap(uint8_t *dst,
             dst[fy * dst_stride + fx] = pixel;
         }
     }
+}
+
+static void dm2_v1_blit_scaled_bitmap_region(uint8_t *dst,
+                                             int dst_stride,
+                                             int dst_x,
+                                             int dst_y,
+                                             int dst_w,
+                                             int dst_h,
+                                             const uint8_t *src,
+                                             int src_x,
+                                             int src_y,
+                                             int src_w,
+                                             int src_h,
+                                             int src_stride,
+                                             int transparent_color)
+{
+    int y;
+
+    if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
+        src_w <= 0 || src_h <= 0 || src_stride <= 0) {
+        return;
+    }
+    for (y = 0; y < dst_h; ++y) {
+        int sy = src_y + (y * src_h) / dst_h;
+        int fy = dst_y + y;
+        int x;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (x = 0; x < dst_w; ++x) {
+            int sx = src_x + (x * src_w) / dst_w;
+            int fx = dst_x + x;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH ||
+                sx < 0 || sy < 0 || sx >= src_stride) {
+                continue;
+            }
+            pixel = src[sy * src_stride + sx];
+            if (transparent_color >= 0 &&
+                pixel == (uint8_t)transparent_color) {
+                continue;
+            }
+            dst[fy * dst_stride + fx] = pixel;
+        }
+    }
+}
+
+static int dm2_v1_prepare_map_chip_frame(int src_w,
+                                         int src_h,
+                                         int requested_frame,
+                                         int *out_frame_x,
+                                         int *out_frame_w)
+{
+    int frame_w = dm2_v1_viewport_map_chip_frame_width(src_w, src_h);
+    int frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
+    int frame_index = dm2_v1_viewport_map_chip_frame_index(requested_frame,
+                                                          frame_count);
+    if (frame_w <= 0 || frame_count <= 0) return 0;
+    if (out_frame_x) *out_frame_x = frame_index * frame_w;
+    if (out_frame_w) *out_frame_w = frame_w;
+    return 1;
 }
 
 static int dm2_v1_viewport_scaled_sprite_extent(int src_extent,
@@ -1436,7 +1523,16 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                 dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
-                int dst_w = dm2_v1_viewport_scaled_sprite_extent(src_w,
+                int frame_x = 0;
+                int frame_w = src_w;
+                if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                                   c->frame_index,
+                                                   &frame_x,
+                                                   &frame_w)) {
+                    frame_x = 0;
+                    frame_w = src_w;
+                }
+                int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
                                                                   c->depth,
                                                                   8,
                                                                   64);
@@ -1445,17 +1541,19 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                                                                   8,
                                                                   64);
                 drawn_h = dst_h;
-                dm2_v1_blit_scaled_bitmap(vp,
-                                          stride,
-                                          cx - (dst_w / 2),
-                                          cy - (dst_h / 2),
-                                          dst_w,
-                                          dst_h,
-                                          pixels,
-                                          src_w,
-                                          src_h,
-                                          src_stride > 0 ? src_stride : src_w,
-                                          DM2_COLOR_TRANSPARENT);
+                dm2_v1_blit_scaled_bitmap_region(vp,
+                                                 stride,
+                                                 cx - (dst_w / 2),
+                                                 cy - (dst_h / 2),
+                                                 dst_w,
+                                                 dst_h,
+                                                 pixels,
+                                                 frame_x,
+                                                 0,
+                                                 frame_w,
+                                                 src_h,
+                                                 src_stride > 0 ? src_stride : src_w,
+                                                 DM2_COLOR_TRANSPARENT);
                 ++s->asset_creature_drawn_count;
                 drawn_asset = 1;
             }
@@ -1528,7 +1626,16 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                 dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
-                int dst_w = dm2_v1_viewport_scaled_sprite_extent(src_w,
+                int frame_x = 0;
+                int frame_w = src_w;
+                if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                                   it->frame_index,
+                                                   &frame_x,
+                                                   &frame_w)) {
+                    frame_x = 0;
+                    frame_w = src_w;
+                }
+                int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
                                                                   it->depth,
                                                                   4,
                                                                   32);
@@ -1536,17 +1643,19 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                                                                   it->depth,
                                                                   4,
                                                                   32);
-                dm2_v1_blit_scaled_bitmap(vp,
-                                          stride,
-                                          ix - (dst_w / 2),
-                                          iy - (dst_h / 2),
-                                          dst_w,
-                                          dst_h,
-                                          pixels,
-                                          src_w,
-                                          src_h,
-                                          src_stride > 0 ? src_stride : src_w,
-                                          DM2_COLOR_TRANSPARENT);
+                dm2_v1_blit_scaled_bitmap_region(vp,
+                                                 stride,
+                                                 ix - (dst_w / 2),
+                                                 iy - (dst_h / 2),
+                                                 dst_w,
+                                                 dst_h,
+                                                 pixels,
+                                                 frame_x,
+                                                 0,
+                                                 frame_w,
+                                                 src_h,
+                                                 src_stride > 0 ? src_stride : src_w,
+                                                 DM2_COLOR_TRANSPARENT);
                 ++s->asset_item_drawn_count;
                 drawn_asset = 1;
             }
@@ -1601,7 +1710,16 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
-                int dst_w = dm2_v1_viewport_scaled_sprite_extent(src_w,
+                int frame_x = 0;
+                int frame_w = src_w;
+                if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                                   p->frame_index,
+                                                   &frame_x,
+                                                   &frame_w)) {
+                    frame_x = 0;
+                    frame_w = src_w;
+                }
+                int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
                                                                   p->depth,
                                                                   3,
                                                                   32);
@@ -1609,17 +1727,19 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                                                                   p->depth,
                                                                   3,
                                                                   32);
-                dm2_v1_blit_scaled_bitmap(vp,
-                                          stride,
-                                          px - (dst_w / 2),
-                                          py - (dst_h / 2),
-                                          dst_w,
-                                          dst_h,
-                                          pixels,
-                                          src_w,
-                                          src_h,
-                                          src_stride > 0 ? src_stride : src_w,
-                                          DM2_COLOR_TRANSPARENT);
+                dm2_v1_blit_scaled_bitmap_region(vp,
+                                                 stride,
+                                                 px - (dst_w / 2),
+                                                 py - (dst_h / 2),
+                                                 dst_w,
+                                                 dst_h,
+                                                 pixels,
+                                                 frame_x,
+                                                 0,
+                                                 frame_w,
+                                                 src_h,
+                                                 src_stride > 0 ? src_stride : src_w,
+                                                 DM2_COLOR_TRANSPARENT);
                 ++s->asset_projectile_drawn_count;
                 drawn_asset = 1;
             }
@@ -2039,6 +2159,7 @@ const char *dm2_v1_viewport_source_evidence(void)
         "Source: ReDMCSB DUNVIEW.C:5681-5883 — projectile occlusion specs\n"
         "Source: ReDMCSB DUNVIEW.C:361        — G0103_as_CurrentMapDoorOrnamentsInfo[17]\n"
         "Source: ReDMCSB DUNVIEW.C:8466-8542 — draw order (D4L→D4R→D4C→D3L→...→D0C)\n"
+        "Source: skproject/SKWIN/SkWinCore.cpp:1001-1037 — DRAW_CHIP_OF_MAGIC_MAP frame atlas offset\n"
         "Source: SKULLWIN/SKWIN/c_gui_vp.cpp  — viewport blit order (reference)\n"
         "Source: docs/dm2_graphics.md         — drawing pipeline audit\n"
         "Source: docs/dm2_walls.md            — wall/door/floor rendering specifics\n"

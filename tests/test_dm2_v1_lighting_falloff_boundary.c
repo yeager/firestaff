@@ -39,30 +39,32 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
     static const uint8_t door_button[4] = { 4, 5, 6, 7 };
     static const uint8_t wall_button[4] = { 12, 13, 14, 15 };
-    static const uint8_t creature[64] = {
-        9, 9, 9, 9, 9, 9, 9, 9,
-        9, 10, 10, 10, 10, 10, 10, 9,
-        9, 10, 11, 11, 11, 11, 10, 9,
-        9, 10, 11, 12, 12, 11, 10, 9,
-        9, 10, 11, 12, 12, 11, 10, 9,
-        9, 10, 11, 11, 11, 11, 10, 9,
-        9, 10, 10, 10, 10, 10, 10, 9,
-        9, 9, 9, 9, 9, 9, 9, 9
+    static const uint8_t creature_atlas[21 * 7] = {
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14
     };
-    static const uint8_t item[36] = {
-        6, 6, 6, 6, 6, 6,
-        6, 7, 7, 7, 7, 6,
-        6, 7, 8, 8, 7, 6,
-        6, 7, 8, 8, 7, 6,
-        6, 7, 7, 7, 7, 6,
-        6, 6, 6, 6, 6, 6
+    static const uint8_t item_atlas[21 * 7] = {
+        2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
+        2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
+        2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
+        2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
+        2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
+        2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
+        2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8
     };
-    static const uint8_t projectile[25] = {
-        5, 5, 5, 5, 5,
-        5, 14, 14, 14, 5,
-        5, 14, 15, 14, 5,
-        5, 14, 14, 14, 5,
-        5, 5, 5, 5, 5
+    static const uint8_t projectile_atlas[21 * 7] = {
+        5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
+        5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
+        5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
+        5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
+        5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
+        5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
+        5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15
     };
     (void)user;
     ++s_asset_fetch_calls;
@@ -96,28 +98,28 @@ static int test_dm2_asset_fetch(void *user,
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >= 0x10 &&
                (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) <= 0x15) {
-        if (out_pixels) *out_pixels = item;
-        if (out_w) *out_w = 6;
-        if (out_h) *out_h = 6;
-        if (out_stride) *out_stride = 6;
+        if (out_pixels) *out_pixels = item_atlas;
+        if (out_w) *out_w = 21;
+        if (out_h) *out_h = 7;
+        if (out_stride) *out_stride = 21;
         return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >= 0x0d &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) <= 0x15) {
-        if (out_pixels) *out_pixels = projectile;
-        if (out_w) *out_w = 5;
-        if (out_h) *out_h = 5;
-        if (out_stride) *out_stride = 5;
+        if (out_pixels) *out_pixels = projectile_atlas;
+        if (out_w) *out_w = 21;
+        if (out_h) *out_h = 7;
+        if (out_stride) *out_stride = 21;
         return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
                    (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
-        if (out_pixels) *out_pixels = creature;
-        if (out_w) *out_w = 8;
-        if (out_h) *out_h = 8;
-        if (out_stride) *out_stride = 8;
+        if (out_pixels) *out_pixels = creature_atlas;
+        if (out_w) *out_w = 21;
+        if (out_h) *out_h = 7;
+        if (out_stride) *out_stride = 21;
         return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index <
@@ -374,12 +376,21 @@ static void test_sprite_asset_provider(void)
               DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE -
                   ((0x0d << DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) |
                    (0x02 << DM2_V1_VIEWPORT_GFX_PROJECTILE_INDEX_SHIFT) | 0x01));
+    CHECK("DM2 map-chip atlas width resolves to square frame width",
+          dm2_v1_viewport_map_chip_frame_width(21, 7) == 7 &&
+              dm2_v1_viewport_map_chip_frame_count(21, 7) == 3);
+    CHECK("DM2 single map-chip bitmap remains one frame",
+          dm2_v1_viewport_map_chip_frame_width(8, 8) == 8 &&
+              dm2_v1_viewport_map_chip_frame_count(8, 8) == 1);
+    CHECK("DM2 map-chip frame index wraps inside source atlas count",
+          dm2_v1_viewport_map_chip_frame_index(4, 3) == 1 &&
+              dm2_v1_viewport_map_chip_frame_index(-1, 3) == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = 0x12;
-    viewport.creatures[0].frame_index = 0x03;
+    viewport.creatures[0].frame_index = 0x01;
     viewport.creatures[0].screen_x = 40;
     viewport.creatures[0].screen_y = 50;
     viewport.creatures[0].health_pct = 100;
@@ -393,7 +404,7 @@ static void test_sprite_asset_provider(void)
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = 0x12;
-    viewport.creatures[0].frame_index = 0x03;
+    viewport.creatures[0].frame_index = 0x01;
     viewport.creatures[0].screen_x = 40;
     viewport.creatures[0].screen_y = 50;
     viewport.creatures[0].health_pct = 100;
@@ -406,11 +417,11 @@ static void test_sprite_asset_provider(void)
     CHECK("creature pass fetches DM2 map-chip sprite assets",
           s_asset_fetch_calls == 1 &&
               s_last_asset_index ==
-                  dm2_v1_viewport_creature_graphic_index(0x12, 0x03) &&
+                  dm2_v1_viewport_creature_graphic_index(0x12, 0x01) &&
               viewport.asset_creature_drawn_count == 1 &&
               viewport.fallback_creature_drawn_count == 0);
-    CHECK("creature asset is centered on the sprite position",
-          framebuffer[((50 - 4) * 320) + (40 - 4)] == 9 &&
+    CHECK("creature map-chip atlas draws only the selected frame",
+          framebuffer[((50 - 4) * 320) + (40 - 4)] == 12 &&
               framebuffer[(50 * 320) + 40] == 12);
 
     memset(framebuffer, 0, sizeof(framebuffer));
@@ -447,9 +458,9 @@ static void test_sprite_asset_provider(void)
                   dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04) &&
               viewport.asset_item_drawn_count == 1 &&
               viewport.fallback_item_drawn_count == 0);
-    CHECK("item asset is centered on the floor-item position",
+    CHECK("item map-chip atlas draws only the selected frame",
           framebuffer[((90 - 3) * 320) + (80 - 3)] == 6 &&
-              framebuffer[(90 * 320) + 80] == 8);
+              framebuffer[(90 * 320) + 80] == 6);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -487,9 +498,9 @@ static void test_sprite_asset_provider(void)
                   dm2_v1_viewport_projectile_graphic_index(0x0d, 0x02, 0x01) &&
               viewport.asset_projectile_drawn_count == 1 &&
               viewport.fallback_projectile_drawn_count == 0);
-    CHECK("projectile asset is centered on the projectile position",
-          framebuffer[((70 - 2) * 320) + (120 - 2)] == 5 &&
-              framebuffer[(70 * 320) + 120] == 15);
+    CHECK("projectile map-chip atlas draws only the selected frame",
+          framebuffer[((70 - 3) * 320) + (120 - 3)] == 13 &&
+              framebuffer[(70 * 320) + 120] == 13);
 }
 
 int main(void)
