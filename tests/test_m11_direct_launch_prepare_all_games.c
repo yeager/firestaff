@@ -229,6 +229,10 @@ static void run_real_data_handoff_if_available(void) {
         M11_GameViewState view;
         M11_BootProbeReceipt receipt;
         const M12_MenuEntry* entry;
+        const M12_AssetVersionStatus* firstMatchedVersion;
+        char expectedAssetMd5[33];
+
+        expectedAssetMd5[0] = '\0';
 
         M12_StartupMenu_InitWithDataDir(&menu, data_dir, kCases[i].gameId);
         dismiss_initial_message(&menu);
@@ -244,6 +248,15 @@ static void run_real_data_handoff_if_available(void) {
             continue;
         }
         ++available_count;
+        firstMatchedVersion = M12_AssetStatus_GetFirstMatchedVersion(
+            &menu.assetStatus,
+            kCases[i].gameId);
+        if (firstMatchedVersion && firstMatchedVersion->matchedMd5[0] != '\0') {
+            snprintf(expectedAssetMd5,
+                     sizeof(expectedAssetMd5),
+                     "%s",
+                     firstMatchedVersion->matchedMd5);
+        }
 
         expect_true(M11_PrepareDirectLaunchForGame(&menu, kCases[i].gameId) == 1,
                     "direct launch prepares available game data");
@@ -281,6 +294,9 @@ static void run_real_data_handoff_if_available(void) {
                         receipt.sourceKind == kCases[i].sourceKind &&
                         strcmp(receipt.sourceId, kCases[i].gameId) == 0,
                     "direct launch boot receipt keeps source identity");
+        expect_true(expectedAssetMd5[0] == '\0' ||
+                        strcmp(receipt.bootAssetMd5, expectedAssetMd5) == 0,
+                    "direct launch boot receipt keeps verified asset md5");
         expect_true(receipt.startedFromLauncher == 1,
                     "direct launch boot receipt proves selected-entry launcher handoff");
         expect_true(receipt.startupPhase[0] != '\0',
@@ -321,6 +337,9 @@ static void run_real_data_handoff_if_available(void) {
             opts.bootProbeExpectRuntime = 1;
             opts.bootProbeExpectParty = 1;
             opts.bootProbeExpectChampions = 1;
+            opts.bootProbeExpectAssetMd5 = expectedAssetMd5[0] != '\0'
+                ? expectedAssetMd5
+                : NULL;
             if (strcmp(kCases[i].gameId, "dm1") == 0) {
                 opts.bootProbeExpectPhase = "dm1-runtime";
                 opts.bootProbeExpectPartyX = 1;

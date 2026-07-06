@@ -167,13 +167,15 @@ typedef struct {
 
 enum {
     M11_BOOT_RECEIPT_SOURCE_ID_CAPACITY = 32,
-    M11_BOOT_RECEIPT_PHASE_CAPACITY = 48
+    M11_BOOT_RECEIPT_PHASE_CAPACITY = 48,
+    M11_BOOT_RECEIPT_MD5_CAPACITY = 33
 };
 
 typedef struct {
     int active;
     M11_GameSourceKind sourceKind;
     char sourceId[M11_BOOT_RECEIPT_SOURCE_ID_CAPACITY];
+    char bootAssetMd5[M11_BOOT_RECEIPT_MD5_CAPACITY];
     int startedFromLauncher;
     int dm1StartupIntroBypassed;
     int startupActive;
@@ -194,6 +196,7 @@ typedef struct {
     int dm1StartupIntroBypassed;
     char title[64];
     char sourceId[32];
+    char bootAssetMd5[M11_BOOT_RECEIPT_MD5_CAPACITY];
     M11_GameSourceKind sourceKind;
     int presentationMode;
     int presentationWidth;

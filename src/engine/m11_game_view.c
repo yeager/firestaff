@@ -11583,6 +11583,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         {
             int ok = M11_GameView_StartNexus(state, dd);
             if (ok) {
+                snprintf(state->bootAssetMd5,
+                         sizeof(state->bootAssetMd5),
+                         "%s",
+                         spec->verifiedAssetMd5 ? spec->verifiedAssetMd5 : "");
                 if (spec->savePath && spec->savePath[0] != '\0' &&
                     !m11_nexus_resume_from_save_path(state, spec->savePath)) {
                     nexus_v1_launcher_shutdown();
@@ -11680,6 +11684,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->active = 1;
         state->startedFromLauncher = 1;
         state->sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+        snprintf(state->bootAssetMd5,
+                 sizeof(state->bootAssetMd5),
+                 "%s",
+                 profile->graphics_md5);
         state->presentationMode = spec->presentationMode;
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
@@ -11899,6 +11907,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->active = 1;
         state->startedFromLauncher = 1;
         state->sourceKind = M11_GAME_SOURCE_DM2_BOOT;
+        snprintf(state->bootAssetMd5,
+                 sizeof(state->bootAssetMd5),
+                 "%s",
+                 profile->graphics_md5);
         state->presentationMode = spec->presentationMode;
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
@@ -11975,6 +11987,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = spec->sourceKind;
+    snprintf(state->bootAssetMd5,
+             sizeof(state->bootAssetMd5),
+             "%s",
+             spec->verifiedAssetMd5 ? spec->verifiedAssetMd5 : "");
     state->presentationMode = spec->presentationMode;
     state->presentationWidth = spec->presentationWidth;
     state->presentationHeight = spec->presentationHeight;
@@ -12217,6 +12233,10 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->active = state->active ? 1 : 0;
     out->sourceKind = state->sourceKind;
     snprintf(out->sourceId, sizeof(out->sourceId), "%s", state->sourceId);
+    snprintf(out->bootAssetMd5,
+             sizeof(out->bootAssetMd5),
+             "%s",
+             state->bootAssetMd5);
     out->startedFromLauncher = state->startedFromLauncher ? 1 : 0;
     out->dm1StartupIntroBypassed =
         M11_GameView_Dm1StartupIntroBypassed(state) ? 1 : 0;
@@ -13842,6 +13862,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+    snprintf(state->bootAssetMd5,
+             sizeof(state->bootAssetMd5),
+             "%s",
+             profile->graphics_md5);
     snprintf(state->title, sizeof(state->title), "THERON'S QUEST");
     snprintf(state->sourceId, sizeof(state->sourceId), "theron");
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
