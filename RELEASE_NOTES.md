@@ -1,6 +1,25 @@
 
 # Unreleased
 
+# Firestaff v3.0.43
+
+Firestaff v3.0.43 packages the latest DM2 startup pointer-action ownership work
+on `main` after v3.0.42.
+
+## Highlights since v3.0.42
+
+- **DM2 startup pointer actions**: DM2 startup now owns pointer actions for
+  Continue, Load Slot, New Game and panel containment before M11 mutates startup
+  state.
+
+## Verification
+
+- Local release-prep verification covers version synchronization and the same
+  focused startup gates used for v3.0.42 before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.43` release run.
+
 # Firestaff v3.0.42
 
 Firestaff v3.0.42 packages the latest CSB utility input plus Nexus startup
