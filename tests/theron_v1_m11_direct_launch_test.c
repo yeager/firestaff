@@ -312,8 +312,8 @@ int main(void) {
     expect_true(view.theronState.companion_count == 0,
                 "M11 startup begins with no companions selected");
     expect_true(view.theronState.startup_phase ==
-                THERON_STARTUP_PHASE_STAGE_SELECT,
-                "M11 direct launch starts at visible stage select");
+                THERON_STARTUP_PHASE_TITLE,
+                "M11 direct launch starts at bounded Theron title gate");
     expect_true(view.theronState.save_resume_verdict >= 0,
                 "M11 Theron direct launch evaluates startup save/resume verdict");
     expect_true(view.theronState.save_resume_claim >= 0,
@@ -336,6 +336,27 @@ int main(void) {
     render_pixels = count_nonzero_pixels(framebuffer, sizeof(framebuffer));
     expect_true(render_pixels > 1000,
                 "M11 Theron startup screen produces a nonblank framebuffer");
+    startup_row_count = M11_GameView_GetTheronStartupRenderRows(
+        &view, startup_rows, 16);
+    expect_true(startup_row_count >= 3 &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "Chapter 1: Hall of Records") &&
+                startup_rows_contain(startup_rows, startup_row_count,
+                                     "PRESS ENTER TO START"),
+                "M11 Theron startup render rows expose title gate");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                    M11_GAME_INPUT_IGNORED &&
+                view.theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+                view.theronState.level_loaded == 0,
+                "M11 Theron title gate ignores dungeon movement input");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron title gate advances to stage select");
+    expect_true(view.theronState.startup_phase ==
+                    THERON_STARTUP_PHASE_STAGE_SELECT &&
+                view.theronState.level_loaded == 0,
+                "M11 Theron title gate keeps runtime unloaded");
+
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(startup_row_count >= 5 &&
@@ -460,6 +481,13 @@ int main(void) {
         expect_true(M11_GameView_Start(&no_continue_view, &spec),
                     "M11 Theron save-present new-stage start succeeds");
         no_continue_world = (Theron_V1_World*)no_continue_view.theronWorld;
+        expect_true(no_continue_view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_TITLE,
+                    "M11 Theron save-present new-stage path starts at title gate");
+        expect_true(M11_GameView_HandleInput(&no_continue_view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 Theron save-present title gate advances to stage select");
         expect_true(no_continue_view.theronState.save_resume_active_slot == 5 &&
                     no_continue_view.theronState.save_resume_continue_focus == 0,
                     "M11 Theron save-present new-stage path starts on stage row");
@@ -890,6 +918,12 @@ int main(void) {
                     srm_view.theronState.save_resume_srm_import_status ==
                         THERON_V1_SRM_PROGRESS_IMPORT_OK,
                     "M11 Theron exposes selected decoded SRM Continue slot");
+        expect_true(srm_view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_TITLE &&
+                    M11_GameView_HandleInput(&srm_view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 Theron SRM title gate advances to stage select");
         expect_true(M11_GameView_HandleInput(&srm_view, M12_MENU_INPUT_UP) ==
                     M11_GAME_INPUT_REDRAW &&
                     srm_view.theronState.save_resume_continue_focus == 1,
