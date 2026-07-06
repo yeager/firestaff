@@ -18,6 +18,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_layout.h"
+#include "dm2_v1_startup_menu.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v1_trigger.h"
 #include "m11_game_view.h"
@@ -246,6 +247,10 @@ static void fill_dm2_launch_spec(M11_GameLaunchSpec* spec,
 static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupRect rect;
     DM2_V1_StartupHit hit;
+    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupAction action;
+    DM2_V1_StartupRowKind row_kind = DM2_V1_STARTUP_ROW_NONE;
+    int slot = -1;
 
     expect_true(dm2_v1_startup_panel_rect(&rect) &&
                     rect.x == 78 && rect.y == 50 &&
@@ -270,6 +275,42 @@ static void expect_dm2_startup_layout_contract(void) {
     expect_true(!dm2_v1_startup_hit(2, 4, 4, &hit) &&
                     hit.kind == DM2_V1_STARTUP_HIT_NONE,
                 "DM2 startup hit ignores outside panel");
+
+    dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-test-saves");
+    menu.resume_available = 1;
+    menu.slot_mask = (1u << 3);
+    menu.row_count = dm2_v1_startup_menu_count_rows(
+        menu.resume_available,
+        menu.slot_mask);
+    expect_true(menu.row_count == 3,
+                "DM2 startup menu counts CONTINUE, slot, and NEW GAME rows");
+    expect_true(dm2_v1_startup_menu_row_at(&menu, 0, &row_kind, &slot) &&
+                    row_kind == DM2_V1_STARTUP_ROW_CONTINUE &&
+                    slot == -1,
+                "DM2 startup menu row 0 is CONTINUE");
+    expect_true(dm2_v1_startup_menu_row_at(&menu, 1, &row_kind, &slot) &&
+                    row_kind == DM2_V1_STARTUP_ROW_SLOT &&
+                    slot == 3,
+                "DM2 startup menu row 1 is LOAD SLOT 03");
+    expect_true(dm2_v1_startup_menu_move_selected(&menu, 8) &&
+                    menu.selected_row == 2,
+                "DM2 startup menu movement clamps at NEW GAME");
+    expect_true(dm2_v1_startup_menu_activate_selected(&menu, &action) &&
+                    action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME &&
+                    action.row == 2 &&
+                    action.slot == -1,
+                "DM2 startup menu activation reports NEW GAME");
+    expect_true(dm2_v1_startup_menu_move_selected(&menu, -1) &&
+                    menu.selected_row == 1 &&
+                    dm2_v1_startup_menu_activate_selected(&menu, &action) &&
+                    action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
+                    action.slot == 3,
+                "DM2 startup menu activation reports LOAD SLOT");
+    expect_true(dm2_v1_startup_menu_move_selected(&menu, -1) &&
+                    menu.selected_row == 0 &&
+                    dm2_v1_startup_menu_activate_selected(&menu, &action) &&
+                    action.kind == DM2_V1_STARTUP_ACTION_CONTINUE,
+                "DM2 startup menu activation reports CONTINUE");
 }
 
 static void check_incomplete_required_files_block_m11(const char* label,

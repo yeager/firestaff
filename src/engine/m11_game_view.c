@@ -31,6 +31,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_layout.h"
+#include "dm2_v1_startup_menu.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_hud_runtime.h"
@@ -538,26 +539,6 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
     return 1;
 }
 
-enum {
-    M11_DM2_STARTUP_ROW_CONTINUE = 1,
-    M11_DM2_STARTUP_ROW_SLOT = 2,
-    M11_DM2_STARTUP_ROW_NEW_GAME = 3
-};
-
-static int m11_dm2_startup_count_rows(int resume_available,
-                                      unsigned int slot_mask)
-{
-    int count = resume_available ? 1 : 0;
-    int slot;
-
-    for (slot = 0; slot < 10; ++slot) {
-        if (slot_mask & (1u << slot)) {
-            ++count;
-        }
-    }
-    return count + 1; /* NEW GAME is always available. */
-}
-
 static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
                                        DM2_V1_BootProfile *profile)
 {
@@ -579,7 +560,7 @@ static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
              "%s",
              profile->save_root);
     state->dm2State.startup_menu_row_count =
-        m11_dm2_startup_count_rows(
+        dm2_v1_startup_menu_count_rows(
             state->dm2State.startup_resume_available,
             state->dm2State.startup_slot_mask);
     if (state->dm2State.startup_menu_selected_row < 0 ||
@@ -589,54 +570,49 @@ static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
     }
 }
 
+static void m11_dm2_startup_menu_from_state(
+    const M11_GameViewState *state,
+    DM2_V1_StartupMenu *menu)
+{
+    if (!state || !menu) {
+        return;
+    }
+    dm2_v1_startup_menu_init(
+        menu,
+        state->dm2State.startup_save_root[0]
+            ? state->dm2State.startup_save_root
+            : NULL);
+    menu->resume_available = state->dm2State.startup_resume_available;
+    menu->slot_mask = state->dm2State.startup_slot_mask;
+    menu->row_count = state->dm2State.startup_menu_row_count;
+    menu->selected_row = state->dm2State.startup_menu_selected_row;
+}
+
+static void m11_dm2_startup_menu_to_state(
+    M11_GameViewState *state,
+    const DM2_V1_StartupMenu *menu)
+{
+    if (!state || !menu) {
+        return;
+    }
+    state->dm2State.startup_resume_available = menu->resume_available;
+    state->dm2State.startup_slot_mask = menu->slot_mask;
+    state->dm2State.startup_menu_row_count = menu->row_count;
+    state->dm2State.startup_menu_selected_row = menu->selected_row;
+}
+
 static int m11_dm2_startup_row_at(const M11_GameViewState *state,
                                   int row,
-                                  int *out_kind,
+                                  DM2_V1_StartupRowKind *out_kind,
                                   int *out_slot)
 {
-    int cursor = 0;
-    int slot;
+    DM2_V1_StartupMenu menu;
 
-    if (out_kind) {
-        *out_kind = 0;
-    }
-    if (out_slot) {
-        *out_slot = -1;
-    }
-    if (!state || row < 0) {
+    if (!state) {
         return 0;
     }
-    if (state->dm2State.startup_resume_available) {
-        if (row == cursor) {
-            if (out_kind) {
-                *out_kind = M11_DM2_STARTUP_ROW_CONTINUE;
-            }
-            return 1;
-        }
-        ++cursor;
-    }
-    for (slot = 0; slot < 10; ++slot) {
-        if ((state->dm2State.startup_slot_mask & (1u << slot)) == 0u) {
-            continue;
-        }
-        if (row == cursor) {
-            if (out_kind) {
-                *out_kind = M11_DM2_STARTUP_ROW_SLOT;
-            }
-            if (out_slot) {
-                *out_slot = slot;
-            }
-            return 1;
-        }
-        ++cursor;
-    }
-    if (row == cursor) {
-        if (out_kind) {
-            *out_kind = M11_DM2_STARTUP_ROW_NEW_GAME;
-        }
-        return 1;
-    }
-    return 0;
+    m11_dm2_startup_menu_from_state(state, &menu);
+    return dm2_v1_startup_menu_row_at(&menu, row, out_kind, out_slot);
 }
 
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
@@ -662,22 +638,20 @@ static M11_GameInputResult m11_dm2_startup_activate_selected(
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_SessionState session;
-    int kind = 0;
-    int slot = -1;
+    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupAction action;
 
     if (!state || !state->dm2State.startup_menu_active ||
         !state->dm2BootProfile) {
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (!m11_dm2_startup_row_at(state,
-                                state->dm2State.startup_menu_selected_row,
-                                &kind,
-                                &slot)) {
+    m11_dm2_startup_menu_from_state(state, &menu);
+    if (!dm2_v1_startup_menu_activate_selected(&menu, &action)) {
         return M11_GAME_INPUT_IGNORED;
     }
     memset(&session, 0, sizeof(session));
-    if (kind == M11_DM2_STARTUP_ROW_CONTINUE) {
+    if (action.kind == DM2_V1_STARTUP_ACTION_CONTINUE) {
         if (dm2_v1_session_load_last_session(profile->save_root,
                                              &session) != 0) {
             m11_set_status(state, "STARTUP", "DM2 CONTINUE FAILED");
@@ -690,9 +664,10 @@ static M11_GameInputResult m11_dm2_startup_activate_selected(
                    ? M11_GAME_INPUT_REDRAW
                    : M11_GAME_INPUT_REDRAW;
     }
-    if (kind == M11_DM2_STARTUP_ROW_SLOT && slot >= 0) {
+    if (action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
+        action.slot >= 0) {
         if (dm2_v1_session_load_slot(profile->save_root,
-                                     (uint8_t)slot,
+                                     (uint8_t)action.slot,
                                      &session) != 0) {
             m11_set_status(state, "STARTUP", "DM2 SLOT LOAD FAILED");
             m11_dm2_startup_scan_saves(state, profile);
@@ -704,10 +679,13 @@ static M11_GameInputResult m11_dm2_startup_activate_selected(
                    ? M11_GAME_INPUT_REDRAW
                    : M11_GAME_INPUT_REDRAW;
     }
-    dm2_v1_session_new(&session);
-    return m11_dm2_startup_apply_session(state, &session, "DM2 NEW GAME")
-               ? M11_GAME_INPUT_REDRAW
-               : M11_GAME_INPUT_REDRAW;
+    if (action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
+        dm2_v1_session_new(&session);
+        return m11_dm2_startup_apply_session(state, &session, "DM2 NEW GAME")
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static M11_GameInputResult m11_dm2_startup_handle_input(
@@ -718,17 +696,18 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
         return M11_GAME_INPUT_IGNORED;
     }
     if (input == M12_MENU_INPUT_UP) {
-        if (state->dm2State.startup_menu_selected_row > 0) {
-            --state->dm2State.startup_menu_selected_row;
-        }
+        DM2_V1_StartupMenu menu;
+        m11_dm2_startup_menu_from_state(state, &menu);
+        (void)dm2_v1_startup_menu_move_selected(&menu, -1);
+        m11_dm2_startup_menu_to_state(state, &menu);
         m11_set_status(state, "STARTUP", "DM2 START SELECT");
         return M11_GAME_INPUT_REDRAW;
     }
     if (input == M12_MENU_INPUT_DOWN) {
-        if (state->dm2State.startup_menu_selected_row + 1 <
-            state->dm2State.startup_menu_row_count) {
-            ++state->dm2State.startup_menu_selected_row;
-        }
+        DM2_V1_StartupMenu menu;
+        m11_dm2_startup_menu_from_state(state, &menu);
+        (void)dm2_v1_startup_menu_move_selected(&menu, 1);
+        m11_dm2_startup_menu_to_state(state, &menu);
         m11_set_status(state, "STARTUP", "DM2 START SELECT");
         return M11_GAME_INPUT_REDRAW;
     }
@@ -36762,7 +36741,7 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                   "SELECT GAME", &g_text_shadow);
     for (row = 0; row < state->dm2State.startup_menu_row_count; ++row) {
         char label[48];
-        int kind = 0;
+        DM2_V1_StartupRowKind kind = DM2_V1_STARTUP_ROW_NONE;
         int slot = -1;
         DM2_V1_StartupRect rowRect;
         DM2_V1_StartupRect highlightRect;
@@ -36772,9 +36751,9 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
             !dm2_v1_startup_row_rect(row, &rowRect)) {
             continue;
         }
-        if (kind == M11_DM2_STARTUP_ROW_CONTINUE) {
+        if (kind == DM2_V1_STARTUP_ROW_CONTINUE) {
             snprintf(label, sizeof(label), "CONTINUE");
-        } else if (kind == M11_DM2_STARTUP_ROW_SLOT) {
+        } else if (kind == DM2_V1_STARTUP_ROW_SLOT) {
             snprintf(label, sizeof(label), "LOAD SLOT %02d", slot);
         } else {
             snprintf(label, sizeof(label), "NEW GAME");
