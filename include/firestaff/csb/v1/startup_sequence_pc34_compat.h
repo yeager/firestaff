@@ -118,6 +118,15 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int waiting_for_input;
     int title_source_step;
     int title_stage;
+    int title_source_x;
+    int title_source_y;
+    int title_source_w;
+    int title_source_h;
+    int title_dest_x;
+    int title_dest_y;
+    int title_dest_w;
+    int title_dest_h;
+    int title_special_palette;
     int blink_prompt_visible;
     int opening_step;
 } CSB_V1_StartupRenderPlan_PC34;

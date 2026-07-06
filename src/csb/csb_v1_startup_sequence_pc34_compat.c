@@ -84,6 +84,81 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
     return (unsigned int)(frame - CSB_V1_TITLE_PRESENTS_TICKS_PC34 + 1);
 }
 
+static void csb_v1_startup_clear_title_rect_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    plan->title_source_x = 0;
+    plan->title_source_y = 0;
+    plan->title_source_w = 0;
+    plan->title_source_h = 0;
+    plan->title_dest_x = 0;
+    plan->title_dest_y = 0;
+    plan->title_dest_w = 0;
+    plan->title_dest_h = 0;
+    plan->title_special_palette = -1;
+}
+
+static void csb_v1_startup_set_title_rect_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    V1_TitleFrontendSourceAnimationStep step;
+
+    if (!plan) {
+        return;
+    }
+    csb_v1_startup_clear_title_rect_pc34(plan);
+    /* ReDMCSB TITLE.C F0437 lines 430, 433-457, and 461 draw the title
+     * through C424 PRESENTS, C425 CHAOS, and C426 STRIKES BACK zones. */
+    if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
+        (void)V1_TitleFrontend_GetStepPalette(
+            V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
+            &plan->title_special_palette);
+        plan->title_source_x = 0;
+        plan->title_source_y = 137;
+        plan->title_source_w = 320;
+        plan->title_source_h = 16;
+        plan->title_dest_x = 0;
+        plan->title_dest_y = 90;
+        plan->title_dest_w = 320;
+        plan->title_dest_h = 16;
+        return;
+    }
+    if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+        V1_TitleFrontend_GetSourceAnimationStep(
+            (unsigned int)plan->title_source_step,
+            &step) &&
+        step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
+        (void)V1_TitleFrontend_GetStepPalette(
+            step.kind,
+            &plan->title_special_palette);
+        plan->title_source_x = (int)step.x;
+        plan->title_source_y = (int)step.y;
+        plan->title_source_w = (int)step.width;
+        plan->title_source_h = (int)step.height;
+        plan->title_dest_x = 0;
+        plan->title_dest_y = 0;
+        plan->title_dest_w = 320;
+        plan->title_dest_h = 80;
+        return;
+    }
+    if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
+        (void)V1_TitleFrontend_GetStepPalette(
+            V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT,
+            &plan->title_special_palette);
+        plan->title_source_x = 0;
+        plan->title_source_y = 80;
+        plan->title_source_w = 320;
+        plan->title_source_h = 57;
+        plan->title_dest_x = 0;
+        plan->title_dest_y = 118;
+        plan->title_dest_w = 320;
+        plan->title_dest_h = 57;
+    }
+}
+
 int csb_v1_startup_entrance_wait_stage_pc34(void)
 {
     return CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34;
@@ -225,6 +300,7 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.waiting_for_input = 0;
     plan.title_source_step = 0;
     plan.title_stage = 0;
+    csb_v1_startup_clear_title_rect_pc34(&plan);
     plan.blink_prompt_visible = 0;
     plan.opening_step = 0;
     if (!state || !state->entrance_active) {
@@ -244,6 +320,7 @@ int csb_v1_startup_build_render_plan_pc34(
         plan.title_source_step =
             (int)csb_v1_startup_title_source_step_for_frame_pc34(
                 state->title_frame);
+        csb_v1_startup_set_title_rect_pc34(&plan);
         *out_plan = plan;
         return 1;
     }

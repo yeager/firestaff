@@ -1,5 +1,6 @@
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -211,30 +212,61 @@ int main(void)
               plan.title_source_step == 1 &&
               plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              plan.title_source_x == 0 &&
+              plan.title_source_y == 137 &&
+              plan.title_source_w == 320 &&
+              plan.title_source_h == 16 &&
+              plan.title_dest_x == 0 &&
+              plan.title_dest_y == 90 &&
+              plan.title_dest_w == 320 &&
+              plan.title_dest_h == 16 &&
+              plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
               !plan.waiting_for_input,
-          "startup render plan owns title PRESENTS surface");
+          "startup render plan owns title PRESENTS surface, boxes, palette");
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34() + 1;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage ==
-                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
-          "startup render plan exposes title CHAOS zoom stage");
+                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              plan.title_source_x == 136 &&
+              plan.title_source_y == 74 &&
+              plan.title_source_w == 48 &&
+              plan.title_source_h == 12 &&
+              plan.title_dest_x == 0 &&
+              plan.title_dest_y == 0 &&
+              plan.title_dest_w == 320 &&
+              plan.title_dest_h == 80 &&
+              plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_TITLE,
+          "startup render plan exposes title CHAOS zoom stage, boxes, palette");
 
     render_state.title_frame =
         csb_v1_startup_title_total_ticks_pc34() - 1;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_stage ==
-                  CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
-          "startup render plan exposes title STRIKES BACK stage");
+                  CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              plan.title_source_x == 0 &&
+              plan.title_source_y == 80 &&
+              plan.title_source_w == 320 &&
+              plan.title_source_h == 57 &&
+              plan.title_dest_x == 0 &&
+              plan.title_dest_y == 118 &&
+              plan.title_dest_w == 320 &&
+              plan.title_dest_h == 57 &&
+              plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_TITLE,
+          "startup render plan exposes title STRIKES BACK stage, boxes, palette");
 
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;
     render_state.entrance_source_step = 2;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34 &&
+              plan.title_special_palette == -1 &&
               !plan.waiting_for_input,
           "startup render plan owns entrance blackout");
 

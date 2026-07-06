@@ -26,6 +26,7 @@
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "m11_game_view.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1243,6 +1244,9 @@ int main(void) {
                     view.csbState.startup_title_source_step == 1 &&
                     view.csbState.startup_entrance_source_step == 0,
                 "M11 CSB new-game start begins at source title prelude");
+    expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
+                    VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS,
+                "M11 CSB PRESENTS title reports source special palette");
     expect_true(view.csbState.level_loaded == 1,
                 "M11 CSB entrance keeps runtime loaded behind startup screen");
     {
@@ -1275,6 +1279,9 @@ int main(void) {
                         view.csbState.startup_title_source_step == 2 &&
                         view.csbState.startup_entrance_source_step == 0,
                     "M11 CSB title prelude reaches CHAOS zoom before entrance");
+        expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
+                        VGA_PALETTE_PC34_SPECIAL_TITLE,
+                    "M11 CSB CHAOS zoom reports source title palette");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         250,
@@ -1288,6 +1295,9 @@ int main(void) {
         expect_true(view.csbState.startup_title_active == 0 &&
                         view.csbState.startup_title_source_step == 0,
                     "M11 CSB title prelude completes before entrance command input");
+        expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
+                        VGA_PALETTE_PC34_SPECIAL_ENTRANCE,
+                    "M11 CSB entrance wait reports source entrance palette");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         250,
@@ -1300,6 +1310,9 @@ int main(void) {
                     view.csbState.startup_entrance_last_command ==
                         M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS,
                     "M11 CSB entrance credits button opens the startup credits phase");
+        expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
+                        VGA_PALETTE_PC34_SPECIAL_CREDITS,
+                    "M11 CSB credits reports source credits palette");
         memset(fb, 0, sizeof(fb));
         M11_GameView_Draw(&view, fb, 320, 200);
         expect_true(count_nonzero_rect(fb, 320, 0, 0, 320, 200) > 0,
