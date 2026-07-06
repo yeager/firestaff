@@ -488,6 +488,12 @@ int main(void) {
     expect_true(view.dm2State.startup_menu_active == 1 &&
                 view.dm2State.tick_count == 0,
                 "M11 DM2 no-save startup menu does not enter runtime before selection");
+    expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_IGNORED,
+                "M11 DM2 no-save startup menu blocks idle runtime tick");
+    expect_true(view.dm2State.startup_menu_active == 1 &&
+                view.dm2State.tick_count == 0 &&
+                dm2_v1_runtime_get_tick_count() == 0,
+                "M11 DM2 no-save startup menu keeps runtime tick frozen");
     while (view.dm2State.startup_menu_selected_row + 1 <
            view.dm2State.startup_menu_row_count) {
         expect_true(M11_GameView_HandleInput(&view,
