@@ -17,9 +17,6 @@ static inline int DM1_V1_InscriptionGlyphIndexFromAscii(unsigned char ch) {
     if (ch >= 'A' && ch <= 'Z') {
         return (int)(ch - 'A');
     }
-    if (ch >= 'a' && ch <= 'z') {
-        return (int)(ch - 'a');
-    }
     if (ch == ' ') {
         return 26;
     }
@@ -30,6 +27,28 @@ static inline int DM1_V1_InscriptionGlyphIndexFromAscii(unsigned char ch) {
      * indices 28..35 for special symbols. */
     if (ch >= 28 && ch <= 35) {
         return (int)ch;
+    }
+    return -1;
+}
+
+static inline int DM1_V1_InscriptionGlyphIndexForFontWidth(unsigned char ch,
+                                                           int fontWidth) {
+    int glyph = DM1_V1_InscriptionGlyphIndexFromAscii(ch);
+    if (glyph >= 0) {
+        return glyph;
+    }
+    /* ReDMCSB DUNGEON.C F0168 line ~2311 uses the G0256 escape-symbol
+     * table directly, and DUNVIEW.C F0107 lines ~3631/~3704 blit M648 at
+     * decodedByte << 3.  Real PC34 M648 has those ASCII-position symbol
+     * cells; small synthetic fixtures may only expose compact 0..35 cells. */
+    if ((ch >= 'a' && ch <= 'x') || (ch >= '0' && ch <= '7')) {
+        int asciiGlyph = (int)ch;
+        if (fontWidth >= (asciiGlyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH) {
+            return asciiGlyph;
+        }
+        if (ch >= 'a' && ch <= 'h') {
+            return 28 + (int)(ch - 'a');
+        }
     }
     return -1;
 }

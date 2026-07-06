@@ -22758,7 +22758,9 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_line(const M11_Gam
     }
     len = (int)strlen(text);
     for (i = 0; i < len; ++i) {
-        int glyph = DM1_V1_InscriptionGlyphIndexFromAscii((unsigned char)text[i]);
+        int glyph = DM1_V1_InscriptionGlyphIndexForFontWidth(
+            (unsigned char)text[i],
+            (int)fontSlot->width);
         if (glyph < 0 ||
             (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontSlot->width) {
             return NULL;
@@ -22790,7 +22792,9 @@ static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
     /* ReDMCSB DUNVIEW.C:3619-3638 uses M648_GRAPHIC_INSCRIPTION_FONT
      * and blits one 8x8 source cell per decoded glyph with C10 transparent. */
     for (i = 0; i < len; ++i) {
-        int glyph = DM1_V1_InscriptionGlyphIndexFromAscii((unsigned char)text[i]);
+        int glyph = DM1_V1_InscriptionGlyphIndexForFontWidth(
+            (unsigned char)text[i],
+            (int)fontSlot->width);
         M11_AssetLoader_BlitRegion(fontSlot,
                                    glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
                                    0,
