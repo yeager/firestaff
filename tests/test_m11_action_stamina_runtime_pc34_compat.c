@@ -8789,6 +8789,46 @@ static void test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel(void) {
               "destroyed D1C thieves-eye mask keeps closed/destroyed panel");
     ASSERT_EQ(srcY, 0, "destroyed D1C mask uses closed/destroyed src y");
     ASSERT_EQ(height, 86, "destroyed D1C mask uses closed/destroyed height");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
+                  0, 2, 1, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              1,
+              "vertical half-open D1C uses one vertical panel blit");
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
+                  0, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              2,
+              "horizontal half-open D1C uses LeftHorizontal and RightHorizontal");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
+                  0, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D1C left half resolves");
+    ASSERT_EQ(srcX, 24, "horizontal half-open D1C left source x from G0186");
+    ASSERT_EQ(srcY, 0, "horizontal half-open D1C left source y from G0186");
+    ASSERT_EQ(dstX, 64, "horizontal half-open D1C left dst x from G0186");
+    ASSERT_EQ(dstY, 17, "horizontal half-open D1C left dst y from G0186");
+    ASSERT_EQ(width, 24, "horizontal half-open D1C left width from G0186");
+    ASSERT_EQ(height, 86, "horizontal half-open D1C left height from G0186");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
+                  0, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D1C right half resolves");
+    ASSERT_EQ(srcX, 48, "horizontal half-open D1C right source x from G0186");
+    ASSERT_EQ(srcY, 0, "horizontal half-open D1C right source y from G0186");
+    ASSERT_EQ(dstX, 136, "horizontal half-open D1C right dst x from G0186");
+    ASSERT_EQ(dstY, 17, "horizontal half-open D1C right dst y from G0186");
+    ASSERT_EQ(width, 24, "horizontal half-open D1C right width from G0186");
+    ASSERT_EQ(height, 86, "horizontal half-open D1C right height from G0186");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
+                  1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              2,
+              "horizontal half-open D2C also uses two source halves");
+    ASSERT_EQ(M11_GameView_ProbeDm1CenterDoorPanelBlit(
+                  2, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              2,
+              "horizontal half-open D3C also uses two source halves");
 }
 
 static void test_f0231_zero_damage_emission_skips_hit_feedback(void) {

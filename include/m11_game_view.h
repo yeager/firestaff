@@ -843,6 +843,16 @@ int M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(int doorState,
                                                int* outDstY,
                                                int* outWidth,
                                                int* outHeight);
+int M11_GameView_ProbeDm1CenterDoorPanelBlit(int depth,
+                                             int doorState,
+                                             int doorVertical,
+                                             int blitIndex,
+                                             int* outSrcX,
+                                             int* outSrcY,
+                                             int* outDstX,
+                                             int* outDstY,
+                                             int* outWidth,
+                                             int* outHeight);
 
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */
