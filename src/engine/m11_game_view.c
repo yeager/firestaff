@@ -3006,19 +3006,7 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
     if (!m11_csb_startup_build_render_plan(state, &plan)) {
         return -1;
     }
-    if (plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
-        return plan.title_special_palette;
-    }
-    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
-        return VGA_PALETTE_PC34_SPECIAL_CREDITS;
-    }
-    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34 ||
-        plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
-        plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
-        plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
-        return VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
-    }
-    return -1;
+    return plan.special_palette;
 }
 
 static int m11_count_nonzero_pixels(const unsigned char *framebuffer,

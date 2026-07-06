@@ -223,6 +223,8 @@ int main(void)
               plan.title_dest_h == 16 &&
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+              plan.special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
               !plan.waiting_for_input,
           "startup render plan owns title PRESENTS surface, boxes, palette");
 
@@ -241,6 +243,8 @@ int main(void)
               plan.title_dest_w == 320 &&
               plan.title_dest_h == 80 &&
               plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+              plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_TITLE,
           "startup render plan exposes title CHAOS zoom stage, boxes, palette");
 
@@ -259,6 +263,8 @@ int main(void)
               plan.title_dest_w == 320 &&
               plan.title_dest_h == 57 &&
               plan.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+              plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_TITLE,
           "startup render plan exposes title STRIKES BACK stage, boxes, palette");
 
@@ -268,6 +274,7 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34 &&
               plan.title_special_palette == -1 &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               !plan.waiting_for_input,
           "startup render plan owns entrance blackout");
 
@@ -279,6 +286,7 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               plan.source_asset_id == 4 &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.waiting_for_input &&
               plan.blink_prompt_visible &&
               plan.closed_left_source_x == 0 &&
@@ -326,6 +334,7 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
               plan.source_asset_id == 5 &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS &&
               plan.fallback_title_x == 38 &&
               plan.fallback_title_y == 42 &&
               plan.fallback_title_style == 2 &&
@@ -349,6 +358,7 @@ int main(void)
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 &&
               plan.source_asset_id == 4 &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.opening_step == 2,
           "startup render plan owns door pre-open surface");
 
@@ -356,6 +366,7 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.opening_step == 2 &&
               plan.opening_door_valid &&
               plan.opening_door_step == 2 &&

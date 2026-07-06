@@ -1,5 +1,6 @@
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "title_frontend_v1.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 
@@ -108,6 +109,7 @@ static void csb_v1_startup_clear_title_rect_pc34(
     plan->title_dest_w = 0;
     plan->title_dest_h = 0;
     plan->title_special_palette = -1;
+    plan->special_palette = -1;
 }
 
 static void csb_v1_startup_clear_door_rects_pc34(
@@ -303,6 +305,7 @@ static void csb_v1_startup_set_title_rect_pc34(
         (void)V1_TitleFrontend_GetStepPalette(
             V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
             &plan->title_special_palette);
+        plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 137;
         plan->title_source_w = 320;
@@ -321,6 +324,7 @@ static void csb_v1_startup_set_title_rect_pc34(
         (void)V1_TitleFrontend_GetStepPalette(
             step.kind,
             &plan->title_special_palette);
+        plan->special_palette = plan->title_special_palette;
         plan->title_source_x = (int)step.x;
         plan->title_source_y = (int)step.y;
         plan->title_source_w = (int)step.width;
@@ -335,6 +339,7 @@ static void csb_v1_startup_set_title_rect_pc34(
         (void)V1_TitleFrontend_GetStepPalette(
             V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT,
             &plan->title_special_palette);
+        plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 80;
         plan->title_source_w = 320;
@@ -517,6 +522,7 @@ int csb_v1_startup_build_render_plan_pc34(
     if (state->credits_active) {
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34;
         plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_CREDITS_PC34;
+        plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
         csb_v1_startup_set_credits_fallback_text_pc34(&plan);
         *out_plan = plan;
         return 1;
@@ -525,6 +531,7 @@ int csb_v1_startup_build_render_plan_pc34(
         /* ReDMCSB ENTRANCE.C F0441 lines 426-443 fades/curtains to black
          * before C004/C002/C003 are redrawn. */
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
+        plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
         *out_plan = plan;
         return 1;
     }
@@ -534,6 +541,7 @@ int csb_v1_startup_build_render_plan_pc34(
             : CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
         plan.opening_step = state->opening_step;
         plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
+        plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
         csb_v1_startup_set_closed_door_rects_pc34(&plan);
         if (plan.surface ==
             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
@@ -544,6 +552,7 @@ int csb_v1_startup_build_render_plan_pc34(
     }
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
+    plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
     csb_v1_startup_set_entrance_fallback_text_pc34(&plan);
     plan.blink_prompt_visible =
