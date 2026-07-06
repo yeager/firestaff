@@ -50,6 +50,25 @@ typedef enum CSB_V1_StartupEntranceDecision_PC34 {
     CSB_V1_STARTUP_ENTRANCE_DECISION_QUIT_PC34 = 6
 } CSB_V1_StartupEntranceDecision_PC34;
 
+typedef enum CSB_V1_StartupEntranceCommandPlanKind_PC34 {
+    CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34 = 0,
+    CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34 = 1,
+    CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34 = 2,
+    CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34 = 3,
+    CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34 = 4,
+    CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34 = 5,
+    CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34 = 6
+} CSB_V1_StartupEntranceCommandPlanKind_PC34;
+
+typedef struct CSB_V1_StartupEntranceCommandPlan_PC34 {
+    CSB_V1_StartupEntranceCommandPlanKind_PC34 kind;
+    int command_id;
+    const char *status_scope;
+    const char *status;
+    const char *failure_status;
+    const char *unavailable_status;
+} CSB_V1_StartupEntranceCommandPlan_PC34;
+
 typedef struct CSB_V1_StartupTickState_PC34 {
     int entrance_frame;
     int title_active;
@@ -147,6 +166,12 @@ int csb_v1_startup_resolve_entrance_command_pc34(
     const CSB_V1_StartupCommandState_PC34 *state,
     int command_id,
     CSB_V1_StartupEntranceDecision_PC34 *out_decision);
+void csb_v1_startup_entrance_command_plan_init_pc34(
+    CSB_V1_StartupEntranceCommandPlan_PC34 *plan);
+int csb_v1_startup_plan_for_entrance_command_pc34(
+    const CSB_V1_StartupCommandState_PC34 *state,
+    int command_id,
+    CSB_V1_StartupEntranceCommandPlan_PC34 *out_plan);
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command);
