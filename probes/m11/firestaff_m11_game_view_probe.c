@@ -11180,22 +11180,40 @@ int main(int argc, char** argv) {
                          actions[0] == 6 && actions[1] == 7 && actions[2] == 8,
                      "action-menu: empty-hand ActionSet yields PUNCH/KICK/WAR CRY indices");
 
-        /* Menu-mode frame: expect a CYAN header band at y=77..85
-         * spanning the action area width.  Count cyan pixels in
-         * the header row y=79 between x=233..319 as the signature
-         * of menu-mode (vs icon-mode which leaves the action-area
-         * graphic frame mostly non-cyan). */
+        /* Menu-mode frame: F0387 prints the champion name via
+         * F0041_TEXT_PrintWithTrailingSpaces at (235,83) with a
+         * 7-character field.  Count cyan pixels in that field as
+         * the signature of menu-mode; the whole header band must
+         * not be treated as a filled Firestaff button strip. */
         memset(fbMenu, 0, sizeof(fbMenu));
         M11_GameView_Draw(&menuView, fbMenu, 320, 200);
         cyanHeaderPixels = 0;
-        for (x = 234; x < 319; ++x) {
-            if ((fbMenu[79 * 320 + x] & 0x0F) == 4) ++cyanHeaderPixels;
+        for (y = 83; y < 89; ++y) {
+            for (x = 235; x < 277; ++x) {
+                if ((fbMenu[y * 320 + x] & 0x0F) == 4) ++cyanHeaderPixels;
+            }
         }
         probe_record(&tally, "INV_GV_313",
                      menuView.assetsAvailable
-                         ? (cyanHeaderPixels >= 60)
+                         ? (cyanHeaderPixels >= 140)
                          : 1,
-                     "action-menu: header band is cyan when acting champion set");
+                     "action-menu: champion-name trailing-space field is cyan when acting champion set");
+
+        {
+            int warCryRightBleed = 0;
+            for (y = 117; y < 123; ++y) {
+                for (x = 286; x < 297; ++x) {
+                    if ((fbMenu[y * 320 + x] & 0x0F) == 4) {
+                        ++warCryRightBleed;
+                    }
+                }
+            }
+            probe_record(&tally, "INV_GV_313B",
+                         menuView.assetsAvailable
+                             ? (warCryRightBleed <= 2)
+                             : 1,
+                         "action-menu: WAR CRY uses source 6-pixel UI advance, not 8-pixel inscription advance");
+        }
 
         /* Icon-cell region at y=95..110 in menu-mode should NOT
          * have the classic cyan icon-cell backdrop for slot 0 —
