@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "vga_palette_pc34_compat.h"
@@ -592,6 +593,7 @@ static int probe_set_compact_square_thing(M11_GameViewState* state,
                                           int mapY,
                                           unsigned char baseSquare,
                                           unsigned short thing) {
+    int sftIndex;
     if (!state || !state->world.dungeon || !state->world.things ||
         !state->world.things->squareFirstThings ||
         mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
@@ -599,7 +601,12 @@ static int probe_set_compact_square_thing(M11_GameViewState* state,
     }
     probe_set_square_on_map(state->world.dungeon, mapIndex, mapX, mapY,
                             (unsigned char)(baseSquare | DUNGEON_SQUARE_MASK_THING_LIST));
-    state->world.things->squareFirstThings[0] = thing;
+    sftIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+        state->world.dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= state->world.things->squareFirstThingCount) {
+        return 0;
+    }
+    state->world.things->squareFirstThings[sftIndex] = thing;
     return 1;
 }
 
@@ -3487,6 +3494,18 @@ int main(int argc, char** argv) {
         char gfxPath[2048];
         int haveAssets = 0;
         int focusMap = 1;
+        int d1cCreatureGroups = -1;
+        int d1cSummaryGroups = -1;
+        int d1cCreatureType = -1;
+        int d1cCreatureMapX = -1;
+        int d1cCreatureMapY = -1;
+        int d1cCreatureElement = -1;
+        int d1lCreatureGroups = -1;
+        int d1lSummaryGroups = -1;
+        int d1lCreatureType = -1;
+        int d1lCreatureMapX = -1;
+        int d1lCreatureMapY = -1;
+        int d1lCreatureElement = -1;
         const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
 
         memset(&focusView, 0, sizeof(focusView));
@@ -3528,6 +3547,10 @@ int main(int argc, char** argv) {
             &focusView, focusMap, 2, 2,
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
             (unsigned short)((THING_TYPE_GROUP << 10) | 0));
+        (void)M11_GameView_ProbeViewportCreatureCounts(
+            &focusView, 1, 0,
+            &d1cCreatureMapX, &d1cCreatureMapY, &d1cCreatureElement,
+            &d1cCreatureGroups, &d1cSummaryGroups, &d1cCreatureType);
         memset(creatureFb, 0, sizeof(creatureFb));
         M11_GameView_Draw(&focusView, creatureFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -3545,9 +3568,13 @@ int main(int argc, char** argv) {
         probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
                        THING_ENDOFLIST);
         probe_set_compact_square_thing(
-            &focusView, focusMap, 2, 1,
+            &focusView, focusMap, 1, 2,
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
             (unsigned short)((THING_TYPE_GROUP << 10) | 0));
+        (void)M11_GameView_ProbeViewportCreatureCounts(
+            &focusView, 1, -1,
+            &d1lCreatureMapX, &d1lCreatureMapY, &d1lCreatureElement,
+            &d1lCreatureGroups, &d1lSummaryGroups, &d1lCreatureType);
         memset(sideCreatureFb, 0, sizeof(sideCreatureFb));
         M11_GameView_Draw(&focusView, sideCreatureFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -3555,7 +3582,7 @@ int main(int argc, char** argv) {
                                     "41_focused_d1l_trolin_creature_vga");
         }
         focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
-        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 1,
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 1, 2,
                                 (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
 
         focusView.world.projectiles.count = 1;
@@ -3791,6 +3818,11 @@ int main(int argc, char** argv) {
         probe_record_asset_required(&tally, "INV_GV_38L", haveAssets,
                                     memcmp(baseFb, creatureFb, sizeof(baseFb)) != 0,
                      "focused viewport: D1C Trolin creature sprite changes the corridor frame");
+        probe_record(&tally, "INV_GV_38L2",
+                     d1cCreatureGroups == 1 &&
+                     d1cSummaryGroups == 1 &&
+                     d1cCreatureType == 14,
+                     "focused viewport: D1C Trolin resolves from compact creature thing chain");
         probe_record_asset_required(&tally, "INV_GV_38AB", haveAssets,
                                     probe_count_diffs_outside_rect(baseFb, creatureFb,
                                                     320, 200,
@@ -3803,6 +3835,11 @@ int main(int argc, char** argv) {
                                     memcmp(baseFb, sideCreatureFb, sizeof(baseFb)) != 0 &&
                      memcmp(creatureFb, sideCreatureFb, sizeof(creatureFb)) != 0,
                      "focused viewport: D1L side-cell Trolin creature differs from empty and center creature frames");
+        probe_record(&tally, "INV_GV_38R2",
+                     d1lCreatureGroups == 1 &&
+                     d1lSummaryGroups == 1 &&
+                     d1lCreatureType == 14,
+                     "focused viewport: D1L Trolin resolves from compact creature thing chain");
         probe_record_asset_required(&tally, "INV_GV_38S", haveAssets,
                                     probe_count_diffs_outside_rect(baseFb, sideCreatureFb,
                                                     320, 200,

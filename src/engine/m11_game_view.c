@@ -19221,7 +19221,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         state->world.party.mapIndex != 0) {
         /* ReDMCSB: Hall of Champions (map 0) has no active creatures.
          * Daniel confirmed 2026-05-19: correct behavior, not a bug. */
-        unsigned short scanThing = firstThing;
+        unsigned short scanThing = viewportStaticFirstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
             if (THING_GET_TYPE(scanThing) == THING_TYPE_GROUP) {
@@ -19512,7 +19512,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
         const struct DungeonMapDesc_Compat* mapDesc =
             &state->world.dungeon->maps[state->world.party.mapIndex];
-        unsigned short scanThing = firstThing;
+        unsigned short scanThing = viewportStaticFirstThing;
         int scanSafety = 0;
         int hasVisibleText = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
@@ -32275,6 +32275,29 @@ int M11_GameView_ProbeViewportFloorItemCounts(const M11_GameViewState* state,
     if (outElementType) *outElementType = cell.elementType;
     if (outFloorItemCount) *outFloorItemCount = cell.floorItemCount;
     if (outSummaryItemCount) *outSummaryItemCount = cell.summary.items;
+    return 1;
+}
+
+int M11_GameView_ProbeViewportCreatureCounts(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             int* outElementType,
+                                             int* outCreatureGroupCount,
+                                             int* outSummaryGroupCount,
+                                             int* outFirstCreatureType) {
+    M11_ViewportCell cell;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outCreatureGroupCount) *outCreatureGroupCount = cell.creatureGroupCount;
+    if (outSummaryGroupCount) *outSummaryGroupCount = cell.summary.groups;
+    if (outFirstCreatureType) *outFirstCreatureType = cell.creatureType;
     return 1;
 }
 
