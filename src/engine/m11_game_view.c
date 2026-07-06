@@ -172,6 +172,16 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       int relativeCell,
                                       int flipFlags,
                                       int sourceZoneRow);
+static int m11_draw_explosion_sprite(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     int x, int y, int w, int h,
+                                     int expType,
+                                     int frame,
+                                     int maxFrames,
+                                     int attack,
+                                     int depthIndex);
 static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -1005,7 +1015,7 @@ typedef struct {
     const CSB_V1_BootProfile *profile;
     int framebuffer_width;
     int framebuffer_height;
-} M11_CSB_ProjectileSpriteContext;
+} M11_CSB_RuntimeSpriteContext;
 
 static int m11_csb_viewport_projectile_material_resolver(
     void *user,
@@ -1034,8 +1044,8 @@ static int m11_csb_viewport_projectile_sprite_drawer(
     uint8_t *screen_pixels,
     int screen_stride)
 {
-    const M11_CSB_ProjectileSpriteContext *ctx =
-        (const M11_CSB_ProjectileSpriteContext *)user;
+    const M11_CSB_RuntimeSpriteContext *ctx =
+        (const M11_CSB_RuntimeSpriteContext *)user;
     const CSB_V1_RuntimeProfile *runtime;
     int aspect;
     int relative_dir;
@@ -1100,6 +1110,64 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         relative_cell,
         flip_flags,
         source_zone_row);
+}
+
+static int m11_csb_viewport_explosion_sprite_drawer(
+    void *user,
+    const struct ExplosionInstance_Compat *explosion,
+    int forward,
+    int side,
+    int view_cell,
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    const M11_CSB_RuntimeSpriteContext *ctx =
+        (const M11_CSB_RuntimeSpriteContext *)user;
+    int pane_x;
+    int pane_y;
+    int pane_w;
+    int pane_h;
+    int depth_index;
+
+    (void)side;
+    (void)view_cell;
+    if (!ctx || !ctx->state || !explosion || !screen_pixels ||
+        screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
+    }
+    pane_x = viewport_x - 16;
+    pane_y = 33 + viewport_y - 16;
+    pane_w = 32;
+    pane_h = 32;
+    if (source_zone >= 0) {
+        pane_x = 0;
+        pane_y = 33;
+        pane_w = 224;
+        pane_h = 136;
+    }
+    depth_index = forward;
+    if (depth_index < 0) depth_index = 0;
+    if (depth_index > 2) depth_index = 2;
+    /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions in a
+     * final pass with F0114/F0675 bitmap selection.  CSB PC34 shares
+     * the DM1 explosion bitmap aspect mapping for this M11 bridge. */
+    return m11_draw_explosion_sprite(
+        ctx->state,
+        screen_pixels,
+        screen_stride,
+        ctx->framebuffer_height,
+        pane_x,
+        pane_y,
+        pane_w,
+        pane_h,
+        explosion->explosionType,
+        explosion->currentFrame,
+        explosion->maxFrames,
+        explosion->attack,
+        depth_index);
 }
 
 static unsigned short m11_csb_runtime_next_thing(
@@ -1273,6 +1341,8 @@ static void m11_csb_runtime_overlay_stats_reset(
     mutable_state->csbState.runtime_projectile_sprite_drawn_count = 0;
     mutable_state->csbState.runtime_projectile_material_resolved_count = 0;
     mutable_state->csbState.runtime_projectile_marker_drawn_count = 0;
+    mutable_state->csbState.runtime_explosion_sprite_drawn_count = 0;
+    mutable_state->csbState.runtime_explosion_marker_drawn_count = 0;
 }
 
 static void m11_csb_runtime_overlay_stats_add_object_sprite(
@@ -1590,7 +1660,7 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     CSB_V1_ViewportConfig cfg;
     const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
     const CSB_V1_CSBGraphicsDatRealCache *cache;
-    M11_CSB_ProjectileSpriteContext projectile_sprite_context;
+    M11_CSB_RuntimeSpriteContext runtime_sprite_context;
     uint8_t dungeon_grid[32 * 32];
     uint8_t custom_background_cell_skins[32 * 32];
     uint32_t i;
@@ -1621,13 +1691,16 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     cfg.projectile_material_resolver =
         m11_csb_viewport_projectile_material_resolver;
     cfg.projectile_material_user = profile;
-    projectile_sprite_context.state = state;
-    projectile_sprite_context.profile = profile;
-    projectile_sprite_context.framebuffer_width = framebufferWidth;
-    projectile_sprite_context.framebuffer_height = framebufferHeight;
+    runtime_sprite_context.state = state;
+    runtime_sprite_context.profile = profile;
+    runtime_sprite_context.framebuffer_width = framebufferWidth;
+    runtime_sprite_context.framebuffer_height = framebufferHeight;
     cfg.projectile_sprite_drawer =
         m11_csb_viewport_projectile_sprite_drawer;
-    cfg.projectile_sprite_user = &projectile_sprite_context;
+    cfg.projectile_sprite_user = &runtime_sprite_context;
+    cfg.explosion_sprite_drawer =
+        m11_csb_viewport_explosion_sprite_drawer;
+    cfg.explosion_sprite_user = &runtime_sprite_context;
     plan = csb_v1_boot_csbgraphics_m11_plan(profile);
     cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.csbgraphics_plan = plan;
@@ -1661,6 +1734,10 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
         cfg.runtime_projectile_material_resolved_count;
     ((M11_GameViewState *)state)->csbState.runtime_projectile_marker_drawn_count =
         cfg.runtime_projectile_marker_drawn_count;
+    ((M11_GameViewState *)state)->csbState.runtime_explosion_sprite_drawn_count =
+        cfg.runtime_explosion_sprite_drawn_count;
+    ((M11_GameViewState *)state)->csbState.runtime_explosion_marker_drawn_count =
+        cfg.runtime_explosion_marker_drawn_count;
     if (plan && plan->ready && cache && cache->loaded) {
         for (i = 0u; i < plan->planned_count; ++i) {
             CSB_V1_CSBGraphicsM11Binding binding;
@@ -32367,7 +32444,9 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     int* outGroupMarkerCount,
     int* outProjectileSpriteCount,
     int* outProjectileMaterialCount,
-    int* outProjectileMarkerCount)
+    int* outProjectileMarkerCount,
+    int* outExplosionSpriteCount,
+    int* outExplosionMarkerCount)
 {
     if (!state) {
         return 0;
@@ -32403,6 +32482,14 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     if (outProjectileMarkerCount) {
         *outProjectileMarkerCount =
             state->csbState.runtime_projectile_marker_drawn_count;
+    }
+    if (outExplosionSpriteCount) {
+        *outExplosionSpriteCount =
+            state->csbState.runtime_explosion_sprite_drawn_count;
+    }
+    if (outExplosionMarkerCount) {
+        *outExplosionMarkerCount =
+            state->csbState.runtime_explosion_marker_drawn_count;
     }
     return 1;
 }

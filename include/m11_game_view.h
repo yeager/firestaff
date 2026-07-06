@@ -616,6 +616,8 @@ typedef struct {
         int runtime_projectile_sprite_drawn_count;
         int runtime_projectile_material_resolved_count;
         int runtime_projectile_marker_drawn_count;
+        int runtime_explosion_sprite_drawn_count;
+        int runtime_explosion_marker_drawn_count;
         int startup_title_active;
         int startup_title_frame;
         int startup_title_source_step;
@@ -821,7 +823,9 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     int* outGroupMarkerCount,
     int* outProjectileSpriteCount,
     int* outProjectileMaterialCount,
-    int* outProjectileMarkerCount);
+    int* outProjectileMarkerCount,
+    int* outExplosionSpriteCount,
+    int* outExplosionMarkerCount);
 int M11_GameView_ProbeDm1V2LiveEffectSeedCount(const M11_GameViewState* state);
 int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
                                         int relForward,
