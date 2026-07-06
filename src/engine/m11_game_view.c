@@ -39,6 +39,7 @@
 #include "asset_find_by_hash.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
+#include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "m11_game_view_a11y.h"  /* m11_screen_reader_update_ex gameplay manifest */
@@ -2926,6 +2927,107 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
     }
 }
 
+static void m11_draw_csb_entrance_door_panel(unsigned char *framebuffer,
+                                             int framebufferWidth,
+                                             int framebufferHeight,
+                                             int x,
+                                             int y,
+                                             int w,
+                                             int h,
+                                             unsigned char fill)
+{
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 ||
+        w <= 0 || h <= 0) {
+        return;
+    }
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y, w, h, fill);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y, w, 1, M11_COLOR_LIGHT_GRAY);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y + h - 1, w, 1, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x, y, 1, h, M11_COLOR_LIGHT_GRAY);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  x + w - 1, y, 1, h, M11_COLOR_BLACK);
+}
+
+static int m11_draw_csb_entrance_closed_doors_asset(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    const M11_AssetSlot *leftDoor;
+    const M11_AssetSlot *rightDoor;
+
+    if (!state || !framebuffer || framebufferWidth < 232 ||
+        framebufferHeight < 189 || !state->assetsAvailable) {
+        return 0;
+    }
+    leftDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 2u);
+    rightDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 3u);
+    if (!leftDoor || !rightDoor || leftDoor->height < 161u ||
+        rightDoor->height < 161u) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0806 lines 721-778 loads C002/C003/C004 before
+     * F0439 draws the waiting entrance; DATA.C source boxes place the closed
+     * doors at screen y=28 over the C004 interface image. */
+    M11_AssetLoader_BlitRegion(leftDoor, 0, 0, 105, 161,
+                               framebuffer, framebufferWidth, framebufferHeight,
+                               0, 28, -1);
+    M11_AssetLoader_BlitRegion(rightDoor, 0, 0, 127, 161,
+                               framebuffer, framebufferWidth, framebufferHeight,
+                               105, 28, -1);
+    return 1;
+}
+
+static int m11_draw_csb_entrance_opening_frame_asset(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const unsigned char *dungeonFrame,
+    const EntranceCompatDoorStep *door)
+{
+    const M11_AssetSlot *entranceScreen;
+    const M11_AssetSlot *leftDoor;
+    const M11_AssetSlot *rightDoor;
+    EntranceCompatCompositePixels pixels;
+
+    if (!state || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0 || !dungeonFrame || !door ||
+        !state->assetsAvailable) {
+        return 0;
+    }
+    entranceScreen = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 4u);
+    leftDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 2u);
+    rightDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 3u);
+    if (!entranceScreen || !leftDoor || !rightDoor) {
+        return 0;
+    }
+    memset(&pixels, 0, sizeof(pixels));
+    pixels.entranceScreen = entranceScreen->pixels;
+    pixels.entranceWidth = entranceScreen->width;
+    pixels.entranceHeight = entranceScreen->height;
+    pixels.dungeonFrame = dungeonFrame;
+    pixels.dungeonFrameWidth = (unsigned int)framebufferWidth;
+    pixels.dungeonFrameHeight = (unsigned int)framebufferHeight;
+    pixels.leftDoor = leftDoor->pixels;
+    pixels.leftDoorWidth = leftDoor->width;
+    pixels.leftDoorHeight = leftDoor->height;
+    pixels.rightDoor = rightDoor->pixels;
+    pixels.rightDoorWidth = rightDoor->width;
+    pixels.rightDoorHeight = rightDoor->height;
+    return ENTRANCE_Compat_CompositeDoorOpeningFrame(
+        framebuffer,
+        (unsigned int)framebufferWidth,
+        (unsigned int)framebufferHeight,
+        &pixels,
+        door);
+}
+
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           unsigned char *framebuffer,
                                           int framebufferWidth,
@@ -2980,6 +3082,64 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             drew_asset = 1;
         }
     }
+    if (state->csbState.startup_entrance_opening_active) {
+        if (drew_asset &&
+            state->csbState.startup_entrance_opening_delay_ticks <= 0) {
+            EntranceCompatDoorStep door;
+            unsigned char dungeonFrame[320 * 200];
+            if (framebufferWidth == 320 && framebufferHeight == 200 &&
+                ENTRANCE_Compat_GetDoorAnimationStep(
+                    (unsigned int)state->csbState.startup_entrance_opening_step,
+                    &door)) {
+                memset(dungeonFrame, 0, sizeof(dungeonFrame));
+                if (m11_render_csb_boot_viewport(state,
+                                                 dungeonFrame,
+                                                 320,
+                                                 200) &&
+                    m11_draw_csb_entrance_opening_frame_asset(
+                        state,
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        dungeonFrame,
+                        &door)) {
+                    return;
+                }
+            }
+        }
+        if (drew_asset) {
+            (void)m11_draw_csb_entrance_closed_doors_asset(
+                state,
+                framebuffer,
+                framebufferWidth,
+                framebufferHeight);
+        } else {
+            m11_draw_csb_entrance_door_panel(framebuffer,
+                                             framebufferWidth,
+                                             framebufferHeight,
+                                             0,
+                                             28,
+                                             101,
+                                             161,
+                                             M11_COLOR_DARK_GRAY);
+            m11_draw_csb_entrance_door_panel(framebuffer,
+                                             framebufferWidth,
+                                             framebufferHeight,
+                                             109,
+                                             28,
+                                             123,
+                                             161,
+                                             M11_COLOR_DARK_GRAY);
+        }
+        return;
+    }
+    if (drew_asset) {
+        (void)m11_draw_csb_entrance_closed_doors_asset(
+            state,
+            framebuffer,
+            framebufferWidth,
+            framebufferHeight);
+    }
 
     /* ReDMCSB ENTRANCE.C F0806 lines 409-441 selects the CSB entrance
      * palette/screen and lines 850-883 wait on the entrance state until the
@@ -3021,8 +3181,42 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 }
 
 enum {
-    M11_CSB_ENTRANCE_CREDITS_TICKS_PC34 = 1800
+    M11_CSB_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
+    M11_CSB_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20
 };
+
+static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
+                                               int commandId)
+{
+    if (!state) {
+        return;
+    }
+    /* ReDMCSB ENTRANCE.C F0806 lines 850-883 waits for the command, line
+     * 935 applies F0022_MAIN_Delay(20), then F0438/F0807 runs 31 one-vblank
+     * door steps.  Keep runtime ticks blocked until this pending command is
+     * committed by m11_csb_startup_finish_door_opening(). */
+    state->csbState.startup_entrance_pending_command = commandId;
+    state->csbState.startup_entrance_opening_active = 1;
+    state->csbState.startup_entrance_opening_delay_ticks =
+        M11_CSB_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34;
+    state->csbState.startup_entrance_opening_step = 1;
+    state->csbState.startup_import_preview_active = 0;
+    m11_set_status(state, "BOOT", "CSB DOORS");
+}
+
+static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
+{
+    if (!state) {
+        return;
+    }
+    state->csbState.startup_entrance_opening_active = 0;
+    state->csbState.startup_entrance_opening_delay_ticks = 0;
+    state->csbState.startup_entrance_opening_step = 0;
+    state->csbState.startup_entrance_pending_command =
+        M11_ENTRANCE_RUNTIME_COMMAND_NONE;
+    state->csbState.startup_entrance_active = 0;
+    state->csbState.startup_entrance_dismissed = 1;
+}
 
 static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     M11_GameViewState *state,
@@ -3038,6 +3232,9 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         m11_set_status(state, "BOOT", "CSB ENTRANCE");
         return M11_GAME_INPUT_REDRAW;
     }
+    if (state->csbState.startup_entrance_opening_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
     if (commandId == M11_ENTRANCE_RUNTIME_COMMAND_NONE) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -3050,9 +3247,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                     (CSB_V1_BootProfile *)state->csbBootProfile;
                 csb_v1_runtime_set_load_bonus_dungeon(&profile->runtime, 0);
             }
-            state->csbState.startup_entrance_active = 0;
-            state->csbState.startup_entrance_dismissed = 1;
-            m11_set_status(state, "BOOT", "CSB READY");
+            m11_csb_startup_begin_door_opening(state, commandId);
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON:
             state->csbState.startup_entrance_bonus_requested = 1;
@@ -3063,9 +3258,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                 (void)csb_v1_runtime_try_load_bonus_dungeon(&profile->runtime);
                 m11_sync_csb_state_from_profile(state, profile);
             }
-            state->csbState.startup_entrance_active = 0;
-            state->csbState.startup_entrance_dismissed = 1;
-            m11_set_status(state, "BOOT", "CSB BONUS");
+            m11_csb_startup_begin_door_opening(state, commandId);
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_RESUME:
             if (state->csbState.startup_entrance_resume_available &&
@@ -3081,11 +3274,9 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                         state->csbState.startup_entrance_resume_path)) {
                     m11_sync_csb_state_from_profile(state, profile);
                     m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
-                    state->csbState.startup_entrance_active = 0;
-                    state->csbState.startup_entrance_dismissed = 1;
                     state->csbState.startup_entrance_credits_active = 0;
                     state->csbState.startup_entrance_credits_remaining_ticks = 0;
-                    m11_set_status(state, "BOOT", "CSB RESUMED");
+                    m11_csb_startup_begin_door_opening(state, commandId);
                     return M11_GAME_INPUT_REDRAW;
                 }
                 m11_set_status(state, "BOOT", "CSB RESUME FAILED");
@@ -3108,6 +3299,11 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             state->csbState.startup_entrance_dismissed = 1;
             state->csbState.startup_entrance_credits_active = 0;
             state->csbState.startup_entrance_credits_remaining_ticks = 0;
+            state->csbState.startup_entrance_opening_active = 0;
+            state->csbState.startup_entrance_opening_delay_ticks = 0;
+            state->csbState.startup_entrance_opening_step = 0;
+            state->csbState.startup_entrance_pending_command =
+                M11_ENTRANCE_RUNTIME_COMMAND_NONE;
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         default:
@@ -3159,7 +3355,8 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active ||
         !state->csbState.startup_import_available ||
-        state->csbState.startup_entrance_credits_active) {
+        state->csbState.startup_entrance_credits_active ||
+        state->csbState.startup_entrance_opening_active) {
         return M11_GAME_INPUT_IGNORED;
     }
 
@@ -3197,7 +3394,8 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active ||
         !state->csbState.startup_import_available ||
-        state->csbState.startup_entrance_credits_active) {
+        state->csbState.startup_entrance_credits_active ||
+        state->csbState.startup_entrance_opening_active) {
         return M11_GAME_INPUT_IGNORED;
     }
 
@@ -11190,6 +11388,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_bonus_requested = 0;
         state->csbState.startup_entrance_credits_active = 0;
         state->csbState.startup_entrance_credits_remaining_ticks = 0;
+        state->csbState.startup_entrance_opening_active = 0;
+        state->csbState.startup_entrance_opening_delay_ticks = 0;
+        state->csbState.startup_entrance_opening_step = 0;
+        state->csbState.startup_entrance_pending_command =
+            M11_ENTRANCE_RUNTIME_COMMAND_NONE;
         state->csbState.startup_entrance_resume_available = 0;
         state->csbState.startup_entrance_resume_path[0] = '\0';
         state->csbState.startup_import_available = 0;
@@ -13586,6 +13789,29 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 if (state->csbState.startup_entrance_credits_remaining_ticks == 0) {
                     state->csbState.startup_entrance_credits_active = 0;
                     m11_set_status(state, "BOOT", "CSB ENTRANCE");
+                }
+            }
+            if (state->csbState.startup_entrance_opening_active) {
+                unsigned int stepCount =
+                    ENTRANCE_Compat_GetDoorAnimationStepCount();
+                if (state->csbState.startup_entrance_opening_delay_ticks > 0) {
+                    state->csbState.startup_entrance_opening_delay_ticks--;
+                } else if (state->csbState.startup_entrance_opening_step <
+                           (int)stepCount) {
+                    state->csbState.startup_entrance_opening_step++;
+                } else {
+                    int pending =
+                        state->csbState.startup_entrance_pending_command;
+                    m11_csb_startup_finish_door_opening(state);
+                    if (pending ==
+                        M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON) {
+                        m11_set_status(state, "BOOT", "CSB BONUS");
+                    } else if (pending ==
+                               M11_ENTRANCE_RUNTIME_COMMAND_RESUME) {
+                        m11_set_status(state, "BOOT", "CSB RESUMED");
+                    } else {
+                        m11_set_status(state, "BOOT", "CSB READY");
+                    }
                 }
             }
             return M11_GAME_INPUT_REDRAW;

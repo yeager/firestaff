@@ -596,6 +596,10 @@ typedef struct {
         int startup_entrance_bonus_requested;
         int startup_entrance_credits_active;
         int startup_entrance_credits_remaining_ticks;
+        int startup_entrance_opening_active;
+        int startup_entrance_opening_delay_ticks;
+        int startup_entrance_opening_step;
+        int startup_entrance_pending_command;
         int startup_entrance_resume_available;
         char startup_entrance_resume_path[512];
         int startup_import_available;

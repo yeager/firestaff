@@ -21,6 +21,7 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_graphics_loader_pc34_compat.h"
+#include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "m11_game_view.h"
@@ -74,6 +75,35 @@ static void expect_true(int condition, const char* message) {
         fprintf(stderr, "FAIL: %s\n", message);
         ++g_failures;
     }
+}
+
+static void drive_csb_entrance_opening(M11_GameViewState *view,
+                                       const char *message)
+{
+    unsigned int i;
+    unsigned int ticks =
+        20u + ENTRANCE_Compat_GetDoorAnimationStepCount();
+    int tick_before;
+    if (!view) {
+        expect_true(0, message);
+        return;
+    }
+    tick_before = view->csbState.tick_count;
+    expect_true(view->csbState.startup_entrance_active == 1 &&
+                    view->csbState.startup_entrance_opening_active == 1 &&
+                    view->csbState.startup_entrance_opening_delay_ticks == 20,
+                "M11 CSB entrance command starts source door-opening phase");
+    for (i = 0; i < ticks; ++i) {
+        expect_true(M11_GameView_AdvanceIdleTick(view) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB entrance door-opening tick redraws");
+    }
+    expect_true(view->csbState.tick_count == tick_before,
+                "M11 CSB entrance door-opening blocks runtime tick aging");
+    expect_true(view->csbState.startup_entrance_active == 0 &&
+                    view->csbState.startup_entrance_dismissed == 1 &&
+                    view->csbState.startup_entrance_opening_active == 0,
+                message);
 }
 
 static void write_be16(unsigned char *buf, size_t off, unsigned short value) {
@@ -1222,9 +1252,8 @@ int main(void) {
                         M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 CSB entrance enter button accepts source-locked pointer command");
-        expect_true(view.csbState.startup_entrance_active == 0 &&
-                    view.csbState.startup_entrance_dismissed == 1,
-                    "M11 CSB entrance dismisses to dungeon runtime");
+        drive_csb_entrance_opening(&view,
+                                   "M11 CSB entrance dismisses to dungeon runtime");
         expect_true(view.csbState.startup_entrance_last_command ==
                         M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
                     "M11 CSB entrance records the enter-dungeon command");
@@ -1416,8 +1445,10 @@ int main(void) {
                     M11_DM1_MOUSE_MASK_LEFT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 CSB utility START NEW GAME row enters the dungeon");
-    expect_true(view.csbState.startup_entrance_active == 0 &&
-                    view.world.party.championCount == 2,
+    drive_csb_entrance_opening(
+        &view,
+        "M11 CSB imported-party utility start opens into runtime");
+    expect_true(view.world.party.championCount == 2,
                 "M11 CSB imported party survives the utility start handoff");
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
@@ -1439,10 +1470,10 @@ int main(void) {
                     view.csbState.startup_import_selected_action_index == 1,
                 "M11 CSB utility keyboard selects LOAD when resume is available");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                    M11_GAME_INPUT_REDRAW &&
-                    view.csbState.startup_entrance_active == 0 &&
-                    view.csbState.startup_entrance_dismissed == 1,
+                    M11_GAME_INPUT_REDRAW,
                 "M11 CSB utility LOAD row resumes a validated save");
+    drive_csb_entrance_opening(&view,
+                               "M11 CSB utility LOAD row opens into runtime");
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
                 "M11 CSB utility LOAD row records the resume command before loading");
@@ -1491,8 +1522,10 @@ int main(void) {
                         M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 CSB menu-entry imported-party launch enters the dungeon");
-        expect_true(view.csbState.startup_entrance_active == 0 &&
-                        view.world.party.championCount == 2,
+        drive_csb_entrance_opening(
+            &view,
+            "M11 CSB menu-entry imported-party launch opens into runtime");
+        expect_true(view.world.party.championCount == 2,
                     "M11 CSB menu-entry imported party survives entrance handoff");
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
@@ -1547,9 +1580,8 @@ int main(void) {
                     ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 CSB entrance accepts the source bonus-dungeon button mask");
-    expect_true(view.csbState.startup_entrance_active == 0 &&
-                    view.csbState.startup_entrance_dismissed == 1,
-                "M11 CSB bonus-dungeon command dismisses to runtime");
+    drive_csb_entrance_opening(&view,
+                               "M11 CSB bonus-dungeon command dismisses to runtime");
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON,
                 "M11 CSB entrance records the bonus-dungeon command");
@@ -1601,9 +1633,9 @@ int main(void) {
                     M11_DM1_MOUSE_MASK_LEFT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 CSB entrance resume button loads the validated save path");
-    expect_true(view.csbState.startup_entrance_active == 0 &&
-                    view.csbState.startup_entrance_dismissed == 1,
-                "M11 CSB entrance resume dismisses to resumed runtime");
+    drive_csb_entrance_opening(
+        &view,
+        "M11 CSB entrance resume dismisses to resumed runtime");
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
                 "M11 CSB entrance records the resume command before loading");
