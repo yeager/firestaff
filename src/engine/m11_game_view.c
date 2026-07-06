@@ -22297,6 +22297,14 @@ static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[
     return 3;
 }
 
+static int m11_dm1_primary_side_wall_max_forward(int centerMaxVisibleForward) {
+    (void)centerMaxVisibleForward;
+    /* ReDMCSB DUNVIEW.C F0128 draws D3/D2/D1 side squares before the
+     * same-depth center square, so the primary side-wall pass always walks
+     * the full three-step side-wall envelope. */
+    return 3;
+}
+
 static int m11_dm1_nearest_blocking_center_depth_index(const M11_ViewportCell cells[3][3]) {
     int depth;
     if (!cells) {
@@ -32008,6 +32016,10 @@ int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
     return 1;
 }
 
+int M11_GameView_ProbeDm1PrimarySideWallMaxForward(int centerMaxVisibleForward) {
+    return m11_dm1_primary_side_wall_max_forward(centerMaxVisibleForward);
+}
+
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
                                                int relativeCell) {
     return m11_projectile_source_scale_units(depthIndex, relativeCell);
@@ -37706,8 +37718,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                              maxVisibleForward, cells);
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
+    /* ReDMCSB DUNVIEW.C F0128: side squares are drawn in source order before
+     * the same-depth center square (D3L/D3R before D3C, D2L/D2R before D2C,
+     * D1L/D1R before D1C).  Do not cap the primary side-wall pass at the
+     * nearest center blocker; the later center-wall pass overpaints it.  The
+     * replay pass below still uses a reduced max to repair near-side occlusion
+     * after center doors/walls have been drawn. */
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                            maxVisibleForward, cells);
+                            m11_dm1_primary_side_wall_max_forward(maxVisibleForward),
+                            cells);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
