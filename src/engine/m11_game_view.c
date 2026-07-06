@@ -21106,6 +21106,68 @@ static void m11_blit_scaled_palette_map(const M11_AssetSlot* slot,
     }
 }
 
+static void m11_blit_scaled_palette_map_region(const M11_AssetSlot* slot,
+                                               int srcX,
+                                               int srcY,
+                                               int srcW,
+                                               int srcH,
+                                               unsigned char* framebuffer,
+                                               int fbW,
+                                               int fbH,
+                                               int dstX,
+                                               int dstY,
+                                               int dstW,
+                                               int dstH,
+                                               int transparentColor,
+                                               const unsigned char paletteMap[16]) {
+    int dy;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        srcW <= 0 || srcH <= 0 || dstW <= 0 || dstH <= 0) {
+        return;
+    }
+    if (srcX < 0) {
+        srcW += srcX;
+        srcX = 0;
+    }
+    if (srcY < 0) {
+        srcH += srcY;
+        srcY = 0;
+    }
+    if (srcX + srcW > (int)slot->width) {
+        srcW = (int)slot->width - srcX;
+    }
+    if (srcY + srcH > (int)slot->height) {
+        srcH = (int)slot->height - srcY;
+    }
+    if (srcW <= 0 || srcH <= 0) {
+        return;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int sy = srcY + (dy * srcH) / dstH;
+        int fbY = dstY + dy;
+        int dx;
+        if (fbY < 0 || fbY >= fbH) {
+            continue;
+        }
+        for (dx = 0; dx < dstW; ++dx) {
+            int sx = srcX + (dx * srcW) / dstW;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) {
+                continue;
+            }
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
+                continue;
+            }
+            if (paletteMap) {
+                pixel = paletteMap[pixel & 0x0f];
+            }
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+}
+
 static void m11_blit_scaled_palette_map_maybe_flip(const M11_AssetSlot* slot,
                                                    unsigned char* framebuffer,
                                                    int fbW,
@@ -21358,14 +21420,47 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
     if (ornW <= 0 || ornH <= 0) {
         return;
     }
-    m11_blit_scaled_palette_map(slot,
-                                framebuffer, fbW, fbH,
-                                M11_VIEWPORT_X + panel->dstX + relX,
-                                M11_VIEWPORT_Y + panel->dstY + relY,
-                                ornW, ornH,
-                                9,
-                                depthIndex == 2 ? kOrnD3Palette :
-                                    (depthIndex == 1 ? kOrnD2Palette : NULL));
+    {
+        int visibleTop = relY;
+        int visibleBottom = relY + ornH;
+        int cropTop;
+        int cropH;
+        int srcY;
+        int srcH;
+        const unsigned char* palette =
+            depthIndex == 2 ? kOrnD3Palette :
+                (depthIndex == 1 ? kOrnD2Palette : NULL);
+
+        /* ReDMCSB DUNVIEW.C F0111 draws the ornament into the full
+         * temporary door bitmap before F0102 blits the current door-state
+         * frame.  When an opening vertical door uses a non-zero source Y,
+         * the ornament must be clipped and shifted with that source frame
+         * instead of being redrawn at the top of the already-clipped panel. */
+        if (visibleTop < panel->srcY) {
+            visibleTop = panel->srcY;
+        }
+        if (visibleBottom > panel->srcY + panel->height) {
+            visibleBottom = panel->srcY + panel->height;
+        }
+        if (visibleBottom <= visibleTop) {
+            return;
+        }
+        cropTop = visibleTop - relY;
+        cropH = visibleBottom - visibleTop;
+        srcY = (cropTop * (int)slot->height) / ornH;
+        srcH = ((cropTop + cropH) * (int)slot->height) / ornH - srcY;
+        if (srcH <= 0) {
+            srcH = 1;
+        }
+        m11_blit_scaled_palette_map_region(
+            slot, 0, srcY, (int)slot->width, srcH,
+            framebuffer, fbW, fbH,
+            M11_VIEWPORT_X + panel->dstX + relX,
+            M11_VIEWPORT_Y + panel->dstY + visibleTop - panel->srcY,
+            ornW, cropH,
+            9,
+            palette);
+    }
 }
 
 static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* state,
@@ -22700,15 +22795,6 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
             {M11_GFX_DOOR_SET0_D3, 0, 7,  90, 29, 44, 31}
         }
     };
-    /* ReDMCSB DUNVIEW.C G0207_aaauc_Graphic558_DoorOrnamentCoordinateSets[4][3][6].
-     * Format: {X1, X2, Y1, Y2, ByteWidth, Height}.
-     * Index 0 = D3LCR, 1 = D2LCR, 2 = D1LCR (full native). */
-    static const unsigned char kDoorOrnCoordSets[4][3][6] = {
-        {{17,31, 8,17, 8,10}, {22,42,11,23,16,13}, {32,63,13,31,16,19}},
-        {{ 0,47, 0,40,24,41}, { 0,63, 0,60,32,61}, { 0,95, 0,87,48,88}},
-        {{17,31,15,24, 8,10}, {22,42,22,34,16,13}, {32,63,31,49,16,19}},
-        {{23,35,31,39, 8, 9}, {30,48,41,52,16,12}, {44,75,61,79,16,19}}
-    };
     int depth;
     if (!state || !state->assetsAvailable) {
         return;
@@ -22719,49 +22805,17 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
     }
     {
         const M11_ViewportCell* cell = &cells[depth][1];
-        const M11_AssetSlot* slot;
-        int graphicIndex;
-        int coordSet;
         int panelState;
         M11_DM1ZoneBlit panel;
-        int viewIndex = (depth == 0) ? 2 : ((depth == 1) ? 1 : 0);
-        int ornW, ornH, relX, relY;
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
             m11_viewport_cell_is_open(cell) || cell->doorOrnamentOrdinal <= 0) {
             return;
         }
-        if (!m11_dm1_door_ornament_info(state, cell->doorOrnamentOrdinal,
-                                        &graphicIndex, &coordSet)) {
-            return;
-        }
-        slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    (unsigned int)graphicIndex);
-        if (!slot || slot->width <= 0 || slot->height <= 0) {
-            return;
-        }
-        if (coordSet < 0 || coordSet > 3) {
-            coordSet = 1;
-        }
         panelState = (cell->doorState >= 1 && cell->doorState <= 3) ? cell->doorState : 0;
         panel = kDoorPanels[depth][panelState];
-        /* Use G0207 coordinate set directly for ornament position/size.
-         * viewIndex: 0=D3, 1=D2, 2=D1. */
-        {
-            const unsigned char* cs = kDoorOrnCoordSets[coordSet][viewIndex];
-            ornW = cs[1] - cs[0] + 1;
-            ornH = cs[3] - cs[2] + 1;
-            relX = cs[0];
-            relY = cs[2];
-        }
-        if (ornW <= 0 || ornH <= 0) {
-            return;
-        }
-        M11_AssetLoader_BlitScaled(slot,
-                                   framebuffer, fbW, fbH,
-                                   M11_VIEWPORT_X + panel.dstX + relX,
-                                   M11_VIEWPORT_Y + panel.dstY + relY,
-                                   ornW, ornH,
-                                   9);
+        m11_draw_dm1_door_ornament_on_panel(state, framebuffer, fbW, fbH,
+                                            &panel, depth,
+                                            cell->doorOrnamentOrdinal);
     }
 }
 
@@ -32770,18 +32824,29 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
      * zone without changing the command pipeline. */
     for (i = 0; i < 6; ++i) {
         int x = 0, y = 0, w = 0, h = 0;
+        unsigned char cueColor;
         if ((state->v1MovementArrowVisualMask & kArrowMasks[i]) == 0) {
             continue;
         }
         if (!M11_GameView_GetV1MovementArrowZone(i, &x, &y, &w, &h)) {
             continue;
         }
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      x, y, w, h, M11_COLOR_WHITE);
-        if (w > 4 && h > 4) {
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x + 1, y + 1, w - 2, h - 2,
-                          M11_COLOR_LIGHT_CYAN);
+        /* This visual echo is a Firestaff keyboard/controller affordance
+         * over ReDMCSB's MENUDRAW.C F0395 native movement panel.  Keep it
+         * source-shaped and subdued: the previous full white rectangle read
+         * as an invented square button around C068/C069 turn zones. */
+        m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
+                       x, y, w, h);
+        cueColor = (i == 0 || i == 1) ? M11_COLOR_YELLOW : M11_COLOR_LIGHT_CYAN;
+        if (w > 8 && h > 8) {
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           x + 1, x + 5, y + 1, cueColor);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           x + 1, y + 1, y + 5, cueColor);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           x + w - 6, x + w - 2, y + h - 2, cueColor);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           x + w - 2, y + h - 6, y + h - 2, cueColor);
         }
     }
 }
