@@ -280,11 +280,11 @@ int main(int argc, char** argv) {
     M12_StartupMenuState menu;
     M11_GameViewState state;
     unsigned char fb[FB_W * FB_H];
-    char decoded[INSCRIPTION_MAX_TEXT];
-    int partyX = -1;
-    int partyY = -1;
-    int dir = -1;
-    int ok;
+    const struct DungeonMapDesc_Compat* map = NULL;
+    int checked = 0;
+    int ok = 1;
+    int x;
+    int y;
 
     if (!dataDir || dataDir[0] == '\0') {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
@@ -308,26 +308,10 @@ int main(int argc, char** argv) {
     }
     state.world.party.championCount = 0;
 
-    decoded[0] = '\0';
-    if (!find_front_inscription_pose(&state, &partyX, &partyY, &dir,
-                                     decoded, sizeof(decoded))) {
-        printf("SKIP no front-visible HoC TextString fixture found\n");
-        M11_GameView_Shutdown(&state);
-        return 0;
-    }
-
-    printf("pose map=0 x=%d y=%d dir=%d text=\"%s\"\n",
-           partyX, partyY, dir, decoded);
-
-    state.world.party.mapIndex = HALL_MAP_INDEX;
-    state.world.party.mapX = partyX;
-    state.world.party.mapY = partyY;
-    state.world.party.direction = dir;
-    memset(fb, 0, sizeof(fb));
-    M11_GameView_Draw(&state, fb, FB_W, FB_H);
     if (state.world.dungeon && HALL_MAP_INDEX < (int)state.world.dungeon->header.mapCount) {
         int wallCount = (int)state.world.dungeon->maps[HALL_MAP_INDEX].wallOrnamentCount;
         int slot;
+        map = &state.world.dungeon->maps[HALL_MAP_INDEX];
         printf("wallOrnamentCount=%d ornamentCacheLoaded=%d\n",
                wallCount, state.ornamentCacheLoaded[HALL_MAP_INDEX]);
         for (slot = 0; slot <= wallCount && slot < 16; ++slot) {
@@ -336,9 +320,89 @@ int main(int argc, char** argv) {
         }
     }
 
-    ok = check_rendered_lines(fb, decoded);
+    if (!map) {
+        printf("SKIP no HoC map loaded\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
+
+    /* ReDMCSB DUNGEON.C:2573-2593 maps each visible TextString's CELL to
+     * one visible wall side, then DUNVIEW.C:3592/3619 renders only the D1C
+     * front-selected inscription through M648.  The MacBook Pro report hit
+     * only some HoC inscriptions, so this checks every real front-readable
+     * HoC text pose instead of stopping at the first one. */
+    for (y = 0; y < (int)map->height; ++y) {
+        for (x = 0; x < (int)map->width; ++x) {
+            int squareIndex = square_index_for(&state, x, y);
+            unsigned short thing;
+            if (squareIndex < 0 ||
+                square_element_for(&state, x, y) != DUNGEON_ELEMENT_WALL) {
+                continue;
+            }
+            thing = state.world.things->squareFirstThings[squareIndex];
+            while (thing != THING_ENDOFLIST && thing != THING_NONE) {
+                int type = (int)THING_GET_TYPE(thing);
+                int index = (int)THING_GET_INDEX(thing);
+                int cell = (int)THING_GET_CELL(thing);
+                if (type == THING_TYPE_TEXTSTRING &&
+                    index >= 0 &&
+                    index < state.world.things->textStringCount &&
+                    state.world.things->textStrings[index].visible) {
+                    int dir;
+                    for (dir = 0; dir < 4; ++dir) {
+                        char decoded[INSCRIPTION_MAX_TEXT];
+                        int partyX;
+                        int partyY;
+                        if (((dir + 2) & 3) != cell) {
+                            continue;
+                        }
+                        partyX = x - dir_dx(dir);
+                        partyY = y - dir_dy(dir);
+                        if (square_element_for(&state, partyX, partyY) !=
+                            DUNGEON_ELEMENT_CORRIDOR) {
+                            continue;
+                        }
+                        if (F0507_DUNGEON_DecodeTextAtOffset_Compat(
+                                state.world.things->textData,
+                                state.world.things->textDataWordCount,
+                                state.world.things->textStrings[index].textDataWordOffset,
+                                decoded,
+                                (int)sizeof(decoded)) < 0 ||
+                            !decoded[0]) {
+                            continue;
+                        }
+                        normalize_inscription_text(decoded);
+                        printf("pose %d map=0 wall=(%d,%d) party=(%d,%d) dir=%d text=\"%s\"\n",
+                               checked, x, y, partyX, partyY, dir, decoded);
+                        state.world.party.mapIndex = HALL_MAP_INDEX;
+                        state.world.party.mapX = partyX;
+                        state.world.party.mapY = partyY;
+                        state.world.party.direction = dir;
+                        memset(fb, 0, sizeof(fb));
+                        M11_GameView_Draw(&state, fb, FB_W, FB_H);
+                        ok = check_rendered_lines(fb, decoded) && ok;
+                        ++checked;
+                    }
+                }
+                thing = (unsigned short)raw_next_thing(&state, thing);
+            }
+        }
+    }
+
+    if (checked <= 0) {
+        char decoded[INSCRIPTION_MAX_TEXT];
+        int partyX = -1;
+        int partyY = -1;
+        int dir = -1;
+        decoded[0] = '\0';
+        (void)find_front_inscription_pose(&state, &partyX, &partyY, &dir,
+                                          decoded, sizeof(decoded));
+        printf("SKIP no front-visible HoC TextString fixture found\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
     M11_GameView_Shutdown(&state);
 
-    printf("summary=%d passed %d failed\n", g_pass, g_fail);
+    printf("checked=%d summary=%d passed %d failed\n", checked, g_pass, g_fail);
     return (ok && g_fail == 0) ? 0 : 1;
 }
