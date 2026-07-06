@@ -172,3 +172,24 @@ int dm2_v1_startup_menu_handle_input(DM2_V1_StartupMenu *menu,
     }
     return 0;
 }
+
+int dm2_v1_startup_menu_handle_hit(DM2_V1_StartupMenu *menu,
+                                   const DM2_V1_StartupHit *hit,
+                                   DM2_V1_StartupAction *out_action)
+{
+    dm2_v1_startup_action_clear(out_action);
+    if (!menu || !hit || !out_action) {
+        return 0;
+    }
+    if (hit->kind == DM2_V1_STARTUP_HIT_PANEL) {
+        out_action->kind = DM2_V1_STARTUP_ACTION_NONE;
+        out_action->row = menu->selected_row;
+        return 1;
+    }
+    if (hit->kind != DM2_V1_STARTUP_HIT_ROW ||
+        hit->row < 0 || hit->row >= menu->row_count) {
+        return 0;
+    }
+    menu->selected_row = hit->row;
+    return dm2_v1_startup_menu_activate_selected(menu, out_action);
+}

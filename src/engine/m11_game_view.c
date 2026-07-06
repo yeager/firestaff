@@ -653,11 +653,13 @@ static DM2_V1_StartupInput m11_dm2_startup_input_from_m12(
     }
 }
 
+static M11_GameInputResult m11_dm2_startup_apply_action(
+    M11_GameViewState *state,
+    const DM2_V1_StartupAction *action);
+
 static M11_GameInputResult m11_dm2_startup_activate_selected(
     M11_GameViewState *state)
 {
-    DM2_V1_BootProfile *profile;
-    DM2_V1_SessionState session;
     DM2_V1_StartupMenu menu;
     DM2_V1_StartupAction action;
 
@@ -665,13 +667,31 @@ static M11_GameInputResult m11_dm2_startup_activate_selected(
         !state->dm2BootProfile) {
         return M11_GAME_INPUT_IGNORED;
     }
-    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
     m11_dm2_startup_menu_from_state(state, &menu);
     if (!dm2_v1_startup_menu_activate_selected(&menu, &action)) {
         return M11_GAME_INPUT_IGNORED;
     }
+    return m11_dm2_startup_apply_action(state, &action);
+}
+
+static M11_GameInputResult m11_dm2_startup_apply_action(
+    M11_GameViewState *state,
+    const DM2_V1_StartupAction *action)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_SessionState session;
+
+    if (!state || !state->dm2State.startup_menu_active ||
+        !state->dm2BootProfile || !action) {
+        return M11_GAME_INPUT_IGNORED;
+    }
     memset(&session, 0, sizeof(session));
-    if (action.kind == DM2_V1_STARTUP_ACTION_CONTINUE) {
+    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
+    if (action->kind == DM2_V1_STARTUP_ACTION_NONE) {
+        m11_set_status(state, "STARTUP", "DM2 START SELECT");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (action->kind == DM2_V1_STARTUP_ACTION_CONTINUE) {
         if (dm2_v1_session_load_last_session(profile->save_root,
                                              &session) != 0) {
             m11_set_status(state, "STARTUP", "DM2 CONTINUE FAILED");
@@ -684,10 +704,10 @@ static M11_GameInputResult m11_dm2_startup_activate_selected(
                    ? M11_GAME_INPUT_REDRAW
                    : M11_GAME_INPUT_REDRAW;
     }
-    if (action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
-        action.slot >= 0) {
+    if (action->kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
+        action->slot >= 0) {
         if (dm2_v1_session_load_slot(profile->save_root,
-                                     (uint8_t)action.slot,
+                                     (uint8_t)action->slot,
                                      &session) != 0) {
             m11_set_status(state, "STARTUP", "DM2 SLOT LOAD FAILED");
             m11_dm2_startup_scan_saves(state, profile);
@@ -699,11 +719,15 @@ static M11_GameInputResult m11_dm2_startup_activate_selected(
                    ? M11_GAME_INPUT_REDRAW
                    : M11_GAME_INPUT_REDRAW;
     }
-    if (action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
+    if (action->kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
         dm2_v1_session_new(&session);
         return m11_dm2_startup_apply_session(state, &session, "DM2 NEW GAME")
                    ? M11_GAME_INPUT_REDRAW
                    : M11_GAME_INPUT_REDRAW;
+    }
+    if (action->kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
+        m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+        return M11_GAME_INPUT_RETURN_TO_MENU;
     }
     return M11_GAME_INPUT_IGNORED;
 }
@@ -16425,6 +16449,8 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     int y)
 {
     DM2_V1_StartupHit hit;
+    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupAction action;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
@@ -16437,14 +16463,12 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
                             &hit)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (hit.kind == DM2_V1_STARTUP_HIT_ROW) {
-        state->dm2State.startup_menu_selected_row = hit.row;
-        return m11_dm2_startup_activate_selected(state);
+    m11_dm2_startup_menu_from_state(state, &menu);
+    if (!dm2_v1_startup_menu_handle_hit(&menu, &hit, &action)) {
+        return M11_GAME_INPUT_IGNORED;
     }
-    if (hit.kind == DM2_V1_STARTUP_HIT_PANEL) {
-        return M11_GAME_INPUT_REDRAW;
-    }
-    return M11_GAME_INPUT_IGNORED;
+    m11_dm2_startup_menu_to_state(state, &menu);
+    return m11_dm2_startup_apply_action(state, &action);
 }
 
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {

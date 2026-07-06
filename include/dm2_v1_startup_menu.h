@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "dm2_v1_startup_layout.h"
+
 typedef enum {
     DM2_V1_STARTUP_ROW_NONE = 0,
     DM2_V1_STARTUP_ROW_CONTINUE = 1,
@@ -57,5 +59,8 @@ int dm2_v1_startup_menu_activate_selected(
 int dm2_v1_startup_menu_handle_input(DM2_V1_StartupMenu *menu,
                                      DM2_V1_StartupInput input,
                                      DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_handle_hit(DM2_V1_StartupMenu *menu,
+                                   const DM2_V1_StartupHit *hit,
+                                   DM2_V1_StartupAction *out_action);
 
 #endif
