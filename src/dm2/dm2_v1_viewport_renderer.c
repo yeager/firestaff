@@ -582,6 +582,31 @@ int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
     return dm2_v1_viewport_map_chip_frame_index(3 + rel, frame_count);
 }
 
+int dm2_v1_viewport_creature_frame_for_direction(int requested_frame,
+                                                 int creature_direction,
+                                                 int party_direction,
+                                                 int frame_count)
+{
+    int rel;
+    int base;
+
+    if (frame_count <= 0) return 0;
+    if (frame_count <= 3) {
+        return dm2_v1_viewport_map_chip_frame_index(requested_frame,
+                                                   frame_count);
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP lines 10588-10618:
+     * creatures are fetched as one IMG_MAP_CHIP atlas and the drawn frame is
+     * `(viewDir - creatureDir) & 1` added to an even animation base before
+     * DRAW_CHIP_OF_MAGIC_MAP slices the 7px chip. */
+    base = requested_frame & ~1;
+    if (base + 1 >= frame_count) base = 0;
+    rel = ((party_direction & 3) - (creature_direction & 3)) & 3;
+    return dm2_v1_viewport_map_chip_frame_index(base + (rel & 1),
+                                                frame_count);
+}
+
 static void dm2_v1_viewport_clear_rect(DM2_V1_ViewportRect *out_rect)
 {
     if (!out_rect) return;
@@ -1563,8 +1588,16 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                 pixels && src_w > 0 && src_h > 0) {
                 int frame_x = 0;
                 int frame_w = src_w;
+                int frame_count =
+                    dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
+                int render_frame =
+                    dm2_v1_viewport_creature_frame_for_direction(
+                        c->frame_index,
+                        c->direction,
+                        s->party_dir,
+                        frame_count);
                 if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
-                                                   c->frame_index,
+                                                   render_frame,
                                                    &frame_x,
                                                    &frame_w)) {
                     frame_x = 0;
