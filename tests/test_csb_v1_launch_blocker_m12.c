@@ -25,6 +25,8 @@ static void force_csb_available(M12_StartupMenuState* state) {
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
+    state->messageIsMissingGameData = 0;
+    state->messageGameId[0] = '\0';
     state->assetStatus.csbAvailable = 1;
     state->assetStatus.versions[1][0].gameId = "csb";
     state->assetStatus.versions[1][0].versionId = "atari-st-v20";
@@ -136,9 +138,15 @@ int main(void) {
                 "CSB V2.1 version match must not bypass missing required-file gating")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE,
                 "CSB V2.1 missing required data shows a message instead of launching")) return 1;
+    if (!expect(state.messageIsMissingGameData == 1,
+                "CSB missing-data popup should expose visual missing-data context")) return 1;
+    if (!expect(strcmp(state.messageGameId, "csb") == 0,
+                "CSB missing-data popup should carry the CSB game id for card art")) return 1;
     if (!expect(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") &&
                 strstr(state.messageLine2, "DUNGEON.DAT"),
                 "CSB V2.1 missing-data popup names both required V1 runtime files")) return 1;
+    if (!expect(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:"),
+                "CSB V2.1 missing-data popup names the searched data directory")) return 1;
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     if (!expect(intent.valid == 0,

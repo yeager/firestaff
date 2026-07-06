@@ -128,7 +128,10 @@ static void check_graphics_only_blocks_launch(const GraphicsOnlyFixture* fixture
     CHECK(state.launchRequested == 0);
     CHECK(state.quickResumeLaunchRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageIsMissingGameData == 1);
+    CHECK(strcmp(state.messageGameId, fixture->gameId) == 0);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") != NULL);
+    CHECK(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:") != NULL);
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 0);

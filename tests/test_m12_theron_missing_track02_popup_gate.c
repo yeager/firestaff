@@ -133,6 +133,8 @@ static int popup_lines_cleared(const M12_StartupMenuState* state) {
     if (state->messageLine1 && state->messageLine1[0] != '\0') return 0;
     if (state->messageLine2 && state->messageLine2[0] != '\0') return 0;
     if (state->messageLine3 && state->messageLine3[0] != '\0') return 0;
+    if (state->messageIsMissingGameData != 0) return 0;
+    if (state->messageGameId[0] != '\0') return 0;
     return 1;
 }
 
@@ -310,6 +312,8 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.launchRequested == 0);
     CHECK(state.quickResumeLaunchRequested == 0);
+    CHECK(state.messageIsMissingGameData == 1);
+    CHECK(strcmp(state.messageGameId, "theron") == 0);
 
     line1 = state.messageLine1 ? state.messageLine1 : "";
     line2 = state.messageLine2 ? state.messageLine2 : "";
@@ -366,6 +370,8 @@ static void check_options_launch_popup_surfaces_track02_hint(char* dataDir) {
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.launchRequested == 0);
     CHECK(state.quickResumeLaunchRequested == 0);
+    CHECK(state.messageIsMissingGameData == 1);
+    CHECK(strcmp(state.messageGameId, "theron") == 0);
     line2 = state.messageLine2 ? state.messageLine2 : "";
     CHECK_STR_CONTAINS(line2, ".BIN");
     CHECK_STR_CONTAINS(line2, ".ISO");
@@ -374,7 +380,6 @@ static void check_options_launch_popup_surfaces_track02_hint(char* dataDir) {
     CHECK(intent.valid == 0);
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    fprintf(stderr, "DBG opts: view=%d\n", state.view);
     /* Dismissal from GAME_OPTIONS returns to GAME_OPTIONS, not MAIN.
      * Verify the launcher is back on the options screen with cleared
      * message lines and no leaked launch request. */
@@ -405,6 +410,8 @@ static void check_quick_resume_popup_surfaces_track02_hint(char* dataDir) {
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.launchRequested == 0);
     CHECK(state.quickResumeLaunchRequested == 0);
+    CHECK(state.messageIsMissingGameData == 1);
+    CHECK(strcmp(state.messageGameId, "theron") == 0);
 
     line1 = state.messageLine1 ? state.messageLine1 : "";
     line2 = state.messageLine2 ? state.messageLine2 : "";
@@ -452,6 +459,8 @@ static void check_unrelated_games_unaffected_by_theron_gate(char* dataDir) {
     state.selectedIndex = 0;  /* DM1 card */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageIsMissingGameData == 1);
+    CHECK(strcmp(state.messageGameId, "dm1") == 0);
 
     line1 = state.messageLine1 ? state.messageLine1 : "";
     line2 = state.messageLine2 ? state.messageLine2 : "";
