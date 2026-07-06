@@ -8926,6 +8926,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_icon_graphic_first_icon_index_pc34_compat
     )
 
+    add_executable(test_dm1_v1_inscription_font_pc34_compat
+        tests/test_dm1_v1_inscription_font_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_inscription_font_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inscription_font_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inscription_font_pc34_compat
+        COMMAND test_dm1_v1_inscription_font_pc34_compat
+    )
+
     # DM1 V1 slot-boxes: Graphics.dat item 562 init var
     # G0030_as_Graphic562_SlotBoxes[46] (8 status-box hands, 30 inventory
     # slots, 8 chest slots) — the pixel-coordinate table for slot-box
