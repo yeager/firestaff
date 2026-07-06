@@ -6213,6 +6213,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_boot_profile_smoke
     )
 
+    add_executable(test_dm2_v1_startup_menu_action_contract
+        tests/test_dm2_v1_startup_menu_action_contract.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_layout.c
+    )
+    target_include_directories(test_dm2_v1_startup_menu_action_contract PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_startup_menu_action_contract
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_startup_menu_action_contract
+        COMMAND test_dm2_v1_startup_menu_action_contract
+    )
+
     add_executable(test_dm2_v1_m11_startup_profile_gate
         tests/test_dm2_v1_m11_startup_profile_gate.c
     )

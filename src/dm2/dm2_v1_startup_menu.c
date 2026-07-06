@@ -41,6 +41,30 @@ int dm2_v1_startup_menu_count_rows(int resume_available,
     return count + 1;
 }
 
+int dm2_v1_startup_menu_refresh(DM2_V1_StartupMenu *menu,
+                                int resume_available,
+                                unsigned int slot_mask)
+{
+    if (!menu) {
+        return 0;
+    }
+    menu->resume_available = resume_available ? 1 : 0;
+    menu->slot_mask = slot_mask & 0x03ffu;
+    menu->row_count = dm2_v1_startup_menu_count_rows(
+        menu->resume_available,
+        menu->slot_mask);
+    if (menu->row_count < 1) {
+        menu->row_count = 1;
+    }
+    if (menu->selected_row < 0) {
+        menu->selected_row = 0;
+    }
+    if (menu->selected_row >= menu->row_count) {
+        menu->selected_row = menu->row_count - 1;
+    }
+    return 1;
+}
+
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,
                                int row,
                                DM2_V1_StartupRowKind *out_kind,
@@ -192,4 +216,44 @@ int dm2_v1_startup_menu_handle_hit(DM2_V1_StartupMenu *menu,
     }
     menu->selected_row = hit->row;
     return dm2_v1_startup_menu_activate_selected(menu, out_action);
+}
+
+int dm2_v1_startup_menu_build_render_rows(
+    const DM2_V1_StartupMenu *menu,
+    DM2_V1_StartupRenderRow *rows,
+    int max_rows)
+{
+    int row;
+    int count = 0;
+
+    if (!menu || !rows || max_rows <= 0) {
+        return 0;
+    }
+    memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
+    for (row = 0; row < menu->row_count && count < max_rows; ++row) {
+        DM2_V1_StartupRowKind kind = DM2_V1_STARTUP_ROW_NONE;
+        int slot = -1;
+        DM2_V1_StartupRenderRow *out = &rows[count];
+
+        if (!dm2_v1_startup_menu_row_at(menu, row, &kind, &slot) ||
+            !dm2_v1_startup_row_rect(row, &out->rect)) {
+            continue;
+        }
+        (void)dm2_v1_startup_row_highlight_rect(row, &out->highlight_rect);
+        out->kind = kind;
+        out->row = row;
+        out->slot = slot;
+        out->selected = (row == menu->selected_row) ? 1 : 0;
+        out->text_x = DM2_V1_STARTUP_ROW_TEXT_X;
+        out->text_y = out->rect.y + 2;
+        if (kind == DM2_V1_STARTUP_ROW_CONTINUE) {
+            snprintf(out->label, sizeof(out->label), "CONTINUE");
+        } else if (kind == DM2_V1_STARTUP_ROW_SLOT) {
+            snprintf(out->label, sizeof(out->label), "LOAD SLOT %02d", slot);
+        } else if (kind == DM2_V1_STARTUP_ROW_NEW_GAME) {
+            snprintf(out->label, sizeof(out->label), "NEW GAME");
+        }
+        ++count;
+    }
+    return count;
 }
