@@ -155,6 +155,7 @@ static void check_dm1_missing_required_popup(int graphicsMatched,
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageIsMissingGameData == 1);
     CHECK(strcmp(state.messageGameId, kDm1GameId) == 0);
+    CHECK(state.activatedIndex == 0);
     CHECK(state.messageLine1 && strstr(state.messageLine1, "DM1") != NULL);
     CHECK(state.messageLine1 && strstr(state.messageLine1, "GAME DATA") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, expectedMissingA) != NULL);
