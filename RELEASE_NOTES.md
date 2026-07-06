@@ -1,6 +1,10 @@
 
 # Unreleased
 
+- Theron's Quest direct startup now accepts a hash-matched Track 02 file from
+  an arbitrary user-selected directory, even when neither the folder nor file
+  is named like Theron media.
+
 - Nexus missing-data popups now tell users to provide a Nexus ISO/BIN/CUE image
   or extracted `DM.BIN`, instead of showing the internal Saturn marker label.
 
@@ -8,6 +12,25 @@
   track modes are case-insensitive, `MODE2/2048` is accepted, and the scanner
   continues across non-matching CUE-referenced payload images before matching
   DM1/CSB/DM2 flat-DAT startup data.
+
+# Firestaff v3.0.35
+
+Firestaff v3.0.35 packages the latest startup-media hardening on `main` after
+v3.0.34.
+
+## Highlights since v3.0.34
+
+- **Theron's Quest arbitrary-folder startup**: direct Theron launch scans now
+  accept a hash-matched Track 02 file from a renamed user-selected folder or
+  file and derive the runtime root from that match.
+
+## Verification
+
+- Local release-prep verification covered version synchronization plus the
+  focused Theron's Quest launcher scan reuse gate and Phase A probe.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.35` release run.
 
 # Firestaff v3.0.34
 
