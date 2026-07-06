@@ -1252,12 +1252,11 @@ endif()
 
 # Firestaff Tier 1 #5 strict boot-probe per path.
 # For each EXTRACTED + VERIFIED path that --scan-data marks READY,
-# runs the firestaff launcher with --game <id> --data-dir <path> and
-# asserts the per-game boot milestone (DM1 LOADING DUNGEON, Theron
-# TQR level load OK, etc.). Out-of-scope exclusions: CSB silent exit
-# (Tier 4 diagnostic-blocker), Nexus Merged.iso::DM.BIN / Track 1.bin
-# mount (Tier 4 launcher gap). See docs/FIRESTAFF_GAP_LIST.md
-# Section H Tier 1 #5 + Section L1 for context.
+# runs the firestaff launcher with --game <id> --data-dir <path>
+# --boot-probe and asserts the per-game runtime receipt
+# (active=1, startupActive=0, levelLoaded=1). Out-of-scope exclusion:
+# Nexus Merged.iso::DM.BIN / Track 1.bin mount (Tier 4 launcher gap).
+# See docs/FIRESTAFF_GAP_LIST.md Section H Tier 1 #5 + Section L1.
 if(NOT WIN32)
     add_executable(firestaff_tier1_strict_boot_probe
         probes/firestaff_tier1_strict_boot_probe.c)
