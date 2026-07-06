@@ -9,7 +9,7 @@
  * The launcher used to fall through to the generic
  * `m12_show_missing_game_data_popup()` for every game, which produced
  * a popup body of "MISSING: Track 02 data image (JP, primary)" —
- * technically correct but leaking internal spec wording and giving the
+ * misleading for US/ISO media, leaking internal spec wording and giving the
  * user no hint about which file extension to drop or which folder to
  * drop it into.
  *
@@ -17,7 +17,7 @@
  *
  *   1. The hash-table contract: Theron still exposes 4 known hashes
  *      (JP/US BIN + JP/US ISO) and exactly one required-file role
- *      (Track 02 primary marker).
+ *      (Track 02 JP/US BIN/ISO marker).
  *   2. Asset-availability negative test: with no real Theron data,
  *      `M12_AssetStatus_GameAvailable("theron")` returns 0 but
  *      `M12_AssetStatus_GameHasCompleteHashSet("theron")` still
@@ -190,7 +190,7 @@ static void seed_theron_unavailable_with_metadata(M12_StartupMenuState* state,
     memset(req, 0, sizeof(*req));
     req->gameId = "theron";
     req->roleId = "track02";
-    req->label = "Track 02 data image (JP, primary)";
+    req->label = "Track 02 data image (JP/US BIN/ISO)";
     req->required = 1;
     req->matched = 0;
 
@@ -286,7 +286,7 @@ static void check_scan_no_data_marks_theron_unavailable(char* dataDir) {
         CHECK(req != NULL);
         CHECK(req->required == 1);
         CHECK(req->matched == 0);
-        CHECK(req->label && strcmp(req->label, "Track 02 data image (JP, primary)") == 0);
+        CHECK(req->label && strcmp(req->label, "Track 02 data image (JP/US BIN/ISO)") == 0);
     }
 }
 
@@ -320,11 +320,12 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
     CHECK_STR_STARTS_WITH(line1, "THERON");
     CHECK_STR_CONTAINS(line1, "GAME DATA NOT FOUND");
     /* The popup body must mention the .BIN/.ISO extension so the
-     * user knows which file format to drop, and the data-dir hint
-     * so they know where to put it. The internal "Track 02 data
-     * image (JP, primary)" label is still recoverable for tooling. */
+     * user knows which file format to drop, JP/US so a valid US
+     * Track 02 does not look like the wrong media, and the data-dir
+     * hint so they know where to put it. */
     CHECK_STR_CONTAINS(line2, ".BIN");
     CHECK_STR_CONTAINS(line2, ".ISO");
+    CHECK_STR_CONTAINS(line2, "JP/US");
     CHECK_STR_CONTAINS(line2, "DATA DIR");
     /* Footer still anchors the data directory so the user can find
      * it. */
@@ -375,6 +376,7 @@ static void check_options_launch_popup_surfaces_track02_hint(char* dataDir) {
     line2 = state.messageLine2 ? state.messageLine2 : "";
     CHECK_STR_CONTAINS(line2, ".BIN");
     CHECK_STR_CONTAINS(line2, ".ISO");
+    CHECK_STR_CONTAINS(line2, "JP/US");
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 0);
@@ -418,6 +420,7 @@ static void check_quick_resume_popup_surfaces_track02_hint(char* dataDir) {
     CHECK_STR_STARTS_WITH(line1, "THERON");
     CHECK_STR_CONTAINS(line2, ".BIN");
     CHECK_STR_CONTAINS(line2, ".ISO");
+    CHECK_STR_CONTAINS(line2, "JP/US");
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 0);

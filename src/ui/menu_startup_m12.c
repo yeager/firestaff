@@ -1359,7 +1359,7 @@ static void m12_format_missing_files_for_game(const M12_StartupMenuState* state,
         return;
     }
     if (strcmp(gameId, "theron") == 0) {
-        snprintf(out, outSize, "MISSING: TRACK 02 .BIN/.ISO - DATA DIR BELOW");
+        snprintf(out, outSize, "MISSING: TRACK 02 JP/US .BIN/.ISO - DATA DIR BELOW");
         return;
     }
     if (strcmp(gameId, "nexus") == 0) {
