@@ -23,11 +23,31 @@ typedef struct {
     int prompt_visible;
 } Nexus_V1_TitleFrame;
 
+typedef enum {
+    NEXUS_V1_BOOT_PHASE_WARNING = 0,
+    NEXUS_V1_BOOT_PHASE_TITLE = 1
+} Nexus_V1_BootPhase;
+
+typedef struct {
+    Nexus_V1_BootPhase phase;
+    int frame_in_phase;
+    int warning_visible;
+    int title_frame;
+    Nexus_V1_TitleFrame title;
+    int start_ready;
+} Nexus_V1_BootFrame;
+
 int nexus_v1_title_min_boot_frames(void);
 int nexus_v1_title_start_ready_frames(void);
 const char *nexus_v1_title_phase_name(Nexus_V1_TitlePhase phase);
 int nexus_v1_title_frame(int frame,
                          int framebuffer_height,
                          Nexus_V1_TitleFrame *out_frame);
+int nexus_v1_boot_warning_frames(void);
+int nexus_v1_boot_start_ready_frames(void);
+const char *nexus_v1_boot_phase_name(Nexus_V1_BootPhase phase);
+int nexus_v1_boot_frame(int frame,
+                        int framebuffer_height,
+                        Nexus_V1_BootFrame *out_frame);
 
 #endif

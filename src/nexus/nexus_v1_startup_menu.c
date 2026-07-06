@@ -228,6 +228,40 @@ int nexus_v1_startup_title_handle_input(int title_frame,
     return 1;
 }
 
+int nexus_v1_startup_boot_handle_input(int boot_frame,
+                                       unsigned int slot_mask,
+                                       Nexus_V1_StartupInput input,
+                                       Nexus_V1_StartupAction *out_action)
+{
+    nexus_v1_startup_action_clear(out_action);
+    if (!out_action) {
+        return 0;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_BACK) {
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER;
+        return 1;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_NONE) {
+        return 0;
+    }
+    if (input != NEXUS_V1_STARTUP_INPUT_ACCEPT &&
+        input != NEXUS_V1_STARTUP_INPUT_ACTION) {
+        return 0;
+    }
+    {
+        Nexus_V1_BootFrame frame_state;
+        if (!nexus_v1_boot_frame(boot_frame, NEXUS_FB_H, &frame_state) ||
+            !frame_state.start_ready) {
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_HOLD_TITLE;
+            return 1;
+        }
+    }
+    out_action->kind = slot_mask != 0u
+                           ? NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT
+                           : NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT;
+    return 1;
+}
+
 int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
                                        Nexus_V1_StartupInput input,
                                        Nexus_V1_StartupAction *out_action)

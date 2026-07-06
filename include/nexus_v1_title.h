@@ -10,17 +10,25 @@ typedef struct {
     int width;
     int height;
     int loaded;
+    uint8_t *warning_pixels;
+    int warning_width;
+    int warning_height;
+    int warning_loaded;
 } Nexus_TitleScreen;
 
 int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine);
 void nexus_title_free(Nexus_TitleScreen *title);
 int nexus_title_min_boot_frames(void);
 int nexus_title_start_ready_frames(void);
+int nexus_title_boot_warning_frames(void);
+int nexus_title_boot_start_ready_frames(void);
 int nexus_title_boot_reveal_complete(int frame);
 int nexus_title_start_ready(int frame);
+int nexus_title_full_boot_start_ready(int frame);
 void nexus_render_title(const Nexus_TitleScreen *title,
                         Nexus_Framebuffer *fb,
                         int frame);
 void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame);
+void nexus_render_title_warning_fallback(Nexus_Framebuffer *fb, int frame);
 
 #endif

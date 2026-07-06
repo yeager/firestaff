@@ -15659,7 +15659,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->nexusState.title_active) {
             Nexus_V1_StartupAction action;
-            if (!nexus_v1_startup_title_handle_input(
+            if (!nexus_v1_startup_boot_handle_input(
                     state->nexusState.title_frame,
                     state->nexusState.startup_save_slot_mask,
                     m11_nexus_startup_input_from_m12(input),
