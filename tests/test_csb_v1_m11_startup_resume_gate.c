@@ -1313,6 +1313,21 @@ int main(void) {
                 "M11 CSB utility keyboard ACCEPT on IMPORT stays on startup");
     expect_true(strcmp(view.lastOutcome, "CSB IMPORT READY") == 0,
                 "M11 CSB utility keyboard IMPORT reports import-ready status");
+    {
+        int last_command = view.csbState.startup_entrance_last_command;
+        int last_action = view.csbState.startup_import_selected_action_index;
+        M11_GameInputResult result = M11_GameView_HandlePointerButton(
+            &view,
+            40,
+            118,
+            ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT);
+        expect_true(result == M11_GAME_INPUT_IGNORED &&
+                        view.csbState.startup_import_selected_action_index ==
+                            last_action &&
+                        view.csbState.startup_entrance_last_command ==
+                            last_command,
+                    "M11 CSB utility LOAD row ignores bonus-dungeon pointer mask");
+    }
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     40,
