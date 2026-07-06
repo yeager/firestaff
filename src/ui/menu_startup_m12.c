@@ -1222,6 +1222,8 @@ static void m12_set_buffered_message(M12_StartupMenuState* state,
     if (!state) {
         return;
     }
+    state->messageIsMissingGameData = 0;
+    state->messageGameId[0] = '\0';
     snprintf(state->messageLine1Storage, sizeof(state->messageLine1Storage), "%s", line1 ? line1 : "");
     snprintf(state->messageLine2Storage, sizeof(state->messageLine2Storage), "%s", line2 ? line2 : "");
     snprintf(state->messageLine3Storage, sizeof(state->messageLine3Storage), "%s", line3 ? line3 : "");
@@ -1272,6 +1274,8 @@ static void m12_clear_message_view(M12_StartupMenuState* state) {
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
+    state->messageIsMissingGameData = 0;
+    state->messageGameId[0] = '\0';
     state->messageReturnView = M12_MENU_VIEW_MAIN;
     state->saveBrowserReturnView = M12_MENU_VIEW_SETTINGS;
     state->messageReturnNavLevel = (int)M12_NAV_MAIN;
@@ -1349,6 +1353,10 @@ static void m12_format_missing_files_for_game(const M12_StartupMenuState* state,
         snprintf(out, outSize, "MISSING: GAME DATA");
         return;
     }
+    if (strcmp(gameId, "theron") == 0) {
+        snprintf(out, outSize, "MISSING: TRACK 02 .BIN/.ISO - DATA DIR BELOW");
+        return;
+    }
     snprintf(out, outSize, "MISSING: ");
     count = M12_AssetStatus_GetRequiredFileCount(&state->assetStatus, gameId);
     for (i = 0U; i < count; ++i) {
@@ -1388,6 +1396,11 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
     state->csbImportDm1ConfirmPath[0] = '\0';
     state->csbImportDm1ConfirmFilename[0] = '\0';
     m12_set_buffered_message(state, line1, line2, line3);
+    state->messageIsMissingGameData = 1;
+    snprintf(state->messageGameId,
+             sizeof(state->messageGameId),
+             "%s",
+             gameId ? gameId : "");
 }
 
 static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {

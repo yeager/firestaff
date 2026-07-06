@@ -153,6 +153,8 @@ static void check_dm1_missing_required_popup(int graphicsMatched,
     CHECK(state.launchRequested == 0);
     CHECK(state.quickResumeLaunchRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageIsMissingGameData == 1);
+    CHECK(strcmp(state.messageGameId, kDm1GameId) == 0);
     CHECK(state.messageLine1 && strstr(state.messageLine1, "DM1") != NULL);
     CHECK(state.messageLine1 && strstr(state.messageLine1, "GAME DATA") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, expectedMissingA) != NULL);
@@ -165,6 +167,7 @@ static void check_dm1_missing_required_popup(int graphicsMatched,
     CHECK(state.messageLine2 && strstr(state.messageLine2, "TITLE") == NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "INTRO") == NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "FTL") == NULL);
+    CHECK(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:") != NULL);
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 0);
@@ -186,6 +189,8 @@ static void check_dm1_required_complete_launches_with_optional_candidate(void) {
     CHECK(state.launchRequested == 1);
     CHECK(state.quickResumeLaunchRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageIsMissingGameData == 0);
+    CHECK(state.messageGameId[0] == '\0');
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "READY TO LAUNCH") == 0);
     CHECK(state.messageLine2 && strcmp(state.messageLine2, kDm1Title) == 0);
 

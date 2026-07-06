@@ -528,6 +528,44 @@ static void draw_text_centered(M12_ModernCanvas* c, int cx, int y,
     draw_text(c, cx - w / 2, y, s, st);
 }
 
+static void draw_text_centered_fit(M12_ModernCanvas* c, int cx, int y,
+                                   const char* s,
+                                   const ModernTextStyle* st,
+                                   int maxW) {
+    char fitted[256];
+    size_t sourceLen;
+    size_t targetLen;
+    if (!s) {
+        s = "";
+    }
+    snprintf(fitted, sizeof(fitted), "%s", s);
+    if (text_width_px(fitted, st) <= maxW) {
+        draw_text_centered(c, cx, y, fitted, st);
+        return;
+    }
+    sourceLen = strlen(s);
+    if (sourceLen >= sizeof(fitted)) {
+        sourceLen = sizeof(fitted) - 1U;
+    }
+    targetLen = sourceLen;
+    while (targetLen > 8U) {
+        size_t front = (targetLen - 3U) / 2U;
+        size_t back = targetLen - 3U - front;
+        snprintf(fitted,
+                 sizeof(fitted),
+                 "%.*s...%s",
+                 (int)front,
+                 s,
+                 s + strlen(s) - back);
+        if (text_width_px(fitted, st) <= maxW) {
+            draw_text_centered(c, cx, y, fitted, st);
+            return;
+        }
+        --targetLen;
+    }
+    draw_text_centered(c, cx, y, "...", st);
+}
+
 static void draw_text_gradient(M12_ModernCanvas* c, int x, int y, const char* s,
                                int scale, M12_RGB top, M12_RGB bot, M12_RGB shadow) {
     if (!s) return;
@@ -588,6 +626,20 @@ static void draw_panel(M12_ModernCanvas* c, int x, int y, int w, int h,
                         clamp_u8(fill.b + 52)), 160);
     }
     stroke_rounded_rect(c, x, y, w, h, radius, edge);
+}
+
+static void blend_rect(M12_ModernCanvas* c, int x, int y, int w, int h,
+                       M12_RGB col, int alpha) {
+    int yy;
+    int xx;
+    if (!c || w <= 0 || h <= 0 || alpha <= 0) {
+        return;
+    }
+    for (yy = y; yy < y + h; ++yy) {
+        for (xx = x; xx < x + w; ++xx) {
+            blend_pixel(c, xx, yy, col, alpha);
+        }
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1869,45 +1921,106 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     }
 }
 
-static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    draw_back_button(c, 0);
-    /* Dim the entire background so the message is clearly on top */
-    for (int y = 0; y < c->h; y++) {
-        for (int x = 0; x < c->w; x++) {
+static void dim_message_background(M12_ModernCanvas* c) {
+    int y;
+    int x;
+    for (y = 0; y < c->h; y++) {
+        for (x = 0; x < c->w; x++) {
             int idx = (y * c->w + x) * 4;
-            unsigned char *p = c->rgba + idx;
-            p[0] = p[0] / 3;  /* B */
-            p[1] = p[1] / 3;  /* G */
-            p[2] = p[2] / 3;  /* R */
+            unsigned char* p = c->rgba + idx;
+            p[0] = p[0] / 3;
+            p[1] = p[1] / 3;
+            p[2] = p[2] / 3;
         }
     }
-    int panelW = 840;
-    int panelH = 320;
+}
+
+static void draw_missing_data_message_view(M12_ModernCanvas* c,
+                                           const M12_StartupMenuState* state) {
+    int panelW = 1060;
+    int panelH = 500;
     int panelX = (c->w - panelW) / 2;
     int panelY = (c->h - panelH) / 2;
-    draw_panel(c, panelX, panelY, panelW, panelH,
-               rgb(16, 14, 30), COLOR_ACCENT(), 20);
-    ModernTextStyle big = text_style_make(3, COLOR_ACCENT(), 2);
+    const char* gameId = state->messageGameId[0] ? state->messageGameId : NULL;
+    const M12_GeneratedCardArt* generated = M12_GeneratedCardArt_Find(gameId);
     const char* line1 = state->messageLine1 ? state->messageLine1 : "";
     const char* line2 = state->messageLine2 ? state->messageLine2 : "";
     const char* line3 = state->messageLine3 ? state->messageLine3 : "";
-    int w1 = text_width_px(line1, &big);
-    draw_text(c, panelX + (panelW - w1) / 2, panelY + 48, line1, &big);
+    ModernTextStyle brand = text_style_make(3, COLOR_ACCENT_HI(), 2);
+    ModernTextStyle title = text_style_make(3, rgb(248, 238, 218), 2);
     ModernTextStyle mid = text_style_make(2, COLOR_TEXT(), 1);
-    int w2 = text_width_px(line2, &mid);
-    draw_text(c, panelX + (panelW - w2) / 2, panelY + 140, line2, &mid);
-    ModernTextStyle sm = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    int w3 = text_width_px(line3, &sm);
-    draw_text(c, panelX + (panelW - w3) / 2, panelY + 220, line3, &sm);
+    ModernTextStyle sm = text_style_make(1, COLOR_TEXT_DIM(), 1);
+    int okW = 120;
+    int okH = 40;
+    int okX = panelX + (panelW - okW) / 2;
+    int okY = panelY + panelH - 70;
+
+    draw_panel(c, panelX, panelY, panelW, panelH,
+               rgb(16, 14, 28), COLOR_ACCENT(), 24);
+    if (generated) {
+        draw_generated_card_art(c, generated, panelX + 4, panelY + 4,
+                                panelW - 8, panelH - 8, 0);
+        blend_rect(c, panelX + 4, panelY + 4, panelW - 8, panelH - 8,
+                   rgb(8, 8, 14), 194);
+    }
+    stroke_rounded_rect(c, panelX, panelY, panelW, panelH, 24, COLOR_ACCENT());
+
+    draw_readme_logo_image(c, panelX + 54, panelY + 42, 106, 106);
+    draw_text(c, panelX + 176, panelY + 54, "FIRESTAFF", &brand);
+    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 136,
+                           line1, &title, panelW - 150);
+
+    fill_rounded_rect(c, panelX + 82, panelY + 212, panelW - 164, 72,
+                      12, rgb(22, 20, 34));
+    stroke_rounded_rect(c, panelX + 82, panelY + 212, panelW - 164, 72,
+                        12, rgb(116, 78, 42));
+    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 238,
+                           line2, &mid, panelW - 210);
+    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 322,
+                           line3, &sm, panelW - 150);
+
+    stroke_rounded_rect(c, okX, okY, okW, okH, 8, COLOR_ACCENT());
     {
+        ModernTextStyle ok = text_style_make(2, COLOR_ACCENT(), 1);
+        draw_text_centered(c, okX + okW / 2, okY + 12, "OK", &ok);
+    }
+}
+
+static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
+    draw_back_button(c, 0);
+    dim_message_background(c);
+    if (state && state->messageIsMissingGameData) {
+        draw_missing_data_message_view(c, state);
+        return;
+    }
+    {
+        int panelW = 840;
+        int panelH = 320;
+        int panelX = (c->w - panelW) / 2;
+        int panelY = (c->h - panelH) / 2;
+        ModernTextStyle big = text_style_make(3, COLOR_ACCENT(), 2);
+        const char* line1 = state->messageLine1 ? state->messageLine1 : "";
+        const char* line2 = state->messageLine2 ? state->messageLine2 : "";
+        const char* line3 = state->messageLine3 ? state->messageLine3 : "";
+        ModernTextStyle mid = text_style_make(2, COLOR_TEXT(), 1);
+        ModernTextStyle sm = text_style_make(2, COLOR_TEXT_DIM(), 1);
         int okW = 108;
         int okH = 36;
         int okX = panelX + (panelW - okW) / 2;
         int okY = panelY + panelH - 64;
+        draw_panel(c, panelX, panelY, panelW, panelH,
+                   rgb(16, 14, 30), COLOR_ACCENT(), 20);
+        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 48,
+                               line1, &big, panelW - 80);
+        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 140,
+                               line2, &mid, panelW - 80);
+        draw_text_centered_fit(c, panelX + panelW / 2, panelY + 220,
+                               line3, &sm, panelW - 80);
         stroke_rounded_rect(c, okX, okY, okW, okH, 6, COLOR_ACCENT());
-        ModernTextStyle ok = text_style_make(2, COLOR_ACCENT(), 1);
-        int okTextW = text_width_px("OK", &ok);
-        draw_text(c, okX + (okW - okTextW) / 2, okY + 10, "OK", &ok);
+        {
+            ModernTextStyle ok = text_style_make(2, COLOR_ACCENT(), 1);
+            draw_text_centered(c, okX + okW / 2, okY + 10, "OK", &ok);
+        }
     }
 }
 
