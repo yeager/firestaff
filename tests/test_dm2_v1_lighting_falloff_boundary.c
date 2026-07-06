@@ -57,6 +57,13 @@ static int test_dm2_asset_fetch(void *user,
         6, 7, 7, 7, 7, 6,
         6, 6, 6, 6, 6, 6
     };
+    static const uint8_t projectile[25] = {
+        5, 5, 5, 5, 5,
+        5, 14, 14, 14, 5,
+        5, 14, 15, 14, 5,
+        5, 14, 14, 14, 5,
+        5, 5, 5, 5, 5
+    };
     (void)user;
     ++s_asset_fetch_calls;
     s_last_asset_index = gdat_index;
@@ -93,6 +100,16 @@ static int test_dm2_asset_fetch(void *user,
         if (out_w) *out_w = 6;
         if (out_h) *out_h = 6;
         if (out_stride) *out_stride = 6;
+        return 0;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
+               (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
+                 DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >= 0x0d &&
+               (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
+                 DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) <= 0x15) {
+        if (out_pixels) *out_pixels = projectile;
+        if (out_w) *out_w = 5;
+        if (out_h) *out_h = 5;
+        if (out_stride) *out_stride = 5;
         return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
@@ -352,6 +369,11 @@ static void test_sprite_asset_provider(void)
               DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE -
                   ((0x10 << DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) |
                    (0x22 << DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT) | 0x04));
+    CHECK("DM2 projectile asset index packs category, type and frame",
+          dm2_v1_viewport_projectile_graphic_index(0x0d, 0x02, 0x01) ==
+              DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE -
+                  ((0x0d << DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) |
+                   (0x02 << DM2_V1_VIEWPORT_GFX_PROJECTILE_INDEX_SHIFT) | 0x01));
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -428,6 +450,46 @@ static void test_sprite_asset_provider(void)
     CHECK("item asset is centered on the floor-item position",
           framebuffer[((90 - 3) * 320) + (80 - 3)] == 6 &&
               framebuffer[(90 * 320) + 80] == 8);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.projectile_count = 1;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 0x02;
+    viewport.projectiles[0].frame_index = 0x01;
+    viewport.projectiles[0].screen_x = 120;
+    viewport.projectiles[0].screen_y = 70;
+    viewport.projectiles[0].velocity_x = 3;
+    dm2_v1_render_projectiles(&viewport);
+    CHECK("projectile fallback draws when no sprite asset provider is installed",
+          viewport.asset_projectile_drawn_count == 0 &&
+              viewport.fallback_projectile_drawn_count == 1 &&
+              framebuffer[(70 * 320) + 120] == 15);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.projectile_count = 1;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 0x02;
+    viewport.projectiles[0].frame_index = 0x01;
+    viewport.projectiles[0].screen_x = 120;
+    viewport.projectiles[0].screen_y = 70;
+    viewport.projectiles[0].velocity_x = 3;
+    s_asset_fetch_calls = 0;
+    s_last_asset_index = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_projectiles(&viewport);
+    CHECK("projectile pass fetches DM2 map-chip sprite assets",
+          s_asset_fetch_calls == 1 &&
+              s_last_asset_index ==
+                  dm2_v1_viewport_projectile_graphic_index(0x0d, 0x02, 0x01) &&
+              viewport.asset_projectile_drawn_count == 1 &&
+              viewport.fallback_projectile_drawn_count == 0);
+    CHECK("projectile asset is centered on the projectile position",
+          framebuffer[((70 - 2) * 320) + (120 - 2)] == 5 &&
+              framebuffer[(70 * 320) + 120] == 15);
 }
 
 int main(void)

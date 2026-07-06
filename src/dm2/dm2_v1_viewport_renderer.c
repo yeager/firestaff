@@ -518,6 +518,22 @@ int dm2_v1_viewport_item_graphic_index(int item_category,
     return DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - packed;
 }
 
+int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
+                                             int projectile_type,
+                                             int frame_index)
+{
+    int packed;
+    if (projectile_category < 0 || projectile_category > 0xFF ||
+        projectile_type < 0 || projectile_type > 0xFF ||
+        frame_index < 0 || frame_index > 0xFF) {
+        return 0;
+    }
+    packed = (projectile_category << DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) |
+             (projectile_type << DM2_V1_VIEWPORT_GFX_PROJECTILE_INDEX_SHIFT) |
+             (frame_index & DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_MASK);
+    return DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - packed;
+}
+
 static void dm2_v1_viewport_clear_rect(DM2_V1_ViewportRect *out_rect)
 {
     if (!out_rect) return;
@@ -1561,34 +1577,73 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
     int stride = s->fb_stride;
 
     /* DM2 projectile rendering:
-     * Source: DUNVIEW.C:4575-4577, 5681-5883 (projectile draw)
-     *         G0075_apuc_PaletteChanges_Projectile[4] (palette shifts)
-     *         DUNVIEW.C s_projectile_occlusion_specs table */
+     * skproject SKWIN/SkWinCore.cpp lines 10672-10750 routes missiles and
+     * clouds through QUERY_DUNGEON_MAP_CHIP_PICT before DRAW_CHIP_OF_MAGIC_MAP.
+     * The runtime drain gives this pass a GDAT category/type pair; missing
+     * or unmapped graphics keep the bounded streak fallback. */
 
     for (int i = 0; i < s->projectile_count && i < DM2_MAX_PROJECTILES; i++) {
         DM2_Projectile *p = &s->projectiles[i];
         int px = p->screen_x;
         int py = p->screen_y;
+        int drawn_asset = 0;
         if (px < 0 || px >= DM2_VP_WIDTH || py < 0 || py >= DM2_VP_HEIGHT) continue;
 
-        /* Draw projectile as 3-pixel streak in velocity direction.
-         * Bright palette-shifted color (white/yellow/orange). */
-        int vx = p->velocity_x;
-        int vy = p->velocity_y;
-        uint8_t color = (uint8_t)(15 - (p->palette_shift & 7));  /* bright */
-        int speed = (int)sqrtf((float)(vx*vx + vy*vy));
-        if (speed > 0) {
-            int len = 3;
-            int dx = (vx * len) / speed;
-            int dy = (vy * len) / speed;
-            for (int t = 0; t < len; t++) {
-                int sx = px + dx * t;
-                int sy = py + dy * t;
-                if ((unsigned)sx < (unsigned)DM2_VP_WIDTH && (unsigned)sy < (unsigned)DM2_VP_HEIGHT)
-                    vp[sy * stride + sx] = color;
+        {
+            const uint8_t *pixels = NULL;
+            int src_w = 0;
+            int src_h = 0;
+            int src_stride = 0;
+            int category = p->projectile_category ? p->projectile_category : 0x0d;
+            int gdat_index = dm2_v1_viewport_projectile_graphic_index(
+                category, p->projectile_type, p->frame_index);
+            if (gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+                                            &src_w, &src_h, &src_stride) == 0 &&
+                pixels && src_w > 0 && src_h > 0) {
+                int dst_w = dm2_v1_viewport_scaled_sprite_extent(src_w,
+                                                                  p->depth,
+                                                                  3,
+                                                                  32);
+                int dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                                  p->depth,
+                                                                  3,
+                                                                  32);
+                dm2_v1_blit_scaled_bitmap(vp,
+                                          stride,
+                                          px - (dst_w / 2),
+                                          py - (dst_h / 2),
+                                          dst_w,
+                                          dst_h,
+                                          pixels,
+                                          src_w,
+                                          src_h,
+                                          src_stride > 0 ? src_stride : src_w,
+                                          DM2_COLOR_TRANSPARENT);
+                ++s->asset_projectile_drawn_count;
+                drawn_asset = 1;
             }
-        } else {
-            vp[py * stride + px] = color;
+        }
+        if (!drawn_asset) {
+            int vx = p->velocity_x;
+            int vy = p->velocity_y;
+            uint8_t color = (uint8_t)(15 - (p->palette_shift & 7));
+            int speed = (int)sqrtf((float)(vx*vx + vy*vy));
+            if (speed > 0) {
+                int len = 3;
+                int dx = (vx * len) / speed;
+                int dy = (vy * len) / speed;
+                for (int t = 0; t < len; t++) {
+                    int sx = px + dx * t;
+                    int sy = py + dy * t;
+                    if ((unsigned)sx < (unsigned)DM2_VP_WIDTH &&
+                        (unsigned)sy < (unsigned)DM2_VP_HEIGHT)
+                        vp[sy * stride + sx] = color;
+                }
+            } else {
+                vp[py * stride + px] = color;
+            }
+            ++s->fallback_projectile_drawn_count;
         }
     }
 }
@@ -1837,6 +1892,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->fallback_creature_drawn_count = 0;
     s->asset_item_drawn_count = 0;
     s->fallback_item_drawn_count = 0;
+    s->asset_projectile_drawn_count = 0;
+    s->fallback_projectile_drawn_count = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view

@@ -88,6 +88,10 @@ typedef struct {
     uint8_t *item_pixels[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
     int item_w[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
     int item_h[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
+    int projectile_keys[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
+    uint8_t *projectile_pixels[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
+    int projectile_w[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
+    int projectile_h[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -235,6 +239,7 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     for (int i = 0; i < DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->creature_pixels[i]);
         dm2_v1_asset_free_pixels(gfx->item_pixels[i]);
+        dm2_v1_asset_free_pixels(gfx->projectile_pixels[i]);
     }
     dm2_v1_asset_loader_free(&gfx->loader);
     free(gfx->bytes);
@@ -795,6 +800,39 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_h = &gfx->wall_h[field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         index = DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
+               (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
+                 DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >=
+                   DM2_GDAT_CATEGORY_SPELL_MISSILES &&
+               (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
+                 DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) <=
+                   DM2_GDAT_CATEGORY_MISCELLANEOUS) {
+        int packed = DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index;
+        int slot = -1;
+        category = (packed >> DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff;
+        index = (packed >> DM2_V1_VIEWPORT_GFX_PROJECTILE_INDEX_SHIFT) & 0xff;
+        field = DM2_GDAT_IMG_MAP_CHIP;
+        for (int i = 0; i < DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT; ++i) {
+            if (gfx->projectile_pixels[i] &&
+                gfx->projectile_keys[i] == gdat_index) {
+                slot = i;
+                break;
+            }
+            if (slot < 0 && !gfx->projectile_pixels[i]) {
+                slot = i;
+            }
+        }
+        if (slot < 0) {
+            slot = (category + index) % DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT;
+            dm2_v1_asset_free_pixels(gfx->projectile_pixels[slot]);
+            gfx->projectile_pixels[slot] = NULL;
+            gfx->projectile_w[slot] = 0;
+            gfx->projectile_h[slot] = 0;
+        }
+        cache_pixels = &gfx->projectile_pixels[slot];
+        cache_w = &gfx->projectile_w[slot];
+        cache_h = &gfx->projectile_h[slot];
+        gfx->projectile_keys[slot] = gdat_index;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE &&
                (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >=
