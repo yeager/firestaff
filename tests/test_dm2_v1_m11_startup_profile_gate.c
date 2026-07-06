@@ -17,6 +17,7 @@
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_startup_layout.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v1_trigger.h"
 #include "m11_game_view.h"
@@ -242,6 +243,35 @@ static void fill_dm2_launch_spec(M11_GameLaunchSpec* spec,
     spec->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
 }
 
+static void expect_dm2_startup_layout_contract(void) {
+    DM2_V1_StartupRect rect;
+    DM2_V1_StartupHit hit;
+
+    expect_true(dm2_v1_startup_panel_rect(&rect) &&
+                    rect.x == 78 && rect.y == 50 &&
+                    rect.w == 164 && rect.h == 122,
+                "DM2 startup panel rect is owned by DM2 layout module");
+    expect_true(dm2_v1_startup_row_rect(0, &rect) &&
+                    rect.x == 92 && rect.y == 76 &&
+                    rect.w == 136 && rect.h == 12,
+                "DM2 startup row 0 hit rect is stable");
+    expect_true(dm2_v1_startup_row_highlight_rect(1, &rect) &&
+                    rect.x == 90 && rect.y == 90 &&
+                    rect.w == 140 && rect.h == 12,
+                "DM2 startup row highlight keeps row cadence");
+    expect_true(dm2_v1_startup_hit(2, 100, 78, &hit) &&
+                    hit.kind == DM2_V1_STARTUP_HIT_ROW &&
+                    hit.row == 0,
+                "DM2 startup hit resolves row zero");
+    expect_true(dm2_v1_startup_hit(2, 82, 54, &hit) &&
+                    hit.kind == DM2_V1_STARTUP_HIT_PANEL &&
+                    hit.row == -1,
+                "DM2 startup hit consumes panel whitespace");
+    expect_true(!dm2_v1_startup_hit(2, 4, 4, &hit) &&
+                    hit.kind == DM2_V1_STARTUP_HIT_NONE,
+                "DM2 startup hit ignores outside panel");
+}
+
 static void check_incomplete_required_files_block_m11(const char* label,
                                                       int seed_graphics,
                                                       int seed_dungeon) {
@@ -425,6 +455,8 @@ int main(void) {
     DM2_V1_SessionState direct_session;
     DM2_V1_SessionState resume_session;
     uint32_t loadable_icon_handle = 0u;
+
+    expect_dm2_startup_layout_contract();
 
     check_incomplete_required_files_block_m11(
         "M11 blocks DM2 launch when GRAPHICS.DAT is present without DUNGEON.DAT",

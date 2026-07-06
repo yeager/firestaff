@@ -30,6 +30,7 @@
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_startup_layout.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_hud_runtime.h"
@@ -16394,21 +16395,24 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     int x,
     int y)
 {
-    int row;
+    DM2_V1_StartupHit hit;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    for (row = 0; row < state->dm2State.startup_menu_row_count; ++row) {
-        if (!m11_point_in_rect(x, y, 92, 76 + row * 14, 136, 12)) {
-            continue;
-        }
-        state->dm2State.startup_menu_selected_row = row;
+    if (!dm2_v1_startup_hit(state->dm2State.startup_menu_row_count,
+                            x,
+                            y,
+                            &hit)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (hit.kind == DM2_V1_STARTUP_HIT_ROW) {
+        state->dm2State.startup_menu_selected_row = hit.row;
         return m11_dm2_startup_activate_selected(state);
     }
-    if (m11_point_in_rect(x, y, 78, 50, 164, 122)) {
+    if (hit.kind == DM2_V1_STARTUP_HIT_PANEL) {
         return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
@@ -36735,26 +36739,34 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       int framebufferHeight)
 {
     int row;
+    DM2_V1_StartupRect rect;
 
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return;
     }
+    (void)dm2_v1_startup_panel_rect(&rect);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  78, 50, 164, 122, M11_COLOR_BLACK);
+                  rect.x, rect.y, rect.w, rect.h, M11_COLOR_BLACK);
     m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  78, 50, 164, 122, M11_COLOR_WHITE);
+                  rect.x, rect.y, rect.w, rect.h, M11_COLOR_WHITE);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  94, 58, "DUNGEON MASTER II", &g_text_title);
+                  DM2_V1_STARTUP_TITLE_X,
+                  DM2_V1_STARTUP_TITLE_Y,
+                  "DUNGEON MASTER II", &g_text_title);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  96, 68, "SELECT GAME", &g_text_shadow);
+                  DM2_V1_STARTUP_SUBTITLE_X,
+                  DM2_V1_STARTUP_SUBTITLE_Y,
+                  "SELECT GAME", &g_text_shadow);
     for (row = 0; row < state->dm2State.startup_menu_row_count; ++row) {
         char label[48];
         int kind = 0;
         int slot = -1;
-        int y = 78 + row * 14;
+        DM2_V1_StartupRect rowRect;
+        DM2_V1_StartupRect highlightRect;
         const M11_TextStyle *style = &g_text_shadow;
 
-        if (!m11_dm2_startup_row_at(state, row, &kind, &slot)) {
+        if (!m11_dm2_startup_row_at(state, row, &kind, &slot) ||
+            !dm2_v1_startup_row_rect(row, &rowRect)) {
             continue;
         }
         if (kind == M11_DM2_STARTUP_ROW_CONTINUE) {
@@ -36765,15 +36777,24 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
             snprintf(label, sizeof(label), "NEW GAME");
         }
         if (row == state->dm2State.startup_menu_selected_row) {
+            (void)dm2_v1_startup_row_highlight_rect(row, &highlightRect);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          90, y - 2, 140, 12, M11_COLOR_RED);
+                          highlightRect.x,
+                          highlightRect.y,
+                          highlightRect.w,
+                          highlightRect.h,
+                          M11_COLOR_RED);
             style = &g_text_title;
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      96, y, label, style);
+                      DM2_V1_STARTUP_ROW_TEXT_X,
+                      rowRect.y + 2,
+                      label, style);
     }
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  90, 158, "ENTER/ACTION STARTS", &g_text_shadow);
+                  DM2_V1_STARTUP_FOOTER_X,
+                  DM2_V1_STARTUP_FOOTER_Y,
+                  "ENTER/ACTION STARTS", &g_text_shadow);
 }
 
 static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
