@@ -197,6 +197,10 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe champion-count expectation is opt-in");
     expect_true(opts.bootProbeExpectRuntimeTickMin == -1,
                 "boot-probe runtime-tick minimum expectation is opt-in");
+    expect_true(opts.bootProbeExpectRuntimeTickMax == -1,
+                "boot-probe runtime-tick maximum expectation is opt-in");
+    expect_true(opts.bootProbeExpectStartupActive == -1,
+                "boot-probe startup-active expectation is opt-in");
     expect_true(opts.bootProbeExpectStartupFrameMin == -1,
                 "boot-probe startup-frame minimum expectation is opt-in");
     opts.bootProbe = 1;
@@ -409,9 +413,11 @@ static void run_real_data_handoff_if_available(void) {
                 opts.dataDir = data_dir;
                 opts.durationMs = 0;
                 opts.bootProbeExpectPhase = "csb-title-1";
+                opts.bootProbeExpectStartupActive = 1;
                 opts.bootProbeExpectStartupFrameMin = 1;
+                opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
-                            "boot-probe proves CSB title startup frame progress before runtime");
+                            "boot-probe proves CSB title startup progress while runtime is frozen");
             }
         }
     }
