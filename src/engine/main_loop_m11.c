@@ -1986,6 +1986,7 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         return M12_MENU_INPUT_ACCEPT;
     }
     if ((len == 5U && strncmp(token, "space", len) == 0) ||
+        (len == 6U && strncmp(token, "action", len) == 0) ||
         (len == 3U && strncmp(token, "act", len) == 0)) {
         return M12_MENU_INPUT_ACTION;
     }

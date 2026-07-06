@@ -31,7 +31,7 @@ static void usage(const char* prog) {
             "  --width <px>        Window width (default: 640)\n"
             "  --height <px>       Window height (default: 400)\n"
             "  --scale-mode <n>    Graphics mode: 1=V1, 2=V2.1, 3=V2.2\n"
-            "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,esc\n"
+            "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
             "  --scan-game-data    Alias for --scan-data\n"
