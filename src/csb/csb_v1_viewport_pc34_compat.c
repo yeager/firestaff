@@ -22,6 +22,7 @@
 
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
+#include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <stdlib.h>
@@ -2448,7 +2449,16 @@ const CSB_V1_ViewportObjectBlitSpec *csb_v1_viewport_get_object_blit_spec_for_sq
 int csb_v1_viewport_object_blit_layout_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
                                             unsigned char view_cell)
 {
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *route;
     if (!spec || view_cell > 4 || spec->object_visibility_row < 0) return -1;
+    route = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+        spec->redmcsb_view_square_index,
+        CSB_V1_D3L2_D3R2_F0115_ROUTE_ITEM_PC34);
+    if (route) {
+        const int routed_zone = csb_v1_viewport_d3l2_d3r2_f0115_item_layout_zone_pc34(
+            route, (int)view_cell);
+        if (routed_zone >= 0) return routed_zone;
+    }
     return spec->object_zone_base +
            (spec->object_visibility_row * spec->object_zone_cell_stride) +
            view_cell;
@@ -2457,8 +2467,17 @@ int csb_v1_viewport_object_blit_layout_zone(const CSB_V1_ViewportObjectBlitSpec 
 int csb_v1_viewport_object_blit_zone(const CSB_V1_ViewportObjectBlitSpec *spec,
                                      unsigned char view_cell)
 {
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *route;
     int zone = csb_v1_viewport_object_blit_layout_zone(spec, view_cell);
     if (zone < 0) return -1;
+    route = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+        spec->redmcsb_view_square_index,
+        CSB_V1_D3L2_D3R2_F0115_ROUTE_ITEM_PC34);
+    if (route) {
+        const int routed_zone = csb_v1_viewport_d3l2_d3r2_f0115_item_zone_pc34(
+            route, (int)view_cell);
+        if (routed_zone >= 0) return routed_zone;
+    }
     return zone | spec->shifts_objects_and_creatures;
 }
 
@@ -2486,7 +2505,16 @@ const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spe
 int csb_v1_viewport_projectile_blit_zone(const CSB_V1_ViewportProjectileBlitSpec *spec,
                                          unsigned char view_cell)
 {
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *route;
     if (!spec || view_cell > 4 || spec->projectile_visibility_row < 0) return -1;
+    route = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+        spec->redmcsb_view_square_index,
+        CSB_V1_D3L2_D3R2_F0115_ROUTE_PROJECTILE_PC34);
+    if (route) {
+        const int routed_zone = csb_v1_viewport_d3l2_d3r2_f0115_projectile_zone_pc34(
+            route, (int)view_cell);
+        if (routed_zone >= 0) return routed_zone;
+    }
     if (spec->view_depth == 3 && spec->suppresses_depth3_front_cells && view_cell <= 1) {
         return -1;
     }
@@ -2555,8 +2583,17 @@ int csb_v1_viewport_creature_visibility_zone(const CSB_V1_ViewportCreatureVisibi
                                              int coordinate_set,
                                              unsigned char view_cell)
 {
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *route;
     if (!spec || coordinate_set < 0 || view_cell > 4 || spec->creature_visibility_row < 0) {
         return -1;
+    }
+    route = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+        spec->redmcsb_view_square_index,
+        CSB_V1_D3L2_D3R2_F0115_ROUTE_CREATURE_PC34);
+    if (route) {
+        const int routed_zone = csb_v1_viewport_d3l2_d3r2_f0115_creature_zone_pc34(
+            route, coordinate_set, (int)view_cell);
+        if (routed_zone >= 0) return routed_zone;
     }
     return spec->creature_zone_base +
            (coordinate_set * spec->creature_coordinate_set_stride) +
@@ -2587,26 +2624,55 @@ const CSB_V1_ViewportExplosionBlitSpec *csb_v1_viewport_get_explosion_blit_spec_
 
 int csb_v1_viewport_explosion_rebirth_step1_zone(const CSB_V1_ViewportExplosionBlitSpec *spec)
 {
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *route;
     if (!spec || spec->explosion_row < 0) return -1;
+    route = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+        spec->redmcsb_view_square_index,
+        CSB_V1_D3L2_D3R2_F0115_ROUTE_EXPLOSION_PC34);
+    if (route) {
+        return csb_v1_viewport_d3l2_d3r2_f0115_explosion_rebirth_step1_zone_pc34(route);
+    }
     return spec->rebirth_step1_zone_base + spec->explosion_row;
 }
 
 int csb_v1_viewport_explosion_rebirth_step2_zone(const CSB_V1_ViewportExplosionBlitSpec *spec)
 {
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *route;
     if (!spec || spec->explosion_row < 0) return -1;
+    route = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+        spec->redmcsb_view_square_index,
+        CSB_V1_D3L2_D3R2_F0115_ROUTE_EXPLOSION_PC34);
+    if (route) {
+        return csb_v1_viewport_d3l2_d3r2_f0115_explosion_rebirth_step2_zone_pc34(route);
+    }
     return spec->rebirth_step2_zone_base + spec->explosion_row;
 }
 
 int csb_v1_viewport_explosion_centered_zone(const CSB_V1_ViewportExplosionBlitSpec *spec)
 {
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *route;
     if (!spec || spec->explosion_row < 0) return -1;
+    route = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+        spec->redmcsb_view_square_index,
+        CSB_V1_D3L2_D3R2_F0115_ROUTE_EXPLOSION_PC34);
+    if (route) {
+        return csb_v1_viewport_d3l2_d3r2_f0115_explosion_centered_zone_pc34(route);
+    }
     return spec->centered_zone_base + spec->explosion_row;
 }
 
 int csb_v1_viewport_explosion_side_zone(const CSB_V1_ViewportExplosionBlitSpec *spec,
                                         unsigned char view_cell)
 {
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *route;
     if (!spec || spec->explosion_row < 0 || view_cell > 1) return -1;
+    route = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+        spec->redmcsb_view_square_index,
+        CSB_V1_D3L2_D3R2_F0115_ROUTE_EXPLOSION_PC34);
+    if (route) {
+        return csb_v1_viewport_d3l2_d3r2_f0115_explosion_side_zone_pc34(
+            route, (int)view_cell);
+    }
     return spec->side_zone_base +
            (spec->explosion_row * spec->side_zone_cell_stride) +
            view_cell;
