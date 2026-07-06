@@ -27,6 +27,10 @@ int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     DM1_V1_StartupLaunchPath_PC34 path);
 int dm1_v1_startup_intro_bypass_applies_to_source_pc34(const char* sourceId,
                                                        int bypassed);
+int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
+                                      int intro_bypassed,
+                                      char* out_phase,
+                                      int out_phase_size);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 

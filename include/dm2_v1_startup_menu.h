@@ -85,5 +85,9 @@ int dm2_v1_startup_menu_build_render_rows(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupRenderRow *rows,
     int max_rows);
+int dm2_v1_startup_receipt_phase(int startup_menu_active,
+                                 char *out_phase,
+                                 int out_phase_size,
+                                 int *out_startup_active);
 
 #endif

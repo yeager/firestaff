@@ -1,6 +1,7 @@
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
+#include <string.h>
 
 static int g_passed;
 static int g_failed;
@@ -22,6 +23,8 @@ int main(void)
     DM2_V1_StartupAction action;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRenderRow rows[4];
+    char phase[64];
+    int startup_active;
     int row_count;
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-startup");
@@ -108,6 +111,16 @@ int main(void)
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");
+    check(dm2_v1_startup_receipt_phase(
+              1, phase, sizeof(phase), &startup_active) &&
+              strcmp(phase, "dm2-startup-menu") == 0 &&
+              startup_active == 1,
+          "receipt phase reports DM2 startup menu");
+    check(dm2_v1_startup_receipt_phase(
+              0, phase, sizeof(phase), &startup_active) &&
+              strcmp(phase, "dm2-runtime") == 0 &&
+              startup_active == 0,
+          "receipt phase reports DM2 runtime");
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed ? 1 : 0;

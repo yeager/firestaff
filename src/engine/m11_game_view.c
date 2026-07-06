@@ -12186,11 +12186,11 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyY = state->dm2State.party_y;
         out->partyDir = state->dm2State.party_dir;
         out->runtimeTick = state->dm2State.tick_count;
-        out->startupActive = state->dm2State.startup_menu_active ? 1 : 0;
-        snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-                 state->dm2State.startup_menu_active
-                     ? "dm2-startup-menu"
-                     : "dm2-runtime");
+        (void)dm2_v1_startup_receipt_phase(
+            state->dm2State.startup_menu_active,
+            out->startupPhase,
+            (int)sizeof(out->startupPhase),
+            &out->startupActive);
         return 1;
     }
 
@@ -12246,15 +12246,11 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->partyDir = state->world.party.direction;
     out->runtimeTick = (int)state->world.gameTick;
     if (strcmp(state->sourceId, "dm1") == 0) {
-        if (!out->levelLoaded) {
-            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-                     "dm1-loading");
-        } else {
-            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-                     out->dm1StartupIntroBypassed
-                         ? "dm1-runtime-direct"
-                         : "dm1-runtime");
-        }
+        (void)dm1_v1_startup_receipt_phase_pc34(
+            out->levelLoaded,
+            out->dm1StartupIntroBypassed,
+            out->startupPhase,
+            (int)sizeof(out->startupPhase));
     } else {
         snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
                  out->levelLoaded ? "runtime" : "loading");

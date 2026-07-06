@@ -209,6 +209,8 @@ static void check_menu_to_entrance_wait_boundary(void) {
 }
 
 static void check_dm1_launch_path_bypass_contract(void) {
+    char phase[64];
+
     expect_i("launcher launch path does not bypass intro",
              dm1_v1_startup_launch_path_bypasses_intro_pc34(
                  DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34),
@@ -237,6 +239,28 @@ static void check_dm1_launch_path_bypass_contract(void) {
              0);
     expect_i("non-DM1 source ignores intro bypass flag",
              dm1_v1_startup_intro_bypass_applies_to_source_pc34("csb", 1),
+             0);
+
+    expect_i("receipt unloaded rc",
+             dm1_v1_startup_receipt_phase_pc34(0, 0, phase, sizeof(phase)),
+             1);
+    expect_i("receipt unloaded phase",
+             strcmp(phase, "dm1-loading"),
+             0);
+    expect_i("receipt launcher runtime rc",
+             dm1_v1_startup_receipt_phase_pc34(1, 0, phase, sizeof(phase)),
+             1);
+    expect_i("receipt launcher runtime phase",
+             strcmp(phase, "dm1-runtime"),
+             0);
+    expect_i("receipt direct runtime rc",
+             dm1_v1_startup_receipt_phase_pc34(1, 1, phase, sizeof(phase)),
+             1);
+    expect_i("receipt direct runtime phase",
+             strcmp(phase, "dm1-runtime-direct"),
+             0);
+    expect_i("receipt null phase rejected",
+             dm1_v1_startup_receipt_phase_pc34(1, 0, NULL, 0),
              0);
 }
 
