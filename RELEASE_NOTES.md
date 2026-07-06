@@ -1,6 +1,29 @@
 
 # Unreleased
 
+# Firestaff v3.0.50
+
+Firestaff v3.0.50 packages the current `main` after the latest DM2 V1
+viewport render-routing work.
+
+## Highlights since v3.0.49
+
+- **DM2 V1 creature map-chip frames**: DM2 viewport rendering exposes and tests
+  creature map-chip frame routing.
+- **DM2 V1 cloud map-chip frames**: DM2 runtime and viewport rendering expose
+  cloud map-chip frame routing for the V1 presentation path.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.50`.
+
+## Verification
+
+- Local release verification covers version synchronization, the focused DM2 V1
+  viewport/render gate, the Phase A probe and `git diff --check` before GitHub
+  Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.50` release run.
+
 # Firestaff v3.0.49
 
 Firestaff v3.0.49 packages the current `main` after the latest CSB startup
