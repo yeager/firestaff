@@ -8966,6 +8966,29 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     ASSERT_EQ(height, 86, "D1R horizontal visible height from G0187");
 }
 
+static void test_dm1_wall_ornament_flip_matches_f0107_pc34(void) {
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(0), 0,
+              "D3L2 wall ornament is not flipped by F0107");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(1), 1,
+              "D3R2 wall ornament uses right-side horizontal flip");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(2), 0,
+              "D3L front wall ornament is not flipped");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(4), 0,
+              "D3R front wall ornament is not flipped");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(6), 1,
+              "D2R left wall ornament uses right-side horizontal flip");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(9), 0,
+              "D2R front wall ornament is not flipped");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(11), 1,
+              "D1R left wall ornament uses right-side horizontal flip");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(12), 0,
+              "D1C front wall ornament is not flipped");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(-1), -1,
+              "wall ornament flip probe rejects negative view index");
+    ASSERT_EQ(M11_GameView_ProbeDm1WallOrnamentFlip(13), -1,
+              "wall ornament flip probe rejects out-of-range view index");
+}
+
 static void test_f0231_zero_damage_emission_skips_hit_feedback(void) {
     M11_GameViewState state;
     int xpBefore;
@@ -9120,6 +9143,7 @@ int main(void) {
     test_dm1_d2_side_walls_sample_and_use_source_rects();
     test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel();
     test_dm1_side_doors_use_source_frame_halves();
+    test_dm1_wall_ornament_flip_matches_f0107_pc34();
     test_f0231_zero_damage_emission_skips_hit_feedback();
     test_f0231_positive_damage_emission_skips_duplicate_xp();
     test_melee_action_row_uses_auto_target_and_action_index();
