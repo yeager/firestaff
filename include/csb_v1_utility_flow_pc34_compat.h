@@ -111,6 +111,8 @@ int csb_v1_util_flow_move_action_cursor(CSB_V1_UtilFlowContext *ctx,
 CSB_V1_UtilFlowAction csb_v1_util_flow_selected_action(
     const CSB_V1_UtilFlowContext *ctx);
 int csb_v1_util_flow_accept_selected_action(CSB_V1_UtilFlowContext *ctx);
+int csb_v1_util_flow_cancel_to_menu(CSB_V1_UtilFlowContext *ctx);
+int csb_v1_util_flow_retry_error(CSB_V1_UtilFlowContext *ctx);
 const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action);
 int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
                                  CSB_V1_UtilMenuLayout *out_layout);
