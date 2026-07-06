@@ -22,6 +22,7 @@ int main(void)
 {
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilInputResult result;
+    CSB_V1_UtilActionPlan action_plan;
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilRenderRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
     int row_count;
@@ -63,6 +64,44 @@ int main(void)
                   CSB_V1_UTIL_ACTION_VIEW) ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
           "utility flow actions resolve entrance source commands");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_LOAD,
+              &action_plan) &&
+              action_plan.kind ==
+                  CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND &&
+              action_plan.entrance_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+              action_plan.preview_active == 0,
+          "utility action plan resolves Load to entrance resume");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_NEW,
+              &action_plan) &&
+              action_plan.kind ==
+                  CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND &&
+              action_plan.entrance_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+          "utility action plan resolves New to entrance dungeon");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_IMPORT,
+              &action_plan) &&
+              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY &&
+              action_plan.preview_active == 0 &&
+              strcmp(action_plan.status_scope, "BOOT") == 0 &&
+              strcmp(action_plan.status, "CSB IMPORT READY") == 0,
+          "utility action plan resolves Import status");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_VIEW,
+              &action_plan) &&
+              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_VIEW_READY &&
+              action_plan.preview_active == 1 &&
+              strcmp(action_plan.status_scope, "BOOT") == 0 &&
+              strcmp(action_plan.status, "CSB PARTY READY") == 0,
+          "utility action plan resolves View status");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_EXIT,
+              &action_plan) &&
+              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_IGNORE,
+          "utility action plan resolves Exit as ignored");
 
     check(csb_v1_util_flow_handle_input(
               &flow,

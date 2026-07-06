@@ -3544,29 +3544,36 @@ static M11_GameInputResult m11_csb_startup_activate_utility_action(
     M11_GameViewState *state,
     CSB_V1_UtilFlowAction action)
 {
+    CSB_V1_UtilActionPlan plan;
+
     if (!state) {
         return M11_GAME_INPUT_IGNORED;
     }
-    switch (action) {
-        case CSB_V1_UTIL_ACTION_NEW:
-            state->csbState.startup_import_preview_active = 0;
+    if (!csb_v1_util_flow_plan_for_action(action, &plan)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    switch (plan.kind) {
+        case CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND:
+            state->csbState.startup_import_preview_active =
+                plan.preview_active;
             return m11_csb_startup_handle_entrance_command(
                 state,
-                csb_v1_util_flow_entrance_command_for_action(action));
-        case CSB_V1_UTIL_ACTION_LOAD:
-            state->csbState.startup_import_preview_active = 0;
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                csb_v1_util_flow_entrance_command_for_action(action));
-        case CSB_V1_UTIL_ACTION_IMPORT:
-            state->csbState.startup_import_preview_active = 0;
-            m11_set_status(state, "BOOT", "CSB IMPORT READY");
+                plan.entrance_command);
+        case CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY:
+            state->csbState.startup_import_preview_active =
+                plan.preview_active;
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "BOOT",
+                           plan.status ? plan.status : "CSB IMPORT READY");
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_VIEW:
-            state->csbState.startup_import_preview_active = 1;
-            m11_set_status(state, "BOOT", "CSB PARTY READY");
+        case CSB_V1_UTIL_ACTION_PLAN_VIEW_READY:
+            state->csbState.startup_import_preview_active =
+                plan.preview_active;
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "BOOT",
+                           plan.status ? plan.status : "CSB PARTY READY");
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_EXIT:
+        case CSB_V1_UTIL_ACTION_PLAN_IGNORE:
         default:
             return M11_GAME_INPUT_IGNORED;
     }

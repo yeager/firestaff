@@ -311,6 +311,53 @@ int csb_v1_util_flow_entrance_command_for_action(
     }
 }
 
+void csb_v1_util_flow_action_plan_init(CSB_V1_UtilActionPlan *plan)
+{
+    if (!plan) {
+        return;
+    }
+    memset(plan, 0, sizeof(*plan));
+    plan->kind = CSB_V1_UTIL_ACTION_PLAN_IGNORE;
+    plan->action = CSB_V1_UTIL_ACTION_EXIT;
+    plan->entrance_command = 0;
+    plan->preview_active = 0;
+}
+
+int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
+                                     CSB_V1_UtilActionPlan *out_plan)
+{
+    if (!out_plan) {
+        return 0;
+    }
+    csb_v1_util_flow_action_plan_init(out_plan);
+    out_plan->action = action;
+    switch (action) {
+    case CSB_V1_UTIL_ACTION_LOAD:
+    case CSB_V1_UTIL_ACTION_NEW:
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND;
+        out_plan->entrance_command =
+            csb_v1_util_flow_entrance_command_for_action(action);
+        out_plan->preview_active = 0;
+        return 1;
+    case CSB_V1_UTIL_ACTION_IMPORT:
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY;
+        out_plan->preview_active = 0;
+        out_plan->status_scope = "BOOT";
+        out_plan->status = "CSB IMPORT READY";
+        return 1;
+    case CSB_V1_UTIL_ACTION_VIEW:
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_VIEW_READY;
+        out_plan->preview_active = 1;
+        out_plan->status_scope = "BOOT";
+        out_plan->status = "CSB PARTY READY";
+        return 1;
+    case CSB_V1_UTIL_ACTION_EXIT:
+    default:
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_IGNORE;
+        return 1;
+    }
+}
+
 int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
                                   CSB_V1_UtilInput input,
                                   int preview_active,
