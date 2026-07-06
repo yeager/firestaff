@@ -53,6 +53,13 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
 int  M11_PhaseA_Run(const M11_PhaseA_Options* opts);
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState);
 
+/* Validate a boot-probe input script without opening SDL or game data.
+   Returns the number of unrecognized tokens. If firstInvalidOut is not NULL,
+   the first invalid token is copied there as a NUL-terminated string. */
+int M11_BootProbeScript_Validate(const char* script,
+                                 char* firstInvalidOut,
+                                 size_t firstInvalidOutSize);
+
 /* Prepare the same selected-entry launch request used by CLI --game.
    This is the testable half of direct launch: --game may bypass the visible
    M12 menu, but it must still select a hash-available game entry and enter
