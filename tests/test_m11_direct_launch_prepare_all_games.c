@@ -107,7 +107,11 @@ static void make_empty_data_dir(char out[512]) {
 }
 
 static const char* default_data_root(char fallback[512]) {
+    const char* env = getenv("FIRESTAFF_DATA");
     const char* home = getenv("HOME");
+    if (env && env[0]) {
+        return env;
+    }
     if (!home || !home[0]) {
         return NULL;
     }
@@ -190,7 +194,7 @@ static void run_real_data_handoff_if_available(void) {
     const char* data_dir = default_data_root(real_dir);
 
     if (!data_dir || !data_dir[0]) {
-        expect_skip("HOME is unset; no default Firestaff data root");
+        expect_skip("no FIRESTAFF_DATA and HOME is unset; no Firestaff data root");
         return;
     }
 
@@ -208,7 +212,7 @@ static void run_real_data_handoff_if_available(void) {
             !M12_AssetStatus_GameAvailable(&menu.assetStatus, kCases[i].gameId)) {
             char msg[96];
             snprintf(msg, sizeof(msg),
-                     "no launchable %s data under default data root",
+                     "no launchable %s data under configured data root",
                      kCases[i].gameId);
             expect_skip(msg);
             M12_StartupMenu_Destroy(&menu);
@@ -305,7 +309,7 @@ static void run_real_data_handoff_if_available(void) {
     }
 
     if (available_count == 0) {
-        expect_skip("no launchable game data under default data root");
+        expect_skip("no launchable game data under configured data root");
     }
 }
 
