@@ -209,8 +209,26 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
               plan.title_source_step == 1 &&
+              plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
               !plan.waiting_for_input,
-          "startup render plan owns title surface");
+          "startup render plan owns title PRESENTS surface");
+
+    render_state.title_frame =
+        csb_v1_startup_title_presents_ticks_pc34() + 1;
+    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+          "startup render plan exposes title CHAOS zoom stage");
+
+    render_state.title_frame =
+        csb_v1_startup_title_total_ticks_pc34() - 1;
+    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              plan.title_stage ==
+                  CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
+          "startup render plan exposes title STRIKES BACK stage");
 
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;

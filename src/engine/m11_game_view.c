@@ -3033,10 +3033,12 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        unsigned char *framebuffer,
                                        int framebufferWidth,
                                        int framebufferHeight,
-                                       int titleSourceStep)
+                                       int titleSourceStep,
+                                       int titleStage)
 {
     const M11_AssetSlot *title = NULL;
     V1_TitleFrontendSourceAnimationStep step;
+    int hasStep = 0;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -3053,12 +3055,12 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
          * the 18 shrink/zoom steps described by V1_TitleFrontend, and
          * STRIKES BACK is blitted from source y=80 to screen y=118 before
          * ENTRANCE.C F0806/F0441 takes over. */
-        if (titleSourceStep <= 0 ||
-            !V1_TitleFrontend_GetSourceAnimationStep(
-                (unsigned int)titleSourceStep, &step)) {
-            step.kind = V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT;
+        if (titleSourceStep > 0) {
+            hasStep = V1_TitleFrontend_GetSourceAnimationStep(
+                (unsigned int)titleSourceStep,
+                &step);
         }
-        if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
+        if (titleStage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
             M11_AssetLoader_BlitRegion(title,
                                        0,
                                        137,
@@ -3085,7 +3087,9 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                               "FTL PRESENTS",
                               &g_text_small);
             }
-        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
+        } else if (titleStage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+                   hasStep &&
+                   step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
             M11_AssetLoader_BlitSubRectScaled(title,
                                               framebuffer,
                                               framebufferWidth,
@@ -3220,7 +3224,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                    framebuffer,
                                    framebufferWidth,
                                    framebufferHeight,
-                                   plan.title_source_step);
+                                   plan.title_source_step,
+                                   plan.title_stage);
         return;
     }
 
