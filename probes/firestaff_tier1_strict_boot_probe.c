@@ -6,10 +6,9 @@
  *
  * For each EXTRACTED + VERIFIED data path that --scan-data marks
  * READY, this probe runs the firestaff launcher with --game <id>
- * --data-dir <path> --duration 1500 under SDL_VIDEODRIVER=dummy
- * and asserts that the runtime reaches the per-game "boot OK"
- * milestone (DM1 LOADING DUNGEON, Theron TQR level load OK,
- * CSB engine alive, DM2 engine alive).
+ * --data-dir <path> --boot-probe under SDL_VIDEODRIVER=dummy and
+ * asserts the per-game runtime receipt. Runtime phases are validated by
+ * main_loop_m11.c as active=1, startupActive=0, and levelLoaded=1.
  *
  * Paths intentionally excluded as out-of-scope for Tier 1 #5:
  *   - Nexus canonical + Nexus saturn-ja — the M11 launcher
@@ -42,49 +41,51 @@
 typedef struct {
     const char* game;
     const char* path;
-    const char* expect_substr; /* success marker in captured stdout/stderr */
+    const char* expect_phase;
+    const char* script;
+    int boot_frames;
     const char* label;
 } Tier1PathSpec;
 
 static const Tier1PathSpec kPaths[] = {
     { "dm1",   DEFAULT_DATA_ROOT "/dm1",
-      "LOADING DUNGEON",
+      "dm1-runtime", NULL, 2,
       "DM1 canonical" },
     { "dm1",   DEFAULT_DATA_ROOT "/dm1-extras/legacy-dos",
-      "LOADING DUNGEON",
+      "dm1-runtime", NULL, 2,
       "DM1 legacy-dos (M11 hash-fallback)" },
     { "csb",   DEFAULT_DATA_ROOT "/csb",
-      "CSB READY",
+      "csb-runtime", "enter", 240,
       "CSB canonical (M11 stderr-pipe)" },
     { "csb",   DEFAULT_DATA_ROOT "/csb-extras/legacy-amiga-dms",
-      "CSB READY",
+      "csb-runtime", "enter", 240,
       "CSB Amiga 3.3 Meynaf FR (M11 stderr-pipe)" },
     { "dm2",   DEFAULT_DATA_ROOT "/dm2",
-      "DM2 READY",
+      "dm2-runtime", "enter", 2,
       "DM2 canonical (M11 stderr-pipe)" },
     { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/dos-en",
-      "DM2 READY",
+      "dm2-runtime", "enter", 2,
       "DM2 DOS EN extras data/ layout (M11 stderr-pipe)" },
     { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/dos-fr",
-      "DM2 READY",
+      "dm2-runtime", "enter", 2,
       "DM2 DOS FR extras data/ layout (M11 stderr-pipe)" },
     { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/pc-fr",
-      "DM2 READY",
+      "dm2-runtime", "enter", 2,
       "DM2 PC FR extras DATA/ layout (M11 stderr-pipe)" },
     { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/pc-de",
-      "DM2 READY",
+      "dm2-runtime", "enter", 2,
       "DM2 PC DE extras DATA/ layout (M11 stderr-pipe)" },
     { "theron", DEFAULT_DATA_ROOT "/theron",
-      "TQR level load",
+      "theron-runtime", "enter,enter,action", 2,
       "Theron JP canonical (Track 02.iso)" },
     { "theron", DEFAULT_DATA_ROOT "/theron-extras/japan",
-      "TQR level load",
+      "theron-runtime", "enter,enter,action", 2,
       "Theron JP extras (Track 02.bin)" },
     { "theron", DEFAULT_DATA_ROOT "/theron-extras/usa",
-      "TQR level load",
+      "theron-runtime", "enter,enter,action", 2,
       "Theron US extras (Track 02.bin, first-matched-version fallback)" },
     /* Sentinel. */
-    { NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, 0, NULL }
 };
 
 static int g_pass = 0;
@@ -110,10 +111,18 @@ static void run_path(const Tier1PathSpec* spec) {
         return;
     }
 
-    char cmd[1024];
-    snprintf(cmd, sizeof(cmd),
-             "SDL_VIDEODRIVER=dummy timeout 6 %s --game %s --data-dir '%s' --duration 1500 2>&1",
-             firestaff_bin(), spec->game, spec->path);
+    char cmd[1400];
+    if (spec->script && spec->script[0] != '\0') {
+        snprintf(cmd, sizeof(cmd),
+                 "SDL_VIDEODRIVER=dummy timeout 35 %s --game %s --data-dir '%s' --boot-probe --boot-probe-frames %d --script '%s' --boot-probe-expect-phase %s --duration 0 2>&1",
+                 firestaff_bin(), spec->game, spec->path,
+                 spec->boot_frames, spec->script, spec->expect_phase);
+    } else {
+        snprintf(cmd, sizeof(cmd),
+                 "SDL_VIDEODRIVER=dummy timeout 35 %s --game %s --data-dir '%s' --boot-probe --boot-probe-frames %d --boot-probe-expect-phase %s --duration 0 2>&1",
+                 firestaff_bin(), spec->game, spec->path,
+                 spec->boot_frames, spec->expect_phase);
+    }
 
     FILE* f = popen(cmd, "r");
     if (!f) {
@@ -128,9 +137,13 @@ static void run_path(const Tier1PathSpec* spec) {
     int rc = pclose(f);
     int wait_status = WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 
-    if (strstr(buf, spec->expect_substr) != NULL) {
-        printf("  PASS: %s (exit=%d, marker=%s)\n",
-               spec->label, wait_status, spec->expect_substr);
+    if (wait_status == 0 &&
+        strstr(buf, "FIRESTAFF BOOT PROBE READY") != NULL &&
+        strstr(buf, spec->expect_phase) != NULL &&
+        strstr(buf, "startupActive=0") != NULL &&
+        strstr(buf, "levelLoaded=1") != NULL) {
+        printf("  PASS: %s (exit=%d, phase=%s)\n",
+               spec->label, wait_status, spec->expect_phase);
         ++g_pass;
         return;
     }
@@ -154,8 +167,8 @@ static void run_path(const Tier1PathSpec* spec) {
         return;
     }
 
-    printf("  FAIL: %s — boot marker %s not found (exit=%d)\n",
-           spec->label, spec->expect_substr, wait_status);
+    printf("  FAIL: %s — runtime boot receipt %s not proven (exit=%d)\n",
+           spec->label, spec->expect_phase, wait_status);
     printf("    captured: %.200s%s\n", buf, strlen(buf) > 200 ? "..." : "");
     ++g_fail;
 }
