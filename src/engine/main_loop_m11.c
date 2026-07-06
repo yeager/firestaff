@@ -689,6 +689,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
 static M12_MenuInput m11_next_script_input(const char** cursor);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
+static int m11_script_event_token_is_valid(const char* token, size_t len);
 
 int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
                                                     int framebufferY,
@@ -2177,6 +2178,66 @@ static int m11_push_script_event_token(const char* token, size_t len) {
     return 0;
 }
 
+static int m11_script_event_token_is_valid(const char* token, size_t len) {
+    char buffer[128];
+    int x = 0;
+    int y = 0;
+    if (!token || len == 0U || len >= sizeof(buffer)) {
+        return 0;
+    }
+    memcpy(buffer, token, len);
+    buffer[len] = '\0';
+    if (strncmp(buffer, "key:", 4) == 0) {
+        return buffer[4] != '\0' &&
+               m11_script_keycode_from_name(buffer + 4) != 0x7fffffff;
+    }
+    if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
+        return 1;
+    }
+    if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
+        return 1;
+    }
+    return 0;
+}
+
+int M11_BootProbeScript_Validate(const char* script,
+                                 char* firstInvalidOut,
+                                 size_t firstInvalidOutSize) {
+    const char* cursor = script;
+    int invalid = 0;
+    if (firstInvalidOut && firstInvalidOutSize > 0U) {
+        firstInvalidOut[0] = '\0';
+    }
+    if (!script || script[0] == '\0') {
+        return 0;
+    }
+    while (cursor && *cursor != '\0') {
+        const char* token = NULL;
+        size_t tokenLen = 0U;
+        int recognized = 0;
+        if (!m11_script_next_token(&cursor, &token, &tokenLen)) {
+            break;
+        }
+        if (m11_boot_probe_script_wait_frames(token, tokenLen) >= 0 ||
+            m11_script_event_token_is_valid(token, tokenLen) ||
+            m11_map_script_token(token, tokenLen) != M12_MENU_INPUT_NONE) {
+            recognized = 1;
+        }
+        if (!recognized) {
+            if (invalid == 0 && firstInvalidOut && firstInvalidOutSize > 0U) {
+                size_t copyLen = tokenLen;
+                if (copyLen >= firstInvalidOutSize) {
+                    copyLen = firstInvalidOutSize - 1U;
+                }
+                memcpy(firstInvalidOut, token, copyLen);
+                firstInvalidOut[copyLen] = '\0';
+            }
+            ++invalid;
+        }
+    }
+    return invalid;
+}
+
 static int m11_input_action_is_motion(int action) {
     switch (action) {
         case M11_ACTION_MOVE_FORWARD:
@@ -3320,6 +3381,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         return 2;
     }
     if (runtimeOptions.bootProbe) {
+        char invalidToken[64];
+        int invalidCount = M11_BootProbeScript_Validate(runtimeOptions.script,
+                                                        invalidToken,
+                                                        sizeof(invalidToken));
+        if (invalidCount > 0) {
+            fprintf(stderr,
+                    "firestaff: --boot-probe script contains %d invalid token(s); first invalid token '%s'\n",
+                    invalidCount,
+                    invalidToken);
+            return 5;
+        }
         runtimeOptions.directLaunch = 1;
     }
     m11_apply_persisted_window_size(&runtimeOptions);

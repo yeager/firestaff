@@ -158,12 +158,34 @@ static void run_empty_data_rejection(void) {
 static void run_boot_probe_empty_data_rejection(void) {
     M11_PhaseA_Options opts;
     char empty_dir[512];
+    char firstInvalid[32];
 
     make_empty_data_dir(empty_dir);
     expect_true(empty_dir[0] != '\0',
                 "boot-probe empty data dir path was created");
 
     test_setenv("SDL_VIDEODRIVER", "dummy");
+    expect_true(M11_BootProbeScript_Validate(NULL, firstInvalid, sizeof(firstInvalid)) == 0,
+                "boot-probe script validator accepts null script");
+    expect_true(M11_BootProbeScript_Validate("wait120,enter,key:q,click:1:2,move:3:4",
+                                             firstInvalid,
+                                             sizeof(firstInvalid)) == 0,
+                "boot-probe script validator accepts wait/input/event tokens");
+    expect_true(M11_BootProbeScript_Validate("enter,bogus,waitx,key:not-a-key",
+                                             firstInvalid,
+                                             sizeof(firstInvalid)) == 3 &&
+                    strcmp(firstInvalid, "bogus") == 0,
+                "boot-probe script validator reports invalid tokens");
+
+    M11_PhaseA_SetDefaultOptions(&opts);
+    opts.bootProbe = 1;
+    opts.gameId = "dm1";
+    opts.dataDir = empty_dir;
+    opts.durationMs = 0;
+    opts.script = "enter,bogus";
+    expect_true(M11_PhaseA_Run(&opts) == 5,
+                "boot-probe refuses invalid script tokens before data scan");
+
     M11_PhaseA_SetDefaultOptions(&opts);
     expect_true(opts.bootProbeFrames == 0,
                 "boot-probe default advances zero startup frames");
