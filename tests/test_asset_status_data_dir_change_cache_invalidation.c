@@ -1146,6 +1146,68 @@ static void check_start_menu_env_data_dir_matches_scan_data(
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
 
+static void check_start_menu_env_data_dir_uses_scan_data_fallback(
+    const char* homeRoot) {
+    char envDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char defaultParent[M12_ASSET_DATA_DIR_CAPACITY];
+    char defaultDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    M12_Config config;
+    M12_StartupMenuState menu;
+    M12_AssetStatus cliStatus;
+
+    if (!FSP_JoinPath(envDataRoot, sizeof(envDataRoot),
+                      homeRoot, "env-empty-data") ||
+        !FSP_CreateDirectoryRecursive(envDataRoot) ||
+        !FSP_JoinPath(defaultParent, sizeof(defaultParent),
+                      homeRoot, ".firestaff") ||
+        !FSP_CreateDirectoryRecursive(defaultParent) ||
+        !FSP_JoinPath(defaultDataRoot, sizeof(defaultDataRoot),
+                      defaultParent, "data") ||
+        !FSP_CreateDirectoryRecursive(defaultDataRoot) ||
+        !setup_dm1_recommended_dir(defaultDataRoot,
+                                   graphicsPath, sizeof(graphicsPath),
+                                   graphicsMd5,
+                                   dungeonPath, sizeof(dungeonPath),
+                                   dungeonMd5)) {
+        fprintf(stderr, "FAIL: cannot seed start-menu env fallback fixture\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5,
+                                                          dungeonMd5);
+    (void)test_setenv("HOME", homeRoot);
+#ifndef _WIN32
+    (void)test_setenv("XDG_CONFIG_HOME", NULL);
+#endif
+    (void)test_setenv("FIRESTAFF_DATA", envDataRoot);
+
+    M12_Config_SetDefaults(&config);
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", envDataRoot);
+    check_int(M12_Config_Save(&config) == 1,
+              "start menu env fallback fixture must save startup config");
+
+    memset(&cliStatus, 0, sizeof(cliStatus));
+    M12_AssetStatus_Scan(&cliStatus, NULL);
+
+    M12_StartupMenu_InitWithDataDir(&menu, NULL, NULL);
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
+                     M12_AssetStatus_GetDataDir(&cliStatus)) == 0,
+              "start menu must use the same fallback root as --scan-data when FIRESTAFF_DATA is empty");
+    check_int(ready_game_count_for_status(&menu.assetStatus) ==
+                  ready_game_count_for_status(&cliStatus),
+              "start menu FIRESTAFF_DATA fallback scan must match --scan-data ready-game count");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
+              "start menu FIRESTAFF_DATA fallback scan must expose DM1");
+    M12_StartupMenu_Destroy(&menu);
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+
 static void check_game_select_uses_asset_status_not_stale_global(
     const char* homeRoot) {
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1233,6 +1295,7 @@ int main(void) {
     check_start_menu_heals_stale_config_data_dir(home);
     check_start_menu_prefers_default_root_with_more_games(home);
     check_start_menu_env_data_dir_matches_scan_data(home);
+    check_start_menu_env_data_dir_uses_scan_data_fallback(home);
     check_game_select_uses_asset_status_not_stale_global(home);
 
     /* Release all test hooks. */
