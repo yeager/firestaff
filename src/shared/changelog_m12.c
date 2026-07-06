@@ -9,6 +9,9 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.44  (2026-07-06)",
+    "  - Release build from current main after Theron's Quest startup pointer-action ownership.",
+    "",
     "V3.0.43  (2026-07-06)",
     "  - Packages the post-v3.0.42 DM2 startup pointer-action work now on main.",
     "  - DM2 startup now owns pointer actions for Continue, Load Slot, New Game, and panel containment before M11 mutates startup state.",
@@ -448,5 +451,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.43";
+    return "3.0.44";
 }

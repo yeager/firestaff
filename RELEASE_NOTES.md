@@ -1,6 +1,26 @@
 
 # Unreleased
 
+# Firestaff v3.0.44
+
+Firestaff v3.0.44 packages the current `main` after the Theron's Quest startup
+pointer-action ownership pass.
+
+## Highlights since v3.0.43
+
+- **Theron's Quest startup pointer actions**: Theron's Quest startup pointer
+  action ownership is now on `main` and included in release packaging.
+- **Release metadata**: In-app version strings, CMake metadata and release notes
+  are synchronized to `v3.0.44`.
+
+## Verification
+
+- Local clean-worktree release verification covers version synchronization and
+  focused startup gates before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.44` release run.
+
 # Firestaff v3.0.43
 
 Firestaff v3.0.43 packages the latest DM2 startup pointer-action ownership work
