@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.43  (2026-07-06)",
+    "  - Packages the post-v3.0.42 DM2 startup pointer-action work now on main.",
+    "  - DM2 startup now owns pointer actions for Continue, Load Slot, New Game, and panel containment before M11 mutates startup state.",
+    "",
     "V3.0.42  (2026-07-06)",
     "  - Packages the post-v3.0.41 CSB utility input plus Nexus startup pointer-action and title-phase ownership work now on main.",
     "  - CSB utility startup now owns keyboard action routing for import, load, view, preview close, and start-new decisions before M11 executes entrance commands.",
@@ -444,5 +448,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.42";
+    return "3.0.43";
 }
