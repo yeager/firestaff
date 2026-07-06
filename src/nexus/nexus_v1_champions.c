@@ -247,6 +247,65 @@ int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index) {
     return pool->party_count - 1;
 }
 
+int nexus_v1_champion_in_party(const Nexus_V1_ChampionPool *pool,
+                               int champion_index) {
+    int i;
+    if (!pool || champion_index < 0) {
+        return 0;
+    }
+    for (i = 0; i < pool->party_count; ++i) {
+        if (pool->party[i] == champion_index) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int nexus_v1_champion_next_selectable(const Nexus_V1_ChampionPool *pool,
+                                      int start,
+                                      int step) {
+    int i;
+    int count;
+    if (!pool || pool->champion_count <= 0) {
+        return 0;
+    }
+    count = pool->champion_count;
+    if (start < 0 || start >= count) {
+        start = 0;
+    }
+    step = step < 0 ? -1 : 1;
+    for (i = 0; i < count; ++i) {
+        int idx = (start + step * i + count * 2) % count;
+        if (!nexus_v1_champion_in_party(pool, idx)) {
+            return idx;
+        }
+    }
+    return start;
+}
+
+int nexus_v1_champion_recruit_and_advance(Nexus_V1_ChampionPool *pool,
+                                          int champion_index,
+                                          int *out_next_cursor) {
+    int recruited;
+    if (out_next_cursor) {
+        *out_next_cursor = champion_index;
+    }
+    if (!pool) {
+        return -1;
+    }
+    recruited = nexus_v1_champion_recruit(pool, champion_index);
+    if (recruited < 0) {
+        return -1;
+    }
+    if (out_next_cursor && pool->party_count < NEXUS_MAX_PARTY) {
+        *out_next_cursor = nexus_v1_champion_next_selectable(
+            pool,
+            champion_index + 1,
+            1);
+    }
+    return recruited;
+}
+
 int nexus_v1_champion_unrecruit_last(Nexus_V1_ChampionPool *pool) {
     int mirror_index;
 

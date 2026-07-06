@@ -220,6 +220,39 @@ static void expect_startup_layout_contract(void) {
                 "Nexus startup champion panel consumes whitespace");
 }
 
+static void expect_champion_startup_selection_contract(void) {
+    Nexus_V1_ChampionPool pool;
+    int next_cursor = -1;
+
+    nexus_v1_champions_init(&pool);
+    expect_true(pool.champion_count >= 3,
+                "Nexus startup champion fixture has selectable roster");
+    expect_true(!nexus_v1_champion_in_party(&pool, 0),
+                "Nexus startup champion starts outside party");
+    expect_true(nexus_v1_champion_next_selectable(&pool, 0, 1) == 0,
+                "Nexus startup next selectable returns first open champion");
+    expect_true(nexus_v1_champion_recruit_and_advance(
+                    &pool,
+                    0,
+                    &next_cursor) >= 0,
+                "Nexus startup recruit helper adds champion");
+    expect_true(pool.party_count == 1 &&
+                    nexus_v1_champion_in_party(&pool, 0),
+                "Nexus startup recruit helper updates party membership");
+    expect_true(next_cursor == 1,
+                "Nexus startup recruit helper advances to next open champion");
+    expect_true(nexus_v1_champion_recruit_and_advance(
+                    &pool,
+                    0,
+                    &next_cursor) < 0,
+                "Nexus startup recruit helper rejects duplicate champion");
+    expect_true(nexus_v1_champion_next_selectable(&pool, 0, 1) == 1,
+                "Nexus startup next selectable skips recruited champion");
+    expect_true(nexus_v1_champion_unrecruit_last(&pool) == 0 &&
+                    pool.party_count == 0,
+                "Nexus startup back helper can remove last recruit");
+}
+
 static void fill_nexus_spec(M11_GameLaunchSpec* spec, const char* data_dir) {
     memset(spec, 0, sizeof(*spec));
     spec->title = "DUNGEON MASTER NEXUS";
@@ -357,6 +390,7 @@ int main(void) {
     expect_face_loader_counts_real_vs_fallback();
     expect_title_render_is_frame_dependent();
     expect_startup_layout_contract();
+    expect_champion_startup_selection_contract();
 
     if (make_temp_root(empty_root)) {
         expect_failed_start_is_inactive(empty_root, "NEXUS DATA ERROR");

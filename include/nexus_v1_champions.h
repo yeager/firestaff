@@ -111,6 +111,14 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool);
 int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index);
 int nexus_v1_champion_unrecruit_last(Nexus_V1_ChampionPool *pool);
 int nexus_v1_champion_resurrect(Nexus_V1_ChampionPool *pool, int party_slot);
+int nexus_v1_champion_in_party(const Nexus_V1_ChampionPool *pool,
+                               int champion_index);
+int nexus_v1_champion_next_selectable(const Nexus_V1_ChampionPool *pool,
+                                      int start,
+                                      int step);
+int nexus_v1_champion_recruit_and_advance(Nexus_V1_ChampionPool *pool,
+                                          int champion_index,
+                                          int *out_next_cursor);
 
 /* ── Champion pool binary serialization (Phase 6 save/load) ────────────────
  *
