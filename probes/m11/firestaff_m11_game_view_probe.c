@@ -11641,9 +11641,9 @@ int main(int argc, char** argv) {
          * (a) always clear the acting champion when the row
          * resolves to a real action index, (b) leave the menu
          * open when the row resolves to ACTION_NONE, (c) emit a
-         * player-facing log entry, and (d) for melee-contact
-         * actions (PUNCH/KICK/etc.) advance the tick and return
-         * 1.  Reject invalid indices (<0 or >=3). */
+         * player-facing log entry, and (d) return F0407's action
+         * result (PUNCH can return FALSE when no melee target is
+         * reached).  Reject invalid indices (<0 or >=3). */
         {
             int triggerResult;
             int logCountBefore;
@@ -11669,16 +11669,16 @@ int main(int argc, char** argv) {
                          "action-menu: invalid row index leaves acting champion set");
 
             /* INV_GV_321: clicking row 0 (PUNCH, melee) executes
-             * the action, clears the acting champion, and
-             * returns 1.  Tick must advance because the strike
-             * tick ran through M10. */
+             * F0391/F0407, clears the acting champion, and logs the
+             * action.  With this fixture there is no melee target, so
+             * F0407's result is false while the UI action still fires. */
             logCountBefore = M11_GameView_GetMessageLogCount(&menuView);
             tickBefore = menuView.world.gameTick;
             triggerResult = M11_GameView_TriggerActionRow(&menuView, 0);
             logCountAfter = M11_GameView_GetMessageLogCount(&menuView);
             tickAfter = menuView.world.gameTick;
             probe_record(&tally, "INV_GV_321",
-                         triggerResult == 1 &&
+                         triggerResult == 0 &&
                              M11_GameView_GetActingChampionOrdinal(&menuView) == 0 &&
                              logCountAfter > logCountBefore,
                          "action-menu: PUNCH row click performs action, "
@@ -11690,6 +11690,7 @@ int main(int argc, char** argv) {
             /* INV_GV_323: re-activate and click row 2 (WAR CRY,
              * non-melee).  Must clear the menu and log a
              * message, but return 0 (no tick-level strike). */
+            menuView.actionDisabledTicks[0] = 0;
             (void)M11_GameView_SetActingChampion(&menuView, 0);
             logCountBefore = M11_GameView_GetMessageLogCount(&menuView);
             triggerResult = M11_GameView_TriggerActionRow(&menuView, 2);
@@ -11713,6 +11714,7 @@ int main(int argc, char** argv) {
              * champion fires the row-click path and returns
              * REDRAW (menu closes).  Cross-check by re-activating
              * and simulating the full pointer flow. */
+            menuView.actionDisabledTicks[0] = 0;
             (void)M11_GameView_SetActingChampion(&menuView, 0);
             pointerResult = M11_GameView_HandlePointer(&menuView, 260, 91, 1);
             probe_record(&tally, "INV_GV_325",
@@ -11806,6 +11808,7 @@ int main(int argc, char** argv) {
             uint32_t tickAfterCry;
             int leaderAfterCry;
 
+            menuView.actionDisabledTicks[0] = 0;
             (void)M11_GameView_SetActingChampion(&menuView, 0);
             menuView.audioState.lastMarker = M11_AUDIO_MARKER_NONE;
             tickBeforeCry = menuView.world.gameTick;
@@ -11922,6 +11925,7 @@ int main(int argc, char** argv) {
 
                 /* FIREBALL: spawns a magical projectile with
                  * subtype PROJECTILE_SUBTYPE_FIREBALL (0x80). */
+                menuView.actionDisabledTicks[0] = 0;
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 /* Ensure enough mana for the cast. */
                 menuView.world.party.champions[0].mana.current =
@@ -11941,6 +11945,7 @@ int main(int argc, char** argv) {
                              "projectile action: FIREBALL spawns subtype 0x80");
 
                 /* LIGHTNING: spawns subtype LIGHTNING_BOLT (0x82). */
+                menuView.actionDisabledTicks[0] = 0;
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 menuView.world.party.champions[0].mana.current =
                     menuView.world.party.champions[0].mana.maximum;
@@ -11960,6 +11965,7 @@ int main(int argc, char** argv) {
                     "projectile action: LIGHTNING spawns subtype 0x82");
 
                 /* DISPELL: spawns subtype HARM_NON_MATERIAL (0x83). */
+                menuView.actionDisabledTicks[0] = 0;
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 menuView.world.party.champions[0].mana.current =
                     menuView.world.party.champions[0].mana.maximum;
@@ -11982,6 +11988,7 @@ int main(int argc, char** argv) {
                  * subtypes; we only verify that a projectile
                  * is created and the subtype is a valid
                  * F0407 C027 outcome. */
+                menuView.actionDisabledTicks[0] = 0;
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 menuView.world.party.champions[0].mana.current =
                     menuView.world.party.champions[0].mana.maximum;
@@ -12009,6 +12016,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_ACTION_HAND] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+                menuView.actionDisabledTicks[0] = 0;
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_RIGHT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
@@ -12029,6 +12037,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
+                menuView.actionDisabledTicks[0] = 0;
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 spawned = M11_GameView_TriggerNonMeleeActionByIndex(
                     &menuView, 0, 32);
@@ -12046,6 +12055,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+                menuView.actionDisabledTicks[0] = 0;
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_QUIVER_1] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 4);
@@ -12058,6 +12068,12 @@ int main(int argc, char** argv) {
                         (projCountAfter > projCountBefore)
                             ? &menuView.world.projectiles.entries[projCountBefore]
                             : NULL;
+                    int shootTick;
+                    for (shootTick = 0;
+                         shootTick < 14 && menuView.actionDisabledTicks[0] > 0;
+                         ++shootTick) {
+                        (void)M11_GameView_AdvanceIdleTick(&menuView);
+                    }
                     probe_record(
                         &tally, "INV_GV_339",
                         spawned == 1 &&
@@ -12079,11 +12095,12 @@ int main(int argc, char** argv) {
                         "kinetic attack cell direction step-energy and reloads from quiver");
                 }
 
-                /* Empty ready hand still fails the immediate SHOOT branch, but
-                 * F0253's action-closure refill moves compatible quiver ammo
-                 * into the ready hand in source order: C12 first, then C07-C09. */
+                /* Empty ready hand fails the immediate SHOOT branch and does
+                 * not schedule the successful-shot ready-hand refill; compatible
+                 * quiver ammunition stays untouched until a later valid shot. */
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+                menuView.actionDisabledTicks[0] = 0;
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_QUIVER_1] = THING_NONE;
                 menuView.world.party.champions[0]
@@ -12097,11 +12114,11 @@ int main(int argc, char** argv) {
                              spawned == 0 &&
                                  projCountAfter == projCountBefore &&
                                  menuView.world.party.champions[0]
-                                     .inventory[CHAMPION_SLOT_HAND_LEFT] ==
-                                     (unsigned short)((THING_TYPE_WEAPON << 10) | 4) &&
+                                     .inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE &&
                                  menuView.world.party.champions[0]
-                                     .inventory[CHAMPION_SLOT_QUIVER_3] == THING_NONE,
-                             "projectile action: SHOOT action closure reloads compatible quiver ammo");
+                                     .inventory[CHAMPION_SLOT_QUIVER_3] ==
+                                     (unsigned short)((THING_TYPE_WEAPON << 10) | 4),
+                             "projectile action: SHOOT no-ammunition failure leaves compatible quiver ammo untouched");
 
                 /* Sling + rock takes the sling ammunition branch from
                  * MENU.C:1381-1390: class 39 launcher requires class-11
@@ -12110,6 +12127,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_ACTION_HAND] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
+                menuView.actionDisabledTicks[0] = 0;
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_RIGHT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
@@ -12147,6 +12165,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+                menuView.actionDisabledTicks[0] = 0;
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 spawned = M11_GameView_TriggerNonMeleeActionByIndex(
                     &menuView, 0, 32);
@@ -12162,6 +12181,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_RIGHT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
+                menuView.actionDisabledTicks[0] = 0;
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 spawned = M11_GameView_TriggerNonMeleeActionByIndex(
                     &menuView, 0, 42);
