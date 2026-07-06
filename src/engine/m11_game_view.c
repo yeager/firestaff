@@ -11226,9 +11226,10 @@ static int m11_nexus_startup_row_at(const M11_GameViewState *state,
         state->nexusState.startup_save_dir[0]
             ? state->nexusState.startup_save_dir
             : NULL);
-    menu.slot_mask = state->nexusState.startup_save_slot_mask;
-    menu.row_count = state->nexusState.startup_save_row_count;
     menu.selected_row = state->nexusState.startup_save_selected_row;
+    (void)nexus_v1_startup_menu_refresh(
+        &menu,
+        state->nexusState.startup_save_slot_mask);
     return nexus_v1_startup_menu_row_at(&menu, row, out_kind, out_slot);
 }
 
@@ -11244,9 +11245,10 @@ static void m11_nexus_startup_menu_from_state(
         state->nexusState.startup_save_dir[0]
             ? state->nexusState.startup_save_dir
             : NULL);
-    menu->slot_mask = state->nexusState.startup_save_slot_mask;
-    menu->row_count = state->nexusState.startup_save_row_count;
     menu->selected_row = state->nexusState.startup_save_selected_row;
+    (void)nexus_v1_startup_menu_refresh(
+        menu,
+        state->nexusState.startup_save_slot_mask);
 }
 
 static void m11_nexus_startup_menu_to_state(
@@ -12200,23 +12202,15 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyY = state->nexusState.party_y;
         out->partyDir = state->nexusState.party_dir;
         out->runtimeTick = state->nexusState.tick_count;
-        out->startupFrame = state->nexusState.title_frame;
-        if (state->nexusState.title_active) {
-            out->startupActive = 1;
-            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-                     "nexus-title");
-        } else if (state->nexusState.startup_save_select_active) {
-            out->startupActive = 1;
-            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-                     "nexus-save-select");
-        } else if (state->nexusState.champion_select_active) {
-            out->startupActive = 1;
-            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-                     "nexus-champion-select");
-        } else {
-            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-                     "nexus-runtime");
-        }
+        (void)nexus_v1_startup_receipt_phase(
+            state->nexusState.title_active,
+            state->nexusState.startup_save_select_active,
+            state->nexusState.champion_select_active,
+            state->nexusState.title_frame,
+            out->startupPhase,
+            (int)sizeof(out->startupPhase),
+            &out->startupActive,
+            &out->startupFrame);
         return 1;
     }
 
@@ -16602,7 +16596,36 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->nexusState.title_active) {
-        return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+        Nexus_V1_StartupAction action;
+        if (!nexus_v1_startup_title_handle_hit(
+                state->nexusState.title_frame,
+                state->nexusState.startup_save_slot_mask,
+                &action)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (action.kind == NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE) {
+            m11_set_status(state, "STARTUP", "NEXUS TITLE");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        state->nexusState.title_active = 0;
+        state->nexusState.title_frame = 0;
+        if (action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT) {
+            state->nexusState.startup_save_select_active = 1;
+            state->nexusState.startup_save_selected_row = 0;
+            m11_set_status(state, "STARTUP", "NEXUS LOAD GAME");
+        } else if (action.kind ==
+                   NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT) {
+            state->nexusState.champion_select_active = 1;
+            state->nexusState.champion_cursor = 0;
+            m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
+        } else {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        return M11_GAME_INPUT_REDRAW;
     }
     if (state->nexusState.startup_save_select_active) {
         Nexus_V1_StartupHit hit;
@@ -40915,6 +40938,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                state->nexusState.title_frame);
         } else if (state->nexusState.startup_save_select_active) {
             int row;
+            Nexus_V1_StartupMenu menu;
+            Nexus_V1_StartupSaveRenderRow rows[16];
+            int row_count;
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           NEXUS_V1_STARTUP_TITLE_X,
                           NEXUS_V1_STARTUP_TITLE_Y,
@@ -40925,38 +40951,30 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           NEXUS_V1_STARTUP_SUBTITLE_Y,
                           "LOAD GAME", &g_text_shadow);
             directDraw = 1;
-            for (row = 0; row < state->nexusState.startup_save_row_count; ++row) {
-                char label[96];
-                Nexus_V1_StartupRowKind kind =
-                    NEXUS_V1_STARTUP_ROW_NONE;
-                int slot = -1;
-                Nexus_V1_StartupRect rowRect;
+            m11_nexus_startup_menu_from_state(state, &menu);
+            row_count = nexus_v1_startup_menu_build_save_render_rows(
+                &menu,
+                rows,
+                (int)(sizeof(rows) / sizeof(rows[0])));
+            for (row = 0; row < row_count; ++row) {
+                const Nexus_V1_StartupSaveRenderRow *render_row = &rows[row];
                 const M11_TextStyle *style = &g_text_small;
-                if (!m11_nexus_startup_row_at(state, row, &kind, &slot) ||
-                    !nexus_v1_startup_save_row_rect(row, &rowRect)) {
-                    continue;
-                }
-                if (kind == NEXUS_V1_STARTUP_ROW_SLOT) {
-                    snprintf(label, sizeof(label), "%c LOAD SLOT %02d",
-                             row == state->nexusState.startup_save_selected_row
-                                 ? '>' : ' ',
-                             slot);
-                } else {
-                    snprintf(label, sizeof(label), "%c NEW GAME",
-                             row == state->nexusState.startup_save_selected_row
-                                 ? '>' : ' ');
-                }
-                if (row == state->nexusState.startup_save_selected_row) {
+
+                if (render_row->selected) {
                     m11_fill_rect(framebuffer, framebufferWidth,
                                   framebufferHeight,
-                                  rowRect.x - 2, rowRect.y, 160, 11,
+                                  render_row->highlight_rect.x,
+                                  render_row->highlight_rect.y,
+                                  render_row->highlight_rect.w,
+                                  render_row->highlight_rect.h,
                                   M11_COLOR_DARK_GRAY);
                     style = &g_text_shadow;
                 }
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              NEXUS_V1_STARTUP_SAVE_ROW_TEXT_X,
-                              rowRect.y + 1,
-                              label, style);
+                              render_row->text_x,
+                              render_row->text_y,
+                              render_row->label,
+                              style);
             }
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           NEXUS_V1_STARTUP_FOOTER_X,
