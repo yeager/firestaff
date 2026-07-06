@@ -1278,6 +1278,19 @@ int main(void) {
     }
     expect_true(view.csbState.startup_import_selected_action_index == 0,
                 "M11 CSB utility keyboard starts on the IMPORT row");
+    {
+        int last_command = view.csbState.startup_entrance_last_command;
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        40,
+                        92,
+                        M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.csbState.startup_entrance_active == 1 &&
+                        view.csbState.startup_import_selected_action_index == 0 &&
+                        view.csbState.startup_entrance_last_command == last_command,
+                    "M11 CSB utility prompt click is consumed by utility panel");
+    }
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                     M11_GAME_INPUT_REDRAW &&
                     view.csbState.startup_import_selected_action_index == 1,
