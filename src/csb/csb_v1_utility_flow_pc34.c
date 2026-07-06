@@ -16,6 +16,7 @@
  */
 
 #include "csb_v1_utility_flow_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "csb_v1_utility_import_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
@@ -288,6 +289,25 @@ const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action)
         return "EXIT";
     default:
         return "";
+    }
+}
+
+int csb_v1_util_flow_entrance_command_for_action(
+    CSB_V1_UtilFlowAction action)
+{
+    /* ReDMCSB ENTRANCE.C utility menu resolves LOAD/NEW back into the
+     * entrance command path; keep these source ids in CSB utility code so
+     * M11 only executes the already resolved startup command. */
+    switch (action) {
+    case CSB_V1_UTIL_ACTION_LOAD:
+        return CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34;
+    case CSB_V1_UTIL_ACTION_NEW:
+        return CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    case CSB_V1_UTIL_ACTION_IMPORT:
+    case CSB_V1_UTIL_ACTION_VIEW:
+    case CSB_V1_UTIL_ACTION_EXIT:
+    default:
+        return 0;
     }
 }
 
