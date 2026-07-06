@@ -2825,6 +2825,14 @@ static const char* m11_dm2_item_name(int item_id)
 }
 
 static const M11_TextStyle *m11_csb_startup_text_style(int style);
+static void m11_draw_csb_startup_plan_text(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int x,
+    int y,
+    int style,
+    const char *text);
 
 static void m11_csb_startup_build_utility_flow(
     const M11_GameViewState *state,
@@ -3142,12 +3150,27 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         }
         return;
     }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  38, 52, "FTL PRESENTS", &g_text_small);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  38, 86, "CHAOS", &g_text_title);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  38, 112, "STRIKES BACK", &g_text_shadow);
+    m11_draw_csb_startup_plan_text(framebuffer,
+                                   framebufferWidth,
+                                   framebufferHeight,
+                                   plan->fallback_title_x,
+                                   plan->fallback_title_y,
+                                   plan->fallback_title_style,
+                                   plan->fallback_title_text);
+    m11_draw_csb_startup_plan_text(framebuffer,
+                                   framebufferWidth,
+                                   framebufferHeight,
+                                   plan->fallback_subtitle_x,
+                                   plan->fallback_subtitle_y,
+                                   plan->fallback_subtitle_style,
+                                   plan->fallback_subtitle_text);
+    m11_draw_csb_startup_plan_text(framebuffer,
+                                   framebufferWidth,
+                                   framebufferHeight,
+                                   plan->fallback_prompt_x,
+                                   plan->fallback_prompt_y,
+                                   plan->fallback_prompt_style,
+                                   plan->fallback_prompt_text);
 }
 
 static const M11_TextStyle *m11_csb_startup_text_style(int style)
