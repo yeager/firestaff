@@ -309,6 +309,61 @@ int csb_v1_startup_entrance_accepts_input_pc34(
         csb_v1_startup_entrance_wait_stage_pc34();
 }
 
+int csb_v1_startup_resolve_entrance_command_pc34(
+    const CSB_V1_StartupCommandState_PC34 *state,
+    int command_id,
+    CSB_V1_StartupEntranceDecision_PC34 *out_decision)
+{
+    CSB_V1_StartupEntranceDecision_PC34 decision =
+        CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34;
+
+    if (!out_decision) {
+        return 0;
+    }
+    if (!state || !state->entrance_active) {
+        *out_decision = decision;
+        return 1;
+    }
+    if (state->credits_active) {
+        *out_decision =
+            CSB_V1_STARTUP_ENTRANCE_DECISION_DISMISS_CREDITS_PC34;
+        return 1;
+    }
+    if (!csb_v1_startup_entrance_accepts_input_pc34(state)) {
+        *out_decision = decision;
+        return 1;
+    }
+
+    /* ReDMCSB ENTRANCE.C F0441 only dispatches these command ids after
+     * F0441 reaches its interactive wait loop. Door-opening and title/prewait
+     * phases ignore queued startup commands until the source loop is ready. */
+    switch (command_id) {
+        case CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34:
+            decision = CSB_V1_STARTUP_ENTRANCE_DECISION_ENTER_DUNGEON_PC34;
+            break;
+        case CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34:
+            decision =
+                CSB_V1_STARTUP_ENTRANCE_DECISION_ENTER_BONUS_DUNGEON_PC34;
+            break;
+        case CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34:
+            decision = CSB_V1_STARTUP_ENTRANCE_DECISION_RESUME_PC34;
+            break;
+        case CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34:
+            decision =
+                CSB_V1_STARTUP_ENTRANCE_DECISION_BEGIN_CREDITS_PC34;
+            break;
+        case CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34:
+            decision = CSB_V1_STARTUP_ENTRANCE_DECISION_QUIT_PC34;
+            break;
+        case CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34:
+        default:
+            decision = CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34;
+            break;
+    }
+    *out_decision = decision;
+    return 1;
+}
+
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command)
