@@ -835,6 +835,7 @@ int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
                                           int* outDstY,
                                           int* outWidth,
                                           int* outHeight);
+int M11_GameView_ProbeDm1PrimarySideWallMaxForward(int centerMaxVisibleForward);
 
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */

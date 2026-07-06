@@ -8687,6 +8687,13 @@ static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
     state.world.party.mapY = 3;
     state.world.party.direction = 0; /* north: D2L=(1,1), D2R=(3,1). */
 
+    ASSERT_EQ(M11_GameView_ProbeDm1PrimarySideWallMaxForward(1), 3,
+              "primary side-wall pass keeps D1/D2/D3 when D1C blocks");
+    ASSERT_EQ(M11_GameView_ProbeDm1PrimarySideWallMaxForward(2), 3,
+              "primary side-wall pass keeps D1/D2/D3 when D2C blocks");
+    ASSERT_EQ(M11_GameView_ProbeDm1PrimarySideWallMaxForward(3), 3,
+              "primary side-wall pass keeps D1/D2/D3 on open center lane");
+
     ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
                   &state, 2, -1, &mapX, &mapY, NULL, &element,
                   &effective, &wallLike, &open),
