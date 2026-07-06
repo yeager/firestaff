@@ -1856,24 +1856,52 @@ static void m12_refresh_v22_modern_asset_status(M12_AssetStatus* status) {
     }
 }
 
+static int m12_publish_direct_theron_match(
+    M12_AssetStatus* status,
+    const char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
+    const char matchedMd5[M12_ASSET_MD5_CAPACITY],
+    const char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY],
+    int versionIndex,
+    const char* configuredDataDir);
+
 static int m12_scan_direct_theron_request(M12_AssetStatus* status,
                                           const char* requestedDataDir,
                                           const char* configuredDataDir) {
     char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
     char matchedMd5[M12_ASSET_MD5_CAPACITY];
     char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY];
-    char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
-    int theronIndex = m12_game_index_from_id("theron");
     int versionIndex = -1;
-    int i;
-    size_t requiredIndex;
-    int requiredMatched = 0;
-    if (!status || theronIndex < 0 ||
+    if (!status ||
         !m12_try_match_direct_theron_request(requestedDataDir,
                                              matchedPath,
                                              matchedMd5,
                                              runtimeRoot,
                                              &versionIndex) ||
+        versionIndex < 0) {
+        return 0;
+    }
+    return m12_publish_direct_theron_match(status,
+                                           matchedPath,
+                                           matchedMd5,
+                                           runtimeRoot,
+                                           versionIndex,
+                                           configuredDataDir);
+}
+
+static int m12_publish_direct_theron_match(
+    M12_AssetStatus* status,
+    const char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
+    const char matchedMd5[M12_ASSET_MD5_CAPACITY],
+    const char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY],
+    int versionIndex,
+    const char* configuredDataDir) {
+    char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
+    int theronIndex = m12_game_index_from_id("theron");
+    int i;
+    size_t requiredIndex;
+    int requiredMatched = 0;
+    if (!status || theronIndex < 0 || !matchedPath || !matchedMd5 ||
+        !runtimeRoot ||
         versionIndex < 0) {
         return 0;
     }
@@ -1931,6 +1959,36 @@ static int m12_scan_direct_theron_request(M12_AssetStatus* status,
     m12_classify_theron_media_path(status, matchedPath);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
+}
+
+static int m12_scan_theron_arbitrary_direct_launch_root(
+    M12_AssetStatus* status,
+    const char* requestedDataDir) {
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char matchedMd5[M12_ASSET_MD5_CAPACITY];
+    char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    size_t i;
+    if (!status || !requestedDataDir || requestedDataDir[0] == '\0' ||
+        !FSP_DirExists(requestedDataDir) ||
+        m12_path_is_theron_specific_dir(requestedDataDir)) {
+        return 0;
+    }
+    for (i = 0U; i < sizeof(g_theronVersions) / sizeof(g_theronVersions[0]); ++i) {
+        if (m12_try_match_version(requestedDataDir,
+                                  &g_theronVersions[i],
+                                  matchedPath,
+                                  matchedMd5) &&
+            m12_derive_theron_runtime_root_for_file(matchedPath,
+                                                    runtimeRoot)) {
+            return m12_publish_direct_theron_match(status,
+                                                   matchedPath,
+                                                   matchedMd5,
+                                                   runtimeRoot,
+                                                   (int)i,
+                                                   requestedDataDir);
+        }
+    }
+    return 0;
 }
 
 static int m12_scan_direct_nexus_request(M12_AssetStatus* status,
@@ -2213,6 +2271,9 @@ static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
         return 1;
     }
     if (m12_scan_theron_child_dir(status, requestedDataDir, "theron", "us")) {
+        return 1;
+    }
+    if (m12_scan_theron_arbitrary_direct_launch_root(status, requestedDataDir)) {
         return 1;
     }
     return 0;

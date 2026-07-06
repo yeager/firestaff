@@ -77,13 +77,17 @@ int main(void) {
     char theronDir[512];
     char extrasDir[512];
     char extrasJapanDir[512];
+    char looseDir[512];
     char trackPath[512];
     char extrasTrackPath[512];
+    char looseTrackPath[512];
     char trackMd5[M12_ASSET_MD5_CAPACITY];
     M12_AssetStatus status;
     M12_AssetStatus directRootStatus;
     M12_AssetStatus specificTheronStatus;
+    M12_AssetStatus looseDirStatus;
     M12_AssetStatusScanMetrics directRootMetrics;
+    M12_AssetStatusScanMetrics looseDirMetrics;
     M12_AssetStatusScanMetrics firstMetrics;
     M12_AssetStatusScanMetrics refreshMetrics;
     const M12_AssetVersionStatus* version;
@@ -106,6 +110,12 @@ int main(void) {
     snprintf(extrasTrackPath, sizeof(extrasTrackPath), "%s/track02.bin", extrasJapanDir);
     check_int(write_file(extrasTrackPath, trackPayload),
               "synthetic Theron raw Track 02 fixture written");
+    snprintf(looseDir, sizeof(looseDir), "%s/renamed-media", root);
+    check_int(make_dir_if_needed(looseDir),
+              "arbitrary renamed Theron media directory created");
+    snprintf(looseTrackPath, sizeof(looseTrackPath), "%s/payload.noext", looseDir);
+    check_int(write_file(looseTrackPath, trackPayload),
+              "arbitrary renamed Theron Track 02 fixture written");
     check_int(m12_file_md5_hex(trackPath, trackMd5),
               "synthetic Theron Track 02 MD5 computed");
     check_int(test_setenv("HOME", root) &&
@@ -153,6 +163,32 @@ int main(void) {
                   strcmp(version->matchedPath, trackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
               "Theron specific-directory scan records the explicit theron/ Track 02 path");
+
+    memset(&looseDirStatus, 0, sizeof(looseDirStatus));
+    M12_AssetStatus_TestResetScanMetrics();
+    M12_AssetStatus_ScanGame(&looseDirStatus, looseDir, "theron");
+    looseDirMetrics = M12_AssetStatus_TestGetScanMetrics();
+    check_int(M12_AssetStatus_GameAvailable(&looseDirStatus, "theron") == 1,
+              "Theron direct-launch scan accepts arbitrary directory by Track 02 hash");
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&looseDirStatus), looseDir) == 0,
+              "Theron arbitrary-directory direct scan preserves selected data dir");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&looseDirStatus, "theron"),
+                     looseDir) == 0,
+              "Theron arbitrary-directory direct scan derives runtime root from matched file");
+    version = M12_AssetStatus_GetVersion(&looseDirStatus, "theron", 0U);
+    check_int(version && version->matched &&
+                  strcmp(version->matchedPath, looseTrackPath) == 0 &&
+                  strcmp(version->matchedMd5, trackMd5) == 0,
+              "Theron arbitrary-directory direct scan records renamed Track 02 path");
+    required = M12_AssetStatus_GetRequiredFile(&looseDirStatus, "theron", 0U);
+    check_int(required && required->matched &&
+                  strcmp(required->matchedPath, looseTrackPath) == 0 &&
+                  strcmp(required->matchedHash, trackMd5) == 0,
+              "Theron arbitrary-directory direct scan propagates renamed required marker");
+    check_int(looseDirMetrics.rootCount == 0U,
+              "Theron arbitrary-directory direct scan avoids generic search roots");
+    check_int(looseDirMetrics.requiredHashLookups == 0U,
+              "Theron arbitrary-directory direct scan avoids required-file fallback lookups");
 
     M12_AssetStatus_TestResetScanMetrics();
     M12_AssetStatus_Scan(&status, root);
