@@ -21,6 +21,7 @@ int main(void)
 {
     DM2_V1_StartupMenu menu;
     DM2_V1_StartupAction action;
+    DM2_V1_StartupActionPlan plan;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRenderRow rows[4];
     char phase[64];
@@ -79,17 +80,36 @@ int main(void)
               action.row == 0 &&
               action.slot == -1,
           "keyboard Accept returns Continue action directly");
+    check(dm2_v1_startup_plan_for_action(&action, &plan) &&
+              plan.kind == DM2_V1_STARTUP_PLAN_CONTINUE &&
+              plan.slot == -1 &&
+              plan.rescan_saves_on_failure == 1 &&
+              strcmp(plan.success_status, "DM2 CONTINUED") == 0 &&
+              strcmp(plan.failure_status, "DM2 CONTINUE FAILED") == 0,
+          "Continue action resolves to DM2-owned startup load plan");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
               menu.selected_row == 1,
           "keyboard Down returns navigation action directly");
+    check(dm2_v1_startup_plan_for_action(&action, &plan) &&
+              plan.kind == DM2_V1_STARTUP_PLAN_IGNORE &&
+              plan.slot == -1 &&
+              strcmp(plan.success_status, "DM2 START SELECT") == 0,
+          "navigation action resolves to DM2-owned redraw plan");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACTION, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
               action.row == 1 &&
               action.slot == 2,
           "keyboard Action returns Load Slot action directly");
+    check(dm2_v1_startup_plan_for_action(&action, &plan) &&
+              plan.kind == DM2_V1_STARTUP_PLAN_LOAD_SLOT &&
+              plan.slot == 2 &&
+              plan.rescan_saves_on_failure == 1 &&
+              strcmp(plan.success_status, "DM2 SLOT LOADED") == 0 &&
+              strcmp(plan.failure_status, "DM2 SLOT LOAD FAILED") == 0,
+          "Load Slot action resolves to DM2-owned startup load plan");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -101,12 +121,22 @@ int main(void)
               action.row == 2 &&
               action.slot == -1,
           "keyboard Accept returns New Game action directly");
+    check(dm2_v1_startup_plan_for_action(&action, &plan) &&
+              plan.kind == DM2_V1_STARTUP_PLAN_NEW_GAME &&
+              plan.slot == -1 &&
+              plan.rescan_saves_on_failure == 0 &&
+              strcmp(plan.success_status, "DM2 NEW GAME") == 0,
+          "New Game action resolves to DM2-owned startup session plan");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
               action.row == 2 &&
               action.slot == -1,
           "keyboard Back returns launcher action directly");
+    check(dm2_v1_startup_plan_for_action(&action, &plan) &&
+              plan.kind == DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER &&
+              strcmp(plan.success_status, "BACK TO LAUNCHER") == 0,
+          "Back action resolves to DM2-owned launcher-return plan");
 
     hit.kind = DM2_V1_STARTUP_HIT_PANEL;
     hit.row = -1;

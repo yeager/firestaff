@@ -15,6 +15,17 @@ static void dm2_v1_startup_action_clear(DM2_V1_StartupAction *action)
     action->slot = -1;
 }
 
+static void dm2_v1_startup_action_plan_clear(
+    DM2_V1_StartupActionPlan *plan)
+{
+    if (!plan) {
+        return;
+    }
+    memset(plan, 0, sizeof(*plan));
+    plan->kind = DM2_V1_STARTUP_PLAN_IGNORE;
+    plan->slot = -1;
+}
+
 void dm2_v1_startup_menu_init(DM2_V1_StartupMenu *menu,
                               const char *save_root)
 {
@@ -239,6 +250,48 @@ int dm2_v1_startup_menu_handle_hit(DM2_V1_StartupMenu *menu,
     }
     menu->selected_row = hit->row;
     return dm2_v1_startup_menu_activate_selected(menu, out_action);
+}
+
+int dm2_v1_startup_plan_for_action(
+    const DM2_V1_StartupAction *action,
+    DM2_V1_StartupActionPlan *out_plan)
+{
+    dm2_v1_startup_action_plan_clear(out_plan);
+    if (!action || !out_plan) {
+        return 0;
+    }
+    if (action->kind == DM2_V1_STARTUP_ACTION_NONE) {
+        out_plan->kind = DM2_V1_STARTUP_PLAN_IGNORE;
+        out_plan->success_status = "DM2 START SELECT";
+        return 1;
+    }
+    if (action->kind == DM2_V1_STARTUP_ACTION_CONTINUE) {
+        out_plan->kind = DM2_V1_STARTUP_PLAN_CONTINUE;
+        out_plan->rescan_saves_on_failure = 1;
+        out_plan->success_status = "DM2 CONTINUED";
+        out_plan->failure_status = "DM2 CONTINUE FAILED";
+        return 1;
+    }
+    if (action->kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
+        action->slot >= 0) {
+        out_plan->kind = DM2_V1_STARTUP_PLAN_LOAD_SLOT;
+        out_plan->slot = action->slot;
+        out_plan->rescan_saves_on_failure = 1;
+        out_plan->success_status = "DM2 SLOT LOADED";
+        out_plan->failure_status = "DM2 SLOT LOAD FAILED";
+        return 1;
+    }
+    if (action->kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
+        out_plan->kind = DM2_V1_STARTUP_PLAN_NEW_GAME;
+        out_plan->success_status = "DM2 NEW GAME";
+        return 1;
+    }
+    if (action->kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
+        out_plan->kind = DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER;
+        out_plan->success_status = "BACK TO LAUNCHER";
+        return 1;
+    }
+    return 0;
 }
 
 int dm2_v1_startup_menu_build_render_rows(
