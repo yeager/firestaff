@@ -583,6 +583,45 @@ int main(void) {
           "duplicate original-name CSB import preserves existing destination");
     check(unlink(outPath) == 0,
           "removed imported original-name CSB save before manifest scan");
+    snprintf(badPath, sizeof(badPath), "%s/SKSave04.dat", backupDir);
+    check(write_bytes(badPath, "NOT-A-DM2-SKSAVE"),
+          "wrote invalid DM2 SKSave import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == -1,
+          "invalid DM2 SKSave import rejected before copy");
+    {
+        DM2_V1_SessionState dm2ImportSession;
+        const M12_SaveBrowserEntry* importedDm2;
+
+        dm2_v1_session_new(&dm2ImportSession);
+        dm2ImportSession.party_level = 9u;
+        dm2ImportSession.party_x = 11u;
+        dm2ImportSession.party_y = 13u;
+        check(dm2_v1_session_save_slot(backupDir,
+                                       4u,
+                                       "Import DM2",
+                                       &dm2ImportSession) == 0,
+              "wrote valid DM2 SKSave import fixture");
+        check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                         (int)sizeof(outPath)) == 0,
+              "valid DM2 SKSave import accepted");
+        check(strstr(outPath, "/data/SKSave04.dat") != NULL,
+              "DM2 SKSave import reports data-dir destination");
+        check(M12_SaveBrowser_Scan(&state, dataDir) >= 1,
+              "scan runs after DM2 SKSave import");
+        importedDm2 = find_entry(&state, "SKSave04.dat");
+        check(importedDm2 != NULL, "imported DM2 SKSave entry present");
+        if (importedDm2) {
+            check(importedDm2->valid == 1,
+                  "imported DM2 SKSave entry is loadable");
+            check(strcmp(importedDm2->gameId, "dm2") == 0,
+                  "imported DM2 SKSave entry is classified as DM2");
+            check(importedDm2->mapLevel == 9,
+                  "imported DM2 SKSave entry preserves map level");
+        }
+        check(unlink(outPath) == 0,
+              "removed imported DM2 SKSave before manifest scan");
+    }
     check(M12_SaveBrowser_ExportSelected(NULL, backupDir, outPath, (int)sizeof(outPath)) == -1,
           "NULL export state rejected");
 

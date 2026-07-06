@@ -326,6 +326,36 @@ static int validate_csb_original_save_import_path(const char* path) {
     return rc == CSB_V1_LOAD_OK;
 }
 
+static int validate_dm2_sksave_import_path(const char* path) {
+    DM2_V1_SessionState session;
+    char saveRoot[512];
+    unsigned char slot = 0u;
+    int lastSession = 0;
+    int rc;
+
+    if (!path || !*path) return 0;
+    if (!dm2_sksave_root_from_path(path,
+                                   saveRoot,
+                                   sizeof(saveRoot),
+                                   &slot,
+                                   &lastSession)) {
+        return 0;
+    }
+
+    /*
+     * skproject SKWINSPX/src/v4/skfileop.cpp READ_SAVEGAMES_FILENAMES
+     * gates visible SKSave slots on the 0xBEEF/0xDEAD slot header before
+     * presenting them. Keep M12 import on Firestaff's DM2 session loader so
+     * malformed SKSave-named bytes are rejected before they are copied into
+     * the user's data/save root.
+     */
+    memset(&session, 0, sizeof(session));
+    rc = lastSession
+        ? dm2_v1_session_load_last_session(saveRoot, &session)
+        : dm2_v1_session_load_slot(saveRoot, slot, &session);
+    return rc == 0 && dm2_v1_session_validate(&session);
+}
+
 /* Check if filename matches a launcher-visible save candidate. */
 static int is_save_file(const char* name) {
     size_t len;
@@ -1509,6 +1539,10 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
     }
     if (is_csb_original_save_basename(base) &&
         !validate_csb_original_save_import_path(importPath)) {
+        return -1;
+    }
+    if (dm2_sksave_slot_from_basename(base, NULL, NULL) &&
+        !validate_dm2_sksave_import_path(importPath)) {
         return -1;
     }
     snprintf(dst, sizeof(dst), "%s/%s", dataDir, base);
