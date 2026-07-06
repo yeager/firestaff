@@ -270,6 +270,7 @@ static const M12_VersionSpec g_dm1Versions[] = {
 static const M12_VersionSpec g_csbVersions[] = {
     {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611"},
     {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e"},
+    {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49"},
     {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68"},
     {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362"}
 };
@@ -917,12 +918,12 @@ static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET
         return count;
     }
 
-    if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
-        m12_add_unique_search_root(roots, &count, defaultOriginals);
-    }
     if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL)) {
         m12_copy_string(legacyFallbackDir, M12_ASSET_DATA_DIR_CAPACITY, legacyData);
         m12_add_unique_search_root(roots, &count, legacyData);
+    }
+    if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
+        m12_add_unique_search_root(roots, &count, defaultOriginals);
     }
     if (count == 0U) {
         m12_add_unique_search_root(roots, &count, ".");
@@ -2359,6 +2360,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     size_t rootCount;
     int dataDirResolvedToMatchedRoot = 0;
     int requestedFileScanParent = 0;
+    int honorRequestedDataDir = options && options->honorRequestedDataDir;
     int i;
     if (!status) {
         return 0;
@@ -2413,8 +2415,9 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
          * directory and materialize canonical runtime files. */
         effectiveRequestedDataDir = containerParent;
         requestedFileScanParent = 1;
-    } else if (m12_promote_game_subdir_scan_root(requestedDataDir,
-                                                promotedDataRoot)) {
+    } else if (!honorRequestedDataDir &&
+               m12_promote_game_subdir_scan_root(requestedDataDir,
+                                                 promotedDataRoot)) {
         /* A saved launcher config can point at ~/.firestaff/data/nexus after
          * a direct Nexus import/launch.  `firestaff --scan-data` defaults to
          * ~/.firestaff/data and sees every game, while the start menu would

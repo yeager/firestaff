@@ -107,7 +107,11 @@ static void make_empty_data_dir(char out[512]) {
 }
 
 static const char* default_data_root(char fallback[512]) {
+    const char* env = getenv("FIRESTAFF_DATA");
     const char* home = getenv("HOME");
+    if (env && env[0]) {
+        return env;
+    }
     if (!home || !home[0]) {
         return NULL;
     }
@@ -205,6 +209,8 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe startup-active expectation is opt-in");
     expect_true(opts.bootProbeExpectStartupFrameMin == -1,
                 "boot-probe startup-frame minimum expectation is opt-in");
+    expect_true(opts.bootProbeExpectStartupFrameMax == -1,
+                "boot-probe startup-frame maximum expectation is opt-in");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
@@ -229,7 +235,7 @@ static void run_real_data_handoff_if_available(void) {
     const char* data_dir = default_data_root(real_dir);
 
     if (!data_dir || !data_dir[0]) {
-        expect_skip("HOME is unset; no default Firestaff data root");
+        expect_skip("no FIRESTAFF_DATA and HOME is unset; no Firestaff data root");
         return;
     }
 
@@ -251,7 +257,7 @@ static void run_real_data_handoff_if_available(void) {
             !M12_AssetStatus_GameAvailable(&menu.assetStatus, kCases[i].gameId)) {
             char msg[96];
             snprintf(msg, sizeof(msg),
-                     "no launchable %s data under default data root",
+                     "no launchable %s data under configured data root",
                      kCases[i].gameId);
             expect_skip(msg);
             M12_StartupMenu_Destroy(&menu);
@@ -383,14 +389,14 @@ static void run_real_data_handoff_if_available(void) {
                     (void)TEST_MKDIR(appdata_dir);
                     test_setenv("APPDATA", appdata_dir);
                 }
-                opts.script = "wait120,key:enter,key:enter,key:space";
+                opts.script = "wait120,enter,enter,action";
                 opts.bootProbeExpectPhase = "nexus-runtime";
                 opts.bootProbeExpectPartyX = 11;
                 opts.bootProbeExpectPartyY = 29;
                 opts.bootProbeExpectPartyDir = 0;
                 opts.bootProbeExpectChampionCount = 1;
             } else if (strcmp(kCases[i].gameId, "theron") == 0) {
-                opts.script = "key:enter,key:enter,key:space";
+                opts.script = "enter,enter,action";
                 opts.bootProbeExpectPhase = "theron-runtime";
                 opts.bootProbeExpectPartyX = 3;
                 opts.bootProbeExpectPartyY = 5;
@@ -421,6 +427,27 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
                             "boot-probe proves CSB title startup progress while runtime is frozen");
+            }
+            if (strcmp(kCases[i].gameId, "dm2") == 0) {
+                M11_PhaseA_SetDefaultOptions(&opts);
+                opts.bootProbe = 1;
+                opts.bootProbeFrames = 2;
+                opts.gameId = "dm2";
+                opts.dataDir = data_dir;
+                opts.durationMs = 0;
+                opts.bootProbeExpectPhase = "dm2-startup-menu";
+                opts.bootProbeExpectStartupActive = 1;
+                opts.bootProbeExpectLevelLoaded = 1;
+                opts.bootProbeExpectRuntimeTickMax = 0;
+                opts.bootProbeExpectStartupFrameMax = 0;
+                opts.bootProbeExpectParty = 1;
+                opts.bootProbeExpectPartyX = 15;
+                opts.bootProbeExpectPartyY = 15;
+                opts.bootProbeExpectPartyDir = 0;
+                opts.bootProbeExpectChampions = 1;
+                opts.bootProbeExpectChampionCount = 4;
+                expect_true(M11_PhaseA_Run(&opts) == 0,
+                            "boot-probe proves DM2 startup menu gates preloaded level before runtime");
             }
             if (strcmp(kCases[i].gameId, "nexus") == 0) {
                 M11_PhaseA_SetDefaultOptions(&opts);
@@ -454,7 +481,7 @@ static void run_real_data_handoff_if_available(void) {
     }
 
     if (available_count == 0) {
-        expect_skip("no launchable game data under default data root");
+        expect_skip("no launchable game data under configured data root");
     }
 }
 

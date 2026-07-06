@@ -1041,6 +1041,7 @@ static int m12_apply_layout_migrations(M12_Config* config) {
 int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
     FILE* fp;
     char line[1024];
+    const char* envDataDir;
     int hadExistingFile;
     int shouldSave = 0;
     if (!config) {
@@ -1074,6 +1075,13 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
     if (dataDirOverride && dataDirOverride[0] != '\0') {
         m12_copy_string(config->dataDir, sizeof(config->dataDir), dataDirOverride);
         shouldSave = 1;
+    } else {
+        envDataDir = getenv("FIRESTAFF_DATA");
+        if (envDataDir && envDataDir[0] != '\0' &&
+            strcmp(config->dataDir, envDataDir) != 0) {
+            m12_copy_string(config->dataDir, sizeof(config->dataDir), envDataDir);
+            shouldSave = 1;
+        }
     }
     if (config->dataDir[0] == '\0') {
         FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);

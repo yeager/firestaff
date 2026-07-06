@@ -29,7 +29,7 @@ typedef struct {
     int presentEveryMs;    /* How often to present during the loop.
                               Default 16 (≈60Hz). */
     const char* script;    /* Optional comma-separated input script:
-                              up,down,left,right,enter,esc.  In boot-probe
+                              up,down,left,right,enter,action,esc.  In boot-probe
                               mode, waitN / wait:N tokens advance N idle
                               frames without input. */
     const char* dataDir;   /* Optional override for asset detection.
@@ -58,6 +58,7 @@ typedef struct {
     int bootProbeExpectRuntimeTickMax; /* Require runtimeTick <= this value. */
     int bootProbeExpectStartupActive; /* -1 ignore, otherwise exact 0/1. */
     int bootProbeExpectStartupFrameMin; /* Require startupFrame >= value. */
+    int bootProbeExpectStartupFrameMax; /* Require startupFrame <= value. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

@@ -311,37 +311,49 @@ int csb_v1_util_flow_entrance_command_for_action(
     }
 }
 
-int csb_v1_util_flow_execution_for_action(
-    CSB_V1_UtilFlowAction action,
-    CSB_V1_UtilExecution *out_execution)
+void csb_v1_util_flow_action_plan_init(CSB_V1_UtilActionPlan *plan)
 {
-    if (!out_execution) {
+    if (!plan) {
+        return;
+    }
+    memset(plan, 0, sizeof(*plan));
+    plan->kind = CSB_V1_UTIL_ACTION_PLAN_IGNORE;
+    plan->action = CSB_V1_UTIL_ACTION_EXIT;
+    plan->entrance_command = 0;
+    plan->preview_active = 0;
+}
+
+int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
+                                     CSB_V1_UtilActionPlan *out_plan)
+{
+    if (!out_plan) {
         return 0;
     }
-    memset(out_execution, 0, sizeof(*out_execution));
-    out_execution->kind = CSB_V1_UTIL_EXEC_IGNORE;
+    csb_v1_util_flow_action_plan_init(out_plan);
+    out_plan->action = action;
     switch (action) {
     case CSB_V1_UTIL_ACTION_LOAD:
     case CSB_V1_UTIL_ACTION_NEW:
-        out_execution->kind = CSB_V1_UTIL_EXEC_ENTRANCE_COMMAND;
-        out_execution->entrance_command =
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND;
+        out_plan->entrance_command =
             csb_v1_util_flow_entrance_command_for_action(action);
-        out_execution->preview_active = 0;
-        return out_execution->entrance_command != 0;
+        out_plan->preview_active = 0;
+        return 1;
     case CSB_V1_UTIL_ACTION_IMPORT:
-        out_execution->kind = CSB_V1_UTIL_EXEC_STATUS_REDRAW;
-        out_execution->preview_active = 0;
-        out_execution->status_context = "BOOT";
-        out_execution->status_message = "CSB IMPORT READY";
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY;
+        out_plan->preview_active = 0;
+        out_plan->status_scope = "BOOT";
+        out_plan->status = "CSB IMPORT READY";
         return 1;
     case CSB_V1_UTIL_ACTION_VIEW:
-        out_execution->kind = CSB_V1_UTIL_EXEC_STATUS_REDRAW;
-        out_execution->preview_active = 1;
-        out_execution->status_context = "BOOT";
-        out_execution->status_message = "CSB PARTY READY";
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_VIEW_READY;
+        out_plan->preview_active = 1;
+        out_plan->status_scope = "BOOT";
+        out_plan->status = "CSB PARTY READY";
         return 1;
     case CSB_V1_UTIL_ACTION_EXIT:
     default:
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_IGNORE;
         return 1;
     }
 }

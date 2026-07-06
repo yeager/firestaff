@@ -12,7 +12,7 @@ extern "C" {
 enum {
     M12_ASSET_DATA_DIR_CAPACITY = 512,
     M12_ASSET_MD5_CAPACITY = 33,
-    M12_ASSET_MAX_VERSIONS_PER_GAME = 4,
+    M12_ASSET_MAX_VERSIONS_PER_GAME = 5,
     M12_ASSET_MAX_REQUIRED_FILES_PER_GAME = 4,
     M12_ASSET_GAME_COUNT = 5  /* DM1, CSB, DM2, Nexus, Theron */
 
@@ -77,6 +77,7 @@ typedef struct {
     M12_AssetStatusScanProgressFn progressFn;
     void* progressUserData;
     const int* cancelFlag;
+    int honorRequestedDataDir;
 } M12_AssetStatusScanOptions;
 
 typedef struct {

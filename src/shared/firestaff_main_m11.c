@@ -31,7 +31,7 @@ static void usage(const char* prog) {
             "  --width <px>        Window width (default: 640)\n"
             "  --height <px>       Window height (default: 400)\n"
             "  --scale-mode <n>    Graphics mode: 1=V1, 2=V2.1, 3=V2.2\n"
-            "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,esc\n"
+            "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
             "  --scan-game-data    Alias for --scan-data\n"
@@ -50,6 +50,7 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-runtime-tick-max <n> Fail unless runtime tick is at most n\n"
             "  --boot-probe-expect-startup-active <0|1> Fail unless startup-active flag matches\n"
             "  --boot-probe-expect-startup-frame-min <n> Fail unless startup frame is at least n\n"
+            "  --boot-probe-expect-startup-frame-max <n> Fail unless startup frame is at most n\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -136,7 +137,14 @@ static void print_scan_game(const M12_AssetStatus* status,
 
 static int run_data_scan(const char* dataDir) {
     M12_AssetStatus status;
-    M12_AssetStatus_Scan(&status, dataDir);
+    if (dataDir && dataDir[0] != '\0') {
+        M12_AssetStatusScanOptions scanOptions;
+        memset(&scanOptions, 0, sizeof(scanOptions));
+        scanOptions.honorRequestedDataDir = 1;
+        (void)M12_AssetStatus_ScanWithOptions(&status, dataDir, &scanOptions);
+    } else {
+        M12_AssetStatus_Scan(&status, dataDir);
+    }
     printf("Firestaff game-data scan\n");
     printf("Data dir: %s\n\n", M12_AssetStatus_GetDataDir(&status));
     print_scan_game(&status, "dm1", "Dungeon Master");
@@ -259,6 +267,11 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--boot-probe-expect-startup-frame-min") == 0 &&
             i + 1 < argc) {
             opts.bootProbeExpectStartupFrameMin = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-startup-frame-max") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectStartupFrameMax = atoi(argv[++i]);
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {

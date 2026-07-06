@@ -142,6 +142,8 @@ int main(void) {
                 "CSB missing-data popup should expose visual missing-data context")) return 1;
     if (!expect(strcmp(state.messageGameId, "csb") == 0,
                 "CSB missing-data popup should carry the CSB game id for card art")) return 1;
+    if (!expect(state.activatedIndex == 1,
+                "CSB missing-data popup should bind the CSB card art index")) return 1;
     if (!expect(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") &&
                 strstr(state.messageLine2, "DUNGEON.DAT"),
                 "CSB V2.1 missing-data popup names both required V1 runtime files")) return 1;

@@ -22,7 +22,7 @@ int main(void)
 {
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilInputResult result;
-    CSB_V1_UtilExecution execution;
+    CSB_V1_UtilActionPlan action_plan;
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilRenderRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
     int row_count;
@@ -64,6 +64,44 @@ int main(void)
                   CSB_V1_UTIL_ACTION_VIEW) ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
           "utility flow actions resolve entrance source commands");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_LOAD,
+              &action_plan) &&
+              action_plan.kind ==
+                  CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND &&
+              action_plan.entrance_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+              action_plan.preview_active == 0,
+          "utility action plan resolves Load to entrance resume");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_NEW,
+              &action_plan) &&
+              action_plan.kind ==
+                  CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND &&
+              action_plan.entrance_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+          "utility action plan resolves New to entrance dungeon");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_IMPORT,
+              &action_plan) &&
+              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY &&
+              action_plan.preview_active == 0 &&
+              strcmp(action_plan.status_scope, "BOOT") == 0 &&
+              strcmp(action_plan.status, "CSB IMPORT READY") == 0,
+          "utility action plan resolves Import status");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_VIEW,
+              &action_plan) &&
+              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_VIEW_READY &&
+              action_plan.preview_active == 1 &&
+              strcmp(action_plan.status_scope, "BOOT") == 0 &&
+              strcmp(action_plan.status, "CSB PARTY READY") == 0,
+          "utility action plan resolves View status");
+    check(csb_v1_util_flow_plan_for_action(
+              CSB_V1_UTIL_ACTION_EXIT,
+              &action_plan) &&
+              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_IGNORE,
+          "utility action plan resolves Exit as ignored");
 
     check(csb_v1_util_flow_handle_input(
               &flow,
@@ -124,42 +162,6 @@ int main(void)
               csb_v1_util_flow_entrance_command_for_action(
                   CSB_V1_UTIL_ACTION_EXIT) == 0,
           "non-entrance utility actions do not synthesize startup commands");
-    check(csb_v1_util_flow_execution_for_action(
-              CSB_V1_UTIL_ACTION_LOAD,
-              &execution) &&
-              execution.kind == CSB_V1_UTIL_EXEC_ENTRANCE_COMMAND &&
-              execution.entrance_command ==
-                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
-              execution.preview_active == 0,
-          "Load utility action resolves to entrance-command execution");
-    check(csb_v1_util_flow_execution_for_action(
-              CSB_V1_UTIL_ACTION_NEW,
-              &execution) &&
-              execution.kind == CSB_V1_UTIL_EXEC_ENTRANCE_COMMAND &&
-              execution.entrance_command ==
-                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
-              execution.preview_active == 0,
-          "New utility action resolves to entrance-command execution");
-    check(csb_v1_util_flow_execution_for_action(
-              CSB_V1_UTIL_ACTION_IMPORT,
-              &execution) &&
-              execution.kind == CSB_V1_UTIL_EXEC_STATUS_REDRAW &&
-              execution.preview_active == 0 &&
-              strcmp(execution.status_message, "CSB IMPORT READY") == 0,
-          "Import utility action resolves to status execution");
-    check(csb_v1_util_flow_execution_for_action(
-              CSB_V1_UTIL_ACTION_VIEW,
-              &execution) &&
-              execution.kind == CSB_V1_UTIL_EXEC_STATUS_REDRAW &&
-              execution.preview_active == 1 &&
-              strcmp(execution.status_message, "CSB PARTY READY") == 0,
-          "View utility action resolves to preview status execution");
-    check(csb_v1_util_flow_execution_for_action(
-              CSB_V1_UTIL_ACTION_EXIT,
-              &execution) &&
-              execution.kind == CSB_V1_UTIL_EXEC_IGNORE,
-          "Exit utility action resolves to ignored execution");
-
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed ? 1 : 0;
 }
