@@ -1371,6 +1371,15 @@ int main(void) {
                         view.csbState.startup_entrance_last_command == last_command,
                     "M11 CSB utility preview click is consumed by utility panel");
     }
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_import_selected_action_index == 0 &&
+                    view.csbState.startup_import_preview_active == 0,
+                "M11 CSB utility cursor movement closes imported-party preview");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_import_selected_action_index == 1,
+                "M11 CSB utility keyboard returns to LOAD after preview cursor close");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     40,

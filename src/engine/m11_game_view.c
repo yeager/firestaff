@@ -3147,11 +3147,13 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
         return M11_GAME_INPUT_REDRAW;
     }
     if (input == M12_MENU_INPUT_UP) {
+        state->csbState.startup_import_preview_active = 0;
         state->csbState.startup_import_selected_action_index =
             csb_v1_util_flow_move_action_cursor(&flow, -1);
         return M11_GAME_INPUT_REDRAW;
     }
     if (input == M12_MENU_INPUT_DOWN) {
+        state->csbState.startup_import_preview_active = 0;
         state->csbState.startup_import_selected_action_index =
             csb_v1_util_flow_move_action_cursor(&flow, 1);
         return M11_GAME_INPUT_REDRAW;
