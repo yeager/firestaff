@@ -272,6 +272,7 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
     s->rain_intensity = 0;
     s->time_of_day  = 0.5f;
     s->dirty        = 1;
+    s->random_seed  = 0x0100u;
 
     /* Initialize all view squares to empty */
     for (int i = 0; i < DM2_SQ_COUNT; i++) {
@@ -658,6 +659,20 @@ int dm2_v1_viewport_cloud_frame_for_tick(int tick_count,
      * DRAW_CHIP_OF_MAGIC_MAP instead of the missile directional frame path. */
     return dm2_v1_viewport_map_chip_frame_index((tick_count & 1) + 1,
                                                 frame_count);
+}
+
+int dm2_v1_viewport_cloud_flip_for_seed(uint32_t *seed)
+{
+    uint32_t next_seed;
+
+    if (!seed) return 0;
+    next_seed = (*seed * 0xbb40e62du) + 11u;
+    *seed = next_seed;
+    /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP lines 10743-10749
+     * passes RAND02() to DRAW_CHIP_OF_MAGIC_MAP for dbCloud. RAND02
+     * lines 33533-33541 advances glbRandomSeed with the same LCG and
+     * returns `(glbRandomSeed >> 8) & 3`. */
+    return (int)((next_seed >> 8) & 3u);
 }
 
 int dm2_v1_viewport_creature_frame_for_direction(int requested_frame,
@@ -2011,7 +2026,8 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 if (p->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD) {
                     int frame_count =
                         dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
-                    flip_mirror = 0;
+                    flip_mirror =
+                        dm2_v1_viewport_cloud_flip_for_seed(&s->random_seed);
                     render_frame =
                         dm2_v1_viewport_cloud_frame_for_tick(s->tick_count,
                                                              frame_count);

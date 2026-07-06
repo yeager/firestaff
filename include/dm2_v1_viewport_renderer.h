@@ -164,6 +164,7 @@ int dm2_v1_viewport_projectile_flip_for_direction(int projectile_direction,
                                                   int party_direction);
 int dm2_v1_viewport_cloud_frame_for_tick(int tick_count,
                                          int frame_count);
+int dm2_v1_viewport_cloud_flip_for_seed(uint32_t *seed);
 int dm2_v1_viewport_creature_frame_for_direction(int requested_frame,
                                                  int creature_direction,
                                                  int party_direction,
@@ -299,6 +300,7 @@ typedef struct {
     /* Rendering state */
     int dirty;                 /* 1=viewport needs full redraw */
     int tick_count;           /* frame counter for weather animation */
+    uint32_t random_seed;      /* skproject RAND02-compatible render seed */
 
     DM2_V1_ViewportAssetFetch asset_fetch;
     void *asset_user;

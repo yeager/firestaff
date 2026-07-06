@@ -95,7 +95,7 @@ static int test_dm2_asset_fetch(void *user,
             for (int frame = 0; frame < 7; ++frame) {
                 for (int x = 0; x < 7; ++x) {
                     projectile_flip_atlas[y * 49 + frame * 7 + x] =
-                        (uint8_t)(frame == 4 ? 21 + x : 1 + frame);
+                        (uint8_t)((frame == 1 || frame == 4) ? 21 + x : 1 + frame);
                 }
             }
         }
@@ -464,6 +464,12 @@ static void test_sprite_asset_provider(void)
     CHECK("DM2 cloud frame follows skproject tick alternation",
           dm2_v1_viewport_cloud_frame_for_tick(0, 7) == 1 &&
               dm2_v1_viewport_cloud_frame_for_tick(1, 7) == 2);
+    {
+        uint32_t seed = 0x0100u;
+        CHECK("DM2 cloud flip follows skproject RAND02 LCG",
+              dm2_v1_viewport_cloud_flip_for_seed(&seed) == 1 &&
+                  seed == 0x40e62d0bu);
+    }
     CHECK("DM2 creature directional frame keeps short atlases animated",
           dm2_v1_viewport_creature_frame_for_direction(3, 1, 0, 2) == 1);
     CHECK("DM2 creature directional frame follows view-relative parity frames",
@@ -679,6 +685,7 @@ static void test_sprite_asset_provider(void)
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
     viewport.tick_count = 0;
+    viewport.random_seed = 0x0100u;
     viewport.projectile_count = 1;
     viewport.projectiles[0].projectile_category = 0x0d;
     viewport.projectiles[0].projectile_type = 0x87;
@@ -697,6 +704,32 @@ static void test_sprite_asset_provider(void)
           viewport.asset_projectile_drawn_count == 1 &&
               framebuffer[((70 - 3) * 320) + (120 - 3)] == 2 &&
               framebuffer[(70 * 320) + 120] == 2);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    viewport.tick_count = 0;
+    viewport.random_seed = 0x0100u;
+    viewport.projectile_count = 1;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 0x87;
+    viewport.projectiles[0].frame_index = 0x00;
+    viewport.projectiles[0].direction = 1;
+    viewport.projectiles[0].render_kind = DM2_V1_PROJECTILE_RENDER_CLOUD;
+    viewport.projectiles[0].screen_x = 120;
+    viewport.projectiles[0].screen_y = 70;
+    s_projectile_flip_fixture = 1;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_projectiles(&viewport);
+    s_projectile_flip_fixture = 0;
+    CHECK("cloud render applies skproject RAND02 flip mirror",
+          viewport.asset_projectile_drawn_count == 1 &&
+              viewport.random_seed == 0x40e62d0bu &&
+              framebuffer[((70 - 3) * 320) + (120 - 3)] == 27 &&
+              framebuffer[((70 - 3) * 320) + (120 + 3)] == 21);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

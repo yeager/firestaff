@@ -826,6 +826,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_time(
         &viewport,
         (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
+    viewport.random_seed = rt->weather.weather_seed;
     dm2_runtime_populate_front_square(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_projectiles(&viewport);
     dm2_runtime_populate_carried_item(rt, &viewport);
@@ -851,6 +852,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_carried_item_drawn_count;
     g_dm2_last_fallback_carried_item_count =
         viewport.fallback_carried_item_drawn_count;
+    rt->weather.weather_seed = viewport.random_seed;
 
     return 0;
 }
