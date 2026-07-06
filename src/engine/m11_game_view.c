@@ -3156,30 +3156,45 @@ static int m11_draw_csb_entrance_closed_doors_asset(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
     int framebufferWidth,
-    int framebufferHeight)
+    int framebufferHeight,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
     const M11_AssetSlot *leftDoor;
     const M11_AssetSlot *rightDoor;
 
     if (!state || !framebuffer || framebufferWidth < 232 ||
-        framebufferHeight < 189 || !state->assetsAvailable) {
+        framebufferHeight < 189 || !plan || !state->assetsAvailable ||
+        plan->closed_left_w <= 0 || plan->closed_left_h <= 0 ||
+        plan->closed_right_w <= 0 || plan->closed_right_h <= 0) {
         return 0;
     }
     leftDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 2u);
     rightDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 3u);
-    if (!leftDoor || !rightDoor || leftDoor->height < 161u ||
-        rightDoor->height < 161u) {
+    if (!leftDoor || !rightDoor ||
+        leftDoor->width < (unsigned int)(plan->closed_left_source_x + plan->closed_left_w) ||
+        leftDoor->height < (unsigned int)(plan->closed_left_source_y + plan->closed_left_h) ||
+        rightDoor->width < (unsigned int)(plan->closed_right_source_x + plan->closed_right_w) ||
+        rightDoor->height < (unsigned int)(plan->closed_right_source_y + plan->closed_right_h)) {
         return 0;
     }
-    /* ReDMCSB ENTRANCE.C F0806 lines 721-778 loads C002/C003/C004 before
-     * F0439 draws the waiting entrance; DATA.C source boxes place the closed
-     * doors at screen y=28 over the C004 interface image. */
-    M11_AssetLoader_BlitRegion(leftDoor, 0, 0, 105, 161,
+    M11_AssetLoader_BlitRegion(leftDoor,
+                               plan->closed_left_source_x,
+                               plan->closed_left_source_y,
+                               plan->closed_left_w,
+                               plan->closed_left_h,
                                framebuffer, framebufferWidth, framebufferHeight,
-                               0, 28, -1);
-    M11_AssetLoader_BlitRegion(rightDoor, 0, 0, 127, 161,
+                               plan->closed_left_dest_x,
+                               plan->closed_left_dest_y,
+                               -1);
+    M11_AssetLoader_BlitRegion(rightDoor,
+                               plan->closed_right_source_x,
+                               plan->closed_right_source_y,
+                               plan->closed_right_w,
+                               plan->closed_right_h,
                                framebuffer, framebufferWidth, framebufferHeight,
-                               105, 28, -1);
+                               plan->closed_right_dest_x,
+                               plan->closed_right_dest_y,
+                               -1);
     return 1;
 }
 
@@ -3189,15 +3204,17 @@ static int m11_draw_csb_entrance_opening_frame_asset(
     int framebufferWidth,
     int framebufferHeight,
     const unsigned char *dungeonFrame,
-    const EntranceCompatDoorStep *door)
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
     const M11_AssetSlot *entranceScreen;
     const M11_AssetSlot *leftDoor;
     const M11_AssetSlot *rightDoor;
+    EntranceCompatDoorStep door;
     EntranceCompatCompositePixels pixels;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
-        framebufferHeight <= 0 || !dungeonFrame || !door ||
+        framebufferHeight <= 0 || !dungeonFrame || !plan ||
+        !plan->opening_door_valid ||
         !state->assetsAvailable) {
         return 0;
     }
@@ -3220,12 +3237,24 @@ static int m11_draw_csb_entrance_opening_frame_asset(
     pixels.rightDoor = rightDoor->pixels;
     pixels.rightDoorWidth = rightDoor->width;
     pixels.rightDoorHeight = rightDoor->height;
+    memset(&door, 0, sizeof(door));
+    door.animationStep = (unsigned int)plan->opening_door_step;
+    door.leftBoxX = (unsigned int)plan->opening_left_dest_x;
+    door.leftBoxY = (unsigned int)plan->opening_left_source_y;
+    door.leftBoxW = (unsigned int)plan->opening_left_w;
+    door.leftBoxH = (unsigned int)plan->opening_left_h;
+    door.rightBoxX = (unsigned int)plan->opening_right_dest_x;
+    door.rightBoxY = (unsigned int)plan->opening_right_source_y;
+    door.rightBoxW = (unsigned int)plan->opening_right_w;
+    door.rightBoxH = (unsigned int)plan->opening_right_h;
+    door.leftSourceX = (unsigned int)plan->opening_left_source_x;
+    door.rightSourceX = (unsigned int)plan->opening_right_source_x;
     return ENTRANCE_Compat_CompositeDoorOpeningFrame(
         framebuffer,
         (unsigned int)framebufferWidth,
         (unsigned int)framebufferHeight,
         &pixels,
-        door);
+        &door);
 }
 
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
@@ -3301,12 +3330,9 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
         if (drew_asset &&
             plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
-            EntranceCompatDoorStep door;
             unsigned char dungeonFrame[320 * 200];
             if (framebufferWidth == 320 && framebufferHeight == 200 &&
-                ENTRANCE_Compat_GetDoorAnimationStep(
-                    (unsigned int)plan.opening_step,
-                    &door)) {
+                plan.opening_door_valid) {
                 memset(dungeonFrame, 0, sizeof(dungeonFrame));
                 if (m11_render_csb_boot_viewport(state,
                                                  dungeonFrame,
@@ -3318,7 +3344,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                         framebufferWidth,
                         framebufferHeight,
                         dungeonFrame,
-                        &door)) {
+                        &plan)) {
                     return;
                 }
             }
@@ -3328,23 +3354,24 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                 state,
                 framebuffer,
                 framebufferWidth,
-                framebufferHeight);
+                framebufferHeight,
+                &plan);
         } else {
             m11_draw_csb_entrance_door_panel(framebuffer,
                                              framebufferWidth,
                                              framebufferHeight,
-                                             0,
-                                             28,
-                                             101,
-                                             161,
+                                             plan.closed_left_dest_x,
+                                             plan.closed_left_dest_y,
+                                             plan.closed_left_w,
+                                             plan.closed_left_h,
                                              M11_COLOR_DARK_GRAY);
             m11_draw_csb_entrance_door_panel(framebuffer,
                                              framebufferWidth,
                                              framebufferHeight,
-                                             109,
-                                             28,
-                                             123,
-                                             161,
+                                             plan.closed_right_dest_x,
+                                             plan.closed_right_dest_y,
+                                             plan.closed_right_w,
+                                             plan.closed_right_h,
                                              M11_COLOR_DARK_GRAY);
         }
         return;
@@ -3354,7 +3381,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             state,
             framebuffer,
             framebufferWidth,
-            framebufferHeight);
+            framebufferHeight,
+            &plan);
     }
 
     /* ReDMCSB ENTRANCE.C F0806 lines 409-441 selects the CSB entrance

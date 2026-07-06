@@ -8,7 +8,8 @@ enum {
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 30,
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
-    CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800
+    CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
+    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 28
 };
 
 const char* csb_v1_startup_stage_name_pc34(CSB_V1_StartupStage_PC34 stage)
@@ -99,6 +100,101 @@ static void csb_v1_startup_clear_title_rect_pc34(
     plan->title_dest_w = 0;
     plan->title_dest_h = 0;
     plan->title_special_palette = -1;
+}
+
+static void csb_v1_startup_clear_door_rects_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    plan->closed_left_source_x = 0;
+    plan->closed_left_source_y = 0;
+    plan->closed_left_dest_x = 0;
+    plan->closed_left_dest_y = 0;
+    plan->closed_left_w = 0;
+    plan->closed_left_h = 0;
+    plan->closed_right_source_x = 0;
+    plan->closed_right_source_y = 0;
+    plan->closed_right_dest_x = 0;
+    plan->closed_right_dest_y = 0;
+    plan->closed_right_w = 0;
+    plan->closed_right_h = 0;
+    plan->opening_door_valid = 0;
+    plan->opening_door_step = 0;
+    plan->opening_left_source_x = 0;
+    plan->opening_left_source_y = 0;
+    plan->opening_left_dest_x = 0;
+    plan->opening_left_dest_y = 0;
+    plan->opening_left_w = 0;
+    plan->opening_left_h = 0;
+    plan->opening_right_source_x = 0;
+    plan->opening_right_source_y = 0;
+    plan->opening_right_dest_x = 0;
+    plan->opening_right_dest_y = 0;
+    plan->opening_right_w = 0;
+    plan->opening_right_h = 0;
+}
+
+static void csb_v1_startup_set_closed_door_rects_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    /* ReDMCSB ENTRANCE.C F0806 lines 721-778 loads C002/C003 door
+     * bitmaps before F0439/F0441 presents C004 at the entrance wait loop.
+     * DATA.C places the closed left and right doors at screen y=28. */
+    plan->closed_left_source_x = 0;
+    plan->closed_left_source_y = 0;
+    plan->closed_left_dest_x = 0;
+    plan->closed_left_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
+    plan->closed_left_w = 105;
+    plan->closed_left_h = 161;
+    plan->closed_right_source_x = 0;
+    plan->closed_right_source_y = 0;
+    plan->closed_right_dest_x = 105;
+    plan->closed_right_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
+    plan->closed_right_w = 127;
+    plan->closed_right_h = 161;
+}
+
+static void csb_v1_startup_set_opening_door_rects_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int animationStep;
+    int leftRight;
+    int rightLeft;
+
+    if (!plan || plan->opening_step <= 0) {
+        return;
+    }
+    /* ReDMCSB ENTRANCE.C F0438/F0807 lines 142-304 run 31 source
+     * animation steps, with moving C002/C003 strips copied at screen y=28. */
+    if (plan->opening_step < 1 || plan->opening_step >= 32) {
+        return;
+    }
+    animationStep = plan->opening_step;
+    leftRight = 100 - 4 * (animationStep - 1);
+    rightLeft = 109 + 4 * (animationStep - 1);
+    plan->opening_door_valid = 1;
+    plan->opening_door_step = animationStep;
+    if (leftRight >= 0) {
+        plan->opening_left_source_x = (animationStep & 0x00fc) << 2;
+        plan->opening_left_source_y = 0;
+        plan->opening_left_dest_x = 0;
+        plan->opening_left_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
+        plan->opening_left_w = leftRight + 1;
+        plan->opening_left_h = 161;
+    }
+    if (rightLeft <= 231) {
+        plan->opening_right_source_x = (animationStep & 0x0003) << 2;
+        plan->opening_right_source_y = 0;
+        plan->opening_right_dest_x = rightLeft;
+        plan->opening_right_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
+        plan->opening_right_w = 231 - rightLeft + 1;
+        plan->opening_right_h = 161;
+    }
 }
 
 static void csb_v1_startup_set_title_rect_pc34(
@@ -301,6 +397,7 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.title_source_step = 0;
     plan.title_stage = 0;
     csb_v1_startup_clear_title_rect_pc34(&plan);
+    csb_v1_startup_clear_door_rects_pc34(&plan);
     plan.blink_prompt_visible = 0;
     plan.opening_step = 0;
     if (!state || !state->entrance_active) {
@@ -341,10 +438,16 @@ int csb_v1_startup_build_render_plan_pc34(
             ? CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34
             : CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
         plan.opening_step = state->opening_step;
+        csb_v1_startup_set_closed_door_rects_pc34(&plan);
+        if (plan.surface ==
+            CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+            csb_v1_startup_set_opening_door_rects_pc34(&plan);
+        }
         *out_plan = plan;
         return 1;
     }
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    csb_v1_startup_set_closed_door_rects_pc34(&plan);
     plan.blink_prompt_visible =
         ((state->entrance_frame / 12) & 1) == 0;
     *out_plan = plan;
