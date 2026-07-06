@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.37  (2026-07-06)",
+    "  - Packages the post-v3.0.36 CSB entrance-door boot phase now on main.",
+    "  - CSB new-game, bonus, resume, and utility-import starts now run a ReDMCSB-shaped pre-open delay plus 31-step door-opening phase before runtime handoff.",
+    "  - Release verification covers the focused CSB startup gates and Phase A probe before GitHub Actions packaging.",
+    "",
     "V3.0.36  (2026-07-06)",
     "  - Packages the post-v3.0.35 DM1 V1 action-area geometry hardening now on main.",
     "  - DM1 V1 action-menu background clear/blit geometry now follows the ReDMCSB source rectangles while preserving source action-row and hand-icon hit zones.",
@@ -409,5 +414,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.36";
+    return "3.0.37";
 }
