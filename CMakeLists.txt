@@ -8219,6 +8219,31 @@ if(BUILD_TESTING)
         NAME asset_status_nexus_bpk_trailer_metadata
         COMMAND test_asset_status_nexus_bpk_trailer_metadata
     )
+    add_executable(test_nexus_v1_availability_profile_gate
+        tests/nexus_v1_availability_profile_gate_test.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_boot_profile.c
+    )
+    target_link_libraries(test_nexus_v1_availability_profile_gate PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_nexus_v1_availability_profile_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_nexus_v1_availability_profile_gate PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_availability_profile_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_availability_profile_gate
+        COMMAND test_nexus_v1_availability_profile_gate
+    )
     if(NOT MSVC)
         target_compile_options(test_dm1_pc34_multilanguage_required_gate PRIVATE -Wall -Wextra -O2)
     endif()
