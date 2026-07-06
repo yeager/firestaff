@@ -12225,10 +12225,20 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->partyY = state->world.party.mapY;
     out->partyDir = state->world.party.direction;
     out->runtimeTick = (int)state->world.gameTick;
-    snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-             out->dm1StartupIntroBypassed
-                 ? "dm1-runtime-direct"
-                 : "dm1-startup-or-runtime");
+    if (strcmp(state->sourceId, "dm1") == 0) {
+        if (!out->levelLoaded) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "dm1-loading");
+        } else {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     out->dm1StartupIntroBypassed
+                         ? "dm1-runtime-direct"
+                         : "dm1-runtime");
+        }
+    } else {
+        snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                 out->levelLoaded ? "runtime" : "loading");
+    }
     return 1;
 }
 

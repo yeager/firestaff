@@ -254,6 +254,10 @@ static void run_real_data_handoff_if_available(void) {
                     "direct launch boot receipt keeps source identity");
         expect_true(receipt.startupPhase[0] != '\0',
                     "direct launch boot receipt names startup/runtime phase");
+        if (strcmp(kCases[i].gameId, "dm1") == 0) {
+            expect_true(strcmp(receipt.startupPhase, "dm1-runtime") == 0,
+                        "direct launch boot receipt names DM1 runtime phase");
+        }
 
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
@@ -267,7 +271,9 @@ static void run_real_data_handoff_if_available(void) {
             opts.gameId = kCases[i].gameId;
             opts.dataDir = data_dir;
             opts.durationMs = 0;
-            if (strcmp(kCases[i].gameId, "dm2") == 0) {
+            if (strcmp(kCases[i].gameId, "dm1") == 0) {
+                opts.bootProbeExpectPhase = "dm1-runtime";
+            } else if (strcmp(kCases[i].gameId, "dm2") == 0) {
                 opts.script = "enter";
                 opts.bootProbeExpectPhase = "dm2-runtime";
             } else if (strcmp(kCases[i].gameId, "csb") == 0) {
