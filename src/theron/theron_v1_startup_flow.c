@@ -82,6 +82,144 @@ void theron_v1_startup_flow_init(Theron_StartupFlow *flow) {
     flow->phase = THERON_STARTUP_PHASE_TITLE;
 }
 
+void theron_v1_startup_action_init(Theron_StartupAction *action) {
+    if (!action) {
+        return;
+    }
+    memset(action, 0, sizeof(*action));
+    action->kind = THERON_STARTUP_ACTION_NONE;
+    action->selected_dungeon = THERON_DUNGEON_INVALID;
+    action->cursor = 0;
+    action->continue_focus = 0;
+    action->mirror_index = -1;
+}
+
+static Theron_DungeonID tqr_startup_clamp_stage(Theron_DungeonID dungeon_id) {
+    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT) {
+        return THERON_DUNGEON_1_HALL_OF_RECORDS;
+    }
+    return dungeon_id;
+}
+
+Theron_StartupResult theron_v1_startup_handle_input(
+    Theron_StartupPhase phase,
+    Theron_DungeonID selected_dungeon,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action) {
+
+    Theron_DungeonID selected;
+
+    if (!out_action) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+    theron_v1_startup_action_init(out_action);
+    selected = tqr_startup_clamp_stage(selected_dungeon);
+    out_action->selected_dungeon = selected;
+    out_action->cursor = soul_cursor;
+    out_action->continue_focus = continue_focus ? 1 : 0;
+
+    if (input == THERON_STARTUP_INPUT_NONE) {
+        return THERON_STARTUP_OK;
+    }
+    if (input == THERON_STARTUP_INPUT_BACK) {
+        if (phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
+            phase == THERON_STARTUP_PHASE_READY) {
+            out_action->kind = THERON_STARTUP_ACTION_SHOW_STAGE_SELECT;
+            out_action->cursor = 0;
+            out_action->continue_focus = 0;
+        } else {
+            out_action->kind = THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER;
+        }
+        return THERON_STARTUP_OK;
+    }
+
+    if (phase == THERON_STARTUP_PHASE_TITLE) {
+        if (input == THERON_STARTUP_INPUT_ACCEPT ||
+            input == THERON_STARTUP_INPUT_ACTION) {
+            out_action->kind = THERON_STARTUP_ACTION_SHOW_STAGE_SELECT;
+            out_action->cursor = 0;
+            out_action->continue_focus = 0;
+        }
+        return THERON_STARTUP_OK;
+    }
+
+    if (phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        if (input == THERON_STARTUP_INPUT_UP) {
+            if (continue_focus) {
+                out_action->continue_focus = 0;
+            } else if (selected > THERON_DUNGEON_1_HALL_OF_RECORDS) {
+                selected = (Theron_DungeonID)(selected - 1);
+            } else if (has_continue) {
+                out_action->continue_focus = 1;
+            }
+            out_action->selected_dungeon = selected;
+            out_action->kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
+            return THERON_STARTUP_OK;
+        }
+        if (input == THERON_STARTUP_INPUT_DOWN) {
+            if (continue_focus) {
+                out_action->continue_focus = 0;
+            } else if (selected < THERON_DUNGEON_COUNT) {
+                selected = (Theron_DungeonID)(selected + 1);
+            }
+            out_action->selected_dungeon = selected;
+            out_action->kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
+            return THERON_STARTUP_OK;
+        }
+        if (input == THERON_STARTUP_INPUT_ACCEPT ||
+            input == THERON_STARTUP_INPUT_ACTION) {
+            out_action->kind = continue_focus
+                ? THERON_STARTUP_ACTION_CONTINUE_SAVE
+                : THERON_STARTUP_ACTION_CHOOSE_STAGE;
+            out_action->selected_dungeon = selected;
+            return THERON_STARTUP_OK;
+        }
+        return THERON_STARTUP_OK;
+    }
+
+    if (phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
+        phase == THERON_STARTUP_PHASE_READY) {
+        int cursor = soul_cursor;
+        if (cursor < 0 || cursor > THERON_STARTUP_HERO_MIRROR_COUNT) {
+            cursor = 0;
+        }
+        if (input == THERON_STARTUP_INPUT_LEFT ||
+            input == THERON_STARTUP_INPUT_UP) {
+            out_action->cursor =
+                (cursor + THERON_STARTUP_HERO_MIRROR_COUNT) %
+                (THERON_STARTUP_HERO_MIRROR_COUNT + 1);
+            out_action->kind = THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR;
+            return THERON_STARTUP_OK;
+        }
+        if (input == THERON_STARTUP_INPUT_RIGHT ||
+            input == THERON_STARTUP_INPUT_DOWN) {
+            out_action->cursor =
+                (cursor + 1) % (THERON_STARTUP_HERO_MIRROR_COUNT + 1);
+            out_action->kind = THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR;
+            return THERON_STARTUP_OK;
+        }
+        if (input == THERON_STARTUP_INPUT_ACCEPT &&
+            cursor < THERON_STARTUP_HERO_MIRROR_COUNT) {
+            out_action->cursor = cursor;
+            out_action->mirror_index = cursor;
+            out_action->kind = THERON_STARTUP_ACTION_TOGGLE_MIRROR;
+            return THERON_STARTUP_OK;
+        }
+        if ((input == THERON_STARTUP_INPUT_ACCEPT &&
+             cursor == THERON_STARTUP_HERO_MIRROR_COUNT) ||
+            input == THERON_STARTUP_INPUT_ACTION) {
+            out_action->cursor = cursor;
+            out_action->kind = THERON_STARTUP_ACTION_ENTER_FORCEFIELD;
+            return THERON_STARTUP_OK;
+        }
+    }
+    return THERON_STARTUP_OK;
+}
+
 Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
     const Theron_DungeonProgression *progression,
@@ -257,6 +395,21 @@ const char *theron_v1_startup_result_name(Theron_StartupResult result) {
     case THERON_STARTUP_ERR_NO_STAGE: return "no-stage";
     case THERON_STARTUP_ERR_NOT_READY: return "not-ready";
     case THERON_STARTUP_ERR_MIRROR_NOT_SELECTED: return "mirror-not-selected";
+    default: return "unknown";
+    }
+}
+
+const char *theron_v1_startup_action_name(Theron_StartupActionKind action) {
+    switch (action) {
+    case THERON_STARTUP_ACTION_NONE: return "none";
+    case THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER: return "return-to-launcher";
+    case THERON_STARTUP_ACTION_SHOW_STAGE_SELECT: return "show-stage-select";
+    case THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR: return "move-stage-cursor";
+    case THERON_STARTUP_ACTION_CONTINUE_SAVE: return "continue-save";
+    case THERON_STARTUP_ACTION_CHOOSE_STAGE: return "choose-stage";
+    case THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR: return "move-soul-cursor";
+    case THERON_STARTUP_ACTION_TOGGLE_MIRROR: return "toggle-mirror";
+    case THERON_STARTUP_ACTION_ENTER_FORCEFIELD: return "enter-forcefield";
     default: return "unknown";
     }
 }
