@@ -195,6 +195,8 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe party expectation is opt-in");
     expect_true(opts.bootProbeExpectChampions == 0,
                 "boot-probe champion-count expectation is opt-in");
+    expect_true(opts.bootProbeExpectRuntimeTickMin == -1,
+                "boot-probe runtime-tick minimum expectation is opt-in");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
@@ -339,6 +341,7 @@ static void run_real_data_handoff_if_available(void) {
             opts.bootProbeExpectChampions = 1;
             opts.bootProbeExpectMap = 1;
             opts.bootProbeExpectMapIndex = 0;
+            opts.bootProbeExpectRuntimeTickMin = 1;
             opts.bootProbeExpectAssetMd5 = expectedAssetMd5[0] != '\0'
                 ? expectedAssetMd5
                 : NULL;
