@@ -1,6 +1,26 @@
 
 # Unreleased
 
+# Firestaff v3.0.29
+
+Firestaff v3.0.29 packages the current `main` startup state after v3.0.28.
+
+## Highlights since v3.0.28
+
+- **Theron's Quest launcher handoff**: Theron's startup now has an explicit
+  launcher-to-runtime gate before the stage/Soul Room flow takes ownership.
+
+- **CSB launcher handoff**: CSB startup now has the matching launcher handoff
+  gate before runtime ownership.
+
+## Verification
+
+- Local release-prep verification covers metadata synchronization before tag
+  push.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.29` release run.
+
 # Firestaff v3.0.28
 
 Firestaff v3.0.28 packages the post-v3.0.27 startup hardening now on `main`.

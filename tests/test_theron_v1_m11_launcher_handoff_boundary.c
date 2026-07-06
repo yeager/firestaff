@@ -211,8 +211,8 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.theronState.level_loaded == 0,
                 "M11 Theron launcher handoff waits before dungeon load");
     expect_true(view.theronState.startup_phase ==
-                    THERON_STARTUP_PHASE_STAGE_SELECT,
-                "M11 Theron launcher handoff enters visible stage select");
+                    THERON_STARTUP_PHASE_TITLE,
+                "M11 Theron launcher handoff enters bounded title gate");
     expect_true(view.theronState.selected_dungeon == 1,
                 "M11 Theron launcher handoff selects chapter 1 first");
 
@@ -220,6 +220,20 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
                 "M11 Theron launcher stage select draws a nonblank frame");
+    row_count = M11_GameView_GetTheronStartupRenderRows(
+        &view, startup_rows, 16);
+    expect_true(row_count >= 3 &&
+                    startup_rows_contain(startup_rows, row_count,
+                                         "Chapter 1: Hall of Records") &&
+                    startup_rows_contain(startup_rows, row_count,
+                                         "PRESS ENTER TO START"),
+                "M11 Theron launcher rows expose title-gate state");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 Theron launcher title accept opens stage select");
+    expect_true(view.theronState.startup_phase ==
+                    THERON_STARTUP_PHASE_STAGE_SELECT,
+                "M11 Theron launcher handoff enters visible stage select");
     row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(row_count >= 5 &&

@@ -12867,12 +12867,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
     theron_v1_startup_flow_init(&startupFlow);
-    /* THQUEST.ASM T400 startup handoff: a fresh Track 02 boot must stop at
-     * the visible stage-select screen before Soul Room mirror selection.
-     * theron_v1_startup_choose_stage() intentionally advances to Soul Room,
-     * so M11 seeds only the selected chapter here and waits for explicit
-     * player input before choosing the stage. */
-    startupFlow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+    /* THQUEST.ASM T400 startup handoff: a fresh Track 02 boot stops at the
+     * title gate. M11 seeds the selected chapter for the title/chapter label;
+     * Accept then advances to the visible stage-select screen, and only the
+     * next explicit input opens the Soul Room. */
     startupFlow.selected_dungeon = world->progression.current_dungeon;
     m11_theron_sync_startup_state(state, &startupFlow);
     state->theronState.startup_cursor = 0;
@@ -15732,6 +15730,10 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         state,
         elements,
         (int)(sizeof(elements) / sizeof(elements[0])));
+    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+        m11_point_in_rect(x, y, 34, 22, 242, 150)) {
+        return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    }
     for (i = 0; i < count; ++i) {
         const M11_TheronStartupElement *e = &elements[i];
         if (e->w <= 0 || e->h <= 0 ||

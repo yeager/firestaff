@@ -40,7 +40,7 @@ int main(void) {
 
     theron_v1_dungeon_progression_init(&progression);
     theron_v1_startup_flow_init(&flow);
-    check_int("init phase", flow.phase, THERON_STARTUP_PHASE_STAGE_SELECT);
+    check_int("init phase", flow.phase, THERON_STARTUP_PHASE_TITLE);
     check_int("init selected dungeon", flow.selected_dungeon, THERON_DUNGEON_INVALID);
     check_int("init companion count", flow.companion_count, 0);
 
@@ -152,7 +152,12 @@ int main(void) {
     check_int("Theron-only forcefield accepted", result, THERON_STARTUP_OK);
     check_int("Theron-only party count", party.champion_count, 1);
 
-    check_contains("phase name", theron_v1_startup_phase_name(THERON_STARTUP_PHASE_SOUL_ROOM), "soul");
+    check_contains("title phase name",
+                   theron_v1_startup_phase_name(THERON_STARTUP_PHASE_TITLE),
+                   "title");
+    check_contains("phase name",
+                   theron_v1_startup_phase_name(THERON_STARTUP_PHASE_SOUL_ROOM),
+                   "soul");
     check_contains("result name", theron_v1_startup_result_name(THERON_STARTUP_ERR_PARTY_FULL), "party");
     check_contains("deselect result name",
                    theron_v1_startup_result_name(THERON_STARTUP_ERR_MIRROR_NOT_SELECTED),
