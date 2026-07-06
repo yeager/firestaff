@@ -306,10 +306,12 @@ int main(void) {
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                             M11_GAME_INPUT_IGNORED,
                         "real Nexus title ignores movement input before explicit start");
+            (void)M11_GameView_HandlePointerButton(
+                &view, 40, 40, M11_DM1_MOUSE_MASK_RIGHT);
             expect_true(view.nexusState.title_active == 1 &&
                             view.nexusState.champion_select_active == 0 &&
                             view.nexusState.startup_save_select_active == 0,
-                        "real Nexus title movement input does not open startup menus");
+                        "real Nexus title non-start input does not open startup menus");
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
                         "real Nexus title phase advances on accept");

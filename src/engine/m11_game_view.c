@@ -15977,21 +15977,21 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         return m11_csb_startup_handle_entrance_command(state, command);
     }
 
-    {
+    if (buttonMask & M11_DM1_MOUSE_MASK_LEFT) {
         M11_GameInputResult theronStartupPointer =
             m11_theron_handle_startup_pointer(state, x, y);
         if (theronStartupPointer != M11_GAME_INPUT_IGNORED) {
             return theronStartupPointer;
         }
     }
-    {
+    if (buttonMask & M11_DM1_MOUSE_MASK_LEFT) {
         M11_GameInputResult nexusStartupPointer =
             m11_nexus_handle_startup_pointer(state, x, y);
         if (nexusStartupPointer != M11_GAME_INPUT_IGNORED) {
             return nexusStartupPointer;
         }
     }
-    {
+    if (buttonMask & M11_DM1_MOUSE_MASK_LEFT) {
         M11_GameInputResult dm2StartupPointer =
             m11_dm2_handle_startup_pointer(state, x, y);
         if (dm2StartupPointer != M11_GAME_INPUT_IGNORED) {
