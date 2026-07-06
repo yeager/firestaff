@@ -18,6 +18,7 @@ static int s_tests_passed = 0;
 static int s_asset_fetch_calls = 0;
 static int s_last_asset_index = 0;
 static int s_projectile_seven_frame_fixture = 0;
+static int s_projectile_flip_fixture = 0;
 static int s_creature_directional_frame_fixture = 0;
 
 #define CHECK(name_, cond_) do { \
@@ -86,7 +87,20 @@ static int test_dm2_asset_fetch(void *user,
         1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13,
         1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13
     };
+    static uint8_t projectile_flip_atlas[49 * 7];
+    static int projectile_flip_atlas_init = 0;
     (void)user;
+    if (!projectile_flip_atlas_init) {
+        for (int y = 0; y < 7; ++y) {
+            for (int frame = 0; frame < 7; ++frame) {
+                for (int x = 0; x < 7; ++x) {
+                    projectile_flip_atlas[y * 49 + frame * 7 + x] =
+                        (uint8_t)(frame == 4 ? 21 + x : 1 + frame);
+                }
+            }
+        }
+        projectile_flip_atlas_init = 1;
+    }
     ++s_asset_fetch_calls;
     s_last_asset_index = gdat_index;
     if (gdat_index == -2) {
@@ -128,12 +142,17 @@ static int test_dm2_asset_fetch(void *user,
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >= 0x0d &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) <= 0x15) {
-        if (out_pixels) *out_pixels = s_projectile_seven_frame_fixture
-            ? projectile_directional_atlas : projectile_atlas;
-        if (out_w) *out_w = s_projectile_seven_frame_fixture ? 49 : 21;
+        if (out_pixels) *out_pixels = s_projectile_flip_fixture
+            ? projectile_flip_atlas
+            : (s_projectile_seven_frame_fixture
+                ? projectile_directional_atlas
+                : projectile_atlas);
+        if (out_w) *out_w = (s_projectile_seven_frame_fixture ||
+                             s_projectile_flip_fixture) ? 49 : 21;
         if (out_h) *out_h = 7;
         if (out_stride) *out_stride =
-            s_projectile_seven_frame_fixture ? 49 : 21;
+            (s_projectile_seven_frame_fixture ||
+             s_projectile_flip_fixture) ? 49 : 21;
         return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
@@ -414,6 +433,11 @@ static void test_sprite_asset_provider(void)
     CHECK("DM2 projectile directional frame follows view-relative missile frames",
           dm2_v1_viewport_projectile_frame_for_direction(0, 1, 0, 7) == 4 &&
               dm2_v1_viewport_projectile_frame_for_direction(0, 3, 0, 7) == 6);
+    CHECK("DM2 projectile flip follows skproject missile flip table",
+          dm2_v1_viewport_projectile_flip_for_direction(0, 0) == 0 &&
+              dm2_v1_viewport_projectile_flip_for_direction(1, 0) == 1 &&
+              dm2_v1_viewport_projectile_flip_for_direction(2, 0) == 3 &&
+              dm2_v1_viewport_projectile_flip_for_direction(3, 0) == 2);
     CHECK("DM2 cloud frame follows skproject tick alternation",
           dm2_v1_viewport_cloud_frame_for_tick(0, 7) == 1 &&
               dm2_v1_viewport_cloud_frame_for_tick(1, 7) == 2);
@@ -582,6 +606,28 @@ static void test_sprite_asset_provider(void)
           viewport.asset_projectile_drawn_count == 1 &&
               framebuffer[((70 - 3) * 320) + (120 - 3)] == 11 &&
               framebuffer[(70 * 320) + 120] == 11);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    viewport.projectile_count = 1;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 0x02;
+    viewport.projectiles[0].frame_index = 0x00;
+    viewport.projectiles[0].direction = 1;
+    viewport.projectiles[0].screen_x = 120;
+    viewport.projectiles[0].screen_y = 70;
+    s_projectile_flip_fixture = 1;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_projectiles(&viewport);
+    s_projectile_flip_fixture = 0;
+    CHECK("projectile render applies skproject horizontal flip mirror",
+          viewport.asset_projectile_drawn_count == 1 &&
+              framebuffer[((70 - 3) * 320) + (120 - 3)] == 27 &&
+              framebuffer[((70 - 3) * 320) + (120 + 3)] == 21);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

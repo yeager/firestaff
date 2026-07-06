@@ -153,6 +153,8 @@ int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
                                                    int projectile_direction,
                                                    int party_direction,
                                                    int frame_count);
+int dm2_v1_viewport_projectile_flip_for_direction(int projectile_direction,
+                                                  int party_direction);
 int dm2_v1_viewport_cloud_frame_for_tick(int tick_count,
                                          int frame_count);
 int dm2_v1_viewport_creature_frame_for_direction(int requested_frame,

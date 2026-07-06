@@ -582,6 +582,16 @@ int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
     return dm2_v1_viewport_map_chip_frame_index(3 + rel, frame_count);
 }
 
+int dm2_v1_viewport_projectile_flip_for_direction(int projectile_direction,
+                                                  int party_direction)
+{
+    static const uint8_t s_skproject_missile_flip[4] = { 0, 1, 3, 2 };
+    int rel = ((projectile_direction & 3) - (party_direction & 3)) & 3;
+    /* skproject SKWIN/SkGlobal.cpp `_4976_3fa4 = {0,1,3,2}`; DRAW_MAP_CHIP
+     * lines 10720-10725 passes it to DRAW_CHIP_OF_MAGIC_MAP for dbMissile. */
+    return s_skproject_missile_flip[rel];
+}
+
 int dm2_v1_viewport_cloud_frame_for_tick(int tick_count,
                                          int frame_count)
 {
@@ -833,6 +843,54 @@ static void dm2_v1_blit_scaled_bitmap(uint8_t *dst,
     }
 }
 
+static void dm2_v1_blit_scaled_bitmap_region_ex(uint8_t *dst,
+                                                int dst_stride,
+                                                int dst_x,
+                                                int dst_y,
+                                                int dst_w,
+                                                int dst_h,
+                                                const uint8_t *src,
+                                                int src_x,
+                                                int src_y,
+                                                int src_w,
+                                                int src_h,
+                                                int src_stride,
+                                                int transparent_color,
+                                                int flip_mirror)
+{
+    int y;
+
+    if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
+        src_w <= 0 || src_h <= 0 || src_stride <= 0) {
+        return;
+    }
+    for (y = 0; y < dst_h; ++y) {
+        int sy = src_y + (y * src_h) / dst_h;
+        int fy = dst_y + y;
+        int x;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (x = 0; x < dst_w; ++x) {
+            int rx = (x * src_w) / dst_w;
+            int sx = src_x + ((flip_mirror & 1) ? (src_w - 1 - rx) : rx);
+            int fx = dst_x + x;
+            uint8_t pixel;
+            if (flip_mirror & 2) {
+                sy = src_y + src_h - 1 - ((y * src_h) / dst_h);
+            }
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH ||
+                sx < 0 || sy < 0 || sx >= src_stride) {
+                continue;
+            }
+            pixel = src[sy * src_stride + sx];
+            if (transparent_color >= 0 &&
+                pixel == (uint8_t)transparent_color) {
+                continue;
+            }
+            dst[fy * dst_stride + fx] = pixel;
+        }
+    }
+}
+
 static void dm2_v1_blit_scaled_bitmap_region(uint8_t *dst,
                                              int dst_stride,
                                              int dst_x,
@@ -847,33 +905,20 @@ static void dm2_v1_blit_scaled_bitmap_region(uint8_t *dst,
                                              int src_stride,
                                              int transparent_color)
 {
-    int y;
-
-    if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
-        src_w <= 0 || src_h <= 0 || src_stride <= 0) {
-        return;
-    }
-    for (y = 0; y < dst_h; ++y) {
-        int sy = src_y + (y * src_h) / dst_h;
-        int fy = dst_y + y;
-        int x;
-        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
-        for (x = 0; x < dst_w; ++x) {
-            int sx = src_x + (x * src_w) / dst_w;
-            int fx = dst_x + x;
-            uint8_t pixel;
-            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH ||
-                sx < 0 || sy < 0 || sx >= src_stride) {
-                continue;
-            }
-            pixel = src[sy * src_stride + sx];
-            if (transparent_color >= 0 &&
-                pixel == (uint8_t)transparent_color) {
-                continue;
-            }
-            dst[fy * dst_stride + fx] = pixel;
-        }
-    }
+    dm2_v1_blit_scaled_bitmap_region_ex(dst,
+                                        dst_stride,
+                                        dst_x,
+                                        dst_y,
+                                        dst_w,
+                                        dst_h,
+                                        src,
+                                        src_x,
+                                        src_y,
+                                        src_w,
+                                        src_h,
+                                        src_stride,
+                                        transparent_color,
+                                        0);
 }
 
 static int dm2_v1_prepare_map_chip_frame(int src_w,
@@ -1795,6 +1840,8 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 int frame_x = 0;
                 int frame_w = src_w;
                 int render_frame = p->frame_index;
+                int flip_mirror = dm2_v1_viewport_projectile_flip_for_direction(
+                    p->direction, s->party_dir);
                 if (!dm2_v1_prepare_projectile_map_chip_frame(src_w,
                                                               src_h,
                                                               p->frame_index,
@@ -1808,6 +1855,7 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 if (p->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD) {
                     int frame_count =
                         dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
+                    flip_mirror = 0;
                     render_frame =
                         dm2_v1_viewport_cloud_frame_for_tick(s->tick_count,
                                                              frame_count);
@@ -1827,19 +1875,21 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                                                                   p->depth,
                                                                   3,
                                                                   32);
-                dm2_v1_blit_scaled_bitmap_region(vp,
-                                                 stride,
-                                                 px - (dst_w / 2),
-                                                 py - (dst_h / 2),
-                                                 dst_w,
-                                                 dst_h,
-                                                 pixels,
-                                                 frame_x,
-                                                 0,
-                                                 frame_w,
-                                                 src_h,
-                                                 src_stride > 0 ? src_stride : src_w,
-                                                 DM2_COLOR_TRANSPARENT);
+                dm2_v1_blit_scaled_bitmap_region_ex(
+                    vp,
+                    stride,
+                    px - (dst_w / 2),
+                    py - (dst_h / 2),
+                    dst_w,
+                    dst_h,
+                    pixels,
+                    frame_x,
+                    0,
+                    frame_w,
+                    src_h,
+                    src_stride > 0 ? src_stride : src_w,
+                    DM2_COLOR_TRANSPARENT,
+                    flip_mirror);
                 ++s->asset_projectile_drawn_count;
                 drawn_asset = 1;
             }
