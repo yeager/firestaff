@@ -9,6 +9,15 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.36  (2026-07-06)",
+    "  - Packages the post-v3.0.35 DM1 V1 action-area geometry hardening now on main.",
+    "  - DM1 V1 action-menu background clear/blit geometry now follows the ReDMCSB source rectangles while preserving source action-row and hand-icon hit zones.",
+    "  - Release verification covers the focused action-area geometry gate and Phase A probe before GitHub Actions packaging.",
+    "",
+    "V3.0.35  (2026-07-06)",
+    "  - Packages the post-v3.0.34 startup-media hardening now on main.",
+    "  - Theron's Quest direct startup accepts a hash-matched Track 02 file from an arbitrary user-selected directory.",
+    "",
     "V3.0.34  (2026-07-06)",
     "  - Packages the post-v3.0.33 startup hardening now on main.",
     "  - Nexus direct ISO/BIN/CUE media requests now use the normal hash-verified scanner handoff.",
@@ -400,5 +409,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.35";
+    return "3.0.36";
 }

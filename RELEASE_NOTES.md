@@ -1,6 +1,25 @@
 
 # Unreleased
 
+# Firestaff v3.0.36
+
+Firestaff v3.0.36 packages the latest DM1 V1 action-area geometry hardening on
+`main` after v3.0.35.
+
+## Highlights since v3.0.35
+
+- **DM1 V1 action-area geometry**: the action-menu background clear/blit path
+  now follows the ReDMCSB source rectangles while keeping the source action-row
+  text zones and champion hand-icon cells intact.
+
+## Verification
+
+- Local release-prep verification covered version synchronization, the focused
+  DM1 action-area geometry gate, and the Phase A probe.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.36` release run.
+
 - Theron's Quest direct startup now accepts a hash-matched Track 02 file from
   an arbitrary user-selected directory, even when neither the folder nor file
   is named like Theron media.
