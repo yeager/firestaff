@@ -4,9 +4,7 @@
     "No Firestaff-vs-original pixel comparator promotion is claimed.",
     "Firestaff normal V1 renderer remains guarded batched replay, not exact ReDMCSB F0128 per-square replay."
   ],
-  "failures": [
-    "gate_verify_v1_viewport_alcove_wall_item_gate.py"
-  ],
+  "failures": [],
   "firestaffAudit": [
     {
       "file": "src/engine/m11_game_view.c",
@@ -14,43 +12,43 @@
       "missing": [],
       "positions": [
         {
-          "line": 24688,
+          "line": 30904,
           "marker": "m11_draw_viewport_background(state"
         },
         {
-          "line": 24701,
+          "line": 30917,
           "marker": "m11_draw_dm1_floor_pits(state"
         },
         {
-          "line": 24705,
+          "line": 30921,
           "marker": "m11_draw_dm1_side_walls(state"
         },
         {
-          "line": 24707,
+          "line": 30923,
           "marker": "m11_draw_dm1_front_walls(state"
         },
         {
-          "line": 24708,
+          "line": 30924,
           "marker": "m11_draw_dm1_wall_ornaments(state"
         },
         {
-          "line": 24720,
+          "line": 30936,
           "marker": "m11_draw_dm1_center_doors(state"
         },
         {
-          "line": 24735,
+          "line": 30951,
           "marker": "m11_dm1_nearest_blocking_center_depth_index(cells)"
         },
         {
-          "line": 24751,
+          "line": 30967,
           "marker": "m11_draw_dm1_side_contents(state"
         },
         {
-          "line": 24780,
+          "line": 30996,
           "marker": "m11_draw_dm1_deferred_explosion_pass(state"
         },
         {
-          "line": 24789,
+          "line": 31005,
           "marker": "if (state->showDebugHUD)"
         }
       ],
@@ -62,27 +60,27 @@
       "missing": [],
       "positions": [
         {
-          "line": 13791,
+          "line": 16750,
           "marker": "static void m11_draw_dm1_alcove_wall_items"
         },
         {
-          "line": 13806,
+          "line": 16765,
           "marker": "C0x0000_CELL_ORDER_ALCOVE"
         },
         {
-          "line": 13806,
+          "line": 16765,
           "marker": "C04_VIEW_CELL_ALCOVE"
         },
         {
-          "line": 13807,
+          "line": 16766,
           "marker": "M018_OPPOSITE(direction)"
         },
         {
-          "line": 13812,
+          "line": 16771,
           "marker": "cell->floorItemCells[ii] != alcoveCellRelativeToParty"
         },
         {
-          "line": 13815,
+          "line": 16774,
           "marker": "m11_draw_item_sprite(state"
         }
       ],
@@ -95,16 +93,16 @@
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_alcove_wall_item_gate.py"
       ],
-      "outputTail": "FAIL: Firestaff wall-item extraction for alcove pass: missing 'Do not filter WALL squares here'",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "- ReDMCSB DUNVIEW.C:7309 L0211_i_Order = C0x0000_CELL_ORDER_ALCOVE;\n- ReDMCSB DUNVIEW.C:7367 T0121016:\n- ReDMCSB DUNVIEW.C:7368 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0212_ai_SquareAspect[M550_FIRST_THING], P0162_i_Direction, P0163_i_MapX, P0164_i_MapY, M603_VIEW_SQUARE_D2C, L0211_i_Order);\n- ReDMCSB DUNVIEW.C:7842 if (F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0218_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M587_VIEW_WALL_D1C_FRONT))\n- ReDMCSB DUNVIEW.C:7843 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);\n- Firestaff m11_game_view.c:11322 alcove global-index guard\n- Firestaff m11_game_view.c:15230 alcove wall-item draw pass\n- Firestaff m11_game_view.c:17258 ornament draw then alcove item pass",
+      "passed": true,
+      "returncode": 0
     },
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_d1c_doorpass_source_lock_gate.py"
       ],
-      "outputTail": "- Firestaff viewport side doors batch: line 24714\n- Firestaff viewport center doors batch: line 24720\n- Firestaff viewport center door ornaments batch: line 24721\n- Firestaff viewport center door buttons batch: line 24724\n- Firestaff viewport source gap warning: line 24730\n- Firestaff viewport near-side replay guard: line 24735\n- invariant: D1C front door draws floor ornament + doorpass1 contents before frame/button/slab, then doorpass2 contents via shared F0115 label\n- gap_guard: Firestaff is still protected as batched-with-replay, not full per-square DUNVIEW parity",
+      "outputTail": "- Firestaff viewport side doors batch: line 30930\n- Firestaff viewport center doors batch: line 30936\n- Firestaff viewport center door ornaments batch: line 30937\n- Firestaff viewport center door buttons batch: line 30940\n- Firestaff viewport source gap warning: line 30946\n- Firestaff viewport near-side replay guard: line 30951\n- invariant: D1C front door draws floor ornament + doorpass1 contents before frame/button/slab, then doorpass2 contents via shared F0115 label\n- gap_guard: Firestaff is still protected as batched-with-replay, not full per-square DUNVIEW parity",
       "passed": true,
       "returncode": 0
     },
@@ -315,5 +313,5 @@
       "use": "secondary lineage reference only"
     }
   ],
-  "status": "FAIL_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS"
+  "status": "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS"
 }

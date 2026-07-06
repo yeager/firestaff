@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/Users/bosse/.openclaw/workspace-main/build",
+        "/Users/bosse/Documents/Firestaff/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -15,24 +15,37 @@
         "-j2"
       ],
       "outputTail": [
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "[ 95%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
+        "gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop."
       ],
-      "passed": true,
-      "returncode": 0
+      "passed": false,
+      "returncode": 2
     }
   ],
   "chainedGates": [
+    {
+      "cmd": [
+        "cmake",
+        "--build",
+        "/Users/bosse/Documents/Firestaff/build",
+        "--target",
+        "test_dm1_v1_input_command_queue_pc34_compat",
+        "test_dm1_v1_movement_command_core_pc34_compat",
+        "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "test_dm1_v1_movement_core_pc34_compat",
+        "test_m11_v1_turning_presentation_pc34_compat",
+        "test_dm1_v1_movement_pipeline_pc34_compat",
+        "-j2"
+      ],
+      "covers": "configure/build movement targets required by chained gates",
+      "expectedStatus": null,
+      "id": "prepare_required_build",
+      "outputTail": [
+        "gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop."
+      ],
+      "passed": false,
+      "returncode": 2,
+      "status": null
+    },
     {
       "cmd": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
@@ -79,11 +92,22 @@
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+        "Traceback (most recent call last):",
+        "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 160, in <module>",
+        "    raise SystemExit(main())",
+        "                     ~~~~^^",
+        "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 128, in main",
+        "    tests = [run(cmd) for cmd in TEST_COMMANDS]",
+        "             ~~~^^^^^",
+        "  File \"/Users/bosse/Documents/Firestaff/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 115, in run",
+        "    raise AssertionError(f\"command failed {' '.join(cmd)}:\\n{proc.stdout[-4000:]}\")",
+        "AssertionError: command failed cmake --build /Users/bosse/Documents/Firestaff/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2:",
+        "gmake: *** No rule to make target 'test_dm1_v1_input_command_queue_pc34_compat'.  Stop.",
+        ""
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED"
+      "passed": false,
+      "returncode": 1,
+      "status": null
     },
     {
       "cmd": [
@@ -128,14 +152,10 @@
       "expectedStatus": null,
       "id": "pass406_movement_legality_completion_gate",
       "outputTail": [
-        "PASS pass406_dm1_v1_movement_legality_completion_gate",
-        "- ReDMCSB: CLIKMENU.C:180-351; MOVESENS.C:316-999; DUNGEON.C:1371-1421, 1423-1479",
-        "- Firestaff: memory_movement_pc34_compat.c:408-493, 714-846",
-        "- report: parity-evidence/pass406_dm1_v1_movement_legality_completion_gate.md",
-        "- manifest: parity-evidence/verification/pass406_dm1_v1_movement_legality_completion_gate/manifest.json"
+        "FAIL pass406_dm1_v1_movement_legality_completion_gate: [Errno 2] No such file or directory: '/Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_core_pc34_compat'"
       ],
-      "passed": true,
-      "returncode": 0,
+      "passed": false,
+      "returncode": 1,
       "status": null
     },
     {
@@ -147,15 +167,11 @@
       "expectedStatus": null,
       "id": "pass406_game_loop_redraw_cadence",
       "outputTail": [
-        "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
-        "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:7576-7754; main_loop_m11.c:2668-2680; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
-        "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
-        "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
+        "FAIL pass406_dm1_v1_game_loop_redraw_cadence: [Errno 2] No such file or directory: '/Users/bosse/Documents/Firestaff/build/test_m11_v1_turning_presentation_pc34_compat'"
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED"
+      "passed": false,
+      "returncode": 1,
+      "status": null
     },
     {
       "cmd": [
@@ -200,14 +216,11 @@
       "expectedStatus": null,
       "id": "pass405_projectile_explosion_layer_occlusion",
       "outputTail": [
-        "status=PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION",
-        "source=DUNVIEW.C:4547-4582,4820-4860,5195-5202,5679-5683,5915-5933",
-        "door_occlusion=DUNVIEW.C:6443-6459,6722-6746,7314-7341,7874-7937",
-        "firestaff=m11_draw_wall_contents/m11_draw_dm1_side_contents projectiles before deferred m11_draw_dm1_deferred_explosion_pass"
+        "status=FAIL_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION reason=center effect cue: missing 'cell->summary.projectiles > 0'"
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION"
+      "passed": false,
+      "returncode": 1,
+      "status": "FAIL_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION"
     },
     {
       "cmd": [
@@ -248,8 +261,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:14469",
-        "- Firestaff source viewport draw order: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:24592",
+        "- Firestaff field rows/zones: /Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c:17552",
+        "- Firestaff source viewport draw order: /Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c:30835",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -275,15 +288,10 @@
       "expectedStatus": null,
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
-        "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:17604",
-        "- Firestaff palette apply: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:12691",
-        "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
-        "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
-        "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
+        "V1 viewport palette source-lock gate failed: Firestaff dungeon palette computation: missing 'static const int kLightPowerToAmount[16] = {'"
       ],
-      "passed": true,
-      "returncode": 0,
+      "passed": false,
+      "returncode": 1,
       "status": null
     },
     {
@@ -306,7 +314,7 @@
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
     }
   ],
-  "decision": "Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.",
+  "decision": "One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.",
   "expectedBlockerGates": [
     {
       "cmd": [
@@ -320,7 +328,8 @@
         "{",
         "  \"status\": \"BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY\",",
         "  \"blockers\": [",
-        "    \"pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence\"",
+        "    \"pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence\",",
+        "    \"latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven\"",
         "  ],",
         "  \"manifest\": \"parity-evidence/verification/pass435_dm1_v1_semantic_original_route_readiness_gate/manifest.json\",",
         "  \"report\": \"parity-evidence/pass435_dm1_v1_semantic_original_route_readiness_gate.md\"",
@@ -332,7 +341,7 @@
     }
   ],
   "gate": "dm1_v1_viewport_movement_completion_matrix",
-  "passed": true,
+  "passed": false,
   "schema": "firestaff.dm1_v1_viewport_movement_completion_matrix.v2",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRows": [
@@ -409,5 +418,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-25T13:46:42.725806+00:00"
+  "timestampUtc": "2026-07-04T18:17:50.545170+00:00"
 }

@@ -122,15 +122,15 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
 
 - PASS firestaff_wall_clip_gate_retains_source_offsets_and_occlusion (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.
-  - line 1349: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
-  - line 1361: int src_x = frame->blit_x;
-  - line 1362: int src_y = frame->blit_y;
-  - line 1369: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
-  - line 1376: if (src_x + width > source_width) width = source_width - src_x;
-  - line 1379: if (width <= 0 || height <= 0) return gate;
-  - line 1381: gate.visible = true;
-  - line 1382: gate.src_x = (int16_t)src_x;
-  - line 1383: gate.src_y = (int16_t)src_y;
+  - line 1363: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
+  - line 1375: int src_x = frame->blit_x;
+  - line 1376: int src_y = frame->blit_y;
+  - line 1383: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+  - line 1390: if (src_x + width > source_width) width = source_width - src_x;
+  - line 1393: if (width <= 0 || height <= 0) return gate;
+  - line 1395: gate.visible = true;
+  - line 1396: gate.src_x = (int16_t)src_x;
+  - line 1397: gate.src_y = (int16_t)src_y;
 
 - PASS firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:276-330)
   - Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.

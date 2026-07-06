@@ -232,7 +232,26 @@ int main(void) {
     CHECK(reloaded.settings.graphicsIndex == M12_PRESENTATION_V22_MODERN);
     CHECK(reloaded.gameOptions[0].resolution == M12_RES_2560x1440);
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
-    CHECK(intent.valid == 0);
+    CHECK(intent.valid == 1);
+    CHECK(intent.gameId && strcmp(intent.gameId, "dm1") == 0);
+    CHECK(intent.presentationMode == M12_PRESENTATION_V22_MODERN);
+    CHECK(intent.options.resolution == M12_RES_2560x1440);
+    CHECK(intent.resolutionWidth == 2560);
+    CHECK(intent.resolutionHeight == 1440);
+    CHECK(intent.options.presentationModeIndex == M12_PRESENTATION_V22_MODERN);
+
+    /* Launch intent must follow the activated game's presentation option, not a
+     * stale global settings value left over from another menu path. */
+    menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V22_MODERN;
+    menu.gameOptions[0].resolution = M12_RES_3200x2000;
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    CHECK(intent.valid == 1);
+    CHECK(intent.presentationMode == M12_PRESENTATION_V22_MODERN);
+    CHECK(intent.options.presentationModeIndex == M12_PRESENTATION_V22_MODERN);
+    CHECK(intent.options.resolution == M12_RES_3200x2000);
+    CHECK(intent.resolutionWidth == 3200);
+    CHECK(intent.resolutionHeight == 2000);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

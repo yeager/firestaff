@@ -102,8 +102,8 @@
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "60229605028c8a2f191733e0bf8e232d68dc70846bfa28c9ddb0a8bec6b06e13",
+      "path": "/Users/bosse/Documents/Firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "4923beec3d1e43a9861f4826b4f1ad50524fddead748d0d62f7fd7d61943a028",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -112,47 +112,47 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 1349,
+          "line": 1363,
           "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
         },
         {
-          "line": 1361,
+          "line": 1375,
           "needle": "int src_x = frame->blit_x;"
         },
         {
-          "line": 1362,
+          "line": 1376,
           "needle": "int src_y = frame->blit_y;"
         },
         {
-          "line": 1369,
+          "line": 1383,
           "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
         },
         {
-          "line": 1376,
+          "line": 1390,
           "needle": "if (src_x + width > source_width) width = source_width - src_x;"
         },
         {
-          "line": 1379,
+          "line": 1393,
           "needle": "if (width <= 0 || height <= 0) return gate;"
         },
         {
-          "line": 1381,
+          "line": 1395,
           "needle": "gate.visible = true;"
         },
         {
-          "line": 1382,
+          "line": 1396,
           "needle": "gate.src_x = (int16_t)src_x;"
         },
         {
-          "line": 1383,
+          "line": 1397,
           "needle": "gate.src_y = (int16_t)src_y;"
         }
       ],
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "60229605028c8a2f191733e0bf8e232d68dc70846bfa28c9ddb0a8bec6b06e13",
+      "path": "/Users/bosse/Documents/Firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "4923beec3d1e43a9861f4826b4f1ad50524fddead748d0d62f7fd7d61943a028",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -236,8 +236,8 @@
       "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
       "lines": "276-330",
       "missing": [],
-      "path": "/Users/bosse/.openclaw/workspace-main/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "b0e84c1cfcbe82dd2ff1bc4d448993485df7cd13b3c0b1af5b3797dbded74b45",
+      "path": "/Users/bosse/Documents/Firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "3221848083e55844bddf0978fe58f862c0847af5b816109f703eb0f72e45b2bb",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -281,8 +281,8 @@
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Users/bosse/.openclaw/workspace-main/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "b0e84c1cfcbe82dd2ff1bc4d448993485df7cd13b3c0b1af5b3797dbded74b45",
+      "path": "/Users/bosse/Documents/Firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "3221848083e55844bddf0978fe58f862c0847af5b816109f703eb0f72e45b2bb",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }
