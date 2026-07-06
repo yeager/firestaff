@@ -864,6 +864,7 @@ int M11_GameView_ProbeDm1SideDoorPanelBlit(int relForward,
                                            int* outDstY,
                                            int* outWidth,
                                            int* outHeight);
+int M11_GameView_ProbeDm1WallOrnamentFlip(int viewWallIndex);
 
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */

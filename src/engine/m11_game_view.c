@@ -22534,6 +22534,16 @@ static int m11_dm1_wall_ornament_is_alcove_global(int globalIndex) {
     return globalIndex == 1 || globalIndex == 2 || globalIndex == 3;
 }
 
+static int m11_dm1_wall_ornament_flip_horizontal_pc34(int viewWallIndex) {
+    /* ReDMCSB DUNVIEW.C F0107: for PC34/I34E the wall-ornament bitmap is
+     * flipped only for right-side left-wall projections:
+     * M576_VIEW_WALL_D3R_LEFT (also C01_VIEW_WALL_D3R2_LEFT in the
+     * PC34 13-row table), M581_VIEW_WALL_D2R_LEFT, and
+     * M586_VIEW_WALL_D1R_LEFT.  Front-facing D3R/D2R ornaments are not
+     * flipped; they use the front derived bitmap/palette route instead. */
+    return viewWallIndex == 1 || viewWallIndex == 6 || viewWallIndex == 11;
+}
+
 static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int fbW,
@@ -23224,7 +23234,8 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                        blit.width, blit.height,
                                                        10,
                                                        kWallOrnaments[i].viewWallIndex <= 4 ? kOrnD3Palette : kOrnD2Palette,
-                                                       kWallOrnaments[i].flipHorizontal);
+                                                       m11_dm1_wall_ornament_flip_horizontal_pc34(
+                                                           kWallOrnaments[i].viewWallIndex));
                 /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3923-3928:
                  * champion portraits are owned by the D1C front-mirror route
                  * (`m11_draw_dm1_front_mirror_route`) after the full cell
@@ -32351,6 +32362,13 @@ int M11_GameView_ProbeDm1SideDoorPanelBlit(int relForward,
     if (outWidth) *outWidth = panels[blitIndex].width;
     if (outHeight) *outHeight = panels[blitIndex].height;
     return 1;
+}
+
+int M11_GameView_ProbeDm1WallOrnamentFlip(int viewWallIndex) {
+    if (viewWallIndex < 0 || viewWallIndex >= 13) {
+        return -1;
+    }
+    return m11_dm1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
 }
 
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
