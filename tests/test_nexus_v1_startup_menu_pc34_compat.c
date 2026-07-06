@@ -74,6 +74,7 @@ int main(void)
     Nexus_V1_StartupMenu menu;
     Nexus_V1_StartupAction action;
     Nexus_V1_StartupSaveExecution execution;
+    Nexus_V1_StartupTitleExecution title_execution;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
@@ -265,6 +266,13 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE,
            "startup title holds Accept before start-ready frame");
+    expect(nexus_v1_startup_execute_title_action(&action,
+                                                 &title_execution) &&
+               title_execution.kind ==
+                   NEXUS_V1_STARTUP_TITLE_EXEC_HOLD_TITLE &&
+               strcmp(title_execution.status_scope, "STARTUP") == 0 &&
+               strcmp(title_execution.status, "NEXUS TITLE") == 0,
+           "startup title execution resolves hold-title redraw");
     expect(nexus_v1_title_frame(30, 200, &title_frame) &&
                title_frame.phase == NEXUS_V1_TITLE_PHASE_HOLD &&
                title_frame.boot_reveal_complete &&
@@ -284,6 +292,13 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT,
            "startup title routes ready Accept to save select when slots exist");
+    expect(nexus_v1_startup_execute_title_action(&action,
+                                                 &title_execution) &&
+               title_execution.kind ==
+                   NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_SAVE_SELECT &&
+               strcmp(title_execution.status_scope, "STARTUP") == 0 &&
+               strcmp(title_execution.status, "NEXUS LOAD GAME") == 0,
+           "startup title execution resolves save-select handoff");
     expect(nexus_v1_startup_title_handle_hit(
                54,
                menu.slot_mask,
@@ -308,6 +323,13 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT,
            "startup title routes ready Action to champion select without slots");
+    expect(nexus_v1_startup_execute_title_action(&action,
+                                                 &title_execution) &&
+               title_execution.kind ==
+                   NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_CHAMPIONS &&
+               strcmp(title_execution.status_scope, "STARTUP") == 0 &&
+               strcmp(title_execution.status, "NEXUS CHAMPIONS") == 0,
+           "startup title execution resolves champion-select handoff");
     expect(nexus_v1_startup_title_handle_input(
                12,
                menu.slot_mask,
@@ -315,6 +337,13 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER,
            "startup title Back returns to launcher");
+    expect(nexus_v1_startup_execute_title_action(&action,
+                                                 &title_execution) &&
+               title_execution.kind ==
+                   NEXUS_V1_STARTUP_TITLE_EXEC_RETURN_TO_LAUNCHER &&
+               strcmp(title_execution.status_scope, "RETURN") == 0 &&
+               strcmp(title_execution.status, "BACK TO LAUNCHER") == 0,
+           "startup title execution resolves launcher return");
     expect(nexus_v1_boot_frame(0, 200, &boot_frame) &&
                boot_frame.phase == NEXUS_V1_BOOT_PHASE_WARNING &&
                boot_frame.warning_visible &&
