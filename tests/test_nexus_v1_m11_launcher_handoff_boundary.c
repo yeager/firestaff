@@ -239,18 +239,23 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
                 "M11 Nexus launcher title phase draws a nonblank frame");
-    for (int t = 0; t < 16; ++t) {
+    for (int t = 0;
+         t < 128 &&
+             view.nexusState.title_frame <
+                 nexus_title_boot_warning_frames() + 16;
+         ++t) {
         expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
                     "M11 Nexus launcher title idle advances title animation");
     }
-    expect_true(view.nexusState.title_frame >= 16,
+    expect_true(view.nexusState.title_frame >=
+                    nexus_title_boot_warning_frames() + 16,
                 "M11 Nexus launcher title advances frame counter");
     memset(framebuffer_later, 0, sizeof(framebuffer_later));
     M11_GameView_Draw(&view, framebuffer_later, 320, 200);
     expect_true(count_diff_pixels(framebuffer,
                                   framebuffer_later,
                                   sizeof(framebuffer)) > 100,
-                "M11 Nexus launcher title frame changes after idle");
+                "M11 Nexus launcher TITLE.CG reveal changes after warning");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                     M11_GAME_INPUT_IGNORED,
                 "M11 Nexus launcher title ignores movement input");
@@ -261,26 +266,32 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 Nexus launcher title blocks early accept");
     expect_true(view.nexusState.title_active == 1,
                 "M11 Nexus launcher title remains active after early accept");
-    for (int t = 0; t < 64 &&
-                    view.nexusState.title_frame < nexus_title_min_boot_frames();
+    for (int t = 0; t < 128 &&
+                    view.nexusState.title_frame <
+                        nexus_title_boot_warning_frames() +
+                            nexus_title_min_boot_frames();
          ++t) {
         expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
                     "M11 Nexus launcher title completes boot reveal");
     }
-    expect_true(view.nexusState.title_frame >= nexus_title_min_boot_frames(),
+    expect_true(view.nexusState.title_frame >=
+                    nexus_title_boot_warning_frames() +
+                        nexus_title_min_boot_frames(),
                 "M11 Nexus launcher title reaches boot reveal frame");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 Nexus launcher title blocks explicit accept during hold");
     expect_true(view.nexusState.title_active == 1,
                 "M11 Nexus launcher title remains active during hold");
-    for (int t = 0; t < 64 &&
-                    view.nexusState.title_frame < nexus_title_start_ready_frames();
+    for (int t = 0; t < 128 &&
+                    view.nexusState.title_frame <
+                        nexus_title_boot_start_ready_frames();
          ++t) {
         expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
                     "M11 Nexus launcher title completes startup hold");
     }
-    expect_true(view.nexusState.title_frame >= nexus_title_start_ready_frames(),
+    expect_true(view.nexusState.title_frame >=
+                    nexus_title_boot_start_ready_frames(),
                 "M11 Nexus launcher title reaches start-ready frame");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,

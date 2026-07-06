@@ -78,6 +78,10 @@ int nexus_v1_startup_title_handle_input(int title_frame,
                                         unsigned int slot_mask,
                                         Nexus_V1_StartupInput input,
                                         Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_boot_handle_input(int boot_frame,
+                                       unsigned int slot_mask,
+                                       Nexus_V1_StartupInput input,
+                                       Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
                                        Nexus_V1_StartupInput input,
                                        Nexus_V1_StartupAction *out_action);

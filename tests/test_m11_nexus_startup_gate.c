@@ -186,6 +186,9 @@ static void expect_title_sequence_contract(void) {
     Nexus_V1_TitleFrame frame16;
     Nexus_V1_TitleFrame frame30;
     Nexus_V1_TitleFrame frame54;
+    Nexus_V1_BootFrame boot0;
+    Nexus_V1_BootFrame boot48;
+    Nexus_V1_BootFrame boot102;
 
     expect_true(nexus_v1_title_min_boot_frames() == 30,
                 "Nexus title sequence owns the minimum boot reveal frame");
@@ -248,6 +251,27 @@ static void expect_title_sequence_contract(void) {
                     !nexus_title_start_ready(53) &&
                     nexus_title_start_ready(54),
                 "legacy Nexus title API delegates reveal and start gates");
+    expect_true(nexus_v1_boot_warning_frames() == 48 &&
+                    nexus_v1_boot_start_ready_frames() == 102 &&
+                    nexus_v1_boot_frame(0, NEXUS_FB_H, &boot0) &&
+                    boot0.phase == NEXUS_V1_BOOT_PHASE_WARNING &&
+                    boot0.warning_visible &&
+                    !boot0.start_ready,
+                "Nexus full boot starts with a WARNING.BIN phase");
+    expect_true(nexus_v1_boot_frame(48, NEXUS_FB_H, &boot48) &&
+                    boot48.phase == NEXUS_V1_BOOT_PHASE_TITLE &&
+                    boot48.title_frame == 0 &&
+                    boot48.title.phase == NEXUS_V1_TITLE_PHASE_BOOT_REVEAL,
+                "Nexus full boot hands WARNING to TITLE.CG reveal");
+    expect_true(nexus_v1_boot_frame(102, NEXUS_FB_H, &boot102) &&
+                    boot102.phase == NEXUS_V1_BOOT_PHASE_TITLE &&
+                    boot102.title_frame == 54 &&
+                    boot102.start_ready &&
+                    nexus_title_boot_start_ready_frames() ==
+                        nexus_v1_boot_start_ready_frames() &&
+                    !nexus_title_full_boot_start_ready(101) &&
+                    nexus_title_full_boot_start_ready(102),
+                "Nexus full boot start gate waits for warning plus title hold");
 }
 
 static void expect_startup_layout_contract(void) {
@@ -516,21 +540,26 @@ int main(void) {
                 unsigned char frame_later[320 * 200];
                 int tick_before = view.nexusState.tick_count;
                 int t;
-                for (t = 0; t < 16; ++t) {
+                for (t = 0;
+                     t < 128 &&
+                         view.nexusState.title_frame <
+                             nexus_title_boot_warning_frames() + 16;
+                     ++t) {
                     expect_true(M11_GameView_AdvanceIdleTick(&view) ==
                                     M11_GAME_INPUT_REDRAW,
                                 "real Nexus title idle advances title animation");
                 }
                 expect_true(view.nexusState.tick_count == tick_before,
                             "real Nexus title animation does not tick runtime");
-                expect_true(view.nexusState.title_frame >= 16,
+                expect_true(view.nexusState.title_frame >=
+                                nexus_title_boot_warning_frames() + 16,
                             "real Nexus title animation advances frame counter");
                 memset(frame_later, 0, sizeof(frame_later));
                 M11_GameView_Draw(&view, frame_later, 320, 200);
                 expect_true(count_diff_pixels(framebuffer,
                                               frame_later,
                                               sizeof(framebuffer)) > 100,
-                            "real Nexus TITLE.CG boot frame changes after idle");
+                            "real Nexus TITLE.CG reveal changes after warning phase");
             }
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                             M11_GAME_INPUT_IGNORED,
@@ -555,8 +584,9 @@ int main(void) {
                         "Nexus title module exposes reveal and start gates");
             expect_true(advance_nexus_title_to_frame(
                             &view,
-                            (unsigned int)nexus_title_min_boot_frames(),
-                            64),
+                            (unsigned int)(nexus_title_boot_warning_frames() +
+                                           nexus_title_min_boot_frames()),
+                            128),
                         "real Nexus title completes boot reveal");
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
@@ -565,8 +595,8 @@ int main(void) {
                         "real Nexus title stays active during title hold");
             expect_true(advance_nexus_title_to_frame(
                             &view,
-                            (unsigned int)nexus_title_start_ready_frames(),
-                            64),
+                            (unsigned int)nexus_title_boot_start_ready_frames(),
+                            128),
                         "real Nexus title completes startup hold");
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
@@ -767,8 +797,8 @@ int main(void) {
                                     "M11 Nexus save-slot title remains active after early accept");
                         expect_true(advance_nexus_title_to_frame(
                                         &view,
-                                        (unsigned int)nexus_title_start_ready_frames(),
-                                        64),
+                                        (unsigned int)nexus_title_boot_start_ready_frames(),
+                                        128),
                                     "M11 Nexus save-slot title completes startup hold");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
@@ -793,8 +823,8 @@ int main(void) {
                                     "M11 Nexus startup save selection Back restores title phase");
                         expect_true(advance_nexus_title_to_frame(
                                         &view,
-                                        (unsigned int)nexus_title_start_ready_frames(),
-                                        64),
+                                        (unsigned int)nexus_title_boot_start_ready_frames(),
+                                        128),
                                     "M11 Nexus startup title hold completes after Back");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
@@ -834,8 +864,8 @@ int main(void) {
                                     "M11 Nexus save-slot NEW GAME path starts on title");
                         expect_true(advance_nexus_title_to_frame(
                                         &view,
-                                        (unsigned int)nexus_title_start_ready_frames(),
-                                        64),
+                                        (unsigned int)nexus_title_boot_start_ready_frames(),
+                                        128),
                                     "M11 Nexus save-slot NEW GAME title completes startup hold");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==

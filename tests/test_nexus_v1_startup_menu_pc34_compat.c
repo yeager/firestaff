@@ -76,6 +76,7 @@ int main(void)
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
+    Nexus_V1_BootFrame boot_frame;
     int slot;
     int cursor;
     Nexus_V1_ChampionPool empty_champions;
@@ -273,6 +274,39 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER,
            "startup title Back returns to launcher");
+    expect(nexus_v1_boot_frame(0, 200, &boot_frame) &&
+               boot_frame.phase == NEXUS_V1_BOOT_PHASE_WARNING &&
+               boot_frame.warning_visible &&
+               !boot_frame.start_ready,
+           "startup full boot frame 0 is the warning phase");
+    expect(nexus_v1_startup_boot_handle_input(
+               nexus_v1_boot_warning_frames() - 1,
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_ACCEPT,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE,
+           "startup full boot holds Accept during warning phase");
+    expect(nexus_v1_startup_boot_handle_input(
+               nexus_v1_boot_warning_frames() + 53,
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_ACCEPT,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE,
+           "startup full boot holds Accept during title hold");
+    expect(nexus_v1_startup_boot_handle_input(
+               nexus_v1_boot_start_ready_frames(),
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_ACCEPT,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT,
+           "startup full boot routes ready Accept after warning and title");
+    expect(nexus_v1_startup_boot_handle_input(
+               4,
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_BACK,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER,
+           "startup full boot Back returns to launcher during warning");
 
     kind = NEXUS_V1_STARTUP_ROW_NONE;
     slot = -1;
