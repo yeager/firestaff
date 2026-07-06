@@ -2545,6 +2545,26 @@ static const char* m11_dm2_item_name(int item_id)
     }
 }
 
+static void m11_csb_startup_build_utility_flow(
+    const M11_GameViewState *state,
+    CSB_V1_UtilFlowContext *flow)
+{
+    int selected;
+
+    if (!flow) {
+        return;
+    }
+    csb_v1_util_flow_init(flow);
+    flow->state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    selected = state ? state->csbState.startup_import_selected_action_index : 0;
+    while (selected < 0) {
+        selected += CSB_V1_UTIL_MENU_ROW_COUNT;
+    }
+    selected %= CSB_V1_UTIL_MENU_ROW_COUNT;
+    flow->selected_action_index = selected;
+    flow->action = csb_v1_util_flow_selected_action(flow);
+}
+
 static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                                unsigned char *framebuffer,
                                                int framebufferWidth,
@@ -2575,9 +2595,7 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                       &g_text_small);
     }
 
-    csb_v1_util_flow_init(&flow);
-    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
-    csb_v1_util_flow_set_action(&flow, CSB_V1_UTIL_ACTION_IMPORT);
+    m11_csb_startup_build_utility_flow(state, &flow);
     if (!csb_v1_util_flow_menu_layout(&flow, &layout)) {
         return;
     }
@@ -2803,6 +2821,57 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     int y)
 {
     CSB_V1_UtilFlowContext flow;
+    CSB_V1_UtilMenuLayout layout;
+    CSB_V1_UtilFlowAction action;
+    int i;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbState.startup_entrance_active ||
+        !state->csbState.startup_import_available ||
+        state->csbState.startup_entrance_credits_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    m11_csb_startup_build_utility_flow(state, &flow);
+    if (!csb_v1_util_flow_menu_layout(&flow, &layout)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    action = CSB_V1_UTIL_ACTION_EXIT;
+    for (i = 0; i < layout.row_count; ++i) {
+        const CSB_V1_UtilMenuRow *row = &layout.rows[i];
+        if (x >= row->x && x < row->x + row->w &&
+            y >= row->y && y < row->y + row->h) {
+            state->csbState.startup_import_selected_action_index = i;
+            action = row->action;
+            break;
+        }
+    }
+    switch (action) {
+        case CSB_V1_UTIL_ACTION_NEW:
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
+        case CSB_V1_UTIL_ACTION_LOAD:
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
+        case CSB_V1_UTIL_ACTION_IMPORT:
+            m11_set_status(state, "BOOT", "CSB IMPORT READY");
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_UTIL_ACTION_VIEW:
+            m11_set_status(state, "BOOT", "CSB PARTY READY");
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_UTIL_ACTION_EXIT:
+        default:
+            return M11_GAME_INPUT_IGNORED;
+    }
+}
+
+static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
+    M11_GameViewState *state,
+    M12_MenuInput input)
+{
+    CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilFlowAction action;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -2812,10 +2881,23 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    csb_v1_util_flow_init(&flow);
-    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
-    csb_v1_util_flow_set_action(&flow, CSB_V1_UTIL_ACTION_IMPORT);
-    action = csb_v1_util_flow_action_at_point(&flow, x, y);
+    m11_csb_startup_build_utility_flow(state, &flow);
+    if (input == M12_MENU_INPUT_UP) {
+        state->csbState.startup_import_selected_action_index =
+            csb_v1_util_flow_move_action_cursor(&flow, -1);
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_DOWN) {
+        state->csbState.startup_import_selected_action_index =
+            csb_v1_util_flow_move_action_cursor(&flow, 1);
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input != M12_MENU_INPUT_ACCEPT &&
+        input != M12_MENU_INPUT_ACTION) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    action = csb_v1_util_flow_selected_action(&flow);
     switch (action) {
         case CSB_V1_UTIL_ACTION_NEW:
             return m11_csb_startup_handle_entrance_command(
@@ -10538,6 +10620,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_resume_path[0] = '\0';
         state->csbState.startup_import_available = 0;
         state->csbState.startup_import_champion_count = 0;
+        state->csbState.startup_import_selected_action_index = 0;
         if (state->csbState.startup_import_utility_state !=
             (int)CSB_V1_UTIL_FLOW_DONE) {
             state->csbState.startup_import_utility_prompt[0] = '\0';
@@ -10566,6 +10649,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 state->csbState.startup_import_available = 1;
                 state->csbState.startup_import_champion_count =
                     imported_party.ChampionCount;
+                state->csbState.startup_import_selected_action_index = 0;
             } else {
                 state->csbState.startup_import_dm1_save_path[0] = '\0';
             }
@@ -14228,6 +14312,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         state->csbState.startup_entrance_active) {
+        M11_GameInputResult utilityInput =
+            m11_csb_startup_handle_utility_keyboard(state, input);
+        if (utilityInput != M11_GAME_INPUT_IGNORED) {
+            return utilityInput;
+        }
         if (input == M12_MENU_INPUT_BACK) {
             return m11_csb_startup_handle_entrance_command(
                 state,

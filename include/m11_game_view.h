@@ -596,6 +596,7 @@ typedef struct {
         int startup_import_available;
         int startup_import_champion_count;
         int startup_import_utility_state;
+        int startup_import_selected_action_index;
         char startup_import_dm1_save_path[512];
         char startup_import_utility_prompt[192];
     } csbState;
