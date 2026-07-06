@@ -478,21 +478,29 @@ int main(void) {
                 "DM2 V1 runtime accessors report the boot pose");
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "DM2 V1 runtime tick counter starts at zero");
-    if (view.dm2State.startup_menu_active) {
-        while (view.dm2State.startup_menu_selected_row + 1 <
-               view.dm2State.startup_menu_row_count) {
-            expect_true(M11_GameView_HandleInput(&view,
-                                                 M12_MENU_INPUT_DOWN) ==
-                            M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 startup menu moves toward NEW GAME");
-        }
+    expect_true(view.dm2State.startup_menu_active == 1,
+                "M11 DM2 no-save launch shows the startup menu");
+    expect_true(view.dm2State.startup_menu_row_count >= 1,
+                "M11 DM2 startup menu exposes at least NEW GAME");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_NONE) ==
+                    M11_GAME_INPUT_IGNORED,
+                "M11 DM2 no-save startup menu ignores idle input");
+    expect_true(view.dm2State.startup_menu_active == 1 &&
+                view.dm2State.tick_count == 0,
+                "M11 DM2 no-save startup menu does not enter runtime before selection");
+    while (view.dm2State.startup_menu_selected_row + 1 <
+           view.dm2State.startup_menu_row_count) {
         expect_true(M11_GameView_HandleInput(&view,
-                                             M12_MENU_INPUT_ACCEPT) ==
+                                             M12_MENU_INPUT_DOWN) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 startup menu NEW GAME enters runtime");
-        expect_true(view.dm2State.startup_menu_active == 0,
-                    "M11 DM2 startup menu is dismissed after NEW GAME");
+                    "M11 DM2 startup menu moves toward NEW GAME");
     }
+    expect_true(M11_GameView_HandleInput(&view,
+                                         M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 DM2 startup menu NEW GAME enters runtime");
+    expect_true(view.dm2State.startup_menu_active == 0,
+                "M11 DM2 startup menu is dismissed after NEW GAME");
 
     expect_true(make_temp_save_root(direct_save_root),
                 "created isolated DM2 direct-start quick-save root");

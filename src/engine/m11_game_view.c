@@ -11207,9 +11207,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             dm2_v1_session_new(&startup_session);
             m11_dm2_mirror_session_party(state, &startup_session);
             m11_dm2_startup_scan_saves(state, profile);
-            state->dm2State.startup_menu_active =
-                (state->dm2State.startup_resume_available ||
-                 state->dm2State.startup_slot_mask != 0u) ? 1 : 0;
+            /* SKULL.ASM T520/T560 enters the game after the startup
+             * selection path. Keep the menu visible even when NEW GAME is
+             * the only available row so a no-save boot does not bypass the
+             * startup choice and fall straight into runtime input. */
+            state->dm2State.startup_menu_active = 1;
         }
         /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         dm2_v2_runtime_init(2);
