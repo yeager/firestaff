@@ -56,7 +56,39 @@ typedef struct {
     uint8_t portrait_index;
 } Theron_StartupMirrorMeta;
 
+typedef enum {
+    THERON_STARTUP_INPUT_NONE = 0,
+    THERON_STARTUP_INPUT_UP,
+    THERON_STARTUP_INPUT_DOWN,
+    THERON_STARTUP_INPUT_LEFT,
+    THERON_STARTUP_INPUT_RIGHT,
+    THERON_STARTUP_INPUT_ACCEPT,
+    THERON_STARTUP_INPUT_ACTION,
+    THERON_STARTUP_INPUT_BACK
+} Theron_StartupInput;
+
+typedef enum {
+    THERON_STARTUP_ACTION_NONE = 0,
+    THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER,
+    THERON_STARTUP_ACTION_SHOW_STAGE_SELECT,
+    THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR,
+    THERON_STARTUP_ACTION_CONTINUE_SAVE,
+    THERON_STARTUP_ACTION_CHOOSE_STAGE,
+    THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR,
+    THERON_STARTUP_ACTION_TOGGLE_MIRROR,
+    THERON_STARTUP_ACTION_ENTER_FORCEFIELD
+} Theron_StartupActionKind;
+
+typedef struct {
+    Theron_StartupActionKind kind;
+    Theron_DungeonID selected_dungeon;
+    int cursor;
+    int continue_focus;
+    int mirror_index;
+} Theron_StartupAction;
+
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
+void theron_v1_startup_action_init(Theron_StartupAction *action);
 Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
     const Theron_DungeonProgression *progression,
@@ -70,9 +102,18 @@ Theron_StartupResult theron_v1_startup_deselect_mirror(
 Theron_StartupResult theron_v1_startup_enter_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party);
+Theron_StartupResult theron_v1_startup_handle_input(
+    Theron_StartupPhase phase,
+    Theron_DungeonID selected_dungeon,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action);
 
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase);
 const char *theron_v1_startup_result_name(Theron_StartupResult result);
+const char *theron_v1_startup_action_name(Theron_StartupActionKind action);
 const char *theron_v1_startup_flow_source_evidence(void);
 const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index);
 int theron_v1_startup_roster_index_for_mirror(int mirror_index);

@@ -47,6 +47,124 @@ int main(void) {
     result = theron_v1_startup_select_mirror(&flow, 0);
     check_int("mirror before stage rejected", result, THERON_STARTUP_ERR_NO_STAGE);
 
+    {
+        Theron_StartupAction action;
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_TITLE,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            0,
+            0,
+            THERON_STARTUP_INPUT_ACCEPT,
+            &action);
+        check_int("title accept action rc", result, THERON_STARTUP_OK);
+        check_int("title accept shows stage select",
+                  action.kind,
+                  THERON_STARTUP_ACTION_SHOW_STAGE_SELECT);
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            0,
+            1,
+            THERON_STARTUP_INPUT_UP,
+            &action);
+        check_int("stage up wraps to continue rc", result, THERON_STARTUP_OK);
+        check_int("stage up action moves cursor",
+                  action.kind,
+                  THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR);
+        check_int("stage up focuses continue", action.continue_focus, 1);
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+            0,
+            0,
+            0,
+            THERON_STARTUP_INPUT_DOWN,
+            &action);
+        check_int("stage down rc", result, THERON_STARTUP_OK);
+        check_int("stage down selected dungeon",
+                  action.selected_dungeon,
+                  THERON_DUNGEON_4_TOMB_OF_WOE);
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_4_TOMB_OF_WOE,
+            0,
+            1,
+            1,
+            THERON_STARTUP_INPUT_ACCEPT,
+            &action);
+        check_int("stage continue accept rc", result, THERON_STARTUP_OK);
+        check_int("stage continue accept action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_CONTINUE_SAVE);
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_4_TOMB_OF_WOE,
+            0,
+            0,
+            0,
+            THERON_STARTUP_INPUT_ACTION,
+            &action);
+        check_int("stage choose action rc", result, THERON_STARTUP_OK);
+        check_int("stage choose action kind",
+                  action.kind,
+                  THERON_STARTUP_ACTION_CHOOSE_STAGE);
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_SOUL_ROOM,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            0,
+            0,
+            THERON_STARTUP_INPUT_LEFT,
+            &action);
+        check_int("soul left rc", result, THERON_STARTUP_OK);
+        check_int("soul left wraps to forcefield",
+                  action.cursor,
+                  THERON_STARTUP_HERO_MIRROR_COUNT);
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_READY,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_STARTUP_HERO_MIRROR_COUNT,
+            0,
+            0,
+            THERON_STARTUP_INPUT_ACCEPT,
+            &action);
+        check_int("ready forcefield accept rc", result, THERON_STARTUP_OK);
+        check_int("ready forcefield accept action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_ENTER_FORCEFIELD);
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_READY,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            3,
+            0,
+            0,
+            THERON_STARTUP_INPUT_ACCEPT,
+            &action);
+        check_int("ready mirror accept rc", result, THERON_STARTUP_OK);
+        check_int("ready mirror accept action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_TOGGLE_MIRROR);
+        check_int("ready mirror accept index", action.mirror_index, 3);
+        result = theron_v1_startup_handle_input(
+            THERON_STARTUP_PHASE_READY,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            3,
+            0,
+            0,
+            THERON_STARTUP_INPUT_BACK,
+            &action);
+        check_int("ready back rc", result, THERON_STARTUP_OK);
+        check_int("ready back action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_SHOW_STAGE_SELECT);
+        check_contains("action label",
+                       theron_v1_startup_action_name(
+                           THERON_STARTUP_ACTION_ENTER_FORCEFIELD),
+                       "forcefield");
+    }
+
     result = theron_v1_startup_choose_stage(&flow,
                                             &progression,
                                             THERON_DUNGEON_2_CRYPT_OF_SHADOWS);

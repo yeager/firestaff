@@ -12562,6 +12562,26 @@ static void m11_theron_sync_startup_state(M11_GameViewState* state,
     }
 }
 
+static Theron_StartupInput m11_theron_startup_input_from_m12(
+    M12_MenuInput input) {
+    switch (input) {
+    case M12_MENU_INPUT_UP: return THERON_STARTUP_INPUT_UP;
+    case M12_MENU_INPUT_DOWN: return THERON_STARTUP_INPUT_DOWN;
+    case M12_MENU_INPUT_LEFT:
+    case M12_MENU_INPUT_TURN_LEFT:
+        return THERON_STARTUP_INPUT_LEFT;
+    case M12_MENU_INPUT_RIGHT:
+    case M12_MENU_INPUT_TURN_RIGHT:
+        return THERON_STARTUP_INPUT_RIGHT;
+    case M12_MENU_INPUT_ACCEPT: return THERON_STARTUP_INPUT_ACCEPT;
+    case M12_MENU_INPUT_ACTION: return THERON_STARTUP_INPUT_ACTION;
+    case M12_MENU_INPUT_BACK: return THERON_STARTUP_INPUT_BACK;
+    case M12_MENU_INPUT_NONE:
+    default:
+        return THERON_STARTUP_INPUT_NONE;
+    }
+}
+
 static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
                                            const Theron_DungeonProgression* progression,
                                            Theron_StartupFlow* flow,
@@ -15513,94 +15533,76 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (!world) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (input == M12_MENU_INPUT_BACK) {
-            if (state->theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
-                state->theronState.startup_phase == THERON_STARTUP_PHASE_READY) {
+        if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
+            !state->theronState.level_loaded) {
+            Theron_StartupAction action;
+            Theron_StartupResult action_result;
+            int has_continue =
+                    m11_theron_tqsv_continue_available(state) ||
+                    m11_theron_srm_continue_available(state);
+            action_result = theron_v1_startup_handle_input(
+                (Theron_StartupPhase)state->theronState.startup_phase,
+                (Theron_DungeonID)state->theronState.selected_dungeon,
+                state->theronState.startup_cursor,
+                state->theronState.save_resume_continue_focus,
+                has_continue,
+                m11_theron_startup_input_from_m12(input),
+                &action);
+            if (action_result != THERON_STARTUP_OK) {
+                m11_set_status(state, "STARTUP",
+                               theron_v1_startup_result_name(action_result));
+                return M11_GAME_INPUT_REDRAW;
+            }
+            switch (action.kind) {
+            case THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER:
+                m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+
+            case THERON_STARTUP_ACTION_SHOW_STAGE_SELECT: {
                 Theron_StartupFlow flow;
                 theron_v1_startup_flow_init(&flow);
                 flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-                flow.selected_dungeon =
-                    (Theron_DungeonID)state->theronState.selected_dungeon;
+                flow.selected_dungeon = action.selected_dungeon;
                 m11_theron_sync_startup_state(state, &flow);
-                state->theronState.startup_cursor = 0;
-                state->theronState.save_resume_continue_focus = 0;
+                state->theronState.startup_cursor = action.cursor;
+                state->theronState.save_resume_continue_focus =
+                    action.continue_focus;
                 m11_set_status(state, "STARTUP", "STAGE SELECT");
                 return M11_GAME_INPUT_REDRAW;
             }
-            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
-            return M11_GAME_INPUT_RETURN_TO_MENU;
-        }
-        if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
-            !state->theronState.level_loaded) {
-            if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
-                if (input == M12_MENU_INPUT_ACCEPT ||
-                    input == M12_MENU_INPUT_ACTION) {
-                    Theron_StartupFlow flow;
-                    theron_v1_startup_flow_init(&flow);
-                    flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-                    flow.selected_dungeon =
-                        (Theron_DungeonID)state->theronState.selected_dungeon;
-                    m11_theron_sync_startup_state(state, &flow);
-                    state->theronState.startup_cursor = 0;
-                    state->theronState.save_resume_continue_focus = 0;
-                    m11_set_status(state, "STARTUP", "STAGE SELECT");
+
+            case THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR:
+                state->theronState.selected_dungeon =
+                    (int)action.selected_dungeon;
+                state->theronState.save_resume_continue_focus =
+                    action.continue_focus;
+                m11_set_status(state, "STARTUP", "STAGE CURSOR");
+                return M11_GAME_INPUT_REDRAW;
+
+            case THERON_STARTUP_ACTION_CONTINUE_SAVE: {
+                char receipt[96];
+                int continued = m11_theron_tqsv_continue_available(state)
+                    ? m11_theron_continue_tqsv_startup(state,
+                                                       receipt,
+                                                       sizeof(receipt))
+                    : m11_theron_continue_srm_startup(state,
+                                                      receipt,
+                                                      sizeof(receipt));
+                if (!continued) {
+                    m11_set_status(state, "STARTUP",
+                                   receipt[0] ? receipt : "CONTINUE FAILED");
                     return M11_GAME_INPUT_REDRAW;
                 }
-                return M11_GAME_INPUT_IGNORED;
+                m11_set_status(state, "STARTUP", "CONTINUE LOADED");
+                m11_theron_set_chapter_inspect(state, receipt);
+                return M11_GAME_INPUT_REDRAW;
             }
-            if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
-                int selected = state->theronState.selected_dungeon;
-                int has_continue =
-                    m11_theron_tqsv_continue_available(state) ||
-                    m11_theron_srm_continue_available(state);
-                if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
-                    selected > THERON_DUNGEON_COUNT) {
-                    selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
-                }
-                if (input == M12_MENU_INPUT_UP) {
-                    if (state->theronState.save_resume_continue_focus) {
-                        state->theronState.save_resume_continue_focus = 0;
-                    } else if (selected > THERON_DUNGEON_1_HALL_OF_RECORDS) {
-                        --selected;
-                    } else if (has_continue) {
-                        state->theronState.save_resume_continue_focus = 1;
-                    }
-                    state->theronState.selected_dungeon = selected;
-                    m11_set_status(state, "STARTUP", "STAGE CURSOR");
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                if (input == M12_MENU_INPUT_DOWN) {
-                    if (state->theronState.save_resume_continue_focus) {
-                        state->theronState.save_resume_continue_focus = 0;
-                    } else if (selected < THERON_DUNGEON_COUNT) {
-                        ++selected;
-                    }
-                    state->theronState.selected_dungeon = selected;
-                    m11_set_status(state, "STARTUP", "STAGE CURSOR");
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                if (input == M12_MENU_INPUT_ACCEPT ||
-                    input == M12_MENU_INPUT_ACTION) {
+
+            case THERON_STARTUP_ACTION_CHOOSE_STAGE: {
                     Theron_StartupFlow flow;
                     char receipt[96];
-                    if (state->theronState.save_resume_continue_focus) {
-                        int continued = m11_theron_tqsv_continue_available(state)
-                            ? m11_theron_continue_tqsv_startup(state,
-                                                               receipt,
-                                                               sizeof(receipt))
-                            : m11_theron_continue_srm_startup(state,
-                                                              receipt,
-                                                              sizeof(receipt));
-                        if (!continued) {
-                            m11_set_status(state, "STARTUP",
-                                           receipt[0] ? receipt : "CONTINUE FAILED");
-                            return M11_GAME_INPUT_REDRAW;
-                        }
-                        m11_set_status(state, "STARTUP", "CONTINUE LOADED");
-                        m11_theron_set_chapter_inspect(state, receipt);
-                        return M11_GAME_INPUT_REDRAW;
-                    }
-                    state->theronState.selected_dungeon = selected;
+                    state->theronState.selected_dungeon =
+                        (int)action.selected_dungeon;
                     receipt[0] = '\0';
                     if (!m11_theron_rebuild_startup_flow(state,
                                                          &world->progression,
@@ -15617,38 +15619,17 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     m11_set_status(state, "STARTUP", "SOUL ROOM");
                     return M11_GAME_INPUT_REDRAW;
                 }
-                return M11_GAME_INPUT_IGNORED;
-            }
 
-            if (state->theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
-                state->theronState.startup_phase == THERON_STARTUP_PHASE_READY) {
-                int cursor = state->theronState.startup_cursor;
-                if (cursor < 0 || cursor > THERON_STARTUP_HERO_MIRROR_COUNT) {
-                    cursor = 0;
-                }
-                if (input == M12_MENU_INPUT_LEFT ||
-                    input == M12_MENU_INPUT_UP ||
-                    input == M12_MENU_INPUT_TURN_LEFT) {
-                    cursor = (cursor + THERON_STARTUP_HERO_MIRROR_COUNT) %
-                             (THERON_STARTUP_HERO_MIRROR_COUNT + 1);
-                    state->theronState.startup_cursor = cursor;
-                    m11_set_status(state, "STARTUP", "SOUL ROOM CURSOR");
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                if (input == M12_MENU_INPUT_RIGHT ||
-                    input == M12_MENU_INPUT_DOWN ||
-                    input == M12_MENU_INPUT_TURN_RIGHT) {
-                    cursor = (cursor + 1) %
-                             (THERON_STARTUP_HERO_MIRROR_COUNT + 1);
-                    state->theronState.startup_cursor = cursor;
-                    m11_set_status(state, "STARTUP", "SOUL ROOM CURSOR");
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                if (input == M12_MENU_INPUT_ACCEPT &&
-                    cursor < THERON_STARTUP_HERO_MIRROR_COUNT) {
+            case THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR:
+                state->theronState.startup_cursor = action.cursor;
+                m11_set_status(state, "STARTUP", "SOUL ROOM CURSOR");
+                return M11_GAME_INPUT_REDRAW;
+
+            case THERON_STARTUP_ACTION_TOGGLE_MIRROR: {
                     Theron_StartupFlow flow;
                     Theron_StartupResult result;
                     char receipt[96];
+                    int cursor = action.mirror_index;
                     receipt[0] = '\0';
                     if (!m11_theron_rebuild_startup_flow(state,
                                                          &world->progression,
@@ -15678,9 +15659,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                         : "HERO RELEASED");
                     return M11_GAME_INPUT_REDRAW;
                 }
-                if ((input == M12_MENU_INPUT_ACCEPT &&
-                     cursor == THERON_STARTUP_HERO_MIRROR_COUNT) ||
-                    input == M12_MENU_INPUT_ACTION) {
+
+            case THERON_STARTUP_ACTION_ENTER_FORCEFIELD: {
                     char receipt[256];
                     if (!m11_theron_enter_startup_forcefield(state,
                                                              receipt,
@@ -15697,8 +15677,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     }
                     return M11_GAME_INPUT_REDRAW;
                 }
+
+            case THERON_STARTUP_ACTION_NONE:
+            default:
+                return M11_GAME_INPUT_IGNORED;
             }
-            return M11_GAME_INPUT_IGNORED;
         }
         /* v2.8.x: arrow Left/Right now mean strafe (matches original
          * DM1 PC 3.4 convention).  TURN_LEFT/RIGHT comes from Home /
