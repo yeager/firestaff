@@ -23912,6 +23912,10 @@ static int m11_dm1_side_door_frame_get_pc34(const M11_DM1SideDoorSpec* spec,
     if (!spec) {
         return -1;
     }
+    /* ReDMCSB: DUNVIEW.C lines 646-681 define G0182/G0184 D2 side
+     * DOOR_FRAMES, lines 682-717 define G0185/G0187 D1 side DOOR_FRAMES,
+     * and F0111/F0100 lines 4310-4313 draws Vertical or both
+     * LeftHorizontal/RightHorizontal frame records for opening doors. */
     if (spec->relForward == 2 && spec->relSide == -1) {
         return dm1_v1_g0182_get_pc34(frameIndex, valueIndex);
     }
