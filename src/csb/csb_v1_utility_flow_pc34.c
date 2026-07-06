@@ -227,6 +227,44 @@ int csb_v1_util_flow_accept_selected_action(CSB_V1_UtilFlowContext *ctx)
     return 0;
 }
 
+int csb_v1_util_flow_cancel_to_menu(CSB_V1_UtilFlowContext *ctx)
+{
+    if (!ctx) return -1;
+    switch (ctx->state) {
+    case CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS:
+    case CSB_V1_UTIL_FLOW_CONFIRM_IMPORT:
+    case CSB_V1_UTIL_FLOW_LOAD_GAME:
+    case CSB_V1_UTIL_FLOW_NEW_GAME:
+    case CSB_V1_UTIL_FLOW_ERROR:
+        ctx->state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+        ctx->action = CSB_V1_UTIL_ACTION_EXIT;
+        ctx->import_confirmed = 0;
+        ctx->last_error = 0;
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+int csb_v1_util_flow_retry_error(CSB_V1_UtilFlowContext *ctx)
+{
+    if (!ctx || ctx->state != CSB_V1_UTIL_FLOW_ERROR) {
+        return -1;
+    }
+
+    ctx->last_error = 0;
+    ctx->import_confirmed = 0;
+    ctx->action = CSB_V1_UTIL_ACTION_EXIT;
+    if (ctx->disk_result == CSB_V1_UTIL_DISK_OK ||
+        ctx->utility_disk_verified) {
+        ctx->disk_result = CSB_V1_UTIL_DISK_OK;
+        ctx->state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    } else {
+        ctx->state = CSB_V1_UTIL_FLOW_INSERT_DISK;
+    }
+    return 0;
+}
+
 const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action)
 {
     switch (action) {

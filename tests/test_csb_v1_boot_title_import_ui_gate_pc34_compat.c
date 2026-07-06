@@ -357,6 +357,26 @@ static void test_utility_action_cursor_drives_select_action(void)
     CHECK(csb_v1_util_flow_step(&flow) == 0 &&
           flow.state == CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS,
           "utility accepted import advances to import state");
+    CHECK(csb_v1_util_flow_cancel_to_menu(&flow) == 0 &&
+          flow.state == CSB_V1_UTIL_FLOW_SELECT_ACTION &&
+          flow.action == CSB_V1_UTIL_ACTION_EXIT,
+          "utility cancel returns a pending import action to SELECT_ACTION");
+    CHECK(csb_v1_util_flow_retry_error(&flow) == -1,
+          "utility retry only applies to ERROR state");
+
+    CHECK(csb_v1_util_flow_move_action_cursor(&flow, 2) == 2 &&
+          csb_v1_util_flow_accept_selected_action(&flow) == 0 &&
+          flow.action == CSB_V1_UTIL_ACTION_NEW,
+          "utility cursor can select NEW after cancel");
+    CHECK(csb_v1_util_flow_step(&flow) == 0 &&
+          flow.state == CSB_V1_UTIL_FLOW_ERROR &&
+          flow.last_error == -8,
+          "utility NEW without imported champions enters recoverable ERROR");
+    CHECK(csb_v1_util_flow_retry_error(&flow) == 0 &&
+          flow.state == CSB_V1_UTIL_FLOW_SELECT_ACTION &&
+          flow.action == CSB_V1_UTIL_ACTION_EXIT &&
+          flow.last_error == 0,
+          "utility retry after verified-disk ERROR returns to SELECT_ACTION");
 }
 
 static void test_diagnostic_report_surfaces_title_import_status(void)
