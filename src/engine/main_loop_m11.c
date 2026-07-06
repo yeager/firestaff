@@ -690,6 +690,8 @@ static M12_MenuInput m11_next_script_input(const char** cursor);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
 static int m11_script_event_token_is_valid(const char* token, size_t len);
+static int m11_boot_probe_expected_source_kind(const char* gameId,
+                                               M11_GameSourceKind* outKind);
 
 int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
                                                     int framebufferY,
@@ -1628,6 +1630,34 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
             }
             return 1;
         }
+    }
+    return 0;
+}
+
+static int m11_boot_probe_expected_source_kind(const char* gameId,
+                                               M11_GameSourceKind* outKind) {
+    if (!gameId || !outKind) {
+        return 0;
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        *outKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+        return 1;
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        *outKind = M11_GAME_SOURCE_CSB_BOOT;
+        return 1;
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        *outKind = M11_GAME_SOURCE_DM2_BOOT;
+        return 1;
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        *outKind = M11_GAME_SOURCE_NEXUS_DGN;
+        return 1;
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        *outKind = M11_GAME_SOURCE_THERON_TRACK02;
+        return 1;
     }
     return 0;
 }
@@ -3525,6 +3555,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             int scriptInputs;
             int scriptFrames = 0;
             M11_BootProbeReceipt receipt;
+            M11_GameSourceKind expectedSourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
             m11_phase_a_advance_boot_probe_frames(&gameView, frames);
             scriptInputs = m11_phase_a_apply_boot_probe_script(&gameView,
                                                                o->script,
@@ -3539,12 +3570,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             memset(&receipt, 0, sizeof(receipt));
             if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
                 !receipt.active ||
-                strcmp(receipt.sourceId, o->gameId) != 0) {
+                strcmp(receipt.sourceId, o->gameId) != 0 ||
+                !m11_boot_probe_expected_source_kind(o->gameId, &expectedSourceKind) ||
+                receipt.sourceKind != expectedSourceKind) {
                 fprintf(stderr,
-                        "firestaff: boot-probe expected active source '%s' but got active=%d sourceId='%s'\n",
+                        "firestaff: boot-probe expected active source '%s' kind=%d but got active=%d sourceId='%s' kind=%d\n",
                         o->gameId ? o->gameId : "",
+                        (int)expectedSourceKind,
                         receipt.active,
-                        receipt.sourceId);
+                        receipt.sourceId,
+                        (int)receipt.sourceKind);
                 runRc = 4;
             }
             if (o->bootProbeExpectPhase && o->bootProbeExpectPhase[0] != '\0') {
