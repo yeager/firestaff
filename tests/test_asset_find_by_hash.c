@@ -167,8 +167,18 @@ static int write_iso_record(unsigned char* dir, int offset, unsigned int lba,
     return recLen;
 }
 
+static int write_iso_fixture_payload(const char* path,
+                                     const char* payload,
+                                     size_t payloadSize);
+
 static int write_iso_fixture(const char* path) {
     static const char payload[] = "Firestaff hash identity fixture v1\n";
+    return write_iso_fixture_payload(path, payload, sizeof(payload) - 1U);
+}
+
+static int write_iso_fixture_payload(const char* path,
+                                     const char* payload,
+                                     size_t payloadSize) {
     static const unsigned char dot = 0;
     static const unsigned char dotdot = 1;
     static const unsigned char fileName[] = "DUNGEON.DAT;1";
@@ -212,7 +222,11 @@ static int write_iso_fixture(const char* path) {
         return 0;
     }
     offset += recLen;
-    recLen = write_iso_record(dir, offset, 21U, (unsigned int)(sizeof(payload) - 1U),
+    if (payloadSize > sizeof(fileSector)) {
+        fclose(fp);
+        return 0;
+    }
+    recLen = write_iso_record(dir, offset, 21U, (unsigned int)payloadSize,
                               0, fileName, (int)(sizeof(fileName) - 1U));
     if (!recLen) {
         fclose(fp);
@@ -222,8 +236,27 @@ static int write_iso_fixture(const char* path) {
         fclose(fp);
         return 0;
     }
-    memcpy(fileSector, payload, sizeof(payload) - 1U);
+    memcpy(fileSector, payload, payloadSize);
     if (fwrite(fileSector, 1U, sizeof(fileSector), fp) != sizeof(fileSector)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+static int write_cue_fixture(const char* path,
+                             const char* firstPayload,
+                             const char* secondPayload) {
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fprintf(fp,
+                "FILE \"%s\" BINARY\n"
+                "  TRACK 01 AUDIO\n"
+                "    INDEX 01 00:00:00\n"
+                "FILE \"%s\" BINARY\n"
+                "  Track 02 Mode1/2048\n"
+                "    INDEX 01 00:00:00\n",
+                firstPayload, secondPayload) < 0) {
         fclose(fp);
         return 0;
     }
@@ -235,6 +268,9 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.zip");
     remove("asset_find_by_hash_test_tmp/disc.iso");
+    remove("asset_find_by_hash_test_tmp/cue_a.payload");
+    remove("asset_find_by_hash_test_tmp/cue_b.payload");
+    remove("asset_find_by_hash_test_tmp/split.cue");
     RMDIR("asset_find_by_hash_test_tmp/nested");
     RMDIR("asset_find_by_hash_test_tmp");
 }
@@ -428,6 +464,46 @@ int main(void) {
         !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
         cleanup_fixture();
         fprintf(stderr, "virtual ISO extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/disc.iso");
+
+    if (!write_iso_fixture_payload("asset_find_by_hash_test_tmp/cue_a.payload",
+                                   "Firestaff non-matching CUE payload v1\n",
+                                   strlen("Firestaff non-matching CUE payload v1\n")) ||
+        !write_iso_fixture("asset_find_by_hash_test_tmp/cue_b.payload") ||
+        !write_cue_fixture("asset_find_by_hash_test_tmp/split.cue",
+                           "cue_a.payload",
+                           "cue_b.payload")) {
+        cleanup_fixture();
+        fprintf(stderr, "split CUE fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_name(outPath, "cue_b.payload", "DUNGEON.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "split CUE mixed-case data track lookup failed: %s\n", outPath);
+        return 1;
+    }
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] ||
+        !matched[1] ||
+        !path_has_virtual_name(outPaths[1], "cue_b.payload", "DUNGEON.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "split CUE all-list lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "split CUE virtual extraction failed: %s\n", outPath);
         return 1;
     }
 
