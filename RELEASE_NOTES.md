@@ -1,6 +1,30 @@
 
 # Unreleased
 
+# Firestaff v3.0.38
+
+Firestaff v3.0.38 packages the latest CSB M11 startup prelude and title-frame
+work on `main` after v3.0.37.
+
+## Highlights since v3.0.37
+
+- **CSB entrance prelude**: CSB new-game, bonus-dungeon, entrance-resume and
+  utility-import starts now pass through an explicit source-shaped prelude gate
+  before the door-opening phase and runtime handoff.
+
+- **CSB title startup**: the M11 startup path now carries the source-shaped FTL
+  Presents, Chaos zoom and Strikes Back frame sequence using the C001 title
+  graphic when available, with fallback text only when the source asset is
+  absent.
+
+## Verification
+
+- Local release-prep verification covered version synchronization, focused CSB
+  startup gates and the Phase A probe.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.38` release run.
+
 # Firestaff v3.0.37
 
 Firestaff v3.0.37 packages the latest CSB M11 entrance-door boot phase on
