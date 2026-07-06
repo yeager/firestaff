@@ -2364,6 +2364,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     size_t rootCount;
     int dataDirResolvedToMatchedRoot = 0;
     int requestedFileScanParent = 0;
+    int honorRequestedDataDir = options && options->honorRequestedDataDir;
     int i;
     if (!status) {
         return 0;
@@ -2418,8 +2419,9 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
          * directory and materialize canonical runtime files. */
         effectiveRequestedDataDir = containerParent;
         requestedFileScanParent = 1;
-    } else if (m12_promote_game_subdir_scan_root(requestedDataDir,
-                                                promotedDataRoot)) {
+    } else if (!honorRequestedDataDir &&
+               m12_promote_game_subdir_scan_root(requestedDataDir,
+                                                 promotedDataRoot)) {
         /* A saved launcher config can point at ~/.firestaff/data/nexus after
          * a direct Nexus import/launch.  `firestaff --scan-data` defaults to
          * ~/.firestaff/data and sees every game, while the start menu would

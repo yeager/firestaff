@@ -77,6 +77,7 @@ typedef struct {
     M12_AssetStatusScanProgressFn progressFn;
     void* progressUserData;
     const int* cancelFlag;
+    int honorRequestedDataDir;
 } M12_AssetStatusScanOptions;
 
 typedef struct {

@@ -109,7 +109,14 @@ static void print_scan_game(const M12_AssetStatus* status,
 
 static int run_data_scan(const char* dataDir) {
     M12_AssetStatus status;
-    M12_AssetStatus_Scan(&status, dataDir);
+    if (dataDir && dataDir[0] != '\0') {
+        M12_AssetStatusScanOptions scanOptions;
+        memset(&scanOptions, 0, sizeof(scanOptions));
+        scanOptions.honorRequestedDataDir = 1;
+        (void)M12_AssetStatus_ScanWithOptions(&status, dataDir, &scanOptions);
+    } else {
+        M12_AssetStatus_Scan(&status, dataDir);
+    }
     printf("Firestaff game-data scan\n");
     printf("Data dir: %s\n\n", M12_AssetStatus_GetDataDir(&status));
     print_scan_game(&status, "dm1", "Dungeon Master");

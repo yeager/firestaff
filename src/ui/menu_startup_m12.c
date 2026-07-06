@@ -1567,6 +1567,7 @@ static int SDLCALL m12_data_dir_scan_thread(void* data) {
     memset(&scanOptions, 0, sizeof(scanOptions));
     scanOptions.progressFn = m12_data_dir_scan_job_progress_callback;
     scanOptions.progressUserData = job;
+    scanOptions.honorRequestedDataDir = 1;
     job->result = M12_AssetStatus_ScanWithOptions(&job->assetStatus,
                                                   job->dataDir,
                                                   &scanOptions);
@@ -1729,6 +1730,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     scanOptions.progressFn = m12_data_dir_scan_progress_callback;
     scanOptions.progressUserData = state;
     scanOptions.cancelFlag = &state->dataDirScanCancelRequested;
+    scanOptions.honorRequestedDataDir = 1;
     scanOk = M12_AssetStatus_ScanWithOptions(&state->assetStatus,
                                              dataDir,
                                              &scanOptions);
@@ -2689,13 +2691,22 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         return;
     }
     (void)gameId;
+    if (hasExplicitDataDirOverride) {
+        M12_AssetStatusScanOptions scanOptions;
+        memset(&scanOptions, 0, sizeof(scanOptions));
+        scanOptions.honorRequestedDataDir = 1;
+        (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                              config->dataDir,
+                                              &scanOptions);
+        return;
+    }
     /* The visible launcher must publish full cross-game availability even
      * when the caller supplied --game.  M12_AssetStatus_ScanGame() is a
      * direct-launch fast path for Theron/Nexus and may intentionally return
      * a one-game status; using it here makes the start menu disagree with
      * `firestaff --scan-data` for the same data root. */
     M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
-    if (!hasExplicitDataDirOverride) {
+    {
         char resolvedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         if (FSP_ResolveDataDir(resolvedDataDir, sizeof(resolvedDataDir), NULL) &&
             resolvedDataDir[0] != '\0' &&
