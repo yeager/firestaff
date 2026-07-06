@@ -409,7 +409,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp "$FIRESTAFF_RELEASE_NOTES" generated_notes.md
+
+          awk -v tag="$FIRESTAFF_TAG" '
+            $0 == "# Firestaff " tag { in_section = 1 }
+            in_section && NR > 1 && $0 ~ /^# Firestaff v[0-9]/ && $0 != "# Firestaff " tag { exit }
+            in_section { print }
+          ' "$FIRESTAFF_RELEASE_NOTES" > generated_notes.md
+          if [[ ! -s generated_notes.md ]]; then
+            {
+              echo "# Firestaff ${FIRESTAFF_TAG}"
+              echo ""
+              echo "Firestaff ${FIRESTAFF_TAG} release build."
+            } > generated_notes.md
+          fi
 
           previous_tag="$(git tag --sort=-v:refname | grep -E '^v[0-9]' | grep -vx "$FIRESTAFF_TAG" | head -1 || true)"
           {
