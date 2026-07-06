@@ -922,12 +922,12 @@ static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET
         return count;
     }
 
-    if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
-        m12_add_unique_search_root(roots, &count, defaultOriginals);
-    }
     if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL)) {
         m12_copy_string(legacyFallbackDir, M12_ASSET_DATA_DIR_CAPACITY, legacyData);
         m12_add_unique_search_root(roots, &count, legacyData);
+    }
+    if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
+        m12_add_unique_search_root(roots, &count, defaultOriginals);
     }
     if (count == 0U) {
         m12_add_unique_search_root(roots, &count, ".");

@@ -1031,6 +1031,65 @@ static void check_start_menu_prefers_default_root_with_more_games(
     M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
 }
 
+static void check_start_menu_env_data_dir_matches_scan_data(
+    const char* homeRoot) {
+    char envDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char staleDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    M12_Config config;
+    M12_StartupMenuState menu;
+    M12_AssetStatus cliStatus;
+
+    if (!FSP_JoinPath(staleDataRoot, sizeof(staleDataRoot),
+                      homeRoot, "env-stale-empty-data") ||
+        !FSP_CreateDirectoryRecursive(staleDataRoot) ||
+        !FSP_JoinPath(envDataRoot, sizeof(envDataRoot),
+                      homeRoot, "env-ready-data") ||
+        !FSP_CreateDirectoryRecursive(envDataRoot) ||
+        !setup_dm1_recommended_dir(envDataRoot,
+                                   graphicsPath, sizeof(graphicsPath),
+                                   graphicsMd5,
+                                   dungeonPath, sizeof(dungeonPath),
+                                   dungeonMd5)) {
+        fprintf(stderr, "FAIL: cannot seed start-menu env data-dir fixture\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5,
+                                                          dungeonMd5);
+    (void)test_setenv("HOME", homeRoot);
+#ifndef _WIN32
+    (void)test_setenv("XDG_CONFIG_HOME", NULL);
+#endif
+    (void)test_setenv("FIRESTAFF_DATA", NULL);
+
+    M12_Config_SetDefaults(&config);
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", staleDataRoot);
+    check_int(M12_Config_Save(&config) == 1,
+              "start menu env fixture must save stale startup config");
+
+    (void)test_setenv("FIRESTAFF_DATA", envDataRoot);
+    memset(&cliStatus, 0, sizeof(cliStatus));
+    M12_AssetStatus_Scan(&cliStatus, NULL);
+
+    M12_StartupMenu_InitWithDataDir(&menu, NULL, NULL);
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
+                     M12_AssetStatus_GetDataDir(&cliStatus)) == 0,
+              "start menu must scan the FIRESTAFF_DATA root used by --scan-data");
+    check_int(ready_game_count_for_status(&menu.assetStatus) ==
+                  ready_game_count_for_status(&cliStatus),
+              "start menu FIRESTAFF_DATA scan must match --scan-data ready-game count");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
+              "start menu FIRESTAFF_DATA scan must expose DM1 availability");
+    M12_StartupMenu_Destroy(&menu);
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+
 static void check_game_select_uses_asset_status_not_stale_global(
     const char* homeRoot) {
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1116,6 +1175,7 @@ int main(void) {
 #endif
     check_start_menu_heals_stale_config_data_dir(home);
     check_start_menu_prefers_default_root_with_more_games(home);
+    check_start_menu_env_data_dir_matches_scan_data(home);
     check_game_select_uses_asset_status_not_stale_global(home);
 
     /* Release all test hooks. */
