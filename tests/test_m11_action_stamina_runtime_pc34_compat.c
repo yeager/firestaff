@@ -8840,6 +8840,56 @@ static void test_dm1_side_doors_use_source_frame_halves(void) {
     int height = -1;
 
     ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  3, -1, 4, 1, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "closed D3L side door resolves through G0179");
+    ASSERT_EQ(srcX, 0, "closed D3L side door source x from G0179");
+    ASSERT_EQ(srcY, 0, "closed D3L side door source y from G0179");
+    ASSERT_EQ(dstX, 24, "closed D3L side door dst x from G0179");
+    ASSERT_EQ(dstY, 28, "closed D3L side door dst y from G0179");
+    ASSERT_EQ(width, 48, "closed D3L side door width from G0179");
+    ASSERT_EQ(height, 40, "closed D3L side door height from G0179");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  3, -1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              2,
+              "horizontal half-open D3L side door uses two G0179 halves");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  3, -1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D3L left half resolves");
+    ASSERT_EQ(srcX, 12, "D3L horizontal left source x from G0179");
+    ASSERT_EQ(dstX, 24, "D3L horizontal left dst x from G0179");
+    ASSERT_EQ(width, 12, "D3L horizontal left width from G0179");
+    ASSERT_EQ(height, 40, "D3L horizontal left height from G0179");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  3, -1, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D3L right half resolves");
+    ASSERT_EQ(srcX, 24, "D3L horizontal right source x from G0179");
+    ASSERT_EQ(dstX, 60, "D3L horizontal right dst x from G0179");
+    ASSERT_EQ(width, 12, "D3L horizontal right width from G0179");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  3, 1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              2,
+              "horizontal half-open D3R side door uses two G0181 halves");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  3, 1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D3R left half resolves");
+    ASSERT_EQ(srcX, 12, "D3R horizontal left source x from G0181");
+    ASSERT_EQ(dstX, 150, "D3R horizontal left dst x from G0181");
+    ASSERT_EQ(width, 12, "D3R horizontal left width from G0181");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  3, 1, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D3R right half resolves");
+    ASSERT_EQ(srcX, 24, "D3R horizontal right source x from G0181");
+    ASSERT_EQ(dstX, 186, "D3R horizontal right dst x from G0181");
+    ASSERT_EQ(width, 12, "D3R horizontal right width from G0181");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
                   2, -1, 4, 1, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
               1,
               "closed D2L side door resolves through G0182");
