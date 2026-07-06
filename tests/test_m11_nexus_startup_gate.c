@@ -17,6 +17,7 @@
 #include "nexus_v1_save.h"
 #include "nexus_v1_startup_layout.h"
 #include "nexus_v1_title.h"
+#include "nexus_v1_title_sequence.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_world.h"
 
@@ -178,6 +179,40 @@ static void expect_title_render_is_frame_dependent(void) {
                                   frame16.color_buffer,
                                   sizeof(frame0.color_buffer)) > 500,
                 "Nexus title render changes across startup frames");
+}
+
+static void expect_title_sequence_contract(void) {
+    Nexus_V1_TitleFrame frame0;
+    Nexus_V1_TitleFrame frame16;
+    Nexus_V1_TitleFrame frame30;
+
+    expect_true(nexus_v1_title_min_boot_frames() == 30,
+                "Nexus title sequence owns the minimum boot reveal frame");
+    expect_true(nexus_v1_title_frame(0, NEXUS_FB_H, &frame0) &&
+                    frame0.reveal_h == 80 &&
+                    frame0.reveal_y0 == 60 &&
+                    frame0.reveal_y1 == 140 &&
+                    frame0.edge_color == 12 &&
+                    !frame0.boot_reveal_complete,
+                "Nexus title sequence frame 0 reveal contract is stable");
+    expect_true(nexus_v1_title_frame(16, NEXUS_FB_H, &frame16) &&
+                    frame16.reveal_h == 144 &&
+                    frame16.reveal_y0 == 28 &&
+                    frame16.reveal_y1 == 172 &&
+                    frame16.edge_color == 16 &&
+                    !frame16.boot_reveal_complete,
+                "Nexus title sequence frame 16 reveal contract is stable");
+    expect_true(nexus_v1_title_frame(30, NEXUS_FB_H, &frame30) &&
+                    frame30.reveal_h == 200 &&
+                    frame30.reveal_y0 == 0 &&
+                    frame30.reveal_y1 == 200 &&
+                    frame30.boot_reveal_complete,
+                "Nexus title sequence reaches full reveal at boot gate");
+    expect_true(nexus_title_min_boot_frames() ==
+                    nexus_v1_title_min_boot_frames() &&
+                    !nexus_title_boot_reveal_complete(29) &&
+                    nexus_title_boot_reveal_complete(30),
+                "legacy Nexus title API delegates to title sequence");
 }
 
 static void expect_startup_layout_contract(void) {
@@ -388,6 +423,7 @@ int main(void) {
     const char* real_dir;
 
     expect_face_loader_counts_real_vs_fallback();
+    expect_title_sequence_contract();
     expect_title_render_is_frame_dependent();
     expect_startup_layout_contract();
     expect_champion_startup_selection_contract();
