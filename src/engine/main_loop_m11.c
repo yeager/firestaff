@@ -1693,6 +1693,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectMap = 0;
     opts->bootProbeExpectMapIndex = -1;
     opts->bootProbeExpectRuntimeTickMin = -1;
+    opts->bootProbeExpectStartupFrameMin = -1;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -1881,7 +1882,7 @@ static void m11_phase_a_print_boot_probe_receipt(
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -1892,6 +1893,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             scriptFrames,
             receipt.startupPhase,
             receipt.startupActive,
+            receipt.startupFrame,
             receipt.levelLoaded,
             receipt.mapIndex,
             receipt.partyX,
@@ -3803,6 +3805,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             "firestaff: boot-probe expected runtime tick >= %d but got %d\n",
                             o->bootProbeExpectRuntimeTickMin,
                             receipt.runtimeTick);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectStartupFrameMin >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.startupFrame < o->bootProbeExpectStartupFrameMin) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected startup frame >= %d but got %d\n",
+                            o->bootProbeExpectStartupFrameMin,
+                            receipt.startupFrame);
                     runRc = 4;
                 }
             }
