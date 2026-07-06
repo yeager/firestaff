@@ -983,8 +983,7 @@ static int m12_promote_game_subdir_scan_root(
     leaf = m12_path_leaf(requestedDataDir);
     if (!m12_is_known_game_data_leaf(leaf) ||
         !FSP_ParentDir(parent, sizeof(parent), requestedDataDir) ||
-        !FSP_DirExists(parent) ||
-        !m12_root_has_original_candidate(parent)) {
+        !FSP_DirExists(parent)) {
         return 0;
     }
     m12_copy_string(promoted, M12_ASSET_DATA_DIR_CAPACITY, parent);
@@ -2425,9 +2424,11 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
          * a direct Nexus import/launch.  `firestaff --scan-data` defaults to
          * ~/.firestaff/data and sees every game, while the start menu would
          * otherwise scan only the game leaf and mark the rest missing.  When
-         * the requested directory is a known game leaf under a parent that
-         * already contains Firestaff-style game data, promote the menu scan to
-         * that parent so launcher availability matches the CLI scan. */
+         * the requested directory is a known game leaf under an existing
+         * parent, promote the menu scan to that parent so launcher
+         * availability matches the CLI scan.  Do not require recognizable
+         * filenames here: Firestaff discovery is hash-first, and user media
+         * files may be renamed archives/images/payloads. */
         effectiveRequestedDataDir = promotedDataRoot;
     }
     if (!m12_scan_progress_update(&progressCtx,

@@ -190,6 +190,33 @@ static int setup_nexus_recommended_dir(const char* root,
     return 1;
 }
 
+static int setup_dm1_renamed_hash_dir(const char* root,
+                                      char* outGraphicsPath,
+                                      size_t outGraphicsPathSize,
+                                      char* outGraphicsMd5,
+                                      char* outDungeonPath,
+                                      size_t outDungeonPathSize,
+                                      char* outDungeonMd5) {
+    char dm1Dir[M12_ASSET_DATA_DIR_CAPACITY];
+    static const char graphicsPayload[] =
+        "Firestaff synthetic renamed DM1 graphics payload\n";
+    static const char dungeonPayload[] =
+        "Firestaff synthetic renamed DM1 dungeon payload\n";
+    if (!FSP_JoinPath(dm1Dir, sizeof(dm1Dir), root, "dm1") ||
+        !FSP_CreateDirectoryRecursive(dm1Dir) ||
+        !FSP_JoinPath(outGraphicsPath, outGraphicsPathSize,
+                      dm1Dir, "renamed-gfx.payload") ||
+        !FSP_JoinPath(outDungeonPath, outDungeonPathSize,
+                      dm1Dir, "renamed-dungeon.payload") ||
+        !write_text(outGraphicsPath, graphicsPayload) ||
+        !write_text(outDungeonPath, dungeonPayload) ||
+        !m12_file_md5_hex(outGraphicsPath, outGraphicsMd5) ||
+        !m12_file_md5_hex(outDungeonPath, outDungeonMd5)) {
+        return 0;
+    }
+    return 1;
+}
+
 static void check_no_game_available(const M12_AssetStatus* status) {
     static const char* const gameIds[] = {"dm1", "csb", "dm2", "nexus", "theron"};
     size_t gi;
@@ -668,6 +695,48 @@ static void check_game_subdir_scan_promotes_to_parent(const char* homeRoot) {
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
 
+static void check_game_subdir_scan_promotes_renamed_hashes_to_parent(
+    const char* homeRoot) {
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char nexusLeaf[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    M12_AssetStatus status;
+
+    if (!FSP_JoinPath(dataRoot, sizeof(dataRoot), homeRoot,
+                      "saved-game-leaf-renamed-data") ||
+        !FSP_CreateDirectoryRecursive(dataRoot) ||
+        !FSP_JoinPath(nexusLeaf, sizeof(nexusLeaf), dataRoot, "nexus") ||
+        !FSP_CreateDirectoryRecursive(nexusLeaf) ||
+        !setup_dm1_renamed_hash_dir(dataRoot,
+                                    graphicsPath, sizeof(graphicsPath),
+                                    graphicsMd5,
+                                    dungeonPath, sizeof(dungeonPath),
+                                    dungeonMd5)) {
+        fprintf(stderr, "FAIL: cannot seed renamed game-subdir promotion fixture\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
+    memset(&status, 0, sizeof(status));
+    scan_in_isolated_env(homeRoot, nexusLeaf, &status);
+
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&status), dataRoot) == 0,
+              "saved game-leaf data_dir must promote renamed hash payloads to parent");
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm1") == 1,
+              "saved game-leaf data_dir must find sibling renamed DM1 hashes");
+    check_int(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1")[0] != '\0',
+              "renamed game-leaf scan must publish a DM1 runtime root");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1"),
+                     nexusLeaf) != 0,
+              "renamed game-leaf scan must not leave DM1 runtime on the saved leaf");
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+
 #ifndef _WIN32
 static void check_symlinked_recommended_dm1_layout(const char* homeRoot) {
     char targetRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -879,6 +948,7 @@ int main(void) {
     check_scan_progress_cancel_contract(home, dirB);
     check_scan_progress_complete_contract(home, dirB);
     check_game_subdir_scan_promotes_to_parent(home);
+    check_game_subdir_scan_promotes_renamed_hashes_to_parent(home);
 #ifndef _WIN32
     check_symlinked_recommended_dm1_layout(home);
     check_symlinked_multi_game_root_scans_all_games(home);
