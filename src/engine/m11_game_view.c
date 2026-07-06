@@ -23749,6 +23749,12 @@ static int m11_draw_wall_ornament(const M11_GameViewState* state,
 
     if (!state || !state->assetsAvailable || ornamentOrdinal < 0) return 0;
     if (!state->world.dungeon) return 0;
+    /* ReDMCSB: DUNVIEW.C F0107 lines ~3502-3938 owns DM1 wall ornament
+     * placement through G0205/C1004 and the per-map derived bitmap route.
+     * This legacy proportional helper is only a fallback for non-DM1
+     * procedural panes; in DM1 it can double-draw softened/misplaced
+     * ornaments over the source-locked 320x200 pass. */
+    if (m11_is_dm1_source_kind(state->sourceKind)) return 0;
 
     mapIdx = state->world.party.mapIndex;
 
@@ -23823,6 +23829,11 @@ static int m11_draw_door_ornament(const M11_GameViewState* state,
 
     if (!state || !state->assetsAvailable || ornamentOrdinal < 0) return 0;
     if (!state->world.dungeon) return 0;
+    /* ReDMCSB: DUNVIEW.C F0111 lines ~4218-4337 draws DM1 door ornaments
+     * into the door panel/temporary bitmap before the current door-state
+     * frame is blitted.  The generic helper below uses approximate
+     * proportional placement and must not compete with that F0111 path. */
+    if (m11_is_dm1_source_kind(state->sourceKind)) return 0;
 
     mapIdx = state->world.party.mapIndex;
 
