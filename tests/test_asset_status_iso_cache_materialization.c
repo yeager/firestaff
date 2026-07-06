@@ -473,6 +473,28 @@ static void check_flat_dat_iso_materialization(
                                    dungeonSize),
               "cached DUNGEON.DAT must be byte-identical to the ISO entry");
 
+    /* Direct file request: a user may point --data-dir at the ISO itself.
+     * That must still reach the recursive hash scanner instead of stopping
+     * at the legacy explicit-file-candidate path with no launchable game. */
+    M12_AssetStatus_Scan(&status, isoPath);
+    check_int(M12_AssetStatus_GameAvailable(&status, gameId) == 1,
+              "direct ISO file request should make the game available");
+    runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, gameId);
+    check_int(runtimeDir && strstr(runtimeDir, "asset-cache") != NULL &&
+              strstr(runtimeDir, "::") == NULL,
+              "direct ISO file request should still materialize an ordinary "
+              "runtime cache directory");
+    graphics = M12_AssetStatus_GetRequiredFile(&status, gameId, 0U);
+    dungeon = M12_AssetStatus_GetRequiredFile(&status, gameId, 1U);
+    check_int(graphics && graphics->matched &&
+              path_has_cache_leaf(graphics->matchedPath, cacheRoot,
+                                  gameId, graphicsLabel),
+              "direct ISO request should materialize GRAPHICS into the cache");
+    check_int(dungeon && dungeon->matched &&
+              path_has_cache_leaf(dungeon->matchedPath, cacheRoot,
+                                  gameId, dungeonLabel),
+              "direct ISO request should materialize DUNGEON into the cache");
+
     /* Clean up so the next game's scan starts from a neutral state. */
     set_hashes(NULL, NULL);
     (void)remove(extractedPath);
