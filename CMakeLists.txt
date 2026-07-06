@@ -6282,13 +6282,12 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_startup_menu_action_contract
         tests/test_dm2_v1_startup_menu_action_contract.c
-        src/dm2/dm2_v1_startup_menu.c
-        src/dm2/dm2_v1_startup_layout.c
-        src/dm2/dm2_v1_save_load.c
     )
     target_include_directories(test_dm2_v1_startup_menu_action_contract PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm2_v1_startup_menu_action_contract PRIVATE
+        firestaff_dm2)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_startup_menu_action_contract
             PRIVATE -Wall -Wextra -O2)

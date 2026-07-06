@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "dm2_v1_new_game.h"
 #include "dm2_v1_startup_layout.h"
 
 typedef enum {
@@ -50,6 +51,20 @@ typedef struct {
     const char *success_status;
     const char *failure_status;
 } DM2_V1_StartupActionPlan;
+
+typedef enum {
+    DM2_V1_STARTUP_EXEC_IGNORE = 0,
+    DM2_V1_STARTUP_EXEC_SESSION_READY = 1,
+    DM2_V1_STARTUP_EXEC_STATUS_REDRAW = 2,
+    DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER = 3
+} DM2_V1_StartupExecutionKind;
+
+typedef struct {
+    DM2_V1_StartupExecutionKind kind;
+    int rescan_saves;
+    const char *status;
+    DM2_V1_SessionState session;
+} DM2_V1_StartupExecution;
 
 typedef struct {
     char save_root[512];
@@ -101,6 +116,10 @@ int dm2_v1_startup_menu_handle_hit(DM2_V1_StartupMenu *menu,
 int dm2_v1_startup_plan_for_action(
     const DM2_V1_StartupAction *action,
     DM2_V1_StartupActionPlan *out_plan);
+int dm2_v1_startup_execute_plan(
+    const DM2_V1_StartupActionPlan *plan,
+    const char *save_root,
+    DM2_V1_StartupExecution *out_execution);
 int dm2_v1_startup_menu_build_render_rows(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupRenderRow *rows,
