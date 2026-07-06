@@ -648,6 +648,28 @@ static int m12_path_tail_equals(const char* path, const char* name) {
     return m12_ascii_equals_ignore_case(m12_basename_ptr(path), name);
 }
 
+static int m12_path_has_extension(const char* path, const char* ext) {
+    size_t pathLen;
+    size_t extLen;
+    size_t i;
+    if (!path || !ext) {
+        return 0;
+    }
+    pathLen = strlen(path);
+    extLen = strlen(ext);
+    if (pathLen < extLen) {
+        return 0;
+    }
+    path += pathLen - extLen;
+    for (i = 0U; i < extLen; ++i) {
+        if (m12_char_lower((unsigned char)path[i]) !=
+            m12_char_lower((unsigned char)ext[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static const char* const* m12_fast_candidate_subdirs_for_game(const char* gameId) {
     static const char* const dm1Subdirs[] = {"dm1", "dm1-multilingual", "", NULL};
     static const char* const csbSubdirs[] = {"csb", "", NULL};
@@ -1357,6 +1379,51 @@ static int m12_try_match_direct_theron_request(
     return 0;
 }
 
+static int m12_try_match_direct_nexus_request(
+    const char* requestedDataDir,
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
+    char matchedMd5[M12_ASSET_MD5_CAPACITY],
+    char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY],
+    int* outVersionIndex) {
+    char scanRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    size_t i;
+    if (outVersionIndex) {
+        *outVersionIndex = -1;
+    }
+    if (!requestedDataDir || requestedDataDir[0] == '\0') {
+        return 0;
+    }
+    if (FSP_FileExists(requestedDataDir)) {
+        if (!m12_path_has_extension(requestedDataDir, ".cue") &&
+            !m12_path_has_extension(requestedDataDir, ".bin") &&
+            !m12_path_has_extension(requestedDataDir, ".iso")) {
+            return 0;
+        }
+        if (!FSP_ParentDir(scanRoot, sizeof(scanRoot), requestedDataDir)) {
+            m12_copy_string(scanRoot, sizeof(scanRoot), ".");
+        }
+    } else if (FSP_DirExists(requestedDataDir)) {
+        m12_copy_string(scanRoot, sizeof(scanRoot), requestedDataDir);
+    } else {
+        return 0;
+    }
+    for (i = 0U; i < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]); ++i) {
+        if (m12_try_match_version(scanRoot,
+                                  &g_nexusVersions[i],
+                                  matchedPath,
+                                  matchedMd5)) {
+            m12_copy_string(runtimeRoot,
+                            M12_ASSET_DATA_DIR_CAPACITY,
+                            scanRoot);
+            if (outVersionIndex) {
+                *outVersionIndex = (int)i;
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void m12_fill_game_versions(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -1852,6 +1919,82 @@ static int m12_scan_direct_theron_request(M12_AssetStatus* status,
     return 1;
 }
 
+static int m12_scan_direct_nexus_request(M12_AssetStatus* status,
+                                         const char* requestedDataDir,
+                                         const char* configuredDataDir) {
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char matchedMd5[M12_ASSET_MD5_CAPACITY];
+    char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char legacyData[M12_ASSET_DATA_DIR_CAPACITY];
+    int nexusIndex = m12_game_index_from_id("nexus");
+    int versionIndex = -1;
+    int i;
+    size_t requiredIndex;
+    int requiredMatched = 0;
+    if (!status || nexusIndex < 0 ||
+        !m12_try_match_direct_nexus_request(requestedDataDir,
+                                            matchedPath,
+                                            matchedMd5,
+                                            runtimeRoot,
+                                            &versionIndex) ||
+        versionIndex < 0) {
+        return 0;
+    }
+
+    memset(status, 0, sizeof(*status));
+    FirestaffTheronMedia_Init(&status->theronMedia);
+    m12_copy_string(status->dataDir,
+                    sizeof(status->dataDir),
+                    (configuredDataDir && configuredDataDir[0] != '\0')
+                        ? configuredDataDir
+                        : runtimeRoot);
+    if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL)) {
+        m12_copy_string(status->legacyFallbackDir,
+                        sizeof(status->legacyFallbackDir),
+                        legacyData);
+    }
+    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        m12_copy_string(status->runtimeDataDirs[i],
+                        sizeof(status->runtimeDataDirs[i]),
+                        status->dataDir);
+    }
+    m12_init_version_metadata(status);
+    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        m12_init_required_file_metadata(status, i);
+    }
+    status->versions[nexusIndex][versionIndex].matched = 1;
+    m12_copy_string(status->versions[nexusIndex][versionIndex].matchedPath,
+                    sizeof(status->versions[nexusIndex][versionIndex].matchedPath),
+                    matchedPath);
+    m12_copy_string(status->versions[nexusIndex][versionIndex].matchedMd5,
+                    sizeof(status->versions[nexusIndex][versionIndex].matchedMd5),
+                    matchedMd5);
+    m12_copy_string(status->runtimeDataDirs[nexusIndex],
+                    sizeof(status->runtimeDataDirs[nexusIndex]),
+                    runtimeRoot);
+    status->originalFileCandidateFound = 1;
+    for (requiredIndex = 0U;
+         requiredIndex < status->requiredFileCounts[nexusIndex];
+         ++requiredIndex) {
+        M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[nexusIndex][requiredIndex];
+        if (required->roleId && strcmp(required->roleId, "data") == 0) {
+            required->matched = 1;
+            requiredMatched = 1;
+            m12_copy_string(required->matchedPath,
+                            sizeof(required->matchedPath),
+                            matchedPath);
+            m12_copy_string(required->matchedHash,
+                            sizeof(required->matchedHash),
+                            matchedMd5);
+        }
+    }
+    m12_apply_required_game_availability(status, nexusIndex, requiredMatched);
+    m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
+    m12_refresh_v22_modern_asset_status(status);
+    return 1;
+}
+
 static int m12_scan_explicit_file_request(M12_AssetStatus* status,
                                           const char* requestedDataDir) {
     char parent[M12_ASSET_DATA_DIR_CAPACITY];
@@ -2105,6 +2248,18 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         return 1;
     }
     if (!m12_scan_progress_update(&progressCtx,
+                                  "checking direct launch path",
+                                  "nexus",
+                                  requestedDataDir,
+                                  1)) {
+        m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
+        return 0;
+    }
+    if (m12_scan_direct_nexus_request(status, requestedDataDir, NULL)) {
+        m12_scan_progress_finish(status, 1, 0);
+        return 1;
+    }
+    if (!m12_scan_progress_update(&progressCtx,
                                   "checking explicit file request",
                                   NULL,
                                   requestedDataDir,
@@ -2227,6 +2382,11 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
             return;
         }
         if (m12_scan_theron_direct_launch_roots(status, requestedDataDir)) {
+            return;
+        }
+    }
+    if (gameId && strcmp(gameId, "nexus") == 0) {
+        if (m12_scan_direct_nexus_request(status, requestedDataDir, NULL)) {
             return;
         }
     }

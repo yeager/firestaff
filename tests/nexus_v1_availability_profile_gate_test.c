@@ -109,6 +109,8 @@ int main(void) {
     char markerMd5[M12_ASSET_MD5_CAPACITY];
     M12_AssetStatus status;
     const M12_AssetRequiredFileStatus* required;
+    M12_AssetStatus directStatus;
+    const M12_AssetVersionStatus* directVersion;
 
     check_int(M12_AssetStatus_GameHasCompleteHashSet("nexus") == 1,
               "Nexus exposes a complete hash gate");
@@ -158,6 +160,24 @@ int main(void) {
     check_int(required && strcmp(required->matchedHash, markerMd5) == 0,
               "required Nexus marker records the matched hash");
     check_profile_still_needs_runtime_slices(root);
+
+    M12_AssetStatus_Scan(&directStatus, markerPath);
+    check_int(M12_AssetStatus_GameAvailable(&directStatus, "nexus") == 1,
+              "direct Nexus DM.BIN file request passes launch availability");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&directStatus, "nexus"),
+                     nexusDir) == 0,
+              "direct Nexus file request resolves runtime root to media parent");
+    directVersion = M12_AssetStatus_GetVersion(&directStatus, "nexus", 0U);
+    check_int(directVersion && directVersion->matched &&
+                  strcmp(directVersion->matchedPath, markerPath) == 0,
+              "direct Nexus file request records the verified media path");
+
+    M12_AssetStatus_ScanGame(&directStatus, markerPath, "nexus");
+    check_int(M12_AssetStatus_GameAvailable(&directStatus, "nexus") == 1,
+              "game-scoped direct Nexus file request passes launch availability");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&directStatus, "nexus"),
+                     nexusDir) == 0,
+              "game-scoped direct Nexus file request keeps media parent root");
 
     M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
