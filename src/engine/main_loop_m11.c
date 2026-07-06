@@ -252,18 +252,27 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         M11_Render_SetScaleFilter(effectiveFilter);
         restoreFilter = 1;
     }
-    if (specialPalette >= 0 &&
-        !(M11_GameView_PresentationTarget(
-              gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
-              gameView ? gameView->presentationWidth : 0,
-              gameView ? gameView->presentationHeight : 0,
-              &targetW,
-              &targetH))) {
-        result = M11_Render_PresentIndexedWithSpecialPalette(
-            M11_Render_GetFramebuffer(),
-            M11_FB_WIDTH,
-            M11_FB_HEIGHT,
-            specialPalette);
+    if (specialPalette >= 0) {
+        if (M11_GameView_PresentationTarget(
+                gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
+                gameView ? gameView->presentationWidth : 0,
+                gameView ? gameView->presentationHeight : 0,
+                &targetW,
+                &targetH)) {
+            result = M11_Render_PresentIndexedToResolutionWithSpecialPalette(
+                M11_Render_GetFramebuffer(),
+                M11_FB_WIDTH,
+                M11_FB_HEIGHT,
+                targetW,
+                targetH,
+                specialPalette);
+        } else {
+            result = M11_Render_PresentIndexedWithSpecialPalette(
+                M11_Render_GetFramebuffer(),
+                M11_FB_WIDTH,
+                M11_FB_HEIGHT,
+                specialPalette);
+        }
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }

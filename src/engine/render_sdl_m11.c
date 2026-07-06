@@ -1425,6 +1425,138 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     return M11_RENDER_OK;
 }
 
+int M11_Render_PresentIndexedToResolutionWithSpecialPalette(
+    const unsigned char* framebuffer,
+    int logicalWidth,
+    int logicalHeight,
+    int targetWidth,
+    int targetHeight,
+    int specialPalette) {
+    int destX = 0;
+    int destY = 0;
+    int destW = 0;
+    int destH = 0;
+    int uploadW;
+    int uploadH;
+    int cpuNearestPresent = 0;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_FRect sourceRect;
+    SDL_FRect destRect;
+#else
+    SDL_Rect sourceRect;
+    SDL_Rect destRect;
+#endif
+
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!framebuffer ||
+        logicalWidth <= 0 || logicalHeight <= 0 ||
+        targetWidth <= 0 || targetHeight <= 0 ||
+        targetWidth > 4096 || targetHeight > 4096 ||
+        specialPalette < 0 ||
+        specialPalette >= VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (targetWidth == logicalWidth && targetHeight == logicalHeight) {
+        return M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
+                                                           logicalWidth,
+                                                           logicalHeight,
+                                                           specialPalette);
+    }
+    g_state.contentW = targetWidth;
+    g_state.contentH = targetHeight;
+    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+    uploadW = targetWidth;
+    uploadH = targetHeight;
+    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+        destW > 0 && destH > 0 &&
+        (destW != targetWidth || destH != targetHeight)) {
+        uploadW = destW;
+        uploadH = destH;
+        cpuNearestPresent = 1;
+    }
+    if (m11_recreate_texture_if_needed(uploadW, uploadH) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.presentedW = uploadW;
+    g_state.presentedH = uploadH;
+    m11_framebuffer_to_rgba_special_resampled(framebuffer,
+                                              logicalWidth,
+                                              logicalHeight,
+                                              uploadW,
+                                              uploadH,
+                                              specialPalette);
+
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    sourceRect.x = 0.0f;
+    sourceRect.y = 0.0f;
+    sourceRect.w = (float)uploadW;
+    sourceRect.h = (float)uploadH;
+    {
+        SDL_Rect updateRect;
+        updateRect.x = 0;
+        updateRect.y = 0;
+        updateRect.w = uploadW;
+        updateRect.h = uploadH;
+        if (!SDL_UpdateTexture(g_state.texture,
+                               &updateRect,
+                               g_state.presentBuffer,
+                               uploadW * 4)) {
+            return M11_RENDER_ERR_TEXTURE;
+        }
+    }
+    if (!SDL_RenderClear(g_state.renderer)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    destRect.x = (float)destX;
+    destRect.y = (float)destY;
+    destRect.w = (float)destW;
+    destRect.h = (float)destH;
+    if (cpuNearestPresent) {
+        destRect.w = (float)uploadW;
+        destRect.h = (float)uploadH;
+    }
+    if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 targetWidth, targetHeight);
+    if (!SDL_RenderPresent(g_state.renderer)) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+#else
+    sourceRect.x = 0;
+    sourceRect.y = 0;
+    sourceRect.w = uploadW;
+    sourceRect.h = uploadH;
+    if (SDL_UpdateTexture(g_state.texture,
+                          &sourceRect,
+                          g_state.presentBuffer,
+                          uploadW * 4) != 0) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    if (SDL_RenderClear(g_state.renderer) != 0) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    destRect.x = destX;
+    destRect.y = destY;
+    destRect.w = destW;
+    destRect.h = destH;
+    if (cpuNearestPresent) {
+        destRect.w = uploadW;
+        destRect.h = uploadH;
+    }
+    if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
+        return M11_RENDER_ERR_RENDERER;
+    }
+    m11_apply_pixel_grid_overlay(destX, destY, destW, destH,
+                                 targetWidth, targetHeight);
+    SDL_RenderPresent(g_state.renderer);
+#endif
+    return M11_RENDER_OK;
+}
+
 int M11_Render_PresentIndexed(const unsigned char* framebuffer,
                               int logicalWidth,
                               int logicalHeight) {
