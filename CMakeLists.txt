@@ -6416,6 +6416,30 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_m11_launcher_handoff_boundary
     )
 
+    # -- Nexus V1 M12/M11 Launcher Handoff Boundary ----------------
+    # Skip-safe gate: M12 launch intent routes the Nexus catalog entry,
+    # and real staged Saturn data must enter M11 through the production
+    # selected-menu path before showing the Nexus title/startup phase.
+    add_executable(test_nexus_v1_m11_launcher_handoff_boundary
+        tests/test_nexus_v1_m11_launcher_handoff_boundary.c
+    )
+    target_include_directories(test_nexus_v1_m11_launcher_handoff_boundary PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_m11_launcher_handoff_boundary PRIVATE
+        firestaff_m11
+        firestaff_m12
+        firestaff_m10
+        SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_m11_launcher_handoff_boundary PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_m11_launcher_handoff_boundary
+        COMMAND test_nexus_v1_m11_launcher_handoff_boundary
+    )
+
     # ── DM2 V1 Weather/Timer Save Round-Trip (weather persistence gate)
     # Source-locked: dm2_v1_save_load.c skload_table_60 +
     # SKULL.ASM skload_table_60 + PROCESS_TIMER_0C.
