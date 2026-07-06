@@ -1692,6 +1692,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectAssetMd5 = NULL;
     opts->bootProbeExpectMap = 0;
     opts->bootProbeExpectMapIndex = -1;
+    opts->bootProbeExpectRuntimeTickMin = -1;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -3792,6 +3793,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             "firestaff: boot-probe expected map %d but got %d\n",
                             o->bootProbeExpectMapIndex,
                             receipt.mapIndex);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectRuntimeTickMin >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.runtimeTick < o->bootProbeExpectRuntimeTickMin) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected runtime tick >= %d but got %d\n",
+                            o->bootProbeExpectRuntimeTickMin,
+                            receipt.runtimeTick);
                     runRc = 4;
                 }
             }

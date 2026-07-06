@@ -45,6 +45,7 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-champions <n> Fail unless the boot receipt champion count matches\n"
             "  --boot-probe-expect-asset-md5 <md5> Fail unless the boot receipt asset hash matches\n"
             "  --boot-probe-expect-map <n> Fail unless the boot receipt map/level index matches\n"
+            "  --boot-probe-expect-runtime-tick-min <n> Fail unless runtime tick is at least n\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -229,6 +230,11 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--boot-probe-expect-map") == 0 && i + 1 < argc) {
             opts.bootProbeExpectMapIndex = atoi(argv[++i]);
             opts.bootProbeExpectMap = 1;
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-runtime-tick-min") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectRuntimeTickMin = atoi(argv[++i]);
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {

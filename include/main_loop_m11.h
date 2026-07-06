@@ -53,6 +53,7 @@ typedef struct {
     const char* bootProbeExpectAssetMd5; /* Optional exact boot asset MD5. */
     int bootProbeExpectMap; /* Require exact receipt map/level index. */
     int bootProbeExpectMapIndex;
+    int bootProbeExpectRuntimeTickMin; /* Require runtimeTick >= this value. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
