@@ -293,6 +293,39 @@ static int dm2_sksave_root_from_path(const char* path,
     return 1;
 }
 
+static int parent_root_from_path(const char* path,
+                                 char* outRoot,
+                                 size_t outRootCap) {
+    const char* slash;
+    size_t len;
+
+    if (!path || !outRoot || outRootCap == 0u) {
+        return 0;
+    }
+    slash = strrchr(path, '/');
+#ifdef _WIN32
+    {
+        const char* backslash = strrchr(path, '\\');
+        if (!slash || (backslash && backslash > slash)) {
+            slash = backslash;
+        }
+    }
+#endif
+    if (!slash) {
+        if (outRootCap < 2u) return 0;
+        outRoot[0] = '.';
+        outRoot[1] = '\0';
+        return 1;
+    }
+    len = (size_t)(slash - path);
+    if (len == 0u || len >= outRootCap) {
+        return 0;
+    }
+    memcpy(outRoot, path, len);
+    outRoot[len] = '\0';
+    return 1;
+}
+
 static int validate_csb_original_save_import_path(const char* path) {
     CSB_V1_CSBWinSaveDiscoveryResult discovery;
     CSB_V1_RuntimeProfile runtime;
@@ -354,6 +387,92 @@ static int validate_dm2_sksave_import_path(const char* path) {
         ? dm2_v1_session_load_last_session(saveRoot, &session)
         : dm2_v1_session_load_slot(saveRoot, slot, &session);
     return rc == 0 && dm2_v1_session_validate(&session);
+}
+
+static int validate_nexus_fnxs_import_path(const char* path) {
+    Nexus_V1_SaveHeader header;
+    unsigned char* champion_buf = NULL;
+    unsigned char* world_buf = NULL;
+    size_t champion_read = 0u;
+    size_t world_read = 0u;
+    size_t champion_cap;
+    size_t world_cap;
+    char diagnostic[256];
+    Nexus_SaveResult result;
+
+    if (!path || !*path) return 0;
+    champion_cap = nexus_v1_save_max_champion_pool_size();
+    world_cap = nexus_v1_save_max_world_size();
+    champion_buf = (unsigned char*)malloc(champion_cap);
+    world_buf = (unsigned char*)malloc(world_cap);
+    if (!champion_buf || !world_buf) {
+        free(champion_buf);
+        free(world_buf);
+        return 0;
+    }
+    memset(&header, 0, sizeof(header));
+    memset(diagnostic, 0, sizeof(diagnostic));
+    result = nexus_v1_load_from_path(path,
+                                     &header,
+                                     champion_buf,
+                                     champion_cap,
+                                     &champion_read,
+                                     world_buf,
+                                     world_cap,
+                                     &world_read,
+                                     diagnostic,
+                                     sizeof(diagnostic));
+    free(champion_buf);
+    free(world_buf);
+    (void)champion_read;
+    (void)world_read;
+    return result == NEXUS_SAVE_OK;
+}
+
+static int validate_theron_tqsv_import_path(const char* path) {
+    Theron_SaveSlot slotInfo;
+    char saveRoot[512];
+    int slot = -1;
+
+    if (!path || !*path) return 0;
+    if (!theron_tqsv_slot_from_basename(path_basename(path), &slot)) {
+        return 0;
+    }
+    if (!parent_root_from_path(path, saveRoot, sizeof(saveRoot))) {
+        return 0;
+    }
+
+    memset(&slotInfo, 0, sizeof(slotInfo));
+    return theron_v1_save_load_from_slot(saveRoot,
+                                         slot,
+                                         NULL,
+                                         0,
+                                         NULL,
+                                         0,
+                                         &slotInfo) == 0 &&
+           slotInfo.valid;
+}
+
+static int validate_theron_srm_import_path(const char* path) {
+    Theron_V1SrmEnvelopeReceipt envelope;
+    Theron_V1SrmEnvelopeKind kind;
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    int slot = -1;
+
+    if (!path || !*path) return 0;
+    if (!theron_srm_slot_from_basename(path_basename(path), &slot)) {
+        return 0;
+    }
+    memset(scratch, 0, sizeof(scratch));
+    memset(&envelope, 0, sizeof(envelope));
+    kind = theron_v1_srm_decode_path(path,
+                                     slot,
+                                     scratch,
+                                     sizeof(scratch),
+                                     &envelope);
+    return (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION ||
+            kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) &&
+           envelope.progression.restored;
 }
 
 /* Check if filename matches a launcher-visible save candidate. */
@@ -1543,6 +1662,18 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
     }
     if (dm2_sksave_slot_from_basename(base, NULL, NULL) &&
         !validate_dm2_sksave_import_path(importPath)) {
+        return -1;
+    }
+    if (nexus_save_slot_from_basename(base, NULL) &&
+        !validate_nexus_fnxs_import_path(importPath)) {
+        return -1;
+    }
+    if (theron_tqsv_slot_from_basename(base, NULL) &&
+        !validate_theron_tqsv_import_path(importPath)) {
+        return -1;
+    }
+    if (theron_srm_slot_from_basename(base, NULL) &&
+        !validate_theron_srm_import_path(importPath)) {
         return -1;
     }
     snprintf(dst, sizeof(dst), "%s/%s", dataDir, base);

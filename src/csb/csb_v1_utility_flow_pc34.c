@@ -18,6 +18,7 @@
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_utility_import_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
+#include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
@@ -587,7 +588,8 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
     case CSB_V1_UTIL_FLOW_LOAD_GAME:
         /* Load saved game from CSB save file.
          * ReDMCSB LOADSAVE.C F0435: STARTEND_LoadGame.
-         * Uses csb_v1_save_load_pc34_compat functions.
+         * Uses the runtime loader so Firestaff-native, CSBWin, and bounded
+         * CSBGAME roster paths all share the same byte gate.
          *
          * In Firestaff: the UI sets csb_save_path, then this state
          * loads the game state from the save file. */
@@ -597,48 +599,33 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
             return 0;
         }
 
-        /* Load the save game.
-         * Note: This uses the save/load system which is separate from
-         * the import system. A full implementation would load the
-         * complete game state (party + dungeon + events). */
         {
-            /* For now, load only the party from the save.
-             * A full implementation would load the complete game state.
-             * This is a placeholder — the actual load would use
-             * csb_v1_load_game() from the save_load module. */
-            FILE *f = fopen(ctx->csb_save_path, "rb");
-            if (!f) {
-                ctx->last_error = -4;  /* save not found */
+            CSB_V1_RuntimeProfile loaded;
+            CSB_V1_PartyState party;
+            int count;
+
+            csb_v1_runtime_init(&loaded, NULL);
+            memset(&party, 0, sizeof(party));
+            if (csb_v1_runtime_load_game_from_path(&loaded,
+                                                   ctx->csb_save_path) !=
+                CSB_V1_LOAD_OK) {
+                ctx->last_error = -5;
                 ctx->state = CSB_V1_UTIL_FLOW_ERROR;
+                csb_v1_runtime_cleanup(&loaded);
                 return 0;
             }
-
-            /* Read save header (512 bytes) and party data.
-             * For now, just verify the save file is a valid CSB save. */
-            {
-                uint8_t hdr[512];
-                size_t read = fread(hdr, 1, 512, f);
-                (void)read;  /* suppress unused warning */
-
-                /* Verify magic (CSB save magic) */
-                uint32_t magic = (uint32_t)hdr[0]
-                               | ((uint32_t)hdr[1] << 8)
-                               | ((uint32_t)hdr[2] << 16)
-                               | ((uint32_t)hdr[3] << 24);
-
-                if (magic != CSB_V1_SAVE_MAGIC_CSB &&
-                    magic != CSB_V1_SAVE_MAGIC_DM) {
-                    ctx->last_error = -5;  /* corrupted */
-                    ctx->state = CSB_V1_UTIL_FLOW_ERROR;
-                    fclose(f);
-                    return 0;
-                }
+            count = csb_v1_runtime_get_party_state(&loaded, &party);
+            if (count <= 0 || party.ChampionCount <= 0) {
+                ctx->last_error = -8;
+                ctx->state = CSB_V1_UTIL_FLOW_ERROR;
+                csb_v1_runtime_cleanup(&loaded);
+                return 0;
             }
-            fclose(f);
-
-            /* Save verified — transition to NEW_GAME with loaded party.
-             * Note: In a real implementation, the party would be loaded
-             * from the save file here. For now, we just succeed. */
+            ctx->imported_party = party;
+            ctx->imported_champion_count = count;
+            ctx->last_error = 0;
+            ctx->action = CSB_V1_UTIL_ACTION_LOAD;
+            csb_v1_runtime_cleanup(&loaded);
             ctx->state = CSB_V1_UTIL_FLOW_NEW_GAME;
         }
         return 0;  /* continue */
