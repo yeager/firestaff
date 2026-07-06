@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 CSB utility startup preview cursor cleanup: keyboard cursor movement out of the CSB startup utility VIEW preview now clears the imported-party preview before selecting the next row, keeping preview state tied to the active VIEW row instead of leaking stale party rows across LOAD/IMPORT/NEW focus. Verification: focused build passed for `test_csb_v1_m11_startup_resume_gate`; focused CTest for `csb_v1_m11_startup_resume_gate` plus `csb_v1_boot_runtime_handoff` passed locally.
+
 - ✅ 2026-07-06 CSB utility startup preview pointer ownership: when the imported-party VIEW preview is open, M11 now consumes pointer clicks in the visible preview rows as utility-panel input instead of letting them fall through to the entrance command hit-test. Verification: focused build passed for `test_csb_v1_m11_startup_resume_gate`; focused CTest for `csb_v1_m11_startup_resume_gate` plus `csb_v1_boot_runtime_handoff` passed locally.
 
 - ✅ 2026-07-06 CSB utility startup preview Back handling: M11 now treats Back inside the CSB startup utility imported-party VIEW preview as a local preview-close command, leaving the entrance active and returning to `CSB IMPORT READY` instead of falling through to the entrance Quit path. Verification: focused build passed for `test_csb_v1_m11_startup_resume_gate`; focused CTest for `csb_v1_m11_startup_resume_gate` plus `csb_v1_boot_runtime_handoff` passed locally.
