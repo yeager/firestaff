@@ -291,6 +291,60 @@ const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action)
     }
 }
 
+int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
+                                  CSB_V1_UtilInput input,
+                                  int preview_active,
+                                  CSB_V1_UtilInputResult *out_result)
+{
+    if (out_result) {
+        memset(out_result, 0, sizeof(*out_result));
+        out_result->kind = CSB_V1_UTIL_INPUT_RESULT_NONE;
+        out_result->action = CSB_V1_UTIL_ACTION_EXIT;
+        out_result->selected_action_index =
+            ctx ? ctx->selected_action_index : 0;
+        out_result->preview_active = preview_active ? 1 : 0;
+    }
+    if (!ctx || !out_result) {
+        return 0;
+    }
+    if (ctx->state != CSB_V1_UTIL_FLOW_SELECT_ACTION &&
+        ctx->state != CSB_V1_UTIL_FLOW_INIT) {
+        return 0;
+    }
+
+    if (input == CSB_V1_UTIL_INPUT_BACK && preview_active) {
+        out_result->kind = CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW;
+        out_result->selected_action_index = ctx->selected_action_index;
+        out_result->preview_active = 0;
+        return 1;
+    }
+    if (input == CSB_V1_UTIL_INPUT_UP ||
+        input == CSB_V1_UTIL_INPUT_DOWN) {
+        int delta = input == CSB_V1_UTIL_INPUT_UP ? -1 : 1;
+        int selected = csb_v1_util_flow_move_action_cursor(ctx, delta);
+        if (selected < 0) {
+            return 0;
+        }
+        out_result->kind = CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED;
+        out_result->action = csb_v1_util_flow_selected_action(ctx);
+        out_result->selected_action_index = selected;
+        out_result->preview_active = 0;
+        return 1;
+    }
+    if (input == CSB_V1_UTIL_INPUT_ACCEPT ||
+        input == CSB_V1_UTIL_INPUT_ACTION) {
+        if (csb_v1_util_flow_accept_selected_action(ctx) != 0) {
+            return 0;
+        }
+        out_result->kind = CSB_V1_UTIL_INPUT_RESULT_ACTIVATE;
+        out_result->action = ctx->action;
+        out_result->selected_action_index = ctx->selected_action_index;
+        out_result->preview_active = preview_active ? 1 : 0;
+        return 1;
+    }
+    return 0;
+}
+
 int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
                                  CSB_V1_UtilMenuLayout *out_layout)
 {

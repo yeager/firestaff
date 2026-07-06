@@ -308,6 +308,7 @@ static void test_mark_imported_party_ready_uses_existing_party(void)
 static void test_utility_action_cursor_drives_select_action(void)
 {
     CSB_V1_UtilFlowContext flow;
+    CSB_V1_UtilInputResult input_result;
 
     csb_v1_util_flow_init(&flow);
     csb_v1_util_flow_mark_utility_disk_verified(&flow, 1);
@@ -333,6 +334,44 @@ static void test_utility_action_cursor_drives_select_action(void)
     CHECK(csb_v1_util_flow_step(&flow) == 0 &&
           flow.state == CSB_V1_UTIL_FLOW_SELECT_ACTION,
           "utility flow reaches SELECT_ACTION");
+
+    CHECK(csb_v1_util_flow_handle_input(
+              &flow,
+              CSB_V1_UTIL_INPUT_DOWN,
+              1,
+              &input_result) &&
+              input_result.kind == CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED &&
+              input_result.selected_action_index == 1 &&
+              input_result.action == CSB_V1_UTIL_ACTION_LOAD &&
+              input_result.preview_active == 0,
+          "utility keyboard DOWN is CSB-owned cursor movement and closes preview");
+    CHECK(csb_v1_util_flow_handle_input(
+              &flow,
+              CSB_V1_UTIL_INPUT_BACK,
+              1,
+              &input_result) &&
+              input_result.kind == CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW &&
+              input_result.selected_action_index == 1 &&
+              input_result.preview_active == 0,
+          "utility keyboard Back closes preview without changing row");
+    CHECK(csb_v1_util_flow_handle_input(
+              &flow,
+              CSB_V1_UTIL_INPUT_UP,
+              0,
+              &input_result) &&
+              input_result.kind == CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED &&
+              input_result.selected_action_index == 0 &&
+              input_result.action == CSB_V1_UTIL_ACTION_IMPORT,
+          "utility keyboard UP moves through the CSB menu model");
+    CHECK(csb_v1_util_flow_handle_input(
+              &flow,
+              CSB_V1_UTIL_INPUT_ACTION,
+              0,
+              &input_result) &&
+              input_result.kind == CSB_V1_UTIL_INPUT_RESULT_ACTIVATE &&
+              input_result.action == CSB_V1_UTIL_ACTION_IMPORT &&
+              input_result.selected_action_index == 0,
+          "utility keyboard Action activates the CSB-selected row");
 
     CHECK(csb_v1_util_flow_move_action_cursor(&flow, 1) == 1 &&
           csb_v1_util_flow_selected_action(&flow) ==
