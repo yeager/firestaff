@@ -295,22 +295,45 @@ static void expect_dm2_startup_layout_contract(void) {
     expect_true(dm2_v1_startup_menu_move_selected(&menu, 8) &&
                     menu.selected_row == 2,
                 "DM2 startup menu movement clamps at NEW GAME");
-    expect_true(dm2_v1_startup_menu_activate_selected(&menu, &action) &&
+    expect_true(dm2_v1_startup_menu_handle_input(
+                    &menu,
+                    DM2_V1_STARTUP_INPUT_ACCEPT,
+                    &action) &&
                     action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME &&
                     action.row == 2 &&
                     action.slot == -1,
-                "DM2 startup menu activation reports NEW GAME");
-    expect_true(dm2_v1_startup_menu_move_selected(&menu, -1) &&
+                "DM2 startup menu Accept reports NEW GAME");
+    expect_true(dm2_v1_startup_menu_handle_input(
+                    &menu,
+                    DM2_V1_STARTUP_INPUT_UP,
+                    &action) &&
                     menu.selected_row == 1 &&
-                    dm2_v1_startup_menu_activate_selected(&menu, &action) &&
+                    action.kind == DM2_V1_STARTUP_ACTION_NONE &&
+                    dm2_v1_startup_menu_handle_input(
+                        &menu,
+                        DM2_V1_STARTUP_INPUT_ACTION,
+                        &action) &&
                     action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
                     action.slot == 3,
-                "DM2 startup menu activation reports LOAD SLOT");
-    expect_true(dm2_v1_startup_menu_move_selected(&menu, -1) &&
+                "DM2 startup menu Up/Action reports LOAD SLOT");
+    expect_true(dm2_v1_startup_menu_handle_input(
+                    &menu,
+                    DM2_V1_STARTUP_INPUT_UP,
+                    &action) &&
                     menu.selected_row == 0 &&
-                    dm2_v1_startup_menu_activate_selected(&menu, &action) &&
+                    dm2_v1_startup_menu_handle_input(
+                        &menu,
+                        DM2_V1_STARTUP_INPUT_ACCEPT,
+                        &action) &&
                     action.kind == DM2_V1_STARTUP_ACTION_CONTINUE,
-                "DM2 startup menu activation reports CONTINUE");
+                "DM2 startup menu Up/Accept reports CONTINUE");
+    expect_true(dm2_v1_startup_menu_handle_input(
+                    &menu,
+                    DM2_V1_STARTUP_INPUT_BACK,
+                    &action) &&
+                    action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
+                    action.row == menu.selected_row,
+                "DM2 startup menu Back reports launcher return");
 }
 
 static void check_incomplete_required_files_block_m11(const char* label,

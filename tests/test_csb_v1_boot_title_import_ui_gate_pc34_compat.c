@@ -379,6 +379,48 @@ static void test_utility_action_cursor_drives_select_action(void)
           "utility retry after verified-disk ERROR returns to SELECT_ACTION");
 }
 
+static void test_utility_panel_layout_owns_visible_hit_area(void)
+{
+    CSB_V1_UtilFlowContext flow;
+    CSB_V1_UtilPanelLayout panel;
+    CSB_V1_UtilMenuLayout menu;
+
+    csb_v1_util_flow_init(&flow);
+    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    flow.selected_action_index = 0;
+
+    CHECK(csb_v1_util_flow_menu_layout(&flow, &menu) == 1 &&
+          menu.x == 38 &&
+          menu.y == 104 &&
+          menu.w == 244 &&
+          menu.h == 48,
+          "utility menu layout keeps the source startup menu rectangle");
+    CHECK(csb_v1_util_flow_panel_layout(&flow, 0, &panel) == 1 &&
+          panel.import_status_x == 38 &&
+          panel.import_status_y == 80 &&
+          panel.prompt_x == 38 &&
+          panel.prompt_y == 92 &&
+          panel.preview_x == 48 &&
+          panel.preview_y == 154,
+          "utility panel layout owns prompt and preview anchors");
+    CHECK(panel.x == 38 && panel.y == 80 && panel.w == 244 &&
+          panel.h == 72,
+          "utility panel without preview spans prompt plus menu rows");
+    CHECK(csb_v1_util_flow_panel_contains_point(&flow, 0, 40, 92) == 1 &&
+          csb_v1_util_flow_panel_contains_point(&flow, 0, 40, 151) == 1 &&
+          csb_v1_util_flow_panel_contains_point(&flow, 0, 40, 152) == 0,
+          "utility panel consumes prompt/menu whitespace only to menu bottom");
+    CHECK(csb_v1_util_flow_panel_layout(&flow, 1, &panel) == 1 &&
+          panel.h == 114 &&
+          panel.preview_row_h == 10 &&
+          panel.preview_max_rows == 4,
+          "utility panel with preview expands through four champion rows");
+    CHECK(csb_v1_util_flow_panel_contains_point(&flow, 1, 52, 164) == 1 &&
+          csb_v1_util_flow_panel_contains_point(&flow, 1, 52, 193) == 1 &&
+          csb_v1_util_flow_panel_contains_point(&flow, 1, 52, 194) == 0,
+          "utility panel consumes preview row clicks without leaking to entrance");
+}
+
 static void test_diagnostic_report_surfaces_title_import_status(void)
 {
     CSB_V1_BootProfile p;
@@ -430,6 +472,7 @@ int main(void)
     test_cmp_import_bad_magic_rejected();
     test_mark_imported_party_ready_uses_existing_party();
     test_utility_action_cursor_drives_select_action();
+    test_utility_panel_layout_owns_visible_hit_area();
     test_diagnostic_report_surfaces_title_import_status();
     test_source_evidence();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

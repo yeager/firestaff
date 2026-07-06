@@ -14,8 +14,18 @@ typedef enum {
     DM2_V1_STARTUP_ACTION_NONE = 0,
     DM2_V1_STARTUP_ACTION_CONTINUE = 1,
     DM2_V1_STARTUP_ACTION_LOAD_SLOT = 2,
-    DM2_V1_STARTUP_ACTION_NEW_GAME = 3
+    DM2_V1_STARTUP_ACTION_NEW_GAME = 3,
+    DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER = 4
 } DM2_V1_StartupActionKind;
+
+typedef enum {
+    DM2_V1_STARTUP_INPUT_NONE = 0,
+    DM2_V1_STARTUP_INPUT_UP = 1,
+    DM2_V1_STARTUP_INPUT_DOWN = 2,
+    DM2_V1_STARTUP_INPUT_ACCEPT = 3,
+    DM2_V1_STARTUP_INPUT_ACTION = 4,
+    DM2_V1_STARTUP_INPUT_BACK = 5
+} DM2_V1_StartupInput;
 
 typedef struct {
     DM2_V1_StartupActionKind kind;
@@ -44,5 +54,8 @@ int dm2_v1_startup_menu_move_selected(DM2_V1_StartupMenu *menu,
 int dm2_v1_startup_menu_activate_selected(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_handle_input(DM2_V1_StartupMenu *menu,
+                                     DM2_V1_StartupInput input,
+                                     DM2_V1_StartupAction *out_action);
 
 #endif
