@@ -189,10 +189,13 @@ static void run_boot_probe_empty_data_rejection(void) {
     M11_PhaseA_SetDefaultOptions(&opts);
     expect_true(opts.bootProbeFrames == 0,
                 "boot-probe default advances zero startup frames");
+    expect_true(opts.bootProbeExpectRuntime == 0,
+                "boot-probe runtime expectation is opt-in");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
     opts.durationMs = 0;
+    opts.bootProbeExpectRuntime = 1;
     opts.bootProbeFrames = 2;
     expect_true(M11_PhaseA_Run(&opts) == 2,
                 "boot-probe refuses missing game data without entering the loop");
@@ -293,6 +296,7 @@ static void run_real_data_handoff_if_available(void) {
             opts.gameId = kCases[i].gameId;
             opts.dataDir = data_dir;
             opts.durationMs = 0;
+            opts.bootProbeExpectRuntime = 1;
             if (strcmp(kCases[i].gameId, "dm1") == 0) {
                 opts.bootProbeExpectPhase = "dm1-runtime";
             } else if (strcmp(kCases[i].gameId, "dm2") == 0) {

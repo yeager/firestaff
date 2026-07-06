@@ -43,6 +43,7 @@ typedef struct {
                               the boot-probe receipt is printed. */
     const char* bootProbeExpectPhase; /* Optional exact startupPhase expected
                                          after boot-probe frames/script. */
+    int bootProbeExpectRuntime; /* Require startup inactive + level loaded. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

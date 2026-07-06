@@ -1648,6 +1648,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbe      = 0;
     opts->bootProbeFrames = 0;
     opts->bootProbeExpectPhase = NULL;
+    opts->bootProbeExpectRuntime = 0;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -3542,6 +3543,18 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             "firestaff: boot-probe expected phase '%s' but got '%s'\n",
                             o->bootProbeExpectPhase,
                             receipt.startupPhase);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectRuntime) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.startupActive ||
+                    !receipt.levelLoaded) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected runtime handoff but got phase='%s' startupActive=%d levelLoaded=%d\n",
+                            receipt.startupPhase,
+                            receipt.startupActive,
+                            receipt.levelLoaded);
                     runRc = 4;
                 }
             }
