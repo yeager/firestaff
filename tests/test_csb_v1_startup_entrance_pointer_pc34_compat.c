@@ -101,6 +101,7 @@ int main(void)
     CSB_V1_StartupRenderState_PC34 render_state;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
+    CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
     CSB_V1_StartupEntranceDecision_PC34 decision;
     char phase[64];
     int startup_active;
@@ -442,6 +443,69 @@ int main(void)
               &decision) &&
               decision == CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34,
           "startup command resolver ignores empty command");
+    command_state.credits_active = 1;
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &command_plan) &&
+              command_plan.kind ==
+                  CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34 &&
+              strcmp(command_plan.status_scope, "BOOT") == 0 &&
+              strcmp(command_plan.status, "CSB ENTRANCE") == 0,
+          "startup command plan resolves credits dismissal status");
+    command_state.credits_active = 0;
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &command_plan) &&
+              command_plan.kind ==
+                  CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34 &&
+              strcmp(command_plan.status, "CSB DOORS") == 0,
+          "startup command plan resolves dungeon entry handoff");
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34,
+              &command_plan) &&
+              command_plan.kind ==
+                  CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34 &&
+              strcmp(command_plan.status, "CSB DOORS") == 0,
+          "startup command plan resolves bonus dungeon handoff");
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
+              &command_plan) &&
+              command_plan.kind ==
+                  CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34 &&
+              strcmp(command_plan.status, "CSB DOORS") == 0 &&
+              strcmp(command_plan.failure_status,
+                     "CSB RESUME FAILED") == 0 &&
+              strcmp(command_plan.unavailable_status,
+                     "CSB RESUME UNAVAILABLE") == 0,
+          "startup command plan resolves resume statuses");
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34,
+              &command_plan) &&
+              command_plan.kind ==
+                  CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34 &&
+              strcmp(command_plan.status, "CSB CREDITS") == 0,
+          "startup command plan resolves credits status");
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34,
+              &command_plan) &&
+              command_plan.kind ==
+                  CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34 &&
+              strcmp(command_plan.status_scope, "RETURN") == 0 &&
+              strcmp(command_plan.status, "BACK TO LAUNCHER") == 0,
+          "startup command plan resolves quit status");
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+              &command_plan) &&
+              command_plan.kind ==
+                  CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34,
+          "startup command plan resolves ignored command");
 
     command_state.title_active = 1;
     command_state.title_frame = 7;

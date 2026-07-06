@@ -3444,33 +3444,34 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     int commandId)
 {
     CSB_V1_StartupCommandState_PC34 command_state;
-    CSB_V1_StartupEntranceDecision_PC34 decision =
-        CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34;
+    CSB_V1_StartupEntranceCommandPlan_PC34 plan;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
         return M11_GAME_INPUT_IGNORED;
     }
     m11_csb_startup_command_state_from_m11(state, &command_state);
-    if (!csb_v1_startup_resolve_entrance_command_pc34(
+    if (!csb_v1_startup_plan_for_entrance_command_pc34(
             &command_state,
             commandId,
-            &decision)) {
+            &plan)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (decision ==
-        CSB_V1_STARTUP_ENTRANCE_DECISION_DISMISS_CREDITS_PC34) {
+    if (plan.kind ==
+        CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34) {
         (void)csb_v1_startup_dismiss_credits_pc34(&command_state);
         m11_csb_startup_command_state_to_m11(state, &command_state);
-        m11_set_status(state, "BOOT", "CSB ENTRANCE");
+        m11_set_status(state,
+                       plan.status_scope ? plan.status_scope : "BOOT",
+                       plan.status ? plan.status : "CSB ENTRANCE");
         return M11_GAME_INPUT_REDRAW;
     }
-    if (decision == CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34) {
+    if (plan.kind == CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34) {
         return M11_GAME_INPUT_IGNORED;
     }
     state->csbState.startup_entrance_last_command = commandId;
-    switch (decision) {
-        case CSB_V1_STARTUP_ENTRANCE_DECISION_ENTER_DUNGEON_PC34:
+    switch (plan.kind) {
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34:
             state->csbState.startup_entrance_bonus_requested = 0;
             if (state->csbBootProfile) {
                 CSB_V1_BootProfile *profile =
@@ -3479,7 +3480,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             }
             m11_csb_startup_begin_door_opening(state, commandId);
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_ENTRANCE_DECISION_ENTER_BONUS_DUNGEON_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34:
             state->csbState.startup_entrance_bonus_requested = 1;
             if (state->csbBootProfile) {
                 CSB_V1_BootProfile *profile =
@@ -3490,7 +3491,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             }
             m11_csb_startup_begin_door_opening(state, commandId);
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_ENTRANCE_DECISION_RESUME_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34:
             if (state->csbState.startup_entrance_resume_available &&
                 state->csbState.startup_entrance_resume_path[0] != '\0' &&
                 state->csbBootProfile) {
@@ -3507,23 +3508,33 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                     m11_csb_startup_begin_door_opening(state, commandId);
                     return M11_GAME_INPUT_REDRAW;
                 }
-                m11_set_status(state, "BOOT", "CSB RESUME FAILED");
+                m11_set_status(state,
+                               plan.status_scope ? plan.status_scope : "BOOT",
+                               plan.failure_status ? plan.failure_status
+                                                   : "CSB RESUME FAILED");
                 return M11_GAME_INPUT_REDRAW;
             }
-            m11_set_status(state, "BOOT", "CSB RESUME UNAVAILABLE");
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "BOOT",
+                           plan.unavailable_status ? plan.unavailable_status
+                                                   : "CSB RESUME UNAVAILABLE");
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_ENTRANCE_DECISION_BEGIN_CREDITS_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34:
             (void)csb_v1_startup_begin_credits_pc34(&command_state);
             m11_csb_startup_command_state_to_m11(state, &command_state);
-            m11_set_status(state, "BOOT", "CSB CREDITS");
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "BOOT",
+                           plan.status ? plan.status : "CSB CREDITS");
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_ENTRANCE_DECISION_QUIT_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34:
             (void)csb_v1_startup_quit_to_launcher_pc34(&command_state);
             m11_csb_startup_command_state_to_m11(state, &command_state);
-            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "RETURN",
+                           plan.status ? plan.status : "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
-        case CSB_V1_STARTUP_ENTRANCE_DECISION_DISMISS_CREDITS_PC34:
-        case CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34:
         default:
             return M11_GAME_INPUT_IGNORED;
     }

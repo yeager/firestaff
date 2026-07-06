@@ -364,6 +364,83 @@ int csb_v1_startup_resolve_entrance_command_pc34(
     return 1;
 }
 
+void csb_v1_startup_entrance_command_plan_init_pc34(
+    CSB_V1_StartupEntranceCommandPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    plan->kind = CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34;
+    plan->command_id = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    plan->status_scope = NULL;
+    plan->status = NULL;
+    plan->failure_status = NULL;
+    plan->unavailable_status = NULL;
+}
+
+int csb_v1_startup_plan_for_entrance_command_pc34(
+    const CSB_V1_StartupCommandState_PC34 *state,
+    int command_id,
+    CSB_V1_StartupEntranceCommandPlan_PC34 *out_plan)
+{
+    CSB_V1_StartupEntranceDecision_PC34 decision =
+        CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34;
+
+    if (!out_plan) {
+        return 0;
+    }
+    csb_v1_startup_entrance_command_plan_init_pc34(out_plan);
+    out_plan->command_id = command_id;
+    if (!csb_v1_startup_resolve_entrance_command_pc34(
+            state,
+            command_id,
+            &decision)) {
+        return 0;
+    }
+    switch (decision) {
+        case CSB_V1_STARTUP_ENTRANCE_DECISION_DISMISS_CREDITS_PC34:
+            out_plan->kind =
+                CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34;
+            out_plan->status_scope = "BOOT";
+            out_plan->status = "CSB ENTRANCE";
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_DECISION_ENTER_DUNGEON_PC34:
+            out_plan->kind =
+                CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34;
+            out_plan->status_scope = "BOOT";
+            out_plan->status = "CSB DOORS";
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_DECISION_ENTER_BONUS_DUNGEON_PC34:
+            out_plan->kind =
+                CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34;
+            out_plan->status_scope = "BOOT";
+            out_plan->status = "CSB DOORS";
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_DECISION_RESUME_PC34:
+            out_plan->kind = CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34;
+            out_plan->status_scope = "BOOT";
+            out_plan->status = "CSB DOORS";
+            out_plan->failure_status = "CSB RESUME FAILED";
+            out_plan->unavailable_status = "CSB RESUME UNAVAILABLE";
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_DECISION_BEGIN_CREDITS_PC34:
+            out_plan->kind =
+                CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34;
+            out_plan->status_scope = "BOOT";
+            out_plan->status = "CSB CREDITS";
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_DECISION_QUIT_PC34:
+            out_plan->kind = CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34;
+            out_plan->status_scope = "RETURN";
+            out_plan->status = "BACK TO LAUNCHER";
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34:
+        default:
+            out_plan->kind = CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34;
+            return 1;
+    }
+}
+
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command)
