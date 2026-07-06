@@ -69,6 +69,20 @@ typedef struct {
     int preview_active;
 } CSB_V1_UtilInputResult;
 
+typedef enum {
+    CSB_V1_UTIL_EXEC_IGNORE = 0,
+    CSB_V1_UTIL_EXEC_ENTRANCE_COMMAND = 1,
+    CSB_V1_UTIL_EXEC_STATUS_REDRAW = 2
+} CSB_V1_UtilExecutionKind;
+
+typedef struct {
+    CSB_V1_UtilExecutionKind kind;
+    int entrance_command;
+    int preview_active;
+    const char *status_context;
+    const char *status_message;
+} CSB_V1_UtilExecution;
+
 typedef struct {
     CSB_V1_UtilFlowAction action;
     const char *label;
@@ -174,6 +188,9 @@ int csb_v1_util_flow_retry_error(CSB_V1_UtilFlowContext *ctx);
 const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action);
 int csb_v1_util_flow_entrance_command_for_action(
     CSB_V1_UtilFlowAction action);
+int csb_v1_util_flow_execution_for_action(
+    CSB_V1_UtilFlowAction action,
+    CSB_V1_UtilExecution *out_execution);
 int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
                                   CSB_V1_UtilInput input,
                                   int preview_active,

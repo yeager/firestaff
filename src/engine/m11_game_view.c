@@ -3544,32 +3544,31 @@ static M11_GameInputResult m11_csb_startup_activate_utility_action(
     M11_GameViewState *state,
     CSB_V1_UtilFlowAction action)
 {
+    CSB_V1_UtilExecution execution;
     if (!state) {
         return M11_GAME_INPUT_IGNORED;
     }
-    switch (action) {
-        case CSB_V1_UTIL_ACTION_NEW:
-            state->csbState.startup_import_preview_active = 0;
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                csb_v1_util_flow_entrance_command_for_action(action));
-        case CSB_V1_UTIL_ACTION_LOAD:
-            state->csbState.startup_import_preview_active = 0;
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                csb_v1_util_flow_entrance_command_for_action(action));
-        case CSB_V1_UTIL_ACTION_IMPORT:
-            state->csbState.startup_import_preview_active = 0;
-            m11_set_status(state, "BOOT", "CSB IMPORT READY");
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_VIEW:
-            state->csbState.startup_import_preview_active = 1;
-            m11_set_status(state, "BOOT", "CSB PARTY READY");
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_EXIT:
-        default:
-            return M11_GAME_INPUT_IGNORED;
+    if (!csb_v1_util_flow_execution_for_action(action, &execution)) {
+        return M11_GAME_INPUT_IGNORED;
     }
+    if (execution.kind == CSB_V1_UTIL_EXEC_ENTRANCE_COMMAND) {
+        state->csbState.startup_import_preview_active =
+            execution.preview_active;
+        return m11_csb_startup_handle_entrance_command(
+            state,
+            execution.entrance_command);
+    }
+    if (execution.kind == CSB_V1_UTIL_EXEC_STATUS_REDRAW) {
+        state->csbState.startup_import_preview_active =
+            execution.preview_active;
+        m11_set_status(state,
+                       execution.status_context ? execution.status_context
+                                                : "BOOT",
+                       execution.status_message ? execution.status_message
+                                                : "CSB UTILITY");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static CSB_V1_UtilInput m11_csb_utility_input_from_m12(M12_MenuInput input)
