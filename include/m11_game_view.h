@@ -591,6 +591,7 @@ typedef struct {
         int runtime_projectile_marker_drawn_count;
         int startup_entrance_active;
         int startup_entrance_frame;
+        int startup_entrance_source_step;
         int startup_entrance_dismissed;
         int startup_entrance_last_command;
         int startup_entrance_bonus_requested;
