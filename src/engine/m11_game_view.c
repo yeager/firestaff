@@ -2045,6 +2045,14 @@ static int m11_is_dm1_source_kind(M11_GameSourceKind kind)
            kind == M11_GAME_SOURCE_DIRECT_DUNGEON;
 }
 
+static int m11_is_stock_dm1_hall_map0(const M11_GameViewState* state)
+{
+    return state &&
+           state->sourceId[0] != '\0' &&
+           strcmp(state->sourceId, "dm1") == 0 &&
+           state->world.party.mapIndex == 0;
+}
+
 static int m11_seed_dm1_v2_visible_effects_from_viewport(
     const M11_GameViewState* state,
     int seedDynamicLights);
@@ -10300,11 +10308,13 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
 
     mapIdx = state->world.party.mapIndex;
     if (mapIdx < 0 || mapIdx >= (int)state->world.dungeon->header.mapCount) return;
-    if (mapIdx == 0) {
-        /* ReDMCSB: the DM1 Hall of Champions map has no active creature
-         * GROUP chains.  Keep the M11 creature-AI pass out of map 0 so an
-         * older dense squareFirstThings interpretation cannot animate a
-         * compact thing-list entry from elsewhere as a false HoC Screamer. */
+    if (m11_is_stock_dm1_hall_map0(state)) {
+        /* ReDMCSB: the stock DM1 Hall of Champions map has no active
+         * creature GROUP chains.  Keep the M11 creature-AI pass out of
+         * source DM1 HoC so an older dense squareFirstThings interpretation
+         * cannot animate compact candidate payloads as false creatures.
+         * Do not suppress generic/custom map-0 dungeons: those may contain
+         * valid GROUP chains and must follow the normal F0209-style pass. */
         return;
     }
     map = &state->world.dungeon->maps[mapIdx];
