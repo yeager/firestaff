@@ -153,6 +153,10 @@ int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
                                                    int projectile_direction,
                                                    int party_direction,
                                                    int frame_count);
+int dm2_v1_viewport_creature_frame_for_direction(int requested_frame,
+                                                 int creature_direction,
+                                                 int party_direction,
+                                                 int frame_count);
 
 typedef struct {
     int x;
@@ -203,6 +207,7 @@ typedef struct {
     int16_t  screen_y;         /* viewport Y position */
     uint8_t  health_pct;       /* 0–100 for health bar */
     uint8_t  light_radius;     /* light emitted by creature */
+    uint8_t  direction;        /* 0=N, 1=E, 2=S, 3=W */
 } DM2_CreatureSprite;
 
 typedef struct {

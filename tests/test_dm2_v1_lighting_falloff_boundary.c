@@ -18,6 +18,7 @@ static int s_tests_passed = 0;
 static int s_asset_fetch_calls = 0;
 static int s_last_asset_index = 0;
 static int s_projectile_seven_frame_fixture = 0;
+static int s_creature_directional_frame_fixture = 0;
 
 #define CHECK(name_, cond_) do { \
     printf("  %s...\n", name_); \
@@ -48,6 +49,15 @@ static int test_dm2_asset_fetch(void *user,
         4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
         4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
         4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14
+    };
+    static const uint8_t creature_directional_atlas[28 * 7] = {
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9,
+        4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14, 9,9,9,9,9,9,9
     };
     static const uint8_t item_atlas[21 * 7] = {
         2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
@@ -128,10 +138,12 @@ static int test_dm2_asset_fetch(void *user,
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
                    (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
-        if (out_pixels) *out_pixels = creature_atlas;
-        if (out_w) *out_w = 21;
+        if (out_pixels) *out_pixels = s_creature_directional_frame_fixture
+            ? creature_directional_atlas : creature_atlas;
+        if (out_w) *out_w = s_creature_directional_frame_fixture ? 28 : 21;
         if (out_h) *out_h = 7;
-        if (out_stride) *out_stride = 21;
+        if (out_stride) *out_stride =
+            s_creature_directional_frame_fixture ? 28 : 21;
         return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index <
@@ -402,6 +414,11 @@ static void test_sprite_asset_provider(void)
     CHECK("DM2 projectile directional frame follows view-relative missile frames",
           dm2_v1_viewport_projectile_frame_for_direction(0, 1, 0, 7) == 4 &&
               dm2_v1_viewport_projectile_frame_for_direction(0, 3, 0, 7) == 6);
+    CHECK("DM2 creature directional frame keeps short atlases animated",
+          dm2_v1_viewport_creature_frame_for_direction(3, 1, 0, 2) == 1);
+    CHECK("DM2 creature directional frame follows view-relative parity frames",
+          dm2_v1_viewport_creature_frame_for_direction(2, 2, 0, 4) == 2 &&
+              dm2_v1_viewport_creature_frame_for_direction(2, 1, 0, 4) == 3);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -440,6 +457,28 @@ static void test_sprite_asset_provider(void)
     CHECK("creature map-chip atlas draws only the selected frame",
           framebuffer[((50 - 4) * 320) + (40 - 4)] == 12 &&
               framebuffer[(50 * 320) + 40] == 12);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    viewport.creature_count = 1;
+    viewport.creatures[0].creature_type = 0x12;
+    viewport.creatures[0].frame_index = 0x02;
+    viewport.creatures[0].direction = 1;
+    viewport.creatures[0].screen_x = 40;
+    viewport.creatures[0].screen_y = 50;
+    viewport.creatures[0].health_pct = 100;
+    s_creature_directional_frame_fixture = 1;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_creatures(&viewport);
+    s_creature_directional_frame_fixture = 0;
+    CHECK("creature render uses view-relative directional atlas frame",
+          viewport.asset_creature_drawn_count == 1 &&
+              framebuffer[((50 - 4) * 320) + (40 - 4)] == 9 &&
+              framebuffer[(50 * 320) + 40] == 9);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
