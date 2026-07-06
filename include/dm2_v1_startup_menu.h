@@ -35,6 +35,22 @@ typedef struct {
     int slot;
 } DM2_V1_StartupAction;
 
+typedef enum {
+    DM2_V1_STARTUP_PLAN_IGNORE = 0,
+    DM2_V1_STARTUP_PLAN_CONTINUE = 1,
+    DM2_V1_STARTUP_PLAN_LOAD_SLOT = 2,
+    DM2_V1_STARTUP_PLAN_NEW_GAME = 3,
+    DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER = 4
+} DM2_V1_StartupPlanKind;
+
+typedef struct {
+    DM2_V1_StartupPlanKind kind;
+    int slot;
+    int rescan_saves_on_failure;
+    const char *success_status;
+    const char *failure_status;
+} DM2_V1_StartupActionPlan;
+
 typedef struct {
     char save_root[512];
     int resume_available;
@@ -82,6 +98,9 @@ int dm2_v1_startup_menu_handle_input(DM2_V1_StartupMenu *menu,
 int dm2_v1_startup_menu_handle_hit(DM2_V1_StartupMenu *menu,
                                    const DM2_V1_StartupHit *hit,
                                    DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_plan_for_action(
+    const DM2_V1_StartupAction *action,
+    DM2_V1_StartupActionPlan *out_plan);
 int dm2_v1_startup_menu_build_render_rows(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupRenderRow *rows,
