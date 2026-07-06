@@ -3280,8 +3280,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 }
 
 enum {
-    M11_CSB_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
-    M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34 = 4
+    M11_CSB_ENTRANCE_CREDITS_TICKS_PC34 = 1800
 };
 
 static int m11_csb_startup_entrance_waiting_for_input(
@@ -3293,6 +3292,39 @@ static int m11_csb_startup_entrance_waiting_for_input(
     }
     return state->csbState.startup_entrance_source_step >=
         csb_v1_startup_entrance_wait_stage_pc34();
+}
+
+static CSB_V1_StartupInput_PC34 m11_csb_startup_input_from_m12(
+    M12_MenuInput input)
+{
+    switch (input) {
+        case M12_MENU_INPUT_ACCEPT:
+            return CSB_V1_STARTUP_INPUT_ACCEPT_PC34;
+        case M12_MENU_INPUT_ACTION:
+            return CSB_V1_STARTUP_INPUT_ACTION_PC34;
+        case M12_MENU_INPUT_BACK:
+            return CSB_V1_STARTUP_INPUT_BACK_PC34;
+        case M12_MENU_INPUT_DISK_MENU:
+            return CSB_V1_STARTUP_INPUT_DISK_MENU_PC34;
+        case M12_MENU_INPUT_NONE:
+        default:
+            return CSB_V1_STARTUP_INPUT_NONE_PC34;
+    }
+}
+
+static int m11_csb_startup_command_from_action(int action)
+{
+    switch (action) {
+        case CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34:
+            return M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON;
+        case CSB_V1_STARTUP_ENTRANCE_ACTION_RESUME_PC34:
+            return M11_ENTRANCE_RUNTIME_COMMAND_RESUME;
+        case CSB_V1_STARTUP_ENTRANCE_ACTION_QUIT_PC34:
+            return M11_ENTRANCE_RUNTIME_COMMAND_QUIT;
+        case CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34:
+        default:
+            return M11_ENTRANCE_RUNTIME_COMMAND_NONE;
+    }
 }
 
 static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
@@ -15371,23 +15403,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (utilityInput != M11_GAME_INPUT_IGNORED) {
             return utilityInput;
         }
-        if (input == M12_MENU_INPUT_BACK) {
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                state->csbState.startup_entrance_credits_active
-                    ? M11_ENTRANCE_RUNTIME_COMMAND_NONE
-                    : M11_ENTRANCE_RUNTIME_COMMAND_QUIT);
-        }
-        if (input == M12_MENU_INPUT_ACCEPT ||
-            input == M12_MENU_INPUT_ACTION) {
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
-        }
-        if (input == M12_MENU_INPUT_DISK_MENU) {
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
+        {
+            int action = csb_v1_startup_entrance_action_for_input_pc34(
+                state->csbState.startup_entrance_credits_active,
+                m11_csb_startup_input_from_m12(input));
+            int command = m11_csb_startup_command_from_action(action);
+            if (action != CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34 ||
+                state->csbState.startup_entrance_credits_active) {
+                return m11_csb_startup_handle_entrance_command(state, command);
+            }
         }
         return M11_GAME_INPUT_IGNORED;
     }

@@ -84,6 +84,32 @@ int csb_v1_startup_entrance_pre_open_delay_ticks_pc34(void)
     return CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34;
 }
 
+int csb_v1_startup_entrance_action_for_input_pc34(
+    int credits_active,
+    CSB_V1_StartupInput_PC34 input)
+{
+    /* ReDMCSB ENTRANCE.C F0441 lines ~857-883 owns the interactive entrance
+     * loop: Return/Enter sets C001_MODE_LOAD_DUNGEON, credits redraw loops
+     * back to the entrance, and other queued commands can leave via the saved
+     * game/menu paths. This maps Firestaff's bounded startup input tokens onto
+     * those source-owned entrance outcomes. */
+    if (credits_active) {
+        return CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34;
+    }
+    switch (input) {
+        case CSB_V1_STARTUP_INPUT_ACCEPT_PC34:
+        case CSB_V1_STARTUP_INPUT_ACTION_PC34:
+            return CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34;
+        case CSB_V1_STARTUP_INPUT_BACK_PC34:
+            return CSB_V1_STARTUP_ENTRANCE_ACTION_QUIT_PC34;
+        case CSB_V1_STARTUP_INPUT_DISK_MENU_PC34:
+            return CSB_V1_STARTUP_ENTRANCE_ACTION_RESUME_PC34;
+        case CSB_V1_STARTUP_INPUT_NONE_PC34:
+        default:
+            return CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34;
+    }
+}
+
 int csb_v1_startup_sequence_source_order_valid_pc34(void)
 {
     /* ReDMCSB startup source order:
