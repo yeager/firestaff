@@ -3073,7 +3073,9 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
     if (state->assetsAvailable) {
-        title = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 1u);
+        title = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&state->assetLoader,
+            (unsigned int)plan->source_asset_id);
     }
     if (title && title->width == 320u && title->height >= 175u) {
         /* ReDMCSB TITLE.C F0437 uses C001_GRAPHIC_TITLE: PRESENTS is
@@ -3150,6 +3152,41 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                   38, 86, "CHAOS", &g_text_title);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   38, 112, "STRIKES BACK", &g_text_shadow);
+}
+
+static const M11_TextStyle *m11_csb_startup_text_style(int style)
+{
+    switch (style) {
+        case 1:
+            return &g_text_small;
+        case 2:
+            return &g_text_title;
+        case 3:
+            return &g_text_shadow;
+        default:
+            return &g_text_small;
+    }
+}
+
+static void m11_draw_csb_startup_plan_text(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int x,
+    int y,
+    int style,
+    const char *text)
+{
+    if (!text || text[0] == '\0') {
+        return;
+    }
+    m11_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  x,
+                  y,
+                  text,
+                  m11_csb_startup_text_style(style));
 }
 
 static int m11_draw_csb_entrance_closed_doors_asset(
@@ -3289,7 +3326,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         const M11_AssetSlot *credits = NULL;
         if (state->assetsAvailable) {
             credits = M11_AssetLoader_Load(
-                (M11_AssetLoader *)&state->assetLoader, 5u);
+                (M11_AssetLoader *)&state->assetLoader,
+                (unsigned int)plan.source_asset_id);
         }
         if (credits && credits->width == 320u && credits->height == 200u) {
             M11_AssetLoader_Blit(credits,
@@ -3300,12 +3338,27 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                  0,
                                  -1);
         } else {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          38, 42, "CHAOS STRIKES BACK", &g_text_title);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          38, 68, "CREDITS", &g_text_shadow);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          38, 154, "PRESS ENTER", &g_text_small);
+            m11_draw_csb_startup_plan_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan.fallback_title_x,
+                                           plan.fallback_title_y,
+                                           plan.fallback_title_style,
+                                           plan.fallback_title_text);
+            m11_draw_csb_startup_plan_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan.fallback_subtitle_x,
+                                           plan.fallback_subtitle_y,
+                                           plan.fallback_subtitle_style,
+                                           plan.fallback_subtitle_text);
+            m11_draw_csb_startup_plan_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan.fallback_prompt_x,
+                                           plan.fallback_prompt_y,
+                                           plan.fallback_prompt_style,
+                                           plan.fallback_prompt_text);
         }
         return;
     }
@@ -3314,7 +3367,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     }
     if (state->assetsAvailable) {
         entrance = M11_AssetLoader_Load(
-            (M11_AssetLoader *)&state->assetLoader, 4u);
+            (M11_AssetLoader *)&state->assetLoader,
+            (unsigned int)plan.source_asset_id);
         if (entrance && entrance->width == 320u && entrance->height == 200u) {
             M11_AssetLoader_Blit(entrance,
                                  framebuffer,

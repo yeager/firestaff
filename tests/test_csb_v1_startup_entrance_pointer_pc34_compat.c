@@ -209,6 +209,7 @@ int main(void)
     render_state.title_frame = 0;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              plan.source_asset_id == 1 &&
               plan.title_source_step == 1 &&
               plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
@@ -277,6 +278,7 @@ int main(void)
         csb_v1_startup_entrance_wait_stage_pc34();
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              plan.source_asset_id == 4 &&
               plan.waiting_for_input &&
               plan.blink_prompt_visible &&
               plan.closed_left_source_x == 0 &&
@@ -302,8 +304,21 @@ int main(void)
     render_state.entrance_active = 1;
     render_state.credits_active = 1;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
-              plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34,
-          "startup render plan owns credits surface");
+              plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
+              plan.source_asset_id == 5 &&
+              plan.fallback_title_x == 38 &&
+              plan.fallback_title_y == 42 &&
+              plan.fallback_title_style == 2 &&
+              strcmp(plan.fallback_title_text, "CHAOS STRIKES BACK") == 0 &&
+              plan.fallback_subtitle_x == 38 &&
+              plan.fallback_subtitle_y == 68 &&
+              plan.fallback_subtitle_style == 3 &&
+              strcmp(plan.fallback_subtitle_text, "CREDITS") == 0 &&
+              plan.fallback_prompt_x == 38 &&
+              plan.fallback_prompt_y == 154 &&
+              plan.fallback_prompt_style == 1 &&
+              strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0,
+          "startup render plan owns credits surface, asset, and fallback text");
 
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;
@@ -313,6 +328,7 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 &&
+              plan.source_asset_id == 4 &&
               plan.opening_step == 2,
           "startup render plan owns door pre-open surface");
 

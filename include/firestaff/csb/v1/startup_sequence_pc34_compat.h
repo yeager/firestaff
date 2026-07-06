@@ -116,6 +116,7 @@ typedef struct CSB_V1_StartupRenderState_PC34 {
 typedef struct CSB_V1_StartupRenderPlan_PC34 {
     CSB_V1_StartupRenderSurface_PC34 surface;
     int waiting_for_input;
+    int source_asset_id;
     int title_source_step;
     int title_stage;
     int title_source_x;
@@ -155,6 +156,18 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int opening_right_dest_y;
     int opening_right_w;
     int opening_right_h;
+    int fallback_title_x;
+    int fallback_title_y;
+    int fallback_title_style;
+    const char *fallback_title_text;
+    int fallback_subtitle_x;
+    int fallback_subtitle_y;
+    int fallback_subtitle_style;
+    const char *fallback_subtitle_text;
+    int fallback_prompt_x;
+    int fallback_prompt_y;
+    int fallback_prompt_style;
+    const char *fallback_prompt_text;
 } CSB_V1_StartupRenderPlan_PC34;
 
 typedef struct CSB_V1_StartupCommandState_PC34 {
