@@ -3386,6 +3386,7 @@ int main(int argc, char** argv) {
         memset(&focusView.world.projectiles.entries[0], 0,
                sizeof(focusView.world.projectiles.entries[0]));
         focusView.world.projectiles.entries[0].slotIndex = 0;
+        focusView.world.projectiles.entries[0].reserved3 = 1;
         focusView.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
         focusView.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
         focusView.world.projectiles.entries[0].mapIndex = 0;
@@ -3409,6 +3410,7 @@ int main(int argc, char** argv) {
         memset(&focusView.world.projectiles.entries[0], 0,
                sizeof(focusView.world.projectiles.entries[0]));
         focusView.world.projectiles.entries[0].slotIndex = 0;
+        focusView.world.projectiles.entries[0].reserved3 = 1;
         focusView.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
         focusView.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
         focusView.world.projectiles.entries[0].mapIndex = 0;
@@ -3432,6 +3434,7 @@ int main(int argc, char** argv) {
         memset(&focusView.world.explosions.entries[0], 0,
                sizeof(focusView.world.explosions.entries[0]));
         focusView.world.explosions.entries[0].slotIndex = 0;
+        focusView.world.explosions.entries[0].reserved0 = 1;
         focusView.world.explosions.entries[0].explosionType = C000_EXPLOSION_FIREBALL;
         focusView.world.explosions.entries[0].mapIndex = 0;
         focusView.world.explosions.entries[0].mapX = 2;
