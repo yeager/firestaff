@@ -398,6 +398,18 @@ typedef struct {
 } CSB_V1_ViewportRuntimeGroupOverlayPlacement;
 
 typedef struct {
+    int visible;
+    int forward;
+    int side;
+    int view_square;
+    int view_cell;
+    int source_zone;
+    int viewport_x;
+    int viewport_y;
+    int used_source_zone;
+} CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
+
+typedef struct {
     int view_square;
     int redmcsb_view_square_index;
     int view_depth;
@@ -613,6 +625,14 @@ int csb_v1_viewport_runtime_group_overlay_placement(
     int side,
     int coordinate_set,
     CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_explosion_overlay_placement(
+    int party_dir,
+    int party_x,
+    int party_y,
+    int explosion_map_x,
+    int explosion_map_y,
+    int explosion_cell,
+    CSB_V1_ViewportRuntimeExplosionOverlayPlacement *out_placement);
 int csb_v1_viewport_projectile_blit_pixels(const CSB_V1_ViewportProjectileBlitSpec *spec,
                                            int flip_flags,
                                            const uint8_t *source,

@@ -633,6 +633,94 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     return 1;
 }
 
+int csb_v1_viewport_runtime_explosion_overlay_placement(
+    int party_dir,
+    int party_x,
+    int party_y,
+    int explosion_map_x,
+    int explosion_map_y,
+    int explosion_cell,
+    CSB_V1_ViewportRuntimeExplosionOverlayPlacement *out_placement)
+{
+    CSB_V1_ViewportRuntimeExplosionOverlayPlacement placement;
+    const CSB_V1_ViewportExplosionBlitSpec *spec = NULL;
+    int x;
+    int y;
+
+    memset(&placement, 0, sizeof(placement));
+    placement.view_square = -1;
+    placement.view_cell = explosion_cell;
+    placement.source_zone = -1;
+    csb_v1_viewport_runtime_relative_position(
+        party_dir,
+        party_x,
+        party_y,
+        explosion_map_x,
+        explosion_map_y,
+        &placement.forward,
+        &placement.side);
+    if (placement.forward < 0 || placement.forward > 4 ||
+        placement.side < -2 || placement.side > 2) {
+        if (out_placement) *out_placement = placement;
+        return 0;
+    }
+
+    if (placement.forward == 3 &&
+        (placement.side == -2 || placement.side == 2)) {
+        placement.view_square =
+            placement.side < 0 ? (int)DM1_VIEW_SQUARE_D3L2
+                               : (int)DM1_VIEW_SQUARE_D3R2;
+        spec = csb_v1_viewport_get_explosion_blit_spec_for_square(
+            placement.view_square);
+        if (explosion_cell == EXPLOSION_CELL_CENTERED) {
+            placement.source_zone =
+                csb_v1_viewport_explosion_centered_zone(spec);
+        } else if (explosion_cell == 0 || explosion_cell == 1) {
+            placement.source_zone =
+                csb_v1_viewport_explosion_side_zone(
+                    spec, (unsigned char)explosion_cell);
+        }
+        if (placement.source_zone < 0) {
+            if (out_placement) *out_placement = placement;
+            return 0;
+        }
+        if (!csb_v1_viewport_runtime_overlay_position(
+                party_dir,
+                party_x,
+                party_y,
+                explosion_map_x,
+                explosion_map_y,
+                &x,
+                &y)) {
+            if (out_placement) *out_placement = placement;
+            return 0;
+        }
+        placement.visible = 1;
+        placement.used_source_zone = 1;
+        placement.viewport_x = x;
+        placement.viewport_y = y;
+        if (out_placement) *out_placement = placement;
+        return 1;
+    }
+
+    if (!csb_v1_viewport_runtime_overlay_position(
+            party_dir,
+            party_x,
+            party_y,
+            explosion_map_x,
+            explosion_map_y,
+            &x,
+            &y)) {
+        if (out_placement) *out_placement = placement;
+        return 0;
+    }
+    placement.visible = 1;
+    placement.viewport_x = x;
+    placement.viewport_y = y;
+    if (out_placement) *out_placement = placement;
+    return 1;
+}
+
 static void csb_v1_viewport_draw_runtime_projectile_overlays(
     CSB_V1_ViewportConfig *cfg,
     int party_dir,
@@ -714,26 +802,30 @@ static void csb_v1_viewport_draw_runtime_explosion_overlays(
     for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
         const struct ExplosionInstance_Compat *explosion =
             &cfg->runtime_explosions->entries[i];
-        int x;
-        int y;
+        CSB_V1_ViewportRuntimeExplosionOverlayPlacement placement;
 
         if (explosion->reserved0 == 0 || explosion->slotIndex < 0) {
             continue;
         }
-        if (!csb_v1_viewport_runtime_overlay_position(
+        if (!csb_v1_viewport_runtime_explosion_overlay_placement(
                 party_dir,
                 party_x,
                 party_y,
                 explosion->mapX,
                 explosion->mapY,
-                &x,
-                &y)) {
+                explosion->cell,
+                &placement)) {
             continue;
         }
-        /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions
-         * after projectiles.  Use a larger marker so a live explosion
-         * visibly wins over a projectile in the same viewport cell. */
-        csb_v1_viewport_draw_runtime_overlay_cross(cfg, x, y, 0x0Cu, 2);
+        /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 restarts the thing list
+         * for explosions after all object/creature/projectile cells and maps
+         * D3L2/D3R2 through C3014/C3031 via G2034. */
+        csb_v1_viewport_draw_runtime_overlay_cross(
+            cfg,
+            placement.viewport_x,
+            placement.viewport_y,
+            0x0Cu,
+            placement.used_source_zone ? 3 : 2);
     }
 }
 

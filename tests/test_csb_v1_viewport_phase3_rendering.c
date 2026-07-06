@@ -2246,6 +2246,7 @@ static void test_csb_runtime_overlay_placement_contracts(void)
 {
     CSB_V1_ViewportRuntimeObjectOverlayPlacement object_place;
     CSB_V1_ViewportRuntimeGroupOverlayPlacement group_place;
+    CSB_V1_ViewportRuntimeExplosionOverlayPlacement explosion_place;
 
     memset(&object_place, 0, sizeof(object_place));
     check_true("csb.runtime_object_overlay.d1c.visible",
@@ -2302,6 +2303,50 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                   4, 0, 0, &group_place), 0);
     check_int("csb.runtime_group_overlay.bad_square.view_square",
               group_place.view_square, -1);
+
+    memset(&explosion_place, 0, sizeof(explosion_place));
+    check_true("csb.runtime_explosion_overlay.d3l2.center.visible",
+               csb_v1_viewport_runtime_explosion_overlay_placement(
+                   0, 10, 10, 8, 7, EXPLOSION_CELL_CENTERED,
+                   &explosion_place) == 1);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.square",
+              explosion_place.view_square, (int)DM1_VIEW_SQUARE_D3L2);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.zone",
+              explosion_place.source_zone, 3020);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.source",
+              explosion_place.used_source_zone, 1);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.x",
+              explosion_place.viewport_x, 28);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.y",
+              explosion_place.viewport_y, 52);
+
+    memset(&explosion_place, 0, sizeof(explosion_place));
+    check_true("csb.runtime_explosion_overlay.d3r2.side1.visible",
+               csb_v1_viewport_runtime_explosion_overlay_placement(
+                   0, 10, 10, 12, 7, 1, &explosion_place) == 1);
+    check_int("csb.runtime_explosion_overlay.d3r2.side1.square",
+              explosion_place.view_square, (int)DM1_VIEW_SQUARE_D3R2);
+    check_int("csb.runtime_explosion_overlay.d3r2.side1.zone",
+              explosion_place.source_zone, 3046);
+    check_int("csb.runtime_explosion_overlay.d3r2.side1.source",
+              explosion_place.used_source_zone, 1);
+
+    memset(&explosion_place, 0, sizeof(explosion_place));
+    check_int("csb.runtime_explosion_overlay.d3l2.bad_cell.hidden",
+              csb_v1_viewport_runtime_explosion_overlay_placement(
+                  0, 10, 10, 8, 7, 3, &explosion_place), 0);
+    check_int("csb.runtime_explosion_overlay.d3l2.bad_cell.zone",
+              explosion_place.source_zone, -1);
+
+    memset(&explosion_place, 0, sizeof(explosion_place));
+    check_true("csb.runtime_explosion_overlay.d2c.generic.visible",
+               csb_v1_viewport_runtime_explosion_overlay_placement(
+                   0, 10, 10, 10, 8, EXPLOSION_CELL_CENTERED,
+                   &explosion_place) == 1);
+    check_int("csb.runtime_explosion_overlay.d2c.generic.square",
+              explosion_place.view_square, -1);
+    check_int("csb.runtime_explosion_overlay.d2c.generic.source",
+              explosion_place.used_source_zone, 0);
 }
 
 static void test_csb_d3l2_d3r2_thing_pass_route_binding_contracts(void)
