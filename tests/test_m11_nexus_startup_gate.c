@@ -92,6 +92,22 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     return nonzero;
 }
 
+static int advance_nexus_title_to_frame(M11_GameViewState* view,
+                                        unsigned int target_frame,
+                                        int max_steps) {
+    int step;
+    int target = (int)target_frame;
+    if (!view) {
+        return 0;
+    }
+    for (step = 0;
+         step < max_steps && view->nexusState.title_frame < target;
+         ++step) {
+        (void)M11_GameView_AdvanceIdleTick(view);
+    }
+    return view->nexusState.title_frame >= target;
+}
+
 static int count_nonzero_region(const unsigned char* pixels,
                                 int fb_w,
                                 int fb_h,
@@ -380,7 +396,21 @@ int main(void) {
                         "real Nexus title non-start input does not open startup menus");
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
-                        "real Nexus title phase advances on accept");
+                        "real Nexus title cannot skip before reveal completes");
+            expect_true(view.nexusState.title_active == 1,
+                        "real Nexus title stays active after early accept");
+            expect_true(nexus_title_min_boot_frames() == 30 &&
+                            !nexus_title_boot_reveal_complete(29) &&
+                            nexus_title_boot_reveal_complete(30),
+                        "Nexus title module exposes the boot reveal gate");
+            expect_true(advance_nexus_title_to_frame(
+                            &view,
+                            (unsigned int)nexus_title_min_boot_frames(),
+                            64),
+                        "real Nexus title completes boot reveal");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus title phase advances on accept after reveal");
             expect_true(view.nexusState.title_active == 0,
                         "real Nexus title phase clears after input");
             if (view.nexusState.startup_save_select_active) {
@@ -568,7 +598,19 @@ int main(void) {
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
                                         M11_GAME_INPUT_REDRAW,
-                                    "M11 Nexus title advances to save selection");
+                                    "M11 Nexus save-slot title blocks early accept");
+                        expect_true(view.nexusState.title_active == 1 &&
+                                        view.nexusState.startup_save_select_active == 0,
+                                    "M11 Nexus save-slot title remains active after early accept");
+                        expect_true(advance_nexus_title_to_frame(
+                                        &view,
+                                        (unsigned int)nexus_title_min_boot_frames(),
+                                        64),
+                                    "M11 Nexus save-slot title completes reveal");
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_ACCEPT) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus title advances to save selection after reveal");
                         expect_true(view.nexusState.startup_save_select_active == 1,
                                     "M11 Nexus startup exposes save selection when slots exist");
                         expect_true(view.nexusState.startup_save_slot_mask ==
@@ -586,10 +628,15 @@ int main(void) {
                         expect_true(view.nexusState.title_active == 1 &&
                                         view.nexusState.startup_save_select_active == 0,
                                     "M11 Nexus startup save selection Back restores title phase");
+                        expect_true(advance_nexus_title_to_frame(
+                                        &view,
+                                        (unsigned int)nexus_title_min_boot_frames(),
+                                        64),
+                                    "M11 Nexus startup title reveal completes after Back");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
                                         M11_GAME_INPUT_REDRAW,
-                                    "M11 Nexus startup title reopens save selection after Back");
+                                    "M11 Nexus startup title reopens save selection after Back reveal");
                         expect_true(view.nexusState.startup_save_select_active == 1,
                                     "M11 Nexus startup save selection is active again after title");
                         expect_true(M11_GameView_HandlePointer(
@@ -622,10 +669,15 @@ int main(void) {
                                     "M11 Nexus startup with save slot restarts for NEW GAME");
                         expect_true(view.nexusState.title_active == 1,
                                     "M11 Nexus save-slot NEW GAME path starts on title");
+                        expect_true(advance_nexus_title_to_frame(
+                                        &view,
+                                        (unsigned int)nexus_title_min_boot_frames(),
+                                        64),
+                                    "M11 Nexus save-slot NEW GAME title completes reveal");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
                                         M11_GAME_INPUT_REDRAW,
-                                    "M11 Nexus save-slot NEW GAME path advances title");
+                                    "M11 Nexus save-slot NEW GAME path advances title after reveal");
                         expect_true(view.nexusState.startup_save_select_active == 1,
                                     "M11 Nexus save-slot NEW GAME path exposes save menu");
                         {

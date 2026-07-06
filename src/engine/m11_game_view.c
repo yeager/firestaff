@@ -15433,6 +15433,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 input != M12_MENU_INPUT_ACTION) {
                 return M11_GAME_INPUT_IGNORED;
             }
+            if (!nexus_title_boot_reveal_complete(
+                    state->nexusState.title_frame)) {
+                m11_set_status(state, "STARTUP", "NEXUS TITLE");
+                return M11_GAME_INPUT_REDRAW;
+            }
             state->nexusState.title_active = 0;
             state->nexusState.title_frame = 0;
             if (state->nexusState.startup_save_slot_mask != 0u) {
@@ -16621,6 +16626,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                   y,
                   (unsigned int)buttonMask);
         return m11_csb_startup_handle_entrance_command(state, command);
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+        state->nexusState.title_active &&
+        (buttonMask & M11_DM1_MOUSE_MASK_LEFT) == 0) {
+        return M11_GAME_INPUT_IGNORED;
     }
 
     if (buttonMask & M11_DM1_MOUSE_MASK_LEFT) {
