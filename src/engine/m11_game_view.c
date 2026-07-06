@@ -39,6 +39,7 @@
 #include "asset_find_by_hash.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
@@ -2957,37 +2958,17 @@ static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state);
 
 enum {
-    M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34 = 1,
-    M11_CSB_TITLE_SOURCE_ZOOM_STEP_PC34 = 2,
-    M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34 = 3,
-    M11_CSB_TITLE_TOTAL_TICKS_PC34 = 53,
-    M11_CSB_TITLE_PRESENTS_TICKS_PC34 = 30
+    M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34 =
+        CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
+    M11_CSB_TITLE_SOURCE_ZOOM_STEP_PC34 =
+        CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+    M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34 =
+        CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34
 };
 
 static int m11_csb_startup_title_source_step_for_frame(int frame)
 {
-    V1_TitleFrontendSourceAnimationStep step;
-    unsigned int sourceStep;
-
-    if (frame < M11_CSB_TITLE_PRESENTS_TICKS_PC34) {
-        return M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34;
-    }
-    sourceStep = (unsigned int)(frame - M11_CSB_TITLE_PRESENTS_TICKS_PC34 + 1);
-    if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
-        return M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34;
-    }
-    switch (step.kind) {
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS:
-            return M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34;
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
-            return M11_CSB_TITLE_SOURCE_ZOOM_STEP_PC34;
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK:
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK:
-        case V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE:
-        default:
-            return M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34;
-    }
+    return csb_v1_startup_title_stage_for_frame_pc34(frame);
 }
 
 static void m11_draw_csb_startup_title(const M11_GameViewState *state,
@@ -3016,10 +2997,11 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
          * ENTRANCE.C F0806/F0441 takes over. */
         sourceStep =
             state->csbState.startup_title_frame <
-                    M11_CSB_TITLE_PRESENTS_TICKS_PC34
+                    csb_v1_startup_title_presents_ticks_pc34()
                 ? 1u
                 : (unsigned int)(state->csbState.startup_title_frame -
-                                 M11_CSB_TITLE_PRESENTS_TICKS_PC34 + 1);
+                                 csb_v1_startup_title_presents_ticks_pc34() +
+                                 1);
         if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
             step.kind = V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT;
         }
@@ -3318,7 +3300,6 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 
 enum {
     M11_CSB_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
-    M11_CSB_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34 = 4
 };
 
@@ -3330,7 +3311,7 @@ static int m11_csb_startup_entrance_waiting_for_input(
         return 0;
     }
     return state->csbState.startup_entrance_source_step >=
-        M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34;
+        csb_v1_startup_entrance_wait_stage_pc34();
 }
 
 static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
@@ -3347,7 +3328,7 @@ static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
     state->csbState.startup_entrance_opening_active = 1;
     state->csbState.startup_entrance_source_step = 6;
     state->csbState.startup_entrance_opening_delay_ticks =
-        M11_CSB_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34;
+        csb_v1_startup_entrance_pre_open_delay_ticks_pc34();
     state->csbState.startup_entrance_opening_step = 1;
     state->csbState.startup_import_preview_active = 0;
     m11_set_status(state, "BOOT", "CSB DOORS");
@@ -13962,7 +13943,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                     m11_csb_startup_title_source_step_for_frame(
                         state->csbState.startup_title_frame);
                 if (state->csbState.startup_title_frame >=
-                    M11_CSB_TITLE_TOTAL_TICKS_PC34) {
+                    csb_v1_startup_title_total_ticks_pc34()) {
                     state->csbState.startup_title_active = 0;
                     state->csbState.startup_title_source_step = 0;
                     state->csbState.startup_entrance_source_step = 1;
@@ -13975,10 +13956,10 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 !state->csbState.startup_entrance_opening_active &&
                 state->csbState.startup_entrance_source_step > 0 &&
                 state->csbState.startup_entrance_source_step <
-                    M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34) {
+                    csb_v1_startup_entrance_wait_stage_pc34()) {
                 state->csbState.startup_entrance_source_step++;
                 if (state->csbState.startup_entrance_source_step ==
-                    M11_CSB_ENTRANCE_SOURCE_WAIT_FOR_INPUT_STEP_PC34) {
+                    csb_v1_startup_entrance_wait_stage_pc34()) {
                     m11_set_status(state, "BOOT", "CSB ENTRANCE");
                 }
             }

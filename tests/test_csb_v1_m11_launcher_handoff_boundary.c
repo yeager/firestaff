@@ -24,6 +24,7 @@
 
 #include "m11_game_view.h"
 #include "entrance_frontend_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "menu_startup_m12.h"
 
@@ -302,6 +303,14 @@ static void run_real_launcher_handoff_if_available(void) {
 
 int main(void) {
     printf("=== CSB V1 M12/M11 launcher handoff boundary ===\n");
+    expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
+                "CSB launcher startup sequence contract is source-ordered");
+    expect_true(csb_v1_startup_title_stage_for_frame_pc34(0) ==
+                    CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+                    csb_v1_startup_title_stage_for_frame_pc34(
+                        csb_v1_startup_title_presents_ticks_pc34()) ==
+                        CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+                "CSB launcher title helper matches M11 handoff stages");
 
     run_empty_launcher_boundary();
     run_real_launcher_handoff_if_available();

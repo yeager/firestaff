@@ -23,6 +23,7 @@
 #include "dm1_v1_graphics_loader_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "m11_game_view.h"
 
@@ -1085,6 +1086,26 @@ int main(void) {
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     CSB_V1_BootProfile* profile;
+
+    expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
+                "CSB startup source-order contract is valid");
+    expect_true(strstr(csb_v1_startup_sequence_source_evidence_pc34(),
+                       "TITLE.C F0437") != NULL &&
+                    strstr(csb_v1_startup_sequence_source_evidence_pc34(),
+                           "ENTRANCE.C F0438") != NULL,
+                "CSB startup evidence names title and entrance sources");
+    expect_true(csb_v1_startup_title_total_ticks_pc34() == 53,
+                "CSB startup title timing keeps the bounded 53-tick prelude");
+    expect_true(csb_v1_startup_title_presents_ticks_pc34() == 30,
+                "CSB startup title timing keeps PRESENTS for 30 ticks");
+    expect_true(csb_v1_startup_title_stage_for_frame_pc34(0) ==
+                    CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+                    csb_v1_startup_title_stage_for_frame_pc34(30) ==
+                        CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+                "CSB startup title helper exposes PRESENTS then CHAOS zoom");
+    expect_true(csb_v1_startup_entrance_wait_stage_pc34() == 4 &&
+                    csb_v1_startup_entrance_pre_open_delay_ticks_pc34() == 20,
+                "CSB startup entrance helper exposes wait step and pre-open delay");
 
     check_incomplete_required_files_block_m11(
         "M11 blocks CSB launch when GRAPHICS.DAT is present without DUNGEON.DAT",
