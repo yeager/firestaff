@@ -292,8 +292,28 @@ int main(void)
               plan.closed_right_dest_x == 105 &&
               plan.closed_right_dest_y == 28 &&
               plan.closed_right_w == 127 &&
-              plan.closed_right_h == 161,
-          "startup render plan owns closed entrance prompt and door boxes");
+              plan.closed_right_h == 161 &&
+              plan.fallback_title_x == 38 &&
+              plan.fallback_title_y == 42 &&
+              plan.fallback_title_style == 2 &&
+              strcmp(plan.fallback_title_text, "CHAOS STRIKES BACK") == 0 &&
+              plan.fallback_subtitle_x == 38 &&
+              plan.fallback_subtitle_y == 64 &&
+              plan.fallback_subtitle_style == 3 &&
+              strcmp(plan.fallback_subtitle_text, "ENTRANCE") == 0 &&
+              plan.fallback_status_x == 38 &&
+              plan.fallback_status_y == 84 &&
+              plan.fallback_status_style == 1 &&
+              strcmp(plan.fallback_status_text, "CSB RUNTIME READY") == 0 &&
+              plan.fallback_detail_x == 38 &&
+              plan.fallback_detail_y == 96 &&
+              plan.fallback_detail_style == 1 &&
+              strcmp(plan.fallback_detail_text, "START") == 0 &&
+              plan.fallback_prompt_x == 38 &&
+              plan.fallback_prompt_y == 154 &&
+              plan.fallback_prompt_style == 3 &&
+              strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0,
+          "startup render plan owns closed entrance prompt, fallback text, and door boxes");
 
     render_state.entrance_frame = 12;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&

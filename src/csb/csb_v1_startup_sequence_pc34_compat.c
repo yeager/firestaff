@@ -158,6 +158,14 @@ static void csb_v1_startup_clear_fallback_text_pc34(
     plan->fallback_subtitle_y = 0;
     plan->fallback_subtitle_style = 0;
     plan->fallback_subtitle_text = NULL;
+    plan->fallback_status_x = 0;
+    plan->fallback_status_y = 0;
+    plan->fallback_status_style = 0;
+    plan->fallback_status_text = NULL;
+    plan->fallback_detail_x = 0;
+    plan->fallback_detail_y = 0;
+    plan->fallback_detail_style = 0;
+    plan->fallback_detail_text = NULL;
     plan->fallback_prompt_x = 0;
     plan->fallback_prompt_y = 0;
     plan->fallback_prompt_style = 0;
@@ -184,6 +192,37 @@ static void csb_v1_startup_set_credits_fallback_text_pc34(
     plan->fallback_prompt_x = 38;
     plan->fallback_prompt_y = 154;
     plan->fallback_prompt_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
+    plan->fallback_prompt_text = "PRESS ENTER";
+}
+
+static void csb_v1_startup_set_entrance_fallback_text_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    /* ReDMCSB ENTRANCE.C F0806/F0441 owns the C004 entrance wait surface and
+     * input prompt.  These rows are Firestaff's no-asset fallback composition,
+     * so keep their positions/styles in the CSB startup render plan. */
+    plan->fallback_title_x = 38;
+    plan->fallback_title_y = 42;
+    plan->fallback_title_style = CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34;
+    plan->fallback_title_text = "CHAOS STRIKES BACK";
+    plan->fallback_subtitle_x = 38;
+    plan->fallback_subtitle_y = 64;
+    plan->fallback_subtitle_style = CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34;
+    plan->fallback_subtitle_text = "ENTRANCE";
+    plan->fallback_status_x = 38;
+    plan->fallback_status_y = 84;
+    plan->fallback_status_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
+    plan->fallback_status_text = "CSB RUNTIME READY";
+    plan->fallback_detail_x = 38;
+    plan->fallback_detail_y = 96;
+    plan->fallback_detail_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
+    plan->fallback_detail_text = "START";
+    plan->fallback_prompt_x = 38;
+    plan->fallback_prompt_y = 154;
+    plan->fallback_prompt_style = CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34;
     plan->fallback_prompt_text = "PRESS ENTER";
 }
 
@@ -506,6 +545,7 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
+    csb_v1_startup_set_entrance_fallback_text_pc34(&plan);
     plan.blink_prompt_visible =
         ((state->entrance_frame / 12) & 1) == 0;
     *out_plan = plan;

@@ -3454,13 +3454,28 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     if (!drew_asset) {
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       18, 18, 284, 164, M11_COLOR_YELLOW);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      38, 42, "CHAOS STRIKES BACK", &g_text_title);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      38, 64, "ENTRANCE", &g_text_shadow);
+        m11_draw_csb_startup_plan_text(framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       plan.fallback_title_x,
+                                       plan.fallback_title_y,
+                                       plan.fallback_title_style,
+                                       plan.fallback_title_text);
+        m11_draw_csb_startup_plan_text(framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       plan.fallback_subtitle_x,
+                                       plan.fallback_subtitle_y,
+                                       plan.fallback_subtitle_style,
+                                       plan.fallback_subtitle_text);
         if (!state->csbState.startup_import_available) {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          38, 84, "CSB RUNTIME READY", &g_text_small);
+            m11_draw_csb_startup_plan_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan.fallback_status_x,
+                                           plan.fallback_status_y,
+                                           plan.fallback_status_style,
+                                           plan.fallback_status_text);
         }
         if (state->csbBootProfile &&
             !state->csbState.startup_import_available) {
@@ -3471,12 +3486,22 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                      profile->runtime.party_x,
                      profile->runtime.party_y,
                      profile->runtime.party_dir);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          38, 96, row, &g_text_small);
+            m11_draw_csb_startup_plan_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan.fallback_detail_x,
+                                           plan.fallback_detail_y,
+                                           plan.fallback_detail_style,
+                                           row);
         }
         if (plan.blink_prompt_visible) {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          38, 154, "PRESS ENTER", &g_text_shadow);
+            m11_draw_csb_startup_plan_text(framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           plan.fallback_prompt_x,
+                                           plan.fallback_prompt_y,
+                                           plan.fallback_prompt_style,
+                                           plan.fallback_prompt_text);
         }
     }
     if (plan.waiting_for_input) {
