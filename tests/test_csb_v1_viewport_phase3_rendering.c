@@ -66,6 +66,31 @@ static int test_projectile_sprite_drawer(
     return 1;
 }
 
+static int test_explosion_sprite_drawer(
+    void *user,
+    const struct ExplosionInstance_Compat *explosion,
+    int forward,
+    int side,
+    int view_cell,
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    int *calls = (int *)user;
+    (void)explosion;
+    (void)forward;
+    (void)side;
+    (void)view_cell;
+    (void)source_zone;
+    if (!screen_pixels || screen_stride <= 0) return 0;
+    if (calls) ++*calls;
+    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + viewport_y) * screen_stride +
+                  DM1_VIEWPORT_SCREEN_X + viewport_x] = 0x0Bu;
+    return 1;
+}
+
 static void test_config_defaults_and_setters(void)
 {
     CSB_V1_ViewportConfig cfg;
@@ -162,6 +187,8 @@ static void test_runtime_projectile_and_explosion_overlays(void)
                   cfg.runtime_projectile_marker_drawn_count, 1);
         check_int("runtime.projectile_overlay.material_thing",
                   seen_thing, 0x1400);
+        cfg.projectile_material_resolver = NULL;
+        cfg.projectile_material_user = NULL;
     }
 
     {
@@ -202,6 +229,29 @@ static void test_runtime_projectile_and_explosion_overlays(void)
               framebuffer[center_offset], 0x0C);
     check_int("runtime.explosion_overlay.radius",
               framebuffer[center_offset - 2], 0x0C);
+    check_int("runtime.explosion_overlay.default_sprite_count",
+              cfg.runtime_explosion_sprite_drawn_count, 0);
+    check_int("runtime.explosion_overlay.default_marker_count",
+              cfg.runtime_explosion_marker_drawn_count, 1);
+
+    {
+        int explosion_calls = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        cfg.explosion_sprite_drawer = test_explosion_sprite_drawer;
+        cfg.explosion_sprite_user = &explosion_calls;
+        cfg.runtime_explosion_sprite_drawn_count = 0;
+        cfg.runtime_explosion_marker_drawn_count = 0;
+        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+        check_int("runtime.explosion_sprite.center",
+                  framebuffer[center_offset], 0x0B);
+        check_int("runtime.explosion_sprite.calls", explosion_calls, 1);
+        check_int("runtime.explosion_sprite.drawn_count",
+                  cfg.runtime_explosion_sprite_drawn_count, 1);
+        check_int("runtime.explosion_sprite.skips_marker_count",
+                  cfg.runtime_explosion_marker_drawn_count, 0);
+        cfg.explosion_sprite_drawer = NULL;
+        cfg.explosion_sprite_user = NULL;
+    }
 }
 
 static void test_csb_custom_background_slot_contracts(void)

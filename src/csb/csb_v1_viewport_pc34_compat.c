@@ -820,12 +820,28 @@ static void csb_v1_viewport_draw_runtime_explosion_overlays(
         /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 restarts the thing list
          * for explosions after all object/creature/projectile cells and maps
          * D3L2/D3R2 through C3014/C3031 via G2034. */
+        if (cfg->explosion_sprite_drawer &&
+            cfg->explosion_sprite_drawer(
+                cfg->explosion_sprite_user,
+                explosion,
+                placement.forward,
+                placement.side,
+                placement.view_cell,
+                placement.source_zone,
+                placement.viewport_x,
+                placement.viewport_y,
+                cfg->viewport_pixels,
+                cfg->viewport_stride)) {
+            ++cfg->runtime_explosion_sprite_drawn_count;
+            continue;
+        }
         csb_v1_viewport_draw_runtime_overlay_cross(
             cfg,
             placement.viewport_x,
             placement.viewport_y,
             0x0Cu,
             placement.used_source_zone ? 3 : 2);
+        ++cfg->runtime_explosion_marker_drawn_count;
     }
 }
 
