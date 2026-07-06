@@ -44,6 +44,10 @@ typedef struct {
     const char* bootProbeExpectPhase; /* Optional exact startupPhase expected
                                          after boot-probe frames/script. */
     int bootProbeExpectRuntime; /* Require startup inactive + level loaded. */
+    int bootProbeExpectParty;   /* Require exact party x,y,dir receipt. */
+    int bootProbeExpectPartyX;
+    int bootProbeExpectPartyY;
+    int bootProbeExpectPartyDir;
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

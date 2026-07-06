@@ -1683,6 +1683,10 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeFrames = 0;
     opts->bootProbeExpectPhase = NULL;
     opts->bootProbeExpectRuntime = 0;
+    opts->bootProbeExpectParty = 0;
+    opts->bootProbeExpectPartyX = -1;
+    opts->bootProbeExpectPartyY = -1;
+    opts->bootProbeExpectPartyDir = -1;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -3726,6 +3730,22 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             receipt.startupPhase,
                             receipt.startupActive,
                             receipt.levelLoaded);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectParty) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.partyX != o->bootProbeExpectPartyX ||
+                    receipt.partyY != o->bootProbeExpectPartyY ||
+                    receipt.partyDir != o->bootProbeExpectPartyDir) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected party %d,%d,%d but got %d,%d,%d\n",
+                            o->bootProbeExpectPartyX,
+                            o->bootProbeExpectPartyY,
+                            o->bootProbeExpectPartyDir,
+                            receipt.partyX,
+                            receipt.partyY,
+                            receipt.partyDir);
                     runRc = 4;
                 }
             }

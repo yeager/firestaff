@@ -41,6 +41,7 @@ static void usage(const char* prog) {
             "                       Boot scripts also accept waitN / wait:N frame tokens\n"
             "  --boot-probe-expect-phase <name> Fail unless the boot receipt phase matches\n"
             "  --boot-probe-expect-runtime Fail unless startup is inactive and a level is loaded\n"
+            "  --boot-probe-expect-party x,y,dir Fail unless the boot receipt party matches\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -49,6 +50,23 @@ static void usage(const char* prog) {
             "  --version           Show version and exit\n"
             "  --help, -h          Show this help\n",
             prog);
+}
+
+static int parse_party_triplet(const char* text,
+                               int* outX,
+                               int* outY,
+                               int* outDir) {
+    int x;
+    int y;
+    int dir;
+    char tail;
+    if (!text || sscanf(text, "%d,%d,%d%c", &x, &y, &dir, &tail) != 3) {
+        return 0;
+    }
+    if (outX) *outX = x;
+    if (outY) *outY = y;
+    if (outDir) *outDir = dir;
+    return 1;
 }
 
 static void print_scan_game(const M12_AssetStatus* status,
@@ -182,6 +200,18 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--boot-probe-expect-runtime") == 0) {
             opts.bootProbeExpectRuntime = 1;
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-party") == 0 && i + 1 < argc) {
+            if (!parse_party_triplet(argv[++i],
+                                     &opts.bootProbeExpectPartyX,
+                                     &opts.bootProbeExpectPartyY,
+                                     &opts.bootProbeExpectPartyDir)) {
+                fprintf(stderr,
+                        "firestaff: --boot-probe-expect-party requires x,y,dir\n");
+                return 2;
+            }
+            opts.bootProbeExpectParty = 1;
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
