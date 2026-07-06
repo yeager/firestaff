@@ -289,10 +289,10 @@ static void run_real_data_handoff_if_available(void) {
                     (void)TEST_MKDIR(appdata_dir);
                     test_setenv("APPDATA", appdata_dir);
                 }
-                opts.script = "wait120,enter,enter,act";
+                opts.script = "wait120,enter,enter,action";
                 opts.bootProbeExpectPhase = "nexus-runtime";
             } else if (strcmp(kCases[i].gameId, "theron") == 0) {
-                opts.script = "enter,enter,act";
+                opts.script = "enter,enter,action";
                 opts.bootProbeExpectPhase = "theron-runtime";
             }
             test_setenv("SDL_VIDEODRIVER", "dummy");
