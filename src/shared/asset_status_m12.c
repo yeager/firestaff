@@ -630,6 +630,34 @@ static int m12_ascii_equals_ignore_case(const char* a, const char* b) {
     return *a == '\0' && *b == '\0';
 }
 
+static const char* m12_path_leaf(const char* path) {
+    const char* slash;
+    const char* backslash;
+    const char* leaf;
+    if (!path || path[0] == '\0') {
+        return "";
+    }
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    leaf = path;
+    if (slash && slash + 1 > leaf) {
+        leaf = slash + 1;
+    }
+    if (backslash && backslash + 1 > leaf) {
+        leaf = backslash + 1;
+    }
+    return leaf;
+}
+
+static int m12_is_known_game_data_leaf(const char* leaf) {
+    return m12_ascii_equals_ignore_case(leaf, "dm1") ||
+           m12_ascii_equals_ignore_case(leaf, "dm1-multilingual") ||
+           m12_ascii_equals_ignore_case(leaf, "csb") ||
+           m12_ascii_equals_ignore_case(leaf, "dm2") ||
+           m12_ascii_equals_ignore_case(leaf, "nexus") ||
+           m12_ascii_equals_ignore_case(leaf, "theron");
+}
+
 static const char* m12_basename_ptr(const char* path) {
     const char* base = path;
     const char* p;
@@ -938,6 +966,29 @@ static int m12_root_has_original_candidate(const char* root) {
         }
     }
     return 0;
+}
+
+static int m12_promote_game_subdir_scan_root(
+    const char* requestedDataDir,
+    char promoted[M12_ASSET_DATA_DIR_CAPACITY]) {
+    char parent[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* leaf;
+    if (promoted) {
+        promoted[0] = '\0';
+    }
+    if (!requestedDataDir || requestedDataDir[0] == '\0' || !promoted ||
+        !FSP_DirExists(requestedDataDir)) {
+        return 0;
+    }
+    leaf = m12_path_leaf(requestedDataDir);
+    if (!m12_is_known_game_data_leaf(leaf) ||
+        !FSP_ParentDir(parent, sizeof(parent), requestedDataDir) ||
+        !FSP_DirExists(parent) ||
+        !m12_root_has_original_candidate(parent)) {
+        return 0;
+    }
+    m12_copy_string(promoted, M12_ASSET_DATA_DIR_CAPACITY, parent);
+    return promoted[0] != '\0';
 }
 
 static uint32_t m12_rd32_be_local(const uint8_t* p) {
@@ -2289,6 +2340,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     char legacyFallbackSnapshot[M12_ASSET_DATA_DIR_CAPACITY];
     char containerParent[M12_ASSET_DATA_DIR_CAPACITY];
+    char promotedDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     const char* effectiveRequestedDataDir = requestedDataDir;
     M12_ScanProgressContext progressCtx;
     size_t rootCount;
@@ -2347,6 +2399,16 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
          * directory and materialize canonical runtime files. */
         effectiveRequestedDataDir = containerParent;
         requestedFileScanParent = 1;
+    } else if (m12_promote_game_subdir_scan_root(requestedDataDir,
+                                                promotedDataRoot)) {
+        /* A saved launcher config can point at ~/.firestaff/data/nexus after
+         * a direct Nexus import/launch.  `firestaff --scan-data` defaults to
+         * ~/.firestaff/data and sees every game, while the start menu would
+         * otherwise scan only the game leaf and mark the rest missing.  When
+         * the requested directory is a known game leaf under a parent that
+         * already contains Firestaff-style game data, promote the menu scan to
+         * that parent so launcher availability matches the CLI scan. */
+        effectiveRequestedDataDir = promotedDataRoot;
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "checking explicit file request",

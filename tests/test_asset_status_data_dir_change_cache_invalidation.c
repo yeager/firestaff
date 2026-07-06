@@ -611,6 +611,42 @@ static void check_legacy_fallback_dir_refreshes(const char* homeRoot,
     }
 }
 
+static void check_game_subdir_scan_promotes_to_parent(const char* homeRoot) {
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char nexusLeaf[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    M12_AssetStatus status;
+
+    if (!FSP_JoinPath(dataRoot, sizeof(dataRoot), homeRoot, "saved-game-leaf-data") ||
+        !FSP_CreateDirectoryRecursive(dataRoot) ||
+        !FSP_JoinPath(nexusLeaf, sizeof(nexusLeaf), dataRoot, "nexus") ||
+        !FSP_CreateDirectoryRecursive(nexusLeaf) ||
+        !setup_dm1_recommended_dir(dataRoot,
+                                   graphicsPath, sizeof(graphicsPath), graphicsMd5,
+                                   dungeonPath, sizeof(dungeonPath), dungeonMd5)) {
+        fprintf(stderr, "FAIL: cannot seed game-subdir promotion fixture\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
+    memset(&status, 0, sizeof(status));
+    scan_in_isolated_env(homeRoot, nexusLeaf, &status);
+
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&status), dataRoot) == 0,
+              "saved game-leaf data_dir must promote to the parent data root");
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm1") == 1,
+              "saved game-leaf data_dir must still find sibling DM1 data");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1"),
+                     dataRoot) == 0,
+              "promoted game-leaf scan must launch DM1 from the parent root");
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+
 #ifndef _WIN32
 static void check_symlinked_recommended_dm1_layout(const char* homeRoot) {
     char targetRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -713,6 +749,7 @@ int main(void) {
     check_legacy_fallback_dir_refreshes(home, dirA, dirB);
     check_scan_progress_cancel_contract(home, dirB);
     check_scan_progress_complete_contract(home, dirB);
+    check_game_subdir_scan_promotes_to_parent(home);
 #ifndef _WIN32
     check_symlinked_recommended_dm1_layout(home);
 #endif
