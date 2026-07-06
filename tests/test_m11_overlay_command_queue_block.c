@@ -32,7 +32,7 @@ static unsigned short make_thing(int type, int index)
 
 #define DM_PC_COLOR_BLACK 0
 #define DM_PC_COLOR_CYAN 4
-#define DM_PC_COLOR_WHITE 15
+#define DM_PC_COLOR_YELLOW 11
 
 static void seed_active_view(M11_GameViewState* state)
 {
@@ -630,6 +630,7 @@ static unsigned char framebuffer_pixel(const unsigned char* framebuffer,
 
 static void draw_and_expect_arrow_feedback(M11_GameViewState* state,
                                            int arrowIndex,
+                                           int cueColor,
                                            const char* label)
 {
     unsigned char framebuffer[320 * 200];
@@ -641,10 +642,10 @@ static void draw_and_expect_arrow_feedback(M11_GameViewState* state,
     ASSERT_EQ(M11_GameView_GetV1MovementArrowZone(arrowIndex,
                                                   &x, &y, &w, &h),
               1, label);
-    ASSERT_EQ(framebuffer_pixel(framebuffer, x, y), DM_PC_COLOR_WHITE,
+    ASSERT_EQ(framebuffer_pixel(framebuffer, x, y), DM_PC_COLOR_BLACK,
               label);
     ASSERT_EQ(framebuffer_pixel(framebuffer, x + 1, y + 1),
-              DM_PC_COLOR_CYAN, label);
+              cueColor, label);
 }
 
 static void test_keyboard_navigation_visually_marks_screen_arrows(void)
@@ -665,19 +666,19 @@ static void test_keyboard_navigation_visually_marks_screen_arrows(void)
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
     ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
               "keyboard up redraws for visual arrow feedback");
-    draw_and_expect_arrow_feedback(&state, 2,
+    draw_and_expect_arrow_feedback(&state, 2, DM_PC_COLOR_CYAN,
                                    "keyboard up marks C070 forward arrow");
 
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_STRAFE_LEFT);
     ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
               "keyboard left-arrow/WASD strafe redraws feedback");
-    draw_and_expect_arrow_feedback(&state, 5,
+    draw_and_expect_arrow_feedback(&state, 5, DM_PC_COLOR_CYAN,
                                    "keyboard strafe-left marks C073 left arrow");
 
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_LEFT);
     ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
               "keyboard Q/Home turn redraws feedback");
-    draw_and_expect_arrow_feedback(&state, 0,
+    draw_and_expect_arrow_feedback(&state, 0, DM_PC_COLOR_YELLOW,
                                    "keyboard turn-left marks C068 turn arrow");
 
     while (state.v1MovementArrowVisualTicks > 0) {
