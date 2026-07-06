@@ -1,6 +1,27 @@
 
 # Unreleased
 
+# Firestaff v3.0.33
+
+Firestaff v3.0.33 packages the latest `main` startup hardening after v3.0.32.
+
+## Highlights since v3.0.32
+
+- **DM1 V2 launcher handoff**: the latest DM1 V2 launch smoke and launcher
+  handoff hardening is included, with the matching focused CI run already
+  green before release prep.
+
+- **Startup evidence refresh**: updated startup/parity manifests and Theron
+  descriptor probe coverage from the same `main` pass are included.
+
+## Verification
+
+- Local release-prep verification covered version synchronization plus focused
+  DM1 V1/V2 launcher handoff and launch-smoke targets.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.33` release run.
+
 # Firestaff v3.0.32
 
 Firestaff v3.0.32 packages the current `main` startup state after v3.0.31.
