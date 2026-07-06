@@ -192,6 +192,9 @@ static void expect_title_sequence_contract(void) {
     expect_true(nexus_v1_title_start_ready_frames() == 54,
                 "Nexus title sequence owns the start-ready hold frame");
     expect_true(nexus_v1_title_frame(0, NEXUS_FB_H, &frame0) &&
+                    frame0.phase == NEXUS_V1_TITLE_PHASE_BOOT_REVEAL &&
+                    frame0.frame_in_phase == 0 &&
+                    frame0.frames_until_ready == 54 &&
                     frame0.reveal_h == 80 &&
                     frame0.reveal_y0 == 60 &&
                     frame0.reveal_y1 == 140 &&
@@ -199,6 +202,9 @@ static void expect_title_sequence_contract(void) {
                     !frame0.boot_reveal_complete,
                 "Nexus title sequence frame 0 reveal contract is stable");
     expect_true(nexus_v1_title_frame(16, NEXUS_FB_H, &frame16) &&
+                    frame16.phase == NEXUS_V1_TITLE_PHASE_BOOT_REVEAL &&
+                    frame16.frame_in_phase == 16 &&
+                    frame16.frames_until_ready == 38 &&
                     frame16.reveal_h == 144 &&
                     frame16.reveal_y0 == 28 &&
                     frame16.reveal_y1 == 172 &&
@@ -206,6 +212,9 @@ static void expect_title_sequence_contract(void) {
                     !frame16.boot_reveal_complete,
                 "Nexus title sequence frame 16 reveal contract is stable");
     expect_true(nexus_v1_title_frame(30, NEXUS_FB_H, &frame30) &&
+                    frame30.phase == NEXUS_V1_TITLE_PHASE_HOLD &&
+                    frame30.frame_in_phase == 0 &&
+                    frame30.frames_until_ready == 24 &&
                     frame30.reveal_h == 200 &&
                     frame30.reveal_y0 == 0 &&
                     frame30.reveal_y1 == 200 &&
@@ -215,11 +224,21 @@ static void expect_title_sequence_contract(void) {
                     frame30.prompt_visible,
                 "Nexus title sequence reaches full reveal at boot gate");
     expect_true(nexus_v1_title_frame(54, NEXUS_FB_H, &frame54) &&
+                    frame54.phase == NEXUS_V1_TITLE_PHASE_START_READY &&
+                    frame54.frame_in_phase == 0 &&
+                    frame54.frames_until_ready == 0 &&
                     frame54.reveal_h == 200 &&
                     frame54.boot_reveal_complete &&
                     frame54.hold_frame == 24 &&
                     frame54.start_ready,
                 "Nexus title sequence reaches start-ready after title hold");
+    expect_true(strcmp(nexus_v1_title_phase_name(frame0.phase),
+                       "BOOT_REVEAL") == 0 &&
+                    strcmp(nexus_v1_title_phase_name(frame30.phase),
+                           "HOLD") == 0 &&
+                    strcmp(nexus_v1_title_phase_name(frame54.phase),
+                           "START_READY") == 0,
+                "Nexus title sequence exposes stable boot phase names");
     expect_true(nexus_title_min_boot_frames() ==
                     nexus_v1_title_min_boot_frames() &&
                     !nexus_title_boot_reveal_complete(29) &&

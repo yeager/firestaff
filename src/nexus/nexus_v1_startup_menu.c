@@ -1,5 +1,6 @@
 #include "nexus_v1_startup_menu.h"
-#include "nexus_v1_title.h"
+#include "nexus_v1_rasterizer.h"
+#include "nexus_v1_title_sequence.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -213,9 +214,13 @@ int nexus_v1_startup_title_handle_input(int title_frame,
         input != NEXUS_V1_STARTUP_INPUT_ACTION) {
         return 0;
     }
-    if (!nexus_title_start_ready(title_frame)) {
-        out_action->kind = NEXUS_V1_STARTUP_ACTION_HOLD_TITLE;
-        return 1;
+    {
+        Nexus_V1_TitleFrame frame_state;
+        if (!nexus_v1_title_frame(title_frame, NEXUS_FB_H, &frame_state) ||
+            frame_state.phase != NEXUS_V1_TITLE_PHASE_START_READY) {
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_HOLD_TITLE;
+            return 1;
+        }
     }
     out_action->kind = slot_mask != 0u
                            ? NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT
