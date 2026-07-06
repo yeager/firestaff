@@ -15,6 +15,7 @@
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_save.h"
+#include "nexus_v1_startup_layout.h"
 #include "nexus_v1_title.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_world.h"
@@ -179,6 +180,46 @@ static void expect_title_render_is_frame_dependent(void) {
                 "Nexus title render changes across startup frames");
 }
 
+static void expect_startup_layout_contract(void) {
+    Nexus_V1_StartupRect rect;
+    Nexus_V1_StartupHit hit;
+
+    expect_true(nexus_v1_startup_save_row_rect(0, &rect) &&
+                    rect.x == 18 && rect.y == 42 &&
+                    rect.w == 284 && rect.h == 12,
+                "Nexus startup save row 0 layout is owned by Nexus module");
+    expect_true(nexus_v1_startup_save_row_rect(1, &rect) &&
+                    rect.y == 55,
+                "Nexus startup save rows keep 13px cadence");
+    expect_true(nexus_v1_startup_save_hit(2, 24, 43, &hit) &&
+                    hit.kind == NEXUS_V1_STARTUP_HIT_SAVE_ROW &&
+                    hit.row == 0,
+                "Nexus startup save hit resolves row 0");
+    expect_true(nexus_v1_startup_save_hit(2, 24, 20, &hit) &&
+                    hit.kind == NEXUS_V1_STARTUP_HIT_SAVE_PANEL,
+                "Nexus startup save panel consumes whitespace");
+    expect_true(!nexus_v1_startup_save_hit(2, 4, 4, &hit),
+                "Nexus startup save hit rejects outside point");
+
+    expect_true(nexus_v1_startup_champion_row_rect(0, &rect) &&
+                    rect.x == 18 && rect.y == 37 &&
+                    rect.w == 284 && rect.h == 11,
+                "Nexus startup champion row 0 layout is owned by Nexus module");
+    expect_true(nexus_v1_startup_champion_row_rect(1, &rect) &&
+                    rect.y == 48,
+                "Nexus startup champion rows keep 11px cadence");
+    expect_true(nexus_v1_startup_champion_hit(12, 24, 38, &hit) &&
+                    hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_ROW &&
+                    hit.row == 0,
+                "Nexus startup champion hit resolves row 0");
+    expect_true(nexus_v1_startup_champion_hit(12, 24, 184, &hit) &&
+                    hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER,
+                "Nexus startup champion footer resolves action hit");
+    expect_true(nexus_v1_startup_champion_hit(12, 24, 24, &hit) &&
+                    hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_PANEL,
+                "Nexus startup champion panel consumes whitespace");
+}
+
 static void fill_nexus_spec(M11_GameLaunchSpec* spec, const char* data_dir) {
     memset(spec, 0, sizeof(*spec));
     spec->title = "DUNGEON MASTER NEXUS";
@@ -315,6 +356,7 @@ int main(void) {
 
     expect_face_loader_counts_real_vs_fallback();
     expect_title_render_is_frame_dependent();
+    expect_startup_layout_contract();
 
     if (make_temp_root(empty_root)) {
         expect_failed_start_is_inactive(empty_root, "NEXUS DATA ERROR");

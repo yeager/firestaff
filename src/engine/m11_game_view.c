@@ -5,6 +5,7 @@
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_movement.h"
 #include "nexus_v1_save.h"
+#include "nexus_v1_startup_layout.h"
 #include "nexus_v1_startup_menu.h"
 #include "nexus_v1_title.h"
 #include "nexus_v1_viewport.h"
@@ -16386,35 +16387,40 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
     }
     if (state->nexusState.startup_save_select_active) {
-        int row;
-        for (row = 0; row < state->nexusState.startup_save_row_count; ++row) {
-            if (!m11_point_in_rect(x, y, 18, 42 + row * 13, 284, 12)) {
-                continue;
-            }
-            state->nexusState.startup_save_selected_row = row;
+        Nexus_V1_StartupHit hit;
+        if (!nexus_v1_startup_save_hit(
+                state->nexusState.startup_save_row_count,
+                x,
+                y,
+                &hit)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (hit.kind == NEXUS_V1_STARTUP_HIT_SAVE_ROW) {
+            state->nexusState.startup_save_selected_row = hit.row;
             return m11_nexus_startup_activate_save_row(state);
         }
-        if (m11_point_in_rect(x, y, 18, 14, 284, 42 +
-                              state->nexusState.startup_save_row_count * 13)) {
+        if (hit.kind == NEXUS_V1_STARTUP_HIT_SAVE_PANEL) {
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->nexusState.champion_select_active) {
         Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
-        int i;
-        if (m11_point_in_rect(x, y, 18, 180, 284, 18)) {
+        Nexus_V1_StartupHit hit;
+        if (!nexus_v1_startup_champion_hit(pool->champion_count,
+                                           x,
+                                           y,
+                                           &hit)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER) {
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
         }
-        for (i = 0; i < pool->champion_count && i < 12; ++i) {
-            int rowY = 38 + i * 11;
-            if (!m11_point_in_rect(x, y, 18, rowY - 1, 284, 11)) {
-                continue;
-            }
-            state->nexusState.champion_cursor = i;
+        if (hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_ROW) {
+            state->nexusState.champion_cursor = hit.row;
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
         }
-        if (m11_point_in_rect(x, y, 18, 20, 284, 178)) {
+        if (hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_PANEL) {
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
@@ -40667,19 +40673,24 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         } else if (state->nexusState.startup_save_select_active) {
             int row;
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 14, "DUNGEON MASTER NEXUS",
+                          NEXUS_V1_STARTUP_TITLE_X,
+                          NEXUS_V1_STARTUP_TITLE_Y,
+                          "DUNGEON MASTER NEXUS",
                           &g_text_title);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 28, "LOAD GAME", &g_text_shadow);
+                          NEXUS_V1_STARTUP_TITLE_X,
+                          NEXUS_V1_STARTUP_SUBTITLE_Y,
+                          "LOAD GAME", &g_text_shadow);
             directDraw = 1;
             for (row = 0; row < state->nexusState.startup_save_row_count; ++row) {
                 char label[96];
                 Nexus_V1_StartupRowKind kind =
                     NEXUS_V1_STARTUP_ROW_NONE;
                 int slot = -1;
-                int rowY = 42 + row * 13;
+                Nexus_V1_StartupRect rowRect;
                 const M11_TextStyle *style = &g_text_small;
-                if (!m11_nexus_startup_row_at(state, row, &kind, &slot)) {
+                if (!m11_nexus_startup_row_at(state, row, &kind, &slot) ||
+                    !nexus_v1_startup_save_row_rect(row, &rowRect)) {
                     continue;
                 }
                 if (kind == NEXUS_V1_STARTUP_ROW_SLOT) {
@@ -40695,34 +40706,44 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 if (row == state->nexusState.startup_save_selected_row) {
                     m11_fill_rect(framebuffer, framebufferWidth,
                                   framebufferHeight,
-                                  16, rowY - 1, 160, 11,
+                                  rowRect.x - 2, rowRect.y, 160, 11,
                                   M11_COLOR_DARK_GRAY);
                     style = &g_text_shadow;
                 }
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              22, rowY, label, style);
+                              NEXUS_V1_STARTUP_SAVE_ROW_TEXT_X,
+                              rowRect.y + 1,
+                              label, style);
             }
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 184, "ACCEPT LOADS  ACTION STARTS",
+                          NEXUS_V1_STARTUP_FOOTER_X,
+                          NEXUS_V1_STARTUP_FOOTER_Y,
+                          "ACCEPT LOADS  ACTION STARTS",
                           &g_text_small);
         } else if (state->nexusState.champion_select_active &&
                    state->nexusEngine) {
             const Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
             int i;
-            int yText = 38;
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 14, "DUNGEON MASTER NEXUS",
+                          NEXUS_V1_STARTUP_TITLE_X,
+                          NEXUS_V1_STARTUP_TITLE_Y,
+                          "DUNGEON MASTER NEXUS",
                           &g_text_title);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          18, 28, "SELECT CHAMPIONS",
+                          NEXUS_V1_STARTUP_TITLE_X,
+                          NEXUS_V1_STARTUP_SUBTITLE_Y,
+                          "SELECT CHAMPIONS",
                           &g_text_shadow);
             directDraw = 1;
             for (i = 0; i < pool->champion_count && i < 12; ++i) {
                 char row[96];
                 int inParty = 0;
                 int p;
-                int rowY = yText + i * 11;
+                Nexus_V1_StartupRect rowRect;
                 int portraitIndex = pool->champions[i].portrait_index;
+                if (!nexus_v1_startup_champion_row_rect(i, &rowRect)) {
+                    continue;
+                }
                 for (p = 0; p < pool->party_count; ++p) {
                     if (pool->party[p] == i) {
                         inParty = 1;
@@ -40738,8 +40759,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                    framebuffer,
                                                    framebufferWidth,
                                                    framebufferHeight,
-                                                   22,
-                                                   rowY,
+                                                   NEXUS_V1_STARTUP_CHAMPION_PORTRAIT_X,
+                                                   rowRect.y + 1,
                                                    10,
                                                    10);
                 }
@@ -40750,7 +40771,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                          pool->champions[i].max_health,
                          pool->champions[i].max_mana);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              36, rowY, row,
+                              NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X,
+                              rowRect.y + 1, row,
                               i == state->nexusState.champion_cursor
                                   ? &g_text_shadow : &g_text_small);
             }
@@ -40760,7 +40782,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                          "PARTY %d/%d  ACCEPT ADD  ACTION START",
                          pool->party_count, NEXUS_MAX_PARTY);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              18, 184, footer, &g_text_small);
+                              NEXUS_V1_STARTUP_FOOTER_X,
+                              NEXUS_V1_STARTUP_FOOTER_Y,
+                              footer, &g_text_small);
             }
         } else if (state->nexusEngine) {
             Nexus_Viewport vp;
