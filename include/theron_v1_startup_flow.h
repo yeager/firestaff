@@ -88,6 +88,30 @@ typedef struct {
 } Theron_StartupAction;
 
 typedef enum {
+    THERON_STARTUP_PLAN_IGNORE = 0,
+    THERON_STARTUP_PLAN_RETURN_TO_LAUNCHER,
+    THERON_STARTUP_PLAN_SHOW_STAGE_SELECT,
+    THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR,
+    THERON_STARTUP_PLAN_CONTINUE_SAVE,
+    THERON_STARTUP_PLAN_CHOOSE_STAGE,
+    THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR,
+    THERON_STARTUP_PLAN_TOGGLE_MIRROR,
+    THERON_STARTUP_PLAN_ENTER_FORCEFIELD
+} Theron_StartupActionPlanKind;
+
+typedef struct {
+    Theron_StartupActionPlanKind kind;
+    Theron_DungeonID selected_dungeon;
+    int cursor;
+    int continue_focus;
+    int mirror_index;
+    const char *status_scope;
+    const char *status;
+    const char *alternate_status;
+    const char *failure_status;
+} Theron_StartupActionPlan;
+
+typedef enum {
     THERON_STARTUP_HIT_NONE = 0,
     THERON_STARTUP_HIT_PANEL,
     THERON_STARTUP_HIT_TITLE,
@@ -153,6 +177,7 @@ typedef struct {
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
 void theron_v1_startup_action_init(Theron_StartupAction *action);
+void theron_v1_startup_action_plan_init(Theron_StartupActionPlan *plan);
 void theron_v1_startup_hit_init(Theron_StartupHit *hit);
 void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state);
 Theron_StartupResult theron_v1_startup_choose_stage(
@@ -205,6 +230,9 @@ Theron_StartupResult theron_v1_startup_handle_hit_with_progression(
     int has_continue,
     const Theron_StartupHit *hit,
     Theron_StartupAction *out_action);
+int theron_v1_startup_plan_for_action(
+    const Theron_StartupAction *action,
+    Theron_StartupActionPlan *out_plan);
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,

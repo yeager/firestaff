@@ -101,6 +101,18 @@ void theron_v1_startup_action_init(Theron_StartupAction *action) {
     action->mirror_index = -1;
 }
 
+void theron_v1_startup_action_plan_init(Theron_StartupActionPlan *plan) {
+    if (!plan) {
+        return;
+    }
+    memset(plan, 0, sizeof(*plan));
+    plan->kind = THERON_STARTUP_PLAN_IGNORE;
+    plan->selected_dungeon = THERON_DUNGEON_INVALID;
+    plan->cursor = 0;
+    plan->continue_focus = 0;
+    plan->mirror_index = -1;
+}
+
 void theron_v1_startup_hit_init(Theron_StartupHit *hit) {
     if (!hit) {
         return;
@@ -885,6 +897,78 @@ const char *theron_v1_startup_action_name(Theron_StartupActionKind action) {
     case THERON_STARTUP_ACTION_ENTER_FORCEFIELD: return "enter-forcefield";
     default: return "unknown";
     }
+}
+
+int theron_v1_startup_plan_for_action(
+    const Theron_StartupAction *action,
+    Theron_StartupActionPlan *out_plan) {
+
+    if (!out_plan) {
+        return 0;
+    }
+    theron_v1_startup_action_plan_init(out_plan);
+    if (!action) {
+        return 0;
+    }
+
+    out_plan->selected_dungeon = action->selected_dungeon;
+    out_plan->cursor = action->cursor;
+    out_plan->continue_focus = action->continue_focus ? 1 : 0;
+    out_plan->mirror_index = action->mirror_index;
+
+    switch (action->kind) {
+    case THERON_STARTUP_ACTION_NONE:
+        out_plan->kind = THERON_STARTUP_PLAN_IGNORE;
+        return 1;
+    case THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER:
+        out_plan->kind = THERON_STARTUP_PLAN_RETURN_TO_LAUNCHER;
+        out_plan->status_scope = "RETURN";
+        out_plan->status = "BACK TO LAUNCHER";
+        return 1;
+    case THERON_STARTUP_ACTION_SHOW_STAGE_SELECT:
+        out_plan->kind = THERON_STARTUP_PLAN_SHOW_STAGE_SELECT;
+        out_plan->status_scope = "STARTUP";
+        out_plan->status = "STAGE SELECT";
+        return 1;
+    case THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR:
+        out_plan->kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;
+        out_plan->status_scope = "STARTUP";
+        out_plan->status = "STAGE CURSOR";
+        return 1;
+    case THERON_STARTUP_ACTION_CONTINUE_SAVE:
+        out_plan->kind = THERON_STARTUP_PLAN_CONTINUE_SAVE;
+        out_plan->status_scope = "STARTUP";
+        out_plan->status = "CONTINUE LOADED";
+        out_plan->failure_status = "CONTINUE FAILED";
+        return 1;
+    case THERON_STARTUP_ACTION_CHOOSE_STAGE:
+        out_plan->kind = THERON_STARTUP_PLAN_CHOOSE_STAGE;
+        out_plan->status_scope = "STARTUP";
+        out_plan->status = "SOUL ROOM";
+        out_plan->failure_status = "STAGE LOCKED";
+        return 1;
+    case THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR:
+        out_plan->kind = THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR;
+        out_plan->status_scope = "STARTUP";
+        out_plan->status = "SOUL ROOM CURSOR";
+        return 1;
+    case THERON_STARTUP_ACTION_TOGGLE_MIRROR:
+        out_plan->kind = THERON_STARTUP_PLAN_TOGGLE_MIRROR;
+        out_plan->status_scope = "STARTUP";
+        out_plan->status = "HERO RESURRECTED";
+        out_plan->alternate_status = "HERO RELEASED";
+        out_plan->failure_status = "SOUL ROOM ERROR";
+        return 1;
+    case THERON_STARTUP_ACTION_ENTER_FORCEFIELD:
+        out_plan->kind = THERON_STARTUP_PLAN_ENTER_FORCEFIELD;
+        out_plan->status_scope = "BOOT";
+        out_plan->status = "THERON READY";
+        out_plan->failure_status = "FORCEFIELD FAILED";
+        return 1;
+    default:
+        break;
+    }
+    return 0;
 }
 
 const char *theron_v1_startup_flow_source_evidence(void) {
