@@ -44,6 +44,7 @@
 #define CSB_V1_UTIL_PREVIEW_Y 154
 #define CSB_V1_UTIL_PREVIEW_ROW_H 10
 #define CSB_V1_UTIL_PREVIEW_MAX_ROWS 4
+#define CSB_V1_UTIL_TEXT_STYLE_SMALL 1
 
 static const CSB_V1_UtilFlowAction s_csb_v1_util_menu_actions[
     CSB_V1_UTIL_MENU_ACTION_COUNT] = {
@@ -476,6 +477,96 @@ int csb_v1_util_flow_menu_render_rows(
                  menu_row->selected ? '>' : ' ',
                  menu_row->label ? menu_row->label : "");
         ++count;
+    }
+    return count;
+}
+
+static void csb_v1_util_trim_name(const char *src,
+                                  char *dst,
+                                  int dst_size)
+{
+    int i;
+    int last = -1;
+
+    if (!dst || dst_size <= 0) {
+        return;
+    }
+    dst[0] = '\0';
+    if (!src) {
+        return;
+    }
+    for (i = 0; i < dst_size - 1 && src[i] != '\0'; ++i) {
+        dst[i] = src[i];
+        if (src[i] != ' ') {
+            last = i;
+        }
+    }
+    dst[i] = '\0';
+    if (last >= 0 && last + 1 < dst_size) {
+        dst[last + 1] = '\0';
+    }
+}
+
+int csb_v1_util_flow_import_status_render_row(
+    const CSB_V1_UtilFlowContext *ctx,
+    CSB_V1_UtilRenderTextRow *out_row)
+{
+    int champion_count;
+
+    if (!ctx || !out_row) {
+        return 0;
+    }
+    memset(out_row, 0, sizeof(*out_row));
+    champion_count = ctx->imported_party.ChampionCount > 0
+        ? ctx->imported_party.ChampionCount
+        : ctx->imported_champion_count;
+    out_row->x = CSB_V1_UTIL_PANEL_X;
+    out_row->y = CSB_V1_UTIL_PANEL_Y;
+    out_row->text_style = CSB_V1_UTIL_TEXT_STYLE_SMALL;
+    snprintf(out_row->text,
+             sizeof(out_row->text),
+             "DM1 IMPORT READY: %d CHAMPIONS",
+             champion_count);
+    return 1;
+}
+
+int csb_v1_util_flow_preview_render_rows(
+    const CSB_V1_UtilFlowContext *ctx,
+    CSB_V1_UtilRenderTextRow *rows,
+    int max_rows)
+{
+    int i;
+    int count;
+
+    if (!ctx || !rows || max_rows <= 0) {
+        return 0;
+    }
+    memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
+    count = ctx->imported_party.ChampionCount;
+    if (count <= 0) {
+        count = ctx->imported_champion_count;
+    }
+    if (count > CSB_V1_UTIL_PREVIEW_MAX_ROWS) {
+        count = CSB_V1_UTIL_PREVIEW_MAX_ROWS;
+    }
+    if (count > max_rows) {
+        count = max_rows;
+    }
+    for (i = 0; i < count; ++i) {
+        const CSB_V1_Champion *champ = &ctx->imported_party.Champions[i];
+        char name[CSB_V1_MAX_NAME_LEN + 1];
+        rows[i].x = CSB_V1_UTIL_PREVIEW_X;
+        rows[i].y = CSB_V1_UTIL_PREVIEW_Y +
+            i * CSB_V1_UTIL_PREVIEW_ROW_H;
+        rows[i].text_style = CSB_V1_UTIL_TEXT_STYLE_SMALL;
+        csb_v1_util_trim_name(champ->Name, name, sizeof(name));
+        snprintf(rows[i].text,
+                 sizeof(rows[i].text),
+                 "%d %s  HP %d/%d",
+                 i + 1,
+                 name[0] ? name : "EMPTY",
+                 (int)champ->CurrentHealth,
+                 (int)champ->MaximumHealth);
     }
     return count;
 }

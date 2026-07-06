@@ -1,6 +1,32 @@
 
 # Unreleased
 
+# Firestaff v3.0.49
+
+Firestaff v3.0.49 packages the current `main` after the latest CSB startup
+presentation ownership work.
+
+## Highlights since v3.0.48
+
+- **CSB startup title palettes**: CSB owns the special-palette decisions for
+  PRESENTS, CHAOS zoom and STRIKES BACK title stages used by M11.
+- **CSB entrance rendering metadata**: CSB startup plans expose entrance door
+  source assets, closed-door boxes, opening-door boxes and credits layout data
+  so M11 consumes structured startup render metadata instead of local constants.
+- **CSB utility preview rendering**: CSB utility flow owns the DM1 import status
+  row and imported champion preview rows before M11 draws them.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.49`.
+
+## Verification
+
+- Local release verification covers version synchronization, CSB startup render
+  gates, CSB M11 startup/resume presentation, the Phase A probe and
+  `git diff --check` before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.49` release run.
+
 # Firestaff v3.0.48
 
 Firestaff v3.0.48 packages the current `main` after the latest CSB startup

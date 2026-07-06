@@ -25,6 +25,8 @@ int main(void)
     CSB_V1_UtilActionPlan action_plan;
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilRenderRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
+    CSB_V1_UtilRenderTextRow status_row;
+    CSB_V1_UtilRenderTextRow preview_rows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
     int row_count;
 
     csb_v1_util_flow_init(&flow);
@@ -144,6 +146,39 @@ int main(void)
               panel.y == 80 &&
               panel.preview_max_rows == 4,
           "utility panel geometry remains source-shaped");
+    flow.imported_champion_count = 2;
+    flow.imported_party.ChampionCount = 2;
+    snprintf(flow.imported_party.Champions[0].Name,
+             sizeof(flow.imported_party.Champions[0].Name),
+             "%s",
+             "ALPHA   ");
+    flow.imported_party.Champions[0].CurrentHealth = 31;
+    flow.imported_party.Champions[0].MaximumHealth = 44;
+    snprintf(flow.imported_party.Champions[1].Name,
+             sizeof(flow.imported_party.Champions[1].Name),
+             "%s",
+             "BETA    ");
+    flow.imported_party.Champions[1].CurrentHealth = 22;
+    flow.imported_party.Champions[1].MaximumHealth = 33;
+    check(csb_v1_util_flow_import_status_render_row(&flow, &status_row) &&
+              status_row.x == 38 &&
+              status_row.y == 80 &&
+              status_row.text_style == 1 &&
+              strcmp(status_row.text,
+                     "DM1 IMPORT READY: 2 CHAMPIONS") == 0,
+          "utility flow owns import status render row");
+    row_count = csb_v1_util_flow_preview_render_rows(
+        &flow,
+        preview_rows,
+        (int)(sizeof(preview_rows) / sizeof(preview_rows[0])));
+    check(row_count == 2 &&
+              preview_rows[0].x == 48 &&
+              preview_rows[0].y == 154 &&
+              strcmp(preview_rows[0].text, "1 ALPHA  HP 31/44") == 0 &&
+              preview_rows[1].x == 48 &&
+              preview_rows[1].y == 164 &&
+              strcmp(preview_rows[1].text, "2 BETA  HP 22/33") == 0,
+          "utility flow owns imported champion preview rows");
     check(csb_v1_util_flow_action_at_point(&flow, 40, 116) ==
               CSB_V1_UTIL_ACTION_LOAD,
           "legacy point lookup still resolves Load row");
