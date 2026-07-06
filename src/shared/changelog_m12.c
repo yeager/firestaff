@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.48  (2026-07-06)",
+    "  - Packages the post-v3.0.47 CSB title render metadata and startup special-palette presentation work now on main.",
+    "  - CSB startup render plans now expose source title stages, C001 title blit boxes, and title/entrance/credits special palettes consumed by M11 presentation.",
+    "",
     "V3.0.47  (2026-07-06)",
     "  - Packages the post-v3.0.46 DM1 V1 side-door frame source-routing work now on main.",
     "  - DM1 V1 D1/D2/D3 side-door panels now route through source-locked frame helpers with focused runtime coverage.",
@@ -463,5 +467,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.47";
+    return "3.0.48";
 }
