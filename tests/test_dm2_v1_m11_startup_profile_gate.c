@@ -334,6 +334,20 @@ static void expect_dm2_startup_layout_contract(void) {
                     action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
                     action.row == menu.selected_row,
                 "DM2 startup menu Back reports launcher return");
+    hit.kind = DM2_V1_STARTUP_HIT_PANEL;
+    hit.row = -1;
+    expect_true(dm2_v1_startup_menu_handle_hit(&menu, &hit, &action) &&
+                    action.kind == DM2_V1_STARTUP_ACTION_NONE &&
+                    action.row == menu.selected_row,
+                "DM2 startup menu panel hit is consumed through DM2 API");
+    hit.kind = DM2_V1_STARTUP_HIT_ROW;
+    hit.row = 1;
+    expect_true(dm2_v1_startup_menu_handle_hit(&menu, &hit, &action) &&
+                    menu.selected_row == 1 &&
+                    action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
+                    action.row == 1 &&
+                    action.slot == 3,
+                "DM2 startup menu row hit activates through DM2 API");
 }
 
 static void check_incomplete_required_files_block_m11(const char* label,
