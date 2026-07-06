@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 DM2 startup idle-tick gate: `M11_GameView_AdvanceIdleTick()` now freezes DM2 runtime ticks while the DM2 startup menu is active, so no-save boots cannot age the DM2 world behind the `NEW GAME` selection screen. Verification: focused build passed for `test_dm2_v1_m11_startup_profile_gate`; direct real-data `test_dm2_v1_m11_startup_profile_gate` passed locally.
+
 - ✅ 2026-07-06 DM2 no-save startup menu gate: verified DM2 launches now always show the M11 DM2 start menu on normal boot, even when no saves exist and `NEW GAME` is the only row. Explicit `savePath` resumes still load directly, but no-save boots no longer bypass the startup choice into runtime input. Verification: focused build passed for `test_dm2_v1_m11_startup_profile_gate`; direct real-data `test_dm2_v1_m11_startup_profile_gate` passed locally.
 
 - ✅ 2026-07-06 Nexus V1 M12-to-M11 launcher handoff gate: added `test_nexus_v1_m11_launcher_handoff_boundary` to prove the production selected-menu launch path, not only direct `M11_GameView_Start()`. The gate keeps absent-data launch intent invalid, and with local real Nexus data proves `M12_StartupMenu_GetLaunchIntent()` is valid, `M11_GameView_OpenSelectedMenuEntry()` starts Nexus from the launcher path, enters `M11_GAME_SOURCE_NEXUS_DGN`, loads level zero, loads `TITLE.CG`, draws a nonblank title frame, ignores movement on the title, and advances only on explicit Accept. Verification: focused build passed for `test_nexus_v1_m11_launcher_handoff_boundary`; direct run passed 20/20 with real data; focused CTest `nexus_v1_m11_launcher_handoff_boundary` passed locally.

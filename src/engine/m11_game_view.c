@@ -13451,6 +13451,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             /* Game state not available — do not tick. */
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
+        if (state->dm2State.startup_menu_active) {
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
         dm2_v1_runtime_tick();
         m11_sync_dm2_state_from_runtime(state);
         return M11_GAME_INPUT_REDRAW;
