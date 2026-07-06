@@ -8831,6 +8831,91 @@ static void test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel(void) {
               "horizontal half-open D3C also uses two source halves");
 }
 
+static void test_dm1_side_doors_use_source_frame_halves(void) {
+    int srcX = -1;
+    int srcY = -1;
+    int dstX = -1;
+    int dstY = -1;
+    int width = -1;
+    int height = -1;
+
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  2, -1, 4, 1, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "closed D2L side door resolves through G0182");
+    ASSERT_EQ(srcX, 0, "closed D2L side door source x from G0182");
+    ASSERT_EQ(srcY, 0, "closed D2L side door source y from G0182");
+    ASSERT_EQ(dstX, 0, "closed D2L side door dst x from G0182");
+    ASSERT_EQ(dstY, 24, "closed D2L side door dst y from G0182");
+    ASSERT_EQ(width, 64, "closed D2L side door width from G0182");
+    ASSERT_EQ(height, 59, "closed D2L side door height from G0182");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  2, -1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              2,
+              "horizontal half-open D2L side door uses two G0182 halves");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  2, -1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D2L left half resolves");
+    ASSERT_EQ(srcX, 16, "D2L horizontal left source x from G0182");
+    ASSERT_EQ(dstX, 0, "D2L horizontal left dst x from G0182");
+    ASSERT_EQ(width, 16, "D2L horizontal left width from G0182");
+    ASSERT_EQ(height, 59, "D2L horizontal left height from G0182");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  2, -1, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D2L right half resolves");
+    ASSERT_EQ(srcX, 32, "D2L horizontal right source x from G0182");
+    ASSERT_EQ(dstX, 48, "D2L horizontal right dst x from G0182");
+    ASSERT_EQ(width, 16, "D2L horizontal right width from G0182");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  2, 1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              2,
+              "horizontal half-open D2R side door uses two G0184 halves");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  2, 1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D2R left half resolves");
+    ASSERT_EQ(srcX, 16, "D2R horizontal left source x from G0184");
+    ASSERT_EQ(dstX, 160, "D2R horizontal left dst x from G0184");
+    ASSERT_EQ(width, 16, "D2R horizontal left width from G0184");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  2, 1, 2, 0, 1, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D2R right half resolves");
+    ASSERT_EQ(srcX, 32, "D2R horizontal right source x from G0184");
+    ASSERT_EQ(dstX, 208, "D2R horizontal right dst x from G0184");
+    ASSERT_EQ(width, 16, "D2R horizontal right width from G0184");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  1, -1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              1,
+              "horizontal half-open D1L side door draws only visible G0185 half");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  1, -1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D1L visible half resolves");
+    ASSERT_EQ(srcX, 48, "D1L horizontal visible source x from G0185");
+    ASSERT_EQ(dstX, 8, "D1L horizontal visible dst x from G0185");
+    ASSERT_EQ(width, 24, "D1L horizontal visible width from G0185");
+    ASSERT_EQ(height, 86, "D1L horizontal visible height from G0185");
+
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  1, 1, 2, 0, -1, NULL, NULL, NULL, NULL, NULL, NULL),
+              1,
+              "horizontal half-open D1R side door draws only visible G0187 half");
+    ASSERT_EQ(M11_GameView_ProbeDm1SideDoorPanelBlit(
+                  1, 1, 2, 0, 0, &srcX, &srcY, &dstX, &dstY, &width, &height),
+              1,
+              "horizontal half-open D1R visible half resolves");
+    ASSERT_EQ(srcX, 24, "D1R horizontal visible source x from G0187");
+    ASSERT_EQ(dstX, 192, "D1R horizontal visible dst x from G0187");
+    ASSERT_EQ(width, 24, "D1R horizontal visible width from G0187");
+    ASSERT_EQ(height, 86, "D1R horizontal visible height from G0187");
+}
+
 static void test_f0231_zero_damage_emission_skips_hit_feedback(void) {
     M11_GameViewState state;
     int xpBefore;
@@ -8984,6 +9069,7 @@ int main(void) {
     test_endgame_restart_controls_respect_restart_allowed();
     test_dm1_d2_side_walls_sample_and_use_source_rects();
     test_dm1_d1c_thieves_eye_mask_follows_opening_door_panel();
+    test_dm1_side_doors_use_source_frame_halves();
     test_f0231_zero_damage_emission_skips_hit_feedback();
     test_f0231_positive_damage_emission_skips_duplicate_xp();
     test_melee_action_row_uses_auto_target_and_action_index();
