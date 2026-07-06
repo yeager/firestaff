@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.38  (2026-07-06)",
+    "  - Packages the post-v3.0.37 CSB startup prelude and title-frame work now on main.",
+    "  - CSB entrance starts now have an explicit source-shaped prelude gate before the door-opening phase and runtime handoff.",
+    "  - CSB title startup now runs the source-shaped FTL Presents, Chaos zoom, and Strikes Back frame sequence through the M11 startup path.",
+    "",
     "V3.0.37  (2026-07-06)",
     "  - Packages the post-v3.0.36 CSB entrance-door boot phase now on main.",
     "  - CSB new-game, bonus, resume, and utility-import starts now run a ReDMCSB-shaped pre-open delay plus 31-step door-opening phase before runtime handoff.",
@@ -414,5 +419,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.37";
+    return "3.0.38";
 }
