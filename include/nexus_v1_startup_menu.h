@@ -6,6 +6,7 @@
 
 #include "nexus_v1_champions.h"
 #include "nexus_v1_save.h"
+#include "nexus_v1_startup_layout.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,11 +81,19 @@ int nexus_v1_startup_title_handle_input(int title_frame,
 int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
                                        Nexus_V1_StartupInput input,
                                        Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
+                                     const Nexus_V1_StartupHit *hit,
+                                     Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
                                            int *cursor,
                                            unsigned int slot_mask,
                                            Nexus_V1_StartupInput input,
                                            Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_champion_handle_hit(Nexus_V1_ChampionPool *pool,
+                                         int *cursor,
+                                         unsigned int slot_mask,
+                                         const Nexus_V1_StartupHit *hit,
+                                         Nexus_V1_StartupAction *out_action);
 
 #ifdef __cplusplus
 }

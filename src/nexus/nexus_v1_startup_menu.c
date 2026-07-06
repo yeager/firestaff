@@ -252,6 +252,26 @@ int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
     return 0;
 }
 
+int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
+                                     const Nexus_V1_StartupHit *hit,
+                                     Nexus_V1_StartupAction *out_action)
+{
+    nexus_v1_startup_action_clear(out_action);
+    if (!menu || !hit || !out_action) {
+        return 0;
+    }
+    if (hit->kind == NEXUS_V1_STARTUP_HIT_SAVE_PANEL) {
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_NONE;
+        return 1;
+    }
+    if (hit->kind != NEXUS_V1_STARTUP_HIT_SAVE_ROW ||
+        hit->row < 0 || hit->row >= menu->row_count) {
+        return 0;
+    }
+    menu->selected_row = hit->row;
+    return nexus_v1_startup_menu_activate_selected(menu, out_action);
+}
+
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
                                            int *cursor,
                                            unsigned int slot_mask,
@@ -330,4 +350,39 @@ int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
         return 1;
     }
     return 0;
+}
+
+int nexus_v1_startup_champion_handle_hit(Nexus_V1_ChampionPool *pool,
+                                         int *cursor,
+                                         unsigned int slot_mask,
+                                         const Nexus_V1_StartupHit *hit,
+                                         Nexus_V1_StartupAction *out_action)
+{
+    nexus_v1_startup_action_clear(out_action);
+    if (!pool || !cursor || !hit || !out_action) {
+        return 0;
+    }
+    if (hit->kind == NEXUS_V1_STARTUP_HIT_CHAMPION_PANEL) {
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_NONE;
+        return 1;
+    }
+    if (hit->kind == NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER) {
+        return nexus_v1_startup_champion_handle_input(
+            pool,
+            cursor,
+            slot_mask,
+            NEXUS_V1_STARTUP_INPUT_ACTION,
+            out_action);
+    }
+    if (hit->kind != NEXUS_V1_STARTUP_HIT_CHAMPION_ROW ||
+        hit->row < 0 || hit->row >= pool->champion_count) {
+        return 0;
+    }
+    *cursor = hit->row;
+    return nexus_v1_startup_champion_handle_input(
+        pool,
+        cursor,
+        slot_mask,
+        NEXUS_V1_STARTUP_INPUT_ACCEPT,
+        out_action);
 }

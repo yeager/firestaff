@@ -72,6 +72,7 @@ int main(void)
     Nexus_V1_World world;
     Nexus_V1_StartupMenu menu;
     Nexus_V1_StartupAction action;
+    Nexus_V1_StartupHit hit;
     Nexus_V1_StartupRowKind kind;
     int slot;
     int cursor;
@@ -162,6 +163,43 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT,
            "Nexus champion startup Back returns to save select when slots exist");
+    cursor = 0;
+    memset(&hit, 0, sizeof(hit));
+    hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_PANEL;
+    hit.row = -1;
+    memset(&action, 0, sizeof(action));
+    expect(nexus_v1_startup_champion_handle_hit(
+               &champions,
+               &cursor,
+               0u,
+               &hit,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_NONE &&
+               champions.party_count == 0,
+           "Nexus champion startup panel hit is consumed without recruiting");
+    hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_ROW;
+    hit.row = 1;
+    expect(nexus_v1_startup_champion_handle_hit(
+               &champions,
+               &cursor,
+               0u,
+               &hit,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED &&
+               action.row == 1 &&
+               cursor == 2 &&
+               champions.party_count == 1,
+           "Nexus champion startup row hit recruits through Nexus-owned action");
+    hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER;
+    hit.row = -1;
+    expect(nexus_v1_startup_champion_handle_hit(
+               &champions,
+               &cursor,
+               0u,
+               &hit,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_START_DUNGEON,
+           "Nexus champion startup footer hit starts when party exists");
 
     build_world(&world);
     nexus_v1_save_init(&mgr, save_dir);
@@ -260,6 +298,23 @@ int main(void)
                &action) &&
                menu.selected_row == 1,
            "startup menu Down clamps at last row");
+    memset(&hit, 0, sizeof(hit));
+    hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_PANEL;
+    hit.row = -1;
+    memset(&action, 0, sizeof(action));
+    expect(nexus_v1_startup_menu_handle_hit(&menu, &hit, &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_NONE &&
+               menu.selected_row == 1,
+           "startup menu panel hit is consumed without row activation");
+    hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_ROW;
+    hit.row = 0;
+    expect(nexus_v1_startup_menu_handle_hit(&menu, &hit, &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT &&
+               action.row == 0 &&
+               action.slot == 3 &&
+               menu.selected_row == 0,
+           "startup menu save row hit activates selected slot through Nexus API");
+    menu.selected_row = 1;
 
     kind = NEXUS_V1_STARTUP_ROW_NONE;
     slot = -1;
