@@ -274,6 +274,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
                                           const char* gameId);
+static int m12_startup_data_dir_is_game_leaf(const char* dataDir);
 static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
                                     const char* gameId);
@@ -1510,8 +1511,10 @@ static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
     }
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_enter_message_view(state);
-    state->messageReturnView = M12_MENU_VIEW_MAIN;
-    state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    if (!m12_message_return_view_valid(state->messageReturnView)) {
+        state->messageReturnView = M12_MENU_VIEW_MAIN;
+        state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    }
     m12_set_buffered_message(state,
                              changed ? m12_tr(state, "DATA DIRECTORY UPDATED")
                                      : m12_tr(state, "DATA DIRECTORY UNCHANGED"),
@@ -2081,6 +2084,14 @@ static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
                              NULL,
                              current,
                              false);
+    if (!state->dataDirPickerActive &&
+        state->view == M12_MENU_VIEW_MESSAGE &&
+        state->messageLine1 &&
+        strcmp(state->messageLine1,
+               m12_tr(state, "DATA DIRECTORY UNCHANGED")) == 0) {
+        state->messageReturnView = M12_MENU_VIEW_MAIN;
+        state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    }
 }
 
 
@@ -2704,6 +2715,26 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     M12_Config_Save(&config);
 }
 
+static int m12_startup_data_dir_is_game_leaf(const char* dataDir) {
+    const char* slash;
+    const char* backslash;
+    const char* leaf;
+    if (!dataDir || dataDir[0] == '\0') {
+        return 0;
+    }
+    slash = strrchr(dataDir, '/');
+    backslash = strrchr(dataDir, '\\');
+    leaf = slash && backslash
+        ? (slash > backslash ? slash + 1 : backslash + 1)
+        : (slash ? slash + 1 : (backslash ? backslash + 1 : dataDir));
+    return strcmp(leaf, "dm1") == 0 ||
+           strcmp(leaf, "dm1-multilingual") == 0 ||
+           strcmp(leaf, "csb") == 0 ||
+           strcmp(leaf, "dm2") == 0 ||
+           strcmp(leaf, "nexus") == 0 ||
+           strcmp(leaf, "theron") == 0;
+}
+
 static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
@@ -2711,14 +2742,18 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
     if (!state || !config) {
         return;
     }
-    (void)gameId;
     if (hasExplicitDataDirOverride) {
-        M12_AssetStatusScanOptions scanOptions;
-        memset(&scanOptions, 0, sizeof(scanOptions));
-        scanOptions.honorRequestedDataDir = 1;
-        (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
-                                              config->dataDir,
-                                              &scanOptions);
+        if ((!gameId || gameId[0] == '\0') &&
+            m12_startup_data_dir_is_game_leaf(config->dataDir)) {
+            M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+        } else {
+            M12_AssetStatusScanOptions scanOptions;
+            memset(&scanOptions, 0, sizeof(scanOptions));
+            scanOptions.honorRequestedDataDir = 1;
+            (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                                  config->dataDir,
+                                                  &scanOptions);
+        }
         return;
     }
     /* The visible launcher must publish full cross-game availability even
@@ -4243,6 +4278,10 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
 
     if (state->view == M12_MENU_VIEW_MESSAGE) {
         if (state->dataDirPickerActive) {
+            if (input == M12_MENU_INPUT_BACK) {
+                state->messageReturnView = M12_MENU_VIEW_MAIN;
+                state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+            }
             return;
         }
         if (state->dataDirScanActive) {
