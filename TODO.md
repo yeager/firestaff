@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-06 DM1 V1/V2.x follow-up: DM1 V2.2 now has a launcher-intent and M12-to-M11 handoff gate alongside V1/V2.0/V2.1. Remaining DM1 work is still the user-reported visual/runtime polish: MacBook title-palette timing/capture, HoC wall-inscription sharpness, champion-mirror visibility in packaged builds, wall/corridor occlusion parity, and survival/runtime regressions such as HoC champion death.
+
 - 🔧 2026-07-06 DM1 V1 startup follow-up: current local work now promotes the DM1 startup ordering contract into production code (`dm1_v1_startup_sequence_pc34_compat`), makes M11 consult it before the SWSH/TITLE/entrance handoff, and marks generic direct `M11_GameView_Start(gameId="dm1")` as the explicit direct-game-view intro bypass while launcher/CLI handoffs keep reporting no source-visible intro bypass. Remaining startup work is still real same-state release capture for the MacBook title-palette report, fuller original boot presentation smoke on packaged apps, and any newly discovered direct launch/menu bypass gaps that still skip source-visible startup phases.
   - 2026-07-06 update: `test_dm1_v1_m11_launcher_handoff_boundary` now proves the normal production M12 selected-menu path reaches M11 DM1 with real local data, keeps `dm1StartupIntroBypassed` false for launcher starts, opens GRAPHICS.DAT/DUNGEON.DAT, builds the HoC mirror catalog, and contrasts that with the explicit direct M11 game-view intro-bypass path. Remaining startup work is real same-state packaged-app capture for title-palette reports and any newly discovered launcher/menu bypass gaps outside this M12-to-M11 boundary.
 

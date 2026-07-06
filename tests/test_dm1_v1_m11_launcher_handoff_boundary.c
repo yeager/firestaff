@@ -109,6 +109,97 @@ static const char* default_data_root(char fallback[512]) {
     return fallback;
 }
 
+static int mode_default_resolution(int mode) {
+    if (mode == M12_PRESENTATION_V22_MODERN) {
+        return M12_RES_2560x1440;
+    }
+    if (mode == M12_PRESENTATION_V21_UPSCALED ||
+        mode == M12_PRESENTATION_V20_FILTERED) {
+        return M12_RES_640x400;
+    }
+    return M12_RES_320x200;
+}
+
+static const char* mode_label(int mode) {
+    switch (mode) {
+        case M12_PRESENTATION_V1_ORIGINAL: return "DM1 V1 original";
+        case M12_PRESENTATION_V20_FILTERED: return "DM1 V2.0 filtered";
+        case M12_PRESENTATION_V21_UPSCALED: return "DM1 V2.1 upscaled";
+        case M12_PRESENTATION_V22_MODERN: return "DM1 V2.2 modern";
+        default: return "DM1 unknown presentation";
+    }
+}
+
+static void expect_mode_true(int condition, int mode, const char* suffix) {
+    char message[192];
+    snprintf(message, sizeof(message), "%s %s", mode_label(mode), suffix);
+    expect_true(condition, message);
+}
+
+static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) {
+    M12_LaunchIntent intent;
+    M11_GameViewState launcher_view;
+    unsigned char framebuffer[320 * 200];
+    int expected_resolution = mode_default_resolution(mode);
+
+    menu->selectedIndex = 0;
+    menu->activatedIndex = 0;
+    menu->launchRequested = 1;
+    menu->settings.graphicsIndex = mode;
+    menu->gameOptions[0].presentationModeIndex = mode;
+    menu->gameOptions[0].resolution = expected_resolution;
+
+    intent = M12_StartupMenu_GetLaunchIntent(menu);
+    expect_mode_true(intent.valid == 1, mode,
+                     "M12 launch intent is valid with real staged data");
+    expect_mode_true(intent.presentationMode == mode, mode,
+                     "M12 launch intent preserves presentation mode");
+    expect_mode_true(intent.options.presentationModeIndex == mode, mode,
+                     "M12 launch intent preserves option presentation mode");
+    expect_mode_true(intent.options.resolution == expected_resolution, mode,
+                     "M12 launch intent preserves expected resolution");
+    if (!intent.valid) {
+        return;
+    }
+
+    M11_GameView_Init(&launcher_view);
+    expect_mode_true(M11_GameView_OpenSelectedMenuEntry(&launcher_view, menu) == 1,
+                     mode, "M11 opens through M12 selected-menu entry");
+    expect_mode_true(launcher_view.startedFromLauncher == 1, mode,
+                     "M11 marks startup as launcher-started");
+    expect_mode_true(launcher_view.active == 1, mode,
+                     "M11 launcher handoff leaves view active");
+    expect_mode_true(launcher_view.sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG,
+                     mode, "M11 launcher handoff claims builtin catalog source");
+    expect_mode_true(strcmp(launcher_view.sourceId, "dm1") == 0, mode,
+                     "M11 launcher handoff preserves sourceId dm1");
+    expect_mode_true(launcher_view.presentationMode == mode, mode,
+                     "M11 launcher handoff preserves presentation mode");
+    expect_mode_true(launcher_view.presentationWidth == intent.resolutionWidth,
+                     mode, "M11 launcher handoff preserves presentation width");
+    expect_mode_true(launcher_view.presentationHeight == intent.resolutionHeight,
+                     mode, "M11 launcher handoff preserves presentation height");
+    expect_mode_true(M11_GameView_Dm1StartupIntroBypassed(&launcher_view) == 0,
+                     mode, "M11 launcher handoff does not mark intro bypass");
+    expect_mode_true(launcher_view.assetsAvailable == 1, mode,
+                     "M11 launcher handoff opens GRAPHICS.DAT assets");
+    expect_mode_true(launcher_view.dungeonPath[0] != '\0', mode,
+                     "M11 launcher handoff records a DUNGEON.DAT path");
+    expect_mode_true(launcher_view.world.dungeon != NULL, mode,
+                     "M11 launcher handoff owns a loaded dungeon model");
+    expect_mode_true(launcher_view.mirrorCatalogAvailable == 1, mode,
+                     "M11 launcher handoff builds the HoC mirror catalog");
+    expect_mode_true(launcher_view.mirrorCatalog.count > 0, mode,
+                     "M11 launcher handoff exposes HoC mirror candidates");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
+    expect_mode_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
+                     mode, "M11 launcher frame draws nonblank pixels");
+
+    M11_GameView_Shutdown(&launcher_view);
+}
+
 static void run_source_order_boundary(void) {
     const char* evidence = dm1_v1_startup_sequence_source_evidence_pc34();
     expect_true(dm1_v1_startup_sequence_source_order_valid_pc34(),
@@ -160,14 +251,11 @@ static void run_empty_launcher_boundary(void) {
 
 static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
-    M12_LaunchIntent intent;
-    M11_GameViewState launcher_view;
     M11_GameViewState direct_view;
     M11_GameLaunchSpec direct_spec;
     const M12_MenuEntry* entry;
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
-    unsigned char framebuffer[320 * 200];
 
     if (!data_dir || !data_dir[0]) {
         expect_skip("HOME is unset; no default Firestaff data root");
@@ -184,48 +272,10 @@ static void run_real_launcher_handoff_if_available(void) {
         return;
     }
 
-    menu.selectedIndex = 0;
-    menu.activatedIndex = 0;
-    menu.launchRequested = 1;
-    menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
-    intent = M12_StartupMenu_GetLaunchIntent(&menu);
-    expect_true(intent.valid == 1,
-                "M12 DM1 launch intent is valid with real staged data");
-    expect_true(intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL,
-                "M12 DM1 launch intent uses V1 original presentation");
-    if (!intent.valid) {
-        M12_StartupMenu_Destroy(&menu);
-        return;
-    }
-
-    M11_GameView_Init(&launcher_view);
-    expect_true(M11_GameView_OpenSelectedMenuEntry(&launcher_view, &menu) == 1,
-                "M11 opens DM1 through M12 selected-menu entry");
-    expect_true(launcher_view.startedFromLauncher == 1,
-                "M11 marks DM1 startup as launcher-started");
-    expect_true(launcher_view.active == 1,
-                "M11 DM1 launcher handoff leaves view active");
-    expect_true(launcher_view.sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG,
-                "M11 DM1 launcher handoff claims builtin catalog source");
-    expect_true(strcmp(launcher_view.sourceId, "dm1") == 0,
-                "M11 DM1 launcher handoff preserves sourceId dm1");
-    expect_true(M11_GameView_Dm1StartupIntroBypassed(&launcher_view) == 0,
-                "M11 DM1 launcher handoff does not mark intro bypass");
-    expect_true(launcher_view.assetsAvailable == 1,
-                "M11 DM1 launcher handoff opens GRAPHICS.DAT assets");
-    expect_true(launcher_view.dungeonPath[0] != '\0',
-                "M11 DM1 launcher handoff records a DUNGEON.DAT path");
-    expect_true(launcher_view.world.dungeon != NULL,
-                "M11 DM1 launcher handoff owns a loaded dungeon model");
-    expect_true(launcher_view.mirrorCatalogAvailable == 1,
-                "M11 DM1 launcher handoff builds the HoC mirror catalog");
-    expect_true(launcher_view.mirrorCatalog.count > 0,
-                "M11 DM1 launcher handoff exposes HoC mirror candidates");
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
-                "M11 DM1 launcher frame draws nonblank pixels");
+    run_launcher_handoff_for_mode(&menu, M12_PRESENTATION_V1_ORIGINAL);
+    run_launcher_handoff_for_mode(&menu, M12_PRESENTATION_V20_FILTERED);
+    run_launcher_handoff_for_mode(&menu, M12_PRESENTATION_V21_UPSCALED);
+    run_launcher_handoff_for_mode(&menu, M12_PRESENTATION_V22_MODERN);
 
     memset(&direct_spec, 0, sizeof(direct_spec));
     direct_spec.title = "DUNGEON MASTER";
@@ -243,7 +293,6 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 direct DM1 game-view start is the explicit intro bypass");
 
     M11_GameView_Shutdown(&direct_view);
-    M11_GameView_Shutdown(&launcher_view);
     M12_StartupMenu_Destroy(&menu);
 }
 

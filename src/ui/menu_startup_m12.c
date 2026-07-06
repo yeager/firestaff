@@ -3996,7 +3996,7 @@ static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
         m12_show_missing_game_data_popup(state, entry->gameId);
         return;
     }
-    pmode = m12_clamp_index(state->settings.graphicsIndex,
+    pmode = m12_clamp_index(state->gameOptions[slot].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
     state->activatedIndex = slot;
     m12_normalize_game_version_index(state, slot);
@@ -4033,7 +4033,7 @@ static void m12_save_browser_commit_csb_import(M12_StartupMenuState* state) {
         return;
     }
 
-    pmode = m12_clamp_index(state->settings.graphicsIndex,
+    pmode = m12_clamp_index(state->gameOptions[csbSlot].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
     state->activatedIndex = csbSlot;
     m12_normalize_game_version_index(state, csbSlot);
@@ -8530,7 +8530,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     panelW = framebufferWidth - margin - panelX;
     gameFill = entry ? m12_game_card_fill(entry->gameId) : M12_COLOR_DARK_GRAY;
     speedDimmed = !opts->cheatsEnabled;
-    pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
+    pmode = m12_clamp_index(state->gameOptions[gi].presentationModeIndex,
+                            M12_PRESENTATION_MODE_COUNT);
     aspectLocked = M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, pmode);
     resLocked = M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, pmode);
     version = m12_selected_version_status(state, gi);
@@ -9261,15 +9262,18 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     if (!state || state->activatedIndex < 0 || state->activatedIndex >= m12_entry_count()) {
         return intent;
     }
-    pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
-    /* V3 is not launchable yet */
-    if (pmode == M12_PRESENTATION_V22_MODERN) {
+    gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
+    intent.gameId = state->entries[state->activatedIndex].gameId;
+    pmode = m12_clamp_index(state->gameOptions[gi].presentationModeIndex,
+                            M12_PRESENTATION_MODE_COUNT);
+    /* V2.2 is launchable for DM1; keep the global experimental mode gate for
+     * other games until their M11 presentation paths have matching coverage. */
+    if (pmode == M12_PRESENTATION_V22_MODERN &&
+        (!intent.gameId || strcmp(intent.gameId, "dm1") != 0)) {
         return intent;
     }
-    gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
     version = m12_selected_version_status(state, gi);
     selectedVersionIndex = state->gameOptions[gi].versionIndex;
-    intent.gameId = state->entries[state->activatedIndex].gameId;
     if ((!version || !version->matched) &&
         intent.gameId &&
         M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)) {
@@ -9291,6 +9295,7 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.rendererBackendAvailable = M12_StartupMenu_RendererBackendAvailable(intent.rendererBackend);
     intent.options = state->gameOptions[gi];
     intent.options.versionIndex = selectedVersionIndex;
+    intent.options.presentationModeIndex = pmode;
     if (state->quickResumeAvailable &&
         state->quickResumeLaunchRequested &&
         state->quickResumeSavePath[0] != '\0' &&
