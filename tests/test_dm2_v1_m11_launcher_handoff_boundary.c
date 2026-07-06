@@ -30,6 +30,10 @@
  *      non-empty state->dungeonPath, and emits the
  *      `DM2 READY: gameId=dm2 dataDir=...` stderr marker
  *      consumed by firestaff_tier1_strict_boot_probe.
+ *   6. When real hash-verified DM2 data is available under the
+ *      default Firestaff data root, the production M12 selected-entry
+ *      path enters M11 DM2, keeps the startup menu active, blocks idle
+ *      tick aging behind that menu, and renders a non-blank first frame.
  *
  * Source-lock boundary:
  *   - m11_game_view.c lines 6706-6810 (DM2 hand-off branch).
@@ -52,6 +56,7 @@
 
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "render_sdl_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -114,6 +119,25 @@ static int write_payload(const char* path, const char* payload) {
     ok = (size == 0U) || fwrite(payload, 1U, size, fp) == size;
     fclose(fp);
     return ok;
+}
+
+static const char* default_data_root(char fallback[512]) {
+    const char* home = getenv("HOME");
+    if (!home || !home[0]) {
+        return NULL;
+    }
+    snprintf(fallback, 512, "%s/.firestaff/data", home);
+    return fallback;
+}
+
+static int count_nonzero_pixels(const unsigned char* framebuffer, size_t size) {
+    size_t i;
+    int count = 0;
+    if (!framebuffer) return 0;
+    for (i = 0; i < size; ++i) {
+        if (framebuffer[i] != 0) ++count;
+    }
+    return count;
 }
 
 static const char* kDm2GraphicsPayload =
@@ -309,12 +333,98 @@ static void run_m11_dm2_unverified_happy_path(void) {
     }
 }
 
+static void run_real_m12_dm2_handoff_if_available(void) {
+    M12_StartupMenuState menu;
+    M12_LaunchIntent intent;
+    M11_GameViewState view;
+    M11_GameInputResult idleResult;
+    const M12_MenuEntry* dm2_entry;
+    unsigned char framebuffer[M11_FB_BYTES];
+    char realDataDir[512];
+    const char* dataDir = default_data_root(realDataDir);
+    int initialTick;
+
+    if (!dataDir || !dataDir[0]) {
+        expect_skip("HOME is unset; no default Firestaff data root");
+        return;
+    }
+
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, "dm2");
+    dismiss_initial_message(&menu);
+    dm2_entry = M12_StartupMenu_GetEntry(&menu, 2 /* DM2 slot */);
+    if (!dm2_entry || !dm2_entry->available ||
+        !M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm2")) {
+        expect_skip("no hash-verified DM2 data under default Firestaff data root");
+        M12_StartupMenu_Destroy(&menu);
+        return;
+    }
+
+    menu.selectedIndex = 2;
+    menu.activatedIndex = 2;
+    menu.launchRequested = 1;
+    menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu.gameOptions[2].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
+
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    expect_true(intent.valid == 1,
+                "real DM2 M12 launch intent is valid");
+    expect_true(intent.gameId && strcmp(intent.gameId, "dm2") == 0,
+                "real DM2 M12 launch intent keeps gameId=\"dm2\"");
+    expect_true(intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL,
+                "real DM2 M12 launch intent uses V1 presentation");
+
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                "real DM2 M12 selected-entry path opens M11");
+    expect_true(view.active == 1,
+                "real DM2 M12 handoff leaves M11 active");
+    expect_true(view.startedFromLauncher == 1,
+                "real DM2 M12 handoff uses launcher contract");
+    expect_true(view.sourceKind == M11_GAME_SOURCE_DM2_BOOT,
+                "real DM2 M12 handoff reaches DM2 boot source kind");
+    expect_true(strcmp(view.sourceId, "dm2") == 0,
+                "real DM2 M12 handoff preserves source id");
+    expect_true(view.dm2BootProfile != NULL,
+                "real DM2 M12 handoff owns a DM2 boot profile");
+    expect_true(view.dm2World != NULL,
+                "real DM2 M12 handoff owns a DM2 world pointer");
+    expect_true(view.dm2State.level_loaded == 1,
+                "real DM2 M12 handoff loads the first DM2 level");
+    expect_true(view.dm2State.startup_menu_active == 1,
+                "real DM2 M12 handoff stops at the DM2 startup menu");
+    expect_true(view.dm2State.startup_menu_row_count >= 1,
+                "real DM2 startup menu exposes at least one row");
+    expect_true(view.dungeonPath[0] != '\0',
+                "real DM2 M12 handoff exposes the verified dungeon path");
+    expect_true(strstr(view.lastOutcome, "DM2") != NULL,
+                "real DM2 M12 handoff reports a DM2 outcome");
+
+    initialTick = view.dm2State.tick_count;
+    idleResult = M11_GameView_AdvanceIdleTick(&view);
+    expect_true(idleResult == M11_GAME_INPUT_IGNORED ||
+                idleResult == M11_GAME_INPUT_REDRAW,
+                "real DM2 startup idle tick returns a handled M11 result");
+    expect_true(view.dm2State.startup_menu_active == 1,
+                "real DM2 idle tick keeps the startup menu active");
+    expect_true(view.dm2State.tick_count == initialTick,
+                "real DM2 idle tick does not age runtime behind startup menu");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 200,
+                "real DM2 startup menu first frame is non-blank");
+
+    M11_GameView_Shutdown(&view);
+    M12_StartupMenu_Destroy(&menu);
+}
+
 int main(void) {
     printf("=== DM2 V1 M12/M11 launcher handoff boundary ===\n");
 
     run_m12_dm2_boundary();
     run_m11_dm2_handoff_branch();
     run_m11_dm2_unverified_happy_path();
+    run_real_m12_dm2_handoff_if_available();
 
     printf("\nDM2 V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
            g_passed, g_failures, g_skipped);
