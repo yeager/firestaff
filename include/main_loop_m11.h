@@ -54,6 +54,8 @@ typedef struct {
     int bootProbeExpectMap; /* Require exact receipt map/level index. */
     int bootProbeExpectMapIndex;
     int bootProbeExpectRuntimeTickMin; /* Require runtimeTick >= this value. */
+    int bootProbeExpectRuntimeTickMax; /* Require runtimeTick <= this value. */
+    int bootProbeExpectStartupActive; /* -1 ignore, otherwise exact 0/1. */
     int bootProbeExpectStartupFrameMin; /* Require startupFrame >= value. */
 } M11_PhaseA_Options;
 

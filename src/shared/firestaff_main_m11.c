@@ -46,6 +46,8 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-asset-md5 <md5> Fail unless the boot receipt asset hash matches\n"
             "  --boot-probe-expect-map <n> Fail unless the boot receipt map/level index matches\n"
             "  --boot-probe-expect-runtime-tick-min <n> Fail unless runtime tick is at least n\n"
+            "  --boot-probe-expect-runtime-tick-max <n> Fail unless runtime tick is at most n\n"
+            "  --boot-probe-expect-startup-active <0|1> Fail unless startup-active flag matches\n"
             "  --boot-probe-expect-startup-frame-min <n> Fail unless startup frame is at least n\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
@@ -236,6 +238,16 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--boot-probe-expect-runtime-tick-min") == 0 &&
             i + 1 < argc) {
             opts.bootProbeExpectRuntimeTickMin = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-runtime-tick-max") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectRuntimeTickMax = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-startup-active") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectStartupActive = atoi(argv[++i]) ? 1 : 0;
             continue;
         }
         if (strcmp(a, "--boot-probe-expect-startup-frame-min") == 0 &&
