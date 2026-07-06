@@ -1,6 +1,36 @@
 
 # Unreleased
 
+# Firestaff v3.0.27
+
+Firestaff v3.0.27 packages the latest startup-flow hardening across CSB, Nexus,
+DM2 and Theron's Quest after v3.0.26.
+
+## Highlights since v3.0.26
+
+- **CSB startup utility routing**: CSB's DM1-import utility startup path now
+  keeps utility-panel clicks owned by the utility UI, limits utility actions to
+  primary/left-button input, and leaves the source-locked bonus-dungeon mask
+  reserved for the original entrance route.
+
+- **Nexus startup guardrails**: the Nexus title, save-select and champion-select
+  phases now keep Back and pointer input local to startup until the player has
+  made an explicit Load/New Game/champion choice.
+
+- **DM2 and Theron startup input ownership**: DM2 start-menu clicks and Theron
+  stage/Soul Room clicks are now constrained to their visible startup panels, so
+  non-primary pointer input and panel whitespace cannot fall through to runtime
+  before a deliberate startup choice.
+
+## Verification
+
+- Local focused verification before release prep covered CSB startup/resume,
+  CSB boot handoff, DM2 startup profile, Nexus startup gate, Nexus startup menu,
+  and Theron direct-launch startup tests.
+- The GitHub release workflow is expected to build and package macOS arm64,
+  macOS x86_64, Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64
+  artifacts from the `v3.0.27` release run.
+
 # Firestaff v3.0.26
 
 Firestaff v3.0.26 packages launcher polish for the startup menu and refreshed
