@@ -49,6 +49,7 @@ int main(void) {
 
     {
         Theron_StartupAction action;
+        Theron_StartupHit hit;
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_TITLE,
             THERON_DUNGEON_1_HALL_OF_RECORDS,
@@ -163,6 +164,107 @@ int main(void) {
                        theron_v1_startup_action_name(
                            THERON_STARTUP_ACTION_ENTER_FORCEFIELD),
                        "forcefield");
+
+        theron_v1_startup_hit_init(&hit);
+        hit.kind = THERON_STARTUP_HIT_TITLE;
+        result = theron_v1_startup_handle_hit(
+            THERON_STARTUP_PHASE_TITLE,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            0,
+            0,
+            &hit,
+            &action);
+        check_int("title hit rc", result, THERON_STARTUP_OK);
+        check_int("title hit shows stage select",
+                  action.kind,
+                  THERON_STARTUP_ACTION_SHOW_STAGE_SELECT);
+
+        theron_v1_startup_hit_init(&hit);
+        hit.kind = THERON_STARTUP_HIT_PANEL;
+        result = theron_v1_startup_handle_hit(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            0,
+            1,
+            &hit,
+            &action);
+        check_int("panel hit rc", result, THERON_STARTUP_OK);
+        check_int("panel hit consumes without action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_NONE);
+
+        theron_v1_startup_hit_init(&hit);
+        hit.kind = THERON_STARTUP_HIT_CONTINUE;
+        result = theron_v1_startup_handle_hit(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            0,
+            1,
+            &hit,
+            &action);
+        check_int("continue hit rc", result, THERON_STARTUP_OK);
+        check_int("continue hit action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_CONTINUE_SAVE);
+        check_int("continue hit focus", action.continue_focus, 1);
+
+        theron_v1_startup_hit_init(&hit);
+        hit.kind = THERON_STARTUP_HIT_STAGE;
+        hit.selected_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+        result = theron_v1_startup_handle_hit(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            1,
+            1,
+            &hit,
+            &action);
+        check_int("stage hit rc", result, THERON_STARTUP_OK);
+        check_int("stage hit action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_CHOOSE_STAGE);
+        check_int("stage hit selected dungeon",
+                  action.selected_dungeon,
+                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+
+        theron_v1_startup_hit_init(&hit);
+        hit.kind = THERON_STARTUP_HIT_MIRROR;
+        hit.mirror_index = 4;
+        result = theron_v1_startup_handle_hit(
+            THERON_STARTUP_PHASE_SOUL_ROOM,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            0,
+            0,
+            0,
+            &hit,
+            &action);
+        check_int("mirror hit rc", result, THERON_STARTUP_OK);
+        check_int("mirror hit action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_TOGGLE_MIRROR);
+        check_int("mirror hit index", action.mirror_index, 4);
+        check_int("mirror hit cursor", action.cursor, 4);
+
+        theron_v1_startup_hit_init(&hit);
+        hit.kind = THERON_STARTUP_HIT_FORCEFIELD;
+        result = theron_v1_startup_handle_hit(
+            THERON_STARTUP_PHASE_READY,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            2,
+            0,
+            0,
+            &hit,
+            &action);
+        check_int("forcefield hit rc", result, THERON_STARTUP_OK);
+        check_int("forcefield hit action",
+                  action.kind,
+                  THERON_STARTUP_ACTION_ENTER_FORCEFIELD);
+        check_int("forcefield hit cursor",
+                  action.cursor,
+                  THERON_STARTUP_HERO_MIRROR_COUNT);
     }
 
     result = theron_v1_startup_choose_stage(&flow,
