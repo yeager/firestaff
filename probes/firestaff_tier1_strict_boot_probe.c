@@ -21,8 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <signal.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifndef FIRESTAFF_BIN
@@ -137,6 +141,8 @@ static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
     int argc = 0;
     size_t used = 0;
     int status;
+    time_t deadline;
+    int child_done = 0;
 
     if (!spec || !path || !buf || buf_size == 0U) {
         return -1;
@@ -144,8 +150,6 @@ static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
     buf[0] = '\0';
     snprintf(frames, sizeof(frames), "%d", spec->boot_frames);
 
-    argv[argc++] = "timeout";
-    argv[argc++] = "35";
     argv[argc++] = firestaff_bin();
     argv[argc++] = "--game";
     argv[argc++] = spec->game;
@@ -181,22 +185,66 @@ static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
         dup2(pipefd[1], STDOUT_FILENO);
         dup2(pipefd[1], STDERR_FILENO);
         close(pipefd[1]);
-        execvp("timeout", (char * const *)argv);
-        perror("execvp timeout");
+        execvp(firestaff_bin(), (char * const *)argv);
+        perror("execvp firestaff");
         _exit(127);
     }
 
     close(pipefd[1]);
-    while (used + 1U < buf_size) {
-        ssize_t n = read(pipefd[0], buf + used, buf_size - used - 1U);
-        if (n <= 0) {
+    deadline = time(NULL) + 35;
+    while (!child_done || used + 1U < buf_size) {
+        fd_set readfds;
+        struct timeval tv;
+        int ready;
+        time_t now = time(NULL);
+
+        if (!child_done) {
+            pid_t wait_rc = waitpid(pid, &status, WNOHANG);
+            if (wait_rc == pid) {
+                child_done = 1;
+            } else if (wait_rc < 0 && errno != EINTR) {
+                child_done = 1;
+                status = -1;
+            }
+        }
+
+        if (!child_done && now >= deadline) {
+            kill(pid, SIGKILL);
+            (void)waitpid(pid, &status, 0);
+            child_done = 1;
+            status = 124 << 8;
+        }
+
+        FD_ZERO(&readfds);
+        FD_SET(pipefd[0], &readfds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 100000;
+        ready = select(pipefd[0] + 1, &readfds, NULL, NULL, &tv);
+        if (ready > 0 && FD_ISSET(pipefd[0], &readfds)) {
+            ssize_t n = read(pipefd[0], buf + used, buf_size - used - 1U);
+            if (n > 0) {
+                used += (size_t)n;
+                buf[used] = '\0';
+                continue;
+            }
+            if (n == 0) {
+                break;
+            }
+            if (errno == EINTR) {
+                continue;
+            }
             break;
         }
-        used += (size_t)n;
+        if (ready < 0 && errno != EINTR) {
+            break;
+        }
+        if (child_done && ready == 0) {
+            break;
+        }
     }
     buf[used] = '\0';
     close(pipefd[0]);
-    if (waitpid(pid, &status, 0) < 0) {
+    if (!child_done && waitpid(pid, &status, 0) < 0) {
         return -1;
     }
     return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
