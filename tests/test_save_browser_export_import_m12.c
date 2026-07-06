@@ -6,6 +6,11 @@
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "nexus_v1_champions.h"
+#include "nexus_v1_save.h"
+#include "nexus_v1_world.h"
+#include "theron_v1_dungeon_progression.h"
+#include "theron_v1_save_load.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -123,6 +128,74 @@ static int write_dm2_suppress_resume_slot(const char* saveRoot,
                      (size_t)champN)) return 0;
 
     return dm2_sl_save(saveRoot, slot, name, payload, pos) == 0;
+}
+
+static int write_nexus_fnxs_save(const char* path) {
+    Nexus_V1_ChampionPool pool;
+    Nexus_V1_World world;
+    Nexus_SaveResult result;
+
+    if (!path) return 0;
+    nexus_v1_champions_init(&pool);
+    pool.party_count = 0;
+    pool.leader_index = -1;
+    nexus_v1_world_init(&world);
+    nexus_v1_party_place(&world, 2, 18, 12, 3);
+    nexus_v1_world_tick(&world);
+
+    result = nexus_v1_save_full_to_path(path,
+                                        world.party_level,
+                                        world.party_x,
+                                        world.party_y,
+                                        world.party_dir,
+                                        (uint32_t)world.world_tick,
+                                        world.state_hash,
+                                        &pool,
+                                        &world);
+    return result == NEXUS_SAVE_OK;
+}
+
+static int write_theron_tqsv_save(const char* root, int slot) {
+    unsigned char championData[
+        THERON_SAVE_CHAMPION_COUNT * THERON_SAVE_CHAMPION_BLOCK_SIZE];
+    Theron_DungeonProgression progression;
+
+    if (!root) return 0;
+    memset(championData, 0x31, sizeof(championData));
+    theron_v1_dungeon_progression_init(&progression);
+    progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    progression.current_level = 1;
+    progression.dungeon_playtime_seconds = 4321u;
+    progression.quest_items_collected = 0x03u;
+    return theron_v1_save_to_slot(root,
+                                  slot,
+                                  championData,
+                                  sizeof(championData),
+                                  &progression,
+                                  "M12 Theron") == 0;
+}
+
+static int write_theron_srm_save(const char* path) {
+    static const unsigned char valid_gzip_srm[] = {
+        0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff,
+        0x73, 0x0b, 0x0e, 0x09, 0x0c, 0x08, 0x72, 0x37, 0x64, 0x64,
+        0x66, 0x66, 0xd4, 0x61, 0x64, 0x60, 0x60, 0x14, 0x60, 0x60,
+        0x60, 0x02, 0x62, 0x66, 0x20, 0x66, 0x01, 0x62, 0x56, 0x20,
+        0x66, 0x03, 0x62, 0x76, 0x20, 0x06, 0x00, 0x50, 0x8a, 0x0c,
+        0xc3, 0x2c, 0x00, 0x00, 0x00
+    };
+    FILE* fp;
+
+    if (!path) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(valid_gzip_srm, 1u, sizeof(valid_gzip_srm), fp) !=
+        sizeof(valid_gzip_srm)) {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    return 1;
 }
 
 static uint16_t rd16le(const unsigned char* p) {
@@ -622,6 +695,91 @@ int main(void) {
         check(unlink(outPath) == 0,
               "removed imported DM2 SKSave before manifest scan");
     }
+    snprintf(badPath, sizeof(badPath), "%s/nexus_save_03.dat", backupDir);
+    check(write_bytes(badPath, "NOT-A-NEXUS-FNXS"),
+          "wrote invalid Nexus FNXS import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == -1,
+          "invalid Nexus FNXS import rejected before copy");
+    check(write_nexus_fnxs_save(badPath),
+          "wrote valid Nexus FNXS import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == 0,
+          "valid Nexus FNXS import accepted");
+    check(strstr(outPath, "/data/nexus_save_03.dat") != NULL,
+          "Nexus FNXS import reports data-dir destination");
+    check(M12_SaveBrowser_Scan(&state, dataDir) >= 1,
+          "scan runs after Nexus FNXS import");
+    {
+        const M12_SaveBrowserEntry* importedNexus =
+            find_entry(&state, "nexus_save_03.dat");
+        check(importedNexus != NULL, "imported Nexus FNXS entry present");
+        if (importedNexus) {
+            check(importedNexus->valid == 1,
+                  "imported Nexus FNXS entry is loadable");
+            check(strcmp(importedNexus->gameId, "nexus") == 0,
+                  "imported Nexus FNXS entry is classified as Nexus");
+        }
+    }
+    check(unlink(outPath) == 0,
+          "removed imported Nexus FNXS before Theron imports");
+    snprintf(badPath, sizeof(badPath), "%s/slot4.tqsv", backupDir);
+    check(write_bytes(badPath, "NOT-A-THERON-TQSV"),
+          "wrote invalid Theron TQSV import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == -1,
+          "invalid Theron TQSV import rejected before copy");
+    check(write_theron_tqsv_save(backupDir, 4),
+          "wrote valid Theron TQSV import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == 0,
+          "valid Theron TQSV import accepted");
+    check(strstr(outPath, "/data/slot4.tqsv") != NULL,
+          "Theron TQSV import reports data-dir destination");
+    check(M12_SaveBrowser_Scan(&state, dataDir) >= 1,
+          "scan runs after Theron TQSV import");
+    {
+        const M12_SaveBrowserEntry* importedTheron =
+            find_entry(&state, "slot4.tqsv");
+        check(importedTheron != NULL, "imported Theron TQSV entry present");
+        if (importedTheron) {
+            check(importedTheron->valid == 1,
+                  "imported Theron TQSV entry is loadable");
+            check(strcmp(importedTheron->gameId, "theron") == 0,
+                  "imported Theron TQSV entry is classified as Theron");
+        }
+    }
+    check(unlink(outPath) == 0,
+          "removed imported Theron TQSV before SRM import");
+    snprintf(badPath, sizeof(badPath), "%s/slot2.srm", backupDir);
+    check(write_bytes(badPath, "NOT-A-THERON-SRM"),
+          "wrote invalid Theron SRM import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == -1,
+          "invalid Theron SRM import rejected before copy");
+    check(write_theron_srm_save(badPath),
+          "wrote valid Theron SRM import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == 0,
+          "valid Theron SRM import accepted");
+    check(strstr(outPath, "/data/slot2.srm") != NULL,
+          "Theron SRM import reports data-dir destination");
+    check(M12_SaveBrowser_Scan(&state, dataDir) >= 1,
+          "scan runs after Theron SRM import");
+    {
+        const M12_SaveBrowserEntry* importedTheronSrm =
+            find_entry(&state, "slot2.srm");
+        check(importedTheronSrm != NULL,
+              "imported Theron SRM entry present");
+        if (importedTheronSrm) {
+            check(importedTheronSrm->valid == 1,
+                  "imported Theron SRM entry is loadable");
+            check(strcmp(importedTheronSrm->gameId, "theron") == 0,
+                  "imported Theron SRM entry is classified as Theron");
+        }
+    }
+    check(unlink(outPath) == 0,
+          "removed imported Theron SRM before manifest scan");
     check(M12_SaveBrowser_ExportSelected(NULL, backupDir, outPath, (int)sizeof(outPath)) == -1,
           "NULL export state rejected");
 

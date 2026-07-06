@@ -82,8 +82,9 @@ int M12_SaveBrowser_ExportSelectedAsDM1PC34(
 /* Import a launcher-visible save into dataDir. Firestaff names are copied
  * by basename; known original/CSBWin CSB basenames first pass the CSBWin
  * loader-boundary classifier and then validate through the CSB runtime
- * loader, while DM2 SKSave basenames validate through the DM2 session
- * loader before copy. Existing destination files are preserved.
+ * loader. DM2 SKSave, Nexus FNXS, Theron TQSV, and Theron SRM basenames
+ * validate through their game-owned startup/save loaders before copy.
+ * Existing destination files are preserved.
  * Returns 0 on success and optionally writes the target path. */
 int M12_SaveBrowser_ImportFile(const char* dataDir,
                                const char* importPath,

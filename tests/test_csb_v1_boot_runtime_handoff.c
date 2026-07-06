@@ -29,6 +29,7 @@
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "asset_find_by_hash.h"
 
 #include <stdio.h>
@@ -528,6 +529,119 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
           "ImportedFromDM1 is preserved through utility flow handoff");
     CHECK(memcmp(party.Champions[0].Name, "ALPHA   ", 8u) == 0,
           "full champion name is preserved through utility flow handoff");
+}
+
+static void test_utility_flow_load_game_uses_runtime_loader(void)
+{
+    CSB_V1_UtilFlowContext ctx;
+    CSB_V1_RuntimeProfile writer;
+    CSB_V1_PartyState imported;
+    CSB_V1_PartyState loaded_party;
+    uint8_t save_buf[1024];
+    uint8_t bad_header[512];
+    const char *bad_path = "/tmp/firestaff-csb-v1-utility-load-bad.sav";
+    const char *good_path = "/tmp/firestaff-csb-v1-utility-load-good.sav";
+    FILE *f;
+
+    memset(bad_header, 0, sizeof(bad_header));
+    bad_header[0] = (uint8_t)(CSB_V1_SAVE_MAGIC_CSB & 0xffu);
+    bad_header[1] = (uint8_t)((CSB_V1_SAVE_MAGIC_CSB >> 8) & 0xffu);
+    bad_header[2] = (uint8_t)((CSB_V1_SAVE_MAGIC_CSB >> 16) & 0xffu);
+    bad_header[3] = (uint8_t)((CSB_V1_SAVE_MAGIC_CSB >> 24) & 0xffu);
+    f = fopen(bad_path, "wb");
+    CHECK(f != NULL, "bad utility LOAD fixture opens for write");
+    if (f) {
+        CHECK(fwrite(bad_header, 1, sizeof(bad_header), f) ==
+                  sizeof(bad_header),
+              "bad utility LOAD fixture writes a magic-only header");
+        fclose(f);
+    }
+
+    csb_v1_util_flow_init(&ctx);
+    csb_v1_util_flow_mark_utility_disk_verified(&ctx, 1);
+    csb_v1_util_flow_set_csb_path(&ctx, bad_path);
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_INSERT_DISK,
+          "utility LOAD negative path reaches INSERT_DISK");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_VERIFY_DISK,
+          "utility LOAD negative path reaches VERIFY_DISK");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_DISK_OK,
+          "utility LOAD negative path accepts verified utility disk");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_SELECT_ACTION,
+          "utility LOAD negative path reaches SELECT_ACTION");
+    csb_v1_util_flow_set_action(&ctx, CSB_V1_UTIL_ACTION_LOAD);
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_LOAD_GAME,
+          "utility LOAD negative path enters LOAD_GAME");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_ERROR &&
+              ctx.last_error == -5,
+          "utility LOAD rejects magic-only bytes through runtime loader");
+
+    CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
+          "utility LOAD builds a two-champion DM1 party buffer");
+    CHECK(csb_v1_character_import_dm1_buffer(&imported, save_buf,
+                                             (int)sizeof(save_buf)) == 2,
+          "utility LOAD imports a two-champion party before save");
+    imported.LeaderIndex = 1;
+    imported.PartyMapX = 7;
+    imported.PartyMapY = 9;
+    imported.PartyDirection = CSB_V1_DIR_SOUTH;
+
+    csb_v1_runtime_init(&writer, NULL);
+    CHECK(csb_v1_runtime_set_party_state(&writer, &imported) == 0,
+          "utility LOAD writer runtime accepts the party snapshot");
+    writer.party_x = 7;
+    writer.party_y = 9;
+    writer.party_dir = CSB_V1_DIR_SOUTH;
+    writer.party_state.PartyMapX = 7;
+    writer.party_state.PartyMapY = 9;
+    writer.party_state.PartyDirection = CSB_V1_DIR_SOUTH;
+    writer.game_time = 1234u;
+    CHECK(csb_v1_runtime_save_game_to_path(&writer, good_path) == 0,
+          "utility LOAD writes a real Firestaff CSB runtime save");
+    csb_v1_runtime_cleanup(&writer);
+
+    csb_v1_util_flow_init(&ctx);
+    csb_v1_util_flow_mark_utility_disk_verified(&ctx, 1);
+    csb_v1_util_flow_set_csb_path(&ctx, good_path);
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_INSERT_DISK,
+          "utility LOAD positive path reaches INSERT_DISK");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_VERIFY_DISK,
+          "utility LOAD positive path reaches VERIFY_DISK");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_DISK_OK,
+          "utility LOAD positive path accepts verified utility disk");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_SELECT_ACTION,
+          "utility LOAD positive path reaches SELECT_ACTION");
+    csb_v1_util_flow_set_action(&ctx, CSB_V1_UTIL_ACTION_LOAD);
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_LOAD_GAME,
+          "utility LOAD positive path enters LOAD_GAME");
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_NEW_GAME,
+          "utility LOAD promotes a runtime-validated save to NEW_GAME");
+    CHECK(csb_v1_util_flow_step(&ctx) == 1 &&
+              ctx.state == CSB_V1_UTIL_FLOW_DONE,
+          "utility LOAD completes after runtime-validated save");
+    memset(&loaded_party, 0, sizeof(loaded_party));
+    CHECK(csb_v1_util_flow_get_party(&ctx, &loaded_party) == 2,
+          "utility LOAD exposes loaded party through get_party");
+    CHECK(loaded_party.ChampionCount == 2 &&
+              loaded_party.LeaderIndex == 1,
+          "utility LOAD preserves champion count and leader index");
+    CHECK(loaded_party.PartyMapX == 7 &&
+              loaded_party.PartyMapY == 9 &&
+              loaded_party.PartyDirection == CSB_V1_DIR_SOUTH,
+          "utility LOAD preserves saved party pose");
+    CHECK(memcmp(loaded_party.Champions[1].Name, "BETA", 4u) == 0,
+          "utility LOAD preserves loaded champion identity");
 }
 
 static void test_enter_game_with_verified_profile_loads_dungeon(void)
@@ -1194,6 +1308,7 @@ int main(void)
     test_enter_game_rejects_partial_or_misrouted_profiles();
     test_enter_game_v2_profile_labels_do_not_change_v1_handoff();
     test_utility_flow_new_game_handoff_preserves_leader_index();
+    test_utility_flow_load_game_uses_runtime_loader();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 boot→runtime handoff completes dungeon load, asset metadata, and entrance/start map handoff in one step");
