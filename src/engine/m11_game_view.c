@@ -15454,10 +15454,13 @@ static int m11_disable_front_mirror_route(M11_GameViewState* state,
                                           int mirrorOrdinal) {
     int mapX;
     int mapY;
+    int sftIndex;
     unsigned short thing;
+    unsigned short prev = THING_ENDOFLIST;
 
     if (!state || mirrorOrdinal < 0 || !state->world.things ||
-        !state->world.things->textStrings) {
+        !state->world.things->textStrings ||
+        !state->world.things->squareFirstThings) {
         return 0;
     }
 
@@ -15469,10 +15472,13 @@ static int m11_disable_front_mirror_route(M11_GameViewState* state,
         case DIR_SOUTH: mapY += 1; break;
         default:        mapX -= 1; break;
     }
-    thing = m11_get_viewport_static_first_thing(&state->world,
-                                                state->world.party.mapIndex,
-                                                mapX,
-                                                mapY);
+    sftIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+        state->world.dungeon, state->world.party.mapIndex, mapX, mapY);
+    if (sftIndex < 0 ||
+        sftIndex >= state->world.things->squareFirstThingCount) {
+        return 0;
+    }
+    thing = state->world.things->squareFirstThings[sftIndex];
     while (thing != THING_ENDOFLIST && thing != THING_NONE) {
         int thingType = THING_GET_TYPE(thing);
         int thingIndex = THING_GET_INDEX(thing);
@@ -15488,6 +15494,22 @@ static int m11_disable_front_mirror_route(M11_GameViewState* state,
             thing = next;
             continue;
         }
+        if (thingType == THING_TYPE_TEXTSTRING && state->world.things->textStrings &&
+            thingIndex >= 0 && thingIndex < state->world.things->textStringCount &&
+            F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+                &state->mirrorCatalog, thingIndex) == mirrorOrdinal) {
+            /* Same front-square mirror disable for the HoC TextString carrier
+             * fallback used by m11_front_cell_mirror_ordinal(). */
+            if (prev == THING_ENDOFLIST) {
+                state->world.things->squareFirstThings[sftIndex] = next;
+            } else {
+                m11_set_next_thing(state->world.things, prev, next);
+            }
+            m11_set_next_thing(state->world.things, thing, THING_ENDOFLIST);
+            thing = next;
+            continue;
+        }
+        prev = thing;
         thing = next;
     }
     return 1;
@@ -20542,6 +20564,22 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
                 return sensorData;
             }
             return -1;
+        } else if (thingType == THING_TYPE_TEXTSTRING &&
+                   state->world.party.mapIndex == 0 &&
+                   state->world.things->textStrings &&
+                   thingIndex >= 0 &&
+                   thingIndex < state->world.things->textStringCount) {
+            int ord = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+                &state->mirrorCatalog, thingIndex);
+            if (ord >= 0) {
+                /* ReDMCSB DUNGEON.C lines 2570-2584 builds the HoC champion
+                 * TextString catalog next to the C127 portrait route.  Some
+                 * PC34 mirror carrier squares expose the TextString in the
+                 * front cell while the C127 sensor is on the paired wall
+                 * carrier; keep this source catalog fallback after the C127
+                 * sensor path so all HoC mirrors remain selectable. */
+                return ord;
+            }
         }
         thing = m11_raw_next_thing(state->world.things, thing);
     }
