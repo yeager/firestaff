@@ -619,6 +619,12 @@ typedef struct {
         int level_loaded;
         int party_x, party_y, party_dir;
         int tick_count;
+        int startup_menu_active;
+        int startup_menu_selected_row;
+        int startup_menu_row_count;
+        int startup_resume_available;
+        unsigned int startup_slot_mask;
+        char startup_save_root[512];
         uint32_t leader_hand_object;
         uint32_t champion_inventory_objects[4][30];
     } dm2State;

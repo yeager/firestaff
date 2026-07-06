@@ -530,6 +530,213 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
     return 1;
 }
 
+enum {
+    M11_DM2_STARTUP_ROW_CONTINUE = 1,
+    M11_DM2_STARTUP_ROW_SLOT = 2,
+    M11_DM2_STARTUP_ROW_NEW_GAME = 3
+};
+
+static int m11_dm2_startup_count_rows(int resume_available,
+                                      unsigned int slot_mask)
+{
+    int count = resume_available ? 1 : 0;
+    int slot;
+
+    for (slot = 0; slot < 10; ++slot) {
+        if (slot_mask & (1u << slot)) {
+            ++count;
+        }
+    }
+    return count + 1; /* NEW GAME is always available. */
+}
+
+static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
+                                       DM2_V1_BootProfile *profile)
+{
+    int slot;
+
+    if (!state || !profile) {
+        return;
+    }
+    state->dm2State.startup_resume_available =
+        dm2_v1_save_has_valid_last_session(profile->save_root) ? 1 : 0;
+    state->dm2State.startup_slot_mask = 0u;
+    for (slot = 0; slot < 10; ++slot) {
+        if (dm2_v1_save_has_valid_slot(profile->save_root, (uint8_t)slot)) {
+            state->dm2State.startup_slot_mask |= (1u << slot);
+        }
+    }
+    snprintf(state->dm2State.startup_save_root,
+             sizeof(state->dm2State.startup_save_root),
+             "%s",
+             profile->save_root);
+    state->dm2State.startup_menu_row_count =
+        m11_dm2_startup_count_rows(
+            state->dm2State.startup_resume_available,
+            state->dm2State.startup_slot_mask);
+    if (state->dm2State.startup_menu_selected_row < 0 ||
+        state->dm2State.startup_menu_selected_row >=
+            state->dm2State.startup_menu_row_count) {
+        state->dm2State.startup_menu_selected_row = 0;
+    }
+}
+
+static int m11_dm2_startup_row_at(const M11_GameViewState *state,
+                                  int row,
+                                  int *out_kind,
+                                  int *out_slot)
+{
+    int cursor = 0;
+    int slot;
+
+    if (out_kind) {
+        *out_kind = 0;
+    }
+    if (out_slot) {
+        *out_slot = -1;
+    }
+    if (!state || row < 0) {
+        return 0;
+    }
+    if (state->dm2State.startup_resume_available) {
+        if (row == cursor) {
+            if (out_kind) {
+                *out_kind = M11_DM2_STARTUP_ROW_CONTINUE;
+            }
+            return 1;
+        }
+        ++cursor;
+    }
+    for (slot = 0; slot < 10; ++slot) {
+        if ((state->dm2State.startup_slot_mask & (1u << slot)) == 0u) {
+            continue;
+        }
+        if (row == cursor) {
+            if (out_kind) {
+                *out_kind = M11_DM2_STARTUP_ROW_SLOT;
+            }
+            if (out_slot) {
+                *out_slot = slot;
+            }
+            return 1;
+        }
+        ++cursor;
+    }
+    if (row == cursor) {
+        if (out_kind) {
+            *out_kind = M11_DM2_STARTUP_ROW_NEW_GAME;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static int m11_dm2_startup_apply_session(M11_GameViewState *state,
+                                         const DM2_V1_SessionState *session,
+                                         const char *status)
+{
+    if (!state || !session ||
+        dm2_v1_runtime_apply_session(session) != 0) {
+        if (state) {
+            m11_set_status(state, "STARTUP", "DM2 LOAD FAILED");
+        }
+        return 0;
+    }
+    m11_dm2_mirror_session_party(state, session);
+    state->dm2State.startup_menu_active = 0;
+    m11_sync_dm2_state_from_runtime(state);
+    m11_set_status(state, "STARTUP", status ? status : "DM2 STARTED");
+    return 1;
+}
+
+static M11_GameInputResult m11_dm2_startup_activate_selected(
+    M11_GameViewState *state)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_SessionState session;
+    int kind = 0;
+    int slot = -1;
+
+    if (!state || !state->dm2State.startup_menu_active ||
+        !state->dm2BootProfile) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
+    if (!m11_dm2_startup_row_at(state,
+                                state->dm2State.startup_menu_selected_row,
+                                &kind,
+                                &slot)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    memset(&session, 0, sizeof(session));
+    if (kind == M11_DM2_STARTUP_ROW_CONTINUE) {
+        if (dm2_v1_session_load_last_session(profile->save_root,
+                                             &session) != 0) {
+            m11_set_status(state, "STARTUP", "DM2 CONTINUE FAILED");
+            m11_dm2_startup_scan_saves(state, profile);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return m11_dm2_startup_apply_session(state,
+                                             &session,
+                                             "DM2 CONTINUED")
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_REDRAW;
+    }
+    if (kind == M11_DM2_STARTUP_ROW_SLOT && slot >= 0) {
+        if (dm2_v1_session_load_slot(profile->save_root,
+                                     (uint8_t)slot,
+                                     &session) != 0) {
+            m11_set_status(state, "STARTUP", "DM2 SLOT LOAD FAILED");
+            m11_dm2_startup_scan_saves(state, profile);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return m11_dm2_startup_apply_session(state,
+                                             &session,
+                                             "DM2 SLOT LOADED")
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_REDRAW;
+    }
+    dm2_v1_session_new(&session);
+    return m11_dm2_startup_apply_session(state, &session, "DM2 NEW GAME")
+               ? M11_GAME_INPUT_REDRAW
+               : M11_GAME_INPUT_REDRAW;
+}
+
+static M11_GameInputResult m11_dm2_startup_handle_input(
+    M11_GameViewState *state,
+    M12_MenuInput input)
+{
+    if (!state || !state->dm2State.startup_menu_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (input == M12_MENU_INPUT_UP) {
+        if (state->dm2State.startup_menu_selected_row > 0) {
+            --state->dm2State.startup_menu_selected_row;
+        }
+        m11_set_status(state, "STARTUP", "DM2 START SELECT");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_DOWN) {
+        if (state->dm2State.startup_menu_selected_row + 1 <
+            state->dm2State.startup_menu_row_count) {
+            ++state->dm2State.startup_menu_selected_row;
+        }
+        m11_set_status(state, "STARTUP", "DM2 START SELECT");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_ACCEPT ||
+        input == M12_MENU_INPUT_ACTION) {
+        return m11_dm2_startup_activate_selected(state);
+    }
+    if (input == M12_MENU_INPUT_BACK) {
+        m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+        return M11_GAME_INPUT_RETURN_TO_MENU;
+    }
+    return input == M12_MENU_INPUT_NONE
+               ? M11_GAME_INPUT_IGNORED
+               : M11_GAME_INPUT_REDRAW;
+}
+
 static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
                               int current,
                               int maximum)
@@ -10810,6 +11017,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             DM2_V1_SessionState startup_session;
             dm2_v1_session_new(&startup_session);
             m11_dm2_mirror_session_party(state, &startup_session);
+            m11_dm2_startup_scan_saves(state, profile);
+            state->dm2State.startup_menu_active =
+                (state->dm2State.startup_resume_available ||
+                 state->dm2State.startup_slot_mask != 0u) ? 1 : 0;
         }
         /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         dm2_v2_runtime_init(2);
@@ -10834,13 +11045,17 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
                            ? "DM2 RESUMED"
-                           : "DM2 READY");
+                           : (state->dm2State.startup_menu_active
+                                  ? "DM2 START MENU"
+                                  : "DM2 READY"));
         m11_set_inspect_readout(state, "READY",
                                 "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
         m11_log_event(state, M11_COLOR_YELLOW,
                       (spec->savePath && spec->savePath[0] != '\0')
                           ? "T0: DM2 RESUMED"
-                          : "T0: DM2 LOADED");
+                          : (state->dm2State.startup_menu_active
+                                 ? "T0: DM2 START MENU"
+                                 : "T0: DM2 LOADED"));
         /* Tier 1 launch smoke: keep the DM2 direct-launch milestone
          * observable to headless probes, matching the CSB stderr-pipe above.
          * The boot itself stays owned by the DM2 V1 branch documented in
@@ -14788,6 +15003,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (!state->dm2World) {
             return M11_GAME_INPUT_IGNORED;
         }
+        if (state->dm2State.startup_menu_active) {
+            return m11_dm2_startup_handle_input(state, input);
+        }
         shop_result = m11_handle_dm2_shop_input(state, input);
         if (shop_result != M11_GAME_INPUT_IGNORED) {
             return shop_result;
@@ -15325,6 +15543,28 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     return M11_GAME_INPUT_IGNORED;
 }
 
+static M11_GameInputResult m11_dm2_handle_startup_pointer(
+    M11_GameViewState *state,
+    int x,
+    int y)
+{
+    int row;
+
+    if (!state ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !state->dm2State.startup_menu_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    for (row = 0; row < state->dm2State.startup_menu_row_count; ++row) {
+        if (!m11_point_in_rect(x, y, 92, 76 + row * 14, 136, 12)) {
+            continue;
+        }
+        state->dm2State.startup_menu_selected_row = row;
+        return m11_dm2_startup_activate_selected(state);
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {
     if (!state) return;
     state->v1MouthVisualIconIndex = 0;
@@ -15513,6 +15753,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             m11_nexus_handle_startup_pointer(state, x, y);
         if (nexusStartupPointer != M11_GAME_INPUT_IGNORED) {
             return nexusStartupPointer;
+        }
+    }
+    {
+        M11_GameInputResult dm2StartupPointer =
+            m11_dm2_handle_startup_pointer(state, x, y);
+        if (dm2StartupPointer != M11_GAME_INPUT_IGNORED) {
+            return dm2StartupPointer;
         }
     }
 
@@ -35528,6 +35775,53 @@ static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
                                       1);
 }
 
+static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
+                                      unsigned char *framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight)
+{
+    int row;
+
+    if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
+        return;
+    }
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  78, 50, 164, 122, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  78, 50, 164, 122, M11_COLOR_WHITE);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  94, 58, "DUNGEON MASTER II", &g_text_title);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  96, 68, "SELECT GAME", &g_text_shadow);
+    for (row = 0; row < state->dm2State.startup_menu_row_count; ++row) {
+        char label[48];
+        int kind = 0;
+        int slot = -1;
+        int y = 78 + row * 14;
+        const M11_TextStyle *style = &g_text_shadow;
+
+        if (!m11_dm2_startup_row_at(state, row, &kind, &slot)) {
+            continue;
+        }
+        if (kind == M11_DM2_STARTUP_ROW_CONTINUE) {
+            snprintf(label, sizeof(label), "CONTINUE");
+        } else if (kind == M11_DM2_STARTUP_ROW_SLOT) {
+            snprintf(label, sizeof(label), "LOAD SLOT %02d", slot);
+        } else {
+            snprintf(label, sizeof(label), "NEW GAME");
+        }
+        if (row == state->dm2State.startup_menu_selected_row) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          90, y - 2, 140, 12, M11_COLOR_RED);
+            style = &g_text_title;
+        }
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      96, y, label, style);
+    }
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  90, 158, "ENTER/ACTION STARTS", &g_text_shadow);
+}
+
 static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
@@ -39475,6 +39769,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 36, boot_status, &g_text_shadow);
         }
+        m11_draw_dm2_startup_menu(state, framebuffer,
+                                  framebufferWidth, framebufferHeight);
         m11_draw_dm2_shop_panel(state, framebuffer,
                                 framebufferWidth, framebufferHeight);
         if (state->inventoryPanelActive) {
