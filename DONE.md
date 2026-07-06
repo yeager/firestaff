@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 CSB utility startup preview pointer ownership: when the imported-party VIEW preview is open, M11 now consumes pointer clicks in the visible preview rows as utility-panel input instead of letting them fall through to the entrance command hit-test. Verification: focused build passed for `test_csb_v1_m11_startup_resume_gate`; focused CTest for `csb_v1_m11_startup_resume_gate` plus `csb_v1_boot_runtime_handoff` passed locally.
+
 - ✅ 2026-07-06 CSB utility startup preview Back handling: M11 now treats Back inside the CSB startup utility imported-party VIEW preview as a local preview-close command, leaving the entrance active and returning to `CSB IMPORT READY` instead of falling through to the entrance Quit path. Verification: focused build passed for `test_csb_v1_m11_startup_resume_gate`; focused CTest for `csb_v1_m11_startup_resume_gate` plus `csb_v1_boot_runtime_handoff` passed locally.
 
 - ✅ 2026-07-06 DM1 generic direct-start intro-bypass audit: generic `M11_GameView_Start(gameId="dm1")` now marks `dm1StartupIntroBypassed` as the direct game-view path, matching `M11_GameView_StartDm1()` and making direct test/dev starts visible to the startup bypass audit. Launcher and CLI `--game dm1` still enter through `M11_GameView_OpenSelectedMenuEntry()` and overwrite the flag to the non-bypass launcher contract before the SWSH/TITLE/entrance handoff. Verification: focused build passed for `test_m11_quick_resume_roundtrip` and `test_dm1_v1_startup_intro_state_machine_gate`; focused CTest for `m11_quick_resume_roundtrip` plus `dm1_v1_startup_intro_state_machine_gate` passed locally.

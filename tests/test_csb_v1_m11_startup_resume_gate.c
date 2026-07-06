@@ -1358,6 +1358,19 @@ int main(void) {
                     M11_GAME_INPUT_REDRAW &&
                     view.csbState.startup_import_preview_active == 1,
                 "M11 CSB utility VIEW row reopens preview after Back");
+    {
+        int last_command = view.csbState.startup_entrance_last_command;
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view,
+                        52,
+                        164,
+                        M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.csbState.startup_entrance_active == 1 &&
+                        view.csbState.startup_import_preview_active == 1 &&
+                        view.csbState.startup_entrance_last_command == last_command,
+                    "M11 CSB utility preview click is consumed by utility panel");
+    }
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     40,

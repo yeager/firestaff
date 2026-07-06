@@ -3117,7 +3117,9 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
         return m11_csb_startup_activate_utility_action(state, action);
     }
     if (x >= layout.x && x < layout.x + layout.w &&
-        y >= 80 && y < layout.y + layout.h) {
+        y >= 80 &&
+        y < (state->csbState.startup_import_preview_active ? 194
+                                                           : layout.y + layout.h)) {
         return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
