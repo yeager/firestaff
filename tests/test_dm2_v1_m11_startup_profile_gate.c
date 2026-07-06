@@ -19,6 +19,7 @@
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_layout.h"
 #include "dm2_v1_startup_menu.h"
+#include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v1_trigger.h"
 #include "m11_game_view.h"
@@ -250,6 +251,9 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupMenu menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupRowKind row_kind = DM2_V1_STARTUP_ROW_NONE;
+    DM2_V1_StartupDrawCommand commands[16];
+    int command_count;
+    char label[64];
     int slot = -1;
 
     expect_true(dm2_v1_startup_panel_rect(&rect) &&
@@ -348,6 +352,45 @@ static void expect_dm2_startup_layout_contract(void) {
                     action.row == 1 &&
                     action.slot == 3,
                 "DM2 startup menu row hit activates through DM2 API");
+    expect_true(dm2_v1_startup_row_label(DM2_V1_STARTUP_ROW_CONTINUE,
+                                         -1,
+                                         label,
+                                         (int)sizeof(label)) &&
+                    strcmp(label, "CONTINUE") == 0,
+                "DM2 startup presentation owns CONTINUE row label");
+    expect_true(dm2_v1_startup_row_label(DM2_V1_STARTUP_ROW_SLOT,
+                                         3,
+                                         label,
+                                         (int)sizeof(label)) &&
+                    strcmp(label, "LOAD SLOT 03") == 0,
+                "DM2 startup presentation owns slot row label");
+    command_count = dm2_v1_startup_presentation_build(
+        &menu,
+        commands,
+        (int)(sizeof(commands) / sizeof(commands[0])));
+    expect_true(command_count == 9,
+                "DM2 startup presentation emits panel, text, rows, and footer");
+    expect_true(commands[0].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[0].style == DM2_V1_STARTUP_STYLE_PANEL &&
+                    commands[0].rect.x == 78 &&
+                    commands[0].rect.y == 50,
+                "DM2 startup presentation owns panel fill command");
+    expect_true(commands[2].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[2].style == DM2_V1_STARTUP_STYLE_TITLE &&
+                    strcmp(commands[2].text, "DUNGEON MASTER II") == 0,
+                "DM2 startup presentation owns title command");
+    expect_true(commands[5].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[5].style == DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
+                    commands[5].row == 1,
+                "DM2 startup presentation owns selected-row highlight command");
+    expect_true(commands[6].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[6].style == DM2_V1_STARTUP_STYLE_SELECTED_TEXT &&
+                    commands[6].row == 1 &&
+                    strcmp(commands[6].text, "LOAD SLOT 03") == 0,
+                "DM2 startup presentation owns selected-row text command");
+    expect_true(commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    strcmp(commands[8].text, "ENTER/ACTION STARTS") == 0,
+                "DM2 startup presentation owns footer command");
 }
 
 static void check_incomplete_required_files_block_m11(const char* label,
