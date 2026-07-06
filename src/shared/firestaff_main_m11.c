@@ -43,6 +43,7 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-runtime Fail unless startup is inactive and a level is loaded\n"
             "  --boot-probe-expect-party x,y,dir Fail unless the boot receipt party matches\n"
             "  --boot-probe-expect-champions <n> Fail unless the boot receipt champion count matches\n"
+            "  --boot-probe-expect-level-loaded <0|1> Fail unless level-loaded flag matches\n"
             "  --boot-probe-expect-asset-md5 <md5> Fail unless the boot receipt asset hash matches\n"
             "  --boot-probe-expect-map <n> Fail unless the boot receipt map/level index matches\n"
             "  --boot-probe-expect-runtime-tick-min <n> Fail unless runtime tick is at least n\n"
@@ -224,6 +225,11 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--boot-probe-expect-champions") == 0 && i + 1 < argc) {
             opts.bootProbeExpectChampionCount = atoi(argv[++i]);
             opts.bootProbeExpectChampions = 1;
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-level-loaded") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectLevelLoaded = atoi(argv[++i]) ? 1 : 0;
             continue;
         }
         if (strcmp(a, "--boot-probe-expect-asset-md5") == 0 && i + 1 < argc) {
