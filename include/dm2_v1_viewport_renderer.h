@@ -119,6 +119,10 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT 16
 #define DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_ITEM_FIELD_MASK 0xFF
+#define DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE (-0x60000)
+#define DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT 16
+#define DM2_V1_VIEWPORT_GFX_PROJECTILE_INDEX_SHIFT 8
+#define DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_MASK 0xFF
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -138,6 +142,9 @@ int dm2_v1_viewport_creature_graphic_index(int creature_type,
 int dm2_v1_viewport_item_graphic_index(int item_category,
                                        int item_type,
                                        int frame_index);
+int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
+                                             int projectile_type,
+                                             int frame_index);
 
 typedef struct {
     int x;
@@ -200,6 +207,7 @@ typedef struct {
 } DM2_ItemSprite;
 
 typedef struct {
+    uint8_t  projectile_category; /* GDAT category, 0 = spell-missile fallback */
     uint8_t  projectile_type; /* spell/arrow/bolt type */
     uint8_t  frame_index;     /* animation frame */
     int16_t  depth;           /* depth sort key */
@@ -267,6 +275,8 @@ typedef struct {
     int fallback_creature_drawn_count;
     int asset_item_drawn_count;
     int fallback_item_drawn_count;
+    int asset_projectile_drawn_count;
+    int fallback_projectile_drawn_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */

@@ -638,6 +638,42 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
 static DM2_V1_DrainedProjectile g_dm2_projectile_drain[DM2_DRAIN_MAX_PROJECTILES];
 static int g_dm2_projectile_drain_count = 0;
 
+static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport)
+{
+    int count;
+    if (!viewport) return;
+    count = g_dm2_projectile_drain_count;
+    if (count > DM2_MAX_PROJECTILES) count = DM2_MAX_PROJECTILES;
+    viewport->projectile_count = count;
+    for (int i = 0; i < count; ++i) {
+        const DM2_V1_DrainedProjectile *src = &g_dm2_projectile_drain[i];
+        DM2_Projectile *dst = &viewport->projectiles[i];
+        memset(dst, 0, sizeof(*dst));
+        dst->projectile_category =
+            (uint8_t)(src->category == PROJECTILE_CATEGORY_MAGICAL ? 0x0d : 0x10);
+        dst->projectile_type = (uint8_t)(src->subtype & 0xff);
+        dst->frame_index = (uint8_t)(src->frame & 0xff);
+        dst->depth = 0;
+        dst->screen_x = (int16_t)src->pixel_x;
+        dst->screen_y = (int16_t)src->pixel_y;
+        switch (src->direction & 3) {
+        case 0:
+            dst->velocity_y = -3;
+            break;
+        case 1:
+            dst->velocity_x = 3;
+            break;
+        case 2:
+            dst->velocity_y = 3;
+            break;
+        default:
+            dst->velocity_x = -3;
+            break;
+        }
+        dst->palette_shift = (uint8_t)(src->frame & 7);
+    }
+}
+
 /*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
@@ -757,6 +793,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport,
         (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
     dm2_runtime_populate_front_square(rt, &viewport, party_dir, party_x, party_y);
+    dm2_runtime_populate_projectiles(&viewport);
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
