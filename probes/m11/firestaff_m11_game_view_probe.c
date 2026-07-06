@@ -547,6 +547,59 @@ static void probe_reset_synthetic_view_to_corridor(M11_GameViewState* state) {
     state->world.magic.magicalLightAmount = 255;
 }
 
+static int probe_add_synthetic_clone_map(M11_GameViewState* state) {
+    struct DungeonDatState_Compat* dungeon;
+    struct DungeonThings_Compat* things;
+    struct DungeonMapDesc_Compat* maps;
+    struct DungeonMapTiles_Compat* tiles;
+    unsigned short* squareFirstThings;
+    int oldSquareCount;
+    int newSquareCount;
+    int i;
+
+    if (!state || !state->world.dungeon || !state->world.things ||
+        !state->world.dungeon->maps || !state->world.dungeon->tiles ||
+        !state->world.dungeon->tiles[0].squareData ||
+        !state->world.things->squareFirstThings) {
+        return 0;
+    }
+    dungeon = state->world.dungeon;
+    things = state->world.things;
+    if (dungeon->header.mapCount >= 2) {
+        return 1;
+    }
+    oldSquareCount = dungeon->tiles[0].squareCount;
+    newSquareCount = oldSquareCount * 2;
+    maps = (struct DungeonMapDesc_Compat*)realloc(
+        dungeon->maps, 2 * sizeof(struct DungeonMapDesc_Compat));
+    if (!maps) return 0;
+    dungeon->maps = maps;
+    tiles = (struct DungeonMapTiles_Compat*)realloc(
+        dungeon->tiles, 2 * sizeof(struct DungeonMapTiles_Compat));
+    if (!tiles) return 0;
+    dungeon->tiles = tiles;
+    squareFirstThings = (unsigned short*)realloc(
+        things->squareFirstThings, (size_t)newSquareCount * sizeof(unsigned short));
+    if (!squareFirstThings) return 0;
+    things->squareFirstThings = squareFirstThings;
+
+    dungeon->maps[1] = dungeon->maps[0];
+    memset(&dungeon->tiles[1], 0, sizeof(dungeon->tiles[1]));
+    dungeon->tiles[1].squareCount = oldSquareCount;
+    dungeon->tiles[1].squareData =
+        (unsigned char*)calloc((size_t)oldSquareCount, sizeof(unsigned char));
+    if (!dungeon->tiles[1].squareData) return 0;
+    memcpy(dungeon->tiles[1].squareData,
+           dungeon->tiles[0].squareData,
+           (size_t)oldSquareCount);
+    for (i = oldSquareCount; i < newSquareCount; ++i) {
+        things->squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    things->squareFirstThingCount = newSquareCount;
+    dungeon->header.mapCount = 2;
+    return 1;
+}
+
 static void probe_set_next(unsigned char* raw,
                            unsigned short nextThing) {
     if (!raw) {
@@ -703,11 +756,18 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
 }
 
 static void probe_free_synthetic_view(M11_GameViewState* state) {
+    int mapIndex;
     if (!state) {
         return;
     }
     if (state->world.dungeon) {
-        free(state->world.dungeon->tiles ? state->world.dungeon->tiles[0].squareData : NULL);
+        if (state->world.dungeon->tiles) {
+            for (mapIndex = 0;
+                 mapIndex < (int)state->world.dungeon->header.mapCount;
+                 ++mapIndex) {
+                free(state->world.dungeon->tiles[mapIndex].squareData);
+            }
+        }
         free(state->world.dungeon->maps);
         free(state->world.dungeon->tiles);
         free(state->world.dungeon);
@@ -3299,6 +3359,51 @@ int main(int argc, char** argv) {
     }
 
     probe_free_synthetic_view(&syntheticView);
+
+    /* ReDMCSB DUNGEON.C F0160/F0161 stores SquareFirstThings as a compact
+     * table for every map.  This two-map synthetic world pins the M11
+     * viewport path to F0511 on map 1, where dense map-square indexing would
+     * read the wrong entry and miss the visible floor item. */
+    {
+        M11_GameViewState compactView;
+        int mapX = -1;
+        int mapY = -1;
+        int elementType = -1;
+        int floorItemCount = -1;
+        int summaryItemCount = -1;
+        int ok = 0;
+        memset(&compactView, 0, sizeof(compactView));
+        if (probe_init_synthetic_view(&compactView)) {
+            probe_reset_synthetic_view_to_corridor(&compactView);
+            if (probe_add_synthetic_clone_map(&compactView)) {
+                int idx = 2 * (int)compactView.world.dungeon->maps[1].height + 2;
+                compactView.world.party.mapIndex = 1;
+                compactView.world.party.mapX = 2;
+                compactView.world.party.mapY = 3;
+                compactView.world.party.direction = DIR_NORTH;
+                compactView.world.things->weapons[0].type = 8; /* dagger */
+                probe_set_next(compactView.world.things->rawThingData[THING_TYPE_WEAPON],
+                               THING_ENDOFLIST);
+                compactView.world.dungeon->tiles[1].squareData[idx] =
+                    (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                    DUNGEON_SQUARE_MASK_THING_LIST);
+                compactView.world.things->squareFirstThings[0] =
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+                ok = M11_GameView_ProbeViewportFloorItemCounts(
+                    &compactView, 1, 0,
+                    &mapX, &mapY, &elementType,
+                    &floorItemCount, &summaryItemCount);
+            }
+            probe_free_synthetic_view(&compactView);
+        }
+        probe_record(&tally, "INV_GV_38AM",
+                     ok &&
+                     mapX == 2 && mapY == 2 &&
+                     elementType == DUNGEON_ELEMENT_CORRIDOR &&
+                     floorItemCount == 1 &&
+                     summaryItemCount == 1,
+                     "viewport floor items resolve compact SquareFirstThings on non-HoC maps");
+    }
 
     /* Focused source-bound viewport artifact scenes.
      *

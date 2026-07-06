@@ -5731,20 +5731,28 @@ static unsigned short m11_get_viewport_static_first_thing(const struct GameWorld
                                                           int mapX,
                                                           int mapY) {
     unsigned char square = 0;
-    int elementType;
     if (m11_get_square_byte(world, mapIndex, mapX, mapY, &square)) {
-        elementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-        (void)elementType;
-        if (mapIndex == 0) {
+        if (square & DUNGEON_SQUARE_MASK_THING_LIST) {
             /* ReDMCSB DUNGEON.C F0160/F0161 stores SquareFirstThings as a
-             * compact table indexed only by squares with the thing-list flag.
-             * The stock DM1 Hall of Champions keeps both mirror C127 wall
-             * sensors and mirror payload data in that compact table.  Using
-             * the older dense mapX*height+mapY route can either miss real
-             * mirrors or draw unrelated compact entries as HoC artifacts. */
+             * compact table indexed only by squares with the thing-list flag,
+             * on every map.  Using dense mapX*height+mapY indexing after HoC
+             * can bind the viewport to an unrelated thing chain, which shows
+             * up as misplaced floor objects, creatures, sensors, or effects. */
             return m11_get_flagged_square_first_thing(world, mapIndex, mapX, mapY);
         }
+        if (world && world->dungeon && world->things) {
+            int totalSquares = 0;
+            int mi;
+            for (mi = 0; mi < (int)world->dungeon->header.mapCount; ++mi) {
+                totalSquares += world->dungeon->tiles[mi].squareCount;
+            }
+            if (world->things->squareFirstThingCount < totalSquares) {
+                return THING_ENDOFLIST;
+            }
+        }
     }
+    /* Synthetic probe worlds created before the compact-table model may lack
+     * MASK0x0010_THING_LIST while still storing dense squareFirstThings. */
     return m11_get_first_square_thing(world, mapIndex, mapX, mapY);
 }
 
@@ -5752,7 +5760,7 @@ static int m11_count_square_things(const struct GameWorld_Compat* world,
                                    int mapIndex,
                                    int mapX,
                                    int mapY) {
-    unsigned short thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+    unsigned short thing = m11_get_viewport_static_first_thing(world, mapIndex, mapX, mapY);
     int count = 0;
     while (thing != THING_ENDOFLIST && thing != THING_NONE && count < 32) {
         ++count;
