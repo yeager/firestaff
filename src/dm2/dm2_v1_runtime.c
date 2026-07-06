@@ -92,6 +92,8 @@ static int g_dm2_last_asset_door_panel_count = 0;
 static int g_dm2_last_asset_door_frame_count = 0;
 static int g_dm2_last_asset_door_button_count = 0;
 static int g_dm2_last_fallback_door_count = 0;
+static int g_dm2_last_asset_carried_item_count = 0;
+static int g_dm2_last_fallback_carried_item_count = 0;
 
 static int dm2_runtime_door_state(uint16_t square_raw) {
     return (int)(square_raw & 0x0007u);
@@ -760,6 +762,28 @@ int dm2_v1_runtime_get_projectile_drain(DM2_V1_DrainedProjectile **out_list) {
     return g_dm2_projectile_drain_count;
 }
 
+static void dm2_runtime_populate_carried_item(const DM2_V1_RuntimeState *rt,
+                                              DM2_V1_ViewportState *viewport)
+{
+    uint8_t pool = 0;
+    uint32_t index = 0u;
+    DM2_ItemSprite *dst;
+
+    if (!rt || !viewport) return;
+    if (!dm2_db_decode_handle(rt->leader_hand_object, &pool, &index)) return;
+
+    dst = &viewport->carried_item;
+    memset(dst, 0, sizeof(*dst));
+    dst->item_category =
+        (uint8_t)dm2_v1_viewport_item_category_for_db_pool((int)pool);
+    dst->item_type = (uint8_t)(index & 0xffu);
+    dst->frame_index = 0;
+    dst->depth = 0;
+    dst->screen_x = 300;
+    dst->screen_y = 184;
+    viewport->carried_item_present = 1;
+}
+
 /* ── Viewport rendering ────────────────────────────────────────────── */
 
 /*
@@ -804,6 +828,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
     dm2_runtime_populate_front_square(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_projectiles(&viewport);
+    dm2_runtime_populate_carried_item(rt, &viewport);
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);
@@ -822,6 +847,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_asset_door_button_count =
         viewport.asset_door_button_drawn_count;
     g_dm2_last_fallback_door_count = viewport.fallback_door_drawn_count;
+    g_dm2_last_asset_carried_item_count =
+        viewport.asset_carried_item_drawn_count;
+    g_dm2_last_fallback_carried_item_count =
+        viewport.fallback_carried_item_drawn_count;
 
     return 0;
 }
@@ -878,6 +907,14 @@ int dm2_v1_runtime_last_asset_door_button_count(void) {
 
 int dm2_v1_runtime_last_fallback_door_count(void) {
     return g_dm2_last_fallback_door_count;
+}
+
+int dm2_v1_runtime_last_asset_carried_item_count(void) {
+    return g_dm2_last_asset_carried_item_count;
+}
+
+int dm2_v1_runtime_last_fallback_carried_item_count(void) {
+    return g_dm2_last_fallback_carried_item_count;
 }
 
 /* ── Movement ──────────────────────────────────────────────────────── */

@@ -50,6 +50,7 @@ static uint8_t s_door_panel_pixels[16 * 8];
 static uint8_t s_door_frame_pixels[16 * 8];
 static uint8_t s_door_button_pixels[16 * 8];
 static uint8_t s_wall_button_pixels[16 * 8];
+static uint8_t s_item_pixels[16 * 8];
 
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
@@ -114,6 +115,17 @@ static int synthetic_viewport_asset_fetch(void *user,
             DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_RELEASED &&
         DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - gdat_index < 0x08) {
         if (out_pixels) *out_pixels = s_door_button_pixels;
+        if (out_w) *out_w = 16;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 16;
+        return 0;
+    }
+    if (gdat_index <= DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE &&
+        (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
+          DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >= 0x10 &&
+        (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
+          DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) <= 0x15) {
+        if (out_pixels) *out_pixels = s_item_pixels;
         if (out_w) *out_w = 16;
         if (out_h) *out_h = 8;
         if (out_stride) *out_stride = 16;
@@ -513,8 +525,10 @@ static void test_first_tick_after_boot_profile_handoff(void)
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
+        memset(s_item_pixels, 6, sizeof(s_item_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_runtime_set_outdoor(0);
+        dm2_v1_runtime_set_leader_hand_object(0u);
         dm2_v1_runtime_set_viewport_asset_provider(
             synthetic_viewport_asset_fetch, &fetch_count);
         CHECK(dm2_v1_runtime_render_frame(
@@ -534,8 +548,38 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(dm2_v1_runtime_last_asset_door_frame_count() == 0 &&
               dm2_v1_runtime_last_fallback_door_count() == 0,
               "runtime records no door-frame draw when no front door is visible");
+        CHECK(dm2_v1_runtime_last_asset_carried_item_count() == 0 &&
+              dm2_v1_runtime_last_fallback_carried_item_count() == 0,
+              "runtime records no carried-item draw when leader hand is empty");
         CHECK(framebuffer[0] == 1,
               "runtime asset-provider frame completes the shared viewport render pass");
+        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+    }
+
+    {
+        uint8_t framebuffer[320 * 200];
+        int fetch_count = 0;
+        memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
+        memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
+        memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
+        memset(s_item_pixels, 6, sizeof(s_item_pixels));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_runtime_set_outdoor(0);
+        dm2_v1_runtime_set_leader_hand_object(dm2_db_make_handle(10, 0x0055));
+        dm2_v1_runtime_set_viewport_asset_provider(
+            synthetic_viewport_asset_fetch, &fetch_count);
+        CHECK(dm2_v1_runtime_render_frame(
+                  dm2_v1_runtime_get_party_dir(),
+                  dm2_v1_runtime_get_party_x(),
+                  dm2_v1_runtime_get_party_y(),
+                  framebuffer, 320, 320, 200) == 0,
+              "runtime renders a leader-hand carried item through the viewport");
+        CHECK(fetch_count == 13,
+              "runtime carried item adds one item-map-chip fetch to the viewport pass");
+        CHECK(dm2_v1_runtime_last_asset_carried_item_count() == 1 &&
+              dm2_v1_runtime_last_fallback_carried_item_count() == 0,
+              "runtime records asset-backed carried leader-hand item draw");
+        dm2_v1_runtime_set_leader_hand_object(0u);
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
     }
 

@@ -409,6 +409,11 @@ static void test_sprite_asset_provider(void)
           dm2_v1_viewport_creature_graphic_index(0x12, 0x03) ==
               DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE -
                   ((0x12 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) | 0x03));
+    CHECK("DM2 item DB pool maps to viewport GDAT category",
+          dm2_v1_viewport_item_category_for_db_pool(5) == 0x10 &&
+              dm2_v1_viewport_item_category_for_db_pool(6) == 0x11 &&
+              dm2_v1_viewport_item_category_for_db_pool(7) == 0x12 &&
+              dm2_v1_viewport_item_category_for_db_pool(10) == 0x15);
     CHECK("DM2 item asset index packs category, type and frame",
           dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04) ==
               DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE -
@@ -562,6 +567,25 @@ static void test_sprite_asset_provider(void)
     CHECK("item map-chip atlas draws only the selected frame",
           framebuffer[((90 - 3) * 320) + (80 - 3)] == 6 &&
               framebuffer[(90 * 320) + 80] == 6);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.carried_item_present = 1;
+    viewport.carried_item.item_category = 0x15;
+    viewport.carried_item.item_type = 0x22;
+    viewport.carried_item.frame_index = 0x04;
+    viewport.carried_item.screen_x = 120;
+    viewport.carried_item.screen_y = 70;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_carried_item(&viewport);
+    CHECK("carried leader-hand item uses the item map-chip asset path",
+          s_asset_fetch_calls == 1 &&
+              viewport.asset_carried_item_drawn_count == 1 &&
+              viewport.fallback_carried_item_drawn_count == 0 &&
+              framebuffer[(70 * 320) + 120] == 6);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

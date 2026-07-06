@@ -285,6 +285,7 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
     /* Initialize sprite pools */
     s->creature_count  = 0;
     s->item_count      = 0;
+    s->carried_item_present = 0;
     s->projectile_count = 0;
 
     /* wall_set arrays are static in this .c file, not in viewport state */
@@ -516,6 +517,17 @@ int dm2_v1_viewport_item_graphic_index(int item_category,
              (item_type << DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT) |
              (frame_index & DM2_V1_VIEWPORT_GFX_ITEM_FIELD_MASK);
     return DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - packed;
+}
+
+int dm2_v1_viewport_item_category_for_db_pool(int db_pool)
+{
+    switch (db_pool) {
+    case 5:  return 0x10; /* WEAPON */
+    case 6:  return 0x11; /* CLOTH */
+    case 7:  return 0x12; /* SCROLL */
+    case 10: return 0x15; /* MISC */
+    default: return 0x15;
+    }
 }
 
 int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
@@ -1856,6 +1868,96 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
     }
 }
 
+void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
+{
+    DM2_ItemSprite *it;
+    int ix;
+    int iy;
+    int drawn_asset = 0;
+    uint8_t *vp;
+    int stride;
+
+    if (!s || !s->framebuffer || !s->carried_item_present) return;
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM_IN_HAND lines 15753-15814
+     * renders glbLeaderHandPossession from the object's GDAT class/type and
+     * selected image into the leader-hand cursor buffer. Firestaff does not
+     * expose that cursor buffer in this renderer yet, so the runtime binds
+     * the carried object as a bounded viewport overlay using the same
+     * item-map-chip asset path as floor objects. */
+    it = &s->carried_item;
+    ix = it->screen_x;
+    iy = it->screen_y;
+    if (ix < 0 || ix >= DM2_VP_WIDTH || iy < 0 || iy >= DM2_VP_HEIGHT) return;
+
+    vp = s->framebuffer;
+    stride = s->fb_stride;
+
+    {
+        const uint8_t *pixels = NULL;
+        int src_w = 0;
+        int src_h = 0;
+        int src_stride = 0;
+        int category = it->item_category ? it->item_category : 0x15;
+        int gdat_index = dm2_v1_viewport_item_graphic_index(
+            category, it->item_type, it->frame_index);
+        if (gdat_index != 0 &&
+            dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+                                        &src_w, &src_h, &src_stride) == 0 &&
+            pixels && src_w > 0 && src_h > 0) {
+            int frame_x = 0;
+            int frame_w = src_w;
+            if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                               it->frame_index,
+                                               &frame_x,
+                                               &frame_w)) {
+                frame_x = 0;
+                frame_w = src_w;
+            }
+            int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
+                                                              0,
+                                                              8,
+                                                              40);
+            int dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                              0,
+                                                              8,
+                                                              40);
+            dm2_v1_blit_scaled_bitmap_region(vp,
+                                             stride,
+                                             ix - (dst_w / 2),
+                                             iy - (dst_h / 2),
+                                             dst_w,
+                                             dst_h,
+                                             pixels,
+                                             frame_x,
+                                             0,
+                                             frame_w,
+                                             src_h,
+                                             src_stride > 0 ? src_stride : src_w,
+                                             DM2_COLOR_TRANSPARENT);
+            ++s->asset_carried_item_drawn_count;
+            drawn_asset = 1;
+        }
+    }
+
+    if (!drawn_asset) {
+        int sz = 5;
+        uint8_t color = (uint8_t)(12 + (it->item_type & 3));
+        for (int dy = -sz; dy <= sz; dy++) {
+            int sy = iy + dy;
+            if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
+            for (int dx = -sz; dx <= sz; dx++) {
+                int sx = ix + dx;
+                if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
+                if (abs(dx) + abs(dy) <= sz) {
+                    vp[sy * stride + sx] = color;
+                }
+            }
+        }
+        ++s->fallback_carried_item_drawn_count;
+    }
+}
+
 /* ── Projectiles ──────────────────────────────────────────────────── */
 
 void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
@@ -2216,6 +2318,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->fallback_creature_drawn_count = 0;
     s->asset_item_drawn_count = 0;
     s->fallback_item_drawn_count = 0;
+    s->asset_carried_item_drawn_count = 0;
+    s->fallback_carried_item_drawn_count = 0;
     s->asset_projectile_drawn_count = 0;
     s->fallback_projectile_drawn_count = 0;
 
@@ -2296,10 +2400,13 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         dm2_v1_render_projectiles(s);
     }
 
-    /* 8. Weather overlay (applies to both indoor and outdoor) */
+    /* 8. Carried leader-hand item overlay */
+    dm2_v1_render_carried_item(s);
+
+    /* 9. Weather overlay (applies to both indoor and outdoor) */
     dm2_v1_render_weather_overlay(s);
 
-    /* 9. UI chrome (always on top) */
+    /* 10. UI chrome (always on top) */
     dm2_v1_render_ui_chrome(s);
 
     s->dirty = 0;
