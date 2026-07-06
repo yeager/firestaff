@@ -278,6 +278,27 @@ static int write_two_file_synthetic_iso(const char* path,
     return fclose(fp) == 0;
 }
 
+static int write_single_data_track_cue(const char* path,
+                                       const char* payloadName) {
+    FILE* fp;
+    if (!path || !payloadName) {
+        return 0;
+    }
+    fp = fopen(path, "wb");
+    if (!fp) {
+        return 0;
+    }
+    if (fprintf(fp,
+                "FILE \"%s\" BINARY\n"
+                "  TRACK 01 MODE1/2048\n"
+                "    INDEX 01 00:00:00\n",
+                payloadName) < 0) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int file_matches_payload(const char* path,
                                 const unsigned char* payload,
                                 size_t payloadSize) {
@@ -370,6 +391,11 @@ static void check_flat_dat_iso_materialization(
         const char* dungeonLabel,
         void (*set_hashes)(const char* graphicsMd5, const char* dungeonMd5)) {
     char isoPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char cueDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char cuePath[M12_ASSET_DATA_DIR_CAPACITY];
+    char cuePayloadPath[M12_ASSET_DATA_DIR_CAPACITY];
+    const char cueName[] = "disc.cue";
+    const char cuePayloadName[] = "disc.payload";
     char foundGraphics[ASSET_PATH_MAX];
     char foundDungeon[ASSET_PATH_MAX];
     char graphicsMd5[M12_ASSET_MD5_CAPACITY];
@@ -494,6 +520,54 @@ static void check_flat_dat_iso_materialization(
               path_has_cache_leaf(dungeon->matchedPath, cacheRoot,
                                   gameId, dungeonLabel),
               "direct ISO request should materialize DUNGEON into the cache");
+
+    /* Direct CUE request: users often point the launcher at a CUE sheet.
+     * Isolate this fixture and deliberately give the referenced image no
+     * .iso/.bin suffix. Without CUE parsing, the scanner can only see the
+     * CUE text and a regular payload file whose whole-file MD5 does not
+     * match either required entry. */
+    check_int(FSP_JoinPath(cueDir, sizeof(cueDir), dataRoot, gameId) &&
+              FSP_CreateDirectoryRecursive(cueDir),
+              "CUE fixture directory should be creatable");
+    check_int(FSP_JoinPath(cuePayloadPath, sizeof(cuePayloadPath),
+                           cueDir, cuePayloadName) &&
+              FSP_JoinPath(cuePath, sizeof(cuePath), cueDir, cueName),
+              "CUE fixture paths should fit");
+    check_int(write_two_file_synthetic_iso(cuePayloadPath,
+                                           graphicsPayload, graphicsSize,
+                                           dungeonPayload, dungeonSize) &&
+              write_single_data_track_cue(cuePath, cuePayloadName),
+              "CUE fixture should be written with a suffixless payload image");
+    memset(foundGraphics, 0, sizeof(foundGraphics));
+    check_int(asset_find_by_md5(cueDir, graphicsMd5, foundGraphics,
+                                (int)sizeof(foundGraphics), 4) &&
+              path_has_virtual_entry(foundGraphics, cuePayloadName,
+                                     "GRAPHICS.DAT"),
+              "scanner should find GRAPHICS through a CUE-referenced payload");
+    memset(foundDungeon, 0, sizeof(foundDungeon));
+    check_int(asset_find_by_md5(cueDir, dungeonMd5, foundDungeon,
+                                (int)sizeof(foundDungeon), 4) &&
+              path_has_virtual_entry(foundDungeon, cuePayloadName,
+                                     "DUNGEON.DAT"),
+              "scanner should find DUNGEON through a CUE-referenced payload");
+    M12_AssetStatus_Scan(&status, cuePath);
+    check_int(M12_AssetStatus_GameAvailable(&status, gameId) == 1,
+              "direct CUE request should make the game available");
+    runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, gameId);
+    check_int(runtimeDir && strstr(runtimeDir, "asset-cache") != NULL &&
+              strstr(runtimeDir, "::") == NULL,
+              "direct CUE request should materialize an ordinary runtime "
+              "cache directory");
+    graphics = M12_AssetStatus_GetRequiredFile(&status, gameId, 0U);
+    dungeon = M12_AssetStatus_GetRequiredFile(&status, gameId, 1U);
+    check_int(graphics && graphics->matched &&
+              path_has_cache_leaf(graphics->matchedPath, cacheRoot,
+                                  gameId, graphicsLabel),
+              "direct CUE request should materialize GRAPHICS into the cache");
+    check_int(dungeon && dungeon->matched &&
+              path_has_cache_leaf(dungeon->matchedPath, cacheRoot,
+                                  gameId, dungeonLabel),
+              "direct CUE request should materialize DUNGEON into the cache");
 
     /* Clean up so the next game's scan starts from a neutral state. */
     set_hashes(NULL, NULL);
