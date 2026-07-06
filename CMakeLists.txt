@@ -24177,6 +24177,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0188_pc34_compat.c"
     )
 endif()
 
+# pass1026b — DM1 V1 G0179_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:610-621 PC 3.4 EN init
+# + DUNVIEW.C F0100/F0111 door frame read sites.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0179_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0179_pc34_compat.c")
+    add_executable(test_dm1_v1_g0179_pc34_compat
+        tests/test_dm1_v1_g0179_pc34_compat.c
+        src/dm1/dm1_v1_g0179_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0179_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0179_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0179_pc34_compat
+        COMMAND test_dm1_v1_g0179_pc34_compat
+    )
+endif()
+
 # pass1027 — DM1 V1 G0180_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
 # door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
 # Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init

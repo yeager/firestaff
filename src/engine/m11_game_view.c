@@ -85,6 +85,8 @@
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
 #include "firestaff/dm1/v1/G0180_pc34_compat.h"
+#include "firestaff/dm1/v1/G0179_pc34_compat.h"
+#include "firestaff/dm1/v1/G0181_pc34_compat.h"
 #include "firestaff/dm1/v1/G0182_pc34_compat.h"
 #include "firestaff/dm1/v1/G0183_pc34_compat.h"
 #include "firestaff/dm1/v1/G0184_pc34_compat.h"
@@ -23912,10 +23914,17 @@ static int m11_dm1_side_door_frame_get_pc34(const M11_DM1SideDoorSpec* spec,
     if (!spec) {
         return -1;
     }
-    /* ReDMCSB: DUNVIEW.C lines 646-681 define G0182/G0184 D2 side
-     * DOOR_FRAMES, lines 682-717 define G0185/G0187 D1 side DOOR_FRAMES,
+    /* ReDMCSB: DUNVIEW.C lines 610-645 define G0179/G0181 D3 side
+     * DOOR_FRAMES, lines 646-681 define G0182/G0184 D2 side DOOR_FRAMES,
+     * lines 682-717 define G0185/G0187 D1 side DOOR_FRAMES,
      * and F0111/F0100 lines 4310-4313 draws Vertical or both
      * LeftHorizontal/RightHorizontal frame records for opening doors. */
+    if (spec->relForward == 3 && spec->relSide == -1) {
+        return dm1_v1_g0179_get_pc34(frameIndex, valueIndex);
+    }
+    if (spec->relForward == 3 && spec->relSide == 1) {
+        return dm1_v1_g0181_get_pc34(frameIndex, valueIndex);
+    }
     if (spec->relForward == 2 && spec->relSide == -1) {
         return dm1_v1_g0182_get_pc34(frameIndex, valueIndex);
     }
@@ -23978,7 +23987,7 @@ static int m11_dm1_side_door_panel_blits_for_cell(const M11_DM1SideDoorSpec* spe
     if (!spec || !cell || !outBlits || cell->doorState == 0) {
         return 0;
     }
-    if (spec->relForward > 2) {
+    if (spec->relForward > 3) {
         return 0;
     }
     if (cell->doorState >= 1 && cell->doorState <= 3) {
