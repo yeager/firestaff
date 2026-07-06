@@ -2979,6 +2979,9 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         m11_set_status(state, "BOOT", "CSB ENTRANCE");
         return M11_GAME_INPUT_REDRAW;
     }
+    if (commandId == M11_ENTRANCE_RUNTIME_COMMAND_NONE) {
+        return M11_GAME_INPUT_IGNORED;
+    }
     state->csbState.startup_entrance_last_command = commandId;
     switch (commandId) {
         case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON:
@@ -15963,10 +15966,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         state->csbState.startup_entrance_active &&
         (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
                        ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
-        M11_GameInputResult utilityResult =
-            m11_csb_startup_handle_utility_pointer(state, x, y);
-        if (utilityResult != M11_GAME_INPUT_IGNORED) {
-            return utilityResult;
+        if (buttonMask & M11_DM1_MOUSE_MASK_LEFT) {
+            M11_GameInputResult utilityResult =
+                m11_csb_startup_handle_utility_pointer(state, x, y);
+            if (utilityResult != M11_GAME_INPUT_IGNORED) {
+                return utilityResult;
+            }
         }
         int command = state->csbState.startup_entrance_credits_active
             ? M11_ENTRANCE_RUNTIME_COMMAND_NONE
