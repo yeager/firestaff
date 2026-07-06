@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-06 flat-DAT startup follow-up: direct `.zip`, `.iso`, and `.bin` data-dir requests for DM1/CSB/DM2 now bypass the legacy generic explicit-file candidate path and continue into hash scanning plus launch-cache materialization. Remaining archive/media startup work is broader real-user archive corpus proof, `.cue`-style multi-file media where relevant, and keeping the missing-data popups precise per game.
+
 - 🔧 2026-07-06 DM1 V1/V2.x follow-up: DM1 V2.2 now has a launcher-intent and M12-to-M11 handoff gate alongside V1/V2.0/V2.1. Remaining DM1 work is still the user-reported visual/runtime polish: MacBook title-palette timing/capture, HoC wall-inscription sharpness, champion-mirror visibility in packaged builds, wall/corridor occlusion parity, and survival/runtime regressions such as HoC champion death.
 
 - 🔧 2026-07-06 DM1 V1 startup follow-up: current local work now promotes the DM1 startup ordering contract into production code (`dm1_v1_startup_sequence_pc34_compat`), makes M11 consult it before the SWSH/TITLE/entrance handoff, and marks generic direct `M11_GameView_Start(gameId="dm1")` as the explicit direct-game-view intro bypass while launcher/CLI handoffs keep reporting no source-visible intro bypass. Remaining startup work is still real same-state release capture for the MacBook title-palette report, fuller original boot presentation smoke on packaged apps, and any newly discovered direct launch/menu bypass gaps that still skip source-visible startup phases.

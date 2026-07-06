@@ -670,6 +670,13 @@ static int m12_path_has_extension(const char* path, const char* ext) {
     return 1;
 }
 
+static int m12_path_is_container_file_request(const char* path) {
+    return path && FSP_FileExists(path) &&
+           (m12_path_has_extension(path, ".zip") ||
+            m12_path_has_extension(path, ".iso") ||
+            m12_path_has_extension(path, ".bin"));
+}
+
 static const char* const* m12_fast_candidate_subdirs_for_game(const char* gameId) {
     static const char* const dm1Subdirs[] = {"dm1", "dm1-multilingual", "", NULL};
     static const char* const csbSubdirs[] = {"csb", "", NULL};
@@ -2213,9 +2220,12 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                     const M12_AssetStatusScanOptions* options) {
     char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     char legacyFallbackSnapshot[M12_ASSET_DATA_DIR_CAPACITY];
+    char containerParent[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* effectiveRequestedDataDir = requestedDataDir;
     M12_ScanProgressContext progressCtx;
     size_t rootCount;
     int dataDirResolvedToMatchedRoot = 0;
+    int requestedContainerFile = 0;
     int i;
     if (!status) {
         return 0;
@@ -2259,6 +2269,16 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         m12_scan_progress_finish(status, 1, 0);
         return 1;
     }
+    if (m12_path_is_container_file_request(requestedDataDir) &&
+        FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
+        /* ZIP/ISO/BIN containers can hold DM1/CSB/DM2 required files as
+         * virtual paths. Do not publish the legacy generic "file candidate"
+         * status here; let the recursive hash scanner walk the parent
+         * directory, match entries inside the container, then materialize
+         * ordinary GRAPHICS.DAT/DUNGEON.DAT cache files before launch. */
+        effectiveRequestedDataDir = containerParent;
+        requestedContainerFile = 1;
+    }
     if (!m12_scan_progress_update(&progressCtx,
                                   "checking explicit file request",
                                   NULL,
@@ -2267,7 +2287,8 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
         return 0;
     }
-    if (m12_scan_explicit_file_request(status, requestedDataDir)) {
+    if (!requestedContainerFile &&
+        m12_scan_explicit_file_request(status, requestedDataDir)) {
         m12_scan_progress_finish(status, 1, 0);
         return 1;
     }
@@ -2275,20 +2296,22 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     m12_scan_progress_init(&status->scanProgress);
     progressCtx.status = status;
     FirestaffTheronMedia_Init(&status->theronMedia);
-    rootCount = m12_build_search_roots(roots, requestedDataDir, status->legacyFallbackDir);
+    rootCount = m12_build_search_roots(roots, effectiveRequestedDataDir, status->legacyFallbackDir);
     m12_copy_string(legacyFallbackSnapshot, sizeof(legacyFallbackSnapshot),
                     status->legacyFallbackDir);
     if (!m12_scan_progress_update(&progressCtx,
                                   "building search roots",
                                   NULL,
-                                  rootCount > 0U ? roots[0] : requestedDataDir,
+                                  rootCount > 0U ? roots[0] : effectiveRequestedDataDir,
                                   1)) {
-        m12_scan_publish_cancelled_status(status, requestedDataDir,
+        m12_scan_publish_cancelled_status(status, effectiveRequestedDataDir,
                                           legacyFallbackSnapshot);
         return 0;
     }
-    if (requestedDataDir && requestedDataDir[0] != '\0') {
-        m12_copy_string(status->dataDir, sizeof(status->dataDir), requestedDataDir);
+    if (effectiveRequestedDataDir && effectiveRequestedDataDir[0] != '\0') {
+        m12_copy_string(status->dataDir,
+                        sizeof(status->dataDir),
+                        effectiveRequestedDataDir);
     } else if (rootCount > 0U) {
         m12_copy_string(status->dataDir, sizeof(status->dataDir), roots[0]);
     }
