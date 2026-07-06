@@ -6497,6 +6497,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
@@ -6505,6 +6506,9 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_runtime_handoff_smoke PRIVATE firestaff_dm2 firestaff_m10)
+    target_compile_definitions(test_dm2_v1_runtime_handoff_smoke PRIVATE
+        FIRESTAFF_DM2_PROJECTILE_TESTING=1
+    )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_runtime_handoff_smoke PRIVATE -Wall -Wextra -O2)
     endif()
