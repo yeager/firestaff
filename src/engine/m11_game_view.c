@@ -15740,6 +15740,9 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         state->dm2State.startup_menu_selected_row = row;
         return m11_dm2_startup_activate_selected(state);
     }
+    if (m11_point_in_rect(x, y, 78, 50, 164, 122)) {
+        return M11_GAME_INPUT_REDRAW;
+    }
     return M11_GAME_INPUT_IGNORED;
 }
 

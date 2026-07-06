@@ -1201,6 +1201,14 @@ int main(void) {
                  "%s",
                  profile->save_root);
         expect_true(M11_GameView_HandlePointerButton(
+                        &view, 82, 54, M11_DM1_MOUSE_MASK_LEFT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 DM2 startup menu panel consumes non-row pointer hits");
+        expect_true(view.dm2State.startup_menu_active == 1 &&
+                    view.dm2State.startup_menu_selected_row == 0 &&
+                    view.dm2State.tick_count == 0,
+                    "M11 DM2 startup menu panel hit does not enter runtime");
+        expect_true(M11_GameView_HandlePointerButton(
                         &view, 100, 78, M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 startup menu pointer loads SKSave03.dat slot");
