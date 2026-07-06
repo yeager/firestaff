@@ -275,16 +275,40 @@ static unsigned int probe_hash_rect(const unsigned char* framebuffer,
     return hsh;
 }
 
+static void probe_set_square_on_map(struct DungeonDatState_Compat* dungeon,
+                                    int mapIndex,
+                                    int mapX,
+                                    int mapY,
+                                    unsigned char square);
+
 static void probe_set_square(struct DungeonDatState_Compat* dungeon,
                              int mapX,
                              int mapY,
                              unsigned char square) {
-    int height;
     if (!dungeon || !dungeon->tiles || !dungeon->tiles[0].squareData) {
         return;
     }
-    height = dungeon->maps[0].height;
-    dungeon->tiles[0].squareData[mapX * height + mapY] = square;
+    probe_set_square_on_map(dungeon, 0, mapX, mapY, square);
+}
+
+static void probe_set_square_on_map(struct DungeonDatState_Compat* dungeon,
+                                    int mapIndex,
+                                    int mapX,
+                                    int mapY,
+                                    unsigned char square) {
+    int height;
+    if (!dungeon || !dungeon->maps || !dungeon->tiles ||
+        mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount ||
+        !dungeon->tiles[mapIndex].squareData) {
+        return;
+    }
+    height = dungeon->maps[mapIndex].height;
+    if (mapX < 0 || mapY < 0 ||
+        mapX >= (int)dungeon->maps[mapIndex].width ||
+        mapY >= height) {
+        return;
+    }
+    dungeon->tiles[mapIndex].squareData[mapX * height + mapY] = square;
 }
 
 static int probe_count_runtime_explosions_of_type(
@@ -525,17 +549,22 @@ static void probe_use_nonzero_difficulty_map_for_palette(M11_GameViewState* stat
 }
 
 static void probe_reset_synthetic_view_to_corridor(M11_GameViewState* state) {
+    int mapIndex;
     int i;
-    int squareCount;
     if (!state || !state->world.dungeon || !state->world.dungeon->tiles ||
         !state->world.dungeon->tiles[0].squareData || !state->world.things ||
         !state->world.things->squareFirstThings) {
         return;
     }
-    squareCount = state->world.dungeon->tiles[0].squareCount;
-    for (i = 0; i < squareCount; ++i) {
-        state->world.dungeon->tiles[0].squareData[i] =
-            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    for (mapIndex = 0; mapIndex < (int)state->world.dungeon->header.mapCount; ++mapIndex) {
+        int squareCount = state->world.dungeon->tiles[mapIndex].squareCount;
+        if (!state->world.dungeon->tiles[mapIndex].squareData) continue;
+        for (i = 0; i < squareCount; ++i) {
+            state->world.dungeon->tiles[mapIndex].squareData[i] =
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        }
+    }
+    for (i = 0; i < state->world.things->squareFirstThingCount; ++i) {
         state->world.things->squareFirstThings[i] = THING_ENDOFLIST;
     }
     state->showDebugHUD = 0;
@@ -545,6 +574,33 @@ static void probe_reset_synthetic_view_to_corridor(M11_GameViewState* state) {
     state->world.party.mapY = 3;
     state->world.party.direction = DIR_NORTH;
     state->world.magic.magicalLightAmount = 255;
+}
+
+static void probe_reset_synthetic_view_to_corridor_map(M11_GameViewState* state,
+                                                       int mapIndex) {
+    probe_reset_synthetic_view_to_corridor(state);
+    if (!state || !state->world.dungeon ||
+        mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
+        return;
+    }
+    state->world.party.mapIndex = mapIndex;
+}
+
+static int probe_set_compact_square_thing(M11_GameViewState* state,
+                                          int mapIndex,
+                                          int mapX,
+                                          int mapY,
+                                          unsigned char baseSquare,
+                                          unsigned short thing) {
+    if (!state || !state->world.dungeon || !state->world.things ||
+        !state->world.things->squareFirstThings ||
+        mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
+        return 0;
+    }
+    probe_set_square_on_map(state->world.dungeon, mapIndex, mapX, mapY,
+                            (unsigned char)(baseSquare | DUNGEON_SQUARE_MASK_THING_LIST));
+    state->world.things->squareFirstThings[0] = thing;
+    return 1;
 }
 
 static int probe_add_synthetic_clone_map(M11_GameViewState* state) {
@@ -3430,11 +3486,16 @@ int main(int argc, char** argv) {
         unsigned char multiObjectFb[320 * 200];
         char gfxPath[2048];
         int haveAssets = 0;
+        int focusMap = 1;
         const char* ssDir = getenv("PROBE_SCREENSHOT_DIR");
 
         memset(&focusView, 0, sizeof(focusView));
         (void)probe_init_synthetic_view(&focusView);
         probe_reset_synthetic_view_to_corridor(&focusView);
+        if (!probe_add_synthetic_clone_map(&focusView)) {
+            focusMap = 0;
+        }
+        probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
 
         if (dataDir && dataDir[0]) {
             snprintf(gfxPath, sizeof(gfxPath), "%s/GRAPHICS.DAT", dataDir);
@@ -3461,31 +3522,41 @@ int main(int argc, char** argv) {
         focusView.world.things->groups[0].count = 0; /* one creature */
         focusView.world.things->groups[0].health[0] = 50;
         focusView.world.things->groups[0].direction = DIR_SOUTH;
-        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-            (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+        probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
+                       THING_ENDOFLIST);
+        probe_set_compact_square_thing(
+            &focusView, focusMap, 2, 2,
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+            (unsigned short)((THING_TYPE_GROUP << 10) | 0));
         memset(creatureFb, 0, sizeof(creatureFb));
         M11_GameView_Draw(&focusView, creatureFb, 320, 200);
         if (ssDir && ssDir[0]) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "35_focused_d1c_trolin_creature_vga");
         }
-        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-            THING_ENDOFLIST;
+        focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
+                                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
 
         focusView.world.things->groups[0].creatureType = 14; /* Trolin */
         focusView.world.things->groups[0].count = 0; /* one creature */
         focusView.world.things->groups[0].health[0] = 50;
         focusView.world.things->groups[0].direction = DIR_SOUTH;
-        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 1] =
-            (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+        probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
+                       THING_ENDOFLIST);
+        probe_set_compact_square_thing(
+            &focusView, focusMap, 2, 1,
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+            (unsigned short)((THING_TYPE_GROUP << 10) | 0));
         memset(sideCreatureFb, 0, sizeof(sideCreatureFb));
         M11_GameView_Draw(&focusView, sideCreatureFb, 320, 200);
         if (ssDir && ssDir[0]) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "41_focused_d1l_trolin_creature_vga");
         }
-        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 1] =
-            THING_ENDOFLIST;
+        focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 1,
+                                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
 
         focusView.world.projectiles.count = 1;
         memset(&focusView.world.projectiles.entries[0], 0,
@@ -3494,7 +3565,7 @@ int main(int argc, char** argv) {
         focusView.world.projectiles.entries[0].reserved3 = 1;
         focusView.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
         focusView.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
-        focusView.world.projectiles.entries[0].mapIndex = 0;
+        focusView.world.projectiles.entries[0].mapIndex = focusMap;
         focusView.world.projectiles.entries[0].mapX = 2;
         focusView.world.projectiles.entries[0].mapY = 2;
         focusView.world.projectiles.entries[0].cell = 3;
@@ -3518,7 +3589,7 @@ int main(int argc, char** argv) {
         focusView.world.projectiles.entries[0].reserved3 = 1;
         focusView.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
         focusView.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
-        focusView.world.projectiles.entries[0].mapIndex = 0;
+        focusView.world.projectiles.entries[0].mapIndex = focusMap;
         focusView.world.projectiles.entries[0].mapX = 2;
         focusView.world.projectiles.entries[0].mapY = 2;
         focusView.world.projectiles.entries[0].cell = 3;
@@ -3541,7 +3612,7 @@ int main(int argc, char** argv) {
         focusView.world.explosions.entries[0].slotIndex = 0;
         focusView.world.explosions.entries[0].reserved0 = 1;
         focusView.world.explosions.entries[0].explosionType = C000_EXPLOSION_FIREBALL;
-        focusView.world.explosions.entries[0].mapIndex = 0;
+        focusView.world.explosions.entries[0].mapIndex = focusMap;
         focusView.world.explosions.entries[0].mapX = 2;
         focusView.world.explosions.entries[0].mapY = 1;
         focusView.world.explosions.entries[0].cell = EXPLOSION_CELL_CENTERED;
@@ -3561,29 +3632,39 @@ int main(int argc, char** argv) {
 
         focusView.world.things->weapons[0].type = 8; /* dagger */
         focusView.world.things->weapons[0].next = THING_ENDOFLIST;
-        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON],
+                       THING_ENDOFLIST);
+        probe_set_compact_square_thing(
+            &focusView, focusMap, 2, 2,
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
         memset(objectFb, 0, sizeof(objectFb));
         M11_GameView_Draw(&focusView, objectFb, 320, 200);
         if (ssDir && ssDir[0]) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "37_focused_d1c_dagger_object_vga");
         }
-        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-            THING_ENDOFLIST;
+        focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
+                                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
 
         focusView.world.things->weapons[0].type = 43; /* source G0209 firstNative gap */
         focusView.world.things->weapons[0].next = THING_ENDOFLIST;
-        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON],
+                       THING_ENDOFLIST);
+        probe_set_compact_square_thing(
+            &focusView, focusMap, 2, 2,
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
         memset(objectGapFb, 0, sizeof(objectGapFb));
         M11_GameView_Draw(&focusView, objectGapFb, 320, 200);
         if (ssDir && ssDir[0]) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "38_focused_d1c_object_native_gap_vga");
         }
-        focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-            THING_ENDOFLIST;
+        focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
+                                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
 
         {
             struct DungeonWeapon_Compat* twoWeapons =
@@ -3604,16 +3685,19 @@ int main(int argc, char** argv) {
                                (unsigned short)((3u << 14) | (THING_TYPE_WEAPON << 10) | 1u));
                 probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON] + 4,
                                THING_ENDOFLIST);
-                focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-                    (unsigned short)((0u << 14) | (THING_TYPE_WEAPON << 10) | 0u);
+                probe_set_compact_square_thing(
+                    &focusView, focusMap, 2, 2,
+                    (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                    (unsigned short)((0u << 14) | (THING_TYPE_WEAPON << 10) | 0u));
                 memset(multiObjectFb, 0, sizeof(multiObjectFb));
                 M11_GameView_Draw(&focusView, multiObjectFb, 320, 200);
                 if (ssDir && ssDir[0]) {
                     probe_capture_vga_frame(&focusView, ssDir,
                                             "39_focused_d1c_multi_object_shift_vga");
                 }
-                focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-                    THING_ENDOFLIST;
+                focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
+                probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
+                                        (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
             } else {
                 if (twoWeapons) focusView.world.things->weapons = twoWeapons;
                 if (twoWeaponRaw) focusView.world.things->rawThingData[THING_TYPE_WEAPON] = twoWeaponRaw;
@@ -3624,8 +3708,8 @@ int main(int argc, char** argv) {
         /* ReDMCSB DUNGEON.C F0172 only exposes C02_ELEMENT_PIT to
          * DUNVIEW when MASK0x0008_PIT_OPEN is set; closed pits render
          * as corridor, so focused pit visibility probes must set open. */
-        probe_set_square(focusView.world.dungeon, 2, 2,
-                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08));
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
+                                (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08));
         memset(pitFb, 0, sizeof(pitFb));
         M11_GameView_Draw(&focusView, pitFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -3633,8 +3717,8 @@ int main(int argc, char** argv) {
                                     "31_focused_d1c_normal_pit_vga");
         }
 
-        probe_set_square(focusView.world.dungeon, 2, 2,
-                         (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08 | 0x04));
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
+                                (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08 | 0x04));
         memset(invisiblePitFb, 0, sizeof(invisiblePitFb));
         M11_GameView_Draw(&focusView, invisiblePitFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -3642,8 +3726,8 @@ int main(int argc, char** argv) {
                                     "32_focused_d1c_invisible_pit_vga");
         }
 
-        probe_set_square(focusView.world.dungeon, 2, 2,
-                         (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x08));
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
+                                (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x08));
         memset(stairsFb, 0, sizeof(stairsFb));
         M11_GameView_Draw(&focusView, stairsFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -3651,8 +3735,8 @@ int main(int argc, char** argv) {
                                     "33_focused_d1c_stairs_down_vga");
         }
 
-        probe_set_square(focusView.world.dungeon, 2, 2,
-                         (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x0c));
+        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
+                                (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x0c));
         memset(teleporterFb, 0, sizeof(teleporterFb));
         M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
         if (ssDir && ssDir[0]) {
@@ -3846,13 +3930,13 @@ int main(int argc, char** argv) {
             int changedWallOrnament = 0;
             size_t pi;
             for (pi = 0; pi < sizeof(kPitPositions) / sizeof(kPitPositions[0]); ++pi) {
-                probe_reset_synthetic_view_to_corridor(&focusView);
+                probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
                 memset(baseFb, 0, sizeof(baseFb));
                 M11_GameView_Draw(&focusView, baseFb, 320, 200);
-                probe_set_square(focusView.world.dungeon,
-                                 focusView.world.party.mapX + kPitPositions[pi].relSide,
-                                 focusView.world.party.mapY - kPitPositions[pi].relForward,
-                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08));
+                probe_set_square_on_map(focusView.world.dungeon, focusMap,
+                                        focusView.world.party.mapX + kPitPositions[pi].relSide,
+                                        focusView.world.party.mapY - kPitPositions[pi].relForward,
+                                        (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08));
                 memset(pitFb, 0, sizeof(pitFb));
                 M11_GameView_Draw(&focusView, pitFb, 320, 200);
                 if (memcmp(baseFb, pitFb, sizeof(baseFb)) != 0) {
@@ -3860,13 +3944,13 @@ int main(int argc, char** argv) {
                 }
             }
             for (pi = 0; pi < sizeof(kInvisiblePitPositions) / sizeof(kInvisiblePitPositions[0]); ++pi) {
-                probe_reset_synthetic_view_to_corridor(&focusView);
+                probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
                 memset(baseFb, 0, sizeof(baseFb));
                 M11_GameView_Draw(&focusView, baseFb, 320, 200);
-                probe_set_square(focusView.world.dungeon,
-                                 focusView.world.party.mapX + kInvisiblePitPositions[pi].relSide,
-                                 focusView.world.party.mapY - kInvisiblePitPositions[pi].relForward,
-                                 (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08 | 0x04));
+                probe_set_square_on_map(focusView.world.dungeon, focusMap,
+                                        focusView.world.party.mapX + kInvisiblePitPositions[pi].relSide,
+                                        focusView.world.party.mapY - kInvisiblePitPositions[pi].relForward,
+                                        (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08 | 0x04));
                 memset(invisiblePitFb, 0, sizeof(invisiblePitFb));
                 M11_GameView_Draw(&focusView, invisiblePitFb, 320, 200);
                 if (memcmp(baseFb, invisiblePitFb, sizeof(baseFb)) != 0) {
@@ -3874,13 +3958,13 @@ int main(int argc, char** argv) {
                 }
             }
             for (pi = 0; pi < sizeof(kStairsFrontPositions) / sizeof(kStairsFrontPositions[0]); ++pi) {
-                probe_reset_synthetic_view_to_corridor(&focusView);
+                probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
                 memset(baseFb, 0, sizeof(baseFb));
                 M11_GameView_Draw(&focusView, baseFb, 320, 200);
-                probe_set_square(focusView.world.dungeon,
-                                 focusView.world.party.mapX + kStairsFrontPositions[pi].relSide,
-                                 focusView.world.party.mapY - kStairsFrontPositions[pi].relForward,
-                                 (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x08));
+                probe_set_square_on_map(focusView.world.dungeon, focusMap,
+                                        focusView.world.party.mapX + kStairsFrontPositions[pi].relSide,
+                                        focusView.world.party.mapY - kStairsFrontPositions[pi].relForward,
+                                        (unsigned char)((DUNGEON_ELEMENT_STAIRS << 5) | 0x08));
                 memset(stairsFb, 0, sizeof(stairsFb));
                 M11_GameView_Draw(&focusView, stairsFb, 320, 200);
                 if (memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0) {
@@ -3888,13 +3972,13 @@ int main(int argc, char** argv) {
                 }
             }
             for (pi = 0; pi < sizeof(kStairsSidePositions) / sizeof(kStairsSidePositions[0]); ++pi) {
-                probe_reset_synthetic_view_to_corridor(&focusView);
+                probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
                 memset(baseFb, 0, sizeof(baseFb));
                 M11_GameView_Draw(&focusView, baseFb, 320, 200);
-                probe_set_square(focusView.world.dungeon,
-                                 focusView.world.party.mapX + kStairsSidePositions[pi].relSide,
-                                 focusView.world.party.mapY - kStairsSidePositions[pi].relForward,
-                                 (unsigned char)(DUNGEON_ELEMENT_STAIRS << 5));
+                probe_set_square_on_map(focusView.world.dungeon, focusMap,
+                                        focusView.world.party.mapX + kStairsSidePositions[pi].relSide,
+                                        focusView.world.party.mapY - kStairsSidePositions[pi].relForward,
+                                        (unsigned char)(DUNGEON_ELEMENT_STAIRS << 5));
                 memset(stairsFb, 0, sizeof(stairsFb));
                 M11_GameView_Draw(&focusView, stairsFb, 320, 200);
                 if (memcmp(baseFb, stairsFb, sizeof(baseFb)) != 0) {
@@ -3902,13 +3986,13 @@ int main(int argc, char** argv) {
                 }
             }
             for (pi = 0; pi < sizeof(kTeleporterPositions) / sizeof(kTeleporterPositions[0]); ++pi) {
-                probe_reset_synthetic_view_to_corridor(&focusView);
+                probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
                 memset(baseFb, 0, sizeof(baseFb));
                 M11_GameView_Draw(&focusView, baseFb, 320, 200);
-                probe_set_square(focusView.world.dungeon,
-                                 focusView.world.party.mapX + kTeleporterPositions[pi].relSide,
-                                 focusView.world.party.mapY - kTeleporterPositions[pi].relForward,
-                                 (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x0c));
+                probe_set_square_on_map(focusView.world.dungeon, focusMap,
+                                        focusView.world.party.mapX + kTeleporterPositions[pi].relSide,
+                                        focusView.world.party.mapY - kTeleporterPositions[pi].relForward,
+                                        (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x0c));
                 memset(teleporterFb, 0, sizeof(teleporterFb));
                 M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
                 if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
@@ -3918,25 +4002,18 @@ int main(int argc, char** argv) {
             for (pi = 0; pi < sizeof(kFloorOrnamentPositions) / sizeof(kFloorOrnamentPositions[0]); ++pi) {
                 int ornX;
                 int ornY;
-                int ornSquare;
-                probe_reset_synthetic_view_to_corridor(&focusView);
-                focusView.world.dungeon->maps[0].floorOrnamentCount = 1;
+                probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
+                focusView.world.dungeon->maps[focusMap].floorOrnamentCount = 1;
                 focusView.ornamentCacheLoaded[0] = 1;
                 focusView.floorOrnamentIndices[0][0] = 0;
                 memset(baseFb, 0, sizeof(baseFb));
                 M11_GameView_Draw(&focusView, baseFb, 320, 200);
-                probe_set_square(focusView.world.dungeon,
-                                 focusView.world.party.mapX + kFloorOrnamentPositions[pi].relSide,
-                                 focusView.world.party.mapY - kFloorOrnamentPositions[pi].relForward,
-                                 (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
                 ornX = focusView.world.party.mapX + kFloorOrnamentPositions[pi].relSide;
                 ornY = focusView.world.party.mapY - kFloorOrnamentPositions[pi].relForward;
-                ornSquare = ornX * (int)focusView.world.dungeon->maps[0].height + ornY;
-                if (focusView.world.things->sensors && ornSquare >= 0 &&
-                    ornSquare < focusView.world.things->squareFirstThingCount) {
-                    focusView.world.things->squareFirstThings[ornSquare] =
-                        (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
-                }
+                (void)probe_set_compact_square_thing(
+                    &focusView, focusMap, ornX, ornY,
+                    (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                    (unsigned short)((THING_TYPE_SENSOR << 10) | 0));
                 memset(teleporterFb, 0, sizeof(teleporterFb));
                 M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
                 if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
@@ -3959,18 +4036,16 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_38I",
                          changedFloorOrnament == (int)(sizeof(kFloorOrnamentPositions) / sizeof(kFloorOrnamentPositions[0])),
                          "focused viewport: all visibly drawable floor ornament positions change their corridor frames");
-            probe_reset_synthetic_view_to_corridor(&focusView);
-            focusView.world.dungeon->maps[0].floorOrnamentCount = 1;
+            probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
+            focusView.world.dungeon->maps[focusMap].floorOrnamentCount = 1;
             focusView.ornamentCacheLoaded[0] = 1;
             focusView.floorOrnamentIndices[0][0] = 15;
             memset(baseFb, 0, sizeof(baseFb));
             M11_GameView_Draw(&focusView, baseFb, 320, 200);
-            probe_set_square(focusView.world.dungeon, 2, 2,
-                             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
-            if (focusView.world.things->sensors) {
-                focusView.world.things->squareFirstThings[2 * (int)focusView.world.dungeon->maps[0].height + 2] =
-                    (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
-            }
+            (void)probe_set_compact_square_thing(
+                &focusView, focusMap, 2, 2,
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                (unsigned short)((THING_TYPE_SENSOR << 10) | 0));
             memset(teleporterFb, 0, sizeof(teleporterFb));
             M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
             changedFootprints = (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) ? 1 : 0;
@@ -3980,23 +4055,20 @@ int main(int argc, char** argv) {
             for (pi = 0; pi < sizeof(kWallOrnamentPositions) / sizeof(kWallOrnamentPositions[0]); ++pi) {
                 int ornX;
                 int ornY;
-                int ornSquare;
-                probe_reset_synthetic_view_to_corridor(&focusView);
-                focusView.world.dungeon->maps[0].wallOrnamentCount = 1;
+                probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
+                focusView.world.dungeon->maps[focusMap].wallOrnamentCount = 1;
                 focusView.ornamentCacheLoaded[0] = 1;
                 focusView.wallOrnamentIndices[0][0] = 0;
                 ornX = focusView.world.party.mapX + kWallOrnamentPositions[pi].relSide;
                 ornY = focusView.world.party.mapY - kWallOrnamentPositions[pi].relForward;
-                probe_set_square(focusView.world.dungeon, ornX, ornY,
-                                 (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+                probe_set_square_on_map(focusView.world.dungeon, focusMap, ornX, ornY,
+                                        (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
                 memset(baseFb, 0, sizeof(baseFb));
                 M11_GameView_Draw(&focusView, baseFb, 320, 200);
-                ornSquare = ornX * (int)focusView.world.dungeon->maps[0].height + ornY;
-                if (focusView.world.things->sensors && ornSquare >= 0 &&
-                    ornSquare < focusView.world.things->squareFirstThingCount) {
-                    focusView.world.things->squareFirstThings[ornSquare] =
-                        (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
-                }
+                (void)probe_set_compact_square_thing(
+                    &focusView, focusMap, ornX, ornY,
+                    (unsigned char)(DUNGEON_ELEMENT_WALL << 5),
+                    (unsigned short)((THING_TYPE_SENSOR << 10) | 0));
                 memset(teleporterFb, 0, sizeof(teleporterFb));
                 M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
                 if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
@@ -4014,13 +4086,13 @@ int main(int argc, char** argv) {
                 int changedFarSideWalls = 0;
                 int clippedFarSideWalls = 0;
                 for (pi = 0; pi < sizeof(kFarSideWallGapPositions) / sizeof(kFarSideWallGapPositions[0]); ++pi) {
-                    probe_reset_synthetic_view_to_corridor(&focusView);
+                    probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
                     memset(baseFb, 0, sizeof(baseFb));
                     M11_GameView_Draw(&focusView, baseFb, 320, 200);
-                    probe_set_square(focusView.world.dungeon,
-                                     focusView.world.party.mapX + kFarSideWallGapPositions[pi].relSide,
-                                     focusView.world.party.mapY - kFarSideWallGapPositions[pi].relForward,
-                                     (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+                    probe_set_square_on_map(focusView.world.dungeon, focusMap,
+                                            focusView.world.party.mapX + kFarSideWallGapPositions[pi].relSide,
+                                            focusView.world.party.mapY - kFarSideWallGapPositions[pi].relForward,
+                                            (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
                     memset(teleporterFb, 0, sizeof(teleporterFb));
                     M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
                     if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
@@ -4047,20 +4119,25 @@ int main(int argc, char** argv) {
              * the C2500/C2900/C3200 source-zone families.  A near D1 side
              * wall must therefore occlude farther D2L lane contents. */
             probe_reset_synthetic_view_to_corridor(&focusView);
+            focusView.world.party.mapIndex = focusMap;
             memset(baseFb, 0, sizeof(baseFb));
             M11_GameView_Draw(&focusView, baseFb, 320, 200);
             focusView.world.things->groups[0].creatureType = 14; /* Trolin */
             focusView.world.things->groups[0].count = 0;
             focusView.world.things->groups[0].health[0] = 50;
             focusView.world.things->groups[0].direction = DIR_SOUTH;
-            focusView.world.things->squareFirstThings[1 * (int)focusView.world.dungeon->maps[0].height + 1] =
-                (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+            probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
+                           THING_ENDOFLIST);
+            probe_set_compact_square_thing(
+                &focusView, focusMap, 1, 1,
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                (unsigned short)((THING_TYPE_GROUP << 10) | 0));
             memset(d2lContentFb, 0, sizeof(d2lContentFb));
             M11_GameView_Draw(&focusView, d2lContentFb, 320, 200);
 
-            probe_reset_synthetic_view_to_corridor(&focusView);
-            probe_set_square(focusView.world.dungeon, 1, 2,
-                             (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
+            probe_reset_synthetic_view_to_corridor_map(&focusView, focusMap);
+            probe_set_square_on_map(focusView.world.dungeon, focusMap, 1, 2,
+                                    (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
             memset(d1lWallFb, 0, sizeof(d1lWallFb));
             M11_GameView_Draw(&focusView, d1lWallFb, 320, 200);
 
@@ -4068,8 +4145,12 @@ int main(int argc, char** argv) {
             focusView.world.things->groups[0].count = 0;
             focusView.world.things->groups[0].health[0] = 50;
             focusView.world.things->groups[0].direction = DIR_SOUTH;
-            focusView.world.things->squareFirstThings[1 * (int)focusView.world.dungeon->maps[0].height + 1] =
-                (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+            probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
+                           THING_ENDOFLIST);
+            probe_set_compact_square_thing(
+                &focusView, focusMap, 1, 1,
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                (unsigned short)((THING_TYPE_GROUP << 10) | 0));
             memset(d1lWallOccludedFb, 0, sizeof(d1lWallOccludedFb));
             M11_GameView_Draw(&focusView, d1lWallOccludedFb, 320, 200);
             probe_record(&tally, "INV_GV_38AK",
