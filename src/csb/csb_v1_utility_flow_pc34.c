@@ -105,6 +105,37 @@ void csb_v1_util_flow_init(CSB_V1_UtilFlowContext *ctx)
     memset(ctx->csb_save_path, 0, sizeof(ctx->csb_save_path));
 }
 
+int csb_v1_util_flow_build_from_runtime_snapshot(
+    const CSB_V1_UtilRuntimeSnapshot *snapshot,
+    CSB_V1_UtilFlowContext *out_ctx)
+{
+    int selected;
+
+    if (!out_ctx) {
+        return 0;
+    }
+    csb_v1_util_flow_init(out_ctx);
+    out_ctx->state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    selected = snapshot ? snapshot->selected_action_index : 0;
+    while (selected < 0) {
+        selected += CSB_V1_UTIL_MENU_ACTION_COUNT;
+    }
+    selected %= CSB_V1_UTIL_MENU_ACTION_COUNT;
+    out_ctx->selected_action_index = selected;
+    out_ctx->action = csb_v1_util_flow_selected_action(out_ctx);
+    out_ctx->imported_champion_count =
+        snapshot ? snapshot->imported_champion_count : 0;
+    if (snapshot &&
+        snapshot->imported_party_available &&
+        snapshot->imported_party.ImportedFromDM1 &&
+        snapshot->imported_party.ChampionCount > 0) {
+        out_ctx->imported_party = snapshot->imported_party;
+        out_ctx->imported_champion_count =
+            snapshot->imported_party.ChampionCount;
+    }
+    return 1;
+}
+
 /* ── State name for UI ───────────────────────────────────────────────── */
 const char *csb_v1_util_flow_state_name(CSB_V1_UtilFlowState state)
 {
