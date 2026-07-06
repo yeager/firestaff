@@ -195,6 +195,8 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe party expectation is opt-in");
     expect_true(opts.bootProbeExpectChampions == 0,
                 "boot-probe champion-count expectation is opt-in");
+    expect_true(opts.bootProbeExpectLevelLoaded == -1,
+                "boot-probe level-loaded expectation is opt-in");
     expect_true(opts.bootProbeExpectRuntimeTickMin == -1,
                 "boot-probe runtime-tick minimum expectation is opt-in");
     expect_true(opts.bootProbeExpectRuntimeTickMax == -1,
@@ -415,9 +417,38 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectPhase = "csb-title-1";
                 opts.bootProbeExpectStartupActive = 1;
                 opts.bootProbeExpectStartupFrameMin = 1;
+                opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
                             "boot-probe proves CSB title startup progress while runtime is frozen");
+            }
+            if (strcmp(kCases[i].gameId, "nexus") == 0) {
+                M11_PhaseA_SetDefaultOptions(&opts);
+                opts.bootProbe = 1;
+                opts.bootProbeFrames = 2;
+                opts.gameId = "nexus";
+                opts.dataDir = data_dir;
+                opts.durationMs = 0;
+                opts.bootProbeExpectPhase = "nexus-title";
+                opts.bootProbeExpectStartupActive = 1;
+                opts.bootProbeExpectLevelLoaded = 1;
+                opts.bootProbeExpectRuntimeTickMax = 0;
+                expect_true(M11_PhaseA_Run(&opts) == 0,
+                            "boot-probe proves Nexus title startup gates preloaded level before runtime");
+            }
+            if (strcmp(kCases[i].gameId, "theron") == 0) {
+                M11_PhaseA_SetDefaultOptions(&opts);
+                opts.bootProbe = 1;
+                opts.bootProbeFrames = 2;
+                opts.gameId = "theron";
+                opts.dataDir = data_dir;
+                opts.durationMs = 0;
+                opts.bootProbeExpectPhase = "theron-startup-0";
+                opts.bootProbeExpectStartupActive = 1;
+                opts.bootProbeExpectLevelLoaded = 0;
+                opts.bootProbeExpectRuntimeTickMax = 0;
+                expect_true(M11_PhaseA_Run(&opts) == 0,
+                            "boot-probe proves Theron title startup has not materialized runtime level");
             }
         }
     }

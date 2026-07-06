@@ -1689,6 +1689,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectPartyDir = -1;
     opts->bootProbeExpectChampions = 0;
     opts->bootProbeExpectChampionCount = -1;
+    opts->bootProbeExpectLevelLoaded = -1;
     opts->bootProbeExpectAssetMd5 = NULL;
     opts->bootProbeExpectMap = 0;
     opts->bootProbeExpectMapIndex = -1;
@@ -3775,6 +3776,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             "firestaff: boot-probe expected champions %d but got %d\n",
                             o->bootProbeExpectChampionCount,
                             receipt.championCount);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectLevelLoaded >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.levelLoaded != o->bootProbeExpectLevelLoaded) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected levelLoaded=%d but got %d\n",
+                            o->bootProbeExpectLevelLoaded,
+                            receipt.levelLoaded);
                     runRc = 4;
                 }
             }

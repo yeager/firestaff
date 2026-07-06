@@ -50,6 +50,7 @@ typedef struct {
     int bootProbeExpectPartyDir;
     int bootProbeExpectChampions; /* Require exact champion/party count. */
     int bootProbeExpectChampionCount;
+    int bootProbeExpectLevelLoaded; /* -1 ignore, otherwise exact 0/1. */
     const char* bootProbeExpectAssetMd5; /* Optional exact boot asset MD5. */
     int bootProbeExpectMap; /* Require exact receipt map/level index. */
     int bootProbeExpectMapIndex;

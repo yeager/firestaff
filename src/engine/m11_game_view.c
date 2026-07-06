@@ -12496,6 +12496,20 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     if (state->nexusEngine) {
         Nexus_TitleScreen* title =
             (Nexus_TitleScreen*)calloc(1u, sizeof(Nexus_TitleScreen));
+        /* The launcher singleton may already hold a prior runtime session.
+         * A new selected-entry boot must start from Nexus new-game defaults;
+         * resume paths apply saved tick/party state in m11_nexus_resume_from_save_path(). */
+        nexus_v1_game_init(&state->nexusEngine->game,
+                           state->nexusEngine->data_dir);
+        state->nexusEngine->game.current_level = 0;
+        nexus_v1_champions_init(&state->nexusEngine->champions);
+        if (state->nexusEngine->mechanics) {
+            nexus_mechanics_init(state->nexusEngine->mechanics,
+                                 state->nexusEngine->game.party_x,
+                                 state->nexusEngine->game.party_y,
+                                 state->nexusEngine->game.party_dir);
+            state->nexusEngine->mechanics->map_index = 0;
+        }
         state->nexusState.level_loaded = state->nexusEngine->level_loaded;
         state->nexusState.party_x = state->nexusEngine->game.party_x;
         state->nexusState.party_y = state->nexusEngine->game.party_y;
