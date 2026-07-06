@@ -3536,6 +3536,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                  frames,
                                                  scriptInputs,
                                                  scriptFrames);
+            memset(&receipt, 0, sizeof(receipt));
+            if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                !receipt.active ||
+                strcmp(receipt.sourceId, o->gameId) != 0) {
+                fprintf(stderr,
+                        "firestaff: boot-probe expected active source '%s' but got active=%d sourceId='%s'\n",
+                        o->gameId ? o->gameId : "",
+                        receipt.active,
+                        receipt.sourceId);
+                runRc = 4;
+            }
             if (o->bootProbeExpectPhase && o->bootProbeExpectPhase[0] != '\0') {
                 if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
                     strcmp(receipt.startupPhase, o->bootProbeExpectPhase) != 0) {
