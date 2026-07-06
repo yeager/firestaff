@@ -610,6 +610,26 @@ static int probe_set_compact_square_thing(M11_GameViewState* state,
     return 1;
 }
 
+static unsigned short probe_make_thing_with_cell(int thingType,
+                                                 int thingIndex,
+                                                 int cell) {
+    if (cell < 0) cell = 0;
+    if (cell > 3) cell = 3;
+    return (unsigned short)(((unsigned int)cell << 14) |
+                            ((unsigned int)(thingType & 0x0f) << 10) |
+                            (unsigned int)(thingIndex & 0x03ff));
+}
+
+static int probe_visible_wall_cell_for_north_view(int relSide) {
+    if (relSide < 0) {
+        return 1;
+    }
+    if (relSide > 0) {
+        return 3;
+    }
+    return 2;
+}
+
 static int probe_add_synthetic_clone_map(M11_GameViewState* state) {
     struct DungeonDatState_Compat* dungeon;
     struct DungeonThings_Compat* things;
@@ -3831,8 +3851,10 @@ int main(int argc, char** argv) {
                                                     PROBE_DM1_VIEWPORT_W,
                                                     PROBE_DM1_VIEWPORT_H) == 0,
                      "focused viewport: D1C Trolin creature clips inside the DM1 viewport rectangle");
-        probe_skip(&tally, "INV_GV_38R",
-                   "focused viewport: D1L side-cell Trolin pixel gate awaits source C3200 side-zone clipping parity");
+        probe_record_asset_required(&tally, "INV_GV_38R", haveAssets,
+                                    memcmp(baseFb, sideCreatureFb, sizeof(baseFb)) != 0 &&
+                     memcmp(creatureFb, sideCreatureFb, sizeof(creatureFb)) != 0,
+                     "focused viewport: D1L side-cell Trolin creature differs from empty and center creature frames");
         probe_record(&tally, "INV_GV_38R2",
                      d1lCreatureGroups == 1 &&
                      d1lSummaryGroups == 1 &&
@@ -4103,7 +4125,10 @@ int main(int argc, char** argv) {
                 (void)probe_set_compact_square_thing(
                     &focusView, focusMap, ornX, ornY,
                     (unsigned char)(DUNGEON_ELEMENT_WALL << 5),
-                    (unsigned short)((THING_TYPE_SENSOR << 10) | 0));
+                    probe_make_thing_with_cell(
+                        THING_TYPE_SENSOR, 0,
+                        probe_visible_wall_cell_for_north_view(
+                            kWallOrnamentPositions[pi].relSide)));
                 memset(teleporterFb, 0, sizeof(teleporterFb));
                 M11_GameView_Draw(&focusView, teleporterFb, 320, 200);
                 if (memcmp(baseFb, teleporterFb, sizeof(baseFb)) != 0) {
