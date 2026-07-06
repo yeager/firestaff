@@ -5860,7 +5860,7 @@ static int m11_compute_floor_ornament_ordinal(
      * Scan for sensor things with ornamentOrdinal on this square.
      * Ref: ReDMCSB F0172 — C0_SENSOR_FLOOR_ORNAMENT_ORDINAL path. */
     if (state->world.things && state->world.things->sensors) {
-        unsigned short scanThing = m11_get_first_square_thing(
+        unsigned short scanThing = m11_get_viewport_static_first_thing(
             &state->world, mapIndex, mapX, mapY);
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
