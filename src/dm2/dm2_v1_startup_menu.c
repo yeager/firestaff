@@ -141,3 +141,34 @@ int dm2_v1_startup_menu_activate_selected(
     }
     return 0;
 }
+
+int dm2_v1_startup_menu_handle_input(DM2_V1_StartupMenu *menu,
+                                     DM2_V1_StartupInput input,
+                                     DM2_V1_StartupAction *out_action)
+{
+    dm2_v1_startup_action_clear(out_action);
+    if (!menu || !out_action) {
+        return 0;
+    }
+    if (input == DM2_V1_STARTUP_INPUT_UP) {
+        (void)dm2_v1_startup_menu_move_selected(menu, -1);
+        out_action->kind = DM2_V1_STARTUP_ACTION_NONE;
+        return 1;
+    }
+    if (input == DM2_V1_STARTUP_INPUT_DOWN) {
+        (void)dm2_v1_startup_menu_move_selected(menu, 1);
+        out_action->kind = DM2_V1_STARTUP_ACTION_NONE;
+        return 1;
+    }
+    if (input == DM2_V1_STARTUP_INPUT_ACCEPT ||
+        input == DM2_V1_STARTUP_INPUT_ACTION) {
+        return dm2_v1_startup_menu_activate_selected(menu, out_action);
+    }
+    if (input == DM2_V1_STARTUP_INPUT_BACK) {
+        out_action->kind = DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER;
+        out_action->row = menu->selected_row;
+        out_action->slot = -1;
+        return 1;
+    }
+    return 0;
+}

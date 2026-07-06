@@ -67,6 +67,21 @@ typedef struct {
     CSB_V1_UtilMenuRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
 } CSB_V1_UtilMenuLayout;
 
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+    int import_status_x;
+    int import_status_y;
+    int prompt_x;
+    int prompt_y;
+    int preview_x;
+    int preview_y;
+    int preview_row_h;
+    int preview_max_rows;
+} CSB_V1_UtilPanelLayout;
+
 /* ── Disk verification result ──────────────────────────────────────── */
 typedef enum {
     CSB_V1_UTIL_DISK_OK          = 0,
@@ -116,10 +131,17 @@ int csb_v1_util_flow_retry_error(CSB_V1_UtilFlowContext *ctx);
 const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action);
 int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
                                  CSB_V1_UtilMenuLayout *out_layout);
+int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
+                                  int preview_active,
+                                  CSB_V1_UtilPanelLayout *out_layout);
 CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
     const CSB_V1_UtilFlowContext *ctx,
     int x,
     int y);
+int csb_v1_util_flow_panel_contains_point(const CSB_V1_UtilFlowContext *ctx,
+                                          int preview_active,
+                                          int x,
+                                          int y);
 
 /* ── Set DM1 save path for import ────────────────────────────────────── */
 void csb_v1_util_flow_set_dm1_path(CSB_V1_UtilFlowContext *ctx,

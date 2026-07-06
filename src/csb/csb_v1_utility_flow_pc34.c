@@ -35,6 +35,14 @@
 #define CSB_V1_UTIL_MENU_W 244
 #define CSB_V1_UTIL_MENU_ROW_H 12
 #define CSB_V1_UTIL_MENU_H (CSB_V1_UTIL_MENU_ROW_H * CSB_V1_UTIL_MENU_ROW_COUNT)
+#define CSB_V1_UTIL_PANEL_X 38
+#define CSB_V1_UTIL_PANEL_Y 80
+#define CSB_V1_UTIL_PANEL_W 244
+#define CSB_V1_UTIL_PROMPT_Y 92
+#define CSB_V1_UTIL_PREVIEW_X 48
+#define CSB_V1_UTIL_PREVIEW_Y 154
+#define CSB_V1_UTIL_PREVIEW_ROW_H 10
+#define CSB_V1_UTIL_PREVIEW_MAX_ROWS 4
 
 static const CSB_V1_UtilFlowAction s_csb_v1_util_menu_actions[
     CSB_V1_UTIL_MENU_ACTION_COUNT] = {
@@ -312,6 +320,43 @@ int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
     return 1;
 }
 
+int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
+                                  int preview_active,
+                                  CSB_V1_UtilPanelLayout *out_layout)
+{
+    CSB_V1_UtilMenuLayout menu;
+    int bottom;
+
+    if (!ctx || !out_layout ||
+        !csb_v1_util_flow_menu_layout(ctx, &menu)) {
+        return 0;
+    }
+    memset(out_layout, 0, sizeof(*out_layout));
+    out_layout->x = CSB_V1_UTIL_PANEL_X;
+    out_layout->y = CSB_V1_UTIL_PANEL_Y;
+    out_layout->w = CSB_V1_UTIL_PANEL_W;
+    out_layout->import_status_x = CSB_V1_UTIL_PANEL_X;
+    out_layout->import_status_y = CSB_V1_UTIL_PANEL_Y;
+    out_layout->prompt_x = CSB_V1_UTIL_PANEL_X;
+    out_layout->prompt_y = CSB_V1_UTIL_PROMPT_Y;
+    out_layout->preview_x = CSB_V1_UTIL_PREVIEW_X;
+    out_layout->preview_y = CSB_V1_UTIL_PREVIEW_Y;
+    out_layout->preview_row_h = CSB_V1_UTIL_PREVIEW_ROW_H;
+    out_layout->preview_max_rows = CSB_V1_UTIL_PREVIEW_MAX_ROWS;
+
+    bottom = menu.y + menu.h;
+    if (preview_active) {
+        int preview_bottom =
+            CSB_V1_UTIL_PREVIEW_Y +
+            CSB_V1_UTIL_PREVIEW_ROW_H * CSB_V1_UTIL_PREVIEW_MAX_ROWS;
+        if (preview_bottom > bottom) {
+            bottom = preview_bottom;
+        }
+    }
+    out_layout->h = bottom - out_layout->y;
+    return 1;
+}
+
 CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
     const CSB_V1_UtilFlowContext *ctx,
     int x,
@@ -334,6 +379,20 @@ CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
         }
     }
     return CSB_V1_UTIL_ACTION_EXIT;
+}
+
+int csb_v1_util_flow_panel_contains_point(const CSB_V1_UtilFlowContext *ctx,
+                                          int preview_active,
+                                          int x,
+                                          int y)
+{
+    CSB_V1_UtilPanelLayout panel;
+
+    if (!csb_v1_util_flow_panel_layout(ctx, preview_active, &panel)) {
+        return 0;
+    }
+    return x >= panel.x && x < panel.x + panel.w &&
+           y >= panel.y && y < panel.y + panel.h;
 }
 
 /* ── Set paths ──────────────────────────────────────────────────────── */

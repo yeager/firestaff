@@ -633,6 +633,26 @@ static int m11_dm2_startup_apply_session(M11_GameViewState *state,
     return 1;
 }
 
+static DM2_V1_StartupInput m11_dm2_startup_input_from_m12(
+    M12_MenuInput input)
+{
+    switch (input) {
+        case M12_MENU_INPUT_UP:
+            return DM2_V1_STARTUP_INPUT_UP;
+        case M12_MENU_INPUT_DOWN:
+            return DM2_V1_STARTUP_INPUT_DOWN;
+        case M12_MENU_INPUT_ACCEPT:
+            return DM2_V1_STARTUP_INPUT_ACCEPT;
+        case M12_MENU_INPUT_ACTION:
+            return DM2_V1_STARTUP_INPUT_ACTION;
+        case M12_MENU_INPUT_BACK:
+            return DM2_V1_STARTUP_INPUT_BACK;
+        case M12_MENU_INPUT_NONE:
+        default:
+            return DM2_V1_STARTUP_INPUT_NONE;
+    }
+}
+
 static M11_GameInputResult m11_dm2_startup_activate_selected(
     M11_GameViewState *state)
 {
@@ -692,36 +712,36 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
+    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupAction action;
+
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (input == M12_MENU_INPUT_UP) {
-        DM2_V1_StartupMenu menu;
-        m11_dm2_startup_menu_from_state(state, &menu);
-        (void)dm2_v1_startup_menu_move_selected(&menu, -1);
-        m11_dm2_startup_menu_to_state(state, &menu);
+    m11_dm2_startup_menu_from_state(state, &menu);
+    if (!dm2_v1_startup_menu_handle_input(
+            &menu,
+            m11_dm2_startup_input_from_m12(input),
+            &action)) {
+        return input == M12_MENU_INPUT_NONE
+                   ? M11_GAME_INPUT_IGNORED
+                   : M11_GAME_INPUT_REDRAW;
+    }
+    m11_dm2_startup_menu_to_state(state, &menu);
+    if (action.kind == DM2_V1_STARTUP_ACTION_NONE) {
         m11_set_status(state, "STARTUP", "DM2 START SELECT");
         return M11_GAME_INPUT_REDRAW;
     }
-    if (input == M12_MENU_INPUT_DOWN) {
-        DM2_V1_StartupMenu menu;
-        m11_dm2_startup_menu_from_state(state, &menu);
-        (void)dm2_v1_startup_menu_move_selected(&menu, 1);
-        m11_dm2_startup_menu_to_state(state, &menu);
-        m11_set_status(state, "STARTUP", "DM2 START SELECT");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (input == M12_MENU_INPUT_ACCEPT ||
-        input == M12_MENU_INPUT_ACTION) {
+    if (action.kind == DM2_V1_STARTUP_ACTION_CONTINUE ||
+        action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT ||
+        action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
         return m11_dm2_startup_activate_selected(state);
     }
-    if (input == M12_MENU_INPUT_BACK) {
+    if (action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
         m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
         return M11_GAME_INPUT_RETURN_TO_MENU;
     }
-    return input == M12_MENU_INPUT_NONE
-               ? M11_GAME_INPUT_IGNORED
-               : M11_GAME_INPUT_REDRAW;
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
@@ -2826,6 +2846,7 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
 {
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilMenuLayout layout;
+    CSB_V1_UtilPanelLayout panel;
     char row[96];
     int i;
 
@@ -2837,22 +2858,27 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
              sizeof(row),
              "DM1 IMPORT READY: %d CHAMPIONS",
              state->csbState.startup_import_champion_count);
+    m11_csb_startup_build_utility_flow(state, &flow);
+    if (!csb_v1_util_flow_menu_layout(&flow, &layout) ||
+        !csb_v1_util_flow_panel_layout(
+            &flow,
+            state->csbState.startup_import_preview_active,
+            &panel)) {
+        return;
+    }
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  38, 80, row, &g_text_small);
+                  panel.import_status_x, panel.import_status_y, row,
+                  &g_text_small);
     if (state->csbState.startup_import_utility_prompt[0] != '\0') {
         m11_draw_text(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
-                      38,
-                      92,
+                      panel.prompt_x,
+                      panel.prompt_y,
                       state->csbState.startup_import_utility_prompt,
                       &g_text_small);
     }
 
-    m11_csb_startup_build_utility_flow(state, &flow);
-    if (!csb_v1_util_flow_menu_layout(&flow, &layout)) {
-        return;
-    }
     for (i = 0; i < layout.row_count; ++i) {
         const CSB_V1_UtilMenuRow *menuRow = &layout.rows[i];
         int textY = menuRow->y + 2;
@@ -2902,8 +2928,8 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
             m11_draw_text(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          48,
-                          154 + i * 10,
+                          panel.preview_x,
+                          panel.preview_y + i * panel.preview_row_h,
                           preview,
                           &g_text_small);
         }
@@ -3532,10 +3558,11 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
         }
         return m11_csb_startup_activate_utility_action(state, action);
     }
-    if (x >= layout.x && x < layout.x + layout.w &&
-        y >= 80 &&
-        y < (state->csbState.startup_import_preview_active ? 194
-                                                           : layout.y + layout.h)) {
+    if (csb_v1_util_flow_panel_contains_point(
+            &flow,
+            state->csbState.startup_import_preview_active,
+            x,
+            y)) {
         return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
