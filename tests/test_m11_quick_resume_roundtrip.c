@@ -287,6 +287,8 @@ int main(void) {
 
     M11_GameView_Init(&view);
     if (!expect(M11_GameView_Start(&view, &spec), "initial DM1 start should succeed")) return 1;
+    if (!expect(M11_GameView_Dm1StartupIntroBypassed(&view) == 1,
+                "direct generic DM1 start should report game-view intro bypass")) return 1;
 
     view.world.party.mapIndex = 2;
     view.world.party.mapX = 11;
@@ -313,6 +315,8 @@ int main(void) {
     spec.savePath = savePath;
     M11_GameView_Init(&resumed);
     if (!expect(M11_GameView_Start(&resumed, &spec), "quick-resume DM1 start should load save")) return 1;
+    if (!expect(M11_GameView_Dm1StartupIntroBypassed(&resumed) == 1,
+                "direct generic DM1 resume should report game-view intro bypass")) return 1;
     if (!expect(resumed.world.party.mapIndex == mapIndex, "resumed mapIndex should match saved state")) return 1;
     if (!expect(resumed.world.party.mapX == mapX, "resumed mapX should match saved state")) return 1;
     if (!expect(resumed.world.party.mapY == mapY, "resumed mapY should match saved state")) return 1;
@@ -337,6 +341,8 @@ int main(void) {
     M11_GameView_Init(&originalResumed);
     if (!expect(M11_GameView_Start(&originalResumed, &spec),
                 "quick-resume should load original PC34 save through M11 fallback")) return 1;
+    if (!expect(M11_GameView_Dm1StartupIntroBypassed(&originalResumed) == 1,
+                "direct generic original PC34 DM1 resume should report game-view intro bypass")) return 1;
     if (!expect(originalResumed.world.party.mapIndex == 4,
                 "original PC34 resumed mapIndex should match GLOBAL_DATA")) return 1;
     if (!expect(originalResumed.world.party.mapX == 9,
@@ -369,6 +375,8 @@ int main(void) {
     M11_GameView_Init(&directLoaded);
     if (!expect(M11_GameView_Start(&directLoaded, &spec),
                 "direct DM1 start should succeed before explicit load")) return 1;
+    if (!expect(M11_GameView_Dm1StartupIntroBypassed(&directLoaded) == 1,
+                "direct generic DM1 start before explicit load should report game-view intro bypass")) return 1;
     if (!expect(M11_GameView_LoadDm1SavePath(&directLoaded, savePath, NULL),
                 "explicit M11 DM1 load helper should load original PC34 save")) return 1;
     if (!expect(directLoaded.world.party.mapIndex == 4 &&
