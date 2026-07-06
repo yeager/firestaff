@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 Nexus save-select idle-tick gate: `M11_GameView_AdvanceIdleTick()` now freezes Nexus runtime ticks while the startup save-select menu is active, matching the existing title and champion-select gates. Verification: focused build passed for `test_m11_nexus_startup_gate`; direct real-data `test_m11_nexus_startup_gate` passed locally.
+
 - ✅ 2026-07-06 DM2 startup idle-tick gate: `M11_GameView_AdvanceIdleTick()` now freezes DM2 runtime ticks while the DM2 startup menu is active, so no-save boots cannot age the DM2 world behind the `NEW GAME` selection screen. Verification: focused build passed for `test_dm2_v1_m11_startup_profile_gate`; direct real-data `test_dm2_v1_m11_startup_profile_gate` passed locally.
 
 - ✅ 2026-07-06 DM2 no-save startup menu gate: verified DM2 launches now always show the M11 DM2 start menu on normal boot, even when no saves exist and `NEW GAME` is the only row. Explicit `savePath` resumes still load directly, but no-save boots no longer bypass the startup choice into runtime input. Verification: focused build passed for `test_dm2_v1_m11_startup_profile_gate`; direct real-data `test_dm2_v1_m11_startup_profile_gate` passed locally.
