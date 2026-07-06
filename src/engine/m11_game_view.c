@@ -3354,17 +3354,8 @@ static CSB_V1_StartupInput_PC34 m11_csb_startup_input_from_m12(
 
 static int m11_csb_startup_command_from_action(int action)
 {
-    switch (action) {
-        case CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34:
-            return M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON;
-        case CSB_V1_STARTUP_ENTRANCE_ACTION_RESUME_PC34:
-            return M11_ENTRANCE_RUNTIME_COMMAND_RESUME;
-        case CSB_V1_STARTUP_ENTRANCE_ACTION_QUIT_PC34:
-            return M11_ENTRANCE_RUNTIME_COMMAND_QUIT;
-        case CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34:
-        default:
-            return M11_ENTRANCE_RUNTIME_COMMAND_NONE;
-    }
+    return csb_v1_startup_entrance_command_for_action_pc34(
+        (CSB_V1_StartupEntranceAction_PC34)action);
 }
 
 static void m11_csb_startup_command_state_from_m11(
@@ -3565,12 +3556,12 @@ static M11_GameInputResult m11_csb_startup_activate_utility_action(
             state->csbState.startup_import_preview_active = 0;
             return m11_csb_startup_handle_entrance_command(
                 state,
-                M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
+                csb_v1_util_flow_entrance_command_for_action(action));
         case CSB_V1_UTIL_ACTION_LOAD:
             state->csbState.startup_import_preview_active = 0;
             return m11_csb_startup_handle_entrance_command(
                 state,
-                M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
+                csb_v1_util_flow_entrance_command_for_action(action));
         case CSB_V1_UTIL_ACTION_IMPORT:
             state->csbState.startup_import_preview_active = 0;
             m11_set_status(state, "BOOT", "CSB IMPORT READY");

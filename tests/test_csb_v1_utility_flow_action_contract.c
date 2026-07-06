@@ -51,13 +51,17 @@ int main(void)
               strstr(rows[1].label, "LOAD") != NULL,
           "unselected Load render row owns visible label");
     check(csb_v1_util_flow_entrance_command_for_action(
-              CSB_V1_UTIL_ACTION_NEW) == 200 &&
+              CSB_V1_UTIL_ACTION_NEW) ==
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
               csb_v1_util_flow_entrance_command_for_action(
-                  CSB_V1_UTIL_ACTION_LOAD) == 202 &&
+                  CSB_V1_UTIL_ACTION_LOAD) ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
               csb_v1_util_flow_entrance_command_for_action(
-                  CSB_V1_UTIL_ACTION_IMPORT) == 0 &&
+                  CSB_V1_UTIL_ACTION_IMPORT) ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34 &&
               csb_v1_util_flow_entrance_command_for_action(
-                  CSB_V1_UTIL_ACTION_VIEW) == 0,
+                  CSB_V1_UTIL_ACTION_VIEW) ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
           "utility flow actions resolve entrance source commands");
 
     check(csb_v1_util_flow_handle_input(
