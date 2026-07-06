@@ -442,6 +442,41 @@ int main(void) {
                     "M11 Theron startup layout exposes machine-readable stage state");
     }
 
+    {
+        M11_GameViewState no_continue_view;
+        Theron_V1_World* no_continue_world;
+        char no_continue_rows[16][M11_THERON_STARTUP_RENDER_ROW_CAPACITY];
+        int no_continue_row_count;
+
+        M11_GameView_Init(&no_continue_view);
+        expect_true(M11_GameView_Start(&no_continue_view, &spec),
+                    "M11 Theron save-present new-stage start succeeds");
+        no_continue_world = (Theron_V1_World*)no_continue_view.theronWorld;
+        expect_true(no_continue_view.theronState.save_resume_active_slot == 5 &&
+                    no_continue_view.theronState.save_resume_continue_focus == 0,
+                    "M11 Theron save-present new-stage path starts on stage row");
+        expect_true(M11_GameView_HandleInput(&no_continue_view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 Theron save-present stage accept opens Soul Room");
+        expect_true(no_continue_view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_SOUL_ROOM,
+                    "M11 Theron save-present new-stage path enters Soul Room");
+        expect_true(no_continue_world != NULL &&
+                        no_continue_world->progression.dungeon_playtime_seconds == 0,
+                    "M11 Theron save-present new-stage path does not apply saved playtime");
+        expect_true(no_continue_world != NULL &&
+                        no_continue_world->party.champions[0].health != 66,
+                    "M11 Theron save-present new-stage path does not apply saved party body");
+        no_continue_row_count = M11_GameView_GetTheronStartupRenderRows(
+            &no_continue_view, no_continue_rows, 16);
+        expect_true(startup_rows_contain(no_continue_rows,
+                                         no_continue_row_count,
+                                         "SOUL ROOM"),
+                    "M11 Theron save-present new-stage path renders Soul Room");
+        M11_GameView_Shutdown(&no_continue_view);
+    }
+
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron stage cursor can focus Continue");
