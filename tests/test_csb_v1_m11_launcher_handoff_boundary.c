@@ -68,6 +68,15 @@ static void expect_skip(const char* message) {
     ++g_skipped;
 }
 
+static void init_menu_without_gallery(M12_StartupMenuState* state,
+                                      const char* data_dir,
+                                      const char* game_id) {
+    M12_StartupMenuInitOptions options;
+    memset(&options, 0, sizeof(options));
+    options.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(state, data_dir, game_id, &options);
+}
+
 static void dismiss_initial_message(M12_StartupMenuState* state) {
     if (state && state->view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
@@ -164,7 +173,7 @@ static void run_empty_launcher_boundary(void) {
     expect_true(empty_dir[0] != '\0',
                 "CSB launcher handoff empty data dir path was created");
 
-    M12_StartupMenu_InitWithDataDir(&menu, empty_dir, "csb");
+    init_menu_without_gallery(&menu, empty_dir, "csb");
     dismiss_initial_message(&menu);
     entry = M12_StartupMenu_GetEntry(&menu, 1);
     expect_true(entry != NULL,
@@ -201,7 +210,7 @@ static void run_real_launcher_handoff_if_available(void) {
         return;
     }
 
-    M12_StartupMenu_InitWithDataDir(&menu, data_dir, "csb");
+    init_menu_without_gallery(&menu, data_dir, "csb");
     dismiss_initial_message(&menu);
     entry = M12_StartupMenu_GetEntry(&menu, 1);
     if (!entry || !entry->available ||
@@ -249,8 +258,8 @@ static void run_real_launcher_handoff_if_available(void) {
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
-                "M11 CSB launcher entrance draws a nonblank frame");
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
+                "M11 CSB launcher title prelude draws a visible first frame");
 
     tick_before = view.csbState.tick_count;
     entrance_frame_before = view.csbState.startup_entrance_frame;
@@ -286,6 +295,10 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.csbState.startup_title_active == 0 &&
                     view.csbState.startup_title_source_step == 0,
                 "M11 CSB launcher title prelude completed before entrance input");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
+                "M11 CSB launcher entrance draws a nonblank wait-loop frame");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
