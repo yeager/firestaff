@@ -670,13 +670,6 @@ static int m12_path_has_extension(const char* path, const char* ext) {
     return 1;
 }
 
-static int m12_path_is_container_file_request(const char* path) {
-    return path && FSP_FileExists(path) &&
-           (m12_path_has_extension(path, ".zip") ||
-            m12_path_has_extension(path, ".iso") ||
-            m12_path_has_extension(path, ".bin"));
-}
-
 static const char* const* m12_fast_candidate_subdirs_for_game(const char* gameId) {
     static const char* const dm1Subdirs[] = {"dm1", "dm1-multilingual", "", NULL};
     static const char* const csbSubdirs[] = {"csb", "", NULL};
@@ -823,6 +816,45 @@ static int m12_materialize_required_file(const M12_AssetRequiredFileStatus* file
         return asset_extract_virtual_path(fileStatus->matchedPath, outPath);
     }
     return m12_copy_file_to_path(fileStatus->matchedPath, outPath);
+}
+
+static int m12_required_file_needs_runtime_cache(const M12_AssetStatus* status,
+                                                 int gameIndex,
+                                                 const M12_AssetRequiredFileStatus* fileStatus) {
+    char directPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char gamePath[M12_ASSET_DATA_DIR_CAPACITY];
+    char gameLeaf[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* gameId;
+    const char* runtimeRoot;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        !fileStatus || !fileStatus->matched || !fileStatus->label ||
+        fileStatus->matchedPath[0] == '\0') {
+        return 0;
+    }
+    if (m12_path_is_virtual_asset(fileStatus->matchedPath)) {
+        return 1;
+    }
+    if (!m12_path_tail_equals(fileStatus->matchedPath, fileStatus->label)) {
+        return 1;
+    }
+    gameId = g_games[gameIndex].gameId;
+    runtimeRoot = status->runtimeDataDirs[gameIndex][0] != '\0'
+        ? status->runtimeDataDirs[gameIndex]
+        : status->dataDir;
+    if (!runtimeRoot || runtimeRoot[0] == '\0') {
+        return 1;
+    }
+    if (FSP_JoinPath(directPath, sizeof(directPath),
+                     runtimeRoot, fileStatus->label) &&
+        m12_same_path(directPath, fileStatus->matchedPath)) {
+        return 0;
+    }
+    if (FSP_JoinPath(gamePath, sizeof(gamePath), runtimeRoot, gameId) &&
+        FSP_JoinPath(gameLeaf, sizeof(gameLeaf), gamePath, fileStatus->label) &&
+        m12_same_path(gameLeaf, fileStatus->matchedPath)) {
+        return 0;
+    }
+    return 1;
 }
 
 static int m12_search_root_already_added(
@@ -1789,7 +1821,7 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char gameCacheDir[M12_ASSET_DATA_DIR_CAPACITY];
     size_t i;
-    int hasVirtualRequired = 0;
+    int needsRuntimeCache = 0;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
         return 1;
     }
@@ -1799,12 +1831,14 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         return 1;
     }
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
-        if (m12_path_is_virtual_asset(status->requiredFiles[gameIndex][i].matchedPath)) {
-            hasVirtualRequired = 1;
+        if (m12_required_file_needs_runtime_cache(status,
+                                                  gameIndex,
+                                                  &status->requiredFiles[gameIndex][i])) {
+            needsRuntimeCache = 1;
             break;
         }
     }
-    if (!hasVirtualRequired) {
+    if (!needsRuntimeCache) {
         return 1;
     }
     if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
@@ -2225,7 +2259,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     M12_ScanProgressContext progressCtx;
     size_t rootCount;
     int dataDirResolvedToMatchedRoot = 0;
-    int requestedContainerFile = 0;
+    int requestedFileScanParent = 0;
     int i;
     if (!status) {
         return 0;
@@ -2269,15 +2303,16 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         m12_scan_progress_finish(status, 1, 0);
         return 1;
     }
-    if (m12_path_is_container_file_request(requestedDataDir) &&
+    if (FSP_FileExists(requestedDataDir) &&
         FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
-        /* ZIP/ISO/BIN containers can hold DM1/CSB/DM2 required files as
-         * virtual paths. Do not publish the legacy generic "file candidate"
-         * status here; let the recursive hash scanner walk the parent
-         * directory, match entries inside the container, then materialize
-         * ordinary GRAPHICS.DAT/DUNGEON.DAT cache files before launch. */
+        /* Hash-first explicit file handling. A direct path may be a
+         * ZIP/ISO/BIN container, a correctly hashed Track/image file with an
+         * arbitrary extension, or a renamed GRAPHICS/DUNGEON payload. Do not
+         * publish the legacy generic "file candidate" status before the
+         * recursive hash scanner has had a chance to walk the parent
+         * directory and materialize canonical runtime files. */
         effectiveRequestedDataDir = containerParent;
-        requestedContainerFile = 1;
+        requestedFileScanParent = 1;
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "checking explicit file request",
@@ -2287,7 +2322,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
         return 0;
     }
-    if (!requestedContainerFile &&
+    if (!requestedFileScanParent &&
         m12_scan_explicit_file_request(status, requestedDataDir)) {
         m12_scan_progress_finish(status, 1, 0);
         return 1;
