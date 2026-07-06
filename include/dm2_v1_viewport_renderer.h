@@ -153,6 +153,12 @@ int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
                                                    int projectile_direction,
                                                    int party_direction,
                                                    int frame_count);
+int dm2_v1_viewport_projectile_frame_for_map_chip(int requested_frame,
+                                                  int projectile_direction,
+                                                  int object_direction,
+                                                  int party_direction,
+                                                  int frame_count,
+                                                  int frame_class);
 int dm2_v1_viewport_projectile_flip_for_direction(int projectile_direction,
                                                   int party_direction);
 int dm2_v1_viewport_cloud_frame_for_tick(int tick_count,
@@ -204,6 +210,12 @@ typedef struct {
 #define DM2_V1_PROJECTILE_RENDER_MISSILE 0
 #define DM2_V1_PROJECTILE_RENDER_CLOUD   1
 
+#define DM2_V1_PROJECTILE_FRAME_CLASS_MISSING      0xffu
+#define DM2_V1_PROJECTILE_FRAME_CLASS_FRONT_ONLY   0u
+#define DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL  1u
+#define DM2_V1_PROJECTILE_FRAME_CLASS_FLAT         2u
+#define DM2_V1_PROJECTILE_FRAME_CLASS_BASE_FRONT   3u
+
 /* ── Sprite / creature record ───────────────────────────────────── */
 typedef struct {
     uint8_t  creature_type;   /* GDAT creature index */
@@ -238,6 +250,8 @@ typedef struct {
     uint8_t  direction;       /* 0=N, 1=E, 2=S, 3=W */
     uint8_t  palette_shift;   /* light/color modifier */
     uint8_t  render_kind;     /* DM2_V1_PROJECTILE_RENDER_* */
+    uint8_t  object_direction;/* skproject ObjectID::Dir() source direction */
+    uint8_t  frame_class;     /* DM2_V1_PROJECTILE_FRAME_CLASS_* */
 } DM2_Projectile;
 
 typedef int (*DM2_V1_ViewportAssetFetch)(

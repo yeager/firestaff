@@ -433,6 +433,24 @@ static void test_sprite_asset_provider(void)
     CHECK("DM2 projectile directional frame follows view-relative missile frames",
           dm2_v1_viewport_projectile_frame_for_direction(0, 1, 0, 7) == 4 &&
               dm2_v1_viewport_projectile_frame_for_direction(0, 3, 0, 7) == 6);
+    CHECK("DM2 projectile map-chip frame applies skproject adjustment table",
+          dm2_v1_viewport_projectile_frame_for_map_chip(
+              0, 1, 1, 0, 7, DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL) == 6 &&
+              dm2_v1_viewport_projectile_frame_for_map_chip(
+                  0, 1, 0, 0, 7,
+                  DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL) == 4 &&
+              dm2_v1_viewport_projectile_frame_for_map_chip(
+                  0, 2, 2, 0, 7,
+                  DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL) == 3);
+    CHECK("DM2 projectile map-chip frame handles non-directional classes",
+          dm2_v1_viewport_projectile_frame_for_map_chip(
+              0, 1, 1, 0, 7, DM2_V1_PROJECTILE_FRAME_CLASS_BASE_FRONT) == 3 &&
+              dm2_v1_viewport_projectile_frame_for_map_chip(
+                  0, 1, 1, 0, 7,
+                  DM2_V1_PROJECTILE_FRAME_CLASS_FRONT_ONLY) == 0 &&
+              dm2_v1_viewport_projectile_frame_for_map_chip(
+                  0, 1, 1, 0, 7,
+                  DM2_V1_PROJECTILE_FRAME_CLASS_FLAT) == 0);
     CHECK("DM2 projectile flip follows skproject missile flip table",
           dm2_v1_viewport_projectile_flip_for_direction(0, 0) == 0 &&
               dm2_v1_viewport_projectile_flip_for_direction(1, 0) == 1 &&
@@ -593,6 +611,8 @@ static void test_sprite_asset_provider(void)
     viewport.projectiles[0].projectile_type = 0x02;
     viewport.projectiles[0].frame_index = 0x01;
     viewport.projectiles[0].direction = 1;
+    viewport.projectiles[0].object_direction = 1;
+    viewport.projectiles[0].frame_class = DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL;
     viewport.projectiles[0].screen_x = 120;
     viewport.projectiles[0].screen_y = 70;
     s_projectile_seven_frame_fixture = 1;
@@ -602,10 +622,10 @@ static void test_sprite_asset_provider(void)
                                        NULL);
     dm2_v1_render_projectiles(&viewport);
     s_projectile_seven_frame_fixture = 0;
-    CHECK("projectile render uses view-relative directional atlas frame",
+    CHECK("projectile render applies skproject adjusted missile atlas frame",
           viewport.asset_projectile_drawn_count == 1 &&
-              framebuffer[((70 - 3) * 320) + (120 - 3)] == 11 &&
-              framebuffer[(70 * 320) + 120] == 11);
+              framebuffer[((70 - 3) * 320) + (120 - 3)] == 13 &&
+              framebuffer[(70 * 320) + 120] == 13);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -615,6 +635,8 @@ static void test_sprite_asset_provider(void)
     viewport.projectiles[0].projectile_type = 0x02;
     viewport.projectiles[0].frame_index = 0x00;
     viewport.projectiles[0].direction = 1;
+    viewport.projectiles[0].object_direction = 0;
+    viewport.projectiles[0].frame_class = DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL;
     viewport.projectiles[0].screen_x = 120;
     viewport.projectiles[0].screen_y = 70;
     s_projectile_flip_fixture = 1;

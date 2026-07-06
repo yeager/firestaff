@@ -582,6 +582,51 @@ int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
     return dm2_v1_viewport_map_chip_frame_index(3 + rel, frame_count);
 }
 
+int dm2_v1_viewport_projectile_frame_for_map_chip(int requested_frame,
+                                                  int projectile_direction,
+                                                  int object_direction,
+                                                  int party_direction,
+                                                  int frame_count,
+                                                  int frame_class)
+{
+    static const int8_t s_skproject_missile_frame_adjust[16] = {
+        0, 0, 2, 2,
+        0, 2, 2, 0,
+        0, 0, -2, -2,
+        0, -2, -2, 0
+    };
+    int motion_rel;
+    int object_rel;
+    int frame;
+
+    if (frame_count <= 0) return 0;
+    if (frame_count <= 3) {
+        return dm2_v1_viewport_map_chip_frame_index(requested_frame,
+                                                   frame_count);
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp `_48ae_011a` lines 10168-10198
+     * classifies missile map-chip image coverage. DRAW_MAP_CHIP lines
+     * 10691-10718 applies `_4976_3fa8` only for class 1; the other source
+     * cases collapse to frame 0 or the base-front frame 3. */
+    switch ((uint8_t)frame_class) {
+    case DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL:
+        motion_rel = ((projectile_direction & 3) - (party_direction & 3)) & 3;
+        object_rel = ((object_direction & 3) - (party_direction & 3)) & 3;
+        frame = 3 + motion_rel;
+        frame += s_skproject_missile_frame_adjust[
+            ((frame - 3) << 2) + object_rel];
+        return dm2_v1_viewport_map_chip_frame_index(frame, frame_count);
+    case DM2_V1_PROJECTILE_FRAME_CLASS_BASE_FRONT:
+        return dm2_v1_viewport_map_chip_frame_index(3, frame_count);
+    case DM2_V1_PROJECTILE_FRAME_CLASS_MISSING:
+    case DM2_V1_PROJECTILE_FRAME_CLASS_FRONT_ONLY:
+    case DM2_V1_PROJECTILE_FRAME_CLASS_FLAT:
+    default:
+        return 0;
+    }
+}
+
 int dm2_v1_viewport_projectile_flip_for_direction(int projectile_direction,
                                                   int party_direction)
 {
@@ -941,14 +986,21 @@ static int dm2_v1_prepare_projectile_map_chip_frame(int src_w,
                                                     int src_h,
                                                     int requested_frame,
                                                     int projectile_direction,
+                                                    int object_direction,
                                                     int party_direction,
+                                                    int frame_class,
                                                     int *out_frame_x,
                                                     int *out_frame_w)
 {
     int frame_w = dm2_v1_viewport_map_chip_frame_width(src_w, src_h);
     int frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
-    int frame_index = dm2_v1_viewport_projectile_frame_for_direction(
-        requested_frame, projectile_direction, party_direction, frame_count);
+    int frame_index = dm2_v1_viewport_projectile_frame_for_map_chip(
+        requested_frame,
+        projectile_direction,
+        object_direction,
+        party_direction,
+        frame_count,
+        frame_class);
     if (frame_w <= 0 || frame_count <= 0) return 0;
     if (out_frame_x) *out_frame_x = frame_index * frame_w;
     if (out_frame_w) *out_frame_w = frame_w;
@@ -1846,7 +1898,9 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                                                               src_h,
                                                               p->frame_index,
                                                               p->direction,
+                                                              p->object_direction,
                                                               s->party_dir,
+                                                              p->frame_class,
                                                               &frame_x,
                                                               &frame_w)) {
                     frame_x = 0;
