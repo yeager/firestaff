@@ -1,12 +1,9 @@
 #include "nexus_v1_title.h"
+#include "nexus_v1_title_sequence.h"
 #include "nexus_v1_ui_surfaces.h"
 
 #include <stdlib.h>
 #include <string.h>
-
-enum {
-    NEXUS_TITLE_MIN_BOOT_FRAMES = 30
-};
 
 static void nexus_title_draw_rect(Nexus_Framebuffer *fb,
                                   int x, int y, int w, int h,
@@ -93,20 +90,21 @@ void nexus_title_free(Nexus_TitleScreen *title) {
 }
 
 int nexus_title_min_boot_frames(void) {
-    return NEXUS_TITLE_MIN_BOOT_FRAMES;
+    return nexus_v1_title_min_boot_frames();
 }
 
 int nexus_title_boot_reveal_complete(int frame) {
-    return frame >= NEXUS_TITLE_MIN_BOOT_FRAMES;
+    Nexus_V1_TitleFrame title_frame;
+    if (!nexus_v1_title_frame(frame, NEXUS_FB_H, &title_frame)) {
+        return 0;
+    }
+    return title_frame.boot_reveal_complete;
 }
 
 void nexus_render_title(const Nexus_TitleScreen *title,
                         Nexus_Framebuffer *fb, int frame) {
     int y;
-    int reveal_h;
-    int reveal_y0;
-    int reveal_y1;
-    uint8_t edge_color;
+    Nexus_V1_TitleFrame title_frame;
     if (!fb) {
         return;
     }
@@ -123,22 +121,21 @@ void nexus_render_title(const Nexus_TitleScreen *title,
     if (frame < 0) {
         frame = 0;
     }
-    reveal_h = 80 + frame * 4;
-    if (reveal_h > NEXUS_FB_H) {
-        reveal_h = NEXUS_FB_H;
+    if (!nexus_v1_title_frame(frame, NEXUS_FB_H, &title_frame)) {
+        return;
     }
-    reveal_y0 = (NEXUS_FB_H - reveal_h) / 2;
-    reveal_y1 = reveal_y0 + reveal_h;
-    for (y = reveal_y0; y < reveal_y1 && y < title->height &&
+    for (y = title_frame.reveal_y0;
+         y < title_frame.reveal_y1 && y < title->height &&
                  y < NEXUS_FB_H; ++y) {
         int copy_w = title->width < NEXUS_FB_W ? title->width : NEXUS_FB_W;
         memcpy(&fb->color_buffer[y * NEXUS_FB_W],
                &title->pixels[y * title->width],
                (size_t)copy_w);
     }
-    edge_color = (uint8_t)(12 + ((frame / 4) & 7));
-    nexus_title_draw_rect(fb, 0, reveal_y0 - 1, NEXUS_FB_W, 1, edge_color);
-    nexus_title_draw_rect(fb, 0, reveal_y1, NEXUS_FB_W, 1, edge_color);
+    nexus_title_draw_rect(fb, 0, title_frame.reveal_y0 - 1,
+                          NEXUS_FB_W, 1, title_frame.edge_color);
+    nexus_title_draw_rect(fb, 0, title_frame.reveal_y1,
+                          NEXUS_FB_W, 1, title_frame.edge_color);
 }
 
 void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame) {

@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.39  (2026-07-06)",
+    "  - Packages the post-v3.0.38 Nexus and DM2 startup ownership work now on main.",
+    "  - Nexus title boot now advances through frame-dependent reveal timing with a minimum skip gate.",
+    "  - Nexus startup owns its save, champion and pointer layout instead of sharing generic M11 rectangles.",
+    "  - DM2 startup owns its menu, row highlight and pointer-hit layout through a DM2-specific contract.",
+    "",
     "V3.0.38  (2026-07-06)",
     "  - Packages the post-v3.0.37 CSB startup prelude and title-frame work now on main.",
     "  - CSB entrance starts now have an explicit source-shaped prelude gate before the door-opening phase and runtime handoff.",
@@ -419,5 +425,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.38";
+    return "3.0.39";
 }

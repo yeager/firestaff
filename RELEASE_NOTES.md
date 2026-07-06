@@ -1,6 +1,28 @@
 
 # Unreleased
 
+# Firestaff v3.0.39
+
+Firestaff v3.0.39 packages the latest Nexus and DM2 startup ownership work on
+`main` after v3.0.38.
+
+## Highlights since v3.0.38
+
+- **Nexus title startup**: title boot now uses frame-dependent reveal timing and
+  a minimum skip gate, so input cannot cut off the startup title immediately.
+- **Nexus startup layout**: save, champion and pointer routing now use
+  Nexus-owned startup rectangles instead of the generic M11 layout.
+- **DM2 startup layout**: the DM2 startup menu now owns its row geometry,
+  highlight placement and pointer-hit contract.
+
+## Verification
+
+- Local release-prep verification covers version synchronization and the Phase A
+  probe before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.39` release run.
+
 # Firestaff v3.0.38
 
 Firestaff v3.0.38 packages the latest CSB M11 startup prelude and title-frame
