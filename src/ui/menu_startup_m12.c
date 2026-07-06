@@ -4094,6 +4094,24 @@ static void m12_save_browser_request_csb_import(M12_StartupMenuState* state) {
                              m12_tr(state, "ENTER IMPORTS / ESC CANCELS"));
 }
 
+const char* M12_StartupMenu_SaveBrowserFooterText(
+    const M12_StartupMenuState* state) {
+    const M12_SaveBrowserEntry* entry;
+
+    if (!state) {
+        return "ESC SETTINGS";
+    }
+    entry = M12_SaveBrowser_GetSelected(&state->saveBrowser);
+    if (!entry || !entry->valid) {
+        return m12_tr(state, "ESC SETTINGS");
+    }
+    if (strcmp(entry->gameId, "dm1") == 0) {
+        return m12_tr(state,
+                      "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS");
+    }
+    return m12_tr(state, "ENTER LOAD   ESC SETTINGS");
+}
+
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input) {
     int count;
@@ -8948,7 +8966,7 @@ static void m12_draw_save_browser_view(const M12_StartupMenuState* state,
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
-                    m12_tr(state, "ENTER LOAD   SAVE EXPORTS DM1 PC34   ESC SETTINGS"));
+                    M12_StartupMenu_SaveBrowserFooterText(state));
 }
 
 void M12_StartupMenu_Draw(const M12_StartupMenuState* state,

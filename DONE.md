@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 CSB save-browser import affordance: the M12 save browser footer is now context-aware. DM1 saves explicitly advertise the CSB import action plus PC34 export, while CSB and other save entries no longer show misleading DM1-only export/import actions. Verification: focused build passed for `test_m12_quick_resume_gate`; direct `test_m12_quick_resume_gate` passed locally.
+
 - ✅ 2026-07-06 Nexus V1 launch smoke gate restored: the previously orphaned `probes/nexus_v1_launch_smoke_probe.c` is now a first-class CMake/CTest target again. It skip-cleans without staged Saturn data and, with local real data under `~/.firestaff/data/nexus`, proves `nexus_v1_init()` from extracted media, `LEV00.DGN` load, five engine ticks, and shutdown without crash. Verification: focused build passed for `firestaff_nexus_v1_launch_smoke_probe`; focused CTest `nexus_v1_launch_smoke` passed locally; direct real-data run passed 14/14 with level 0 reported as 64x64.
 
 - ✅ 2026-07-06 CSB utility primary-button gate: M11 now routes CSB startup utility-panel pointer actions only for the primary/left button, so the entrance bonus-dungeon mask cannot activate Import/Load/New/View rows and misses outside the entrance route no longer overwrite the last source command with `NONE`. Verification: focused build passed for `test_csb_v1_m11_startup_resume_gate`; focused CTest for `csb_v1_m11_startup_resume_gate` plus `csb_v1_boot_runtime_handoff` passed locally.

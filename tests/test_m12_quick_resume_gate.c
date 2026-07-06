@@ -1115,6 +1115,11 @@ int main(void) {
     if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
                        "csb") == 0,
                 "save browser should classify CSB save as csb")) return 1;
+    if (!expect(strstr(M12_StartupMenu_SaveBrowserFooterText(&state),
+                       "IMPORTS TO CSB") == NULL &&
+                strstr(M12_StartupMenu_SaveBrowserFooterText(&state),
+                       "EXPORTS PC34") == NULL,
+                "CSB save browser footer should not advertise DM1-only actions")) return 1;
     if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
                        "ROSTERA") != NULL &&
                 strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
@@ -1634,6 +1639,11 @@ int main(void) {
                 "startup should open save browser for CSB DM1 import")) return 1;
     if (!expect(select_save_entry(&state, "firestaff-dm1-browser.sav"),
                 "save browser should select DM1 save for CSB import")) return 1;
+    if (!expect(strstr(M12_StartupMenu_SaveBrowserFooterText(&state),
+                       "ACTION IMPORTS TO CSB") != NULL &&
+                strstr(M12_StartupMenu_SaveBrowserFooterText(&state),
+                       "SAVE EXPORTS PC34") != NULL,
+                "DM1 save browser footer should advertise CSB import and PC34 export")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACTION);
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE &&
                 state.csbImportDm1ConfirmActive == 1,
