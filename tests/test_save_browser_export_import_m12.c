@@ -542,6 +542,22 @@ int main(void) {
     check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
                                      (int)sizeof(outPath)) == -1,
           "invalid original-name CSB save import rejected before copy");
+    snprintf(badPath, sizeof(badPath), "%s/CSBGAME.BAK", backupDir);
+    check(write_bytes(badPath, "RDMCSB15-RAW-DM1-NOT-CSB"),
+          "wrote DM1-raw magic under CSB backup basename");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == -1,
+          "DM1 raw save under CSB basename rejected before copy");
+    snprintf(badPath, sizeof(badPath), "%s/DMSAVE.DAT", backupDir);
+    check(firestaff_test_write_csbwin_resume_fixture(badPath, 0),
+          "wrote valid CSBWin DMSAVE import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == 0,
+          "valid CSBWin DMSAVE import accepted");
+    check(strstr(outPath, "/data/DMSAVE.DAT") != NULL,
+          "CSBWin DMSAVE import reports data-dir destination");
+    check(unlink(outPath) == 0,
+          "removed imported DMSAVE before CSBGAME import");
     snprintf(badPath, sizeof(badPath), "%s/CSBGAME.DAT", backupDir);
     check(firestaff_test_write_csbwin_resume_fixture(badPath, 0),
           "wrote valid CSBWin original-name import fixture");
