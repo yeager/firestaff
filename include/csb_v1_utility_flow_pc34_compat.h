@@ -172,6 +172,8 @@ int csb_v1_util_flow_accept_selected_action(CSB_V1_UtilFlowContext *ctx);
 int csb_v1_util_flow_cancel_to_menu(CSB_V1_UtilFlowContext *ctx);
 int csb_v1_util_flow_retry_error(CSB_V1_UtilFlowContext *ctx);
 const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action);
+int csb_v1_util_flow_entrance_command_for_action(
+    CSB_V1_UtilFlowAction action);
 int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
                                   CSB_V1_UtilInput input,
                                   int preview_active,

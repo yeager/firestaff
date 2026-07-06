@@ -1,4 +1,5 @@
 #include "csb_v1_utility_flow_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -49,6 +50,15 @@ int main(void)
               rows[1].label[0] == ' ' &&
               strstr(rows[1].label, "LOAD") != NULL,
           "unselected Load render row owns visible label");
+    check(csb_v1_util_flow_entrance_command_for_action(
+              CSB_V1_UTIL_ACTION_NEW) == 200 &&
+              csb_v1_util_flow_entrance_command_for_action(
+                  CSB_V1_UTIL_ACTION_LOAD) == 202 &&
+              csb_v1_util_flow_entrance_command_for_action(
+                  CSB_V1_UTIL_ACTION_IMPORT) == 0 &&
+              csb_v1_util_flow_entrance_command_for_action(
+                  CSB_V1_UTIL_ACTION_VIEW) == 0,
+          "utility flow actions resolve entrance source commands");
 
     check(csb_v1_util_flow_handle_input(
               &flow,
@@ -94,6 +104,21 @@ int main(void)
     check(csb_v1_util_flow_action_at_point(&flow, 40, 116) ==
               CSB_V1_UTIL_ACTION_LOAD,
           "legacy point lookup still resolves Load row");
+    check(csb_v1_util_flow_entrance_command_for_action(
+              CSB_V1_UTIL_ACTION_LOAD) ==
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
+          "Load utility action resolves to CSB startup resume command");
+    check(csb_v1_util_flow_entrance_command_for_action(
+              CSB_V1_UTIL_ACTION_NEW) ==
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+          "New Game utility action resolves to CSB startup enter command");
+    check(csb_v1_util_flow_entrance_command_for_action(
+              CSB_V1_UTIL_ACTION_IMPORT) == 0 &&
+              csb_v1_util_flow_entrance_command_for_action(
+                  CSB_V1_UTIL_ACTION_VIEW) == 0 &&
+              csb_v1_util_flow_entrance_command_for_action(
+                  CSB_V1_UTIL_ACTION_EXIT) == 0,
+          "non-entrance utility actions do not synthesize startup commands");
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed ? 1 : 0;
