@@ -255,6 +255,7 @@ static int m12_cycle_index(int value, int delta, int count);
 static int m12_clamp_index(int value, int count);
 static const char* m12_session_timer_label_for_index(int index);
 static int m12_game_slot_from_id(const char* gameId);
+static const char* m12_game_select_game_id(int index);
 static int m12_game_supported(const char* gameId);
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex);
 static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex);
@@ -2967,6 +2968,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
         return;
     }
     memset(state, 0, sizeof(*state));
+    g_nav_level = M12_NAV_MAIN;
     {
         int gi;
         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -6049,9 +6051,24 @@ void m12_update_game_availability(const FS_GameAvailability *avail) {
     g_game_select_available[4] = avail->theron_available;
 }
 
-static const char *m12_game_tag(int index) {
+static int m12_game_select_available_for_state(const M12_StartupMenuState* state,
+                                               int index) {
+    const char* gameId;
+    if (index < 0 || index >= M12_GAME_SELECT_COUNT) {
+        return 0;
+    }
+    gameId = m12_game_select_game_id(index);
+    if (state && gameId) {
+        return M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) ? 1 : 0;
+    }
+    return g_game_select_available[index] ? 1 : 0;
+}
+
+static const char *m12_game_tag(const M12_StartupMenuState* state, int index) {
     if (index < 0 || index >= M12_GAME_SELECT_COUNT) return "";
-    return g_game_select_available[index] ? g_game_select_tags_ready[index] : g_game_select_tags_missing[index];
+    return m12_game_select_available_for_state(state, index)
+               ? g_game_select_tags_ready[index]
+               : g_game_select_tags_missing[index];
 }
 
 static const char* m12_game_select_game_id(int index) {
@@ -6202,10 +6219,11 @@ static void __attribute__((unused)) m12_draw_game_select (const M12_StartupMenuS
 
     for (i = 0; i < M12_GAME_SELECT_COUNT; i++) {
         int y = startY + i * itemH;
+        int available = m12_game_select_available_for_state(state, i);
         m12_draw_menu_item(fb, fw, fh, margin + 20, y,
-            m12_tr(state, g_game_select_labels[i]), m12_tr(state, m12_game_tag(i)),
+            m12_tr(state, g_game_select_labels[i]), m12_tr(state, m12_game_tag(state, i)),
             (int)state->gameSelectSelected == i,
-            g_game_select_available[i], i);
+            available, i);
     }
 
     m12_draw_text(fb, fw, fh, margin, fh - 24,
@@ -9467,7 +9485,8 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
             if (key_down && state->gameSelectSelected < M12_GAME_SELECT_COUNT - 1)
                 state->gameSelectSelected++;
             if (key_enter) {
-                if (g_game_select_available[state->gameSelectSelected]) {
+                if (m12_game_select_available_for_state(state,
+                                                        (int)state->gameSelectSelected)) {
                     g_nav_level = M12_NAV_GAME_MODE;
                     state->selectedGameId = state->gameSelectSelected;
                     state->gameModeSelected = M12_GAME_MODE_NEW_V1;
