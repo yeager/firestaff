@@ -50,12 +50,15 @@
 #define FIRESTAFF_ASSET_STATUS_TESTING 1
 #include "asset_status_m12.h"
 #include "config_m12.h"
+#include "firestaff_startup.h"
 #include "fs_portable_compat.h"
 #include "menu_startup_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+void m12_update_game_availability(const FS_GameAvailability* avail);
 
 #ifdef _WIN32
 #include <direct.h>
@@ -1028,6 +1031,53 @@ static void check_start_menu_prefers_default_root_with_more_games(
     M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
 }
 
+static void check_game_select_uses_asset_status_not_stale_global(
+    const char* homeRoot) {
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    FS_GameAvailability staleAvailability;
+    M12_StartupMenuState menu;
+
+    if (!FSP_JoinPath(dataRoot, sizeof(dataRoot), homeRoot, "game-select-data") ||
+        !FSP_CreateDirectoryRecursive(dataRoot) ||
+        !setup_dm1_recommended_dir(dataRoot,
+                                   graphicsPath, sizeof(graphicsPath),
+                                   graphicsMd5,
+                                   dungeonPath, sizeof(dungeonPath),
+                                   dungeonMd5)) {
+        fprintf(stderr, "FAIL: cannot seed game-select asset-status fixture\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5,
+                                                          dungeonMd5);
+    memset(&staleAvailability, 0, sizeof(staleAvailability));
+
+    M12_StartupMenu_InitWithDataDir(&menu, dataRoot, NULL);
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
+              "game-select fixture must expose DM1 in assetStatus");
+
+    m12_update_game_availability(&staleAvailability);
+    menu.mainMenuSelected = M12_MAIN_MENU_PLAY;
+    m12_redesigned_handle_input(&menu, 0, 0, 0, 0, 1, 0);
+    menu.gameSelectSelected = M12_GAME_SELECT_DM1;
+    m12_redesigned_handle_input(&menu, 0, 0, 0, 0, 1, 0);
+
+    check_int(m12_get_nav_level() == (int)M12_NAV_GAME_MODE,
+              "redesigned game-select must follow state assetStatus, not stale global availability");
+    check_int(menu.view == M12_MENU_VIEW_MAIN,
+              "redesigned game-select must not open a missing-data popup for assetStatus-ready DM1");
+    check_int(menu.selectedGameId == (int)M12_GAME_SELECT_DM1,
+              "redesigned game-select must keep selected ready game");
+
+    M12_StartupMenu_Destroy(&menu);
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+
 int main(void) {
     char home[M12_ASSET_DATA_DIR_CAPACITY];
     char dirA[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1066,6 +1116,7 @@ int main(void) {
 #endif
     check_start_menu_heals_stale_config_data_dir(home);
     check_start_menu_prefers_default_root_with_more_games(home);
+    check_game_select_uses_asset_status_not_stale_global(home);
 
     /* Release all test hooks. */
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
