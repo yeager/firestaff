@@ -1,4 +1,5 @@
 #include "nexus_v1_startup_menu.h"
+#include "nexus_v1_title.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -187,6 +188,65 @@ int nexus_v1_startup_menu_activate_selected(
     }
     if (row_kind == NEXUS_V1_STARTUP_ROW_NEW_GAME) {
         out_action->kind = NEXUS_V1_STARTUP_ACTION_NEW_GAME;
+        return 1;
+    }
+    return 0;
+}
+
+int nexus_v1_startup_title_handle_input(int title_frame,
+                                        unsigned int slot_mask,
+                                        Nexus_V1_StartupInput input,
+                                        Nexus_V1_StartupAction *out_action)
+{
+    nexus_v1_startup_action_clear(out_action);
+    if (!out_action) {
+        return 0;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_BACK) {
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER;
+        return 1;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_NONE) {
+        return 0;
+    }
+    if (input != NEXUS_V1_STARTUP_INPUT_ACCEPT &&
+        input != NEXUS_V1_STARTUP_INPUT_ACTION) {
+        return 0;
+    }
+    if (!nexus_title_start_ready(title_frame)) {
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_HOLD_TITLE;
+        return 1;
+    }
+    out_action->kind = slot_mask != 0u
+                           ? NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT
+                           : NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT;
+    return 1;
+}
+
+int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
+                                       Nexus_V1_StartupInput input,
+                                       Nexus_V1_StartupAction *out_action)
+{
+    nexus_v1_startup_action_clear(out_action);
+    if (!menu || !out_action) {
+        return 0;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_UP) {
+        (void)nexus_v1_startup_menu_move_selected(menu, -1);
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_NONE;
+        return 1;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_DOWN) {
+        (void)nexus_v1_startup_menu_move_selected(menu, 1);
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_NONE;
+        return 1;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_ACCEPT ||
+        input == NEXUS_V1_STARTUP_INPUT_ACTION) {
+        return nexus_v1_startup_menu_activate_selected(menu, out_action);
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_BACK) {
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE;
         return 1;
     }
     return 0;

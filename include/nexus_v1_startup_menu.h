@@ -19,8 +19,22 @@ typedef enum {
 typedef enum {
     NEXUS_V1_STARTUP_ACTION_NONE = 0,
     NEXUS_V1_STARTUP_ACTION_LOAD_SLOT = 1,
-    NEXUS_V1_STARTUP_ACTION_NEW_GAME = 2
+    NEXUS_V1_STARTUP_ACTION_NEW_GAME = 2,
+    NEXUS_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER = 3,
+    NEXUS_V1_STARTUP_ACTION_HOLD_TITLE = 4,
+    NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT = 5,
+    NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT = 6,
+    NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE = 7
 } Nexus_V1_StartupActionKind;
+
+typedef enum {
+    NEXUS_V1_STARTUP_INPUT_NONE = 0,
+    NEXUS_V1_STARTUP_INPUT_UP = 1,
+    NEXUS_V1_STARTUP_INPUT_DOWN = 2,
+    NEXUS_V1_STARTUP_INPUT_ACCEPT = 3,
+    NEXUS_V1_STARTUP_INPUT_ACTION = 4,
+    NEXUS_V1_STARTUP_INPUT_BACK = 5
+} Nexus_V1_StartupInput;
 
 typedef struct {
     Nexus_V1_StartupActionKind kind;
@@ -52,6 +66,13 @@ int nexus_v1_startup_menu_move_selected(Nexus_V1_StartupMenu *menu,
 int nexus_v1_startup_menu_activate_selected(
     const Nexus_V1_StartupMenu *menu,
     Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_title_handle_input(int title_frame,
+                                        unsigned int slot_mask,
+                                        Nexus_V1_StartupInput input,
+                                        Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
+                                       Nexus_V1_StartupInput input,
+                                       Nexus_V1_StartupAction *out_action);
 
 #ifdef __cplusplus
 }
