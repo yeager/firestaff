@@ -1,6 +1,31 @@
 
 # Unreleased
 
+# Firestaff v3.0.51
+
+Firestaff v3.0.51 packages the current `main` after the latest DM2 V1
+projectile and carried-item viewport rendering work.
+
+## Highlights since v3.0.50
+
+- **DM2 V1 missile map-chip flips and frame classes**: projectile rendering now
+  applies skproject-shaped missile frame adjustment and flipMirror routing.
+- **DM2 V1 carried item viewport overlay**: the current leader-hand item now
+  binds into the viewport overlay asset path.
+- **DM2 V1 cloud RAND02 flip**: poison-cloud map-chip rendering advances and
+  applies the skproject-compatible RAND02 flip seed.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.51`.
+
+## Verification
+
+- Local release verification covers version synchronization, the focused DM2 V1
+  viewport/render gate, the Phase A probe and `git diff --check` before GitHub
+  Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.51` release run.
+
 # Firestaff v3.0.50
 
 Firestaff v3.0.50 packages the current `main` after the latest DM2 V1
