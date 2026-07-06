@@ -1262,17 +1262,35 @@ static int cue_extract_file_name(const char *line, char *out, size_t outSize) {
     return i > 0U;
 }
 
+static int cue_contains_case(const char *line, const char *needle) {
+    size_t needleLen;
+    const char *p;
+    if (!line || !needle) return 0;
+    needleLen = strlen(needle);
+    if (needleLen == 0U) return 1;
+    for (p = line; *p; ++p) {
+        size_t i;
+        for (i = 0U; i < needleLen; ++i) {
+            if (p[i] == '\0' ||
+                tolower((unsigned char)p[i]) !=
+                tolower((unsigned char)needle[i])) {
+                break;
+            }
+        }
+        if (i == needleLen) return 1;
+    }
+    return 0;
+}
+
 static int cue_track_is_data(const char *line) {
     const char *p;
     if (!line) return 0;
     p = cue_ltrim(line);
     if (!cue_starts_with_keyword(p, "TRACK")) return 0;
-    return strstr(p, "MODE1/2048") != NULL ||
-           strstr(p, "MODE1/2352") != NULL ||
-           strstr(p, "MODE2/2352") != NULL ||
-           strstr(p, "mode1/2048") != NULL ||
-           strstr(p, "mode1/2352") != NULL ||
-           strstr(p, "mode2/2352") != NULL;
+    return cue_contains_case(p, "MODE1/2048") ||
+           cue_contains_case(p, "MODE1/2352") ||
+           cue_contains_case(p, "MODE2/2048") ||
+           cue_contains_case(p, "MODE2/2352");
 }
 
 static int path_is_absolute_local(const char *path) {
