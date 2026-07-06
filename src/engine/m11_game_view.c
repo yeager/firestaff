@@ -12183,6 +12183,7 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     {
         int ok = M11_GameView_Start(state, &spec);
         if (ok) {
+            state->startedFromLauncher = 0;
             state->dm1StartupIntroBypassed =
                 dm1_v1_startup_launch_path_bypasses_intro_pc34(
                     DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34);

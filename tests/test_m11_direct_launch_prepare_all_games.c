@@ -279,11 +279,29 @@ static void run_real_data_handoff_if_available(void) {
                         receipt.sourceKind == kCases[i].sourceKind &&
                         strcmp(receipt.sourceId, kCases[i].gameId) == 0,
                     "direct launch boot receipt keeps source identity");
+        expect_true(receipt.startedFromLauncher == 1,
+                    "direct launch boot receipt proves selected-entry launcher handoff");
         expect_true(receipt.startupPhase[0] != '\0',
                     "direct launch boot receipt names startup/runtime phase");
         if (strcmp(kCases[i].gameId, "dm1") == 0) {
             expect_true(strcmp(receipt.startupPhase, "dm1-runtime") == 0,
                         "direct launch boot receipt names DM1 runtime phase");
+            expect_true(receipt.dm1StartupIntroBypassed == 0,
+                        "direct launch boot receipt keeps DM1 source-visible intro path");
+            {
+                M11_GameViewState directView;
+                M11_BootProbeReceipt directReceipt;
+                M11_GameView_Init(&directView);
+                expect_true(M11_GameView_StartDm1(&directView, data_dir) == 1,
+                            "explicit direct DM1 game-view path starts with real data");
+                expect_true(M11_GameView_GetBootProbeReceipt(&directView,
+                                                             &directReceipt) == 1,
+                            "explicit direct DM1 game-view path exports boot receipt");
+                expect_true(directReceipt.startedFromLauncher == 0 &&
+                                directReceipt.dm1StartupIntroBypassed == 1,
+                            "explicit direct DM1 game-view path remains distinguishable from selected-entry boot");
+                M11_GameView_Shutdown(&directView);
+            }
         }
 
         M11_GameView_Shutdown(&view);
