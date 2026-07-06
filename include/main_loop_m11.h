@@ -35,6 +35,8 @@ typedef struct {
     const char* gameId;    /* Optional game to pre-select: dm1, csb, dm2,
                               nexus, theron. Overrides auto-detection. */
     int directLaunch;      /* Non-zero when --game should bypass M12. */
+    int bootProbe;         /* Non-zero for deterministic --game boot smoke:
+                              prepare/open selected-entry startup, then exit. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

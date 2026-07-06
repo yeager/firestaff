@@ -171,6 +171,25 @@ static int setup_dm1_recommended_dir(const char* root,
     return 1;
 }
 
+static int setup_nexus_recommended_dir(const char* root,
+                                       char* outDataPath,
+                                       size_t outDataPathSize,
+                                       char* outDataMd5,
+                                       size_t outDataMd5Size) {
+    char nexusDir[M12_ASSET_DATA_DIR_CAPACITY];
+    static const char dataPayload[] =
+        "Firestaff synthetic Nexus DM.BIN fixture for recommended layout\n";
+    if (!FSP_JoinPath(nexusDir, sizeof(nexusDir), root, "nexus") ||
+        !FSP_CreateDirectoryRecursive(nexusDir) ||
+        !FSP_JoinPath(outDataPath, outDataPathSize, nexusDir, "DM.BIN") ||
+        !write_text(outDataPath, dataPayload) ||
+        !m12_file_md5_hex(outDataPath, outDataMd5)) {
+        return 0;
+    }
+    outDataMd5[outDataMd5Size - 1U] = '\0';
+    return 1;
+}
+
 static void check_no_game_available(const M12_AssetStatus* status) {
     static const char* const gameIds[] = {"dm1", "csb", "dm2", "nexus", "theron"};
     size_t gi;
@@ -719,6 +738,55 @@ static void check_symlinked_recommended_dm1_layout(const char* homeRoot) {
 
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
+
+static void check_symlinked_multi_game_root_scans_all_games(const char* homeRoot) {
+    char targetRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char linkRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char nexusPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    char nexusMd5[M12_ASSET_MD5_CAPACITY];
+    M12_AssetStatus status;
+
+    if (!FSP_JoinPath(targetRoot, sizeof(targetRoot), homeRoot, "multi-game-symlink-target") ||
+        !FSP_CreateDirectoryRecursive(targetRoot) ||
+        !FSP_JoinPath(linkRoot, sizeof(linkRoot), homeRoot, "multi-game-symlink-data") ||
+        !setup_dm1_recommended_dir(targetRoot,
+                                   graphicsPath, sizeof(graphicsPath), graphicsMd5,
+                                   dungeonPath, sizeof(dungeonPath), dungeonMd5) ||
+        !setup_nexus_recommended_dir(targetRoot,
+                                     nexusPath, sizeof(nexusPath),
+                                     nexusMd5, sizeof(nexusMd5))) {
+        fprintf(stderr, "FAIL: cannot seed symlink multi-game data-root fixture\n");
+        ++g_failures;
+        return;
+    }
+    unlink(linkRoot);
+    if (symlink(targetRoot, linkRoot) != 0) {
+        fprintf(stderr, "FAIL: cannot create symlinked multi-game data root\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
+    M12_AssetStatus_TestSetNexusSyntheticHash(nexusMd5);
+    memset(&status, 0, sizeof(status));
+    scan_in_isolated_env(homeRoot, linkRoot, &status);
+
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm1") == 1,
+              "symlink broad data root must keep DM1 available");
+    check_int(M12_AssetStatus_GameAvailable(&status, "nexus") == 1,
+              "symlink broad data root must keep Nexus available");
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&status), linkRoot) == 0,
+              "symlink broad data root must stay on requested data root");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1"), linkRoot) == 0,
+              "symlink broad data root must launch DM1 from requested root");
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
+}
 #endif
 
 static int any_menu_game_available(const M12_StartupMenuState* menu) {
@@ -813,6 +881,7 @@ int main(void) {
     check_game_subdir_scan_promotes_to_parent(home);
 #ifndef _WIN32
     check_symlinked_recommended_dm1_layout(home);
+    check_symlinked_multi_game_root_scans_all_games(home);
 #endif
     check_start_menu_heals_stale_config_data_dir(home);
 

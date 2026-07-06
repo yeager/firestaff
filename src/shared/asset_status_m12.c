@@ -1367,6 +1367,25 @@ static int m12_path_is_theron_specific_dir(const char* path) {
     return 0;
 }
 
+static int m12_path_is_nexus_specific_dir(const char* path) {
+    char parent[M12_ASSET_DATA_DIR_CAPACITY];
+    if (!path || path[0] == '\0' || !FSP_DirExists(path)) {
+        return 0;
+    }
+    if (m12_path_tail_equals(path, "nexus")) {
+        return 1;
+    }
+    if (!FSP_ParentDir(parent, sizeof(parent), path)) {
+        return 0;
+    }
+    if ((m12_path_tail_equals(path, "saturn-ja") ||
+         m12_path_tail_equals(path, "saturn-jp")) &&
+        m12_path_tail_equals(parent, "nexus-extras")) {
+        return 1;
+    }
+    return 0;
+}
+
 static int m12_derive_theron_runtime_root_for_file(
     const char* filePath,
     char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY]) {
@@ -1465,7 +1484,7 @@ static int m12_try_match_direct_nexus_request(
         if (!FSP_ParentDir(scanRoot, sizeof(scanRoot), requestedDataDir)) {
             m12_copy_string(scanRoot, sizeof(scanRoot), ".");
         }
-    } else if (FSP_DirExists(requestedDataDir)) {
+    } else if (m12_path_is_nexus_specific_dir(requestedDataDir)) {
         m12_copy_string(scanRoot, sizeof(scanRoot), requestedDataDir);
     } else {
         return 0;
@@ -2390,6 +2409,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         return 1;
     }
     if (FSP_FileExists(requestedDataDir) &&
+        !FSP_DirExists(requestedDataDir) &&
         FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
         /* Hash-first explicit file handling. A direct path may be a
          * ZIP/ISO/BIN container, a correctly hashed Track/image file with an
