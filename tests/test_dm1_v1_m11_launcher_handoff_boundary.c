@@ -24,6 +24,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 
@@ -73,6 +74,20 @@ static void dismiss_initial_message(M12_StartupMenuState* state) {
     }
 }
 
+static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
+    size_t i;
+    int nonzero = 0;
+    if (!pixels) {
+        return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        if (pixels[i] != 0u) {
+            ++nonzero;
+        }
+    }
+    return nonzero;
+}
+
 static void make_empty_data_dir(char out[512]) {
     int rc = snprintf(out, 512,
                       "%s%sfirestaff_dm1_launcher_empty_%ld",
@@ -92,6 +107,22 @@ static const char* default_data_root(char fallback[512]) {
     }
     snprintf(fallback, 512, "%s/.firestaff/data", home);
     return fallback;
+}
+
+static void run_source_order_boundary(void) {
+    const char* evidence = dm1_v1_startup_sequence_source_evidence_pc34();
+    expect_true(dm1_v1_startup_sequence_source_order_valid_pc34(),
+                "DM1 startup source order is valid");
+    expect_true(evidence && strstr(evidence, "SWSH.C") &&
+                    strstr(evidence, "TITLE.C") &&
+                    strstr(evidence, "ENTRANCE.C"),
+                "DM1 startup source evidence names swoosh/title/entrance");
+    expect_true(dm1_v1_startup_launch_path_bypasses_intro_pc34(
+                    DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34) == 0,
+                "DM1 launcher startup does not bypass intro");
+    expect_true(dm1_v1_startup_launch_path_bypasses_intro_pc34(
+                    DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34) == 1,
+                "DM1 direct game-view helper remains the bypass path");
 }
 
 static void run_empty_launcher_boundary(void) {
@@ -136,6 +167,7 @@ static void run_real_launcher_handoff_if_available(void) {
     const M12_MenuEntry* entry;
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
+    unsigned char framebuffer[320 * 200];
 
     if (!data_dir || !data_dir[0]) {
         expect_skip("HOME is unset; no default Firestaff data root");
@@ -183,8 +215,17 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 DM1 launcher handoff opens GRAPHICS.DAT assets");
     expect_true(launcher_view.dungeonPath[0] != '\0',
                 "M11 DM1 launcher handoff records a DUNGEON.DAT path");
+    expect_true(launcher_view.world.dungeon != NULL,
+                "M11 DM1 launcher handoff owns a loaded dungeon model");
     expect_true(launcher_view.mirrorCatalogAvailable == 1,
                 "M11 DM1 launcher handoff builds the HoC mirror catalog");
+    expect_true(launcher_view.mirrorCatalog.count > 0,
+                "M11 DM1 launcher handoff exposes HoC mirror candidates");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
+                "M11 DM1 launcher frame draws nonblank pixels");
 
     memset(&direct_spec, 0, sizeof(direct_spec));
     direct_spec.title = "DUNGEON MASTER";
@@ -209,6 +250,7 @@ static void run_real_launcher_handoff_if_available(void) {
 int main(void) {
     printf("=== DM1 V1 M12/M11 launcher handoff boundary ===\n");
 
+    run_source_order_boundary();
     run_empty_launcher_boundary();
     run_real_launcher_handoff_if_available();
 
