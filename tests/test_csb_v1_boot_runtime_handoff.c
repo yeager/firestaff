@@ -429,6 +429,7 @@ static int build_synthetic_dm1_party_buffer(uint8_t *buf, size_t buf_size,
 static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
 {
     CSB_V1_UtilFlowContext ctx;
+    CSB_V1_UtilMenuLayout layout;
     CSB_V1_PartyState party;
     const char *save_path = "/tmp/firestaff-csb-v1-utility-flow-leader.sav";
 
@@ -468,6 +469,29 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
               strstr(csb_v1_util_flow_prompt(&ctx),
                      "START NEW GAME") != NULL,
           "utility flow exposes the source action menu text");
+    memset(&layout, 0, sizeof(layout));
+    CHECK(csb_v1_util_flow_menu_layout(&ctx, &layout) == 1,
+          "utility flow exposes a source-space action menu layout");
+    CHECK(layout.row_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
+              layout.rows[0].action == CSB_V1_UTIL_ACTION_IMPORT &&
+              layout.rows[1].action == CSB_V1_UTIL_ACTION_LOAD &&
+              layout.rows[2].action == CSB_V1_UTIL_ACTION_NEW &&
+              layout.rows[3].action == CSB_V1_UTIL_ACTION_VIEW,
+          "utility flow layout preserves ReDMCSB action row order");
+    CHECK(layout.rows[0].selected == 1 &&
+              layout.rows[0].x > 0 &&
+              layout.rows[0].y > 0 &&
+              layout.rows[0].w > 0 &&
+              layout.rows[0].h > 0,
+          "utility flow layout marks the selected import row with a source rectangle");
+    CHECK(csb_v1_util_flow_action_at_point(
+              &ctx,
+              layout.rows[2].x + 1,
+              layout.rows[2].y + 1) == CSB_V1_UTIL_ACTION_NEW,
+          "utility flow hit-test maps row coordinates to source actions");
+    CHECK(csb_v1_util_flow_action_at_point(&ctx, 0, 0) ==
+              CSB_V1_UTIL_ACTION_EXIT,
+          "utility flow hit-test rejects points outside the source action menu");
     csb_v1_util_flow_set_action(&ctx, CSB_V1_UTIL_ACTION_IMPORT);
     CHECK(csb_v1_util_flow_step(&ctx) == 0,
           "utility flow import action enters IMPORT_CHAMPIONS");

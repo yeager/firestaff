@@ -44,6 +44,29 @@ typedef enum {
     CSB_V1_UTIL_ACTION_EXIT     = 4   /* Exit utility flow */
 } CSB_V1_UtilFlowAction;
 
+#define CSB_V1_UTIL_MENU_ROW_COUNT 4
+
+typedef struct {
+    CSB_V1_UtilFlowAction action;
+    const char *label;
+    int x;
+    int y;
+    int w;
+    int h;
+    int selected;
+} CSB_V1_UtilMenuRow;
+
+typedef struct {
+    const char *prompt;
+    int x;
+    int y;
+    int w;
+    int h;
+    int row_count;
+    int selected_action_index;
+    CSB_V1_UtilMenuRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
+} CSB_V1_UtilMenuLayout;
+
 /* ── Disk verification result ──────────────────────────────────────── */
 typedef enum {
     CSB_V1_UTIL_DISK_OK          = 0,
@@ -89,6 +112,12 @@ CSB_V1_UtilFlowAction csb_v1_util_flow_selected_action(
     const CSB_V1_UtilFlowContext *ctx);
 int csb_v1_util_flow_accept_selected_action(CSB_V1_UtilFlowContext *ctx);
 const char *csb_v1_util_flow_action_label(CSB_V1_UtilFlowAction action);
+int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
+                                 CSB_V1_UtilMenuLayout *out_layout);
+CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
+    const CSB_V1_UtilFlowContext *ctx,
+    int x,
+    int y);
 
 /* ── Set DM1 save path for import ────────────────────────────────────── */
 void csb_v1_util_flow_set_dm1_path(CSB_V1_UtilFlowContext *ctx,
