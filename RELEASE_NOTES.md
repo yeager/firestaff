@@ -1,6 +1,30 @@
 
 # Unreleased
 
+# Firestaff v3.0.42
+
+Firestaff v3.0.42 packages the latest CSB utility input plus Nexus startup
+pointer-action and title-phase ownership work on `main` after v3.0.41.
+
+## Highlights since v3.0.41
+
+- **CSB utility input**: CSB utility startup now owns keyboard action routing
+  for import, load, view, preview close and start-new decisions before M11
+  executes entrance commands.
+- **Nexus startup pointer actions**: Nexus startup now owns pointer actions for
+  title, save-select and champion-select phases before M11 mutates startup
+  state.
+- **Nexus title phases**: Nexus title sequence now exposes named boot-reveal,
+  hold and start-ready phases with frame counters for tests and UI consumers.
+
+## Verification
+
+- Local release-prep verification covers version synchronization, focused Nexus
+  and CSB startup gates, and the Phase A probe before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.42` release run.
+
 # Firestaff v3.0.41
 
 Firestaff v3.0.41 packages the latest Nexus, CSB and DM2 startup ownership work

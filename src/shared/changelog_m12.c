@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.42  (2026-07-06)",
+    "  - Packages the post-v3.0.41 CSB utility input plus Nexus startup pointer-action and title-phase ownership work now on main.",
+    "  - CSB utility startup now owns keyboard action routing for import, load, view, preview close, and start-new decisions before M11 executes entrance commands.",
+    "  - Nexus startup now owns pointer actions for title, save-select, and champion-select phases before M11 mutates startup state.",
+    "  - Nexus title sequence now exposes named boot-reveal, hold, and start-ready phases with frame counters.",
+    "",
     "V3.0.41  (2026-07-06)",
     "  - Packages the post-v3.0.40 CSB entrance input, CSB utility panel, DM2 startup input, and Nexus champion-boot work now on main.",
     "  - CSB entrance input now resolves Accept, Action, Disk Menu, Back, and credits-dismiss decisions through the CSB startup sequence contract.",
@@ -438,5 +444,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.41";
+    return "3.0.42";
 }
