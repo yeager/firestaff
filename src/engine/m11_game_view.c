@@ -47,6 +47,7 @@
 #include "m11_v2_vertical_slice_assets.h"
 #include "m11_game_text_utf8_decoder_pc34_compat.h"
 #include "render_sdl_m11.h"
+#include "title_frontend_v1.h"
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -2959,21 +2960,34 @@ enum {
     M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34 = 1,
     M11_CSB_TITLE_SOURCE_ZOOM_STEP_PC34 = 2,
     M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34 = 3,
-    M11_CSB_TITLE_TOTAL_TICKS_PC34 = 82,
-    M11_CSB_TITLE_PRESENTS_TICKS_PC34 = 60,
-    M11_CSB_TITLE_ZOOM_TICKS_PC34 = 20
+    M11_CSB_TITLE_TOTAL_TICKS_PC34 = 53,
+    M11_CSB_TITLE_PRESENTS_TICKS_PC34 = 30
 };
 
 static int m11_csb_startup_title_source_step_for_frame(int frame)
 {
+    V1_TitleFrontendSourceAnimationStep step;
+    unsigned int sourceStep;
+
     if (frame < M11_CSB_TITLE_PRESENTS_TICKS_PC34) {
         return M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34;
     }
-    if (frame < M11_CSB_TITLE_PRESENTS_TICKS_PC34 +
-                    M11_CSB_TITLE_ZOOM_TICKS_PC34) {
-        return M11_CSB_TITLE_SOURCE_ZOOM_STEP_PC34;
+    sourceStep = (unsigned int)(frame - M11_CSB_TITLE_PRESENTS_TICKS_PC34 + 1);
+    if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
+        return M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34;
     }
-    return M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34;
+    switch (step.kind) {
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS:
+            return M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34;
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
+            return M11_CSB_TITLE_SOURCE_ZOOM_STEP_PC34;
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE:
+        default:
+            return M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34;
+    }
 }
 
 static void m11_draw_csb_startup_title(const M11_GameViewState *state,
@@ -2982,6 +2996,8 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        int framebufferHeight)
 {
     const M11_AssetSlot *title = NULL;
+    V1_TitleFrontendSourceAnimationStep step;
+    unsigned int sourceStep;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -2993,18 +3009,59 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         title = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 1u);
     }
     if (title && title->width == 320u && title->height >= 175u) {
-        /* ReDMCSB TITLE.C F0437 loads C001_GRAPHIC_TITLE for CSB, holds
-         * PRESENTS for 60 vblanks, zooms CHAOS for 20 frames, then blits
-         * STRIKES BACK before ENTRANCE.C F0806 takes over.  This M11 CSB
-         * prelude keeps the source phase explicit and uses the original C001
-         * bitmap whenever the verified CSB GRAPHICS.DAT is available. */
-        M11_AssetLoader_Blit(title,
-                             framebuffer,
-                             framebufferWidth,
-                             framebufferHeight,
-                             0,
-                             0,
-                             -1);
+        /* ReDMCSB TITLE.C F0437 uses C001_GRAPHIC_TITLE: PRESENTS is
+         * blitted from source y=137 to screen y=90, CHAOS is rendered as
+         * the 18 shrink/zoom steps described by V1_TitleFrontend, and
+         * STRIKES BACK is blitted from source y=80 to screen y=118 before
+         * ENTRANCE.C F0806/F0441 takes over. */
+        sourceStep =
+            state->csbState.startup_title_frame <
+                    M11_CSB_TITLE_PRESENTS_TICKS_PC34
+                ? 1u
+                : (unsigned int)(state->csbState.startup_title_frame -
+                                 M11_CSB_TITLE_PRESENTS_TICKS_PC34 + 1);
+        if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
+            step.kind = V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT;
+        }
+        if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
+            M11_AssetLoader_BlitRegion(title,
+                                       0,
+                                       137,
+                                       320,
+                                       16,
+                                       framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       0,
+                                       90,
+                                       -1);
+        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
+            M11_AssetLoader_BlitSubRectScaled(title,
+                                              framebuffer,
+                                              framebufferWidth,
+                                              framebufferHeight,
+                                              (int)step.x,
+                                              (int)step.y,
+                                              (int)step.width,
+                                              (int)step.height,
+                                              0,
+                                              0,
+                                              320,
+                                              80,
+                                              -1);
+        } else {
+            M11_AssetLoader_BlitRegion(title,
+                                       0,
+                                       80,
+                                       320,
+                                       57,
+                                       framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       0,
+                                       118,
+                                       0);
+        }
         return;
     }
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
