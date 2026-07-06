@@ -414,6 +414,9 @@ static void test_sprite_asset_provider(void)
     CHECK("DM2 projectile directional frame follows view-relative missile frames",
           dm2_v1_viewport_projectile_frame_for_direction(0, 1, 0, 7) == 4 &&
               dm2_v1_viewport_projectile_frame_for_direction(0, 3, 0, 7) == 6);
+    CHECK("DM2 cloud frame follows skproject tick alternation",
+          dm2_v1_viewport_cloud_frame_for_tick(0, 7) == 1 &&
+              dm2_v1_viewport_cloud_frame_for_tick(1, 7) == 2);
     CHECK("DM2 creature directional frame keeps short atlases animated",
           dm2_v1_viewport_creature_frame_for_direction(3, 1, 0, 2) == 1);
     CHECK("DM2 creature directional frame follows view-relative parity frames",
@@ -579,6 +582,52 @@ static void test_sprite_asset_provider(void)
           viewport.asset_projectile_drawn_count == 1 &&
               framebuffer[((70 - 3) * 320) + (120 - 3)] == 11 &&
               framebuffer[(70 * 320) + 120] == 11);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    viewport.tick_count = 0;
+    viewport.projectile_count = 1;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 0x87;
+    viewport.projectiles[0].frame_index = 0x00;
+    viewport.projectiles[0].direction = 1;
+    viewport.projectiles[0].render_kind = DM2_V1_PROJECTILE_RENDER_CLOUD;
+    viewport.projectiles[0].screen_x = 120;
+    viewport.projectiles[0].screen_y = 70;
+    s_projectile_seven_frame_fixture = 1;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_projectiles(&viewport);
+    CHECK("cloud render uses tick frame instead of directional missile frame",
+          viewport.asset_projectile_drawn_count == 1 &&
+              framebuffer[((70 - 3) * 320) + (120 - 3)] == 2 &&
+              framebuffer[(70 * 320) + 120] == 2);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    viewport.tick_count = 1;
+    viewport.projectile_count = 1;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 0x87;
+    viewport.projectiles[0].frame_index = 0x00;
+    viewport.projectiles[0].direction = 1;
+    viewport.projectiles[0].render_kind = DM2_V1_PROJECTILE_RENDER_CLOUD;
+    viewport.projectiles[0].screen_x = 120;
+    viewport.projectiles[0].screen_y = 70;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_projectiles(&viewport);
+    s_projectile_seven_frame_fixture = 0;
+    CHECK("cloud render alternates to the next tick frame",
+          viewport.asset_projectile_drawn_count == 1 &&
+              framebuffer[((70 - 3) * 320) + (120 - 3)] == 3 &&
+              framebuffer[(70 * 320) + 120] == 3);
 }
 
 int main(void)

@@ -582,6 +582,17 @@ int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
     return dm2_v1_viewport_map_chip_frame_index(3 + rel, frame_count);
 }
 
+int dm2_v1_viewport_cloud_frame_for_tick(int tick_count,
+                                         int frame_count)
+{
+    if (frame_count <= 0) return 0;
+    /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP lines 10672-10743:
+     * dbCloud objects use `(glbGameTick & 1) + 1` before
+     * DRAW_CHIP_OF_MAGIC_MAP instead of the missile directional frame path. */
+    return dm2_v1_viewport_map_chip_frame_index((tick_count & 1) + 1,
+                                                frame_count);
+}
+
 int dm2_v1_viewport_creature_frame_for_direction(int requested_frame,
                                                  int creature_direction,
                                                  int party_direction,
@@ -1783,6 +1794,7 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 pixels && src_w > 0 && src_h > 0) {
                 int frame_x = 0;
                 int frame_w = src_w;
+                int render_frame = p->frame_index;
                 if (!dm2_v1_prepare_projectile_map_chip_frame(src_w,
                                                               src_h,
                                                               p->frame_index,
@@ -1792,6 +1804,20 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                                                               &frame_w)) {
                     frame_x = 0;
                     frame_w = src_w;
+                }
+                if (p->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD) {
+                    int frame_count =
+                        dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
+                    render_frame =
+                        dm2_v1_viewport_cloud_frame_for_tick(s->tick_count,
+                                                             frame_count);
+                    if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                                       render_frame,
+                                                       &frame_x,
+                                                       &frame_w)) {
+                        frame_x = 0;
+                        frame_w = src_w;
+                    }
                 }
                 int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
                                                                   p->depth,
