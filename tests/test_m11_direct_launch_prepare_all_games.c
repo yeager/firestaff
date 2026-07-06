@@ -266,6 +266,9 @@ static void run_real_data_handoff_if_available(void) {
             opts.gameId = kCases[i].gameId;
             opts.dataDir = data_dir;
             opts.durationMs = 0;
+            if (strcmp(kCases[i].gameId, "dm2") == 0) {
+                opts.script = "enter";
+            }
             test_setenv("SDL_VIDEODRIVER", "dummy");
             expect_true(M11_PhaseA_Run(&opts) == 0,
                         "boot-probe advances selected-entry startup frames");
