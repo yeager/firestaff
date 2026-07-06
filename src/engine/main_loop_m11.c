@@ -253,7 +253,6 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         restoreFilter = 1;
     }
     if (specialPalette >= 0 &&
-        scale == 1 &&
         !(M11_GameView_PresentationTarget(
               gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
               gameView ? gameView->presentationWidth : 0,
