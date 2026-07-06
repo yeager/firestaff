@@ -278,8 +278,20 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               plan.waiting_for_input &&
-              plan.blink_prompt_visible,
-          "startup render plan owns closed entrance prompt");
+              plan.blink_prompt_visible &&
+              plan.closed_left_source_x == 0 &&
+              plan.closed_left_source_y == 0 &&
+              plan.closed_left_dest_x == 0 &&
+              plan.closed_left_dest_y == 28 &&
+              plan.closed_left_w == 105 &&
+              plan.closed_left_h == 161 &&
+              plan.closed_right_source_x == 0 &&
+              plan.closed_right_source_y == 0 &&
+              plan.closed_right_dest_x == 105 &&
+              plan.closed_right_dest_y == 28 &&
+              plan.closed_right_w == 127 &&
+              plan.closed_right_h == 161,
+          "startup render plan owns closed entrance prompt and door boxes");
 
     render_state.entrance_frame = 12;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
@@ -308,8 +320,20 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
-              plan.opening_step == 2,
-          "startup render plan owns door-opening frame surface");
+              plan.opening_step == 2 &&
+              plan.opening_door_valid &&
+              plan.opening_door_step == 2 &&
+              plan.opening_left_source_x == 0 &&
+              plan.opening_left_dest_x == 0 &&
+              plan.opening_left_dest_y == 28 &&
+              plan.opening_left_w == 97 &&
+              plan.opening_left_h == 161 &&
+              plan.opening_right_source_x == 8 &&
+              plan.opening_right_dest_x == 113 &&
+              plan.opening_right_dest_y == 28 &&
+              plan.opening_right_w == 119 &&
+              plan.opening_right_h == 161,
+          "startup render plan owns door-opening frame surface and boxes");
 
     memset(&command_state, 0, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 0) &&

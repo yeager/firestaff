@@ -129,6 +129,32 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int title_special_palette;
     int blink_prompt_visible;
     int opening_step;
+    int closed_left_source_x;
+    int closed_left_source_y;
+    int closed_left_dest_x;
+    int closed_left_dest_y;
+    int closed_left_w;
+    int closed_left_h;
+    int closed_right_source_x;
+    int closed_right_source_y;
+    int closed_right_dest_x;
+    int closed_right_dest_y;
+    int closed_right_w;
+    int closed_right_h;
+    int opening_door_valid;
+    int opening_door_step;
+    int opening_left_source_x;
+    int opening_left_source_y;
+    int opening_left_dest_x;
+    int opening_left_dest_y;
+    int opening_left_w;
+    int opening_left_h;
+    int opening_right_source_x;
+    int opening_right_source_y;
+    int opening_right_dest_x;
+    int opening_right_dest_y;
+    int opening_right_w;
+    int opening_right_h;
 } CSB_V1_StartupRenderPlan_PC34;
 
 typedef struct CSB_V1_StartupCommandState_PC34 {
