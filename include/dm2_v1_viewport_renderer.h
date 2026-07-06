@@ -149,6 +149,10 @@ int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
                                          int frame_count);
+int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
+                                                   int projectile_direction,
+                                                   int party_direction,
+                                                   int frame_count);
 
 typedef struct {
     int x;
@@ -219,6 +223,7 @@ typedef struct {
     int16_t  screen_y;
     int16_t  velocity_x;      /* pixel velocity */
     int16_t  velocity_y;
+    uint8_t  direction;       /* 0=N, 1=E, 2=S, 3=W */
     uint8_t  palette_shift;   /* light/color modifier */
 } DM2_Projectile;
 

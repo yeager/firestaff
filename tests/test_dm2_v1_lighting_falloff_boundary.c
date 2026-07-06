@@ -17,6 +17,7 @@ static int s_tests_run = 0;
 static int s_tests_passed = 0;
 static int s_asset_fetch_calls = 0;
 static int s_last_asset_index = 0;
+static int s_projectile_seven_frame_fixture = 0;
 
 #define CHECK(name_, cond_) do { \
     printf("  %s...\n", name_); \
@@ -66,6 +67,15 @@ static int test_dm2_asset_fetch(void *user,
         5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
         5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15
     };
+    static const uint8_t projectile_directional_atlas[49 * 7] = {
+        1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13,
+        1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13,
+        1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13,
+        1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13,
+        1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13,
+        1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13,
+        1,1,1,1,1,1,1, 2,2,2,2,2,2,2, 3,3,3,3,3,3,3, 10,10,10,10,10,10,10, 11,11,11,11,11,11,11, 12,12,12,12,12,12,12, 13,13,13,13,13,13,13
+    };
     (void)user;
     ++s_asset_fetch_calls;
     s_last_asset_index = gdat_index;
@@ -108,10 +118,12 @@ static int test_dm2_asset_fetch(void *user,
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >= 0x0d &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) <= 0x15) {
-        if (out_pixels) *out_pixels = projectile_atlas;
-        if (out_w) *out_w = 21;
+        if (out_pixels) *out_pixels = s_projectile_seven_frame_fixture
+            ? projectile_directional_atlas : projectile_atlas;
+        if (out_w) *out_w = s_projectile_seven_frame_fixture ? 49 : 21;
         if (out_h) *out_h = 7;
-        if (out_stride) *out_stride = 21;
+        if (out_stride) *out_stride =
+            s_projectile_seven_frame_fixture ? 49 : 21;
         return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
@@ -385,6 +397,11 @@ static void test_sprite_asset_provider(void)
     CHECK("DM2 map-chip frame index wraps inside source atlas count",
           dm2_v1_viewport_map_chip_frame_index(4, 3) == 1 &&
               dm2_v1_viewport_map_chip_frame_index(-1, 3) == 0);
+    CHECK("DM2 projectile directional frame keeps short atlases animated",
+          dm2_v1_viewport_projectile_frame_for_direction(5, 1, 0, 3) == 2);
+    CHECK("DM2 projectile directional frame follows view-relative missile frames",
+          dm2_v1_viewport_projectile_frame_for_direction(0, 1, 0, 7) == 4 &&
+              dm2_v1_viewport_projectile_frame_for_direction(0, 3, 0, 7) == 6);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -501,6 +518,28 @@ static void test_sprite_asset_provider(void)
     CHECK("projectile map-chip atlas draws only the selected frame",
           framebuffer[((70 - 3) * 320) + (120 - 3)] == 13 &&
               framebuffer[(70 * 320) + 120] == 13);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    viewport.projectile_count = 1;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 0x02;
+    viewport.projectiles[0].frame_index = 0x01;
+    viewport.projectiles[0].direction = 1;
+    viewport.projectiles[0].screen_x = 120;
+    viewport.projectiles[0].screen_y = 70;
+    s_projectile_seven_frame_fixture = 1;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_projectiles(&viewport);
+    s_projectile_seven_frame_fixture = 0;
+    CHECK("projectile render uses view-relative directional atlas frame",
+          viewport.asset_projectile_drawn_count == 1 &&
+              framebuffer[((70 - 3) * 320) + (120 - 3)] == 11 &&
+              framebuffer[(70 * 320) + 120] == 11);
 }
 
 int main(void)

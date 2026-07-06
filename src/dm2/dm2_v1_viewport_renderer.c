@@ -562,6 +562,26 @@ int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
     return requested_frame % frame_count;
 }
 
+int dm2_v1_viewport_projectile_frame_for_direction(int requested_frame,
+                                                   int projectile_direction,
+                                                   int party_direction,
+                                                   int frame_count)
+{
+    int rel;
+    if (frame_count <= 0) return 0;
+    /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP lines 1525-1575 uses
+     * directional missile frames when QUERY_DUNGEON_MAP_CHIP_PICT reports
+     * more than three 7px frames. The source chooses a base missile frame
+     * near 3 plus a view-relative direction term before DRAW_CHIP_OF_MAGIC_MAP
+     * slices the atlas. Keep short atlases on their requested animation frame. */
+    if (frame_count <= 3) {
+        return dm2_v1_viewport_map_chip_frame_index(requested_frame,
+                                                   frame_count);
+    }
+    rel = ((projectile_direction & 3) - (party_direction & 3)) & 3;
+    return dm2_v1_viewport_map_chip_frame_index(3 + rel, frame_count);
+}
+
 static void dm2_v1_viewport_clear_rect(DM2_V1_ViewportRect *out_rect)
 {
     if (!out_rect) return;
@@ -830,6 +850,24 @@ static int dm2_v1_prepare_map_chip_frame(int src_w,
     int frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
     int frame_index = dm2_v1_viewport_map_chip_frame_index(requested_frame,
                                                           frame_count);
+    if (frame_w <= 0 || frame_count <= 0) return 0;
+    if (out_frame_x) *out_frame_x = frame_index * frame_w;
+    if (out_frame_w) *out_frame_w = frame_w;
+    return 1;
+}
+
+static int dm2_v1_prepare_projectile_map_chip_frame(int src_w,
+                                                    int src_h,
+                                                    int requested_frame,
+                                                    int projectile_direction,
+                                                    int party_direction,
+                                                    int *out_frame_x,
+                                                    int *out_frame_w)
+{
+    int frame_w = dm2_v1_viewport_map_chip_frame_width(src_w, src_h);
+    int frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
+    int frame_index = dm2_v1_viewport_projectile_frame_for_direction(
+        requested_frame, projectile_direction, party_direction, frame_count);
     if (frame_w <= 0 || frame_count <= 0) return 0;
     if (out_frame_x) *out_frame_x = frame_index * frame_w;
     if (out_frame_w) *out_frame_w = frame_w;
@@ -1712,10 +1750,13 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 pixels && src_w > 0 && src_h > 0) {
                 int frame_x = 0;
                 int frame_w = src_w;
-                if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
-                                                   p->frame_index,
-                                                   &frame_x,
-                                                   &frame_w)) {
+                if (!dm2_v1_prepare_projectile_map_chip_frame(src_w,
+                                                              src_h,
+                                                              p->frame_index,
+                                                              p->direction,
+                                                              s->party_dir,
+                                                              &frame_x,
+                                                              &frame_w)) {
                     frame_x = 0;
                     frame_w = src_w;
                 }
