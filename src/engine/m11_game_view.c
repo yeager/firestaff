@@ -14809,6 +14809,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             if (input == M12_MENU_INPUT_NONE) {
                 return M11_GAME_INPUT_IGNORED;
             }
+            if (input != M12_MENU_INPUT_ACCEPT &&
+                input != M12_MENU_INPUT_ACTION) {
+                return M11_GAME_INPUT_IGNORED;
+            }
             state->nexusState.title_active = 0;
             state->nexusState.title_frame = 0;
             if (state->nexusState.startup_save_slot_mask != 0u) {

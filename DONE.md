@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-06 Nexus startup title input gate: M11 now advances the Nexus title phase only on explicit Accept/Action or primary pointer start, while Back still returns to the launcher. Movement tokens no longer skip directly into save-select or champion-select from the title. Verification: focused build passed for `test_m11_nexus_startup_gate`; focused CTest for `m11_nexus_startup_gate` plus `nexus_v1_startup_menu_pc34_compat` passed locally.
+
 - ✅ 2026-07-06 Nexus startup Back navigation: M11 now keeps Back/ESC local to the Nexus startup flow before dungeon entry. Save-select Back returns to the title, empty champion-select Back returns to save-select or title, and champion-select Back after recruitment removes the last selected champion through a Nexus champion-pool API instead of leaving for the launcher. Verification: focused build passed for `test_m11_nexus_startup_gate`; focused CTest for `m11_nexus_startup_gate` plus `nexus_v1_startup_menu_pc34_compat` passed locally.
 
 - ✅ 2026-07-06 Nexus champion-select pointer ownership: M11 now consumes pointer clicks inside the visible Nexus champion-select panel when no champion row/footer is hit, preventing header/panel whitespace from bypassing startup selection. Verification: focused build passed for `test_m11_nexus_startup_gate`; focused CTest for `m11_nexus_startup_gate` plus `nexus_v1_startup_menu_pc34_compat` passed locally.
