@@ -233,14 +233,14 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
         }
     } else {
         /* Partial/short: load what is available */
+        int available = data_size > data_of_face ? data_size - data_of_face : 0;
         printf("Nexus UI: WARNING FACE.BIN data short for portrait %d "
                "(need=%d have=%d) — gray placeholder\n",
-               face_index, entry_size, data_size - data_of_face);
+               face_index, entry_size, available);
         surf->data = (uint8_t *)calloc(entry_size, 1);
-        if (surf->data && data && data_size > data_of_face) {
-            int avail = data_size - data_of_face;
+        if (surf->data && data && available > 0) {
             memcpy(surf->data, data + data_of_face,
-                   avail < entry_size ? (size_t)avail : (size_t)entry_size);
+                   available < entry_size ? (size_t)available : (size_t)entry_size);
         }
         if (surf->data) surface_clear_gray(surf);
     }

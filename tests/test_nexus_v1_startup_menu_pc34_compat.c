@@ -74,6 +74,8 @@ int main(void)
     Nexus_V1_StartupAction action;
     Nexus_V1_StartupRowKind kind;
     int slot;
+    int cursor;
+    Nexus_V1_ChampionPool empty_champions;
 
     if (!make_temp_root(root, sizeof(root))) {
         fprintf(stderr, "FAIL: could not create temporary root\n");
@@ -81,7 +83,86 @@ int main(void)
     }
     snprintf(save_dir, sizeof(save_dir), "%s/saves", root);
 
+    memset(&empty_champions, 0, sizeof(empty_champions));
+    cursor = 7;
+    memset(&action, 0, sizeof(action));
+    expect(nexus_v1_startup_champion_handle_input(
+               &empty_champions,
+               &cursor,
+               0u,
+               NEXUS_V1_STARTUP_INPUT_BACK,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE,
+           "Nexus champion startup Back returns to title even with an empty roster");
+    expect(nexus_v1_startup_champion_handle_input(
+               &empty_champions,
+               &cursor,
+               (1u << 3),
+               NEXUS_V1_STARTUP_INPUT_BACK,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT,
+           "Nexus champion startup Back returns to save select with slots and an empty roster");
+    expect(!nexus_v1_startup_champion_handle_input(
+               &empty_champions,
+               &cursor,
+               0u,
+               NEXUS_V1_STARTUP_INPUT_ACCEPT,
+               &action),
+           "Nexus champion startup ignores non-Back input with an empty roster");
+
     nexus_v1_champions_init(&champions);
+    expect(champions.champion_count == NEXUS_MAX_CHAMPIONS,
+           "Nexus startup champion roster exposes all 24 mirror rows");
+    cursor = 0;
+    memset(&action, 0, sizeof(action));
+    expect(nexus_v1_startup_champion_handle_input(
+               &champions,
+               &cursor,
+               0u,
+               NEXUS_V1_STARTUP_INPUT_ACTION,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_NEED_CHAMPION &&
+               champions.party_count == 0,
+           "Nexus champion startup refuses dungeon start without a party");
+    expect(nexus_v1_startup_champion_handle_input(
+               &champions,
+               &cursor,
+               0u,
+               NEXUS_V1_STARTUP_INPUT_ACCEPT,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED &&
+               action.row == 0 &&
+               cursor == 1 &&
+               champions.party_count == 1,
+           "Nexus champion startup Accept recruits and advances cursor");
+    expect(nexus_v1_startup_champion_handle_input(
+               &champions,
+               &cursor,
+               0u,
+               NEXUS_V1_STARTUP_INPUT_BACK,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_REMOVED &&
+               action.row == 0 &&
+               cursor == 0 &&
+               champions.party_count == 0,
+           "Nexus champion startup Back removes last recruit");
+    expect(nexus_v1_startup_champion_handle_input(
+               &champions,
+               &cursor,
+               0u,
+               NEXUS_V1_STARTUP_INPUT_BACK,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE,
+           "Nexus champion startup Back returns to title with no save slots");
+    expect(nexus_v1_startup_champion_handle_input(
+               &champions,
+               &cursor,
+               (1u << 3),
+               NEXUS_V1_STARTUP_INPUT_BACK,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT,
+           "Nexus champion startup Back returns to save select when slots exist");
+
     build_world(&world);
     nexus_v1_save_init(&mgr, save_dir);
     expect(nexus_v1_save_full(&mgr, 3,

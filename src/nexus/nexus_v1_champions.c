@@ -188,6 +188,22 @@ static const struct { const char *ascii; const char *jp; int cls; int hp; int st
     {"Elija",     "\xe3\x82\xa8\xe3\x83\xaa\xe3\x82\xb8\xe3\x83\xa3", NEXUS_CLASS_WIZARD,  38, 30, 70, 22, 32, 65, 28},
     {"Wu Tse",    "\xe3\x82\xa6\xe3\x83\xbc\xe3\x83\x84\xe3\x82\xa7", NEXUS_CLASS_NINJA,   52, 58, 30, 38, 55, 35, 42},
     {"Stamm",     "\xe3\x82\xb9\xe3\x82\xbf\xe3\x83\xa0", NEXUS_CLASS_FIGHTER, 75, 60, 10, 60, 35, 20, 55},
+    {"Tiggy",     "Tiggy", NEXUS_CLASS_WIZARD,  32, 35, 70, 24, 42, 66, 32},
+    {"Chani",     "Chani", NEXUS_CLASS_PRIEST,  42, 42, 60, 30, 38, 62, 42},
+    {"Hissssa",   "Hissssa", NEXUS_CLASS_NINJA, 60, 62, 20, 48, 64, 26, 54},
+    {"Daroou",    "Daroou", NEXUS_CLASS_FIGHTER, 78, 58, 12, 66, 32, 22, 58},
+    {"Gothmog",   "Gothmog", NEXUS_CLASS_WIZARD, 45, 40, 68, 34, 34, 68, 38},
+    {"Mophus",    "Mophus", NEXUS_CLASS_PRIEST, 48, 38, 64, 32, 30, 70, 44},
+    {"Alex",      "Alex", NEXUS_CLASS_FIGHTER, 62, 55, 24, 52, 48, 36, 50},
+    {"Nabi II",   "Nabi II", NEXUS_CLASS_NINJA, 56, 61, 28, 42, 62, 34, 46},
+    {"Linflas",   "Linflas", NEXUS_CLASS_NINJA, 50, 60, 34, 38, 66, 40, 44},
+    {"Iaido",     "Iaido", NEXUS_CLASS_FIGHTER, 68, 54, 18, 58, 50, 28, 52},
+    {"Boris",     "Boris", NEXUS_CLASS_WIZARD, 44, 38, 72, 28, 36, 72, 36},
+    {"Sonja",     "Sonja", NEXUS_CLASS_FIGHTER, 72, 57, 16, 62, 44, 24, 56},
+    {"Wuuf",      "Wuuf", NEXUS_CLASS_PRIEST, 46, 46, 58, 34, 42, 58, 48},
+    {"Leif",      "Leif", NEXUS_CLASS_FIGHTER, 64, 52, 26, 54, 46, 38, 50},
+    {"Azizi",     "Azizi", NEXUS_CLASS_NINJA, 58, 59, 30, 44, 60, 36, 48},
+    {"Hawk",      "Hawk", NEXUS_CLASS_FIGHTER, 76, 63, 14, 64, 40, 24, 60},
     {NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
