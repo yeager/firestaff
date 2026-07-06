@@ -27105,8 +27105,11 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
  *   C013_ZONE_SPELL_AREA click/input box is at x=233..319, y=42..73
  *     in ReDMCSB COMMAND.C; GRAPHICS.DAT graphic 9 is the 87x25
  *     spell-area background that starts at the same source x/y.
- *   G0001/G0499 C011 action-area source box is x=224..319,
- *     y=77..121 (96x45), matching ReDMCSB DATA.C/MENU.C.
+ *   C011 action-area screen zone is x=233..319, y=77..121
+ *     (87x45), matching the current PC right-column stack.  The
+ *     older G0499_ai_Graphic560_Box_ActionArea* byte boxes in MENU.C
+ *     name x=224..319 for pre-layout bitmap crops; those are not the
+ *     resolved screen/action zone exposed here.
  *
  * Earlier Firestaff V1 builds placed these panels at x=224 with the
  * action graphic up at y=45, leaving the action/menu chrome detached
@@ -27115,9 +27118,9 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
  * Reference: ReDMCSB COMMAND.C primary mouse input; ACTIDRAW.C F0387;
  * CASTER.C F0394; DATA.C C009/C010 graphics.
  */
-#define M11_DM_ACTION_AREA_X    224
+#define M11_DM_ACTION_AREA_X    233
 #define M11_DM_ACTION_AREA_Y     77
-#define M11_DM_ACTION_AREA_W     96
+#define M11_DM_ACTION_AREA_W     87
 #define M11_DM_ACTION_AREA_H     45
 #define M11_DM_SPELL_AREA_X     233
 #define M11_DM_SPELL_AREA_Y      42
