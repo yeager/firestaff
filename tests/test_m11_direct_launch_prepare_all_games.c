@@ -260,6 +260,7 @@ static void run_real_data_handoff_if_available(void) {
 
         {
             M11_PhaseA_Options opts;
+            char appdata_dir[512];
             M11_PhaseA_SetDefaultOptions(&opts);
             opts.bootProbe = 1;
             opts.bootProbeFrames = 2;
@@ -268,10 +269,32 @@ static void run_real_data_handoff_if_available(void) {
             opts.durationMs = 0;
             if (strcmp(kCases[i].gameId, "dm2") == 0) {
                 opts.script = "enter";
+                opts.bootProbeExpectPhase = "dm2-runtime";
+            } else if (strcmp(kCases[i].gameId, "csb") == 0) {
+                opts.bootProbeFrames = 240;
+                opts.script = "enter";
+                opts.bootProbeExpectPhase = "csb-runtime";
+            } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
+                int rc = snprintf(appdata_dir, sizeof(appdata_dir),
+                                  "%s%sfirestaff_nexus_boot_probe_appdata_%ld",
+                                  (getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp"),
+                                  TEST_PATH_SEP, (long)TEST_GETPID());
+                if (rc > 0 && rc < (int)sizeof(appdata_dir)) {
+                    (void)TEST_MKDIR(appdata_dir);
+                    test_setenv("APPDATA", appdata_dir);
+                }
+                opts.script = "wait120,enter,enter,act";
+                opts.bootProbeExpectPhase = "nexus-runtime";
+            } else if (strcmp(kCases[i].gameId, "theron") == 0) {
+                opts.script = "enter,enter,act";
+                opts.bootProbeExpectPhase = "theron-runtime";
             }
             test_setenv("SDL_VIDEODRIVER", "dummy");
             expect_true(M11_PhaseA_Run(&opts) == 0,
                         "boot-probe advances selected-entry startup frames");
+            if (strcmp(kCases[i].gameId, "nexus") == 0) {
+                test_setenv("APPDATA", NULL);
+            }
         }
     }
 

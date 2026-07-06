@@ -38,6 +38,8 @@ static void usage(const char* prog) {
             "  --boot-probe        With --game, verify selected-entry boot handoff and exit\n"
             "  --boot-probe-frames <n> Advance n M11 idle frames before probe receipt\n"
             "                       In boot-probe mode, --script input is applied after those frames\n"
+            "                       Boot scripts also accept waitN / wait:N frame tokens\n"
+            "  --boot-probe-expect-phase <name> Fail unless the boot receipt phase matches\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -171,6 +173,10 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--boot-probe-frames") == 0 && i + 1 < argc) {
             opts.bootProbeFrames = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-phase") == 0 && i + 1 < argc) {
+            opts.bootProbeExpectPhase = argv[++i];
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
