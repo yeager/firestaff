@@ -29,6 +29,19 @@ static void check_contains(const char *label, const char *haystack, const char *
     }
 }
 
+static void check_str(const char *label, const char *got, const char *expected) {
+    if (got && expected && strcmp(got, expected) == 0) {
+        printf("PASS %s=%s\n", label, got);
+        ++g_pass;
+    } else {
+        printf("FAIL %s got=%s expected=%s\n",
+               label,
+               got ? got : "(null)",
+               expected ? expected : "(null)");
+        ++g_fail;
+    }
+}
+
 int main(void) {
     Theron_DungeonProgression progression;
     Theron_StartupFlow flow;
@@ -241,6 +254,128 @@ int main(void) {
                        theron_v1_startup_action_name(
                            THERON_STARTUP_ACTION_ENTER_FORCEFIELD),
                        "forcefield");
+        {
+            Theron_StartupActionPlan plan;
+            theron_v1_startup_action_init(&action);
+            action.kind = THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER;
+            result = theron_v1_startup_plan_for_action(&action, &plan)
+                         ? THERON_STARTUP_OK
+                         : THERON_STARTUP_ERR_BAD_STAGE;
+            check_int("plan return rc", result, THERON_STARTUP_OK);
+            check_int("plan return kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_RETURN_TO_LAUNCHER);
+            check_str("plan return scope", plan.status_scope, "RETURN");
+            check_str("plan return status", plan.status, "BACK TO LAUNCHER");
+
+            theron_v1_startup_action_init(&action);
+            action.kind = THERON_STARTUP_ACTION_SHOW_STAGE_SELECT;
+            action.selected_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+            action.cursor = 1;
+            action.continue_focus = 0;
+            check_int("plan stage-select rc",
+                      theron_v1_startup_plan_for_action(&action, &plan),
+                      1);
+            check_int("plan stage-select kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_SHOW_STAGE_SELECT);
+            check_int("plan stage-select dungeon",
+                      plan.selected_dungeon,
+                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+            check_str("plan stage-select status", plan.status, "STAGE SELECT");
+
+            theron_v1_startup_action_init(&action);
+            action.kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
+            action.selected_dungeon = THERON_DUNGEON_4_TOMB_OF_WOE;
+            action.continue_focus = 1;
+            check_int("plan stage-cursor rc",
+                      theron_v1_startup_plan_for_action(&action, &plan),
+                      1);
+            check_int("plan stage-cursor kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR);
+            check_int("plan stage-cursor continue",
+                      plan.continue_focus,
+                      1);
+            check_str("plan stage-cursor status", plan.status, "STAGE CURSOR");
+
+            theron_v1_startup_action_init(&action);
+            action.kind = THERON_STARTUP_ACTION_CONTINUE_SAVE;
+            check_int("plan continue rc",
+                      theron_v1_startup_plan_for_action(&action, &plan),
+                      1);
+            check_int("plan continue kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_CONTINUE_SAVE);
+            check_str("plan continue status", plan.status, "CONTINUE LOADED");
+            check_str("plan continue failure",
+                      plan.failure_status,
+                      "CONTINUE FAILED");
+
+            theron_v1_startup_action_init(&action);
+            action.kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
+            action.selected_dungeon = THERON_DUNGEON_5_VAULT_OF_SECRETS;
+            check_int("plan choose-stage rc",
+                      theron_v1_startup_plan_for_action(&action, &plan),
+                      1);
+            check_int("plan choose-stage kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_CHOOSE_STAGE);
+            check_str("plan choose-stage status", plan.status, "SOUL ROOM");
+            check_str("plan choose-stage failure",
+                      plan.failure_status,
+                      "STAGE LOCKED");
+
+            theron_v1_startup_action_init(&action);
+            action.kind = THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR;
+            action.cursor = 4;
+            check_int("plan soul-cursor rc",
+                      theron_v1_startup_plan_for_action(&action, &plan),
+                      1);
+            check_int("plan soul-cursor kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR);
+            check_int("plan soul-cursor cursor", plan.cursor, 4);
+            check_str("plan soul-cursor status",
+                      plan.status,
+                      "SOUL ROOM CURSOR");
+
+            theron_v1_startup_action_init(&action);
+            action.kind = THERON_STARTUP_ACTION_TOGGLE_MIRROR;
+            action.mirror_index = 6;
+            check_int("plan mirror-toggle rc",
+                      theron_v1_startup_plan_for_action(&action, &plan),
+                      1);
+            check_int("plan mirror-toggle kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_TOGGLE_MIRROR);
+            check_int("plan mirror-toggle index", plan.mirror_index, 6);
+            check_str("plan mirror-toggle status",
+                      plan.status,
+                      "HERO RESURRECTED");
+            check_str("plan mirror-toggle alternate",
+                      plan.alternate_status,
+                      "HERO RELEASED");
+
+            theron_v1_startup_action_init(&action);
+            action.kind = THERON_STARTUP_ACTION_ENTER_FORCEFIELD;
+            check_int("plan forcefield rc",
+                      theron_v1_startup_plan_for_action(&action, &plan),
+                      1);
+            check_int("plan forcefield kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_ENTER_FORCEFIELD);
+            check_str("plan forcefield scope", plan.status_scope, "BOOT");
+            check_str("plan forcefield status", plan.status, "THERON READY");
+
+            theron_v1_startup_action_init(&action);
+            check_int("plan ignore rc",
+                      theron_v1_startup_plan_for_action(&action, &plan),
+                      1);
+            check_int("plan ignore kind",
+                      plan.kind,
+                      THERON_STARTUP_PLAN_IGNORE);
+        }
 
         theron_v1_startup_hit_init(&hit);
         hit.kind = THERON_STARTUP_HIT_TITLE;

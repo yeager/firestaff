@@ -13388,6 +13388,7 @@ static M11_GameInputResult m11_theron_startup_apply_action(
     M11_GameViewState* state,
     const Theron_StartupAction* action) {
     Theron_V1_World* world;
+    Theron_StartupActionPlan plan;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
@@ -13396,34 +13397,43 @@ static M11_GameInputResult m11_theron_startup_apply_action(
     if (!world) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (!theron_v1_startup_plan_for_action(action, &plan)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
 
-    switch (action->kind) {
-    case THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER:
-        m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+    switch (plan.kind) {
+    case THERON_STARTUP_PLAN_RETURN_TO_LAUNCHER:
+        m11_set_status(state,
+                       plan.status_scope ? plan.status_scope : "RETURN",
+                       plan.status ? plan.status : "BACK TO LAUNCHER");
         return M11_GAME_INPUT_RETURN_TO_MENU;
 
-    case THERON_STARTUP_ACTION_SHOW_STAGE_SELECT: {
+    case THERON_STARTUP_PLAN_SHOW_STAGE_SELECT: {
         Theron_StartupFlow flow;
         theron_v1_startup_flow_init(&flow);
         flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-        flow.selected_dungeon = action->selected_dungeon;
+        flow.selected_dungeon = plan.selected_dungeon;
         m11_theron_sync_startup_state(state, &flow);
-        state->theronState.startup_cursor = action->cursor;
+        state->theronState.startup_cursor = plan.cursor;
         state->theronState.save_resume_continue_focus =
-            action->continue_focus;
-        m11_set_status(state, "STARTUP", "STAGE SELECT");
+            plan.continue_focus;
+        m11_set_status(state,
+                       plan.status_scope ? plan.status_scope : "STARTUP",
+                       plan.status ? plan.status : "STAGE SELECT");
         return M11_GAME_INPUT_REDRAW;
     }
 
-    case THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR:
+    case THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR:
         state->theronState.selected_dungeon =
-            (int)action->selected_dungeon;
+            (int)plan.selected_dungeon;
         state->theronState.save_resume_continue_focus =
-            action->continue_focus;
-        m11_set_status(state, "STARTUP", "STAGE CURSOR");
+            plan.continue_focus;
+        m11_set_status(state,
+                       plan.status_scope ? plan.status_scope : "STARTUP",
+                       plan.status ? plan.status : "STAGE CURSOR");
         return M11_GAME_INPUT_REDRAW;
 
-    case THERON_STARTUP_ACTION_CONTINUE_SAVE: {
+    case THERON_STARTUP_PLAN_CONTINUE_SAVE: {
         char receipt[96];
         int continued = m11_theron_tqsv_continue_available(state)
             ? m11_theron_continue_tqsv_startup(state,
@@ -13434,19 +13444,23 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                               sizeof(receipt));
         if (!continued) {
             m11_set_status(state, "STARTUP",
-                           receipt[0] ? receipt : "CONTINUE FAILED");
+                           receipt[0] ? receipt :
+                           (plan.failure_status ? plan.failure_status
+                                                : "CONTINUE FAILED"));
             return M11_GAME_INPUT_REDRAW;
         }
-        m11_set_status(state, "STARTUP", "CONTINUE LOADED");
+        m11_set_status(state,
+                       plan.status_scope ? plan.status_scope : "STARTUP",
+                       plan.status ? plan.status : "CONTINUE LOADED");
         m11_theron_set_chapter_inspect(state, receipt);
         return M11_GAME_INPUT_REDRAW;
     }
 
-    case THERON_STARTUP_ACTION_CHOOSE_STAGE: {
+    case THERON_STARTUP_PLAN_CHOOSE_STAGE: {
         Theron_StartupFlow flow;
         char receipt[96];
         state->theronState.selected_dungeon =
-            (int)action->selected_dungeon;
+            (int)plan.selected_dungeon;
         receipt[0] = '\0';
         if (!m11_theron_rebuild_startup_flow(state,
                                              &world->progression,
@@ -13454,26 +13468,32 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                              receipt,
                                              sizeof(receipt))) {
             m11_set_status(state, "STARTUP",
-                           receipt[0] ? receipt : "STAGE LOCKED");
+                           receipt[0] ? receipt :
+                           (plan.failure_status ? plan.failure_status
+                                                : "STAGE LOCKED"));
             return M11_GAME_INPUT_REDRAW;
         }
         m11_theron_sync_startup_state(state, &flow);
         state->theronState.startup_cursor = 0;
         state->theronState.save_resume_continue_focus = 0;
-        m11_set_status(state, "STARTUP", "SOUL ROOM");
+        m11_set_status(state,
+                       plan.status_scope ? plan.status_scope : "STARTUP",
+                       plan.status ? plan.status : "SOUL ROOM");
         return M11_GAME_INPUT_REDRAW;
     }
 
-    case THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR:
-        state->theronState.startup_cursor = action->cursor;
-        m11_set_status(state, "STARTUP", "SOUL ROOM CURSOR");
+    case THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR:
+        state->theronState.startup_cursor = plan.cursor;
+        m11_set_status(state,
+                       plan.status_scope ? plan.status_scope : "STARTUP",
+                       plan.status ? plan.status : "SOUL ROOM CURSOR");
         return M11_GAME_INPUT_REDRAW;
 
-    case THERON_STARTUP_ACTION_TOGGLE_MIRROR: {
+    case THERON_STARTUP_PLAN_TOGGLE_MIRROR: {
         Theron_StartupFlow flow;
         Theron_StartupResult result;
         char receipt[96];
-        int cursor = action->mirror_index;
+        int cursor = plan.mirror_index;
         receipt[0] = '\0';
         if (!m11_theron_rebuild_startup_flow(state,
                                              &world->progression,
@@ -13481,7 +13501,9 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                              receipt,
                                              sizeof(receipt))) {
             m11_set_status(state, "STARTUP",
-                           receipt[0] ? receipt : "SOUL ROOM ERROR");
+                           receipt[0] ? receipt :
+                           (plan.failure_status ? plan.failure_status
+                                                : "SOUL ROOM ERROR"));
             return M11_GAME_INPUT_REDRAW;
         }
         if ((state->theronState.selected_mirrors_mask &
@@ -13499,21 +13521,28 @@ static M11_GameInputResult m11_theron_startup_apply_action(
         m11_set_status(state, "STARTUP",
                        (state->theronState.selected_mirrors_mask &
                         (1 << cursor)) != 0
-                            ? "HERO RESURRECTED"
-                            : "HERO RELEASED");
+                            ? (plan.status ? plan.status
+                                           : "HERO RESURRECTED")
+                            : (plan.alternate_status
+                                   ? plan.alternate_status
+                                   : "HERO RELEASED"));
         return M11_GAME_INPUT_REDRAW;
     }
 
-    case THERON_STARTUP_ACTION_ENTER_FORCEFIELD: {
+    case THERON_STARTUP_PLAN_ENTER_FORCEFIELD: {
         char receipt[256];
         if (!m11_theron_enter_startup_forcefield(state,
                                                  receipt,
                                                  sizeof(receipt))) {
             m11_set_status(state, "STARTUP",
-                           receipt[0] ? receipt : "FORCEFIELD FAILED");
+                           receipt[0] ? receipt :
+                           (plan.failure_status ? plan.failure_status
+                                                : "FORCEFIELD FAILED"));
             return M11_GAME_INPUT_REDRAW;
         }
-        m11_set_status(state, "BOOT", "THERON READY");
+        m11_set_status(state,
+                       plan.status_scope ? plan.status_scope : "BOOT",
+                       plan.status ? plan.status : "THERON READY");
         m11_set_inspect_readout(state, "READY", receipt);
         m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON LOADED");
         if (receipt[0] != '\0') {
@@ -13522,7 +13551,7 @@ static M11_GameInputResult m11_theron_startup_apply_action(
         return M11_GAME_INPUT_REDRAW;
     }
 
-    case THERON_STARTUP_ACTION_NONE:
+    case THERON_STARTUP_PLAN_IGNORE:
         return M11_GAME_INPUT_IGNORED;
 
     default:
