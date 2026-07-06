@@ -6417,6 +6417,30 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_m11_launcher_handoff_boundary
     )
 
+    # -- M11 CLI Direct Launch Preparation Boundary ----------------
+    # Skip-safe all-games gate: --game may bypass the visible launcher
+    # surface, but must still prepare a normal selected M12 game entry
+    # and enter M11 through M12 launch intent / selected-entry startup.
+    add_executable(test_m11_direct_launch_prepare_all_games
+        tests/test_m11_direct_launch_prepare_all_games.c
+    )
+    target_include_directories(test_m11_direct_launch_prepare_all_games PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_m11_direct_launch_prepare_all_games PRIVATE
+        firestaff_m11
+        firestaff_m12
+        firestaff_m10
+        SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_direct_launch_prepare_all_games PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_direct_launch_prepare_all_games
+        COMMAND test_m11_direct_launch_prepare_all_games
+    )
+
     # -- CSB V1 M12/M11 Launcher Handoff Boundary ------------------
     # Skip-safe gate: M12 launch intent routes the CSB catalog entry,
     # and real staged CSB data must enter M11 through the production
