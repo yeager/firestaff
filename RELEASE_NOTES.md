@@ -1,6 +1,23 @@
 
 # Unreleased
 
+# Firestaff v3.0.32
+
+Firestaff v3.0.32 packages the current `main` startup state after v3.0.31.
+
+## Highlights since v3.0.31
+
+- **DM1 HoC resurrection survival**: the latest runtime hardening after
+  v3.0.31 is included, with local probe coverage for the resurrect/load path.
+
+## Verification
+
+- Local release-prep verification covered version synchronization and the
+  focused startup gates used before v3.0.31.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.32` release run.
+
 # Firestaff v3.0.31
 
 Firestaff v3.0.31 packages the all-games startup handoff hardening that landed
