@@ -477,6 +477,13 @@ int main(void) {
                                                          sizeof(framebuffer)) > 500,
                                     "M11 Nexus startup save selection draws nonblank frame");
                         expect_true(M11_GameView_HandlePointer(
+                                        &view, 24, 20, 1) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus startup save panel consumes non-row pointer hits");
+                        expect_true(view.nexusState.startup_save_select_active == 1 &&
+                                        view.nexusState.startup_save_selected_row == 0,
+                                    "M11 Nexus startup save panel hit keeps menu selection");
+                        expect_true(M11_GameView_HandlePointer(
                                         &view, 24, 43, 1) ==
                                         M11_GAME_INPUT_REDRAW,
                                     "M11 Nexus startup pointer loads slot row");
