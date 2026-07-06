@@ -2741,6 +2741,63 @@ static void m11_draw_text(unsigned char* framebuffer,
     }
 }
 
+static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
+                                                 int framebufferWidth,
+                                                 int framebufferHeight,
+                                                 int x,
+                                                 int y,
+                                                 const char* text,
+                                                 int maxChars,
+                                                 unsigned char fgColor,
+                                                 unsigned char bgColor) {
+    int i;
+    int effectiveScale;
+    if (!framebuffer || maxChars <= 0) {
+        return;
+    }
+    effectiveScale = g_m11_font_scale_override > 0 ? g_m11_font_scale_override : 1;
+    if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
+        for (i = 0; i < maxChars; ++i) {
+            unsigned char ch = ' ';
+            if (text && text[i] != '\0') {
+                ch = (unsigned char)text[i];
+            }
+            (void)M11_Font_DrawChar(g_activeOriginalFont,
+                                    framebuffer,
+                                    framebufferWidth,
+                                    framebufferHeight,
+                                    x + (i * 6 * effectiveScale),
+                                    y,
+                                    ch,
+                                    fgColor,
+                                    (int)bgColor,
+                                    effectiveScale);
+        }
+        return;
+    }
+    for (i = 0; i < maxChars; ++i) {
+        char one[2];
+        M11_TextStyle style = g_text_small;
+        one[0] = (text && text[i] != '\0') ? text[i] : ' ';
+        one[1] = '\0';
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      x + (i * 6 * effectiveScale),
+                      y,
+                      6 * effectiveScale,
+                      7 * effectiveScale,
+                      bgColor);
+        style.color = fgColor;
+        style.shadowDx = 0;
+        style.shadowDy = 0;
+        style.shadowColor = bgColor;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      x + (i * 6 * effectiveScale),
+                      y,
+                      one,
+                      &style);
+    }
+}
+
 static const char* m11_dm2_item_name(int item_id)
 {
     const char *knownName = dm2_v1_tech_magic_item_name(item_id);
@@ -35186,8 +35243,6 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     int visibleRows = 3;
     int row;
     char nameBuf[16];
-    M11_TextStyle styleBlackOnCyan;
-    M11_TextStyle styleCyanOnBlack;
     const struct ChampionState_Compat* champ;
     if (!state) return 0;
     if (state->actingChampionOrdinal == 0) return 0;
@@ -35242,56 +35297,41 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
         }
     }
 
-    /* Header band: fill cyan and print the champion name in black.
-     * Matches F0387's zone-80 print (black text, cyan background). */
-    {
-        int headerX, headerY, headerW, headerH;
-        (void)M11_GameView_GetV1ActionMenuHeaderZone(
-            &headerX, &headerY, &headerW, &headerH);
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      headerX, headerY, headerW, headerH,
-                      (unsigned char)M11_GameView_GetV1ActionMenuHeaderFillColor());
-    }
-
     m11_format_champion_name(champ->name, nameBuf, sizeof(nameBuf));
-    styleBlackOnCyan = g_text_small;
-    styleBlackOnCyan.color = (unsigned char)M11_GameView_GetV1ActionMenuHeaderTextColor();
-    styleBlackOnCyan.shadowDx = 0;
-    styleBlackOnCyan.shadowDy = 0;
-    styleBlackOnCyan.shadowColor = (unsigned char)M11_GameView_GetV1ActionMenuHeaderFillColor();
     {
         int textX, textY;
         (void)M11_GameView_GetV1ActionMenuTextOrigin(-1, &textX, &textY);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      textX, textY, nameBuf, &styleBlackOnCyan);
+        /* ReDMCSB ACTIDRAW.C F0387:361 uses
+         * F0041_TEXT_PrintWithTrailingSpaces at (235,83) with
+         * C007_CHAMPION_NAME_MAXIMUM_LENGTH.  That path uses
+         * TEXT2.C G2087_C6_TextCharacterWidth, not the 8-pixel
+         * inscription/font advance. */
+        m11_draw_dm1_ui_text_trailing_spaces(
+            framebuffer, framebufferWidth, framebufferHeight,
+            textX, textY, nameBuf, 7,
+            (unsigned char)M11_GameView_GetV1ActionMenuHeaderTextColor(),
+            (unsigned char)M11_GameView_GetV1ActionMenuHeaderFillColor());
     }
 
-    /* Action rows: each row is a black strip with cyan text.  Pull
-     * the 3-tuple from the champion's action-hand ActionSet; any
-     * C0xFF_ACTION_NONE entry is drawn as an empty strip (DM1's
-     * F0384_MENUS_GetActionName returns "" for 0xFF). */
-    styleCyanOnBlack = g_text_small;
-    styleCyanOnBlack.color = (unsigned char)M11_GameView_GetV1ActionMenuRowTextColor();
-    styleCyanOnBlack.shadowDx = 0;
-    styleCyanOnBlack.shadowDy = 0;
-    styleCyanOnBlack.shadowColor = (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor();
-
+    /* Action rows: pull the 3-tuple from the champion's action-hand
+     * ActionSet.  F0387 prints every row through
+     * F0041_TEXT_PrintWithTrailingSpaces with C012 length; NONE
+     * therefore becomes a 12-character black trailing-space field. */
     for (row = 0; row < M11_GameView_GetV1ActionMenuRowCount(); ++row) {
-        int rowX, rowY, rowW, rowH;
         const char* name;
-        (void)M11_GameView_GetV1ActionMenuRowZone(
-            row, &rowX, &rowY, &rowW, &rowH);
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      rowX, rowY, rowW, rowH,
-                      (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor());
-        if (!gotActions || row >= visibleRows) continue;
-        name = M11_GameView_GetActionName(actions[row]);
-        if (!name || name[0] == '\0') continue;
+        int textX, textY;
+        if (!M11_GameView_GetV1ActionMenuTextOrigin(row, &textX, &textY)) {
+            continue;
+        }
+        name = (gotActions && row < visibleRows)
+                   ? M11_GameView_GetActionName(actions[row])
+                   : "";
         {
-            int textX, textY;
-            (void)M11_GameView_GetV1ActionMenuTextOrigin(row, &textX, &textY);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          textX, textY, name, &styleCyanOnBlack);
+            m11_draw_dm1_ui_text_trailing_spaces(
+                framebuffer, framebufferWidth, framebufferHeight,
+                textX, textY, name ? name : "", 12,
+                (unsigned char)M11_GameView_GetV1ActionMenuRowTextColor(),
+                (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor());
         }
     }
     return 1;
