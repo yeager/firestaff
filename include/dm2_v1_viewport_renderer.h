@@ -112,6 +112,13 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE (-0x500)
 #define DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_MASK 0xFF
+#define DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE (-0x20000)
+#define DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT 8
+#define DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK 0xFF
+#define DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE (-0x40000)
+#define DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT 16
+#define DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT 8
+#define DM2_V1_VIEWPORT_GFX_ITEM_FIELD_MASK 0xFF
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -126,6 +133,11 @@ int dm2_v1_viewport_door_button_rectno_for_square(int view_square);
 int dm2_v1_viewport_door_button_clickable_for_square(int view_square);
 int dm2_v1_viewport_wall_button_graphic_index(int wall_gfx_index,
                                               int wall_gfx_field);
+int dm2_v1_viewport_creature_graphic_index(int creature_type,
+                                           int frame_index);
+int dm2_v1_viewport_item_graphic_index(int item_category,
+                                       int item_type,
+                                       int frame_index);
 
 typedef struct {
     int x;
@@ -179,6 +191,7 @@ typedef struct {
 } DM2_CreatureSprite;
 
 typedef struct {
+    uint8_t  item_category;   /* GDAT category, 0 = miscellaneous fallback */
     uint8_t  item_type;       /* GDAT item index */
     uint8_t  frame_index;     /* animation frame */
     int16_t  depth;           /* depth sort key */
@@ -250,6 +263,10 @@ typedef struct {
     int asset_door_frame_drawn_count;
     int asset_door_button_drawn_count;
     int fallback_door_drawn_count;
+    int asset_creature_drawn_count;
+    int fallback_creature_drawn_count;
+    int asset_item_drawn_count;
+    int fallback_item_drawn_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */

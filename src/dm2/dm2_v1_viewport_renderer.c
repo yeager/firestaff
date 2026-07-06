@@ -489,6 +489,35 @@ int dm2_v1_viewport_wall_button_graphic_index(int wall_gfx_index,
     return DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - packed;
 }
 
+int dm2_v1_viewport_creature_graphic_index(int creature_type,
+                                           int frame_index)
+{
+    int packed;
+    if (creature_type < 0 || creature_type > 0xFF ||
+        frame_index < 0 || frame_index > 0xFF) {
+        return 0;
+    }
+    packed = (creature_type << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) |
+             (frame_index & DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK);
+    return DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - packed;
+}
+
+int dm2_v1_viewport_item_graphic_index(int item_category,
+                                       int item_type,
+                                       int frame_index)
+{
+    int packed;
+    if (item_category < 0 || item_category > 0xFF ||
+        item_type < 0 || item_type > 0xFF ||
+        frame_index < 0 || frame_index > 0xFF) {
+        return 0;
+    }
+    packed = (item_category << DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) |
+             (item_type << DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT) |
+             (frame_index & DM2_V1_VIEWPORT_GFX_ITEM_FIELD_MASK);
+    return DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - packed;
+}
+
 static void dm2_v1_viewport_clear_rect(DM2_V1_ViewportRect *out_rect)
 {
     if (!out_rect) return;
@@ -702,6 +731,31 @@ static void dm2_v1_blit_scaled_bitmap(uint8_t *dst,
             dst[fy * dst_stride + fx] = pixel;
         }
     }
+}
+
+static int dm2_v1_viewport_scaled_sprite_extent(int src_extent,
+                                                int depth,
+                                                int min_extent,
+                                                int max_extent)
+{
+    int scale_pct;
+    int extent = src_extent;
+    if (extent <= 0) return 0;
+    if (depth <= 0) {
+        scale_pct = 100;
+    } else if (depth == 1) {
+        scale_pct = 80;
+    } else if (depth == 2) {
+        scale_pct = 62;
+    } else if (depth == 3) {
+        scale_pct = 48;
+    } else {
+        scale_pct = 36;
+    }
+    extent = (extent * scale_pct + 50) / 100;
+    if (extent < min_extent) extent = min_extent;
+    if (extent > max_extent) extent = max_extent;
+    return extent;
 }
 
 /* ── Populate view squares from world model ─────────────────────── */
@@ -1341,43 +1395,84 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
     int stride = s->fb_stride;
 
     /* DM2 creature rendering:
-     * Source: DUNVIEW.C:4573, 5195-5202 (creature draw pass)
-     *         ReDMCSB creature graphic indices from GDAT
-     *         SKULL.ASM T560 - creature sprite draw
-     *
-     * Phase 3: creature sprite placeholders as colored squares.
-     * Real creature graphics from GRAPHICS.DAT (Phase 4). */
+     * skproject SKWIN/SkWinCore.cpp lines 10557-10619 routes creature
+     * records through QUERY_DUNGEON_MAP_CHIP_PICT(cls1, cls2) before
+     * DRAW_CHIP_OF_MAGIC_MAP. This pass asks the boot-owned asset provider
+     * for that map-chip bitmap first and only falls back to the old
+     * placeholder when the GDAT image is unavailable. */
 
     for (int i = 0; i < s->creature_count && i < DM2_MAX_CREATURES_PER_SQ; i++) {
         DM2_CreatureSprite *c = &s->creatures[i];
         int cx = c->screen_x;
         int cy = c->screen_y;
+        int drawn_asset = 0;
+        int drawn_h = 8;
         if (cx < 0 || cx >= DM2_VP_WIDTH || cy < 0 || cy >= DM2_VP_HEIGHT) continue;
 
-        /* Draw creature as 8x8 placeholder square.
-         * Color: yellow-ish + hue shift per creature type. */
-        int sz = 8;
-        uint8_t color = (uint8_t)(11 + (c->creature_type & 7));
-        for (int dy = -sz/2; dy < sz/2; dy++) {
-            int sy = cy + dy;
-            if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
-            for (int dx = -sz/2; dx < sz/2; dx++) {
-                int sx = cx + dx;
-                if ((unsigned)sx < (unsigned)DM2_VP_WIDTH)
-                    vp[sy * stride + sx] = color;
+        {
+            const uint8_t *pixels = NULL;
+            int src_w = 0;
+            int src_h = 0;
+            int src_stride = 0;
+            int gdat_index = dm2_v1_viewport_creature_graphic_index(
+                c->creature_type, c->frame_index);
+            if (gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+                                            &src_w, &src_h, &src_stride) == 0 &&
+                pixels && src_w > 0 && src_h > 0) {
+                int dst_w = dm2_v1_viewport_scaled_sprite_extent(src_w,
+                                                                  c->depth,
+                                                                  8,
+                                                                  64);
+                int dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                                  c->depth,
+                                                                  8,
+                                                                  64);
+                drawn_h = dst_h;
+                dm2_v1_blit_scaled_bitmap(vp,
+                                          stride,
+                                          cx - (dst_w / 2),
+                                          cy - (dst_h / 2),
+                                          dst_w,
+                                          dst_h,
+                                          pixels,
+                                          src_w,
+                                          src_h,
+                                          src_stride > 0 ? src_stride : src_w,
+                                          DM2_COLOR_TRANSPARENT);
+                ++s->asset_creature_drawn_count;
+                drawn_asset = 1;
             }
+        }
+        if (!drawn_asset) {
+            int sz = 8;
+            uint8_t color = (uint8_t)(11 + (c->creature_type & 7));
+            for (int dy = -sz/2; dy < sz/2; dy++) {
+                int sy = cy + dy;
+                if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
+                for (int dx = -sz/2; dx < sz/2; dx++) {
+                    int sx = cx + dx;
+                    if ((unsigned)sx < (unsigned)DM2_VP_WIDTH)
+                        vp[sy * stride + sx] = color;
+                }
+            }
+            ++s->fallback_creature_drawn_count;
         }
         /* Health bar above creature */
         if (c->health_pct < 100) {
             int bar_w = 16;
             int bar_x = cx - bar_w/2;
-            int bar_y = cy - sz - 2;
+            int bar_y = cy - (drawn_h / 2) - 4;
             if (bar_y >= 0) {
-                for (int bx = bar_x; bx < bar_x + bar_w; bx++)
-                    vp[bar_y * stride + bx] = 4;  /* dark red = damaged */
+                for (int bx = bar_x; bx < bar_x + bar_w; bx++) {
+                    if ((unsigned)bx < (unsigned)DM2_VP_WIDTH)
+                        vp[bar_y * stride + bx] = 4;  /* dark red = damaged */
+                }
                 int fill_w = (bar_w * c->health_pct) / 100;
-                for (int bx = bar_x; bx < bar_x + fill_w; bx++)
-                    vp[bar_y * stride + bx] = 2;  /* green = health */
+                for (int bx = bar_x; bx < bar_x + fill_w; bx++) {
+                    if ((unsigned)bx < (unsigned)DM2_VP_WIDTH)
+                        vp[bar_y * stride + bx] = 2;  /* green = health */
+                }
             }
         }
     }
@@ -1392,30 +1487,67 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
     int stride = s->fb_stride;
 
     /* DM2 item rendering:
-     * Source: DUNVIEW.C:4567-4571, 4853-4860 (object draw pass)
-     *         F0104/F0105 DrawFloorPitOrStairsBitmap
-     *         F0108 DrawFloorOrnament (floor ornaments)
-     *
-     * Phase 3: floor item placeholders as small colored diamonds.
-     * Source: DUNVIEW.C:3940-4015 F0108_DrawFloorOrnament */
+     * skproject SKWIN/SkWinCore.cpp lines 10523-10549 draws floor items
+     * through QUERY_DUNGEON_MAP_CHIP_PICT(cls1, cls2) and
+     * DRAW_CHIP_OF_MAGIC_MAP. The category is carried on the sprite when
+     * available; older population code leaves it at zero and therefore uses
+     * miscellaneous as a bounded fallback category. */
 
     for (int i = 0; i < s->item_count && i < DM2_MAX_ITEMS_PER_SQ; i++) {
         DM2_ItemSprite *it = &s->items[i];
         int ix = it->screen_x;
         int iy = it->screen_y;
+        int drawn_asset = 0;
         if (ix < 0 || ix >= DM2_VP_WIDTH || iy < 0 || iy >= DM2_VP_HEIGHT) continue;
 
-        /* Draw item as 4x4 diamond placeholder (cyan). */
-        int sz = 4;
-        for (int dy = -sz; dy <= sz; dy++) {
-            int sy = iy + dy;
-            if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
-            for (int dx = -sz; dx <= sz; dx++) {
-                int sx = ix + dx;
-                if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
-                if (abs(dx) + abs(dy) <= sz)
-                    vp[sy * stride + sx] = 3;  /* cyan */
+        {
+            const uint8_t *pixels = NULL;
+            int src_w = 0;
+            int src_h = 0;
+            int src_stride = 0;
+            int category = it->item_category ? it->item_category : 0x15;
+            int gdat_index = dm2_v1_viewport_item_graphic_index(
+                category, it->item_type, it->frame_index);
+            if (gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+                                            &src_w, &src_h, &src_stride) == 0 &&
+                pixels && src_w > 0 && src_h > 0) {
+                int dst_w = dm2_v1_viewport_scaled_sprite_extent(src_w,
+                                                                  it->depth,
+                                                                  4,
+                                                                  32);
+                int dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                                  it->depth,
+                                                                  4,
+                                                                  32);
+                dm2_v1_blit_scaled_bitmap(vp,
+                                          stride,
+                                          ix - (dst_w / 2),
+                                          iy - (dst_h / 2),
+                                          dst_w,
+                                          dst_h,
+                                          pixels,
+                                          src_w,
+                                          src_h,
+                                          src_stride > 0 ? src_stride : src_w,
+                                          DM2_COLOR_TRANSPARENT);
+                ++s->asset_item_drawn_count;
+                drawn_asset = 1;
             }
+        }
+        if (!drawn_asset) {
+            int sz = 4;
+            for (int dy = -sz; dy <= sz; dy++) {
+                int sy = iy + dy;
+                if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
+                for (int dx = -sz; dx <= sz; dx++) {
+                    int sx = ix + dx;
+                    if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
+                    if (abs(dx) + abs(dy) <= sz)
+                        vp[sy * stride + sx] = 3;  /* cyan */
+                }
+            }
+            ++s->fallback_item_drawn_count;
         }
     }
 }
@@ -1701,6 +1833,10 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->asset_door_frame_drawn_count = 0;
     s->asset_door_button_drawn_count = 0;
     s->fallback_door_drawn_count = 0;
+    s->asset_creature_drawn_count = 0;
+    s->fallback_creature_drawn_count = 0;
+    s->asset_item_drawn_count = 0;
+    s->fallback_item_drawn_count = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view
