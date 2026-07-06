@@ -34,6 +34,8 @@ int main(void) {
     Theron_StartupFlow flow;
     Theron_V1_Party party;
     Theron_StartupResult result;
+    char phase_label[64];
+    int startup_active = -1;
 
     printf("=== Theron V1 startup flow probe ===\n");
     printf("source: %s\n", theron_v1_startup_flow_source_evidence());
@@ -43,6 +45,21 @@ int main(void) {
     check_int("init phase", flow.phase, THERON_STARTUP_PHASE_TITLE);
     check_int("init selected dungeon", flow.selected_dungeon, THERON_DUNGEON_INVALID);
     check_int("init companion count", flow.companion_count, 0);
+    check_int("startup availability stage 1",
+              theron_v1_startup_stage_available(
+                  &progression,
+                  THERON_DUNGEON_1_HALL_OF_RECORDS),
+              1);
+    check_int("startup availability locked stage 2",
+              theron_v1_startup_stage_available(
+                  &progression,
+                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS),
+              0);
+    check_int("startup availability invalid stage",
+              theron_v1_startup_stage_available(
+                  &progression,
+                  THERON_DUNGEON_INVALID),
+              0);
 
     result = theron_v1_startup_select_mirror(&flow, 0);
     check_int("mirror before stage rejected", result, THERON_STARTUP_ERR_NO_STAGE);
@@ -87,6 +104,66 @@ int main(void) {
         check_int("stage down selected dungeon",
                   action.selected_dungeon,
                   THERON_DUNGEON_4_TOMB_OF_WOE);
+        result = theron_v1_startup_handle_input_with_progression(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            &progression,
+            0,
+            0,
+            0,
+            THERON_STARTUP_INPUT_DOWN,
+            &action);
+        check_int("initial locked stages skipped rc", result, THERON_STARTUP_OK);
+        check_int("initial locked stages keep stage 1",
+                  action.selected_dungeon,
+                  THERON_DUNGEON_1_HALL_OF_RECORDS);
+        {
+            Theron_DungeonProgression progressed;
+            theron_v1_dungeon_progression_init(&progressed);
+            (void)theron_v1_dungeon_advance(&progressed);
+            result = theron_v1_startup_handle_input_with_progression(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                &progressed,
+                0,
+                0,
+                0,
+                THERON_STARTUP_INPUT_DOWN,
+                &action);
+            check_int("post-first stage down rc", result, THERON_STARTUP_OK);
+            check_int("post-first stage down skips complete stage",
+                      action.selected_dungeon,
+                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+            result = theron_v1_startup_handle_input_with_progression(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                THERON_DUNGEON_6_CASTLE_OF_FATE,
+                &progressed,
+                0,
+                0,
+                0,
+                THERON_STARTUP_INPUT_DOWN,
+                &action);
+            check_int("locked final stage skipped rc", result, THERON_STARTUP_OK);
+            check_int("locked final stage skipped",
+                      action.selected_dungeon,
+                      THERON_DUNGEON_6_CASTLE_OF_FATE);
+            result = theron_v1_startup_handle_input_with_progression(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                &progressed,
+                0,
+                0,
+                1,
+                THERON_STARTUP_INPUT_UP,
+                &action);
+            check_int("post-first stage up rc", result, THERON_STARTUP_OK);
+            check_int("post-first stage up focuses continue",
+                      action.continue_focus,
+                      1);
+            check_int("post-first stage up keeps first available",
+                      action.selected_dungeon,
+                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+        }
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_STAGE_SELECT,
             THERON_DUNGEON_4_TOMB_OF_WOE,
@@ -231,6 +308,47 @@ int main(void) {
                   THERON_DUNGEON_3_ABYSS_OF_FLAMES);
 
         theron_v1_startup_hit_init(&hit);
+        hit.kind = THERON_STARTUP_HIT_STAGE;
+        hit.selected_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+        result = theron_v1_startup_handle_hit_with_progression(
+            THERON_STARTUP_PHASE_STAGE_SELECT,
+            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            &progression,
+            0,
+            0,
+            0,
+            &hit,
+            &action);
+        check_int("locked stage hit rc", result, THERON_STARTUP_OK);
+        check_int("locked stage hit consumed",
+                  action.kind,
+                  THERON_STARTUP_ACTION_NONE);
+        check_int("locked stage hit keeps target for status",
+                  action.selected_dungeon,
+                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+        {
+            Theron_DungeonProgression progressed_hit;
+            theron_v1_dungeon_progression_init(&progressed_hit);
+            (void)theron_v1_dungeon_advance(&progressed_hit);
+            result = theron_v1_startup_handle_hit_with_progression(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                &progressed_hit,
+                0,
+                0,
+                0,
+                &hit,
+                &action);
+            check_int("unlocked stage hit rc", result, THERON_STARTUP_OK);
+            check_int("unlocked stage hit chooses",
+                      action.kind,
+                      THERON_STARTUP_ACTION_CHOOSE_STAGE);
+            check_int("unlocked stage hit selected dungeon",
+                      action.selected_dungeon,
+                      THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+        }
+
+        theron_v1_startup_hit_init(&hit);
         hit.kind = THERON_STARTUP_HIT_MIRROR;
         hit.mirror_index = 4;
         result = theron_v1_startup_handle_hit(
@@ -265,6 +383,107 @@ int main(void) {
         check_int("forcefield hit cursor",
                   action.cursor,
                   THERON_STARTUP_HERO_MIRROR_COUNT);
+
+        {
+            Theron_StartupLayoutState layout_state;
+            Theron_StartupLayoutElement elements[16];
+            int order[THERON_STARTUP_MAX_COMPANIONS] = {6, 2, -1};
+            int layout_count;
+
+            theron_v1_startup_layout_state_init(&layout_state);
+            layout_state.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+            layout_state.selected_dungeon =
+                THERON_DUNGEON_1_HALL_OF_RECORDS;
+            layout_state.progression = &progression;
+            layout_state.has_tqsv_continue = 1;
+            layout_state.tqsv_slot = 2;
+            layout_count = theron_v1_startup_layout_build(
+                &layout_state,
+                elements,
+                (int)(sizeof(elements) / sizeof(elements[0])));
+            check_int("layout stage count", layout_count, 10);
+            check_int("layout title kind",
+                      elements[0].kind,
+                      THERON_STARTUP_LAYOUT_ELEMENT_TITLE);
+            check_int("layout continue kind",
+                      elements[2].kind,
+                      THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE);
+            check_int("layout continue slot", elements[2].save_slot, 2);
+            check_int("layout stage1 kind",
+                      elements[3].kind,
+                      THERON_STARTUP_LAYOUT_ELEMENT_STAGE);
+            check_int("layout stage1 enabled", elements[3].enabled, 1);
+            check_int("layout stage2 locked", elements[4].enabled, 0);
+            result = theron_v1_startup_layout_hit_at(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                elements,
+                layout_count,
+                42,
+                66,
+                &hit) ? THERON_STARTUP_OK : THERON_STARTUP_ERR_NULL;
+            check_int("layout continue hit rc", result, THERON_STARTUP_OK);
+            check_int("layout continue hit kind",
+                      hit.kind,
+                      THERON_STARTUP_HIT_CONTINUE);
+            result = theron_v1_startup_layout_hit_at(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                elements,
+                layout_count,
+                42,
+                91,
+                &hit) ? THERON_STARTUP_OK : THERON_STARTUP_ERR_NULL;
+            check_int("layout locked stage hit rc", result, THERON_STARTUP_OK);
+            check_int("layout locked stage hit panel",
+                      hit.kind,
+                      THERON_STARTUP_HIT_PANEL);
+
+            theron_v1_startup_layout_state_init(&layout_state);
+            layout_state.phase = THERON_STARTUP_PHASE_READY;
+            layout_state.selected_dungeon =
+                THERON_DUNGEON_1_HALL_OF_RECORDS;
+            layout_state.soul_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
+            layout_state.selected_mirrors_mask = (1 << 6) | (1 << 2);
+            layout_state.selected_mirror_order = order;
+            layout_state.selected_mirror_order_count =
+                THERON_STARTUP_MAX_COMPANIONS;
+            layout_count = theron_v1_startup_layout_build(
+                &layout_state,
+                elements,
+                (int)(sizeof(elements) / sizeof(elements[0])));
+            check_int("layout ready count", layout_count, 10);
+            check_int("layout mirror6 order",
+                      elements[8].selected_order,
+                      1);
+            check_int("layout forcefield enabled",
+                      elements[9].enabled,
+                      1);
+            check_int("layout forcefield cursor",
+                      elements[9].cursor,
+                      1);
+            result = theron_v1_startup_layout_hit_at(
+                THERON_STARTUP_PHASE_READY,
+                elements,
+                layout_count,
+                48,
+                144,
+                &hit) ? THERON_STARTUP_OK : THERON_STARTUP_ERR_NULL;
+            check_int("layout mirror hit rc", result, THERON_STARTUP_OK);
+            check_int("layout mirror hit kind",
+                      hit.kind,
+                      THERON_STARTUP_HIT_MIRROR);
+            check_int("layout mirror hit index", hit.mirror_index, 6);
+            result = theron_v1_startup_layout_hit_at(
+                THERON_STARTUP_PHASE_READY,
+                elements,
+                layout_count,
+                48,
+                162,
+                &hit) ? THERON_STARTUP_OK : THERON_STARTUP_ERR_NULL;
+            check_int("layout forcefield hit rc", result, THERON_STARTUP_OK);
+            check_int("layout forcefield hit kind",
+                      hit.kind,
+                      THERON_STARTUP_HIT_FORCEFIELD);
+        }
     }
 
     result = theron_v1_startup_choose_stage(&flow,
@@ -383,6 +602,51 @@ int main(void) {
                    theron_v1_startup_result_name(THERON_STARTUP_ERR_MIRROR_NOT_SELECTED),
                    "mirror");
     check_contains("source evidence", theron_v1_startup_flow_source_evidence(), "dmweb");
+    check_int("receipt title rc",
+              theron_v1_startup_receipt_phase(
+                  THERON_STARTUP_PHASE_TITLE,
+                  phase_label,
+                  sizeof(phase_label),
+                  &startup_active),
+              1);
+    check_contains("receipt title phase", phase_label, "theron-startup-0");
+    check_int("receipt title active", startup_active, 1);
+    check_int("receipt stage rc",
+              theron_v1_startup_receipt_phase(
+                  THERON_STARTUP_PHASE_STAGE_SELECT,
+                  phase_label,
+                  sizeof(phase_label),
+                  &startup_active),
+              1);
+    check_contains("receipt stage phase", phase_label, "theron-startup-1");
+    check_int("receipt stage active", startup_active, 1);
+    check_int("receipt soul rc",
+              theron_v1_startup_receipt_phase(
+                  THERON_STARTUP_PHASE_SOUL_ROOM,
+                  phase_label,
+                  sizeof(phase_label),
+                  &startup_active),
+              1);
+    check_contains("receipt soul phase", phase_label, "theron-startup-2");
+    check_int("receipt soul active", startup_active, 1);
+    check_int("receipt ready rc",
+              theron_v1_startup_receipt_phase(
+                  THERON_STARTUP_PHASE_READY,
+                  phase_label,
+                  sizeof(phase_label),
+                  &startup_active),
+              1);
+    check_contains("receipt ready phase", phase_label, "theron-startup-3");
+    check_int("receipt ready active", startup_active, 1);
+    check_int("receipt runtime rc",
+              theron_v1_startup_receipt_phase(
+                  THERON_STARTUP_PHASE_IN_DUNGEON,
+                  phase_label,
+                  sizeof(phase_label),
+                  &startup_active),
+              1);
+    check_contains("receipt runtime phase", phase_label, "theron-runtime");
+    check_int("receipt runtime active", startup_active, 0);
 
     printf("# total=%d passed=%d failed=%d\n", g_pass + g_fail, g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;

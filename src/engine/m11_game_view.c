@@ -449,6 +449,10 @@ static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
     return M11_GAME_INPUT_REDRAW;
 }
 
+static int m11_theron_startup_build_layout_state(
+    const M11_GameViewState* state,
+    Theron_StartupLayoutState* layout_state);
+
 static int m11_dm2_save_path_to_root_slot(const char *save_path,
                                           char *out_root,
                                           size_t out_root_cap,
@@ -11095,11 +11099,7 @@ static void m11_nexus_startup_scan_saves(M11_GameViewState *state)
         return;
     }
     nexus_v1_startup_menu_init(&menu, NULL);
-    if (nexus_v1_startup_menu_scan(&menu) != 0) {
-        state->nexusState.startup_save_row_count = 1;
-        state->nexusState.startup_save_slot_mask = 0u;
-        return;
-    }
+    (void)nexus_v1_startup_menu_scan_or_new_game(&menu);
     state->nexusState.startup_save_row_count = menu.row_count;
     state->nexusState.startup_save_slot_mask = menu.slot_mask;
     state->nexusState.startup_save_selected_row = menu.selected_row;
@@ -11636,31 +11636,17 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         state->csbBootProfile = profile;
         m11_sync_csb_state_from_profile(state, profile);
-        state->csbState.startup_title_active =
-            (spec->savePath && spec->savePath[0] != '\0') ? 0 : 1;
-        state->csbState.startup_title_frame = 0;
-        state->csbState.startup_title_source_step =
-            state->csbState.startup_title_active
-                ? CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34
-                : 0;
-        state->csbState.startup_entrance_active =
-            (spec->savePath && spec->savePath[0] != '\0') ? 0 : 1;
+        {
+            CSB_V1_StartupCommandState_PC34 command_state;
+            (void)csb_v1_startup_init_command_state_pc34(
+                &command_state,
+                spec->savePath && spec->savePath[0] != '\0');
+            m11_csb_startup_command_state_to_m11(state, &command_state);
+        }
         state->csbState.startup_entrance_frame = 0;
-        state->csbState.startup_entrance_source_step =
-            state->csbState.startup_entrance_active &&
-                    !state->csbState.startup_title_active ? 1 : 0;
-        state->csbState.startup_entrance_dismissed =
-            state->csbState.startup_entrance_active ? 0 : 1;
         state->csbState.startup_entrance_last_command =
             M11_ENTRANCE_RUNTIME_COMMAND_NONE;
         state->csbState.startup_entrance_bonus_requested = 0;
-        state->csbState.startup_entrance_credits_active = 0;
-        state->csbState.startup_entrance_credits_remaining_ticks = 0;
-        state->csbState.startup_entrance_opening_active = 0;
-        state->csbState.startup_entrance_opening_delay_ticks = 0;
-        state->csbState.startup_entrance_opening_step = 0;
-        state->csbState.startup_entrance_pending_command =
-            M11_ENTRANCE_RUNTIME_COMMAND_NONE;
         state->csbState.startup_entrance_resume_available = 0;
         state->csbState.startup_entrance_resume_path[0] = '\0';
         state->csbState.startup_import_available = 0;
@@ -12220,17 +12206,11 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyY = state->theronState.party_y;
         out->partyDir = state->theronState.party_dir;
         out->runtimeTick = state->theronState.tick_count;
-        out->startupActive =
-            (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON)
-                ? 1
-                : 0;
-        if (out->startupActive) {
-            snprintf(out->startupPhase, sizeof(out->startupPhase),
-                     "theron-startup-%d", state->theronState.startup_phase);
-        } else {
-            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
-                     "theron-runtime");
-        }
+        (void)theron_v1_startup_receipt_phase(
+            (Theron_StartupPhase)state->theronState.startup_phase,
+            out->startupPhase,
+            (int)sizeof(out->startupPhase),
+            &out->startupActive);
         return 1;
     }
 
@@ -15930,9 +15910,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             int has_continue =
                     m11_theron_tqsv_continue_available(state) ||
                     m11_theron_srm_continue_available(state);
-            action_result = theron_v1_startup_handle_input(
+            action_result = theron_v1_startup_handle_input_with_progression(
                 (Theron_StartupPhase)state->theronState.startup_phase,
                 (Theron_DungeonID)state->theronState.selected_dungeon,
+                &world->progression,
                 state->theronState.startup_cursor,
                 state->theronState.save_resume_continue_focus,
                 has_continue,
@@ -16511,13 +16492,13 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     M11_GameViewState* state,
     int x,
     int y) {
-    M11_TheronStartupElement elements[16];
+    Theron_StartupLayoutState layout_state;
+    Theron_StartupLayoutElement elements[16];
     Theron_StartupHit hit;
     Theron_StartupAction action;
     Theron_StartupResult result;
     int has_continue;
     int count;
-    int i;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
@@ -16526,45 +16507,28 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    theron_v1_startup_hit_init(&hit);
-    count = M11_GameView_GetTheronStartupLayout(
-        state,
+    if (!m11_theron_startup_build_layout_state(state, &layout_state)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    count = theron_v1_startup_layout_build(
+        &layout_state,
         elements,
         (int)(sizeof(elements) / sizeof(elements[0])));
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
-        m11_point_in_rect(x, y, 34, 22, 242, 150)) {
-        hit.kind = THERON_STARTUP_HIT_TITLE;
-    }
     has_continue =
         m11_theron_tqsv_continue_available(state) ||
         m11_theron_srm_continue_available(state);
-    if (hit.kind == THERON_STARTUP_HIT_NONE) {
-        for (i = 0; i < count; ++i) {
-            const M11_TheronStartupElement *e = &elements[i];
-            if (e->w <= 0 || e->h <= 0 ||
-                !m11_point_in_rect(x, y, e->x, e->y, e->w, e->h)) {
-                continue;
-            }
-            if (e->kind == M11_THERON_STARTUP_ELEMENT_CONTINUE && e->enabled) {
-                hit.kind = THERON_STARTUP_HIT_CONTINUE;
-            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_STAGE && e->enabled) {
-                hit.kind = THERON_STARTUP_HIT_STAGE;
-                hit.selected_dungeon = e->dungeonId;
-            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR && e->enabled) {
-                hit.kind = THERON_STARTUP_HIT_MIRROR;
-                hit.mirror_index = e->mirrorIndex;
-            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_FORCEFIELD && e->enabled) {
-                hit.kind = THERON_STARTUP_HIT_FORCEFIELD;
-            } else {
-                hit.kind = THERON_STARTUP_HIT_PANEL;
-            }
-            break;
-        }
-    }
-    if (hit.kind != THERON_STARTUP_HIT_NONE) {
-        result = theron_v1_startup_handle_hit(
+    if (theron_v1_startup_layout_hit_at(
+            (Theron_StartupPhase)state->theronState.startup_phase,
+            elements,
+            count,
+            x,
+            y,
+            &hit)) {
+        Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
+        result = theron_v1_startup_handle_hit_with_progression(
             (Theron_StartupPhase)state->theronState.startup_phase,
             (Theron_DungeonID)state->theronState.selected_dungeon,
+            world ? &world->progression : NULL,
             state->theronState.startup_cursor,
             state->theronState.save_resume_continue_focus,
             has_continue,
@@ -16579,9 +16543,6 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
             return M11_GAME_INPUT_REDRAW;
         }
         return m11_theron_startup_apply_action(state, &action);
-    }
-    if (m11_point_in_rect(x, y, 34, 22, 242, 150)) {
-        return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
 }
@@ -40122,35 +40083,6 @@ static void m11_draw_map_panel(const M11_GameViewState* state,
                   cx - cell, cy - cell, cell * 3 - 1, cell * 3 - 1, M11_COLOR_YELLOW);
 }
 
-static int m11_theron_stage_available_for_startup(const Theron_V1_World* world,
-                                                  int dungeon_id) {
-    Theron_DungeonState state;
-    if (!world ||
-        dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
-        dungeon_id > THERON_DUNGEON_COUNT) {
-        return 0;
-    }
-    state = world->progression.dungeon_states[dungeon_id - 1];
-    return state == THERON_DUNGEON_STATE_AVAILABLE ||
-           state == THERON_DUNGEON_STATE_IN_PROGRESS;
-}
-
-static int m11_theron_selected_mirror_order(
-    const M11_GameViewState* state,
-    int mirror_index) {
-    int i;
-    if (!state || mirror_index < 0 ||
-        mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
-        return 0;
-    }
-    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
-        if (state->theronState.selected_mirror_order[i] == mirror_index) {
-            return i + 1;
-        }
-    }
-    return 0;
-}
-
 static void m11_theron_startup_layout_set_label(
     M11_TheronStartupElement* element,
     const char* label) {
@@ -40232,15 +40164,74 @@ static void m11_theron_startup_chapter_label(
              marker.chapter_label[0] ? marker.chapter_label : "Chapter ?");
 }
 
+static int m11_theron_startup_build_layout_state(
+    const M11_GameViewState* state,
+    Theron_StartupLayoutState* layout_state) {
+
+    const Theron_V1_World* world;
+    int selected;
+
+    if (!state || !layout_state) {
+        return 0;
+    }
+    theron_v1_startup_layout_state_init(layout_state);
+    world = (const Theron_V1_World*)state->theronWorld;
+    selected = state->theronState.selected_dungeon;
+    if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        selected > THERON_DUNGEON_COUNT) {
+        selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    }
+    layout_state->phase =
+        (Theron_StartupPhase)state->theronState.startup_phase;
+    layout_state->selected_dungeon = (Theron_DungeonID)selected;
+    layout_state->progression = world ? &world->progression : NULL;
+    layout_state->soul_cursor = state->theronState.startup_cursor;
+    layout_state->continue_focus =
+        state->theronState.save_resume_continue_focus;
+    layout_state->has_tqsv_continue =
+        m11_theron_tqsv_continue_available(state);
+    layout_state->tqsv_slot = state->theronState.save_resume_active_slot;
+    layout_state->has_srm_continue =
+        m11_theron_srm_continue_available(state);
+    layout_state->srm_slot = state->theronState.save_resume_srm_active_slot;
+    layout_state->selected_mirrors_mask =
+        state->theronState.selected_mirrors_mask;
+    layout_state->selected_mirror_order =
+        state->theronState.selected_mirror_order;
+    layout_state->selected_mirror_order_count =
+        THERON_STARTUP_MAX_COMPANIONS;
+    return 1;
+}
+
+static M11_TheronStartupElementKind m11_theron_startup_element_kind_from_layout(
+    Theron_StartupLayoutElementKind kind) {
+
+    switch (kind) {
+    case THERON_STARTUP_LAYOUT_ELEMENT_TITLE:
+        return M11_THERON_STARTUP_ELEMENT_TITLE;
+    case THERON_STARTUP_LAYOUT_ELEMENT_CHAPTER:
+        return M11_THERON_STARTUP_ELEMENT_CHAPTER;
+    case THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE:
+        return M11_THERON_STARTUP_ELEMENT_CONTINUE;
+    case THERON_STARTUP_LAYOUT_ELEMENT_STAGE:
+        return M11_THERON_STARTUP_ELEMENT_STAGE;
+    case THERON_STARTUP_LAYOUT_ELEMENT_MIRROR:
+        return M11_THERON_STARTUP_ELEMENT_MIRROR;
+    case THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD:
+        return M11_THERON_STARTUP_ELEMENT_FORCEFIELD;
+    default:
+        return M11_THERON_STARTUP_ELEMENT_TITLE;
+    }
+}
+
 int M11_GameView_GetTheronStartupLayout(
     const M11_GameViewState* state,
     M11_TheronStartupElement* elements,
     int maxElements) {
-    const Theron_V1_World* world;
-    int count = 0;
+    Theron_StartupLayoutState layout_state;
+    Theron_StartupLayoutElement theron_elements[16];
+    int count;
     int i;
-    int selected;
-    const int forcefield_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
 
     if (!state || !elements || maxElements <= 0) {
         return 0;
@@ -40248,134 +40239,49 @@ int M11_GameView_GetTheronStartupLayout(
     if (state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) {
         return 0;
     }
-    world = (const Theron_V1_World*)state->theronWorld;
     memset(elements, 0, (size_t)maxElements * sizeof(elements[0]));
     for (i = 0; i < maxElements; ++i) {
         elements[i].portraitIndex = -1;
         elements[i].primaryClass = -1;
     }
-
-    elements[count].kind = M11_THERON_STARTUP_ELEMENT_TITLE;
-    elements[count].phase = state->theronState.startup_phase;
-    elements[count].enabled = 1;
-    m11_theron_startup_layout_set_label(&elements[count], "THERON'S QUEST");
-    m11_theron_startup_layout_set_rect(&elements[count], 34, 22, 152, 12);
-    ++count;
-    if (count >= maxElements) return count;
-
-    elements[count].kind = M11_THERON_STARTUP_ELEMENT_CHAPTER;
-    elements[count].phase = state->theronState.startup_phase;
-    elements[count].enabled = 1;
-    {
-        char chapter[M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
-        m11_theron_startup_chapter_label(state, chapter, sizeof(chapter));
-        m11_theron_startup_layout_set_label(&elements[count], chapter);
+    if (!m11_theron_startup_build_layout_state(state, &layout_state)) {
+        return 0;
     }
-    m11_theron_startup_layout_set_rect(&elements[count], 34, 38, 220, 10);
-    ++count;
-    if (count >= maxElements) return count;
-
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
-        return count;
+    count = theron_v1_startup_layout_build(
+        &layout_state,
+        theron_elements,
+        (int)(sizeof(theron_elements) / sizeof(theron_elements[0])));
+    if (count > maxElements) {
+        count = maxElements;
     }
-
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
-        int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
-        int has_srm_continue = m11_theron_srm_continue_available(state);
-        int has_continue = has_tqsv_continue || has_srm_continue;
-        int rowY = 66;
-
-        selected = state->theronState.selected_dungeon;
-        if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
-            selected > THERON_DUNGEON_COUNT) {
-            selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
-        }
-        if (has_continue && count < maxElements) {
-            elements[count].kind = M11_THERON_STARTUP_ELEMENT_CONTINUE;
-            elements[count].phase = state->theronState.startup_phase;
-            elements[count].cursor =
-                state->theronState.save_resume_continue_focus ? 1 : 0;
-            elements[count].enabled = 1;
-            elements[count].selected =
-                state->theronState.save_resume_continue_focus ? 1 : 0;
-            elements[count].saveKind = has_tqsv_continue ? 1 : 2;
-            elements[count].saveSlot = has_tqsv_continue
-                ? state->theronState.save_resume_active_slot
-                : state->theronState.save_resume_srm_active_slot;
-            m11_theron_startup_layout_set_label(
-                &elements[count],
-                has_tqsv_continue ? "CONTINUE TQSV" : "CONTINUE SRM");
-            m11_theron_startup_layout_set_rect(
-                &elements[count], 40, rowY, 168, 10);
-            ++count;
-            rowY += 12;
-        }
-        for (i = THERON_DUNGEON_1_HALL_OF_RECORDS;
-             i <= THERON_DUNGEON_COUNT && count < maxElements;
-             ++i) {
-            const Theron_DungeonMeta* meta =
-                theron_v1_dungeon_meta((Theron_DungeonID)i);
-            int available = m11_theron_stage_available_for_startup(world, i);
-            elements[count].kind = M11_THERON_STARTUP_ELEMENT_STAGE;
-            elements[count].phase = state->theronState.startup_phase;
-            elements[count].cursor =
-                (!state->theronState.save_resume_continue_focus &&
-                 i == selected) ? 1 : 0;
-            elements[count].enabled = available ? 1 : 0;
-            elements[count].selected = (i == selected) ? 1 : 0;
-            elements[count].dungeonId = i;
-            m11_theron_startup_layout_set_label(
-                &elements[count],
-                meta ? meta->name : "Unknown");
-            m11_theron_startup_layout_set_rect(
-                &elements[count], 40, rowY + (i - 1) * 13, 220, 10);
-            ++count;
-        }
-        return count;
-    }
-
-    for (i = 0;
-         i < THERON_STARTUP_HERO_MIRROR_COUNT && count < maxElements;
-         ++i) {
-        const Theron_StartupMirrorMeta *meta =
-            theron_v1_startup_mirror_meta(i);
-        int selected_mirror =
-            (state->theronState.selected_mirrors_mask & (1 << i)) != 0;
-        elements[count].kind = M11_THERON_STARTUP_ELEMENT_MIRROR;
-        elements[count].phase = state->theronState.startup_phase;
-        elements[count].cursor =
-            (state->theronState.startup_cursor == i) ? 1 : 0;
-        elements[count].enabled = 1;
-        elements[count].selected = selected_mirror ? 1 : 0;
-        elements[count].mirrorIndex = i;
-        elements[count].selectedOrder =
-            m11_theron_selected_mirror_order(state, i);
-        elements[count].portraitIndex = meta ? meta->portrait_index : -1;
-        elements[count].primaryClass = meta ? (int)meta->primary_class : -1;
-        m11_theron_startup_layout_set_label(
-            &elements[count],
-            meta ? meta->name : "Hero Mirror");
-        m11_theron_startup_layout_bind_decoded_roster(
-            state,
-            &elements[count],
-            i);
+    for (i = 0; i < count; ++i) {
+        const Theron_StartupLayoutElement* src = &theron_elements[i];
+        elements[i].kind =
+            m11_theron_startup_element_kind_from_layout(src->kind);
+        elements[i].phase = (int)src->phase;
+        elements[i].cursor = src->cursor;
+        elements[i].enabled = src->enabled;
+        elements[i].selected = src->selected;
+        elements[i].dungeonId = (int)src->dungeon_id;
+        elements[i].mirrorIndex = src->mirror_index;
+        elements[i].selectedOrder = src->selected_order;
+        elements[i].portraitIndex = src->portrait_index;
+        elements[i].primaryClass = src->primary_class;
+        elements[i].saveKind = src->save_kind;
+        elements[i].saveSlot = src->save_slot;
+        m11_theron_startup_layout_set_label(&elements[i], src->label);
         m11_theron_startup_layout_set_rect(
-            &elements[count], 46, 78 + i * 11, 230, 10);
-        ++count;
-    }
-    if (count < maxElements) {
-        elements[count].kind = M11_THERON_STARTUP_ELEMENT_FORCEFIELD;
-        elements[count].phase = state->theronState.startup_phase;
-        elements[count].cursor =
-            (state->theronState.startup_cursor == forcefield_cursor) ? 1 : 0;
-        elements[count].enabled =
-            (state->theronState.startup_phase == THERON_STARTUP_PHASE_READY)
-                ? 1
-                : 0;
-        elements[count].selected = elements[count].cursor;
-        m11_theron_startup_layout_set_label(&elements[count], "FORCEFIELD");
-        m11_theron_startup_layout_set_rect(&elements[count], 46, 160, 154, 10);
-        ++count;
+            &elements[i], src->x, src->y, src->w, src->h);
+        if (elements[i].kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
+            char chapter[M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
+            m11_theron_startup_chapter_label(state, chapter, sizeof(chapter));
+            m11_theron_startup_layout_set_label(&elements[i], chapter);
+        } else if (elements[i].kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
+            m11_theron_startup_layout_bind_decoded_roster(
+                state,
+                &elements[i],
+                elements[i].mirrorIndex);
+        }
     }
     return count;
 }

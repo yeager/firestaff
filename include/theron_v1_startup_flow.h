@@ -103,9 +103,58 @@ typedef struct {
     int mirror_index;
 } Theron_StartupHit;
 
+enum {
+    THERON_STARTUP_LAYOUT_LABEL_CAPACITY = 48
+};
+
+typedef enum {
+    THERON_STARTUP_LAYOUT_ELEMENT_TITLE = 1,
+    THERON_STARTUP_LAYOUT_ELEMENT_CHAPTER,
+    THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE,
+    THERON_STARTUP_LAYOUT_ELEMENT_STAGE,
+    THERON_STARTUP_LAYOUT_ELEMENT_MIRROR,
+    THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD
+} Theron_StartupLayoutElementKind;
+
+typedef struct {
+    Theron_StartupLayoutElementKind kind;
+    Theron_StartupPhase phase;
+    int cursor;
+    int enabled;
+    int selected;
+    Theron_DungeonID dungeon_id;
+    int mirror_index;
+    int selected_order;
+    int portrait_index;
+    int primary_class;
+    int save_kind; /* 0=none, 1=TQSV, 2=SRM */
+    int save_slot;
+    int x;
+    int y;
+    int w;
+    int h;
+    char label[THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
+} Theron_StartupLayoutElement;
+
+typedef struct {
+    Theron_StartupPhase phase;
+    Theron_DungeonID selected_dungeon;
+    const Theron_DungeonProgression *progression;
+    int soul_cursor;
+    int continue_focus;
+    int has_tqsv_continue;
+    int tqsv_slot;
+    int has_srm_continue;
+    int srm_slot;
+    int selected_mirrors_mask;
+    const int *selected_mirror_order;
+    int selected_mirror_order_count;
+} Theron_StartupLayoutState;
+
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
 void theron_v1_startup_action_init(Theron_StartupAction *action);
 void theron_v1_startup_hit_init(Theron_StartupHit *hit);
+void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state);
 Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
     const Theron_DungeonProgression *progression,
@@ -119,9 +168,21 @@ Theron_StartupResult theron_v1_startup_deselect_mirror(
 Theron_StartupResult theron_v1_startup_enter_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party);
+int theron_v1_startup_stage_available(
+    const Theron_DungeonProgression *progression,
+    Theron_DungeonID dungeon_id);
 Theron_StartupResult theron_v1_startup_handle_input(
     Theron_StartupPhase phase,
     Theron_DungeonID selected_dungeon,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action);
+Theron_StartupResult theron_v1_startup_handle_input_with_progression(
+    Theron_StartupPhase phase,
+    Theron_DungeonID selected_dungeon,
+    const Theron_DungeonProgression *progression,
     int soul_cursor,
     int continue_focus,
     int has_continue,
@@ -135,6 +196,31 @@ Theron_StartupResult theron_v1_startup_handle_hit(
     int has_continue,
     const Theron_StartupHit *hit,
     Theron_StartupAction *out_action);
+Theron_StartupResult theron_v1_startup_handle_hit_with_progression(
+    Theron_StartupPhase phase,
+    Theron_DungeonID selected_dungeon,
+    const Theron_DungeonProgression *progression,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    const Theron_StartupHit *hit,
+    Theron_StartupAction *out_action);
+int theron_v1_startup_layout_build(
+    const Theron_StartupLayoutState *state,
+    Theron_StartupLayoutElement *elements,
+    int max_elements);
+int theron_v1_startup_layout_hit_at(
+    Theron_StartupPhase phase,
+    const Theron_StartupLayoutElement *elements,
+    int element_count,
+    int x,
+    int y,
+    Theron_StartupHit *out_hit);
+int theron_v1_startup_receipt_phase(
+    Theron_StartupPhase phase,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active);
 
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase);
 const char *theron_v1_startup_result_name(Theron_StartupResult result);

@@ -14,6 +14,13 @@ static int tqr_stage_is_available(const Theron_DungeonProgression *progression,
            state == THERON_DUNGEON_STATE_IN_PROGRESS;
 }
 
+int theron_v1_startup_stage_available(
+    const Theron_DungeonProgression *progression,
+    Theron_DungeonID dungeon_id) {
+
+    return tqr_stage_is_available(progression, dungeon_id);
+}
+
 static const Theron_StartupMirrorMeta g_tqr_mirror_meta[THERON_STARTUP_HERO_MIRROR_COUNT] = {
     { "Hakar",  THERON_CLASS_FIGHTER, 1 },
     { "Mara",   THERON_CLASS_PRIEST,  2 },
@@ -104,6 +111,19 @@ void theron_v1_startup_hit_init(Theron_StartupHit *hit) {
     hit->mirror_index = -1;
 }
 
+void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state) {
+    if (!state) {
+        return;
+    }
+    memset(state, 0, sizeof(*state));
+    state->phase = THERON_STARTUP_PHASE_TITLE;
+    state->selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    state->soul_cursor = 0;
+    state->continue_focus = 0;
+    state->tqsv_slot = -1;
+    state->srm_slot = -1;
+}
+
 static Theron_DungeonID tqr_startup_clamp_stage(Theron_DungeonID dungeon_id) {
     if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
         dungeon_id > THERON_DUNGEON_COUNT) {
@@ -112,9 +132,302 @@ static Theron_DungeonID tqr_startup_clamp_stage(Theron_DungeonID dungeon_id) {
     return dungeon_id;
 }
 
-Theron_StartupResult theron_v1_startup_handle_input(
+static Theron_DungeonID tqr_startup_move_stage_cursor(
+    const Theron_DungeonProgression *progression,
+    Theron_DungeonID selected,
+    int delta) {
+
+    int id;
+
+    selected = tqr_startup_clamp_stage(selected);
+    if (!progression || delta == 0) {
+        if (delta < 0 && selected > THERON_DUNGEON_1_HALL_OF_RECORDS) {
+            return (Theron_DungeonID)(selected - 1);
+        }
+        if (delta > 0 && selected < THERON_DUNGEON_COUNT) {
+            return (Theron_DungeonID)(selected + 1);
+        }
+        return selected;
+    }
+
+    if (delta < 0) {
+        for (id = (int)selected - 1;
+             id >= THERON_DUNGEON_1_HALL_OF_RECORDS;
+             --id) {
+            if (tqr_stage_is_available(progression, (Theron_DungeonID)id)) {
+                return (Theron_DungeonID)id;
+            }
+        }
+        return selected;
+    }
+
+    for (id = (int)selected + 1; id <= THERON_DUNGEON_COUNT; ++id) {
+        if (tqr_stage_is_available(progression, (Theron_DungeonID)id)) {
+            return (Theron_DungeonID)id;
+        }
+    }
+    return selected;
+}
+
+static void tqr_startup_layout_set_label(
+    Theron_StartupLayoutElement *element,
+    const char *label) {
+
+    if (!element) {
+        return;
+    }
+    snprintf(element->label,
+             sizeof(element->label),
+             "%s",
+             label ? label : "");
+}
+
+static void tqr_startup_layout_set_rect(
+    Theron_StartupLayoutElement *element,
+    int x,
+    int y,
+    int w,
+    int h) {
+
+    if (!element) {
+        return;
+    }
+    element->x = x;
+    element->y = y;
+    element->w = w;
+    element->h = h;
+}
+
+static int tqr_startup_layout_selected_order(
+    const Theron_StartupLayoutState *state,
+    int mirror_index) {
+
+    int i;
+
+    if (!state || !state->selected_mirror_order ||
+        mirror_index < 0 ||
+        mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
+        return 0;
+    }
+    for (i = 0; i < state->selected_mirror_order_count; ++i) {
+        if (state->selected_mirror_order[i] == mirror_index) {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
+int theron_v1_startup_layout_build(
+    const Theron_StartupLayoutState *state,
+    Theron_StartupLayoutElement *elements,
+    int max_elements) {
+
+    int count = 0;
+    int i;
+    int row_y;
+    int has_continue;
+    Theron_DungeonID selected;
+
+    if (!state || !elements || max_elements <= 0) {
+        return 0;
+    }
+    memset(elements, 0, (size_t)max_elements * sizeof(elements[0]));
+    for (i = 0; i < max_elements; ++i) {
+        elements[i].portrait_index = -1;
+        elements[i].primary_class = -1;
+        elements[i].dungeon_id = THERON_DUNGEON_INVALID;
+        elements[i].mirror_index = -1;
+        elements[i].save_slot = -1;
+    }
+
+    elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_TITLE;
+    elements[count].phase = state->phase;
+    elements[count].enabled = 1;
+    tqr_startup_layout_set_label(&elements[count], "THERON'S QUEST");
+    tqr_startup_layout_set_rect(&elements[count], 34, 22, 152, 12);
+    ++count;
+    if (count >= max_elements) {
+        return count;
+    }
+
+    elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_CHAPTER;
+    elements[count].phase = state->phase;
+    elements[count].enabled = 1;
+    tqr_startup_layout_set_label(&elements[count], "Chapter ?");
+    tqr_startup_layout_set_rect(&elements[count], 34, 38, 220, 10);
+    ++count;
+    if (count >= max_elements ||
+        state->phase == THERON_STARTUP_PHASE_TITLE) {
+        return count;
+    }
+
+    if (state->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        row_y = 66;
+        has_continue =
+            state->has_tqsv_continue || state->has_srm_continue;
+        selected = tqr_startup_clamp_stage(state->selected_dungeon);
+        if (has_continue && count < max_elements) {
+            elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE;
+            elements[count].phase = state->phase;
+            elements[count].cursor = state->continue_focus ? 1 : 0;
+            elements[count].enabled = 1;
+            elements[count].selected = state->continue_focus ? 1 : 0;
+            elements[count].save_kind = state->has_tqsv_continue ? 1 : 2;
+            elements[count].save_slot = state->has_tqsv_continue
+                ? state->tqsv_slot
+                : state->srm_slot;
+            tqr_startup_layout_set_label(
+                &elements[count],
+                state->has_tqsv_continue ? "CONTINUE TQSV" : "CONTINUE SRM");
+            tqr_startup_layout_set_rect(&elements[count], 40, row_y, 168, 10);
+            ++count;
+            row_y += 12;
+        }
+        for (i = THERON_DUNGEON_1_HALL_OF_RECORDS;
+             i <= THERON_DUNGEON_COUNT && count < max_elements;
+             ++i) {
+            const Theron_DungeonMeta *meta =
+                theron_v1_dungeon_meta((Theron_DungeonID)i);
+            int available = theron_v1_startup_stage_available(
+                state->progression,
+                (Theron_DungeonID)i);
+            elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_STAGE;
+            elements[count].phase = state->phase;
+            elements[count].cursor =
+                (!state->continue_focus && i == (int)selected) ? 1 : 0;
+            elements[count].enabled = available ? 1 : 0;
+            elements[count].selected = (i == (int)selected) ? 1 : 0;
+            elements[count].dungeon_id = (Theron_DungeonID)i;
+            tqr_startup_layout_set_label(
+                &elements[count],
+                meta ? meta->name : "Unknown");
+            tqr_startup_layout_set_rect(
+                &elements[count], 40, row_y + (i - 1) * 13, 220, 10);
+            ++count;
+        }
+        return count;
+    }
+
+    for (i = 0;
+         i < THERON_STARTUP_HERO_MIRROR_COUNT && count < max_elements;
+         ++i) {
+        const Theron_StartupMirrorMeta *meta =
+            theron_v1_startup_mirror_meta(i);
+        int selected_mirror =
+            (state->selected_mirrors_mask & (1 << i)) != 0;
+        elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_MIRROR;
+        elements[count].phase = state->phase;
+        elements[count].cursor = (state->soul_cursor == i) ? 1 : 0;
+        elements[count].enabled = 1;
+        elements[count].selected = selected_mirror ? 1 : 0;
+        elements[count].mirror_index = i;
+        elements[count].selected_order =
+            tqr_startup_layout_selected_order(state, i);
+        elements[count].portrait_index = meta ? meta->portrait_index : -1;
+        elements[count].primary_class = meta ? (int)meta->primary_class : -1;
+        tqr_startup_layout_set_label(
+            &elements[count],
+            meta ? meta->name : "Hero Mirror");
+        tqr_startup_layout_set_rect(
+            &elements[count], 46, 78 + i * 11, 230, 10);
+        ++count;
+    }
+    if (count < max_elements) {
+        elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD;
+        elements[count].phase = state->phase;
+        elements[count].cursor =
+            (state->soul_cursor == THERON_STARTUP_HERO_MIRROR_COUNT) ? 1 : 0;
+        elements[count].enabled =
+            (state->phase == THERON_STARTUP_PHASE_READY) ? 1 : 0;
+        elements[count].selected = elements[count].cursor;
+        tqr_startup_layout_set_label(&elements[count], "FORCEFIELD");
+        tqr_startup_layout_set_rect(&elements[count], 46, 160, 154, 10);
+        ++count;
+    }
+    return count;
+}
+
+static int tqr_startup_point_in_rect(
+    int px,
+    int py,
+    int x,
+    int y,
+    int w,
+    int h) {
+
+    return w > 0 && h > 0 &&
+           px >= x && py >= y &&
+           px < x + w && py < y + h;
+}
+
+int theron_v1_startup_layout_hit_at(
+    Theron_StartupPhase phase,
+    const Theron_StartupLayoutElement *elements,
+    int element_count,
+    int x,
+    int y,
+    Theron_StartupHit *out_hit) {
+
+    int i;
+
+    if (!out_hit) {
+        return 0;
+    }
+    theron_v1_startup_hit_init(out_hit);
+    if (phase == THERON_STARTUP_PHASE_TITLE &&
+        tqr_startup_point_in_rect(x, y, 34, 22, 242, 150)) {
+        out_hit->kind = THERON_STARTUP_HIT_TITLE;
+        return 1;
+    }
+    if (!elements || element_count <= 0) {
+        return 0;
+    }
+    for (i = 0; i < element_count; ++i) {
+        const Theron_StartupLayoutElement *e = &elements[i];
+        if (!tqr_startup_point_in_rect(x, y, e->x, e->y, e->w, e->h)) {
+            continue;
+        }
+        switch (e->kind) {
+        case THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE:
+            out_hit->kind = e->enabled
+                ? THERON_STARTUP_HIT_CONTINUE
+                : THERON_STARTUP_HIT_PANEL;
+            return 1;
+        case THERON_STARTUP_LAYOUT_ELEMENT_STAGE:
+            out_hit->kind = e->enabled
+                ? THERON_STARTUP_HIT_STAGE
+                : THERON_STARTUP_HIT_PANEL;
+            out_hit->selected_dungeon = e->dungeon_id;
+            return 1;
+        case THERON_STARTUP_LAYOUT_ELEMENT_MIRROR:
+            out_hit->kind = e->enabled
+                ? THERON_STARTUP_HIT_MIRROR
+                : THERON_STARTUP_HIT_PANEL;
+            out_hit->mirror_index = e->mirror_index;
+            return 1;
+        case THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD:
+            out_hit->kind = e->enabled
+                ? THERON_STARTUP_HIT_FORCEFIELD
+                : THERON_STARTUP_HIT_PANEL;
+            return 1;
+        case THERON_STARTUP_LAYOUT_ELEMENT_TITLE:
+        case THERON_STARTUP_LAYOUT_ELEMENT_CHAPTER:
+        default:
+            out_hit->kind = THERON_STARTUP_HIT_PANEL;
+            return 1;
+        }
+    }
+    if (tqr_startup_point_in_rect(x, y, 34, 22, 242, 150)) {
+        out_hit->kind = THERON_STARTUP_HIT_PANEL;
+        return 1;
+    }
+    return 0;
+}
+
+Theron_StartupResult theron_v1_startup_handle_input_with_progression(
     Theron_StartupPhase phase,
     Theron_DungeonID selected_dungeon,
+    const Theron_DungeonProgression *progression,
     int soul_cursor,
     int continue_focus,
     int has_continue,
@@ -161,10 +474,17 @@ Theron_StartupResult theron_v1_startup_handle_input(
         if (input == THERON_STARTUP_INPUT_UP) {
             if (continue_focus) {
                 out_action->continue_focus = 0;
-            } else if (selected > THERON_DUNGEON_1_HALL_OF_RECORDS) {
-                selected = (Theron_DungeonID)(selected - 1);
             } else if (has_continue) {
-                out_action->continue_focus = 1;
+                Theron_DungeonID moved =
+                    tqr_startup_move_stage_cursor(progression, selected, -1);
+                if (moved == selected) {
+                    out_action->continue_focus = 1;
+                } else {
+                    selected = moved;
+                }
+            } else {
+                selected =
+                    tqr_startup_move_stage_cursor(progression, selected, -1);
             }
             out_action->selected_dungeon = selected;
             out_action->kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
@@ -173,8 +493,9 @@ Theron_StartupResult theron_v1_startup_handle_input(
         if (input == THERON_STARTUP_INPUT_DOWN) {
             if (continue_focus) {
                 out_action->continue_focus = 0;
-            } else if (selected < THERON_DUNGEON_COUNT) {
-                selected = (Theron_DungeonID)(selected + 1);
+            } else {
+                selected =
+                    tqr_startup_move_stage_cursor(progression, selected, 1);
             }
             out_action->selected_dungeon = selected;
             out_action->kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
@@ -230,9 +551,29 @@ Theron_StartupResult theron_v1_startup_handle_input(
     return THERON_STARTUP_OK;
 }
 
-Theron_StartupResult theron_v1_startup_handle_hit(
+Theron_StartupResult theron_v1_startup_handle_input(
     Theron_StartupPhase phase,
     Theron_DungeonID selected_dungeon,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action) {
+
+    return theron_v1_startup_handle_input_with_progression(phase,
+                                                           selected_dungeon,
+                                                           NULL,
+                                                           soul_cursor,
+                                                           continue_focus,
+                                                           has_continue,
+                                                           input,
+                                                           out_action);
+}
+
+Theron_StartupResult theron_v1_startup_handle_hit_with_progression(
+    Theron_StartupPhase phase,
+    Theron_DungeonID selected_dungeon,
+    const Theron_DungeonProgression *progression,
     int soul_cursor,
     int continue_focus,
     int has_continue,
@@ -271,10 +612,15 @@ Theron_StartupResult theron_v1_startup_handle_hit(
     }
     if (hit->kind == THERON_STARTUP_HIT_STAGE) {
         if (phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
-            out_action->kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
-            out_action->selected_dungeon =
+            Theron_DungeonID hit_stage =
                 tqr_startup_clamp_stage(hit->selected_dungeon);
+            out_action->selected_dungeon = hit_stage;
             out_action->continue_focus = 0;
+            if (!progression || tqr_stage_is_available(progression, hit_stage)) {
+                out_action->kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
+            } else {
+                out_action->kind = THERON_STARTUP_ACTION_NONE;
+            }
         }
         return THERON_STARTUP_OK;
     }
@@ -296,6 +642,25 @@ Theron_StartupResult theron_v1_startup_handle_hit(
         return THERON_STARTUP_OK;
     }
     return THERON_STARTUP_OK;
+}
+
+Theron_StartupResult theron_v1_startup_handle_hit(
+    Theron_StartupPhase phase,
+    Theron_DungeonID selected_dungeon,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    const Theron_StartupHit *hit,
+    Theron_StartupAction *out_action) {
+
+    return theron_v1_startup_handle_hit_with_progression(phase,
+                                                         selected_dungeon,
+                                                         NULL,
+                                                         soul_cursor,
+                                                         continue_focus,
+                                                         has_continue,
+                                                         hit,
+                                                         out_action);
 }
 
 Theron_StartupResult theron_v1_startup_choose_stage(
@@ -459,6 +824,36 @@ const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     case THERON_STARTUP_PHASE_IN_DUNGEON: return "in-dungeon";
     default: return "unknown";
     }
+}
+
+int theron_v1_startup_receipt_phase(
+    Theron_StartupPhase phase,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active) {
+
+    int startup_active;
+
+    if (!out_phase || out_phase_size <= 0) {
+        return 0;
+    }
+    startup_active =
+        phase != THERON_STARTUP_PHASE_IN_DUNGEON ? 1 : 0;
+    if (startup_active) {
+        snprintf(out_phase,
+                 (size_t)out_phase_size,
+                 "theron-startup-%d",
+                 (int)phase);
+    } else {
+        snprintf(out_phase,
+                 (size_t)out_phase_size,
+                 "%s",
+                 "theron-runtime");
+    }
+    if (out_startup_active) {
+        *out_startup_active = startup_active;
+    }
+    return 1;
 }
 
 const char *theron_v1_startup_result_name(Theron_StartupResult result) {
