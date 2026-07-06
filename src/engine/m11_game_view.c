@@ -2116,8 +2116,8 @@ enum {
      * (M11_DM_ACTION_MENU_ROW_*) live next to the renderer
      * later in the file.  Ref: ReDMCSB ACTIDRAW.C
      * F0387_MENUS_DrawActionArea menu-mode zones 85/86/87. */
-    M11_DM_ACTION_MENU_AREA_X_FWD      = 233,
-    M11_DM_ACTION_MENU_AREA_W_FWD      = 87,
+    M11_DM_ACTION_MENU_ROW_X_FWD       = 234,
+    M11_DM_ACTION_MENU_ROW_W_FWD       = 85,
     M11_DM_ACTION_MENU_ROW_Y0_FWD      = 86,
     M11_DM_ACTION_MENU_ROW_STEP_FWD    = 12,
     M11_DM_ACTION_MENU_ROW_H_FWD       = 11
@@ -25834,8 +25834,8 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
  *   C013_ZONE_SPELL_AREA click/input box is at x=233..319, y=42..73
  *     in ReDMCSB COMMAND.C; GRAPHICS.DAT graphic 9 is the 87x25
  *     spell-area background that starts at the same source x/y.
- *   C011_ZONE_ACTION_AREA is at x=233..319, y=77..121 (87x45),
- *     matching COMMAND.C C111 and GRAPHICS.DAT graphic 10.
+ *   G0001/G0499 C011 action-area source box is x=224..319,
+ *     y=77..121 (96x45), matching ReDMCSB DATA.C/MENU.C.
  *
  * Earlier Firestaff V1 builds placed these panels at x=224 with the
  * action graphic up at y=45, leaving the action/menu chrome detached
@@ -25844,9 +25844,9 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
  * Reference: ReDMCSB COMMAND.C primary mouse input; ACTIDRAW.C F0387;
  * CASTER.C F0394; DATA.C C009/C010 graphics.
  */
-#define M11_DM_ACTION_AREA_X    233
+#define M11_DM_ACTION_AREA_X    224
 #define M11_DM_ACTION_AREA_Y     77
-#define M11_DM_ACTION_AREA_W     87
+#define M11_DM_ACTION_AREA_W     96
 #define M11_DM_ACTION_AREA_H     45
 #define M11_DM_SPELL_AREA_X     233
 #define M11_DM_SPELL_AREA_Y      42
@@ -32712,7 +32712,7 @@ int M11_GameView_ProbeF0407FuseImmediate(M11_GameViewState* state,
  * rows in CYAN-ON-BLACK.  DM1 selects one of three zones for the
  * graphic blit depending on how many action rows are present:
  *
- *   all three actions      -> C011_ZONE_ACTION_AREA    (87×45)
+ *   all three actions      -> C011/G0499 action box    (96×45)
  *   only two actions       -> C077_ZONE_ACTION_AREA_TWO_ACTIONS_MENU
  *   only one action        -> C079_ZONE_ACTION_AREA_ONE_ACTION_MENU
  *
@@ -32724,8 +32724,10 @@ int M11_GameView_ProbeF0407FuseImmediate(M11_GameViewState* state,
  * This stays within the bounded slice while still rendering the
  * authentic header + action-row presentation.
  *
- * Geometry within the 87×45 action-area graphic is source-anchored
- * to ReDMCSB COMMAND.C / layout-696, not the old Firestaff panel:
+ * The menu background uses ReDMCSB MENU.C G0499/G0500/G0501 boxes
+ * at x=224..319.  The action row hit/text zones are narrower:
+ * COMMAND.C pins C113..C115 to x=234..318 and F0387 prints text
+ * at x=241, while the champion-name text starts at x=235.
  *
  *   Header band (champion name, black-on-cyan): y = 77..85
  *   Action row 0 hit/fill zone:                 y = 86..96
@@ -32744,6 +32746,8 @@ int M11_GameView_ProbeF0407FuseImmediate(M11_GameViewState* state,
 #define M11_DM_ACTION_MENU_ROW_Y0     86
 #define M11_DM_ACTION_MENU_ROW_STEP   12
 #define M11_DM_ACTION_MENU_ROW_H      11
+#define M11_DM_ACTION_MENU_ROW_X     234
+#define M11_DM_ACTION_MENU_ROW_W      85
 #define M11_DM_ACTION_MENU_HEADER_TEXT_X 235
 #define M11_DM_ACTION_MENU_HEADER_TEXT_Y  83
 #define M11_DM_ACTION_MENU_ROW_TEXT_X    241
@@ -33409,7 +33413,7 @@ int M11_GameView_GetV1ActionMenuGraphicZone(int actionRowCount,
     }
     if (outX) *outX = actionX;
     if (outY) *outY = actionY;
-    if (outW) *outW = 87;
+    if (outW) *outW = M11_DM_ACTION_AREA_W;
     if (outH) *outH = (zoneId == 79) ? 21 : ((zoneId == 77) ? 33 : 45);
     return 1;
 }
@@ -35251,10 +35255,10 @@ int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
                                             int* outH) {
     int zoneId = M11_GameView_GetV1ActionMenuRowZoneId(rowIndex);
     if (zoneId == 0) return 0;
-    if (outX) *outX = M11_DM_ACTION_AREA_X + 1;
+    if (outX) *outX = M11_DM_ACTION_MENU_ROW_X;
     if (outY) *outY = M11_DM_ACTION_MENU_ROW_Y0 +
                       (zoneId - 85) * M11_DM_ACTION_MENU_ROW_STEP;
-    if (outW) *outW = 85;
+    if (outW) *outW = M11_DM_ACTION_MENU_ROW_W;
     if (outH) *outH = M11_DM_ACTION_MENU_ROW_H;
     return 1;
 }
