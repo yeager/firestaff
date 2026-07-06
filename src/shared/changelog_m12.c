@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.47  (2026-07-06)",
+    "  - Packages the post-v3.0.46 DM1 V1 side-door frame source-routing work now on main.",
+    "  - DM1 V1 D1/D2/D3 side-door panels now route through source-locked frame helpers with focused runtime coverage.",
+    "",
     "V3.0.46  (2026-07-06)",
     "  - Packages the post-v3.0.45 DM1 inscription glyph, side-wall ordering, and arrow-feedback gates now on main.",
     "  - DM1 V1 wall-inscription glyph escapes, side-wall source ordering, and arrow feedback coverage are included in release packaging.",
@@ -459,5 +463,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.46";
+    return "3.0.47";
 }

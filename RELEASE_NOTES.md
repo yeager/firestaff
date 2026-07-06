@@ -1,6 +1,28 @@
 
 # Unreleased
 
+# Firestaff v3.0.47
+
+Firestaff v3.0.47 packages the current `main` after the latest DM1 V1
+side-door frame source-routing work.
+
+## Highlights since v3.0.46
+
+- **DM1 V1 side-door rendering**: D1/D2/D3 side-door panels now route through
+  source-locked frame helpers for closed and partly-open door states.
+- **DM1 V1 runtime coverage**: The focused action/stamina runtime gate now
+  covers D3 side-door frame selection alongside the D1/D2 source paths.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.47`.
+
+## Verification
+
+- Local release verification covers version synchronization, focused DM1 V1
+  side-door frame tests and the Phase A probe before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.47` release run.
+
 # Firestaff v3.0.46
 
 Firestaff v3.0.46 packages the current `main` after the latest DM1 V1
