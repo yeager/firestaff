@@ -311,6 +311,41 @@ int csb_v1_util_flow_entrance_command_for_action(
     }
 }
 
+int csb_v1_util_flow_execution_for_action(
+    CSB_V1_UtilFlowAction action,
+    CSB_V1_UtilExecution *out_execution)
+{
+    if (!out_execution) {
+        return 0;
+    }
+    memset(out_execution, 0, sizeof(*out_execution));
+    out_execution->kind = CSB_V1_UTIL_EXEC_IGNORE;
+    switch (action) {
+    case CSB_V1_UTIL_ACTION_LOAD:
+    case CSB_V1_UTIL_ACTION_NEW:
+        out_execution->kind = CSB_V1_UTIL_EXEC_ENTRANCE_COMMAND;
+        out_execution->entrance_command =
+            csb_v1_util_flow_entrance_command_for_action(action);
+        out_execution->preview_active = 0;
+        return out_execution->entrance_command != 0;
+    case CSB_V1_UTIL_ACTION_IMPORT:
+        out_execution->kind = CSB_V1_UTIL_EXEC_STATUS_REDRAW;
+        out_execution->preview_active = 0;
+        out_execution->status_context = "BOOT";
+        out_execution->status_message = "CSB IMPORT READY";
+        return 1;
+    case CSB_V1_UTIL_ACTION_VIEW:
+        out_execution->kind = CSB_V1_UTIL_EXEC_STATUS_REDRAW;
+        out_execution->preview_active = 1;
+        out_execution->status_context = "BOOT";
+        out_execution->status_message = "CSB PARTY READY";
+        return 1;
+    case CSB_V1_UTIL_ACTION_EXIT:
+    default:
+        return 1;
+    }
+}
+
 int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
                                   CSB_V1_UtilInput input,
                                   int preview_active,
