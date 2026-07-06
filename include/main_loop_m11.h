@@ -29,7 +29,9 @@ typedef struct {
     int presentEveryMs;    /* How often to present during the loop.
                               Default 16 (≈60Hz). */
     const char* script;    /* Optional comma-separated input script:
-                              up,down,left,right,enter,esc. */
+                              up,down,left,right,enter,esc.  In boot-probe
+                              mode, waitN / wait:N tokens advance N idle
+                              frames without input. */
     const char* dataDir;   /* Optional override for asset detection.
                               Falls back to FIRESTAFF_DATA. */
     const char* gameId;    /* Optional game to pre-select: dm1, csb, dm2,
@@ -39,6 +41,8 @@ typedef struct {
                               prepare/open selected-entry startup, then exit. */
     int bootProbeFrames;   /* Optional M11 idle frames to advance before
                               the boot-probe receipt is printed. */
+    const char* bootProbeExpectPhase; /* Optional exact startupPhase expected
+                                         after boot-probe frames/script. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

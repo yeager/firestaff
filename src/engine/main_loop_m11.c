@@ -687,6 +687,8 @@ static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
 static M12_MenuInput m11_next_script_input(const char** cursor);
+static M12_MenuInput m11_map_script_token(const char* token, size_t len);
+static int m11_push_script_event_token(const char* token, size_t len);
 
 int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
                                                     int framebufferY,
@@ -1644,6 +1646,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->directLaunch   = 0;
     opts->bootProbe      = 0;
     opts->bootProbeFrames = 0;
+    opts->bootProbeExpectPhase = NULL;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -1663,17 +1666,109 @@ static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
     }
 }
 
+static int m11_script_next_token(const char** cursor,
+                                 const char** outStart,
+                                 size_t* outLen) {
+    const char* start;
+    const char* end;
+    if (outStart) {
+        *outStart = NULL;
+    }
+    if (outLen) {
+        *outLen = 0U;
+    }
+    if (!cursor || !*cursor) {
+        return 0;
+    }
+    start = *cursor;
+    while (*start == ' ' || *start == ',') {
+        ++start;
+    }
+    if (*start == '\0') {
+        *cursor = start;
+        return 0;
+    }
+    end = start;
+    while (*end != '\0' && *end != ',') {
+        ++end;
+    }
+    *cursor = end;
+    if (outStart) {
+        *outStart = start;
+    }
+    if (outLen) {
+        *outLen = (size_t)(end - start);
+    }
+    return 1;
+}
+
+static int m11_boot_probe_script_wait_frames(const char* token, size_t len) {
+    unsigned long value = 0UL;
+    size_t pos = 0U;
+    if (!token || len == 0U) {
+        return -1;
+    }
+    if (len >= 4U && strncmp(token, "wait", 4U) == 0) {
+        pos = 4U;
+        if (pos < len && token[pos] == ':') {
+            ++pos;
+        }
+    } else if (len >= 6U && strncmp(token, "frames", 6U) == 0) {
+        pos = 6U;
+        if (pos < len && token[pos] == ':') {
+            ++pos;
+        }
+    } else {
+        return -1;
+    }
+    if (pos >= len) {
+        return -1;
+    }
+    while (pos < len) {
+        if (token[pos] < '0' || token[pos] > '9') {
+            return -1;
+        }
+        value = value * 10UL + (unsigned long)(token[pos] - '0');
+        if (value > 100000UL) {
+            value = 100000UL;
+        }
+        ++pos;
+    }
+    return (int)value;
+}
+
 static int m11_phase_a_apply_boot_probe_script(M11_GameViewState* gameView,
                                                const char* script,
-                                               int framesAfterInput) {
+                                               int framesAfterInput,
+                                               int* outWaitFrames) {
     const char* cursor = script;
     int applied = 0;
+    int waited = 0;
+    if (outWaitFrames) {
+        *outWaitFrames = 0;
+    }
     if (!gameView || !gameView->active || !script || script[0] == '\0') {
         return 0;
     }
     while (cursor && *cursor != '\0') {
-        M12_MenuInput input = m11_next_script_input(&cursor);
+        const char* token = NULL;
+        size_t tokenLen = 0U;
+        int waitFrames;
+        M12_MenuInput input;
         M11_GameInputResult result;
+        if (!m11_script_next_token(&cursor, &token, &tokenLen)) {
+            break;
+        }
+        waitFrames = m11_boot_probe_script_wait_frames(token, tokenLen);
+        if (waitFrames >= 0) {
+            m11_phase_a_advance_boot_probe_frames(gameView, waitFrames);
+            waited += waitFrames;
+            continue;
+        }
+        if (m11_push_script_event_token(token, tokenLen)) {
+            continue;
+        }
+        input = m11_map_script_token(token, tokenLen);
         if (input == M12_MENU_INPUT_NONE) {
             continue;
         }
@@ -1690,6 +1785,10 @@ static int m11_phase_a_apply_boot_probe_script(M11_GameViewState* gameView,
             break;
         }
         m11_phase_a_advance_boot_probe_frames(gameView, framesAfterInput);
+        waited += framesAfterInput > 0 ? framesAfterInput : 0;
+    }
+    if (outWaitFrames) {
+        *outWaitFrames = waited;
     }
     return applied;
 }
@@ -1699,7 +1798,8 @@ static void m11_phase_a_print_boot_probe_receipt(
     const M12_StartupMenuState* menuState,
     const char* gameId,
     int advancedFrames,
-    int scriptInputs) {
+    int scriptInputs,
+    int scriptFrames) {
     M11_BootProbeReceipt receipt;
     const char* runtimeDir = "";
     if (menuState && gameId && gameId[0] != '\0') {
@@ -1711,23 +1811,25 @@ static void m11_phase_a_print_boot_probe_receipt(
     }
     if (!M11_GameView_GetBootProbeReceipt(gameView, &receipt)) {
         fprintf(stderr,
-                "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d\n",
+                "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d\n",
                 gameId ? gameId : "",
                 gameView ? (int)gameView->sourceKind : 0,
                 gameView ? gameView->sourceId : "",
                 runtimeDir,
                 advancedFrames,
-                scriptInputs);
+                scriptInputs,
+                scriptFrames);
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d runtimeTick=%d dm1WorldTick=%u introBypassed=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d runtimeTick=%d dm1WorldTick=%u introBypassed=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
             runtimeDir,
             advancedFrames,
             scriptInputs,
+            scriptFrames,
             receipt.startupPhase,
             receipt.startupActive,
             receipt.levelLoaded,
@@ -3348,15 +3450,29 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (o->bootProbe) {
             int frames = o->bootProbeFrames < 0 ? 0 : o->bootProbeFrames;
             int scriptInputs;
+            int scriptFrames = 0;
+            M11_BootProbeReceipt receipt;
             m11_phase_a_advance_boot_probe_frames(&gameView, frames);
             scriptInputs = m11_phase_a_apply_boot_probe_script(&gameView,
                                                                o->script,
-                                                               frames);
+                                                               frames,
+                                                               &scriptFrames);
             m11_phase_a_print_boot_probe_receipt(&gameView,
                                                  &menuState,
                                                  o->gameId,
                                                  frames,
-                                                 scriptInputs);
+                                                 scriptInputs,
+                                                 scriptFrames);
+            if (o->bootProbeExpectPhase && o->bootProbeExpectPhase[0] != '\0') {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    strcmp(receipt.startupPhase, o->bootProbeExpectPhase) != 0) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected phase '%s' but got '%s'\n",
+                            o->bootProbeExpectPhase,
+                            receipt.startupPhase);
+                    runRc = 4;
+                }
+            }
             goto cleanup;
         }
         if (exitAfterLaunch) {
