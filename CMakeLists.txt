@@ -278,6 +278,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_combat_log_pc34_compat.c
     src/dm1/dm1_v1_custom_dungeon_loader.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_startup_sequence_pc34_compat.c
     src/csb/csb_v1_keyboard_commands_pc34_compat.c
     src/engine/render_sdl_m11.c
     src/engine/color_presets_m11.c
