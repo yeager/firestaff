@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/stat.h>
 
 #ifdef FIRESTAFF_HAS_ZLIB
@@ -289,6 +290,10 @@ static int is_zip_path(const char *path) {
 
 static int is_iso_path(const char *path) {
     return has_case_suffix(path, ".iso") || has_case_suffix(path, ".bin");
+}
+
+static int is_cue_path(const char *path) {
+    return has_case_suffix(path, ".cue");
 }
 
 static int is_known_large_whole_file_hash(const char *expectedMd5) {
@@ -1213,6 +1218,177 @@ static int scan_iso_by_md5_list(const char *isoPath, const char *const *md5List,
     return foundCount;
 }
 
+static const char *cue_ltrim(const char *s) {
+    while (s && *s && isspace((unsigned char)*s)) {
+        ++s;
+    }
+    return s ? s : "";
+}
+
+static int cue_starts_with_keyword(const char *line, const char *keyword) {
+    size_t n;
+    size_t i;
+    if (!line || !keyword) return 0;
+    n = strlen(keyword);
+    for (i = 0U; i < n; ++i) {
+        if (tolower((unsigned char)line[i]) !=
+            tolower((unsigned char)keyword[i])) {
+            return 0;
+        }
+    }
+    return line[n] == '\0' || isspace((unsigned char)line[n]);
+}
+
+static int cue_extract_file_name(const char *line, char *out, size_t outSize) {
+    const char *p;
+    size_t i = 0U;
+    if (!line || !out || outSize == 0U) return 0;
+    out[0] = '\0';
+    p = cue_ltrim(line);
+    if (!cue_starts_with_keyword(p, "FILE")) return 0;
+    p = cue_ltrim(p + 4);
+    if (*p == '"') {
+        ++p;
+        while (*p && *p != '"' && i + 1U < outSize) {
+            out[i++] = *p++;
+        }
+        out[i] = '\0';
+        return *p == '"' && i > 0U;
+    }
+    while (*p && !isspace((unsigned char)*p) && i + 1U < outSize) {
+        out[i++] = *p++;
+    }
+    out[i] = '\0';
+    return i > 0U;
+}
+
+static int cue_track_is_data(const char *line) {
+    const char *p;
+    if (!line) return 0;
+    p = cue_ltrim(line);
+    if (!cue_starts_with_keyword(p, "TRACK")) return 0;
+    return strstr(p, "MODE1/2048") != NULL ||
+           strstr(p, "MODE1/2352") != NULL ||
+           strstr(p, "MODE2/2352") != NULL ||
+           strstr(p, "mode1/2048") != NULL ||
+           strstr(p, "mode1/2352") != NULL ||
+           strstr(p, "mode2/2352") != NULL;
+}
+
+static int path_is_absolute_local(const char *path) {
+    if (!path || path[0] == '\0') return 0;
+    if (path[0] == '/' || path[0] == '\\') return 1;
+    if (isalpha((unsigned char)path[0]) && path[1] == ':') return 1;
+    return 0;
+}
+
+static int path_parent_local(const char *path, char *out, size_t outSize) {
+    const char *slash;
+    const char *backslash;
+    const char *sep;
+    size_t n;
+    if (!path || !out || outSize == 0U) return 0;
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    sep = slash;
+    if (backslash && (!sep || backslash > sep)) sep = backslash;
+    if (!sep) {
+        if (outSize < 2U) return 0;
+        out[0] = '.';
+        out[1] = '\0';
+        return 1;
+    }
+    n = (size_t)(sep - path);
+    if (n == 0U) n = 1U;
+    if (n + 1U > outSize) return 0;
+    memcpy(out, path, n);
+    out[n] = '\0';
+    return 1;
+}
+
+static int cue_resolve_payload_path(const char *cuePath,
+                                    const char *fileName,
+                                    char *out,
+                                    size_t outSize) {
+    char parent[ASSET_PATH_MAX];
+    if (!cuePath || !fileName || !out || outSize == 0U) return 0;
+    if (path_is_absolute_local(fileName)) {
+        if (strlen(fileName) + 1U > outSize) return 0;
+        strcpy(out, fileName);
+        return 1;
+    }
+    if (!path_parent_local(cuePath, parent, sizeof(parent))) return 0;
+    if (snprintf(out, outSize, "%s/%s", parent, fileName) >= (int)outSize) {
+        return 0;
+    }
+    return 1;
+}
+
+static int scan_cue_by_md5(const char *cuePath, const char *expectedMd5,
+                           char *outPath, int outPathLen) {
+    FILE *fp;
+    char line[1024];
+    char currentFile[ASSET_PATH_MAX];
+    currentFile[0] = '\0';
+    if (!cuePath || !expectedMd5 || !outPath || outPathLen <= 0) return 0;
+    fp = fopen(cuePath, "rb");
+    if (!fp) return 0;
+    while (fgets(line, sizeof(line), fp)) {
+        char fileName[ASSET_PATH_MAX];
+        char payloadPath[ASSET_PATH_MAX];
+        if (cue_extract_file_name(line, fileName, sizeof(fileName))) {
+            strcpy(currentFile, fileName);
+            continue;
+        }
+        if (cue_track_is_data(line) && currentFile[0] != '\0' &&
+            cue_resolve_payload_path(cuePath, currentFile,
+                                     payloadPath, sizeof(payloadPath)) &&
+            scan_iso_by_md5(payloadPath, expectedMd5, outPath, outPathLen)) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
+static int scan_cue_by_md5_list(const char *cuePath,
+                                const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX],
+                                int matched[]) {
+    FILE *fp;
+    char line[1024];
+    char currentFile[ASSET_PATH_MAX];
+    int foundCount = 0;
+    currentFile[0] = '\0';
+    if (!cuePath || !md5List || md5Count <= 0 || !outPaths || !matched) {
+        return 0;
+    }
+    fp = fopen(cuePath, "rb");
+    if (!fp) return 0;
+    while (fgets(line, sizeof(line), fp)) {
+        char fileName[ASSET_PATH_MAX];
+        char payloadPath[ASSET_PATH_MAX];
+        if (cue_extract_file_name(line, fileName, sizeof(fileName))) {
+            strcpy(currentFile, fileName);
+            continue;
+        }
+        if (cue_track_is_data(line) && currentFile[0] != '\0' &&
+            cue_resolve_payload_path(cuePath, currentFile,
+                                     payloadPath, sizeof(payloadPath))) {
+            foundCount += scan_iso_by_md5_list(payloadPath, md5List, md5Count,
+                                               outPaths, matched);
+            if (foundCount >= md5Count) {
+                fclose(fp);
+                return foundCount;
+            }
+        }
+    }
+    fclose(fp);
+    return foundCount;
+}
+
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
     if (is_zip_path(path)) {
@@ -1220,6 +1396,9 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     }
     if (is_iso_path(path)) {
         return scan_iso_by_md5(path, expectedMd5, outPath, outPathLen);
+    }
+    if (is_cue_path(path)) {
+        return scan_cue_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     return 0;
 }
@@ -1233,6 +1412,9 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     }
     if (is_iso_path(path)) {
         return scan_iso_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (is_cue_path(path)) {
+        return scan_cue_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     return 0;
 }
@@ -1266,7 +1448,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
 
         if (S_ISREG(st.st_mode)) {
             int matchIndex;
-            if (is_zip_path(path) || is_iso_path(path)) {
+            if (is_zip_path(path) || is_iso_path(path) || is_cue_path(path)) {
                 foundCount += scan_container_by_md5_list(path, md5List, md5Count,
                                                          outPaths, matched);
                 if (foundCount >= md5Count) {
@@ -1323,7 +1505,7 @@ static int scan_dir(const char *dir, const char *expectedMd5,
         if (stat(path, &st) != 0) continue;
 
         if (S_ISREG(st.st_mode)) {
-            if ((is_zip_path(path) || is_iso_path(path)) &&
+            if ((is_zip_path(path) || is_iso_path(path) || is_cue_path(path)) &&
                 scan_container_by_md5(path, expectedMd5, outPath, outPathLen)) {
                 closedir(d);
                 return 1;
@@ -1385,7 +1567,7 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
             int matchIndex;
             sz.LowPart = fd.nFileSizeLow;
             sz.HighPart = fd.nFileSizeHigh;
-            if (is_zip_path(path) || is_iso_path(path)) {
+            if (is_zip_path(path) || is_iso_path(path) || is_cue_path(path)) {
                 foundCount += scan_container_by_md5_list(path, md5List, md5Count,
                                                          outPaths, matched);
                 if (foundCount >= md5Count) {
@@ -1433,7 +1615,7 @@ static int scan_dir(const char *dir, const char *expectedMd5,
             }
         } else {
             LARGE_INTEGER sz; sz.LowPart = fd.nFileSizeLow; sz.HighPart = fd.nFileSizeHigh;
-            if ((is_zip_path(path) || is_iso_path(path)) &&
+            if ((is_zip_path(path) || is_iso_path(path) || is_cue_path(path)) &&
                 scan_container_by_md5(path, expectedMd5, outPath, outPathLen)) {
                 FindClose(h);
                 return 1;
@@ -1569,8 +1751,9 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     if (is_zip_path(container)) {
         return zip_extract_entry_to_path(container, entry, outFilePath);
     }
-    if (is_iso_path(container)) {
-        return iso_extract_entry_to_path(container, entry, outFilePath);
-    }
-    return 0;
+    /* CUE sheets may reference a data image with no .iso/.bin suffix.
+     * Virtual paths are produced only after the scanner has already walked
+     * the referenced payload as an ISO-like image, so extraction must not
+     * reapply the filename-suffix gate here. */
+    return iso_extract_entry_to_path(container, entry, outFilePath);
 }
