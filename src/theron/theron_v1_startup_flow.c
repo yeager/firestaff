@@ -79,7 +79,7 @@ void theron_v1_startup_flow_init(Theron_StartupFlow *flow) {
     for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
         flow->selected_mirror_order[i] = 0xffu;
     }
-    flow->phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+    flow->phase = THERON_STARTUP_PHASE_TITLE;
 }
 
 Theron_StartupResult theron_v1_startup_choose_stage(
@@ -118,6 +118,7 @@ Theron_StartupResult theron_v1_startup_select_mirror(
         return THERON_STARTUP_ERR_NULL;
     }
     if (flow->selected_dungeon == THERON_DUNGEON_INVALID ||
+        flow->phase == THERON_STARTUP_PHASE_TITLE ||
         flow->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         return THERON_STARTUP_ERR_NO_STAGE;
     }
@@ -151,6 +152,7 @@ Theron_StartupResult theron_v1_startup_deselect_mirror(
         return THERON_STARTUP_ERR_NULL;
     }
     if (flow->selected_dungeon == THERON_DUNGEON_INVALID ||
+        flow->phase == THERON_STARTUP_PHASE_TITLE ||
         flow->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         return THERON_STARTUP_ERR_NO_STAGE;
     }
@@ -197,6 +199,7 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
         return THERON_STARTUP_ERR_NULL;
     }
     if (flow->selected_dungeon == THERON_DUNGEON_INVALID ||
+        flow->phase == THERON_STARTUP_PHASE_TITLE ||
         flow->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
         return THERON_STARTUP_ERR_NO_STAGE;
     }
@@ -233,6 +236,7 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
 
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     switch (phase) {
+    case THERON_STARTUP_PHASE_TITLE: return "title";
     case THERON_STARTUP_PHASE_STAGE_SELECT: return "stage-select";
     case THERON_STARTUP_PHASE_SOUL_ROOM: return "soul-room";
     case THERON_STARTUP_PHASE_READY: return "ready";
