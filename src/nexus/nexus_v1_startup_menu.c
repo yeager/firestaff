@@ -251,3 +251,83 @@ int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
     }
     return 0;
 }
+
+int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
+                                           int *cursor,
+                                           unsigned int slot_mask,
+                                           Nexus_V1_StartupInput input,
+                                           Nexus_V1_StartupAction *out_action)
+{
+    int current;
+    int next_cursor;
+
+    nexus_v1_startup_action_clear(out_action);
+    if (!pool || !cursor || !out_action) {
+        return 0;
+    }
+    current = *cursor;
+    if (pool->champion_count <= 0) {
+        current = 0;
+    } else if (current < 0 || current >= pool->champion_count) {
+        current = 0;
+    }
+
+    if (input == NEXUS_V1_STARTUP_INPUT_BACK) {
+        int removed = nexus_v1_champion_unrecruit_last(pool);
+        if (removed >= 0) {
+            *cursor = removed;
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_REMOVED;
+            out_action->row = removed;
+        } else if (slot_mask != 0u) {
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT;
+        } else {
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE;
+        }
+        return 1;
+    }
+    if (pool->champion_count <= 0) {
+        return 0;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_UP) {
+        current = nexus_v1_champion_next_selectable(
+            pool,
+            current + pool->champion_count - 1,
+            -1);
+        *cursor = current;
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR;
+        out_action->row = current;
+        return 1;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_DOWN) {
+        current = nexus_v1_champion_next_selectable(pool, current + 1, 1);
+        *cursor = current;
+        out_action->kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR;
+        out_action->row = current;
+        return 1;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_ACCEPT) {
+        next_cursor = current;
+        if (nexus_v1_champion_recruit_and_advance(pool,
+                                                  current,
+                                                  &next_cursor) >= 0) {
+            *cursor = next_cursor;
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED;
+            out_action->row = current;
+        } else {
+            *cursor = current;
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_SKIPPED;
+            out_action->row = current;
+        }
+        return 1;
+    }
+    if (input == NEXUS_V1_STARTUP_INPUT_ACTION) {
+        if (pool->party_count <= 0) {
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_NEED_CHAMPION;
+            out_action->row = current;
+        } else {
+            out_action->kind = NEXUS_V1_STARTUP_ACTION_START_DUNGEON;
+        }
+        return 1;
+    }
+    return 0;
+}

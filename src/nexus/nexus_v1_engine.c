@@ -113,10 +113,9 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     face_data = nexus_v1_read_file(engine, "FACE.BIN", &face_size);
     if (!face_data) return;
 
-    /* DM Nexus FACE.BIN is the startup champion portrait source.  The
-     * current roster uses the first eight portrait indices; loading only the
-     * roster-backed slice avoids fabricating placeholder portraits for hidden
-     * or still-unmapped entries. */
+    /* DM Nexus FACE.BIN is the startup champion portrait source. Keep the
+     * full 24-row startup roster visible even when a specific dump exposes
+     * fewer full raw 48x48 entries; fallback rows are counted explicitly. */
     for (i = 0; i < engine->champions.champion_count && i < 24; ++i) {
         const int portrait_index = engine->champions.champions[i].portrait_index;
         int load_result;
@@ -392,6 +391,6 @@ int nexus_v1_startup_faces_fallback_count(const Nexus_V1_Engine *engine) {
 int nexus_v1_startup_faces_ready(const Nexus_V1_Engine *engine) {
     if (!engine) return 0;
     return engine->ui_faces_expected > 0 &&
-           engine->ui_faces_loaded == engine->ui_faces_expected &&
-           engine->ui_faces_fallback == 0;
+           engine->ui_faces_loaded + engine->ui_faces_fallback ==
+               engine->ui_faces_expected;
 }

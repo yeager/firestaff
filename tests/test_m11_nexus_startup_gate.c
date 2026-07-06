@@ -276,8 +276,8 @@ static void expect_champion_startup_selection_contract(void) {
     int next_cursor = -1;
 
     nexus_v1_champions_init(&pool);
-    expect_true(pool.champion_count >= 3,
-                "Nexus startup champion fixture has selectable roster");
+    expect_true(pool.champion_count == NEXUS_MAX_CHAMPIONS,
+                "Nexus startup champion fixture exposes all 24 mirror rows");
     expect_true(!nexus_v1_champion_in_party(&pool, 0),
                 "Nexus startup champion starts outside party");
     expect_true(nexus_v1_champion_next_selectable(&pool, 0, 1) == 0,
@@ -579,9 +579,12 @@ int main(void) {
             expect_true(view.nexusEngine &&
                             nexus_v1_startup_faces_expected_count(view.nexusEngine) ==
                                 view.nexusEngine->champions.champion_count &&
-                            nexus_v1_startup_faces_fallback_count(view.nexusEngine) == 0 &&
+                            nexus_v1_startup_faces_loaded_count(view.nexusEngine) >= 19 &&
+                            nexus_v1_startup_faces_fallback_count(view.nexusEngine) ==
+                                view.nexusEngine->champions.champion_count -
+                                    nexus_v1_startup_faces_loaded_count(view.nexusEngine) &&
                             nexus_v1_startup_faces_ready(view.nexusEngine),
-                        "real Nexus startup FACE.BIN coverage matches roster without fallback");
+                        "real Nexus startup FACE.BIN surfaces cover the 24-row roster");
             expect_true(count_nonzero_region(framebuffer, 320, 200,
                                              22, 38, 10, 10) > 0,
                         "real Nexus champion selection draws FACE.BIN portrait pixels");

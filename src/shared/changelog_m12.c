@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.41  (2026-07-06)",
+    "  - Packages the post-v3.0.40 CSB entrance input, CSB utility panel, DM2 startup input, and Nexus champion-boot work now on main.",
+    "  - CSB entrance input now resolves Accept, Action, Disk Menu, Back, and credits-dismiss decisions through the CSB startup sequence contract.",
+    "  - CSB utility startup now owns its import status, prompt, preview-row, and panel hit-containment layout instead of keeping those coordinates in M11.",
+    "  - DM2 startup keyboard decisions now flow through the DM2 startup-menu action contract before M11 executes Continue, Load Slot, New Game, or launcher return.",
+    "  - Nexus startup now exposes a 24-row champion roster and reports FACE.BIN real-vs-fallback portrait coverage before dungeon entry.",
+    "",
     "V3.0.40  (2026-07-06)",
     "  - Packages the post-v3.0.39 Nexus save-startup and DM2 startup action work now on main.",
     "  - Nexus title boot now keeps the title hold under an explicit startup sequence contract.",
@@ -431,5 +438,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.40";
+    return "3.0.41";
 }

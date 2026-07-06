@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "nexus_v1_champions.h"
 #include "nexus_v1_save.h"
 
 #ifdef __cplusplus
@@ -24,7 +25,13 @@ typedef enum {
     NEXUS_V1_STARTUP_ACTION_HOLD_TITLE = 4,
     NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT = 5,
     NEXUS_V1_STARTUP_ACTION_SHOW_CHAMPION_SELECT = 6,
-    NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE = 7
+    NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE = 7,
+    NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR = 8,
+    NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED = 9,
+    NEXUS_V1_STARTUP_ACTION_CHAMPION_SKIPPED = 10,
+    NEXUS_V1_STARTUP_ACTION_CHAMPION_REMOVED = 11,
+    NEXUS_V1_STARTUP_ACTION_START_DUNGEON = 12,
+    NEXUS_V1_STARTUP_ACTION_NEED_CHAMPION = 13
 } Nexus_V1_StartupActionKind;
 
 typedef enum {
@@ -73,6 +80,11 @@ int nexus_v1_startup_title_handle_input(int title_frame,
 int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
                                        Nexus_V1_StartupInput input,
                                        Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
+                                           int *cursor,
+                                           unsigned int slot_mask,
+                                           Nexus_V1_StartupInput input,
+                                           Nexus_V1_StartupAction *out_action);
 
 #ifdef __cplusplus
 }

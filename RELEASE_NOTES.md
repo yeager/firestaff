@@ -1,6 +1,33 @@
 
 # Unreleased
 
+# Firestaff v3.0.41
+
+Firestaff v3.0.41 packages the latest Nexus, CSB and DM2 startup ownership work
+on `main` after v3.0.40.
+
+## Highlights since v3.0.40
+
+- **CSB entrance input**: CSB startup now owns Accept, Action, Disk Menu, Back
+  and credits-dismiss decisions before M11 executes the resulting entrance
+  command.
+- **CSB utility startup panel**: CSB utility flow now owns the visible import
+  status, prompt, preview-row and panel hit-containment layout used by M11.
+- **DM2 startup input**: DM2 startup now owns keyboard row movement, activation
+  and launcher-return actions before M11 executes the selected route.
+- **Nexus boot champion selection**: Nexus startup now exposes all 24 champion
+  rows, owns champion-select input actions, and reports FACE.BIN real-vs-fallback
+  portrait coverage for short raw dumps.
+
+## Verification
+
+- Local release-prep verification covers version synchronization, focused CSB,
+  DM2 and Nexus startup gates, and the Phase A probe before GitHub Actions
+  packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.41` release run.
+
 # Firestaff v3.0.40
 
 Firestaff v3.0.40 packages the latest Nexus title/save startup and DM2 startup
