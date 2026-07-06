@@ -1011,6 +1011,19 @@ static void check_start_menu_prefers_default_root_with_more_games(
               "start menu --game hint without --data-dir must keep selected Nexus available");
     M12_StartupMenu_Destroy(&menu);
 
+    M12_StartupMenu_InitWithDataDir(&menu, defaultDataRoot, "nexus");
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
+                     defaultDataRoot) == 0,
+              "start menu explicit --data-dir plus --game must keep requested data root");
+    check_int(ready_game_count_for_status(&menu.assetStatus) ==
+                  ready_game_count_for_status(&cliStatus),
+              "start menu explicit --data-dir plus --game must match --scan-data ready-game count");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
+              "start menu explicit --data-dir plus --game must not hide sibling DM1 data");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "nexus") == 1,
+              "start menu explicit --data-dir plus --game must keep selected Nexus available");
+    M12_StartupMenu_Destroy(&menu);
+
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
 }

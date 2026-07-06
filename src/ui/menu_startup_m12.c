@@ -2687,11 +2687,13 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
     if (!state || !config) {
         return;
     }
-    if (hasExplicitDataDirOverride && gameId && gameId[0] != '\0') {
-        M12_AssetStatus_ScanGame(&state->assetStatus, config->dataDir, gameId);
-    } else {
-        M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
-    }
+    (void)gameId;
+    /* The visible launcher must publish full cross-game availability even
+     * when the caller supplied --game.  M12_AssetStatus_ScanGame() is a
+     * direct-launch fast path for Theron/Nexus and may intentionally return
+     * a one-game status; using it here makes the start menu disagree with
+     * `firestaff --scan-data` for the same data root. */
+    M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
     if (!hasExplicitDataDirOverride) {
         char resolvedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         if (FSP_ResolveDataDir(resolvedDataDir, sizeof(resolvedDataDir), NULL) &&
