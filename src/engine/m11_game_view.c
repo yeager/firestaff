@@ -18362,16 +18362,16 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {
                 int sIdx = THING_GET_INDEX(scanThing);
                 if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {
+                    if ((int)THING_GET_CELL(scanThing) != visibleWallCell) {
+                        scanThing = m11_raw_next_thing(state->world.things, scanThing);
+                        ++scanSafety;
+                        continue;
+                    }
                     if (state->world.things->sensors[sIdx].sensorType == 127) {
                         /* ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) against
                          * the view direction, DUNGEON.C:2610-2612 lets only the
                          * front wall aspect set G0289, and DUNVIEW.C:3913-3928
                          * blits that D1C front champion portrait. */
-                        if ((int)THING_GET_CELL(scanThing) != visibleWallCell) {
-                            scanThing = m11_raw_next_thing(state->world.things, scanThing);
-                            ++scanSafety;
-                            continue;
-                        }
                         cell.championPortraitOrdinal = (int)state->world.things->sensors[sIdx].sensorData;
                         /* Champion mirrors also have an ornament ordinal for the
                          * mirror frame; keep scanning or use it for the frame. */
@@ -18409,7 +18409,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
             if (THING_GET_TYPE(scanThing) == THING_TYPE_TEXTSTRING) {
                 int textIdx = THING_GET_INDEX(scanThing);
-                if (textIdx >= 0 && textIdx < state->world.things->textStringCount) {
+                if ((int)THING_GET_CELL(scanThing) == visibleWallCell &&
+                    textIdx >= 0 && textIdx < state->world.things->textStringCount) {
                     if (state->mirrorCatalogAvailable && mapDesc->wallOrnamentCount > 0 &&
                         F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
                             &state->mirrorCatalog, textIdx) >= 0) {
@@ -18457,8 +18458,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                        tSafety++ < 64) {
                     if (THING_GET_TYPE(tScan) == THING_TYPE_TEXTSTRING) {
                         int tsIdx = THING_GET_INDEX(tScan);
-                        if (tsIdx >= 0 &&
-                            tsIdx < state->world.things->textStringCount) {
+                        if ((int)THING_GET_CELL(tScan) == visibleWallCell &&
+                            tsIdx >= 0 &&
+                            tsIdx < state->world.things->textStringCount &&
+                            state->world.things->textStrings[tsIdx].visible) {
                             cell.inscriptionTextIndex = tsIdx;
                             break;
                         }
@@ -21542,6 +21545,34 @@ static int m11_decode_visible_wall_text(const M11_GameViewState* state,
         return 0;
     }
     outText[0] = '\0';
+    if (cell->inscriptionTextIndex >= 0 &&
+        cell->inscriptionTextIndex < state->world.things->textStringCount) {
+        if (F0508_DUNGEON_DecodeTextStringThing_Compat(
+                state->world.things,
+                cell->inscriptionTextIndex,
+                DUNGEON_TEXT_TYPE_INSCRIPTION,
+                outText,
+                (int)outTextSize) >= 0 &&
+            outText[0] != '\0') {
+            char* p;
+            /* ReDMCSB DUNGEON.C:2591-2593 stores exactly the
+             * front-wall inscription thing in G0290 for the visible side;
+             * DUNVIEW.C:3592 then decodes that one thing for the M648
+             * renderer.  Use the side-selected index from sampling first so
+             * multi-sided HoC wall text cannot pick the wrong square text. */
+            for (p = outText; *p; ++p) {
+                unsigned char ch = (unsigned char)*p;
+                if (ch == 0x80U) {
+                    *p = '\n';
+                } else if (ch == 0x81U) {
+                    *p = '\0';
+                    break;
+                }
+            }
+            return 1;
+        }
+        outText[0] = '\0';
+    }
     thing = cell->firstThing;
     while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
         if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING) {
