@@ -225,8 +225,20 @@ int main(void)
                   VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
               plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+              plan.fallback_title_x == 38 &&
+              plan.fallback_title_y == 52 &&
+              plan.fallback_title_style == 1 &&
+              strcmp(plan.fallback_title_text, "FTL PRESENTS") == 0 &&
+              plan.fallback_subtitle_x == 38 &&
+              plan.fallback_subtitle_y == 86 &&
+              plan.fallback_subtitle_style == 2 &&
+              strcmp(plan.fallback_subtitle_text, "CHAOS") == 0 &&
+              plan.fallback_prompt_x == 38 &&
+              plan.fallback_prompt_y == 112 &&
+              plan.fallback_prompt_style == 3 &&
+              strcmp(plan.fallback_prompt_text, "STRIKES BACK") == 0 &&
               !plan.waiting_for_input,
-          "startup render plan owns title PRESENTS surface, boxes, palette");
+          "startup render plan owns title PRESENTS surface, boxes, palette, and fallback text");
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34() + 1;
