@@ -130,6 +130,7 @@ static void check_graphics_only_blocks_launch(const GraphicsOnlyFixture* fixture
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageIsMissingGameData == 1);
     CHECK(strcmp(state.messageGameId, fixture->gameId) == 0);
+    CHECK(state.activatedIndex == fixture->gameIndex);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") != NULL);
     CHECK(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:") != NULL);
 

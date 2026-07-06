@@ -875,6 +875,22 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
     return &state->entries[index];
 }
 
+static int m12_entry_index_for_game_id(const M12_StartupMenuState* state,
+                                       const char* gameId) {
+    int i;
+    if (!state || !gameId || gameId[0] == '\0') {
+        return -1;
+    }
+    for (i = 0; i < m12_entry_count(); ++i) {
+        if (state->entries[i].kind == M12_MENU_ENTRY_GAME &&
+            state->entries[i].gameId &&
+            strcmp(state->entries[i].gameId, gameId) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 /* Language cycle accessors.  g_languages[] / g_languageNames[] are
  * file-local to this module; these getters expose just the count
  * and the per-index strings so probes can drive the 19-language
@@ -1390,13 +1406,18 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
     char line1[128];
     char line2[256];
     char line3[160];
+    int gameIndex;
     if (!state) {
         return;
     }
+    gameIndex = m12_entry_index_for_game_id(state, gameId);
     snprintf(line1, sizeof(line1), "%s %s", m12_game_popup_label(gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
     m12_format_missing_files_for_game(state, gameId, line2, sizeof(line2));
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_enter_message_view(state);
+    if (gameIndex >= 0) {
+        state->activatedIndex = gameIndex;
+    }
     state->launchRequested = 0;
     state->quickResumeLaunchRequested = 0;
     state->csbImportDm1LaunchRequested = 0;
