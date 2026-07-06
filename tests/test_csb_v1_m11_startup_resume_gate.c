@@ -1261,10 +1261,20 @@ int main(void) {
     {
         unsigned char fb[320 * 200];
         memset(fb, 0, sizeof(fb));
+        if (view.assetsAvailable) {
+            M11_GameView_Draw(&view, fb, 320, 200);
+            expect_true(count_color_rect(fb, 320, 38, 80, 230, 64, 15u) > 20,
+                        "M11 CSB real entrance overlays the utility import prompt");
+            expect_true(count_color_rect(fb, 320, 36, 104, 244, 12, 12u) > 20,
+                        "M11 CSB real entrance overlays the selected utility import row");
+            memset(fb, 0, sizeof(fb));
+        }
         view.assetsAvailable = 0;
         M11_GameView_Draw(&view, fb, 320, 200);
-        expect_true(count_color_rect(fb, 320, 38, 112, 230, 25, 15u) > 20,
+        expect_true(count_color_rect(fb, 320, 38, 80, 230, 64, 15u) > 20,
                     "M11 CSB fallback entrance renders the utility import prompt");
+        expect_true(count_color_rect(fb, 320, 36, 104, 244, 12, 12u) > 20,
+                    "M11 CSB fallback entrance renders the selected utility import row");
     }
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
