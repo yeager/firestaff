@@ -1875,7 +1875,7 @@ static void m11_phase_a_print_boot_probe_receipt(
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d runtimeTick=%d dm1WorldTick=%u introBypassed=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -1891,6 +1891,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             receipt.partyDir,
             receipt.runtimeTick,
             (unsigned int)receipt.dm1WorldTick,
+            receipt.startedFromLauncher,
             receipt.dm1StartupIntroBypassed);
 }
 
@@ -3700,15 +3701,20 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
                 !receipt.active ||
                 strcmp(receipt.sourceId, o->gameId) != 0 ||
+                !receipt.startedFromLauncher ||
+                (strcmp(o->gameId, "dm1") == 0 &&
+                 receipt.dm1StartupIntroBypassed) ||
                 !m11_boot_probe_expected_source_kind(o->gameId, &expectedSourceKind) ||
                 receipt.sourceKind != expectedSourceKind) {
                 fprintf(stderr,
-                        "firestaff: boot-probe expected active source '%s' kind=%d but got active=%d sourceId='%s' kind=%d\n",
+                        "firestaff: boot-probe expected selected-entry source '%s' kind=%d but got active=%d sourceId='%s' kind=%d startedFromLauncher=%d introBypassed=%d\n",
                         o->gameId ? o->gameId : "",
                         (int)expectedSourceKind,
                         receipt.active,
                         receipt.sourceId,
-                        (int)receipt.sourceKind);
+                        (int)receipt.sourceKind,
+                        receipt.startedFromLauncher,
+                        receipt.dm1StartupIntroBypassed);
                 runRc = 4;
             }
             if (o->bootProbeExpectPhase && o->bootProbeExpectPhase[0] != '\0') {
