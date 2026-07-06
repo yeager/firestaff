@@ -8061,6 +8061,36 @@ if(BUILD_TESTING)
         COMMAND test_asset_status_zip_cache_nested_deflate
     )
 
+    # -- Asset scanner + cache: renamed ZIP/raw file materialization --
+    # Synthesizes hash-valid DM2 payloads with non-canonical entry names
+    # and raw filenames, then proves the launcher materializes canonical
+    # GRAPHICS.DAT/DUNGEON.DAT runtime cache leaves before launch.
+    add_executable(test_asset_status_zip_cache_materialization
+        tests/test_asset_status_zip_cache_materialization.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
+    )
+    target_link_libraries(test_asset_status_zip_cache_materialization PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_asset_status_zip_cache_materialization PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_asset_status_zip_cache_materialization PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    firestaff_link_zlib(test_asset_status_zip_cache_materialization PRIVATE)
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_zip_cache_materialization PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_zip_cache_materialization
+        COMMAND test_asset_status_zip_cache_materialization
+    )
+
     add_executable(test_dm1_pc34_archive_media_receipt
         tests/test_dm1_pc34_archive_media_receipt.c
         src/shared/asset_status_m12.c

@@ -263,6 +263,9 @@ int main(void) {
     char zipPath[M12_ASSET_DATA_DIR_CAPACITY];
     char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
     char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char rawDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char rawGraphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char rawDungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
     char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char cachedGraphics[M12_ASSET_DATA_DIR_CAPACITY];
@@ -288,9 +291,17 @@ int main(void) {
         !FSP_CreateDirectoryRecursive(dataRoot) ||
         !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), home, "graphics.bin") ||
         !FSP_JoinPath(dungeonPath, sizeof(dungeonPath), home, "dungeon.bin") ||
+        !FSP_JoinPath(rawDir, sizeof(rawDir), home, "renamed-raw-files") ||
+        !FSP_CreateDirectoryRecursive(rawDir) ||
+        !FSP_JoinPath(rawGraphicsPath, sizeof(rawGraphicsPath),
+                      rawDir, "not-graphics.payload") ||
+        !FSP_JoinPath(rawDungeonPath, sizeof(rawDungeonPath),
+                      rawDir, "not-dungeon.payload") ||
         !FSP_JoinPath(zipPath, sizeof(zipPath), dataRoot, "dm2-required.zip") ||
         !write_payload_file(graphicsPath, graphicsPayload, sizeof(graphicsPayload) - 1U) ||
         !write_payload_file(dungeonPath, dungeonPayload, sizeof(dungeonPayload) - 1U) ||
+        !write_payload_file(rawGraphicsPath, graphicsPayload, sizeof(graphicsPayload) - 1U) ||
+        !write_payload_file(rawDungeonPath, dungeonPayload, sizeof(dungeonPayload) - 1U) ||
         !m12_file_md5_hex(graphicsPath, graphicsMd5) ||
         !m12_file_md5_hex(dungeonPath, dungeonMd5) ||
         !write_zip_fixture(zipPath, entries, 2U)) {
@@ -368,6 +379,32 @@ int main(void) {
     check_int(file_matches_payload(cachedDungeon, dungeonPayload,
                                    sizeof(dungeonPayload) - 1U),
               "cached DUNGEON.DAT should contain the ZIP entry payload");
+
+    M12_AssetStatus_Scan(&status, rawGraphicsPath);
+
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
+              "direct renamed raw graphics file should hash-scan its parent "
+              "and make DM2 available");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                     cacheRoot) == 0,
+              "direct renamed raw file request should use asset-cache as the "
+              "DM2 runtime root");
+    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
+    check_int(required && required->matched &&
+              path_has_cache_leaf(required->matchedPath, cacheRoot,
+                                  "dm2", "GRAPHICS.DAT"),
+              "direct renamed raw graphics should materialize as GRAPHICS.DAT");
+    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
+    check_int(required && required->matched &&
+              path_has_cache_leaf(required->matchedPath, cacheRoot,
+                                  "dm2", "DUNGEON.DAT"),
+              "direct renamed raw dungeon should materialize as DUNGEON.DAT");
+    check_int(file_matches_payload(cachedGraphics, graphicsPayload,
+                                   sizeof(graphicsPayload) - 1U),
+              "direct renamed raw graphics cache should match the payload");
+    check_int(file_matches_payload(cachedDungeon, dungeonPayload,
+                                   sizeof(dungeonPayload) - 1U),
+              "direct renamed raw dungeon cache should match the payload");
 
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
