@@ -40,6 +40,7 @@ static void usage(const char* prog) {
             "                       In boot-probe mode, --script input is applied after those frames\n"
             "                       Boot scripts also accept waitN / wait:N frame tokens\n"
             "  --boot-probe-expect-phase <name> Fail unless the boot receipt phase matches\n"
+            "  --boot-probe-expect-runtime Fail unless startup is inactive and a level is loaded\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -177,6 +178,10 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--boot-probe-expect-phase") == 0 && i + 1 < argc) {
             opts.bootProbeExpectPhase = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-runtime") == 0) {
+            opts.bootProbeExpectRuntime = 1;
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
