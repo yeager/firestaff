@@ -109,7 +109,7 @@ static void drive_csb_entrance_opening(M11_GameViewState *view,
 static void drive_csb_entrance_to_wait(M11_GameViewState *view,
                                        const char *message)
 {
-    int guard = 8;
+    int guard = 96;
     if (!view) {
         expect_true(0, message);
         return;
@@ -118,9 +118,9 @@ static void drive_csb_entrance_to_wait(M11_GameViewState *view,
         int tick_before = view->csbState.tick_count;
         expect_true(M11_GameView_AdvanceIdleTick(view) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 CSB entrance source prelude redraws");
+                    "M11 CSB title/entrance source prelude redraws");
         expect_true(view->csbState.tick_count == tick_before,
-                    "M11 CSB entrance source prelude blocks runtime tick aging");
+                    "M11 CSB title/entrance source prelude blocks runtime tick aging");
     }
     expect_true(view->csbState.startup_entrance_active == 1 &&
                     view->csbState.startup_entrance_source_step == 4,
@@ -1189,7 +1189,11 @@ int main(void) {
                 "M11 CSB new-game start succeeds");
     expect_true(view.csbState.startup_entrance_active == 1 &&
                 view.csbState.startup_entrance_dismissed == 0,
-                "M11 CSB new-game start opens source-locked entrance");
+                "M11 CSB new-game start opens source-locked title/entrance");
+    expect_true(view.csbState.startup_title_active == 1 &&
+                    view.csbState.startup_title_source_step == 1 &&
+                    view.csbState.startup_entrance_source_step == 0,
+                "M11 CSB new-game start begins at source title prelude");
     expect_true(view.csbState.level_loaded == 1,
                 "M11 CSB entrance keeps runtime loaded behind startup screen");
     {
@@ -1213,10 +1217,13 @@ int main(void) {
                         188,
                         M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_IGNORED,
-                    "M11 CSB entrance ignores pointer commands before source wait loop");
+                    "M11 CSB title/entrance ignores pointer commands before source wait loop");
         drive_csb_entrance_to_wait(
             &view,
             "M11 CSB entrance reaches source wait loop before command input");
+        expect_true(view.csbState.startup_title_active == 0 &&
+                        view.csbState.startup_title_source_step == 0,
+                    "M11 CSB title prelude completes before entrance command input");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         250,

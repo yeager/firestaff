@@ -2955,6 +2955,66 @@ static void m11_draw_csb_entrance_door_panel(unsigned char *framebuffer,
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state);
 
+enum {
+    M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34 = 1,
+    M11_CSB_TITLE_SOURCE_ZOOM_STEP_PC34 = 2,
+    M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34 = 3,
+    M11_CSB_TITLE_TOTAL_TICKS_PC34 = 82,
+    M11_CSB_TITLE_PRESENTS_TICKS_PC34 = 60,
+    M11_CSB_TITLE_ZOOM_TICKS_PC34 = 20
+};
+
+static int m11_csb_startup_title_source_step_for_frame(int frame)
+{
+    if (frame < M11_CSB_TITLE_PRESENTS_TICKS_PC34) {
+        return M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34;
+    }
+    if (frame < M11_CSB_TITLE_PRESENTS_TICKS_PC34 +
+                    M11_CSB_TITLE_ZOOM_TICKS_PC34) {
+        return M11_CSB_TITLE_SOURCE_ZOOM_STEP_PC34;
+    }
+    return M11_CSB_TITLE_SOURCE_STRIKES_BACK_STEP_PC34;
+}
+
+static void m11_draw_csb_startup_title(const M11_GameViewState *state,
+                                       unsigned char *framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight)
+{
+    const M11_AssetSlot *title = NULL;
+
+    if (!state || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0) {
+        return;
+    }
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
+    if (state->assetsAvailable) {
+        title = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 1u);
+    }
+    if (title && title->width == 320u && title->height >= 175u) {
+        /* ReDMCSB TITLE.C F0437 loads C001_GRAPHIC_TITLE for CSB, holds
+         * PRESENTS for 60 vblanks, zooms CHAOS for 20 frames, then blits
+         * STRIKES BACK before ENTRANCE.C F0806 takes over.  This M11 CSB
+         * prelude keeps the source phase explicit and uses the original C001
+         * bitmap whenever the verified CSB GRAPHICS.DAT is available. */
+        M11_AssetLoader_Blit(title,
+                             framebuffer,
+                             framebufferWidth,
+                             framebufferHeight,
+                             0,
+                             0,
+                             -1);
+        return;
+    }
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  38, 52, "FTL PRESENTS", &g_text_small);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  38, 86, "CHAOS", &g_text_title);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  38, 112, "STRIKES BACK", &g_text_shadow);
+}
+
 static int m11_draw_csb_entrance_closed_doors_asset(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
@@ -3042,6 +3102,14 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
+        return;
+    }
+
+    if (state->csbState.startup_title_active) {
+        m11_draw_csb_startup_title(state,
+                                   framebuffer,
+                                   framebufferWidth,
+                                   framebufferHeight);
         return;
     }
 
@@ -3238,6 +3306,9 @@ static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
     state->csbState.startup_entrance_opening_step = 0;
     state->csbState.startup_entrance_pending_command =
         M11_ENTRANCE_RUNTIME_COMMAND_NONE;
+    state->csbState.startup_title_active = 0;
+    state->csbState.startup_title_frame = 0;
+    state->csbState.startup_title_source_step = 0;
     state->csbState.startup_entrance_active = 0;
     state->csbState.startup_entrance_source_step = 0;
     state->csbState.startup_entrance_dismissed = 1;
@@ -3326,6 +3397,9 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             m11_set_status(state, "BOOT", "CSB CREDITS");
             return M11_GAME_INPUT_REDRAW;
         case M11_ENTRANCE_RUNTIME_COMMAND_QUIT:
+            state->csbState.startup_title_active = 0;
+            state->csbState.startup_title_frame = 0;
+            state->csbState.startup_title_source_step = 0;
             state->csbState.startup_entrance_active = 0;
             state->csbState.startup_entrance_dismissed = 1;
             state->csbState.startup_entrance_source_step = 0;
@@ -11410,11 +11484,19 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         state->csbBootProfile = profile;
         m11_sync_csb_state_from_profile(state, profile);
+        state->csbState.startup_title_active =
+            (spec->savePath && spec->savePath[0] != '\0') ? 0 : 1;
+        state->csbState.startup_title_frame = 0;
+        state->csbState.startup_title_source_step =
+            state->csbState.startup_title_active
+                ? M11_CSB_TITLE_SOURCE_PRESENTS_STEP_PC34
+                : 0;
         state->csbState.startup_entrance_active =
             (spec->savePath && spec->savePath[0] != '\0') ? 0 : 1;
         state->csbState.startup_entrance_frame = 0;
         state->csbState.startup_entrance_source_step =
-            state->csbState.startup_entrance_active ? 1 : 0;
+            state->csbState.startup_entrance_active &&
+                    !state->csbState.startup_title_active ? 1 : 0;
         state->csbState.startup_entrance_dismissed =
             state->csbState.startup_entrance_active ? 0 : 1;
         state->csbState.startup_entrance_last_command =
@@ -13817,6 +13899,21 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if (state->csbState.startup_entrance_active) {
             state->csbState.startup_entrance_frame++;
+            if (state->csbState.startup_title_active) {
+                state->csbState.startup_title_frame++;
+                state->csbState.startup_title_source_step =
+                    m11_csb_startup_title_source_step_for_frame(
+                        state->csbState.startup_title_frame);
+                if (state->csbState.startup_title_frame >=
+                    M11_CSB_TITLE_TOTAL_TICKS_PC34) {
+                    state->csbState.startup_title_active = 0;
+                    state->csbState.startup_title_source_step = 0;
+                    state->csbState.startup_entrance_source_step = 1;
+                    state->csbState.startup_entrance_frame = 0;
+                    m11_set_status(state, "BOOT", "CSB ENTRANCE");
+                }
+                return M11_GAME_INPUT_REDRAW;
+            }
             if (!state->csbState.startup_entrance_credits_active &&
                 !state->csbState.startup_entrance_opening_active &&
                 state->csbState.startup_entrance_source_step > 0 &&
