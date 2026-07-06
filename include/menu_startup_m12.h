@@ -439,10 +439,18 @@ typedef struct M12_StartupMenuState {
     void* dataDirScanJob;
 } M12_StartupMenuState;
 
+typedef struct M12_StartupMenuInitOptions {
+    int skipScreenshotGalleryScan;
+} M12_StartupMenuInitOptions;
+
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
 void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
                                      const char* dataDir,
                                      const char* gameId);
+void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
+                                     const char* dataDir,
+                                     const char* gameId,
+                                     const M12_StartupMenuInitOptions* options);
 int M12_SessionTimer_MinutesForIndex(int index);
 int M12_SessionTimer_IndexForMinutes(int minutes);
 int M12_StartupMenu_SessionTimerLimitMinutes(const M12_StartupMenuState* state);
