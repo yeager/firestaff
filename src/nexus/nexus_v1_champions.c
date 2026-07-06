@@ -247,6 +247,21 @@ int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index) {
     return pool->party_count - 1;
 }
 
+int nexus_v1_champion_unrecruit_last(Nexus_V1_ChampionPool *pool) {
+    int mirror_index;
+
+    if (!pool || pool->party_count <= 0) {
+        return -1;
+    }
+    mirror_index = pool->party[pool->party_count - 1];
+    pool->party[pool->party_count - 1] = -1;
+    --pool->party_count;
+    if (pool->leader_index >= pool->party_count) {
+        pool->leader_index = 0;
+    }
+    return mirror_index;
+}
+
 int nexus_v1_champion_resurrect(Nexus_V1_ChampionPool *pool, int party_slot) {
     int idx;
     if (!pool || party_slot < 0 || party_slot >= pool->party_count) return -1;

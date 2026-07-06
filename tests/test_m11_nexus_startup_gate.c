@@ -360,6 +360,20 @@ int main(void) {
             expect_true(view.nexusEngine &&
                             view.nexusEngine->champions.party_count == 2,
                         "real Nexus pointer selection recruits second champion");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus champion selection Back removes last recruit");
+            expect_true(view.nexusState.champion_select_active == 1 &&
+                            view.nexusEngine &&
+                            view.nexusEngine->champions.party_count == 1 &&
+                            view.nexusState.champion_cursor == 1,
+                        "real Nexus champion selection Back keeps local cursor on removed champion");
+            expect_true(M11_GameView_HandlePointer(&view, 24, 49, 1) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus champion selection can reselect removed champion");
+            expect_true(view.nexusEngine &&
+                            view.nexusEngine->champions.party_count == 2,
+                        "real Nexus champion selection restore second recruit after Back");
             expect_true(M11_GameView_HandlePointer(&view, 24, 184, 1) ==
                             M11_GAME_INPUT_REDRAW,
                         "real Nexus champion selection pointer footer starts dungeon");
@@ -483,6 +497,19 @@ int main(void) {
                         expect_true(count_nonzero_pixels(framebuffer,
                                                          sizeof(framebuffer)) > 500,
                                     "M11 Nexus startup save selection draws nonblank frame");
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_BACK) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus startup save selection Back returns to title");
+                        expect_true(view.nexusState.title_active == 1 &&
+                                        view.nexusState.startup_save_select_active == 0,
+                                    "M11 Nexus startup save selection Back restores title phase");
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_ACCEPT) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus startup title reopens save selection after Back");
+                        expect_true(view.nexusState.startup_save_select_active == 1,
+                                    "M11 Nexus startup save selection is active again after title");
                         expect_true(M11_GameView_HandlePointer(
                                         &view, 24, 20, 1) ==
                                         M11_GAME_INPUT_REDRAW,
@@ -542,6 +569,23 @@ int main(void) {
                         expect_true(count_nonzero_pixels(framebuffer,
                                                          sizeof(framebuffer)) > 500,
                                     "M11 Nexus save-slot NEW GAME path draws champion select");
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_BACK) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus empty champion selection Back returns to save menu");
+                        expect_true(view.nexusState.champion_select_active == 0 &&
+                                        view.nexusState.startup_save_select_active == 1 &&
+                                        view.nexusState.startup_save_selected_row + 1 ==
+                                            view.nexusState.startup_save_row_count,
+                                    "M11 Nexus empty champion selection Back keeps NEW GAME selected");
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_ACCEPT) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus NEW GAME can re-enter champion selection after Back");
+                        expect_true(view.nexusState.champion_select_active == 1 &&
+                                        view.nexusEngine &&
+                                        view.nexusEngine->champions.party_count == 0,
+                                    "M11 Nexus re-entered champion selection remains a new party");
                         M11_GameView_Shutdown(&view);
                         nexus_v1_launcher_shutdown();
                     }

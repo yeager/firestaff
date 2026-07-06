@@ -109,6 +109,7 @@ void nexus_champion_recalc_load(Nexus_V1_Champion *c);
 
 void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool);
 int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index);
+int nexus_v1_champion_unrecruit_last(Nexus_V1_ChampionPool *pool);
 int nexus_v1_champion_resurrect(Nexus_V1_ChampionPool *pool, int party_slot);
 
 /* ── Champion pool binary serialization (Phase 6 save/load) ────────────────
