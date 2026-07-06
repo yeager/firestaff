@@ -1359,6 +1359,34 @@ int main(void) {
                 "M11 CSB utility START NEW GAME row records the enter-dungeon command");
     M11_GameView_Shutdown(&view);
 
+    fill_csb_launch_spec(&spec, data_dir, NULL);
+    spec.csbImportDm1SavePath = dm1_import_path;
+    spec.entranceResumeSavePath = save_path;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 CSB utility start accepts import plus validated resume path");
+    expect_true(view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_import_available == 1 &&
+                    view.csbState.startup_entrance_resume_available == 1,
+                "M11 CSB utility start keeps both import and resume available");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_import_selected_action_index == 1,
+                "M11 CSB utility keyboard selects LOAD when resume is available");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 0 &&
+                    view.csbState.startup_entrance_dismissed == 1,
+                "M11 CSB utility LOAD row resumes a validated save");
+    expect_true(view.csbState.startup_entrance_last_command ==
+                    M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
+                "M11 CSB utility LOAD row records the resume command before loading");
+    assert_csb_view_matches_expected_resume(
+        &view,
+        &expected,
+        "M11 CSB utility LOAD row restores the validated resume pose");
+    M11_GameView_Shutdown(&view);
+
     {
         M12_StartupMenuState menu;
         M12_StartupMenu_InitWithDataDir(&menu, data_dir, NULL);
