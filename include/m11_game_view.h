@@ -165,6 +165,28 @@ typedef struct {
     int count;
 } M11_MessageLog;
 
+enum {
+    M11_BOOT_RECEIPT_SOURCE_ID_CAPACITY = 32,
+    M11_BOOT_RECEIPT_PHASE_CAPACITY = 48
+};
+
+typedef struct {
+    int active;
+    M11_GameSourceKind sourceKind;
+    char sourceId[M11_BOOT_RECEIPT_SOURCE_ID_CAPACITY];
+    int startedFromLauncher;
+    int dm1StartupIntroBypassed;
+    int startupActive;
+    char startupPhase[M11_BOOT_RECEIPT_PHASE_CAPACITY];
+    int startupFrame;
+    int levelLoaded;
+    int partyX;
+    int partyY;
+    int partyDir;
+    int runtimeTick;
+    uint32_t dm1WorldTick;
+} M11_BootProbeReceipt;
+
 typedef struct {
     int active;
     int startedFromLauncher;
@@ -697,6 +719,8 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState);
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
 int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state);
+int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
+                                     M11_BootProbeReceipt* out);
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
                                   size_t outSize);

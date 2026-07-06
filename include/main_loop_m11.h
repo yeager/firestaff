@@ -37,6 +37,8 @@ typedef struct {
     int directLaunch;      /* Non-zero when --game should bypass M12. */
     int bootProbe;         /* Non-zero for deterministic --game boot smoke:
                               prepare/open selected-entry startup, then exit. */
+    int bootProbeFrames;   /* Optional M11 idle frames to advance before
+                              the boot-probe receipt is printed. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

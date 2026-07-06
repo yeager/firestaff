@@ -165,10 +165,13 @@ static void run_boot_probe_empty_data_rejection(void) {
 
     test_setenv("SDL_VIDEODRIVER", "dummy");
     M11_PhaseA_SetDefaultOptions(&opts);
+    expect_true(opts.bootProbeFrames == 0,
+                "boot-probe default advances zero startup frames");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
     opts.durationMs = 0;
+    opts.bootProbeFrames = 2;
     expect_true(M11_PhaseA_Run(&opts) == 2,
                 "boot-probe refuses missing game data without entering the loop");
 
@@ -195,6 +198,7 @@ static void run_real_data_handoff_if_available(void) {
         M12_StartupMenuState menu;
         M12_LaunchIntent intent;
         M11_GameViewState view;
+        M11_BootProbeReceipt receipt;
         const M12_MenuEntry* entry;
 
         M12_StartupMenu_InitWithDataDir(&menu, data_dir, kCases[i].gameId);
@@ -242,9 +246,30 @@ static void run_real_data_handoff_if_available(void) {
             expect_true(M11_GameView_Dm1StartupIntroBypassed(&view) == 0,
                         "direct --game dm1 does not use the game-view intro bypass");
         }
+        expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1,
+                    "direct launch handoff exports a boot receipt");
+        expect_true(receipt.active == 1 &&
+                        receipt.sourceKind == kCases[i].sourceKind &&
+                        strcmp(receipt.sourceId, kCases[i].gameId) == 0,
+                    "direct launch boot receipt keeps source identity");
+        expect_true(receipt.startupPhase[0] != '\0',
+                    "direct launch boot receipt names startup/runtime phase");
 
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
+
+        {
+            M11_PhaseA_Options opts;
+            M11_PhaseA_SetDefaultOptions(&opts);
+            opts.bootProbe = 1;
+            opts.bootProbeFrames = 2;
+            opts.gameId = kCases[i].gameId;
+            opts.dataDir = data_dir;
+            opts.durationMs = 0;
+            test_setenv("SDL_VIDEODRIVER", "dummy");
+            expect_true(M11_PhaseA_Run(&opts) == 0,
+                        "boot-probe advances selected-entry startup frames");
+        }
     }
 
     if (available_count == 0) {
