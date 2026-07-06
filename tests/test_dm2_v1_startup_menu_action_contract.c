@@ -22,6 +22,7 @@ int main(void)
     DM2_V1_StartupMenu menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupActionPlan plan;
+    DM2_V1_StartupExecution execution;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRenderRow rows[4];
     char phase[64];
@@ -87,6 +88,12 @@ int main(void)
               strcmp(plan.success_status, "DM2 CONTINUED") == 0 &&
               strcmp(plan.failure_status, "DM2 CONTINUE FAILED") == 0,
           "Continue action resolves to DM2-owned startup load plan");
+    check(dm2_v1_startup_execute_plan(
+              &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+              execution.rescan_saves == 1 &&
+              strcmp(execution.status, "DM2 CONTINUE FAILED") == 0,
+          "Continue plan execution reports failed load and rescan");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -110,6 +117,12 @@ int main(void)
               strcmp(plan.success_status, "DM2 SLOT LOADED") == 0 &&
               strcmp(plan.failure_status, "DM2 SLOT LOAD FAILED") == 0,
           "Load Slot action resolves to DM2-owned startup load plan");
+    check(dm2_v1_startup_execute_plan(
+              &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+              execution.rescan_saves == 1 &&
+              strcmp(execution.status, "DM2 SLOT LOAD FAILED") == 0,
+          "Load Slot plan execution reports failed load and rescan");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -127,6 +140,15 @@ int main(void)
               plan.rescan_saves_on_failure == 0 &&
               strcmp(plan.success_status, "DM2 NEW GAME") == 0,
           "New Game action resolves to DM2-owned startup session plan");
+    check(dm2_v1_startup_execute_plan(
+              &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY &&
+              execution.rescan_saves == 0 &&
+              execution.session.champion_count == 4 &&
+              execution.session.party_x == 15 &&
+              execution.session.party_y == 15 &&
+              strcmp(execution.status, "DM2 NEW GAME") == 0,
+          "New Game plan execution creates a DM2 startup session");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
@@ -137,6 +159,11 @@ int main(void)
               plan.kind == DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER &&
               strcmp(plan.success_status, "BACK TO LAUNCHER") == 0,
           "Back action resolves to DM2-owned launcher-return plan");
+    check(dm2_v1_startup_execute_plan(
+              &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER &&
+              strcmp(execution.status, "BACK TO LAUNCHER") == 0,
+          "Back plan execution returns launcher command");
 
     hit.kind = DM2_V1_STARTUP_HIT_PANEL;
     hit.row = -1;

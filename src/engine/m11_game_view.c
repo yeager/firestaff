@@ -661,75 +661,43 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_StartupActionPlan plan;
-    DM2_V1_SessionState session;
+    DM2_V1_StartupExecution execution;
 
     if (!state || !state->dm2State.startup_menu_active ||
         !state->dm2BootProfile || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    memset(&session, 0, sizeof(session));
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
     if (!dm2_v1_startup_plan_for_action(action, &plan)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (plan.kind == DM2_V1_STARTUP_PLAN_IGNORE) {
+    if (!dm2_v1_startup_execute_plan(&plan,
+                                     profile->save_root,
+                                     &execution)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW) {
         m11_set_status(state,
                        "STARTUP",
-                       plan.success_status ? plan.success_status
-                                           : "DM2 START SELECT");
+                       execution.status ? execution.status
+                                        : "DM2 START SELECT");
+        if (execution.rescan_saves) {
+            m11_dm2_startup_scan_saves(state, profile);
+        }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (plan.kind == DM2_V1_STARTUP_PLAN_CONTINUE) {
-        if (dm2_v1_session_load_last_session(profile->save_root,
-                                             &session) != 0) {
-            m11_set_status(state,
-                           "STARTUP",
-                           plan.failure_status ? plan.failure_status
-                                               : "DM2 CONTINUE FAILED");
-            if (plan.rescan_saves_on_failure) {
-                m11_dm2_startup_scan_saves(state, profile);
-            }
-            return M11_GAME_INPUT_REDRAW;
-        }
+    if (execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
         return m11_dm2_startup_apply_session(state,
-                                             &session,
-                                             plan.success_status)
+                                             &execution.session,
+                                             execution.status)
                    ? M11_GAME_INPUT_REDRAW
                    : M11_GAME_INPUT_REDRAW;
     }
-    if (plan.kind == DM2_V1_STARTUP_PLAN_LOAD_SLOT &&
-        plan.slot >= 0) {
-        if (dm2_v1_session_load_slot(profile->save_root,
-                                     (uint8_t)plan.slot,
-                                     &session) != 0) {
-            m11_set_status(state,
-                           "STARTUP",
-                           plan.failure_status ? plan.failure_status
-                                               : "DM2 SLOT LOAD FAILED");
-            if (plan.rescan_saves_on_failure) {
-                m11_dm2_startup_scan_saves(state, profile);
-            }
-            return M11_GAME_INPUT_REDRAW;
-        }
-        return m11_dm2_startup_apply_session(state,
-                                             &session,
-                                             plan.success_status)
-                   ? M11_GAME_INPUT_REDRAW
-                   : M11_GAME_INPUT_REDRAW;
-    }
-    if (plan.kind == DM2_V1_STARTUP_PLAN_NEW_GAME) {
-        dm2_v1_session_new(&session);
-        return m11_dm2_startup_apply_session(state,
-                                             &session,
-                                             plan.success_status)
-                   ? M11_GAME_INPUT_REDRAW
-                   : M11_GAME_INPUT_REDRAW;
-    }
-    if (plan.kind == DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER) {
+    if (execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER) {
         m11_set_status(state,
                        "RETURN",
-                       plan.success_status ? plan.success_status
-                                           : "BACK TO LAUNCHER");
+                       execution.status ? execution.status
+                                        : "BACK TO LAUNCHER");
         return M11_GAME_INPUT_RETURN_TO_MENU;
     }
     return M11_GAME_INPUT_IGNORED;

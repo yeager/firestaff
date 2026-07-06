@@ -26,6 +26,16 @@ static void dm2_v1_startup_action_plan_clear(
     plan->slot = -1;
 }
 
+static void dm2_v1_startup_execution_clear(
+    DM2_V1_StartupExecution *execution)
+{
+    if (!execution) {
+        return;
+    }
+    memset(execution, 0, sizeof(*execution));
+    execution->kind = DM2_V1_STARTUP_EXEC_IGNORE;
+}
+
 void dm2_v1_startup_menu_init(DM2_V1_StartupMenu *menu,
                               const char *save_root)
 {
@@ -289,6 +299,65 @@ int dm2_v1_startup_plan_for_action(
     if (action->kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
         out_plan->kind = DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER;
         out_plan->success_status = "BACK TO LAUNCHER";
+        return 1;
+    }
+    return 0;
+}
+
+int dm2_v1_startup_execute_plan(
+    const DM2_V1_StartupActionPlan *plan,
+    const char *save_root,
+    DM2_V1_StartupExecution *out_execution)
+{
+    if (!out_execution) {
+        return 0;
+    }
+    dm2_v1_startup_execution_clear(out_execution);
+    if (!plan) {
+        return 0;
+    }
+    if (plan->kind == DM2_V1_STARTUP_PLAN_IGNORE) {
+        out_execution->kind = DM2_V1_STARTUP_EXEC_STATUS_REDRAW;
+        out_execution->status = plan->success_status;
+        return 1;
+    }
+    if (plan->kind == DM2_V1_STARTUP_PLAN_CONTINUE) {
+        if (dm2_v1_session_load_last_session(
+                save_root,
+                &out_execution->session) != 0) {
+            out_execution->kind = DM2_V1_STARTUP_EXEC_STATUS_REDRAW;
+            out_execution->status = plan->failure_status;
+            out_execution->rescan_saves = plan->rescan_saves_on_failure;
+            return 1;
+        }
+        out_execution->kind = DM2_V1_STARTUP_EXEC_SESSION_READY;
+        out_execution->status = plan->success_status;
+        return 1;
+    }
+    if (plan->kind == DM2_V1_STARTUP_PLAN_LOAD_SLOT &&
+        plan->slot >= 0) {
+        if (dm2_v1_session_load_slot(
+                save_root,
+                (uint8_t)plan->slot,
+                &out_execution->session) != 0) {
+            out_execution->kind = DM2_V1_STARTUP_EXEC_STATUS_REDRAW;
+            out_execution->status = plan->failure_status;
+            out_execution->rescan_saves = plan->rescan_saves_on_failure;
+            return 1;
+        }
+        out_execution->kind = DM2_V1_STARTUP_EXEC_SESSION_READY;
+        out_execution->status = plan->success_status;
+        return 1;
+    }
+    if (plan->kind == DM2_V1_STARTUP_PLAN_NEW_GAME) {
+        dm2_v1_session_new(&out_execution->session);
+        out_execution->kind = DM2_V1_STARTUP_EXEC_SESSION_READY;
+        out_execution->status = plan->success_status;
+        return 1;
+    }
+    if (plan->kind == DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER) {
+        out_execution->kind = DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER;
+        out_execution->status = plan->success_status;
         return 1;
     }
     return 0;
