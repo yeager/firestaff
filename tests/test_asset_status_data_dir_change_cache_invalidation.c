@@ -917,6 +917,85 @@ static void check_start_menu_heals_stale_config_data_dir(const char* homeRoot) {
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
 
+static void check_start_menu_prefers_default_root_with_more_games(
+    const char* homeRoot) {
+    char defaultParent[M12_ASSET_DATA_DIR_CAPACITY];
+    char defaultDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char staleDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char nexusPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char staleNexusPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char nexusMd5[M12_ASSET_MD5_CAPACITY];
+    char staleNexusMd5[M12_ASSET_MD5_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    M12_Config config;
+    M12_StartupMenuState menu;
+
+    if (!FSP_JoinPath(staleDataRoot, sizeof(staleDataRoot),
+                      homeRoot, "stale-nexus-only-data") ||
+        !FSP_CreateDirectoryRecursive(staleDataRoot) ||
+        !setup_nexus_recommended_dir(staleDataRoot,
+                                     staleNexusPath, sizeof(staleNexusPath),
+                                     staleNexusMd5, sizeof(staleNexusMd5)) ||
+        !FSP_JoinPath(defaultParent, sizeof(defaultParent),
+                      homeRoot, ".firestaff") ||
+        !FSP_CreateDirectoryRecursive(defaultParent) ||
+        !FSP_JoinPath(defaultDataRoot, sizeof(defaultDataRoot),
+                      defaultParent, "data") ||
+        !FSP_CreateDirectoryRecursive(defaultDataRoot) ||
+        !setup_dm1_recommended_dir(defaultDataRoot,
+                                   graphicsPath, sizeof(graphicsPath),
+                                   graphicsMd5,
+                                   dungeonPath, sizeof(dungeonPath),
+                                   dungeonMd5) ||
+        !setup_nexus_recommended_dir(defaultDataRoot,
+                                     nexusPath, sizeof(nexusPath),
+                                     nexusMd5, sizeof(nexusMd5))) {
+        fprintf(stderr, "FAIL: cannot seed start-menu default-root fixture\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5,
+                                                          dungeonMd5);
+    M12_AssetStatus_TestSetNexusSyntheticHash(nexusMd5);
+    (void)test_setenv("HOME", homeRoot);
+    (void)test_setenv("FIRESTAFF_DATA", NULL);
+#ifndef _WIN32
+    (void)test_setenv("XDG_CONFIG_HOME", NULL);
+#endif
+
+    M12_Config_SetDefaults(&config);
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", staleDataRoot);
+    check_int(M12_Config_Save(&config) == 1,
+              "start menu partial-stale fixture must save startup config");
+
+    M12_StartupMenu_InitWithDataDir(&menu, NULL, NULL);
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
+                     defaultDataRoot) == 0,
+              "start menu must prefer default root when it verifies more games than saved config");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
+              "start menu default-root rescan must expose DM1");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "nexus") == 1,
+              "start menu default-root rescan must expose Nexus");
+    M12_StartupMenu_Destroy(&menu);
+
+    M12_StartupMenu_InitWithDataDir(&menu, NULL, "nexus");
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
+                     defaultDataRoot) == 0,
+              "start menu --game hint without --data-dir must still use the broad default scan root");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
+              "start menu --game hint without --data-dir must not hide sibling DM1 data");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "nexus") == 1,
+              "start menu --game hint without --data-dir must keep selected Nexus available");
+    M12_StartupMenu_Destroy(&menu);
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
+}
+
 int main(void) {
     char home[M12_ASSET_DATA_DIR_CAPACITY];
     char dirA[M12_ASSET_DATA_DIR_CAPACITY];
@@ -954,9 +1033,11 @@ int main(void) {
     check_symlinked_multi_game_root_scans_all_games(home);
 #endif
     check_start_menu_heals_stale_config_data_dir(home);
+    check_start_menu_prefers_default_root_with_more_games(home);
 
     /* Release all test hooks. */
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
     M12_AssetStatus_TestSetTheronSyntheticHash(NULL);
     test_setenv("FIRESTAFF_DATA", NULL);
     test_setenv("XDG_DATA_HOME", NULL);

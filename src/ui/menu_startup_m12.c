@@ -1465,6 +1465,17 @@ static void m12_publish_game_availability(M12_StartupMenuState* state) {
     m12_update_game_availability(&avail);
 }
 
+static int m12_asset_ready_game_count(const M12_AssetStatus* status) {
+    if (!status) {
+        return 0;
+    }
+    return (M12_AssetStatus_GameAvailable(status, "dm1") ? 1 : 0) +
+           (M12_AssetStatus_GameAvailable(status, "csb") ? 1 : 0) +
+           (M12_AssetStatus_GameAvailable(status, "dm2") ? 1 : 0) +
+           (M12_AssetStatus_GameAvailable(status, "nexus") ? 1 : 0) +
+           (M12_AssetStatus_GameAvailable(status, "theron") ? 1 : 0);
+}
+
 static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
                                            int changed) {
     char line3[160];
@@ -2670,9 +2681,12 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* gameId) {
     M12_Config config;
     int gi;
+    int hasExplicitDataDirOverride;
     if (!state) {
         return;
     }
+    hasExplicitDataDirOverride =
+        (dataDirOverride && dataDirOverride[0] != '\0') ? 1 : 0;
     M12_Config_Load(&config, dataDirOverride);
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
                                                     M12_UI_LANGUAGE_COUNT);
@@ -2886,33 +2900,30 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
      * touch the sync root when the flag is off or the root is
      * unusable; see cloud_sync_m12.h for the full contract. */
     M12_CloudSync_ApplyConfig(&config);
-    if (gameId && gameId[0] != '\0') {
+    if (hasExplicitDataDirOverride && gameId && gameId[0] != '\0') {
         M12_AssetStatus_ScanGame(&state->assetStatus, config.dataDir, gameId);
     } else {
         M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
     }
-    if ((!dataDirOverride || dataDirOverride[0] == '\0') &&
-        !M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1") &&
-        !M12_AssetStatus_GameAvailable(&state->assetStatus, "csb") &&
-        !M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2") &&
-        !M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus") &&
-        !M12_AssetStatus_GameAvailable(&state->assetStatus, "theron")) {
+    if (!hasExplicitDataDirOverride) {
         char resolvedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         if (FSP_ResolveDataDir(resolvedDataDir, sizeof(resolvedDataDir), NULL) &&
             resolvedDataDir[0] != '\0' &&
             strcmp(resolvedDataDir, config.dataDir) != 0) {
             M12_AssetStatus fallbackStatus;
+            int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
+            int fallbackReadyCount;
             memset(&fallbackStatus, 0, sizeof(fallbackStatus));
-            if (gameId && gameId[0] != '\0') {
+            if (hasExplicitDataDirOverride && gameId && gameId[0] != '\0') {
                 M12_AssetStatus_ScanGame(&fallbackStatus, resolvedDataDir, gameId);
             } else {
                 M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
             }
-            if (M12_AssetStatus_GameAvailable(&fallbackStatus, "dm1") ||
-                M12_AssetStatus_GameAvailable(&fallbackStatus, "csb") ||
-                M12_AssetStatus_GameAvailable(&fallbackStatus, "dm2") ||
-                M12_AssetStatus_GameAvailable(&fallbackStatus, "nexus") ||
-                M12_AssetStatus_GameAvailable(&fallbackStatus, "theron")) {
+            fallbackReadyCount = m12_asset_ready_game_count(&fallbackStatus);
+            if (fallbackReadyCount > currentReadyCount ||
+                (gameId && gameId[0] != '\0' &&
+                 !M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) &&
+                 M12_AssetStatus_GameAvailable(&fallbackStatus, gameId))) {
                 state->assetStatus = fallbackStatus;
                 snprintf(config.dataDir, sizeof(config.dataDir), "%s",
                          M12_AssetStatus_GetDataDir(&state->assetStatus));
