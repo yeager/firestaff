@@ -32,6 +32,7 @@
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_layout.h"
 #include "dm2_v1_startup_menu.h"
+#include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_hud_runtime.h"
@@ -36833,63 +36834,62 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       int framebufferWidth,
                                       int framebufferHeight)
 {
-    int row;
-    DM2_V1_StartupRect rect;
+    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupDrawCommand commands[32];
+    int command_count;
+    int i;
 
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return;
     }
-    (void)dm2_v1_startup_panel_rect(&rect);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  rect.x, rect.y, rect.w, rect.h, M11_COLOR_BLACK);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  rect.x, rect.y, rect.w, rect.h, M11_COLOR_WHITE);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  DM2_V1_STARTUP_TITLE_X,
-                  DM2_V1_STARTUP_TITLE_Y,
-                  "DUNGEON MASTER II", &g_text_title);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  DM2_V1_STARTUP_SUBTITLE_X,
-                  DM2_V1_STARTUP_SUBTITLE_Y,
-                  "SELECT GAME", &g_text_shadow);
-    for (row = 0; row < state->dm2State.startup_menu_row_count; ++row) {
-        char label[48];
-        DM2_V1_StartupRowKind kind = DM2_V1_STARTUP_ROW_NONE;
-        int slot = -1;
-        DM2_V1_StartupRect rowRect;
-        DM2_V1_StartupRect highlightRect;
-        const M11_TextStyle *style = &g_text_shadow;
-
-        if (!m11_dm2_startup_row_at(state, row, &kind, &slot) ||
-            !dm2_v1_startup_row_rect(row, &rowRect)) {
-            continue;
-        }
-        if (kind == DM2_V1_STARTUP_ROW_CONTINUE) {
-            snprintf(label, sizeof(label), "CONTINUE");
-        } else if (kind == DM2_V1_STARTUP_ROW_SLOT) {
-            snprintf(label, sizeof(label), "LOAD SLOT %02d", slot);
-        } else {
-            snprintf(label, sizeof(label), "NEW GAME");
-        }
-        if (row == state->dm2State.startup_menu_selected_row) {
-            (void)dm2_v1_startup_row_highlight_rect(row, &highlightRect);
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          highlightRect.x,
-                          highlightRect.y,
-                          highlightRect.w,
-                          highlightRect.h,
-                          M11_COLOR_RED);
-            style = &g_text_title;
-        }
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      DM2_V1_STARTUP_ROW_TEXT_X,
-                      rowRect.y + 2,
-                      label, style);
+    m11_dm2_startup_menu_from_state(state, &menu);
+    command_count =
+        dm2_v1_startup_presentation_build(&menu,
+                                          commands,
+                                          (int)(sizeof(commands) /
+                                                sizeof(commands[0])));
+    if (command_count <= 0) {
+        return;
     }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  DM2_V1_STARTUP_FOOTER_X,
-                  DM2_V1_STARTUP_FOOTER_Y,
-                  "ENTER/ACTION STARTS", &g_text_shadow);
+    for (i = 0; i < command_count; ++i) {
+        const DM2_V1_StartupDrawCommand *command = &commands[i];
+        if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT) {
+            unsigned char color =
+                command->style == DM2_V1_STARTUP_STYLE_SELECTED_FILL
+                    ? M11_COLOR_RED
+                    : M11_COLOR_BLACK;
+            m11_fill_rect(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          command->rect.x,
+                          command->rect.y,
+                          command->rect.w,
+                          command->rect.h,
+                          color);
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_OUTLINE_RECT) {
+            m11_draw_rect(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          command->rect.x,
+                          command->rect.y,
+                          command->rect.w,
+                          command->rect.h,
+                          M11_COLOR_WHITE);
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_TEXT) {
+            const M11_TextStyle *style =
+                command->style == DM2_V1_STARTUP_STYLE_TITLE ||
+                        command->style == DM2_V1_STARTUP_STYLE_SELECTED_TEXT
+                    ? &g_text_title
+                    : &g_text_shadow;
+            m11_draw_text(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          command->x,
+                          command->y,
+                          command->text,
+                          style);
+        }
+    }
 }
 
 static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
