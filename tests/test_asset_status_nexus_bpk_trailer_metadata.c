@@ -128,6 +128,11 @@ int main(void) {
     char root[512];
     char nexusDir[512];
     char bpkPath[512];
+    char directRoot[512];
+    char renamedNexusDataPath[512];
+    char nexusDataMd5[33];
+    const unsigned char nexusDataPayload[] =
+        "Firestaff synthetic Nexus launch marker with arbitrary filename\n";
     M12_AssetStatus status;
     const M12_NexusBpkTrailerMetadata* meta;
 
@@ -167,6 +172,39 @@ int main(void) {
     check_int(meta && meta->trailerFirstOffset == 76U &&
                   meta->trailerSecondOffset == 120U,
               "metadata exposes directory-trailer target offsets");
+
+    snprintf(directRoot, sizeof(directRoot), "%s/%s", root, "renamed-nexus");
+    check_int(make_dir_if_needed(directRoot),
+              "direct Nexus hash fixture directory created");
+    snprintf(renamedNexusDataPath, sizeof(renamedNexusDataPath),
+             "%s/%s", directRoot, "disc-image.payload");
+    check_int(write_bytes(renamedNexusDataPath,
+                          nexusDataPayload,
+                          sizeof(nexusDataPayload) - 1U),
+              "renamed Nexus data marker written");
+    check_int(m12_file_md5_hex(renamedNexusDataPath, nexusDataMd5),
+              "renamed Nexus data marker hashed");
+
+    M12_AssetStatus_TestSetNexusSyntheticHash(nexusDataMd5);
+    M12_AssetStatus_Scan(&status, renamedNexusDataPath);
+    check_int(M12_AssetStatus_GameAvailable(&status, "nexus") == 1,
+              "direct Nexus file request should hash-scan its parent even "
+              "without .cue/.bin/.iso extension");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "nexus"),
+                     directRoot) == 0,
+              "direct renamed Nexus file request should use the matched "
+              "parent as runtime root");
+    check_int(M12_AssetStatus_GetRequiredFileCount(&status, "nexus") == 1U,
+              "direct renamed Nexus scan keeps the Nexus required-file row");
+    {
+        const M12_AssetRequiredFileStatus* required =
+            M12_AssetStatus_GetRequiredFile(&status, "nexus", 0U);
+        check_int(required && required->matched &&
+                      strcmp(required->matchedPath, renamedNexusDataPath) == 0 &&
+                      strcmp(required->matchedHash, nexusDataMd5) == 0,
+                  "direct renamed Nexus required row records the hash-matched "
+                  "file, not a filename-derived candidate");
+    }
 
     M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
