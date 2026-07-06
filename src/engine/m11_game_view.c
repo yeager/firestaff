@@ -2965,6 +2965,10 @@ static void m11_draw_csb_entrance_door_panel(unsigned char *framebuffer,
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state);
 
+static void m11_csb_startup_command_state_from_m11(
+    const M11_GameViewState *state,
+    CSB_V1_StartupCommandState_PC34 *out_state);
+
 static int m11_csb_startup_build_render_plan(
     const M11_GameViewState *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
@@ -3322,14 +3326,12 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state)
 {
-    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupCommandState_PC34 command_state;
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
-    if (!m11_csb_startup_build_render_plan(state, &plan)) {
-        return 0;
-    }
-    return plan.waiting_for_input;
+    m11_csb_startup_command_state_from_m11(state, &command_state);
+    return csb_v1_startup_entrance_accepts_input_pc34(&command_state);
 }
 
 static CSB_V1_StartupInput_PC34 m11_csb_startup_input_from_m12(

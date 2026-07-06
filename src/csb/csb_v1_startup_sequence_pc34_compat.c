@@ -125,6 +125,25 @@ int csb_v1_startup_entrance_action_for_input_pc34(
     }
 }
 
+int csb_v1_startup_entrance_command_for_action_pc34(
+    CSB_V1_StartupEntranceAction_PC34 action)
+{
+    /* ReDMCSB ENTRANCE.C F0441/F0806 uses the source entrance command ids
+     * C001/C200..C216 to leave the startup wait loop.  Keep that mapping in
+     * CSB startup code so M11 only adapts and executes the resolved command. */
+    switch (action) {
+        case CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34:
+            return CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_ACTION_RESUME_PC34:
+            return CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_ACTION_QUIT_PC34:
+            return CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34:
+        default:
+            return CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    }
+}
+
 int csb_v1_startup_advance_tick_pc34(
     CSB_V1_StartupTickState_PC34 *state,
     CSB_V1_StartupTickResult_PC34 *out_result)
@@ -272,6 +291,22 @@ int csb_v1_startup_init_command_state_pc34(
     state->opening_step = 0;
     state->pending_command = 0;
     return 1;
+}
+
+int csb_v1_startup_entrance_accepts_input_pc34(
+    const CSB_V1_StartupCommandState_PC34 *state)
+{
+    if (!state || !state->entrance_active || state->title_active) {
+        return 0;
+    }
+    if (state->credits_active) {
+        return 1;
+    }
+    if (state->opening_active) {
+        return 0;
+    }
+    return state->entrance_source_step >=
+        csb_v1_startup_entrance_wait_stage_pc34();
 }
 
 int csb_v1_startup_begin_door_opening_pc34(
