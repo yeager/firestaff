@@ -45,6 +45,14 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
 int  M11_PhaseA_Run(const M11_PhaseA_Options* opts);
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState);
 
+/* Prepare the same selected-entry launch request used by CLI --game.
+   This is the testable half of direct launch: --game may bypass the visible
+   M12 menu, but it must still select a hash-available game entry and enter
+   M11 through M12_StartupMenu_GetLaunchIntent() /
+   M11_GameView_OpenSelectedMenuEntry(), not through a per-game shortcut. */
+int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
+                                   const char* gameId);
+
 /* Map a point from the active presented game surface back to the source
    320x200 DM1 framebuffer. V2.1/V2.2 pass their selected presentation
    resolution here before source-locked mouse zone dispatch. */

@@ -10886,6 +10886,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (spec->gameId && strcmp(spec->gameId, "nexus") == 0) {
         /* dataDir may come in via spec or via the dataDir arg */
         const char *dd = spec->dataDir;
+        char verifiedDir[M11_GAME_VIEW_PATH_CAPACITY];
+        verifiedDir[0] = '\0';
         if ((!dd || !dd[0]) && spec->dungeonPath && spec->dungeonPath[0]) {
             /* Extract data dir from the dungeon path */
             size_t len = strlen(spec->dungeonPath);
@@ -10900,6 +10902,21 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 ddir[slash] = '\0';
                 dd = ddir;
             }
+        }
+        /* CLI --game and launcher-wide scans may identify Nexus from
+         * dataDir/nexus/DM.BIN while spec->dataDir still points at the broad
+         * user data root.  Nexus V1 expects the extracted Saturn directory
+         * itself because LEVxx.DGN, TITLE.CG, FACE.BIN, and friends live next
+         * to DM.BIN.  Use the hash-verified marker's parent directory when it
+         * is a real filesystem path.  Source: Nexus launcher init/load in
+         * nexus_v1_launcher.c; this keeps --game on the same selected-entry
+         * startup path without making users pass the per-game subdirectory. */
+        if (spec->verifiedAssetPath && spec->verifiedAssetPath[0] != '\0' &&
+            strstr(spec->verifiedAssetPath, "::") == NULL &&
+            FSP_ParentDir(verifiedDir, sizeof(verifiedDir),
+                          spec->verifiedAssetPath) &&
+            verifiedDir[0] != '\0') {
+            dd = verifiedDir;
         }
         if (!dd || !dd[0]) return 0;
         {

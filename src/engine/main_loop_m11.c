@@ -1565,8 +1565,8 @@ static int m11_restart_current_launch(M11_GameViewState* gameView,
     return m11_open_requested_launch(gameView, menuState, idleAccumulatorMs, dataDir);
 }
 
-static int m11_prepare_direct_launch(M12_StartupMenuState* menuState,
-                                     const char* gameId) {
+int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
+                                   const char* gameId) {
     int i;
     int entryCount;
     if (!menuState || !gameId || gameId[0] == '\0') {
@@ -3191,7 +3191,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 
     /* Always present at least once so the window actually has content. */
     if (o->directLaunch) {
-        if (!m11_prepare_direct_launch(&menuState, o->gameId)) {
+        if (!M11_PrepareDirectLaunchForGame(&menuState, o->gameId)) {
             fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
                     o->gameId ? o->gameId : "(null)");
             runRc = 2;
