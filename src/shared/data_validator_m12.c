@@ -169,6 +169,7 @@ static const M12_KnownChecksum g_knownChecksums[] = {
     {"csb", "TELE2.AMG", "70528f7143bd0a3ca7bfd3988722a8a8", "CSB Amiga Utility Disk TELE2.AMG"},
     {"csb", "GRAPHICS.DAT", "21197b1d4994fd835c403d5a33dcac2b", "CSB Amiga X.X and 3.1 English GRAPHICS.DAT"},
     {"csb", "GRAPHICS.DAT", "ebf6a57af3f27782e358c0490bfd2f2e", "CSB Atari ST 2.0 and 2.1 English GRAPHICS.DAT"},
+    {"csb", "GRAPHICS.DAT", "e0ce7ac5160ca5540e90cf09ab9fad49", "CSB Atari ST 2.x English hard-disk GRAPHICS.DAT"},
     {"csb", "ANIMATE.DAT", "9f8feb269c959c9fe722ac08f99d9c35", "CSB Atari ST Utility Disk English ANIMATE.DAT"},
     {"csb", "GRAPHICS.DAT", "405b757038eea3c263e60f240854d6de", "CSB FM-Towns English GRAPHICS.DAT"},
     {"csb", "GRAPHICS.DAT", "761d6fc588b31aeaaa9caf3725e111b9", "CSB FM-Towns Japanese GRAPHICS.DAT"},

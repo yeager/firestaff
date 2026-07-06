@@ -1697,6 +1697,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectRuntimeTickMax = -1;
     opts->bootProbeExpectStartupActive = -1;
     opts->bootProbeExpectStartupFrameMin = -1;
+    opts->bootProbeExpectStartupFrameMax = -1;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -1909,6 +1910,30 @@ static void m11_phase_a_print_boot_probe_receipt(
             receipt.dm1StartupIntroBypassed);
 }
 
+static int m11_boot_probe_expected_phase_is_runtime(const char *phase) {
+    size_t len;
+    const char *suffix = "-runtime";
+    size_t suffix_len = 8U;
+    if (!phase) {
+        return 0;
+    }
+    len = strlen(phase);
+    if (len == 7U && strcmp(phase, "runtime") == 0) {
+        return 1;
+    }
+    return len > suffix_len &&
+           strcmp(phase + len - suffix_len, suffix) == 0;
+}
+
+static int m11_boot_probe_runtime_receipt_ready(
+    const M11_BootProbeReceipt *receipt)
+{
+    return receipt &&
+           receipt->active &&
+           !receipt->startupActive &&
+           receipt->levelLoaded;
+}
+
 
 static void m11_write_autotest_runtime_probe(const char* path,
                                              int launchedEver,
@@ -2054,6 +2079,7 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         return M12_MENU_INPUT_ACCEPT;
     }
     if ((len == 5U && strncmp(token, "space", len) == 0) ||
+        (len == 6U && strncmp(token, "action", len) == 0) ||
         (len == 3U && strncmp(token, "act", len) == 0)) {
         return M12_MENU_INPUT_ACTION;
     }
@@ -3739,6 +3765,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             o->bootProbeExpectPhase,
                             receipt.startupPhase);
                     runRc = 4;
+                } else if (m11_boot_probe_expected_phase_is_runtime(
+                               o->bootProbeExpectPhase) &&
+                           !m11_boot_probe_runtime_receipt_ready(&receipt)) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected runtime-ready phase '%s' but receipt has active=%d startupActive=%d levelLoaded=%d\n",
+                            o->bootProbeExpectPhase,
+                            receipt.active,
+                            receipt.startupActive,
+                            receipt.levelLoaded);
+                    runRc = 4;
                 }
             }
             if (o->bootProbeExpectRuntime) {
@@ -3847,6 +3883,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     fprintf(stderr,
                             "firestaff: boot-probe expected startup frame >= %d but got %d\n",
                             o->bootProbeExpectStartupFrameMin,
+                            receipt.startupFrame);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectStartupFrameMax >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.startupFrame > o->bootProbeExpectStartupFrameMax) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected startup frame <= %d but got %d\n",
+                            o->bootProbeExpectStartupFrameMax,
                             receipt.startupFrame);
                     runRc = 4;
                 }

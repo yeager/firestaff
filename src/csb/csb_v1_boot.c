@@ -24,6 +24,7 @@
 static const char *const g_csb_boot_graphics_hashes[] = {
     "61fbfd56887c94adc26888a9491c6611",
     "ebf6a57af3f27782e358c0490bfd2f2e",
+    "e0ce7ac5160ca5540e90cf09ab9fad49",
     "291e1bc6803e3dc4b974c60117ca5d68",
     "cefaddfdf5651df2c91f61b5611a8362",
     NULL
@@ -31,6 +32,7 @@ static const char *const g_csb_boot_graphics_hashes[] = {
 
 static const CSB_V1_VariantId g_csb_boot_graphics_variants[] = {
     CSB_V1_VARIANT_PC34_EN,
+    CSB_V1_VARIANT_ST21_EN,
     CSB_V1_VARIANT_ST21_EN,
     CSB_V1_VARIANT_AMIGA35_EN,
     CSB_V1_VARIANT_AMIGA35_MULTI
@@ -978,7 +980,7 @@ void csb_v1_boot_print_summary(const CSB_V1_BootProfile *profile)
 
 /* ── CSB V1 boot profile -> M11 entry guard ─────────────────────
  *
- * The canonical CSB V1 media hash registry below mirrors the four
+ * The canonical CSB V1 media hash registry below mirrors the supported
  * graphics md5s and the one dungeon md5 the launcher scans for.
  * The gate hashes here MUST stay in sync with g_csb_boot_graphics_hashes
  * and g_csb_boot_dungeon_hashes above; the registry is the source of
@@ -991,6 +993,7 @@ void csb_v1_boot_print_summary(const CSB_V1_BootProfile *profile)
 static const char *const g_csb_m11_entry_graphics_hashes[] = {
     "61fbfd56887c94adc26888a9491c6611", /* PC DOS 3.4 English         MEDIA278 */
     "ebf6a57af3f27782e358c0490bfd2f2e", /* Atari ST 2.0/2.1 English   MEDIA332 */
+    "e0ce7ac5160ca5540e90cf09ab9fad49", /* Atari ST 2.x hard-disk     MEDIA332 */
     "291e1bc6803e3dc4b974c60117ca5d68", /* Amiga 3.5 English          MEDIA529 */
     "cefaddfdf5651df2c91f61b5611a8362", /* Amiga 3.5 Multilanguage    MEDIA529 */
     NULL

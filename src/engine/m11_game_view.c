@@ -723,20 +723,7 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
                    : M11_GAME_INPUT_REDRAW;
     }
     m11_dm2_startup_menu_to_state(state, &menu);
-    if (action.kind == DM2_V1_STARTUP_ACTION_NONE) {
-        m11_set_status(state, "STARTUP", "DM2 START SELECT");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (action.kind == DM2_V1_STARTUP_ACTION_CONTINUE ||
-        action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT ||
-        action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
-        return m11_dm2_startup_apply_action(state, &action);
-    }
-    if (action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
-        m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
-        return M11_GAME_INPUT_RETURN_TO_MENU;
-    }
-    return M11_GAME_INPUT_IGNORED;
+    return m11_dm2_startup_apply_action(state, &action);
 }
 
 static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
@@ -3544,31 +3531,39 @@ static M11_GameInputResult m11_csb_startup_activate_utility_action(
     M11_GameViewState *state,
     CSB_V1_UtilFlowAction action)
 {
-    CSB_V1_UtilExecution execution;
+    CSB_V1_UtilActionPlan plan;
+
     if (!state) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!csb_v1_util_flow_execution_for_action(action, &execution)) {
+    if (!csb_v1_util_flow_plan_for_action(action, &plan)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (execution.kind == CSB_V1_UTIL_EXEC_ENTRANCE_COMMAND) {
-        state->csbState.startup_import_preview_active =
-            execution.preview_active;
-        return m11_csb_startup_handle_entrance_command(
-            state,
-            execution.entrance_command);
+    switch (plan.kind) {
+        case CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND:
+            state->csbState.startup_import_preview_active =
+                plan.preview_active;
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                plan.entrance_command);
+        case CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY:
+            state->csbState.startup_import_preview_active =
+                plan.preview_active;
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "BOOT",
+                           plan.status ? plan.status : "CSB IMPORT READY");
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_UTIL_ACTION_PLAN_VIEW_READY:
+            state->csbState.startup_import_preview_active =
+                plan.preview_active;
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "BOOT",
+                           plan.status ? plan.status : "CSB PARTY READY");
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_UTIL_ACTION_PLAN_IGNORE:
+        default:
+            return M11_GAME_INPUT_IGNORED;
     }
-    if (execution.kind == CSB_V1_UTIL_EXEC_STATUS_REDRAW) {
-        state->csbState.startup_import_preview_active =
-            execution.preview_active;
-        m11_set_status(state,
-                       execution.status_context ? execution.status_context
-                                                : "BOOT",
-                       execution.status_message ? execution.status_message
-                                                : "CSB UTILITY");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    return M11_GAME_INPUT_IGNORED;
 }
 
 static CSB_V1_UtilInput m11_csb_utility_input_from_m12(M12_MenuInput input)
@@ -11412,58 +11407,36 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
     if (!nexus_v1_startup_execute_champion_action(action, &execution)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_STATUS_REDRAW) {
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS CHAMPIONS");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR) {
+    if (execution.kind ==
+        NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR) {
         state->nexusState.champion_cursor = execution.cursor;
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS CHAMPION");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
+    } else if (execution.kind ==
+               NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
         state->nexusState.champion_select_active = 0;
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "BOOT",
-                       execution.status ? execution.status
-                                        : "NEXUS READY");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_SAVE_SELECT) {
+    } else if (execution.kind ==
+               NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_SAVE_SELECT) {
         state->nexusState.champion_select_active = 0;
         state->nexusState.startup_save_select_active = 1;
-        if (state->nexusState.startup_save_row_count > 0) {
+        if (execution.select_last_save_row &&
+            state->nexusState.startup_save_row_count > 0) {
             state->nexusState.startup_save_selected_row =
                 state->nexusState.startup_save_row_count - 1;
         }
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS LOAD GAME");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE) {
+    } else if (execution.kind ==
+               NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE) {
         state->nexusState.champion_select_active = 0;
         state->nexusState.title_active = 1;
         state->nexusState.title_frame = 0;
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS TITLE");
-        return M11_GAME_INPUT_REDRAW;
     }
-    return M11_GAME_INPUT_IGNORED;
+    if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_IGNORE) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    m11_set_status(state,
+                   execution.status_scope ? execution.status_scope
+                                          : "STARTUP",
+                   execution.status ? execution.status
+                                    : "NEXUS CHAMPIONS");
+    return M11_GAME_INPUT_REDRAW;
 }
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {

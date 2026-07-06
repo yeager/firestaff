@@ -83,7 +83,7 @@ typedef struct {
 
 typedef enum {
     NEXUS_V1_STARTUP_CHAMPION_EXEC_IGNORE = 0,
-    NEXUS_V1_STARTUP_CHAMPION_EXEC_STATUS_REDRAW = 1,
+    NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW = 1,
     NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR = 2,
     NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON = 3,
     NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_SAVE_SELECT = 4,
@@ -93,6 +93,7 @@ typedef enum {
 typedef struct {
     Nexus_V1_StartupChampionExecutionKind kind;
     int cursor;
+    int select_last_save_row;
     const char *status_scope;
     const char *status;
 } Nexus_V1_StartupChampionExecution;

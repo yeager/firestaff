@@ -875,6 +875,22 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
     return &state->entries[index];
 }
 
+static int m12_entry_index_for_game_id(const M12_StartupMenuState* state,
+                                       const char* gameId) {
+    int i;
+    if (!state || !gameId || gameId[0] == '\0') {
+        return -1;
+    }
+    for (i = 0; i < m12_entry_count(); ++i) {
+        if (state->entries[i].kind == M12_MENU_ENTRY_GAME &&
+            state->entries[i].gameId &&
+            strcmp(state->entries[i].gameId, gameId) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 /* Language cycle accessors.  g_languages[] / g_languageNames[] are
  * file-local to this module; these getters expose just the count
  * and the per-index strings so probes can drive the 19-language
@@ -1390,13 +1406,18 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
     char line1[128];
     char line2[256];
     char line3[160];
+    int gameIndex;
     if (!state) {
         return;
     }
+    gameIndex = m12_entry_index_for_game_id(state, gameId);
     snprintf(line1, sizeof(line1), "%s %s", m12_game_popup_label(gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
     m12_format_missing_files_for_game(state, gameId, line2, sizeof(line2));
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_enter_message_view(state);
+    if (gameIndex >= 0) {
+        state->activatedIndex = gameIndex;
+    }
     state->launchRequested = 0;
     state->quickResumeLaunchRequested = 0;
     state->csbImportDm1LaunchRequested = 0;
@@ -1567,6 +1588,7 @@ static int SDLCALL m12_data_dir_scan_thread(void* data) {
     memset(&scanOptions, 0, sizeof(scanOptions));
     scanOptions.progressFn = m12_data_dir_scan_job_progress_callback;
     scanOptions.progressUserData = job;
+    scanOptions.honorRequestedDataDir = 1;
     job->result = M12_AssetStatus_ScanWithOptions(&job->assetStatus,
                                                   job->dataDir,
                                                   &scanOptions);
@@ -1729,6 +1751,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     scanOptions.progressFn = m12_data_dir_scan_progress_callback;
     scanOptions.progressUserData = state;
     scanOptions.cancelFlag = &state->dataDirScanCancelRequested;
+    scanOptions.honorRequestedDataDir = 1;
     scanOk = M12_AssetStatus_ScanWithOptions(&state->assetStatus,
                                              dataDir,
                                              &scanOptions);
@@ -2689,13 +2712,22 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         return;
     }
     (void)gameId;
+    if (hasExplicitDataDirOverride) {
+        M12_AssetStatusScanOptions scanOptions;
+        memset(&scanOptions, 0, sizeof(scanOptions));
+        scanOptions.honorRequestedDataDir = 1;
+        (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                              config->dataDir,
+                                              &scanOptions);
+        return;
+    }
     /* The visible launcher must publish full cross-game availability even
      * when the caller supplied --game.  M12_AssetStatus_ScanGame() is a
      * direct-launch fast path for Theron/Nexus and may intentionally return
      * a one-game status; using it here makes the start menu disagree with
      * `firestaff --scan-data` for the same data root. */
     M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
-    if (!hasExplicitDataDirOverride) {
+    {
         char resolvedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         if (FSP_ResolveDataDir(resolvedDataDir, sizeof(resolvedDataDir), NULL) &&
             resolvedDataDir[0] != '\0' &&
@@ -2723,13 +2755,16 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
                                     const char* gameId) {
     M12_Config config;
+    const char* envDataDir;
     int gi;
     int hasExplicitDataDirOverride;
     if (!state) {
         return;
     }
+    envDataDir = getenv("FIRESTAFF_DATA");
     hasExplicitDataDirOverride =
-        (dataDirOverride && dataDirOverride[0] != '\0') ? 1 : 0;
+        ((dataDirOverride && dataDirOverride[0] != '\0') ||
+         (envDataDir && envDataDir[0] != '\0')) ? 1 : 0;
     M12_Config_Load(&config, dataDirOverride);
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
                                                     M12_UI_LANGUAGE_COUNT);

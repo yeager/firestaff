@@ -156,6 +156,7 @@ static int csb_v1_runtime_skin_cache_record_lookup(
 static const char *const g_csb_graphics_hashes[] = {
     "61fbfd56887c94adc26888a9491c6611", /* CSB PC 3.4 English GRAPHICS.DAT */
     "ebf6a57af3f27782e358c0490bfd2f2e", /* CSB Atari ST 2.0/2.1 English */
+    "e0ce7ac5160ca5540e90cf09ab9fad49", /* CSB Atari ST 2.x hard-disk */
     "291e1bc6803e3dc4b974c60117ca5d68", /* CSB Amiga 3.5 English */
     "cefaddfdf5651df2c91f61b5611a8362", /* CSB Amiga 3.5 Multilanguage */
     NULL
@@ -532,6 +533,9 @@ int csb_v1_runtime_detect_variant(const char *gfx_path,
     }
 
     if (md5_gfx) {
+        if (strcmp(md5_gfx, "e0ce7ac5160ca5540e90cf09ab9fad49") == 0) {
+            return CSB_V1_VARIANT_ST21_EN;
+        }
         for (i = 1; i < CSB_V1_VARIANT_COUNT; i++) {
             if (g_csb_variants[i].md5_gfx[0] != '\0' &&
                 strcmp(md5_gfx, g_csb_variants[i].md5_gfx) == 0) {
