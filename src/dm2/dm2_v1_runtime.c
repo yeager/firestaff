@@ -656,6 +656,7 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport)
         dst->depth = 0;
         dst->screen_x = (int16_t)src->pixel_x;
         dst->screen_y = (int16_t)src->pixel_y;
+        dst->direction = (uint8_t)(src->direction & 3);
         switch (src->direction & 3) {
         case 0:
             dst->velocity_y = -3;
