@@ -50,6 +50,7 @@ typedef struct {
     int bootProbeExpectPartyDir;
     int bootProbeExpectChampions; /* Require exact champion/party count. */
     int bootProbeExpectChampionCount;
+    const char* bootProbeExpectAssetMd5; /* Optional exact boot asset MD5. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

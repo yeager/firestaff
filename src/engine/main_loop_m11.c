@@ -1689,6 +1689,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectPartyDir = -1;
     opts->bootProbeExpectChampions = 0;
     opts->bootProbeExpectChampionCount = -1;
+    opts->bootProbeExpectAssetMd5 = NULL;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -1877,10 +1878,11 @@ static void m11_phase_a_print_boot_probe_receipt(
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d levelLoaded=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
+            receipt.bootAssetMd5,
             runtimeDir,
             advancedFrames,
             scriptInputs,
@@ -3765,6 +3767,18 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             "firestaff: boot-probe expected champions %d but got %d\n",
                             o->bootProbeExpectChampionCount,
                             receipt.championCount);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectAssetMd5 &&
+                o->bootProbeExpectAssetMd5[0] != '\0') {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    strcmp(receipt.bootAssetMd5,
+                           o->bootProbeExpectAssetMd5) != 0) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected asset md5 '%s' but got '%s'\n",
+                            o->bootProbeExpectAssetMd5,
+                            receipt.bootAssetMd5);
                     runRc = 4;
                 }
             }
