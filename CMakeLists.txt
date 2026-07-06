@@ -6161,6 +6161,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_save_load.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_dm2_v1_boot_profile_smoke PRIVATE
