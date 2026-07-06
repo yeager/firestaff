@@ -183,6 +183,7 @@ typedef struct {
     int partyX;
     int partyY;
     int partyDir;
+    int championCount;
     int runtimeTick;
     uint32_t dm1WorldTick;
 } M11_BootProbeReceipt;
