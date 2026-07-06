@@ -119,6 +119,8 @@ static void m11_format_champion_name(const unsigned char* raw,
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
                                            const char* savePath);
 static void m11_nexus_release_title(M11_GameViewState* state);
+static int m11_path_has_extension(const char* path, const char* ext);
+static int m11_path_tail_equals_ascii(const char* path, const char* tail);
 static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
                                             const char *path);
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
@@ -10630,6 +10632,108 @@ static void m11_nexus_startup_scan_saves(M11_GameViewState *state)
              menu.save_dir);
 }
 
+static int m11_path_has_extension(const char* path, const char* ext) {
+    size_t pathLen;
+    size_t extLen;
+    size_t i;
+    if (!path || !ext) {
+        return 0;
+    }
+    pathLen = strlen(path);
+    extLen = strlen(ext);
+    if (pathLen < extLen) {
+        return 0;
+    }
+    path += pathLen - extLen;
+    for (i = 0U; i < extLen; ++i) {
+        if (tolower((unsigned char)path[i]) !=
+            tolower((unsigned char)ext[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int m11_path_tail_equals_ascii(const char* path, const char* tail) {
+    const char* lastSlash;
+    const char* lastBackslash;
+    const char* base;
+    size_t i;
+    if (!path || !tail) {
+        return 0;
+    }
+    lastSlash = strrchr(path, '/');
+    lastBackslash = strrchr(path, '\\');
+    base = path;
+    if (lastSlash && lastSlash + 1 > base) {
+        base = lastSlash + 1;
+    }
+    if (lastBackslash && lastBackslash + 1 > base) {
+        base = lastBackslash + 1;
+    }
+    if (strlen(base) != strlen(tail)) {
+        return 0;
+    }
+    for (i = 0U; tail[i] != '\0'; ++i) {
+        if (tolower((unsigned char)base[i]) !=
+            tolower((unsigned char)tail[i])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
+                                            char* outPath,
+                                            int outPathSize) {
+    char physicalPath[M11_GAME_VIEW_PATH_CAPACITY];
+    const char* candidate;
+    const char* virtualSep;
+    if (!spec || !outPath || outPathSize <= 0) {
+        return 0;
+    }
+    outPath[0] = '\0';
+
+    candidate = spec->verifiedAssetPath;
+    if ((!candidate || candidate[0] == '\0') &&
+        spec->dungeonPath && spec->dungeonPath[0] != '\0') {
+        candidate = spec->dungeonPath;
+    }
+    if (candidate && candidate[0] != '\0') {
+        virtualSep = strstr(candidate, "::");
+        if (virtualSep) {
+            size_t len = (size_t)(virtualSep - candidate);
+            if (len > 0U && len < sizeof(physicalPath)) {
+                memcpy(physicalPath, candidate, len);
+                physicalPath[len] = '\0';
+                candidate = physicalPath;
+            }
+        } else if (m11_path_tail_equals_ascii(candidate, "DM.BIN") ||
+                   m11_path_tail_equals_ascii(candidate, "SEGADATA.BIN") ||
+                   m11_path_has_extension(candidate, ".DGN")) {
+            if (FSP_ParentDir(outPath, (size_t)outPathSize, candidate) &&
+                outPath[0] != '\0') {
+                return 1;
+            }
+        }
+        if (m11_path_has_extension(candidate, ".cue") ||
+            m11_path_has_extension(candidate, ".bin") ||
+            m11_path_has_extension(candidate, ".iso")) {
+            snprintf(outPath, (size_t)outPathSize, "%s", candidate);
+            return outPath[0] != '\0';
+        }
+        if (FSP_ParentDir(outPath, (size_t)outPathSize, candidate) &&
+            outPath[0] != '\0') {
+            return 1;
+        }
+    }
+    if (spec->dataDir && spec->dataDir[0] != '\0') {
+        snprintf(outPath, (size_t)outPathSize, "%s", spec->dataDir);
+        return outPath[0] != '\0';
+    }
+    return 0;
+}
+
 static int m11_nexus_startup_row_at(const M11_GameViewState *state,
                                     int row,
                                     Nexus_V1_StartupRowKind *out_kind,
@@ -10884,41 +10988,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * path here and hand off to M11_GameView_StartNexus().
      * Source: nexus_v1_launcher.c, nexus_v1_engine.c. */
     if (spec->gameId && strcmp(spec->gameId, "nexus") == 0) {
-        /* dataDir may come in via spec or via the dataDir arg */
-        const char *dd = spec->dataDir;
-        char verifiedDir[M11_GAME_VIEW_PATH_CAPACITY];
-        verifiedDir[0] = '\0';
-        if ((!dd || !dd[0]) && spec->dungeonPath && spec->dungeonPath[0]) {
-            /* Extract data dir from the dungeon path */
-            size_t len = strlen(spec->dungeonPath);
-            size_t slash = len;
-            while (slash > 0 && spec->dungeonPath[slash - 1] != '/'
-                   && spec->dungeonPath[slash - 1] != '\\') {
-                --slash;
-            }
-            static char ddir[256];
-            if (slash > 0 && slash < sizeof(ddir)) {
-                memcpy(ddir, spec->dungeonPath, slash);
-                ddir[slash] = '\0';
-                dd = ddir;
-            }
-        }
+        char dd[M11_GAME_VIEW_PATH_CAPACITY];
         /* CLI --game and launcher-wide scans may identify Nexus from
-         * dataDir/nexus/DM.BIN while spec->dataDir still points at the broad
-         * user data root.  Nexus V1 expects the extracted Saturn directory
-         * itself because LEVxx.DGN, TITLE.CG, FACE.BIN, and friends live next
-         * to DM.BIN.  Use the hash-verified marker's parent directory when it
-         * is a real filesystem path.  Source: Nexus launcher init/load in
-         * nexus_v1_launcher.c; this keeps --game on the same selected-entry
-         * startup path without making users pass the per-game subdirectory. */
-        if (spec->verifiedAssetPath && spec->verifiedAssetPath[0] != '\0' &&
-            strstr(spec->verifiedAssetPath, "::") == NULL &&
-            FSP_ParentDir(verifiedDir, sizeof(verifiedDir),
-                          spec->verifiedAssetPath) &&
-            verifiedDir[0] != '\0') {
-            dd = verifiedDir;
+         * dataDir/nexus/DM.BIN or image.bin::DM.BIN while spec->dataDir still
+         * points at the broad user data root.  Resolve to the extracted Saturn
+         * directory or the physical ISO/BIN/CUE image before calling the Nexus
+         * engine. Source: nexus_v1_launcher.c, nexus_v1_engine.c. */
+        if (!M11_GameView_ResolveNexusRuntimeDataDir(spec, dd, sizeof(dd))) {
+            return 0;
         }
-        if (!dd || !dd[0]) return 0;
         {
             int ok = M11_GameView_StartNexus(state, dd);
             if (ok) {

@@ -7,9 +7,9 @@
 #define strcasecmp _stricmp
 #endif
 
-/* Read one sector's data payload from MODE1/2352 BIN */
-static int read_sector(FILE *fp, uint32_t sector, uint8_t *buf) {
-    long offset = (long)sector * NEXUS_ISO_SECTOR_SIZE + NEXUS_ISO_DATA_OFFSET;
+static int read_sector_payload(FILE *fp, uint32_t sector, int sector_size,
+                               int data_offset, uint8_t *buf) {
+    long offset = (long)sector * sector_size + data_offset;
     if (fseek(fp, offset, SEEK_SET) != 0) return -1;
     return (int)fread(buf, 1, NEXUS_ISO_DATA_SIZE, fp);
 }
@@ -43,6 +43,7 @@ static int parse_dir_record(const uint8_t *data, int offset, Nexus_ISOFile *out)
 
 /* Recursively parse directory tree */
 static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
+    int sector_size, int data_offset,
     Nexus_ISOFile *files, int *count, int max_files)
 {
     uint8_t sector_buf[NEXUS_ISO_DATA_SIZE];
@@ -50,7 +51,8 @@ static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
     int s, offset;
 
     for (s = 0; s < sectors; s++) {
-        if (read_sector(fp, dir_lba + s, sector_buf) < 0) return -1;
+        if (read_sector_payload(fp, dir_lba + s, sector_size, data_offset,
+                                sector_buf) < 0) return -1;
 
         offset = 0;
         while (offset < NEXUS_ISO_DATA_SIZE && *count < max_files) {
@@ -64,7 +66,9 @@ static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
                     (*count)++;
                 } else if (strcmp(entry.name, ".") != 0 && strcmp(entry.name, "..") != 0) {
                     /* Recurse into subdirectory */
-                    parse_directory(fp, entry.lba, entry.size, files, count, max_files);
+                    parse_directory(fp, entry.lba, entry.size,
+                                    sector_size, data_offset,
+                                    files, count, max_files);
                 }
             }
             offset += rec_len;
@@ -76,17 +80,32 @@ static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
 int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path) {
     uint8_t pvd[NEXUS_ISO_DATA_SIZE];
     uint32_t root_lba, root_size;
+    int sector_size = NEXUS_ISO_SECTOR_SIZE;
+    int data_offset = NEXUS_ISO_DATA_OFFSET;
 
     if (!reader || !bin_path) return -1;
     memset(reader, 0, sizeof(*reader));
     strncpy(reader->path, bin_path, sizeof(reader->path) - 1);
+    reader->sector_size = sector_size;
+    reader->data_offset = data_offset;
 
     reader->fp = fopen(bin_path, "rb");
     if (!reader->fp) return -1;
 
-    /* Read PVD at sector 16 */
-    if (read_sector(reader->fp, 16, pvd) < 0) goto fail;
-    if (pvd[0] != 1 || memcmp(pvd + 1, "CD001", 5) != 0) goto fail;
+    /* Saturn dumps are commonly raw MODE1/2352 BINs; some users stage
+     * plain 2048-byte ISO data images.  Accept both because the launcher
+     * advertises ISO/BIN as first-class Nexus input. */
+    if (read_sector_payload(reader->fp, 16, sector_size, data_offset, pvd) < 0 ||
+        pvd[0] != 1 || memcmp(pvd + 1, "CD001", 5) != 0) {
+        sector_size = NEXUS_ISO_DATA_SIZE;
+        data_offset = 0;
+        if (read_sector_payload(reader->fp, 16, sector_size, data_offset, pvd) < 0 ||
+            pvd[0] != 1 || memcmp(pvd + 1, "CD001", 5) != 0) {
+            goto fail;
+        }
+    }
+    reader->sector_size = sector_size;
+    reader->data_offset = data_offset;
 
     root_lba = r32le(pvd + 158);
     root_size = r32le(pvd + 166);
@@ -94,6 +113,7 @@ int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path) {
     /* Parse file tree */
     reader->file_count = 0;
     parse_directory(reader->fp, root_lba, root_size,
+        reader->sector_size, reader->data_offset,
         reader->files, &reader->file_count, NEXUS_ISO_MAX_FILES);
 
     reader->valid = 1;
@@ -175,7 +195,8 @@ int nexus_iso_read_file(Nexus_ISOReader *reader, const Nexus_ISOFile *file,
 
     while (remaining > 0) {
         int chunk = remaining > NEXUS_ISO_DATA_SIZE ? NEXUS_ISO_DATA_SIZE : remaining;
-        if (read_sector(reader->fp, sector, sector_buf) < 0) return -1;
+        if (read_sector_payload(reader->fp, sector, reader->sector_size,
+                                reader->data_offset, sector_buf) < 0) return -1;
         memcpy(buffer + offset, sector_buf, chunk);
         offset += chunk;
         remaining -= chunk;
@@ -199,7 +220,8 @@ int nexus_iso_read_file_chunk(Nexus_ISOReader *reader, const Nexus_ISOFile *file
 
     while (read_total < chunk_size) {
         int avail, to_copy;
-        if (read_sector(reader->fp, sector, sector_buf) < 0) return -1;
+        if (read_sector_payload(reader->fp, sector, reader->sector_size,
+                                reader->data_offset, sector_buf) < 0) return -1;
         avail = NEXUS_ISO_DATA_SIZE - sector_offset;
         to_copy = chunk_size - read_total;
         if (to_copy > avail) to_copy = avail;

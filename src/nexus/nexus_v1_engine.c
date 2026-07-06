@@ -14,31 +14,77 @@
 #include <dirent.h>
 #endif
 
-/* Try to find ISO (CUE/BIN) in data directory — cross-platform */
+static int nexus_path_has_ext(const char *path, const char *ext) {
+    size_t path_len;
+    size_t ext_len;
+    if (!path || !ext) return 0;
+    path_len = strlen(path);
+    ext_len = strlen(ext);
+    if (path_len < ext_len) return 0;
+    return strcasecmp(path + path_len - ext_len, ext) == 0;
+}
+
+static int nexus_path_is_file(const char *path) {
+    struct stat st;
+    return path && stat(path, &st) == 0 && (st.st_mode & S_IFMT) != S_IFDIR;
+}
+
+static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
+    int n = -1;
+    if (!engine || !path || !path[0]) return 0;
+    if (nexus_path_has_ext(path, ".cue")) {
+        n = nexus_iso_open_cue(&engine->iso, path);
+    } else if (nexus_path_has_ext(path, ".bin") ||
+               nexus_path_has_ext(path, ".iso")) {
+        n = nexus_iso_open(&engine->iso, path);
+    }
+    if (n > 0 && nexus_iso_is_nexus(&engine->iso)) {
+        engine->source = NEXUS_SRC_ISO;
+        printf("Nexus: opened disc image %s with %d files\n", path, n);
+        return 1;
+    }
+    nexus_iso_close(&engine->iso);
+    return 0;
+}
+
+/* Try to find ISO/CUE/BIN in data directory — cross-platform */
 #ifdef _WIN32
 #include <windows.h>
-static int find_iso(const char *dir, char *cue_path, int max_len) {
+static int find_iso(const char *dir, char *disc_path, int max_len) {
+    static const char* const patterns[] = {"*.cue", "*.bin", "*.iso", NULL};
     WIN32_FIND_DATAA fd;
-    HANDLE h;
+    HANDLE h = INVALID_HANDLE_VALUE;
     char pattern[512];
-    snprintf(pattern, sizeof(pattern), "%s\\*.cue", dir);
-    h = FindFirstFileA(pattern, &fd);
-    if (h == INVALID_HANDLE_VALUE) return 0;
-    snprintf(cue_path, max_len, "%s\\%s", dir, fd.cFileName);
-    FindClose(h);
-    return 1;
+    int i;
+    for (i = 0; patterns[i] != NULL; ++i) {
+        snprintf(pattern, sizeof(pattern), "%s\\%s", dir, patterns[i]);
+        h = FindFirstFileA(pattern, &fd);
+        if (h != INVALID_HANDLE_VALUE) {
+            snprintf(disc_path, max_len, "%s\\%s", dir, fd.cFileName);
+            FindClose(h);
+            return 1;
+        }
+    }
+    return 0;
 }
 #else
-static int find_iso(const char *dir, char *cue_path, int max_len) {
+static int find_iso(const char *dir, char *disc_path, int max_len) {
+    static const char* const exts[] = {".cue", ".bin", ".iso", NULL};
     DIR *d = opendir(dir);
     struct dirent *ent;
+    int ext_index;
     if (!d) return 0;
-    while ((ent = readdir(d)) != NULL) {
-        int len = (int)strlen(ent->d_name);
-        if (len > 4 && (strcasecmp(ent->d_name + len - 4, ".cue") == 0)) {
-            snprintf(cue_path, max_len, "%s/%s", dir, ent->d_name);
-            closedir(d);
-            return 1;
+    for (ext_index = 0; exts[ext_index] != NULL; ++ext_index) {
+        rewinddir(d);
+        while ((ent = readdir(d)) != NULL) {
+            int len = (int)strlen(ent->d_name);
+            int ext_len = (int)strlen(exts[ext_index]);
+            if (len > ext_len &&
+                strcasecmp(ent->d_name + len - ext_len, exts[ext_index]) == 0) {
+                snprintf(disc_path, max_len, "%s/%s", dir, ent->d_name);
+                closedir(d);
+                return 1;
+            }
         }
     }
     closedir(d);
@@ -94,18 +140,16 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
 }
 
 int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
-    char cue_path[512];
+    char disc_path[512];
     if (!engine || !data_dir) return -1;
     memset(engine, 0, sizeof(*engine));
     strncpy(engine->data_dir, data_dir, sizeof(engine->data_dir) - 1);
 
     /* Priority: ISO first, extracted files second */
-    if (find_iso(data_dir, cue_path, sizeof(cue_path))) {
-        int n = nexus_iso_open_cue(&engine->iso, cue_path);
-        if (n > 0 && nexus_iso_is_nexus(&engine->iso)) {
-            engine->source = NEXUS_SRC_ISO;
-            printf("Nexus: opened ISO with %d files\n", n);
-        }
+    if (nexus_path_is_file(data_dir)) {
+        (void)nexus_try_open_disc_path(engine, data_dir);
+    } else if (find_iso(data_dir, disc_path, sizeof(disc_path))) {
+        (void)nexus_try_open_disc_path(engine, disc_path);
     }
 
     if (engine->source == NEXUS_SRC_NONE && has_extracted(data_dir)) {
