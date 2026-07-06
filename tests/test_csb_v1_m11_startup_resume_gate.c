@@ -1278,14 +1278,49 @@ int main(void) {
     }
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
-                    245,
-                    46,
+                    40,
+                    106,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1,
+                "M11 CSB utility IMPORT row stays on the startup menu");
+    expect_true(strcmp(view.lastOutcome, "CSB IMPORT READY") == 0,
+                "M11 CSB utility IMPORT row reports import-ready status");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    40,
+                    142,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1,
+                "M11 CSB utility VIEW row stays on the startup menu");
+    expect_true(strcmp(view.lastOutcome, "CSB PARTY READY") == 0,
+                "M11 CSB utility VIEW row reports party-ready status");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    40,
+                    118,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_entrance_last_command ==
+                        M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
+                "M11 CSB utility LOAD row routes through the resume command");
+    expect_true(strcmp(view.lastOutcome, "CSB RESUME UNAVAILABLE") == 0,
+                "M11 CSB utility LOAD row reports unavailable resume without save");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    40,
+                    130,
                     M11_DM1_MOUSE_MASK_LEFT) ==
                     M11_GAME_INPUT_REDRAW,
-                "M11 CSB imported-party entrance enters the dungeon normally");
+                "M11 CSB utility START NEW GAME row enters the dungeon");
     expect_true(view.csbState.startup_entrance_active == 0 &&
                     view.world.party.championCount == 2,
-                "M11 CSB imported party survives the entrance Enter handoff");
+                "M11 CSB imported party survives the utility start handoff");
+    expect_true(view.csbState.startup_entrance_last_command ==
+                    M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
+                "M11 CSB utility START NEW GAME row records the enter-dungeon command");
     M11_GameView_Shutdown(&view);
 
     {

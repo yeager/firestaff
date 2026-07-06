@@ -2797,6 +2797,46 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     }
 }
 
+static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
+    M11_GameViewState *state,
+    int x,
+    int y)
+{
+    CSB_V1_UtilFlowContext flow;
+    CSB_V1_UtilFlowAction action;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbState.startup_entrance_active ||
+        !state->csbState.startup_import_available ||
+        state->csbState.startup_entrance_credits_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    csb_v1_util_flow_init(&flow);
+    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    csb_v1_util_flow_set_action(&flow, CSB_V1_UTIL_ACTION_IMPORT);
+    action = csb_v1_util_flow_action_at_point(&flow, x, y);
+    switch (action) {
+        case CSB_V1_UTIL_ACTION_NEW:
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
+        case CSB_V1_UTIL_ACTION_LOAD:
+            return m11_csb_startup_handle_entrance_command(
+                state,
+                M11_ENTRANCE_RUNTIME_COMMAND_RESUME);
+        case CSB_V1_UTIL_ACTION_IMPORT:
+            m11_set_status(state, "BOOT", "CSB IMPORT READY");
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_UTIL_ACTION_VIEW:
+            m11_set_status(state, "BOOT", "CSB PARTY READY");
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_UTIL_ACTION_EXIT:
+        default:
+            return M11_GAME_INPUT_IGNORED;
+    }
+}
+
 static void m11_format_dm2_item_name(int item_id, char* out, size_t out_size)
 {
     const char* name;
@@ -15330,6 +15370,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         state->csbState.startup_entrance_active &&
         (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
                        ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
+        M11_GameInputResult utilityResult =
+            m11_csb_startup_handle_utility_pointer(state, x, y);
+        if (utilityResult != M11_GAME_INPUT_IGNORED) {
+            return utilityResult;
+        }
         int command = state->csbState.startup_entrance_credits_active
             ? M11_ENTRANCE_RUNTIME_COMMAND_NONE
             : M11_Entrance_DispatchSourceLockedPointerCommand(
