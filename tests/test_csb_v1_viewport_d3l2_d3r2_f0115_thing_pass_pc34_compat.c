@@ -278,10 +278,10 @@ static void test_route_zone_math(void)
         expect_int(label,
                    csb_v1_viewport_d3l2_d3r2_f0115_projectile_zone_pc34(projectile, 3),
                    2900 + want_row[side] * 4 + 3, A_PROJECTILE);
-        snprintf(label, sizeof(label), "side%d.projectile.bad_cell", side);
+        snprintf(label, sizeof(label), "side%d.projectile.cell4", side);
         expect_int(label,
                    csb_v1_viewport_d3l2_d3r2_f0115_projectile_zone_pc34(projectile, 4),
-                   -1, A_PROJECTILE);
+                   2900 + want_row[side] * 4 + 4, A_PROJECTILE);
         snprintf(label, sizeof(label), "side%d.projectile.requires_c14", side);
         expect_int(label, projectile ? projectile->projectile_requires_type_c14 : 0,
                    1, A_PROJECTILE);

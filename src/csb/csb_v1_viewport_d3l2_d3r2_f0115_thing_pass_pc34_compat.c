@@ -315,7 +315,7 @@ static int d3_visible_thing_cell(
     const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec,
     int view_cell)
 {
-    if (!spec || view_cell < 0 || view_cell > 3) return 0;
+    if (!spec || view_cell < 0 || view_cell > 4) return 0;
     if (spec->view_depth == 3 && view_cell <= 1) return 0;
     if (spec->view_depth == 0 && view_cell >= 2) return 0;
     return 1;

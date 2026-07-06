@@ -1,4 +1,5 @@
 #include "csb_v1_viewport_pc34_compat.h"
+#include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 
 #include <stdio.h>
@@ -1748,8 +1749,8 @@ static void test_csb_creature_visibility_zone_contracts(void)
         int coord1_cell4;
         const char *function_name;
     } expected[] = {
-        { DM1_VIEW_SQUARE_D3L2, 14, 3, 3217, 3218, 3284, "F0676_DrawD3L2" },
-        { DM1_VIEW_SQUARE_D3R2, 15, 4, 3222, 3223, 3289, "F0677_DrawD3R2" },
+        { DM1_VIEW_SQUARE_D3L2, 14, 3, 35985, 35986, 36052, "F0676_DrawD3L2" },
+        { DM1_VIEW_SQUARE_D3R2, 15, 4, 35990, 35991, 36057, "F0677_DrawD3R2" },
     };
 
     check_int("csb.creature_visibility.count",
@@ -2303,6 +2304,88 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.view_square, -1);
 }
 
+static void test_csb_d3l2_d3r2_thing_pass_route_binding_contracts(void)
+{
+    static const struct {
+        DM1_ViewSquareIndex square;
+        int redmcsb_index;
+    } expected[] = {
+        { DM1_VIEW_SQUARE_D3L2, 14 },
+        { DM1_VIEW_SQUARE_D3R2, 15 },
+    };
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
+        char id[128];
+        const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *item =
+            csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+                expected[i].redmcsb_index,
+                CSB_V1_D3L2_D3R2_F0115_ROUTE_ITEM_PC34);
+        const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *projectile =
+            csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+                expected[i].redmcsb_index,
+                CSB_V1_D3L2_D3R2_F0115_ROUTE_PROJECTILE_PC34);
+        const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *creature =
+            csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+                expected[i].redmcsb_index,
+                CSB_V1_D3L2_D3R2_F0115_ROUTE_CREATURE_PC34);
+        const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *explosion =
+            csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_for_route_pc34(
+                expected[i].redmcsb_index,
+                CSB_V1_D3L2_D3R2_F0115_ROUTE_EXPLOSION_PC34);
+        const CSB_V1_ViewportObjectBlitSpec *object_blit =
+            csb_v1_viewport_get_object_blit_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportProjectileBlitSpec *projectile_blit =
+            csb_v1_viewport_get_projectile_blit_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportCreatureVisibilitySpec *creature_visibility =
+            csb_v1_viewport_get_creature_visibility_spec_for_square((int)expected[i].square);
+        const CSB_V1_ViewportExplosionBlitSpec *explosion_blit =
+            csb_v1_viewport_get_explosion_blit_spec_for_square((int)expected[i].square);
+
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.item_present", i);
+        check_true(id, item != NULL);
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.projectile_present", i);
+        check_true(id, projectile != NULL);
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.creature_present", i);
+        check_true(id, creature != NULL);
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.explosion_present", i);
+        check_true(id, explosion != NULL);
+        if (!item || !projectile || !creature || !explosion ||
+            !object_blit || !projectile_blit ||
+            !creature_visibility || !explosion_blit) {
+            continue;
+        }
+
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.item_layout_cell3", i);
+        check_int(id,
+                  csb_v1_viewport_object_blit_layout_zone(object_blit, 3),
+                  csb_v1_viewport_d3l2_d3r2_f0115_item_layout_zone_pc34(item, 3));
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.item_zone_cell4", i);
+        check_int(id,
+                  csb_v1_viewport_object_blit_zone(object_blit, 4),
+                  csb_v1_viewport_d3l2_d3r2_f0115_item_zone_pc34(item, 4));
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.projectile_cell2", i);
+        check_int(id,
+                  csb_v1_viewport_projectile_blit_zone(projectile_blit, 2),
+                  csb_v1_viewport_d3l2_d3r2_f0115_projectile_zone_pc34(projectile, 2));
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.projectile_front_hidden", i);
+        check_int(id,
+                  csb_v1_viewport_projectile_blit_zone(projectile_blit, 1),
+                  csb_v1_viewport_d3l2_d3r2_f0115_projectile_zone_pc34(projectile, 1));
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.creature_coord1_cell3", i);
+        check_int(id,
+                  csb_v1_viewport_creature_visibility_zone(creature_visibility, 1, 3),
+                  csb_v1_viewport_d3l2_d3r2_f0115_creature_zone_pc34(creature, 1, 3));
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.explosion_centered", i);
+        check_int(id,
+                  csb_v1_viewport_explosion_centered_zone(explosion_blit),
+                  csb_v1_viewport_d3l2_d3r2_f0115_explosion_centered_zone_pc34(explosion));
+        snprintf(id, sizeof(id), "csb.d3_f0115_binding.%zu.explosion_side1", i);
+        check_int(id,
+                  csb_v1_viewport_explosion_side_zone(explosion_blit, 1),
+                  csb_v1_viewport_d3l2_d3r2_f0115_explosion_side_zone_pc34(explosion, 1));
+    }
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_viewport_source_evidence();
@@ -2392,6 +2475,7 @@ int main(void)
     test_csb_f0115_projectile_blit_contracts();
     test_csb_creature_visibility_zone_contracts();
     test_csb_runtime_overlay_placement_contracts();
+    test_csb_d3l2_d3r2_thing_pass_route_binding_contracts();
     test_csb_f0115_explosion_blit_contracts();
     test_csb_teleporter_field_route_contracts();
     test_csb_f0111_door_panel_blit_contracts();

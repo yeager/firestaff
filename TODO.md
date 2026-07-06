@@ -2,7 +2,7 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
-- 🔧 2026-07-07 CSB V1 rendering follow-up: runtime floor-object and creature-group overlay placement has moved into `csb_v1_viewport_pc34_compat` and M11 consumes that CSB-owned contract. Remaining CSB V1 rendering work is broader real-asset dungeon proof for D3L2/D3R2 thing passes, exact sprite/material parity for object piles and creature groups, and packaged capture evidence for startup/title/entrance rendering.
+- 🔧 2026-07-07 CSB V1 rendering follow-up: runtime floor-object and creature-group overlay placement plus D3L2/D3R2 F0115 object/projectile/creature/explosion zone binding now live in `csb_v1_viewport_pc34_compat` and the source-locked F0115 route tables. Remaining CSB V1 rendering work is broader real-asset dungeon proof for D3L2/D3R2 thing passes, exact sprite/material parity for object piles and creature groups, and packaged capture evidence for startup/title/entrance rendering.
 
 - 🔧 2026-07-07 DM1 V1 action/projectile runtime follow-up: the source/right-column action/spell zones and the F0391/F0407 M11 action/projection fixture gates are now green through `INV_GV_321/325/328/334..340`, including delayed SHOOT quiver refill after source disabled ticks and no-ammunition failure leaving quiver ammo untouched. The broad M11 game-view probe is now green at `636/636`, including XP/impact verifier rows, map-0 creature AI guards, and debug feedback-strip rendering. Remaining DM1 V1 follow-up is broader live HoC packaged capture checks and original-pixel evidence for the already-green runtime paths.
 
