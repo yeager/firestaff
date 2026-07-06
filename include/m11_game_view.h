@@ -524,6 +524,11 @@ typedef struct {
         int title_frame;
         int champion_select_active;
         int champion_cursor;
+        int startup_save_select_active;
+        int startup_save_selected_row;
+        int startup_save_row_count;
+        unsigned int startup_save_slot_mask;
+        char startup_save_dir[512];
     } nexusState;
 
     /* Theron's Quest V1 runtime — active when sourceKind ==
