@@ -9,7 +9,15 @@ enum {
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
-    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 28
+    CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34 = 28,
+    CSB_V1_GRAPHIC_TITLE_PC34 = 1,
+    CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR_PC34 = 2,
+    CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34 = 3,
+    CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34 = 4,
+    CSB_V1_GRAPHIC_ENTRANCE_CREDITS_PC34 = 5,
+    CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34 = 1,
+    CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34 = 2,
+    CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34 = 3
 };
 
 const char* csb_v1_startup_stage_name_pc34(CSB_V1_StartupStage_PC34 stage)
@@ -136,6 +144,49 @@ static void csb_v1_startup_clear_door_rects_pc34(
     plan->opening_right_h = 0;
 }
 
+static void csb_v1_startup_clear_fallback_text_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    plan->fallback_title_x = 0;
+    plan->fallback_title_y = 0;
+    plan->fallback_title_style = 0;
+    plan->fallback_title_text = NULL;
+    plan->fallback_subtitle_x = 0;
+    plan->fallback_subtitle_y = 0;
+    plan->fallback_subtitle_style = 0;
+    plan->fallback_subtitle_text = NULL;
+    plan->fallback_prompt_x = 0;
+    plan->fallback_prompt_y = 0;
+    plan->fallback_prompt_style = 0;
+    plan->fallback_prompt_text = NULL;
+}
+
+static void csb_v1_startup_set_credits_fallback_text_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    /* ReDMCSB ENTRANCE.C F0442/F0806 draws the C005 credits page after the
+     * C203 entrance command. These text rows are Firestaff's no-asset
+     * fallback, so keep their semantic placement in the CSB startup plan. */
+    plan->fallback_title_x = 38;
+    plan->fallback_title_y = 42;
+    plan->fallback_title_style = CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34;
+    plan->fallback_title_text = "CHAOS STRIKES BACK";
+    plan->fallback_subtitle_x = 38;
+    plan->fallback_subtitle_y = 68;
+    plan->fallback_subtitle_style = CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34;
+    plan->fallback_subtitle_text = "CREDITS";
+    plan->fallback_prompt_x = 38;
+    plan->fallback_prompt_y = 154;
+    plan->fallback_prompt_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
+    plan->fallback_prompt_text = "PRESS ENTER";
+}
+
 static void csb_v1_startup_set_closed_door_rects_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
@@ -205,6 +256,7 @@ static void csb_v1_startup_set_title_rect_pc34(
     if (!plan) {
         return;
     }
+    plan->source_asset_id = CSB_V1_GRAPHIC_TITLE_PC34;
     csb_v1_startup_clear_title_rect_pc34(plan);
     /* ReDMCSB TITLE.C F0437 lines 430, 433-457, and 461 draw the title
      * through C424 PRESENTS, C425 CHAOS, and C426 STRIKES BACK zones. */
@@ -394,10 +446,12 @@ int csb_v1_startup_build_render_plan_pc34(
     }
     plan.surface = CSB_V1_STARTUP_RENDER_NONE_PC34;
     plan.waiting_for_input = 0;
+    plan.source_asset_id = 0;
     plan.title_source_step = 0;
     plan.title_stage = 0;
     csb_v1_startup_clear_title_rect_pc34(&plan);
     csb_v1_startup_clear_door_rects_pc34(&plan);
+    csb_v1_startup_clear_fallback_text_pc34(&plan);
     plan.blink_prompt_visible = 0;
     plan.opening_step = 0;
     if (!state || !state->entrance_active) {
@@ -423,6 +477,8 @@ int csb_v1_startup_build_render_plan_pc34(
     }
     if (state->credits_active) {
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34;
+        plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_CREDITS_PC34;
+        csb_v1_startup_set_credits_fallback_text_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -438,6 +494,7 @@ int csb_v1_startup_build_render_plan_pc34(
             ? CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34
             : CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
         plan.opening_step = state->opening_step;
+        plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
         csb_v1_startup_set_closed_door_rects_pc34(&plan);
         if (plan.surface ==
             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
@@ -447,6 +504,7 @@ int csb_v1_startup_build_render_plan_pc34(
         return 1;
     }
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
     plan.blink_prompt_visible =
         ((state->entrance_frame / 12) & 1) == 0;
