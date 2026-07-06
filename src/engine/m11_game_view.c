@@ -15700,6 +15700,10 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
             state->nexusState.startup_save_selected_row = row;
             return m11_nexus_startup_activate_save_row(state);
         }
+        if (m11_point_in_rect(x, y, 18, 14, 284, 42 +
+                              state->nexusState.startup_save_row_count * 13)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->nexusState.champion_select_active) {
