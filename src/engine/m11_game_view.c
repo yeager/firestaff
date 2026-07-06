@@ -723,20 +723,7 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
                    : M11_GAME_INPUT_REDRAW;
     }
     m11_dm2_startup_menu_to_state(state, &menu);
-    if (action.kind == DM2_V1_STARTUP_ACTION_NONE) {
-        m11_set_status(state, "STARTUP", "DM2 START SELECT");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (action.kind == DM2_V1_STARTUP_ACTION_CONTINUE ||
-        action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT ||
-        action.kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
-        return m11_dm2_startup_apply_action(state, &action);
-    }
-    if (action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
-        m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
-        return M11_GAME_INPUT_RETURN_TO_MENU;
-    }
-    return M11_GAME_INPUT_IGNORED;
+    return m11_dm2_startup_apply_action(state, &action);
 }
 
 static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
