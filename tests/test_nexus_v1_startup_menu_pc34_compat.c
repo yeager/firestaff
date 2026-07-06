@@ -1,5 +1,6 @@
 #include "nexus_v1_startup_menu.h"
 #include "nexus_v1_champions.h"
+#include "nexus_v1_title_sequence.h"
 #include "nexus_v1_world.h"
 
 #include <stdio.h>
@@ -74,6 +75,7 @@ int main(void)
     Nexus_V1_StartupAction action;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupRowKind kind;
+    Nexus_V1_TitleFrame title_frame;
     int slot;
     int cursor;
     Nexus_V1_ChampionPool empty_champions;
@@ -238,6 +240,18 @@ int main(void)
                &action) &&
                action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE,
            "startup title holds Accept before start-ready frame");
+    expect(nexus_v1_title_frame(30, 200, &title_frame) &&
+               title_frame.phase == NEXUS_V1_TITLE_PHASE_HOLD &&
+               title_frame.boot_reveal_complete &&
+               !title_frame.start_ready,
+           "startup title frame 30 is full reveal but still in hold phase");
+    expect(nexus_v1_startup_title_handle_input(
+               30,
+               menu.slot_mask,
+               NEXUS_V1_STARTUP_INPUT_ACTION,
+               &action) &&
+               action.kind == NEXUS_V1_STARTUP_ACTION_HOLD_TITLE,
+           "startup title holds Action during post-reveal hold phase");
     expect(nexus_v1_startup_title_handle_input(
                54,
                menu.slot_mask,
