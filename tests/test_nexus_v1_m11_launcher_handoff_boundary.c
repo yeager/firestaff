@@ -133,6 +133,39 @@ static void run_empty_launcher_boundary(void) {
                 "Nexus launch intent is invalid when assets are absent");
 }
 
+static void run_nexus_runtime_path_resolution(void) {
+    M11_GameLaunchSpec spec;
+    char out[512];
+
+    memset(&spec, 0, sizeof(spec));
+    spec.gameId = "nexus";
+    spec.dataDir = "/firestaff/data";
+    spec.verifiedAssetPath = "/firestaff/data/nexus/DM.BIN";
+    expect_true(M11_GameView_ResolveNexusRuntimeDataDir(&spec, out, sizeof(out)) == 1,
+                "Nexus runtime resolver accepts extracted DM.BIN marker");
+    expect_true(strcmp(out, "/firestaff/data/nexus") == 0,
+                "Nexus extracted marker resolves to its parent directory");
+
+    spec.verifiedAssetPath = "/firestaff/data/nexus/disc.bin::DM.BIN";
+    expect_true(M11_GameView_ResolveNexusRuntimeDataDir(&spec, out, sizeof(out)) == 1,
+                "Nexus runtime resolver accepts virtual BIN marker");
+    expect_true(strcmp(out, "/firestaff/data/nexus/disc.bin") == 0,
+                "Nexus virtual BIN marker resolves to the physical BIN image");
+
+    spec.verifiedAssetPath = "/firestaff/data/nexus/disc.iso::LEV00.DGN";
+    expect_true(M11_GameView_ResolveNexusRuntimeDataDir(&spec, out, sizeof(out)) == 1,
+                "Nexus runtime resolver accepts virtual ISO marker");
+    expect_true(strcmp(out, "/firestaff/data/nexus/disc.iso") == 0,
+                "Nexus virtual ISO marker resolves to the physical ISO image");
+
+    spec.verifiedAssetPath = "";
+    spec.dungeonPath = "";
+    expect_true(M11_GameView_ResolveNexusRuntimeDataDir(&spec, out, sizeof(out)) == 1,
+                "Nexus runtime resolver falls back to dataDir");
+    expect_true(strcmp(out, "/firestaff/data") == 0,
+                "Nexus runtime resolver keeps broad dataDir fallback");
+}
+
 static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
     M12_LaunchIntent intent;
@@ -206,6 +239,7 @@ int main(void) {
     printf("=== Nexus V1 M12/M11 launcher handoff boundary ===\n");
 
     run_empty_launcher_boundary();
+    run_nexus_runtime_path_resolution();
     run_real_launcher_handoff_if_available();
 
     printf("\nNexus V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",

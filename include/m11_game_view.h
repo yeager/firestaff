@@ -682,6 +682,9 @@ void M11_GameView_GetCameraOffset(const M11_GameViewState* state,
 void M11_GameView_Init(M11_GameViewState* state);
 void M11_GameView_Shutdown(M11_GameViewState* state);
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec);
+int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
+                                            char* outPath,
+                                            int outPathSize);
 int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState);
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);

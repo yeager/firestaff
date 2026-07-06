@@ -28,6 +28,8 @@ typedef struct {
     Nexus_ISOFile files[NEXUS_ISO_MAX_FILES];
     int file_count;
     int valid;
+    int sector_size;
+    int data_offset;
 } Nexus_ISOReader;
 
 /* Open a Saturn BIN file (Track 1) and parse the ISO 9660 filesystem */

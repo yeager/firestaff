@@ -92,6 +92,40 @@ static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState)
     return menuState != NULL;
 }
 
+static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
+    const M12_MenuEntry* entry = NULL;
+    const char* gameId = NULL;
+    if (!menuState) {
+        return;
+    }
+    if (menuState->activatedIndex >= 0) {
+        entry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
+    }
+    if (!entry && menuState->selectedIndex >= 0) {
+        entry = M12_StartupMenu_GetEntry(menuState, menuState->selectedIndex);
+    }
+    gameId = entry ? entry->gameId : NULL;
+    menuState->launchRequested = 0;
+    menuState->view = M12_MENU_VIEW_MESSAGE;
+    if (gameId && strcmp(gameId, "nexus") == 0) {
+        menuState->messageLine1 = "NEXUS LOAD FAILED";
+        menuState->messageLine2 = "CHECK ISO/BIN OR EXTRACTED FILES";
+    } else if (gameId && strcmp(gameId, "theron") == 0) {
+        menuState->messageLine1 = "THERON LOAD FAILED";
+        menuState->messageLine2 = "CHECK TRACK 02 ISO/BIN";
+    } else if (gameId && strcmp(gameId, "dm2") == 0) {
+        menuState->messageLine1 = "DM2 LOAD FAILED";
+        menuState->messageLine2 = "CHECK GRAPHICS/DUNGEON DATA";
+    } else if (gameId && strcmp(gameId, "csb") == 0) {
+        menuState->messageLine1 = "CSB LOAD FAILED";
+        menuState->messageLine2 = "CHECK GRAPHICS/DUNGEON DATA";
+    } else {
+        menuState->messageLine1 = "DUNGEON LOAD FAILED";
+        menuState->messageLine2 = "CHECK DUNGEON.DAT";
+    }
+    menuState->messageLine3 = "ESC RETURNS TO MENU";
+}
+
 static void m11_draw_launcher_legacy(const M12_StartupMenuState* menuState,
                                      unsigned char* launcherFramebuffer) {
     if (!menuState || !launcherFramebuffer) {
@@ -1539,11 +1573,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                           M11_FB_HEIGHT);
         return 1;
     }
-    menuState->launchRequested = 0;
-    menuState->view = M12_MENU_VIEW_MESSAGE;
-    menuState->messageLine1 = "DUNGEON LOAD FAILED";
-    menuState->messageLine2 = "CHECK DUNGEON.DAT";
-    menuState->messageLine3 = "ESC RETURNS TO MENU";
+    m11_set_launch_failed_message(menuState);
     return 0;
 }
 
