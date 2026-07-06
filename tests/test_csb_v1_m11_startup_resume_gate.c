@@ -1343,6 +1343,21 @@ int main(void) {
         expect_true(count_color_rect(fb, 320, 48, 164, 170, 10, 15u) > 20,
                     "M11 CSB utility VIEW preview renders the second imported champion row");
     }
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_entrance_active == 1 &&
+                    view.csbState.startup_import_preview_active == 0,
+                "M11 CSB utility Back closes imported-party preview");
+    expect_true(strcmp(view.lastOutcome, "CSB IMPORT READY") == 0,
+                "M11 CSB utility Back returns to import-ready status");
+    expect_true(M11_GameView_HandlePointerButton(
+                    &view,
+                    40,
+                    142,
+                    M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view.csbState.startup_import_preview_active == 1,
+                "M11 CSB utility VIEW row reopens preview after Back");
     expect_true(M11_GameView_HandlePointerButton(
                     &view,
                     40,

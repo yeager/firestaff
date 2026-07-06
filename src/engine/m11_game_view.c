@@ -3138,6 +3138,12 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     }
 
     m11_csb_startup_build_utility_flow(state, &flow);
+    if (input == M12_MENU_INPUT_BACK &&
+        state->csbState.startup_import_preview_active) {
+        state->csbState.startup_import_preview_active = 0;
+        m11_set_status(state, "BOOT", "CSB IMPORT READY");
+        return M11_GAME_INPUT_REDRAW;
+    }
     if (input == M12_MENU_INPUT_UP) {
         state->csbState.startup_import_selected_action_index =
             csb_v1_util_flow_move_action_cursor(&flow, -1);
