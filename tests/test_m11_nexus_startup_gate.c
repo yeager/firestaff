@@ -10,6 +10,7 @@
  */
 
 #include "m11_game_view.h"
+#include "nexus_v1_champions.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
@@ -23,6 +24,7 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <stdlib.h>
 #define TEST_MKDIR(path) _mkdir(path)
 #define TEST_RMDIR(path) _rmdir(path)
 #define TEST_PATH_SEP "\\"
@@ -125,6 +127,53 @@ static void fill_nexus_spec(M11_GameLaunchSpec* spec, const char* data_dir) {
     spec->rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     spec->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+}
+
+static int set_test_home(const char* home) {
+#ifdef _WIN32
+    return _putenv_s("HOME", home ? home : "") == 0;
+#else
+    return home ? setenv("HOME", home, 1) == 0 : unsetenv("HOME") == 0;
+#endif
+}
+
+static void cleanup_nexus_default_save_dir(const char* home) {
+    char save_dir[512];
+    char path[512];
+    int i;
+    char old_home[512];
+    const char* old_home_env = getenv("HOME");
+
+    if (!home || !home[0]) {
+        return;
+    }
+    snprintf(old_home, sizeof(old_home), "%s",
+             old_home_env ? old_home_env : "");
+    (void)set_test_home(home);
+    nexus_v1_save_default_dir(save_dir, sizeof(save_dir));
+    for (i = 0; i < NEXUS_SAVE_MAX_SLOTS; ++i) {
+        snprintf(path, sizeof(path), "%s%snexus_save_%02d.dat",
+                 save_dir, TEST_PATH_SEP, i);
+        remove(path);
+    }
+    (void)TEST_RMDIR(save_dir);
+#ifndef _WIN32
+    snprintf(path, sizeof(path), "%s/Library/Application Support/Firestaff/nexus",
+             home);
+    (void)TEST_RMDIR(path);
+    snprintf(path, sizeof(path), "%s/Library/Application Support/Firestaff",
+             home);
+    (void)TEST_RMDIR(path);
+    snprintf(path, sizeof(path), "%s/Library/Application Support", home);
+    (void)TEST_RMDIR(path);
+    snprintf(path, sizeof(path), "%s/Library", home);
+    (void)TEST_RMDIR(path);
+#endif
+    if (old_home[0]) {
+        (void)set_test_home(old_home);
+    } else {
+        (void)set_test_home(NULL);
+    }
 }
 
 static void expect_face_loader_counts_real_vs_fallback(void) {
@@ -259,6 +308,19 @@ int main(void) {
                         "real Nexus title phase advances on accept");
             expect_true(view.nexusState.title_active == 0,
                         "real Nexus title phase clears after input");
+            if (view.nexusState.startup_save_select_active) {
+                while (view.nexusState.startup_save_selected_row + 1 <
+                       view.nexusState.startup_save_row_count) {
+                    expect_true(M11_GameView_HandleInput(&view,
+                                                         M12_MENU_INPUT_DOWN) ==
+                                    M11_GAME_INPUT_REDRAW,
+                                "real Nexus startup save menu moves toward NEW GAME");
+                }
+                expect_true(M11_GameView_HandleInput(&view,
+                                                     M12_MENU_INPUT_ACCEPT) ==
+                                M11_GAME_INPUT_REDRAW,
+                            "real Nexus startup save menu NEW GAME enters champion selection");
+            }
             expect_true(view.nexusState.champion_select_active == 1,
                         "real Nexus startup enters champion selection");
             memset(framebuffer, 0, sizeof(framebuffer));
@@ -357,6 +419,91 @@ int main(void) {
                 nexus_v1_launcher_shutdown();
                 remove(save_path);
                 (void)TEST_RMDIR(save_root);
+            }
+
+            {
+                char temp_home[512];
+                char old_home[512];
+                char default_save_dir[512];
+                const char* old_home_env = getenv("HOME");
+                Nexus_V1_SaveManager slot_mgr;
+                Nexus_V1_ChampionPool slot_champions;
+                Nexus_V1_World slot_world;
+                int slot_fixture_ready = 0;
+
+                snprintf(old_home, sizeof(old_home), "%s",
+                         old_home_env ? old_home_env : "");
+                if (make_temp_root(temp_home) && set_test_home(temp_home)) {
+                    nexus_v1_save_default_dir(default_save_dir,
+                                              sizeof(default_save_dir));
+                    nexus_v1_champions_init(&slot_champions);
+                    nexus_v1_world_init(&slot_world);
+                    nexus_v1_party_place(&slot_world, 0, 19, 13, 2);
+                    slot_world.world_tick = 91u;
+                    slot_world.state_hash = nexus_v1_world_hash(&slot_world);
+                    nexus_v1_save_init(&slot_mgr, default_save_dir);
+                    slot_fixture_ready =
+                        nexus_v1_save_full(&slot_mgr,
+                                           3,
+                                           slot_world.party_level,
+                                           slot_world.party_x,
+                                           slot_world.party_y,
+                                           slot_world.party_dir,
+                                           (uint32_t)slot_world.world_tick,
+                                           slot_world.state_hash,
+                                           &slot_champions,
+                                           &slot_world) == NEXUS_SAVE_OK;
+                    expect_true(slot_fixture_ready,
+                                "wrote Nexus default-save slot fixture");
+                    if (slot_fixture_ready) {
+                        fill_nexus_spec(&spec, real_dir);
+                        M11_GameView_Init(&view);
+                        expect_true(M11_GameView_Start(&view, &spec),
+                                    "M11 Nexus startup with default save slot succeeds");
+                        expect_true(view.nexusState.title_active == 1,
+                                    "M11 Nexus save-slot startup starts on title");
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_ACCEPT) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus title advances to save selection");
+                        expect_true(view.nexusState.startup_save_select_active == 1,
+                                    "M11 Nexus startup exposes save selection when slots exist");
+                        expect_true(view.nexusState.startup_save_slot_mask ==
+                                        (1u << 3),
+                                    "M11 Nexus startup save selection sees slot 03");
+                        memset(framebuffer, 0, sizeof(framebuffer));
+                        M11_GameView_Draw(&view, framebuffer, 320, 200);
+                        expect_true(count_nonzero_pixels(framebuffer,
+                                                         sizeof(framebuffer)) > 500,
+                                    "M11 Nexus startup save selection draws nonblank frame");
+                        expect_true(M11_GameView_HandlePointer(
+                                        &view, 24, 43, 1) ==
+                                        M11_GAME_INPUT_REDRAW,
+                                    "M11 Nexus startup pointer loads slot row");
+                        expect_true(view.nexusState.startup_save_select_active == 0,
+                                    "M11 Nexus startup save selection closes after load");
+                        expect_true(strstr(view.lastOutcome, "NEXUS RESUMED") != NULL,
+                                    "M11 Nexus startup slot load reports resumed status");
+                        expect_true(view.nexusState.party_x == 19 &&
+                                    view.nexusState.party_y == 13 &&
+                                    view.nexusState.party_dir == 2,
+                                    "M11 Nexus startup slot load mirrors saved pose");
+                        expect_true(view.nexusState.tick_count == 91,
+                                    "M11 Nexus startup slot load mirrors saved tick");
+                        M11_GameView_Shutdown(&view);
+                        nexus_v1_launcher_shutdown();
+                    }
+                    if (old_home[0]) {
+                        (void)set_test_home(old_home);
+                    }
+                    cleanup_nexus_default_save_dir(temp_home);
+                    (void)TEST_RMDIR(temp_home);
+                } else {
+                    if (old_home[0]) {
+                        (void)set_test_home(old_home);
+                    }
+                    expect_true(0, "created isolated Nexus startup HOME");
+                }
             }
         } else {
             printf("skip: no launchable Nexus V1 data at %s\n", real_dir);
