@@ -2977,8 +2977,8 @@ int main(int argc, char** argv) {
                                        PROBE_FEEDBACK_STRIP_Y,
                                        PROBE_FEEDBACK_STRIP_W,
                                        PROBE_FEEDBACK_STRIP_H,
-                                       PROBE_COLOR_LIGHT_RED) > 8U,
-                 "post-tick feedback strip renders attack-colored event telemetry inside the HUD");
+                                       PROBE_COLOR_YELLOW) > 8U,
+                 "post-tick feedback strip renders door-colored event telemetry inside the debug HUD");
 
     probe_record(&tally,
                  "INV_GV_20",
