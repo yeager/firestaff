@@ -589,6 +589,9 @@ typedef struct {
         int runtime_projectile_sprite_drawn_count;
         int runtime_projectile_material_resolved_count;
         int runtime_projectile_marker_drawn_count;
+        int startup_title_active;
+        int startup_title_frame;
+        int startup_title_source_step;
         int startup_entrance_active;
         int startup_entrance_frame;
         int startup_entrance_source_step;

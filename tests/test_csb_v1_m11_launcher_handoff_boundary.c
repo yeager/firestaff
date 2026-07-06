@@ -114,7 +114,7 @@ static void drive_csb_entrance_opening(M11_GameViewState *view,
 
 static void drive_csb_entrance_to_wait(M11_GameViewState *view,
                                        const char *message) {
-    int guard = 8;
+    int guard = 96;
     if (!view) {
         expect_true(0, message);
         return;
@@ -123,9 +123,9 @@ static void drive_csb_entrance_to_wait(M11_GameViewState *view,
         int tick_before = view->csbState.tick_count;
         expect_true(M11_GameView_AdvanceIdleTick(view) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 CSB launcher entrance source prelude redraws");
+                    "M11 CSB launcher title/entrance source prelude redraws");
         expect_true(view->csbState.tick_count == tick_before,
-                    "M11 CSB launcher entrance source prelude blocks runtime ticks");
+                    "M11 CSB launcher title/entrance source prelude blocks runtime ticks");
     }
     expect_true(view->csbState.startup_entrance_active == 1 &&
                     view->csbState.startup_entrance_source_step == 4,
@@ -235,9 +235,11 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 CSB launcher handoff owns a CSB boot profile");
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_dismissed == 0,
-                "M11 CSB launcher handoff stops at the entrance");
-    expect_true(view.csbState.startup_entrance_source_step == 1,
-                "M11 CSB launcher handoff starts at the source entrance prelude");
+                "M11 CSB launcher handoff stops at startup title/entrance");
+    expect_true(view.csbState.startup_title_active == 1 &&
+                    view.csbState.startup_title_source_step == 1 &&
+                    view.csbState.startup_entrance_source_step == 0,
+                "M11 CSB launcher handoff starts at the source title prelude");
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_NONE,
                 "M11 CSB launcher handoff has no recycled entrance command");
@@ -260,10 +262,13 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 CSB launcher entrance advances only entrance frame time");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_IGNORED,
-                "M11 CSB launcher entrance ignores Enter before source wait loop");
+                "M11 CSB launcher title/entrance ignores Enter before source wait loop");
     drive_csb_entrance_to_wait(
         &view,
         "M11 CSB launcher entrance reaches source wait loop before commands");
+    expect_true(view.csbState.startup_title_active == 0 &&
+                    view.csbState.startup_title_source_step == 0,
+                "M11 CSB launcher title prelude completed before entrance input");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
