@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum {
+    NEXUS_TITLE_MIN_BOOT_FRAMES = 30
+};
+
 static void nexus_title_draw_rect(Nexus_Framebuffer *fb,
                                   int x, int y, int w, int h,
                                   uint8_t color) {
@@ -86,6 +90,14 @@ void nexus_title_free(Nexus_TitleScreen *title) {
     }
     free(title->pixels);
     memset(title, 0, sizeof(*title));
+}
+
+int nexus_title_min_boot_frames(void) {
+    return NEXUS_TITLE_MIN_BOOT_FRAMES;
+}
+
+int nexus_title_boot_reveal_complete(int frame) {
+    return frame >= NEXUS_TITLE_MIN_BOOT_FRAMES;
 }
 
 void nexus_render_title(const Nexus_TitleScreen *title,
