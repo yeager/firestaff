@@ -87,8 +87,25 @@ typedef struct {
     int mirror_index;
 } Theron_StartupAction;
 
+typedef enum {
+    THERON_STARTUP_HIT_NONE = 0,
+    THERON_STARTUP_HIT_PANEL,
+    THERON_STARTUP_HIT_TITLE,
+    THERON_STARTUP_HIT_CONTINUE,
+    THERON_STARTUP_HIT_STAGE,
+    THERON_STARTUP_HIT_MIRROR,
+    THERON_STARTUP_HIT_FORCEFIELD
+} Theron_StartupHitKind;
+
+typedef struct {
+    Theron_StartupHitKind kind;
+    Theron_DungeonID selected_dungeon;
+    int mirror_index;
+} Theron_StartupHit;
+
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
 void theron_v1_startup_action_init(Theron_StartupAction *action);
+void theron_v1_startup_hit_init(Theron_StartupHit *hit);
 Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
     const Theron_DungeonProgression *progression,
@@ -109,6 +126,14 @@ Theron_StartupResult theron_v1_startup_handle_input(
     int continue_focus,
     int has_continue,
     Theron_StartupInput input,
+    Theron_StartupAction *out_action);
+Theron_StartupResult theron_v1_startup_handle_hit(
+    Theron_StartupPhase phase,
+    Theron_DungeonID selected_dungeon,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    const Theron_StartupHit *hit,
     Theron_StartupAction *out_action);
 
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase);
