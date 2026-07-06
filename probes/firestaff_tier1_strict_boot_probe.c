@@ -10,13 +10,7 @@
  * asserts the per-game runtime receipt. Runtime phases are validated by
  * main_loop_m11.c as active=1, startupActive=0, and levelLoaded=1.
  *
- * Paths intentionally excluded as out-of-scope for Tier 1 #5:
- *   - Nexus canonical + Nexus saturn-ja — the M11 launcher
- *     cannot open `Merged.iso::DM.BIN` or `Track 1.bin::DM.BIN`
- *     without an extract step; that is a Tier 4 launcher gap
- *     (Nexus runtime coverage), not a path-discovery gap.
- *
- * Pass: all present in-scope paths reach their boot milestone.
+ * Pass: all present in-scope paths reach their runtime receipt.
  *
  * Run:
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_tier1_strict_boot_probe
@@ -75,6 +69,9 @@ static const Tier1PathSpec kPaths[] = {
     { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/pc-de",
       "dm2-runtime", "enter", 2,
       "DM2 PC DE extras DATA/ layout (M11 stderr-pipe)" },
+    { "nexus", DEFAULT_DATA_ROOT "/nexus",
+      "nexus-runtime", "wait120,enter,enter,action", 2,
+      "Nexus canonical (Saturn ISO/CUE recursive scan)" },
     { "theron", DEFAULT_DATA_ROOT "/theron",
       "theron-runtime", "enter,enter,action", 2,
       "Theron JP canonical (Track 02.iso)" },
