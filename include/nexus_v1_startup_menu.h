@@ -81,6 +81,23 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupTitleExecution;
 
+typedef enum {
+    NEXUS_V1_STARTUP_CHAMPION_EXEC_IGNORE = 0,
+    NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW = 1,
+    NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR = 2,
+    NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON = 3,
+    NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_SAVE_SELECT = 4,
+    NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE = 5
+} Nexus_V1_StartupChampionExecutionKind;
+
+typedef struct {
+    Nexus_V1_StartupChampionExecutionKind kind;
+    int cursor;
+    int select_last_save_row;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupChampionExecution;
+
 typedef struct {
     char save_dir[512];
     unsigned int slot_mask;
@@ -146,6 +163,9 @@ int nexus_v1_startup_execute_title_action(
 int nexus_v1_startup_execute_save_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupSaveExecution *out_execution);
+int nexus_v1_startup_execute_champion_action(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupChampionExecution *out_execution);
 int nexus_v1_startup_menu_build_save_render_rows(
     const Nexus_V1_StartupMenu *menu,
     Nexus_V1_StartupSaveRenderRow *rows,

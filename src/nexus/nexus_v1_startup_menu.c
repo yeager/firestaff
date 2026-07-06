@@ -60,6 +60,17 @@ static void nexus_v1_startup_title_execution_clear(
     execution->kind = NEXUS_V1_STARTUP_TITLE_EXEC_IGNORE;
 }
 
+static void nexus_v1_startup_champion_execution_clear(
+    Nexus_V1_StartupChampionExecution *execution)
+{
+    if (!execution) {
+        return;
+    }
+    memset(execution, 0, sizeof(*execution));
+    execution->kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_IGNORE;
+    execution->cursor = -1;
+}
+
 void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
                                 const char *save_dir)
 {
@@ -464,6 +475,70 @@ int nexus_v1_startup_execute_title_action(
         out_execution->status_scope = "STARTUP";
         out_execution->status = "NEXUS CHAMPIONS";
         return 1;
+    }
+    return 0;
+}
+
+int nexus_v1_startup_execute_champion_action(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupChampionExecution *out_execution)
+{
+    if (!out_execution) {
+        return 0;
+    }
+    nexus_v1_startup_champion_execution_clear(out_execution);
+    if (!action) {
+        return 0;
+    }
+    out_execution->status_scope = "STARTUP";
+    switch (action->kind) {
+        case NEXUS_V1_STARTUP_ACTION_NONE:
+            out_execution->kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW;
+            out_execution->status = "NEXUS CHAMPIONS";
+            return 1;
+        case NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR:
+            out_execution->kind =
+                NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR;
+            out_execution->cursor = action->row;
+            out_execution->status = "NEXUS CHAMPION CURSOR";
+            return 1;
+        case NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED:
+            out_execution->kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW;
+            out_execution->status = "NEXUS CHAMPION ADDED";
+            return 1;
+        case NEXUS_V1_STARTUP_ACTION_CHAMPION_SKIPPED:
+            out_execution->kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW;
+            out_execution->status = "NEXUS CHAMPION SKIPPED";
+            return 1;
+        case NEXUS_V1_STARTUP_ACTION_CHAMPION_REMOVED:
+            out_execution->kind =
+                NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR;
+            out_execution->cursor = action->row;
+            out_execution->status = "NEXUS CHAMPION REMOVED";
+            return 1;
+        case NEXUS_V1_STARTUP_ACTION_NEED_CHAMPION:
+            out_execution->kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW;
+            out_execution->status = "NEXUS NEEDS CHAMPION";
+            return 1;
+        case NEXUS_V1_STARTUP_ACTION_START_DUNGEON:
+            out_execution->kind =
+                NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON;
+            out_execution->status_scope = "BOOT";
+            out_execution->status = "NEXUS READY";
+            return 1;
+        case NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT:
+            out_execution->kind =
+                NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_SAVE_SELECT;
+            out_execution->select_last_save_row = 1;
+            out_execution->status = "NEXUS LOAD GAME";
+            return 1;
+        case NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE:
+            out_execution->kind =
+                NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE;
+            out_execution->status = "NEXUS TITLE";
+            return 1;
+        default:
+            break;
     }
     return 0;
 }
