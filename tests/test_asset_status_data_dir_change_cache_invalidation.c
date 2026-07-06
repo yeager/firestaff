@@ -49,7 +49,9 @@
 
 #define FIRESTAFF_ASSET_STATUS_TESTING 1
 #include "asset_status_m12.h"
+#include "config_m12.h"
 #include "fs_portable_compat.h"
+#include "menu_startup_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -719,6 +721,65 @@ static void check_symlinked_recommended_dm1_layout(const char* homeRoot) {
 }
 #endif
 
+static int any_menu_game_available(const M12_StartupMenuState* menu) {
+    return menu &&
+           (M12_AssetStatus_GameAvailable(&menu->assetStatus, "dm1") ||
+            M12_AssetStatus_GameAvailable(&menu->assetStatus, "csb") ||
+            M12_AssetStatus_GameAvailable(&menu->assetStatus, "dm2") ||
+            M12_AssetStatus_GameAvailable(&menu->assetStatus, "nexus") ||
+            M12_AssetStatus_GameAvailable(&menu->assetStatus, "theron"));
+}
+
+static void check_start_menu_heals_stale_config_data_dir(const char* homeRoot) {
+    char defaultParent[M12_ASSET_DATA_DIR_CAPACITY];
+    char defaultDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char staleDataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    M12_Config config;
+    M12_StartupMenuState menu;
+
+    if (!FSP_JoinPath(staleDataRoot, sizeof(staleDataRoot), homeRoot, "stale-empty-data") ||
+        !FSP_CreateDirectoryRecursive(staleDataRoot) ||
+        !FSP_JoinPath(defaultParent, sizeof(defaultParent), homeRoot, ".firestaff") ||
+        !FSP_CreateDirectoryRecursive(defaultParent) ||
+        !FSP_JoinPath(defaultDataRoot, sizeof(defaultDataRoot), defaultParent, "data") ||
+        !FSP_CreateDirectoryRecursive(defaultDataRoot) ||
+        !setup_dm1_recommended_dir(defaultDataRoot,
+                                   graphicsPath, sizeof(graphicsPath), graphicsMd5,
+                                   dungeonPath, sizeof(dungeonPath), dungeonMd5)) {
+        fprintf(stderr, "FAIL: cannot seed start-menu stale-config fixture\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
+    (void)test_setenv("HOME", homeRoot);
+    (void)test_setenv("FIRESTAFF_DATA", NULL);
+#ifndef _WIN32
+    (void)test_setenv("XDG_CONFIG_HOME", NULL);
+#endif
+
+    M12_Config_SetDefaults(&config);
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", staleDataRoot);
+    check_int(M12_Config_Save(&config) == 1,
+              "start menu stale-config fixture must save startup config");
+
+    M12_StartupMenu_InitWithDataDir(&menu, NULL, NULL);
+    check_int(any_menu_game_available(&menu) == 1,
+              "start menu must heal stale config data_dir when default scan finds game data");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1") == 1,
+              "start menu healed scan must expose DM1 availability");
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&menu.assetStatus),
+                     defaultDataRoot) == 0,
+              "start menu healed scan must use the same default root as --scan-data");
+    M12_StartupMenu_Destroy(&menu);
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+
 int main(void) {
     char home[M12_ASSET_DATA_DIR_CAPACITY];
     char dirA[M12_ASSET_DATA_DIR_CAPACITY];
@@ -753,6 +814,7 @@ int main(void) {
 #ifndef _WIN32
     check_symlinked_recommended_dm1_layout(home);
 #endif
+    check_start_menu_heals_stale_config_data_dir(home);
 
     /* Release all test hooks. */
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);

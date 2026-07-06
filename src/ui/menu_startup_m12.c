@@ -2891,6 +2891,35 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     } else {
         M12_AssetStatus_Scan(&state->assetStatus, config.dataDir);
     }
+    if ((!dataDirOverride || dataDirOverride[0] == '\0') &&
+        !M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1") &&
+        !M12_AssetStatus_GameAvailable(&state->assetStatus, "csb") &&
+        !M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2") &&
+        !M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus") &&
+        !M12_AssetStatus_GameAvailable(&state->assetStatus, "theron")) {
+        char resolvedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+        if (FSP_ResolveDataDir(resolvedDataDir, sizeof(resolvedDataDir), NULL) &&
+            resolvedDataDir[0] != '\0' &&
+            strcmp(resolvedDataDir, config.dataDir) != 0) {
+            M12_AssetStatus fallbackStatus;
+            memset(&fallbackStatus, 0, sizeof(fallbackStatus));
+            if (gameId && gameId[0] != '\0') {
+                M12_AssetStatus_ScanGame(&fallbackStatus, resolvedDataDir, gameId);
+            } else {
+                M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
+            }
+            if (M12_AssetStatus_GameAvailable(&fallbackStatus, "dm1") ||
+                M12_AssetStatus_GameAvailable(&fallbackStatus, "csb") ||
+                M12_AssetStatus_GameAvailable(&fallbackStatus, "dm2") ||
+                M12_AssetStatus_GameAvailable(&fallbackStatus, "nexus") ||
+                M12_AssetStatus_GameAvailable(&fallbackStatus, "theron")) {
+                state->assetStatus = fallbackStatus;
+                snprintf(config.dataDir, sizeof(config.dataDir), "%s",
+                         M12_AssetStatus_GetDataDir(&state->assetStatus));
+                M12_Config_Save(&config);
+            }
+        }
+    }
     /* Mirror V2.2 modern-assets installation state into the config struct
      * so the value is persisted on save (even though it's set by
      * M12_AssetStatus_Scan at runtime, not by the user). */
