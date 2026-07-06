@@ -2241,6 +2241,68 @@ static void test_csb_f0111_door_panel_blit_contracts(void)
                csb_v1_viewport_get_door_panel_blit_spec_for_square(999) == NULL);
 }
 
+static void test_csb_runtime_overlay_placement_contracts(void)
+{
+    CSB_V1_ViewportRuntimeObjectOverlayPlacement object_place;
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement group_place;
+
+    memset(&object_place, 0, sizeof(object_place));
+    check_true("csb.runtime_object_overlay.d1c.visible",
+               csb_v1_viewport_runtime_object_overlay_placement(
+                   1, 0, 0, &object_place) == 1);
+    check_int("csb.runtime_object_overlay.d1c.row",
+              object_place.object_row, 8);
+    check_int("csb.runtime_object_overlay.d1c.view_square",
+              object_place.view_square, 3);
+    check_int("csb.runtime_object_overlay.d1c.screen_x",
+              object_place.screen_x, 83);
+    check_int("csb.runtime_object_overlay.d1c.screen_y",
+              object_place.screen_y, 132);
+    check_int("csb.runtime_object_overlay.d1c.source_zone",
+              object_place.used_source_zone, 1);
+
+    memset(&object_place, 0, sizeof(object_place));
+    check_int("csb.runtime_object_overlay.bad_cell.hidden",
+              csb_v1_viewport_runtime_object_overlay_placement(
+                  1, 0, 4, &object_place), 0);
+    check_int("csb.runtime_object_overlay.bad_cell.zone",
+              object_place.source_zone, -1);
+
+    memset(&object_place, 0, sizeof(object_place));
+    check_int("csb.runtime_object_overlay.bad_square.hidden",
+              csb_v1_viewport_runtime_object_overlay_placement(
+                  4, 0, 0, &object_place), 0);
+    check_int("csb.runtime_object_overlay.bad_square.view_square",
+              object_place.view_square, -1);
+
+    memset(&group_place, 0, sizeof(group_place));
+    check_true("csb.runtime_group_overlay.d1c.visible",
+               csb_v1_viewport_runtime_group_overlay_placement(
+                   1, 0, 0, &group_place) == 1);
+    check_int("csb.runtime_group_overlay.d1c.view_square",
+              group_place.view_square, 3);
+    check_int("csb.runtime_group_overlay.d1c.screen_x",
+              group_place.screen_x, 112);
+    check_int("csb.runtime_group_overlay.d1c.screen_y",
+              group_place.screen_y, 144);
+    check_int("csb.runtime_group_overlay.d1c.source_zone",
+              group_place.used_source_zone, 1);
+
+    memset(&group_place, 0, sizeof(group_place));
+    check_int("csb.runtime_group_overlay.bad_coord.hidden",
+              csb_v1_viewport_runtime_group_overlay_placement(
+                  1, 0, 3, &group_place), 0);
+    check_int("csb.runtime_group_overlay.bad_coord.zone",
+              group_place.source_zone, -1);
+
+    memset(&group_place, 0, sizeof(group_place));
+    check_int("csb.runtime_group_overlay.bad_square.hidden",
+              csb_v1_viewport_runtime_group_overlay_placement(
+                  4, 0, 0, &group_place), 0);
+    check_int("csb.runtime_group_overlay.bad_square.view_square",
+              group_place.view_square, -1);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_viewport_source_evidence();
@@ -2329,6 +2391,7 @@ int main(void)
     test_csb_f0115_object_blit_contracts();
     test_csb_f0115_projectile_blit_contracts();
     test_csb_creature_visibility_zone_contracts();
+    test_csb_runtime_overlay_placement_contracts();
     test_csb_f0115_explosion_blit_contracts();
     test_csb_teleporter_field_route_contracts();
     test_csb_f0111_door_panel_blit_contracts();

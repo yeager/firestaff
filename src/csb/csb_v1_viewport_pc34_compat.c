@@ -257,6 +257,267 @@ static int csb_v1_viewport_runtime_overlay_position(
     return 1;
 }
 
+static int csb_v1_viewport_f0115_view_square_index(int forward, int side)
+{
+    static const signed char k_view_square[3][3] = {
+        { 4,  3,  5},
+        { 7,  6,  8},
+        {12, 11, 13}
+    };
+    if (forward < 1 || forward > 3) return -1;
+    if (side == -2 && forward == 3) return 14;
+    if (side == 2 && forward == 3) return 15;
+    if (side < -1 || side > 1) return -1;
+    return (int)k_view_square[forward - 1][side + 1];
+}
+
+static int csb_v1_viewport_f0115_c2500_c2900_row(int forward, int side)
+{
+    static const signed char k_g2028[23] = {
+        11, -1, -1,  8,  9, 10,  5,  6,  7, -1, -1,
+         0,  1,  2,  3,  4, -1, -1, -1, -1, -1, -1, -1
+    };
+    int view_square = csb_v1_viewport_f0115_view_square_index(forward, side);
+    if (view_square < 0 || view_square >= 23) return -1;
+    return (int)k_g2028[view_square];
+}
+
+static int csb_v1_viewport_c2500_source_zone_point(
+    int row_index,
+    int relative_cell,
+    int *out_x,
+    int *out_y)
+{
+    static const short k_c2500_raw[17][4][2] = {
+        {{   0,   0}, {   0,   0}, { 127,  70}, {  98,  70}},
+        {{   0,   0}, {   0,   0}, {  62,  70}, {  25,  70}},
+        {{   0,   0}, {   0,   0}, { 200,  70}, { 162,  70}},
+        {{   0,   0}, {   0,   0}, {   2,  70}, { -35,  70}},
+        {{   0,   0}, {   0,   0}, { 258,  70}, { 222,  70}},
+        {{  94,  78}, { 131,  78}, { 136,  88}, {  89,  88}},
+        {{  10,  78}, {  53,  79}, {  41,  88}, { -14,  89}},
+        {{ 171,  78}, { 218,  78}, { 236,  89}, { 184,  88}},
+        {{  83,  99}, { 141,  99}, { 150, 115}, {  76, 115}},
+        {{ -40, 101}, {  24,  99}, {   5, 114}, { -79, 117}},
+        {{ 200,  99}, { 262, 101}, { 301, 117}, { 220, 114}},
+        {{  66, 133}, { 158, 133}, {   0,   0}, {   0,   0}},
+        {{ 113,  62}, {  46,  61}, { 180,  61}, { 115,  74}},
+        {{   8,  73}, { 220,  74}, { 115,  92}, { 112,  60}},
+        {{  45,  61}, { 179,  60}, { 114,  73}, {   4,  73}},
+        {{ 219,  73}, { 114,  88}, { 113,  63}, {  45,  62}},
+        {{ 181,  62}, { 114,  74}, {  11,  73}, { 218,  74}}
+    };
+    int x;
+    int y;
+
+    if (row_index < 0 || row_index >= 17 ||
+        relative_cell < 0 || relative_cell > 3) {
+        return 0;
+    }
+    x = (int)k_c2500_raw[row_index][relative_cell][0];
+    y = (int)k_c2500_raw[row_index][relative_cell][1];
+    if (x == 0 && y == 0) {
+        return 0;
+    }
+    if (out_x) *out_x = x;
+    if (out_y) *out_y = y;
+    return 1;
+}
+
+static int csb_v1_viewport_creature_front_point_index(
+    int coordinate_set,
+    int visible_count,
+    int slot_index)
+{
+    int point_index = 4;
+    if (slot_index < 0) slot_index = 0;
+    if (slot_index > 3) slot_index = 3;
+    if (coordinate_set == 1) {
+        if (visible_count > 1) {
+            point_index = slot_index < 2 ? slot_index : 4;
+        }
+    } else if (visible_count > 1) {
+        point_index = slot_index;
+        if (point_index > 3) point_index = 3;
+    }
+    return point_index;
+}
+
+static int csb_v1_viewport_c3200_creature_zone_point(
+    int coordinate_set,
+    int depth_index,
+    int side,
+    int *out_x,
+    int *out_y)
+{
+    static const short k_center[3][3][5][2] = {
+        {
+            {{ 83,106}, {141,106}, {148,119}, { 76,119}, {112,111}},
+            {{ 92, 83}, {131, 83}, {132, 90}, { 91, 90}, {112, 85}},
+            {{ 97, 67}, {125, 67}, {129, 72}, { 95, 72}, {112, 72}}
+        },
+        {
+            {{ 81,119}, {142,119}, {112,105}, {112,111}, {112,119}},
+            {{ 91, 90}, {132, 90}, {112, 83}, {112, 85}, {112, 89}},
+            {{ 94, 73}, {128, 73}, {112, 70}, {112, 70}, {112, 73}}
+        },
+        {
+            {{ 83, 79}, {141, 79}, {148, 85}, { 76, 85}, {112, 81}},
+            {{ 92, 65}, {131, 65}, {132, 67}, { 91, 67}, {112, 66}},
+            {{ 95, 59}, {127, 59}, {129, 61}, { 93, 61}, {112, 60}}
+        }
+    };
+    static const short k_side[3][3][2][5][2] = {
+        {
+            {{{ 46,103}, {118,103}, {101,119}, {  0,  0}, { 79,111}},
+             {{107,103}, {177,103}, {  0,  0}, {123,119}, {144,111}}},
+            {{{ 99, 81}, {146, 81}, {135, 90}, { 80, 90}, {120, 85}},
+             {{ 77, 81}, {124, 81}, {143, 90}, { 89, 90}, {105, 85}}},
+            {{{131, 70}, {163, 70}, {158, 75}, {120, 75}, {145, 72}},
+             {{ 59, 70}, { 91, 70}, {107, 75}, { 66, 75}, { 79, 72}}}
+        },
+        {
+            {{{  0,  0}, {101,119}, { 84,105}, { 70,111}, { 77,119}},
+             {{123,119}, {  0,  0}, {139,105}, {153,111}, {146,119}}},
+            {{{ 80, 90}, {135, 90}, {125, 83}, {120, 85}, {125, 90}},
+             {{ 89, 90}, {143, 90}, { 99, 83}, {105, 85}, { 98, 90}}},
+            {{{120, 75}, {158, 75}, {149, 70}, {145, 72}, {150, 75}},
+             {{ 66, 75}, {104, 75}, { 75, 70}, { 79, 72}, { 73, 75}}}
+        },
+        {
+            {{{ 46, 79}, {118, 79}, {101, 85}, {  0,  0}, { 79, 81}},
+             {{107, 79}, {177, 79}, {  0,  0}, {123, 85}, {144, 81}}},
+            {{{ 99, 65}, {146, 65}, {135, 67}, { 80, 67}, {120, 66}},
+             {{ 77, 65}, {124, 65}, {143, 67}, { 89, 67}, {105, 66}}},
+            {{{131, 59}, {163, 59}, {158, 61}, {120, 61}, {145, 60}},
+             {{ 59, 59}, { 91, 59}, {107, 61}, { 66, 61}, { 79, 60}}}
+        }
+    };
+    int point_index;
+    int side_index;
+
+    if (coordinate_set < 0 || coordinate_set > 2) return 0;
+    if (depth_index < 0) depth_index = 0;
+    if (depth_index > 2) depth_index = 2;
+    point_index = csb_v1_viewport_creature_front_point_index(
+        coordinate_set, 1, 0);
+    if (side < 0 || side > 0) {
+        side_index = side < 0 ? 0 : 1;
+        if (out_x) *out_x =
+            (int)k_side[coordinate_set][depth_index][side_index][point_index][0];
+        if (out_y) *out_y =
+            (int)k_side[coordinate_set][depth_index][side_index][point_index][1];
+    } else {
+        if (out_x) *out_x =
+            (int)k_center[coordinate_set][depth_index][point_index][0];
+        if (out_y) *out_y =
+            (int)k_center[coordinate_set][depth_index][point_index][1];
+    }
+    return 1;
+}
+
+int csb_v1_viewport_runtime_object_overlay_placement(
+    int forward,
+    int side,
+    int relative_cell,
+    CSB_V1_ViewportRuntimeObjectOverlayPlacement *out_placement)
+{
+    CSB_V1_ViewportRuntimeObjectOverlayPlacement placement;
+    const CSB_V1_ViewportObjectBlitSpec *spec = NULL;
+    int x = 0;
+    int y = 0;
+
+    memset(&placement, 0, sizeof(placement));
+    placement.forward = forward;
+    placement.side = side;
+    placement.view_cell = relative_cell;
+    placement.view_square =
+        csb_v1_viewport_f0115_view_square_index(forward, side);
+    placement.object_row =
+        csb_v1_viewport_f0115_c2500_c2900_row(forward, side);
+    placement.source_zone = -1;
+    if (placement.view_square < 0 ||
+        relative_cell < 0 ||
+        relative_cell > 3) {
+        if (out_placement) *out_placement = placement;
+        return 0;
+    }
+    if (placement.view_square >= 0) {
+        spec = csb_v1_viewport_get_object_blit_spec_for_square(
+            placement.view_square);
+        placement.source_zone = csb_v1_viewport_object_blit_zone(
+            spec, (unsigned char)relative_cell);
+    }
+    if (placement.object_row >= 0 &&
+        csb_v1_viewport_c2500_source_zone_point(
+            placement.object_row, relative_cell, &x, &y)) {
+        placement.visible = 1;
+        placement.used_source_zone = 1;
+        placement.viewport_x = x;
+        placement.viewport_y = y;
+        placement.screen_x = x;
+        placement.screen_y = DM1_VIEWPORT_SCREEN_Y + y;
+    } else {
+        placement.visible = 1;
+        placement.viewport_x = (DM1_VIEWPORT_WIDTH / 2) + side * 42;
+        placement.viewport_y = 108 - forward * 24;
+        placement.screen_x = DM1_VIEWPORT_SCREEN_X + placement.viewport_x;
+        placement.screen_y = DM1_VIEWPORT_SCREEN_Y + placement.viewport_y;
+    }
+    if (out_placement) *out_placement = placement;
+    return placement.visible;
+}
+
+int csb_v1_viewport_runtime_group_overlay_placement(
+    int forward,
+    int side,
+    int coordinate_set,
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement)
+{
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
+    const CSB_V1_ViewportCreatureVisibilitySpec *spec = NULL;
+    int x = 0;
+    int y = 0;
+
+    memset(&placement, 0, sizeof(placement));
+    placement.forward = forward;
+    placement.side = side;
+    placement.view_cell = 0;
+    placement.coordinate_set = coordinate_set;
+    placement.view_square =
+        csb_v1_viewport_f0115_view_square_index(forward, side);
+    placement.source_zone = -1;
+    if (placement.view_square < 0 ||
+        coordinate_set < 0 ||
+        coordinate_set > 2) {
+        if (out_placement) *out_placement = placement;
+        return 0;
+    }
+    if (placement.view_square >= 0) {
+        spec = csb_v1_viewport_get_creature_visibility_spec_for_square(
+            placement.view_square);
+        placement.source_zone = csb_v1_viewport_creature_visibility_zone(
+            spec, coordinate_set, 0);
+    }
+    if (csb_v1_viewport_c3200_creature_zone_point(
+            coordinate_set, forward - 1, side, &x, &y)) {
+        placement.visible = 1;
+        placement.used_source_zone = 1;
+        placement.viewport_x = x;
+        placement.viewport_y = y;
+        placement.screen_x = x;
+        placement.screen_y = DM1_VIEWPORT_SCREEN_Y + y;
+    } else {
+        placement.visible = 1;
+        placement.viewport_x = (DM1_VIEWPORT_WIDTH / 2) + side * 42;
+        placement.viewport_y = 86 - forward * 24;
+        placement.screen_x = DM1_VIEWPORT_SCREEN_X + placement.viewport_x;
+        placement.screen_y = DM1_VIEWPORT_SCREEN_Y + placement.viewport_y;
+    }
+    if (out_placement) *out_placement = placement;
+    return placement.visible;
+}
+
 static int csb_v1_viewport_c2900_source_zone_point(
     int row_index,
     int view_cell,

@@ -368,6 +368,36 @@ typedef struct {
 } CSB_V1_ViewportRuntimeProjectileOverlayPlacement;
 
 typedef struct {
+    int visible;
+    int forward;
+    int side;
+    int view_square;
+    int view_cell;
+    int object_row;
+    int source_zone;
+    int viewport_x;
+    int viewport_y;
+    int screen_x;
+    int screen_y;
+    int used_source_zone;
+} CSB_V1_ViewportRuntimeObjectOverlayPlacement;
+
+typedef struct {
+    int visible;
+    int forward;
+    int side;
+    int view_square;
+    int view_cell;
+    int coordinate_set;
+    int source_zone;
+    int viewport_x;
+    int viewport_y;
+    int screen_x;
+    int screen_y;
+    int used_source_zone;
+} CSB_V1_ViewportRuntimeGroupOverlayPlacement;
+
+typedef struct {
     int view_square;
     int redmcsb_view_square_index;
     int view_depth;
@@ -573,6 +603,16 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     int projectile_map_y,
     int projectile_cell,
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_object_overlay_placement(
+    int forward,
+    int side,
+    int relative_cell,
+    CSB_V1_ViewportRuntimeObjectOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_group_overlay_placement(
+    int forward,
+    int side,
+    int coordinate_set,
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement);
 int csb_v1_viewport_projectile_blit_pixels(const CSB_V1_ViewportProjectileBlitSpec *spec,
                                            int flip_flags,
                                            const uint8_t *source,
