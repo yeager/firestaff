@@ -93,12 +93,44 @@ int nexus_title_min_boot_frames(void) {
     return nexus_v1_title_min_boot_frames();
 }
 
+int nexus_title_start_ready_frames(void) {
+    return nexus_v1_title_start_ready_frames();
+}
+
 int nexus_title_boot_reveal_complete(int frame) {
     Nexus_V1_TitleFrame title_frame;
     if (!nexus_v1_title_frame(frame, NEXUS_FB_H, &title_frame)) {
         return 0;
     }
     return title_frame.boot_reveal_complete;
+}
+
+int nexus_title_start_ready(int frame) {
+    Nexus_V1_TitleFrame title_frame;
+    if (!nexus_v1_title_frame(frame, NEXUS_FB_H, &title_frame)) {
+        return 0;
+    }
+    return title_frame.start_ready;
+}
+
+static void nexus_title_draw_prompt(Nexus_Framebuffer *fb,
+                                    const Nexus_V1_TitleFrame *title_frame)
+{
+    int x;
+    int y;
+    uint8_t base;
+    if (!fb || !title_frame || !title_frame->prompt_visible) {
+        return;
+    }
+    base = (uint8_t)(18 + ((title_frame->hold_frame / 6) & 3));
+    y = NEXUS_FB_H - 18;
+    for (x = 86; x < 234; x += 18) {
+        nexus_title_draw_rect(fb, x, y, 12, 2, base);
+        nexus_title_draw_rect(fb, x, y + 4, 10, 2, (uint8_t)(base - 2));
+        nexus_title_draw_rect(fb, x, y + 8, 12, 2, base);
+    }
+    nexus_title_draw_rect(fb, 74, y - 6, 172, 1, (uint8_t)(base - 4));
+    nexus_title_draw_rect(fb, 74, y + 14, 172, 1, (uint8_t)(base - 4));
 }
 
 void nexus_render_title(const Nexus_TitleScreen *title,
@@ -136,12 +168,20 @@ void nexus_render_title(const Nexus_TitleScreen *title,
                           NEXUS_FB_W, 1, title_frame.edge_color);
     nexus_title_draw_rect(fb, 0, title_frame.reveal_y1,
                           NEXUS_FB_W, 1, title_frame.edge_color);
+    nexus_title_draw_prompt(fb, &title_frame);
 }
 
 void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame) {
     int y;
     int pulse;
+    Nexus_V1_TitleFrame title_frame;
     if (!fb) {
+        return;
+    }
+    if (frame < 0) {
+        frame = 0;
+    }
+    if (!nexus_v1_title_frame(frame, NEXUS_FB_H, &title_frame)) {
         return;
     }
     nexus_fb_clear(fb);
@@ -158,4 +198,5 @@ void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame) {
     nexus_title_draw_rect(fb, 68, 144, 184, 3, 14);
     nexus_title_draw_rect(fb, 96, 164, 128, 3, 12);
     nexus_title_draw_rect(fb, 20 + pulse * 2, 190, 280 - pulse * 4, 2, 22);
+    nexus_title_draw_prompt(fb, &title_frame);
 }

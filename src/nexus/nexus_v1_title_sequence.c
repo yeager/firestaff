@@ -2,6 +2,7 @@
 
 enum {
     NEXUS_V1_TITLE_MIN_BOOT_FRAMES = 30,
+    NEXUS_V1_TITLE_START_READY_FRAMES = 54,
     NEXUS_V1_TITLE_INITIAL_REVEAL_H = 80,
     NEXUS_V1_TITLE_REVEAL_PIXELS_PER_FRAME = 4
 };
@@ -9,6 +10,11 @@ enum {
 int nexus_v1_title_min_boot_frames(void)
 {
     return NEXUS_V1_TITLE_MIN_BOOT_FRAMES;
+}
+
+int nexus_v1_title_start_ready_frames(void)
+{
+    return NEXUS_V1_TITLE_START_READY_FRAMES;
 }
 
 int nexus_v1_title_frame(int frame,
@@ -36,5 +42,11 @@ int nexus_v1_title_frame(int frame,
     out_frame->edge_color = (uint8_t)(12 + ((frame / 4) & 7));
     out_frame->boot_reveal_complete =
         frame >= NEXUS_V1_TITLE_MIN_BOOT_FRAMES;
+    out_frame->hold_frame = out_frame->boot_reveal_complete
+                                ? frame - NEXUS_V1_TITLE_MIN_BOOT_FRAMES
+                                : 0;
+    out_frame->start_ready = frame >= NEXUS_V1_TITLE_START_READY_FRAMES;
+    out_frame->prompt_visible =
+        out_frame->boot_reveal_complete && (((frame / 12) & 1) == 0);
     return 1;
 }

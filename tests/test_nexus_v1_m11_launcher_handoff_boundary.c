@@ -20,6 +20,7 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "nexus_v1_launcher.h"
+#include "nexus_v1_title.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -260,15 +261,30 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 Nexus launcher title blocks early accept");
     expect_true(view.nexusState.title_active == 1,
                 "M11 Nexus launcher title remains active after early accept");
-    for (int t = 0; t < 64 && view.nexusState.title_frame < 30; ++t) {
+    for (int t = 0; t < 64 &&
+                    view.nexusState.title_frame < nexus_title_min_boot_frames();
+         ++t) {
         expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
                     "M11 Nexus launcher title completes boot reveal");
     }
-    expect_true(view.nexusState.title_frame >= 30,
+    expect_true(view.nexusState.title_frame >= nexus_title_min_boot_frames(),
                 "M11 Nexus launcher title reaches boot reveal frame");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
-                "M11 Nexus launcher title advances on explicit accept after reveal");
+                "M11 Nexus launcher title blocks explicit accept during hold");
+    expect_true(view.nexusState.title_active == 1,
+                "M11 Nexus launcher title remains active during hold");
+    for (int t = 0; t < 64 &&
+                    view.nexusState.title_frame < nexus_title_start_ready_frames();
+         ++t) {
+        expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
+                    "M11 Nexus launcher title completes startup hold");
+    }
+    expect_true(view.nexusState.title_frame >= nexus_title_start_ready_frames(),
+                "M11 Nexus launcher title reaches start-ready frame");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 Nexus launcher title advances on explicit accept after hold");
     expect_true(view.nexusState.title_active == 0,
                 "M11 Nexus launcher title clears after accept");
     M11_GameView_Shutdown(&view);

@@ -15380,8 +15380,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 input != M12_MENU_INPUT_ACTION) {
                 return M11_GAME_INPUT_IGNORED;
             }
-            if (!nexus_title_boot_reveal_complete(
-                    state->nexusState.title_frame)) {
+            if (!nexus_title_start_ready(state->nexusState.title_frame)) {
                 m11_set_status(state, "STARTUP", "NEXUS TITLE");
                 return M11_GAME_INPUT_REDRAW;
             }

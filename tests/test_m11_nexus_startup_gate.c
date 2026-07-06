@@ -185,9 +185,12 @@ static void expect_title_sequence_contract(void) {
     Nexus_V1_TitleFrame frame0;
     Nexus_V1_TitleFrame frame16;
     Nexus_V1_TitleFrame frame30;
+    Nexus_V1_TitleFrame frame54;
 
     expect_true(nexus_v1_title_min_boot_frames() == 30,
                 "Nexus title sequence owns the minimum boot reveal frame");
+    expect_true(nexus_v1_title_start_ready_frames() == 54,
+                "Nexus title sequence owns the start-ready hold frame");
     expect_true(nexus_v1_title_frame(0, NEXUS_FB_H, &frame0) &&
                     frame0.reveal_h == 80 &&
                     frame0.reveal_y0 == 60 &&
@@ -206,13 +209,26 @@ static void expect_title_sequence_contract(void) {
                     frame30.reveal_h == 200 &&
                     frame30.reveal_y0 == 0 &&
                     frame30.reveal_y1 == 200 &&
-                    frame30.boot_reveal_complete,
+                    frame30.boot_reveal_complete &&
+                    frame30.hold_frame == 0 &&
+                    !frame30.start_ready &&
+                    frame30.prompt_visible,
                 "Nexus title sequence reaches full reveal at boot gate");
+    expect_true(nexus_v1_title_frame(54, NEXUS_FB_H, &frame54) &&
+                    frame54.reveal_h == 200 &&
+                    frame54.boot_reveal_complete &&
+                    frame54.hold_frame == 24 &&
+                    frame54.start_ready,
+                "Nexus title sequence reaches start-ready after title hold");
     expect_true(nexus_title_min_boot_frames() ==
                     nexus_v1_title_min_boot_frames() &&
                     !nexus_title_boot_reveal_complete(29) &&
-                    nexus_title_boot_reveal_complete(30),
-                "legacy Nexus title API delegates to title sequence");
+                    nexus_title_boot_reveal_complete(30) &&
+                    nexus_title_start_ready_frames() ==
+                        nexus_v1_title_start_ready_frames() &&
+                    !nexus_title_start_ready(53) &&
+                    nexus_title_start_ready(54),
+                "legacy Nexus title API delegates reveal and start gates");
 }
 
 static void expect_startup_layout_contract(void) {
@@ -513,8 +529,11 @@ int main(void) {
                         "real Nexus title stays active after early accept");
             expect_true(nexus_title_min_boot_frames() == 30 &&
                             !nexus_title_boot_reveal_complete(29) &&
-                            nexus_title_boot_reveal_complete(30),
-                        "Nexus title module exposes the boot reveal gate");
+                            nexus_title_boot_reveal_complete(30) &&
+                            nexus_title_start_ready_frames() == 54 &&
+                            !nexus_title_start_ready(53) &&
+                            nexus_title_start_ready(54),
+                        "Nexus title module exposes reveal and start gates");
             expect_true(advance_nexus_title_to_frame(
                             &view,
                             (unsigned int)nexus_title_min_boot_frames(),
@@ -522,7 +541,17 @@ int main(void) {
                         "real Nexus title completes boot reveal");
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
-                        "real Nexus title phase advances on accept after reveal");
+                        "real Nexus title blocks accept during title hold");
+            expect_true(view.nexusState.title_active == 1,
+                        "real Nexus title stays active during title hold");
+            expect_true(advance_nexus_title_to_frame(
+                            &view,
+                            (unsigned int)nexus_title_start_ready_frames(),
+                            64),
+                        "real Nexus title completes startup hold");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "real Nexus title phase advances on accept after hold");
             expect_true(view.nexusState.title_active == 0,
                         "real Nexus title phase clears after input");
             if (view.nexusState.startup_save_select_active) {
@@ -716,13 +745,13 @@ int main(void) {
                                     "M11 Nexus save-slot title remains active after early accept");
                         expect_true(advance_nexus_title_to_frame(
                                         &view,
-                                        (unsigned int)nexus_title_min_boot_frames(),
+                                        (unsigned int)nexus_title_start_ready_frames(),
                                         64),
-                                    "M11 Nexus save-slot title completes reveal");
+                                    "M11 Nexus save-slot title completes startup hold");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
                                         M11_GAME_INPUT_REDRAW,
-                                    "M11 Nexus title advances to save selection after reveal");
+                                    "M11 Nexus title advances to save selection after hold");
                         expect_true(view.nexusState.startup_save_select_active == 1,
                                     "M11 Nexus startup exposes save selection when slots exist");
                         expect_true(view.nexusState.startup_save_slot_mask ==
@@ -742,13 +771,13 @@ int main(void) {
                                     "M11 Nexus startup save selection Back restores title phase");
                         expect_true(advance_nexus_title_to_frame(
                                         &view,
-                                        (unsigned int)nexus_title_min_boot_frames(),
+                                        (unsigned int)nexus_title_start_ready_frames(),
                                         64),
-                                    "M11 Nexus startup title reveal completes after Back");
+                                    "M11 Nexus startup title hold completes after Back");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
                                         M11_GAME_INPUT_REDRAW,
-                                    "M11 Nexus startup title reopens save selection after Back reveal");
+                                    "M11 Nexus startup title reopens save selection after Back hold");
                         expect_true(view.nexusState.startup_save_select_active == 1,
                                     "M11 Nexus startup save selection is active again after title");
                         expect_true(M11_GameView_HandlePointer(
@@ -783,13 +812,13 @@ int main(void) {
                                     "M11 Nexus save-slot NEW GAME path starts on title");
                         expect_true(advance_nexus_title_to_frame(
                                         &view,
-                                        (unsigned int)nexus_title_min_boot_frames(),
+                                        (unsigned int)nexus_title_start_ready_frames(),
                                         64),
-                                    "M11 Nexus save-slot NEW GAME title completes reveal");
+                                    "M11 Nexus save-slot NEW GAME title completes startup hold");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
                                         M11_GAME_INPUT_REDRAW,
-                                    "M11 Nexus save-slot NEW GAME path advances title after reveal");
+                                    "M11 Nexus save-slot NEW GAME path advances title after hold");
                         expect_true(view.nexusState.startup_save_select_active == 1,
                                     "M11 Nexus save-slot NEW GAME path exposes save menu");
                         {
