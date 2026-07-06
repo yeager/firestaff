@@ -690,6 +690,10 @@ static M12_MenuInput m11_next_script_input(const char** cursor);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
 static int m11_script_event_token_is_valid(const char* token, size_t len);
+static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
+                                            const char* token,
+                                            size_t len,
+                                            M11_GameInputResult* outResult);
 static int m11_boot_probe_expected_source_kind(const char* gameId,
                                                M11_GameSourceKind* outKind);
 
@@ -1797,7 +1801,20 @@ static int m11_phase_a_apply_boot_probe_script(M11_GameViewState* gameView,
             waited += waitFrames;
             continue;
         }
-        if (m11_push_script_event_token(token, tokenLen)) {
+        if (m11_apply_boot_probe_event_token(gameView, token, tokenLen, &result)) {
+            applied++;
+            if (result == M11_GAME_INPUT_REDRAW) {
+                M11_GameView_Draw(gameView,
+                                  M11_Render_GetFramebuffer(),
+                                  M11_FB_WIDTH,
+                                  M11_FB_HEIGHT);
+            }
+            if (result == M11_GAME_INPUT_RETURN_TO_MENU ||
+                result == M11_GAME_INPUT_RESTART_GAME) {
+                break;
+            }
+            m11_phase_a_advance_boot_probe_frames(gameView, framesAfterInput);
+            waited += framesAfterInput > 0 ? framesAfterInput : 0;
             continue;
         }
         input = m11_map_script_token(token, tokenLen);
@@ -2226,6 +2243,114 @@ static int m11_script_event_token_is_valid(const char* token, size_t len) {
         return 1;
     }
     if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
+        return 1;
+    }
+    return 0;
+}
+
+static M12_MenuInput m11_boot_probe_key_input(const M11_GameViewState* gameView,
+                                              int keycode) {
+    M12_MenuInput csbInput = M12_MENU_INPUT_NONE;
+    if (m11_game_view_is_csb(gameView) &&
+        m11_csb_sdl_key_to_menu_input(keycode, 0, &csbInput)) {
+        return csbInput;
+    }
+    switch (keycode) {
+        case SDLK_UP: return M12_MENU_INPUT_UP;
+        case SDLK_DOWN: return M12_MENU_INPUT_DOWN;
+        case SDLK_LEFT: return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDLK_RIGHT: return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDLK_KP_5: return M12_MENU_INPUT_UP;
+        case SDLK_KP_2: return M12_MENU_INPUT_DOWN;
+        case SDLK_KP_1: return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDLK_KP_3: return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDLK_KP_4: return M12_MENU_INPUT_TURN_LEFT;
+        case SDLK_KP_6: return M12_MENU_INPUT_TURN_RIGHT;
+        case SDLK_Q: return M12_MENU_INPUT_TURN_LEFT;
+        case SDLK_E: return M12_MENU_INPUT_TURN_RIGHT;
+        case SDLK_HOME: return M12_MENU_INPUT_TURN_LEFT;
+        case SDLK_END: return M12_MENU_INPUT_TURN_RIGHT;
+        case SDLK_A: return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDLK_D: return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDLK_W: return M12_MENU_INPUT_UP;
+        case SDLK_S: return M12_MENU_INPUT_DOWN;
+        case SDLK_RETURN:
+        case SDLK_KP_ENTER: return M12_MENU_INPUT_ACCEPT;
+        case SDLK_ESCAPE: return M12_MENU_INPUT_BACK;
+        case SDLK_SPACE: return M12_MENU_INPUT_ACTION;
+        case SDLK_TAB: return M12_MENU_INPUT_CYCLE_CHAMPION;
+        case SDLK_R: return gameView && gameView->active ? M12_MENU_INPUT_REST_TOGGLE : M12_MENU_INPUT_NONE;
+        case SDLK_X: return gameView && gameView->active ? M12_MENU_INPUT_USE_STAIRS : M12_MENU_INPUT_NONE;
+        case SDLK_G: return gameView && gameView->active ? M12_MENU_INPUT_PICKUP_ITEM : M12_MENU_INPUT_NONE;
+        case SDLK_P: return gameView && gameView->active ? M12_MENU_INPUT_DROP_ITEM : M12_MENU_INPUT_NONE;
+        case SDLK_1: return gameView && gameView->active ? M12_MENU_INPUT_SPELL_RUNE_1 : M12_MENU_INPUT_NONE;
+        case SDLK_2: return gameView && gameView->active ? M12_MENU_INPUT_SPELL_RUNE_2 : M12_MENU_INPUT_NONE;
+        case SDLK_3: return gameView && gameView->active ? M12_MENU_INPUT_SPELL_RUNE_3 : M12_MENU_INPUT_NONE;
+        case SDLK_4: return gameView && gameView->active ? M12_MENU_INPUT_SPELL_RUNE_4 : M12_MENU_INPUT_NONE;
+        case SDLK_5: return gameView && gameView->active ? M12_MENU_INPUT_SPELL_RUNE_5 : M12_MENU_INPUT_NONE;
+        case SDLK_6: return gameView && gameView->active ? M12_MENU_INPUT_SPELL_RUNE_6 : M12_MENU_INPUT_NONE;
+        case SDLK_C: return gameView && gameView->active ? M12_MENU_INPUT_SPELL_CAST : M12_MENU_INPUT_NONE;
+        case SDLK_V: return gameView && gameView->active ? M12_MENU_INPUT_SPELL_CLEAR : M12_MENU_INPUT_NONE;
+        case SDLK_U: return gameView && gameView->active ? M12_MENU_INPUT_USE_ITEM : M12_MENU_INPUT_NONE;
+        case SDLK_M: return gameView && gameView->active ? M12_MENU_INPUT_MAP_TOGGLE : M12_MENU_INPUT_NONE;
+        case SDLK_I: return gameView && gameView->active ? M12_MENU_INPUT_INVENTORY_TOGGLE : M12_MENU_INPUT_NONE;
+        default: return M12_MENU_INPUT_NONE;
+    }
+}
+
+static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
+                                            const char* token,
+                                            size_t len,
+                                            M11_GameInputResult* outResult) {
+    char buffer[128];
+    int x = 0;
+    int y = 0;
+    if (outResult) {
+        *outResult = M11_GAME_INPUT_IGNORED;
+    }
+    if (!gameView || !gameView->active ||
+        !token || len == 0U || len >= sizeof(buffer)) {
+        return 0;
+    }
+    memcpy(buffer, token, len);
+    buffer[len] = '\0';
+    if (strncmp(buffer, "key:", 4) == 0) {
+        int keycode = m11_script_keycode_from_name(buffer + 4);
+        M12_MenuInput input = m11_boot_probe_key_input(gameView, keycode);
+        if (input == M12_MENU_INPUT_NONE) {
+            return 0;
+        }
+        if (outResult) {
+            *outResult = M11_GameView_HandleInput(gameView, input);
+        } else {
+            (void)M11_GameView_HandleInput(gameView, input);
+        }
+        return 1;
+    }
+    if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
+        if (!M11_Render_MapWindowToFramebuffer(x, y, &x, &y)) {
+            return 1;
+        }
+        m11_map_presented_game_point_to_source(gameView, &x, &y);
+        if (outResult) {
+            *outResult = M11_GameView_HandlePointerButton(
+                gameView, x, y, M11_DM1_MOUSE_MASK_LEFT);
+        } else {
+            (void)M11_GameView_HandlePointerButton(
+                gameView, x, y, M11_DM1_MOUSE_MASK_LEFT);
+        }
+        return 1;
+    }
+    if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
+        if (!M11_Render_MapWindowToFramebuffer(x, y, &x, &y)) {
+            return 1;
+        }
+        m11_map_presented_game_point_to_source(gameView, &x, &y);
+        if (outResult) {
+            *outResult = M11_GameView_HandlePointerMove(gameView, x, y);
+        } else {
+            (void)M11_GameView_HandlePointerMove(gameView, x, y);
+        }
         return 1;
     }
     return 0;
