@@ -17191,6 +17191,28 @@ if(BUILD_TESTING)
         LABELS "tier4;nexus;save_load"
     )
 
+    add_executable(test_nexus_v1_startup_menu_pc34_compat
+        tests/test_nexus_v1_startup_menu_pc34_compat.c
+    )
+    target_link_libraries(test_nexus_v1_startup_menu_pc34_compat PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(test_nexus_v1_startup_menu_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_startup_menu_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_startup_menu_pc34_compat
+        COMMAND test_nexus_v1_startup_menu_pc34_compat
+    )
+    set_tests_properties(nexus_v1_startup_menu_pc34_compat PROPERTIES
+        LABELS "tier4;nexus;startup;save_load"
+    )
+
     # ── CSB / DM hidden-code skip table (Tier 2 from FIRESTAFF_GAP_LIST) ──
     # Skips Atari ST and Amiga item indices 558-562 which contain
     # 68k executable code left over from the original FTL port

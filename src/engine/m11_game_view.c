@@ -5,6 +5,7 @@
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_movement.h"
 #include "nexus_v1_save.h"
+#include "nexus_v1_startup_menu.h"
 #include "nexus_v1_title.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_world.h"
@@ -10590,6 +10591,143 @@ static void m11_nexus_release_title(M11_GameViewState* state) {
     state->nexusState.champion_cursor = 0;
 }
 
+static void m11_nexus_startup_scan_saves(M11_GameViewState *state)
+{
+    Nexus_V1_StartupMenu menu;
+
+    if (!state) {
+        return;
+    }
+    nexus_v1_startup_menu_init(&menu, NULL);
+    if (nexus_v1_startup_menu_scan(&menu) != 0) {
+        state->nexusState.startup_save_row_count = 1;
+        state->nexusState.startup_save_slot_mask = 0u;
+        return;
+    }
+    state->nexusState.startup_save_row_count = menu.row_count;
+    state->nexusState.startup_save_slot_mask = menu.slot_mask;
+    state->nexusState.startup_save_selected_row = menu.selected_row;
+    snprintf(state->nexusState.startup_save_dir,
+             sizeof(state->nexusState.startup_save_dir),
+             "%s",
+             menu.save_dir);
+}
+
+static int m11_nexus_startup_row_at(const M11_GameViewState *state,
+                                    int row,
+                                    Nexus_V1_StartupRowKind *out_kind,
+                                    int *out_slot)
+{
+    Nexus_V1_StartupMenu menu;
+
+    if (!state) {
+        return 0;
+    }
+    nexus_v1_startup_menu_init(
+        &menu,
+        state->nexusState.startup_save_dir[0]
+            ? state->nexusState.startup_save_dir
+            : NULL);
+    menu.slot_mask = state->nexusState.startup_save_slot_mask;
+    menu.row_count = state->nexusState.startup_save_row_count;
+    menu.selected_row = state->nexusState.startup_save_selected_row;
+    return nexus_v1_startup_menu_row_at(&menu, row, out_kind, out_slot);
+}
+
+static int m11_nexus_startup_selected_path(M11_GameViewState *state,
+                                           char *out_path,
+                                           size_t out_path_size)
+{
+    Nexus_V1_StartupMenu menu;
+
+    if (!state) {
+        return 0;
+    }
+    nexus_v1_startup_menu_init(
+        &menu,
+        state->nexusState.startup_save_dir[0]
+            ? state->nexusState.startup_save_dir
+            : NULL);
+    menu.slot_mask = state->nexusState.startup_save_slot_mask;
+    menu.row_count = state->nexusState.startup_save_row_count;
+    menu.selected_row = state->nexusState.startup_save_selected_row;
+    return nexus_v1_startup_menu_selected_path(&menu,
+                                               out_path,
+                                               out_path_size);
+}
+
+static M11_GameInputResult m11_nexus_startup_activate_save_row(
+    M11_GameViewState *state)
+{
+    Nexus_V1_StartupRowKind kind = NEXUS_V1_STARTUP_ROW_NONE;
+    int slot = -1;
+    char save_path[M11_GAME_VIEW_PATH_CAPACITY];
+
+    if (!state || !state->nexusState.startup_save_select_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!m11_nexus_startup_row_at(
+            state,
+            state->nexusState.startup_save_selected_row,
+            &kind,
+            &slot)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (kind == NEXUS_V1_STARTUP_ROW_SLOT) {
+        (void)slot;
+        if (!m11_nexus_startup_selected_path(state,
+                                             save_path,
+                                             sizeof(save_path)) ||
+            !m11_nexus_resume_from_save_path(state, save_path)) {
+            m11_set_status(state, "STARTUP", "NEXUS LOAD FAILED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        state->nexusState.startup_save_select_active = 0;
+        m11_set_status(state, "BOOT", "NEXUS RESUMED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    state->nexusState.startup_save_select_active = 0;
+    state->nexusState.champion_select_active = 1;
+    state->nexusState.champion_cursor = 0;
+    m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
+    return M11_GAME_INPUT_REDRAW;
+}
+
+static M11_GameInputResult m11_nexus_startup_handle_save_input(
+    M11_GameViewState *state,
+    M12_MenuInput input)
+{
+    if (!state || !state->nexusState.startup_save_select_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (input == M12_MENU_INPUT_UP) {
+        if (state->nexusState.startup_save_selected_row > 0) {
+            --state->nexusState.startup_save_selected_row;
+        }
+        m11_set_status(state, "STARTUP", "NEXUS SAVE SELECT");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_DOWN) {
+        if (state->nexusState.startup_save_selected_row + 1 <
+            state->nexusState.startup_save_row_count) {
+            ++state->nexusState.startup_save_selected_row;
+        }
+        m11_set_status(state, "STARTUP", "NEXUS SAVE SELECT");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_ACCEPT ||
+        input == M12_MENU_INPUT_ACTION) {
+        return m11_nexus_startup_activate_save_row(state);
+    }
+    if (input == M12_MENU_INPUT_BACK) {
+        m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+        return M11_GAME_INPUT_RETURN_TO_MENU;
+    }
+    return input == M12_MENU_INPUT_NONE
+               ? M11_GAME_INPUT_IGNORED
+               : M11_GAME_INPUT_REDRAW;
+}
+
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     if (!state || !spec || !spec->title) {
@@ -11491,6 +11629,7 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
         } else {
             state->nexusState.title_loaded = 0;
         }
+        m11_nexus_startup_scan_saves(state);
     }
     m11_set_status(state, "BOOT", "NEXUS TITLE");
     m11_log_event(state, M11_COLOR_YELLOW,
@@ -14619,10 +14758,19 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             state->nexusState.title_active = 0;
             state->nexusState.title_frame = 0;
-            state->nexusState.champion_select_active = 1;
-            state->nexusState.champion_cursor = 0;
-            m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
+            if (state->nexusState.startup_save_slot_mask != 0u) {
+                state->nexusState.startup_save_select_active = 1;
+                state->nexusState.startup_save_selected_row = 0;
+                m11_set_status(state, "STARTUP", "NEXUS LOAD GAME");
+            } else {
+                state->nexusState.champion_select_active = 1;
+                state->nexusState.champion_cursor = 0;
+                m11_set_status(state, "STARTUP", "NEXUS CHAMPIONS");
+            }
             return M11_GAME_INPUT_REDRAW;
+        }
+        if (state->nexusState.startup_save_select_active) {
+            return m11_nexus_startup_handle_save_input(state, input);
         }
         if (state->nexusState.champion_select_active) {
             Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
@@ -15523,6 +15671,17 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     }
     if (state->nexusState.title_active) {
         return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    }
+    if (state->nexusState.startup_save_select_active) {
+        int row;
+        for (row = 0; row < state->nexusState.startup_save_row_count; ++row) {
+            if (!m11_point_in_rect(x, y, 18, 42 + row * 13, 284, 12)) {
+                continue;
+            }
+            state->nexusState.startup_save_selected_row = row;
+            return m11_nexus_startup_activate_save_row(state);
+        }
+        return M11_GAME_INPUT_IGNORED;
     }
     if (state->nexusState.champion_select_active) {
         Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
@@ -39650,6 +39809,47 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             nexus_render_title((const Nexus_TitleScreen*)state->nexusTitleScreen,
                                &nexusFb,
                                state->nexusState.title_frame);
+        } else if (state->nexusState.startup_save_select_active) {
+            int row;
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 14, "DUNGEON MASTER NEXUS",
+                          &g_text_title);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 28, "LOAD GAME", &g_text_shadow);
+            directDraw = 1;
+            for (row = 0; row < state->nexusState.startup_save_row_count; ++row) {
+                char label[96];
+                Nexus_V1_StartupRowKind kind =
+                    NEXUS_V1_STARTUP_ROW_NONE;
+                int slot = -1;
+                int rowY = 42 + row * 13;
+                const M11_TextStyle *style = &g_text_small;
+                if (!m11_nexus_startup_row_at(state, row, &kind, &slot)) {
+                    continue;
+                }
+                if (kind == NEXUS_V1_STARTUP_ROW_SLOT) {
+                    snprintf(label, sizeof(label), "%c LOAD SLOT %02d",
+                             row == state->nexusState.startup_save_selected_row
+                                 ? '>' : ' ',
+                             slot);
+                } else {
+                    snprintf(label, sizeof(label), "%c NEW GAME",
+                             row == state->nexusState.startup_save_selected_row
+                                 ? '>' : ' ');
+                }
+                if (row == state->nexusState.startup_save_selected_row) {
+                    m11_fill_rect(framebuffer, framebufferWidth,
+                                  framebufferHeight,
+                                  16, rowY - 1, 160, 11,
+                                  M11_COLOR_DARK_GRAY);
+                    style = &g_text_shadow;
+                }
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              22, rowY, label, style);
+            }
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          18, 184, "ACCEPT LOADS  ACTION STARTS",
+                          &g_text_small);
         } else if (state->nexusState.champion_select_active &&
                    state->nexusEngine) {
             const Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
