@@ -1,6 +1,33 @@
 
 # Unreleased
 
+# Firestaff v3.0.28
+
+Firestaff v3.0.28 packages the post-v3.0.27 startup hardening now on `main`.
+
+## Highlights since v3.0.27
+
+- **Nexus startup freeze**: the runtime now stays frozen while the startup
+  save-select flow is visible, so the dungeon cannot advance behind the menu.
+
+- **DM2 startup menu ownership**: normal DM2 launches now show the startup menu
+  before no-save runtime handoff, and the runtime remains frozen while that menu
+  is active.
+
+- **Nexus launcher handoff**: the launch path now has an explicit startup gate
+  before runtime ownership begins.
+
+- **CSB save-browser copy**: the import footer text is clearer during startup
+  save selection.
+
+## Verification
+
+- Local release-prep verification covers metadata synchronization and the
+  focused probes/builds run before the post-v3.0.27 commits were pushed.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.28` release run.
+
 # Firestaff v3.0.27
 
 Firestaff v3.0.27 packages the latest startup-flow hardening across CSB, Nexus,
