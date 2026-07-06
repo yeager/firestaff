@@ -14292,6 +14292,46 @@ static void m11_apply_reincarnation_to_candidate(M11_GameViewState* state,
     }
 }
 
+static void m11_repair_mirror_candidate_survival_fields(M11_GameViewState* state,
+                                                        int championIndex) {
+    struct ChampionState_Compat sourceRecord;
+    struct ChampionState_Compat* champ;
+
+    if (!state || !state->mirrorCatalogAvailable ||
+        state->candidateMirrorOrdinal < 0 ||
+        championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+        return;
+    }
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) return;
+    if (champ->hp.maximum > 0 && champ->hp.current > 0 &&
+        champ->stamina.maximum > 0 && champ->mana.maximum > 0 &&
+        champ->maxLoad > 0 && champ->food > 0 && champ->water > 0) {
+        return;
+    }
+
+    /* ReDMCSB REVIVE.C F0280 lines 227-242 materializes a live mirror
+     * candidate from the C127 sensorData before C040 opens.  If stale HoC
+     * routing or a partial candidate restore ever reaches F0282/Confirm with
+     * zeroed survival fields, repair only those fields from the same source
+     * mirror record instead of confirming a dead/immobile champion. */
+    F0600_CHAMPION_InitEmpty_Compat(&sourceRecord);
+    if (!F0675_CHAMPION_MirrorCatalogCopyRecord_Compat(
+            &state->mirrorCatalog, state->candidateMirrorOrdinal,
+            &sourceRecord)) {
+        return;
+    }
+    champ->hp = sourceRecord.hp;
+    champ->stamina = sourceRecord.stamina;
+    champ->mana = sourceRecord.mana;
+    champ->food = sourceRecord.food;
+    champ->water = sourceRecord.water;
+    champ->maxLoad = sourceRecord.maxLoad;
+    if (champ->hp.current == 0 && champ->hp.maximum > 0) {
+        champ->hp.current = champ->hp.maximum;
+    }
+}
+
 static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
                                                   int mirrorOrdinal) {
     int previousPartyCount;
@@ -14370,6 +14410,7 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
     }
     (void)M11_GameView_GetMirrorNameByOrdinal(state, state->candidateMirrorOrdinal,
                                               mirrorName, sizeof(mirrorName));
+    m11_repair_mirror_candidate_survival_fields(state, championIndex);
     if (reincarnate) {
         m11_apply_reincarnation_to_candidate(state, championIndex);
     } else {
