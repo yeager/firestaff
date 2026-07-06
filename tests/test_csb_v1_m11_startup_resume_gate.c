@@ -1100,7 +1100,8 @@ int main(void) {
                 "CSB startup title timing keeps PRESENTS for 30 ticks");
     expect_true(csb_v1_startup_title_stage_for_frame_pc34(0) ==
                     CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
-                    csb_v1_startup_title_stage_for_frame_pc34(30) ==
+                    csb_v1_startup_title_stage_for_frame_pc34(
+                        csb_v1_startup_title_presents_ticks_pc34() + 1) ==
                         CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
                 "CSB startup title helper exposes PRESENTS then CHAOS zoom");
     expect_true(csb_v1_startup_entrance_wait_stage_pc34() == 4 &&
