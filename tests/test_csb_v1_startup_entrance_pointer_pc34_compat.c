@@ -101,6 +101,7 @@ int main(void)
     CSB_V1_StartupRenderState_PC34 render_state;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
+    CSB_V1_StartupEntranceDecision_PC34 decision;
     char phase[64];
     int startup_active;
     int startup_frame;
@@ -369,6 +370,78 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34) ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
           "startup entrance actions resolve source command ids");
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.credits_active = 1;
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &decision) &&
+              decision ==
+                  CSB_V1_STARTUP_ENTRANCE_DECISION_DISMISS_CREDITS_PC34,
+          "startup command resolver dismisses credits before command dispatch");
+
+    command_state.credits_active = 0;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34() - 1;
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &decision) &&
+              decision == CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34,
+          "startup command resolver blocks pre-wait commands");
+
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    command_state.opening_active = 1;
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &decision) &&
+              decision == CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34,
+          "startup command resolver blocks opening commands");
+
+    command_state.opening_active = 0;
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &decision) &&
+              decision ==
+                  CSB_V1_STARTUP_ENTRANCE_DECISION_ENTER_DUNGEON_PC34,
+          "startup command resolver accepts dungeon entry command");
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34,
+              &decision) &&
+              decision ==
+                  CSB_V1_STARTUP_ENTRANCE_DECISION_ENTER_BONUS_DUNGEON_PC34,
+          "startup command resolver accepts bonus dungeon command");
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
+              &decision) &&
+              decision == CSB_V1_STARTUP_ENTRANCE_DECISION_RESUME_PC34,
+          "startup command resolver accepts resume command");
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34,
+              &decision) &&
+              decision ==
+                  CSB_V1_STARTUP_ENTRANCE_DECISION_BEGIN_CREDITS_PC34,
+          "startup command resolver accepts credits command");
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34,
+              &decision) &&
+              decision == CSB_V1_STARTUP_ENTRANCE_DECISION_QUIT_PC34,
+          "startup command resolver accepts quit command");
+    check(csb_v1_startup_resolve_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+              &decision) &&
+              decision == CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34,
+          "startup command resolver ignores empty command");
 
     command_state.title_active = 1;
     command_state.title_frame = 7;
