@@ -11,6 +11,7 @@
 #include "firestaff_sdl_bridge.h"
 #include "csb_v2_filter_config_pc34.h"
 #include "firestaff_save.h"
+#include "fs_portable_compat.h"
 #include "firestaff_graphics_dat_reader.h"
 #include "firestaff_wall_graphics.h"
 #include "firestaff_dungeon_query.h"
@@ -422,12 +423,18 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
     /* ── CSB V1 boot profile init ── */
     if (state->config.game == FS_GAME_CSB) {
         static CSB_V1_BootProfile s_csb_boot;
+        char resolvedDataDir[FSP_PATH_MAX];
+        const char* scanRoot = state->config.data_dir;
         csb_v1_boot_profile_init(&s_csb_boot);
-        if (state->config.data_dir) {
-            (void)csb_v1_boot_scan_assets(&s_csb_boot, state->config.data_dir);
-        } else {
-            (void)csb_v1_boot_scan_assets(&s_csb_boot, "~/.firestaff/data");
+        if (!scanRoot || !scanRoot[0]) {
+            if (FSP_ResolveDataDir(resolvedDataDir,
+                                   sizeof(resolvedDataDir),
+                                   NULL)) {
+                scanRoot = resolvedDataDir;
+            }
         }
+        (void)csb_v1_boot_scan_assets(&s_csb_boot,
+                                      scanRoot && scanRoot[0] ? scanRoot : NULL);
         if (state->config.save_dir) {
             csb_v1_boot_set_save_root(&s_csb_boot, state->config.save_dir);
         } else {
@@ -448,14 +455,23 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
     /* ── DM2 V1 boot profile init ── */
     if (state->config.game == FS_GAME_DM2) {
         static DM2_V1_BootProfile s_dm2_boot;
+        char resolvedDataDir[FSP_PATH_MAX];
+        const char* scanRoot = state->config.data_dir;
         dm2_v1_boot_profile_init(&s_dm2_boot);
         /* Scan assets in data_dir/dm2/ */
-        if (state->config.data_dir) {
+        if (!scanRoot || !scanRoot[0]) {
+            if (FSP_ResolveDataDir(resolvedDataDir,
+                                   sizeof(resolvedDataDir),
+                                   NULL)) {
+                scanRoot = resolvedDataDir;
+            }
+        }
+        if (scanRoot && scanRoot[0]) {
             char scan_dir[512];
-            snprintf(scan_dir, sizeof(scan_dir), "%s/dm2", state->config.data_dir);
-            (void)dm2_v1_boot_scan_assets(&s_dm2_boot, scan_dir);
-        } else {
-            (void)dm2_v1_boot_scan_assets(&s_dm2_boot, "~/.firestaff/data/dm2");
+            snprintf(scan_dir, sizeof(scan_dir), "%s/dm2", scanRoot);
+            if (dm2_v1_boot_scan_assets(&s_dm2_boot, scan_dir) != 0) {
+                (void)dm2_v1_boot_scan_assets(&s_dm2_boot, scanRoot);
+            }
         }
         /* Set save root */
         if (state->config.save_dir) {

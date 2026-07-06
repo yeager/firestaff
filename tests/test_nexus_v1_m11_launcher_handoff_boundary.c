@@ -62,6 +62,15 @@ static void expect_skip(const char* message) {
     ++g_skipped;
 }
 
+static void init_menu_without_gallery(M12_StartupMenuState* state,
+                                      const char* data_dir,
+                                      const char* game_id) {
+    M12_StartupMenuInitOptions options;
+    memset(&options, 0, sizeof(options));
+    options.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(state, data_dir, game_id, &options);
+}
+
 static void dismiss_initial_message(M12_StartupMenuState* state) {
     if (state && state->view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
@@ -129,7 +138,7 @@ static void run_empty_launcher_boundary(void) {
     expect_true(empty_dir[0] != '\0',
                 "Nexus launcher handoff empty data dir path was created");
 
-    M12_StartupMenu_InitWithDataDir(&menu, empty_dir, "nexus");
+    init_menu_without_gallery(&menu, empty_dir, "nexus");
     dismiss_initial_message(&menu);
     entry = M12_StartupMenu_GetEntry(&menu, 3);
     expect_true(entry != NULL,
@@ -198,7 +207,7 @@ static void run_real_launcher_handoff_if_available(void) {
         return;
     }
 
-    M12_StartupMenu_InitWithDataDir(&menu, data_dir, "nexus");
+    init_menu_without_gallery(&menu, data_dir, "nexus");
     dismiss_initial_message(&menu);
     entry = M12_StartupMenu_GetEntry(&menu, 3);
     if (!entry || !entry->available ||

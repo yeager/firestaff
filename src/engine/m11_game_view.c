@@ -2977,6 +2977,49 @@ static int m11_csb_startup_build_render_plan(
     return csb_v1_startup_build_render_plan_pc34(&render_state, out_plan);
 }
 
+static int m11_count_nonzero_pixels(const unsigned char *framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight,
+                                    int x,
+                                    int y,
+                                    int w,
+                                    int h)
+{
+    int yy;
+    int xx;
+    int count = 0;
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 ||
+        w <= 0 || h <= 0) {
+        return 0;
+    }
+    if (x < 0) {
+        w += x;
+        x = 0;
+    }
+    if (y < 0) {
+        h += y;
+        y = 0;
+    }
+    if (x + w > framebufferWidth) {
+        w = framebufferWidth - x;
+    }
+    if (y + h > framebufferHeight) {
+        h = framebufferHeight - y;
+    }
+    if (w <= 0 || h <= 0) {
+        return 0;
+    }
+    for (yy = y; yy < y + h; ++yy) {
+        const unsigned char *row = framebuffer + yy * framebufferWidth;
+        for (xx = x; xx < x + w; ++xx) {
+            if (row[xx] != 0u) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        unsigned char *framebuffer,
                                        int framebufferWidth,
@@ -3018,6 +3061,21 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        0,
                                        90,
                                        -1);
+            if (m11_count_nonzero_pixels(framebuffer,
+                                         framebufferWidth,
+                                         framebufferHeight,
+                                         0,
+                                         90,
+                                         320,
+                                         16) == 0) {
+                m11_draw_text(framebuffer,
+                              framebufferWidth,
+                              framebufferHeight,
+                              38,
+                              90,
+                              "FTL PRESENTS",
+                              &g_text_small);
+            }
         } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
             M11_AssetLoader_BlitSubRectScaled(title,
                                               framebuffer,
@@ -11584,11 +11642,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * Source: ReDMCSB LOADSAVE.C F0435 lines 2721-2800. */
     if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         const char *dd = spec->dataDir;
+        char resolvedDataDir[FSP_PATH_MAX];
         char scanDir[512];
         CSB_V1_BootProfile *profile = NULL;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
-            dd = "~/.firestaff/data";
+            if (FSP_ResolveDataDir(resolvedDataDir,
+                                   sizeof(resolvedDataDir),
+                                   NULL)) {
+                dd = resolvedDataDir;
+            }
         }
         M11_GameView_Shutdown(state);
         M11_GameView_Init(state);
@@ -11790,11 +11853,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * Source: dm2_v1_boot.h, dm2_v1_runtime.h. */
     if (spec->gameId && strcmp(spec->gameId, "dm2") == 0) {
         const char *dd = spec->dataDir;
+        char resolvedDataDir[FSP_PATH_MAX];
         char scanDir[512];
         DM2_V1_BootProfile *profile = NULL;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
-            dd = "~/.firestaff/data";
+            if (FSP_ResolveDataDir(resolvedDataDir,
+                                   sizeof(resolvedDataDir),
+                                   NULL)) {
+                dd = resolvedDataDir;
+            }
         }
         /* M11 owns the launch (per include/m11_game_view.h:36-37
          * "M11 owns the launch but the M11 render loop dispatches on

@@ -105,6 +105,15 @@ static void expect_skip(const char* msg) {
     ++g_skipped;
 }
 
+static void init_menu_without_gallery(M12_StartupMenuState* state,
+                                      const char* data_dir,
+                                      const char* game_id) {
+    M12_StartupMenuInitOptions options;
+    memset(&options, 0, sizeof(options));
+    options.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(state, data_dir, game_id, &options);
+}
+
 static int make_dir(const char* path) {
     return TEST_MKDIR(path) == 0;
 }
@@ -235,7 +244,7 @@ static void run_m12_dm2_boundary(void) {
     /* Boundary 1: M12 supports the dm2 launch intent. The launcher
      * must report m12_game_supported("dm2") == 1 so the Play menu
      * can show the DM2 entry at all. */
-    M12_StartupMenu_InitWithDataDir(&menu, emptyDataDir, "dm2");
+    init_menu_without_gallery(&menu, emptyDataDir, "dm2");
     dismiss_initial_message(&menu);
 
     dm2_entry = M12_StartupMenu_GetEntry(&menu, 2 /* DM2 slot */);
@@ -391,7 +400,7 @@ static void run_real_m12_dm2_handoff_if_available(void) {
         return;
     }
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir, "dm2");
+    init_menu_without_gallery(&menu, dataDir, "dm2");
     dismiss_initial_message(&menu);
     dm2_entry = M12_StartupMenu_GetEntry(&menu, 2 /* DM2 slot */);
     if (!dm2_entry || !dm2_entry->available ||
@@ -489,7 +498,7 @@ static void run_real_m12_dm2_quick_resume_if_available(void) {
         return;
     }
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir, "dm2");
+    init_menu_without_gallery(&menu, dataDir, "dm2");
     dismiss_initial_message(&menu);
     dm2_entry = M12_StartupMenu_GetEntry(&menu, 2 /* DM2 slot */);
     if (!dm2_entry || !dm2_entry->available ||
