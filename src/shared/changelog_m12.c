@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.46  (2026-07-06)",
+    "  - Packages the post-v3.0.45 DM1 inscription glyph, side-wall ordering, and arrow-feedback gates now on main.",
+    "  - DM1 V1 wall-inscription glyph escapes, side-wall source ordering, and arrow feedback coverage are included in release packaging.",
+    "",
     "V3.0.45  (2026-07-06)",
     "  - Packages the post-v3.0.44 DM2 V1 rendering handoff work now on main.",
     "  - DM2 V1 projectiles now carry runtime direction into viewport rendering and select view-relative directional map-chip frames for wide atlases.",
@@ -455,5 +459,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.45";
+    return "3.0.46";
 }
