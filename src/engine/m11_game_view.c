@@ -117,22 +117,6 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 static void m11_nexus_release_title(M11_GameViewState* state);
 static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
                                             const char *path);
-static int m11_csb_utility_accept_import_action(CSB_V1_UtilFlowContext *flow)
-{
-    CSB_V1_UtilMenuLayout layout;
-
-    if (!flow || flow->state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
-        return 0;
-    }
-    if (!csb_v1_util_flow_menu_layout(flow, &layout) ||
-        layout.row_count <= 0 ||
-        layout.rows[0].action != CSB_V1_UTIL_ACTION_IMPORT) {
-        return 0;
-    }
-    csb_v1_util_flow_set_action(flow, layout.rows[0].action);
-    return csb_v1_util_flow_accept_selected_action(flow) == 0;
-}
-
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                                  const char *path,
                                                  int *out_count,
@@ -2561,6 +2545,72 @@ static const char* m11_dm2_item_name(int item_id)
     }
 }
 
+static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
+                                               unsigned char *framebuffer,
+                                               int framebufferWidth,
+                                               int framebufferHeight)
+{
+    CSB_V1_UtilFlowContext flow;
+    CSB_V1_UtilMenuLayout layout;
+    char row[96];
+    int i;
+
+    if (!state || !state->csbState.startup_import_available) {
+        return;
+    }
+
+    snprintf(row,
+             sizeof(row),
+             "DM1 IMPORT READY: %d CHAMPIONS",
+             state->csbState.startup_import_champion_count);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  38, 80, row, &g_text_small);
+    if (state->csbState.startup_import_utility_prompt[0] != '\0') {
+        m11_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      38,
+                      92,
+                      state->csbState.startup_import_utility_prompt,
+                      &g_text_small);
+    }
+
+    csb_v1_util_flow_init(&flow);
+    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    csb_v1_util_flow_set_action(&flow, CSB_V1_UTIL_ACTION_IMPORT);
+    if (!csb_v1_util_flow_menu_layout(&flow, &layout)) {
+        return;
+    }
+    for (i = 0; i < layout.row_count; ++i) {
+        const CSB_V1_UtilMenuRow *menuRow = &layout.rows[i];
+        int textY = menuRow->y + 2;
+        if (menuRow->selected) {
+            m11_fill_rect(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          menuRow->x - 2,
+                          menuRow->y,
+                          menuRow->w,
+                          menuRow->h,
+                          M11_COLOR_DARK_GRAY);
+            m11_draw_text(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          menuRow->x,
+                          textY,
+                          ">",
+                          &g_text_small);
+        }
+        m11_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      menuRow->x + 10,
+                      textY,
+                      menuRow->label,
+                      &g_text_small);
+    }
+}
+
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           unsigned char *framebuffer,
                                           int framebufferWidth,
@@ -2627,9 +2677,12 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                       38, 42, "CHAOS STRIKES BACK", &g_text_title);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       38, 64, "ENTRANCE", &g_text_shadow);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      38, 84, "CSB RUNTIME READY", &g_text_small);
-        if (state->csbBootProfile) {
+        if (!state->csbState.startup_import_available) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          38, 84, "CSB RUNTIME READY", &g_text_small);
+        }
+        if (state->csbBootProfile &&
+            !state->csbState.startup_import_available) {
             const CSB_V1_BootProfile *profile =
                 (const CSB_V1_BootProfile *)state->csbBootProfile;
             char row[96];
@@ -2640,30 +2693,16 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           38, 96, row, &g_text_small);
         }
-        if (state->csbState.startup_import_available) {
-            char row[96];
-            snprintf(row,
-                     sizeof(row),
-                     "DM1 IMPORT READY: %d CHAMPIONS",
-                     state->csbState.startup_import_champion_count);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          38, 112, row, &g_text_small);
-            if (state->csbState.startup_import_utility_prompt[0] != '\0') {
-                m11_draw_text(framebuffer,
-                              framebufferWidth,
-                              framebufferHeight,
-                              38,
-                              124,
-                              state->csbState.startup_import_utility_prompt,
-                              &g_text_small);
-            }
-        }
         blink_on = ((state->csbState.startup_entrance_frame / 12) & 1) == 0;
         if (blink_on) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           38, 154, "PRESS ENTER", &g_text_shadow);
         }
     }
+    m11_draw_csb_startup_utility_panel(state,
+                                       framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight);
 }
 
 enum {
@@ -3940,23 +3979,17 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
 
 static int m11_csb_utility_accept_import_action(CSB_V1_UtilFlowContext *flow)
 {
-    int guard;
+    CSB_V1_UtilMenuLayout layout;
 
     if (!flow || flow->state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
         return 0;
     }
-    for (guard = 0;
-         guard < 4 &&
-         csb_v1_util_flow_selected_action(flow) != CSB_V1_UTIL_ACTION_IMPORT;
-         ++guard) {
-        if (csb_v1_util_flow_move_action_cursor(flow, 1) < 0) {
-            return 0;
-        }
-    }
-    if (csb_v1_util_flow_selected_action(flow) !=
-        CSB_V1_UTIL_ACTION_IMPORT) {
+    if (!csb_v1_util_flow_menu_layout(flow, &layout) ||
+        layout.row_count <= 0 ||
+        layout.rows[0].action != CSB_V1_UTIL_ACTION_IMPORT) {
         return 0;
     }
+    csb_v1_util_flow_set_action(flow, layout.rows[0].action);
     return csb_v1_util_flow_accept_selected_action(flow) == 0;
 }
 
