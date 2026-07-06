@@ -10734,12 +10734,46 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
         return m11_nexus_startup_activate_save_row(state);
     }
     if (input == M12_MENU_INPUT_BACK) {
-        m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
-        return M11_GAME_INPUT_RETURN_TO_MENU;
+        state->nexusState.startup_save_select_active = 0;
+        state->nexusState.title_active = 1;
+        state->nexusState.title_frame = 0;
+        m11_set_status(state, "STARTUP", "NEXUS TITLE");
+        return M11_GAME_INPUT_REDRAW;
     }
     return input == M12_MENU_INPUT_NONE
                ? M11_GAME_INPUT_IGNORED
                : M11_GAME_INPUT_REDRAW;
+}
+
+static M11_GameInputResult m11_nexus_startup_back_from_champions(
+    M11_GameViewState *state,
+    Nexus_V1_ChampionPool *pool)
+{
+    int removed;
+
+    if (!state || !pool) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    removed = nexus_v1_champion_unrecruit_last(pool);
+    if (removed >= 0) {
+        state->nexusState.champion_cursor = removed;
+        m11_set_status(state, "STARTUP", "NEXUS CHAMPION REMOVED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    state->nexusState.champion_select_active = 0;
+    if (state->nexusState.startup_save_slot_mask != 0u) {
+        state->nexusState.startup_save_select_active = 1;
+        if (state->nexusState.startup_save_row_count > 0) {
+            state->nexusState.startup_save_selected_row =
+                state->nexusState.startup_save_row_count - 1;
+        }
+        m11_set_status(state, "STARTUP", "NEXUS LOAD GAME");
+    } else {
+        state->nexusState.title_active = 1;
+        state->nexusState.title_frame = 0;
+        m11_set_status(state, "STARTUP", "NEXUS TITLE");
+    }
+    return M11_GAME_INPUT_REDRAW;
 }
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
@@ -14767,11 +14801,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (!state->nexusEngine) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (input == M12_MENU_INPUT_BACK) {
-            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
-            return M11_GAME_INPUT_RETURN_TO_MENU;
-        }
         if (state->nexusState.title_active) {
+            if (input == M12_MENU_INPUT_BACK) {
+                m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            }
             if (input == M12_MENU_INPUT_NONE) {
                 return M11_GAME_INPUT_IGNORED;
             }
@@ -14794,6 +14828,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (state->nexusState.champion_select_active) {
             Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
             int cursor = state->nexusState.champion_cursor;
+            if (input == M12_MENU_INPUT_BACK) {
+                return m11_nexus_startup_back_from_champions(state, pool);
+            }
             if (pool->champion_count <= 0) {
                 return M11_GAME_INPUT_IGNORED;
             }
@@ -14843,6 +14880,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_BACK) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
         }
         switch (input) {
             case M12_MENU_INPUT_UP:
