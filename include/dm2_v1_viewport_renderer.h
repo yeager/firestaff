@@ -145,6 +145,10 @@ int dm2_v1_viewport_item_graphic_index(int item_category,
 int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
                                              int projectile_type,
                                              int frame_index);
+int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h);
+int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h);
+int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
+                                         int frame_count);
 
 typedef struct {
     int x;
