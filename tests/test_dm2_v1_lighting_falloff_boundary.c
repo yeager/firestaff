@@ -39,6 +39,24 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
     static const uint8_t door_button[4] = { 4, 5, 6, 7 };
     static const uint8_t wall_button[4] = { 12, 13, 14, 15 };
+    static const uint8_t creature[64] = {
+        9, 9, 9, 9, 9, 9, 9, 9,
+        9, 10, 10, 10, 10, 10, 10, 9,
+        9, 10, 11, 11, 11, 11, 10, 9,
+        9, 10, 11, 12, 12, 11, 10, 9,
+        9, 10, 11, 12, 12, 11, 10, 9,
+        9, 10, 11, 11, 11, 11, 10, 9,
+        9, 10, 10, 10, 10, 10, 10, 9,
+        9, 9, 9, 9, 9, 9, 9, 9
+    };
+    static const uint8_t item[36] = {
+        6, 6, 6, 6, 6, 6,
+        6, 7, 7, 7, 7, 6,
+        6, 7, 8, 8, 7, 6,
+        6, 7, 8, 8, 7, 6,
+        6, 7, 7, 7, 7, 6,
+        6, 6, 6, 6, 6, 6
+    };
     (void)user;
     ++s_asset_fetch_calls;
     s_last_asset_index = gdat_index;
@@ -66,6 +84,24 @@ static int test_dm2_asset_fetch(void *user,
                    DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT &&
                DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - gdat_index < 0x04) {
         if (out_pixels) *out_pixels = door_panel;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE &&
+               (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
+                 DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >= 0x10 &&
+               (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
+                 DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) <= 0x15) {
+        if (out_pixels) *out_pixels = item;
+        if (out_w) *out_w = 6;
+        if (out_h) *out_h = 6;
+        if (out_stride) *out_stride = 6;
+        return 0;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE - gdat_index <
+                   (0x100 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT)) {
+        if (out_pixels) *out_pixels = creature;
+        if (out_w) *out_w = 8;
+        if (out_h) *out_h = 8;
+        if (out_stride) *out_stride = 8;
+        return 0;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index <
                    (0x100 << DM2_V1_VIEWPORT_GFX_WALL_BUTTON_INDEX_SHIFT)) {
@@ -302,6 +338,98 @@ static void test_floor_ceiling_asset_provider(void)
               viewport.fallback_door_drawn_count == 0);
 }
 
+static void test_sprite_asset_provider(void)
+{
+    uint8_t framebuffer[320 * 200];
+    DM2_V1_ViewportState viewport;
+
+    CHECK("DM2 creature asset index packs type and frame",
+          dm2_v1_viewport_creature_graphic_index(0x12, 0x03) ==
+              DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE -
+                  ((0x12 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) | 0x03));
+    CHECK("DM2 item asset index packs category, type and frame",
+          dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04) ==
+              DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE -
+                  ((0x10 << DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) |
+                   (0x22 << DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT) | 0x04));
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.creature_count = 1;
+    viewport.creatures[0].creature_type = 0x12;
+    viewport.creatures[0].frame_index = 0x03;
+    viewport.creatures[0].screen_x = 40;
+    viewport.creatures[0].screen_y = 50;
+    viewport.creatures[0].health_pct = 100;
+    dm2_v1_render_creatures(&viewport);
+    CHECK("creature fallback draws when no sprite asset provider is installed",
+          viewport.asset_creature_drawn_count == 0 &&
+              viewport.fallback_creature_drawn_count == 1 &&
+              framebuffer[(50 * 320) + 40] == (uint8_t)(11 + (0x12 & 7)));
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.creature_count = 1;
+    viewport.creatures[0].creature_type = 0x12;
+    viewport.creatures[0].frame_index = 0x03;
+    viewport.creatures[0].screen_x = 40;
+    viewport.creatures[0].screen_y = 50;
+    viewport.creatures[0].health_pct = 100;
+    s_asset_fetch_calls = 0;
+    s_last_asset_index = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_creatures(&viewport);
+    CHECK("creature pass fetches DM2 map-chip sprite assets",
+          s_asset_fetch_calls == 1 &&
+              s_last_asset_index ==
+                  dm2_v1_viewport_creature_graphic_index(0x12, 0x03) &&
+              viewport.asset_creature_drawn_count == 1 &&
+              viewport.fallback_creature_drawn_count == 0);
+    CHECK("creature asset is centered on the sprite position",
+          framebuffer[((50 - 4) * 320) + (40 - 4)] == 9 &&
+              framebuffer[(50 * 320) + 40] == 12);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.item_count = 1;
+    viewport.items[0].item_category = 0x10;
+    viewport.items[0].item_type = 0x22;
+    viewport.items[0].frame_index = 0x04;
+    viewport.items[0].screen_x = 80;
+    viewport.items[0].screen_y = 90;
+    dm2_v1_render_items(&viewport);
+    CHECK("item fallback draws when no sprite asset provider is installed",
+          viewport.asset_item_drawn_count == 0 &&
+              viewport.fallback_item_drawn_count == 1 &&
+              framebuffer[(90 * 320) + 80] == 3);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.item_count = 1;
+    viewport.items[0].item_category = 0x10;
+    viewport.items[0].item_type = 0x22;
+    viewport.items[0].frame_index = 0x04;
+    viewport.items[0].screen_x = 80;
+    viewport.items[0].screen_y = 90;
+    s_asset_fetch_calls = 0;
+    s_last_asset_index = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_items(&viewport);
+    CHECK("item pass fetches DM2 map-chip sprite assets",
+          s_asset_fetch_calls == 1 &&
+              s_last_asset_index ==
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04) &&
+              viewport.asset_item_drawn_count == 1 &&
+              viewport.fallback_item_drawn_count == 0);
+    CHECK("item asset is centered on the floor-item position",
+          framebuffer[((90 - 3) * 320) + (80 - 3)] == 6 &&
+              framebuffer[(90 * 320) + 80] == 8);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Lighting/Palette Runtime Gate ===\n\n");
@@ -335,6 +463,7 @@ int main(void)
     }
     test_door_rect_contracts();
     test_floor_ceiling_asset_provider();
+    test_sprite_asset_provider();
 
     printf("\nDM2 V1 Lighting/Palette Runtime Gate: %d/%d passed\n",
            s_tests_passed, s_tests_run);
