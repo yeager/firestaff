@@ -1,11 +1,14 @@
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "title_frontend_v1.h"
 
+#include <stdio.h>
+
 enum {
     CSB_V1_TITLE_TOTAL_TICKS_PC34 = 53,
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 30,
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
-    CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20
+    CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
+    CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800
 };
 
 const char* csb_v1_startup_stage_name_pc34(CSB_V1_StartupStage_PC34 stage)
@@ -55,8 +58,7 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
     }
-    sourceStep =
-        (unsigned int)(frame - CSB_V1_TITLE_PRESENTS_TICKS_PC34 + 1);
+    sourceStep = csb_v1_startup_title_source_step_for_frame_pc34(frame);
     if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
         return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     }
@@ -74,6 +76,14 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
     }
 }
 
+unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
+{
+    if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
+        return 1u;
+    }
+    return (unsigned int)(frame - CSB_V1_TITLE_PRESENTS_TICKS_PC34 + 1);
+}
+
 int csb_v1_startup_entrance_wait_stage_pc34(void)
 {
     return CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34;
@@ -82,6 +92,11 @@ int csb_v1_startup_entrance_wait_stage_pc34(void)
 int csb_v1_startup_entrance_pre_open_delay_ticks_pc34(void)
 {
     return CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34;
+}
+
+int csb_v1_startup_entrance_credits_ticks_pc34(void)
+{
+    return CSB_V1_ENTRANCE_CREDITS_TICKS_PC34;
 }
 
 int csb_v1_startup_entrance_action_for_input_pc34(
@@ -108,6 +123,274 @@ int csb_v1_startup_entrance_action_for_input_pc34(
         default:
             return CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34;
     }
+}
+
+int csb_v1_startup_advance_tick_pc34(
+    CSB_V1_StartupTickState_PC34 *state,
+    CSB_V1_StartupTickResult_PC34 *out_result)
+{
+    if (out_result) {
+        out_result->redraw = 0;
+        out_result->title_finished = 0;
+        out_result->reached_entrance_wait = 0;
+        out_result->credits_finished = 0;
+        out_result->door_opening_finished = 0;
+    }
+    if (!state) {
+        return 0;
+    }
+    state->entrance_frame++;
+    if (out_result) {
+        out_result->redraw = 1;
+    }
+    if (state->title_active) {
+        state->title_frame++;
+        state->title_source_step =
+            csb_v1_startup_title_stage_for_frame_pc34(state->title_frame);
+        if (state->title_frame >= csb_v1_startup_title_total_ticks_pc34()) {
+            state->title_active = 0;
+            state->title_source_step = 0;
+            state->entrance_source_step = 1;
+            state->entrance_frame = 0;
+            if (out_result) {
+                out_result->title_finished = 1;
+            }
+        }
+        return 1;
+    }
+    if (!state->credits_active &&
+        !state->opening_active &&
+        state->entrance_source_step > 0 &&
+        state->entrance_source_step < csb_v1_startup_entrance_wait_stage_pc34()) {
+        state->entrance_source_step++;
+        if (state->entrance_source_step ==
+            csb_v1_startup_entrance_wait_stage_pc34() &&
+            out_result) {
+            out_result->reached_entrance_wait = 1;
+        }
+    }
+    if (state->credits_active && state->credits_remaining_ticks > 0) {
+        state->credits_remaining_ticks--;
+        if (state->credits_remaining_ticks == 0) {
+            state->credits_active = 0;
+            if (out_result) {
+                out_result->credits_finished = 1;
+            }
+        }
+    }
+    if (state->opening_active) {
+        int door_step_count = state->door_step_count > 0
+            ? state->door_step_count
+            : 0;
+        if (state->opening_delay_ticks > 0) {
+            state->opening_delay_ticks--;
+        } else if (state->opening_step < door_step_count) {
+            state->opening_step++;
+        } else if (out_result) {
+            out_result->door_opening_finished = 1;
+        }
+    }
+    return 1;
+}
+
+int csb_v1_startup_build_render_plan_pc34(
+    const CSB_V1_StartupRenderState_PC34 *state,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    CSB_V1_StartupRenderPlan_PC34 plan;
+
+    if (!out_plan) {
+        return 0;
+    }
+    plan.surface = CSB_V1_STARTUP_RENDER_NONE_PC34;
+    plan.waiting_for_input = 0;
+    plan.title_source_step = 0;
+    plan.blink_prompt_visible = 0;
+    plan.opening_step = 0;
+    if (!state || !state->entrance_active) {
+        *out_plan = plan;
+        return 0;
+    }
+    plan.waiting_for_input =
+        state->entrance_source_step >=
+        csb_v1_startup_entrance_wait_stage_pc34();
+    if (state->title_active) {
+        plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+        plan.title_source_step =
+            (int)csb_v1_startup_title_source_step_for_frame_pc34(
+                state->title_frame);
+        *out_plan = plan;
+        return 1;
+    }
+    if (state->credits_active) {
+        plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34;
+        *out_plan = plan;
+        return 1;
+    }
+    if (!plan.waiting_for_input && state->entrance_source_step == 2) {
+        /* ReDMCSB ENTRANCE.C F0441 lines 426-443 fades/curtains to black
+         * before C004/C002/C003 are redrawn. */
+        plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
+        *out_plan = plan;
+        return 1;
+    }
+    if (state->opening_active) {
+        plan.surface = state->opening_delay_ticks > 0
+            ? CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34
+            : CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
+        plan.opening_step = state->opening_step;
+        *out_plan = plan;
+        return 1;
+    }
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.blink_prompt_visible =
+        ((state->entrance_frame / 12) & 1) == 0;
+    *out_plan = plan;
+    return 1;
+}
+
+int csb_v1_startup_begin_door_opening_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    int pending_command)
+{
+    if (!state || !state->entrance_active || state->opening_active) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0441/F0806 starts dungeon entry by leaving the
+     * interactive wait loop, cancelling transient credits, waiting 20 vblanks,
+     * then running F0438/F0807 door animation before runtime handoff. */
+    state->credits_active = 0;
+    state->credits_remaining_ticks = 0;
+    state->opening_active = 1;
+    state->entrance_source_step =
+        CSB_V1_STARTUP_STAGE_ENTRANCE_PRE_OPEN_DELAY_PC34;
+    state->opening_delay_ticks =
+        csb_v1_startup_entrance_pre_open_delay_ticks_pc34();
+    state->opening_step = 1;
+    state->pending_command = pending_command;
+    return 1;
+}
+
+int csb_v1_startup_finish_door_opening_pc34(
+    CSB_V1_StartupCommandState_PC34 *state)
+{
+    if (!state || !state->opening_active) {
+        return 0;
+    }
+    state->opening_active = 0;
+    state->opening_delay_ticks = 0;
+    state->opening_step = 0;
+    state->entrance_active = 0;
+    state->entrance_dismissed = 1;
+    state->entrance_source_step = 0;
+    state->credits_active = 0;
+    state->credits_remaining_ticks = 0;
+    state->pending_command = 0;
+    return 1;
+}
+
+int csb_v1_startup_begin_credits_pc34(
+    CSB_V1_StartupCommandState_PC34 *state)
+{
+    if (!state || !state->entrance_active) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0442 lines ~966-1091 shows C005 credits for
+     * 1800 vertical blanks, then returns to the entrance loop. */
+    state->credits_active = 1;
+    state->credits_remaining_ticks =
+        csb_v1_startup_entrance_credits_ticks_pc34();
+    state->opening_active = 0;
+    state->opening_delay_ticks = 0;
+    state->opening_step = 0;
+    state->pending_command = 0;
+    return 1;
+}
+
+int csb_v1_startup_dismiss_credits_pc34(
+    CSB_V1_StartupCommandState_PC34 *state)
+{
+    if (!state || !state->credits_active) {
+        return 0;
+    }
+    state->credits_active = 0;
+    state->credits_remaining_ticks = 0;
+    return 1;
+}
+
+int csb_v1_startup_quit_to_launcher_pc34(
+    CSB_V1_StartupCommandState_PC34 *state)
+{
+    if (!state) {
+        return 0;
+    }
+    state->title_active = 0;
+    state->title_frame = 0;
+    state->title_source_step = 0;
+    state->entrance_active = 0;
+    state->entrance_source_step = 0;
+    state->entrance_dismissed = 1;
+    state->credits_active = 0;
+    state->credits_remaining_ticks = 0;
+    state->opening_active = 0;
+    state->opening_delay_ticks = 0;
+    state->opening_step = 0;
+    state->pending_command = 0;
+    return 1;
+}
+
+int csb_v1_startup_receipt_phase_pc34(
+    const CSB_V1_StartupCommandState_PC34 *state,
+    int entrance_frame,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame)
+{
+    int startup_active = 0;
+    int startup_frame = entrance_frame;
+    const char *literal_phase = "csb-runtime";
+
+    if (!out_phase || out_phase_size <= 0) {
+        return 0;
+    }
+    out_phase[0] = '\0';
+    if (state) {
+        startup_active = state->entrance_active ? 1 : 0;
+        startup_frame = state->title_active
+            ? state->title_frame
+            : entrance_frame;
+        if (state->title_active) {
+            snprintf(out_phase,
+                     (size_t)out_phase_size,
+                     "csb-title-%d",
+                     state->title_source_step);
+        } else if (state->opening_active) {
+            snprintf(out_phase,
+                     (size_t)out_phase_size,
+                     "csb-entrance-opening-%d",
+                     state->opening_step);
+        } else if (state->credits_active) {
+            literal_phase = "csb-credits";
+            snprintf(out_phase, (size_t)out_phase_size, "%s", literal_phase);
+        } else if (state->entrance_active) {
+            snprintf(out_phase,
+                     (size_t)out_phase_size,
+                     "csb-entrance-%d",
+                     state->entrance_source_step);
+        } else {
+            snprintf(out_phase, (size_t)out_phase_size, "%s", literal_phase);
+        }
+    } else {
+        snprintf(out_phase, (size_t)out_phase_size, "%s", literal_phase);
+    }
+    if (out_startup_active) {
+        *out_startup_active = startup_active;
+    }
+    if (out_startup_frame) {
+        *out_startup_frame = startup_frame;
+    }
+    return 1;
 }
 
 int csb_v1_startup_sequence_source_order_valid_pc34(void)

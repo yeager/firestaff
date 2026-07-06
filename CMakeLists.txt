@@ -5994,6 +5994,48 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_boot_title_import_ui_gate_pc34_compat
     )
 
+    add_executable(test_csb_v1_startup_entrance_pointer_pc34_compat
+        tests/test_csb_v1_startup_entrance_pointer_pc34_compat.c
+        src/csb/csb_v1_startup_entrance_pointer_pc34_compat.c
+        src/csb/csb_v1_startup_sequence_pc34_compat.c
+        src/frontend/title_frontend_v1.c
+        src/frontend/title_dat_loader_v1.c
+    )
+    target_include_directories(test_csb_v1_startup_entrance_pointer_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_startup_entrance_pointer_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_startup_entrance_pointer_pc34_compat
+        COMMAND test_csb_v1_startup_entrance_pointer_pc34_compat
+    )
+
+    add_executable(test_csb_v1_utility_flow_action_contract
+        tests/test_csb_v1_utility_flow_action_contract.c
+        src/csb/csb_v1_utility_flow_pc34.c
+    )
+    target_include_directories(test_csb_v1_utility_flow_action_contract PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_utility_flow_action_contract
+            PRIVATE -Wall -Wextra -O2 -ffunction-sections -fdata-sections)
+    endif()
+    if(APPLE)
+        target_link_options(test_csb_v1_utility_flow_action_contract
+            PRIVATE -Wl,-dead_strip)
+    elseif(UNIX AND NOT MSVC)
+        target_link_options(test_csb_v1_utility_flow_action_contract
+            PRIVATE -Wl,--gc-sections)
+    endif()
+    add_test(
+        NAME csb_v1_utility_flow_action_contract
+        COMMAND test_csb_v1_utility_flow_action_contract
+    )
+
     add_executable(test_csb_v1_keyboard_commands_pc34_compat
         tests/test_csb_v1_keyboard_commands_pc34_compat.c
     )

@@ -90,6 +90,26 @@ typedef struct {
     CSB_V1_UtilMenuRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
 } CSB_V1_UtilMenuLayout;
 
+enum {
+    CSB_V1_UTIL_RENDER_ROW_LABEL_CAPACITY = 96
+};
+
+typedef struct {
+    CSB_V1_UtilFlowAction action;
+    int selected;
+    int x;
+    int y;
+    int w;
+    int h;
+    int highlight_x;
+    int highlight_y;
+    int highlight_w;
+    int highlight_h;
+    int text_x;
+    int text_y;
+    char label[CSB_V1_UTIL_RENDER_ROW_LABEL_CAPACITY];
+} CSB_V1_UtilRenderRow;
+
 typedef struct {
     int x;
     int y;
@@ -158,6 +178,10 @@ int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
                                   CSB_V1_UtilInputResult *out_result);
 int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
                                  CSB_V1_UtilMenuLayout *out_layout);
+int csb_v1_util_flow_menu_render_rows(
+    const CSB_V1_UtilFlowContext *ctx,
+    CSB_V1_UtilRenderRow *rows,
+    int max_rows);
 int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
                                   int preview_active,
                                   CSB_V1_UtilPanelLayout *out_layout);
@@ -165,6 +189,11 @@ CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
     const CSB_V1_UtilFlowContext *ctx,
     int x,
     int y);
+int csb_v1_util_flow_handle_point(CSB_V1_UtilFlowContext *ctx,
+                                  int x,
+                                  int y,
+                                  int preview_active,
+                                  CSB_V1_UtilInputResult *out_result);
 int csb_v1_util_flow_panel_contains_point(const CSB_V1_UtilFlowContext *ctx,
                                           int preview_active,
                                           int x,
