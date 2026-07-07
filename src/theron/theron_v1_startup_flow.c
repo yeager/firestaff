@@ -496,6 +496,215 @@ int theron_v1_startup_layout_hit_at(
     return 0;
 }
 
+static int tqr_startup_render_add_row(
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows,
+    int count,
+    const char *text) {
+
+    if (!rows || count < 0 || count >= max_rows) {
+        return count;
+    }
+    snprintf(rows[count],
+             THERON_STARTUP_RENDER_ROW_CAPACITY,
+             "%s",
+             text ? text : "");
+    return count + 1;
+}
+
+static const Theron_StartupLayoutElement *tqr_startup_find_layout_element(
+    const Theron_StartupLayoutElement *elements,
+    int element_count,
+    Theron_StartupLayoutElementKind kind) {
+
+    int i;
+
+    if (!elements || element_count <= 0) {
+        return NULL;
+    }
+    for (i = 0; i < element_count; ++i) {
+        if (elements[i].kind == kind) {
+            return &elements[i];
+        }
+    }
+    return NULL;
+}
+
+static const char *tqr_startup_selected_status(
+    const Theron_StartupLayoutElement *element) {
+
+    if (!element || !element->selected) {
+        return "AVAILABLE";
+    }
+    switch (element->selected_order) {
+    case 1: return "RESURRECTED #1";
+    case 2: return "RESURRECTED #2";
+    case 3: return "RESURRECTED #3";
+    default: return "RESURRECTED";
+    }
+}
+
+int theron_v1_startup_render_rows_build(
+    const Theron_StartupLayoutState *state,
+    const Theron_StartupLayoutElement *elements,
+    int element_count,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows) {
+
+    const Theron_StartupLayoutElement *title;
+    const Theron_StartupLayoutElement *chapter;
+    int count = 0;
+    int i;
+
+    if (!state || !rows || max_rows <= 0) {
+        return 0;
+    }
+    memset(rows, 0,
+           (size_t)max_rows * THERON_STARTUP_RENDER_ROW_CAPACITY);
+
+    title = tqr_startup_find_layout_element(
+        elements, element_count, THERON_STARTUP_LAYOUT_ELEMENT_TITLE);
+    chapter = tqr_startup_find_layout_element(
+        elements, element_count, THERON_STARTUP_LAYOUT_ELEMENT_CHAPTER);
+    if (title && count < max_rows) {
+        count = tqr_startup_render_add_row(
+            rows, max_rows, count, title->label);
+    }
+    if (chapter && count < max_rows) {
+        count = tqr_startup_render_add_row(
+            rows, max_rows, count, chapter->label);
+    }
+    if (count >= max_rows) {
+        return count;
+    }
+
+    if (state->phase == THERON_STARTUP_PHASE_TITLE) {
+        return tqr_startup_render_add_row(
+            rows, max_rows, count, "PRESS ENTER TO START");
+    }
+
+    if (state->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        int has_continue =
+            state->has_tqsv_continue || state->has_srm_continue;
+
+        count = tqr_startup_render_add_row(
+            rows, max_rows, count, "CHOOSE A STAGE");
+        if (count >= max_rows) {
+            return count;
+        }
+        if (state->startup_roster_name_count > 0) {
+            int written = snprintf(rows[count],
+                                   THERON_STARTUP_RENDER_ROW_CAPACITY,
+                                   "TRACK 02 ROSTER:");
+            for (i = 0;
+                 i < state->startup_roster_name_count &&
+                 i < THERON_STARTUP_LAYOUT_ROSTER_CAPACITY;
+                 ++i) {
+                const char *name = state->startup_roster_names[i];
+                if (written < 0 ||
+                    written >= THERON_STARTUP_RENDER_ROW_CAPACITY ||
+                    !name || !name[0]) {
+                    continue;
+                }
+                written += snprintf(
+                    rows[count] + written,
+                    (size_t)THERON_STARTUP_RENDER_ROW_CAPACITY -
+                        (size_t)written,
+                    " %s",
+                    name);
+            }
+            ++count;
+            if (count >= max_rows) {
+                return count;
+            }
+        }
+        if (state->startup_roster_name_count > 7 &&
+            state->startup_roster_titles[1] &&
+            state->startup_roster_titles[7] &&
+            state->startup_roster_titles[1][0] != '\0' &&
+            state->startup_roster_titles[7][0] != '\0') {
+            snprintf(rows[count++],
+                     THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "TRACK 02 TITLES: MARA=%s; PENTAI=%s",
+                     state->startup_roster_titles[1],
+                     state->startup_roster_titles[7]);
+            if (count >= max_rows) {
+                return count;
+            }
+        }
+        for (i = 0; i < element_count && count < max_rows; ++i) {
+            const Theron_StartupLayoutElement *e = &elements[i];
+            if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE) {
+                snprintf(rows[count++],
+                         THERON_STARTUP_RENDER_ROW_CAPACITY,
+                         "%c CONTINUE  %s SLOT %d",
+                         e->cursor ? '>' : ' ',
+                         e->save_kind == 1 ? "TQSV" : "SRM",
+                         e->save_slot);
+            } else if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_STAGE) {
+                snprintf(rows[count++],
+                         THERON_STARTUP_RENDER_ROW_CAPACITY,
+                         "%c %d  %s%s",
+                         e->cursor ? '>' : ' ',
+                         e->dungeon_id,
+                         e->label,
+                         e->enabled ? "" : "  LOCKED");
+            }
+        }
+        if (count < max_rows) {
+            count = tqr_startup_render_add_row(
+                rows,
+                max_rows,
+                count,
+                has_continue
+                    ? "UP/DOWN SELECT  ENTER CONTINUE/STAGE"
+                    : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM");
+        }
+        return count;
+    }
+
+    count = tqr_startup_render_add_row(
+        rows, max_rows, count, "SOUL ROOM");
+    if (count >= max_rows) {
+        return count;
+    }
+    count = tqr_startup_render_add_row(
+        rows,
+        max_rows,
+        count,
+        state->startup_text_prompt[0] != '\0'
+            ? state->startup_text_prompt
+            : "THERON WAITS AT THE FORCEFIELD");
+    if (count >= max_rows) {
+        return count;
+    }
+    for (i = 0; i < element_count && count < max_rows; ++i) {
+        const Theron_StartupLayoutElement *e = &elements[i];
+        if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_MIRROR) {
+            snprintf(rows[count++],
+                     THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%c %-22s %-7s %s",
+                     e->cursor ? '>' : ' ',
+                     e->label,
+                     e->primary_class >= 0
+                        ? theron_v1_startup_class_name(
+                              (Theron_ChampionClass)e->primary_class)
+                        : "UNKNOWN",
+                     tqr_startup_selected_status(e));
+        } else if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD) {
+            snprintf(rows[count++],
+                     THERON_STARTUP_RENDER_ROW_CAPACITY,
+                     "%c ENTER FORCEFIELD",
+                     e->cursor ? '>' : ' ');
+        }
+    }
+    if (count < max_rows) {
+        count = tqr_startup_render_add_row(
+            rows, max_rows, count, "ENTER SELECTS MIRROR  ACTION ENTERS");
+    }
+    return count;
+}
+
 Theron_StartupResult theron_v1_startup_handle_input_with_progression(
     Theron_StartupPhase phase,
     Theron_DungeonID selected_dungeon,

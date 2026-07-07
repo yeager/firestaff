@@ -40702,6 +40702,10 @@ static int m11_theron_startup_build_layout_state(
     m11_theron_startup_chapter_label(state,
                                      layout_state->chapter_label,
                                      sizeof(layout_state->chapter_label));
+    snprintf(layout_state->startup_text_prompt,
+             sizeof(layout_state->startup_text_prompt),
+             "%s",
+             state->theronState.startup_text_prompt);
     layout_state->startup_roster_name_count =
         state->theronState.startup_roster_name_count;
     for (i = 0;
@@ -40808,9 +40812,11 @@ int M11_GameView_GetTheronStartupRenderRows(
     const M11_GameViewState* state,
     char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
     int maxRows) {
-    M11_TheronStartupElement elements[16];
+    Theron_StartupLayoutState layout_state;
+    Theron_StartupLayoutElement elements[16];
     int element_count;
-    int count = 0;
+    char theron_rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
+    int row_count;
     int i;
 
     if (!state || !rows || maxRows <= 0) {
@@ -40820,163 +40826,31 @@ int M11_GameView_GetTheronStartupRenderRows(
         return 0;
     }
 
-    element_count = M11_GameView_GetTheronStartupLayout(
-        state,
+    if (!m11_theron_startup_build_layout_state(state, &layout_state)) {
+        return 0;
+    }
+    element_count = theron_v1_startup_layout_build(
+        &layout_state,
         elements,
         (int)(sizeof(elements) / sizeof(elements[0])));
-    for (i = 0; i < element_count && count < maxRows; ++i) {
-        if (elements[i].kind == M11_THERON_STARTUP_ELEMENT_TITLE) {
-            snprintf(rows[count++],
-                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "%s",
-                     elements[i].label);
-            break;
-        }
+    row_count = theron_v1_startup_render_rows_build(
+        &layout_state,
+        elements,
+        element_count,
+        theron_rows,
+        (int)(sizeof(theron_rows) / sizeof(theron_rows[0])));
+    if (row_count > maxRows) {
+        row_count = maxRows;
     }
-    if (count >= maxRows) return count;
-    for (i = 0; i < element_count && count < maxRows; ++i) {
-        if (elements[i].kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
-            snprintf(rows[count++],
-                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "%s",
-                     elements[i].label);
-            break;
-        }
-    }
-    if (count >= maxRows) return count;
-
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
-        snprintf(rows[count++],
+    memset(rows, 0,
+           (size_t)maxRows * M11_THERON_STARTUP_RENDER_ROW_CAPACITY);
+    for (i = 0; i < row_count; ++i) {
+        snprintf(rows[i],
                  M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                 "PRESS ENTER TO START");
-        return count;
+                 "%s",
+                 theron_rows[i]);
     }
-
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
-        int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
-        int has_srm_continue = m11_theron_srm_continue_available(state);
-        int has_continue = has_tqsv_continue || has_srm_continue;
-
-        snprintf(rows[count++],
-                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                 "CHOOSE A STAGE");
-        if (count >= maxRows) {
-            return count;
-        }
-        if (state->theronState.startup_roster_name_count > 0) {
-            int written = snprintf(rows[count],
-                                   M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                                   "TRACK 02 ROSTER:");
-            int j;
-            for (j = 0;
-                 j < state->theronState.startup_roster_name_count &&
-                 j < (int)(sizeof(state->theronState.startup_roster_names) /
-                           sizeof(state->theronState.startup_roster_names[0]));
-                 ++j) {
-                if (written < 0 ||
-                    written >= M11_THERON_STARTUP_RENDER_ROW_CAPACITY) {
-                    break;
-                }
-                written += snprintf(
-                    rows[count] + written,
-                    (size_t)M11_THERON_STARTUP_RENDER_ROW_CAPACITY -
-                        (size_t)written,
-                    " %s",
-                    state->theronState.startup_roster_names[j]);
-            }
-            ++count;
-            if (count >= maxRows) {
-                return count;
-            }
-        }
-        if (state->theronState.startup_roster_name_count > 7 &&
-            state->theronState.startup_roster_titles[1][0] != '\0' &&
-            state->theronState.startup_roster_titles[7][0] != '\0') {
-            snprintf(rows[count++],
-                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "TRACK 02 TITLES: MARA=%s; PENTAI=%s",
-                     state->theronState.startup_roster_titles[1],
-                     state->theronState.startup_roster_titles[7]);
-            if (count >= maxRows) {
-                return count;
-            }
-        }
-        for (i = 0; i < element_count && count < maxRows; ++i) {
-            const M11_TheronStartupElement *e = &elements[i];
-            if (e->kind == M11_THERON_STARTUP_ELEMENT_CONTINUE) {
-                snprintf(rows[count++],
-                         M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                         "%c CONTINUE  %s SLOT %d",
-                         e->cursor ? '>' : ' ',
-                         e->saveKind == 1 ? "TQSV" : "SRM",
-                         e->saveSlot);
-            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_STAGE) {
-                snprintf(rows[count++],
-                         M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                         "%c %d  %s%s",
-                         e->cursor ? '>' : ' ',
-                         e->dungeonId,
-                         e->label,
-                         e->enabled ? "" : "  LOCKED");
-            }
-        }
-        if (count < maxRows) {
-            snprintf(rows[count++],
-                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "%s",
-                     has_continue
-                        ? "UP/DOWN SELECT  ENTER CONTINUE/STAGE"
-                        : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM");
-        }
-        return count;
-    }
-
-    snprintf(rows[count++],
-             M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-             "SOUL ROOM");
-    if (count >= maxRows) {
-        return count;
-    }
-    snprintf(rows[count++],
-             M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-             "%s",
-             state->theronState.startup_text_prompt[0] != '\0'
-                 ? state->theronState.startup_text_prompt
-                 : "THERON WAITS AT THE FORCEFIELD");
-    if (count >= maxRows) {
-        return count;
-    }
-    for (i = 0; i < element_count && count < maxRows; ++i) {
-        const M11_TheronStartupElement *e = &elements[i];
-        if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
-            snprintf(rows[count++],
-                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "%c %-22s %-7s %s",
-                     e->cursor ? '>' : ' ',
-                     e->label,
-                     e->primaryClass >= 0
-                        ? theron_v1_startup_class_name(
-                              (Theron_ChampionClass)e->primaryClass)
-                        : "UNKNOWN",
-                     e->selected
-                        ? (e->selectedOrder == 1 ? "RESURRECTED #1" :
-                           e->selectedOrder == 2 ? "RESURRECTED #2" :
-                           e->selectedOrder == 3 ? "RESURRECTED #3" :
-                                                   "RESURRECTED")
-                        : "AVAILABLE");
-        } else if (e->kind == M11_THERON_STARTUP_ELEMENT_FORCEFIELD) {
-            snprintf(rows[count++],
-                     M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                     "%c ENTER FORCEFIELD",
-                     e->cursor ? '>' : ' ');
-        }
-    }
-    if (count < maxRows) {
-        snprintf(rows[count++],
-                 M11_THERON_STARTUP_RENDER_ROW_CAPACITY,
-                 "ENTER SELECTS MIRROR  ACTION ENTERS");
-    }
-    return count;
+    return row_count;
 }
 
 static void m11_theron_draw_startup_screen(const M11_GameViewState* state,

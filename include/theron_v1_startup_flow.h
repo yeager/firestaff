@@ -129,6 +129,7 @@ typedef struct {
 
 enum {
     THERON_STARTUP_LAYOUT_LABEL_CAPACITY = 48,
+    THERON_STARTUP_RENDER_ROW_CAPACITY = 80,
     THERON_STARTUP_LAYOUT_DECODED_NAME_CAPACITY = 16,
     THERON_STARTUP_LAYOUT_DECODED_TITLE_CAPACITY = 32,
     THERON_STARTUP_LAYOUT_ROSTER_CAPACITY = 8
@@ -176,6 +177,7 @@ typedef struct {
     int has_srm_continue;
     int srm_slot;
     char chapter_label[THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
+    char startup_text_prompt[THERON_STARTUP_RENDER_ROW_CAPACITY];
     const char *startup_roster_names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY];
     const char *startup_roster_titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY];
     int startup_roster_name_count;
@@ -253,6 +255,12 @@ int theron_v1_startup_layout_hit_at(
     int x,
     int y,
     Theron_StartupHit *out_hit);
+int theron_v1_startup_render_rows_build(
+    const Theron_StartupLayoutState *state,
+    const Theron_StartupLayoutElement *elements,
+    int element_count,
+    char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
+    int max_rows);
 int theron_v1_startup_receipt_phase(
     Theron_StartupPhase phase,
     char *out_phase,
