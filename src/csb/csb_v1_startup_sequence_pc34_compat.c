@@ -237,6 +237,121 @@ static void csb_v1_startup_clear_fallback_text_pc34(
     }
 }
 
+static void csb_v1_startup_clear_primitive_commands_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int i;
+    if (!plan) {
+        return;
+    }
+    plan->primitive_command_count = 0;
+    for (i = 0; i < CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34; ++i) {
+        plan->primitive_commands[i].kind =
+            CSB_V1_STARTUP_PRIMITIVE_NONE_PC34;
+        plan->primitive_commands[i].x = 0;
+        plan->primitive_commands[i].y = 0;
+        plan->primitive_commands[i].w = 0;
+        plan->primitive_commands[i].h = 0;
+        plan->primitive_commands[i].color = 0;
+        plan->primitive_commands[i].light_edge_color = 0;
+        plan->primitive_commands[i].dark_edge_color = 0;
+        plan->primitive_commands[i].visible = 0;
+    }
+}
+
+static void csb_v1_startup_add_primitive_command_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupPrimitiveCommandKind_PC34 kind,
+    int x,
+    int y,
+    int w,
+    int h,
+    int color,
+    int light_edge_color,
+    int dark_edge_color,
+    int visible)
+{
+    CSB_V1_StartupPrimitiveCommand_PC34 *cmd;
+    if (!plan || kind == CSB_V1_STARTUP_PRIMITIVE_NONE_PC34 ||
+        w <= 0 || h <= 0 ||
+        plan->primitive_command_count >=
+            CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34) {
+        return;
+    }
+    cmd = &plan->primitive_commands[plan->primitive_command_count++];
+    cmd->kind = kind;
+    cmd->x = x;
+    cmd->y = y;
+    cmd->w = w;
+    cmd->h = h;
+    cmd->color = color;
+    cmd->light_edge_color = light_edge_color;
+    cmd->dark_edge_color = dark_edge_color;
+    cmd->visible = visible ? 1 : 0;
+}
+
+static void csb_v1_startup_rebuild_primitive_commands_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    csb_v1_startup_clear_primitive_commands_pc34(plan);
+    if (plan->surface == CSB_V1_STARTUP_RENDER_NONE_PC34) {
+        return;
+    }
+    csb_v1_startup_add_primitive_command_pc34(
+        plan,
+        CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34,
+        0,
+        0,
+        320,
+        200,
+        CSB_V1_FALLBACK_BLACK_PC34,
+        0,
+        0,
+        1);
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+        plan->fallback_frame_valid) {
+        csb_v1_startup_add_primitive_command_pc34(
+            plan,
+            CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34,
+            plan->fallback_frame_x,
+            plan->fallback_frame_y,
+            plan->fallback_frame_w,
+            plan->fallback_frame_h,
+            plan->fallback_frame_color,
+            0,
+            0,
+            1);
+    }
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
+        plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+        csb_v1_startup_add_primitive_command_pc34(
+            plan,
+            CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34,
+            plan->closed_left_dest_x,
+            plan->closed_left_dest_y,
+            plan->closed_left_w,
+            plan->closed_left_h,
+            plan->closed_left_fallback_fill_color,
+            plan->closed_left_fallback_light_edge_color,
+            plan->closed_left_fallback_dark_edge_color,
+            1);
+        csb_v1_startup_add_primitive_command_pc34(
+            plan,
+            CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34,
+            plan->closed_right_dest_x,
+            plan->closed_right_dest_y,
+            plan->closed_right_w,
+            plan->closed_right_h,
+            plan->closed_right_fallback_fill_color,
+            plan->closed_right_fallback_light_edge_color,
+            plan->closed_right_fallback_dark_edge_color,
+            1);
+    }
+}
+
 static void csb_v1_startup_add_fallback_text_row_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan,
     int x,
@@ -673,6 +788,7 @@ int csb_v1_startup_build_render_plan_pc34(
     csb_v1_startup_clear_title_rect_pc34(&plan);
     csb_v1_startup_clear_door_rects_pc34(&plan);
     csb_v1_startup_clear_fallback_text_pc34(&plan);
+    csb_v1_startup_clear_primitive_commands_pc34(&plan);
     plan.blink_prompt_visible = 0;
     plan.opening_step = 0;
     if (!state || !state->entrance_active) {
@@ -693,6 +809,7 @@ int csb_v1_startup_build_render_plan_pc34(
             (int)csb_v1_startup_title_source_step_for_frame_pc34(
                 state->title_frame);
         csb_v1_startup_set_title_rect_pc34(&plan);
+        csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -702,6 +819,7 @@ int csb_v1_startup_build_render_plan_pc34(
         csb_v1_startup_set_full_surface_blit_pc34(&plan);
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
         csb_v1_startup_set_credits_fallback_text_pc34(&plan);
+        csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -710,6 +828,7 @@ int csb_v1_startup_build_render_plan_pc34(
          * before C004/C002/C003 are redrawn. */
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+        csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -726,6 +845,7 @@ int csb_v1_startup_build_render_plan_pc34(
             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
             csb_v1_startup_set_opening_door_rects_pc34(&plan);
         }
+        csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -749,6 +869,7 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.blink_prompt_visible =
         ((state->entrance_frame / 12) & 1) == 0;
     csb_v1_startup_rebuild_fallback_text_rows_pc34(&plan);
+    csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
     *out_plan = plan;
     return 1;
 }

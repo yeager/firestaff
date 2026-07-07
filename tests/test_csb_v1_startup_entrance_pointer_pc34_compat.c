@@ -254,8 +254,16 @@ int main(void)
               strcmp(plan.fallback_text_rows[1].text, "CHAOS") == 0 &&
               plan.fallback_text_rows[2].visible &&
               strcmp(plan.fallback_text_rows[2].text, "STRIKES BACK") == 0 &&
+              plan.primitive_command_count == 1 &&
+              plan.primitive_commands[0].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
+              plan.primitive_commands[0].x == 0 &&
+              plan.primitive_commands[0].y == 0 &&
+              plan.primitive_commands[0].w == 320 &&
+              plan.primitive_commands[0].h == 200 &&
+              plan.primitive_commands[0].color == 0 &&
               !plan.waiting_for_input,
-          "startup render plan owns title PRESENTS surface, boxes, palette, and fallback rows");
+          "startup render plan owns title PRESENTS surface, boxes, palette, fallback rows, and primitive clear");
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34() + 1;
@@ -312,6 +320,9 @@ int main(void)
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34 &&
               plan.title_special_palette == -1 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              plan.primitive_command_count == 1 &&
+              plan.primitive_commands[0].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
               !plan.waiting_for_input,
           "startup render plan owns entrance blackout");
 
@@ -390,8 +401,18 @@ int main(void)
               strcmp(plan.fallback_text_rows[1].text, "ENTRANCE") == 0 &&
               strcmp(plan.fallback_text_rows[2].text, "CSB RUNTIME READY") == 0 &&
               strcmp(plan.fallback_text_rows[3].text, "START 5,7 DIR 2") == 0 &&
-              strcmp(plan.fallback_text_rows[4].text, "PRESS ENTER") == 0,
-          "startup render plan owns closed entrance prompt, fallback rows, and door boxes");
+              strcmp(plan.fallback_text_rows[4].text, "PRESS ENTER") == 0 &&
+              plan.primitive_command_count == 2 &&
+              plan.primitive_commands[0].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
+              plan.primitive_commands[1].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34 &&
+              plan.primitive_commands[1].x == 18 &&
+              plan.primitive_commands[1].y == 18 &&
+              plan.primitive_commands[1].w == 284 &&
+              plan.primitive_commands[1].h == 164 &&
+              plan.primitive_commands[1].color == 14,
+          "startup render plan owns closed entrance prompt, fallback rows, door boxes, and primitive frame");
 
     render_state.utility_overlay_active = 1;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
@@ -441,8 +462,11 @@ int main(void)
               plan.fallback_text_row_count == 3 &&
               strcmp(plan.fallback_text_rows[0].text, "CHAOS STRIKES BACK") == 0 &&
               strcmp(plan.fallback_text_rows[1].text, "CREDITS") == 0 &&
-              strcmp(plan.fallback_text_rows[2].text, "PRESS ENTER") == 0,
-          "startup render plan owns credits surface, asset, and fallback rows");
+              strcmp(plan.fallback_text_rows[2].text, "PRESS ENTER") == 0 &&
+              plan.primitive_command_count == 1 &&
+              plan.primitive_commands[0].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34,
+          "startup render plan owns credits surface, asset, fallback rows, and primitive clear");
 
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;
@@ -463,8 +487,24 @@ int main(void)
               plan.closed_left_fallback_fill_color == 12 &&
               plan.closed_right_fallback_fill_color == 12 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
-              plan.opening_step == 2,
-          "startup render plan owns door pre-open surface");
+              plan.opening_step == 2 &&
+              plan.primitive_command_count == 3 &&
+              plan.primitive_commands[0].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
+              plan.primitive_commands[1].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&
+              plan.primitive_commands[1].x == 0 &&
+              plan.primitive_commands[1].y == 28 &&
+              plan.primitive_commands[1].w == 105 &&
+              plan.primitive_commands[1].h == 161 &&
+              plan.primitive_commands[1].color == 12 &&
+              plan.primitive_commands[1].light_edge_color == 2 &&
+              plan.primitive_commands[1].dark_edge_color == 0 &&
+              plan.primitive_commands[2].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&
+              plan.primitive_commands[2].x == 105 &&
+              plan.primitive_commands[2].w == 127,
+          "startup render plan owns door pre-open surface and fallback primitive panels");
 
     render_state.opening_delay_ticks = 0;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
@@ -493,8 +533,11 @@ int main(void)
               plan.opening_right_dest_x == 113 &&
               plan.opening_right_dest_y == 28 &&
               plan.opening_right_w == 119 &&
-              plan.opening_right_h == 161,
-          "startup render plan owns door-opening frame surface and boxes");
+              plan.opening_right_h == 161 &&
+              plan.primitive_command_count == 3 &&
+              plan.primitive_commands[1].kind ==
+                  CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34,
+          "startup render plan owns door-opening frame surface, boxes, and fallback primitive panels");
 
     memset(&command_state, 0, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 0) &&

@@ -2576,6 +2576,63 @@ static void m11_draw_csb_entrance_door_panel(unsigned char *framebuffer,
                   x + w - 1, y, 1, h, darkEdge);
 }
 
+static void m11_execute_csb_startup_primitive_commands(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int i;
+    if (!framebuffer || !plan) {
+        return;
+    }
+    for (i = 0; i < plan->primitive_command_count &&
+                i < CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34; ++i) {
+        const CSB_V1_StartupPrimitiveCommand_PC34 *cmd =
+            &plan->primitive_commands[i];
+        if (!cmd->visible) {
+            continue;
+        }
+        switch (cmd->kind) {
+            case CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34:
+                m11_fill_rect(framebuffer,
+                              framebufferWidth,
+                              framebufferHeight,
+                              cmd->x,
+                              cmd->y,
+                              cmd->w,
+                              cmd->h,
+                              (unsigned char)cmd->color);
+                break;
+            case CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34:
+                m11_draw_rect(framebuffer,
+                              framebufferWidth,
+                              framebufferHeight,
+                              cmd->x,
+                              cmd->y,
+                              cmd->w,
+                              cmd->h,
+                              (unsigned char)cmd->color);
+                break;
+            case CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34:
+                m11_draw_csb_entrance_door_panel(
+                    framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    cmd->x,
+                    cmd->y,
+                    cmd->w,
+                    cmd->h,
+                    (unsigned char)cmd->color,
+                    (unsigned char)cmd->light_edge_color,
+                    (unsigned char)cmd->dark_edge_color);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state);
 
@@ -2693,8 +2750,10 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         framebufferHeight <= 0) {
         return;
     }
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
+    m11_execute_csb_startup_primitive_commands(framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight,
+                                               plan);
     if (state->assetsAvailable) {
         title = M11_AssetLoader_Load(
             (M11_AssetLoader *)&state->assetLoader,
@@ -2962,8 +3021,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         return;
     }
 
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
+    m11_execute_csb_startup_primitive_commands(framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight,
+                                               &plan);
     if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
         const M11_AssetSlot *credits = NULL;
         if (state->assetsAvailable) {
@@ -3040,26 +3101,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                 framebufferHeight,
                 &plan);
         } else {
-            m11_draw_csb_entrance_door_panel(framebuffer,
-                                             framebufferWidth,
-                                             framebufferHeight,
-                                             plan.closed_left_dest_x,
-                                             plan.closed_left_dest_y,
-                                             plan.closed_left_w,
-                                             plan.closed_left_h,
-                                             (unsigned char)plan.closed_left_fallback_fill_color,
-                                             (unsigned char)plan.closed_left_fallback_light_edge_color,
-                                             (unsigned char)plan.closed_left_fallback_dark_edge_color);
-            m11_draw_csb_entrance_door_panel(framebuffer,
-                                             framebufferWidth,
-                                             framebufferHeight,
-                                             plan.closed_right_dest_x,
-                                             plan.closed_right_dest_y,
-                                             plan.closed_right_w,
-                                             plan.closed_right_h,
-                                             (unsigned char)plan.closed_right_fallback_fill_color,
-                                             (unsigned char)plan.closed_right_fallback_light_edge_color,
-                                             (unsigned char)plan.closed_right_fallback_dark_edge_color);
+            m11_execute_csb_startup_primitive_commands(framebuffer,
+                                                       framebufferWidth,
+                                                       framebufferHeight,
+                                                       &plan);
         }
         return;
     }
@@ -3077,14 +3122,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
      * player confirms LOAD_DUNGEON.  Firestaff keeps the CSB runtime loaded
      * behind this screen but blocks gameplay input/ticks until confirmation. */
     if (!drew_asset) {
-        if (plan.fallback_frame_valid) {
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          plan.fallback_frame_x,
-                          plan.fallback_frame_y,
-                          plan.fallback_frame_w,
-                          plan.fallback_frame_h,
-                          (unsigned char)plan.fallback_frame_color);
-        }
+        m11_execute_csb_startup_primitive_commands(framebuffer,
+                                                   framebufferWidth,
+                                                   framebufferHeight,
+                                                   &plan);
         m11_draw_csb_startup_fallback_text_rows(framebuffer,
                                                 framebufferWidth,
                                                 framebufferHeight,
