@@ -454,6 +454,13 @@ int theron_v1_startup_state_receipt_from_flow_apply(
     const Theron_StartupFlow *flow,
     const Theron_StartupApplyReceipt *apply_receipt,
     Theron_StartupStateReceipt *out_receipt);
+int theron_v1_startup_execute_flow_plan_with_receipts(
+    const Theron_StartupActionPlan *plan,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow,
+    Theron_StartupExecution *out_execution,
+    Theron_StartupApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt);
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,

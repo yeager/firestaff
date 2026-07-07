@@ -11579,10 +11579,10 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->startupTitleFrame = state->nexusState.title_active
             ? state->nexusState.title_frame
             : -1;
-        out->startupTitleFrameMax = nexus_v1_title_start_ready_frames();
+        out->startupTitleFrameMax = nexus_v1_boot_start_ready_frames();
         out->startupTitleReady =
             !state->nexusState.title_active ||
-            state->nexusState.title_frame >= nexus_v1_title_start_ready_frames();
+            state->nexusState.title_frame >= nexus_v1_boot_start_ready_frames();
         return 1;
     }
 
@@ -12265,14 +12265,13 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                                 : "STARTUP ERROR"));
             return M11_GAME_INPUT_REDRAW;
         }
-        if (!theron_v1_startup_execute_flow_plan(&plan,
-                                                 &world->progression,
-                                                 &flow,
-                                                 &execution) ||
-            !theron_v1_startup_apply_receipt_from_flow_execution(
+        if (!theron_v1_startup_execute_flow_plan_with_receipts(
                 &plan,
+                &world->progression,
+                &flow,
                 &execution,
-                &applyReceipt)) {
+                &applyReceipt,
+                &stateReceipt)) {
             m11_set_status(state, "STARTUP",
                            execution.result != THERON_STARTUP_OK
                                ? theron_v1_startup_result_name(
@@ -12282,10 +12281,12 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                       : "STARTUP ERROR"));
             return M11_GAME_INPUT_REDRAW;
         }
-        if (theron_v1_startup_state_receipt_from_flow_apply(
-                &flow,
-                &applyReceipt,
-                &stateReceipt)) {
+        if (stateReceipt.flow_changed ||
+            stateReceipt.set_startup_cursor ||
+            stateReceipt.set_continue_focus ||
+            stateReceipt.set_level_loaded ||
+            stateReceipt.set_party_pose ||
+            stateReceipt.set_tick_count) {
             m11_theron_apply_startup_state_receipt(state, &stateReceipt);
         }
         if (applyReceipt.status_scope || applyReceipt.status) {
@@ -35350,8 +35351,35 @@ static void m11_nexus_startup_exec_warning_background(
 {
     M11_NexusStartupDrawContext *context =
         (M11_NexusStartupDrawContext*)userdata;
+    Nexus_Framebuffer nexusFb;
+    const Nexus_TitleScreen *title;
+    int y;
+    int copyW;
+    int copyH;
     (void)command;
     if (!context || !context->framebuffer) {
+        return;
+    }
+    title = context->state
+                ? (const Nexus_TitleScreen*)context->state->nexusTitleScreen
+                : NULL;
+    if (title && title->warning_loaded) {
+        nexus_fb_init(&nexusFb);
+        nexus_render_title(title,
+                           &nexusFb,
+                           context->state ? context->state->nexusState.title_frame
+                                          : 0);
+        copyW = context->framebufferWidth < NEXUS_FB_W
+                    ? context->framebufferWidth
+                    : NEXUS_FB_W;
+        copyH = context->framebufferHeight < NEXUS_FB_H
+                    ? context->framebufferHeight
+                    : NEXUS_FB_H;
+        for (y = 0; y < copyH; ++y) {
+            memcpy(&context->framebuffer[y * context->framebufferWidth],
+                   &nexusFb.color_buffer[y * NEXUS_FB_W],
+                   (size_t)copyW);
+        }
         return;
     }
     if (context->state && context->state->nexusEngine) {
@@ -35396,7 +35424,7 @@ static void m11_nexus_startup_exec_boot_title_frame(
                                ? context->state->nexusTitleScreen
                                : NULL),
                        &nexusFb,
-                       command->title_frame);
+                       command->title_frame + nexus_title_boot_warning_frames());
     copyW = context->framebufferWidth < NEXUS_FB_W
                 ? context->framebufferWidth
                 : NEXUS_FB_W;
