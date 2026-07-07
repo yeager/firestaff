@@ -2598,6 +2598,14 @@ static int m11_csb_startup_build_render_plan(
         state->csbState.startup_entrance_opening_delay_ticks;
     render_state.opening_step =
         state->csbState.startup_entrance_opening_step;
+    if (state->csbBootProfile) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        render_state.runtime_start_valid = 1;
+        render_state.runtime_start_x = profile->runtime.party_x;
+        render_state.runtime_start_y = profile->runtime.party_y;
+        render_state.runtime_start_dir = profile->runtime.party_dir;
+    }
     return csb_v1_startup_build_render_plan_pc34(&render_state, out_plan);
 }
 
@@ -3061,8 +3069,14 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
      * player confirms LOAD_DUNGEON.  Firestaff keeps the CSB runtime loaded
      * behind this screen but blocks gameplay input/ticks until confirmation. */
     if (!drew_asset) {
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      18, 18, 284, 164, M11_COLOR_YELLOW);
+        if (plan.fallback_frame_valid) {
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          plan.fallback_frame_x,
+                          plan.fallback_frame_y,
+                          plan.fallback_frame_w,
+                          plan.fallback_frame_h,
+                          (unsigned char)plan.fallback_frame_color);
+        }
         m11_draw_csb_startup_plan_text(framebuffer,
                                        framebufferWidth,
                                        framebufferHeight,
@@ -3088,20 +3102,16 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         }
         if (state->csbBootProfile &&
             !state->csbState.startup_import_available) {
-            const CSB_V1_BootProfile *profile =
-                (const CSB_V1_BootProfile *)state->csbBootProfile;
-            char row[96];
-            snprintf(row, sizeof(row), "START %d,%d DIR %d",
-                     profile->runtime.party_x,
-                     profile->runtime.party_y,
-                     profile->runtime.party_dir);
+            const char *detail = plan.fallback_runtime_detail_visible
+                ? plan.fallback_runtime_detail_text
+                : plan.fallback_detail_text;
             m11_draw_csb_startup_plan_text(framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,
                                            plan.fallback_detail_x,
                                            plan.fallback_detail_y,
                                            plan.fallback_detail_style,
-                                           row);
+                                           detail);
         }
         if (plan.blink_prompt_visible) {
             m11_draw_csb_startup_plan_text(framebuffer,

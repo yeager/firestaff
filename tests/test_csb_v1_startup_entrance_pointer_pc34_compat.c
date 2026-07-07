@@ -310,6 +310,10 @@ int main(void)
     render_state.entrance_frame = 0;
     render_state.entrance_source_step =
         csb_v1_startup_entrance_wait_stage_pc34();
+    render_state.runtime_start_valid = 1;
+    render_state.runtime_start_x = 5;
+    render_state.runtime_start_y = 7;
+    render_state.runtime_start_dir = 2;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               plan.source_asset_id == 4 &&
@@ -353,10 +357,18 @@ int main(void)
               plan.fallback_status_y == 84 &&
               plan.fallback_status_style == 1 &&
               strcmp(plan.fallback_status_text, "CSB RUNTIME READY") == 0 &&
+              plan.fallback_frame_valid &&
+              plan.fallback_frame_x == 18 &&
+              plan.fallback_frame_y == 18 &&
+              plan.fallback_frame_w == 284 &&
+              plan.fallback_frame_h == 164 &&
+              plan.fallback_frame_color == 14 &&
               plan.fallback_detail_x == 38 &&
               plan.fallback_detail_y == 96 &&
               plan.fallback_detail_style == 1 &&
               strcmp(plan.fallback_detail_text, "START") == 0 &&
+              plan.fallback_runtime_detail_visible &&
+              strcmp(plan.fallback_runtime_detail_text, "START 5,7 DIR 2") == 0 &&
               plan.fallback_prompt_x == 38 &&
               plan.fallback_prompt_y == 154 &&
               plan.fallback_prompt_style == 3 &&
