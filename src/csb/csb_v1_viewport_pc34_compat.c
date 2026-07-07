@@ -481,6 +481,57 @@ static int csb_v1_viewport_creature_front_point_index(
     return point_index;
 }
 
+static int csb_v1_viewport_object_source_scale_index(
+    int depth_index,
+    int relative_cell)
+{
+    int front_row = relative_cell >= 2;
+    int index;
+
+    if (depth_index <= 0) return 0;
+    index = depth_index * 2 - (front_row ? 1 : 0);
+    if (index < 0) index = 0;
+    if (index > 4) index = 4;
+    return index;
+}
+
+static void csb_v1_viewport_object_pile_shift_indices(
+    int pile_index,
+    int *out_x_index,
+    int *out_y_index)
+{
+    /* ReDMCSB DUNVIEW.C G0217_aauc_Graphic558_ObjectPileShiftSetIndices. */
+    static const unsigned char k_indices[16][2] = {
+        {2,5}, {0,6}, {5,7}, {3,0},
+        {7,1}, {1,2}, {6,3}, {3,3},
+        {5,5}, {2,6}, {7,7}, {1,0},
+        {3,1}, {6,2}, {1,3}, {5,3}
+    };
+
+    if (pile_index < 0) pile_index = 0;
+    pile_index &= 0x0F;
+    if (out_x_index) *out_x_index = (int)k_indices[pile_index][0];
+    if (out_y_index) *out_y_index = (int)k_indices[pile_index][1];
+}
+
+static int csb_v1_viewport_object_shift_value(
+    int shift_set,
+    int shift_index)
+{
+    /* ReDMCSB DUNVIEW.C G0223_aac_Graphic558_ShiftSets. */
+    static const signed char k_sets[3][8] = {
+        { 0, 1, 2, 3, 0,-3,-2,-1},
+        { 0, 1, 1, 2, 0,-2,-1,-1},
+        { 0, 1, 1, 1, 0,-1,-1,-1}
+    };
+
+    if (shift_set < 0) shift_set = 0;
+    if (shift_set > 2) shift_set = 2;
+    if (shift_index < 0) shift_index = 0;
+    if (shift_index > 7) shift_index = 7;
+    return (int)k_sets[shift_set][shift_index];
+}
+
 static int csb_v1_viewport_c3200_creature_zone_point(
     int coordinate_set,
     int depth_index,
@@ -562,6 +613,21 @@ int csb_v1_viewport_runtime_object_overlay_placement(
     int relative_cell,
     CSB_V1_ViewportRuntimeObjectOverlayPlacement *out_placement)
 {
+    return csb_v1_viewport_runtime_object_overlay_pile_placement(
+        forward,
+        side,
+        relative_cell,
+        0,
+        out_placement);
+}
+
+int csb_v1_viewport_runtime_object_overlay_pile_placement(
+    int forward,
+    int side,
+    int relative_cell,
+    int pile_index,
+    CSB_V1_ViewportRuntimeObjectOverlayPlacement *out_placement)
+{
     CSB_V1_ViewportRuntimeObjectOverlayPlacement placement;
     const CSB_V1_ViewportObjectBlitSpec *spec = NULL;
     int x = 0;
@@ -576,6 +642,21 @@ int csb_v1_viewport_runtime_object_overlay_placement(
     placement.object_row =
         csb_v1_viewport_f0115_c2500_c2900_row(forward, side);
     placement.source_zone = -1;
+    placement.pile_index = pile_index < 0 ? 0 : pile_index;
+    placement.object_scale_index =
+        csb_v1_viewport_object_source_scale_index(forward - 1,
+                                                  relative_cell);
+    placement.shift_set = (placement.object_scale_index + 1) >> 1;
+    if (placement.shift_set > 2) placement.shift_set = 2;
+    csb_v1_viewport_object_pile_shift_indices(placement.pile_index,
+                                              &placement.shift_x_index,
+                                              &placement.shift_y_index);
+    placement.pile_shift_x =
+        csb_v1_viewport_object_shift_value(placement.shift_set,
+                                           placement.shift_x_index);
+    placement.pile_shift_y =
+        csb_v1_viewport_object_shift_value(placement.shift_set,
+                                           placement.shift_y_index);
     if (placement.view_square < 0 ||
         relative_cell < 0 ||
         relative_cell > 3) {

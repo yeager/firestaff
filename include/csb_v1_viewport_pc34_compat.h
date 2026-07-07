@@ -404,6 +404,13 @@ typedef struct {
     int screen_x;
     int screen_y;
     int used_source_zone;
+    int pile_index;
+    int object_scale_index;
+    int shift_set;
+    int shift_x_index;
+    int shift_y_index;
+    int pile_shift_x;
+    int pile_shift_y;
 } CSB_V1_ViewportRuntimeObjectOverlayPlacement;
 
 typedef struct {
@@ -676,6 +683,12 @@ int csb_v1_viewport_runtime_object_overlay_placement(
     int forward,
     int side,
     int relative_cell,
+    CSB_V1_ViewportRuntimeObjectOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_object_overlay_pile_placement(
+    int forward,
+    int side,
+    int relative_cell,
+    int pile_index,
     CSB_V1_ViewportRuntimeObjectOverlayPlacement *out_placement);
 int csb_v1_viewport_runtime_group_overlay_placement(
     int forward,

@@ -1282,16 +1282,11 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                 int marker_x = x;
                 int marker_y = y;
                 int pile_index = object_pile_index;
-                int scale_index;
-                int shift_set;
-                int shift_x_index = 0;
-                int shift_y_index = 0;
-                int pile_shift_x = 0;
-                int pile_shift_y = 0;
-                if (!csb_v1_viewport_runtime_object_overlay_placement(
+                if (!csb_v1_viewport_runtime_object_overlay_pile_placement(
                         forward,
                         side,
                         rel_cell,
+                        pile_index,
                         &placement)) {
                     thing = csb_v1_runtime_next_thing(dungeon, thing);
                     continue;
@@ -1302,30 +1297,15 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                 row = placement.object_row;
                 marker_x = x;
                 marker_y = y;
-                /* ReDMCSB DUNVIEW.C F0115/G0217/G0223: every floor
-                 * object in a square receives the next source pile
-                 * shift before drawing.  CSB runtime overlays can carry
-                 * several floor objects in the same thing chain, so keep
-                 * the same per-square object order here instead of
-                 * reusing pile index 0 for all of them. */
-                scale_index = m11_object_source_scale_index(forward - 1,
-                                                            rel_cell);
-                shift_set = (scale_index + 1) >> 1;
-                if (shift_set > 2) shift_set = 2;
-                m11_object_source_pile_shift_indices(pile_index,
-                                                     &shift_x_index,
-                                                     &shift_y_index);
-                pile_shift_x = m11_object_source_shift_value(shift_set,
-                                                             shift_x_index);
-                pile_shift_y = m11_object_source_shift_value(shift_set,
-                                                             shift_y_index);
-                marker_x += pile_shift_x;
-                marker_y += pile_shift_y;
+                /* CSB viewport owns ReDMCSB DUNVIEW.C F0115/G0217/G0223
+                 * pile shifts; M11 only applies the returned draw offsets. */
+                marker_x += placement.pile_shift_x;
+                marker_y += placement.pile_shift_y;
                 if (rel_cell == 0 || rel_cell == 2) x -= 5;
                 if (rel_cell == 1 || rel_cell == 3) x += 5;
                 if (rel_cell >= 2) y += 3;
-                x += pile_shift_x;
-                y += pile_shift_y;
+                x += placement.pile_shift_x;
+                y += placement.pile_shift_y;
                 if (subtype >= 0 &&
                     m11_draw_item_sprite(state,
                                          framebuffer,

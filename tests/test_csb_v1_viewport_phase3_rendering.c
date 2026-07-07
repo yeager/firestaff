@@ -2485,6 +2485,29 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_place.screen_y, 132);
     check_int("csb.runtime_object_overlay.d1c.source_zone",
               object_place.used_source_zone, 1);
+    check_int("csb.runtime_object_overlay.d1c.pile0.scale",
+              object_place.object_scale_index, 0);
+    check_int("csb.runtime_object_overlay.d1c.pile0.shift_x",
+              object_place.pile_shift_x, 2);
+    check_int("csb.runtime_object_overlay.d1c.pile0.shift_y",
+              object_place.pile_shift_y, -3);
+
+    memset(&object_place, 0, sizeof(object_place));
+    check_true("csb.runtime_object_overlay.d2c.pile1.visible",
+               csb_v1_viewport_runtime_object_overlay_pile_placement(
+                   2, 0, 0, 1, &object_place) == 1);
+    check_int("csb.runtime_object_overlay.d2c.pile1.scale",
+              object_place.object_scale_index, 2);
+    check_int("csb.runtime_object_overlay.d2c.pile1.shift_set",
+              object_place.shift_set, 1);
+    check_int("csb.runtime_object_overlay.d2c.pile1.shift_x_index",
+              object_place.shift_x_index, 0);
+    check_int("csb.runtime_object_overlay.d2c.pile1.shift_y_index",
+              object_place.shift_y_index, 6);
+    check_int("csb.runtime_object_overlay.d2c.pile1.shift_x",
+              object_place.pile_shift_x, 0);
+    check_int("csb.runtime_object_overlay.d2c.pile1.shift_y",
+              object_place.pile_shift_y, -1);
 
     memset(&object_place, 0, sizeof(object_place));
     check_int("csb.runtime_object_overlay.bad_cell.hidden",
