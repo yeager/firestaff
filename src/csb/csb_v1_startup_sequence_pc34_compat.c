@@ -104,6 +104,12 @@ static void csb_v1_startup_clear_title_rect_pc34(
     plan->title_source_y = 0;
     plan->title_source_w = 0;
     plan->title_source_h = 0;
+    plan->title_blit_kind = CSB_V1_STARTUP_TITLE_BLIT_NONE_PC34;
+    plan->title_transparent_color = -1;
+    plan->title_empty_fallback_x = 0;
+    plan->title_empty_fallback_y = 0;
+    plan->title_empty_fallback_style = 0;
+    plan->title_empty_fallback_text = NULL;
     plan->title_dest_x = 0;
     plan->title_dest_y = 0;
     plan->title_dest_w = 0;
@@ -326,6 +332,12 @@ static void csb_v1_startup_set_title_rect_pc34(
         plan->title_dest_y = 90;
         plan->title_dest_w = 320;
         plan->title_dest_h = 16;
+        plan->title_blit_kind = CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34;
+        plan->title_transparent_color = -1;
+        plan->title_empty_fallback_x = 38;
+        plan->title_empty_fallback_y = 90;
+        plan->title_empty_fallback_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
+        plan->title_empty_fallback_text = "FTL PRESENTS";
         return;
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
@@ -345,6 +357,9 @@ static void csb_v1_startup_set_title_rect_pc34(
         plan->title_dest_y = 0;
         plan->title_dest_w = 320;
         plan->title_dest_h = 80;
+        plan->title_blit_kind =
+            CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34;
+        plan->title_transparent_color = -1;
         return;
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
@@ -360,6 +375,8 @@ static void csb_v1_startup_set_title_rect_pc34(
         plan->title_dest_y = 118;
         plan->title_dest_w = 320;
         plan->title_dest_h = 57;
+        plan->title_blit_kind = CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34;
+        plan->title_transparent_color = 0;
     }
 }
 
