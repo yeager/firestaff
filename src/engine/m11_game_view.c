@@ -21135,7 +21135,6 @@ static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
     int mapIdx;
     int doorSet = 0;
     int doorType = 0;
-    int depthOffset;
     if (!state || !state->world.dungeon || !cell || depthIndex < 0 || depthIndex > 2) {
         return -1;
     }
@@ -21147,12 +21146,7 @@ static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
     doorSet = doorType ?
         (int)state->world.dungeon->maps[mapIdx].doorSet1 :
         (int)state->world.dungeon->maps[mapIdx].doorSet0;
-    /* ReDMCSB F0095_DUNGEONVIEW_LoadDoorSet:
-     *   D3 = M633 + doorSet*3 + 0
-     *   D2 = M633 + doorSet*3 + 1
-     *   D1 = M633 + doorSet*3 + 2 */
-    depthOffset = 2 - depthIndex;
-    return M11_GFX_DOOR_SET0_D3 + doorSet * 3 + depthOffset;
+    return dm1_v1_door_panel_graphic_for_set_depth_pc34(doorSet, depthIndex);
 }
 
 int M11_GameView_GetDm1WallOrnamentZone(int coordSet,

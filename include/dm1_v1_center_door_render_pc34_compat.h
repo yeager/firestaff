@@ -42,6 +42,10 @@ int dm1_v1_center_door_panel_blits_for_cell_pc34(
     int doorVertical,
     DM1_CenterDoorBlitPc34 outBlits[2]);
 
+int dm1_v1_door_panel_graphic_for_set_depth_pc34(
+    int doorSet,
+    int depthIndex);
+
 #ifdef __cplusplus
 }
 #endif
