@@ -16964,8 +16964,8 @@ static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell);
 static int m11_viewport_cell_has_renderable_projectile(
     const M11_ViewportCell* cell) {
     return cell &&
-           cell->summary.projectiles > 0 &&
-           cell->firstProjectileGfxIndex >= 0;
+           dm1_v1_projectile_renderable_pc34(cell->summary.projectiles,
+                                             cell->firstProjectileGfxIndex);
 }
 
 static int m11_viewport_cell_has_renderable_explosion(
@@ -17051,17 +17051,10 @@ static int m11_seed_dm1_v2_visible_effect_particle(
     }
 
     if (m11_viewport_cell_has_renderable_projectile(cell)) {
-        if (cell->firstProjectileSubtype == PROJECTILE_SUBTYPE_LIGHTNING_BOLT) {
-            color = 0x00ffffffu;
-            size = 1.0f;
-        } else if (cell->firstProjectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
-                   cell->firstProjectileSubtype == PROJECTILE_SUBTYPE_POISON_CLOUD) {
-            color = 0x00ff00ffu;
-            size = 2.0f;
-        } else {
-            color = 0xffaa00ffu;
-            size = 2.0f;
-        }
+        (void)dm1_v1_projectile_effect_particle_pc34(
+            cell->firstProjectileSubtype,
+            &color,
+            &size);
     } else if (m11_viewport_cell_has_renderable_explosion(cell)) {
         if (cell->firstExplosionType == C002_EXPLOSION_LIGHTNING_BOLT) {
             color = 0x00ffffffu;
