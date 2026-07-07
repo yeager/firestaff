@@ -143,6 +143,8 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int special_palette;
     int blink_prompt_visible;
     int opening_step;
+    int closed_left_asset_id;
+    int closed_right_asset_id;
     int closed_left_source_x;
     int closed_left_source_y;
     int closed_left_dest_x;

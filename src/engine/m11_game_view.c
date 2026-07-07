@@ -2751,8 +2751,12 @@ static int m11_draw_csb_entrance_closed_doors_asset(
         plan->closed_right_w <= 0 || plan->closed_right_h <= 0) {
         return 0;
     }
-    leftDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 2u);
-    rightDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 3u);
+    leftDoor = M11_AssetLoader_Load(
+        (M11_AssetLoader *)&state->assetLoader,
+        (unsigned int)plan->closed_left_asset_id);
+    rightDoor = M11_AssetLoader_Load(
+        (M11_AssetLoader *)&state->assetLoader,
+        (unsigned int)plan->closed_right_asset_id);
     if (!leftDoor || !rightDoor ||
         leftDoor->width < (unsigned int)(plan->closed_left_source_x + plan->closed_left_w) ||
         leftDoor->height < (unsigned int)(plan->closed_left_source_y + plan->closed_left_h) ||
@@ -2801,9 +2805,15 @@ static int m11_draw_csb_entrance_opening_frame_asset(
         !state->assetsAvailable) {
         return 0;
     }
-    entranceScreen = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 4u);
-    leftDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 2u);
-    rightDoor = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 3u);
+    entranceScreen = M11_AssetLoader_Load(
+        (M11_AssetLoader *)&state->assetLoader,
+        (unsigned int)plan->source_asset_id);
+    leftDoor = M11_AssetLoader_Load(
+        (M11_AssetLoader *)&state->assetLoader,
+        (unsigned int)plan->closed_left_asset_id);
+    rightDoor = M11_AssetLoader_Load(
+        (M11_AssetLoader *)&state->assetLoader,
+        (unsigned int)plan->closed_right_asset_id);
     if (!entranceScreen || !leftDoor || !rightDoor) {
         return 0;
     }
