@@ -1663,6 +1663,34 @@ static void m11_draw_csb_runtime_group_overlays(
     }
 }
 
+static void m11_csb_viewport_runtime_thing_pass_drawer(
+    void *user,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    const M11_CSB_RuntimeSpriteContext *ctx =
+        (const M11_CSB_RuntimeSpriteContext *)user;
+
+    if (!ctx || !ctx->state || !ctx->profile || !screen_pixels ||
+        screen_stride <= 0) {
+        return;
+    }
+    /* ReDMCSB DUNVIEW.C F0115 thing pass order: floor objects before
+     * creature groups, both before projectiles/explosions. */
+    m11_draw_csb_runtime_floor_object_overlays(
+        ctx->state,
+        ctx->profile,
+        screen_pixels,
+        screen_stride,
+        ctx->framebuffer_height);
+    m11_draw_csb_runtime_group_overlays(
+        ctx->state,
+        ctx->profile,
+        screen_pixels,
+        screen_stride,
+        ctx->framebuffer_height);
+}
+
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -1713,6 +1741,9 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     cfg.explosion_sprite_drawer =
         m11_csb_viewport_explosion_sprite_drawer;
     cfg.explosion_sprite_user = &runtime_sprite_context;
+    cfg.runtime_thing_pass_drawer =
+        m11_csb_viewport_runtime_thing_pass_drawer;
+    cfg.runtime_thing_pass_user = &runtime_sprite_context;
     plan = csb_v1_boot_csbgraphics_m11_plan(profile);
     cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.csbgraphics_plan = plan;
@@ -1767,18 +1798,6 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                 &binding);
         }
     }
-    m11_draw_csb_runtime_group_overlays(
-        state,
-        profile,
-        framebuffer,
-        framebufferWidth,
-        framebufferHeight);
-    m11_draw_csb_runtime_floor_object_overlays(
-        state,
-        profile,
-        framebuffer,
-        framebufferWidth,
-        framebufferHeight);
     return 1;
 }
 

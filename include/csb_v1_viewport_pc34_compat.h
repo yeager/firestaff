@@ -34,6 +34,11 @@ typedef int (*CSB_V1_ViewportExplosionSpriteDrawer)(
     uint8_t *screen_pixels,
     int screen_stride);
 
+typedef void (*CSB_V1_ViewportRuntimeThingPassDrawer)(
+    void *user,
+    uint8_t *screen_pixels,
+    int screen_stride);
+
 typedef struct {
     int src_x;
     int src_y;
@@ -92,6 +97,8 @@ typedef struct {
     void *explosion_sprite_user;
     int runtime_explosion_sprite_drawn_count;
     int runtime_explosion_marker_drawn_count;
+    CSB_V1_ViewportRuntimeThingPassDrawer runtime_thing_pass_drawer;
+    void *runtime_thing_pass_user;
 
     /* Optional CSBgraphics.dat CustomBackgrounds bridge. The CSB boot layer
      * owns the plan/cache/skin-def bytes; the viewport can select a
