@@ -86,6 +86,25 @@ static void nexus_title_load_warning_if_available(Nexus_TitleScreen *title,
     free(data);
 }
 
+static void nexus_title_copy_cached_warning_if_available(
+    Nexus_TitleScreen *title,
+    Nexus_V1_Engine *engine)
+{
+    const Nexus_UI_Surface *surface;
+
+    if (!title || !engine) {
+        return;
+    }
+    surface = &engine->ui.surfaces[NEXUS_SURFACE_WARNING];
+    if (surface->data && surface->w > 0 && surface->h > 0 &&
+        nexus_title_copy_surface(&title->warning_pixels,
+                                 &title->warning_width,
+                                 &title->warning_height,
+                                 surface) == 0) {
+        title->warning_loaded = 1;
+    }
+}
+
 int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
     uint8_t *data;
     int size = 0;
@@ -96,7 +115,21 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
         return -1;
     }
     memset(title, 0, sizeof(*title));
-    nexus_title_load_warning_if_available(title, engine);
+    nexus_title_copy_cached_warning_if_available(title, engine);
+    if (!title->warning_loaded) {
+        nexus_title_load_warning_if_available(title, engine);
+    }
+
+    surface = &engine->ui.surfaces[NEXUS_SURFACE_TITLE];
+    if (surface->data && surface->w > 0 && surface->h > 0 &&
+        nexus_title_copy_surface(&title->pixels,
+                                 &title->width,
+                                 &title->height,
+                                 surface) == 0) {
+        title->loaded = 1;
+        return 0;
+    }
+
     data = nexus_v1_read_file(engine, "TITLE.CG", &size);
     if (!data || size <= 0) {
         nexus_title_free(title);

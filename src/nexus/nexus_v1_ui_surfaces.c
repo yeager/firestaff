@@ -145,7 +145,7 @@ int nexus_ui_load_title(Nexus_UI_Manager *mgr,
     }
     /* Default: TITLE.CG = 320×200 indexed at offset */
     return nexus_ui_surface_load(mgr, NEXUS_SURFACE_TITLE,
-        data + offset, data_size - offset,
+        data ? data + offset : NULL, data_size - offset,
         320, 200, 64, 64, "TITLE.CG");
 }
 
