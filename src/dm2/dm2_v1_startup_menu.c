@@ -363,6 +363,17 @@ int dm2_v1_startup_menu_snapshot_handle_input(
     return handled;
 }
 
+int dm2_v1_startup_menu_snapshot_handle_firestaff_input(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    int menu_input,
+    DM2_V1_StartupAction *out_action)
+{
+    return dm2_v1_startup_menu_snapshot_handle_input(
+        snapshot,
+        dm2_v1_startup_input_from_firestaff_menu_code(menu_input),
+        out_action);
+}
+
 int dm2_v1_startup_menu_snapshot_handle_hit(
     DM2_V1_StartupMenuSnapshot *snapshot,
     const DM2_V1_StartupHit *hit,
@@ -382,6 +393,25 @@ int dm2_v1_startup_menu_snapshot_handle_hit(
     handled = dm2_v1_startup_menu_handle_hit(&menu, hit, out_action);
     (void)dm2_v1_startup_menu_snapshot_from_menu(snapshot, &menu);
     return handled;
+}
+
+int dm2_v1_startup_menu_snapshot_handle_pointer(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    int row_count,
+    int x,
+    int y,
+    DM2_V1_StartupAction *out_action)
+{
+    DM2_V1_StartupHit hit;
+
+    if (!dm2_v1_startup_hit(row_count, x, y, &hit)) {
+        dm2_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return dm2_v1_startup_menu_snapshot_handle_hit(
+        snapshot,
+        &hit,
+        out_action);
 }
 
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,

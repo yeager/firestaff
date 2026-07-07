@@ -26,6 +26,7 @@ int main(void)
     DM2_V1_StartupModeUpdate mode_update;
     DM2_V1_StartupInputOutcome outcome;
     DM2_V1_StartupHit hit;
+    DM2_V1_StartupRect panel_rect;
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupRowKind row_kind;
     DM2_V1_StartupRenderRow rows[4];
@@ -201,6 +202,12 @@ int main(void)
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
               menu.selected_row == 1,
           "keyboard Down returns navigation action directly");
+    check(dm2_v1_startup_menu_snapshot_from_menu(&snapshot, &menu) &&
+              dm2_v1_startup_menu_snapshot_handle_firestaff_input(
+                  &snapshot, 1, &action) &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE &&
+              snapshot.selected_row == 0,
+          "snapshot Firestaff input helper owns input-code mapping and action");
     check(dm2_v1_startup_plan_for_action(&action, &plan) &&
               plan.kind == DM2_V1_STARTUP_PLAN_IGNORE &&
               plan.slot == -1 &&
@@ -326,6 +333,16 @@ int main(void)
               action.slot == 2 &&
               menu.selected_row == 1,
           "pointer row hit returns Load Slot action directly");
+    check(dm2_v1_startup_panel_rect(&panel_rect) &&
+              dm2_v1_startup_menu_snapshot_from_menu(&snapshot, &menu) &&
+              dm2_v1_startup_menu_snapshot_handle_pointer(
+                  &snapshot,
+                  snapshot.row_count,
+                  panel_rect.x + 8,
+                  panel_rect.y + 8,
+                  &action) &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE,
+          "snapshot pointer helper owns pointer hit-test and action");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");

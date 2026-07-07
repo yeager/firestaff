@@ -166,9 +166,19 @@ int dm2_v1_startup_menu_snapshot_handle_input(
     DM2_V1_StartupMenuSnapshot *snapshot,
     DM2_V1_StartupInput input,
     DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_snapshot_handle_firestaff_input(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    int menu_input,
+    DM2_V1_StartupAction *out_action);
 int dm2_v1_startup_menu_snapshot_handle_hit(
     DM2_V1_StartupMenuSnapshot *snapshot,
     const DM2_V1_StartupHit *hit,
+    DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_snapshot_handle_pointer(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    int row_count,
+    int x,
+    int y,
     DM2_V1_StartupAction *out_action);
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,
                                int row,
