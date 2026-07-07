@@ -70,6 +70,30 @@ int csb_v1_startup_entrance_command_for_pointer_action_pc34(
     }
 }
 
+int csb_v1_startup_entrance_command_for_pointer_pc34(
+    int credits_active,
+    int x,
+    int y,
+    unsigned int button_mask,
+    int *out_command)
+{
+    CSB_V1_StartupEntrancePointerAction_PC34 action =
+        CSB_V1_STARTUP_ENTRANCE_POINTER_ACTION_NONE_PC34;
+    int handled = csb_v1_startup_entrance_pointer_action_pc34(
+        credits_active,
+        x,
+        y,
+        button_mask,
+        &action);
+    int command =
+        csb_v1_startup_entrance_command_for_pointer_action_pc34(action);
+
+    if (out_command) {
+        *out_command = command;
+    }
+    return handled;
+}
+
 const char *csb_v1_startup_entrance_pointer_source_evidence_pc34(void)
 {
     return "ReDMCSB ENTRANCE.C F0806/F0438 entrance mouse-command startup; "
