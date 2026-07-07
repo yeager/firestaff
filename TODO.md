@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-07 release follow-up: v3.0.65 packages the DM1 title/entrance and CSB startup ownership work after v3.0.64. Remaining release work is GitHub Actions packaging completion and asset publication proof.
+
 - 🔧 2026-07-07 all-game title/startup follow-up: M11 boot receipts now expose per-game startup animation identity, active state, title frame, title-frame boundary, and readiness for DM1, CSB, DM2, Nexus, and Theron's Quest, with the direct-launch all-games gate covering all five paths. Remaining title/startup work is still exact bitmap/audio/timing presentation breadth per game and packaged capture proof, not the headless receipt/status contract.
   - 2026-07-07 update: CSB startup now owns the entrance input outcome contract for redraw/return-to-launcher plus resume unavailable/failed/loaded status text, so M11 no longer branches locally for those title/entrance command results. Remaining title/startup work is exact bitmap/audio/timing presentation breadth per game and packaged capture proof.
   - 2026-07-07 update: Tier 1 strict boot-probe now runs an explicit DM1 title/startup handoff receipt before the normal DM1 runtime receipt, matching the CSB, DM2, Nexus, and Theron startup coverage. Remaining title/startup work is exact bitmap/audio/timing presentation breadth per game and packaged capture proof.
