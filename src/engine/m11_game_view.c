@@ -626,6 +626,19 @@ static void m11_dm2_startup_snapshot_to_state(
     state->dm2State.startup_menu_selected_row = snapshot->selected_row;
 }
 
+_Static_assert(M12_MENU_INPUT_NONE == 0,
+               "DM2 startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_UP == 1,
+               "DM2 startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_DOWN == 2,
+               "DM2 startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACCEPT == 9,
+               "DM2 startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_BACK == 10,
+               "DM2 startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACTION == 11,
+               "DM2 startup menu input code drift");
+
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session,
                                          const char *status)
@@ -642,26 +655,6 @@ static int m11_dm2_startup_apply_session(M11_GameViewState *state,
     m11_sync_dm2_state_from_runtime(state);
     m11_set_status(state, "STARTUP", status ? status : "DM2 STARTED");
     return 1;
-}
-
-static DM2_V1_StartupInput m11_dm2_startup_input_from_m12(
-    M12_MenuInput input)
-{
-    switch (input) {
-        case M12_MENU_INPUT_UP:
-            return DM2_V1_STARTUP_INPUT_UP;
-        case M12_MENU_INPUT_DOWN:
-            return DM2_V1_STARTUP_INPUT_DOWN;
-        case M12_MENU_INPUT_ACCEPT:
-            return DM2_V1_STARTUP_INPUT_ACCEPT;
-        case M12_MENU_INPUT_ACTION:
-            return DM2_V1_STARTUP_INPUT_ACTION;
-        case M12_MENU_INPUT_BACK:
-            return DM2_V1_STARTUP_INPUT_BACK;
-        case M12_MENU_INPUT_NONE:
-        default:
-            return DM2_V1_STARTUP_INPUT_NONE;
-    }
 }
 
 static M11_GameInputResult m11_dm2_startup_apply_action(
@@ -729,7 +722,7 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     m11_dm2_startup_snapshot_from_state(state, &snapshot);
     if (!dm2_v1_startup_menu_snapshot_handle_input(
             &snapshot,
-            m11_dm2_startup_input_from_m12(input),
+            dm2_v1_startup_input_from_firestaff_menu_code((int)input),
             &action)) {
         return input == M12_MENU_INPUT_NONE
                    ? M11_GAME_INPUT_IGNORED
@@ -3135,12 +3128,6 @@ static CSB_V1_StartupInput_PC34 m11_csb_startup_input_from_m12(
         default:
             return CSB_V1_STARTUP_INPUT_NONE_PC34;
     }
-}
-
-static int m11_csb_startup_command_from_action(int action)
-{
-    return csb_v1_startup_entrance_command_for_action_pc34(
-        (CSB_V1_StartupEntranceAction_PC34)action);
 }
 
 static void m11_csb_startup_command_state_from_m11(
@@ -15336,10 +15323,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return utilityInput;
         }
         {
+            CSB_V1_StartupInput_PC34 csbInput =
+                m11_csb_startup_input_from_m12(input);
             int action = csb_v1_startup_entrance_action_for_input_pc34(
                 state->csbState.startup_entrance_credits_active,
-                m11_csb_startup_input_from_m12(input));
-            int command = m11_csb_startup_command_from_action(action);
+                csbInput);
+            int command = csb_v1_startup_entrance_command_for_input_pc34(
+                state->csbState.startup_entrance_credits_active,
+                csbInput);
             if (action != CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34 ||
                 state->csbState.startup_entrance_credits_active) {
                 return m11_csb_startup_handle_entrance_command(state, command);
