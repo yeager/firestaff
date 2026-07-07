@@ -1638,6 +1638,38 @@ int csb_v1_runtime_apply_startup_sequence_plan_pc34(
                                                           out_receipt);
 }
 
+void csb_v1_runtime_view_state_receipt_init_pc34(
+    CSB_V1_RuntimeViewStateReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+}
+
+int csb_v1_runtime_view_state_receipt_from_profile_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_RuntimeViewStateReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_runtime_view_state_receipt_init_pc34(out_receipt);
+    if (!profile) {
+        return 0;
+    }
+
+    /* ReDMCSB: ENTRANCE.C F0806 hands selected dungeon map and party
+     * pose to the runtime before the view mirrors the active state. */
+    out_receipt->level_loaded = profile->dungeon_handle ? 1 : 0;
+    out_receipt->current_level = profile->current_level;
+    out_receipt->party_x = profile->party_x;
+    out_receipt->party_y = profile->party_y;
+    out_receipt->party_dir = profile->party_dir;
+    out_receipt->tick_count = (int)profile->tick_count;
+    return 1;
+}
+
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
 
