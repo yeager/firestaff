@@ -401,6 +401,10 @@ static void test_m11_query_surface(void) {
 /* Test 12: Creature draw placement helper surface. */
 static void test_draw_placement_surface(void) {
     DM1_CreatureDrawPlacement p;
+    DM1_CreatureDrawPlan plan;
+    int types[2] = { 14, 10 };
+    int counts[2] = { 2, 1 };
+    int dirs[2] = { 2, 0 };
     ASSERT_EQ(dm1_creature_center_draw_placement(14, 0, 32, 42, 160, 90,
               1, 0, 1, 0, &p), 1, "center placement returns row");
     ASSERT_EQ(p.side_hint, 0, "center placement side hint");
@@ -414,6 +418,30 @@ static void test_draw_placement_surface(void) {
     ASSERT_EQ(p.side_hint, 0, "side placement binds source zone");
     ASSERT_EQ(p.w > 0, 1, "side placement width positive");
     ASSERT_EQ(p.h > 0, 1, "side placement height positive");
+
+    ASSERT_EQ(dm1_creature_center_draw_plan(types, counts, dirs, 2,
+              0, 32, 42, 160, 90, &plan), 3,
+              "center draw plan expands groups");
+    ASSERT_EQ(plan.count, 3, "center draw plan count");
+    ASSERT_EQ(plan.entries[0].group_index, 0, "center plan group 0 first");
+    ASSERT_EQ(plan.entries[0].duplicate_index, 0, "center plan dup 0");
+    ASSERT_EQ(plan.entries[0].first_in_group, 1, "center plan first flag");
+    ASSERT_EQ(plan.entries[0].creature_count, 2, "center plan count field");
+    ASSERT_EQ(plan.entries[0].creature_direction, 2, "center plan direction");
+    ASSERT_EQ(plan.entries[1].group_index, 0, "center plan group 0 second");
+    ASSERT_EQ(plan.entries[1].duplicate_index, 1, "center plan dup 1");
+    ASSERT_EQ(plan.entries[1].first_in_group, 0, "center plan second flag");
+    ASSERT_EQ(plan.entries[2].group_index, 1, "center plan group 1");
+    ASSERT_EQ(plan.entries[2].creature_type, 10, "center plan creature type");
+
+    ASSERT_EQ(dm1_creature_side_draw_plan(types, counts, dirs, 2,
+              1, -1, 4, 50, 48, 70, &plan), 3,
+              "side draw plan expands groups");
+    ASSERT_EQ(plan.count, 3, "side draw plan count");
+    ASSERT_EQ(plan.entries[0].placement.w > 0, 1, "side plan width positive");
+    ASSERT_EQ(dm1_creature_center_draw_plan(NULL, counts, dirs, 2,
+              0, 32, 42, 160, 90, &plan), 0,
+              "center draw plan rejects null types");
 }
 
 /* Test 13: Source-locked creature Aspect frame cycling.

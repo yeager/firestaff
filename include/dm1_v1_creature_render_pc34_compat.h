@@ -167,6 +167,23 @@ typedef struct {
     int side_hint;
 } DM1_CreatureDrawPlacement;
 
+#define DM1_CREATURE_DRAW_PLAN_MAX 16
+
+typedef struct {
+    int creature_type;
+    int creature_direction;
+    int creature_count;
+    int group_index;
+    int duplicate_index;
+    int first_in_group;
+    DM1_CreatureDrawPlacement placement;
+} DM1_CreatureDrawPlanEntry;
+
+typedef struct {
+    DM1_CreatureDrawPlanEntry entries[DM1_CREATURE_DRAW_PLAN_MAX];
+    int count;
+} DM1_CreatureDrawPlan;
+
 /* ── Source-locked API ── */
 
 const DM1_CreatureAspect* dm1_creature_aspects(void);
@@ -261,6 +278,27 @@ int dm1_creature_side_draw_placement(int creatureType,
                                      int creatureCount,
                                      int duplicateIndex,
                                      DM1_CreatureDrawPlacement *outPlacement);
+int dm1_creature_center_draw_plan(const int *creatureTypes,
+                                  const int *creatureCounts,
+                                  const int *creatureDirections,
+                                  int groupCount,
+                                  int depthIndex,
+                                  int faceX,
+                                  int faceY,
+                                  int faceW,
+                                  int faceH,
+                                  DM1_CreatureDrawPlan *outPlan);
+int dm1_creature_side_draw_plan(const int *creatureTypes,
+                                const int *creatureCounts,
+                                const int *creatureDirections,
+                                int groupCount,
+                                int depthIndex,
+                                int side,
+                                int paneX,
+                                int paneY,
+                                int paneW,
+                                int paneH,
+                                DM1_CreatureDrawPlan *outPlan);
 const unsigned char* dm1_creature_palette_d3(void);
 const unsigned char* dm1_creature_palette_d2(void);
 

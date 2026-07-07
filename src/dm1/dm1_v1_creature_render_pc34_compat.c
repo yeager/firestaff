@@ -501,6 +501,119 @@ int dm1_creature_side_draw_placement(int creatureType,
     return 1;
 }
 
+int dm1_creature_center_draw_plan(const int *creatureTypes,
+                                  const int *creatureCounts,
+                                  const int *creatureDirections,
+                                  int groupCount,
+                                  int depthIndex,
+                                  int faceX,
+                                  int faceY,
+                                  int faceW,
+                                  int faceH,
+                                  DM1_CreatureDrawPlan *outPlan) {
+    int gi;
+    int outCount = 0;
+    if (!outPlan) return 0;
+    outPlan->count = 0;
+    if (!creatureTypes || !creatureCounts || !creatureDirections ||
+        groupCount < 1 || faceW <= 0 || faceH <= 0) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0115 lines 4567-4581 and 5201-5520: group
+     * occupants are expanded in cell order before the creature draw branch
+     * consumes the C3200 coordinate zones. */
+    for (gi = 0; gi < groupCount && outCount < DM1_CREATURE_DRAW_PLAN_MAX; ++gi) {
+        int di;
+        int visible;
+        if (creatureTypes[gi] < 0 || creatureTypes[gi] >= DM1_CREATURE_TYPE_COUNT) {
+            continue;
+        }
+        visible = dm1_creature_visible_duplicates(creatureCounts[gi], 4);
+        for (di = 0; di < visible && outCount < DM1_CREATURE_DRAW_PLAN_MAX; ++di) {
+            DM1_CreatureDrawPlanEntry *entry = &outPlan->entries[outCount];
+            if (!dm1_creature_center_draw_placement(creatureTypes[gi],
+                                                    depthIndex,
+                                                    faceX,
+                                                    faceY,
+                                                    faceW,
+                                                    faceH,
+                                                    groupCount,
+                                                    gi,
+                                                    creatureCounts[gi],
+                                                    di,
+                                                    &entry->placement)) {
+                continue;
+            }
+            entry->creature_type = creatureTypes[gi];
+            entry->creature_direction = creatureDirections[gi];
+            entry->creature_count = creatureCounts[gi];
+            entry->group_index = gi;
+            entry->duplicate_index = di;
+            entry->first_in_group = (di == 0);
+            ++outCount;
+        }
+    }
+    outPlan->count = outCount;
+    return outCount;
+}
+
+int dm1_creature_side_draw_plan(const int *creatureTypes,
+                                const int *creatureCounts,
+                                const int *creatureDirections,
+                                int groupCount,
+                                int depthIndex,
+                                int side,
+                                int paneX,
+                                int paneY,
+                                int paneW,
+                                int paneH,
+                                DM1_CreatureDrawPlan *outPlan) {
+    int gi;
+    int outCount = 0;
+    if (!outPlan) return 0;
+    outPlan->count = 0;
+    if (!creatureTypes || !creatureCounts || !creatureDirections ||
+        groupCount < 1 || paneW <= 2 || paneH <= 2 || (side != -1 && side != 1)) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0115 lines 5613-5616 uses the side C3200 zone
+     * variant after the same group/duplicate expansion as center squares. */
+    for (gi = 0; gi < groupCount && outCount < DM1_CREATURE_DRAW_PLAN_MAX; ++gi) {
+        int di;
+        int visible;
+        if (creatureTypes[gi] < 0 || creatureTypes[gi] >= DM1_CREATURE_TYPE_COUNT) {
+            continue;
+        }
+        visible = dm1_creature_visible_duplicates(creatureCounts[gi], 3);
+        for (di = 0; di < visible && outCount < DM1_CREATURE_DRAW_PLAN_MAX; ++di) {
+            DM1_CreatureDrawPlanEntry *entry = &outPlan->entries[outCount];
+            if (!dm1_creature_side_draw_placement(creatureTypes[gi],
+                                                  depthIndex,
+                                                  side,
+                                                  paneX,
+                                                  paneY,
+                                                  paneW,
+                                                  paneH,
+                                                  groupCount,
+                                                  gi,
+                                                  creatureCounts[gi],
+                                                  di,
+                                                  &entry->placement)) {
+                continue;
+            }
+            entry->creature_type = creatureTypes[gi];
+            entry->creature_direction = creatureDirections[gi];
+            entry->creature_count = creatureCounts[gi];
+            entry->group_index = gi;
+            entry->duplicate_index = di;
+            entry->first_in_group = (di == 0);
+            ++outCount;
+        }
+    }
+    outPlan->count = outCount;
+    return outCount;
+}
+
 /*
  * Aspect frame cycling — ReDMCSB GROUP.C F0179 lines 222-305.
  *
