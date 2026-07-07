@@ -211,7 +211,6 @@ void dm2_v1_build_champion_record(DM2_ChampionRecord *record,
                                    uint8_t view_cell,
                                    uint8_t direction)
 {
-    (void)portrait_index;  /* portrait ordinal stored at render time (F0280) */
     if (!record) return;
 
     /* Zero out the record first */
@@ -236,6 +235,7 @@ void dm2_v1_build_champion_record(DM2_ChampionRecord *record,
      * in the record; the rendering code uses the ordinal to
      * look up the portrait at render time.
      * Source: ReDMCSB CHAMPION.C F0280 — L0798_pc_Character assignment */
+    record->portrait_index = (uint8_t)(portrait_index % DM2_PORTRAIT_COUNT);
 
     /* Direction and view cell.
      * Source: ReDMCSB CHAMPION.C F0280:

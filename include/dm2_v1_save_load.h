@@ -354,6 +354,10 @@ typedef struct {
     uint8_t  hero_flag;
     uint8_t  body_flag;
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS]; /* ObjectID handles */
+    /* Firestaff session-tail metadata: stored in the unused 261-byte record
+     * tail for bounded startup/rendering. Original SUPPRESS masks leave this
+     * byte untouched, so source save import/export fields are not displaced. */
+    uint8_t  portrait_index;
 } DM2_ChampionRecord;
 
 /* Fill mask[261] with SUPPRESS mask for a DM2 champion record.

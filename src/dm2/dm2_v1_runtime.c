@@ -976,6 +976,8 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         dst->stamina_pct =
             dm2_runtime_hud_pct_from_current(champ->stamina);
         dst->mana_pct = dm2_runtime_hud_pct_from_current(champ->mana);
+        dst->portrait_index =
+            (uint8_t)(champ->portrait_index % DM2_V1_HUD_PORTRAIT_COUNT);
         memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);
         dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
     }
