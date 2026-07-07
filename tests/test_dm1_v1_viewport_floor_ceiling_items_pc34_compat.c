@@ -215,6 +215,44 @@ static void test_item_sprite_metadata_ownership(void)
     expect_int("item.sprite.invalid", (int)dm1_item_sprite_index(1, 0), 0,
                "non-object THING type has no F0115 item sprite");
 
+    expect_int("thing.item.weapon",
+               dm1_v1_thing_type_is_floor_item_pc34(5), 1,
+               "F0115 floor item object type gate");
+    expect_int("thing.item.armour",
+               dm1_v1_thing_type_is_floor_item_pc34(6), 1,
+               "F0115 floor item object type gate");
+    expect_int("thing.item.scroll",
+               dm1_v1_thing_type_is_floor_item_pc34(7), 1,
+               "F0115 floor item object type gate");
+    expect_int("thing.item.potion",
+               dm1_v1_thing_type_is_floor_item_pc34(8), 1,
+               "F0115 floor item object type gate");
+    expect_int("thing.item.container",
+               dm1_v1_thing_type_is_floor_item_pc34(9), 1,
+               "F0115 floor item object type gate");
+    expect_int("thing.item.junk",
+               dm1_v1_thing_type_is_floor_item_pc34(10), 1,
+               "F0115 floor item object type gate");
+    expect_int("thing.item.sensor",
+               dm1_v1_thing_type_is_floor_item_pc34(3), 0,
+               "sensors are controls, not floor items");
+    expect_int("thing.item.text",
+               dm1_v1_thing_type_is_floor_item_pc34(2), 0,
+               "text strings are controls, not floor items");
+
+    expect_int("hoc.payload.sensor.map0",
+               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 3, -1), 1,
+               "REVIVE.C F0280 map-0 mirror control before payload item");
+    expect_int("hoc.payload.mirror_text.map0",
+               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 2, 7), 1,
+               "REVIVE.C F0280 map-0 mirror text before payload item");
+    expect_int("hoc.payload.plain_text.map0",
+               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 2, -1), 0,
+               "plain text is not a mirror payload control");
+    expect_int("hoc.payload.sensor.map1",
+               dm1_v1_hall_candidate_payload_control_thing_pc34(1, 3, -1), 0,
+               "payload hiding is Hall of Champions map-0 scoped");
+
     expect_int("object.aspect.info.0", (int)dm1_object_aspect_graphic_info(0), 0x11,
                "DUNVIEW.C G0209 object aspect GraphicInfo");
     expect_int("object.aspect.info.63", (int)dm1_object_aspect_graphic_info(63), 0x01,

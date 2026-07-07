@@ -116,6 +116,11 @@ int dm1_item_aspect_index(int thingType, int subtype);
 unsigned int dm1_item_sprite_index(int thingType, int subtype);
 unsigned int dm1_object_aspect_graphic_info(int aspectIndex);
 int dm1_object_aspect_coordinate_set(int aspectIndex);
+int dm1_v1_thing_type_is_floor_item_pc34(int thingType);
+int dm1_v1_hall_candidate_payload_control_thing_pc34(
+    int mapIndex,
+    int thingType,
+    int mirrorTextStringOrdinal);
 
 typedef struct DM1_ItemSpriteBlitPlan {
     unsigned int graphic_index;

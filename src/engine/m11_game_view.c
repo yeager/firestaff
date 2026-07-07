@@ -5438,20 +5438,6 @@ void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
     if (outBottomY) *outBottomY = (int)s_creatureFrontCoordSets[depthIndex][coordSet][pointIndex][1];
 }
 
-static int m11_thing_is_item(int thingType) {
-    switch (thingType) {
-        case THING_TYPE_WEAPON:
-        case THING_TYPE_ARMOUR:
-        case THING_TYPE_SCROLL:
-        case THING_TYPE_POTION:
-        case THING_TYPE_CONTAINER:
-        case THING_TYPE_JUNK:
-            return 1;
-        default:
-            return 0;
-    }
-}
-
 static int m11_dm1_hall_candidate_payload_item(const M11_GameViewState* state,
                                                unsigned short firstThing,
                                                unsigned short itemThing) {
@@ -5468,22 +5454,23 @@ static int m11_dm1_hall_candidate_payload_item(const M11_GameViewState* state,
            scanSafety++ < 64) {
         int type = THING_GET_TYPE(scanThing);
         int index = THING_GET_INDEX(scanThing);
+        int mirrorOrdinal = -1;
         if (scanThing == itemThing) {
             return seenCandidateControl;
         }
-        if (type == THING_TYPE_SENSOR) {
-            /* ReDMCSB REVIVE.C F0280 lines 297-349 consumes objects from
-             * the front Hall mirror square into the candidate champion
-             * inventory.  Those source DAT objects sit after C02/C03
-             * control things in map 0 and must not be drawn as floor loot. */
-            seenCandidateControl = 1;
-        } else if (type == THING_TYPE_TEXTSTRING &&
-                   state->mirrorCatalogAvailable &&
-                   state->world.things->textStrings &&
-                   index >= 0 &&
-                   index < state->world.things->textStringCount &&
-                   F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                       &state->mirrorCatalog, index) >= 0) {
+        if (type == THING_TYPE_TEXTSTRING &&
+            state->mirrorCatalogAvailable &&
+            state->world.things->textStrings &&
+            index >= 0 &&
+            index < state->world.things->textStringCount) {
+            mirrorOrdinal =
+                F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+                    &state->mirrorCatalog, index);
+        }
+        if (dm1_v1_hall_candidate_payload_control_thing_pc34(
+                state->world.party.mapIndex,
+                type,
+                mirrorOrdinal)) {
             seenCandidateControl = 1;
         }
         scanThing = m11_raw_next_thing(state->world.things, scanThing);
@@ -5534,7 +5521,7 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
             case THING_TYPE_EXPLOSION:
                 break;
             default:
-                if (m11_thing_is_item(thingType)) {
+                if (dm1_v1_thing_type_is_floor_item_pc34(thingType)) {
                     ++summary.items;
                 }
                 break;
@@ -7521,7 +7508,7 @@ static unsigned short m11_find_first_item_on_square(
     unsigned short thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
     int safety = 0;
     while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
-        if (m11_thing_is_item(THING_GET_TYPE(thing))) {
+        if (dm1_v1_thing_type_is_floor_item_pc34(THING_GET_TYPE(thing))) {
             return thing;
         }
         thing = m11_raw_next_thing(world->things, thing);
@@ -18343,7 +18330,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                    scanSafety < 64 && cell.floorItemCount < M11_MAX_CELL_ITEMS) {
                 int tType = THING_GET_TYPE(scanThing);
                 int tIdx = THING_GET_INDEX(scanThing);
-                if (m11_thing_is_item(tType)) {
+                if (dm1_v1_thing_type_is_floor_item_pc34(tType)) {
                     int itemSubtype = -1;
                     if (m11_dm1_hall_candidate_payload_item(state, itemFirstThing, scanThing)) {
                         hiddenCandidatePayloadItems++;
