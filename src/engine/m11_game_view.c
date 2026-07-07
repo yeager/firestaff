@@ -1423,83 +1423,84 @@ static void m11_draw_csb_runtime_group_overlays(
         cell_count = sizeof(cells) / sizeof(cells[0]);
     }
     for (cell_index = 0; cell_index < cell_count; ++cell_index) {
-            int forward = cells[cell_index].forward;
-            int side = cells[cell_index].side;
-            unsigned short thing;
-            int safety = 0;
+        int forward = cells[cell_index].forward;
+        int side = cells[cell_index].side;
+        unsigned short thing;
+        int safety = 0;
 
-            thing = (unsigned short)cells[cell_index].first_thing;
-            while (thing != THING_ENDOFLIST && thing != THING_NONE &&
-                   safety++ < 64) {
-                int type = -1;
-                int size = 0;
-                const uint8_t *record =
-                    csb_v1_dungeon_get_thing_record(dungeon,
-                                                    thing,
-                                                    &type,
-                                                    NULL,
-                                                    &size);
-                if (type == THING_TYPE_GROUP && record && size >= 16) {
-                    int creature_type = (int)record[4];
-                    int creature_dir =
-                        csb_v1_runtime_group_record_direction(record, size);
-                    int visible_count =
-                        csb_v1_runtime_group_record_visible_count(record, size);
-                    int coord_set =
-                        m11_creature_coordinate_set(creature_type);
-                    int depth_index = forward - 1;
-                    int sprite_w = 54 - depth_index * 12;
-                    int sprite_h = 70 - depth_index * 14;
-                    int slot;
+        thing = (unsigned short)cells[cell_index].first_thing;
+        while (thing != THING_ENDOFLIST && thing != THING_NONE &&
+               safety++ < 64) {
+            int type = -1;
+            int size = 0;
+            const uint8_t *record =
+                csb_v1_dungeon_get_thing_record(dungeon,
+                                                thing,
+                                                &type,
+                                                NULL,
+                                                &size);
+            if (type == THING_TYPE_GROUP && record && size >= 16) {
+                int creature_type =
+                    csb_v1_runtime_group_record_creature_type(record, size);
+                int creature_dir =
+                    csb_v1_runtime_group_record_direction(record, size);
+                int visible_count =
+                    csb_v1_runtime_group_record_visible_count(record, size);
+                int coord_set =
+                    m11_creature_coordinate_set(creature_type);
+                int depth_index = forward - 1;
+                int sprite_w = 54 - depth_index * 12;
+                int sprite_h = 70 - depth_index * 14;
+                int slot;
 
-                    if (sprite_w < 20) sprite_w = 20;
-                    if (sprite_h < 28) sprite_h = 28;
-                    for (slot = 0; slot < visible_count; ++slot) {
-                        CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
-                        int group_cell =
-                            csb_v1_runtime_group_record_creature_cell(record,
-                                                                      size,
-                                                                      slot);
-                        int x = 0;
-                        int y = 0;
-                        if (!csb_v1_viewport_runtime_group_overlay_slot_placement(
-                                forward,
-                                side,
-                                coord_set,
-                                visible_count,
-                                group_cell,
-                                &placement)) {
-                            continue;
-                        }
-                        x = placement.screen_x;
-                        y = placement.screen_y;
-                        if (creature_type >= 0 &&
-                            m11_draw_creature_sprite_ex(state,
-                                                        framebuffer,
-                                                        framebuffer_width,
-                                                        framebuffer_height,
-                                                        x - sprite_w / 2,
-                                                        y - sprite_h,
-                                                        sprite_w,
-                                                        sprite_h,
-                                                        creature_type,
-                                                        depth_index,
-                                                        side,
-                                                        creature_dir)) {
-                            m11_csb_runtime_overlay_stats_add_group_sprite(state);
-                        } else {
-                            m11_csb_mark_runtime_group(framebuffer,
-                                                       framebuffer_width,
-                                                       framebuffer_height,
-                                                       x,
-                                                       y);
-                            m11_csb_runtime_overlay_stats_add_group_marker(state);
-                        }
+                if (sprite_w < 20) sprite_w = 20;
+                if (sprite_h < 28) sprite_h = 28;
+                for (slot = 0; slot < visible_count; ++slot) {
+                    CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
+                    int group_cell =
+                        csb_v1_runtime_group_record_creature_cell(record,
+                                                                  size,
+                                                                  slot);
+                    int x = 0;
+                    int y = 0;
+                    if (!csb_v1_viewport_runtime_group_overlay_slot_placement(
+                            forward,
+                            side,
+                            coord_set,
+                            visible_count,
+                            group_cell,
+                            &placement)) {
+                        continue;
                     }
-                    break;
+                    x = placement.screen_x;
+                    y = placement.screen_y;
+                    if (creature_type >= 0 &&
+                        m11_draw_creature_sprite_ex(state,
+                                                    framebuffer,
+                                                    framebuffer_width,
+                                                    framebuffer_height,
+                                                    x - sprite_w / 2,
+                                                    y - sprite_h,
+                                                    sprite_w,
+                                                    sprite_h,
+                                                    creature_type,
+                                                    depth_index,
+                                                    side,
+                                                    creature_dir)) {
+                        m11_csb_runtime_overlay_stats_add_group_sprite(state);
+                    } else {
+                        m11_csb_mark_runtime_group(framebuffer,
+                                                   framebuffer_width,
+                                                   framebuffer_height,
+                                                   x,
+                                                   y);
+                        m11_csb_runtime_overlay_stats_add_group_marker(state);
+                    }
                 }
-                thing = csb_v1_runtime_next_thing(dungeon, thing);
+                break;
             }
+            thing = csb_v1_runtime_next_thing(dungeon, thing);
+        }
     }
 }
 

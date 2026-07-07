@@ -8122,6 +8122,19 @@ int csb_v1_runtime_thing_type_is_floor_object(int thing_type)
            thing_type == THING_TYPE_JUNK;
 }
 
+int csb_v1_runtime_group_record_creature_type(
+    const uint8_t *record,
+    int size)
+{
+    if (!record || size < 16) {
+        return -1;
+    }
+    /* ReDMCSB DEFS.H GROUP stores the creature type byte before Cells.
+     * Runtime overlay drawing uses it only after the C04 record has been
+     * validated by the CSB dungeon accessor. */
+    return (int)record[4];
+}
+
 int csb_v1_runtime_group_record_direction(
     const uint8_t *record,
     int size)
