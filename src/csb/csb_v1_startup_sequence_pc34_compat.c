@@ -193,6 +193,7 @@ static void csb_v1_startup_clear_door_rects_pc34(
 static void csb_v1_startup_clear_fallback_text_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
+    int i;
     if (!plan) {
         return;
     }
@@ -226,6 +227,82 @@ static void csb_v1_startup_clear_fallback_text_pc34(
     plan->fallback_prompt_y = 0;
     plan->fallback_prompt_style = 0;
     plan->fallback_prompt_text = NULL;
+    plan->fallback_text_row_count = 0;
+    for (i = 0; i < CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34; ++i) {
+        plan->fallback_text_rows[i].x = 0;
+        plan->fallback_text_rows[i].y = 0;
+        plan->fallback_text_rows[i].style = 0;
+        plan->fallback_text_rows[i].visible = 0;
+        plan->fallback_text_rows[i].text = NULL;
+    }
+}
+
+static void csb_v1_startup_add_fallback_text_row_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan,
+    int x,
+    int y,
+    int style,
+    const char *text,
+    int visible)
+{
+    CSB_V1_StartupFallbackTextRow_PC34 *row;
+    if (!plan || !text || text[0] == '\0' ||
+        plan->fallback_text_row_count >=
+            CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34) {
+        return;
+    }
+    row = &plan->fallback_text_rows[plan->fallback_text_row_count++];
+    row->x = x;
+    row->y = y;
+    row->style = style;
+    row->text = text;
+    row->visible = visible ? 1 : 0;
+}
+
+static void csb_v1_startup_rebuild_fallback_text_rows_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    plan->fallback_text_row_count = 0;
+    csb_v1_startup_add_fallback_text_row_pc34(
+        plan,
+        plan->fallback_title_x,
+        plan->fallback_title_y,
+        plan->fallback_title_style,
+        plan->fallback_title_text,
+        1);
+    csb_v1_startup_add_fallback_text_row_pc34(
+        plan,
+        plan->fallback_subtitle_x,
+        plan->fallback_subtitle_y,
+        plan->fallback_subtitle_style,
+        plan->fallback_subtitle_text,
+        1);
+    csb_v1_startup_add_fallback_text_row_pc34(
+        plan,
+        plan->fallback_status_x,
+        plan->fallback_status_y,
+        plan->fallback_status_style,
+        plan->fallback_status_text,
+        plan->fallback_status_visible);
+    csb_v1_startup_add_fallback_text_row_pc34(
+        plan,
+        plan->fallback_detail_x,
+        plan->fallback_detail_y,
+        plan->fallback_detail_style,
+        plan->fallback_runtime_detail_visible
+            ? plan->fallback_runtime_detail_text
+            : plan->fallback_detail_text,
+        plan->fallback_detail_visible);
+    csb_v1_startup_add_fallback_text_row_pc34(
+        plan,
+        plan->fallback_prompt_x,
+        plan->fallback_prompt_y,
+        plan->fallback_prompt_style,
+        plan->fallback_prompt_text,
+        plan->blink_prompt_visible);
 }
 
 static void csb_v1_startup_set_credits_fallback_text_pc34(
@@ -249,6 +326,8 @@ static void csb_v1_startup_set_credits_fallback_text_pc34(
     plan->fallback_prompt_y = 154;
     plan->fallback_prompt_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
     plan->fallback_prompt_text = "PRESS ENTER";
+    plan->blink_prompt_visible = 1;
+    csb_v1_startup_rebuild_fallback_text_rows_pc34(plan);
 }
 
 static void csb_v1_startup_set_entrance_fallback_text_pc34(
@@ -383,6 +462,8 @@ static void csb_v1_startup_set_title_rect_pc34(
     plan->fallback_prompt_y = 112;
     plan->fallback_prompt_style = CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34;
     plan->fallback_prompt_text = "STRIKES BACK";
+    plan->blink_prompt_visible = 1;
+    csb_v1_startup_rebuild_fallback_text_rows_pc34(plan);
     /* ReDMCSB TITLE.C F0437 lines 430, 433-457, and 461 draw the title
      * through C424 PRESENTS, C425 CHAOS, and C426 STRIKES BACK zones. */
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
@@ -667,6 +748,7 @@ int csb_v1_startup_build_render_plan_pc34(
     }
     plan.blink_prompt_visible =
         ((state->entrance_frame / 12) & 1) == 0;
+    csb_v1_startup_rebuild_fallback_text_rows_pc34(&plan);
     *out_plan = plan;
     return 1;
 }

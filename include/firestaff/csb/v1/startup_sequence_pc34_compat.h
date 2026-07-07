@@ -107,6 +107,16 @@ typedef enum CSB_V1_StartupTitleBlitKind_PC34 {
     CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 = 2
 } CSB_V1_StartupTitleBlitKind_PC34;
 
+#define CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34 5
+
+typedef struct CSB_V1_StartupFallbackTextRow_PC34 {
+    int x;
+    int y;
+    int style;
+    int visible;
+    const char *text;
+} CSB_V1_StartupFallbackTextRow_PC34;
+
 typedef struct CSB_V1_StartupRenderState_PC34 {
     int entrance_active;
     int entrance_frame;
@@ -217,6 +227,9 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int fallback_prompt_y;
     int fallback_prompt_style;
     const char *fallback_prompt_text;
+    int fallback_text_row_count;
+    CSB_V1_StartupFallbackTextRow_PC34 fallback_text_rows[
+        CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34];
 } CSB_V1_StartupRenderPlan_PC34;
 
 typedef struct CSB_V1_StartupCommandState_PC34 {
