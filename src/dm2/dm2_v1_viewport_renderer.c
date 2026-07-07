@@ -2262,6 +2262,47 @@ int dm2_v1_viewport_build_weather_overlay_render_plan(
     return 1;
 }
 
+int dm2_v1_viewport_build_weather_overlay_commands(
+    const DM2_V1_WeatherOverlayRenderPlan *plan,
+    DM2_V1_WeatherOverlayCommandPlan *out_commands)
+{
+    DM2_V1_WeatherOverlayCommand *cmd;
+
+    if (!out_commands) {
+        return 0;
+    }
+    memset(out_commands, 0, sizeof(*out_commands));
+    if (!plan || plan->kind == DM2_V1_WEATHER_OVERLAY_NONE) {
+        return 1;
+    }
+
+    if (plan->kind == DM2_V1_WEATHER_OVERLAY_RAIN ||
+        plan->kind == DM2_V1_WEATHER_OVERLAY_STORM) {
+        cmd = &out_commands->commands[out_commands->command_count++];
+        cmd->kind = DM2_V1_WEATHER_COMMAND_RAIN_STREAKS;
+        cmd->density = plan->density;
+        cmd->scroll = plan->scroll;
+        cmd->streak_step = plan->streak_step;
+        cmd->color = plan->rain_color;
+    }
+
+    if (plan->kind == DM2_V1_WEATHER_OVERLAY_FOG) {
+        cmd = &out_commands->commands[out_commands->command_count++];
+        cmd->kind = DM2_V1_WEATHER_COMMAND_FOG_BLEND;
+        cmd->alpha = plan->alpha;
+        cmd->target_color = plan->fog_target_color;
+    }
+
+    if (plan->kind == DM2_V1_WEATHER_OVERLAY_STORM &&
+        plan->lightning_flash &&
+        out_commands->command_count < DM2_V1_WEATHER_OVERLAY_COMMAND_MAX) {
+        cmd = &out_commands->commands[out_commands->command_count++];
+        cmd->kind = DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL;
+        cmd->color = plan->lightning_color;
+    }
+    return 1;
+}
+
 /* ── Populate view squares from world model ─────────────────────── */
 
 /*
@@ -3222,9 +3263,12 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
     DM2_V1_WeatherOverlayRenderPlan plan;
+    DM2_V1_WeatherOverlayCommandPlan commands;
+    int i;
 
     if (!dm2_v1_viewport_build_weather_overlay_render_plan(s, &plan) ||
-        plan.kind == DM2_V1_WEATHER_OVERLAY_NONE) {
+        !dm2_v1_viewport_build_weather_overlay_commands(&plan, &commands) ||
+        commands.command_count <= 0) {
         return;
     }
 
@@ -3239,60 +3283,36 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
      * DM2 weather rendering uses blitline_48 (16→8-bit) for overlay.
      * Source: DUNVIEW.C:line ~5900 (weather overlay pass)
      */
-    if (plan.kind == DM2_V1_WEATHER_OVERLAY_RAIN) {
-        /* DM2 rain: diagonal streaks falling at ~30° angle.
-         * Tick count scrolls the pattern diagonally.
-         * Source: SKULL.ASM T600 rain streak animation. */
-        for (int y = 0; y < DM2_VP_HEIGHT; y++) {
-            for (int x = 0; x < DM2_VP_WIDTH; x += 2) {
-                /* Diagonal pattern: (x + y + scroll) % density < threshold */
-                if (((x + y + plan.scroll) & 7) < plan.density) {
-                    /* Streak: mark a few vertical pixels */
-                    int sy = y;
-                    while (sy < DM2_VP_HEIGHT && sy >= 0) {
-                        if (sy < DM2_VP_HEIGHT)
-                            vp[sy * stride + x] = plan.rain_color;
-                        sy += plan.streak_step;
+    for (i = 0; i < commands.command_count; ++i) {
+        const DM2_V1_WeatherOverlayCommand *cmd = &commands.commands[i];
+        if (cmd->kind == DM2_V1_WEATHER_COMMAND_RAIN_STREAKS) {
+            for (int y = 0; y < DM2_VP_HEIGHT; y++) {
+                for (int x = 0; x < DM2_VP_WIDTH; x += 2) {
+                    if (((x + y + cmd->scroll) & 7) < cmd->density) {
+                        int sy = y;
+                        while (sy < DM2_VP_HEIGHT && sy >= 0) {
+                            if (sy < DM2_VP_HEIGHT)
+                                vp[sy * stride + x] = cmd->color;
+                            sy += cmd->streak_step;
+                        }
                     }
                 }
             }
-        }
-    } else if (plan.kind == DM2_V1_WEATHER_OVERLAY_FOG) {
-        /* Semi-transparent gray overlay.
-         * Source: SKULL.ASM T600 fog rendering (blitline_48). */
-        if (plan.alpha > 0) {
+        } else if (cmd->kind == DM2_V1_WEATHER_COMMAND_FOG_BLEND &&
+                   cmd->alpha > 0) {
             for (int y = 0; y < DM2_VP_HEIGHT; y++) {
                 for (int x = 0; x < DM2_VP_WIDTH; x++) {
                     uint8_t fg = vp[y * stride + x];
-                    /* Simple alpha blend: fg*alpha/16 + black*(16-alpha)/16 */
                     vp[y * stride + x] =
-                        (uint8_t)((fg * (16 - (uint8_t)plan.alpha) +
-                                   plan.fog_target_color *
-                                       (uint8_t)plan.alpha) / 16);
+                        (uint8_t)((fg * (16 - (uint8_t)cmd->alpha) +
+                                   cmd->target_color *
+                                       (uint8_t)cmd->alpha) / 16);
                 }
             }
-        }
-    } else if (plan.kind == DM2_V1_WEATHER_OVERLAY_STORM) {
-        /* Storm: rain streaks + ambient darkening + occasional lightning.
-         * Source: SKULL.ASM T600 storm overlay. */
-        for (int y = 0; y < DM2_VP_HEIGHT; y++) {
-            for (int x = 0; x < DM2_VP_WIDTH; x += 2) {
-                if (((x + y + plan.scroll) & 7) < plan.density) {
-                    int sy = y;
-                    while (sy < DM2_VP_HEIGHT && sy >= 0) {
-                        if (sy < DM2_VP_HEIGHT)
-                            vp[sy * stride + x] = plan.rain_color;
-                        sy += plan.streak_step;
-                    }
-                }
-            }
-        }
-        /* Lightning flash: every ~120 ticks, brighten screen for 1-2 ticks.
-         * Source: SKULL.ASM T600 lightning flash. */
-        if (plan.lightning_flash) {
+        } else if (cmd->kind == DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL) {
             for (int y = 0; y < DM2_VP_HEIGHT; y++) {
                 for (int x = 0; x < DM2_VP_WIDTH; x++)
-                    vp[y * stride + x] = plan.lightning_color;
+                    vp[y * stride + x] = cmd->color;
             }
         }
     }
