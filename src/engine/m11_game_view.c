@@ -1327,7 +1327,8 @@ static void m11_draw_csb_runtime_thing_overlays(
                            framebuffer,
                            framebuffer_width,
                            framebuffer_height,
-                           placement)) {
+                           placement,
+                           creature_type)) {
                 m11_csb_runtime_overlay_stats_add_group_marker(state);
             }
         }
