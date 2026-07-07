@@ -76,6 +76,7 @@ int main(void)
     Nexus_V1_StartupSaveExecution execution;
     Nexus_V1_StartupTitleExecution title_execution;
     Nexus_V1_StartupChampionExecution champion_execution;
+    Nexus_V1_StartupModeUpdate mode_update;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
@@ -404,6 +405,14 @@ int main(void)
                strcmp(champion_execution.status,
                       "NEXUS CHAMPION CURSOR") == 0,
            "Nexus champion execution resolves cursor movement");
+    expect(nexus_v1_startup_champion_execution_mode_update(
+               &champion_execution,
+               2,
+               &mode_update) &&
+               mode_update.set_champion_cursor &&
+               mode_update.champion_cursor == 2 &&
+               !mode_update.set_champion_select_active,
+           "Nexus champion execution owns cursor state update");
     hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER;
     hit.row = -1;
     expect(nexus_v1_startup_champion_handle_hit(
@@ -422,6 +431,15 @@ int main(void)
                strcmp(champion_execution.status_scope, "BOOT") == 0 &&
                strcmp(champion_execution.status, "NEXUS READY") == 0,
            "Nexus champion execution resolves start-dungeon handoff");
+    expect(nexus_v1_startup_champion_execution_mode_update(
+               &champion_execution,
+               2,
+               &mode_update) &&
+               mode_update.set_champion_select_active &&
+               mode_update.champion_select_active == 0 &&
+               mode_update.set_champion_frame &&
+               mode_update.champion_frame == 0,
+           "Nexus champion execution owns start-dungeon state update");
     action.kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR;
     action.row = 5;
     expect(nexus_v1_startup_execute_champion_action(
@@ -463,6 +481,17 @@ int main(void)
                champion_execution.select_last_save_row == 1 &&
                strcmp(champion_execution.status, "NEXUS LOAD GAME") == 0,
            "Nexus champion execution resolves back to save select");
+    expect(nexus_v1_startup_champion_execution_mode_update(
+               &champion_execution,
+               2,
+               &mode_update) &&
+               mode_update.set_champion_select_active &&
+               mode_update.champion_select_active == 0 &&
+               mode_update.set_save_select_active &&
+               mode_update.save_select_active == 1 &&
+               mode_update.set_save_selected_row &&
+               mode_update.save_selected_row == 1,
+           "Nexus champion execution owns save-select state update");
     action.kind = NEXUS_V1_STARTUP_ACTION_BACK_TO_TITLE;
     expect(nexus_v1_startup_execute_champion_action(
                &action,
@@ -471,6 +500,17 @@ int main(void)
                    NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE &&
                strcmp(champion_execution.status, "NEXUS TITLE") == 0,
            "Nexus champion execution resolves back to title");
+    expect(nexus_v1_startup_champion_execution_mode_update(
+               &champion_execution,
+               0,
+               &mode_update) &&
+               mode_update.set_champion_select_active &&
+               mode_update.champion_select_active == 0 &&
+               mode_update.set_title_active &&
+               mode_update.title_active == 1 &&
+               mode_update.set_title_frame &&
+               mode_update.title_frame == 0,
+           "Nexus champion execution owns title state update");
     action.kind = NEXUS_V1_STARTUP_ACTION_NONE;
     expect(nexus_v1_startup_execute_champion_action(
                &action,
