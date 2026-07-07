@@ -3000,9 +3000,9 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           int framebufferWidth,
                                           int framebufferHeight)
 {
-    const M11_AssetSlot *entrance = NULL;
     CSB_V1_StartupRenderPlan_PC34 plan;
     int drew_asset = 0;
+    int i;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -3012,130 +3012,141 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         return;
     }
 
-    if (plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
-        m11_draw_csb_startup_title(state,
-                                   framebuffer,
-                                   framebufferWidth,
-                                   framebufferHeight,
-                                   &plan);
-        return;
-    }
-
-    m11_execute_csb_startup_primitive_commands(framebuffer,
-                                               framebufferWidth,
-                                               framebufferHeight,
-                                               &plan);
-    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
-        const M11_AssetSlot *credits = NULL;
-        if (state->assetsAvailable) {
-            credits = M11_AssetLoader_Load(
-                (M11_AssetLoader *)&state->assetLoader,
-                (unsigned int)plan.source_asset_id);
-        }
-        if (credits &&
-            credits->width == (unsigned int)plan.surface_w &&
-            credits->height == (unsigned int)plan.surface_h) {
-            M11_AssetLoader_Blit(credits,
-                                 framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 plan.surface_dest_x,
-                                 plan.surface_dest_y,
-                                 plan.surface_transparent_color);
-        } else {
-            m11_draw_csb_startup_fallback_text_rows(framebuffer,
-                                                    framebufferWidth,
-                                                    framebufferHeight,
-                                                    &plan);
-        }
-        return;
-    }
-    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34) {
-        return;
-    }
-    if (state->assetsAvailable) {
-        entrance = M11_AssetLoader_Load(
-            (M11_AssetLoader *)&state->assetLoader,
-            (unsigned int)plan.source_asset_id);
-        if (entrance &&
-            entrance->width == (unsigned int)plan.surface_w &&
-            entrance->height == (unsigned int)plan.surface_h) {
-            M11_AssetLoader_Blit(entrance,
-                                 framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 plan.surface_dest_x,
-                                 plan.surface_dest_y,
-                                 plan.surface_transparent_color);
-            drew_asset = 1;
-        }
-    }
-    if (plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
-        plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
-        if (drew_asset &&
-            plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
-            unsigned char dungeonFrame[320 * 200];
-            if (framebufferWidth == 320 && framebufferHeight == 200 &&
-                plan.opening_door_valid) {
-                memset(dungeonFrame, 0, sizeof(dungeonFrame));
-                if (m11_render_csb_boot_viewport(state,
-                                                 dungeonFrame,
-                                                 320,
-                                                 200) &&
-                    m11_draw_csb_entrance_opening_frame_asset(
+    for (i = 0; i < plan.render_command_count &&
+                i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
+        const CSB_V1_StartupRenderCommand_PC34 *command =
+            &plan.render_commands[i];
+        switch (command->kind) {
+            case CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34:
+                m11_draw_csb_startup_title(state,
+                                           framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           &plan);
+                return;
+            case CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34:
+                m11_fill_rect(framebuffer,
+                              framebufferWidth,
+                              framebufferHeight,
+                              0,
+                              0,
+                              framebufferWidth,
+                              framebufferHeight,
+                              M11_COLOR_BLACK);
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34: {
+                const M11_AssetSlot *surface = NULL;
+                if (state->assetsAvailable) {
+                    surface = M11_AssetLoader_Load(
+                        (M11_AssetLoader *)&state->assetLoader,
+                        (unsigned int)plan.source_asset_id);
+                }
+                if (surface &&
+                    surface->width == (unsigned int)plan.surface_w &&
+                    surface->height == (unsigned int)plan.surface_h) {
+                    M11_AssetLoader_Blit(surface,
+                                         framebuffer,
+                                         framebufferWidth,
+                                         framebufferHeight,
+                                         plan.surface_dest_x,
+                                         plan.surface_dest_y,
+                                         plan.surface_transparent_color);
+                    drew_asset = 1;
+                } else {
+                    m11_draw_csb_startup_fallback_text_rows(
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        &plan);
+                }
+                break;
+            }
+            case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34: {
+                const M11_AssetSlot *surface = NULL;
+                if (state->assetsAvailable) {
+                    surface = M11_AssetLoader_Load(
+                        (M11_AssetLoader *)&state->assetLoader,
+                        (unsigned int)plan.source_asset_id);
+                }
+                if (surface &&
+                    surface->width == (unsigned int)plan.surface_w &&
+                    surface->height == (unsigned int)plan.surface_h) {
+                    M11_AssetLoader_Blit(surface,
+                                         framebuffer,
+                                         framebufferWidth,
+                                         framebufferHeight,
+                                         plan.surface_dest_x,
+                                         plan.surface_dest_y,
+                                         plan.surface_transparent_color);
+                    drew_asset = 1;
+                }
+                break;
+            }
+            case CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34:
+                if (drew_asset && framebufferWidth == 320 &&
+                    framebufferHeight == 200 && plan.opening_door_valid) {
+                    unsigned char dungeonFrame[320 * 200];
+                    memset(dungeonFrame, 0, sizeof(dungeonFrame));
+                    if (m11_render_csb_boot_viewport(state,
+                                                     dungeonFrame,
+                                                     320,
+                                                     200) &&
+                        m11_draw_csb_entrance_opening_frame_asset(
+                            state,
+                            framebuffer,
+                            framebufferWidth,
+                            framebufferHeight,
+                            dungeonFrame,
+                            &plan)) {
+                        return;
+                    }
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34:
+                if (drew_asset) {
+                    (void)m11_draw_csb_entrance_closed_doors_asset(
                         state,
                         framebuffer,
                         framebufferWidth,
                         framebufferHeight,
-                        dungeonFrame,
-                        &plan)) {
-                    return;
+                        &plan);
+                } else {
+                    m11_execute_csb_startup_primitive_commands(
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        &plan);
                 }
-            }
-        }
-        if (drew_asset) {
-            (void)m11_draw_csb_entrance_closed_doors_asset(
-                state,
-                framebuffer,
-                framebufferWidth,
-                framebufferHeight,
-                &plan);
-        } else {
-            m11_execute_csb_startup_primitive_commands(framebuffer,
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34:
+                /* ReDMCSB ENTRANCE.C F0806 lines 409-441 selects the CSB
+                 * entrance palette/screen. The CSB plan owns the no-asset
+                 * fallback composition; M11 only draws the requested rows. */
+                if (!drew_asset) {
+                    m11_execute_csb_startup_primitive_commands(
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        &plan);
+                    m11_draw_csb_startup_fallback_text_rows(
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        &plan);
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34:
+                if (plan.waiting_for_input) {
+                    m11_draw_csb_startup_utility_panel(state,
+                                                       framebuffer,
                                                        framebufferWidth,
-                                                       framebufferHeight,
-                                                       &plan);
+                                                       framebufferHeight);
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_NONE_PC34:
+            default:
+                break;
         }
-        return;
-    }
-    if (drew_asset) {
-        (void)m11_draw_csb_entrance_closed_doors_asset(
-            state,
-            framebuffer,
-            framebufferWidth,
-            framebufferHeight,
-            &plan);
-    }
-
-    /* ReDMCSB ENTRANCE.C F0806 lines 409-441 selects the CSB entrance
-     * palette/screen and lines 850-883 wait on the entrance state until the
-     * player confirms LOAD_DUNGEON.  Firestaff keeps the CSB runtime loaded
-     * behind this screen but blocks gameplay input/ticks until confirmation. */
-    if (!drew_asset) {
-        m11_execute_csb_startup_primitive_commands(framebuffer,
-                                                   framebufferWidth,
-                                                   framebufferHeight,
-                                                   &plan);
-        m11_draw_csb_startup_fallback_text_rows(framebuffer,
-                                                framebufferWidth,
-                                                framebufferHeight,
-                                                &plan);
-    }
-    if (plan.waiting_for_input) {
-        m11_draw_csb_startup_utility_panel(state,
-                                           framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight);
     }
 }
 

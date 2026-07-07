@@ -352,6 +352,81 @@ static void csb_v1_startup_rebuild_primitive_commands_pc34(
     }
 }
 
+static void csb_v1_startup_clear_render_commands_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int i;
+    if (!plan) {
+        return;
+    }
+    plan->render_command_count = 0;
+    for (i = 0; i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
+        plan->render_commands[i].kind =
+            CSB_V1_STARTUP_RENDER_COMMAND_NONE_PC34;
+    }
+}
+
+static void csb_v1_startup_add_render_command_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupRenderCommandKind_PC34 kind)
+{
+    CSB_V1_StartupRenderCommand_PC34 *command;
+    if (!plan || kind == CSB_V1_STARTUP_RENDER_COMMAND_NONE_PC34 ||
+        plan->render_command_count >=
+            CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34) {
+        return;
+    }
+    command = &plan->render_commands[plan->render_command_count++];
+    command->kind = kind;
+}
+
+static void csb_v1_startup_rebuild_render_commands_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    csb_v1_startup_clear_render_commands_pc34(plan);
+    if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+        csb_v1_startup_add_render_command_pc34(
+            plan, CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34);
+        return;
+    }
+    csb_v1_startup_add_render_command_pc34(
+        plan, CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34);
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34) {
+        return;
+    }
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
+        csb_v1_startup_add_render_command_pc34(
+            plan, CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34);
+        return;
+    }
+    csb_v1_startup_add_render_command_pc34(
+        plan, CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34);
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+        csb_v1_startup_add_render_command_pc34(
+            plan,
+            CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34);
+    }
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
+        plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+        csb_v1_startup_add_render_command_pc34(
+            plan,
+            CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34);
+        return;
+    }
+    csb_v1_startup_add_render_command_pc34(
+        plan,
+        CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34);
+    csb_v1_startup_add_render_command_pc34(
+        plan,
+        CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34);
+    csb_v1_startup_add_render_command_pc34(
+        plan,
+        CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34);
+}
+
 static void csb_v1_startup_add_fallback_text_row_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan,
     int x,
@@ -789,6 +864,7 @@ int csb_v1_startup_build_render_plan_pc34(
     csb_v1_startup_clear_door_rects_pc34(&plan);
     csb_v1_startup_clear_fallback_text_pc34(&plan);
     csb_v1_startup_clear_primitive_commands_pc34(&plan);
+    csb_v1_startup_clear_render_commands_pc34(&plan);
     plan.blink_prompt_visible = 0;
     plan.opening_step = 0;
     if (!state || !state->entrance_active) {
@@ -810,6 +886,7 @@ int csb_v1_startup_build_render_plan_pc34(
                 state->title_frame);
         csb_v1_startup_set_title_rect_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
+        csb_v1_startup_rebuild_render_commands_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -820,6 +897,7 @@ int csb_v1_startup_build_render_plan_pc34(
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
         csb_v1_startup_set_credits_fallback_text_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
+        csb_v1_startup_rebuild_render_commands_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -829,6 +907,7 @@ int csb_v1_startup_build_render_plan_pc34(
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
+        csb_v1_startup_rebuild_render_commands_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -846,6 +925,7 @@ int csb_v1_startup_build_render_plan_pc34(
             csb_v1_startup_set_opening_door_rects_pc34(&plan);
         }
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
+        csb_v1_startup_rebuild_render_commands_pc34(&plan);
         *out_plan = plan;
         return 1;
     }
@@ -870,6 +950,7 @@ int csb_v1_startup_build_render_plan_pc34(
         ((state->entrance_frame / 12) & 1) == 0;
     csb_v1_startup_rebuild_fallback_text_rows_pc34(&plan);
     csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
+    csb_v1_startup_rebuild_render_commands_pc34(&plan);
     *out_plan = plan;
     return 1;
 }
