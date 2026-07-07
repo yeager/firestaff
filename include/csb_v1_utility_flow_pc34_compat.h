@@ -142,6 +142,10 @@ typedef struct {
     int y;
     int w;
     int h;
+    int fill_visible;
+    int fill_color;
+    int border_visible;
+    int border_color;
     int import_status_x;
     int import_status_y;
     int prompt_x;

@@ -2481,6 +2481,26 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
             &plan)) {
         return;
     }
+    if (plan.panel.fill_visible) {
+        m11_fill_rect(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      plan.panel.x,
+                      plan.panel.y,
+                      plan.panel.w,
+                      plan.panel.h,
+                      (unsigned char)plan.panel.fill_color);
+    }
+    if (plan.panel.border_visible) {
+        m11_draw_rect(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      plan.panel.x,
+                      plan.panel.y,
+                      plan.panel.w,
+                      plan.panel.h,
+                      (unsigned char)plan.panel.border_color);
+    }
     if (plan.has_status_row) {
         m11_draw_text(framebuffer,
                       framebufferWidth,

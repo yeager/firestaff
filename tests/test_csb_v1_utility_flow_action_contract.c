@@ -180,9 +180,13 @@ int main(void)
     check(csb_v1_util_flow_panel_layout(&flow, 1, &panel) &&
               panel.x == 38 &&
               panel.y == 80 &&
+              panel.fill_visible == 1 &&
+              panel.fill_color == 0 &&
+              panel.border_visible == 1 &&
+              panel.border_color == 14 &&
               panel.prompt_text_style == 1 &&
               panel.preview_max_rows == 4,
-          "utility panel geometry remains source-shaped");
+          "utility panel geometry and material remain source-shaped");
     flow.imported_champion_count = 2;
     flow.imported_party.ChampionCount = 2;
     snprintf(flow.imported_party.Champions[0].Name,
@@ -233,6 +237,8 @@ int main(void)
               1,
               &render_plan) &&
               render_plan.panel.x == 38 &&
+              render_plan.panel.fill_visible == 1 &&
+              render_plan.panel.border_visible == 1 &&
               render_plan.has_status_row == 1 &&
               render_plan.has_prompt_row == 1 &&
               render_plan.menu_row_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
