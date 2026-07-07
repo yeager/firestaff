@@ -73,6 +73,18 @@ typedef struct {
     int attack;
 } TestRuntimeSpritePlacementCapture;
 
+typedef struct {
+    int object_sprite_calls;
+    int object_icon_calls;
+    int group_sprite_calls;
+    int last_object_type;
+    int last_object_subtype;
+    int last_object_pile;
+    int last_object_icon;
+    int last_group_type;
+    int last_group_direction;
+} TestRuntimeThingDrawCapture;
+
 static int test_projectile_material_resolver(
     void *user,
     const struct ProjectileInstance_Compat *projectile)
@@ -161,6 +173,66 @@ static void test_runtime_thing_pass_drawer(
     if (calls) ++*calls;
     screen_pixels[(DM1_VIEWPORT_SCREEN_Y + 88) * screen_stride +
                   DM1_VIEWPORT_SCREEN_X + 112] = 0x03u;
+}
+
+static int test_object_sprite_drawer(
+    void *user,
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    TestRuntimeThingDrawCapture *capture =
+        (TestRuntimeThingDrawCapture *)user;
+
+    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (capture) {
+        ++capture->object_sprite_calls;
+        capture->last_object_type = placement->sprite_thing_type;
+        capture->last_object_subtype = placement->sprite_subtype_index;
+        capture->last_object_pile = placement->sprite_pile_index;
+    }
+    screen_pixels[placement->marker_screen_y * screen_stride +
+                  placement->marker_screen_x] = 0x21u;
+    return 1;
+}
+
+static int test_object_icon_drawer(
+    void *user,
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    TestRuntimeThingDrawCapture *capture =
+        (TestRuntimeThingDrawCapture *)user;
+
+    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (capture) {
+        ++capture->object_icon_calls;
+        capture->last_object_icon = placement->icon_index;
+    }
+    screen_pixels[placement->icon_draw_y * screen_stride +
+                  placement->icon_draw_x] = 0x22u;
+    return 1;
+}
+
+static int test_group_sprite_drawer(
+    void *user,
+    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    TestRuntimeThingDrawCapture *capture =
+        (TestRuntimeThingDrawCapture *)user;
+
+    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (capture) {
+        ++capture->group_sprite_calls;
+        capture->last_group_type = placement->sprite_creature_type;
+        capture->last_group_direction = placement->sprite_direction;
+    }
+    screen_pixels[placement->marker_screen_y * screen_stride +
+                  placement->marker_screen_x] = 0x23u;
+    return 1;
 }
 
 static void test_config_defaults_and_setters(void)
@@ -3106,6 +3178,118 @@ static void test_csb_runtime_overlay_placement_contracts(void)
     }
 }
 
+static void test_csb_runtime_thing_pass_render_config(void)
+{
+    CSB_V1_ViewportConfig cfg;
+    CSB_V1_RuntimeProfile runtime;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[128];
+    uint8_t framebuffer[320 * 200];
+    uint8_t dungeon_grid[32 * 32];
+    TestRuntimeThingDrawCapture capture;
+    uint16_t group = (uint16_t)((THING_TYPE_GROUP << 10) | 0);
+    uint16_t dagger = (uint16_t)((THING_TYPE_WEAPON << 10) | 0);
+    uint16_t bow = (uint16_t)((THING_TYPE_WEAPON << 10) | 1);
+
+    memset(&runtime, 0, sizeof(runtime));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(dungeon_grid, 0, sizeof(dungeon_grid));
+    memset(&capture, 0, sizeof(capture));
+
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 4;
+    dungeon.level_heights[0] = 3;
+    dungeon.level_offsets[0] = 66;
+    dungeon.square_bytes = 1;
+    dungeon.raw_map_data_base = 66;
+    dungeon.square_first_thing_base = 80;
+    dungeon.square_first_thing_count = 2;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.thing_type_counts[THING_TYPE_GROUP] = 1;
+    dungeon.thing_type_counts[THING_TYPE_WEAPON] = 2;
+    dungeon.thing_data_bases[THING_TYPE_GROUP] = 96;
+    dungeon.thing_data_bases[THING_TYPE_WEAPON] = 0;
+
+    raw[69] = (uint8_t)((1u << 5) | 0x10u);
+    write_fixture_u16(raw, 80, group);
+    write_fixture_u16(raw, 82, THING_ENDOFLIST);
+    write_fixture_u16(raw, 96, dagger);
+    write_fixture_u16(raw, 98, THING_ENDOFLIST);
+    raw[100] = 6u;
+    raw[101] = 0x08u;
+    write_fixture_u16(raw, 102, 80u);
+    write_fixture_u16(raw, 104, 70u);
+    write_fixture_u16(raw, 110, (uint16_t)(1u << 5));
+    write_fixture_u16(raw, 0, bow);
+    write_fixture_u16(raw, 2, 8u);
+    write_fixture_u16(raw, 4, THING_ENDOFLIST);
+    write_fixture_u16(raw, 6, 25u);
+
+    runtime.dungeon_handle = &dungeon;
+    runtime.current_level = 0;
+    runtime.party_x = 0;
+    runtime.party_y = 0;
+    runtime.party_dir = 1;
+
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = framebuffer;
+    cfg.viewport_stride = 320;
+    cfg.dungeon_grid = dungeon_grid;
+    cfg.dungeon_width = 32;
+    cfg.dungeon_height = 32;
+    cfg.runtime_profile = &runtime;
+    cfg.object_sprite_drawer = test_object_sprite_drawer;
+    cfg.object_sprite_user = &capture;
+    cfg.object_icon_drawer = test_object_icon_drawer;
+    cfg.object_icon_user = &capture;
+    cfg.group_sprite_drawer = test_group_sprite_drawer;
+    cfg.group_sprite_user = &capture;
+
+    csb_v1_viewport_render_frame(&cfg, 1, 0, 0);
+    check_int("csb.runtime_thing_pass.render.object_sprite_count",
+              cfg.runtime_object_sprite_drawn_count, 2);
+    check_int("csb.runtime_thing_pass.render.object_icon_count",
+              cfg.runtime_object_icon_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.object_marker_count",
+              cfg.runtime_object_marker_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.group_sprite_count",
+              cfg.runtime_group_sprite_drawn_count, 2);
+    check_int("csb.runtime_thing_pass.render.group_marker_count",
+              cfg.runtime_group_marker_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.object_callback_calls",
+              capture.object_sprite_calls, 2);
+    check_int("csb.runtime_thing_pass.render.group_callback_calls",
+              capture.group_sprite_calls, 2);
+    check_int("csb.runtime_thing_pass.render.last_object_type",
+              capture.last_object_type, THING_TYPE_WEAPON);
+    check_int("csb.runtime_thing_pass.render.last_object_subtype",
+              capture.last_object_subtype, 25);
+    check_int("csb.runtime_thing_pass.render.last_object_pile",
+              capture.last_object_pile, 1);
+    check_int("csb.runtime_thing_pass.render.last_group_type",
+              capture.last_group_type, 6);
+    check_int("csb.runtime_thing_pass.render.last_group_direction",
+              capture.last_group_direction, 0);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&capture, 0, sizeof(capture));
+    cfg.object_sprite_drawer = NULL;
+    cfg.object_icon_drawer = NULL;
+    cfg.group_sprite_drawer = NULL;
+    csb_v1_viewport_render_frame(&cfg, 1, 0, 0);
+    check_int("csb.runtime_thing_pass.render.fallback_object_sprites",
+              cfg.runtime_object_sprite_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.fallback_object_markers",
+              cfg.runtime_object_marker_drawn_count, 2);
+    check_int("csb.runtime_thing_pass.render.fallback_group_sprites",
+              cfg.runtime_group_sprite_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.fallback_group_markers",
+              cfg.runtime_group_marker_drawn_count, 2);
+}
+
 static void test_csb_d3l2_d3r2_thing_pass_route_binding_contracts(void)
 {
     static const struct {
@@ -3277,6 +3461,7 @@ int main(void)
     test_csb_f0115_projectile_blit_contracts();
     test_csb_creature_visibility_zone_contracts();
     test_csb_runtime_overlay_placement_contracts();
+    test_csb_runtime_thing_pass_render_config();
     test_csb_d3l2_d3r2_thing_pass_route_binding_contracts();
     test_csb_f0115_explosion_blit_contracts();
     test_csb_teleporter_field_route_contracts();
