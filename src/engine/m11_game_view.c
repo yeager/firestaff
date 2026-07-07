@@ -639,6 +639,19 @@ _Static_assert(M12_MENU_INPUT_BACK == 10,
 _Static_assert(M12_MENU_INPUT_ACTION == 11,
                "DM2 startup menu input code drift");
 
+_Static_assert(M12_MENU_INPUT_NONE == 0,
+               "Nexus startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_UP == 1,
+               "Nexus startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_DOWN == 2,
+               "Nexus startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACCEPT == 9,
+               "Nexus startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_BACK == 10,
+               "Nexus startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACTION == 11,
+               "Nexus startup menu input code drift");
+
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session,
                                          const char *status)
@@ -10525,26 +10538,6 @@ static void m11_nexus_champion_snapshot_to_state(
     state->nexusState.champion_select_frame = snapshot->frame;
 }
 
-static Nexus_V1_StartupInput m11_nexus_startup_input_from_m12(
-    M12_MenuInput input)
-{
-    switch (input) {
-        case M12_MENU_INPUT_UP:
-            return NEXUS_V1_STARTUP_INPUT_UP;
-        case M12_MENU_INPUT_DOWN:
-            return NEXUS_V1_STARTUP_INPUT_DOWN;
-        case M12_MENU_INPUT_ACCEPT:
-            return NEXUS_V1_STARTUP_INPUT_ACCEPT;
-        case M12_MENU_INPUT_ACTION:
-            return NEXUS_V1_STARTUP_INPUT_ACTION;
-        case M12_MENU_INPUT_BACK:
-            return NEXUS_V1_STARTUP_INPUT_BACK;
-        case M12_MENU_INPUT_NONE:
-        default:
-            return NEXUS_V1_STARTUP_INPUT_NONE;
-    }
-}
-
 static M11_GameInputResult m11_nexus_startup_apply_save_action(
     M11_GameViewState *state,
     const Nexus_V1_StartupAction *action)
@@ -10676,7 +10669,8 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
     if (!state || !state->nexusState.startup_save_select_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    startup_input = m11_nexus_startup_input_from_m12(input);
+    startup_input =
+        nexus_v1_startup_input_from_firestaff_menu_code((int)input);
     m11_nexus_startup_snapshot_from_state(state, &snapshot);
     if (!nexus_v1_startup_menu_snapshot_handle_input(&snapshot,
                                                      startup_input,
@@ -15372,7 +15366,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             if (!nexus_v1_startup_boot_handle_input(
                     state->nexusState.title_frame,
                     state->nexusState.startup_save_slot_mask,
-                    m11_nexus_startup_input_from_m12(input),
+                    nexus_v1_startup_input_from_firestaff_menu_code(
+                        (int)input),
                     &action)) {
                 return M11_GAME_INPUT_IGNORED;
             }
@@ -15389,7 +15384,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             if (!nexus_v1_startup_champion_snapshot_handle_input(
                     pool,
                     &snapshot,
-                    m11_nexus_startup_input_from_m12(input),
+                    nexus_v1_startup_input_from_firestaff_menu_code(
+                        (int)input),
                     &action)) {
                 return M11_GAME_INPUT_IGNORED;
             }

@@ -95,6 +95,23 @@ int main(void)
     snprintf(save_dir, sizeof(save_dir), "%s/saves", root);
 
     memset(&empty_champions, 0, sizeof(empty_champions));
+    expect(nexus_v1_startup_input_from_firestaff_menu_code(0) ==
+               NEXUS_V1_STARTUP_INPUT_NONE &&
+               nexus_v1_startup_input_from_firestaff_menu_code(1) ==
+                   NEXUS_V1_STARTUP_INPUT_UP &&
+               nexus_v1_startup_input_from_firestaff_menu_code(2) ==
+                   NEXUS_V1_STARTUP_INPUT_DOWN &&
+               nexus_v1_startup_input_from_firestaff_menu_code(9) ==
+                   NEXUS_V1_STARTUP_INPUT_ACCEPT &&
+               nexus_v1_startup_input_from_firestaff_menu_code(10) ==
+                   NEXUS_V1_STARTUP_INPUT_BACK &&
+               nexus_v1_startup_input_from_firestaff_menu_code(11) ==
+                   NEXUS_V1_STARTUP_INPUT_ACTION,
+           "Firestaff menu input codes map through Nexus startup input adapter");
+    expect(nexus_v1_startup_input_from_firestaff_menu_code(999) ==
+               NEXUS_V1_STARTUP_INPUT_NONE,
+           "unknown Firestaff menu input maps to Nexus startup idle input");
+
     cursor = 7;
     memset(&action, 0, sizeof(action));
     expect(nexus_v1_startup_champion_handle_input(
