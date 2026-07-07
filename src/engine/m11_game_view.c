@@ -12198,13 +12198,14 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     return 1;
 }
 
-static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
-                                            char* receipt,
-                                            size_t receipt_cap) {
+static int m11_theron_continue_startup(M11_GameViewState* state,
+                                       char* receipt,
+                                       size_t receipt_cap) {
     Theron_V1_World* world;
     Theron_V1_BootProfile* profile;
+    Theron_V1StartupContinueRequest request;
+    Theron_V1StartupContinueResult result;
     Theron_StartupFlow flow;
-    int slot;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -12217,41 +12218,35 @@ static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
     if (!world || !profile) {
         return 0;
     }
-    if (state->theronState.save_resume_claim != THERON_V1_STARTUP_RESUME_TQSV &&
-        state->theronState.save_resume_claim != THERON_V1_STARTUP_RESUME_DUAL) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "Continue requires a .tqsv slot");
-        }
-        return 0;
-    }
-
-    slot = state->theronState.save_resume_active_slot;
-    if (slot < 0 || slot >= THERON_SAVE_SLOT_COUNT) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "No .tqsv slot selected");
-        }
-        return 0;
-    }
-
-    if (!theron_v1_startup_continue_tqsv_apply(world,
-                                               profile->save_root,
-                                               slot,
-                                               receipt,
-                                               receipt_cap)) {
+    theron_v1_startup_continue_request_init(&request);
+    request.resume_claim =
+        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim;
+    request.tqsv_slot_index = state->theronState.save_resume_active_slot;
+    request.tqsv_root = profile->save_root;
+    request.srm_slot_index = state->theronState.save_resume_srm_active_slot;
+    request.srm_import_status =
+        (Theron_V1SrmProgressImportStatus)
+            state->theronState.save_resume_srm_import_status;
+    request.srm_root = state->theronState.save_resume_srm_root;
+    if (!theron_v1_startup_continue_apply_request(world,
+                                                  &request,
+                                                  &result,
+                                                  receipt,
+                                                  receipt_cap)) {
         return 0;
     }
 
     (void)theron_v1_startup_show_stage_select(
         &flow,
-        world->progression.current_dungeon);
+        result.selected_dungeon);
     m11_theron_sync_startup_state(state, &flow);
-    state->theronState.level_loaded = 0;
-    state->theronState.startup_cursor = 0;
-    state->theronState.save_resume_continue_focus = 0;
-    state->theronState.party_x = world->party.leader_x;
-    state->theronState.party_y = world->party.leader_y;
-    state->theronState.party_dir = world->party.leader_dir;
-    state->theronState.tick_count = (int)world->world_tick;
+    state->theronState.level_loaded = result.level_loaded;
+    state->theronState.startup_cursor = result.startup_cursor;
+    state->theronState.save_resume_continue_focus = result.continue_focus;
+    state->theronState.party_x = result.party_x;
+    state->theronState.party_y = result.party_y;
+    state->theronState.party_dir = result.party_dir;
+    state->theronState.tick_count = result.tick_count;
     return 1;
 }
 
@@ -12302,53 +12297,6 @@ static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
         snprintf(detail, sizeof(detail), "%s", markerLine);
     }
     m11_set_inspect_readout(state, "STARTUP", detail);
-}
-
-static int m11_theron_continue_srm_startup(M11_GameViewState* state,
-                                           char* receipt,
-                                           size_t receipt_cap) {
-    Theron_V1_World* world;
-    Theron_StartupFlow flow;
-    int slot;
-
-    if (receipt && receipt_cap > 0u) {
-        receipt[0] = '\0';
-    }
-    if (!state) {
-        return 0;
-    }
-    world = (Theron_V1_World*)state->theronWorld;
-    if (!world) {
-        return 0;
-    }
-    if (!m11_theron_srm_continue_available(state)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "Continue requires decoded SRM progress");
-        }
-        return 0;
-    }
-    slot = state->theronState.save_resume_srm_active_slot;
-    if (!theron_v1_startup_continue_srm_apply(
-            world,
-            state->theronState.save_resume_srm_root,
-            slot,
-            receipt,
-            receipt_cap)) {
-        return 0;
-    }
-
-    (void)theron_v1_startup_show_stage_select(
-        &flow,
-        world->progression.current_dungeon);
-    m11_theron_sync_startup_state(state, &flow);
-    state->theronState.level_loaded = 0;
-    state->theronState.startup_cursor = 0;
-    state->theronState.save_resume_continue_focus = 0;
-    state->theronState.party_x = world->party.leader_x;
-    state->theronState.party_y = world->party.leader_y;
-    state->theronState.party_dir = world->party.leader_dir;
-    state->theronState.tick_count = (int)world->world_tick;
-    return 1;
 }
 
 static M11_GameInputResult m11_theron_startup_apply_action(
@@ -12436,13 +12384,9 @@ static M11_GameInputResult m11_theron_startup_apply_action(
 
     case THERON_STARTUP_PLAN_CONTINUE_SAVE: {
         char receipt[96];
-        int continued = m11_theron_tqsv_continue_available(state)
-            ? m11_theron_continue_tqsv_startup(state,
-                                               receipt,
-                                               sizeof(receipt))
-            : m11_theron_continue_srm_startup(state,
-                                              receipt,
-                                              sizeof(receipt));
+        int continued = m11_theron_continue_startup(state,
+                                                    receipt,
+                                                    sizeof(receipt));
         if (!continued) {
             m11_set_status(state, "STARTUP",
                            receipt[0] ? receipt :

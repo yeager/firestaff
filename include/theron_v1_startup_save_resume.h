@@ -132,6 +132,33 @@ typedef struct {
     char resume_claim_name[40];
 } Theron_V1StartupSaveResume;
 
+typedef enum {
+    THERON_V1_STARTUP_CONTINUE_SOURCE_NONE = 0,
+    THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV = 1,
+    THERON_V1_STARTUP_CONTINUE_SOURCE_SRM = 2
+} Theron_V1StartupContinueSource;
+
+typedef struct {
+    Theron_V1StartupResumeClaim resume_claim;
+    int tqsv_slot_index;
+    const char *tqsv_root;
+    int srm_slot_index;
+    Theron_V1SrmProgressImportStatus srm_import_status;
+    const char *srm_root;
+} Theron_V1StartupContinueRequest;
+
+typedef struct {
+    Theron_V1StartupContinueSource source;
+    Theron_DungeonID selected_dungeon;
+    int level_loaded;
+    int startup_cursor;
+    int continue_focus;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int tick_count;
+} Theron_V1StartupContinueResult;
+
 /* Resolve both save roots deterministically:
  *   tqsv_root: profile->save_root when non-empty, otherwise
  *              theron_v1_save_default_root() result.
@@ -159,6 +186,16 @@ int theron_v1_startup_continue_srm_apply(
     Theron_V1_World *world,
     const char *srm_root,
     int slot_index,
+    char *receipt,
+    size_t receipt_cap);
+void theron_v1_startup_continue_request_init(
+    Theron_V1StartupContinueRequest *request);
+void theron_v1_startup_continue_result_init(
+    Theron_V1StartupContinueResult *result);
+int theron_v1_startup_continue_apply_request(
+    Theron_V1_World *world,
+    const Theron_V1StartupContinueRequest *request,
+    Theron_V1StartupContinueResult *out_result,
     char *receipt,
     size_t receipt_cap);
 

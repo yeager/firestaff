@@ -549,6 +549,123 @@ int theron_v1_startup_continue_srm_apply(
     return 1;
 }
 
+void theron_v1_startup_continue_request_init(
+    Theron_V1StartupContinueRequest *request) {
+
+    if (!request) {
+        return;
+    }
+    memset(request, 0, sizeof(*request));
+    request->resume_claim = THERON_V1_STARTUP_RESUME_NONE;
+    request->tqsv_slot_index = -1;
+    request->srm_slot_index = -1;
+    request->srm_import_status = THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+}
+
+void theron_v1_startup_continue_result_init(
+    Theron_V1StartupContinueResult *result) {
+
+    if (!result) {
+        return;
+    }
+    memset(result, 0, sizeof(*result));
+    result->source = THERON_V1_STARTUP_CONTINUE_SOURCE_NONE;
+    result->selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    result->startup_cursor = 0;
+    result->continue_focus = 0;
+}
+
+static void theron_v1_startup_continue_capture_result(
+    const Theron_V1_World *world,
+    Theron_V1StartupContinueSource source,
+    Theron_V1StartupContinueResult *out_result) {
+
+    if (!world || !out_result) {
+        return;
+    }
+    theron_v1_startup_continue_result_init(out_result);
+    out_result->source = source;
+    out_result->selected_dungeon = world->progression.current_dungeon;
+    out_result->level_loaded = 0;
+    out_result->startup_cursor = 0;
+    out_result->continue_focus = 0;
+    out_result->party_x = world->party.leader_x;
+    out_result->party_y = world->party.leader_y;
+    out_result->party_dir = world->party.leader_dir;
+    out_result->tick_count = (int)world->world_tick;
+}
+
+int theron_v1_startup_continue_apply_request(
+    Theron_V1_World *world,
+    const Theron_V1StartupContinueRequest *request,
+    Theron_V1StartupContinueResult *out_result,
+    char *receipt,
+    size_t receipt_cap) {
+
+    int tqsv_available;
+    int srm_available;
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (out_result) {
+        theron_v1_startup_continue_result_init(out_result);
+    }
+    if (!world || !request) {
+        return 0;
+    }
+
+    tqsv_available =
+        request->tqsv_slot_index >= 0 &&
+        request->tqsv_slot_index < THERON_SAVE_SLOT_COUNT &&
+        (request->resume_claim == THERON_V1_STARTUP_RESUME_TQSV ||
+         request->resume_claim == THERON_V1_STARTUP_RESUME_DUAL);
+    srm_available =
+        request->srm_slot_index >= 0 &&
+        request->srm_slot_index < THERON_V1_SRM_DISK_SLOT_COUNT &&
+        request->srm_import_status == THERON_V1_SRM_PROGRESS_IMPORT_OK;
+
+    if (tqsv_available) {
+        if (!theron_v1_startup_continue_tqsv_apply(
+                world,
+                request->tqsv_root,
+                request->tqsv_slot_index,
+                receipt,
+                receipt_cap)) {
+            return 0;
+        }
+        theron_v1_startup_continue_capture_result(
+            world,
+            THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV,
+            out_result);
+        return 1;
+    }
+    if (srm_available) {
+        if (!theron_v1_startup_continue_srm_apply(
+                world,
+                request->srm_root,
+                request->srm_slot_index,
+                receipt,
+                receipt_cap)) {
+            return 0;
+        }
+        theron_v1_startup_continue_capture_result(
+            world,
+            THERON_V1_STARTUP_CONTINUE_SOURCE_SRM,
+            out_result);
+        return 1;
+    }
+
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 srm_available
+                     ? "Continue requires a .tqsv slot"
+                     : "Continue requires decoded SRM progress");
+    }
+    return 0;
+}
+
 size_t theron_v1_startup_save_resume_format(
     const Theron_V1StartupSaveResume *snap,
     char *buf,
