@@ -15,6 +15,7 @@
 #include "m11_game_view.h"
 #include "firestaff_po_loader.h"
 #include "firestaff_accessibility.h"
+#include "firestaff_retroachievements.h"
 #include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
 #include "m11_qol_runtime.h"
@@ -1681,6 +1682,10 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectTitleFrameMax = -1;
     opts->bootProbeExpectTitleFrameBoundary = -1;
     opts->bootProbeExpectTitleReady = -1;
+    opts->retroAchievementsEnabled = 0;
+    opts->retroAchievementsHardcore = 1;
+    opts->retroAchievementsUser = NULL;
+    opts->retroAchievementsToken = NULL;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -3605,6 +3610,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M12_MenuInput pendingDm1V1MotionInputs[M11_DM1_V1_PENDING_MOTION_CAPACITY];
     int pendingDm1V1MotionHead = 0;
     int pendingDm1V1MotionCount = 0;
+    Firestaff_RA_Runtime raRuntime;
 
     int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
     if (rc != M11_RENDER_OK) {
@@ -3670,6 +3676,28 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int failIfNoLaunch = getenv("FIRESTAFF_FAIL_IF_NO_LAUNCH") != NULL;
     int runRc = 0;
     M11_ApplyStartupMenuRuntime(&menuState);
+    firestaff_ra_runtime_init(&raRuntime);
+    if (o->retroAchievementsEnabled) {
+        Firestaff_RA_Config raConfig;
+        char redactedToken[16];
+        firestaff_ra_config_init(&raConfig);
+        raConfig.enabled = 1;
+        raConfig.hardcore = o->retroAchievementsHardcore ? 1 : 0;
+        firestaff_ra_set_credentials(&raConfig,
+                                     o->retroAchievementsUser,
+                                     o->retroAchievementsToken);
+        raRuntime.backend_available = 1;
+        firestaff_ra_runtime_apply_config(&raRuntime, &raConfig);
+        firestaff_ra_redact_token(raConfig.api_token,
+                                  redactedToken,
+                                  sizeof(redactedToken));
+        fprintf(stderr,
+                "RetroAchievements: %s user=%s token=%s hardcore=%d\n",
+                firestaff_ra_status_label(firestaff_ra_status(&raRuntime)),
+                raConfig.username[0] ? raConfig.username : "(none)",
+                redactedToken[0] ? redactedToken : "(none)",
+                raConfig.hardcore);
+    }
     {
         M12_Config qolCfg;
         M12_Config_Load(&qolCfg, o->dataDir);

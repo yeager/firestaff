@@ -61,6 +61,10 @@ static void usage(const char* prog) {
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
+            "  --retroachievements Enable RetroAchievements runtime bridge\n"
+            "  --ra-user <name>    RetroAchievements username\n"
+            "  --ra-token <token>  RetroAchievements API token\n"
+            "  --ra-hardcore <0|1> Toggle hardcore mode for RA config\n"
             "  --menu              Show startup menu even when --game is set\n"
             "  --version           Show version and exit\n"
             "  --help, -h          Show this help\n",
@@ -314,6 +318,22 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
             opts.gameId = argv[++i];
             opts.directLaunch = 1;
+            continue;
+        }
+        if (strcmp(a, "--retroachievements") == 0) {
+            opts.retroAchievementsEnabled = 1;
+            continue;
+        }
+        if (strcmp(a, "--ra-user") == 0 && i + 1 < argc) {
+            opts.retroAchievementsUser = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--ra-token") == 0 && i + 1 < argc) {
+            opts.retroAchievementsToken = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--ra-hardcore") == 0 && i + 1 < argc) {
+            opts.retroAchievementsHardcore = atoi(argv[++i]) ? 1 : 0;
             continue;
         }
         if (strcmp(a, "--menu") == 0) {
