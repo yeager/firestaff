@@ -74,6 +74,7 @@
 #include "memory_creature_ai_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_sound_pc34_compat.h"
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
@@ -230,7 +231,6 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
-static int m11_creature_coordinate_set(int creatureType);
 static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
@@ -5694,13 +5694,13 @@ void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
 }
 
 /* Query the creature aspect's coordinate set index (0-10) for a type. */
-static int m11_creature_coordinate_set(int creatureType) {
+static int dm1_creature_coordinate_set(int creatureType) {
     if (creatureType < 0 || creatureType >= 27) return 0;
     return M11_CREATURE_COORD_SET(&s_creatureAspects[creatureType]);
 }
 
 /* Query the creature's transparent color index from aspect data. */
-static int m11_creature_transparent_color(int creatureType) {
+static int dm1_creature_transparent_color(int creatureType) {
     if (creatureType < 0 || creatureType >= 27) return 0;
     return M11_CREATURE_TRANSPARENT_COLOR(&s_creatureAspects[creatureType]);
 }
@@ -17477,71 +17477,6 @@ static int m11_projectile_aspect_flip_flags(int aspectIndex,
                                         mapY);
 }
 
-static int m11_c2900_projectile_zone_point(int scaleIndex,
-                                           int relativeCell,
-                                           int* outX,
-                                           int* outY) {
-    /* Layout-696 C2900_ZONE_ table used by DUNVIEW.C F0115 for
-     * projectile placement.  Five projectile scale buckets × four
-     * view cells, parallel to the C2500 object table but higher in
-     * the viewport (projectiles fly through the cell center rather
-     * than lying on the floor). */
-    static const short kC2900[5][4][2] = {
-        {{  0,  0}, {  0,  0}, {129, 47}, { 95, 47}},
-        {{  0,  0}, {  0,  0}, { 62, 47}, { 25, 47}},
-        {{  0,  0}, {  0,  0}, {200, 47}, {162, 47}},
-        {{  0,  0}, {  0,  0}, {  2, 47}, {-35, 47}},
-        {{  0,  0}, {  0,  0}, {258, 47}, {202, 47}}
-    };
-    int zx;
-    int zy;
-    if (scaleIndex < 0) scaleIndex = 0;
-    if (scaleIndex > 4) scaleIndex = 4;
-    if (relativeCell < 0 || relativeCell > 3) return 0;
-    zx = (int)kC2900[scaleIndex][relativeCell][0];
-    zy = (int)kC2900[scaleIndex][relativeCell][1];
-    if (zx == 0 && zy == 0) return 0;
-    if (outX) *outX = zx;
-    if (outY) *outY = zy;
-    return 1;
-}
-
-
-static int m11_c2900_projectile_raw_zone_point(int rowIndex,
-                                               int relativeCell,
-                                               int* outX,
-                                               int* outY) {
-    /* Full layout-696 C2900_ZONE_ family.  The normal renderer still uses
-     * m11_c2900_projectile_zone_point() for the legacy five-row path; this
-     * raw helper exposes every source row (C2900..C2947) so side/deep
-     * projectile work can be gated without silently dropping rows 5..11.
-     * Ref: GRAPHICS.DAT #696 / zones_h_reconstruction.json, pass83. */
-    static const short kC2900Raw[12][4][2] = {
-        {{  0,  0}, {  0,  0}, {129, 47}, { 95, 47}},
-        {{  0,  0}, {  0,  0}, { 62, 47}, { 25, 47}},
-        {{  0,  0}, {  0,  0}, {200, 47}, {162, 47}},
-        {{  0,  0}, {  0,  0}, {  2, 47}, {-35, 47}},
-        {{  0,  0}, {  0,  0}, {258, 47}, {202, 47}},
-        {{ 92, 47}, {132, 46}, {136, 47}, { 88, 47}},
-        {{ 10, 47}, { 53, 47}, { 41, 47}, {-14, 47}},
-        {{171, 47}, {218, 47}, {236, 47}, {183, 47}},
-        {{ 83, 47}, {140, 47}, {148, 47}, { 76, 47}},
-        {{-40, 47}, { 26, 47}, {  5, 47}, {-79, 47}},
-        {{197, 47}, {262, 47}, {301, 47}, {220, 47}},
-        {{ 66, 47}, {158, 47}, {  0,  0}, {  0,  0}}
-    };
-    int zx;
-    int zy;
-    if (rowIndex < 0 || rowIndex >= 12) return 0;
-    if (relativeCell < 0 || relativeCell > 3) return 0;
-    zx = (int)kC2900Raw[rowIndex][relativeCell][0];
-    zy = (int)kC2900Raw[rowIndex][relativeCell][1];
-    if (zx == 0 && zy == 0) return 0;
-    if (outX) *outX = zx;
-    if (outY) *outY = zy;
-    return 1;
-}
-
 static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -17585,9 +17520,9 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
         int qy = h / 4;  /* quarter-height offset */
         if (x >= M11_VIEWPORT_X && y >= M11_VIEWPORT_Y &&
             ((sourceZoneRow >= 0 &&
-              m11_c2900_projectile_raw_zone_point(sourceZoneRow, relativeCell, &zoneX, &zoneY)) ||
+              dm1_viewport_3d_c2900_projectile_raw_zone_point(sourceZoneRow, relativeCell, &zoneX, &zoneY)) ||
              (sourceZoneRow < 0 &&
-              m11_c2900_projectile_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)))) {
+              dm1_viewport_3d_c2900_projectile_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)))) {
             drawX = M11_VIEWPORT_X + zoneX - drawW / 2;
             drawY = M11_VIEWPORT_Y + zoneY - drawH / 2;
         } else {
@@ -20456,7 +20391,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
             if (visibleDups > 4) visibleDups = 4;
             if (visibleDups < 1) visibleDups = 1;
             if (visibleDups == 1) {
-                int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
                 int zoneX = 0;
                 int zoneY = 0;
                 if (dm1_viewport_3d_c3200_creature_zone_point(coordSet,
@@ -20492,7 +20427,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                  * local face rectangle and then anchor the duplicate sprite
                  * by its bottom center. */
                 {
-                    int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                    int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
                     int dIdx = depthIndex < 3 ? depthIndex : 2;
                     if (coordSet >= 0 && coordSet <= 2) {
                         for (di = 0; di < visibleDups && di < 4; ++di) {
@@ -24534,7 +24469,7 @@ static const unsigned char s_replColor10[13] = {
 
 /* Query replacement palette indices for a creature type.
  * Returns 1 if the creature uses replacement colors, 0 if not. */
-static int m11_creature_replacement_colors(int creatureType,
+static int dm1_creature_replacement_colors(int creatureType,
                                            int* outReplDst9,
                                            int* outReplDst10) {
     int setIdx9, setIdx10;
@@ -24578,7 +24513,7 @@ enum {
  * fallback the renderer indexes into the next creature's bitmap set or
  * unrelated graphic slots — a well-known fidelity bug we fix here.
  */
-static unsigned int m11_creature_sprite_for_pose(int creatureType,
+static unsigned int dm1_creature_sprite_for_pose(int creatureType,
                                                  int depthIndex,
                                                  int pose) {
     static const unsigned int kFirstNativeCreatureGraphic = 584;
@@ -24656,7 +24591,7 @@ static int m11_creature_pose_mirror(int relFacing, int pose) {
  * is facing the party from its right — the engine flips for that case
  * when the corresponding flag is set.  See ReDMCSB DUNGEON.C
  * F0178_GROUP_GetCreatureAspect / F0115 orientation logic. */
-static int m11_creature_pose_mirror_with_info(int creatureType,
+static int dm1_creature_m11_pose_mirror_with_info(int creatureType,
                                               int relFacing,
                                               int pose,
                                               int attacking) {
@@ -24764,7 +24699,7 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
     relFacing = m11_creature_relative_facing(creatureDir,
                                              state->world.party.direction);
     pose = m11_creature_pose_for_view(relFacing, useAttackPose);
-    spriteIdx = m11_creature_sprite_for_pose(creatureType, depthIndex, pose);
+    spriteIdx = dm1_creature_sprite_for_pose(creatureType, depthIndex, pose);
     if (spriteIdx == 0) return 0;
 
     /* Query replacement colors from the creature aspect data.
@@ -24772,7 +24707,7 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
      * differentiated by replacing palette indices 9 and 10 with
      * creature-specific colors during compositing.
      * Ref: ReDMCSB VIDEODRV.C VIDRV_12_SetCreatureReplacementColors. */
-    hasReplColors = m11_creature_replacement_colors(creatureType,
+    hasReplColors = dm1_creature_replacement_colors(creatureType,
                                                     &replDst9, &replDst10);
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
@@ -24787,7 +24722,7 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
      * When the pose fell back to FRONT because no dedicated bitmap
      * exists, the GraphicInfo FLIP_NON_ATTACK/FLIP_ATTACK flags decide
      * whether the front bitmap should be mirrored for this view. */
-    useMirror = m11_creature_pose_mirror_with_info(creatureType,
+    useMirror = dm1_creature_m11_pose_mirror_with_info(creatureType,
                                                    relFacing, pose,
                                                    useAttackPose);
 
@@ -24880,7 +24815,7 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
      * replacing palette indices 9 and 10 with creature-specific colors.
      * This is how e.g. PainRat and Mummy share set 0 but look different. */
     {
-        int transpColor = m11_creature_transparent_color(creatureType);
+        int transpColor = dm1_creature_transparent_color(creatureType);
         if (hasReplColors) {
             if (useMirror) {
                 M11_AssetLoader_BlitScaledMirrorReplace(
@@ -25123,7 +25058,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                 if (visibleDups > 3) visibleDups = 3;
                 if (visibleDups < 1) visibleDups = 1;
                 if (visibleDups == 1) {
-                    int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                    int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
                     int zoneX = 0;
                     int zoneY = 0;
                     int drawPaneX = paneX + 1;
@@ -25157,7 +25092,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                     if (ofsY < 1) ofsY = 1;
                     for (di = 0; di < visibleDups; ++di) {
                         int dy = cy + di * ofsY;
-                        int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                        int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
                         int zoneX = 0;
                         int zoneY = 0;
                         int drawPaneX = paneX + 1;
@@ -25393,7 +25328,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                     for (di = 0; di < visibleDups; ++di) {
                         int drawH = visibleDups == 1 ? slotH : slotH * 2 / 3;
                         int drawYBase = visibleDups == 1 ? cy : cy + di * ((slotH - drawH) > 1 ? (slotH - drawH) : 1);
-                        int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
+                        int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
                         int zoneX = 0;
                         int zoneY = 0;
                         int drawPaneX = paneX + 1;
@@ -32059,14 +31994,14 @@ int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
                                              int relativeCell,
                                              int* outX,
                                              int* outY) {
-    return m11_c2900_projectile_zone_point(scaleIndex, relativeCell, outX, outY);
+    return dm1_viewport_3d_c2900_projectile_zone_point(scaleIndex, relativeCell, outX, outY);
 }
 
 int M11_GameView_GetC2900ProjectileRawZonePoint(int rowIndex,
                                                 int relativeCell,
                                                 int* outX,
                                                 int* outY) {
-    return m11_c2900_projectile_raw_zone_point(rowIndex, relativeCell, outX, outY);
+    return dm1_viewport_3d_c2900_projectile_raw_zone_point(rowIndex, relativeCell, outX, outY);
 }
 
 int M11_GameView_GetProjectileRawZonePointForRel(int relForward,
@@ -32078,7 +32013,7 @@ int M11_GameView_GetProjectileRawZonePointForRel(int relForward,
     if (rowIndex < 0) {
         return 0;
     }
-    return m11_c2900_projectile_raw_zone_point(rowIndex, relativeCell,
+    return dm1_viewport_3d_c2900_projectile_raw_zone_point(rowIndex, relativeCell,
                                                outX, outY);
 }
 
@@ -42235,15 +42170,15 @@ int M11_GameView_ShowDialogOverlayChoices(M11_GameViewState* state,
 /* ── Creature aspect query API ── */
 
 int M11_GameView_GetCreatureCoordinateSet(int creatureType) {
-    return m11_creature_coordinate_set(creatureType);
+    return dm1_creature_coordinate_set(creatureType);
 }
 
 int M11_GameView_GetCreatureTransparentColor(int creatureType) {
-    return m11_creature_transparent_color(creatureType);
+    return dm1_creature_transparent_color(creatureType);
 }
 
 unsigned int M11_GameView_GetCreatureSpriteForDepth(int creatureType, int depthIndex) {
-    return m11_creature_sprite_for_pose(creatureType, depthIndex,
+    return dm1_creature_sprite_for_pose(creatureType, depthIndex,
                                         M11_CREATURE_POSE_FRONT);
 }
 
@@ -42256,11 +42191,11 @@ unsigned int M11_GameView_GetCreatureSpriteForView(int creatureType,
     int relFacing = m11_creature_relative_facing(creatureDir, partyDir);
     int pose = m11_creature_pose_for_view(relFacing, attacking);
     if (outMirror) {
-        *outMirror = m11_creature_pose_mirror_with_info(creatureType,
+        *outMirror = dm1_creature_m11_pose_mirror_with_info(creatureType,
                                                         relFacing, pose,
                                                         attacking);
     }
-    return m11_creature_sprite_for_pose(creatureType, depthIndex, pose);
+    return dm1_creature_sprite_for_pose(creatureType, depthIndex, pose);
 }
 
 unsigned int M11_GameView_GetCreatureGraphicInfo(int creatureType) {
@@ -42349,7 +42284,7 @@ int M11_GameView_CreatureHasFlipAttack(int creatureType) {
 int M11_GameView_GetCreatureReplacementColors(int creatureType,
                                                int* outReplDst9,
                                                int* outReplDst10) {
-    return m11_creature_replacement_colors(creatureType, outReplDst9, outReplDst10);
+    return dm1_creature_replacement_colors(creatureType, outReplDst9, outReplDst10);
 }
 
 int M11_GameView_GetFloorOrnamentOrdinal(const M11_GameViewState* state,

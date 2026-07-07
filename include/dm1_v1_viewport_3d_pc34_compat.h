@@ -495,6 +495,14 @@ int dm1_viewport_3d_c2500_object_raw_zone_point(int row_index,
                                                 int relative_cell,
                                                 int *out_x,
                                                 int *out_y);
+int dm1_viewport_3d_c2900_projectile_zone_point(int scale_index,
+                                                int relative_cell,
+                                                int *out_x,
+                                                int *out_y);
+int dm1_viewport_3d_c2900_projectile_raw_zone_point(int row_index,
+                                                    int relative_cell,
+                                                    int *out_x,
+                                                    int *out_y);
 int dm1_viewport_3d_c3200_creature_zone_point(int coord_set,
                                               int depth_index,
                                               int visible_count,
