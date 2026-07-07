@@ -142,6 +142,49 @@ int main(void)
               flow.imported_champion_count == 3 &&
               flow.imported_party.Champions[0].CurrentHealth == 17,
           "utility flow builds from runtime profile facts without M11 party copy");
+    check(csb_v1_util_flow_render_plan_from_runtime_profile_facts(
+              4,
+              1,
+              &runtime_profile,
+              "PICK SOURCE",
+              1,
+              &render_plan) &&
+              render_plan.preview_active == 1 &&
+              render_plan.menu_row_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
+              render_plan.preview_row_count > 0 &&
+              strcmp(render_plan.prompt_row.text, "PICK SOURCE") == 0,
+          "utility render plan builds from runtime profile facts");
+    check(csb_v1_util_flow_apply_firestaff_input_from_runtime_profile_facts(
+              0,
+              1,
+              &runtime_profile,
+              2,
+              1,
+              0,
+              0,
+              1,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
+              apply_receipt.selected_action_index_changed &&
+              apply_receipt.selected_action_index == 1 &&
+              apply_receipt.preview_active_changed &&
+              apply_receipt.preview_active == 0,
+          "utility keyboard receipt builds from runtime profile facts");
+    check(csb_v1_util_flow_apply_point_from_runtime_profile_facts(
+              0,
+              1,
+              &runtime_profile,
+              render_plan.menu_rows[1].x + 1,
+              render_plan.menu_rows[1].y + 1,
+              1,
+              0,
+              0,
+              1,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              apply_receipt.selected_action_index_changed &&
+              apply_receipt.selected_action_index == 1,
+          "utility pointer receipt builds from runtime profile facts");
     csb_v1_runtime_cleanup(&runtime_profile);
     flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
     flow.selected_action_index = 2;

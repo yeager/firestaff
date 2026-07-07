@@ -2217,28 +2217,12 @@ static void m11_draw_csb_startup_fallback_text_rows(
     int framebufferHeight,
     const CSB_V1_StartupRenderPlan_PC34 *plan);
 
-static void m11_csb_startup_build_utility_flow(
-    const M11_GameViewState *state,
-    CSB_V1_UtilFlowContext *flow)
-{
-    if (!flow) {
-        return;
-    }
-    (void)csb_v1_util_flow_build_from_runtime_profile_facts(
-        state ? state->csbState.startup_import_selected_action_index : 0,
-        state ? state->csbState.startup_import_champion_count : 0,
-        state && state->csbBootProfile
-            ? &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime
-            : NULL,
-        flow);
-}
-
 static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                                unsigned char *framebuffer,
                                                int framebufferWidth,
                                                int framebufferHeight)
 {
-    CSB_V1_UtilFlowContext flow;
+    const CSB_V1_BootProfile *profile;
     CSB_V1_UtilRenderPlan plan;
     int i;
 
@@ -2246,9 +2230,11 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
         return;
     }
 
-    m11_csb_startup_build_utility_flow(state, &flow);
-    if (!csb_v1_util_flow_render_plan(
-            &flow,
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!csb_v1_util_flow_render_plan_from_runtime_profile_facts(
+            state->csbState.startup_import_selected_action_index,
+            state->csbState.startup_import_champion_count,
+            profile ? &profile->runtime : NULL,
             state->csbState.startup_import_utility_prompt,
             state->csbState.startup_import_preview_active,
             &plan)) {
@@ -3170,7 +3156,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     int x,
     int y)
 {
-    CSB_V1_UtilFlowContext flow;
+    const CSB_V1_BootProfile *profile;
     CSB_V1_UtilApplyReceipt receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -3178,9 +3164,11 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    m11_csb_startup_build_utility_flow(state, &flow);
-    if (!csb_v1_util_flow_apply_point_if_active(
-            &flow,
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!csb_v1_util_flow_apply_point_from_runtime_profile_facts(
+            state->csbState.startup_import_selected_action_index,
+            state->csbState.startup_import_champion_count,
+            profile ? &profile->runtime : NULL,
             x,
             y,
             state->csbState.startup_import_available,
@@ -3218,7 +3206,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    CSB_V1_UtilFlowContext flow;
+    const CSB_V1_BootProfile *profile;
     CSB_V1_UtilApplyReceipt receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -3226,9 +3214,11 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    m11_csb_startup_build_utility_flow(state, &flow);
-    if (!csb_v1_util_flow_apply_firestaff_input_if_active(
-            &flow,
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!csb_v1_util_flow_apply_firestaff_input_from_runtime_profile_facts(
+            state->csbState.startup_import_selected_action_index,
+            state->csbState.startup_import_champion_count,
+            profile ? &profile->runtime : NULL,
             (int)input,
             state->csbState.startup_import_available,
             state->csbState.startup_entrance_credits_active,
