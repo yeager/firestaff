@@ -690,6 +690,40 @@ int csb_v1_util_flow_apply_firestaff_input_if_active(
                                                             out_receipt);
 }
 
+int csb_v1_util_flow_apply_firestaff_input_from_runtime_profile_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *runtime_profile,
+    int menu_input,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt)
+{
+    CSB_V1_UtilFlowContext ctx;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_util_flow_apply_receipt_init(out_receipt);
+    if (!csb_v1_util_flow_build_from_runtime_profile_facts(
+            selected_action_index,
+            imported_champion_count,
+            runtime_profile,
+            &ctx)) {
+        return 0;
+    }
+    return csb_v1_util_flow_apply_firestaff_input_if_active(
+        &ctx,
+        menu_input,
+        import_available,
+        credits_active,
+        opening_active,
+        preview_active,
+        out_receipt);
+}
+
 int csb_v1_util_flow_handle_point_if_active(
     CSB_V1_UtilFlowContext *ctx,
     int x,
@@ -744,6 +778,41 @@ int csb_v1_util_flow_apply_point_if_active(
     }
     return csb_v1_util_flow_apply_receipt_from_input_result(&result,
                                                             out_receipt);
+}
+
+int csb_v1_util_flow_apply_point_from_runtime_profile_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *runtime_profile,
+    int x,
+    int y,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilApplyReceipt *out_receipt)
+{
+    CSB_V1_UtilFlowContext ctx;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_util_flow_apply_receipt_init(out_receipt);
+    if (!csb_v1_util_flow_build_from_runtime_profile_facts(
+            selected_action_index,
+            imported_champion_count,
+            runtime_profile,
+            &ctx)) {
+        return 0;
+    }
+    return csb_v1_util_flow_apply_point_if_active(&ctx,
+                                                  x,
+                                                  y,
+                                                  import_available,
+                                                  credits_active,
+                                                  opening_active,
+                                                  preview_active,
+                                                  out_receipt);
 }
 
 int csb_v1_util_flow_overlay_accepts_input(int import_available,
@@ -1016,6 +1085,33 @@ int csb_v1_util_flow_render_plan(const CSB_V1_UtilFlowContext *ctx,
                       sizeof(out_plan->preview_rows[0])));
     }
     return out_plan->menu_row_count > 0 && out_plan->has_status_row;
+}
+
+int csb_v1_util_flow_render_plan_from_runtime_profile_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *runtime_profile,
+    const char *prompt_override,
+    int preview_active,
+    CSB_V1_UtilRenderPlan *out_plan)
+{
+    CSB_V1_UtilFlowContext ctx;
+
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!csb_v1_util_flow_build_from_runtime_profile_facts(
+            selected_action_index,
+            imported_champion_count,
+            runtime_profile,
+            &ctx)) {
+        return 0;
+    }
+    return csb_v1_util_flow_render_plan(&ctx,
+                                        prompt_override,
+                                        preview_active,
+                                        out_plan);
 }
 
 CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(

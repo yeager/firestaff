@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB utility runtime-profile facts ownership: `csb_v1_utility_flow_pc34` now builds utility render plans plus keyboard/pointer apply receipts directly from runtime-profile facts. M11 no longer constructs a CSB utility flow context before startup utility panel rendering or input routing. Verification: utility-flow action contract passed 55/55, CSB startup entrance pointer contract passed 133/133, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup input facts ownership: `theron_v1_startup_flow` now routes startup keyboard and pointer input directly from raw phase/profile/world/roster/Continue facts. M11 no longer builds Theron layout state before startup input routing. Verification: Theron startup-flow probe passed 508/508, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup render facts ownership: `theron_v1_startup_flow` now builds startup render plans directly from raw phase/profile/world/roster/Continue facts. M11 no longer builds Theron layout elements before drawing the startup screen. Verification: Theron startup-flow probe passed 503/503, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
