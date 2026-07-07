@@ -2495,7 +2495,7 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                       panel.prompt_x,
                       panel.prompt_y,
                       state->csbState.startup_import_utility_prompt,
-                      &g_text_small);
+                      m11_csb_startup_text_style(panel.prompt_text_style));
     }
 
     for (i = 0; i < renderRowCount; ++i) {
@@ -2508,15 +2508,15 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                           menuRow->highlight_y,
                           menuRow->highlight_w,
                           menuRow->highlight_h,
-                          M11_COLOR_DARK_GRAY);
+                          (unsigned char)menuRow->highlight_color);
         }
-        m11_draw_text(framebuffer,
-                      framebufferWidth,
-                      framebufferHeight,
-                      menuRow->text_x,
-                      menuRow->text_y,
-                      menuRow->label,
-                      &g_text_small);
+        m11_draw_csb_startup_plan_text(framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       menuRow->text_x,
+                                       menuRow->text_y,
+                                       menuRow->text_style,
+                                       menuRow->label);
     }
     if (state->csbState.startup_import_preview_active) {
         int count = csb_v1_util_flow_preview_render_rows(

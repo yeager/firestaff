@@ -45,6 +45,7 @@
 #define CSB_V1_UTIL_PREVIEW_ROW_H 10
 #define CSB_V1_UTIL_PREVIEW_MAX_ROWS 4
 #define CSB_V1_UTIL_TEXT_STYLE_SMALL 1
+#define CSB_V1_UTIL_SELECTED_HIGHLIGHT_COLOR 12
 
 static const CSB_V1_UtilFlowAction s_csb_v1_util_menu_actions[
     CSB_V1_UTIL_MENU_ACTION_COUNT] = {
@@ -500,8 +501,10 @@ int csb_v1_util_flow_menu_render_rows(
         out->highlight_y = menu_row->y;
         out->highlight_w = menu_row->w;
         out->highlight_h = menu_row->h;
+        out->highlight_color = CSB_V1_UTIL_SELECTED_HIGHLIGHT_COLOR;
         out->text_x = menu_row->x;
         out->text_y = menu_row->y + 2;
+        out->text_style = CSB_V1_UTIL_TEXT_STYLE_SMALL;
         snprintf(out->label,
                  sizeof(out->label),
                  "%c %s",
@@ -621,6 +624,7 @@ int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
     out_layout->import_status_y = CSB_V1_UTIL_PANEL_Y;
     out_layout->prompt_x = CSB_V1_UTIL_PANEL_X;
     out_layout->prompt_y = CSB_V1_UTIL_PROMPT_Y;
+    out_layout->prompt_text_style = CSB_V1_UTIL_TEXT_STYLE_SMALL;
     out_layout->preview_x = CSB_V1_UTIL_PREVIEW_X;
     out_layout->preview_y = CSB_V1_UTIL_PREVIEW_Y;
     out_layout->preview_row_h = CSB_V1_UTIL_PREVIEW_ROW_H;
