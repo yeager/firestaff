@@ -1255,16 +1255,10 @@ static void m11_draw_csb_runtime_thing_overlays(
         const CSB_V1_ViewportRuntimeThingOverlay *overlay =
             &overlays[overlay_index];
         if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_OBJECT) {
-            const CSB_V1_RuntimeObjectOverlayInfo *object_info =
-                &overlay->object_info;
             const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement =
                 &overlay->object_placement;
-            int type = object_info->thing_type;
-            int icon = object_info->icon_index;
-            int rel_cell = object_info->relative_cell;
-            int subtype = object_info->subtype_index;
-            int pile_index = overlay->object_pile_index;
-            int row = placement->object_row;
+            int icon = placement->icon_index;
+            int subtype = placement->sprite_subtype_index;
 
             if (subtype >= 0 &&
                 m11_draw_item_sprite(state,
@@ -1275,12 +1269,12 @@ static void m11_draw_csb_runtime_thing_overlays(
                                      placement->sprite_viewport_y,
                                      placement->sprite_viewport_w,
                                      placement->sprite_viewport_h,
-                                     type,
+                                     placement->sprite_thing_type,
                                      subtype,
-                                     rel_cell,
-                                     pile_index,
+                                     placement->sprite_relative_cell,
+                                     placement->sprite_pile_index,
                                      placement->sprite_depth_index,
-                                     row)) {
+                                     placement->object_row)) {
                 m11_csb_runtime_overlay_stats_add_object_sprite(state);
             } else if (icon >= 0 &&
                 m11_draw_dm_object_icon_index(

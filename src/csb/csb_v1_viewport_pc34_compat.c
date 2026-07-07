@@ -394,6 +394,16 @@ size_t csb_v1_viewport_runtime_collect_thing_overlays(
                     overlay.map_y = cell->map_y;
                     overlay.object_pile_index = object_pile_index;
                     overlay.object_info = object_info;
+                    overlay.object_placement.sprite_thing_type =
+                        object_info.thing_type;
+                    overlay.object_placement.sprite_subtype_index =
+                        object_info.subtype_index;
+                    overlay.object_placement.sprite_relative_cell =
+                        object_info.relative_cell;
+                    overlay.object_placement.sprite_pile_index =
+                        object_pile_index;
+                    overlay.object_placement.icon_index =
+                        object_info.icon_index;
                     if (out_overlays && count < out_capacity) {
                         out_overlays[count] = overlay;
                     }
@@ -877,6 +887,10 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
     placement.object_row =
         csb_v1_viewport_f0115_c2500_c2900_row(forward, side);
     placement.source_zone = -1;
+    placement.sprite_thing_type = -1;
+    placement.sprite_subtype_index = -1;
+    placement.sprite_relative_cell = relative_cell;
+    placement.sprite_pile_index = pile_index < 0 ? 0 : pile_index;
     /* ReDMCSB DUNVIEW.C F0115/F0128 draws runtime floor-object sprites
      * inside the 224x136 viewport pane, with row/depth selected by the
      * CSB F0115 view-square route.  Keep the full M11 sprite call contract
@@ -889,7 +903,7 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
     if (placement.sprite_depth_index < 0) {
         placement.sprite_depth_index = 0;
     }
-    placement.pile_index = pile_index < 0 ? 0 : pile_index;
+    placement.pile_index = placement.sprite_pile_index;
     placement.object_scale_index =
         csb_v1_viewport_object_source_scale_index(forward - 1,
                                                   relative_cell);
@@ -934,6 +948,7 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
     }
     placement.marker_screen_x = placement.screen_x + placement.pile_shift_x;
     placement.marker_screen_y = placement.screen_y + placement.pile_shift_y;
+    placement.icon_index = -1;
     placement.icon_screen_x = placement.marker_screen_x;
     placement.icon_screen_y = placement.marker_screen_y;
     if (relative_cell == 0 || relative_cell == 2) {

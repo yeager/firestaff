@@ -2569,6 +2569,17 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                   overlays[0].thing, dagger);
         check_int("csb.runtime_thing_overlay_plan.first_pile",
                   overlays[0].object_pile_index, 0);
+        check_int("csb.runtime_thing_overlay_plan.first_object_type",
+                  overlays[0].object_placement.sprite_thing_type,
+                  THING_TYPE_WEAPON);
+        check_int("csb.runtime_thing_overlay_plan.first_object_subtype",
+                  overlays[0].object_placement.sprite_subtype_index, 8);
+        check_int("csb.runtime_thing_overlay_plan.first_object_cell",
+                  overlays[0].object_placement.sprite_relative_cell, 3);
+        check_int("csb.runtime_thing_overlay_plan.first_object_draw_pile",
+                  overlays[0].object_placement.sprite_pile_index, 0);
+        check_int("csb.runtime_thing_overlay_plan.first_object_icon",
+                  overlays[0].object_placement.icon_index, 32);
         check_int("csb.runtime_thing_overlay_plan.first_marker_x",
                   overlays[0].object_placement.marker_screen_x, 78);
         check_int("csb.runtime_thing_overlay_plan.second_object",
@@ -2609,6 +2620,16 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                    1, 0, 0, &object_place) == 1);
     check_int("csb.runtime_object_overlay.d1c.row",
               object_place.object_row, 8);
+    check_int("csb.runtime_object_overlay.d1c.sprite_type_default",
+              object_place.sprite_thing_type, -1);
+    check_int("csb.runtime_object_overlay.d1c.sprite_subtype_default",
+              object_place.sprite_subtype_index, -1);
+    check_int("csb.runtime_object_overlay.d1c.sprite_cell",
+              object_place.sprite_relative_cell, 0);
+    check_int("csb.runtime_object_overlay.d1c.sprite_pile",
+              object_place.sprite_pile_index, 0);
+    check_int("csb.runtime_object_overlay.d1c.icon_default",
+              object_place.icon_index, -1);
     check_int("csb.runtime_object_overlay.d1c.sprite_vp_x",
               object_place.sprite_viewport_x, 0);
     check_int("csb.runtime_object_overlay.d1c.sprite_vp_y",
