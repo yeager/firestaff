@@ -2465,6 +2465,7 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilRenderRow renderRows[CSB_V1_UTIL_MENU_ROW_COUNT];
     CSB_V1_UtilRenderTextRow statusRow;
+    CSB_V1_UtilRenderTextRow promptRow;
     CSB_V1_UtilRenderTextRow previewRows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
     int renderRowCount;
     int i;
@@ -2488,14 +2489,17 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   statusRow.x, statusRow.y, statusRow.text,
                   m11_csb_startup_text_style(statusRow.text_style));
-    if (state->csbState.startup_import_utility_prompt[0] != '\0') {
+    if (csb_v1_util_flow_prompt_render_row(
+            &flow,
+            state->csbState.startup_import_utility_prompt,
+            &promptRow)) {
         m11_draw_text(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
-                      panel.prompt_x,
-                      panel.prompt_y,
-                      state->csbState.startup_import_utility_prompt,
-                      m11_csb_startup_text_style(panel.prompt_text_style));
+                      promptRow.x,
+                      promptRow.y,
+                      promptRow.text,
+                      m11_csb_startup_text_style(promptRow.text_style));
     }
 
     for (i = 0; i < renderRowCount; ++i) {

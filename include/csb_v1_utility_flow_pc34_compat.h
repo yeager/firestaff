@@ -228,6 +228,10 @@ int csb_v1_util_flow_menu_render_rows(
 int csb_v1_util_flow_import_status_render_row(
     const CSB_V1_UtilFlowContext *ctx,
     CSB_V1_UtilRenderTextRow *out_row);
+int csb_v1_util_flow_prompt_render_row(
+    const CSB_V1_UtilFlowContext *ctx,
+    const char *prompt_override,
+    CSB_V1_UtilRenderTextRow *out_row);
 int csb_v1_util_flow_preview_render_rows(
     const CSB_V1_UtilFlowContext *ctx,
     CSB_V1_UtilRenderTextRow *rows,

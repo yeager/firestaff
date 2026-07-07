@@ -27,6 +27,7 @@ int main(void)
     CSB_V1_UtilRuntimeSnapshot snapshot;
     CSB_V1_UtilRenderRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
     CSB_V1_UtilRenderTextRow status_row;
+    CSB_V1_UtilRenderTextRow prompt_row;
     CSB_V1_UtilRenderTextRow preview_rows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
     int row_count;
 
@@ -202,6 +203,17 @@ int main(void)
               strcmp(status_row.text,
                      "DM1 IMPORT READY: 2 CHAMPIONS") == 0,
           "utility flow owns import status render row");
+    check(!csb_v1_util_flow_prompt_render_row(&flow, "", &prompt_row),
+          "utility flow skips empty prompt render row");
+    check(csb_v1_util_flow_prompt_render_row(
+              &flow,
+              "CHAOS STRIKES BACK READY",
+              &prompt_row) &&
+              prompt_row.x == 38 &&
+              prompt_row.y == 92 &&
+              prompt_row.text_style == 1 &&
+              strcmp(prompt_row.text, "CHAOS STRIKES BACK READY") == 0,
+          "utility flow owns prompt render row");
     row_count = csb_v1_util_flow_preview_render_rows(
         &flow,
         preview_rows,
