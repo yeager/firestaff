@@ -608,9 +608,18 @@ int main(void)
             (int)(sizeof(draw_commands) / sizeof(draw_commands[0])));
         expect(draw_count == 1 &&
                    draw_commands[0].kind ==
+                       NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND,
+               "Nexus startup presentation owns WARNING.BIN boot draw frame");
+        draw_count = nexus_v1_startup_presentation_build_title(
+            60,
+            draw_commands,
+            (int)(sizeof(draw_commands) / sizeof(draw_commands[0])));
+        expect(draw_count == 1 &&
+                   draw_commands[0].kind ==
                        NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME &&
-                   draw_commands[0].title_frame == 17,
-               "Nexus startup presentation owns warning/title boot draw frame");
+                   draw_commands[0].title_frame ==
+                       60 - nexus_v1_boot_warning_frames(),
+               "Nexus startup presentation maps boot frame to TITLE.CG frame");
         menu_snapshot.slot_mask = (1u << 3);
         menu_snapshot.row_count = 2;
         menu_snapshot.selected_row = 1;

@@ -167,7 +167,8 @@ typedef enum {
     NEXUS_V1_STARTUP_DRAW_OUTLINE_RECT = 3,
     NEXUS_V1_STARTUP_DRAW_TEXT = 4,
     NEXUS_V1_STARTUP_DRAW_PORTRAIT = 5,
-    NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME = 6
+    NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME = 6,
+    NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND = 7
 } Nexus_V1_StartupDrawKind;
 
 typedef enum {
@@ -201,6 +202,7 @@ typedef struct {
     Nexus_V1_StartupDrawFn draw_text;
     Nexus_V1_StartupDrawFn draw_portrait;
     Nexus_V1_StartupDrawFn draw_boot_title_frame;
+    Nexus_V1_StartupDrawFn draw_warning_background;
 } Nexus_V1_StartupDrawExecutor;
 
 typedef struct {
