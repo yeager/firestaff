@@ -151,61 +151,61 @@ static int test_explosion_sprite_drawer(
 
 static int test_object_sprite_drawer(
     void *user,
-    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeObjectSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     TestRuntimeThingDrawCapture *capture =
         (TestRuntimeThingDrawCapture *)user;
 
-    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (!blit || !screen_pixels || screen_stride <= 0) return 0;
     if (capture) {
         ++capture->object_sprite_calls;
-        capture->last_object_type = placement->sprite_thing_type;
-        capture->last_object_subtype = placement->sprite_subtype_index;
-        capture->last_object_pile = placement->sprite_pile_index;
+        capture->last_object_type = blit->thing_type;
+        capture->last_object_subtype = blit->subtype_index;
+        capture->last_object_pile = blit->pile_index;
     }
-    screen_pixels[placement->marker_screen_y * screen_stride +
-                  placement->marker_screen_x] = 0x21u;
+    screen_pixels[blit->viewport_y * screen_stride +
+                  blit->viewport_x] = 0x21u;
     return 1;
 }
 
 static int test_object_icon_drawer(
     void *user,
-    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeObjectIconBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     TestRuntimeThingDrawCapture *capture =
         (TestRuntimeThingDrawCapture *)user;
 
-    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (!blit || !screen_pixels || screen_stride <= 0) return 0;
     if (capture) {
         ++capture->object_icon_calls;
-        capture->last_object_icon = placement->icon_index;
+        capture->last_object_icon = blit->icon_index;
     }
-    screen_pixels[placement->icon_draw_y * screen_stride +
-                  placement->icon_draw_x] = 0x22u;
+    screen_pixels[blit->draw_y * screen_stride +
+                  blit->draw_x] = 0x22u;
     return 1;
 }
 
 static int test_group_sprite_drawer(
     void *user,
-    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeGroupSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     TestRuntimeThingDrawCapture *capture =
         (TestRuntimeThingDrawCapture *)user;
 
-    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (!blit || !screen_pixels || screen_stride <= 0) return 0;
     if (capture) {
         ++capture->group_sprite_calls;
-        capture->last_group_type = placement->sprite_creature_type;
-        capture->last_group_direction = placement->sprite_direction;
+        capture->last_group_type = blit->creature_type;
+        capture->last_group_direction = blit->direction;
     }
-    screen_pixels[placement->marker_screen_y * screen_stride +
-                  placement->marker_screen_x] = 0x23u;
+    screen_pixels[blit->y * screen_stride +
+                  blit->x] = 0x23u;
     return 1;
 }
 

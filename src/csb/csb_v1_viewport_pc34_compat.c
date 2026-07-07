@@ -1803,21 +1803,62 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
             const int icon = placement->icon_index;
 
             if (placement->sprite_subtype_index >= 0 &&
-                cfg->object_sprite_drawer &&
-                cfg->object_sprite_drawer(
-                    cfg->object_sprite_user,
-                    placement,
-                    cfg->viewport_pixels,
-                    cfg->viewport_stride)) {
-                ++cfg->runtime_object_sprite_drawn_count;
+                cfg->object_sprite_drawer) {
+                CSB_V1_ViewportRuntimeObjectSpriteBlit blit;
+                if (csb_v1_viewport_runtime_object_sprite_blit(
+                        placement, &blit) &&
+                    cfg->object_sprite_drawer(
+                        cfg->object_sprite_user,
+                        &blit,
+                        cfg->viewport_pixels,
+                        cfg->viewport_stride)) {
+                    ++cfg->runtime_object_sprite_drawn_count;
+                } else if (icon >= 0 &&
+                           cfg->object_icon_drawer) {
+                    CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
+                    if (csb_v1_viewport_runtime_object_icon_blit(
+                            placement, &icon_blit) &&
+                        cfg->object_icon_drawer(
+                            cfg->object_icon_user,
+                            &icon_blit,
+                            cfg->viewport_pixels,
+                            cfg->viewport_stride)) {
+                        ++cfg->runtime_object_icon_drawn_count;
+                    } else if (csb_v1_viewport_draw_runtime_object_marker(
+                                   cfg->viewport_pixels,
+                                   cfg->viewport_stride,
+                                   screen_height,
+                                   placement,
+                                   icon)) {
+                        ++cfg->runtime_object_marker_drawn_count;
+                    }
+                } else if (csb_v1_viewport_draw_runtime_object_marker(
+                               cfg->viewport_pixels,
+                               cfg->viewport_stride,
+                               screen_height,
+                               placement,
+                               icon)) {
+                    ++cfg->runtime_object_marker_drawn_count;
+                }
             } else if (icon >= 0 &&
-                       cfg->object_icon_drawer &&
-                       cfg->object_icon_drawer(
-                           cfg->object_icon_user,
-                           placement,
-                           cfg->viewport_pixels,
-                           cfg->viewport_stride)) {
-                ++cfg->runtime_object_icon_drawn_count;
+                       cfg->object_icon_drawer) {
+                CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
+                if (csb_v1_viewport_runtime_object_icon_blit(
+                        placement, &icon_blit) &&
+                    cfg->object_icon_drawer(
+                        cfg->object_icon_user,
+                        &icon_blit,
+                        cfg->viewport_pixels,
+                        cfg->viewport_stride)) {
+                    ++cfg->runtime_object_icon_drawn_count;
+                } else if (csb_v1_viewport_draw_runtime_object_marker(
+                               cfg->viewport_pixels,
+                               cfg->viewport_stride,
+                               screen_height,
+                               placement,
+                               icon)) {
+                    ++cfg->runtime_object_marker_drawn_count;
+                }
             } else if (csb_v1_viewport_draw_runtime_object_marker(
                            cfg->viewport_pixels,
                            cfg->viewport_stride,
@@ -1832,13 +1873,24 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
             const int creature_type = placement->sprite_creature_type;
 
             if (creature_type >= 0 &&
-                cfg->group_sprite_drawer &&
-                cfg->group_sprite_drawer(
-                    cfg->group_sprite_user,
-                    placement,
-                    cfg->viewport_pixels,
-                    cfg->viewport_stride)) {
-                ++cfg->runtime_group_sprite_drawn_count;
+                cfg->group_sprite_drawer) {
+                CSB_V1_ViewportRuntimeGroupSpriteBlit blit;
+                if (csb_v1_viewport_runtime_group_sprite_blit(
+                        placement, &blit) &&
+                    cfg->group_sprite_drawer(
+                        cfg->group_sprite_user,
+                        &blit,
+                        cfg->viewport_pixels,
+                        cfg->viewport_stride)) {
+                    ++cfg->runtime_group_sprite_drawn_count;
+                } else if (csb_v1_viewport_draw_runtime_group_marker(
+                               cfg->viewport_pixels,
+                               cfg->viewport_stride,
+                               screen_height,
+                               placement,
+                               creature_type)) {
+                    ++cfg->runtime_group_marker_drawn_count;
+                }
             } else if (csb_v1_viewport_draw_runtime_group_marker(
                            cfg->viewport_pixels,
                            cfg->viewport_stride,
