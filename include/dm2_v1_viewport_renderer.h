@@ -127,6 +127,10 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT 16
 #define DM2_V1_VIEWPORT_GFX_PROJECTILE_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_MASK 0xFF
+#define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE (-0x80000)
+#define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT 8
+#define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_MASK 0xFF
+#define DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD 0x00
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -150,6 +154,7 @@ int dm2_v1_viewport_item_graphic_index(int item_category,
 int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
                                              int projectile_type,
                                              int frame_index);
+int dm2_v1_viewport_hud_portrait_graphic_index(int portrait_index);
 int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
@@ -423,6 +428,8 @@ typedef struct {
     int fallback_carried_item_drawn_count;
     int asset_projectile_drawn_count;
     int fallback_projectile_drawn_count;
+    int asset_hud_portrait_drawn_count;
+    int fallback_hud_portrait_drawn_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
