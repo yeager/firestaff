@@ -528,6 +528,7 @@ struct CSB_V1_ViewportRuntimeObjectSpriteBlit {
     int viewport_w;
     int viewport_h;
     int depth_index;
+    int source_zone;
     int source_zone_row;
     int transparent_color;
     int uses_f0791_blit;
