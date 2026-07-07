@@ -1278,6 +1278,26 @@ static int m11_csb_runtime_group_visible_count(const uint8_t *record, int size)
     return count;
 }
 
+static int m11_csb_runtime_group_creature_cell(const uint8_t *record,
+                                               int size,
+                                               int creature_index)
+{
+    if (!record || size < 16 || creature_index < 0) {
+        return 0;
+    }
+    if (record[5] == 0xFFu) {
+        return 0;
+    }
+    if (creature_index > 3) {
+        creature_index = 3;
+    }
+    /* ReDMCSB DEFS.H M050_CREATURE_VALUE reads packed GROUP.Cells:
+     * two bits per creature.  F0115 uses the creature cell as the
+     * C3200 view cell, so runtime GROUP overlays must not substitute the
+     * loop ordinal when creatures occupy non-sequential cells. */
+    return ((int)record[5] >> (creature_index << 1)) & 0x03;
+}
+
 static int m11_csb_square_allows_runtime_thing_overlay(
     const CSB_V1_DungeonData *dungeon,
     int level,
@@ -1676,6 +1696,10 @@ static void m11_draw_csb_runtime_group_overlays(
                     if (sprite_h < 28) sprite_h = 28;
                     for (slot = 0; slot < visible_count; ++slot) {
                         CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
+                        int group_cell =
+                            m11_csb_runtime_group_creature_cell(record,
+                                                                size,
+                                                                slot);
                         int x = 0;
                         int y = 0;
                         if (!csb_v1_viewport_runtime_group_overlay_slot_placement(
@@ -1683,7 +1707,7 @@ static void m11_draw_csb_runtime_group_overlays(
                                 side,
                                 coord_set,
                                 visible_count,
-                                slot,
+                                group_cell,
                                 &placement)) {
                             continue;
                         }

@@ -2410,15 +2410,15 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.used_source_zone, 1);
 
     memset(&group_place, 0, sizeof(group_place));
-    check_true("csb.runtime_group_overlay.d1c.slot1.visible",
+    check_true("csb.runtime_group_overlay.d1c.cell2.visible",
                csb_v1_viewport_runtime_group_overlay_slot_placement(
-                   1, 0, 0, 2, 1, &group_place) == 1);
-    check_int("csb.runtime_group_overlay.d1c.slot1.view_cell",
-              group_place.view_cell, 1);
-    check_int("csb.runtime_group_overlay.d1c.slot1.screen_x",
-              group_place.screen_x, 141);
-    check_int("csb.runtime_group_overlay.d1c.slot1.screen_y",
-              group_place.screen_y, 139);
+                   1, 0, 0, 2, 2, &group_place) == 1);
+    check_int("csb.runtime_group_overlay.d1c.cell2.view_cell",
+              group_place.view_cell, 2);
+    check_int("csb.runtime_group_overlay.d1c.cell2.screen_x",
+              group_place.screen_x, 148);
+    check_int("csb.runtime_group_overlay.d1c.cell2.screen_y",
+              group_place.screen_y, 152);
 
     memset(&group_place, 0, sizeof(group_place));
     check_int("csb.runtime_group_overlay.bad_coord.hidden",
