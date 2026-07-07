@@ -118,6 +118,19 @@ typedef struct {
     int champion_frame;
 } Nexus_V1_StartupModeUpdate;
 
+typedef enum {
+    NEXUS_V1_STARTUP_APPLY_RESULT_IGNORE = 0,
+    NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW = 1,
+    NEXUS_V1_STARTUP_APPLY_RESULT_RETURN_TO_LAUNCHER = 2
+} Nexus_V1_StartupApplyResult;
+
+typedef struct {
+    Nexus_V1_StartupApplyResult result;
+    Nexus_V1_StartupModeUpdate mode_update;
+    const char *status_scope;
+    const char *status;
+} Nexus_V1_StartupApplyReceipt;
+
 typedef struct {
     char save_dir[512];
     unsigned int slot_mask;
@@ -257,16 +270,27 @@ int nexus_v1_startup_execute_save_action(
 int nexus_v1_startup_save_execution_mode_update(
     const Nexus_V1_StartupSaveExecution *execution,
     Nexus_V1_StartupModeUpdate *out_update);
+int nexus_v1_startup_apply_receipt_from_save_execution(
+    const Nexus_V1_StartupSaveExecution *execution,
+    int load_success,
+    Nexus_V1_StartupApplyReceipt *out_receipt);
 int nexus_v1_startup_execute_champion_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupChampionExecution *out_execution);
 int nexus_v1_startup_title_execution_mode_update(
     const Nexus_V1_StartupTitleExecution *execution,
     Nexus_V1_StartupModeUpdate *out_update);
+int nexus_v1_startup_apply_receipt_from_title_execution(
+    const Nexus_V1_StartupTitleExecution *execution,
+    Nexus_V1_StartupApplyReceipt *out_receipt);
 int nexus_v1_startup_champion_execution_mode_update(
     const Nexus_V1_StartupChampionExecution *execution,
     int save_row_count,
     Nexus_V1_StartupModeUpdate *out_update);
+int nexus_v1_startup_apply_receipt_from_champion_execution(
+    const Nexus_V1_StartupChampionExecution *execution,
+    int save_row_count,
+    Nexus_V1_StartupApplyReceipt *out_receipt);
 int nexus_v1_startup_menu_build_save_render_rows(
     const Nexus_V1_StartupMenu *menu,
     Nexus_V1_StartupSaveRenderRow *rows,

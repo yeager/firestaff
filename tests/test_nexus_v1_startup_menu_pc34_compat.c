@@ -77,6 +77,7 @@ int main(void)
     Nexus_V1_StartupTitleExecution title_execution;
     Nexus_V1_StartupChampionExecution champion_execution;
     Nexus_V1_StartupModeUpdate mode_update;
+    Nexus_V1_StartupApplyReceipt receipt;
     Nexus_V1_StartupHit hit;
     Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
@@ -413,6 +414,15 @@ int main(void)
                mode_update.champion_cursor == 2 &&
                !mode_update.set_champion_select_active,
            "Nexus champion execution owns cursor state update");
+    expect(nexus_v1_startup_apply_receipt_from_champion_execution(
+               &champion_execution,
+               2,
+               &receipt) &&
+               receipt.result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW &&
+               receipt.mode_update.set_champion_cursor &&
+               receipt.mode_update.champion_cursor == 2 &&
+               strcmp(receipt.status, "NEXUS CHAMPION CURSOR") == 0,
+           "Nexus champion apply receipt owns cursor redraw policy");
     hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER;
     hit.row = -1;
     expect(nexus_v1_startup_champion_handle_hit(
@@ -675,6 +685,14 @@ int main(void)
                mode_update.set_save_selected_row &&
                mode_update.save_selected_row == 0,
            "startup title execution owns save-select mode update");
+    expect(nexus_v1_startup_apply_receipt_from_title_execution(
+               &title_execution,
+               &receipt) &&
+               receipt.result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW &&
+               receipt.mode_update.set_save_select_active &&
+               receipt.mode_update.save_select_active == 1 &&
+               strcmp(receipt.status, "NEXUS LOAD GAME") == 0,
+           "startup title apply receipt owns save-select redraw policy");
     expect(nexus_v1_startup_title_handle_hit(
                54,
                menu.slot_mask,
@@ -738,6 +756,13 @@ int main(void)
                !mode_update.set_title_active &&
                !mode_update.set_save_select_active,
            "startup title launcher return owns no-op mode update");
+    expect(nexus_v1_startup_apply_receipt_from_title_execution(
+               &title_execution,
+               &receipt) &&
+               receipt.result ==
+                   NEXUS_V1_STARTUP_APPLY_RESULT_RETURN_TO_LAUNCHER &&
+               strcmp(receipt.status_scope, "RETURN") == 0,
+           "startup title apply receipt owns launcher return policy");
     expect(nexus_v1_boot_frame(0, 200, &boot_frame) &&
                boot_frame.phase == NEXUS_V1_BOOT_PHASE_WARNING &&
                boot_frame.warning_visible &&
@@ -810,6 +835,25 @@ int main(void)
                mode_update.save_select_active == 0 &&
                !mode_update.set_champion_select_active,
            "startup save execution owns load-slot mode update");
+    expect(nexus_v1_startup_apply_receipt_from_save_execution(
+               &execution,
+               1,
+               &receipt) &&
+               receipt.result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW &&
+               receipt.mode_update.set_save_select_active &&
+               receipt.mode_update.save_select_active == 0 &&
+               strcmp(receipt.status_scope, "BOOT") == 0 &&
+               strcmp(receipt.status, "NEXUS RESUMED") == 0,
+           "startup save apply receipt owns successful load policy");
+    expect(nexus_v1_startup_apply_receipt_from_save_execution(
+               &execution,
+               0,
+               &receipt) &&
+               receipt.result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW &&
+               !receipt.mode_update.set_save_select_active &&
+               strcmp(receipt.status_scope, "STARTUP") == 0 &&
+               strcmp(receipt.status, "NEXUS LOAD FAILED") == 0,
+           "startup save apply receipt owns failed load policy");
     expect(nexus_v1_startup_menu_handle_input(
                &menu,
                NEXUS_V1_STARTUP_INPUT_DOWN,
