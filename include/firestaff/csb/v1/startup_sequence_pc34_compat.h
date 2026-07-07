@@ -156,12 +156,18 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int closed_left_dest_y;
     int closed_left_w;
     int closed_left_h;
+    int closed_left_fallback_fill_color;
+    int closed_left_fallback_light_edge_color;
+    int closed_left_fallback_dark_edge_color;
     int closed_right_source_x;
     int closed_right_source_y;
     int closed_right_dest_x;
     int closed_right_dest_y;
     int closed_right_w;
     int closed_right_h;
+    int closed_right_fallback_fill_color;
+    int closed_right_fallback_light_edge_color;
+    int closed_right_fallback_dark_edge_color;
     int opening_door_valid;
     int opening_door_step;
     int opening_left_source_x;
