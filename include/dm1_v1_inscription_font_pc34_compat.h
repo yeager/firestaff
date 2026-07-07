@@ -49,6 +49,9 @@ static inline int DM1_V1_InscriptionGlyphIndexForFontWidth(unsigned char ch,
         if (ch >= 'a' && ch <= 'h') {
             return 28 + (int)(ch - 'a');
         }
+        if (ch >= '0' && ch <= '7') {
+            return 28 + (int)(ch - '0');
+        }
     }
     return -1;
 }

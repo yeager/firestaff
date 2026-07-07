@@ -42,6 +42,12 @@ int main(void)
     check_int("escape.lowercase.compact.last",
               DM1_V1_InscriptionGlyphIndexForFontWidth('h', compactWidth),
               35);
+    check_int("escape.digit.compact.first",
+              DM1_V1_InscriptionGlyphIndexForFontWidth('0', compactWidth),
+              28);
+    check_int("escape.digit.compact.last",
+              DM1_V1_InscriptionGlyphIndexForFontWidth('7', compactWidth),
+              35);
     check_int("escape.lowercase.compact.unavailable",
               DM1_V1_InscriptionGlyphIndexForFontWidth('i', compactWidth),
               -1);
