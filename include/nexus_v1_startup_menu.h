@@ -155,6 +155,19 @@ typedef struct {
     int frame;
 } Nexus_V1_StartupChampionSnapshot;
 
+typedef struct {
+    char save_dir[512];
+    unsigned int slot_mask;
+    int row_count;
+    int selected_row;
+} Nexus_V1_StartupMenuStateReceipt;
+
+typedef struct {
+    unsigned int slot_mask;
+    int cursor;
+    int frame;
+} Nexus_V1_StartupChampionStateReceipt;
+
 enum {
     NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY = 96,
@@ -306,6 +319,20 @@ int nexus_v1_startup_menu_snapshot_scan_or_new_game_from_facts(
     Nexus_V1_StartupMenuSnapshot *snapshot,
     const char *save_dir,
     int selected_row);
+void nexus_v1_startup_menu_state_receipt_init(
+    Nexus_V1_StartupMenuStateReceipt *receipt);
+int nexus_v1_startup_menu_state_receipt_from_snapshot(
+    const Nexus_V1_StartupMenuSnapshot *snapshot,
+    Nexus_V1_StartupMenuStateReceipt *out_receipt);
+int nexus_v1_startup_menu_state_receipt_from_facts(
+    Nexus_V1_StartupMenuStateReceipt *out_receipt,
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row);
+int nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_facts(
+    Nexus_V1_StartupMenuStateReceipt *out_receipt,
+    const char *save_dir,
+    int selected_row);
 int nexus_v1_startup_menu_snapshot_row_at(
     const Nexus_V1_StartupMenuSnapshot *snapshot,
     int row,
@@ -322,12 +349,28 @@ int nexus_v1_startup_menu_handle_firestaff_input_from_facts(
     int selected_row,
     int menu_input,
     Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
+    Nexus_V1_StartupMenuStateReceipt *out_receipt,
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row,
+    int menu_input,
+    Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_menu_snapshot_handle_hit(
     Nexus_V1_StartupMenuSnapshot *snapshot,
     const Nexus_V1_StartupHit *hit,
     Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_menu_handle_pointer_from_facts(
     Nexus_V1_StartupMenuSnapshot *snapshot,
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row,
+    int row_count,
+    int x,
+    int y,
+    Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_menu_handle_pointer_from_facts_with_receipt(
+    Nexus_V1_StartupMenuStateReceipt *out_receipt,
     const char *save_dir,
     unsigned int slot_mask,
     int selected_row,
@@ -412,6 +455,17 @@ int nexus_v1_startup_champion_snapshot_from_facts(
     unsigned int slot_mask,
     int cursor,
     int frame);
+void nexus_v1_startup_champion_state_receipt_init(
+    Nexus_V1_StartupChampionStateReceipt *receipt);
+int nexus_v1_startup_champion_state_receipt_from_snapshot(
+    const Nexus_V1_StartupChampionSnapshot *snapshot,
+    Nexus_V1_StartupChampionStateReceipt *out_receipt);
+int nexus_v1_startup_champion_state_receipt_from_facts(
+    const Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionStateReceipt *out_receipt,
+    unsigned int slot_mask,
+    int cursor,
+    int frame);
 int nexus_v1_startup_champion_snapshot_handle_input(
     Nexus_V1_ChampionPool *pool,
     Nexus_V1_StartupChampionSnapshot *snapshot,
@@ -425,6 +479,14 @@ int nexus_v1_startup_champion_handle_firestaff_input_from_facts(
     int frame,
     int firestaff_input,
     Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_champion_handle_firestaff_input_from_facts_with_receipt(
+    Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionStateReceipt *out_receipt,
+    unsigned int slot_mask,
+    int cursor,
+    int frame,
+    int firestaff_input,
+    Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_champion_snapshot_handle_hit(
     Nexus_V1_ChampionPool *pool,
     Nexus_V1_StartupChampionSnapshot *snapshot,
@@ -433,6 +495,15 @@ int nexus_v1_startup_champion_snapshot_handle_hit(
 int nexus_v1_startup_champion_handle_pointer_from_facts(
     Nexus_V1_ChampionPool *pool,
     Nexus_V1_StartupChampionSnapshot *snapshot,
+    unsigned int slot_mask,
+    int cursor,
+    int frame,
+    int x,
+    int y,
+    Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_champion_handle_pointer_from_facts_with_receipt(
+    Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionStateReceipt *out_receipt,
     unsigned int slot_mask,
     int cursor,
     int frame,
