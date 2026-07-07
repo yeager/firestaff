@@ -349,9 +349,9 @@ static void run_real_data_handoff_if_available(void) {
         } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
             expect_true(receipt.startupAnimationActive == 1 &&
                             receipt.startupTitleFrame == 0 &&
-                            receipt.startupTitleFrameMax == 54 &&
+                            receipt.startupTitleFrameMax == 102 &&
                             receipt.startupTitleReady == 0,
-                        "Nexus receipt exposes active title reveal frame and ready boundary");
+                        "Nexus receipt exposes active full boot title frame and ready boundary");
         } else {
             expect_true(receipt.startupAnimationActive == 1,
                         "direct launch boot receipt marks non-DM1 startup surface active");
@@ -510,7 +510,7 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectStartupAnimation = "nexus-title";
                 opts.bootProbeExpectStartupAnimationActive = 1;
                 opts.bootProbeExpectTitleFrameMin = 1;
-                opts.bootProbeExpectTitleFrameBoundary = 54;
+                opts.bootProbeExpectTitleFrameBoundary = 102;
                 opts.bootProbeExpectTitleReady = 0;
                 opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMax = 0;

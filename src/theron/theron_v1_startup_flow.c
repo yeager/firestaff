@@ -799,6 +799,55 @@ int theron_v1_startup_state_receipt_from_flow_apply(
            out_receipt->set_continue_focus;
 }
 
+int theron_v1_startup_execute_flow_plan_with_receipts(
+    const Theron_StartupActionPlan *plan,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow,
+    Theron_StartupExecution *out_execution,
+    Theron_StartupApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt) {
+
+    Theron_StartupExecution local_execution;
+    Theron_StartupApplyReceipt local_apply;
+    Theron_StartupExecution *execution;
+    Theron_StartupApplyReceipt *apply;
+
+    if (out_execution) {
+        theron_v1_startup_execution_init(out_execution);
+    }
+    if (out_apply_receipt) {
+        theron_v1_startup_apply_receipt_init(out_apply_receipt);
+    }
+    if (out_state_receipt) {
+        theron_v1_startup_state_receipt_init(out_state_receipt);
+    }
+    if (!plan || !flow) {
+        return 0;
+    }
+    execution = out_execution ? out_execution : &local_execution;
+    apply = out_apply_receipt ? out_apply_receipt : &local_apply;
+
+    if (!theron_v1_startup_execute_flow_plan(plan,
+                                             progression,
+                                             flow,
+                                             execution)) {
+        return 0;
+    }
+    if (!theron_v1_startup_apply_receipt_from_flow_execution(
+            plan,
+            execution,
+            apply)) {
+        return 0;
+    }
+    if (out_state_receipt) {
+        (void)theron_v1_startup_state_receipt_from_flow_apply(
+            flow,
+            apply,
+            out_state_receipt);
+    }
+    return 1;
+}
+
 static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)
 {
     if (!plan) {

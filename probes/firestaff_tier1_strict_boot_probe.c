@@ -56,7 +56,7 @@ typedef struct {
 #define EXPECT_DM1_RUNTIME   0, 1, -1, "dm1-title", 0, 53, 53, 53, 1
 #define EXPECT_CSB_RUNTIME   0, 1, -1, "csb-runtime", 0, 53, 53, 53, 1
 #define EXPECT_DM2_RUNTIME   0, 1, -1, "dm2-runtime", 0, 0, 0, 0, 1
-#define EXPECT_NEXUS_RUNTIME 0, 1, -1, "nexus-runtime", 0, -1, -1, 54, 1
+#define EXPECT_NEXUS_RUNTIME 0, 1, -1, "nexus-runtime", 0, -1, -1, 102, 1
 #define EXPECT_THERON_RUNTIME 0, 1, -1, "theron-runtime", 0, 0, 0, 0, 1
 
 static const Tier1PathSpec kPaths[] = {
@@ -289,7 +289,7 @@ static int make_startup_spec(const Tier1PathSpec *runtime_spec,
         startup_spec->expect_animation_active = 1;
         startup_spec->expect_title_frame_min = 1;
         startup_spec->expect_title_frame_max = -1;
-        startup_spec->expect_title_frame_boundary = 54;
+        startup_spec->expect_title_frame_boundary = 102;
         startup_spec->expect_title_ready = 0;
     } else if (strcmp(runtime_spec->game, "theron") == 0) {
         startup_spec->expect_phase = "theron-startup-0";

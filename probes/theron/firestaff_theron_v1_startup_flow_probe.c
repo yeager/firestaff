@@ -984,6 +984,31 @@ int main(void) {
                 check_str("exec stage-select receipt status",
                           receipt.status,
                           "STAGE SELECT");
+                theron_v1_startup_flow_init(&exec_flow);
+                check_int("exec stage-select combined rc",
+                          theron_v1_startup_execute_flow_plan_with_receipts(
+                              &plan,
+                              &progression,
+                              &exec_flow,
+                              &execution,
+                              &receipt,
+                              &state_receipt),
+                          1);
+                check_int("exec stage-select combined result",
+                          execution.result,
+                          THERON_STARTUP_OK);
+                check_int("exec stage-select combined redraw",
+                          receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_int("exec stage-select combined state flow",
+                          state_receipt.flow_changed,
+                          1);
+                check_int("exec stage-select combined state phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_STAGE_SELECT);
+                check_int("exec stage-select combined cursor",
+                          state_receipt.startup_cursor,
+                          1);
 
                 theron_v1_startup_action_init(&action);
                 action.kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
