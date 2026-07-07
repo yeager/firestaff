@@ -495,6 +495,33 @@ int dm2_v1_startup_menu_snapshot_handle_pointer(
         out_action);
 }
 
+int dm2_v1_startup_menu_handle_pointer_from_facts(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root,
+    const char *fallback_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int x,
+    int y,
+    DM2_V1_StartupAction *out_action)
+{
+    if (!dm2_v1_startup_menu_snapshot_from_facts(snapshot,
+                                                save_root,
+                                                fallback_save_root,
+                                                resume_available,
+                                                slot_mask,
+                                                selected_row)) {
+        dm2_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return dm2_v1_startup_menu_snapshot_handle_pointer(snapshot,
+                                                       snapshot->row_count,
+                                                       x,
+                                                       y,
+                                                       out_action);
+}
+
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,
                                int row,
                                DM2_V1_StartupRowKind *out_kind,

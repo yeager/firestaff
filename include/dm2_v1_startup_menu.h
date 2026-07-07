@@ -215,6 +215,16 @@ int dm2_v1_startup_menu_snapshot_handle_pointer(
     int x,
     int y,
     DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_handle_pointer_from_facts(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root,
+    const char *fallback_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int x,
+    int y,
+    DM2_V1_StartupAction *out_action);
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,
                                int row,
                                DM2_V1_StartupRowKind *out_kind,
