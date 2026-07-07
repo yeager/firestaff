@@ -102,6 +102,35 @@ static void nexus_v1_startup_champion_execution_clear(
     execution->cursor = -1;
 }
 
+Nexus_V1_StartupInput nexus_v1_startup_input_from_firestaff_menu_code(
+    int menu_input)
+{
+    enum {
+        FIRESTAFF_MENU_INPUT_NONE = 0,
+        FIRESTAFF_MENU_INPUT_UP = 1,
+        FIRESTAFF_MENU_INPUT_DOWN = 2,
+        FIRESTAFF_MENU_INPUT_ACCEPT = 9,
+        FIRESTAFF_MENU_INPUT_BACK = 10,
+        FIRESTAFF_MENU_INPUT_ACTION = 11
+    };
+
+    switch (menu_input) {
+        case FIRESTAFF_MENU_INPUT_UP:
+            return NEXUS_V1_STARTUP_INPUT_UP;
+        case FIRESTAFF_MENU_INPUT_DOWN:
+            return NEXUS_V1_STARTUP_INPUT_DOWN;
+        case FIRESTAFF_MENU_INPUT_ACCEPT:
+            return NEXUS_V1_STARTUP_INPUT_ACCEPT;
+        case FIRESTAFF_MENU_INPUT_ACTION:
+            return NEXUS_V1_STARTUP_INPUT_ACTION;
+        case FIRESTAFF_MENU_INPUT_BACK:
+            return NEXUS_V1_STARTUP_INPUT_BACK;
+        case FIRESTAFF_MENU_INPUT_NONE:
+        default:
+            return NEXUS_V1_STARTUP_INPUT_NONE;
+    }
+}
+
 void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
                                 const char *save_dir)
 {

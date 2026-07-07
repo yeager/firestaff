@@ -44,6 +44,9 @@ typedef enum {
     NEXUS_V1_STARTUP_INPUT_BACK = 5
 } Nexus_V1_StartupInput;
 
+Nexus_V1_StartupInput nexus_v1_startup_input_from_firestaff_menu_code(
+    int menu_input);
+
 typedef struct {
     Nexus_V1_StartupActionKind kind;
     int row;
