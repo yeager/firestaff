@@ -44,9 +44,17 @@ int nexus_v1_startup_champion_row_rect(int row,
                                        Nexus_V1_StartupRect *out_rect);
 int nexus_v1_startup_champion_footer_rect(Nexus_V1_StartupRect *out_rect);
 int nexus_v1_startup_champion_panel_rect(Nexus_V1_StartupRect *out_rect);
+int nexus_v1_startup_champion_visible_first_row(int champion_count,
+                                                int cursor,
+                                                int max_visible);
 int nexus_v1_startup_champion_hit(int champion_count,
                                   int x,
                                   int y,
                                   Nexus_V1_StartupHit *out_hit);
+int nexus_v1_startup_champion_hit_at_cursor(int champion_count,
+                                            int cursor,
+                                            int x,
+                                            int y,
+                                            Nexus_V1_StartupHit *out_hit);
 
 #endif

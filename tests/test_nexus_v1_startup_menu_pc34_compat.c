@@ -150,6 +150,35 @@ int main(void)
                champion_footer.text_x == NEXUS_V1_STARTUP_FOOTER_X &&
                champion_footer.text_y == NEXUS_V1_STARTUP_FOOTER_Y,
            "Nexus champion startup footer render metadata is Nexus-owned");
+    cursor = 13;
+    memset(champion_rows, 0, sizeof(champion_rows));
+    memset(&champion_footer, 0, sizeof(champion_footer));
+    expect(nexus_v1_startup_champion_visible_first_row(
+               champions.champion_count, cursor, 12) == 12,
+           "Nexus champion startup second page starts at champion 12");
+    expect(nexus_v1_startup_menu_build_champion_render_rows(
+               &champions,
+               cursor,
+               champion_rows,
+               (int)(sizeof(champion_rows) / sizeof(champion_rows[0])),
+               &champion_footer) == 12 &&
+               champion_rows[0].row == 12 &&
+               champion_rows[1].row == 13 &&
+               champion_rows[1].selected == 1 &&
+               champion_rows[0].rect.y == 37 &&
+               strstr(champion_rows[0].label,
+                      champions.champions[12].name_ascii) != NULL,
+           "Nexus champion startup render plan pages to the cursor-visible roster half");
+    memset(&hit, 0, sizeof(hit));
+    expect(nexus_v1_startup_champion_hit_at_cursor(
+               champions.champion_count,
+               cursor,
+               20,
+               49,
+               &hit) &&
+               hit.kind == NEXUS_V1_STARTUP_HIT_CHAMPION_ROW &&
+               hit.row == 13,
+           "Nexus champion startup pointer hit maps visible page rows to absolute champion rows");
     cursor = 0;
     memset(&action, 0, sizeof(action));
     expect(nexus_v1_startup_champion_handle_input(

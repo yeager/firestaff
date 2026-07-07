@@ -16197,10 +16197,12 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         Nexus_V1_StartupHit hit;
         Nexus_V1_StartupAction action;
         int cursor = state->nexusState.champion_cursor;
-        if (!nexus_v1_startup_champion_hit(pool->champion_count,
-                                           x,
-                                           y,
-                                           &hit)) {
+        if (!nexus_v1_startup_champion_hit_at_cursor(
+                pool->champion_count,
+                cursor,
+                x,
+                y,
+                &hit)) {
                 return M11_GAME_INPUT_IGNORED;
         }
         if (!nexus_v1_startup_champion_handle_hit(

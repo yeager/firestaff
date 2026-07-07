@@ -116,18 +116,47 @@ int nexus_v1_startup_champion_panel_rect(Nexus_V1_StartupRect *out_rect)
     return 1;
 }
 
-int nexus_v1_startup_champion_hit(int champion_count,
-                                  int x,
-                                  int y,
-                                  Nexus_V1_StartupHit *out_hit)
+int nexus_v1_startup_champion_visible_first_row(int champion_count,
+                                                int cursor,
+                                                int max_visible)
+{
+    int first;
+
+    if (champion_count <= 0 || max_visible <= 0) {
+        return 0;
+    }
+    if (cursor < 0) {
+        cursor = 0;
+    }
+    if (cursor >= champion_count) {
+        cursor = champion_count - 1;
+    }
+    first = (cursor / max_visible) * max_visible;
+    if (first >= champion_count) {
+        first = 0;
+    }
+    return first;
+}
+
+int nexus_v1_startup_champion_hit_at_cursor(int champion_count,
+                                            int cursor,
+                                            int x,
+                                            int y,
+                                            Nexus_V1_StartupHit *out_hit)
 {
     Nexus_V1_StartupRect rect;
     int row;
+    int first_row;
     int visible_count = champion_count < 12 ? champion_count : 12;
 
     nexus_v1_startup_hit_clear(out_hit);
     if (champion_count < 0) {
         return 0;
+    }
+    first_row = nexus_v1_startup_champion_visible_first_row(
+        champion_count, cursor, visible_count);
+    if (first_row + visible_count > champion_count) {
+        visible_count = champion_count - first_row;
     }
     if (nexus_v1_startup_champion_footer_rect(&rect) &&
         nexus_v1_rect_contains(&rect, x, y)) {
@@ -143,7 +172,7 @@ int nexus_v1_startup_champion_hit(int champion_count,
         if (nexus_v1_rect_contains(&rect, x, y)) {
             if (out_hit) {
                 out_hit->kind = NEXUS_V1_STARTUP_HIT_CHAMPION_ROW;
-                out_hit->row = row;
+                out_hit->row = first_row + row;
             }
             return 1;
         }
@@ -156,4 +185,13 @@ int nexus_v1_startup_champion_hit(int champion_count,
         return 1;
     }
     return 0;
+}
+
+int nexus_v1_startup_champion_hit(int champion_count,
+                                  int x,
+                                  int y,
+                                  Nexus_V1_StartupHit *out_hit)
+{
+    return nexus_v1_startup_champion_hit_at_cursor(
+        champion_count, 0, x, y, out_hit);
 }
