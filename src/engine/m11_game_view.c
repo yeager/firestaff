@@ -1218,7 +1218,7 @@ static void m11_csb_runtime_overlay_stats_add_group_marker(
     ((M11_GameViewState *)state)->csbState.runtime_group_marker_drawn_count++;
 }
 
-static void m11_draw_csb_runtime_floor_object_overlays(
+static void m11_draw_csb_runtime_thing_overlays(
     const M11_GameViewState *state,
     const CSB_V1_BootProfile *profile,
     unsigned char *framebuffer,
@@ -1226,194 +1226,101 @@ static void m11_draw_csb_runtime_floor_object_overlays(
     int framebuffer_height)
 {
     const CSB_V1_RuntimeProfile *runtime;
-    const CSB_V1_DungeonData *dungeon;
-    CSB_V1_ViewportRuntimeOverlayCell cells[16];
-    size_t cell_count;
-    size_t cell_index;
+    CSB_V1_ViewportRuntimeThingOverlay overlays[80];
+    size_t overlay_count;
+    size_t overlay_index;
 
     if (!state || !profile || !framebuffer ||
         framebuffer_width <= 0 || framebuffer_height <= 0) {
         return;
     }
     runtime = &profile->runtime;
-    dungeon = runtime->dungeon_handle;
-    if (!dungeon) return;
-
-    cell_count = csb_v1_viewport_runtime_collect_overlay_cells(
-        dungeon,
-        runtime->current_level,
-        runtime->party_dir,
-        runtime->party_x,
-        runtime->party_y,
-        cells,
-        sizeof(cells) / sizeof(cells[0]));
-    if (cell_count > sizeof(cells) / sizeof(cells[0])) {
-        cell_count = sizeof(cells) / sizeof(cells[0]);
+    overlay_count = csb_v1_viewport_runtime_collect_thing_overlays(
+        runtime,
+        overlays,
+        sizeof(overlays) / sizeof(overlays[0]));
+    if (overlay_count > sizeof(overlays) / sizeof(overlays[0])) {
+        overlay_count = sizeof(overlays) / sizeof(overlays[0]);
     }
-    for (cell_index = 0; cell_index < cell_count; ++cell_index) {
-        int forward = cells[cell_index].forward;
-        int side = cells[cell_index].side;
-        unsigned short thing;
-        int object_pile_index = 0;
-        int safety = 0;
+    for (overlay_index = 0; overlay_index < overlay_count; ++overlay_index) {
+        const CSB_V1_ViewportRuntimeThingOverlay *overlay =
+            &overlays[overlay_index];
+        if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_OBJECT) {
+            const CSB_V1_RuntimeObjectOverlayInfo *object_info =
+                &overlay->object_info;
+            const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement =
+                &overlay->object_placement;
+            int type = object_info->thing_type;
+            int icon = object_info->icon_index;
+            int rel_cell = object_info->relative_cell;
+            int subtype = object_info->subtype_index;
+            int pile_index = overlay->object_pile_index;
+            int row = placement->object_row;
 
-        thing = (unsigned short)cells[cell_index].first_thing;
-        while (thing != THING_ENDOFLIST && thing != THING_NONE &&
-               safety++ < 64) {
-            CSB_V1_RuntimeObjectOverlayInfo object_info;
-            if (csb_v1_runtime_object_overlay_info(runtime,
-                                                   thing,
-                                                   &object_info)) {
-                int type = object_info.thing_type;
-                int icon = object_info.icon_index;
-                int rel_cell = object_info.relative_cell;
-                CSB_V1_ViewportRuntimeObjectOverlayPlacement placement;
-                int row;
-                int subtype = object_info.subtype_index;
-                int pile_index = object_pile_index;
-                if (!csb_v1_viewport_runtime_object_overlay_pile_placement(
-                        forward,
-                        side,
-                        rel_cell,
-                        pile_index,
-                        &placement)) {
-                    thing = csb_v1_runtime_next_thing(dungeon, thing);
-                    continue;
-                }
-                object_pile_index++;
-                row = placement.object_row;
-                /* CSB viewport owns ReDMCSB DUNVIEW.C F0115/G0217/G0223
-                 * pile shifts and relative-cell overlay offsets. */
-                if (subtype >= 0 &&
-                    m11_draw_item_sprite(state,
-                                         framebuffer,
-                                         framebuffer_width,
-                                         framebuffer_height,
-                                         0,
-                                         33,
-                                         224,
-                                         136,
-                                         type,
-                                         subtype,
-                                         rel_cell,
-                                         pile_index,
-                                         forward - 1,
-                                         row)) {
-                    m11_csb_runtime_overlay_stats_add_object_sprite(state);
-                } else if (icon >= 0 &&
-                    m11_draw_dm_object_icon_index(
-                        state,
-                        framebuffer,
-                        framebuffer_width,
-                        framebuffer_height,
-                        icon,
-                        placement.icon_screen_x - 8,
-                        placement.icon_screen_y - 8,
-                        0)) {
-                    m11_csb_runtime_overlay_stats_add_object_icon(state);
-                } else if (csb_v1_viewport_draw_runtime_object_marker(
-                               framebuffer,
-                               framebuffer_width,
-                               framebuffer_height,
-                               &placement,
-                               icon)) {
-                    m11_csb_runtime_overlay_stats_add_object_marker(state);
-                }
+            if (subtype >= 0 &&
+                m11_draw_item_sprite(state,
+                                     framebuffer,
+                                     framebuffer_width,
+                                     framebuffer_height,
+                                     0,
+                                     33,
+                                     224,
+                                     136,
+                                     type,
+                                     subtype,
+                                     rel_cell,
+                                     pile_index,
+                                     overlay->forward - 1,
+                                     row)) {
+                m11_csb_runtime_overlay_stats_add_object_sprite(state);
+            } else if (icon >= 0 &&
+                m11_draw_dm_object_icon_index(
+                    state,
+                    framebuffer,
+                    framebuffer_width,
+                    framebuffer_height,
+                    icon,
+                    placement->icon_screen_x - 8,
+                    placement->icon_screen_y - 8,
+                    0)) {
+                m11_csb_runtime_overlay_stats_add_object_icon(state);
+            } else if (csb_v1_viewport_draw_runtime_object_marker(
+                           framebuffer,
+                           framebuffer_width,
+                           framebuffer_height,
+                           placement,
+                           icon)) {
+                m11_csb_runtime_overlay_stats_add_object_marker(state);
             }
-            thing = csb_v1_runtime_next_thing(dungeon, thing);
-        }
-    }
-}
+        } else if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP) {
+            const CSB_V1_RuntimeGroupOverlayInfo *group_info =
+                &overlay->group_info;
+            const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement =
+                &overlay->group_placement;
+            int creature_type = group_info->creature_type;
+            int creature_dir = group_info->direction;
 
-static void m11_draw_csb_runtime_group_overlays(
-    const M11_GameViewState *state,
-    const CSB_V1_BootProfile *profile,
-    unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height)
-{
-    const CSB_V1_RuntimeProfile *runtime;
-    const CSB_V1_DungeonData *dungeon;
-    CSB_V1_ViewportRuntimeOverlayCell cells[16];
-    size_t cell_count;
-    size_t cell_index;
-
-    if (!state || !profile || !framebuffer ||
-        framebuffer_width <= 0 || framebuffer_height <= 0) {
-        return;
-    }
-    runtime = &profile->runtime;
-    dungeon = runtime->dungeon_handle;
-    if (!dungeon) return;
-
-    cell_count = csb_v1_viewport_runtime_collect_overlay_cells(
-        dungeon,
-        runtime->current_level,
-        runtime->party_dir,
-        runtime->party_x,
-        runtime->party_y,
-        cells,
-        sizeof(cells) / sizeof(cells[0]));
-    if (cell_count > sizeof(cells) / sizeof(cells[0])) {
-        cell_count = sizeof(cells) / sizeof(cells[0]);
-    }
-    for (cell_index = 0; cell_index < cell_count; ++cell_index) {
-        int forward = cells[cell_index].forward;
-        int side = cells[cell_index].side;
-        unsigned short thing;
-        int safety = 0;
-
-        thing = (unsigned short)cells[cell_index].first_thing;
-        while (thing != THING_ENDOFLIST && thing != THING_NONE &&
-               safety++ < 64) {
-            CSB_V1_RuntimeGroupOverlayInfo group_info;
-            if (csb_v1_runtime_group_overlay_info(dungeon,
-                                                  thing,
-                                                  &group_info)) {
-                int creature_type = group_info.creature_type;
-                int creature_dir = group_info.direction;
-                int visible_count = group_info.visible_count;
-                int slot;
-
-                for (slot = 0; slot < visible_count; ++slot) {
-                    CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
-                    int group_cell = group_info.cells[slot];
-                    if (!csb_v1_viewport_runtime_group_overlay_creature_placement(
-                            forward,
-                            side,
-                            creature_type,
-                            visible_count,
-                            group_cell,
-                            &placement)) {
-                        continue;
-                    }
-                    if (creature_type >= 0 &&
-                        m11_draw_creature_sprite_ex(state,
-                                                    framebuffer,
-                                                    framebuffer_width,
-                                                    framebuffer_height,
-                                                    placement.sprite_x,
-                                                    placement.sprite_y,
-                                                    placement.sprite_w,
-                                                    placement.sprite_h,
-                                                    creature_type,
-                                                    placement.depth_index,
-                                                    side,
-                                                    creature_dir)) {
-                        m11_csb_runtime_overlay_stats_add_group_sprite(state);
-                    } else {
-                        if (csb_v1_viewport_draw_runtime_group_marker(
-                                framebuffer,
-                                framebuffer_width,
-                                framebuffer_height,
-                                &placement)) {
-                            m11_csb_runtime_overlay_stats_add_group_marker(state);
-                        }
-                    }
-                }
-                break;
+            if (creature_type >= 0 &&
+                m11_draw_creature_sprite_ex(state,
+                                            framebuffer,
+                                            framebuffer_width,
+                                            framebuffer_height,
+                                            placement->sprite_x,
+                                            placement->sprite_y,
+                                            placement->sprite_w,
+                                            placement->sprite_h,
+                                            creature_type,
+                                            placement->depth_index,
+                                            overlay->side,
+                                            creature_dir)) {
+                m11_csb_runtime_overlay_stats_add_group_sprite(state);
+            } else if (csb_v1_viewport_draw_runtime_group_marker(
+                           framebuffer,
+                           framebuffer_width,
+                           framebuffer_height,
+                           placement)) {
+                m11_csb_runtime_overlay_stats_add_group_marker(state);
             }
-            thing = csb_v1_runtime_next_thing(dungeon, thing);
         }
     }
 }
@@ -1430,15 +1337,7 @@ static void m11_csb_viewport_runtime_thing_pass_drawer(
         screen_stride <= 0) {
         return;
     }
-    /* ReDMCSB DUNVIEW.C F0115 thing pass order: floor objects before
-     * creature groups, both before projectiles/explosions. */
-    m11_draw_csb_runtime_floor_object_overlays(
-        ctx->state,
-        ctx->profile,
-        screen_pixels,
-        screen_stride,
-        ctx->framebuffer_height);
-    m11_draw_csb_runtime_group_overlays(
+    m11_draw_csb_runtime_thing_overlays(
         ctx->state,
         ctx->profile,
         screen_pixels,
