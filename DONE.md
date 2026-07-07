@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 RetroAchievements start-menu settings hardening: modern RA username/token edit rendering now uses the public settings-row constants instead of private row numbers, and the settings hit-test gate covers token commit exit, long-paste capacity clamping, and cancel without overwriting the saved token. Verification: settings hit-test passed 49/49, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup rebuild receipt ownership: `theron_v1_startup_flow` now rebuilds startup flow and emits the matching state receipt from one raw-facts helper. M11 uses that helper for startup flow refresh instead of owning the rebuild-to-receipt split. Verification: Theron startup-flow probe passed 517/517, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Nexus startup action receipt ownership: `nexus_v1_startup_menu` now owns combined title/save/champion action execution plus apply-receipt construction, including save-load callback routing. M11 no longer builds Nexus apply receipts after startup action execution. Verification: Nexus startup menu test passed, Nexus M11 launcher handoff passed 151/151, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

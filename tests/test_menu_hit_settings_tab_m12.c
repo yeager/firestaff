@@ -168,6 +168,32 @@ int main(void) {
           "RA Token commit succeeds");
     CHECK(strcmp(state.settings.retroAchievementsToken, "secre") == 0,
           "RA Token stored without displaying raw token");
+    CHECK(!M12_StartupMenu_TextEditActive(&state),
+          "RA Token commit exits text edit");
+
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(M12_StartupMenu_TextEditActive(&state),
+          "RA Token re-click starts second text edit");
+    CHECK(M12_StartupMenu_ConsumeTextInput(&state,
+                                           "0123456789abcdef0123456789abcdef"
+                                           "0123456789abcdef0123456789abcdef"
+                                           "0123456789abcdef0123456789abcdef"
+                                           "0123456789abcdef0123456789abcdef") == 1,
+          "RA Token input accepts long paste up to row capacity");
+    CHECK(M12_StartupMenu_TextEditCommit(&state) == 1,
+          "RA Token long paste commit succeeds");
+    CHECK(strlen(state.settings.retroAchievementsToken) == 127,
+          "RA Token edit clamps to persisted token capacity");
+
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(M12_StartupMenu_TextEditActive(&state),
+          "RA Token third click starts cancelable edit");
+    CHECK(M12_StartupMenu_ConsumeTextInput(&state, "SHOULD_NOT_PERSIST") == 1,
+          "RA Token cancel edit accepts temporary text");
+    CHECK(M12_StartupMenu_TextEditCancel(&state) == 1,
+          "RA Token cancel succeeds");
+    CHECK(strlen(state.settings.retroAchievementsToken) == 127,
+          "RA Token cancel leaves previous token unchanged");
 
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
