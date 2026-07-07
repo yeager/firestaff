@@ -431,6 +431,19 @@ typedef struct {
 } DM2_V1_CreaturePossessionItemRenderPlan;
 
 typedef struct {
+    int gdat_index;
+    int frame_x;
+    int frame_y;
+    int frame_w;
+    int frame_h;
+    DM2_V1_ViewportRect dst_rect;
+    int src_stride;
+    int transparent_color;
+    int flip_mirror;
+    int render_frame;
+} DM2_V1_ItemAssetBlit;
+
+typedef struct {
     uint8_t  projectile_category; /* GDAT category, 0 = spell-missile fallback */
     uint8_t  projectile_type; /* spell/arrow/bolt type */
     uint8_t  frame_index;     /* animation frame */
@@ -610,6 +623,14 @@ int dm2_v1_viewport_build_carried_item_render_plan(
 int dm2_v1_viewport_build_creature_possession_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CreaturePossessionItemRenderPlan *out_plan);
+int dm2_v1_viewport_item_asset_blit(
+    const DM2_V1_ItemRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    int scale_base,
+    int scale_max,
+    DM2_V1_ItemAssetBlit *out_blit);
 int dm2_v1_viewport_build_projectile_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ProjectileRenderPlan *out_plan);

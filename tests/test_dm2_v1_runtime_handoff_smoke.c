@@ -956,6 +956,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
     {
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
+        DM2_V1_ItemRender direct_item;
+        DM2_V1_ItemAssetBlit direct_item_blit;
         DM2_V1_ProjectileRender direct_projectile;
         DM2_V1_ProjectileAssetBlit direct_blit;
         uint32_t direct_seed = 0x12345678u;
@@ -964,8 +966,39 @@ static void test_first_tick_after_boot_profile_handoff(void)
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
         memset(s_projectile_pixels, 13, sizeof(s_projectile_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
+        memset(&direct_item, 0, sizeof(direct_item));
+        memset(&direct_item_blit, 0, sizeof(direct_item_blit));
         memset(&direct_projectile, 0, sizeof(direct_projectile));
         memset(&direct_blit, 0, sizeof(direct_blit));
+        direct_item.gdat_index =
+            dm2_v1_viewport_item_graphic_index(0x15, 0x22, 1);
+        direct_item.frame_index = 1;
+        direct_item.depth = 2;
+        direct_item.center_x = 120;
+        direct_item.center_y = 90;
+        direct_item.flip_mirror = 1;
+        CHECK(dm2_v1_viewport_item_asset_blit(&direct_item,
+                                              24,
+                                              8,
+                                              24,
+                                              4,
+                                              32,
+                                              &direct_item_blit) == 1,
+              "item asset blit contract builds");
+        CHECK(direct_item_blit.dst_rect.x == 118 &&
+              direct_item_blit.dst_rect.y == 88 &&
+              direct_item_blit.dst_rect.w == 5 &&
+              direct_item_blit.dst_rect.h == 5,
+              "item asset blit owns scaled destination");
+        CHECK(direct_item_blit.frame_x == 8 &&
+              direct_item_blit.frame_y == 0 &&
+              direct_item_blit.frame_w == 8 &&
+              direct_item_blit.frame_h == 8,
+              "item asset blit owns source frame");
+        CHECK(direct_item_blit.transparent_color == 10 &&
+              direct_item_blit.flip_mirror == 1 &&
+              direct_item_blit.render_frame == 1,
+              "item asset blit owns material and flip");
         direct_projectile.gdat_index =
             dm2_v1_viewport_projectile_graphic_index(
                 0x0d, DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL, 0);
