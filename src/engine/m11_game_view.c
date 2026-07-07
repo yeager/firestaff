@@ -35351,6 +35351,39 @@ static void m11_nexus_startup_exec_title_background(
     }
 }
 
+static void m11_nexus_startup_exec_warning_background(
+    void *userdata,
+    const Nexus_V1_StartupDrawCommand *command)
+{
+    M11_NexusStartupDrawContext *context =
+        (M11_NexusStartupDrawContext*)userdata;
+    (void)command;
+    if (!context || !context->framebuffer) {
+        return;
+    }
+    if (context->state && context->state->nexusEngine) {
+        const Nexus_UI_Surface *warning =
+            &context->state->nexusEngine->ui.surfaces[NEXUS_SURFACE_WARNING];
+        if (warning->data && warning->w > 0 && warning->h > 0) {
+            nexus_ui_blit_surface(warning,
+                                  context->framebuffer,
+                                  context->framebufferWidth,
+                                  context->framebufferHeight,
+                                  0,
+                                  0);
+            return;
+        }
+    }
+    m11_fill_rect(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  0,
+                  0,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  1);
+}
+
 static void m11_nexus_startup_exec_boot_title_frame(
     void *userdata,
     const Nexus_V1_StartupDrawCommand *command)
@@ -35507,6 +35540,8 @@ static void m11_draw_nexus_startup_commands(
     executor.draw_text = m11_nexus_startup_exec_text;
     executor.draw_portrait = m11_nexus_startup_exec_portrait;
     executor.draw_boot_title_frame = m11_nexus_startup_exec_boot_title_frame;
+    executor.draw_warning_background =
+        m11_nexus_startup_exec_warning_background;
     (void)nexus_v1_startup_presentation_execute(commands,
                                                 command_count,
                                                 &executor);

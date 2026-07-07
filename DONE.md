@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Nexus warning/title boot graphics split: Nexus startup presentation now treats `title_frame` as full boot-frame state and emits a WARNING.BIN draw command before TITLE.CG reveal frames. M11 executes the Nexus-owned warning command with the loaded warning surface. Verification: startup menu test, M11 startup gate, launcher handoff 138/138, Phase A 24/24, Nexus boot-probe, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron Continue availability ownership: `theron_v1_startup_save_resume` now owns a `Theron_V1StartupContinueAvailability` summary for TQSV/SRM Continue slots. M11 uses that Theron-owned contract for startup input, pointer hit routing, and layout state instead of keeping separate local availability checks. Verification: startup-flow probe passed 425/425, save-resume probe passed 66/66, M11 launcher handoff passed 26/26, Phase A passed 24/24, Theron boot-probe passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB utility input apply ownership: `csb_v1_utility_flow_pc34` now returns `CSB_V1_UtilApplyReceipt` directly from active Firestaff keyboard and pointer utility input. M11 no longer converts utility input results to receipts in duplicate pointer/keyboard branches. Verification: utility-flow action contract passed 49/49, startup entrance pointer contract passed 116/116, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.

@@ -238,6 +238,17 @@ static int nexus_v1_startup_push_boot_title_frame(
     return nexus_v1_startup_push_draw(commands, max_commands, count, &command);
 }
 
+static int nexus_v1_startup_push_warning_background(
+    Nexus_V1_StartupDrawCommand *commands,
+    int max_commands,
+    int *count)
+{
+    Nexus_V1_StartupDrawCommand command;
+    nexus_v1_startup_draw_clear(&command);
+    command.kind = NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND;
+    return nexus_v1_startup_push_draw(commands, max_commands, count, &command);
+}
+
 Nexus_V1_StartupInput nexus_v1_startup_input_from_firestaff_menu_code(
     int menu_input)
 {
@@ -1426,6 +1437,7 @@ int nexus_v1_startup_presentation_build_title(
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands)
 {
+    Nexus_V1_BootFrame boot_frame;
     int count = 0;
 
     if (!out_commands || max_commands <= 0) {
@@ -1434,10 +1446,19 @@ int nexus_v1_startup_presentation_build_title(
     memset(out_commands,
            0,
            (size_t)max_commands * sizeof(out_commands[0]));
+    if (!nexus_v1_boot_frame(title_frame, 200, &boot_frame)) {
+        return count;
+    }
+    if (boot_frame.warning_visible) {
+        (void)nexus_v1_startup_push_warning_background(out_commands,
+                                                       max_commands,
+                                                       &count);
+        return count;
+    }
     (void)nexus_v1_startup_push_boot_title_frame(out_commands,
                                                 max_commands,
                                                 &count,
-                                                title_frame);
+                                                boot_frame.title_frame);
     return count;
 }
 
@@ -1591,6 +1612,12 @@ int nexus_v1_startup_presentation_execute(
                 if (executor->draw_boot_title_frame) {
                     executor->draw_boot_title_frame(executor->userdata,
                                                     command);
+                }
+                break;
+            case NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND:
+                if (executor->draw_warning_background) {
+                    executor->draw_warning_background(executor->userdata,
+                                                      command);
                 }
                 break;
             case NEXUS_V1_STARTUP_DRAW_NONE:
