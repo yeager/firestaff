@@ -849,6 +849,98 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
     return count;
 }
 
+int nexus_v1_startup_champion_snapshot_refresh(
+    const Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    if (!pool || pool->champion_count <= 0) {
+        snapshot->cursor = 0;
+        if (snapshot->frame < 0) {
+            snapshot->frame = 0;
+        }
+        return 1;
+    }
+    if (snapshot->cursor < 0 || snapshot->cursor >= pool->champion_count) {
+        snapshot->cursor = 0;
+    }
+    if (snapshot->frame < 0) {
+        snapshot->frame = 0;
+    }
+    return 1;
+}
+
+int nexus_v1_startup_champion_snapshot_handle_input(
+    Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot,
+    Nexus_V1_StartupInput input,
+    Nexus_V1_StartupAction *out_action)
+{
+    int cursor;
+    int handled;
+
+    if (!snapshot) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    (void)nexus_v1_startup_champion_snapshot_refresh(pool, snapshot);
+    cursor = snapshot->cursor;
+    handled = nexus_v1_startup_champion_handle_input(pool,
+                                                     &cursor,
+                                                     snapshot->slot_mask,
+                                                     input,
+                                                     out_action);
+    snapshot->cursor = cursor;
+    (void)nexus_v1_startup_champion_snapshot_refresh(pool, snapshot);
+    return handled;
+}
+
+int nexus_v1_startup_champion_snapshot_handle_hit(
+    Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot,
+    const Nexus_V1_StartupHit *hit,
+    Nexus_V1_StartupAction *out_action)
+{
+    int cursor;
+    int handled;
+
+    if (!snapshot) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    (void)nexus_v1_startup_champion_snapshot_refresh(pool, snapshot);
+    cursor = snapshot->cursor;
+    handled = nexus_v1_startup_champion_handle_hit(pool,
+                                                   &cursor,
+                                                   snapshot->slot_mask,
+                                                   hit,
+                                                   out_action);
+    snapshot->cursor = cursor;
+    (void)nexus_v1_startup_champion_snapshot_refresh(pool, snapshot);
+    return handled;
+}
+
+int nexus_v1_startup_champion_snapshot_build_render_rows(
+    const Nexus_V1_ChampionPool *pool,
+    const Nexus_V1_StartupChampionSnapshot *snapshot,
+    Nexus_V1_StartupChampionRenderRow *rows,
+    int max_rows,
+    Nexus_V1_StartupChampionFooterRender *out_footer)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    return nexus_v1_startup_menu_build_champion_render_rows_for_frame(
+        pool,
+        snapshot->cursor,
+        snapshot->frame,
+        rows,
+        max_rows,
+        out_footer);
+}
+
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
                                            int *cursor,
                                            unsigned int slot_mask,
