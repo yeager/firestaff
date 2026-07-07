@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.62  (2026-07-07)",
+    "  - Packages current main after the CSB runtime thing-pass hook cleanup landed after v3.0.61 was tagged.",
+    "  - Release metadata now points at the latest main commit for the GitHub Actions release run.",
+    "",
     "V3.0.61  (2026-07-07)",
     "  - Packages the CSB runtime thing-overlay ownership release with data-free CSB test target link fixes.",
     "  - CSB custom-background and CSBgraphics runtime-plan tests now link the projectile/explosion helper and object-icon stub needed by viewport overlay code.",
@@ -496,5 +500,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.61";
+    return "3.0.62";
 }
