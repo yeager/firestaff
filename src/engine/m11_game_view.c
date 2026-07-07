@@ -12359,6 +12359,32 @@ static int m11_theron_load_initial_level(Theron_V1_World* world,
     return 1;
 }
 
+typedef struct {
+    const TrAssetBundle* assets;
+    const char* md5_hex;
+} M11_TheronStartupLevelLoadContext;
+
+static int m11_theron_startup_level_load_callback(
+    Theron_V1_World* world,
+    Theron_DungeonID dungeon_id,
+    void* userdata,
+    char* receipt,
+    size_t receipt_cap) {
+
+    const M11_TheronStartupLevelLoadContext* ctx =
+        (const M11_TheronStartupLevelLoadContext*)userdata;
+
+    if (!ctx) {
+        return 0;
+    }
+    return m11_theron_load_initial_level(world,
+                                         ctx->assets,
+                                         ctx->md5_hex,
+                                         dungeon_id,
+                                         receipt,
+                                         receipt_cap);
+}
+
 static void m11_theron_sync_startup_state(M11_GameViewState* state,
                                           const Theron_StartupFlow* flow) {
     int i;
@@ -12435,8 +12461,8 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     Theron_StartupFlow flow;
     Theron_StartupResult result;
     const char* rosterNames[8];
+    M11_TheronStartupLevelLoadContext levelLoadContext;
     char flowReceipt[128];
-    char levelReceipt[160];
     int i;
 
     if (receipt && receipt_cap > 0u) {
@@ -12453,7 +12479,6 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     }
 
     flowReceipt[0] = '\0';
-    levelReceipt[0] = '\0';
     if (!m11_theron_rebuild_startup_flow(state,
                                          &world->progression,
                                          &flow,
@@ -12483,25 +12508,23 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
-    result = theron_v1_startup_enter_world_from_forcefield(&flow, world);
+    levelLoadContext.assets = assets;
+    levelLoadContext.md5_hex = profile->graphics_md5;
+    result = theron_v1_startup_enter_runtime_from_forcefield(
+        &flow,
+        world,
+        m11_theron_startup_level_load_callback,
+        &levelLoadContext,
+        receipt,
+        receipt_cap);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "startup-flow dungeon enter failed: %s",
-                     theron_v1_startup_result_name(result));
-        }
-        return 0;
-    }
-
-    if (!m11_theron_load_initial_level(world,
-                                       assets,
-                                       profile->graphics_md5,
-                                       flow.selected_dungeon,
-                                       levelReceipt,
-                                       sizeof(levelReceipt))) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "Theron level load failed");
+            if (receipt[0] == '\0') {
+                snprintf(receipt,
+                         receipt_cap,
+                         "startup-flow runtime entry failed: %s",
+                         theron_v1_startup_result_name(result));
+            }
         }
         return 0;
     }
@@ -12512,16 +12535,6 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
     m11_theron_sync_startup_state(state, &flow);
-    if (receipt && receipt_cap > 0u) {
-        snprintf(receipt,
-                 receipt_cap,
-                 "startup-flow stage=%d phase=%s party=%d companions=%d; %s",
-                 (int)flow.selected_dungeon,
-                 theron_v1_startup_phase_name(flow.phase),
-                 world->party.champion_count,
-                 (int)flow.companion_count,
-                 levelReceipt);
-    }
     return 1;
 }
 

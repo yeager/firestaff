@@ -4,6 +4,7 @@
 #include "theron_v1_champions.h"
 #include "theron_v1_dungeon_progression.h"
 #include "theron_v1_world.h"
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -39,8 +40,16 @@ typedef enum {
     THERON_STARTUP_ERR_NO_STAGE = -7,
     THERON_STARTUP_ERR_NOT_READY = -8,
     THERON_STARTUP_ERR_MIRROR_NOT_SELECTED = -9,
-    THERON_STARTUP_ERR_DUNGEON_ENTRY = -10
+    THERON_STARTUP_ERR_DUNGEON_ENTRY = -10,
+    THERON_STARTUP_ERR_LEVEL_LOAD = -11
 } Theron_StartupResult;
+
+typedef int (*Theron_StartupLevelLoadFn)(
+    Theron_V1_World *world,
+    Theron_DungeonID dungeon_id,
+    void *userdata,
+    char *receipt,
+    size_t receipt_cap);
 
 typedef struct {
     Theron_StartupPhase phase;
@@ -271,6 +280,13 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
 Theron_StartupResult theron_v1_startup_enter_world_from_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_World *world);
+Theron_StartupResult theron_v1_startup_enter_runtime_from_forcefield(
+    Theron_StartupFlow *flow,
+    Theron_V1_World *world,
+    Theron_StartupLevelLoadFn load_level,
+    void *userdata,
+    char *receipt,
+    size_t receipt_cap);
 int theron_v1_startup_stage_available(
     const Theron_DungeonProgression *progression,
     Theron_DungeonID dungeon_id);
