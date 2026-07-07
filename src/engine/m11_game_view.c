@@ -274,6 +274,23 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
+static int m11_draw_item_sprite_material(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int fbW,
+                                         int fbH,
+                                         int x,
+                                         int y,
+                                         int w,
+                                         int h,
+                                         int thingType,
+                                         int subtype,
+                                         int relativeCell,
+                                         int pileIndex,
+                                         int depthIndex,
+                                         int sourceZone,
+                                         int sourceZoneRow,
+                                         int transparentColor,
+                                         int usesF0791Blit);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -1133,20 +1150,23 @@ static int m11_csb_viewport_object_sprite_drawer(
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    return m11_draw_item_sprite(ctx->state,
-                                screen_pixels,
-                                screen_stride,
-                                ctx->framebuffer_height,
-                                blit->viewport_x,
-                                blit->viewport_y,
-                                blit->viewport_w,
-                                blit->viewport_h,
-                                blit->thing_type,
-                                blit->subtype_index,
-                                blit->relative_cell,
-                                blit->pile_index,
-                                blit->depth_index,
-                                blit->source_zone_row);
+    return m11_draw_item_sprite_material(ctx->state,
+                                         screen_pixels,
+                                         screen_stride,
+                                         ctx->framebuffer_height,
+                                         blit->viewport_x,
+                                         blit->viewport_y,
+                                         blit->viewport_w,
+                                         blit->viewport_h,
+                                         blit->thing_type,
+                                         blit->subtype_index,
+                                         blit->relative_cell,
+                                         blit->pile_index,
+                                         blit->depth_index,
+                                         blit->source_zone,
+                                         blit->source_zone_row,
+                                         blit->transparent_color,
+                                         blit->uses_f0791_blit);
 }
 
 static int m11_csb_viewport_object_icon_drawer(
@@ -19970,6 +19990,17 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int relativeCell, int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
+static int m11_draw_item_sprite_material(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int fbW, int fbH,
+                                         int x, int y, int w, int h,
+                                         int thingType, int subtype,
+                                         int relativeCell, int pileIndex,
+                                         int depthIndex,
+                                         int sourceZone,
+                                         int sourceZoneRow,
+                                         int transparentColor,
+                                         int usesF0791Blit);
 static int m11_draw_wall_ornament(const M11_GameViewState* state,
                                   unsigned char* framebuffer,
                                   int fbW, int fbH,
@@ -23293,6 +23324,82 @@ static unsigned int m11_inventory_thing_sprite_index(
 /* Draw an item sprite from GRAPHICS.DAT at the given viewport position.
  * Falls back to the primitive item cue if the asset is unavailable.
  * Returns 1 if a real sprite was drawn. */
+static int m11_csb_object_source_zone_row(int sourceZone,
+                                          int sourceZoneRow) {
+    int baseZone;
+    if (sourceZone < 0) {
+        return sourceZoneRow;
+    }
+    baseZone = sourceZone & ~0x8000;
+    if (baseZone >= 2500 && baseZone < 2900) {
+        return (baseZone - 2500) / 4;
+    }
+    return sourceZoneRow;
+}
+
+static int m11_draw_item_sprite_material(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int fbW,
+                                         int fbH,
+                                         int x,
+                                         int y,
+                                         int w,
+                                         int h,
+                                         int thingType,
+                                         int subtype,
+                                         int relativeCell,
+                                         int pileIndex,
+                                         int depthIndex,
+                                         int sourceZone,
+                                         int sourceZoneRow,
+                                         int transparentColor,
+                                         int usesF0791Blit) {
+    unsigned int gfxIdx;
+    const M11_AssetSlot* slot;
+    DM1_ItemSpriteBlitPlan plan;
+    int effectiveSourceZoneRow;
+    int effectiveTransparentColor;
+
+    if (!state || !state->assetsAvailable || thingType < 0) return 0;
+    gfxIdx = dm1_item_sprite_index(thingType, subtype);
+    if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
+
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
+    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+
+    effectiveSourceZoneRow =
+        m11_csb_object_source_zone_row(sourceZone, sourceZoneRow);
+    if (!dm1_item_sprite_blit_plan(&plan, thingType, subtype,
+                                   relativeCell, pileIndex, depthIndex,
+                                   effectiveSourceZoneRow,
+                                   M11_VIEWPORT_X, M11_VIEWPORT_Y,
+                                   x, y, w, h,
+                                   (int)slot->width, (int)slot->height)) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115 object blits use F0791 with C10
+     * transparency for the C2500 source-zone paths.  CSB runtime object
+     * records carry that material decision explicitly; DM1 callers pass
+     * negative defaults through m11_draw_item_sprite(). */
+    effectiveTransparentColor =
+        (usesF0791Blit && transparentColor >= 0)
+            ? transparentColor
+            : plan.transparent_color;
+    if (plan.use_mirror) {
+        M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
+                                         plan.draw_x, plan.draw_y,
+                                         plan.draw_w, plan.draw_h,
+                                         effectiveTransparentColor);
+    } else {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                                   plan.draw_x, plan.draw_y,
+                                   plan.draw_w, plan.draw_h,
+                                   effectiveTransparentColor);
+    }
+    return 1;
+}
+
 static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
@@ -23307,38 +23414,13 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow) {
-    unsigned int gfxIdx;
-    const M11_AssetSlot* slot;
-    DM1_ItemSpriteBlitPlan plan;
-
-    if (!state || !state->assetsAvailable || thingType < 0) return 0;
-    gfxIdx = dm1_item_sprite_index(thingType, subtype);
-    if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
-
-    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
-
-    if (!dm1_item_sprite_blit_plan(&plan, thingType, subtype,
-                                   relativeCell, pileIndex, depthIndex,
-                                   sourceZoneRow,
-                                   M11_VIEWPORT_X, M11_VIEWPORT_Y,
-                                   x, y, w, h,
-                                   (int)slot->width, (int)slot->height)) {
-        return 0;
-    }
-
-    if (plan.use_mirror) {
-        M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
-                                         plan.draw_x, plan.draw_y,
-                                         plan.draw_w, plan.draw_h,
-                                         plan.transparent_color);
-    } else {
-        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                                   plan.draw_x, plan.draw_y,
-                                   plan.draw_w, plan.draw_h,
-                                   plan.transparent_color);
-    }
-    return 1;
+    return m11_draw_item_sprite_material(state, framebuffer, fbW, fbH,
+                                         x, y, w, h,
+                                         thingType, subtype,
+                                         relativeCell, pileIndex,
+                                         depthIndex,
+                                         -1, sourceZoneRow,
+                                         -1, 0);
 }
 
 /* Draw a wall ornament from GRAPHICS.DAT on the wall face.
