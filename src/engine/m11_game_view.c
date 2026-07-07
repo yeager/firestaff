@@ -4700,22 +4700,6 @@ static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
     return csb_v1_runtime_apply_csbwin_resume_file(profile, path, 0u) == 0;
 }
 
-static int m11_csb_utility_accept_import_action(CSB_V1_UtilFlowContext *flow)
-{
-    CSB_V1_UtilMenuLayout layout;
-
-    if (!flow || flow->state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
-        return 0;
-    }
-    if (!csb_v1_util_flow_menu_layout(flow, &layout) ||
-        layout.row_count <= 0 ||
-        layout.rows[0].action != CSB_V1_UTIL_ACTION_IMPORT) {
-        return 0;
-    }
-    csb_v1_util_flow_set_action(flow, layout.rows[0].action);
-    return csb_v1_util_flow_accept_selected_action(flow) == 0;
-}
-
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                                  const char *path,
                                                  int *out_count,
@@ -4765,7 +4749,7 @@ static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
         flow.state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
         return 0;
     }
-    if (!m11_csb_utility_accept_import_action(&flow)) {
+    if (!csb_v1_util_flow_accept_import_action(&flow)) {
         return 0;
     }
     if (csb_v1_util_flow_step(&flow) != 0 ||

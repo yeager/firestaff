@@ -86,6 +86,18 @@ int main(void)
               flow.imported_champion_count == 3 &&
               flow.imported_party.Champions[0].CurrentHealth == 17,
           "utility flow snapshot imports party preview state");
+    flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
+    flow.selected_action_index = 2;
+    flow.action = CSB_V1_UTIL_ACTION_NEW;
+    check(csb_v1_util_flow_accept_import_action(&flow) &&
+              flow.selected_action_index == 0 &&
+              flow.action == CSB_V1_UTIL_ACTION_IMPORT,
+          "utility flow owns forced Import action acceptance");
+    flow.state = CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS;
+    check(!csb_v1_util_flow_accept_import_action(&flow),
+          "utility flow rejects forced Import outside the action menu");
+    check(!csb_v1_util_flow_accept_import_action(NULL),
+          "utility flow rejects NULL forced Import");
     check(csb_v1_util_flow_entrance_command_for_action(
               CSB_V1_UTIL_ACTION_NEW) ==
               CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
