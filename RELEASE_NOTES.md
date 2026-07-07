@@ -1,6 +1,30 @@
 
 # Unreleased
 
+# Firestaff v3.0.61
+
+Firestaff v3.0.61 packages the CSB viewport runtime thing-overlay ownership
+release with the data-free CSB test target link fixes required by release CI.
+
+## Highlights since v3.0.60
+
+- **Release CI link fix**: The CSB custom-background mask and CSBgraphics
+  runtime-plan test targets now link the DM1 projectile/explosion helper used
+  by CSB viewport projectile/explosion binding code, and the data-free runtime
+  overlay stub now supplies `csb_v1_runtime_object_icon_index`.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.61`.
+
+## Verification
+
+- Local release verification covers the two release-CI CSB test targets that
+  failed in `v3.0.60`, the focused CSB V1 viewport/rendering gate, the M11 CSB
+  fallback guard, the Phase A probe and `git diff --check` before GitHub
+  Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.61` release run.
+
 # Firestaff v3.0.60
 
 Firestaff v3.0.60 packages the current `main` after the CSB viewport runtime

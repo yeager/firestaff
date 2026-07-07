@@ -22,6 +22,15 @@ int csb_v1_runtime_object_overlay_info(
     return 0;
 }
 
+int csb_v1_runtime_object_icon_index(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing)
+{
+    (void)profile;
+    (void)thing;
+    return -1;
+}
+
 int csb_v1_runtime_group_overlay_info(
     const CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
