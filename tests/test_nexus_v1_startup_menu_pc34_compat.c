@@ -730,6 +730,8 @@ int main(void)
     {
         Nexus_V1_StartupMenuSnapshot snapshot;
         Nexus_V1_StartupSaveRenderRow snapshot_rows[4];
+        Nexus_V1_StartupRowKind snapshot_kind;
+        int snapshot_slot;
         int snapshot_row_count;
 
         memset(&snapshot, 0, sizeof(snapshot));
@@ -737,6 +739,14 @@ int main(void)
         snapshot.slot_mask = menu.slot_mask;
         snapshot.row_count = menu.row_count;
         snapshot.selected_row = 0;
+        expect(nexus_v1_startup_menu_snapshot_row_at(
+                   &snapshot,
+                   0,
+                   &snapshot_kind,
+                   &snapshot_slot) &&
+                   snapshot_kind == NEXUS_V1_STARTUP_ROW_SLOT &&
+                   snapshot_slot == 3,
+               "startup snapshot row lookup resolves slot without M11 row adapter");
         expect(nexus_v1_startup_menu_snapshot_handle_input(
                    &snapshot,
                    NEXUS_V1_STARTUP_INPUT_DOWN,

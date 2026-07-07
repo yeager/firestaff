@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Nexus startup row-adapter cleanup: the unused M11-local `m11_nexus_startup_row_at()` bridge is removed, and the Nexus startup menu test now proves save-row lookup directly through `nexus_v1_startup_menu_snapshot_row_at()`. Verification: direct `test_nexus_v1_startup_menu_pc34_compat` build/run passed, M11 syntax passed with existing unused-function warnings, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM2 startup row-adapter cleanup: the unused M11-local `m11_dm2_startup_row_at()` bridge is removed, and the DM2 startup action contract now proves snapshot row lookup directly through `dm2_v1_startup_menu_snapshot_row_at()`. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 31/31, DM2 startup syntax passed, M11 syntax passed with existing unused-function warnings, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM2 startup resume-session ownership: `dm2_v1_startup_menu` now owns direct `SKSave.dat` / `SKSave.bak` / `SKSaveNN.dat` session loading through `dm2_v1_startup_load_session_from_save_path()`, including invalid-path vs parsed-but-load-failed results. M11 now only applies the DM2-returned session to runtime and mirrors party state. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 30/30, DM2 startup syntax passed, M11 syntax passed with existing unused-function warnings, and `git diff --check` passed.
