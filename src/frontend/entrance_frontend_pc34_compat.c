@@ -1,4 +1,5 @@
 #include "entrance_frontend_pc34_compat.h"
+#include <stdio.h>
 #include <string.h>
 
 #define ENTRANCE_COMPAT_SCREEN_WIDTH 320u
@@ -10,6 +11,8 @@
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_Y 31u
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_WIDTH 224u
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_HEIGHT 136u
+#define ENTRANCE_COMPAT_VBLANK_DELAY_MS 20u
+#define ENTRANCE_COMPAT_CREDITS_WAIT_TICKS 1800u
 
 static int entrance_copy_rect(unsigned char* dst,
                               unsigned int dstW,
@@ -155,16 +158,98 @@ unsigned int ENTRANCE_Compat_GetRuntimeDelayMs(const EntranceCompatSourceAnimati
      * Runtime expresses those source ticks as 20 ms vblank slots, matching
      * the TITLE frontend cadence helper used for TITLE.C. */
     if (step->delayTicks > 0u) {
-        return step->delayTicks * 20u;
+        return step->delayTicks * ENTRANCE_COMPAT_VBLANK_DELAY_MS;
     }
     if (step->vblankLoopCount > 0u) {
-        return step->vblankLoopCount * 20u;
+        return step->vblankLoopCount * ENTRANCE_COMPAT_VBLANK_DELAY_MS;
     }
     return 0u;
 }
 
+unsigned int ENTRANCE_Compat_GetVblankDelayMs(void) {
+    return ENTRANCE_COMPAT_VBLANK_DELAY_MS;
+}
+
+unsigned int ENTRANCE_Compat_GetCreditsWaitTicks(void) {
+    return ENTRANCE_COMPAT_CREDITS_WAIT_TICKS;
+}
+
+int ENTRANCE_Compat_DispatchKeyCommand(EntranceCompatKey key) {
+    /* ReDMCSB ENTRANCE.C:850-883 PC/F20 path checks raw keyboard input in the
+     * entrance wait loop and maps carriage return to C001_MODE_LOAD_DUNGEON.
+     * Space stays inert because that source path does not activate entrance. */
+    switch (key) {
+    case ENTRANCE_COMPAT_KEY_RETURN:
+    case ENTRANCE_COMPAT_KEY_KEYPAD_RETURN:
+        return ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON;
+    case ENTRANCE_COMPAT_KEY_ESCAPE:
+    case ENTRANCE_COMPAT_KEY_Q:
+        return ENTRANCE_COMPAT_RUNTIME_COMMAND_QUIT;
+    default:
+        return ENTRANCE_COMPAT_RUNTIME_COMMAND_NONE;
+    }
+}
+
+EntranceCompatCommandPath ENTRANCE_Compat_CommandPathFromSourceCommand(int commandId) {
+    switch (commandId) {
+    case ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON:
+    case ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON:
+        return ENTRANCE_COMPAT_COMMAND_PATH_ENTER;
+    case ENTRANCE_COMPAT_RUNTIME_COMMAND_RESUME:
+        return ENTRANCE_COMPAT_COMMAND_PATH_RESUME;
+    case ENTRANCE_COMPAT_RUNTIME_COMMAND_DRAW_CREDITS:
+        return ENTRANCE_COMPAT_COMMAND_PATH_CREDITS;
+    case ENTRANCE_COMPAT_RUNTIME_COMMAND_QUIT:
+        return ENTRANCE_COMPAT_COMMAND_PATH_QUIT;
+    default:
+        return ENTRANCE_COMPAT_COMMAND_PATH_NONE;
+    }
+}
+
+int ENTRANCE_Compat_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
+                                              int autoEnterAfterMs,
+                                              unsigned long long elapsedMs) {
+    if (!allowHeadlessTimeout) {
+        return 0;
+    }
+    if (autoEnterAfterMs > 0 && elapsedMs > (unsigned long long)autoEnterAfterMs) {
+        return 1;
+    }
+    return elapsedMs > 5000ull;
+}
+
+int ENTRANCE_Compat_ResolveDm1ResumeSavePath(const char* sourceId,
+                                             int quickResumeAvailable,
+                                             const char* quickResumeGameId,
+                                             const char* quickResumeSavePath,
+                                             char* outPath,
+                                             size_t outPathBytes) {
+    const char* sid;
+    int rc;
+    if (!outPath || outPathBytes == 0u) {
+        return 0;
+    }
+    outPath[0] = '\0';
+    sid = (sourceId && sourceId[0] != '\0') ? sourceId : "dm1";
+    if (quickResumeAvailable &&
+        quickResumeGameId && strcmp(quickResumeGameId, "dm1") == 0 &&
+        quickResumeSavePath && quickResumeSavePath[0] != '\0') {
+        rc = snprintf(outPath, outPathBytes, "%s", quickResumeSavePath);
+        return rc > 0 && rc < (int)outPathBytes;
+    }
+    /* ReDMCSB COMMAND.C M566 enters saved-game load from the entrance.  This
+     * preserves Firestaff's existing source-id save filename when the launcher
+     * has no validated quick-resume path. */
+    rc = snprintf(outPath, outPathBytes, "firestaff-%s-dm1save.sav", sid);
+    return rc > 0 && rc < (int)outPathBytes;
+}
+
 const char* ENTRANCE_Compat_GetSourceAnimationEvidence(void) {
     return "ReDMCSB ENTRANCE.C PC/F20 path: draw entrance micro-dungeon, fade/curtain to entrance palette, draw C004 entrance screen, wait on VBlank/input loop, play switch sound, F0022_MAIN_Delay(20), hide pointer, then F0438 opens doors in source animation steps 1..31 with a BUG0_71 one-VBlank guard per step; rattle sound fires when step%3==1; door boxes move 4px per step from DATA.C left {0,100,0,160} and right {109,231,0,160}.";
+}
+
+const char* ENTRANCE_Compat_GetRuntimeCommandEvidence(void) {
+    return "ReDMCSB ENTRANCE.C:850-883 discards stale input and waits in C099_MODE_WAITING_ON_ENTRANCE for a fresh command; carriage return maps to C200, Space is inert on the PC/F20 path, COMMAND.C M566/M567 route resume/credits, and ENTRANCE.C:1012-1091 F0442 waits L1406=1800 vblank ticks on the credits screen.";
 }
 
 int ENTRANCE_Compat_CompositeDoorOpeningFrame(unsigned char* framebuffer,
