@@ -7,6 +7,58 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* ReDMCSB: DUNVIEW.C F0113 lines ~6213-6219 draws field bitmaps via
+ * G2035 view-square -> G0188 field-aspect mapping and layout-696
+ * C702..C717 wall/field zones. DUNGEON.C F0172 line ~2685 stores the
+ * visible/open teleporter bits that gate this draw path. */
+enum {
+    DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34 = 0x04,
+    DM1_FIELD_TELEPORTER_OPEN_MASK_PC34 = 0x08
+};
+
+static const DM1_FieldRenderPlanPc34 s_fieldRenderPlans[] = {
+    {3, -2, 0,   25, 36,  49, 0x3f, 0x0a, 0x00},
+    {3,  2, 188, 25, 36,  49, 0x3f, 0x0a, 0x80},
+    {3, -1, 7,   25, 83,  49, 0x3f, 0x0a, 0x01},
+    {3,  0, 77,  25, 70,  49, 0x3f, 0x8a, 0xff},
+    {3,  1, 134, 25, 83,  49, 0x3f, 0x0a, 0x81},
+    {2, -2, 0,   24, 8,   52, 0x3f, 0x0a, 0x02},
+    {2,  2, 216, 24, 8,   52, 0x3f, 0x0a, 0x82},
+    {2, -1, 0,   19, 78,  74, 0x3f, 0x0a, 0x03},
+    {2,  0, 59,  19, 106, 74, 0x3c, 0x8a, 0xff},
+    {2,  1, 146, 19, 78,  74, 0x3f, 0x0a, 0x83},
+    {1, -1, 0,   9,  60,  111, 0x3f, 0x0a, 0x04},
+    {1,  0, 32,  9,  160, 111, 0x3d, 0x8a, 0xff},
+    {1,  1, 164, 9,  60,  111, 0x3f, 0x0a, 0x84},
+    {0, -1, 0,   0,  33,  136, 0x3f, 0x0a, 0x05},
+    {0,  0, 0,   0,  224, 136, 0x3b, 0x8a, 0xff},
+    {0,  1, 191, 0,  33,  136, 0x3f, 0x0a, 0x85}
+};
+
+int dm1_v1_field_render_plan_count_pc34(void)
+{
+    return (int)(sizeof(s_fieldRenderPlans) / sizeof(s_fieldRenderPlans[0]));
+}
+
+int dm1_v1_field_render_plan_at_pc34(
+    int planIndex,
+    DM1_FieldRenderPlanPc34* outPlan)
+{
+    if (planIndex < 0 ||
+        planIndex >= dm1_v1_field_render_plan_count_pc34() ||
+        !outPlan) {
+        return 0;
+    }
+    *outPlan = s_fieldRenderPlans[planIndex];
+    return 1;
+}
+
+int dm1_v1_field_square_is_visible_open_pc34(int square)
+{
+    return (square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0 &&
+           (square & DM1_FIELD_TELEPORTER_OPEN_MASK_PC34) != 0;
+}
+
 void m11_ft_init(M11_FT_EffectState* state) {
     if (!state) return;
     memset(state, 0, sizeof(M11_FT_EffectState));

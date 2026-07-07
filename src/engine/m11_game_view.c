@@ -82,6 +82,7 @@
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_floor_pit_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
@@ -22651,68 +22652,41 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
                                            int fbH,
                                            int maxVisibleForward,
                                            const M11_ViewportCell cells[3][3]) {
-    typedef struct M11_DM1FieldSpec {
-        int relForward;
-        int relSide;
-        int dstX;
-        int dstY;
-        int dstW;
-        int dstH;
-        int baseStartUnit;
-        int transparentColor;
-        int maskIndexAndFlip;
-    } M11_DM1FieldSpec;
-    static const M11_DM1FieldSpec kFields[] = {
-        /* ReDMCSB G2035 view-square -> G0188 field-aspect mapping,
-         * resolved through layout-696 wall zones C702..C717. */
-        {3,-2,0,   25,36, 49,0x3f,0x0a,0x00},
-        {3, 2,188, 25,36, 49,0x3f,0x0a,0x80},
-        {3,-1,7,   25,83, 49,0x3f,0x0a,0x01},
-        {3, 0,77,  25,70, 49,0x3f,0x8a,0xff},
-        {3, 1,134, 25,83, 49,0x3f,0x0a,0x81},
-        {2,-2,0,   24,8,  52,0x3f,0x0a,0x02},
-        {2, 2,216, 24,8,  52,0x3f,0x0a,0x82},
-        {2,-1,0,   19,78, 74,0x3f,0x0a,0x03},
-        {2, 0,59,  19,106,74,0x3c,0x8a,0xff},
-        {2, 1,146, 19,78, 74,0x3f,0x0a,0x83},
-        {1,-1,0,   9, 60, 111,0x3f,0x0a,0x04},
-        {1, 0,32,  9, 160,111,0x3d,0x8a,0xff},
-        {1, 1,164, 9, 60, 111,0x3f,0x0a,0x84},
-        {0,-1,0,   0, 33, 136,0x3f,0x0a,0x05},
-        {0, 0,0,   0, 224,136,0x3b,0x8a,0xff},
-        {0, 1,191, 0, 33, 136,0x3f,0x0a,0x85}
-    };
-    size_t i;
+    int i;
+    int planCount;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (i = 0; i < sizeof(kFields) / sizeof(kFields[0]); ++i) {
+    planCount = dm1_v1_field_render_plan_count_pc34();
+    for (i = 0; i < planCount; ++i) {
         M11_ViewportCell cell;
-        if (kFields[i].relForward > maxVisibleForward) {
+        DM1_FieldRenderPlanPc34 plan;
+        if (!dm1_v1_field_render_plan_at_pc34(i, &plan)) {
+            continue;
+        }
+        if (plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             kFields[i].relForward,
-                                             kFields[i].relSide)) {
+                                             plan.relForward,
+                                             plan.relSide)) {
             continue;
         }
-        if (!m11_sample_viewport_cell(state, kFields[i].relForward, kFields[i].relSide, &cell)) {
+        if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_TELEPORTER) {
             continue;
         }
-        /* ReDMCSB DUNGEON.C F0172:2685 — teleporter visible iff OPEN&&VISIBLE.
-         * DEFS.H: MASK0x0004_TELEPORTER_VISIBLE, MASK0x0008_TELEPORTER_OPEN. */
-        if ((cell.square & 0x04) == 0 || (cell.square & 0x08) == 0) {
+        if (!dm1_v1_field_square_is_visible_open_pc34(cell.square)) {
             continue;
         }
         (void)m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH,
-                                      kFields[i].dstX, kFields[i].dstY,
-                                      kFields[i].dstW, kFields[i].dstH,
-                                      kFields[i].baseStartUnit,
-                                      kFields[i].transparentColor,
-                                      kFields[i].maskIndexAndFlip);
+                                      plan.dstX, plan.dstY,
+                                      plan.dstW, plan.dstH,
+                                      plan.baseStartUnit,
+                                      plan.transparentColor,
+                                      plan.maskIndexAndFlip);
     }
 }
 
