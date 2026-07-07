@@ -653,6 +653,8 @@ static void test_sprite_asset_provider(void)
     uint8_t framebuffer[320 * 200];
     DM2_V1_ViewportState viewport;
     DM2_V1_CreatureRenderPlan creature_plan;
+    DM2_V1_ItemRenderPlan item_plan;
+    DM2_V1_ProjectileRenderPlan projectile_plan;
 
     CHECK("DM2 creature asset index packs type and frame",
           dm2_v1_viewport_creature_graphic_index(0x12, 0x03) ==
@@ -959,11 +961,46 @@ static void test_sprite_asset_provider(void)
     viewport.items[0].frame_index = 0x04;
     viewport.items[0].screen_x = 80;
     viewport.items[0].screen_y = 90;
+    memset(&item_plan, 0, sizeof(item_plan));
+    CHECK("DM2 item render plan owns map-chip identity and fallback",
+          dm2_v1_viewport_build_item_render_plan(&viewport,
+                                                 &item_plan) == 1 &&
+              item_plan.item_count == 1 &&
+              item_plan.items[0].item_index == 0 &&
+              item_plan.items[0].item_category == 0x10 &&
+              item_plan.items[0].item_type == 0x22 &&
+              item_plan.items[0].frame_index == 0x04 &&
+              item_plan.items[0].center_x == 80 &&
+              item_plan.items[0].center_y == 90 &&
+              item_plan.items[0].gdat_index ==
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04) &&
+              item_plan.items[0].fallback_radius == 4 &&
+              item_plan.items[0].fallback_color == 3);
     dm2_v1_render_items(&viewport);
     CHECK("item fallback draws when no sprite asset provider is installed",
           viewport.asset_item_drawn_count == 0 &&
               viewport.fallback_item_drawn_count == 1 &&
               framebuffer[(90 * 320) + 80] == 3);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.item_count = 2;
+    viewport.items[0].item_category = 0x10;
+    viewport.items[0].item_type = 0x22;
+    viewport.items[0].screen_x = 80;
+    viewport.items[0].screen_y = 200;
+    viewport.items[1].item_type = 0x23;
+    viewport.items[1].screen_x = 81;
+    viewport.items[1].screen_y = 91;
+    memset(&item_plan, 0, sizeof(item_plan));
+    CHECK("DM2 item render plan filters offscreen floor objects",
+          dm2_v1_viewport_build_item_render_plan(&viewport,
+                                                 &item_plan) == 1 &&
+              item_plan.item_count == 1 &&
+              item_plan.items[0].item_index == 1 &&
+              item_plan.items[0].item_category == 0x15 &&
+              item_plan.items[0].center_x == 81 &&
+              item_plan.items[0].center_y == 91);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1058,6 +1095,25 @@ static void test_sprite_asset_provider(void)
     viewport.projectiles[0].screen_x = 120;
     viewport.projectiles[0].screen_y = 70;
     viewport.projectiles[0].velocity_x = 3;
+    memset(&projectile_plan, 0, sizeof(projectile_plan));
+    CHECK("DM2 projectile render plan owns missile identity and fallback",
+          dm2_v1_viewport_build_projectile_render_plan(&viewport,
+                                                       &projectile_plan) == 1 &&
+              projectile_plan.projectile_count == 1 &&
+              projectile_plan.projectiles[0].projectile_index == 0 &&
+              projectile_plan.projectiles[0].projectile_category == 0x0d &&
+              projectile_plan.projectiles[0].projectile_type == 0x02 &&
+              projectile_plan.projectiles[0].frame_index == 0x01 &&
+              projectile_plan.projectiles[0].center_x == 120 &&
+              projectile_plan.projectiles[0].center_y == 70 &&
+              projectile_plan.projectiles[0].gdat_index ==
+                  dm2_v1_viewport_projectile_graphic_index(0x0d, 0x02, 0x01) &&
+              projectile_plan.projectiles[0].flip_mirror ==
+                  dm2_v1_viewport_projectile_flip_for_direction(0, 0) &&
+              projectile_plan.projectiles[0].fallback_dx == 3 &&
+              projectile_plan.projectiles[0].fallback_dy == 0 &&
+              projectile_plan.projectiles[0].fallback_len == 3 &&
+              projectile_plan.projectiles[0].fallback_color == 15);
     dm2_v1_render_projectiles(&viewport);
     CHECK("projectile fallback draws when no sprite asset provider is installed",
           viewport.asset_projectile_drawn_count == 0 &&
@@ -1101,6 +1157,20 @@ static void test_sprite_asset_provider(void)
     viewport.projectiles[0].frame_class = DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL;
     viewport.projectiles[0].screen_x = 120;
     viewport.projectiles[0].screen_y = 70;
+    memset(&projectile_plan, 0, sizeof(projectile_plan));
+    CHECK("DM2 projectile render plan owns directional frame inputs",
+          dm2_v1_viewport_build_projectile_render_plan(&viewport,
+                                                       &projectile_plan) == 1 &&
+              projectile_plan.projectile_count == 1 &&
+              projectile_plan.projectiles[0].direction == 1 &&
+              projectile_plan.projectiles[0].object_direction == 1 &&
+              projectile_plan.projectiles[0].frame_class ==
+                  DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL &&
+              projectile_plan.projectiles[0].render_kind ==
+                  DM2_V1_PROJECTILE_RENDER_MISSILE &&
+              projectile_plan.projectiles[0].flip_mirror ==
+                  dm2_v1_viewport_projectile_flip_for_direction(1, 0) &&
+              projectile_plan.projectiles[0].cloud_flip_from_seed == 0);
     s_projectile_seven_frame_fixture = 1;
     s_asset_fetch_calls = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,
@@ -1150,6 +1220,15 @@ static void test_sprite_asset_provider(void)
     viewport.projectiles[0].render_kind = DM2_V1_PROJECTILE_RENDER_CLOUD;
     viewport.projectiles[0].screen_x = 120;
     viewport.projectiles[0].screen_y = 70;
+    memset(&projectile_plan, 0, sizeof(projectile_plan));
+    CHECK("DM2 projectile render plan marks clouds for seeded flip",
+          dm2_v1_viewport_build_projectile_render_plan(&viewport,
+                                                       &projectile_plan) == 1 &&
+              projectile_plan.projectile_count == 1 &&
+              projectile_plan.projectiles[0].render_kind ==
+                  DM2_V1_PROJECTILE_RENDER_CLOUD &&
+              projectile_plan.projectiles[0].cloud_flip_from_seed == 1 &&
+              viewport.random_seed == 0x0100u);
     s_projectile_seven_frame_fixture = 1;
     s_asset_fetch_calls = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,

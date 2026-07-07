@@ -401,6 +401,25 @@ typedef struct {
 } DM2_ItemSprite;
 
 typedef struct {
+    int item_index;
+    int item_category;
+    int item_type;
+    int frame_index;
+    int direction;
+    int depth;
+    int center_x;
+    int center_y;
+    int gdat_index;
+    int fallback_radius;
+    uint8_t fallback_color;
+} DM2_V1_ItemRender;
+
+typedef struct {
+    DM2_V1_ItemRender items[DM2_MAX_ITEMS_PER_SQ];
+    int item_count;
+} DM2_V1_ItemRenderPlan;
+
+typedef struct {
     uint8_t  projectile_category; /* GDAT category, 0 = spell-missile fallback */
     uint8_t  projectile_type; /* spell/arrow/bolt type */
     uint8_t  frame_index;     /* animation frame */
@@ -415,6 +434,33 @@ typedef struct {
     uint8_t  object_direction;/* skproject ObjectID::Dir() source direction */
     uint8_t  frame_class;     /* DM2_V1_PROJECTILE_FRAME_CLASS_* */
 } DM2_Projectile;
+
+typedef struct {
+    int projectile_index;
+    int projectile_category;
+    int projectile_type;
+    int frame_index;
+    int render_frame;
+    int direction;
+    int object_direction;
+    int frame_class;
+    int render_kind;
+    int depth;
+    int center_x;
+    int center_y;
+    int gdat_index;
+    int flip_mirror;
+    int cloud_flip_from_seed;
+    int fallback_dx;
+    int fallback_dy;
+    int fallback_len;
+    uint8_t fallback_color;
+} DM2_V1_ProjectileRender;
+
+typedef struct {
+    DM2_V1_ProjectileRender projectiles[DM2_MAX_PROJECTILES];
+    int projectile_count;
+} DM2_V1_ProjectileRenderPlan;
 
 typedef int (*DM2_V1_ViewportAssetFetch)(
     void *user,
@@ -511,6 +557,12 @@ int dm2_v1_viewport_build_door_render_plan(
 int dm2_v1_viewport_build_creature_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CreatureRenderPlan *out_plan);
+int dm2_v1_viewport_build_item_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ItemRenderPlan *out_plan);
+int dm2_v1_viewport_build_projectile_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ProjectileRenderPlan *out_plan);
 
 /* ── Lighting helpers ─────────────────────────────────────────── */
 /* dm2_v1_viewport_object_light_level — compute object light intensity
