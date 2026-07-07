@@ -216,6 +216,11 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
+static int m11_object_source_scale_index(int depthIndex, int relativeCell);
+static void m11_object_source_pile_shift_indices(int pileIndex,
+                                                 int* outXIndex,
+                                                 int* outYIndex);
+static int m11_object_source_shift_value(int shiftSet, int shiftIndex);
 static int m11_creature_coordinate_set(int creatureType);
 static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
 static int m11_dm1_d4_far_projectile_box(int relSide,
@@ -1407,6 +1412,7 @@ static void m11_draw_csb_runtime_floor_object_overlays(
             int map_y;
             int first_thing;
             unsigned short thing;
+            int object_pile_index = 0;
             int safety = 0;
 
             m11_csb_map_from_relative(runtime->party_dir,
@@ -1455,6 +1461,13 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                                                                    record_size);
                     int marker_x = x;
                     int marker_y = y;
+                    int pile_index = object_pile_index;
+                    int scale_index;
+                    int shift_set;
+                    int shift_x_index = 0;
+                    int shift_y_index = 0;
+                    int pile_shift_x = 0;
+                    int pile_shift_y = 0;
                     if (!csb_v1_viewport_runtime_object_overlay_placement(
                             forward,
                             side,
@@ -1463,14 +1476,36 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                         thing = m11_csb_runtime_next_thing(dungeon, thing);
                         continue;
                     }
+                    object_pile_index++;
                     x = placement.screen_x;
                     y = placement.screen_y;
                     row = placement.object_row;
                     marker_x = x;
                     marker_y = y;
+                    /* ReDMCSB DUNVIEW.C F0115/G0217/G0223: every floor
+                     * object in a square receives the next source pile
+                     * shift before drawing.  CSB runtime overlays can carry
+                     * several floor objects in the same thing chain, so keep
+                     * the same per-square object order here instead of
+                     * reusing pile index 0 for all of them. */
+                    scale_index = m11_object_source_scale_index(forward - 1,
+                                                                rel_cell);
+                    shift_set = (scale_index + 1) >> 1;
+                    if (shift_set > 2) shift_set = 2;
+                    m11_object_source_pile_shift_indices(pile_index,
+                                                         &shift_x_index,
+                                                         &shift_y_index);
+                    pile_shift_x = m11_object_source_shift_value(shift_set,
+                                                                 shift_x_index);
+                    pile_shift_y = m11_object_source_shift_value(shift_set,
+                                                                 shift_y_index);
+                    marker_x += pile_shift_x;
+                    marker_y += pile_shift_y;
                     if (rel_cell == 0 || rel_cell == 2) x -= 5;
                     if (rel_cell == 1 || rel_cell == 3) x += 5;
                     if (rel_cell >= 2) y += 3;
+                    x += pile_shift_x;
+                    y += pile_shift_y;
                     if (record_type == type &&
                         subtype >= 0 &&
                         m11_draw_item_sprite(state,
@@ -1484,7 +1519,7 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                                              type,
                                              subtype,
                                              rel_cell,
-                                             0,
+                                             pile_index,
                                              forward - 1,
                                              row)) {
                         m11_csb_runtime_overlay_stats_add_object_sprite(state);

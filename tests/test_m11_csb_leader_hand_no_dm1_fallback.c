@@ -35,6 +35,35 @@ static void write_u16(unsigned char *p, unsigned int value)
     p[1] = (unsigned char)((value >> 8) & 0xffu);
 }
 
+static void add_object_pile_shift(int depth_index,
+                                  int relative_cell,
+                                  int pile_index,
+                                  int *x,
+                                  int *y)
+{
+    int front_row = relative_cell >= 2;
+    int scale_index;
+    int shift_set;
+    int shift_x_index = 0;
+    int shift_y_index = 0;
+
+    if (!x || !y) return;
+    if (depth_index <= 0) {
+        scale_index = 0;
+    } else {
+        scale_index = depth_index * 2 - (front_row ? 1 : 0);
+        if (scale_index < 0) scale_index = 0;
+        if (scale_index > 4) scale_index = 4;
+    }
+    shift_set = (scale_index + 1) >> 1;
+    if (shift_set > 2) shift_set = 2;
+    M11_GameView_GetObjectPileShiftIndices(pile_index,
+                                           &shift_x_index,
+                                           &shift_y_index);
+    *x += M11_GameView_GetObjectShiftValue(shift_set, shift_x_index);
+    *y += M11_GameView_GetObjectShiftValue(shift_set, shift_y_index);
+}
+
 static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
                              unsigned char *raw,
                              size_t raw_size)
@@ -143,6 +172,8 @@ int main(void)
         int f0115_row = 0;
         int object_marker_x = 112;
         int object_marker_y = 117;
+        int object_marker_pile1_x = 112;
+        int object_marker_pile1_y = 117;
         int group_marker_x = 112;
         int group_marker_y = 144;
         int d3_object_marker_x = 0;
@@ -267,7 +298,16 @@ int main(void)
                           &object_marker_x,
                           &object_marker_y),
                   "CSB draw checks resolve front-square object marker through C2500");
+            object_marker_pile1_x = object_marker_x;
+            object_marker_pile1_y = object_marker_y;
+            add_object_pile_shift(0, 3, 0,
+                                  &object_marker_x,
+                                  &object_marker_y);
+            add_object_pile_shift(0, 3, 1,
+                                  &object_marker_pile1_x,
+                                  &object_marker_pile1_y);
             object_marker_y += sy;
+            object_marker_pile1_y += sy;
             check(M11_GameView_GetC3200CreatureZonePoint(
                       0,
                       0,
@@ -285,6 +325,9 @@ int main(void)
                           &d3_object_marker_x,
                           &d3_object_marker_y),
                   "CSB draw checks resolve D3R2 object marker through C2500");
+            add_object_pile_shift(2, 3, 0,
+                                  &d3_object_marker_x,
+                                  &d3_object_marker_y);
             d3_object_marker_y += sy;
             check(M11_GameView_GetC3200CreatureSideZonePoint(
                       0,
@@ -358,6 +401,8 @@ int main(void)
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
                   "CSB M11 draw marks a runtime floor object from CSB square thing chain without DM1 world.things");
             write_u16(raw + 0, bow);
+            d3_bow_icon = csb_v1_runtime_object_icon_index(
+                &profile.runtime, bow);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
             check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
@@ -377,6 +422,10 @@ int main(void)
                       object_marker_count == 2 && group_sprite_count == 0 &&
                       group_marker_count == 1,
                   "CSB M11 draw stats prove multiple floor objects in one square chain");
+            check(framebuffer[object_marker_pile1_y * 320 +
+                              object_marker_pile1_x] ==
+                      (unsigned char)csb_v1_viewport_projectile_material_overlay_color(d3_bow_icon),
+                  "CSB M11 draw applies source pile shift to the second floor object marker");
             write_u16(raw + 0, THING_ENDOFLIST);
             raw[69] = (unsigned char)(1u << 5);
             raw[77] = (unsigned char)((1u << 5) | 0x10u);
