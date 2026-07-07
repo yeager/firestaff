@@ -39253,170 +39253,92 @@ int M11_GameView_GetTheronStartupRenderRows(
     return row_count;
 }
 
+static const M11_TextStyle *m11_theron_startup_text_style(
+    Theron_StartupRenderTextStyle style,
+    M11_TextStyle *scratch)
+{
+    switch (style) {
+    case THERON_STARTUP_RENDER_TEXT_TITLE:
+        return &g_text_title;
+    case THERON_STARTUP_RENDER_TEXT_SHADOW:
+        return &g_text_shadow;
+    case THERON_STARTUP_RENDER_TEXT_ACTIVE:
+        if (scratch) {
+            *scratch = g_text_shadow;
+            scratch->color = M11_COLOR_YELLOW;
+            return scratch;
+        }
+        return &g_text_shadow;
+    case THERON_STARTUP_RENDER_TEXT_LOCKED:
+        if (scratch) {
+            *scratch = g_text_small;
+            scratch->color = M11_COLOR_DARK_GRAY;
+            return scratch;
+        }
+        return &g_text_small;
+    case THERON_STARTUP_RENDER_TEXT_PICKED:
+        if (scratch) {
+            *scratch = g_text_shadow;
+            scratch->color = M11_COLOR_LIGHT_GREEN;
+            return scratch;
+        }
+        return &g_text_shadow;
+    case THERON_STARTUP_RENDER_TEXT_SMALL:
+    default:
+        if (scratch) {
+            *scratch = g_text_small;
+            scratch->color = M11_COLOR_LIGHT_GRAY;
+            return scratch;
+        }
+        return &g_text_small;
+    }
+}
+
 static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                            const Theron_V1_World* world,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
                                            int framebufferHeight) {
     int i;
-    M11_TheronStartupElement elements[16];
+    Theron_StartupLayoutState layout_state;
+    Theron_StartupLayoutElement elements[16];
+    Theron_StartupRenderPlan plan;
     int element_count;
-    M11_TextStyle muted = g_text_small;
-    M11_TextStyle active = g_text_shadow;
-    M11_TextStyle locked = g_text_small;
-    M11_TextStyle picked = g_text_shadow;
 
     (void)world;
-    muted.color = M11_COLOR_LIGHT_GRAY;
-    active.color = M11_COLOR_YELLOW;
-    locked.color = M11_COLOR_DARK_GRAY;
-    picked.color = M11_COLOR_LIGHT_GREEN;
 
     if (!state || !framebuffer) {
         return;
     }
 
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  12, 10, 296, 180, M11_COLOR_YELLOW);
-    element_count = M11_GameView_GetTheronStartupLayout(
-        state,
+    if (!m11_theron_startup_build_layout_state(state, &layout_state)) {
+        return;
+    }
+    element_count = theron_v1_startup_layout_build(
+        &layout_state,
         elements,
         (int)(sizeof(elements) / sizeof(elements[0])));
-
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
-        for (i = 0; i < element_count; ++i) {
-            const M11_TheronStartupElement *e = &elements[i];
-            if (e->kind == M11_THERON_STARTUP_ELEMENT_TITLE) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              e->x, e->y, e->label, &g_text_title);
-            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              e->x, e->y, e->label, &g_text_small);
-            }
-        }
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      34, 76, "PRESS ENTER TO START", &g_text_shadow);
+    if (!theron_v1_startup_render_plan_build(&layout_state,
+                                             elements,
+                                             element_count,
+                                             &plan)) {
         return;
     }
 
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
-        int has_tqsv_continue = m11_theron_tqsv_continue_available(state);
-        int has_srm_continue = m11_theron_srm_continue_available(state);
-        int has_continue = has_tqsv_continue || has_srm_continue;
-
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  0, 0, framebufferWidth, framebufferHeight,
+                  plan.background_color);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  plan.border_x, plan.border_y, plan.border_w, plan.border_h,
+                  plan.border_color);
+    for (i = 0; i < plan.text_count; ++i) {
+        M11_TextStyle scratch;
+        const Theron_StartupRenderTextCommand *command = &plan.text[i];
+        const M11_TextStyle *style =
+            m11_theron_startup_text_style(command->style, &scratch);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      34, 52, "CHOOSE A STAGE", &g_text_shadow);
-        if (state->theronState.startup_roster_name_count > 0) {
-            char roster_row[128];
-            int written = snprintf(roster_row,
-                                   sizeof(roster_row),
-                                   "ROSTER:");
-            int j;
-            for (j = 0;
-                 j < state->theronState.startup_roster_name_count &&
-                 j < (int)(sizeof(state->theronState.startup_roster_names) /
-                           sizeof(state->theronState.startup_roster_names[0]));
-                 ++j) {
-                if (written < 0 || written >= (int)sizeof(roster_row)) {
-                    break;
-                }
-                written += snprintf(roster_row + written,
-                                    sizeof(roster_row) - (size_t)written,
-                                    " %s",
-                                    state->theronState.startup_roster_names[j]);
-            }
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          34, 164, roster_row, &g_text_small);
-        }
-        for (i = 0; i < element_count; ++i) {
-            const M11_TheronStartupElement *e = &elements[i];
-            char row[96];
-            if (e->kind == M11_THERON_STARTUP_ELEMENT_TITLE) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              e->x, e->y, e->label, &g_text_title);
-            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              e->x, e->y, e->label, &g_text_small);
-            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_CONTINUE) {
-                snprintf(row, sizeof(row), "%c CONTINUE  %s SLOT %d",
-                         e->cursor ? '>' : ' ',
-                         e->saveKind == 1 ? "TQSV" : "SRM",
-                         e->saveSlot);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              e->x, e->y, row,
-                              e->cursor ? &active : &picked);
-            } else if (e->kind == M11_THERON_STARTUP_ELEMENT_STAGE) {
-                snprintf(row, sizeof(row), "%c %d  %s%s",
-                         e->cursor ? '>' : ' ',
-                         e->dungeonId,
-                         e->label,
-                         e->enabled ? "" : "  LOCKED");
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              e->x, e->y, row,
-                              e->cursor ? &active :
-                              (e->enabled ? &muted : &locked));
-            }
-        }
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      34, 176,
-                      has_continue
-                          ? "UP/DOWN SELECT  ENTER CONTINUE/STAGE"
-                          : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM",
-                      &g_text_small);
-        return;
+                      command->x, command->y, command->text, style);
     }
-
-    for (i = 0; i < element_count; ++i) {
-        const M11_TheronStartupElement *e = &elements[i];
-        if (e->kind == M11_THERON_STARTUP_ELEMENT_TITLE) {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          e->x, e->y, e->label, &g_text_title);
-        } else if (e->kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          e->x, e->y, e->label, &g_text_small);
-        }
-    }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  34, 52, "SOUL ROOM", &g_text_shadow);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  34, 64,
-                  state->theronState.startup_text_prompt[0] != '\0'
-                      ? state->theronState.startup_text_prompt
-                      : "THERON WAITS AT THE FORCEFIELD",
-                  &g_text_small);
-    for (i = 0; i < element_count; ++i) {
-        const M11_TheronStartupElement *e = &elements[i];
-        char row[80];
-        if (e->kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
-            snprintf(row, sizeof(row), "%c %-22s %-7s %s",
-                     e->cursor ? '>' : ' ',
-                     e->label,
-                     e->primaryClass >= 0
-                        ? theron_v1_startup_class_name(
-                              (Theron_ChampionClass)e->primaryClass)
-                        : "UNKNOWN",
-                     e->selected
-                        ? (e->selectedOrder == 1 ? "RESURRECTED #1" :
-                           e->selectedOrder == 2 ? "RESURRECTED #2" :
-                           e->selectedOrder == 3 ? "RESURRECTED #3" :
-                                                   "RESURRECTED")
-                        : "AVAILABLE");
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          e->x, e->y, row,
-                          e->selected ? &picked :
-                          (e->cursor ? &active : &muted));
-        } else if (e->kind == M11_THERON_STARTUP_ELEMENT_FORCEFIELD) {
-            snprintf(row, sizeof(row), "%c ENTER FORCEFIELD",
-                     e->cursor ? '>' : ' ');
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          e->x, e->y, row, e->cursor ? &active : &muted);
-        }
-    }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  34, 176, "ENTER SELECTS MIRROR  ACTION ENTERS",
-                  &g_text_small);
 }
 
 static void m11_draw_dm2_shop_panel(const M11_GameViewState* state,
