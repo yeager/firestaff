@@ -452,6 +452,31 @@ int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
     return 1;
 }
 
+int V1_TitleFrontend_Unpack4bppScreenToIndexed(const unsigned char* packed4bpp,
+                                               unsigned int width,
+                                               unsigned int height,
+                                               unsigned char* indexed,
+                                               unsigned int indexedStride) {
+    unsigned int y;
+    unsigned int x;
+    unsigned int packedStride;
+    if (!packed4bpp || !indexed || width == 0u || height == 0u ||
+        (width & 1u) != 0u || indexedStride < width) {
+        return 0;
+    }
+    packedStride = width >> 1;
+    for (y = 0u; y < height; ++y) {
+        const unsigned char* src = packed4bpp + y * packedStride;
+        unsigned char* dst = indexed + y * indexedStride;
+        for (x = 0u; x < width; x += 2u) {
+            unsigned char b = src[x >> 1];
+            dst[x] = (unsigned char)((b >> 4) & 0x0fu);
+            dst[x + 1u] = (unsigned char)(b & 0x0fu);
+        }
+    }
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Pass602 — Remaining TITLE.C function citations for parity
  *

@@ -491,21 +491,6 @@ static int m11_find_title_dat_for_intro(const M12_StartupMenuState* menuState,
     return 0;
 }
 
-static void m11_unpack_title_4bpp_to_indexed(const unsigned char* packed4bpp,
-                                             unsigned char* indexed) {
-    unsigned int y;
-    unsigned int x;
-    for (y = 0U; y < (unsigned int)M11_FB_HEIGHT; ++y) {
-        const unsigned char* src = packed4bpp + y * 160U;
-        unsigned char* dst = indexed + y * (unsigned int)M11_FB_WIDTH;
-        for (x = 0U; x < (unsigned int)M11_FB_WIDTH; x += 2U) {
-            unsigned char b = src[x >> 1];
-            dst[x] = (unsigned char)((b >> 4) & 0x0fU);
-            dst[x + 1U] = (unsigned char)(b & 0x0fU);
-        }
-    }
-}
-
 static void m11_fill_rect_indexed(unsigned char* framebuffer,
                                   int framebufferWidth,
                                   int framebufferHeight,
@@ -1415,7 +1400,11 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                     err[0] ? err : "unknown TITLE decode error");
             break;
         }
-        m11_unpack_title_4bpp_to_indexed(packedScreen, indexedScreen);
+        (void)V1_TitleFrontend_Unpack4bppScreenToIndexed(packedScreen,
+                                                         M11_FB_WIDTH,
+                                                         M11_FB_HEIGHT,
+                                                         indexedScreen,
+                                                         M11_FB_WIDTH);
         /* TITLE.DAT is the bank-of-frames fallback used when the
          * GRAPHICS.DAT C001 graphic is not available.  Keep its palette
          * choice behind the same ReDMCSB TITLE.C source-lock helper as

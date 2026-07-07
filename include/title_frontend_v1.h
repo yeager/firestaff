@@ -196,6 +196,18 @@ int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
                                          size_t errMsgBytes);
 
 /*
+ * Unpack the TITLE frontend 4bpp packed screen format into one byte per
+ * indexed pixel. This is the inverse presentation adapter for
+ * V1_TitleFrontend_RenderFrameToScreen() and keeps TITLE.DAT framebuffer
+ * layout out of M11.
+ */
+int V1_TitleFrontend_Unpack4bppScreenToIndexed(const unsigned char* packed4bpp,
+                                               unsigned int width,
+                                               unsigned int height,
+                                               unsigned char* indexed,
+                                               unsigned int indexedStride);
+
+/*
  * Map a TITLE source animation step kind to the source-locked
  * VGA_PALETTE_PC34_SPECIAL_* palette index that the original F20E PC 3.4
  * TITLE.C F0437 routine applies at that step.  Returns:
