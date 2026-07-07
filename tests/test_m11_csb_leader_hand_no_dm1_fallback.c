@@ -176,6 +176,8 @@ int main(void)
         int object_marker_pile1_y = 117;
         int group_marker_x = 112;
         int group_marker_y = 144;
+        int group_marker_count2_x = 112;
+        int group_marker_count2_y = 144;
         int d3_object_marker_x = 0;
         int d3_object_marker_y = 0;
         int d3_group_marker_x = 0;
@@ -317,6 +319,15 @@ int main(void)
                       &group_marker_y),
                   "CSB draw checks resolve front-square group marker through C3200");
             group_marker_y += sy;
+            check(M11_GameView_GetC3200CreatureZonePoint(
+                      0,
+                      0,
+                      2,
+                      1,
+                      &group_marker_count2_x,
+                      &group_marker_count2_y),
+                  "CSB draw checks resolve second front-square group marker through C3200");
+            group_marker_count2_y += sy;
             f0115_row = M11_GameView_GetF0115C2500C2900Row(3, 2);
             check(f0115_row >= 0 &&
                       M11_GameView_GetC2500ObjectRawZonePoint(
@@ -426,6 +437,30 @@ int main(void)
                               object_marker_pile1_x] ==
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(d3_bow_icon),
                   "CSB M11 draw applies source pile shift to the second floor object marker");
+            raw[101] = 0u;
+            write_u16(raw + 110, (1u << 5));
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&state, framebuffer, 320, 200);
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+                      &state,
+                      &object_sprite_count,
+                      &object_icon_count,
+                      &object_marker_count,
+                      &group_sprite_count,
+                      &group_marker_count,
+                      &projectile_sprite_count,
+                      &projectile_material_count,
+                      &projectile_marker_count,
+                      &explosion_sprite_count,
+                      &explosion_marker_count),
+                  "CSB M11 draw exposes multi-creature runtime group overlay stats");
+            check(group_sprite_count == 0 && group_marker_count == 2,
+                  "CSB M11 draw stats prove a two-creature runtime group draws two markers");
+            check(framebuffer[group_marker_count2_y * 320 +
+                              group_marker_count2_x] == 0x0D,
+                  "CSB M11 draw marks the second runtime creature in a two-creature group");
+            raw[101] = 0xFFu;
+            write_u16(raw + 110, 0u);
             write_u16(raw + 0, THING_ENDOFLIST);
             raw[69] = (unsigned char)(1u << 5);
             raw[77] = (unsigned char)((1u << 5) | 0x10u);
