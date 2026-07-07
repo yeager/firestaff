@@ -1914,7 +1914,7 @@ static void m11_phase_a_print_boot_probe_receipt(
         return;
     }
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -1926,6 +1926,11 @@ static void m11_phase_a_print_boot_probe_receipt(
             receipt.startupPhase,
             receipt.startupActive,
             receipt.startupFrame,
+            receipt.startupAnimation,
+            receipt.startupAnimationActive,
+            receipt.startupTitleFrame,
+            receipt.startupTitleFrameMax,
+            receipt.startupTitleReady,
             receipt.levelLoaded,
             receipt.mapIndex,
             receipt.partyX,

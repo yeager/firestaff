@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-07 all-game title/startup follow-up: M11 boot receipts now expose per-game startup animation identity, active state, title frame, title-frame boundary, and readiness for DM1, CSB, DM2, Nexus, and Theron's Quest, with the direct-launch all-games gate covering all five paths. Remaining title/startup work is still exact bitmap/audio/timing presentation breadth per game and packaged capture proof, not the headless receipt/status contract.
+
 - 🔧 2026-07-07 DM1 V1 side-lane field follow-up: the legacy CSB/DM1 viewport side-lane teleporter fill now uses the shared ReDMCSB F0113 relative render-plan lookup for D3L2/D3R2 and D2L2/D2R2 instead of hard-coded wall-frame rectangles. Remaining work is exact source bitmap byte-for-byte material proof for the field swirl and broader packaged HoC/CSB capture proof for every side-lane teleporter orientation.
   - 2026-07-07 update: DM1 field compat now owns the F0113 field-pixel material decision used by M11 plus the GRAPHICS.DAT field/mask asset route for C076 and C070..C075 masks. Remaining DM1 field work is broader packaged HoC/CSB capture proof for every side-lane teleporter orientation and any byte-level provenance notes still needed for public docs.
   - 2026-07-07 update: DM1 field asset binding now also exposes mask-required, mask index/flip, and transparent-color metadata for M11. Remaining DM1 field work is packaged HoC/CSB capture proof for every side-lane teleporter orientation.
