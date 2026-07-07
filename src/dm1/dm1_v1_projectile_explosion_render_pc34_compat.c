@@ -168,10 +168,10 @@ int dm1_v1_projectile_subtype_to_aspect(int subtype) {
 int dm1_v1_explosion_type_to_aspect(int explosionType) {
     if (explosionType < 0) return -1;
     if (explosionType == DM1_EXPLOSION_FLUXCAGE) return -1;
-    if (explosionType == DM1_EXPLOSION_REBIRTH_STEP1) return -1;
+    if (explosionType == DM1_EXPLOSION_TYPE_REBIRTH_STEP1) return -1;
     if (explosionType == DM1_EXPLOSION_FIREBALL ||
         explosionType == DM1_EXPLOSION_LIGHTNING_BOLT ||
-        explosionType == DM1_EXPLOSION_REBIRTH_STEP2) {
+        explosionType == DM1_EXPLOSION_TYPE_REBIRTH_STEP2) {
         return DM1_EXPLOSION_ASPECT_FIRE;
     }
     if (explosionType == DM1_EXPLOSION_POISON_BOLT ||

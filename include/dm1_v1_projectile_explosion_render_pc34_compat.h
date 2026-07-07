@@ -102,8 +102,12 @@ extern "C" {
 #define DM1_EXPLOSION_POISON_CLOUD            7  /* C007 */
 #define DM1_EXPLOSION_SMOKE                  40  /* C040 */
 #define DM1_EXPLOSION_FLUXCAGE               50  /* C050 */
-#define DM1_EXPLOSION_REBIRTH_STEP1         100  /* C100 */
-#define DM1_EXPLOSION_REBIRTH_STEP2         101  /* C101 */
+#ifndef DM1_EXPLOSION_TYPE_REBIRTH_STEP1
+#define DM1_EXPLOSION_TYPE_REBIRTH_STEP1    100  /* C100 */
+#endif
+#ifndef DM1_EXPLOSION_TYPE_REBIRTH_STEP2
+#define DM1_EXPLOSION_TYPE_REBIRTH_STEP2    101  /* C101 */
+#endif
 
 /* ── Explosion visual aspects (DEFS.H) ──────────────────────────── */
 

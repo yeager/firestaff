@@ -195,7 +195,7 @@ static void test_explosion_type_to_aspect(void) {
               DM1_EXPLOSION_ASPECT_FIRE, "fireball->fire");
     ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_LIGHTNING_BOLT),
               DM1_EXPLOSION_ASPECT_FIRE, "lightning->fire");
-    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_REBIRTH_STEP2),
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_TYPE_REBIRTH_STEP2),
               DM1_EXPLOSION_ASPECT_FIRE, "rebirth2->fire");
     ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_POISON_BOLT),
               DM1_EXPLOSION_ASPECT_POISON, "poison_bolt->poison");
@@ -211,7 +211,7 @@ static void test_explosion_type_to_aspect(void) {
               DM1_EXPLOSION_ASPECT_SPELL, "slime->spell");
     /* Fluxcage and rebirth step1 return -1 */
     ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_FLUXCAGE), -1, "fluxcage->-1");
-    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_REBIRTH_STEP1), -1, "rebirth1->-1");
+    ASSERT_EQ(dm1_v1_explosion_type_to_aspect(DM1_EXPLOSION_TYPE_REBIRTH_STEP1), -1, "rebirth1->-1");
     ASSERT_EQ(dm1_v1_explosion_type_to_aspect(-1), -1, "neg->-1");
 }
 
