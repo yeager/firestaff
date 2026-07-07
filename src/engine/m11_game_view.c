@@ -10923,11 +10923,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         CSB_V1_BootProfile *profile = NULL;
         CSB_V1_StartupSessionOptionsInput_PC34 session_input;
         CSB_V1_StartupSessionOptions_PC34 session_options;
-        int startup_imported_count = 0;
-        int startup_import_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
-        char startup_import_utility_prompt[CSB_V1_STARTUP_PROMPT_CAP_PC34];
+        CSB_V1_RuntimeStartupHandoffReceipt_PC34 startup_handoff;
         int savedDebugHUD = state->showDebugHUD;
-        startup_import_utility_prompt[0] = '\0';
         if (!dd || !dd[0]) {
             if (FSP_ResolveDataDir(resolvedDataDir,
                                    sizeof(resolvedDataDir),
@@ -10961,35 +10958,26 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             free(profile);
             return 0;
         }
-        if (spec->savePath && spec->savePath[0] != '\0') {
-            if (csb_v1_runtime_load_game_from_path(&profile->runtime,
-                                                   spec->savePath) !=
-                CSB_V1_LOAD_OK) {
-                m11_set_status(state, "BOOT", "CSB RESUME FAILED");
-                m11_log_event(state, M11_COLOR_RED,
-                              "T0: CSB RESUME FAILED: %s",
-                              spec->savePath);
-                csb_v1_boot_cleanup(profile);
-                free(profile);
-                return 0;
-            }
-        } else if (spec->csbImportDm1SavePath &&
-                   spec->csbImportDm1SavePath[0] != '\0') {
-            if (!csb_v1_runtime_import_dm1_party_path(
-                    &profile->runtime,
-                    spec->csbImportDm1SavePath,
-                    &startup_imported_count,
-                    &startup_import_utility_state,
-                    startup_import_utility_prompt,
-                    sizeof(startup_import_utility_prompt))) {
-                m11_set_status(state, "BOOT", "CSB IMPORT FAILED");
-                m11_log_event(state, M11_COLOR_RED,
-                              "T0: CSB DM1 IMPORT FAILED: %s",
-                              spec->csbImportDm1SavePath);
-                csb_v1_boot_cleanup(profile);
-                free(profile);
-                return 0;
-            }
+        if (!csb_v1_runtime_apply_startup_handoff_pc34(
+                &profile->runtime,
+                spec->savePath,
+                spec->csbImportDm1SavePath,
+                &startup_handoff)) {
+            m11_set_status(state,
+                           startup_handoff.status_scope
+                               ? startup_handoff.status_scope
+                               : "BOOT",
+                           startup_handoff.status
+                               ? startup_handoff.status
+                               : "CSB STARTUP FAILED");
+            m11_log_event(state, M11_COLOR_RED,
+                          "T0: %s",
+                          startup_handoff.status
+                              ? startup_handoff.status
+                              : "CSB STARTUP FAILED");
+            csb_v1_boot_cleanup(profile);
+            free(profile);
+            return 0;
         }
         state->active = 1;
         state->startedFromLauncher = 1;
@@ -11037,13 +11025,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_bonus_requested = 0;
         memset(&session_input, 0, sizeof(session_input));
         session_input.direct_resume_loaded =
-            spec->savePath && spec->savePath[0] != '\0';
+            startup_handoff.direct_resume_loaded;
         session_input.import_dm1_save_path = spec->csbImportDm1SavePath;
-        session_input.import_utility_state = startup_import_utility_state;
-        session_input.import_utility_prompt = startup_import_utility_prompt;
+        session_input.import_utility_state =
+            startup_handoff.import_utility_state;
+        session_input.import_utility_prompt =
+            startup_handoff.import_utility_prompt;
         if (!session_input.direct_resume_loaded &&
-            spec->csbImportDm1SavePath &&
-            spec->csbImportDm1SavePath[0] != '\0') {
+            startup_handoff.import_succeeded) {
             CSB_V1_PartyState imported_party;
             memset(&imported_party, 0, sizeof(imported_party));
             if (csb_v1_runtime_get_party_state(&profile->runtime,
@@ -11052,8 +11041,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 imported_party.ChampionCount > 0) {
                 session_input.import_party_loaded = 1;
                 session_input.import_champion_count =
-                    startup_imported_count > 0
-                        ? startup_imported_count
+                    startup_handoff.import_champion_count > 0
+                        ? startup_handoff.import_champion_count
                         : imported_party.ChampionCount;
             }
         }

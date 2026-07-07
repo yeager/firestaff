@@ -1300,6 +1300,7 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
 {
     CSB_V1_RuntimeProfile runtime;
     CSB_V1_PartyState party;
+    CSB_V1_RuntimeStartupHandoffReceipt_PC34 receipt;
     uint8_t save_buf[1024];
     const char *path = "/tmp/firestaff-csb-v1-runtime-dm1-import.sav";
     FILE *f;
@@ -1339,6 +1340,24 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
               party.ChampionCount == 2 &&
               memcmp(party.Champions[1].Name, "BETA", 4u) == 0,
           "runtime DM1 import preserves champion identity and provenance");
+
+    csb_v1_runtime_cleanup(&runtime);
+    csb_v1_runtime_init(&runtime, NULL);
+    CHECK(csb_v1_runtime_apply_startup_handoff_pc34(
+              &runtime,
+              NULL,
+              path,
+              &receipt) == 1,
+          "runtime startup handoff owns DM1 import execution");
+    CHECK(receipt.kind ==
+              CSB_V1_RUNTIME_STARTUP_HANDOFF_IMPORT_DM1_PC34 &&
+              receipt.import_attempted &&
+              receipt.import_succeeded &&
+              receipt.import_champion_count == 2,
+          "runtime startup handoff receipt reports import result");
+    CHECK(receipt.import_utility_state == (int)CSB_V1_UTIL_FLOW_DONE &&
+              strstr(receipt.import_utility_prompt, "READY") != NULL,
+          "runtime startup handoff receipt carries utility state");
     csb_v1_runtime_cleanup(&runtime);
     remove(path);
 }

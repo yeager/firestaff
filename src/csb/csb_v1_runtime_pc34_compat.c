@@ -1401,6 +1401,70 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     return 1;
 }
 
+void csb_v1_runtime_startup_handoff_receipt_init_pc34(
+    CSB_V1_RuntimeStartupHandoffReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->kind = CSB_V1_RUNTIME_STARTUP_HANDOFF_NONE_PC34;
+    receipt->import_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
+}
+
+int csb_v1_runtime_apply_startup_handoff_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    CSB_V1_RuntimeStartupHandoffReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_runtime_startup_handoff_receipt_init_pc34(out_receipt);
+    if (!profile) {
+        out_receipt->status_scope = "BOOT";
+        out_receipt->status = "CSB BOOT FAILED";
+        return 0;
+    }
+    if (save_path && save_path[0] != '\0') {
+        out_receipt->kind = CSB_V1_RUNTIME_STARTUP_HANDOFF_RESUME_PC34;
+        if (csb_v1_runtime_load_game_from_path(profile, save_path) !=
+            CSB_V1_LOAD_OK) {
+            out_receipt->status_scope = "BOOT";
+            out_receipt->status = "CSB RESUME FAILED";
+            return 0;
+        }
+        out_receipt->direct_resume_loaded = 1;
+        out_receipt->status_scope = "BOOT";
+        out_receipt->status = "CSB RESUMED";
+        return 1;
+    }
+    if (import_dm1_save_path && import_dm1_save_path[0] != '\0') {
+        out_receipt->kind =
+            CSB_V1_RUNTIME_STARTUP_HANDOFF_IMPORT_DM1_PC34;
+        out_receipt->import_attempted = 1;
+        if (!csb_v1_runtime_import_dm1_party_path(
+                profile,
+                import_dm1_save_path,
+                &out_receipt->import_champion_count,
+                &out_receipt->import_utility_state,
+                out_receipt->import_utility_prompt,
+                sizeof(out_receipt->import_utility_prompt))) {
+            out_receipt->status_scope = "BOOT";
+            out_receipt->status = "CSB IMPORT FAILED";
+            return 0;
+        }
+        out_receipt->import_succeeded = 1;
+        out_receipt->status_scope = "BOOT";
+        out_receipt->status = "CSB IMPORT READY";
+        return 1;
+    }
+    out_receipt->status_scope = "BOOT";
+    out_receipt->status = "CSB READY";
+    return 1;
+}
+
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
 
