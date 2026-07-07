@@ -25,6 +25,7 @@ int main(void)
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupModeUpdate mode_update;
     DM2_V1_StartupInputOutcome outcome;
+    DM2_V1_StartupApplyReceipt receipt;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRect panel_rect;
     DM2_V1_StartupMenuSnapshot snapshot;
@@ -197,6 +198,13 @@ int main(void)
               strcmp(outcome.status_scope, "STARTUP") == 0 &&
               strcmp(outcome.status, "DM2 CONTINUE FAILED") == 0,
           "failed Continue execution owns redraw input outcome");
+    check(dm2_v1_startup_apply_receipt_from_execution(
+              &execution, 0, &receipt) &&
+              !receipt.session_should_apply &&
+              !receipt.mode_update.set_startup_menu_active &&
+              receipt.outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
+              receipt.outcome.rescan_saves == 1,
+          "failed Continue receipt owns redraw and rescan policy");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -283,11 +291,27 @@ int main(void)
               strcmp(outcome.status_scope, "STARTUP") == 0 &&
               strcmp(outcome.status, "DM2 NEW GAME") == 0,
           "session-ready execution owns successful redraw input outcome");
+    check(dm2_v1_startup_apply_receipt_from_execution(
+              &execution, 1, &receipt) &&
+              receipt.session_should_apply &&
+              receipt.session_applied &&
+              receipt.mode_update.set_startup_menu_active &&
+              receipt.mode_update.startup_menu_active == 0 &&
+              receipt.outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
+              strcmp(receipt.outcome.status, "DM2 NEW GAME") == 0,
+          "session-ready receipt closes startup after applied session");
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               strcmp(outcome.status_scope, "STARTUP") == 0 &&
               strcmp(outcome.status, "DM2 LOAD FAILED") == 0,
           "session-ready execution owns failed apply input outcome");
+    check(dm2_v1_startup_apply_receipt_from_execution(
+              &execution, 0, &receipt) &&
+              receipt.session_should_apply &&
+              !receipt.session_applied &&
+              !receipt.mode_update.set_startup_menu_active &&
+              strcmp(receipt.outcome.status, "DM2 LOAD FAILED") == 0,
+          "session-ready receipt keeps startup open after failed apply");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
@@ -318,6 +342,13 @@ int main(void)
               strcmp(outcome.status_scope, "RETURN") == 0 &&
               strcmp(outcome.status, "BACK TO LAUNCHER") == 0,
           "launcher-return execution owns return input outcome");
+    check(dm2_v1_startup_apply_receipt_from_execution(
+              &execution, 0, &receipt) &&
+              !receipt.session_should_apply &&
+              receipt.outcome.result ==
+                  DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER &&
+              strcmp(receipt.outcome.status, "BACK TO LAUNCHER") == 0,
+          "launcher-return receipt owns return policy");
 
     hit.kind = DM2_V1_STARTUP_HIT_PANEL;
     hit.row = -1;
