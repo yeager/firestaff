@@ -296,32 +296,6 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
 
-static unsigned short m11_csb_clamp_u16(int value)
-{
-    if (value <= 0) return 0u;
-    if (value > 65535) return 65535u;
-    return (unsigned short)value;
-}
-
-static void m11_csb_pack_text(unsigned char *dst, int dst_len,
-                              const char *src, int src_len)
-{
-    int i;
-    if (!dst || dst_len <= 0) {
-        return;
-    }
-    for (i = 0; i < dst_len; ++i) {
-        dst[i] = ' ';
-    }
-    if (!src || src_len <= 0) {
-        return;
-    }
-    for (i = 0; i < dst_len && i < src_len && src[i] != '\0'; ++i) {
-        unsigned char ch = (unsigned char)src[i];
-        dst[i] = (ch >= 0x20u && ch <= 0x7eu) ? ch : ' ';
-    }
-}
-
 static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
 {
     if (!state) {
@@ -821,87 +795,6 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     return m11_dm2_startup_apply_action(state, &action);
 }
 
-static void m11_csb_copy_stat(struct ChampionStat_Compat *dst,
-                              int current,
-                              int maximum)
-{
-    unsigned short max_value = m11_csb_clamp_u16(maximum);
-    unsigned int shifted;
-    if (!dst) return;
-    if (max_value == 0u) {
-        max_value = m11_csb_clamp_u16(current);
-    }
-    dst->current = m11_csb_clamp_u16(current);
-    dst->maximum = max_value;
-    shifted = (unsigned int)max_value << 1;
-    dst->shifted = (unsigned short)(shifted > 65535u ? 65535u : shifted);
-}
-
-static int m11_csb_copy_portrait_compat(struct ChampionState_Compat *dst,
-                                        const CSB_V1_Champion *src)
-{
-    int i;
-    int compatible_nonzero = 0;
-    int wide_nonzero = 0;
-    if (!dst || !src) return 0;
-    for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
-        if (src->Portrait[i] != 0u) {
-            compatible_nonzero = 1;
-            break;
-        }
-    }
-    if (compatible_nonzero) {
-        /* ReDMCSB: PANEL.C F0354 draws status-box portraits from
-         * M516_CHAMPIONS[i].Portrait. Utility Disk CMP import and DM1 save import
-         * keep the DM1-compatible 32x29x4bpp packed portrait in the first 464
-         * bytes, so preserve that byte-exact fast path. */
-        memcpy(dst->portraitBitmap,
-               src->Portrait,
-               CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
-        dst->portraitBitmapValid = 1;
-        return 1;
-    }
-    for (i = CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT;
-         i < CSB_V1_PORTRAIT_BYTE_COUNT;
-         ++i) {
-        if (src->Portrait[i] != 0u) {
-            wide_nonzero = 1;
-            break;
-        }
-    }
-    if (!wide_nonzero) {
-        dst->portraitBitmapValid = 0;
-        memset(dst->portraitBitmap, 0, sizeof(dst->portraitBitmap));
-        return 0;
-    }
-
-    /* ReDMCSB: CEDT006.C F7048 copies loaded portraits into the 464-byte
-     * on-screen portrait bitmap, and PORTRAIT.C F7251/F7252 convert between
-     * Atari ST planar storage and that packed 4bpp HUD bitmap. Firestaff's
-     * CSB runtime reserves a wider portrait buffer; if the compatible prefix is
-     * empty, compact two 4-byte source pixels as one 4bpp pixel pair so
-     * M11 has a bounded status-box bitmap instead of dropping the portrait. */
-    for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
-        const int base = i * 8;
-        unsigned int left = 0u;
-        unsigned int right = 0u;
-        if (base + 7 < CSB_V1_PORTRAIT_BYTE_COUNT) {
-            left = (unsigned int)(src->Portrait[base] |
-                                  src->Portrait[base + 1] |
-                                  src->Portrait[base + 2] |
-                                  src->Portrait[base + 3]);
-            right = (unsigned int)(src->Portrait[base + 4] |
-                                   src->Portrait[base + 5] |
-                                   src->Portrait[base + 6] |
-                                   src->Portrait[base + 7]);
-        }
-        dst->portraitBitmap[i] =
-            (unsigned char)(((left & 0x0fu) << 4) | (right & 0x0fu));
-    }
-    dst->portraitBitmapValid = 1;
-    return 1;
-}
-
 static int m11_csb_mapped_inventory_slot(int csb_slot)
 {
     if (csb_slot == CSB_V1_SLOT_READY_HAND) return CHAMPION_SLOT_HAND_LEFT;
@@ -935,106 +828,6 @@ static int m11_csb_slot_for_m11_inventory_slot(int championSlot)
         return CSB_V1_SLOT_PACK_9 + (championSlot - CHAMPION_SLOT_BACKPACK_9);
     }
     return -1;
-}
-
-static void m11_sync_csb_party_from_runtime(M11_GameViewState *state,
-                                            const CSB_V1_RuntimeProfile *runtime)
-{
-    const CSB_V1_PartyState *src_party;
-    int count;
-    int leader;
-    int i;
-
-    if (!state || !runtime) {
-        return;
-    }
-
-    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
-        F0600_CHAMPION_InitEmpty_Compat(&state->world.party.champions[i]);
-    }
-    state->world.party.championCount = 0;
-    state->world.party.mapIndex = runtime->current_level;
-    state->world.party.mapX = runtime->party_x;
-    state->world.party.mapY = runtime->party_y;
-    state->world.party.direction = runtime->party_dir & 3;
-    state->world.party.activeChampionIndex = -1;
-
-    if (!runtime->party_state_valid) {
-        return;
-    }
-
-    src_party = &runtime->party_state;
-    count = src_party->ChampionCount;
-    if (count < 0) count = 0;
-    if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
-    state->world.party.championCount = count;
-
-    leader = runtime->leader_index;
-    if (leader < 0 || leader >= count) {
-        leader = src_party->LeaderIndex;
-    }
-    if (leader < 0 || leader >= count) {
-        leader = (count > 0) ? 0 : -1;
-    }
-    state->world.party.activeChampionIndex = leader;
-
-    for (i = 0; i < count; ++i) {
-        const CSB_V1_Champion *src = &src_party->Champions[i];
-        struct ChampionState_Compat *dst = &state->world.party.champions[i];
-        int attr;
-        int skill;
-        int csb_slot;
-
-        F0600_CHAMPION_InitEmpty_Compat(dst);
-        dst->present = 1;
-        dst->portraitIndex = i;
-        m11_csb_pack_text(dst->name,
-                          CHAMPION_NAME_LENGTH,
-                          src->Name,
-                          CSB_V1_MAX_NAME_LEN);
-        m11_csb_pack_text(dst->title,
-                          CHAMPION_TITLE_LENGTH,
-                          src->Title,
-                          CSB_V1_MAX_TITLE_LEN);
-        m11_csb_copy_stat(&dst->hp, src->CurrentHealth, src->MaximumHealth);
-        m11_csb_copy_stat(&dst->stamina,
-                          src->CurrentStamina,
-                          src->MaximumStamina);
-        m11_csb_copy_stat(&dst->mana, src->CurrentMana, src->MaximumMana);
-        for (attr = 0; attr < CHAMPION_ATTR_COUNT &&
-                       attr < CSB_V1_STAT_COUNT; ++attr) {
-            dst->attributes[attr] =
-                m11_csb_clamp_u16((int)src->Statistics[attr][CSB_V1_STAT_CUR]);
-            dst->attributeMaximums[attr] =
-                m11_csb_clamp_u16((int)src->Statistics[attr][CSB_V1_STAT_MAX]);
-        }
-        for (skill = 0; skill < CHAMPION_SKILL_COUNT &&
-                        skill < CSB_V1_SKILL_COUNT; ++skill) {
-            dst->skillLevels[skill] = src->Skills[skill];
-        }
-        /* ReDMCSB: DEFS.H C00_SLOT_READY_HAND/C01_SLOT_ACTION_HAND and
-         * PANEL.C F0354 status boxes read champion slots by semantic slot, not
-         * by Firestaff's unified DM1 body-slot enum.  Only the storage slots
-         * with a clear M11 equivalent are mirrored here; CSB chest slots stay
-         * runtime-owned until the chest panel has a source-locked CSB bridge. */
-        for (csb_slot = 0; csb_slot < CSB_V1_SLOT_COUNT; ++csb_slot) {
-            int dst_slot = m11_csb_mapped_inventory_slot(csb_slot);
-            if (dst_slot >= 0 && dst_slot < CHAMPION_SLOT_COUNT) {
-                dst->inventory[dst_slot] = src->Slots[csb_slot];
-            }
-        }
-        dst->load = src->Load;
-        dst->maxLoad = 0u;
-        dst->cell = (unsigned char)(src->Cell & 3u);
-        dst->direction = (unsigned char)(src->Direction & 3u);
-        dst->wounds = src->Wounds;
-        dst->poisonDose = src->PoisonDose;
-        dst->food = src->Food;
-        dst->water = src->Water;
-        dst->actionDefense = 0;
-        dst->actionIndex = src->ActionIndex;
-        (void)m11_csb_copy_portrait_compat(dst, src);
-    }
 }
 
 typedef struct {
@@ -1358,6 +1151,7 @@ static void m11_sync_csb_state_from_profile(M11_GameViewState *state,
                                             const CSB_V1_BootProfile *profile)
 {
     CSB_V1_RuntimeViewStateReceipt_PC34 receipt;
+    CSB_V1_RuntimePartyMirrorReceipt_PC34 party_receipt;
     if (!state || !profile) {
         return;
     }
@@ -1372,7 +1166,12 @@ static void m11_sync_csb_state_from_profile(M11_GameViewState *state,
     state->csbState.party_y = receipt.party_y;
     state->csbState.party_dir = receipt.party_dir;
     state->csbState.tick_count = receipt.tick_count;
-    m11_sync_csb_party_from_runtime(state, &profile->runtime);
+    if (csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
+            &profile->runtime,
+            &party_receipt) &&
+        party_receipt.valid) {
+        state->world.party = party_receipt.party;
+    }
 }
 
 static void m11_theron_render_v2_hud(const M11_GameViewState* state,

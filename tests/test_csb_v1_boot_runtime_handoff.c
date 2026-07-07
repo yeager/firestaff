@@ -763,6 +763,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CSB_V1_BootProfile p;
     CSB_V1_PartyState imported;
     CSB_V1_PartyState runtime_party;
+    CSB_V1_RuntimePartyMirrorReceipt_PC34 party_receipt;
     uint8_t save_buf[1024];
     char dungeon_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-party";
@@ -779,6 +780,9 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CHECK(imported.LeaderIndex == 0,
           "imported party starts with first living champion as leader");
     imported.PartyDirection = CSB_V1_DIR_EAST;
+    imported.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] = 0x1234u;
+    imported.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] = 0x2345u;
+    imported.Champions[0].Portrait[0] = 0xabu;
 
     memset(&p, 0, sizeof(p));
     csb_v1_boot_profile_init(&p);
@@ -819,6 +823,32 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CHECK(runtime_party.Champions[1].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] == 67 &&
               runtime_party.Champions[1].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_MAX] == 67,
           "runtime champion 1 keeps imported DEX current/max");
+    CHECK(csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
+              &p.runtime,
+              &party_receipt) == 1 && party_receipt.valid,
+          "CSB runtime owns the M11 party mirror receipt");
+    CHECK(party_receipt.party.championCount == 2 &&
+              party_receipt.party.mapX == p.runtime.party_x &&
+              party_receipt.party.mapY == p.runtime.party_y &&
+              party_receipt.party.direction == (p.runtime.party_dir & 3),
+          "party mirror receipt carries pose and champion count");
+    CHECK(party_receipt.party.activeChampionIndex == 0 &&
+              party_receipt.party.champions[0].present == 1,
+          "party mirror receipt carries active leader and present champion");
+    CHECK(memcmp(party_receipt.party.champions[0].name, "ALPHA   ", 8u) == 0,
+          "party mirror receipt packs imported champion name");
+    CHECK(party_receipt.party.champions[0].hp.current == 80 &&
+              party_receipt.party.champions[0].hp.maximum == 100 &&
+              party_receipt.party.champions[0].hp.shifted == 200,
+          "party mirror receipt carries imported health stat");
+    CHECK(party_receipt.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] == 55,
+          "party mirror receipt carries imported strength");
+    CHECK(party_receipt.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1234u &&
+              party_receipt.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] == 0x2345u,
+          "party mirror receipt maps CSB hand slots to shared champion slots");
+    CHECK(party_receipt.party.champions[0].portraitBitmapValid == 1 &&
+              party_receipt.party.champions[0].portraitBitmap[0] == 0xabu,
+          "party mirror receipt carries compatible imported portrait bytes");
 
     CHECK(csb_v1_runtime_set_leader(&p.runtime, 1) == 0,
           "runtime leader switch to second imported champion succeeds");
