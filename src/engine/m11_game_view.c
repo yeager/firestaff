@@ -12600,9 +12600,9 @@ static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
         return 0;
     }
 
-    theron_v1_startup_flow_init(&flow);
-    flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-    flow.selected_dungeon = world->progression.current_dungeon;
+    (void)theron_v1_startup_show_stage_select(
+        &flow,
+        world->progression.current_dungeon);
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
     state->theronState.startup_cursor = 0;
@@ -12696,9 +12696,9 @@ static int m11_theron_continue_srm_startup(M11_GameViewState* state,
         return 0;
     }
 
-    theron_v1_startup_flow_init(&flow);
-    flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-    flow.selected_dungeon = world->progression.current_dungeon;
+    (void)theron_v1_startup_show_stage_select(
+        &flow,
+        world->progression.current_dungeon);
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
     state->theronState.startup_cursor = 0;
@@ -12736,9 +12736,8 @@ static M11_GameInputResult m11_theron_startup_apply_action(
 
     case THERON_STARTUP_PLAN_SHOW_STAGE_SELECT: {
         Theron_StartupFlow flow;
-        theron_v1_startup_flow_init(&flow);
-        flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-        flow.selected_dungeon = plan.selected_dungeon;
+        (void)theron_v1_startup_show_stage_select(&flow,
+                                                  plan.selected_dungeon);
         m11_theron_sync_startup_state(state, &flow);
         state->theronState.startup_cursor = plan.cursor;
         state->theronState.save_resume_continue_focus =
@@ -12817,9 +12816,9 @@ static M11_GameInputResult m11_theron_startup_apply_action(
 
     case THERON_STARTUP_PLAN_TOGGLE_MIRROR: {
         Theron_StartupFlow flow;
-        Theron_StartupResult result;
         char receipt[96];
         int cursor = plan.mirror_index;
+        int selected = 0;
         receipt[0] = '\0';
         if (!m11_theron_rebuild_startup_flow(state,
                                              &world->progression,
@@ -12832,12 +12831,8 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                                 : "SOUL ROOM ERROR"));
             return M11_GAME_INPUT_REDRAW;
         }
-        if ((state->theronState.selected_mirrors_mask &
-             (1 << cursor)) != 0) {
-            result = theron_v1_startup_deselect_mirror(&flow, cursor);
-        } else {
-            result = theron_v1_startup_select_mirror(&flow, cursor);
-        }
+        Theron_StartupResult result =
+            theron_v1_startup_toggle_mirror(&flow, cursor, &selected);
         if (result != THERON_STARTUP_OK) {
             m11_set_status(state, "STARTUP",
                            theron_v1_startup_result_name(result));
@@ -12845,8 +12840,7 @@ static M11_GameInputResult m11_theron_startup_apply_action(
         }
         m11_theron_sync_startup_state(state, &flow);
         m11_set_status(state, "STARTUP",
-                       (state->theronState.selected_mirrors_mask &
-                        (1 << cursor)) != 0
+                       selected
                             ? (plan.status ? plan.status
                                            : "HERO RESURRECTED")
                             : (plan.alternate_status
@@ -12921,9 +12915,9 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
     world->quest_items_in_dungeon = 0;
     memset(world->level_loaded, 0, sizeof(world->level_loaded));
 
-    theron_v1_startup_flow_init(&flow);
-    flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-    flow.selected_dungeon = world->progression.current_dungeon;
+    (void)theron_v1_startup_show_stage_select(
+        &flow,
+        world->progression.current_dungeon);
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
     state->theronState.startup_cursor = 0;

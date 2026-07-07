@@ -245,12 +245,19 @@ Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
     const Theron_DungeonProgression *progression,
     Theron_DungeonID dungeon_id);
+Theron_StartupResult theron_v1_startup_show_stage_select(
+    Theron_StartupFlow *flow,
+    Theron_DungeonID dungeon_id);
 Theron_StartupResult theron_v1_startup_select_mirror(
     Theron_StartupFlow *flow,
     int mirror_index);
 Theron_StartupResult theron_v1_startup_deselect_mirror(
     Theron_StartupFlow *flow,
     int mirror_index);
+Theron_StartupResult theron_v1_startup_toggle_mirror(
+    Theron_StartupFlow *flow,
+    int mirror_index,
+    int *out_selected);
 Theron_StartupResult theron_v1_startup_enter_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party);
