@@ -931,6 +931,51 @@ int main(void) {
     check_int("slot 1 class", party.champions[1].primary_class, THERON_CLASS_FIGHTER);
     check_int("slot 2 class", party.champions[2].primary_class, THERON_CLASS_FIGHTER);
     check_int("slot 3 class", party.champions[3].primary_class, THERON_CLASS_FIGHTER);
+
+    {
+        const char *roster_names[8] = {
+            "THERON-JP",
+            "MARA-JP",
+            "LINOS-JP",
+            "HEXA-JP",
+            "HAKAR-JP",
+            "TIRAN-JP",
+            "DOTAN-JP",
+            "PENTAI-JP"
+        };
+        theron_v1_startup_flow_init(&flow);
+        result = theron_v1_startup_choose_stage(
+            &flow,
+            &progression,
+            THERON_DUNGEON_1_HALL_OF_RECORDS);
+        check_int("roster forcefield choose rc", result, THERON_STARTUP_OK);
+        check_int("roster forcefield mirror 6 rc",
+                  theron_v1_startup_select_mirror(&flow, 6),
+                  THERON_STARTUP_OK);
+        check_int("roster forcefield mirror 2 rc",
+                  theron_v1_startup_select_mirror(&flow, 2),
+                  THERON_STARTUP_OK);
+        memset(&party, 0, sizeof(party));
+        snprintf(party.champions[THERON_CHAMPION_SLOT_THERON].name,
+                 sizeof(party.champions[THERON_CHAMPION_SLOT_THERON].name),
+                 "THERON SAVED");
+        result = theron_v1_startup_enter_forcefield_with_roster(
+            &flow,
+            &party,
+            roster_names,
+            8);
+        check_int("roster forcefield rc", result, THERON_STARTUP_OK);
+        check_contains("roster preserves Theron",
+                       party.champions[0].name,
+                       "THERON SAVED");
+        check_contains("roster applies mirror 6 raw name",
+                       party.champions[1].name,
+                       "PENTAI-JP");
+        check_contains("roster applies mirror 2 raw name",
+                       party.champions[2].name,
+                       "TIRAN-JP");
+    }
+
     check_contains("mirror 0 meta", theron_v1_startup_mirror_meta(0)->name, "Hakar");
     check_contains("mirror 1 meta", theron_v1_startup_mirror_meta(1)->name, "Mara");
     check_contains("mirror 3 meta", theron_v1_startup_mirror_meta(3)->name, "Linos");

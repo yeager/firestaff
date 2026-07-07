@@ -261,6 +261,11 @@ Theron_StartupResult theron_v1_startup_toggle_mirror(
 Theron_StartupResult theron_v1_startup_enter_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party);
+Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
+    Theron_StartupFlow *flow,
+    Theron_V1_Party *party,
+    const char *const roster_names[],
+    int roster_name_count);
 int theron_v1_startup_stage_available(
     const Theron_DungeonProgression *progression,
     Theron_DungeonID dungeon_id);

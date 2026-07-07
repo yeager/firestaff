@@ -1504,6 +1504,57 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
+    Theron_StartupFlow *flow,
+    Theron_V1_Party *party,
+    const char *const roster_names[],
+    int roster_name_count) {
+
+    Theron_V1_Champion persisted_theron;
+    Theron_StartupResult result;
+    int slot = 1;
+
+    if (!flow || !party) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+
+    memset(&persisted_theron, 0, sizeof(persisted_theron));
+    persisted_theron = party->champions[THERON_CHAMPION_SLOT_THERON];
+
+    result = theron_v1_startup_enter_forcefield(flow, party);
+    if (result != THERON_STARTUP_OK) {
+        return result;
+    }
+    if (persisted_theron.name[0] != '\0') {
+        party->champions[THERON_CHAMPION_SLOT_THERON] = persisted_theron;
+    }
+
+    for (int order = 0;
+         order < flow->companion_count && slot < THERON_MAX_CHAMPIONS;
+         ++order) {
+        int mirror = flow->selected_mirror_order[order];
+        int roster_index;
+        if (mirror < 0 ||
+            mirror >= THERON_STARTUP_HERO_MIRROR_COUNT ||
+            (flow->selected_mirrors_mask & (uint8_t)(1u << mirror)) == 0u) {
+            continue;
+        }
+        roster_index = theron_v1_startup_roster_index_for_mirror(mirror);
+        if (roster_names &&
+            roster_index >= 0 &&
+            roster_index < roster_name_count &&
+            roster_names[roster_index] &&
+            roster_names[roster_index][0] != '\0') {
+            snprintf(party->champions[slot].name,
+                     sizeof(party->champions[slot].name),
+                     "%s",
+                     roster_names[roster_index]);
+        }
+        ++slot;
+    }
+    return THERON_STARTUP_OK;
+}
+
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     switch (phase) {
     case THERON_STARTUP_PHASE_TITLE: return "title";

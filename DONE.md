@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron forcefield roster ownership: `theron_v1_startup_flow` now owns forcefield party construction with optional Track 02 roster-name overrides and persisted-Theron preservation. M11 no longer carries local mirror-to-roster party-name logic. Verification: direct `firestaff_theron_v1_startup_flow_probe` build/run passed 272/272, M11 syntax passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron startup state ownership: `theron_v1_startup_flow` now owns stage-select flow reset and Soul Room mirror toggle selection/deselection policy through dedicated helpers. M11 consumes those helpers for title advance, continue resume, dungeon exit, and mirror toggles instead of rebuilding those startup states locally. Verification: direct `firestaff_theron_v1_startup_flow_probe` build/run passed 265/265, M11 syntax passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron startup continue ownership: `theron_v1_startup_save_resume` now owns explicit Continue application for both Firestaff `.tqsv` slots and bounded SRM progression envelopes, including save decode, party restore, and between-dungeon world reset. M11 now only chooses the source, updates view-state fields, and shows status/inspect text. Verification: direct `firestaff_theron_v1_startup_save_resume_probe` build/run passed 66/66 with zlib, M11 syntax passed, and `git diff --check` passed.
