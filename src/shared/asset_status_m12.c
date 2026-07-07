@@ -363,6 +363,11 @@ static const char* const g_originalCandidateNames[] = {
     "SWOOSH.DAT",
     "DUNGEONF.DAT",
     "DUNGEONG.DAT",
+    "DUNGEONB.DAT",
+    "HCSB.HTC",
+    "HCSBF.HTC",
+    "HCSBG.HTC",
+    "CSBGAME.DAT",
     "CSBGRAPH.DAT",
     "CSB.DAT",
     "DM2GRAPHICS.DAT",
@@ -933,6 +938,28 @@ static void m12_materialize_dm1_startup_optional_cache(const char* seedPath,
                                                        const char* gameCacheDir) {
     static const char* const labels[] = {
         "TITLE", "TITLE.DAT", "SWOOSH", "SWOOSH.DAT"
+    };
+    size_t i;
+    if (!seedPath || !gameCacheDir || seedPath[0] == '\0' ||
+        gameCacheDir[0] == '\0') {
+        return;
+    }
+    for (i = 0U; i < sizeof(labels) / sizeof(labels[0]); ++i) {
+        char outPath[M12_ASSET_DATA_DIR_CAPACITY];
+        if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, labels[i])) {
+            continue;
+        }
+        (void)m12_materialize_optional_for_cache_seed(seedPath,
+                                                      labels[i],
+                                                      outPath);
+    }
+}
+
+static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
+                                                       const char* gameCacheDir) {
+    static const char* const labels[] = {
+        "DUNGEONB.DAT", "HCSB.HTC", "HCSBF.HTC", "HCSBG.HTC",
+        "CSBGAME.DAT", "CSB.DAT", "CSBGRAPH.DAT"
     };
     size_t i;
     if (!seedPath || !gameCacheDir || seedPath[0] == '\0' ||
@@ -2084,6 +2111,13 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
          * and SWOOSH siblings across too so full original startup graphics do
          * not silently degrade to only GRAPHICS.DAT C001 or no FTL logo. */
         m12_materialize_dm1_startup_optional_cache(optionalSeedPath, gameCacheDir);
+    }
+    if (strcmp(gameId, "csb") == 0 && optionalSeedPath[0] != '\0') {
+        /* ReDMCSB: ENTRANCE.C C201 can request the bonus dungeon, and the
+         * CSB utility path uses HCSB.HTC-family sidecar data. Runtime code
+         * opens ordinary paths under asset-cache/csb/, so archive-backed CSB
+         * launches must carry these startup/utility siblings with GRAPHICS.DAT. */
+        m12_materialize_csb_startup_optional_cache(optionalSeedPath, gameCacheDir);
     }
     m12_copy_string(status->runtimeDataDirs[gameIndex],
                     sizeof(status->runtimeDataDirs[gameIndex]),
