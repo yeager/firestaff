@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 RetroAchievements start-menu settings polish: RA User and RA API Token now have visible settings labels in the shared settings renderer, and all four RetroAchievements rows stay grouped under ONLINE instead of splitting username/token into appearance rows.
+
 - ✅ 2026-07-08 Nexus save-select input facts ownership: `nexus_v1_startup_menu` now handles Firestaff save-select input directly from raw save-dir, slot-mask, and selected-row facts, returning the updated snapshot and action. M11 no longer builds a Nexus save snapshot before keyboard/menu input. Verification: Nexus startup menu passed, M11 Nexus startup gate passed, Nexus launcher handoff passed 151/151, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 startup input facts ownership: `dm2_v1_startup_menu` now handles Firestaff input directly from raw startup facts, including fallback save root, row normalization, updated snapshot, and startup action. M11 no longer builds a DM2 startup snapshot before routing keyboard/menu input. Verification: DM2 startup action contract passed 57/57, DM2 M11 startup/profile gate passed, DM2 launcher handoff passed 42/42, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

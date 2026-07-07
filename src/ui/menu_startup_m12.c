@@ -3549,6 +3549,8 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_tr(state, "QUICK RESUME");
         case M12_SETTINGS_ROW_RETROACHIEVEMENTS: return m12_tr(state, "RETROACHIEVEMENTS");
         case M12_SETTINGS_ROW_RA_HARDCORE: return m12_tr(state, "RA HARDCORE");
+        case M12_SETTINGS_ROW_RA_USERNAME: return m12_tr(state, "RA USER");
+        case M12_SETTINGS_ROW_RA_TOKEN: return m12_tr(state, "RA API TOKEN");
         case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "SAVE BROWSER");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_tr(state, "SESSION TIMER");
         case M12_SETTINGS_ROW_MINIMAP: return m12_tr(state, "MINIMAP");
@@ -3677,7 +3679,7 @@ static const char* m12_settings_group_label(const M12_StartupMenuState* state, i
     if (row <= M12_SETTINGS_ROW_AUTO_PAUSE) {
         return m12_tr(state, "ACCESSIBILITY");
     }
-    if (row <= M12_SETTINGS_ROW_RA_HARDCORE) {
+    if (row <= M12_SETTINGS_ROW_RA_TOKEN) {
         return m12_tr(state, "ONLINE");
     }
     return m12_tr(state, "APPEARANCE");
@@ -6756,8 +6758,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                 else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
                 else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
                 else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
-                else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_HARDCORE) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
-                else if (row > M12_SETTINGS_ROW_RA_HARDCORE) groupId = M12_SETTINGS_ROW_THEME;
+                else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_TOKEN) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
+                else if (row > M12_SETTINGS_ROW_RA_TOKEN) groupId = M12_SETTINGS_ROW_THEME;
                 if (groupId != lastGroup) {
                     m12_draw_text(framebuffer,
                                   framebufferWidth,
@@ -8117,8 +8119,8 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
             else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
             else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
             else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
-            else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_HARDCORE) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
-            else if (row > M12_SETTINGS_ROW_RA_HARDCORE) groupId = M12_SETTINGS_ROW_THEME;
+            else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_TOKEN) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
+            else if (row > M12_SETTINGS_ROW_RA_TOKEN) groupId = M12_SETTINGS_ROW_THEME;
             if (groupId != lastGroup) {
                 m12_draw_text(framebuffer,
                               framebufferWidth,
