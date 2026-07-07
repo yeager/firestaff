@@ -2885,14 +2885,16 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                 (M11_AssetLoader *)&state->assetLoader,
                 (unsigned int)plan.source_asset_id);
         }
-        if (credits && credits->width == 320u && credits->height == 200u) {
+        if (credits &&
+            credits->width == (unsigned int)plan.surface_w &&
+            credits->height == (unsigned int)plan.surface_h) {
             M11_AssetLoader_Blit(credits,
                                  framebuffer,
                                  framebufferWidth,
                                  framebufferHeight,
-                                 0,
-                                 0,
-                                 -1);
+                                 plan.surface_dest_x,
+                                 plan.surface_dest_y,
+                                 plan.surface_transparent_color);
         } else {
             m11_draw_csb_startup_plan_text(framebuffer,
                                            framebufferWidth,
@@ -2925,14 +2927,16 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         entrance = M11_AssetLoader_Load(
             (M11_AssetLoader *)&state->assetLoader,
             (unsigned int)plan.source_asset_id);
-        if (entrance && entrance->width == 320u && entrance->height == 200u) {
+        if (entrance &&
+            entrance->width == (unsigned int)plan.surface_w &&
+            entrance->height == (unsigned int)plan.surface_h) {
             M11_AssetLoader_Blit(entrance,
                                  framebuffer,
                                  framebufferWidth,
                                  framebufferHeight,
-                                 0,
-                                 0,
-                                 -1);
+                                 plan.surface_dest_x,
+                                 plan.surface_dest_y,
+                                 plan.surface_transparent_color);
             drew_asset = 1;
         }
     }
