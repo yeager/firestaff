@@ -353,6 +353,41 @@ static void test_runtime_projectile_and_explosion_overlays(void)
     }
 
     {
+        CSB_V1_RuntimeProfile runtime;
+        CSB_V1_DungeonData dungeon;
+        uint8_t raw[16];
+        uint16_t dagger = (uint16_t)((THING_TYPE_WEAPON << 10) | 0);
+        int runtime_material_color =
+            csb_v1_viewport_projectile_material_overlay_color(32);
+
+        memset(&runtime, 0, sizeof(runtime));
+        memset(&dungeon, 0, sizeof(dungeon));
+        memset(raw, 0, sizeof(raw));
+        dungeon.raw_data = raw;
+        dungeon.raw_size = (int)sizeof(raw);
+        dungeon.thing_type_counts[THING_TYPE_WEAPON] = 1;
+        dungeon.thing_data_bases[THING_TYPE_WEAPON] = 0;
+        write_fixture_u16(raw, 0, THING_ENDOFLIST);
+        write_fixture_u16(raw, 2, 8u);
+        runtime.dungeon_handle = &dungeon;
+        projectiles.entries[0].reserved1 = dagger;
+
+        memset(framebuffer, 0, sizeof(framebuffer));
+        cfg.runtime_profile = &runtime;
+        cfg.runtime_projectile_material_resolved_count = 0;
+        cfg.runtime_projectile_marker_drawn_count = 0;
+        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+        check_int("runtime.projectile_overlay.runtime_material_color",
+                  framebuffer[center_offset], runtime_material_color);
+        check_int("runtime.projectile_overlay.runtime_material_count",
+                  cfg.runtime_projectile_material_resolved_count, 1);
+        check_int("runtime.projectile_overlay.runtime_material_marker_count",
+                  cfg.runtime_projectile_marker_drawn_count, 1);
+        cfg.runtime_profile = NULL;
+        projectiles.entries[0].reserved1 = 0x1400;
+    }
+
+    {
         TestRuntimeSpritePlacementCapture sprite_capture;
         memset(&sprite_capture, 0, sizeof(sprite_capture));
         memset(framebuffer, 0, sizeof(framebuffer));

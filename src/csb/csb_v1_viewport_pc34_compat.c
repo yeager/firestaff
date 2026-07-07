@@ -1537,10 +1537,8 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
             projectile,
             &placement);
         /* ReDMCSB DUNVIEW.C F0115 lines 5668-5683 map projectiles through
-         * G2028 and C2900_ZONE_ + row*4 + ViewCell.  The bitmap binding is
-         * still bounded, but D3L2/D3R2 runtime markers now use the same
-         * source-zone placement, front-cell rejection, and caller-supplied
-         * OBJECT.C F0032/F0033 material identity as the real route. */
+         * G2028 and C2900_ZONE_ + row*4 + ViewCell.  OBJECT.C F0032/F0033
+         * resolves the material thing identity used by the fallback marker. */
         if (cfg->projectile_sprite_drawer &&
             cfg->projectile_sprite_drawer(
                 cfg->projectile_sprite_user,
@@ -1555,9 +1553,16 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
             material_icon_index = cfg->projectile_material_resolver(
                 cfg->projectile_material_user,
                 projectile);
-            if (material_icon_index >= 0) {
-                ++cfg->runtime_projectile_material_resolved_count;
+        } else if (cfg->runtime_profile) {
+            unsigned short thing = (unsigned short)projectile->reserved1;
+            if (thing != THING_NONE && thing != THING_ENDOFLIST) {
+                material_icon_index = csb_v1_runtime_object_icon_index(
+                    cfg->runtime_profile,
+                    thing);
             }
+        }
+        if (material_icon_index >= 0) {
+            ++cfg->runtime_projectile_material_resolved_count;
         }
         color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
             material_icon_index);
