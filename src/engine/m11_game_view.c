@@ -12426,40 +12426,6 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
     return 1;
 }
 
-static void m11_theron_apply_decoded_roster_to_party(
-    const M11_GameViewState* state,
-    const Theron_StartupFlow* flow,
-    Theron_V1_Party* party) {
-    int slot = 1;
-
-    if (!state || !flow || !party) {
-        return;
-    }
-    for (int order = 0;
-         order < flow->companion_count && slot < THERON_MAX_CHAMPIONS;
-         ++order) {
-        int mirror = flow->selected_mirror_order[order];
-        int roster_index;
-        if (mirror < 0 || mirror >= THERON_STARTUP_HERO_MIRROR_COUNT ||
-            (flow->selected_mirrors_mask & (uint8_t)(1u << mirror)) == 0u) {
-            continue;
-        }
-        roster_index =
-            theron_v1_startup_roster_index_for_mirror(mirror);
-        if (roster_index >= 0 &&
-            roster_index < state->theronState.startup_roster_name_count &&
-            roster_index < (int)(sizeof(state->theronState.startup_roster_names) /
-                                 sizeof(state->theronState.startup_roster_names[0])) &&
-            state->theronState.startup_roster_names[roster_index][0] != '\0') {
-            snprintf(party->champions[slot].name,
-                     sizeof(party->champions[slot].name),
-                     "%s",
-                     state->theronState.startup_roster_names[roster_index]);
-        }
-        ++slot;
-    }
-}
-
 static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
                                                char* receipt,
                                                size_t receipt_cap) {
@@ -12468,9 +12434,10 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     TrAssetBundle* assets;
     Theron_StartupFlow flow;
     Theron_StartupResult result;
-    Theron_V1_Champion persistedTheron;
+    const char* rosterNames[8];
     char flowReceipt[128];
     char levelReceipt[160];
+    int i;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -12498,9 +12465,14 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
-    memset(&persistedTheron, 0, sizeof(persistedTheron));
-    persistedTheron = world->party.champions[THERON_CHAMPION_SLOT_THERON];
-    result = theron_v1_startup_enter_forcefield(&flow, &world->party);
+    for (i = 0; i < (int)(sizeof(rosterNames) / sizeof(rosterNames[0])); ++i) {
+        rosterNames[i] = state->theronState.startup_roster_names[i];
+    }
+    result = theron_v1_startup_enter_forcefield_with_roster(
+        &flow,
+        &world->party,
+        rosterNames,
+        state->theronState.startup_roster_name_count);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
@@ -12510,10 +12482,6 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         }
         return 0;
     }
-    if (persistedTheron.name[0] != '\0') {
-        world->party.champions[THERON_CHAMPION_SLOT_THERON] = persistedTheron;
-    }
-    m11_theron_apply_decoded_roster_to_party(state, &flow, &world->party);
 
     if (theron_v1_dungeon_enter(&world->progression, flow.selected_dungeon) != 0) {
         if (receipt && receipt_cap > 0u) {
