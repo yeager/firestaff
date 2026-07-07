@@ -14,7 +14,10 @@
  */
 
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+
+#include <string.h>
 
 /* ReDMCSB DUNVIEW.C G0213_auc_Graphic558_PaletteChanges_FloorOrnament_D3
  * Palette remapping for floor ornaments at depth 3 (farthest visible).
@@ -117,4 +120,109 @@ int dm1_object_aspect_coordinate_set(int aspectIndex) {
     };
     if (aspectIndex < 0 || aspectIndex >= 85) return 0;
     return (int)kCoordinateSet[aspectIndex];
+}
+
+int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
+                              int thingType,
+                              int subtype,
+                              int relativeCell,
+                              int pileIndex,
+                              int depthIndex,
+                              int sourceZoneRow,
+                              int viewportX,
+                              int viewportY,
+                              int paneX,
+                              int paneY,
+                              int paneW,
+                              int paneH,
+                              int spriteW,
+                              int spriteH)
+{
+    DM1_ItemSpriteBlitPlan plan;
+    int zoneX = 0;
+    int zoneY = 0;
+
+    if (!out_plan || thingType < 0 || paneW <= 0 || paneH <= 0 ||
+        spriteW <= 0 || spriteH <= 0) {
+        return 0;
+    }
+
+    memset(&plan, 0, sizeof(plan));
+    plan.graphic_index = dm1_item_sprite_index(thingType, subtype);
+    if (plan.graphic_index == 0u) {
+        return 0;
+    }
+    plan.aspect_index = dm1_item_aspect_index(thingType, subtype);
+    plan.use_mirror =
+        (plan.aspect_index >= 0 &&
+         (dm1_object_aspect_graphic_info(plan.aspect_index) & 0x0001u) &&
+         (relativeCell == 1 || relativeCell == 3)) ? 1 : 0;
+    plan.transparent_color = 10;
+
+    /* ReDMCSB DUNVIEW.C F0115 lines 4820-5075 resolves object aspect,
+     * optional right-cell mirroring, G2030 scale bucket, G0217 pile shift,
+     * and C2500 source row before the F0791 C10-transparent blit. */
+    plan.scale_index =
+        dm1_viewport_3d_object_source_scale_index(depthIndex, relativeCell);
+    plan.draw_w = spriteW *
+        dm1_viewport_3d_object_source_scale_units(plan.scale_index) / 32;
+    plan.draw_h = (plan.draw_w * spriteH) / spriteW;
+    if (plan.draw_h > paneH) {
+        plan.draw_h = paneH;
+        plan.draw_w = (plan.draw_h * spriteW) / spriteH;
+    }
+    if (plan.draw_w > paneW) {
+        plan.draw_w = paneW;
+        plan.draw_h = (plan.draw_w * spriteH) / spriteW;
+    }
+    if (plan.draw_w < 3 || plan.draw_h < 3) {
+        return 0;
+    }
+
+    plan.shift_set = (plan.scale_index + 1) >> 1;
+    if (plan.shift_set > 2) plan.shift_set = 2;
+    dm1_viewport_3d_object_pile_shift_indices(pileIndex,
+                                              &plan.shift_x_index,
+                                              &plan.shift_y_index);
+    if (paneX >= viewportX && paneY >= viewportY &&
+        ((sourceZoneRow >= 0 &&
+          dm1_viewport_3d_c2500_object_raw_zone_point(sourceZoneRow,
+                                                      relativeCell,
+                                                      &zoneX,
+                                                      &zoneY)) ||
+         (sourceZoneRow < 0 &&
+          dm1_viewport_3d_c2500_object_zone_point(plan.scale_index,
+                                                  relativeCell,
+                                                  &zoneX,
+                                                  &zoneY)))) {
+        plan.draw_x = viewportX + zoneX - (plan.draw_w / 2) +
+            dm1_viewport_3d_object_source_shift_value(plan.shift_set,
+                                                      plan.shift_x_index);
+        plan.draw_y = viewportY + zoneY - plan.draw_h +
+            dm1_viewport_3d_object_source_shift_value(plan.shift_set,
+                                                      plan.shift_y_index);
+    } else {
+        int halfW = (paneW - plan.draw_w) / 2;
+        int cellX = (relativeCell == 1 || relativeCell == 3) ?
+            (paneW / 6) : -(paneW / 6);
+        int cellY = (relativeCell >= 2) ? 2 : -2;
+        plan.draw_x = paneX + halfW + cellX +
+            dm1_viewport_3d_object_source_shift_value(plan.shift_set,
+                                                      plan.shift_x_index);
+        plan.draw_y = paneY + paneH - plan.draw_h - 2 + cellY +
+            dm1_viewport_3d_object_source_shift_value(plan.shift_set,
+                                                      plan.shift_y_index);
+    }
+
+    if (plan.draw_x < paneX) plan.draw_x = paneX;
+    if (plan.draw_y < paneY) plan.draw_y = paneY;
+    if (plan.draw_x + plan.draw_w > paneX + paneW) {
+        plan.draw_x = paneX + paneW - plan.draw_w;
+    }
+    if (plan.draw_y + plan.draw_h > paneY + paneH) {
+        plan.draw_y = paneY + paneH - plan.draw_h;
+    }
+
+    *out_plan = plan;
+    return 1;
 }

@@ -117,6 +117,37 @@ unsigned int dm1_item_sprite_index(int thingType, int subtype);
 unsigned int dm1_object_aspect_graphic_info(int aspectIndex);
 int dm1_object_aspect_coordinate_set(int aspectIndex);
 
+typedef struct DM1_ItemSpriteBlitPlan {
+    unsigned int graphic_index;
+    int aspect_index;
+    int use_mirror;
+    int transparent_color;
+    int scale_index;
+    int shift_set;
+    int shift_x_index;
+    int shift_y_index;
+    int draw_x;
+    int draw_y;
+    int draw_w;
+    int draw_h;
+} DM1_ItemSpriteBlitPlan;
+
+int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
+                              int thingType,
+                              int subtype,
+                              int relativeCell,
+                              int pileIndex,
+                              int depthIndex,
+                              int sourceZoneRow,
+                              int viewportX,
+                              int viewportY,
+                              int paneX,
+                              int paneY,
+                              int paneW,
+                              int paneH,
+                              int spriteW,
+                              int spriteH);
+
 #ifdef __cplusplus
 }
 #endif

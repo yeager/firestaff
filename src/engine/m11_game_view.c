@@ -23566,100 +23566,34 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int sourceZoneRow) {
     unsigned int gfxIdx;
     const M11_AssetSlot* slot;
-    int spriteW, spriteH;
-    int drawW, drawH, drawX, drawY;
-    int scaleIndex;
-    int shiftSet;
-    int shiftXIndex = 0;
-    int shiftYIndex = 0;
-    int aspectIndex;
-    int useMirror;
+    DM1_ItemSpriteBlitPlan plan;
 
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
     gfxIdx = dm1_item_sprite_index(thingType, subtype);
     if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
-    aspectIndex = dm1_item_aspect_index(thingType, subtype);
-    useMirror = (aspectIndex >= 0 &&
-                 (dm1_object_aspect_graphic_info(aspectIndex) & 0x0001u) &&
-                 (relativeCell == 1 || relativeCell == 3)) ? 1 : 0;
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
-    spriteW = (int)slot->width;
-    spriteH = (int)slot->height;
-
-    /* Source-derived object scaling. DM1 uses G2030 units out of 32 for
-     * object scale buckets; this keeps the current center-cell renderer
-     * aligned with the future C2500 zone pass instead of using invented
-     * depth percentages. */
-    scaleIndex = dm1_viewport_3d_object_source_scale_index(depthIndex,
-                                                           relativeCell);
-    drawW = (int)slot->width *
-            dm1_viewport_3d_object_source_scale_units(scaleIndex) / 32;
-    drawH = (drawW * spriteH) / spriteW;
-    if (drawH > h) {
-        drawH = h;
-        drawW = (drawH * spriteW) / spriteH;
-    }
-    if (drawW > w) {
-        drawW = w;
-        drawH = (drawW * spriteH) / spriteW;
-    }
-    if (drawW < 3 || drawH < 3) return 0;
-
-    /* Source-derived pile shift. F0115 uses G0217 to pick X/Y shift
-     * indices and G0223 to turn those indices into pixel offsets for the
-     * current distance bucket. We still draw into the temporary center
-     * rectangle, but the scatter order now follows the DM1 table. */
-    {
-        int halfW = (w - drawW) / 2;
-        int cellX = (relativeCell == 1 || relativeCell == 3) ? (w / 6) : -(w / 6);
-        int cellY = (relativeCell >= 2) ? 2 : -2;
-        int zoneX = 0;
-        int zoneY = 0;
-        shiftSet = (scaleIndex + 1) >> 1;
-        if (shiftSet > 2) shiftSet = 2;
-        dm1_viewport_3d_object_pile_shift_indices(pileIndex,
-                                                  &shiftXIndex,
-                                                  &shiftYIndex);
-        if (x >= M11_VIEWPORT_X && y >= M11_VIEWPORT_Y &&
-            ((sourceZoneRow >= 0 &&
-              dm1_viewport_3d_c2500_object_raw_zone_point(sourceZoneRow,
-                                                          relativeCell,
-                                                          &zoneX,
-                                                          &zoneY)) ||
-             (sourceZoneRow < 0 &&
-              dm1_viewport_3d_c2500_object_zone_point(scaleIndex,
-                                                      relativeCell,
-                                                      &zoneX,
-                                                      &zoneY)))) {
-            drawX = M11_VIEWPORT_X + zoneX - (drawW / 2) +
-                    dm1_viewport_3d_object_source_shift_value(shiftSet,
-                                                              shiftXIndex);
-            drawY = M11_VIEWPORT_Y + zoneY - drawH +
-                    dm1_viewport_3d_object_source_shift_value(shiftSet,
-                                                              shiftYIndex);
-        } else {
-            drawX = x + halfW + cellX +
-                    dm1_viewport_3d_object_source_shift_value(shiftSet,
-                                                              shiftXIndex);
-            drawY = y + h - drawH - 2 + cellY +
-                    dm1_viewport_3d_object_source_shift_value(shiftSet,
-                                                              shiftYIndex);
-        }
-        if (drawX < x) drawX = x;
-        if (drawY < y) drawY = y;
-        if (drawX + drawW > x + w) drawX = x + w - drawW;
-        if (drawY + drawH > y + h) drawY = y + h - drawH;
+    if (!dm1_item_sprite_blit_plan(&plan, thingType, subtype,
+                                   relativeCell, pileIndex, depthIndex,
+                                   sourceZoneRow,
+                                   M11_VIEWPORT_X, M11_VIEWPORT_Y,
+                                   x, y, w, h,
+                                   (int)slot->width, (int)slot->height)) {
+        return 0;
     }
 
-    if (useMirror) {
+    if (plan.use_mirror) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
-                                         drawX, drawY, drawW, drawH, 10);
+                                         plan.draw_x, plan.draw_y,
+                                         plan.draw_w, plan.draw_h,
+                                         plan.transparent_color);
     } else {
         M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                                   drawX, drawY, drawW, drawH, 10);
+                                   plan.draw_x, plan.draw_y,
+                                   plan.draw_w, plan.draw_h,
+                                   plan.transparent_color);
     }
     return 1;
 }
