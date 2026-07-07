@@ -35287,6 +35287,13 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
         &executor);
 }
 
+typedef struct M11_NexusStartupDrawContext {
+    const M11_GameViewState *state;
+    unsigned char *framebuffer;
+    int framebufferWidth;
+    int framebufferHeight;
+} M11_NexusStartupDrawContext;
+
 static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
@@ -35314,6 +35321,175 @@ static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
                 surface->data[sy * surface->w + sx];
         }
     }
+}
+
+static void m11_nexus_startup_exec_title_background(
+    void *userdata,
+    const Nexus_V1_StartupDrawCommand *command)
+{
+    M11_NexusStartupDrawContext *context =
+        (M11_NexusStartupDrawContext*)userdata;
+    const Nexus_TitleScreen *title;
+    int y;
+    int copyW;
+    int copyH;
+    (void)command;
+    if (!context || !context->framebuffer) {
+        return;
+    }
+    title = context->state
+                ? (const Nexus_TitleScreen*)context->state->nexusTitleScreen
+                : NULL;
+    if (!title || !title->loaded || !title->pixels ||
+        title->width <= 0 || title->height <= 0) {
+        m11_fill_rect(context->framebuffer,
+                      context->framebufferWidth,
+                      context->framebufferHeight,
+                      0,
+                      0,
+                      context->framebufferWidth,
+                      context->framebufferHeight,
+                      1);
+        return;
+    }
+    copyW = context->framebufferWidth < title->width
+                ? context->framebufferWidth
+                : title->width;
+    copyH = context->framebufferHeight < title->height
+                ? context->framebufferHeight
+                : title->height;
+    for (y = 0; y < copyH; ++y) {
+        memcpy(&context->framebuffer[y * context->framebufferWidth],
+               &title->pixels[y * title->width],
+               (size_t)copyW);
+    }
+}
+
+static void m11_nexus_startup_exec_fill_rect(
+    void *userdata,
+    const Nexus_V1_StartupDrawCommand *command)
+{
+    M11_NexusStartupDrawContext *context =
+        (M11_NexusStartupDrawContext*)userdata;
+    if (!context || !command) {
+        return;
+    }
+    m11_fill_rect(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  command->rect.x,
+                  command->rect.y,
+                  command->rect.w,
+                  command->rect.h,
+                  (unsigned char)command->text_color);
+}
+
+static void m11_nexus_startup_exec_outline_rect(
+    void *userdata,
+    const Nexus_V1_StartupDrawCommand *command)
+{
+    M11_NexusStartupDrawContext *context =
+        (M11_NexusStartupDrawContext*)userdata;
+    if (!context || !command) {
+        return;
+    }
+    m11_draw_rect(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  command->rect.x,
+                  command->rect.y,
+                  command->rect.w,
+                  command->rect.h,
+                  (unsigned char)command->text_color);
+}
+
+static void m11_nexus_startup_exec_text(
+    void *userdata,
+    const Nexus_V1_StartupDrawCommand *command)
+{
+    M11_NexusStartupDrawContext *context =
+        (M11_NexusStartupDrawContext*)userdata;
+    M11_TextStyle style;
+    if (!context || !command) {
+        return;
+    }
+    if (command->text_style == NEXUS_V1_STARTUP_TEXT_TITLE) {
+        style = g_text_title;
+    } else if (command->text_style == NEXUS_V1_STARTUP_TEXT_SHADOW) {
+        style = g_text_shadow;
+    } else {
+        style = g_text_small;
+    }
+    if (command->text_color > 0) {
+        style.color = (unsigned char)command->text_color;
+    }
+    style.shadowColor = (unsigned char)command->shadow_color;
+    m11_draw_text(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  command->x,
+                  command->y,
+                  command->label,
+                  &style);
+}
+
+static void m11_nexus_startup_exec_portrait(
+    void *userdata,
+    const Nexus_V1_StartupDrawCommand *command)
+{
+    M11_NexusStartupDrawContext *context =
+        (M11_NexusStartupDrawContext*)userdata;
+    const Nexus_UI_Surface *face;
+    int portraitIndex;
+    if (!context || !context->state || !context->state->nexusEngine ||
+        !command) {
+        return;
+    }
+    portraitIndex = command->portrait_index;
+    if (context->state->nexusEngine->ui_faces_loaded <= 0 ||
+        portraitIndex < 0 || portraitIndex >= 24) {
+        return;
+    }
+    face = &context->state->nexusEngine->ui.surfaces[
+        NEXUS_SURFACE_FACE0 + portraitIndex];
+    m11_draw_nexus_portrait_scaled(face,
+                                   context->framebuffer,
+                                   context->framebufferWidth,
+                                   context->framebufferHeight,
+                                   command->rect.x,
+                                   command->rect.y,
+                                   command->rect.w,
+                                   command->rect.h);
+}
+
+static void m11_draw_nexus_startup_commands(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const Nexus_V1_StartupDrawCommand *commands,
+    int command_count)
+{
+    M11_NexusStartupDrawContext context;
+    Nexus_V1_StartupDrawExecutor executor;
+    if (!commands || command_count <= 0) {
+        return;
+    }
+    memset(&context, 0, sizeof(context));
+    context.state = state;
+    context.framebuffer = framebuffer;
+    context.framebufferWidth = framebufferWidth;
+    context.framebufferHeight = framebufferHeight;
+    memset(&executor, 0, sizeof(executor));
+    executor.userdata = &context;
+    executor.draw_title_background = m11_nexus_startup_exec_title_background;
+    executor.fill_rect = m11_nexus_startup_exec_fill_rect;
+    executor.outline_rect = m11_nexus_startup_exec_outline_rect;
+    executor.draw_text = m11_nexus_startup_exec_text;
+    executor.draw_portrait = m11_nexus_startup_exec_portrait;
+    (void)nexus_v1_startup_presentation_execute(commands,
+                                                command_count,
+                                                &executor);
 }
 
 static void m11_draw_utility_panel(const M11_GameViewState* state,
@@ -38941,141 +39117,40 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                &nexusFb,
                                state->nexusState.title_frame);
         } else if (state->nexusState.startup_save_select_active) {
-            int row;
             Nexus_V1_StartupMenuSnapshot snapshot;
-            Nexus_V1_StartupSaveRenderRow rows[16];
-            Nexus_V1_StartupChromeRender chrome;
-            int row_count;
+            Nexus_V1_StartupDrawCommand commands[48];
+            int command_count;
             directDraw = 1;
-            if (nexus_v1_startup_menu_build_save_chrome_render(&chrome)) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              chrome.title_x,
-                              chrome.title_y,
-                              chrome.title,
-                              &g_text_title);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              chrome.subtitle_x,
-                              chrome.subtitle_y,
-                              chrome.subtitle,
-                              &g_text_shadow);
-            }
             m11_nexus_startup_snapshot_from_state(state, &snapshot);
-            row_count = nexus_v1_startup_menu_snapshot_build_save_render_rows(
+            command_count = nexus_v1_startup_presentation_build_save(
                 &snapshot,
-                rows,
-                (int)(sizeof(rows) / sizeof(rows[0])));
-            for (row = 0; row < row_count; ++row) {
-                const Nexus_V1_StartupSaveRenderRow *render_row = &rows[row];
-                const M11_TextStyle *style = &g_text_small;
-
-                if (render_row->selected) {
-                    m11_fill_rect(framebuffer, framebufferWidth,
-                                  framebufferHeight,
-                                  render_row->highlight_rect.x,
-                                  render_row->highlight_rect.y,
-                                  render_row->highlight_rect.w,
-                                  render_row->highlight_rect.h,
-                                  M11_COLOR_DARK_GRAY);
-                    style = &g_text_shadow;
-                }
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              render_row->text_x,
-                              render_row->text_y,
-                              render_row->label,
-                              style);
-            }
-            if (chrome.footer[0]) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              chrome.footer_x,
-                              chrome.footer_y,
-                              chrome.footer,
-                              &g_text_small);
-            }
+                commands,
+                (int)(sizeof(commands) / sizeof(commands[0])));
+            m11_draw_nexus_startup_commands(state,
+                                            framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight,
+                                            commands,
+                                            command_count);
         } else if (state->nexusState.champion_select_active &&
                    state->nexusEngine) {
             const Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
             Nexus_V1_StartupChampionSnapshot snapshot;
-            Nexus_V1_StartupChampionRenderRow rows[12];
-            Nexus_V1_StartupChampionFooterRender footer;
-            Nexus_V1_StartupChromeRender chrome;
-            int row_count;
-            int row;
+            Nexus_V1_StartupDrawCommand commands[80];
+            int command_count;
             directDraw = 1;
-            if (nexus_v1_startup_menu_build_champion_chrome_render(&chrome)) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              chrome.title_x,
-                              chrome.title_y,
-                              chrome.title,
-                              &g_text_title);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              chrome.subtitle_x,
-                              chrome.subtitle_y,
-                              chrome.subtitle,
-                              &g_text_shadow);
-            }
             m11_nexus_champion_snapshot_from_state(state, &snapshot);
-            row_count = nexus_v1_startup_champion_snapshot_build_render_rows(
+            command_count = nexus_v1_startup_presentation_build_champion(
                 pool,
                 &snapshot,
-                rows,
-                (int)(sizeof(rows) / sizeof(rows[0])),
-                &footer);
-            for (row = 0; row < row_count; ++row) {
-                const Nexus_V1_StartupChampionRenderRow *render_row =
-                    &rows[row];
-                int portraitIndex = render_row->portrait_index;
-                M11_TextStyle row_style = g_text_small;
-                row_style.color = (unsigned char)render_row->text_color;
-                row_style.shadowColor =
-                    (unsigned char)render_row->shadow_color;
-                row_style.shadowDx = render_row->selected ? 1 : 0;
-                row_style.shadowDy = render_row->selected ? 1 : 0;
-                if (render_row->highlight_visible) {
-                    m11_draw_rect(framebuffer,
-                                  framebufferWidth,
-                                  framebufferHeight,
-                                  render_row->highlight_rect.x,
-                                  render_row->highlight_rect.y,
-                                  render_row->highlight_rect.w,
-                                  render_row->highlight_rect.h,
-                                  (unsigned char)render_row->text_color);
-                }
-                if (state->nexusEngine->ui_faces_loaded > 0 &&
-                    portraitIndex >= 0 && portraitIndex < 24) {
-                    const Nexus_UI_Surface* face =
-                        &state->nexusEngine->ui.surfaces[
-                            NEXUS_SURFACE_FACE0 + portraitIndex];
-                    m11_draw_nexus_portrait_scaled(face,
-                                                   framebuffer,
-                                                   framebufferWidth,
-                                                   framebufferHeight,
-                                                   render_row->portrait_x,
-                                                   render_row->portrait_y,
-                                                   render_row->portrait_w,
-                                                   render_row->portrait_h);
-                }
-                if (render_row->portrait_border_color > 0) {
-                    m11_draw_rect(framebuffer,
-                                  framebufferWidth,
-                                  framebufferHeight,
-                                  render_row->portrait_x - 1,
-                                  render_row->portrait_y - 1,
-                                  render_row->portrait_w + 2,
-                                  render_row->portrait_h + 2,
-                                  (unsigned char)
-                                      render_row->portrait_border_color);
-                }
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              render_row->text_x,
-                              render_row->text_y,
-                              render_row->label,
-                              &row_style);
-            }
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          footer.text_x,
-                          footer.text_y,
-                          footer.label,
-                          &g_text_small);
+                commands,
+                (int)(sizeof(commands) / sizeof(commands[0])));
+            m11_draw_nexus_startup_commands(state,
+                                            framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight,
+                                            commands,
+                                            command_count);
         } else if (state->nexusEngine) {
             Nexus_Viewport vp;
             nexus_viewport_init(&vp);

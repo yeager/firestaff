@@ -83,11 +83,16 @@ int main(void)
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
     Nexus_V1_StartupChampionFooterRender champion_footer;
     Nexus_V1_StartupChromeRender chrome;
+    Nexus_V1_StartupDrawCommand draw_commands[80];
+    Nexus_V1_StartupMenuSnapshot menu_snapshot;
+    Nexus_V1_StartupChampionSnapshot champion_snapshot;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
     int slot;
     int cursor;
+    int draw_count;
+    int portrait_draws;
     Nexus_V1_ChampionPool empty_champions;
 
     if (!make_temp_root(root, sizeof(root))) {
@@ -592,6 +597,48 @@ int main(void)
                    chrome.title_x == NEXUS_V1_STARTUP_TITLE_X &&
                    chrome.subtitle_y == NEXUS_V1_STARTUP_SUBTITLE_Y,
                "Nexus champion-select chrome render metadata is Nexus-owned");
+        memset(&menu_snapshot, 0, sizeof(menu_snapshot));
+        snprintf(menu_snapshot.save_dir,
+                 sizeof(menu_snapshot.save_dir),
+                 "%s",
+                 save_dir);
+        menu_snapshot.slot_mask = (1u << 3);
+        menu_snapshot.row_count = 2;
+        menu_snapshot.selected_row = 1;
+        draw_count = nexus_v1_startup_presentation_build_save(
+            &menu_snapshot,
+            draw_commands,
+            (int)(sizeof(draw_commands) / sizeof(draw_commands[0])));
+        expect(draw_count >= 6 &&
+                   draw_commands[0].kind ==
+                       NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
+                   draw_commands[1].kind == NEXUS_V1_STARTUP_DRAW_TEXT &&
+                   draw_commands[1].text_style ==
+                       NEXUS_V1_STARTUP_TEXT_TITLE &&
+                   strcmp(draw_commands[1].label,
+                          "DUNGEON MASTER NEXUS") == 0,
+               "Nexus save startup presentation starts from title art and owns chrome commands");
+        memset(&champion_snapshot, 0, sizeof(champion_snapshot));
+        champion_snapshot.cursor = 0;
+        champion_snapshot.frame = 0;
+        champion_snapshot.slot_mask = 0u;
+        draw_count = nexus_v1_startup_presentation_build_champion(
+            &champions,
+            &champion_snapshot,
+            draw_commands,
+            (int)(sizeof(draw_commands) / sizeof(draw_commands[0])));
+        portrait_draws = 0;
+        for (slot = 0; slot < draw_count; ++slot) {
+            if (draw_commands[slot].kind ==
+                NEXUS_V1_STARTUP_DRAW_PORTRAIT) {
+                ++portrait_draws;
+            }
+        }
+        expect(draw_count > 24 &&
+                   draw_commands[0].kind ==
+                       NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
+                   portrait_draws == 12,
+               "Nexus champion startup presentation combines title art and FACE portrait commands");
     }
     menu.selected_row = 99;
     expect(nexus_v1_startup_menu_refresh(&menu, menu.slot_mask) &&
