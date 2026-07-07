@@ -37,6 +37,12 @@ static const char kCsbGraphicsPayload[] =
     "Firestaff synthetic CSB graphics archive fixture v1\n";
 static const char kCsbDungeonPayload[] =
     "Firestaff synthetic CSB dungeon plain fixture v1\n";
+static const char kCsbBonusDungeonPayload[] =
+    "Firestaff synthetic CSB bonus dungeon startup fixture v1\n";
+static const char kCsbHintPayload[] =
+    "Firestaff synthetic CSB utility HCSB hint fixture v1\n";
+static const char kCsbSavePayload[] =
+    "Firestaff synthetic CSB utility CSBGAME fixture v1\n";
 static const char kCsbWrongGraphicsPayload[] =
     "Firestaff synthetic CSB wrong graphics archive fixture v1\n";
 static const char kCsbGraphicsMd5[] = "5b5922a7c89d7a885f7334000df4846a";
@@ -91,54 +97,84 @@ static void put32(unsigned char* p, unsigned int v) {
     p[3] = (unsigned char)((v >> 24U) & 0xffU);
 }
 
-static int write_stored_zip_file(const char* path, const char* entryName,
-                                 const char* payload) {
+typedef struct TestZipEntry {
+    const char* name;
+    const char* payload;
+    unsigned int localOffset;
+} TestZipEntry;
+
+static int write_stored_zip_entries(const char* path,
+                                    TestZipEntry* entries,
+                                    size_t entryCount) {
     FILE* fp = fopen(path, "wb");
     unsigned char local[30] = {0};
     unsigned char central[46] = {0};
     unsigned char eocd[22] = {0};
-    unsigned int payloadSize = (unsigned int)strlen(payload);
-    unsigned int nameLen = (unsigned int)strlen(entryName);
     unsigned int centralOffset;
-    if (!fp) return 0;
-
-    put32(local, 0x04034b50U);
-    put16(local + 4, 20U);
-    put16(local + 8, 0U);
-    put32(local + 18, payloadSize);
-    put32(local + 22, payloadSize);
-    put16(local + 26, nameLen);
-    if (fwrite(local, 1U, sizeof(local), fp) != sizeof(local) ||
-        fwrite(entryName, 1U, nameLen, fp) != nameLen ||
-        fwrite(payload, 1U, payloadSize, fp) != payloadSize) {
-        fclose(fp);
+    unsigned int centralEnd;
+    size_t i;
+    if (!fp || !entries || entryCount == 0U) {
+        if (fp) {
+            fclose(fp);
+        }
         return 0;
+    }
+    for (i = 0U; i < entryCount; ++i) {
+        unsigned int payloadSize = (unsigned int)strlen(entries[i].payload);
+        unsigned int nameLen = (unsigned int)strlen(entries[i].name);
+        entries[i].localOffset = (unsigned int)ftell(fp);
+        memset(local, 0, sizeof(local));
+        put32(local, 0x04034b50U);
+        put16(local + 4, 20U);
+        put16(local + 8, 0U);
+        put32(local + 18, payloadSize);
+        put32(local + 22, payloadSize);
+        put16(local + 26, nameLen);
+        if (fwrite(local, 1U, sizeof(local), fp) != sizeof(local) ||
+            fwrite(entries[i].name, 1U, nameLen, fp) != nameLen ||
+            fwrite(entries[i].payload, 1U, payloadSize, fp) != payloadSize) {
+            fclose(fp);
+            return 0;
+        }
     }
 
     centralOffset = (unsigned int)ftell(fp);
-    put32(central, 0x02014b50U);
-    put16(central + 4, 20U);
-    put16(central + 6, 20U);
-    put16(central + 10, 0U);
-    put32(central + 20, payloadSize);
-    put32(central + 24, payloadSize);
-    put16(central + 28, nameLen);
-    if (fwrite(central, 1U, sizeof(central), fp) != sizeof(central) ||
-        fwrite(entryName, 1U, nameLen, fp) != nameLen) {
-        fclose(fp);
-        return 0;
+    for (i = 0U; i < entryCount; ++i) {
+        unsigned int payloadSize = (unsigned int)strlen(entries[i].payload);
+        unsigned int nameLen = (unsigned int)strlen(entries[i].name);
+        memset(central, 0, sizeof(central));
+        put32(central, 0x02014b50U);
+        put16(central + 4, 20U);
+        put16(central + 6, 20U);
+        put16(central + 10, 0U);
+        put32(central + 20, payloadSize);
+        put32(central + 24, payloadSize);
+        put16(central + 28, nameLen);
+        put32(central + 42, entries[i].localOffset);
+        if (fwrite(central, 1U, sizeof(central), fp) != sizeof(central) ||
+            fwrite(entries[i].name, 1U, nameLen, fp) != nameLen) {
+            fclose(fp);
+            return 0;
+        }
     }
 
+    centralEnd = (unsigned int)ftell(fp);
     put32(eocd, 0x06054b50U);
-    put16(eocd + 8, 1U);
-    put16(eocd + 10, 1U);
-    put32(eocd + 12, (unsigned int)(sizeof(central) + nameLen));
+    put16(eocd + 8, (unsigned int)entryCount);
+    put16(eocd + 10, (unsigned int)entryCount);
+    put32(eocd + 12, centralEnd - centralOffset);
     put32(eocd + 16, centralOffset);
     if (fwrite(eocd, 1U, sizeof(eocd), fp) != sizeof(eocd)) {
         fclose(fp);
         return 0;
     }
     return fclose(fp) == 0;
+}
+
+static int write_stored_zip_file(const char* path, const char* entryName,
+                                 const char* payload) {
+    TestZipEntry entry = {entryName, payload, 0U};
+    return write_stored_zip_entries(path, &entry, 1U);
 }
 
 static int write_iso_dir_record(unsigned char* dir, int offset,
@@ -287,19 +323,38 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char zipPath[512];
     char isoPath[512];
     char foundPath[ASSET_PATH_MAX];
+    char csbCacheDir[512];
+    char cachedBonusDungeon[512];
+    char cachedHint[512];
+    char cachedSave[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
+    TestZipEntry zipEntries[4];
     M12_AssetStatus status;
 
+    memset(csbCacheDir, 0, sizeof(csbCacheDir));
+    memset(cachedBonusDungeon, 0, sizeof(cachedBonusDungeon));
+    memset(cachedHint, 0, sizeof(cachedHint));
+    memset(cachedSave, 0, sizeof(cachedSave));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
     check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
               "positive ISO path should fit");
-    check_int(write_stored_zip_file(zipPath, "archive/GRAPHICS.DAT",
-                                    kCsbGraphicsPayload),
-              "synthetic CSB GRAPHICS ZIP fixture should be written");
+    memset(zipEntries, 0, sizeof(zipEntries));
+    zipEntries[0].name = "archive/GRAPHICS.DAT";
+    zipEntries[0].payload = kCsbGraphicsPayload;
+    zipEntries[1].name = "archive/DUNGEONB.DAT";
+    zipEntries[1].payload = kCsbBonusDungeonPayload;
+    zipEntries[2].name = "archive/HCSB.HTC";
+    zipEntries[2].payload = kCsbHintPayload;
+    zipEntries[3].name = "archive/CSBGAME.DAT";
+    zipEntries[3].payload = kCsbSavePayload;
+    check_int(write_stored_zip_entries(zipPath,
+                                       zipEntries,
+                                       sizeof(zipEntries) / sizeof(zipEntries[0])),
+              "synthetic CSB GRAPHICS ZIP fixture with startup sidecars should be written");
     check_int(write_single_entry_iso_file(isoPath, "dungeon.dat;1",
                                           kCsbDungeonPayload),
               "synthetic CSB DUNGEON ISO fixture should be written");
@@ -358,6 +413,21 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     check_int(dungeon && file_matches_payload(dungeon->matchedPath,
                                               kCsbDungeonPayload),
               "materialized CSB DUNGEON should match the ISO payload");
+    check_int(runtimeDir &&
+                  FSP_JoinPath(csbCacheDir, sizeof(csbCacheDir), runtimeDir, "csb") &&
+                  FSP_JoinPath(cachedBonusDungeon, sizeof(cachedBonusDungeon),
+                               csbCacheDir, "DUNGEONB.DAT") &&
+                  FSP_JoinPath(cachedHint, sizeof(cachedHint),
+                               csbCacheDir, "HCSB.HTC") &&
+                  FSP_JoinPath(cachedSave, sizeof(cachedSave),
+                               csbCacheDir, "CSBGAME.DAT"),
+              "CSB optional startup cache paths should resolve");
+    check_int(file_matches_payload(cachedBonusDungeon, kCsbBonusDungeonPayload),
+              "archive-backed CSB bonus dungeon should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedHint, kCsbHintPayload),
+              "archive-backed CSB HCSB.HTC utility data should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedSave, kCsbSavePayload),
+              "archive-backed CSB CSBGAME.DAT utility save should be materialized next to GRAPHICS.DAT");
 }
 
 static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
