@@ -170,6 +170,11 @@ int main(void)
               strcmp(result.status_scope, "BOOT") == 0 &&
               strcmp(result.status, "CSB IMPORT READY") == 0,
           "keyboard Back close-preview result owns status");
+    check(csb_v1_util_flow_overlay_accepts_input(1, 0, 0) &&
+              !csb_v1_util_flow_overlay_accepts_input(0, 0, 0) &&
+              !csb_v1_util_flow_overlay_accepts_input(1, 1, 0) &&
+              !csb_v1_util_flow_overlay_accepts_input(1, 0, 1),
+          "utility overlay input gate belongs to CSB flow");
 
     flow.selected_action_index = 0;
     check(csb_v1_util_flow_handle_point(&flow, 40, 116, 1, &result) &&

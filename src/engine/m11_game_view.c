@@ -3445,9 +3445,10 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active ||
-        !state->csbState.startup_import_available ||
-        state->csbState.startup_entrance_credits_active ||
-        state->csbState.startup_entrance_opening_active) {
+        !csb_v1_util_flow_overlay_accepts_input(
+            state->csbState.startup_import_available,
+            state->csbState.startup_entrance_credits_active,
+            state->csbState.startup_entrance_opening_active)) {
         return M11_GAME_INPUT_IGNORED;
     }
 
@@ -3478,9 +3479,10 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active ||
-        !state->csbState.startup_import_available ||
-        state->csbState.startup_entrance_credits_active ||
-        state->csbState.startup_entrance_opening_active) {
+        !csb_v1_util_flow_overlay_accepts_input(
+            state->csbState.startup_import_available,
+            state->csbState.startup_entrance_credits_active,
+            state->csbState.startup_entrance_opening_active)) {
         return M11_GAME_INPUT_IGNORED;
     }
 
