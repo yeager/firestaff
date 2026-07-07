@@ -13,6 +13,13 @@
 #define DM1_V1_INSCRIPTION_TRANSPARENT_COLOR 10
 #define DM1_V1_INSCRIPTION_CENTER_X 112
 
+static inline int DM1_V1_InscriptionGlyphIndexFromSourceByte(unsigned char ch) {
+    /* ReDMCSB DUNVIEW.C F0107 lines ~3631/~3704 blit decoded inscription
+     * bytes directly at source_x = decodedByte << 3.  Valid PC34 M648 cells
+     * are 0..35: A..Z, space, period, and eight symbol cells. */
+    return ch <= 35 ? (int)ch : -1;
+}
+
 static inline int DM1_V1_InscriptionGlyphIndexFromAscii(unsigned char ch) {
     if (ch >= 'A' && ch <= 'Z') {
         return (int)(ch - 'A');

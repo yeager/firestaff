@@ -84,6 +84,14 @@ int main(void) {
               DM1_V1_InscriptionGlyphIndexFromAscii(35), 35);
     check_int("unsupported question mark is rejected",
               DM1_V1_InscriptionGlyphIndexFromAscii('?'), -1);
+    check_int("raw source byte 0 maps to glyph A",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(0), 0);
+    check_int("raw source byte 26 maps to source space cell",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(26), 26);
+    check_int("raw source byte 35 maps to last symbol cell",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(35), 35);
+    check_int("raw source byte 36 is rejected",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(36), -1);
     check_int("compact escape digit 0 maps to glyph 28",
               DM1_V1_InscriptionGlyphIndexForFontWidth(
                   '0', DM1_V1_INSCRIPTION_FONT_WIDTH_PC34), 28);

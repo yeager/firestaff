@@ -21,6 +21,24 @@ int main(void)
     const int compactWidth = DM1_V1_INSCRIPTION_FONT_WIDTH_PC34;
     const int realAsciiWidth = 128 * DM1_V1_INSCRIPTION_GLYPH_WIDTH;
 
+    check_int("source.raw.A",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(0),
+              0);
+    check_int("source.raw.Z",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(25),
+              25);
+    check_int("source.raw.space",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(26),
+              26);
+    check_int("source.raw.period",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(27),
+              27);
+    check_int("source.raw.symbol.last",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(35),
+              35);
+    check_int("source.raw.unsupported",
+              DM1_V1_InscriptionGlyphIndexFromSourceByte(36),
+              -1);
     check_int("uppercase.A.compact",
               DM1_V1_InscriptionGlyphIndexForFontWidth('A', compactWidth),
               0);
