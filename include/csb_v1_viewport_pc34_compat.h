@@ -458,6 +458,26 @@ struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
     int icon_draw_y;
 };
 
+typedef struct {
+    int thing_type;
+    int subtype_index;
+    int relative_cell;
+    int pile_index;
+    int viewport_x;
+    int viewport_y;
+    int viewport_w;
+    int viewport_h;
+    int depth_index;
+    int source_zone_row;
+} CSB_V1_ViewportRuntimeObjectSpriteBlit;
+
+typedef struct {
+    int icon_index;
+    int draw_x;
+    int draw_y;
+    int transparent_color;
+} CSB_V1_ViewportRuntimeObjectIconBlit;
+
 struct CSB_V1_ViewportRuntimeGroupOverlayPlacement {
     int visible;
     int forward;
@@ -482,6 +502,17 @@ struct CSB_V1_ViewportRuntimeGroupOverlayPlacement {
     int marker_screen_x;
     int marker_screen_y;
 };
+
+typedef struct {
+    int creature_type;
+    int direction;
+    int relative_side;
+    int x;
+    int y;
+    int w;
+    int h;
+    int depth_index;
+} CSB_V1_ViewportRuntimeGroupSpriteBlit;
 
 struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int visible;
@@ -812,6 +843,12 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
     int relative_cell,
     int pile_index,
     CSB_V1_ViewportRuntimeObjectOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_object_sprite_blit(
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeObjectSpriteBlit *out_blit);
+int csb_v1_viewport_runtime_object_icon_blit(
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeObjectIconBlit *out_blit);
 int csb_v1_viewport_runtime_group_overlay_placement(
     int forward,
     int side,
@@ -832,6 +869,9 @@ int csb_v1_viewport_runtime_group_overlay_slot_placement(
     int visible_count,
     int slot_index,
     CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_group_sprite_blit(
+    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeGroupSpriteBlit *out_blit);
 int csb_v1_viewport_runtime_explosion_overlay_placement(
     int party_dir,
     int party_x,

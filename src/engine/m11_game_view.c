@@ -1141,25 +1141,29 @@ static int m11_csb_viewport_object_sprite_drawer(
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
+    CSB_V1_ViewportRuntimeObjectSpriteBlit blit;
 
     if (!ctx || !ctx->state || !placement || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
+    }
+    if (!csb_v1_viewport_runtime_object_sprite_blit(placement, &blit)) {
         return 0;
     }
     return m11_draw_item_sprite(ctx->state,
                                 screen_pixels,
                                 screen_stride,
                                 ctx->framebuffer_height,
-                                placement->sprite_viewport_x,
-                                placement->sprite_viewport_y,
-                                placement->sprite_viewport_w,
-                                placement->sprite_viewport_h,
-                                placement->sprite_thing_type,
-                                placement->sprite_subtype_index,
-                                placement->sprite_relative_cell,
-                                placement->sprite_pile_index,
-                                placement->sprite_depth_index,
-                                placement->object_row);
+                                blit.viewport_x,
+                                blit.viewport_y,
+                                blit.viewport_w,
+                                blit.viewport_h,
+                                blit.thing_type,
+                                blit.subtype_index,
+                                blit.relative_cell,
+                                blit.pile_index,
+                                blit.depth_index,
+                                blit.source_zone_row);
 }
 
 static int m11_csb_viewport_object_icon_drawer(
@@ -1170,19 +1174,23 @@ static int m11_csb_viewport_object_icon_drawer(
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
+    CSB_V1_ViewportRuntimeObjectIconBlit blit;
 
     if (!ctx || !ctx->state || !placement || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
+    }
+    if (!csb_v1_viewport_runtime_object_icon_blit(placement, &blit)) {
         return 0;
     }
     return m11_draw_dm_object_icon_index(ctx->state,
                                          screen_pixels,
                                          screen_stride,
                                          ctx->framebuffer_height,
-                                         placement->icon_index,
-                                         placement->icon_draw_x,
-                                         placement->icon_draw_y,
-                                         0);
+                                         blit.icon_index,
+                                         blit.draw_x,
+                                         blit.draw_y,
+                                         blit.transparent_color);
 }
 
 static int m11_csb_viewport_group_sprite_drawer(
@@ -1193,23 +1201,27 @@ static int m11_csb_viewport_group_sprite_drawer(
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
+    CSB_V1_ViewportRuntimeGroupSpriteBlit blit;
 
     if (!ctx || !ctx->state || !placement || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
+    }
+    if (!csb_v1_viewport_runtime_group_sprite_blit(placement, &blit)) {
         return 0;
     }
     return m11_draw_creature_sprite_ex(ctx->state,
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
-        placement->sprite_x,
-        placement->sprite_y,
-        placement->sprite_w,
-        placement->sprite_h,
-        placement->sprite_creature_type,
-        placement->depth_index,
-        placement->sprite_relative_side,
-        placement->sprite_direction);
+        blit.x,
+        blit.y,
+        blit.w,
+        blit.h,
+        blit.creature_type,
+        blit.depth_index,
+        blit.relative_side,
+        blit.direction);
 }
 
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
