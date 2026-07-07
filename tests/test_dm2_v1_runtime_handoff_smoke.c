@@ -956,6 +956,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
     {
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
+        DM2_V1_CreatureRender direct_creature;
+        DM2_V1_CreatureAssetBlit direct_creature_blit;
         DM2_V1_ItemRender direct_item;
         DM2_V1_ItemAssetBlit direct_item_blit;
         DM2_V1_ProjectileRender direct_projectile;
@@ -966,10 +968,39 @@ static void test_first_tick_after_boot_profile_handoff(void)
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
         memset(s_projectile_pixels, 13, sizeof(s_projectile_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
+        memset(&direct_creature, 0, sizeof(direct_creature));
+        memset(&direct_creature_blit, 0, sizeof(direct_creature_blit));
         memset(&direct_item, 0, sizeof(direct_item));
         memset(&direct_item_blit, 0, sizeof(direct_item_blit));
         memset(&direct_projectile, 0, sizeof(direct_projectile));
         memset(&direct_blit, 0, sizeof(direct_blit));
+        direct_creature.gdat_index = dm2_v1_viewport_creature_graphic_index(
+            0x12, 0);
+        direct_creature.frame_index = 1;
+        direct_creature.direction = 1;
+        direct_creature.depth = 1;
+        direct_creature.center_x = 144;
+        direct_creature.center_y = 92;
+        CHECK(dm2_v1_viewport_creature_asset_blit(&direct_creature,
+                                                  32,
+                                                  8,
+                                                  32,
+                                                  0,
+                                                  &direct_creature_blit) == 1,
+              "creature asset blit contract builds");
+        CHECK(direct_creature_blit.dst_rect.x == 140 &&
+              direct_creature_blit.dst_rect.y == 88 &&
+              direct_creature_blit.dst_rect.w == 8 &&
+              direct_creature_blit.dst_rect.h == 8,
+              "creature asset blit owns scaled destination");
+        CHECK(direct_creature_blit.frame_x == 8 &&
+              direct_creature_blit.frame_y == 0 &&
+              direct_creature_blit.frame_w == 8 &&
+              direct_creature_blit.frame_h == 8,
+              "creature asset blit owns directional source frame");
+        CHECK(direct_creature_blit.transparent_color == 10 &&
+              direct_creature_blit.render_frame == 1,
+              "creature asset blit owns material and render frame");
         direct_item.gdat_index =
             dm2_v1_viewport_item_graphic_index(0x15, 0x22, 1);
         direct_item.frame_index = 1;

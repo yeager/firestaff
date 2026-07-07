@@ -1665,6 +1665,73 @@ int dm2_v1_viewport_build_creature_render_plan(
     return 1;
 }
 
+int dm2_v1_viewport_creature_asset_blit(
+    const DM2_V1_CreatureRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    int party_direction,
+    DM2_V1_CreatureAssetBlit *out_blit)
+{
+    DM2_V1_CreatureAssetBlit blit;
+    int frame_x = 0;
+    int frame_w = src_w;
+    int frame_count;
+    int render_frame = 0;
+    int dst_w;
+    int dst_h;
+
+    if (!out_blit) {
+        return 0;
+    }
+    memset(&blit, 0, sizeof(blit));
+    blit.gdat_index = -1;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    if (!render || render->gdat_index == 0 || src_w <= 0 || src_h <= 0) {
+        *out_blit = blit;
+        return 0;
+    }
+
+    frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
+    render_frame = dm2_v1_viewport_creature_frame_for_direction(
+        render->frame_index,
+        render->direction,
+        party_direction,
+        frame_count);
+    if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                       render_frame,
+                                       &frame_x,
+                                       &frame_w)) {
+        frame_x = 0;
+        frame_w = src_w;
+        render_frame = 0;
+    }
+
+    dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
+                                                  render->depth,
+                                                  8,
+                                                  64);
+    dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                  render->depth,
+                                                  8,
+                                                  64);
+
+    blit.gdat_index = render->gdat_index;
+    blit.frame_x = frame_x;
+    blit.frame_y = 0;
+    blit.frame_w = frame_w;
+    blit.frame_h = src_h;
+    blit.dst_rect.x = render->center_x - (dst_w / 2);
+    blit.dst_rect.y = render->center_y - (dst_h / 2);
+    blit.dst_rect.w = dst_w;
+    blit.dst_rect.h = dst_h;
+    blit.src_stride = src_stride > 0 ? src_stride : src_w;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    blit.render_frame = render_frame;
+    *out_blit = blit;
+    return frame_w > 0 && dst_w > 0 && dst_h > 0;
+}
+
 int dm2_v1_viewport_build_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ItemRenderPlan *out_plan)
@@ -2626,47 +2693,31 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                 dm2_v1_fetch_viewport_asset(s, c->gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
-                int frame_x = 0;
-                int frame_w = src_w;
-                int frame_count =
-                    dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
-                int render_frame =
-                    dm2_v1_viewport_creature_frame_for_direction(
-                        c->frame_index,
-                        c->direction,
-                        s->party_dir,
-                        frame_count);
-                if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
-                                                   render_frame,
-                                                   &frame_x,
-                                                   &frame_w)) {
-                    frame_x = 0;
-                    frame_w = src_w;
+                DM2_V1_CreatureAssetBlit blit;
+                if (dm2_v1_viewport_creature_asset_blit(c,
+                                                        src_w,
+                                                        src_h,
+                                                        src_stride,
+                                                        s->party_dir,
+                                                        &blit)) {
+                    drawn_h = blit.dst_rect.h;
+                    dm2_v1_blit_scaled_bitmap_region(
+                        vp,
+                        stride,
+                        blit.dst_rect.x,
+                        blit.dst_rect.y,
+                        blit.dst_rect.w,
+                        blit.dst_rect.h,
+                        pixels,
+                        blit.frame_x,
+                        blit.frame_y,
+                        blit.frame_w,
+                        blit.frame_h,
+                        blit.src_stride,
+                        blit.transparent_color);
+                    ++s->asset_creature_drawn_count;
+                    drawn_asset = 1;
                 }
-                int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
-                                                                  c->depth,
-                                                                  8,
-                                                                  64);
-                int dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
-                                                                  c->depth,
-                                                                  8,
-                                                                  64);
-                drawn_h = dst_h;
-                dm2_v1_blit_scaled_bitmap_region(vp,
-                                                 stride,
-                                                 c->center_x - (dst_w / 2),
-                                                 c->center_y - (dst_h / 2),
-                                                 dst_w,
-                                                 dst_h,
-                                                 pixels,
-                                                 frame_x,
-                                                 0,
-                                                 frame_w,
-                                                 src_h,
-                                                 src_stride > 0 ? src_stride : src_w,
-                                                 DM2_COLOR_TRANSPARENT);
-                ++s->asset_creature_drawn_count;
-                drawn_asset = 1;
             }
         }
         if (!drawn_asset) {
