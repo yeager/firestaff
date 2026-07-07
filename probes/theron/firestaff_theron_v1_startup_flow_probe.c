@@ -42,6 +42,52 @@ static void check_str(const char *label, const char *got, const char *expected) 
     }
 }
 
+static int fake_runtime_level_load(Theron_V1_World *world,
+                                   Theron_DungeonID dungeon_id,
+                                   void *userdata,
+                                   char *receipt,
+                                   size_t receipt_cap) {
+    int *called = (int*)userdata;
+
+    if (called) {
+        ++(*called);
+    }
+    if (!world || dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT) {
+        return 0;
+    }
+    world->current_dungeon = dungeon_id;
+    world->current_level = 0;
+    world->level_loaded[dungeon_id - 1][0] = 1;
+    world->party.leader_x = 5;
+    world->party.leader_y = 6;
+    world->party.leader_dir = 1;
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 "fake level stage=%d start=(5,6,1)",
+                 (int)dungeon_id);
+    }
+    return 1;
+}
+
+static int fake_runtime_level_load_fail(Theron_V1_World *world,
+                                        Theron_DungeonID dungeon_id,
+                                        void *userdata,
+                                        char *receipt,
+                                        size_t receipt_cap) {
+    int *called = (int*)userdata;
+
+    (void)world;
+    (void)dungeon_id;
+    if (called) {
+        ++(*called);
+    }
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt, receipt_cap, "forced load failure");
+    }
+    return 0;
+}
+
 int main(void) {
     Theron_DungeonProgression progression;
     Theron_StartupFlow flow;
@@ -1004,6 +1050,68 @@ int main(void) {
         check_int("world entry before forcefield rejected",
                   result,
                   THERON_STARTUP_ERR_NOT_READY);
+        theron_v1_startup_flow_init(&flow);
+        result = theron_v1_startup_choose_stage(
+            &flow,
+            &progression,
+            THERON_DUNGEON_1_HALL_OF_RECORDS);
+        check_int("runtime entry choose rc", result, THERON_STARTUP_OK);
+        memset(&party, 0, sizeof(party));
+        result = theron_v1_startup_enter_forcefield(&flow, &party);
+        check_int("runtime entry forcefield rc", result, THERON_STARTUP_OK);
+        theron_v1_world_init(&world);
+        world.party = party;
+        {
+            int called = 0;
+            char runtime_receipt[192];
+            runtime_receipt[0] = '\0';
+            result = theron_v1_startup_enter_runtime_from_forcefield(
+                &flow,
+                &world,
+                fake_runtime_level_load,
+                &called,
+                runtime_receipt,
+                sizeof(runtime_receipt));
+            check_int("runtime entry rc", result, THERON_STARTUP_OK);
+            check_int("runtime entry callback called", called, 1);
+            check_int("runtime entry level loaded",
+                      world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      1);
+            check_int("runtime entry party x", world.party.leader_x, 5);
+            check_contains("runtime entry receipt",
+                           runtime_receipt,
+                           "fake level stage=1");
+        }
+        theron_v1_startup_flow_init(&flow);
+        result = theron_v1_startup_choose_stage(
+            &flow,
+            &progression,
+            THERON_DUNGEON_1_HALL_OF_RECORDS);
+        check_int("runtime fail choose rc", result, THERON_STARTUP_OK);
+        memset(&party, 0, sizeof(party));
+        result = theron_v1_startup_enter_forcefield(&flow, &party);
+        check_int("runtime fail forcefield rc", result, THERON_STARTUP_OK);
+        theron_v1_world_init(&world);
+        world.party = party;
+        {
+            int called = 0;
+            char runtime_receipt[192];
+            runtime_receipt[0] = '\0';
+            result = theron_v1_startup_enter_runtime_from_forcefield(
+                &flow,
+                &world,
+                fake_runtime_level_load_fail,
+                &called,
+                runtime_receipt,
+                sizeof(runtime_receipt));
+            check_int("runtime entry load failure rc",
+                      result,
+                      THERON_STARTUP_ERR_LEVEL_LOAD);
+            check_int("runtime entry failing callback called", called, 1);
+            check_contains("runtime entry load failure receipt",
+                           runtime_receipt,
+                           "level load failed");
+        }
     }
 
     check_contains("mirror 0 meta", theron_v1_startup_mirror_meta(0)->name, "Hakar");

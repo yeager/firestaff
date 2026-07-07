@@ -1579,6 +1579,60 @@ Theron_StartupResult theron_v1_startup_enter_world_from_forcefield(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_enter_runtime_from_forcefield(
+    Theron_StartupFlow *flow,
+    Theron_V1_World *world,
+    Theron_StartupLevelLoadFn load_level,
+    void *userdata,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_StartupResult result;
+    char level_receipt[160];
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!flow || !world || !load_level) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+
+    level_receipt[0] = '\0';
+    result = theron_v1_startup_enter_world_from_forcefield(flow, world);
+    if (result != THERON_STARTUP_OK) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "startup-flow dungeon enter failed: %s",
+                     theron_v1_startup_result_name(result));
+        }
+        return result;
+    }
+
+    if (!load_level(world,
+                    flow->selected_dungeon,
+                    userdata,
+                    level_receipt,
+                    sizeof(level_receipt))) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "Theron level load failed");
+        }
+        return THERON_STARTUP_ERR_LEVEL_LOAD;
+    }
+
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 "startup-flow stage=%d phase=%s party=%d companions=%d; %s",
+                 (int)flow->selected_dungeon,
+                 theron_v1_startup_phase_name(flow->phase),
+                 world->party.champion_count,
+                 (int)flow->companion_count,
+                 level_receipt);
+    }
+    return THERON_STARTUP_OK;
+}
+
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     switch (phase) {
     case THERON_STARTUP_PHASE_TITLE: return "title";
@@ -1633,6 +1687,7 @@ const char *theron_v1_startup_result_name(Theron_StartupResult result) {
     case THERON_STARTUP_ERR_NOT_READY: return "not-ready";
     case THERON_STARTUP_ERR_MIRROR_NOT_SELECTED: return "mirror-not-selected";
     case THERON_STARTUP_ERR_DUNGEON_ENTRY: return "dungeon-entry";
+    case THERON_STARTUP_ERR_LEVEL_LOAD: return "level-load";
     default: return "unknown";
     }
 }
