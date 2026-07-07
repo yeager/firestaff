@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM2 startup snapshot input/pointer ownership: `dm2_v1_startup_menu` now owns Firestaff input-code dispatch and startup pointer hit-test-to-action routing through snapshot helpers. M11 no longer calls the DM2 input mapper or layout hit-test directly for DM2 startup menu actions. Verification: `test_dm2_v1_startup_menu_action_contract` passed 48/48, `firestaff_m11_phase_a_probe` passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-07 v3.0.65 release prep: version metadata and release notes now target v3.0.65 for the current DM1 title/entrance and CSB startup ownership work. Verification will run before tag/release workflow dispatch.
 
 - ✅ 2026-07-07 CSB pure entrance command ownership: `csb_v1_startup_sequence_pc34_compat` now owns pure startup entrance command application for credits dismissal, credits start, ignored commands, and quit-to-launcher through `csb_v1_startup_apply_pure_entrance_plan_pc34()`. M11 now keeps only runtime side effects for dungeon entry, bonus dungeon, and resume loading. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.

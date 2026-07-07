@@ -811,9 +811,9 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
         return M11_GAME_INPUT_IGNORED;
     }
     m11_dm2_startup_snapshot_from_state(state, &snapshot);
-    if (!dm2_v1_startup_menu_snapshot_handle_input(
+    if (!dm2_v1_startup_menu_snapshot_handle_firestaff_input(
             &snapshot,
-            dm2_v1_startup_input_from_firestaff_menu_code((int)input),
+            (int)input,
             &action)) {
         return input == M12_MENU_INPUT_NONE
                    ? M11_GAME_INPUT_IGNORED
@@ -16177,7 +16177,6 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     int x,
     int y)
 {
-    DM2_V1_StartupHit hit;
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupAction action;
 
@@ -16186,14 +16185,13 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!dm2_v1_startup_hit(state->dm2State.startup_menu_row_count,
-                            x,
-                            y,
-                            &hit)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
     m11_dm2_startup_snapshot_from_state(state, &snapshot);
-    if (!dm2_v1_startup_menu_snapshot_handle_hit(&snapshot, &hit, &action)) {
+    if (!dm2_v1_startup_menu_snapshot_handle_pointer(
+            &snapshot,
+            state->dm2State.startup_menu_row_count,
+            x,
+            y,
+            &action)) {
         return M11_GAME_INPUT_IGNORED;
     }
     m11_dm2_startup_snapshot_to_state(state, &snapshot);
