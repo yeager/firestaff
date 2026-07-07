@@ -391,6 +391,18 @@ typedef struct {
 } DM2_V1_CreatureRenderPlan;
 
 typedef struct {
+    int gdat_index;
+    int frame_x;
+    int frame_y;
+    int frame_w;
+    int frame_h;
+    DM2_V1_ViewportRect dst_rect;
+    int src_stride;
+    int transparent_color;
+    int render_frame;
+} DM2_V1_CreatureAssetBlit;
+
+typedef struct {
     uint8_t  item_category;   /* GDAT category, 0 = miscellaneous fallback */
     uint8_t  item_type;       /* GDAT item index */
     uint8_t  frame_index;     /* animation frame */
@@ -614,6 +626,13 @@ int dm2_v1_viewport_build_door_render_plan(
 int dm2_v1_viewport_build_creature_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CreatureRenderPlan *out_plan);
+int dm2_v1_viewport_creature_asset_blit(
+    const DM2_V1_CreatureRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    int party_direction,
+    DM2_V1_CreatureAssetBlit *out_blit);
 int dm2_v1_viewport_build_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ItemRenderPlan *out_plan);

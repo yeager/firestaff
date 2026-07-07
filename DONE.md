@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-07 DM2 V1 creature asset blit contract: `dm2_v1_viewport_renderer` now exposes `DM2_V1_CreatureAssetBlit` plus `dm2_v1_viewport_creature_asset_blit()`, carrying GDAT id, directional source frame, scaled destination, stride, transparent color, and render frame before bitmap copy. Runtime creature rendering consumes that contract instead of rebuilding map-chip frame and destination geometry inline.
+
 - ✅ 2026-07-07 CSB runtime object material consumption: M11 now consumes CSB-owned runtime object sprite material through `m11_draw_item_sprite_material()`, deriving the effective C2500 source row from full `source_zone` values including the `MASK0x8000_SHIFT_OBJECTS_AND_CREATURES` bit and using the CSB blit's F0791/C10 transparency instead of relying only on the DM1 item default. Verification: `cc -std=c11 -Wall -Wextra -I. -Iinclude -Isrc -fsyntax-only src/engine/m11_game_view.c` passed with only existing unused-function warnings, and `/tmp/firestaff-goal-build/test_csb_v1_viewport_phase3_rendering` passed 2611/0.
 
 - ✅ 2026-07-07 DM2 V1 item asset blit contract: `dm2_v1_viewport_renderer` now exposes `DM2_V1_ItemAssetBlit` plus `dm2_v1_viewport_item_asset_blit()`, carrying GDAT id, source frame, scaled destination, stride, transparent color, mirror flag, and render frame before bitmap copy. Floor-item, creature-possession item, and carried leader-hand item rendering consume that contract instead of rebuilding map-chip frame and destination geometry inline.
