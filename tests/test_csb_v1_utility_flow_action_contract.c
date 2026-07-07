@@ -240,6 +240,36 @@ int main(void)
           "utility overlay input gate belongs to CSB flow");
 
     flow.selected_action_index = 0;
+    check(csb_v1_util_flow_handle_point_if_active(
+              &flow,
+              40,
+              116,
+              1,
+              0,
+              0,
+              1,
+              &result) &&
+              result.kind == CSB_V1_UTIL_INPUT_RESULT_ACTIVATE &&
+              result.action == CSB_V1_UTIL_ACTION_LOAD &&
+              result.selected_action_index == 1 &&
+              result.preview_active == 0 &&
+              flow.selected_action_index == 1,
+          "pointer helper owns overlay gate and row activation");
+    check(!csb_v1_util_flow_handle_point_if_active(
+              &flow,
+              40,
+              116,
+              0,
+              0,
+              0,
+              1,
+              &result) &&
+              result.kind == CSB_V1_UTIL_INPUT_RESULT_NONE &&
+              result.selected_action_index == 1 &&
+              result.preview_active == 1,
+          "pointer helper rejects inactive overlay");
+
+    flow.selected_action_index = 0;
     check(csb_v1_util_flow_handle_point(&flow, 40, 116, 1, &result) &&
               result.kind == CSB_V1_UTIL_INPUT_RESULT_ACTIVATE &&
               result.action == CSB_V1_UTIL_ACTION_LOAD &&

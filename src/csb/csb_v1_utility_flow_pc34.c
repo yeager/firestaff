@@ -522,6 +522,32 @@ int csb_v1_util_flow_handle_firestaff_input_if_active(
         out_result);
 }
 
+int csb_v1_util_flow_handle_point_if_active(
+    CSB_V1_UtilFlowContext *ctx,
+    int x,
+    int y,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilInputResult *out_result)
+{
+    if (!csb_v1_util_flow_overlay_accepts_input(import_available,
+                                                credits_active,
+                                                opening_active)) {
+        if (out_result) {
+            memset(out_result, 0, sizeof(*out_result));
+            out_result->kind = CSB_V1_UTIL_INPUT_RESULT_NONE;
+            out_result->action = CSB_V1_UTIL_ACTION_EXIT;
+            out_result->selected_action_index =
+                ctx ? ctx->selected_action_index : 0;
+            out_result->preview_active = preview_active ? 1 : 0;
+        }
+        return 0;
+    }
+    return csb_v1_util_flow_handle_point(ctx, x, y, preview_active, out_result);
+}
+
 int csb_v1_util_flow_overlay_accepts_input(int import_available,
                                            int credits_active,
                                            int opening_active)
