@@ -227,6 +227,14 @@ typedef struct {
 } DM2_V1_DoorRenderPlan;
 
 typedef struct {
+    int gdat_index;
+    DM2_V1_ViewportRect src_rect;
+    DM2_V1_ViewportRect dst_rect;
+    int src_stride;
+    int transparent_color;
+} DM2_V1_DoorAssetBlit;
+
+typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
     uint8_t fill_color;
@@ -623,6 +631,24 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
 int dm2_v1_viewport_build_door_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_DoorRenderPlan *out_plan);
+int dm2_v1_viewport_door_panel_asset_blit(
+    const DM2_V1_DoorRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    DM2_V1_DoorAssetBlit *out_blit);
+int dm2_v1_viewport_door_frame_asset_blit(
+    const DM2_V1_DoorRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    DM2_V1_DoorAssetBlit *out_blit);
+int dm2_v1_viewport_door_button_asset_blit(
+    const DM2_V1_DoorRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    DM2_V1_DoorAssetBlit *out_blit);
 int dm2_v1_viewport_build_creature_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CreatureRenderPlan *out_plan);

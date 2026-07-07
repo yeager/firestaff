@@ -1310,6 +1310,130 @@ int dm2_v1_viewport_build_door_render_plan(
     return 1;
 }
 
+static int dm2_v1_viewport_full_rect_asset_blit(
+    int gdat_index,
+    const DM2_V1_ViewportRect *dst_rect,
+    int src_w,
+    int src_h,
+    int src_stride,
+    DM2_V1_DoorAssetBlit *out_blit)
+{
+    DM2_V1_DoorAssetBlit blit;
+
+    if (!out_blit) {
+        return 0;
+    }
+    memset(&blit, 0, sizeof(blit));
+    blit.gdat_index = -1;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    if (gdat_index == 0 || !dst_rect || dst_rect->w <= 0 ||
+        dst_rect->h <= 0 || src_w <= 0 || src_h <= 0) {
+        *out_blit = blit;
+        return 0;
+    }
+    blit.gdat_index = gdat_index;
+    blit.src_rect = (DM2_V1_ViewportRect){ 0, 0, src_w, src_h };
+    blit.dst_rect = *dst_rect;
+    blit.src_stride = src_stride > 0 ? src_stride : src_w;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    *out_blit = blit;
+    return 1;
+}
+
+int dm2_v1_viewport_door_panel_asset_blit(
+    const DM2_V1_DoorRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    DM2_V1_DoorAssetBlit *out_blit)
+{
+    DM2_V1_DoorAssetBlit blit;
+    int source_y;
+    int source_h;
+
+    if (!out_blit) {
+        return 0;
+    }
+    memset(&blit, 0, sizeof(blit));
+    blit.gdat_index = -1;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    if (!render || render->panel_gdat_index == 0 ||
+        render->panel_rect.w <= 0 || render->panel_rect.h <= 0 ||
+        render->panel_visible_rect.w <= 0 ||
+        render->panel_visible_rect.h <= 0 ||
+        src_w <= 0 || src_h <= 0) {
+        *out_blit = blit;
+        return 0;
+    }
+
+    source_y =
+        ((render->panel_visible_rect.y - render->panel_rect.y) * src_h) /
+        render->panel_rect.h;
+    source_h =
+        (render->panel_visible_rect.h * src_h + render->panel_rect.h - 1) /
+        render->panel_rect.h;
+    if (source_y < 0) source_y = 0;
+    if (source_y > src_h) source_y = src_h;
+    if (source_h < 1) source_h = 1;
+    if (source_y + source_h > src_h) {
+        source_h = src_h - source_y;
+    }
+
+    blit.gdat_index = render->panel_gdat_index;
+    blit.src_rect = (DM2_V1_ViewportRect){ 0, source_y, src_w, source_h };
+    blit.dst_rect = render->panel_visible_rect;
+    blit.src_stride = src_stride > 0 ? src_stride : src_w;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    *out_blit = blit;
+    return source_h > 0;
+}
+
+int dm2_v1_viewport_door_frame_asset_blit(
+    const DM2_V1_DoorRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    DM2_V1_DoorAssetBlit *out_blit)
+{
+    if (!render) {
+        if (out_blit) {
+            memset(out_blit, 0, sizeof(*out_blit));
+            out_blit->gdat_index = -1;
+            out_blit->transparent_color = DM2_COLOR_TRANSPARENT;
+        }
+        return 0;
+    }
+    return dm2_v1_viewport_full_rect_asset_blit(render->frame_gdat_index,
+                                                &render->frame_rect,
+                                                src_w,
+                                                src_h,
+                                                src_stride,
+                                                out_blit);
+}
+
+int dm2_v1_viewport_door_button_asset_blit(
+    const DM2_V1_DoorRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    DM2_V1_DoorAssetBlit *out_blit)
+{
+    if (!render) {
+        if (out_blit) {
+            memset(out_blit, 0, sizeof(*out_blit));
+            out_blit->gdat_index = -1;
+            out_blit->transparent_color = DM2_COLOR_TRANSPARENT;
+        }
+        return 0;
+    }
+    return dm2_v1_viewport_full_rect_asset_blit(render->button_gdat_index,
+                                                &render->button_rect,
+                                                src_w,
+                                                src_h,
+                                                src_stride,
+                                                out_blit);
+}
+
 /* ── Internal blit helper ─────────────────────────────────────────── */
 
 static void __attribute__((unused)) dm2_blit_bitmap (
@@ -2544,37 +2668,32 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                             &panel_h,
                                             &panel_stride) == 0 &&
                 panel_pixels && panel_w > 0 && panel_h > 0) {
+                DM2_V1_DoorAssetBlit blit;
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR lines
                  * ~46402-46457 draws the panel through GDAT_CATEGORY_DOORS
                  * with image 0 for D0/D1 and image 1 for D2. Door type
                  * decoding is still boot-defaulted to index 0 here. */
-                int source_y =
-                    ((door->panel_visible_rect.y - door->panel_rect.y) *
-                     panel_h) / door->panel_rect.h;
-                int source_h =
-                    (door->panel_visible_rect.h * panel_h +
-                     door->panel_rect.h - 1) / door->panel_rect.h;
-                if (source_y < 0) source_y = 0;
-                if (source_y > panel_h) source_y = panel_h;
-                if (source_h < 1) source_h = 1;
-                if (source_y + source_h > panel_h) {
-                    source_h = panel_h - source_y;
+                if (dm2_v1_viewport_door_panel_asset_blit(door,
+                                                          panel_w,
+                                                          panel_h,
+                                                          panel_stride,
+                                                          &blit)) {
+                    dm2_v1_blit_scaled_bitmap_region(
+                        vp,
+                        stride,
+                        blit.dst_rect.x,
+                        blit.dst_rect.y,
+                        blit.dst_rect.w,
+                        blit.dst_rect.h,
+                        panel_pixels,
+                        blit.src_rect.x,
+                        blit.src_rect.y,
+                        blit.src_rect.w,
+                        blit.src_rect.h,
+                        blit.src_stride,
+                        blit.transparent_color);
+                    ++door_panel_asset_count;
                 }
-                dm2_v1_blit_scaled_bitmap_region(
-                    vp,
-                    stride,
-                    door->panel_visible_rect.x,
-                    door->panel_visible_rect.y,
-                    door->panel_visible_rect.w,
-                    door->panel_visible_rect.h,
-                    panel_pixels,
-                    0,
-                    source_y,
-                    panel_w,
-                    source_h,
-                    panel_stride > 0 ? panel_stride : panel_w,
-                    DM2_COLOR_TRANSPARENT);
-                ++door_panel_asset_count;
             } else {
                 dm2_v1_draw_door_panel_fallback_rect(vp,
                                                      stride,
@@ -2598,22 +2717,32 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                             &door_h,
                                             &door_stride) == 0 &&
                 door_pixels && door_w > 0 && door_h > 0) {
+                DM2_V1_DoorAssetBlit blit;
                 /* skproject GRAPHICSSET fields 0x06/0x07/0x09 are the
                  * first boot-bound door-frame images for front, D1C and D2C.
                  * This pass scales them into the current bounded DM2 frame
                  * rectangles; exact DRAW_DUNGEON_GRAPHIC offsets remain open. */
-                dm2_v1_blit_scaled_bitmap(vp,
-                                          stride,
-                                          door->frame_rect.x,
-                                          door->frame_rect.y,
-                                          door->frame_rect.w,
-                                          door->frame_rect.h,
-                                          door_pixels,
-                                          door_w,
-                                          door_h,
-                                          door_stride > 0 ? door_stride : door_w,
-                                          DM2_COLOR_TRANSPARENT);
-                ++door_asset_count;
+                if (dm2_v1_viewport_door_frame_asset_blit(door,
+                                                          door_w,
+                                                          door_h,
+                                                          door_stride,
+                                                          &blit)) {
+                    dm2_v1_blit_scaled_bitmap_region(
+                        vp,
+                        stride,
+                        blit.dst_rect.x,
+                        blit.dst_rect.y,
+                        blit.dst_rect.w,
+                        blit.dst_rect.h,
+                        door_pixels,
+                        blit.src_rect.x,
+                        blit.src_rect.y,
+                        blit.src_rect.w,
+                        blit.src_rect.h,
+                        blit.src_stride,
+                        blit.transparent_color);
+                    ++door_asset_count;
+                }
             }
         }
         if (door->button_gdat_index != 0 &&
@@ -2630,23 +2759,33 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                             &button_h,
                                             &button_stride) == 0 &&
                 button_pixels && button_w > 0 && button_h > 0) {
+                DM2_V1_DoorAssetBlit blit;
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON
                  * lines ~46243-46264 renders both default door buttons and
                  * custom wall-gfx buttons through the same rectno path. Exact
                  * viewport-cell placement is isolated in
                  * dm2_v1_viewport_door_button_rect_for_square(). */
-                dm2_v1_blit_scaled_bitmap(vp,
-                                          stride,
-                                          door->button_rect.x,
-                                          door->button_rect.y,
-                                          door->button_rect.w,
-                                          door->button_rect.h,
-                                          button_pixels,
-                                          button_w,
-                                          button_h,
-                                          button_stride > 0 ? button_stride : button_w,
-                                          DM2_COLOR_TRANSPARENT);
-                ++door_button_asset_count;
+                if (dm2_v1_viewport_door_button_asset_blit(door,
+                                                           button_w,
+                                                           button_h,
+                                                           button_stride,
+                                                           &blit)) {
+                    dm2_v1_blit_scaled_bitmap_region(
+                        vp,
+                        stride,
+                        blit.dst_rect.x,
+                        blit.dst_rect.y,
+                        blit.dst_rect.w,
+                        blit.dst_rect.h,
+                        button_pixels,
+                        blit.src_rect.x,
+                        blit.src_rect.y,
+                        blit.src_rect.w,
+                        blit.src_rect.h,
+                        blit.src_stride,
+                        blit.transparent_color);
+                    ++door_button_asset_count;
+                }
             }
         }
     }
