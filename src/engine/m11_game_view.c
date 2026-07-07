@@ -235,11 +235,6 @@ static void m11_object_source_pile_shift_indices(int pileIndex,
 static int m11_object_source_shift_value(int shiftSet, int shiftIndex);
 static int m11_creature_coordinate_set(int creatureType);
 static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
-static int m11_dm1_d4_far_projectile_box(int relSide,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH);
 static int m11_c2500_object_raw_zone_point(int rowIndex,
                                            int relativeCell,
                                            int* outX,
@@ -24077,26 +24072,6 @@ static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide) {
     return (int)kG2028[viewSquare];
 }
 
-static int m11_dm1_d4_far_projectile_box(int relSide,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH) {
-    int x;
-    if (relSide < -1 || relSide > 1) {
-        return 0;
-    }
-    /* DUNVIEW.C F0128 D4 pass has source view-square ids M598/M599/M597
-     * but no M11 C2900 row yet. Keep the box tiny and centered behind
-     * the D3 row so later F0128 wall calls naturally overpaint it. */
-    x = (relSide < 0) ? 78 : ((relSide > 0) ? 138 : 108);
-    if (outX) *outX = x;
-    if (outY) *outY = 42;
-    if (outW) *outW = 10;
-    if (outH) *outH = 8;
-    return 1;
-}
-
 static int m11_object_source_scale_units(int scaleIndex) {
     /* DUNVIEW.C G2030_auc_ObjectScales: source object scale units for
      * the five distance/cell scale buckets used by F0115. */
@@ -25744,7 +25719,7 @@ static void m11_draw_dm1_d4_far_projectile_pass(const M11_GameViewState* state,
             !cell.valid ||
             !m11_viewport_cell_is_open(&cell) ||
             !m11_viewport_cell_has_renderable_projectile(&cell) ||
-            !m11_dm1_d4_far_projectile_box(kRelSides[i], &x, &y, &w, &h)) {
+            !dm1_v1_projectile_d4_far_box(kRelSides[i], &x, &y, &w, &h)) {
             continue;
         }
         if (!g_drawState ||
@@ -32264,7 +32239,7 @@ int M11_GameView_GetDm1D4FarProjectileBox(int relSide,
                                           int* outY,
                                           int* outW,
                                           int* outH) {
-    return m11_dm1_d4_far_projectile_box(relSide, outX, outY, outW, outH);
+    return dm1_v1_projectile_d4_far_box(relSide, outX, outY, outW, outH);
 }
 
 
