@@ -2043,6 +2043,23 @@ const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM
     return NULL;
 }
 
+const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_side_wall_draw_spec_for_rel(int rel_forward,
+                                                                                int rel_side)
+{
+    size_t i;
+    for (i = 0; i < dm1_viewport_3d_wall_draw_spec_count(); ++i) {
+        const DM1_ViewportWallDrawSpec *spec = &s_wall_draw_specs[i];
+        if (spec->center_wall) {
+            continue;
+        }
+        if (spec->runtime_rel_forward == rel_forward &&
+            spec->runtime_rel_side == rel_side) {
+            return spec;
+        }
+    }
+    return NULL;
+}
+
 DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec,
                                                     bool parity_flip,
                                                     bool *flip_horizontally)

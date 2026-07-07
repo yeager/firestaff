@@ -736,6 +736,14 @@ static void test_pc34_wall_bitmap_selection(void)
         check_nonnull(id, spec->occlusion_source_lines);
         snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.occlusion_line", i);
         check_int(id, strstr(spec->occlusion_source_lines, expected[i].occlusion_needle) != NULL, 1);
+        if (!expected[i].center) {
+            const DM1_ViewportWallDrawSpec *by_rel =
+                dm1_viewport_3d_get_side_wall_draw_spec_for_rel(
+                    expected[i].rel_forward,
+                    expected[i].rel_side);
+            snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.side_by_rel", i);
+            check_int(id, by_rel == spec, 1);
+        }
 
         bool flip = true;
         DM1_WallSetIndex native_sel = dm1_viewport_3d_select_wall_bitmap(spec, false, &flip);
@@ -754,6 +762,10 @@ static void test_pc34_wall_bitmap_selection(void)
     bool flip = true;
     check_int("PC34.wall_select.null_index", (int)dm1_viewport_3d_select_wall_bitmap(NULL, true, &flip), (int)DM1_WALL_SET_COUNT);
     check_int("PC34.wall_select.null_flip", flip ? 1 : 0, 0);
+    check_int("PC34.wall_spec.side_by_rel.center_rejected",
+              dm1_viewport_3d_get_side_wall_draw_spec_for_rel(2, 0) == NULL, 1);
+    check_int("PC34.wall_spec.side_by_rel.unknown_rejected",
+              dm1_viewport_3d_get_side_wall_draw_spec_for_rel(9, -1) == NULL, 1);
 }
 
 static void test_wall_item_occlusion_alcove_exception(void)
@@ -3606,7 +3618,7 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
           "the native center-wall graphic flipped horizontally.",
           "pass510.center_wall_flip_path" },
         { "src/engine/m11_game_view.c",
-          "left zones use the right-side graphic flipped horizontally",
+          "metadata selects the parity bitmap and asks M11 to mirror",
           "pass510.side_wall_lr_swap_path" },
     };
     for (size_t i = 0; i < sizeof(needles) / sizeof(needles[0]); ++i) {

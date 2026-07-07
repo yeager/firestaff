@@ -45,6 +45,16 @@ static void dm2_v1_startup_mode_update_clear(
     memset(update, 0, sizeof(*update));
 }
 
+static void dm2_v1_startup_input_outcome_clear(
+    DM2_V1_StartupInputOutcome *outcome)
+{
+    if (!outcome) {
+        return;
+    }
+    memset(outcome, 0, sizeof(*outcome));
+    outcome->result = DM2_V1_STARTUP_INPUT_RESULT_IGNORED;
+}
+
 DM2_V1_StartupInput dm2_v1_startup_input_from_firestaff_menu_code(
     int menu_input)
 {
@@ -659,6 +669,47 @@ int dm2_v1_startup_execution_mode_update(
         out_update->startup_menu_active = 0;
     }
     return 1;
+}
+
+int dm2_v1_startup_execution_input_outcome(
+    const DM2_V1_StartupExecution *execution,
+    int session_applied,
+    DM2_V1_StartupInputOutcome *out_outcome)
+{
+    if (!out_outcome) {
+        return 0;
+    }
+    dm2_v1_startup_input_outcome_clear(out_outcome);
+    if (!execution || execution->kind == DM2_V1_STARTUP_EXEC_IGNORE) {
+        return 0;
+    }
+    if (execution->kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW) {
+        out_outcome->result = DM2_V1_STARTUP_INPUT_RESULT_REDRAW;
+        out_outcome->rescan_saves = execution->rescan_saves;
+        out_outcome->status_scope = "STARTUP";
+        out_outcome->status = execution->status
+            ? execution->status
+            : "DM2 START SELECT";
+        return 1;
+    }
+    if (execution->kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
+        out_outcome->result = DM2_V1_STARTUP_INPUT_RESULT_REDRAW;
+        out_outcome->status_scope = "STARTUP";
+        out_outcome->status = session_applied
+            ? (execution->status ? execution->status : "DM2 STARTED")
+            : "DM2 LOAD FAILED";
+        return 1;
+    }
+    if (execution->kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER) {
+        out_outcome->result =
+            DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER;
+        out_outcome->status_scope = "RETURN";
+        out_outcome->status = execution->status
+            ? execution->status
+            : "BACK TO LAUNCHER";
+        return 1;
+    }
+    return 0;
 }
 
 int dm2_v1_startup_execute_save_path(
