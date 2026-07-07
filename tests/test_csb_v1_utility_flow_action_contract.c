@@ -160,6 +160,16 @@ int main(void)
               result.selected_action_index == 1 &&
               result.action == CSB_V1_UTIL_ACTION_LOAD,
           "keyboard Action activates selected Load row");
+    check(csb_v1_util_flow_handle_input(
+              &flow,
+              CSB_V1_UTIL_INPUT_BACK,
+              1,
+              &result) &&
+              result.kind == CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW &&
+              result.preview_active == 0 &&
+              strcmp(result.status_scope, "BOOT") == 0 &&
+              strcmp(result.status, "CSB IMPORT READY") == 0,
+          "keyboard Back close-preview result owns status");
 
     flow.selected_action_index = 0;
     check(csb_v1_util_flow_handle_point(&flow, 40, 116, 1, &result) &&
