@@ -83,6 +83,7 @@
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
@@ -2467,7 +2468,9 @@ static void m11_draw_csb_entrance_door_panel(unsigned char *framebuffer,
                                              int y,
                                              int w,
                                              int h,
-                                             unsigned char fill)
+                                             unsigned char fill,
+                                             unsigned char lightEdge,
+                                             unsigned char darkEdge)
 {
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 ||
         w <= 0 || h <= 0) {
@@ -2476,13 +2479,13 @@ static void m11_draw_csb_entrance_door_panel(unsigned char *framebuffer,
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   x, y, w, h, fill);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x, y, w, 1, M11_COLOR_LIGHT_GRAY);
+                  x, y, w, 1, lightEdge);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x, y + h - 1, w, 1, M11_COLOR_BLACK);
+                  x, y + h - 1, w, 1, darkEdge);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x, y, 1, h, M11_COLOR_LIGHT_GRAY);
+                  x, y, 1, h, lightEdge);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x + w - 1, y, 1, h, M11_COLOR_BLACK);
+                  x + w - 1, y, 1, h, darkEdge);
 }
 
 static int m11_csb_startup_entrance_waiting_for_input(
@@ -2953,7 +2956,9 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                              plan.closed_left_dest_y,
                                              plan.closed_left_w,
                                              plan.closed_left_h,
-                                             M11_COLOR_DARK_GRAY);
+                                             (unsigned char)plan.closed_left_fallback_fill_color,
+                                             (unsigned char)plan.closed_left_fallback_light_edge_color,
+                                             (unsigned char)plan.closed_left_fallback_dark_edge_color);
             m11_draw_csb_entrance_door_panel(framebuffer,
                                              framebufferWidth,
                                              framebufferHeight,
@@ -2961,7 +2966,9 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                              plan.closed_right_dest_y,
                                              plan.closed_right_w,
                                              plan.closed_right_h,
-                                             M11_COLOR_DARK_GRAY);
+                                             (unsigned char)plan.closed_right_fallback_fill_color,
+                                             (unsigned char)plan.closed_right_fallback_light_edge_color,
+                                             (unsigned char)plan.closed_right_fallback_dark_edge_color);
         }
         return;
     }
@@ -21129,20 +21136,7 @@ static int m11_dm1_scaled_dimension(int dimension, int scale) {
 }
 
 static int m11_dm1_wall_ornament_coord_set_index(int globalIndex) {
-    /* DUNVIEW.C G0194_auc_Graphic558_WallOrnamentCoordinateSetIndices,
-     * DM1/PC 3.4 media path with 60 global wall ornaments. */
-    static const unsigned char kCoordSet[60] = {
-        1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-        0, 2, 3, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 2, 2, 1, 1, 1, 1, 1,
-        4, 4, 4, 5, 0, 0, 1, 0, 0, 0,
-        2, 0, 0, 0, 0, 2, 6, 6, 6, 7
-    };
-    if (globalIndex < 0 || globalIndex >= (int)(sizeof(kCoordSet) / sizeof(kCoordSet[0]))) {
-        return 0;
-    }
-    return kCoordSet[globalIndex];
+    return dm1_v1_wall_ornament_coord_set_index_pc34(globalIndex);
 }
 
 int M11_GameView_GetDm1WallOrnamentZone(int coordSet,
@@ -21185,32 +21179,18 @@ int M11_GameView_GetDm1WallOrnamentZone(int coordSet,
 static int m11_dm1_wall_ornament_zone(int coordSet,
                                       int viewWallIndex,
                                       M11_DM1ZoneBlit* outBlit) {
-    /* DUNVIEW.C G0205_aaauc_Graphic558_WallOrnamentCoordinateSets:
-     * { X1, X2, Y1, Y2, ByteWidth, Height }.  The viewport destination is
-     * the inclusive X/Y box; ByteWidth describes source-byte storage and is
-     * not a destination width. */
-    static const unsigned char kZones[8][13][6] = {
-        {{80,83,41,45,8,5},{140,143,41,45,8,5},{16,29,39,50,8,12},{107,120,39,50,8,12},{187,200,39,50,8,12},{67,77,40,49,8,10},{146,156,40,49,8,10},{0,17,38,55,16,18},{102,123,38,55,16,18},{206,223,38,55,16,18},{48,63,38,56,8,19},{160,175,38,56,8,19},{96,127,36,63,16,28}},
-        {{74,82,41,60,8,20},{141,149,41,60,8,20},{1,47,37,63,24,27},{88,134,37,63,24,27},{171,217,37,63,24,27},{61,76,38,67,8,30},{147,162,38,67,8,30},{0,43,37,73,32,37},{80,143,37,73,32,37},{180,223,37,73,32,37},{32,63,36,83,16,48},{160,191,36,83,16,48},{64,159,36,91,48,56}},
-        {{80,83,66,70,8,5},{140,143,66,70,8,5},{16,29,64,75,8,12},{106,119,64,75,8,12},{187,200,64,75,8,12},{67,77,74,83,8,10},{146,156,74,83,8,10},{0,17,73,90,16,18},{100,121,73,90,16,18},{206,223,73,90,16,18},{48,63,84,102,8,19},{160,175,84,102,8,19},{96,127,92,119,16,28}},
-        {{80,83,49,53,8,5},{140,143,49,53,8,5},{16,29,50,61,8,12},{106,119,50,61,8,12},{187,200,50,61,8,12},{67,77,53,62,8,10},{146,156,53,62,8,10},{0,17,55,72,16,18},{100,121,55,72,16,18},{206,223,55,72,16,18},{48,63,57,75,8,19},{160,175,57,75,8,19},{96,127,64,91,16,28}},
-        {{75,90,40,44,8,5},{133,148,40,44,8,5},{1,48,44,49,24,6},{88,135,44,49,24,6},{171,218,44,49,24,6},{60,77,40,46,16,7},{146,163,40,46,16,7},{0,35,43,50,32,8},{80,143,43,50,32,8},{184,223,43,50,32,8},{32,63,41,52,16,12},{160,191,41,52,16,12},{64,159,41,52,48,12}},
-        {{78,85,36,51,8,16},{138,145,36,51,8,16},{10,41,34,53,16,20},{98,129,34,53,16,20},{179,210,34,53,16,20},{66,75,34,56,8,23},{148,157,34,56,8,23},{0,26,33,61,24,29},{91,133,33,61,24,29},{194,223,33,61,24,29},{41,56,31,65,8,35},{167,182,31,65,8,35},{80,143,29,71,32,43}},
-        {{75,82,25,75,8,51},{142,149,25,75,8,51},{12,60,25,75,32,51},{88,136,25,75,32,51},{163,211,25,75,32,51},{64,73,20,90,8,71},{150,159,20,90,8,71},{0,38,20,90,32,71},{82,142,20,90,32,71},{184,223,20,90,32,71},{41,56,9,119,8,111},{169,184,9,119,8,111},{64,159,9,119,48,111}},
-        {{74,85,25,75,8,51},{137,149,25,75,8,51},{0,75,25,75,40,51},{74,149,25,75,40,51},{148,223,25,75,40,51},{60,77,20,90,16,71},{146,163,20,90,16,71},{0,74,20,90,56,71},{60,163,20,90,56,71},{149,223,20,90,56,71},{32,63,9,119,16,111},{160,191,9,119,16,111},{32,191,9,119,80,111}}
-    };
-    const unsigned char* z;
-    if (!outBlit || coordSet < 0 || coordSet >= 8 || viewWallIndex < 0 || viewWallIndex >= 13) {
+    DM1_WallOrnamentZoneBlitPc34 blit;
+    if (!outBlit ||
+        !dm1_v1_wall_ornament_zone_pc34(coordSet, viewWallIndex, &blit)) {
         return 0;
     }
-    z = kZones[coordSet][viewWallIndex];
-    outBlit->srcX = 0;
-    outBlit->srcY = 0;
-    outBlit->dstX = z[0];
-    outBlit->dstY = z[2];
-    outBlit->width = z[1] - z[0] + 1;
-    outBlit->height = z[3] - z[2] + 1;
-    return outBlit->width > 0 && outBlit->height > 0;
+    outBlit->srcX = blit.srcX;
+    outBlit->srcY = blit.srcY;
+    outBlit->dstX = blit.dstX;
+    outBlit->dstY = blit.dstY;
+    outBlit->width = blit.width;
+    outBlit->height = blit.height;
+    return 1;
 }
 
 static int m11_dm1_door_ornament_info(const M11_GameViewState* state,

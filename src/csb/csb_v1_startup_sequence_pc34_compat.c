@@ -18,7 +18,10 @@ enum {
     CSB_V1_GRAPHIC_ENTRANCE_CREDITS_PC34 = 5,
     CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34 = 1,
     CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34 = 2,
-    CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34 = 3
+    CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34 = 3,
+    CSB_V1_FALLBACK_BLACK_PC34 = 0,
+    CSB_V1_FALLBACK_LIGHT_GRAY_PC34 = 2,
+    CSB_V1_FALLBACK_DARK_GRAY_PC34 = 12
 };
 
 const char* csb_v1_startup_stage_name_pc34(CSB_V1_StartupStage_PC34 stage)
@@ -157,6 +160,9 @@ static void csb_v1_startup_clear_door_rects_pc34(
     plan->closed_left_dest_y = 0;
     plan->closed_left_w = 0;
     plan->closed_left_h = 0;
+    plan->closed_left_fallback_fill_color = 0;
+    plan->closed_left_fallback_light_edge_color = 0;
+    plan->closed_left_fallback_dark_edge_color = 0;
     plan->closed_right_source_x = 0;
     plan->closed_right_source_y = 0;
     plan->closed_right_asset_id = 0;
@@ -164,6 +170,9 @@ static void csb_v1_startup_clear_door_rects_pc34(
     plan->closed_right_dest_y = 0;
     plan->closed_right_w = 0;
     plan->closed_right_h = 0;
+    plan->closed_right_fallback_fill_color = 0;
+    plan->closed_right_fallback_light_edge_color = 0;
+    plan->closed_right_fallback_dark_edge_color = 0;
     plan->opening_door_valid = 0;
     plan->opening_door_step = 0;
     plan->opening_left_source_x = 0;
@@ -278,6 +287,11 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
     plan->closed_left_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
     plan->closed_left_w = 105;
     plan->closed_left_h = 161;
+    plan->closed_left_fallback_fill_color = CSB_V1_FALLBACK_DARK_GRAY_PC34;
+    plan->closed_left_fallback_light_edge_color =
+        CSB_V1_FALLBACK_LIGHT_GRAY_PC34;
+    plan->closed_left_fallback_dark_edge_color =
+        CSB_V1_FALLBACK_BLACK_PC34;
     plan->closed_right_source_x = 0;
     plan->closed_right_source_y = 0;
     plan->closed_right_asset_id = CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34;
@@ -285,6 +299,11 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
     plan->closed_right_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
     plan->closed_right_w = 127;
     plan->closed_right_h = 161;
+    plan->closed_right_fallback_fill_color = CSB_V1_FALLBACK_DARK_GRAY_PC34;
+    plan->closed_right_fallback_light_edge_color =
+        CSB_V1_FALLBACK_LIGHT_GRAY_PC34;
+    plan->closed_right_fallback_dark_edge_color =
+        CSB_V1_FALLBACK_BLACK_PC34;
 }
 
 static void csb_v1_startup_set_opening_door_rects_pc34(

@@ -329,12 +329,18 @@ int main(void)
               plan.closed_left_dest_y == 28 &&
               plan.closed_left_w == 105 &&
               plan.closed_left_h == 161 &&
+              plan.closed_left_fallback_fill_color == 12 &&
+              plan.closed_left_fallback_light_edge_color == 2 &&
+              plan.closed_left_fallback_dark_edge_color == 0 &&
               plan.closed_right_source_x == 0 &&
               plan.closed_right_source_y == 0 &&
               plan.closed_right_dest_x == 105 &&
               plan.closed_right_dest_y == 28 &&
               plan.closed_right_w == 127 &&
               plan.closed_right_h == 161 &&
+              plan.closed_right_fallback_fill_color == 12 &&
+              plan.closed_right_fallback_light_edge_color == 2 &&
+              plan.closed_right_fallback_dark_edge_color == 0 &&
               plan.fallback_title_x == 38 &&
               plan.fallback_title_y == 42 &&
               plan.fallback_title_style == 2 &&
@@ -404,6 +410,8 @@ int main(void)
               plan.surface_transparent_color == -1 &&
               plan.closed_left_asset_id == 2 &&
               plan.closed_right_asset_id == 3 &&
+              plan.closed_left_fallback_fill_color == 12 &&
+              plan.closed_right_fallback_fill_color == 12 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.opening_step == 2,
           "startup render plan owns door pre-open surface");
@@ -421,6 +429,8 @@ int main(void)
               plan.surface_transparent_color == -1 &&
               plan.closed_left_asset_id == 2 &&
               plan.closed_right_asset_id == 3 &&
+              plan.closed_left_fallback_light_edge_color == 2 &&
+              plan.closed_right_fallback_dark_edge_color == 0 &&
               plan.opening_step == 2 &&
               plan.opening_door_valid &&
               plan.opening_door_step == 2 &&
