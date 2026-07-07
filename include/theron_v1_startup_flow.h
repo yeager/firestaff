@@ -294,6 +294,18 @@ typedef struct {
 } Theron_StartupLayoutStateRequest;
 
 typedef struct {
+    const void *boot_profile; /* Theron_V1_BootProfile*, kept opaque here. */
+    const Theron_V1_World *world;
+    const char *prefix;
+} Theron_StartupChapterInspectRequest;
+
+typedef struct {
+    char inspect_scope[16];
+    char inspect_detail[320];
+    char marker_line[192];
+} Theron_StartupChapterInspectReceipt;
+
+typedef struct {
     int x;
     int y;
     Theron_StartupRenderTextStyle style;
@@ -393,6 +405,11 @@ void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state);
 int theron_v1_startup_layout_state_from_request(
     const Theron_StartupLayoutStateRequest *request,
     Theron_StartupLayoutState *out_state);
+void theron_v1_startup_chapter_inspect_receipt_init(
+    Theron_StartupChapterInspectReceipt *receipt);
+int theron_v1_startup_chapter_inspect_receipt_from_request(
+    const Theron_StartupChapterInspectRequest *request,
+    Theron_StartupChapterInspectReceipt *out_receipt);
 Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
     const Theron_DungeonProgression *progression,
