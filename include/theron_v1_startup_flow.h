@@ -412,6 +412,16 @@ Theron_StartupResult theron_v1_startup_flow_rebuild_from_facts(
     int selected_mirror_order_count,
     const Theron_DungeonProgression *progression,
     Theron_StartupFlow *flow);
+Theron_StartupResult theron_v1_startup_flow_rebuild_from_facts_with_receipt(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_receipt);
 void theron_v1_startup_action_init(Theron_StartupAction *action);
 void theron_v1_startup_action_plan_init(Theron_StartupActionPlan *plan);
 void theron_v1_startup_hit_init(Theron_StartupHit *hit);
