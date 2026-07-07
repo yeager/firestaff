@@ -193,6 +193,26 @@ static int setup_nexus_recommended_dir(const char* root,
     return 1;
 }
 
+static int setup_nexus_renamed_file(const char* root,
+                                    char* outDataPath,
+                                    size_t outDataPathSize,
+                                    char* outDataMd5,
+                                    size_t outDataMd5Size) {
+    char nexusDir[M12_ASSET_DATA_DIR_CAPACITY];
+    static const char dataPayload[] =
+        "Firestaff synthetic Nexus data image fixture with renamed file\n";
+    if (!FSP_JoinPath(nexusDir, sizeof(nexusDir), root, "nexus") ||
+        !FSP_CreateDirectoryRecursive(nexusDir) ||
+        !FSP_JoinPath(outDataPath, outDataPathSize,
+                      nexusDir, "user-renamed-saturn-data.image") ||
+        !write_text(outDataPath, dataPayload) ||
+        !m12_file_md5_hex(outDataPath, outDataMd5)) {
+        return 0;
+    }
+    outDataMd5[outDataMd5Size - 1U] = '\0';
+    return 1;
+}
+
 static int setup_dm1_renamed_hash_dir(const char* root,
                                       char* outGraphicsPath,
                                       size_t outGraphicsPathSize,
@@ -917,6 +937,66 @@ static void check_symlinked_multi_game_root_scans_all_games(const char* homeRoot
 }
 #endif
 
+static void check_direct_nexus_file_request_is_hash_first(
+    const char* homeRoot) {
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char nexusPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char nexusMd5[M12_ASSET_MD5_CAPACITY];
+    char expectedRuntimeRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    M12_AssetStatus status;
+    M12_StartupMenuState menu;
+    const M12_AssetRequiredFileStatus* required = NULL;
+    size_t i;
+    size_t count;
+
+    if (!FSP_JoinPath(dataRoot, sizeof(dataRoot), homeRoot,
+                      "direct-renamed-nexus-file-data") ||
+        !FSP_CreateDirectoryRecursive(dataRoot) ||
+        !setup_nexus_renamed_file(dataRoot,
+                                  nexusPath, sizeof(nexusPath),
+                                  nexusMd5, sizeof(nexusMd5)) ||
+        !FSP_ParentDir(expectedRuntimeRoot,
+                       sizeof(expectedRuntimeRoot),
+                       nexusPath)) {
+        fprintf(stderr, "FAIL: cannot seed direct renamed Nexus file fixture\n");
+        ++g_failures;
+        return;
+    }
+
+    M12_AssetStatus_TestSetNexusSyntheticHash(nexusMd5);
+
+    memset(&status, 0, sizeof(status));
+    scan_in_isolated_env(homeRoot, nexusPath, &status);
+    check_int(M12_AssetStatus_GameAvailable(&status, "nexus") == 1,
+              "direct renamed Nexus file scan must verify by file hash");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "nexus"),
+                     expectedRuntimeRoot) == 0,
+              "direct renamed Nexus file scan must launch from the file parent");
+    count = M12_AssetStatus_GetRequiredFileCount(&status, "nexus");
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetRequiredFileStatus* r =
+            M12_AssetStatus_GetRequiredFile(&status, "nexus", i);
+        if (r && r->roleId && strcmp(r->roleId, "data") == 0) {
+            required = r;
+            break;
+        }
+    }
+    check_int(required && required->matched &&
+              strcmp(required->matchedPath, nexusPath) == 0,
+              "direct renamed Nexus file required row must report the selected file");
+
+    M12_StartupMenu_InitWithDataDir(&menu, nexusPath, "nexus");
+    check_int(M12_AssetStatus_GameAvailable(&menu.assetStatus, "nexus") == 1,
+              "start menu direct renamed Nexus file must verify by file hash");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&menu.assetStatus,
+                                                       "nexus"),
+                     expectedRuntimeRoot) == 0,
+              "start menu direct renamed Nexus file must launch from the file parent");
+    M12_StartupMenu_Destroy(&menu);
+
+    M12_AssetStatus_TestSetNexusSyntheticHash(NULL);
+}
+
 static int any_menu_game_available(const M12_StartupMenuState* menu) {
     return menu &&
            (M12_AssetStatus_GameAvailable(&menu->assetStatus, "dm1") ||
@@ -1292,6 +1372,7 @@ int main(void) {
     check_symlinked_recommended_dm1_layout(home);
     check_symlinked_multi_game_root_scans_all_games(home);
 #endif
+    check_direct_nexus_file_request_is_hash_first(home);
     check_start_menu_heals_stale_config_data_dir(home);
     check_start_menu_prefers_default_root_with_more_games(home);
     check_start_menu_env_data_dir_matches_scan_data(home);

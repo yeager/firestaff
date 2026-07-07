@@ -1291,6 +1291,27 @@ static int m12_theron_version_index_for_md5(const char* md5) {
     return -1;
 }
 
+static int m12_nexus_version_index_for_md5(const char* md5) {
+    size_t i;
+    if (!md5) {
+        return -1;
+    }
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    if (g_m12TestNexusDataMd5[0] != '\0' &&
+        strcmp(md5, g_m12TestNexusDataMd5) == 0) {
+        return 0;
+    }
+#endif
+    for (i = 0U; i < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]); ++i) {
+        if (g_nexusVersions[i].md5 &&
+            g_nexusVersions[i].md5[0] != '\0' &&
+            strcmp(g_nexusVersions[i].md5, md5) == 0) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
 static void m12_init_version_metadata(M12_AssetStatus* status) {
     int gameIndex;
     if (!status) {
@@ -1476,6 +1497,30 @@ static int m12_try_match_direct_nexus_request(
         return 0;
     }
     if (FSP_FileExists(requestedDataDir)) {
+        char md5[M12_ASSET_MD5_CAPACITY];
+        int versionIndex = -1;
+        if (m12_file_md5_hex(requestedDataDir, md5)) {
+            versionIndex = m12_nexus_version_index_for_md5(md5);
+            if (versionIndex >= 0) {
+                if (!FSP_ParentDir(runtimeRoot,
+                                   M12_ASSET_DATA_DIR_CAPACITY,
+                                   requestedDataDir)) {
+                    m12_copy_string(runtimeRoot,
+                                    M12_ASSET_DATA_DIR_CAPACITY,
+                                    ".");
+                }
+                m12_copy_string(matchedPath,
+                                M12_ASSET_DATA_DIR_CAPACITY,
+                                requestedDataDir);
+                m12_copy_string(matchedMd5,
+                                M12_ASSET_MD5_CAPACITY,
+                                md5);
+                if (outVersionIndex) {
+                    *outVersionIndex = versionIndex;
+                }
+                return 1;
+            }
+        }
         if (!FSP_ParentDir(scanRoot, sizeof(scanRoot), requestedDataDir)) {
             m12_copy_string(scanRoot, sizeof(scanRoot), ".");
         }
