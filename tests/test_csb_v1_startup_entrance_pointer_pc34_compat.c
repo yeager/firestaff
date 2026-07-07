@@ -262,8 +262,15 @@ int main(void)
               plan.primitive_commands[0].w == 320 &&
               plan.primitive_commands[0].h == 200 &&
               plan.primitive_commands[0].color == 0 &&
+              plan.asset_command_count == 1 &&
+              plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
+              plan.asset_commands[0].asset_id == 1 &&
+              plan.asset_commands[0].source_y == 137 &&
+              plan.asset_commands[0].dest_y == 90 &&
+              plan.asset_commands[0].transparent_color == -1 &&
               !plan.waiting_for_input,
-          "startup render plan owns title PRESENTS surface, boxes, palette, fallback rows, and primitive clear");
+          "startup render plan owns title PRESENTS surface, boxes, palette, fallback rows, asset blit, and primitive clear");
     check(plan.render_command_count == 1 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
@@ -290,8 +297,14 @@ int main(void)
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_TITLE &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE,
-          "startup render plan exposes title CHAOS zoom stage, boxes, palette");
+                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+              plan.asset_command_count == 1 &&
+              plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34 &&
+              plan.asset_commands[0].asset_id == 1 &&
+              plan.asset_commands[0].dest_w == 320 &&
+              plan.asset_commands[0].dest_h == 80,
+          "startup render plan exposes title CHAOS zoom stage, boxes, palette, and asset blit");
 
     render_state.title_frame =
         csb_v1_startup_title_total_ticks_pc34() - 1;
@@ -314,8 +327,15 @@ int main(void)
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_TITLE &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE,
-          "startup render plan exposes title STRIKES BACK stage, boxes, palette");
+                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+              plan.asset_command_count == 1 &&
+              plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
+              plan.asset_commands[0].asset_id == 1 &&
+              plan.asset_commands[0].source_y == 80 &&
+              plan.asset_commands[0].dest_y == 118 &&
+              plan.asset_commands[0].transparent_color == 0,
+          "startup render plan exposes title STRIKES BACK stage, boxes, palette, and asset blit");
 
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;
@@ -419,8 +439,18 @@ int main(void)
               plan.primitive_commands[1].y == 18 &&
               plan.primitive_commands[1].w == 284 &&
               plan.primitive_commands[1].h == 164 &&
-              plan.primitive_commands[1].color == 14,
-          "startup render plan owns closed entrance prompt, fallback rows, door boxes, and primitive frame");
+              plan.primitive_commands[1].color == 14 &&
+              plan.asset_command_count == 3 &&
+              plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
+              plan.asset_commands[0].asset_id == 4 &&
+              plan.asset_commands[1].kind ==
+                  CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 &&
+              plan.asset_commands[1].asset_id == 2 &&
+              plan.asset_commands[2].kind ==
+                  CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34 &&
+              plan.asset_commands[2].asset_id == 3,
+          "startup render plan owns closed entrance prompt, fallback rows, door boxes, asset blits, and primitive frame");
     check(plan.render_command_count == 5 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
@@ -485,8 +515,14 @@ int main(void)
               strcmp(plan.fallback_text_rows[2].text, "PRESS ENTER") == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
-                  CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34,
-          "startup render plan owns credits surface, asset, fallback rows, and primitive clear");
+                  CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
+              plan.asset_command_count == 1 &&
+              plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
+              plan.asset_commands[0].asset_id == 5 &&
+              plan.asset_commands[0].dest_w == 320 &&
+              plan.asset_commands[0].dest_h == 200,
+          "startup render plan owns credits surface, asset blit, fallback rows, and primitive clear");
     check(plan.render_command_count == 2 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
@@ -529,8 +565,15 @@ int main(void)
               plan.primitive_commands[2].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&
               plan.primitive_commands[2].x == 105 &&
-              plan.primitive_commands[2].w == 127,
-          "startup render plan owns door pre-open surface and fallback primitive panels");
+              plan.primitive_commands[2].w == 127 &&
+              plan.asset_command_count == 3 &&
+              plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
+              plan.asset_commands[1].kind ==
+                  CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 &&
+              plan.asset_commands[2].kind ==
+                  CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34,
+          "startup render plan owns door pre-open surface, asset blits, and fallback primitive panels");
     check(plan.render_command_count == 3 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
@@ -570,8 +613,15 @@ int main(void)
               plan.opening_right_h == 161 &&
               plan.primitive_command_count == 3 &&
               plan.primitive_commands[1].kind ==
-                  CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34,
-          "startup render plan owns door-opening frame surface, boxes, and fallback primitive panels");
+                  CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&
+              plan.asset_command_count == 3 &&
+              plan.asset_commands[0].kind ==
+                  CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
+              plan.asset_commands[1].kind ==
+                  CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 &&
+              plan.asset_commands[2].kind ==
+                  CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34,
+          "startup render plan owns door-opening frame surface, boxes, asset blits, and fallback primitive panels");
     check(plan.render_command_count == 4 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
