@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 center-lane mask consumer cleanup: M11 now funnels center blocking, nearest blocking, and center-door blocker queries through one adapter to the DM1-owned `DM1_ViewportCenterLaneMasksPc34` contract instead of keeping separate local center mask builders. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, DM1 viewport syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 lane-mask helper ownership: `dm1_v1_viewport_3d_pc34_compat` now owns open-depth mask construction and center-lane valid/open/blocking/door mask derivation from per-depth cell flags. This keeps the F0128 center/side lane mask contract in DM1 instead of spreading mask assembly across consumers. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, DM1 viewport syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 wall-ornament predicate ownership: M11 now calls `dm1_v1_wall_ornament_pc34_compat` directly for wall-ornament alcove classification and source horizontal-flip decisions. The local M11 wrapper predicates are gone, keeping the HoC viewport path on the DM1-owned wall-ornament contract. Verification: M11 syntax passed cleanly, DM1 wall-ornament syntax passed, and `git diff --check` passed.
