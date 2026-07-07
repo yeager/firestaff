@@ -312,6 +312,13 @@ int nexus_v1_startup_menu_snapshot_handle_input(
     Nexus_V1_StartupMenuSnapshot *snapshot,
     Nexus_V1_StartupInput input,
     Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_menu_handle_firestaff_input_from_facts(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row,
+    int menu_input,
+    Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_menu_snapshot_handle_hit(
     Nexus_V1_StartupMenuSnapshot *snapshot,
     const Nexus_V1_StartupHit *hit,

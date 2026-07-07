@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus save-select input facts ownership: `nexus_v1_startup_menu` now handles Firestaff save-select input directly from raw save-dir, slot-mask, and selected-row facts, returning the updated snapshot and action. M11 no longer builds a Nexus save snapshot before keyboard/menu input. Verification: Nexus startup menu passed, M11 Nexus startup gate passed, Nexus launcher handoff passed 151/151, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 DM2 startup input facts ownership: `dm2_v1_startup_menu` now handles Firestaff input directly from raw startup facts, including fallback save root, row normalization, updated snapshot, and startup action. M11 no longer builds a DM2 startup snapshot before routing keyboard/menu input. Verification: DM2 startup action contract passed 57/57, DM2 M11 startup/profile gate passed, DM2 launcher handoff passed 42/42, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB utility-flow runtime-profile facts ownership: `csb_v1_utility_flow_pc34` now builds utility panel state directly from selected action, imported champion count, and runtime-profile facts. M11 no longer copies imported party state before utility panel render/input. Verification: utility-flow action contract passed 52/52, CSB M11 startup/resume gate passed, CSB boot-runtime handoff passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

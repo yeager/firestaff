@@ -687,6 +687,27 @@ int nexus_v1_startup_menu_snapshot_handle_input(
     return handled;
 }
 
+int nexus_v1_startup_menu_handle_firestaff_input_from_facts(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row,
+    int menu_input,
+    Nexus_V1_StartupAction *out_action)
+{
+    if (!nexus_v1_startup_menu_snapshot_from_facts(snapshot,
+                                                  save_dir,
+                                                  slot_mask,
+                                                  selected_row)) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return nexus_v1_startup_menu_snapshot_handle_input(
+        snapshot,
+        nexus_v1_startup_input_from_firestaff_menu_code(menu_input),
+        out_action);
+}
+
 int nexus_v1_startup_menu_snapshot_handle_hit(
     Nexus_V1_StartupMenuSnapshot *snapshot,
     const Nexus_V1_StartupHit *hit,
