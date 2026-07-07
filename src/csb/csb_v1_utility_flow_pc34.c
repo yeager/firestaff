@@ -271,6 +271,22 @@ int csb_v1_util_flow_accept_selected_action(CSB_V1_UtilFlowContext *ctx)
     return 0;
 }
 
+int csb_v1_util_flow_accept_import_action(CSB_V1_UtilFlowContext *ctx)
+{
+    CSB_V1_UtilMenuLayout layout;
+
+    if (!ctx || ctx->state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
+        return 0;
+    }
+    if (!csb_v1_util_flow_menu_layout(ctx, &layout) ||
+        layout.row_count <= 0 ||
+        layout.rows[0].action != CSB_V1_UTIL_ACTION_IMPORT) {
+        return 0;
+    }
+    csb_v1_util_flow_set_action(ctx, layout.rows[0].action);
+    return csb_v1_util_flow_accept_selected_action(ctx) == 0;
+}
+
 int csb_v1_util_flow_cancel_to_menu(CSB_V1_UtilFlowContext *ctx)
 {
     if (!ctx) return -1;
