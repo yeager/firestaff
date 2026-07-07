@@ -649,13 +649,30 @@ int nexus_v1_startup_menu_build_champion_render_rows(
     int max_rows,
     Nexus_V1_StartupChampionFooterRender *out_footer)
 {
+    return nexus_v1_startup_menu_build_champion_render_rows_for_frame(
+        pool, cursor, 0, rows, max_rows, out_footer);
+}
+
+int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
+    const Nexus_V1_ChampionPool *pool,
+    int cursor,
+    int frame,
+    Nexus_V1_StartupChampionRenderRow *rows,
+    int max_rows,
+    Nexus_V1_StartupChampionFooterRender *out_footer)
+{
     int row;
     int count = 0;
     int first_row = 0;
+    int blink_on;
 
     if (!pool || !rows || max_rows <= 0) {
         return 0;
     }
+    if (frame < 0) {
+        frame = 0;
+    }
+    blink_on = ((frame / 12) & 1) == 0;
     memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
     if (out_footer) {
         Nexus_V1_StartupRect footer_rect;
@@ -691,10 +708,21 @@ int nexus_v1_startup_menu_build_champion_render_rows(
         out->selected = (row == cursor) ? 1 : 0;
         out->in_party = in_party;
         out->portrait_index = pool->champions[row].portrait_index;
+        out->highlight_rect = out->rect;
+        out->highlight_rect.x -= 2;
+        out->highlight_rect.y -= 1;
+        out->highlight_rect.w = 266;
+        out->highlight_rect.h += 2;
         out->portrait_x = NEXUS_V1_STARTUP_CHAMPION_PORTRAIT_X;
         out->portrait_y = out->rect.y + 1;
         out->portrait_w = 10;
         out->portrait_h = 10;
+        out->highlight_visible = out->selected && blink_on ? 1 : 0;
+        out->text_color = out->selected && blink_on ? 11 : 15;
+        out->shadow_color = 0;
+        out->portrait_border_color = out->selected && blink_on ? 11 :
+            (out->in_party ? 7 : 12);
+        out->party_marker_color = out->in_party ? 7 : 12;
         out->text_x = NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X;
         out->text_y = out->rect.y + 1;
         snprintf(out->label,

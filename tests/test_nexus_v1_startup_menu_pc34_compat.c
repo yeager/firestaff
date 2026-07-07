@@ -141,11 +141,27 @@ int main(void)
                    champions.champions[0].portrait_index &&
                champion_rows[0].portrait_x ==
                    NEXUS_V1_STARTUP_CHAMPION_PORTRAIT_X &&
+               champion_rows[0].highlight_visible == 1 &&
+               champion_rows[0].text_color == 11 &&
+               champion_rows[0].portrait_border_color == 11 &&
                champion_rows[0].text_x ==
                    NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X &&
                strstr(champion_rows[0].label,
                       champions.champions[0].name_ascii) != NULL,
            "Nexus champion startup render row carries selection, portrait, text and label");
+    memset(champion_rows, 0, sizeof(champion_rows));
+    expect(nexus_v1_startup_menu_build_champion_render_rows_for_frame(
+               &champions,
+               cursor,
+               12,
+               champion_rows,
+               (int)(sizeof(champion_rows) / sizeof(champion_rows[0])),
+               &champion_footer) == 12 &&
+               champion_rows[0].selected == 1 &&
+               champion_rows[0].highlight_visible == 0 &&
+               champion_rows[0].text_color == 15 &&
+               champion_rows[0].portrait_border_color == 12,
+           "Nexus champion startup render row owns cursor blink timing");
     expect(strstr(champion_footer.label, "PARTY 0/4") != NULL &&
                champion_footer.text_x == NEXUS_V1_STARTUP_FOOTER_X &&
                champion_footer.text_y == NEXUS_V1_STARTUP_FOOTER_Y,
@@ -165,6 +181,8 @@ int main(void)
                champion_rows[0].row == 12 &&
                champion_rows[1].row == 13 &&
                champion_rows[1].selected == 1 &&
+               champion_rows[1].highlight_visible == 1 &&
+               champion_rows[1].text_color == 11 &&
                champion_rows[0].rect.y == 37 &&
                strstr(champion_rows[0].label,
                       champions.champions[12].name_ascii) != NULL,
