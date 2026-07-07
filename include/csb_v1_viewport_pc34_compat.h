@@ -478,6 +478,9 @@ struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int sprite_y;
     int sprite_w;
     int sprite_h;
+    int sprite_aspect_index;
+    int sprite_graphic_index;
+    int sprite_is_smoke;
 };
 
 typedef struct {
@@ -809,6 +812,9 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
     int explosion_map_y,
     int explosion_cell,
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_bind_explosion_sprite(
+    const struct ExplosionInstance_Compat *explosion,
+    CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement);
 int csb_v1_viewport_runtime_explosion_sprite_rect(
     int forward,
     int source_zone,
