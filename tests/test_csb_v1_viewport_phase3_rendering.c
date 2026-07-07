@@ -2297,6 +2297,29 @@ static void test_csb_runtime_overlay_placement_contracts(void)
     CSB_V1_ViewportRuntimeObjectOverlayPlacement object_place;
     CSB_V1_ViewportRuntimeGroupOverlayPlacement group_place;
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement explosion_place;
+    int min_side = 99;
+    int max_side = -99;
+
+    check_true("csb.runtime_overlay_scan.d1.range",
+               csb_v1_viewport_runtime_overlay_side_range(
+                   1, &min_side, &max_side) == 1);
+    check_int("csb.runtime_overlay_scan.d1.min", min_side, -1);
+    check_int("csb.runtime_overlay_scan.d1.max", max_side, 1);
+    check_true("csb.runtime_overlay_scan.d2.range",
+               csb_v1_viewport_runtime_overlay_side_range(
+                   2, &min_side, &max_side) == 1);
+    check_int("csb.runtime_overlay_scan.d2.min", min_side, -1);
+    check_int("csb.runtime_overlay_scan.d2.max", max_side, 1);
+    check_true("csb.runtime_overlay_scan.d3.range",
+               csb_v1_viewport_runtime_overlay_side_range(
+                   3, &min_side, &max_side) == 1);
+    check_int("csb.runtime_overlay_scan.d3.min", min_side, -2);
+    check_int("csb.runtime_overlay_scan.d3.max", max_side, 2);
+    check_int("csb.runtime_overlay_scan.bad_forward",
+              csb_v1_viewport_runtime_overlay_side_range(
+                  4, &min_side, &max_side), 0);
+    check_int("csb.runtime_overlay_scan.bad_min", min_side, 0);
+    check_int("csb.runtime_overlay_scan.bad_max", max_side, -1);
 
     memset(&object_place, 0, sizeof(object_place));
     check_true("csb.runtime_object_overlay.d1c.visible",
