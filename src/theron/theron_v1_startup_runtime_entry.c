@@ -541,3 +541,53 @@ int theron_v1_startup_runtime_enter_from_forcefield_with_receipts(
     }
     return 1;
 }
+
+int theron_v1_startup_runtime_enter_from_forcefield_facts_with_receipts(
+    Theron_StartupFlow *flow,
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    int startup_roster_name_count,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_V1StartupRuntimeEntryRequest request;
+    const char *roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY];
+    int roster_count;
+    int i;
+
+    memset(roster_names, 0, sizeof(roster_names));
+    roster_count = startup_roster_name_count;
+    if (roster_count < 0) {
+        roster_count = 0;
+    }
+    if (roster_count > (int)THERON_STARTUP_MEDIA_ROSTER_CAPACITY) {
+        roster_count = (int)THERON_STARTUP_MEDIA_ROSTER_CAPACITY;
+    }
+    for (i = 0; i < roster_count; ++i) {
+        roster_names[i] = startup_roster_names ? startup_roster_names[i] : NULL;
+    }
+
+    theron_v1_startup_runtime_entry_request_init(&request);
+    request.hucard_rom = hucard_rom;
+    request.hucard_rom_size = hucard_rom_size;
+    request.md5_hex = md5_hex;
+    request.roster_names = roster_names;
+    request.roster_name_count = roster_count;
+    return theron_v1_startup_runtime_enter_from_forcefield_with_receipts(
+        flow,
+        world,
+        &request,
+        plan,
+        out_result,
+        out_apply_receipt,
+        out_state_receipt,
+        receipt,
+        receipt_cap);
+}

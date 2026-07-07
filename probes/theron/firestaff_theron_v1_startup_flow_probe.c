@@ -2072,6 +2072,17 @@ int main(void) {
                 Theron_StartupActionPlan forcefield_plan;
                 Theron_V1StartupRuntimeEntryApplyReceipt runtime_apply_receipt;
                 Theron_StartupStateReceipt state_receipt;
+                char fixed_roster[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
+                                 [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY] = {
+                    "THERON",
+                    "MARA-FX",
+                    "LINOS-FX",
+                    "HEXA-FX",
+                    "HAKAR-FX",
+                    "TIRAN-FX",
+                    "DOTAN-FX",
+                    "PENTAI-FX"
+                };
                 check_int("runtime wrapper state receipt rc",
                           theron_v1_startup_runtime_entry_state_receipt_from_result(
                               &flow,
@@ -2132,6 +2143,44 @@ int main(void) {
                 check_int("runtime combined state loaded",
                           state_receipt.level_loaded,
                           1);
+
+                theron_v1_startup_flow_init(&flow);
+                theron_v1_world_init(&world);
+                runtime_receipt[0] = '\0';
+                check_int("runtime facts choose rc",
+                          theron_v1_startup_choose_stage(
+                              &flow,
+                              &progression,
+                              THERON_DUNGEON_1_HALL_OF_RECORDS),
+                          THERON_STARTUP_OK);
+                check_int("runtime facts mirror rc",
+                          theron_v1_startup_select_mirror(&flow, 0),
+                          THERON_STARTUP_OK);
+                check_int("runtime facts enter rc",
+                          theron_v1_startup_runtime_enter_from_forcefield_facts_with_receipts(
+                              &flow,
+                              &world,
+                              NULL,
+                              0u,
+                              NULL,
+                              fixed_roster,
+                              (int)THERON_STARTUP_MEDIA_ROSTER_CAPACITY,
+                              &forcefield_plan,
+                              &runtime_result,
+                              &runtime_apply_receipt,
+                              &state_receipt,
+                              runtime_receipt,
+                              sizeof(runtime_receipt)),
+                          1);
+                check_str("runtime facts roster name",
+                          world.party.champions[1].name,
+                          "HAKAR-FX");
+                check_int("runtime facts state phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_IN_DUNGEON);
+                check_int("runtime facts apply redraw",
+                          runtime_apply_receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
             }
         }
         theron_v1_startup_flow_init(&flow);
