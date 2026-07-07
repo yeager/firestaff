@@ -188,6 +188,21 @@ static void csb_v1_startup_clear_door_rects_pc34(
     plan->opening_right_dest_y = 0;
     plan->opening_right_w = 0;
     plan->opening_right_h = 0;
+    plan->opening_composite_valid = 0;
+    plan->opening_composite_screen_asset_id = 0;
+    plan->opening_composite_left_asset_id = 0;
+    plan->opening_composite_right_asset_id = 0;
+    plan->opening_composite_animation_step = 0;
+    plan->opening_composite_left_box_x = 0;
+    plan->opening_composite_left_box_y = 0;
+    plan->opening_composite_left_box_w = 0;
+    plan->opening_composite_left_box_h = 0;
+    plan->opening_composite_right_box_x = 0;
+    plan->opening_composite_right_box_y = 0;
+    plan->opening_composite_right_box_w = 0;
+    plan->opening_composite_right_box_h = 0;
+    plan->opening_composite_left_source_x = 0;
+    plan->opening_composite_right_source_x = 0;
 }
 
 static void csb_v1_startup_clear_fallback_text_pc34(
@@ -792,6 +807,35 @@ static void csb_v1_startup_set_opening_door_rects_pc34(
     }
 }
 
+static void csb_v1_startup_set_opening_composite_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan || !plan->opening_door_valid ||
+        plan->source_asset_id <= 0 ||
+        plan->closed_left_asset_id <= 0 ||
+        plan->closed_right_asset_id <= 0) {
+        return;
+    }
+    /* ReDMCSB ENTRANCE.C F0438/F0807 composites C004 with the live dungeon
+     * viewport and moving C002/C003 door strips.  M11 supplies pixels, but
+     * CSB owns the source asset ids and door-step rectangle contract. */
+    plan->opening_composite_valid = 1;
+    plan->opening_composite_screen_asset_id = plan->source_asset_id;
+    plan->opening_composite_left_asset_id = plan->closed_left_asset_id;
+    plan->opening_composite_right_asset_id = plan->closed_right_asset_id;
+    plan->opening_composite_animation_step = plan->opening_door_step;
+    plan->opening_composite_left_box_x = plan->opening_left_dest_x;
+    plan->opening_composite_left_box_y = plan->opening_left_source_y;
+    plan->opening_composite_left_box_w = plan->opening_left_w;
+    plan->opening_composite_left_box_h = plan->opening_left_h;
+    plan->opening_composite_right_box_x = plan->opening_right_dest_x;
+    plan->opening_composite_right_box_y = plan->opening_right_source_y;
+    plan->opening_composite_right_box_w = plan->opening_right_w;
+    plan->opening_composite_right_box_h = plan->opening_right_h;
+    plan->opening_composite_left_source_x = plan->opening_left_source_x;
+    plan->opening_composite_right_source_x = plan->opening_right_source_x;
+}
+
 static void csb_v1_startup_set_title_rect_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
@@ -1089,6 +1133,7 @@ int csb_v1_startup_build_render_plan_pc34(
         if (plan.surface ==
             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
             csb_v1_startup_set_opening_door_rects_pc34(&plan);
+            csb_v1_startup_set_opening_composite_pc34(&plan);
         }
         csb_v1_startup_rebuild_asset_commands_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);

@@ -611,6 +611,21 @@ int main(void)
               plan.opening_right_dest_y == 28 &&
               plan.opening_right_w == 119 &&
               plan.opening_right_h == 161 &&
+              plan.opening_composite_valid &&
+              plan.opening_composite_screen_asset_id == 4 &&
+              plan.opening_composite_left_asset_id == 2 &&
+              plan.opening_composite_right_asset_id == 3 &&
+              plan.opening_composite_animation_step == 2 &&
+              plan.opening_composite_left_box_x == 0 &&
+              plan.opening_composite_left_box_y == 0 &&
+              plan.opening_composite_left_box_w == 97 &&
+              plan.opening_composite_left_box_h == 161 &&
+              plan.opening_composite_right_box_x == 113 &&
+              plan.opening_composite_right_box_y == 0 &&
+              plan.opening_composite_right_box_w == 119 &&
+              plan.opening_composite_right_box_h == 161 &&
+              plan.opening_composite_left_source_x == 0 &&
+              plan.opening_composite_right_source_x == 8 &&
               plan.primitive_command_count == 3 &&
               plan.primitive_commands[1].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&
@@ -621,7 +636,7 @@ int main(void)
                   CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 &&
               plan.asset_commands[2].kind ==
                   CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34,
-          "startup render plan owns door-opening frame surface, boxes, asset blits, and fallback primitive panels");
+          "startup render plan owns door-opening frame surface, boxes, composite plan, asset blits, and fallback primitive panels");
     check(plan.render_command_count == 4 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
