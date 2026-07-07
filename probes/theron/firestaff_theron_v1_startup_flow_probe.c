@@ -522,8 +522,10 @@ int main(void) {
         {
             Theron_StartupLayoutState layout_state;
             Theron_StartupLayoutElement elements[16];
+            char rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
             int order[THERON_STARTUP_MAX_COMPANIONS] = {6, 2, -1};
             int layout_count;
+            int row_count;
 
             theron_v1_startup_layout_state_init(&layout_state);
             layout_state.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
@@ -532,6 +534,9 @@ int main(void) {
             layout_state.progression = &progression;
             layout_state.has_tqsv_continue = 1;
             layout_state.tqsv_slot = 2;
+            snprintf(layout_state.chapter_label,
+                     sizeof(layout_state.chapter_label),
+                     "Chapter 1: Hall of Records");
             layout_count = theron_v1_startup_layout_build(
                 &layout_state,
                 elements,
@@ -571,12 +576,40 @@ int main(void) {
             check_int("layout locked stage hit panel",
                       hit.kind,
                       THERON_STARTUP_HIT_PANEL);
+            row_count = theron_v1_startup_render_rows_build(
+                &layout_state,
+                elements,
+                layout_count,
+                rows,
+                (int)(sizeof(rows) / sizeof(rows[0])));
+            check_int("layout stage rows count", row_count, 12);
+            check_contains("layout stage rows chapter",
+                           rows[1],
+                           "Chapter 1: Hall of Records");
+            check_contains("layout stage rows continue",
+                           rows[3],
+                           "CONTINUE  TQSV SLOT 2");
+            check_contains("layout stage rows cursor",
+                           rows[4],
+                           "> 1  Hall of Records");
 
             theron_v1_startup_layout_state_init(&layout_state);
             layout_state.phase = THERON_STARTUP_PHASE_READY;
             layout_state.selected_dungeon =
                 THERON_DUNGEON_1_HALL_OF_RECORDS;
             layout_state.soul_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
+            snprintf(layout_state.chapter_label,
+                     sizeof(layout_state.chapter_label),
+                     "Chapter 1: Hall of Records");
+            snprintf(layout_state.startup_text_prompt,
+                     sizeof(layout_state.startup_text_prompt),
+                     "GO AWAY AND RESURRECT THERON");
+            layout_state.startup_roster_name_count = 8;
+            layout_state.startup_roster_names[4] = "HAKAR";
+            layout_state.startup_roster_names[5] = "TIRAN";
+            layout_state.startup_roster_names[7] = "PENTAI";
+            layout_state.startup_roster_titles[4] = "THE BRAVE";
+            layout_state.startup_roster_titles[7] = "THE SURVIVOR";
             layout_state.selected_mirrors_mask = (1 << 6) | (1 << 2);
             layout_state.selected_mirror_order = order;
             layout_state.selected_mirror_order_count =
@@ -618,6 +651,22 @@ int main(void) {
             check_int("layout forcefield hit kind",
                       hit.kind,
                       THERON_STARTUP_HIT_FORCEFIELD);
+            row_count = theron_v1_startup_render_rows_build(
+                &layout_state,
+                elements,
+                layout_count,
+                rows,
+                (int)(sizeof(rows) / sizeof(rows[0])));
+            check_int("layout ready rows count", row_count, 13);
+            check_contains("layout ready rows prompt",
+                           rows[3],
+                           "GO AWAY AND RESURRECT THERON");
+            check_contains("layout ready rows decoded mirror",
+                           rows[4],
+                           "HAKAR");
+            check_contains("layout ready rows selected order",
+                           rows[10],
+                           "RESURRECTED #1");
         }
     }
 
