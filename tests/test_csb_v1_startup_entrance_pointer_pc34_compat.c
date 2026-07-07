@@ -496,6 +496,39 @@ int main(void)
               csb_v1_startup_entrance_wait_stage_pc34() &&
               result.reached_entrance_wait,
           "startup tick advances entrance prelude to wait stage");
+    {
+        CSB_V1_StartupTickReceipt_PC34 tick_receipt;
+        check(csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
+                  17,
+                  0,
+                  0,
+                  0,
+                  csb_v1_startup_entrance_wait_stage_pc34() - 1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  3,
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+                  3,
+                  &tick_receipt) &&
+                  tick_receipt.entrance_frame == 18 &&
+                  !tick_receipt.tick_result.reached_entrance_wait &&
+                  tick_receipt.tick_result.credits_finished &&
+                  tick_receipt.tick_result.door_opening_finished &&
+                  tick_receipt.state.entrance_active &&
+                  tick_receipt.state.entrance_source_step ==
+                      csb_v1_startup_entrance_wait_stage_pc34() - 1 &&
+                  !tick_receipt.state.credits_active &&
+                  tick_receipt.state.opening_active &&
+                  tick_receipt.state.pending_command ==
+                      CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              "startup tick facts helper returns M11-ready receipt");
+        memset(&tick_receipt, 0x7f, sizeof(tick_receipt));
+        check(!csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL),
+              "startup tick facts helper rejects NULL receipt");
+    }
 
     memset(&tick, 0, sizeof(tick));
     tick.credits_active = 1;

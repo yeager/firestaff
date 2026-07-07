@@ -1467,6 +1467,76 @@ int csb_v1_startup_advance_tick_pc34(
     return 1;
 }
 
+void csb_v1_startup_tick_receipt_init_pc34(
+    CSB_V1_StartupTickReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_startup_command_state_receipt_init_pc34(&receipt->state);
+}
+
+int csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
+    int entrance_frame,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_source_step,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int door_step_count,
+    CSB_V1_StartupTickReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupTickState_PC34 state;
+
+    if (out_receipt) {
+        csb_v1_startup_tick_receipt_init_pc34(out_receipt);
+    }
+    if (!out_receipt) {
+        return 0;
+    }
+
+    memset(&state, 0, sizeof(state));
+    state.entrance_frame = entrance_frame;
+    state.title_active = title_active;
+    state.title_frame = title_frame;
+    state.title_source_step = title_source_step;
+    state.entrance_source_step = entrance_source_step;
+    state.credits_active = credits_active;
+    state.credits_remaining_ticks = credits_remaining_ticks;
+    state.opening_active = opening_active;
+    state.opening_delay_ticks = opening_delay_ticks;
+    state.opening_step = opening_step;
+    state.door_step_count = door_step_count;
+
+    if (!csb_v1_startup_advance_tick_pc34(
+            &state,
+            &out_receipt->tick_result)) {
+        csb_v1_startup_tick_receipt_init_pc34(out_receipt);
+        return 0;
+    }
+    out_receipt->entrance_frame = state.entrance_frame;
+    return csb_v1_startup_command_state_receipt_from_facts_pc34(
+        state.title_active,
+        state.title_frame,
+        state.title_source_step,
+        1,
+        state.entrance_source_step,
+        0,
+        state.credits_active,
+        state.credits_remaining_ticks,
+        state.opening_active,
+        state.opening_delay_ticks,
+        state.opening_step,
+        pending_command,
+        &out_receipt->state);
+}
+
 int csb_v1_startup_render_state_from_command_state_pc34(
     const CSB_V1_StartupCommandState_PC34 *command_state,
     int entrance_frame,
