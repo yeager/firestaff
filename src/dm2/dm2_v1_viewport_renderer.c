@@ -1713,6 +1713,103 @@ int dm2_v1_viewport_build_item_render_plan(
     return 1;
 }
 
+int dm2_v1_viewport_build_carried_item_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_CarriedItemRenderPlan *out_plan)
+{
+    const DM2_ItemSprite *src;
+    DM2_V1_ItemRender *row;
+    int category;
+
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s || !s->carried_item_present) {
+        return 1;
+    }
+    src = &s->carried_item;
+    if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
+        src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT) {
+        return 1;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM_IN_HAND selects the carried
+     * object's GDAT identity before drawing the cursor buffer. Firestaff's
+     * bounded viewport overlay keeps that identity/fallback state explicit. */
+    category = src->item_category ? src->item_category : 0x15;
+    row = &out_plan->item;
+    out_plan->item_present = 1;
+    row->item_index = 0;
+    row->item_category = category;
+    row->item_type = src->item_type;
+    row->frame_index = src->frame_index;
+    row->direction = src->direction;
+    row->depth = src->depth;
+    row->center_x = src->screen_x;
+    row->center_y = src->screen_y;
+    row->gdat_index = dm2_v1_viewport_item_graphic_index(
+        category,
+        src->item_type,
+        src->frame_index);
+    row->fallback_radius = 5;
+    row->fallback_color = (uint8_t)(12 + (src->item_type & 3));
+    return 1;
+}
+
+int dm2_v1_viewport_build_creature_possession_item_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_CreaturePossessionItemRenderPlan *out_plan)
+{
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s) {
+        return 1;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP lines 10782-10817 draws
+     * source-visible creature possessions after the creature with frame 0
+     * and the _4976_3fa4 object-direction flip table. */
+    for (int i = 0;
+         i < s->creature_possession_item_count &&
+             i < DM2_MAX_CREATURE_POSSESSION_ITEMS;
+         ++i) {
+        const DM2_ItemSprite *src = &s->creature_possession_items[i];
+        DM2_V1_ItemRender *row;
+        int category;
+
+        if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
+            src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
+            out_plan->item_count >= DM2_MAX_CREATURE_POSSESSION_ITEMS) {
+            continue;
+        }
+
+        category = src->item_category ? src->item_category : 0x15;
+        row = &out_plan->items[out_plan->item_count++];
+        row->item_index = i;
+        row->item_category = category;
+        row->item_type = src->item_type;
+        row->frame_index = 0;
+        row->direction = src->direction;
+        row->depth = src->depth;
+        row->center_x = src->screen_x;
+        row->center_y = src->screen_y;
+        row->gdat_index = dm2_v1_viewport_item_graphic_index(
+            category,
+            src->item_type,
+            0);
+        row->flip_mirror =
+            dm2_v1_viewport_map_chip_flip_for_object_direction(
+                src->direction,
+                s->party_dir);
+        row->fallback_radius = 3;
+        row->fallback_color = (uint8_t)(9 + (src->item_type & 5));
+    }
+    return 1;
+}
+
 int dm2_v1_viewport_build_projectile_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ProjectileRenderPlan *out_plan)
@@ -2499,7 +2596,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
 
 void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
 {
-    int i;
+    DM2_V1_CreaturePossessionItemRenderPlan plan;
     uint8_t *vp;
     int stride;
 
@@ -2513,35 +2610,25 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
      * DRAW_CHIP_OF_MAGIC_MAP(frame=0, flip=_4976_3fa4[(Dir-viewDir)&3]).
      * Runtime possession-chain extraction is a separate bridge; this pass is
      * the renderer-owned hook that keeps those overlays in source order. */
-    for (i = 0;
-         i < s->creature_possession_item_count &&
-             i < DM2_MAX_CREATURE_POSSESSION_ITEMS;
-         ++i) {
-        DM2_ItemSprite *it = &s->creature_possession_items[i];
-        int ix = it->screen_x;
-        int iy = it->screen_y;
+    if (!dm2_v1_viewport_build_creature_possession_item_render_plan(s,
+                                                                    &plan)) {
+        return;
+    }
+    for (int i = 0; i < plan.item_count; ++i) {
+        const DM2_V1_ItemRender *it = &plan.items[i];
         int drawn_asset = 0;
-        if (ix < 0 || ix >= DM2_VP_WIDTH || iy < 0 || iy >= DM2_VP_HEIGHT) {
-            continue;
-        }
 
         {
             const uint8_t *pixels = NULL;
             int src_w = 0;
             int src_h = 0;
             int src_stride = 0;
-            int category = it->item_category ? it->item_category : 0x15;
-            int gdat_index = dm2_v1_viewport_item_graphic_index(
-                category, it->item_type, 0);
-            if (gdat_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+            if (it->gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 int frame_x = 0;
                 int frame_w = src_w;
-                int flip_mirror =
-                    dm2_v1_viewport_map_chip_flip_for_object_direction(
-                        it->direction, s->party_dir);
                 if (!dm2_v1_prepare_map_chip_frame(src_w, src_h, 0,
                                                    &frame_x, &frame_w)) {
                     frame_x = 0;
@@ -2555,8 +2642,8 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                     dm2_v1_blit_scaled_bitmap_region_ex(
                         vp,
                         stride,
-                        ix - (dst_w / 2),
-                        iy - (dst_h / 2),
+                        it->center_x - (dst_w / 2),
+                        it->center_y - (dst_h / 2),
                         dst_w,
                         dst_h,
                         pixels,
@@ -2566,7 +2653,7 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                         src_h,
                         src_stride > 0 ? src_stride : src_w,
                         DM2_COLOR_TRANSPARENT,
-                        flip_mirror);
+                        it->flip_mirror);
                 }
                 ++s->asset_creature_possession_item_drawn_count;
                 drawn_asset = 1;
@@ -2574,13 +2661,13 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
         }
 
         if (!drawn_asset) {
-            int sz = 3;
-            uint8_t color = (uint8_t)(9 + (it->item_type & 5));
+            int sz = it->fallback_radius;
+            uint8_t color = it->fallback_color;
             for (int dy = -sz; dy <= sz; ++dy) {
-                int sy = iy + dy;
+                int sy = it->center_y + dy;
                 if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
                 for (int dx = -sz; dx <= sz; ++dx) {
-                    int sx = ix + dx;
+                    int sx = it->center_x + dx;
                     if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
                     if (abs(dx) + abs(dy) <= sz) {
                         vp[sy * stride + sx] = color;
@@ -2594,14 +2681,13 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
 
 void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
 {
-    DM2_ItemSprite *it;
-    int ix;
-    int iy;
+    DM2_V1_CarriedItemRenderPlan plan;
+    const DM2_V1_ItemRender *it;
     int drawn_asset = 0;
     uint8_t *vp;
     int stride;
 
-    if (!s || !s->framebuffer || !s->carried_item_present) return;
+    if (!s || !s->framebuffer) return;
 
     /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM_IN_HAND lines 15753-15814
      * renders glbLeaderHandPossession from the object's GDAT class/type and
@@ -2609,11 +2695,12 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
      * expose that cursor buffer in this renderer yet, so the runtime binds
      * the carried object as a bounded viewport overlay using the same
      * item-map-chip asset path as floor objects. */
-    it = &s->carried_item;
-    ix = it->screen_x;
-    iy = it->screen_y;
-    if (ix < 0 || ix >= DM2_VP_WIDTH || iy < 0 || iy >= DM2_VP_HEIGHT) return;
+    if (!dm2_v1_viewport_build_carried_item_render_plan(s, &plan) ||
+        !plan.item_present) {
+        return;
+    }
 
+    it = &plan.item;
     vp = s->framebuffer;
     stride = s->fb_stride;
 
@@ -2622,11 +2709,8 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
         int src_w = 0;
         int src_h = 0;
         int src_stride = 0;
-        int category = it->item_category ? it->item_category : 0x15;
-        int gdat_index = dm2_v1_viewport_item_graphic_index(
-            category, it->item_type, it->frame_index);
-        if (gdat_index != 0 &&
-            dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+        if (it->gdat_index != 0 &&
+            dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
                                         &src_w, &src_h, &src_stride) == 0 &&
             pixels && src_w > 0 && src_h > 0) {
             int frame_x = 0;
@@ -2648,8 +2732,8 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
                                                               40);
             dm2_v1_blit_scaled_bitmap_region(vp,
                                              stride,
-                                             ix - (dst_w / 2),
-                                             iy - (dst_h / 2),
+                                             it->center_x - (dst_w / 2),
+                                             it->center_y - (dst_h / 2),
                                              dst_w,
                                              dst_h,
                                              pixels,
@@ -2665,13 +2749,13 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
     }
 
     if (!drawn_asset) {
-        int sz = 5;
-        uint8_t color = (uint8_t)(12 + (it->item_type & 3));
+        int sz = it->fallback_radius;
+        uint8_t color = it->fallback_color;
         for (int dy = -sz; dy <= sz; dy++) {
-            int sy = iy + dy;
+            int sy = it->center_y + dy;
             if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
             for (int dx = -sz; dx <= sz; dx++) {
-                int sx = ix + dx;
+                int sx = it->center_x + dx;
                 if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
                 if (abs(dx) + abs(dy) <= sz) {
                     vp[sy * stride + sx] = color;
