@@ -2506,6 +2506,50 @@ int csb_v1_startup_finish_door_opening_pc34(
     return 1;
 }
 
+int csb_v1_startup_finish_door_opening_from_facts_with_receipt_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupCommandState_PC34 state;
+
+    if (out_receipt) {
+        csb_v1_startup_command_state_receipt_init_pc34(out_receipt);
+    }
+    if (!csb_v1_startup_command_state_from_facts_pc34(
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            &state)) {
+        return 0;
+    }
+    if (!csb_v1_startup_finish_door_opening_pc34(&state)) {
+        return 0;
+    }
+    return csb_v1_startup_command_state_receipt_from_state_pc34(
+        &state,
+        out_receipt);
+}
+
 int csb_v1_startup_begin_credits_pc34(
     CSB_V1_StartupCommandState_PC34 *state)
 {
