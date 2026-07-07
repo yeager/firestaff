@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.57  (2026-07-07)",
+    "  - Packages the current main after DM2 V1 HUD champion-state and portrait-ordinal handoff work landed after v3.0.56.",
+    "  - DM2 V1 HUD rendering now consumes session-backed champion status and portrait ordinal metadata through the viewport-owned HUD party state.",
+    "",
     "V3.0.56  (2026-07-07)",
     "  - Packages the latest DM2 V1 HUD chrome render-plan ownership now on main.",
     "  - DM2 V1 viewport rendering now builds status bar, action strip, gold indicator, and indoor champion-panel placeholder geometry through a DM2-owned HUD chrome plan before drawing it.",
@@ -476,5 +480,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.56";
+    return "3.0.57";
 }

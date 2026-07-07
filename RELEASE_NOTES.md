@@ -1,6 +1,31 @@
 
 # Unreleased
 
+# Firestaff v3.0.57
+
+Firestaff v3.0.57 packages the current `main` after the DM2 V1 HUD
+champion-state and portrait-ordinal handoff work that landed after v3.0.56.
+
+## Highlights since v3.0.56
+
+- **DM2 V1 session-backed HUD state**: DM2 runtime rendering now feeds
+  session-backed champion HUD state into the viewport, and the HUD plan exposes
+  leader marker plus HP, stamina, mana, and name-marker geometry.
+- **DM2 V1 portrait ordinal handoff**: New-game/session records preserve
+  champion portrait ordinals, and the viewport HUD render path consumes them
+  for deterministic per-portrait placeholder rendering.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.57`.
+
+## Verification
+
+- Local release verification covers version synchronization, the focused DM2 V1
+  lighting/render gate, DM2 utility import, DM2 runtime handoff, the Phase A
+  probe and `git diff --check` before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.57` release run.
+
 # Firestaff v3.0.56
 
 Firestaff v3.0.56 packages the current `main` after the latest DM2 V1 viewport
