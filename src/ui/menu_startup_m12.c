@@ -971,6 +971,33 @@ static int m12_clamp_index(int value, int count) {
     return value;
 }
 
+static int m12_cycle_visible_settings_row(int row, int delta) {
+    static const int visibleRows[] = {
+        M12_SETTINGS_ROW_LANGUAGE,
+        M12_SETTINGS_ROW_GRAPHICS,
+        M12_SETTINGS_ROW_WINDOW_MODE,
+        M12_SETTINGS_ROW_SMOOTH_TURN_PAN,
+        M12_SETTINGS_ROW_DATA_DIR,
+        M12_SETTINGS_ROW_DATA_STATUS,
+        M12_SETTINGS_ROW_RETROACHIEVEMENTS,
+        M12_SETTINGS_ROW_RA_HARDCORE,
+        M12_SETTINGS_ROW_RA_USERNAME,
+        M12_SETTINGS_ROW_RA_TOKEN,
+        M12_SETTINGS_ROW_SESSION_TIMER
+    };
+    const int count = (int)(sizeof(visibleRows) / sizeof(visibleRows[0]));
+    int i;
+    int selected = 0;
+    for (i = 0; i < count; ++i) {
+        if (visibleRows[i] == row) {
+            selected = i;
+            break;
+        }
+    }
+    selected = m12_cycle_index(selected, delta, count);
+    return visibleRows[selected];
+}
+
 int M12_SessionTimer_MinutesForIndex(int index) {
     static const int minutes[] = {0, 15, 30, 60, 120};
     if (index < 0 || index >= (int)(sizeof(minutes) / sizeof(minutes[0]))) {
@@ -4978,17 +5005,15 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         switch (input) {
             case M12_MENU_INPUT_UP:
                 state->languagePopupOpen = 0;
-                state->settingsSelectedIndex = m12_cycle_index(
+                state->settingsSelectedIndex = m12_cycle_visible_settings_row(
                     state->settingsSelectedIndex,
-                    -1,
-                    M12_SETTINGS_ROW_COUNT);
+                    -1);
                 break;
             case M12_MENU_INPUT_DOWN:
                 state->languagePopupOpen = 0;
-                state->settingsSelectedIndex = m12_cycle_index(
+                state->settingsSelectedIndex = m12_cycle_visible_settings_row(
                     state->settingsSelectedIndex,
-                    1,
-                    M12_SETTINGS_ROW_COUNT);
+                    1);
                 break;
             case M12_MENU_INPUT_LEFT:
                 state->languagePopupOpen = 0;
