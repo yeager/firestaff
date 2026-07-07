@@ -1267,17 +1267,18 @@ static void m11_draw_csb_runtime_floor_object_overlays(
         thing = (unsigned short)cells[cell_index].first_thing;
         while (thing != THING_ENDOFLIST && thing != THING_NONE &&
                safety++ < 64) {
-            int type = (int)THING_GET_TYPE(thing);
-            if (csb_v1_runtime_thing_type_is_floor_object(type)) {
-                int icon = csb_v1_runtime_object_icon_index(runtime, thing);
-                int rel_cell = ((int)THING_GET_CELL(thing) -
-                                runtime->party_dir) & 3;
+            CSB_V1_RuntimeObjectOverlayInfo object_info;
+            if (csb_v1_runtime_object_overlay_info(runtime,
+                                                   thing,
+                                                   &object_info)) {
+                int type = object_info.thing_type;
+                int icon = object_info.icon_index;
+                int rel_cell = object_info.relative_cell;
                 CSB_V1_ViewportRuntimeObjectOverlayPlacement placement;
                 int x = 0;
                 int y = 0;
                 int row;
-                int subtype =
-                    csb_v1_runtime_object_subtype_index(runtime, thing);
+                int subtype = object_info.subtype_index;
                 int marker_x = x;
                 int marker_y = y;
                 int pile_index = object_pile_index;

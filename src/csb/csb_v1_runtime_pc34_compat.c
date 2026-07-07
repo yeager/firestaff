@@ -8122,6 +8122,37 @@ int csb_v1_runtime_thing_type_is_floor_object(int thing_type)
            thing_type == THING_TYPE_JUNK;
 }
 
+int csb_v1_runtime_object_overlay_info(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t object_thing,
+    CSB_V1_RuntimeObjectOverlayInfo *out_info)
+{
+    int thing_type;
+
+    if (!profile || !out_info ||
+        object_thing == THING_NONE ||
+        object_thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    thing_type = (int)THING_GET_TYPE(object_thing);
+    if (!csb_v1_runtime_thing_type_is_floor_object(thing_type)) {
+        return 0;
+    }
+
+    memset(out_info, 0, sizeof(*out_info));
+    /* ReDMCSB DEFS.H THING packs Cell/Type/Index in the thing word, while
+     * WEAPON..JUNK records carry the object subtype data used by F0115 item
+     * rendering.  Keep that compact routing in CSB runtime instead of M11. */
+    out_info->thing_type = thing_type;
+    out_info->relative_cell =
+        ((int)THING_GET_CELL(object_thing) - profile->party_dir) & 3;
+    out_info->icon_index =
+        csb_v1_runtime_object_icon_index(profile, object_thing);
+    out_info->subtype_index =
+        csb_v1_runtime_object_subtype_index(profile, object_thing);
+    return 1;
+}
+
 int csb_v1_runtime_group_record_creature_type(
     const uint8_t *record,
     int size)
