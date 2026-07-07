@@ -24026,19 +24026,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
 
 static unsigned int m11_dm1_center_depth_mask(const M11_ViewportCell cells[3][3],
                                               int requireOpen) {
-    int valid[3] = {0, 0, 0};
-    int open[3] = {0, 0, 0};
-    int door[3] = {0, 0, 0};
-    int depth;
-    DM1_ViewportCenterLaneMasksPc34 masks;
-    if (!cells) return 0u;
-    for (depth = 0; depth < 3; ++depth) {
-        const M11_ViewportCell* cell = &cells[depth][1];
-        valid[depth] = cell->valid ? 1 : 0;
-        open[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;
-        door[depth] = cell->elementType == DUNGEON_ELEMENT_DOOR ? 1 : 0;
-    }
-    masks = dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid, open, door);
+    DM1_ViewportCenterLaneMasksPc34 masks = m11_dm1_center_lane_masks(cells);
     return requireOpen ? masks.open_depth_mask : masks.valid_depth_mask;
 }
 
@@ -24050,9 +24038,10 @@ static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3
 }
 
 static int m11_dm1_center_content_visible_depth_mask(const M11_ViewportCell cells[3][3]) {
+    DM1_ViewportCenterLaneMasksPc34 masks = m11_dm1_center_lane_masks(cells);
     return dm1_viewport_3d_center_visible_depth_mask_pc34(
-        m11_dm1_center_depth_mask(cells, 0),
-        m11_dm1_center_depth_mask(cells, 1));
+        masks.valid_depth_mask,
+        masks.open_depth_mask);
 }
 
 static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
