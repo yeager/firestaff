@@ -30,6 +30,7 @@
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "asset_find_by_hash.h"
 
 #include <stdio.h>
@@ -1226,6 +1227,7 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
 {
     CSB_V1_BootProfile p;
     CSB_V1_RuntimeStartupRuntimePlan_PC34 runtime_plan;
+    CSB_V1_StartupRuntimePlan_PC34 startup_plan;
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_receipt;
     char dungeon_path[ASSET_PATH_MAX];
     char bonus_dungeon_path[ASSET_PATH_MAX];
@@ -1355,6 +1357,38 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
               p.runtime.party_y == 13 &&
               p.runtime.party_dir == 2,
           "runtime startup plan execution owns entrance resume load");
+
+    memset(&startup_plan, 0, sizeof(startup_plan));
+    startup_plan.kind =
+        CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34;
+    startup_plan.set_bonus_dungeon = 1;
+    startup_plan.bonus_dungeon = 1;
+    CHECK(csb_v1_runtime_apply_startup_sequence_plan_pc34(
+              &p.runtime,
+              &startup_plan,
+              NULL,
+              &runtime_receipt) == 1 &&
+              runtime_receipt.bonus_requested_changed &&
+              runtime_receipt.bonus_requested == 1,
+          "runtime owns CSB startup-sequence plan adapter for bonus dungeon");
+
+    memset(&startup_plan, 0, sizeof(startup_plan));
+    startup_plan.kind = CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34;
+    startup_plan.requires_resume_load = 1;
+    p.runtime.party_x = 3;
+    p.runtime.party_y = 4;
+    p.runtime.party_dir = 1;
+    CHECK(csb_v1_runtime_apply_startup_sequence_plan_pc34(
+              &p.runtime,
+              &startup_plan,
+              runtime_save_path,
+              &runtime_receipt) == 1 &&
+              runtime_receipt.resume_available &&
+              runtime_receipt.resume_loaded &&
+              p.runtime.party_x == 12 &&
+              p.runtime.party_y == 13 &&
+              p.runtime.party_dir == 2,
+          "runtime owns CSB startup-sequence plan adapter for resume");
 
     csb_v1_boot_cleanup(&p);
 }
