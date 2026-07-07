@@ -2588,6 +2588,14 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.marker_screen_x, 112);
     check_int("csb.runtime_group_overlay.d1c.marker_y",
               group_place.marker_screen_y, 144);
+    check_int("csb.runtime_group_overlay.coord.giant_scorpion",
+              csb_v1_viewport_runtime_creature_coordinate_set(0), 1);
+    check_int("csb.runtime_group_overlay.coord.swamp_slime",
+              csb_v1_viewport_runtime_creature_coordinate_set(1), 0);
+    check_int("csb.runtime_group_overlay.coord.pain_rat",
+              csb_v1_viewport_runtime_creature_coordinate_set(3), 2);
+    check_int("csb.runtime_group_overlay.coord.invalid",
+              csb_v1_viewport_runtime_creature_coordinate_set(99), 0);
     {
         uint8_t screen[320 * 200];
         memset(screen, 0, sizeof(screen));
@@ -2607,6 +2615,16 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                   csb_v1_viewport_draw_runtime_group_marker(
                       screen, 320, 0, &group_place), 0);
     }
+    memset(&group_place, 0, sizeof(group_place));
+    check_true("csb.runtime_group_overlay.creature_wrapper.type0",
+               csb_v1_viewport_runtime_group_overlay_creature_placement(
+                   1, 0, 0, 1, 0, &group_place) == 1);
+    check_int("csb.runtime_group_overlay.creature_wrapper.type0.coord",
+              group_place.coordinate_set, 1);
+    check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_x",
+              group_place.sprite_x, 85);
+    check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_y",
+              group_place.sprite_y, 82);
 
     memset(&group_place, 0, sizeof(group_place));
     check_true("csb.runtime_group_overlay.d1c.cell2.visible",

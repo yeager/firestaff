@@ -1380,17 +1380,15 @@ static void m11_draw_csb_runtime_group_overlays(
                 int creature_type = group_info.creature_type;
                 int creature_dir = group_info.direction;
                 int visible_count = group_info.visible_count;
-                int coord_set =
-                    m11_creature_coordinate_set(creature_type);
                 int slot;
 
                 for (slot = 0; slot < visible_count; ++slot) {
                     CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
                     int group_cell = group_info.cells[slot];
-                    if (!csb_v1_viewport_runtime_group_overlay_slot_placement(
+                    if (!csb_v1_viewport_runtime_group_overlay_creature_placement(
                             forward,
                             side,
-                            coord_set,
+                            creature_type,
                             visible_count,
                             group_cell,
                             &placement)) {

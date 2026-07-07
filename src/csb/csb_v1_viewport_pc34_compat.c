@@ -802,6 +802,42 @@ int csb_v1_viewport_runtime_group_overlay_placement(
         forward, side, coordinate_set, 1, 0, out_placement);
 }
 
+int csb_v1_viewport_runtime_creature_coordinate_set(int creature_type)
+{
+    /* ReDMCSB DUNVIEW.C G0219_as_Graphic558_CreatureAspects, high nibble
+     * of coordinateSet_transparentColor. This mirrors the CSB/DM1 runtime
+     * creature type order already consumed by the M11 CSB overlay bridge. */
+    static const unsigned char k_coordinate_sets[27] = {
+        1, 0, 0, 2, 1, 1, 0, 0, 0,
+        1, 0, 1, 0, 1, 0, 1, 0, 2,
+        0, 0, 1, 1, 0, 1, 1, 1, 1
+    };
+
+    if (creature_type < 0 ||
+        creature_type >= (int)(sizeof(k_coordinate_sets) /
+                               sizeof(k_coordinate_sets[0]))) {
+        return 0;
+    }
+    return (int)k_coordinate_sets[creature_type];
+}
+
+int csb_v1_viewport_runtime_group_overlay_creature_placement(
+    int forward,
+    int side,
+    int creature_type,
+    int visible_count,
+    int creature_cell,
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement)
+{
+    return csb_v1_viewport_runtime_group_overlay_slot_placement(
+        forward,
+        side,
+        csb_v1_viewport_runtime_creature_coordinate_set(creature_type),
+        visible_count,
+        creature_cell,
+        out_placement);
+}
+
 int csb_v1_viewport_runtime_group_overlay_slot_placement(
     int forward,
     int side,

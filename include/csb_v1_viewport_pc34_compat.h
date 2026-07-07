@@ -717,6 +717,14 @@ int csb_v1_viewport_runtime_group_overlay_placement(
     int side,
     int coordinate_set,
     CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_creature_coordinate_set(int creature_type);
+int csb_v1_viewport_runtime_group_overlay_creature_placement(
+    int forward,
+    int side,
+    int creature_type,
+    int visible_count,
+    int creature_cell,
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement);
 int csb_v1_viewport_runtime_group_overlay_slot_placement(
     int forward,
     int side,
