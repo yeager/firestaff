@@ -25,9 +25,48 @@ int main(void)
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRenderRow rows[4];
+    DM2_V1_SessionState direct_session;
+    DM2_V1_StartupSavePathResult save_path_result;
     char phase[64];
+    char save_root[128];
+    uint8_t save_slot;
+    int last_session;
     int startup_active;
     int row_count;
+
+    save_path_result = dm2_v1_startup_load_session_from_save_path(
+        "/tmp/firestaff-dm2-startup-missing/Other.dat",
+        save_root,
+        (int)sizeof(save_root),
+        &direct_session,
+        &save_slot,
+        &last_session);
+    check(save_path_result == DM2_V1_STARTUP_SAVE_PATH_INVALID,
+          "direct resume session loader rejects non-SKSave paths");
+    save_path_result = dm2_v1_startup_load_session_from_save_path(
+        "/tmp/firestaff-dm2-startup-missing/SKSave03.dat",
+        save_root,
+        (int)sizeof(save_root),
+        &direct_session,
+        &save_slot,
+        &last_session);
+    check(save_path_result == DM2_V1_STARTUP_SAVE_PATH_LOAD_FAILED &&
+              strcmp(save_root, "/tmp/firestaff-dm2-startup-missing") == 0 &&
+              save_slot == 3u &&
+              last_session == 0,
+          "direct resume session loader reports missing slot after parsing");
+    save_path_result = dm2_v1_startup_load_session_from_save_path(
+        "/tmp/firestaff-dm2-startup-missing/SKSave.dat",
+        save_root,
+        (int)sizeof(save_root),
+        &direct_session,
+        &save_slot,
+        &last_session);
+    check(save_path_result == DM2_V1_STARTUP_SAVE_PATH_LOAD_FAILED &&
+              strcmp(save_root, "/tmp/firestaff-dm2-startup-missing") == 0 &&
+              save_slot == 0u &&
+              last_session == 1,
+          "direct resume session loader reports missing last-session after parsing");
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-startup");
     check(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 2)) &&
