@@ -1,6 +1,31 @@
 
 # Unreleased
 
+# Firestaff v3.0.53
+
+Firestaff v3.0.53 packages the current `main` after the latest CSB V1
+runtime overlay rendering ownership work.
+
+## Highlights since v3.0.52
+
+- **CSB V1 runtime overlay marker drawing**: CSB viewport code now owns the
+  fallback marker drawing for runtime floor objects and creature groups instead
+  of keeping those pixel routines in the shared M11 game view.
+- **CSB V1 rendering ownership**: M11 now consumes CSB-owned object/group
+  overlay placement and marker helpers, reducing remaining shared-game-view
+  assumptions before exact sprite/material parity work.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.53`.
+
+## Verification
+
+- Local release verification covers version synchronization, the focused CSB V1
+  viewport/render gates, the Phase A probe and `git diff --check` before GitHub
+  Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.53` release run.
+
 # Firestaff v3.0.52
 
 Firestaff v3.0.52 packages the current `main` after the latest DM1 V1
