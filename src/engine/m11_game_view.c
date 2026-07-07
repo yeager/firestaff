@@ -762,19 +762,21 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
+    const DM2_V1_BootProfile *profile;
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupAction action;
 
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!m11_dm2_startup_snapshot_from_state(state, &snapshot)) {
-        return input == M12_MENU_INPUT_NONE
-                   ? M11_GAME_INPUT_IGNORED
-                   : M11_GAME_INPUT_REDRAW;
-    }
-    if (!dm2_v1_startup_menu_snapshot_handle_firestaff_input(
+    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    if (!dm2_v1_startup_menu_handle_firestaff_input_from_facts(
             &snapshot,
+            state->dm2State.startup_save_root,
+            profile ? profile->save_root : NULL,
+            state->dm2State.startup_resume_available,
+            state->dm2State.startup_slot_mask,
+            state->dm2State.startup_menu_selected_row,
             (int)input,
             &action)) {
         return input == M12_MENU_INPUT_NONE

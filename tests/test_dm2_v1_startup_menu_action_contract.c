@@ -256,6 +256,20 @@ int main(void)
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
               snapshot.selected_row == 0,
           "snapshot Firestaff input helper owns input-code mapping and action");
+    check(dm2_v1_startup_menu_handle_firestaff_input_from_facts(
+              &snapshot,
+              "",
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              0,
+              2,
+              &action) &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE &&
+              snapshot.save_root[0] == '/' &&
+              snapshot.row_count == 3 &&
+              snapshot.selected_row == 1,
+          "snapshot facts input helper owns M11 input snapshot construction");
     check(dm2_v1_startup_plan_for_action(&action, &plan) &&
               plan.kind == DM2_V1_STARTUP_PLAN_IGNORE &&
               plan.slot == -1 &&
