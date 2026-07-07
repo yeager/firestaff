@@ -1203,6 +1203,77 @@ int dm2_v1_viewport_door_button_rect_for_square(int view_square,
     }
 }
 
+static DM2_V1_ViewportRect dm2_v1_viewport_wall_frame_rect(int view_square)
+{
+    const DM2_WallFrame *frame = dm2_v1_get_wall_frame(view_square);
+    DM2_V1_ViewportRect rect = { 0, 0, 0, 0 };
+    if (!frame) {
+        return rect;
+    }
+    rect.x = frame->left_x;
+    rect.y = frame->top_y;
+    rect.w = frame->right_x - frame->left_x + 1;
+    rect.h = frame->bottom_y - frame->top_y + 1;
+    return rect;
+}
+
+int dm2_v1_viewport_build_door_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_DoorRenderPlan *out_plan)
+{
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s) {
+        return 1;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_TILE/DRAW_DOOR_FRAMES routes
+     * each visible DB0 door through center viewport cells 0,3,6 before
+     * drawing the panel, frame, and optional default/custom wall button. */
+    for (int square = 0; square < DM2_SQ_COUNT; ++square) {
+        const DM2_ViewSquare *vs = &s->squares[square];
+        DM2_V1_DoorRender *row;
+        DM2_V1_ViewportRect panel_rect;
+
+        if (!(vs->flags & DM2_SQF_HAS_DOOR) ||
+            out_plan->door_count >= DM2_V1_DOOR_RENDER_MAX) {
+            continue;
+        }
+        if (!dm2_v1_viewport_door_panel_rect_for_square(square,
+                                                        &panel_rect)) {
+            continue;
+        }
+        row = &out_plan->doors[out_plan->door_count++];
+        row->view_square = square;
+        row->skproject_cell = dm2_v1_viewport_skproject_cell_for_square(square);
+        row->panel_gdat_index =
+            dm2_v1_viewport_door_panel_graphic_index_for_square(square);
+        row->frame_gdat_index =
+            dm2_v1_viewport_door_frame_graphic_index_for_square(square);
+        row->fallback_color = 10;
+        row->panel_rect = panel_rect;
+        row->frame_rect = dm2_v1_viewport_wall_frame_rect(square);
+        if (vs->door_button || vs->door_wall_button) {
+            (void)dm2_v1_viewport_door_button_rect_for_square(
+                square,
+                &row->button_rect);
+            if (vs->door_button) {
+                row->button_gdat_index =
+                    dm2_v1_viewport_door_button_graphic_index_for_state(
+                        vs->door_button_state != 0);
+            } else {
+                row->button_gdat_index =
+                    dm2_v1_viewport_wall_button_graphic_index(
+                        vs->door_wall_button_index,
+                        vs->door_wall_button_field);
+            }
+        }
+    }
+    return 1;
+}
+
 /* ── Internal blit helper ─────────────────────────────────────────── */
 
 static void __attribute__((unused)) dm2_blit_bitmap (
@@ -1748,6 +1819,27 @@ static void dm2_v1_draw_legacy_wall_fallback(uint8_t *vp, int stride)
     }
 }
 
+static void dm2_v1_draw_door_panel_fallback_rect(uint8_t *vp,
+                                                 int stride,
+                                                 int view_square,
+                                                 const DM2_V1_ViewportRect *rect,
+                                                 uint8_t color)
+{
+    if (!vp || !rect || stride <= 0 || rect->w <= 0 || rect->h <= 0) {
+        return;
+    }
+    dm2_v1_fill_rect(vp, stride, rect, color);
+    if (view_square == DM2_SQ_D0C) {
+        dm2_v1_stroke_rect(vp, stride, rect, DM2_COL_MIDGRAY);
+    } else {
+        DM2_V1_ViewportRect line =
+            (DM2_V1_ViewportRect){ rect->x, rect->y, 1, rect->h };
+        dm2_v1_fill_rect(vp, stride, &line, DM2_COL_MIDGRAY);
+        line.x = rect->x + rect->w - 1;
+        dm2_v1_fill_rect(vp, stride, &line, DM2_COL_MIDGRAY);
+    }
+}
+
 void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer) return;
@@ -1834,6 +1926,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     int door_asset_count = 0;
     int door_button_asset_count = 0;
     int door_fallback_count = 0;
+    DM2_V1_DoorRenderPlan plan;
 
     /* DM2 door rendering: overlays on wall squares.
      * Source: DUNVIEW.C:3082-3095 F0102_DrawDoorBitmap,
@@ -1845,32 +1938,21 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
      * Phase 3: placeholder door rects on DM2_SQF_HAS_DOOR squares.
      * Real door graphics from GRAPHICS.DAT (Phase 4). */
 
-    for (int i = 0; i < DM2_SQ_COUNT; i++) {
-        DM2_ViewSquare *vs = &s->squares[i];
-        if (!(vs->flags & DM2_SQF_HAS_DOOR)) continue;
+    if (!dm2_v1_viewport_build_door_render_plan(s, &plan)) {
+        return;
+    }
 
-        /* DM2 door positions per depth row.
-         *   D0C: front door - centered, full-height (lines 0-135)
-         *   D1C: near door - centered, high strip (lines 9-119)
-         *   D2C: mid door - centered, mid strip (lines 20-90) */
-        DM2_V1_ViewportRect panel_rect;
-        int dx = 0, dy = 0, dw = 0, dh = 0;
-        if (dm2_v1_viewport_door_panel_rect_for_square(i, &panel_rect)) {
-            dx = panel_rect.x;
-            dy = panel_rect.y;
-            dw = panel_rect.w;
-            dh = panel_rect.h;
-        }
-        if (dw > 0 && dh > 0) {
+    for (int i = 0; i < plan.door_count; i++) {
+        const DM2_V1_DoorRender *door = &plan.doors[i];
+
+        if (door->panel_rect.w > 0 && door->panel_rect.h > 0) {
             const uint8_t *panel_pixels = NULL;
             int panel_w = 0;
             int panel_h = 0;
             int panel_stride = 0;
-            int panel_index =
-                dm2_v1_viewport_door_panel_graphic_index_for_square(i);
-            if (panel_index != 0 &&
+            if (door->panel_gdat_index != 0 &&
                 dm2_v1_fetch_viewport_asset(s,
-                                            panel_index,
+                                            door->panel_gdat_index,
                                             &panel_pixels,
                                             &panel_w,
                                             &panel_h,
@@ -1882,94 +1964,49 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                  * decoding is still boot-defaulted to index 0 here. */
                 dm2_v1_blit_scaled_bitmap(vp,
                                           stride,
-                                          dx,
-                                          dy,
-                                          dw,
-                                          dh,
+                                          door->panel_rect.x,
+                                          door->panel_rect.y,
+                                          door->panel_rect.w,
+                                          door->panel_rect.h,
                                           panel_pixels,
                                           panel_w,
                                           panel_h,
                                           panel_stride > 0 ? panel_stride : panel_w,
                                           DM2_COLOR_TRANSPARENT);
                 ++door_panel_asset_count;
-            } else if (i == DM2_SQ_D0C) {
-            for (int y = dy; y < dy + dh; y++) {
-                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
-                for (int x = dx; x < dx + dw; x++)
-                    vp[y * stride + x] = 10;  /* brown door */
+            } else {
+                dm2_v1_draw_door_panel_fallback_rect(vp,
+                                                     stride,
+                                                     door->view_square,
+                                                     &door->panel_rect,
+                                                     door->fallback_color);
+                ++door_fallback_count;
             }
-            for (int y = dy; y < dy + dh; y++) {
-                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
-                vp[y * stride + dx] = DM2_COL_MIDGRAY;
-                vp[y * stride + dx + dw - 1] = DM2_COL_MIDGRAY;
-            }
-            for (int x = dx; x < dx + dw; x++) {
-                vp[dy * stride + x] = DM2_COL_MIDGRAY;
-                vp[(dy + dh - 1) * stride + x] = DM2_COL_MIDGRAY;
-            }
-            ++door_fallback_count;
-        } else if (i == DM2_SQ_D1C) {
-            for (int y = dy; y < dy + dh; y++) {
-                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
-                for (int x = dx; x < dx + dw; x++)
-                    vp[y * stride + x] = 10;
-            }
-            for (int y = dy; y < dy + dh; y++) {
-                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
-                vp[y * stride + dx] = DM2_COL_MIDGRAY;
-                vp[y * stride + dx + dw - 1] = DM2_COL_MIDGRAY;
-            }
-            ++door_fallback_count;
-        } else if (i == DM2_SQ_D2C) {
-            for (int y = dy; y < dy + dh; y++) {
-                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
-                for (int x = dx; x < dx + dw; x++)
-                    vp[y * stride + x] = 10;
-            }
-            for (int y = dy; y < dy + dh; y++) {
-                if ((unsigned)y >= (unsigned)DM2_VP_HEIGHT) break;
-                vp[y * stride + dx] = DM2_COL_MIDGRAY;
-                vp[y * stride + dx + dw - 1] = DM2_COL_MIDGRAY;
-            }
-            ++door_fallback_count;
         }
-        }
-        {
+        if (door->frame_rect.w > 0 && door->frame_rect.h > 0) {
             const uint8_t *door_pixels = NULL;
             int door_w = 0;
             int door_h = 0;
             int door_stride = 0;
-            int gdat_index =
-                dm2_v1_viewport_door_frame_graphic_index_for_square(i);
-            const DM2_WallFrame *frame = dm2_v1_get_wall_frame(i);
-            int dst_x = frame ? frame->left_x : 0;
-            int dst_y = frame ? frame->top_y : 0;
-            int dst_w = frame
-                ? (int)frame->right_x - (int)frame->left_x + 1
-                : 0;
-            int dst_h = frame
-                ? (int)frame->bottom_y - (int)frame->top_y + 1
-                : 0;
 
-            if (gdat_index != 0 &&
+            if (door->frame_gdat_index != 0 &&
                 dm2_v1_fetch_viewport_asset(s,
-                                            gdat_index,
+                                            door->frame_gdat_index,
                                             &door_pixels,
                                             &door_w,
                                             &door_h,
                                             &door_stride) == 0 &&
-                door_pixels && door_w > 0 && door_h > 0 &&
-                dst_w > 0 && dst_h > 0) {
+                door_pixels && door_w > 0 && door_h > 0) {
                 /* skproject GRAPHICSSET fields 0x06/0x07/0x09 are the
                  * first boot-bound door-frame images for front, D1C and D2C.
                  * This pass scales them into the current bounded DM2 frame
                  * rectangles; exact DRAW_DUNGEON_GRAPHIC offsets remain open. */
                 dm2_v1_blit_scaled_bitmap(vp,
                                           stride,
-                                          dst_x,
-                                          dst_y,
-                                          dst_w,
-                                          dst_h,
+                                          door->frame_rect.x,
+                                          door->frame_rect.y,
+                                          door->frame_rect.w,
+                                          door->frame_rect.h,
                                           door_pixels,
                                           door_w,
                                           door_h,
@@ -1978,36 +2015,15 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 ++door_asset_count;
             }
         }
-        if (vs->door_button || vs->door_wall_button) {
+        if (door->button_gdat_index != 0 &&
+            door->button_rect.w > 0 && door->button_rect.h > 0) {
             const uint8_t *button_pixels = NULL;
             int button_w = 0;
             int button_h = 0;
             int button_stride = 0;
-            DM2_V1_ViewportRect button_rect;
-            int button_index;
-            int has_button_rect =
-                dm2_v1_viewport_door_button_rect_for_square(i, &button_rect);
 
-            if (vs->door_button) {
-                button_index =
-                    dm2_v1_viewport_door_button_graphic_index_for_state(
-                        vs->door_button_state != 0);
-            } else {
-                /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES lines
-                 * ~46346-46350 draws a custom wall-gfx button only when the
-                 * DB0 door has no default button and tblCellTilesRoom[cell]
-                 * w6[2] is present: category WALL_GFX, index low byte,
-                 * field high byte + 1. */
-                button_index = dm2_v1_viewport_wall_button_graphic_index(
-                    vs->door_wall_button_index,
-                    vs->door_wall_button_field);
-            }
-
-            if (has_button_rect &&
-                button_rect.w > 0 && button_rect.h > 0 &&
-                button_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s,
-                                            button_index,
+            if (dm2_v1_fetch_viewport_asset(s,
+                                            door->button_gdat_index,
                                             &button_pixels,
                                             &button_w,
                                             &button_h,
@@ -2020,10 +2036,10 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                  * dm2_v1_viewport_door_button_rect_for_square(). */
                 dm2_v1_blit_scaled_bitmap(vp,
                                           stride,
-                                          button_rect.x,
-                                          button_rect.y,
-                                          button_rect.w,
-                                          button_rect.h,
+                                          door->button_rect.x,
+                                          door->button_rect.y,
+                                          door->button_rect.w,
+                                          door->button_rect.h,
                                           button_pixels,
                                           button_w,
                                           button_h,

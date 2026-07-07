@@ -366,6 +366,7 @@ static void test_floor_ceiling_asset_provider(void)
     uint8_t framebuffer[320 * 200];
     DM2_V1_ViewportState viewport;
     DM2_V1_WallPanelRenderPlan wall_plan;
+    DM2_V1_DoorRenderPlan door_plan;
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -460,6 +461,50 @@ static void test_floor_ceiling_asset_provider(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_button = 1;
+    viewport.squares[DM2_SQ_D0C].door_button_state = 1;
+    viewport.squares[DM2_SQ_D1C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D2C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0L].flags |= DM2_SQF_HAS_DOOR;
+    memset(&door_plan, 0, sizeof(door_plan));
+    CHECK("door render plan binds center door panel/frame/button rows",
+          dm2_v1_viewport_build_door_render_plan(&viewport, &door_plan) == 1 &&
+              door_plan.door_count == 3 &&
+              door_plan.doors[0].view_square == DM2_SQ_D2C &&
+              door_plan.doors[0].skproject_cell == 6 &&
+              door_plan.doors[0].panel_gdat_index ==
+                  dm2_v1_viewport_door_panel_graphic_index_for_square(
+                      DM2_SQ_D2C) &&
+              rect_equals(&door_plan.doors[0].panel_rect, 60, 20, 103, 71) &&
+              rect_equals(&door_plan.doors[0].frame_rect, 60, 20, 104, 71) &&
+              door_plan.doors[1].view_square == DM2_SQ_D1C &&
+              door_plan.doors[1].frame_gdat_index ==
+                  dm2_v1_viewport_door_frame_graphic_index_for_square(
+                      DM2_SQ_D1C) &&
+              door_plan.doors[2].view_square == DM2_SQ_D0C &&
+              rect_equals(&door_plan.doors[2].panel_rect, 80, 0, 160, 135) &&
+              rect_equals(&door_plan.doors[2].button_rect, 212, 58, 16, 18) &&
+              door_plan.doors[2].button_gdat_index ==
+                  dm2_v1_viewport_door_button_graphic_index_for_state(1));
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    memset(&door_plan, 0, sizeof(door_plan));
+    CHECK("door render plan owns front panel and frame routing",
+          dm2_v1_viewport_build_door_render_plan(&viewport,
+                                                 &door_plan) == 1 &&
+              door_plan.door_count == 1 &&
+              door_plan.doors[0].view_square == DM2_SQ_D0C &&
+              door_plan.doors[0].skproject_cell == 0 &&
+              door_plan.doors[0].panel_gdat_index ==
+                  dm2_v1_viewport_door_panel_graphic_index_for_square(
+                      DM2_SQ_D0C) &&
+              door_plan.doors[0].frame_gdat_index ==
+                  dm2_v1_viewport_door_frame_graphic_index_for_square(
+                      DM2_SQ_D0C) &&
+              rect_equals(&door_plan.doors[0].panel_rect, 80, 0, 160, 135) &&
+              rect_equals(&door_plan.doors[0].frame_rect, 0, 0, 224, 136));
     dm2_v1_render_doors(&viewport);
     CHECK("door fallback counts when no asset provider is installed",
           viewport.asset_door_frame_drawn_count == 0 &&
@@ -488,6 +533,14 @@ static void test_floor_ceiling_asset_provider(void)
     viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D0C].door_button = 1;
     viewport.squares[DM2_SQ_D0C].door_button_state = 1;
+    memset(&door_plan, 0, sizeof(door_plan));
+    CHECK("door render plan owns pushed default button routing",
+          dm2_v1_viewport_build_door_render_plan(&viewport,
+                                                 &door_plan) == 1 &&
+              door_plan.door_count == 1 &&
+              door_plan.doors[0].button_gdat_index ==
+                  dm2_v1_viewport_door_button_graphic_index_for_state(1) &&
+              rect_equals(&door_plan.doors[0].button_rect, 212, 58, 16, 18));
     s_asset_fetch_calls = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        test_dm2_asset_fetch,
@@ -510,6 +563,14 @@ static void test_floor_ceiling_asset_provider(void)
     viewport.squares[DM2_SQ_D0C].door_wall_button = 1;
     viewport.squares[DM2_SQ_D0C].door_wall_button_index = 0x2a;
     viewport.squares[DM2_SQ_D0C].door_wall_button_field = 0x07;
+    memset(&door_plan, 0, sizeof(door_plan));
+    CHECK("door render plan owns custom wall-gfx button routing",
+          dm2_v1_viewport_build_door_render_plan(&viewport,
+                                                 &door_plan) == 1 &&
+              door_plan.door_count == 1 &&
+              door_plan.doors[0].button_gdat_index ==
+                  dm2_v1_viewport_wall_button_graphic_index(0x2a, 0x07) &&
+              rect_equals(&door_plan.doors[0].button_rect, 212, 58, 16, 18));
     s_asset_fetch_calls = 0;
     s_last_asset_index = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,
@@ -532,6 +593,19 @@ static void test_floor_ceiling_asset_provider(void)
     viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D1C].flags |= DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D2C].flags |= DM2_SQF_HAS_DOOR;
+    memset(&door_plan, 0, sizeof(door_plan));
+    CHECK("door render plan preserves D0/D1/D2 center-cell order",
+          dm2_v1_viewport_build_door_render_plan(&viewport,
+                                                 &door_plan) == 1 &&
+              door_plan.door_count == 3 &&
+              door_plan.doors[0].view_square == DM2_SQ_D2C &&
+              door_plan.doors[0].skproject_cell == 6 &&
+              rect_equals(&door_plan.doors[0].panel_rect, 60, 20, 103, 71) &&
+              door_plan.doors[1].view_square == DM2_SQ_D1C &&
+              door_plan.doors[1].skproject_cell == 3 &&
+              rect_equals(&door_plan.doors[1].panel_rect, 60, 9, 104, 110) &&
+              door_plan.doors[2].view_square == DM2_SQ_D0C &&
+              door_plan.doors[2].skproject_cell == 0);
     s_asset_fetch_calls = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        test_dm2_asset_fetch,
