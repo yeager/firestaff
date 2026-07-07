@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.54  (2026-07-07)",
+    "  - Packages the post-v3.0.53 CSB projectile/render ownership, Nexus champion-select render ownership, and DM1 rebirth explosion type namespace work now on main.",
+    "  - CSB V1 projectile rendering now consumes CSB-owned source tables for projectile graphic index, flip flags, bitmap deltas, scale units, and aspect mapping.",
+    "  - Nexus champion select now exposes row and footer render metadata from the Nexus startup module before M11 draws it.",
+    "  - DM1 V1 keeps resurrection thing IDs separate from C100/C101 explosion render type IDs so the M11 projectile handoff stays warning-free.",
+    "",
     "V3.0.48  (2026-07-06)",
     "  - Packages the post-v3.0.47 CSB title render metadata and startup special-palette presentation work now on main.",
     "  - CSB startup render plans now expose source title stages, C001 title blit boxes, and title/entrance/credits special palettes consumed by M11 presentation.",
@@ -467,5 +473,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.53";
+    return "3.0.54";
 }
