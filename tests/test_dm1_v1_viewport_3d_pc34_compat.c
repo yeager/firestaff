@@ -74,6 +74,139 @@ static void test_redmcsb_g0163_wall_frames(void)
     }
 }
 
+static void test_redmcsb_f0115_object_c2500_geometry(void)
+{
+    static const int expected_scales[5] = { 27, 21, 18, 14, 12 };
+    static const int expected_scale_index[3][4] = {
+        { 2, 2, 1, 1 },
+        { 4, 4, 3, 3 },
+        { 4, 4, 4, 4 }
+    };
+    static const int expected_pile_shift[16][2] = {
+        { 2, 5 }, { 0, 6 }, { 5, 7 }, { 3, 0 },
+        { 7, 1 }, { 1, 2 }, { 6, 3 }, { 3, 3 },
+        { 5, 5 }, { 2, 6 }, { 7, 7 }, { 1, 0 },
+        { 3, 1 }, { 6, 2 }, { 1, 3 }, { 5, 3 }
+    };
+    static const int expected_shift_sets[3][8] = {
+        { 0, 1, 2, 3, 0, -3, -2, -1 },
+        { 0, 1, 1, 2, 0, -2, -1, -1 },
+        { 0, 1, 1, 1, 0, -1, -1, -1 }
+    };
+    static const int expected_c2500[5][4][2] = {
+        {{   0,   0 }, {   0,   0 }, { 127,  70 }, {  98,  70 }},
+        {{   0,   0 }, {   0,   0 }, {  62,  70 }, {  25,  70 }},
+        {{   0,   0 }, {   0,   0 }, { 200,  70 }, { 162,  70 }},
+        {{   0,   0 }, {   0,   0 }, {   2,  70 }, { -35,  70 }},
+        {{   0,   0 }, {   0,   0 }, { 258,  70 }, { 222,  70 }}
+    };
+    static const int raw_samples[][4] = {
+        {  5, 0,  94,  78 },
+        {  8, 3,  76, 115 },
+        { 10, 2, 301, 117 },
+        { 12, 1,  46,  61 },
+        { 16, 3, 218,  74 }
+    };
+
+    for (int i = 0; i < 5; ++i) {
+        char id[96];
+        snprintf(id, sizeof(id), "F0115.object.scale_units.%d", i);
+        check_int(id, dm1_viewport_3d_object_source_scale_units(i),
+                  expected_scales[i]);
+    }
+    check_int("F0115.object.scale_units.clamp_low",
+              dm1_viewport_3d_object_source_scale_units(-5), 27);
+    check_int("F0115.object.scale_units.clamp_high",
+              dm1_viewport_3d_object_source_scale_units(99), 12);
+
+    for (int depth = 1; depth <= 3; ++depth) {
+        for (int cell = 0; cell < 4; ++cell) {
+            char id[96];
+            snprintf(id, sizeof(id), "F0115.object.scale_index.d%d.c%d",
+                     depth, cell);
+            check_int(id,
+                      dm1_viewport_3d_object_source_scale_index(depth, cell),
+                      expected_scale_index[depth - 1][cell]);
+        }
+    }
+    check_int("F0115.object.scale_index.native",
+              dm1_viewport_3d_object_source_scale_index(0, 3), 0);
+
+    for (int i = 0; i < 16; ++i) {
+        int x = -1;
+        int y = -1;
+        char id[96];
+        dm1_viewport_3d_object_pile_shift_indices(i, &x, &y);
+        snprintf(id, sizeof(id), "F0115.object.pile_shift.%d.x", i);
+        check_int(id, x, expected_pile_shift[i][0]);
+        snprintf(id, sizeof(id), "F0115.object.pile_shift.%d.y", i);
+        check_int(id, y, expected_pile_shift[i][1]);
+    }
+    {
+        int x = -1;
+        int y = -1;
+        dm1_viewport_3d_object_pile_shift_indices(31, &x, &y);
+        check_int("F0115.object.pile_shift.wrap.x", x,
+                  expected_pile_shift[15][0]);
+        check_int("F0115.object.pile_shift.wrap.y", y,
+                  expected_pile_shift[15][1]);
+    }
+
+    for (int set = 0; set < 3; ++set) {
+        for (int idx = 0; idx < 8; ++idx) {
+            char id[96];
+            snprintf(id, sizeof(id), "F0115.object.shift.set%d.idx%d",
+                     set, idx);
+            check_int(id,
+                      dm1_viewport_3d_object_source_shift_value(set, idx),
+                      expected_shift_sets[set][idx]);
+        }
+    }
+
+    for (int scale = 0; scale < 5; ++scale) {
+        for (int cell = 0; cell < 4; ++cell) {
+            int x = -999;
+            int y = -999;
+            int present = dm1_viewport_3d_c2500_object_zone_point(scale,
+                                                                  cell,
+                                                                  &x,
+                                                                  &y);
+            char id[96];
+            snprintf(id, sizeof(id), "F0115.object.c2500.%d.%d.present",
+                     scale, cell);
+            check_int(id, present, expected_c2500[scale][cell][0] != 0 ||
+                                   expected_c2500[scale][cell][1] != 0);
+            if (!present) continue;
+            snprintf(id, sizeof(id), "F0115.object.c2500.%d.%d.x",
+                     scale, cell);
+            check_int(id, x, expected_c2500[scale][cell][0]);
+            snprintf(id, sizeof(id), "F0115.object.c2500.%d.%d.y",
+                     scale, cell);
+            check_int(id, y, expected_c2500[scale][cell][1]);
+        }
+    }
+
+    for (size_t i = 0; i < sizeof(raw_samples) / sizeof(raw_samples[0]); ++i) {
+        int x = -999;
+        int y = -999;
+        char id[96];
+        int present = dm1_viewport_3d_c2500_object_raw_zone_point(
+            raw_samples[i][0], raw_samples[i][1], &x, &y);
+        snprintf(id, sizeof(id), "F0115.object.c2500.raw.%zu.present", i);
+        check_int(id, present, 1);
+        snprintf(id, sizeof(id), "F0115.object.c2500.raw.%zu.x", i);
+        check_int(id, x, raw_samples[i][2]);
+        snprintf(id, sizeof(id), "F0115.object.c2500.raw.%zu.y", i);
+        check_int(id, y, raw_samples[i][3]);
+    }
+    check_int("F0115.object.c2500.raw.invalid_row",
+              dm1_viewport_3d_c2500_object_raw_zone_point(17, 0, NULL, NULL),
+              0);
+    check_int("F0115.object.c2500.raw.empty_cell",
+              dm1_viewport_3d_c2500_object_raw_zone_point(11, 2, NULL, NULL),
+              0);
+}
+
 
 static void test_redmcsb_g0163_wall_frames_resolve_clip_gate(void)
 {
@@ -3201,9 +3334,51 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
     }
 }
 
+static void test_f0115_object_zone_contract(void)
+{
+    int x = 0;
+    int y = 0;
+    int sx = 0;
+    int sy = 0;
+
+    check_int("F0115.object.scale.units.0",
+              dm1_viewport_3d_object_source_scale_units(0), 27);
+    check_int("F0115.object.scale.units.4",
+              dm1_viewport_3d_object_source_scale_units(4), 12);
+    check_int("F0115.object.scale.index.d0",
+              dm1_viewport_3d_object_source_scale_index(0, 0), 0);
+    check_int("F0115.object.scale.index.d1.front",
+              dm1_viewport_3d_object_source_scale_index(1, 2), 1);
+    check_int("F0115.object.scale.index.d2.back",
+              dm1_viewport_3d_object_source_scale_index(2, 0), 4);
+
+    check_int("F0115.object.c2500.zone.ok",
+              dm1_viewport_3d_c2500_object_zone_point(1, 3, &x, &y), 1);
+    check_int("F0115.object.c2500.zone.x", x, 25);
+    check_int("F0115.object.c2500.zone.y", y, 70);
+    check_int("F0115.object.c2500.raw.ok",
+              dm1_viewport_3d_c2500_object_raw_zone_point(11, 1, &x, &y), 1);
+    check_int("F0115.object.c2500.raw.x", x, 158);
+    check_int("F0115.object.c2500.raw.y", y, 133);
+    check_int("F0115.object.c2500.raw.empty",
+              dm1_viewport_3d_c2500_object_raw_zone_point(11, 2, &x, &y), 0);
+
+    dm1_viewport_3d_object_pile_shift_indices(0, &sx, &sy);
+    check_int("F0115.object.pile.0.x", sx, 2);
+    check_int("F0115.object.pile.0.y", sy, 5);
+    dm1_viewport_3d_object_pile_shift_indices(10, &sx, &sy);
+    check_int("F0115.object.pile.10.x", sx, 7);
+    check_int("F0115.object.pile.10.y", sy, 7);
+    check_int("F0115.object.shift.set0.index3",
+              dm1_viewport_3d_object_source_shift_value(0, 3), 3);
+    check_int("F0115.object.shift.set2.index7",
+              dm1_viewport_3d_object_source_shift_value(2, 7), -1);
+}
+
 int main(void)
 {
     test_redmcsb_g0163_wall_frames();
+    test_redmcsb_f0115_object_c2500_geometry();
     test_redmcsb_g0163_wall_frames_resolve_clip_gate();
     test_redmcsb_f0128_draw_order();
     test_f0128_d4_far_object_pass_order();
@@ -3233,6 +3408,7 @@ int main(void)
     test_projectile_occlusion_zone_mapping();
     test_explosion_occlusion_zone_mapping();
     test_projectile_wall_zone_movement_visibility_gate();
+    test_f0115_object_zone_contract();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();

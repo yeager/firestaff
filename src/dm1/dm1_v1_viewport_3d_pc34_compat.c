@@ -203,6 +203,137 @@ static const DM1_ViewportFarObjectPassSpec s_far_object_pass_specs[] = {
     { DM1_VIEW_SQUARE_D4C, 4,  0, 0x0001, 16, true, "DUNVIEW.C:8474-8477; DEFS.H:2612 M597_VIEW_SQUARE_D4C" },
 };
 
+int dm1_viewport_3d_object_source_scale_units(int scale_index)
+{
+    /* ReDMCSB DUNVIEW.C:1207 G2030_auc_ObjectScales.  F0115 lines
+     * 5030-5039 select one of these source units before deriving an object
+     * bitmap for the current view depth/cell. */
+    static const unsigned char k_object_scales[5] = { 27, 21, 18, 14, 12 };
+    if (scale_index < 0) scale_index = 0;
+    if (scale_index > 4) scale_index = 4;
+    return (int)k_object_scales[scale_index];
+}
+
+int dm1_viewport_3d_object_source_scale_index(int depth_index,
+                                              int relative_cell)
+{
+    int front_row = relative_cell >= 2;
+    int idx;
+
+    /* ReDMCSB DUNVIEW.C F0115: D1/native objects use the native bucket;
+     * deeper view rows derive the bucket from view depth and the
+     * front/back half of AL0126_i_ViewCell. */
+    if (depth_index <= 0) return 0;
+    idx = depth_index * 2 - (front_row ? 1 : 0);
+    if (idx < 0) idx = 0;
+    if (idx > 4) idx = 4;
+    return idx;
+}
+
+void dm1_viewport_3d_object_pile_shift_indices(int pile_index,
+                                               int *out_x_index,
+                                               int *out_y_index)
+{
+    /* ReDMCSB DUNVIEW.C:1228-1235
+     * G0217_aauc_Graphic558_ObjectPileShiftSetIndices. */
+    static const unsigned char k_pile_shift_indices[16][2] = {
+        { 2, 5 }, { 0, 6 }, { 5, 7 }, { 3, 0 },
+        { 7, 1 }, { 1, 2 }, { 6, 3 }, { 3, 3 },
+        { 5, 5 }, { 2, 6 }, { 7, 7 }, { 1, 0 },
+        { 3, 1 }, { 6, 2 }, { 1, 3 }, { 5, 3 }
+    };
+    if (pile_index < 0) pile_index = 0;
+    pile_index &= 0x0F;
+    if (out_x_index) *out_x_index = (int)k_pile_shift_indices[pile_index][0];
+    if (out_y_index) *out_y_index = (int)k_pile_shift_indices[pile_index][1];
+}
+
+int dm1_viewport_3d_object_source_shift_value(int shift_set,
+                                              int shift_index)
+{
+    /* ReDMCSB DUNVIEW.C:1237-1240 G0223_aac_Graphic558_ShiftSets.
+     * COORD.C F0637 applies these when the C2500 zone has
+     * MASK0x8000_SHIFT_OBJECTS_AND_CREATURES. */
+    static const signed char k_shift_sets[3][8] = {
+        { 0, 1, 2, 3, 0, -3, -2, -1 },
+        { 0, 1, 1, 2, 0, -2, -1, -1 },
+        { 0, 1, 1, 1, 0, -1, -1, -1 }
+    };
+    if (shift_set < 0) shift_set = 0;
+    if (shift_set > 2) shift_set = 2;
+    if (shift_index < 0) shift_index = 0;
+    if (shift_index > 7) shift_index = 7;
+    return (int)k_shift_sets[shift_set][shift_index];
+}
+
+int dm1_viewport_3d_c2500_object_zone_point(int scale_index,
+                                            int relative_cell,
+                                            int *out_x,
+                                            int *out_y)
+{
+    /* ReDMCSB DUNVIEW.C F0115 line 5075 binds C2500_ZONE_ plus
+     * G2028 row and AL0126_i_ViewCell.  These five canonical source rows
+     * match the current source-scale buckets used by the Firestaff
+     * object-render path. */
+    static const short k_c2500[5][4][2] = {
+        {{   0,   0 }, {   0,   0 }, { 127,  70 }, {  98,  70 }},
+        {{   0,   0 }, {   0,   0 }, {  62,  70 }, {  25,  70 }},
+        {{   0,   0 }, {   0,   0 }, { 200,  70 }, { 162,  70 }},
+        {{   0,   0 }, {   0,   0 }, {   2,  70 }, { -35,  70 }},
+        {{   0,   0 }, {   0,   0 }, { 258,  70 }, { 222,  70 }}
+    };
+    int zx;
+    int zy;
+    if (scale_index < 0) scale_index = 0;
+    if (scale_index > 4) scale_index = 4;
+    if (relative_cell < 0 || relative_cell > 3) return 0;
+    zx = (int)k_c2500[scale_index][relative_cell][0];
+    zy = (int)k_c2500[scale_index][relative_cell][1];
+    if (zx == 0 && zy == 0) return 0;
+    if (out_x) *out_x = zx;
+    if (out_y) *out_y = zy;
+    return 1;
+}
+
+int dm1_viewport_3d_c2500_object_raw_zone_point(int row_index,
+                                                int relative_cell,
+                                                int *out_x,
+                                                int *out_y)
+{
+    /* ReDMCSB DUNVIEW.C F0115 lines 4923 and 5075 select rows through
+     * G2028_ac_ViewSquareIndexTo; COORD.C F0637/F0640 resolve layout-696
+     * C2500..C2567 and apply MASK0x8000 object/creature pile shifts. */
+    static const short k_c2500_raw[17][4][2] = {
+        {{   0,   0 }, {   0,   0 }, { 127,  70 }, {  98,  70 }},
+        {{   0,   0 }, {   0,   0 }, {  62,  70 }, {  25,  70 }},
+        {{   0,   0 }, {   0,   0 }, { 200,  70 }, { 162,  70 }},
+        {{   0,   0 }, {   0,   0 }, {   2,  70 }, { -35,  70 }},
+        {{   0,   0 }, {   0,   0 }, { 258,  70 }, { 222,  70 }},
+        {{  94,  78 }, { 131,  78 }, { 136,  88 }, {  89,  88 }},
+        {{  10,  78 }, {  53,  79 }, {  41,  88 }, { -14,  89 }},
+        {{ 171,  78 }, { 218,  78 }, { 236,  89 }, { 184,  88 }},
+        {{  83,  99 }, { 141,  99 }, { 150, 115 }, {  76, 115 }},
+        {{ -40, 101 }, {  24,  99 }, {   5, 114 }, { -79, 117 }},
+        {{ 200,  99 }, { 262, 101 }, { 301, 117 }, { 220, 114 }},
+        {{  66, 133 }, { 158, 133 }, {   0,   0 }, {   0,   0 }},
+        {{ 113,  62 }, {  46,  61 }, { 180,  61 }, { 115,  74 }},
+        {{   8,  73 }, { 220,  74 }, { 115,  92 }, { 112,  60 }},
+        {{  45,  61 }, { 179,  60 }, { 114,  73 }, {   4,  73 }},
+        {{ 219,  73 }, { 114,  88 }, { 113,  63 }, {  45,  62 }},
+        {{ 181,  62 }, { 114,  74 }, {  11,  73 }, { 218,  74 }}
+    };
+    int zx;
+    int zy;
+    if (row_index < 0 || row_index >= 17) return 0;
+    if (relative_cell < 0 || relative_cell > 3) return 0;
+    zx = (int)k_c2500_raw[row_index][relative_cell][0];
+    zy = (int)k_c2500_raw[row_index][relative_cell][1];
+    if (zx == 0 && zy == 0) return 0;
+    if (out_x) *out_x = zx;
+    if (out_y) *out_y = zy;
+    return 1;
+}
+
 /* ReDMCSB DUNVIEW.C F0128 lines 8488-8499 dispatch D3L, D3R, then D3C
  * after resolving their map cells through DUNGEON.C F0150 lines 1371-1421.
  * F0116 lines 6406-6437 prove D3L wall/alcove handling returns before the

@@ -479,6 +479,23 @@ typedef struct {
     const char *source_lines;
 } DM1_ViewportResolvedDrawStep;
 
+int dm1_viewport_3d_object_source_scale_units(int scale_index);
+int dm1_viewport_3d_object_source_scale_index(int depth_index,
+                                              int relative_cell);
+void dm1_viewport_3d_object_pile_shift_indices(int pile_index,
+                                               int *out_x_index,
+                                               int *out_y_index);
+int dm1_viewport_3d_object_source_shift_value(int shift_set,
+                                              int shift_index);
+int dm1_viewport_3d_c2500_object_zone_point(int scale_index,
+                                            int relative_cell,
+                                            int *out_x,
+                                            int *out_y);
+int dm1_viewport_3d_c2500_object_raw_zone_point(int row_index,
+                                                int relative_cell,
+                                                int *out_x,
+                                                int *out_y);
+
 /* Source-locked no-write coverage for a read-only view square.  The allowed
  * list records the other F0128 view-square callbacks that remain eligible to
  * draw while the target cell's own F0115/object handoff is locked out.
