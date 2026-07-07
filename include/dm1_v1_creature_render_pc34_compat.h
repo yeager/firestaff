@@ -159,6 +159,14 @@ typedef struct {
     int count;
 } DM1_CreatureRenderList;
 
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+    int side_hint;
+} DM1_CreatureDrawPlacement;
+
 /* ── Source-locked API ── */
 
 const DM1_CreatureAspect* dm1_creature_aspects(void);
@@ -230,6 +238,29 @@ int dm1_creature_has_flip_attack(int creatureType);
 int dm1_creature_replacement_colors(int creatureType,
                                     int *outReplDst9,
                                     int *outReplDst10);
+int dm1_creature_center_draw_placement(int creatureType,
+                                       int depthIndex,
+                                       int faceX,
+                                       int faceY,
+                                       int faceW,
+                                       int faceH,
+                                       int groupCount,
+                                       int groupIndex,
+                                       int creatureCount,
+                                       int duplicateIndex,
+                                       DM1_CreatureDrawPlacement *outPlacement);
+int dm1_creature_side_draw_placement(int creatureType,
+                                     int depthIndex,
+                                     int side,
+                                     int paneX,
+                                     int paneY,
+                                     int paneW,
+                                     int paneH,
+                                     int groupCount,
+                                     int groupIndex,
+                                     int creatureCount,
+                                     int duplicateIndex,
+                                     DM1_CreatureDrawPlacement *outPlacement);
 const unsigned char* dm1_creature_palette_d3(void);
 const unsigned char* dm1_creature_palette_d2(void);
 
