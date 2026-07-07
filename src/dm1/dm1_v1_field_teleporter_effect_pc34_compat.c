@@ -72,38 +72,43 @@ int dm1_v1_field_render_plan_for_relative_pc34(
     return 0;
 }
 
-int dm1_v1_field_build_blit_pc34(
+int dm1_v1_field_bitmap_sample_pc34(
     const DM1_FieldRenderPlanPc34* plan,
     uint32_t animTick,
-    DM1_FieldBlitPc34* outBlit)
+    int localX,
+    int localY,
+    int fieldWidth,
+    int fieldHeight,
+    int maskWidth,
+    int maskHeight,
+    DM1_FieldBitmapSamplePc34* outSample)
 {
-    DM1_FieldBlitPc34 blit;
-    if (!plan || !outBlit || plan->dstW <= 0 || plan->dstH <= 0) {
+    int fieldStartUnit;
+    int fieldYPhase;
+
+    if (!plan || !outSample ||
+        localX < 0 || localY < 0 ||
+        localX >= plan->dstW || localY >= plan->dstH ||
+        fieldWidth <= 0 || fieldHeight <= 0) {
         return 0;
     }
-    memset(&blit, 0, sizeof(blit));
-    blit.dstX = plan->dstX;
-    blit.dstY = plan->dstY;
-    blit.dstW = plan->dstW;
-    blit.dstH = plan->dstH;
-    /* ReDMCSB DUNVIEW.C F0113 calls F0133 with M005_RANDOM(2) added to the
-     * field base unit and M003_RANDOM(32) for the vertical phase. Firestaff's
-     * deterministic renderer derives the same bounded material inputs from
-     * the viewport animation tick before M11 performs the bitmap copy. */
-    blit.fieldStartUnit = plan->baseStartUnit + (int)((animTick >> 1) & 1u);
-    blit.fieldYPhase = (int)((animTick * 7u) & 31u);
-    blit.transparentColor = plan->transparentColor;
-    blit.transparentSkipColor = plan->transparentColor & 0x7f;
-    blit.transparentSkipEnabled = blit.transparentSkipColor != 0x7f;
-    blit.maskIndex = -1;
-    blit.maskFlip = 0;
-    if (plan->maskIndexAndFlip != 255) {
-        blit.usesMask = 1;
-        blit.maskIndex = plan->maskIndexAndFlip & 0x7f;
-        blit.maskFlip = (plan->maskIndexAndFlip & 0x80) ? 1 : 0;
+
+    memset(outSample, 0, sizeof(*outSample));
+    fieldStartUnit = plan->baseStartUnit + (int)((animTick >> 1) & 1u);
+    fieldYPhase = (int)((animTick * 7u) & 31u);
+    outSample->fieldX = (localX + (fieldStartUnit * 16)) % fieldWidth;
+    outSample->fieldY = (localY + fieldYPhase) % fieldHeight;
+    outSample->transparentColor = plan->transparentColor;
+
+    if (plan->maskIndexAndFlip != 0xff && maskWidth > 0 && maskHeight > 0) {
+        outSample->maskPresent = 1;
+        outSample->maskFlip = (plan->maskIndexAndFlip & 0x80) ? 1 : 0;
+        outSample->maskX = localX * maskWidth / plan->dstW;
+        outSample->maskY = localY * maskHeight / plan->dstH;
+        if (outSample->maskFlip) {
+            outSample->maskX = maskWidth - 1 - outSample->maskX;
+        }
     }
-    blit.usesF0133FieldBlit = 1;
-    *outBlit = blit;
     return 1;
 }
 
