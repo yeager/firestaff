@@ -22271,19 +22271,6 @@ static int m11_dm1_side_wall_blit_for_rel(int relForward,
     return 1;
 }
 
-static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
-                                       const M11_ViewportCell* cell) {
-    int northSouth;
-    if (!state || !cell) {
-        return 1;
-    }
-    /* ReDMCSB/DEFS.H: stairs bit 0x08 marks north/south orientation. */
-    northSouth = (cell->square & 0x08) ? 1 : 0;
-    return northSouth ?
-        (state->world.party.direction == DIR_NORTH || state->world.party.direction == DIR_SOUTH) :
-        (state->world.party.direction == DIR_EAST || state->world.party.direction == DIR_WEST);
-}
-
 static void m11_draw_dm1_stairs(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
@@ -22298,7 +22285,6 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
     planCount = dm1_v1_stairs_render_plan_count_pc34();
     for (i = 0; i < planCount; ++i) {
         M11_ViewportCell cell;
-        int frontFacing;
         int stairUp;
         M11_DM1ZoneBlit blit;
         const DM1_StairsBlitPc34* stairBlit;
@@ -22320,8 +22306,12 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_STAIRS) {
             continue;
         }
-        frontFacing = m11_dm1_stairs_front_facing(state, &cell);
-        if ((plan.frontOnly && !frontFacing) || (plan.sideOnly && frontFacing)) {
+        if (!dm1_v1_stairs_render_plan_for_square_pc34(
+                plan.relForward,
+                plan.relSide,
+                cell.square,
+                state->world.party.direction,
+                &plan)) {
             continue;
         }
         stairUp = dm1_v1_stairs_square_is_up_pc34(cell.square);
