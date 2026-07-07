@@ -70,6 +70,15 @@ typedef struct {
 } Theron_StartupFlowSnapshot;
 
 typedef struct {
+    Theron_StartupPhase phase;
+    int selected_dungeon;
+    int selected_mirrors_mask;
+    int companion_count;
+    const int *selected_mirror_order;
+    int selected_mirror_order_count;
+} Theron_StartupFlowSnapshotRequest;
+
+typedef struct {
     int flow_changed;
     Theron_StartupFlowSnapshot flow;
     int set_level_loaded;
@@ -362,6 +371,9 @@ typedef struct {
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
 void theron_v1_startup_flow_snapshot_init(Theron_StartupFlowSnapshot *snapshot);
+int theron_v1_startup_flow_snapshot_from_request(
+    const Theron_StartupFlowSnapshotRequest *request,
+    Theron_StartupFlowSnapshot *out_snapshot);
 void theron_v1_startup_state_receipt_init(
     Theron_StartupStateReceipt *receipt);
 void theron_v1_startup_flow_capture_snapshot(

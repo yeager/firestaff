@@ -144,6 +144,49 @@ void theron_v1_startup_flow_snapshot_init(Theron_StartupFlowSnapshot *snapshot) 
     }
 }
 
+int theron_v1_startup_flow_snapshot_from_request(
+    const Theron_StartupFlowSnapshotRequest *request,
+    Theron_StartupFlowSnapshot *out_snapshot) {
+
+    int count;
+    int copy_count;
+    int i;
+
+    if (!request || !out_snapshot) {
+        return 0;
+    }
+    theron_v1_startup_flow_snapshot_init(out_snapshot);
+    out_snapshot->phase = request->phase;
+    out_snapshot->selected_dungeon =
+        (Theron_DungeonID)request->selected_dungeon;
+    out_snapshot->selected_mirrors_mask =
+        (uint8_t)request->selected_mirrors_mask;
+
+    count = request->companion_count;
+    if (count < 0) {
+        count = 0;
+    }
+    if (count > THERON_STARTUP_MAX_COMPANIONS) {
+        count = THERON_STARTUP_MAX_COMPANIONS;
+    }
+    out_snapshot->companion_count = (uint8_t)count;
+
+    copy_count = request->selected_mirror_order_count;
+    if (copy_count < 0) {
+        copy_count = 0;
+    }
+    if (copy_count > THERON_STARTUP_MAX_COMPANIONS) {
+        copy_count = THERON_STARTUP_MAX_COMPANIONS;
+    }
+    for (i = 0; i < copy_count; ++i) {
+        out_snapshot->selected_mirror_order[i] =
+            request->selected_mirror_order
+                ? request->selected_mirror_order[i]
+                : -1;
+    }
+    return 1;
+}
+
 void theron_v1_startup_state_receipt_init(
     Theron_StartupStateReceipt *receipt) {
 

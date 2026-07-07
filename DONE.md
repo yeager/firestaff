@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron startup snapshot request ownership: `theron_v1_startup_flow` now builds `Theron_StartupFlowSnapshot` from a Theron-owned request contract. M11 supplies raw phase/dungeon/mirror facts and no longer clamps companion count or copies mirror order locally before flow rebuild. Verification: startup-flow probe passed 453/453, save-resume probe passed 66/66, M11 launcher handoff passed 26/26, Phase A passed 24/24, and targeted build passed.
+
 - ✅ 2026-07-07 CSB startup render request ownership: `csb_v1_startup_sequence_pc34_compat` now owns the startup render-plan request adapter. M11 sends raw title/entrance/runtime-start facts and no longer builds intermediate CSB render-state before drawing CSB title/entrance startup. Verification: startup entrance pointer contract passed 117/117, CSB boot runtime handoff passed 261/261, Phase A passed 24/24, and targeted build passed.
 
 - ✅ 2026-07-07 Theron startup layout-state ownership: `theron_v1_startup_flow` now builds `Theron_StartupLayoutState` from a Theron-owned request contract. M11 supplies raw profile/world/roster/Continue facts and no longer computes chapter labels, clamps selected dungeons, or copies layout arrays locally. Verification: startup-flow probe passed 449/449, save-resume probe passed 66/66, M11 launcher handoff passed 26/26, Phase A passed 24/24, and targeted build passed.

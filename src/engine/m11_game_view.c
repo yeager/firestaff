@@ -11959,7 +11959,7 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
                                            size_t receipt_cap) {
     Theron_StartupResult result;
     Theron_StartupFlowSnapshot snapshot;
-    int i;
+    Theron_StartupFlowSnapshotRequest request;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -11968,22 +11968,18 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
         return 0;
     }
 
-    theron_v1_startup_flow_snapshot_init(&snapshot);
-    snapshot.phase = (Theron_StartupPhase)state->theronState.startup_phase;
-    snapshot.selected_dungeon =
-        (Theron_DungeonID)state->theronState.selected_dungeon;
-    snapshot.selected_mirrors_mask =
-        (uint8_t)state->theronState.selected_mirrors_mask;
-    snapshot.companion_count =
-        state->theronState.companion_count < 0
-            ? 0u
-            : (state->theronState.companion_count >
-                   THERON_STARTUP_MAX_COMPANIONS
-                   ? (uint8_t)THERON_STARTUP_MAX_COMPANIONS
-                   : (uint8_t)state->theronState.companion_count);
-    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
-        snapshot.selected_mirror_order[i] =
-            state->theronState.selected_mirror_order[i];
+    memset(&request, 0, sizeof(request));
+    request.phase = (Theron_StartupPhase)state->theronState.startup_phase;
+    request.selected_dungeon = state->theronState.selected_dungeon;
+    request.selected_mirrors_mask =
+        state->theronState.selected_mirrors_mask;
+    request.companion_count = state->theronState.companion_count;
+    request.selected_mirror_order =
+        state->theronState.selected_mirror_order;
+    request.selected_mirror_order_count =
+        THERON_STARTUP_MAX_COMPANIONS;
+    if (!theron_v1_startup_flow_snapshot_from_request(&request, &snapshot)) {
+        return 0;
     }
     result = theron_v1_startup_flow_rebuild_from_snapshot(&snapshot,
                                                           progression,
