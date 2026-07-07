@@ -69,6 +69,7 @@
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
@@ -139,15 +140,6 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 static void m11_nexus_release_title(M11_GameViewState* state);
 static int m11_path_has_extension(const char* path, const char* ext);
 static int m11_path_tail_equals_ascii(const char* path, const char* tail);
-int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir);
-int dm1_v1_projectile_flip_flags(int aspectIndex,
-                                 int relativeDir,
-                                 int relativeCell,
-                                 int mapX,
-                                 int mapY);
-int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir);
-int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);
-int dm1_v1_projectile_subtype_to_aspect(int subtype);
 static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
                                             const char *path);
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
@@ -162,7 +154,6 @@ static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
                                int experience);
-static int m11_projectile_subtype_to_graphic_index(int subtype);
 static int m11_projectile_subtype_to_aspect_index(int subtype);
 static int m11_projectile_aspect_to_graphic_index(int aspectIndex,
                                                   int relativeDir);
@@ -17622,23 +17613,6 @@ static void m11_draw_item_cue(unsigned char* framebuffer,
  * G218_aaaauc_Graphic558_ObjectCoordinateSets to position projectiles
  * within the viewport cell based on their sub-cell.
  * Returns 1 if a real sprite was drawn, 0 for fallback. */
-static int m11_projectile_source_scale_units(int depthIndex, int relativeCell) {
-    /* DUNVIEW.C G0215_auc_Graphic558_ProjectileScales:
-     *   32 D1 back/native, 27 D2 front, 21 D2 back,
-     *   18 D3 front, 14 D3 back, 12 D4 front, 9 D4 back.
-     * Values are scale units out of 32. The normal V1 pass draws D1..D3;
-     * center sub-cells 0/1 are the back row and 2/3 are the front row. */
-    static const unsigned char kProjectileScales[7] = {32, 27, 21, 18, 14, 12, 9};
-    int frontRow = (relativeCell < 0) ? 1 : (relativeCell >= 2);
-    int idx;
-    if (depthIndex <= 0) return kProjectileScales[0];
-    idx = depthIndex * 2 - (frontRow ? 1 : 0);
-    if (idx < 1) idx = 1;
-    if (idx > 6) idx = 6;
-    return kProjectileScales[idx];
-}
-
-static unsigned int m11_projectile_aspect_graphic_info(int aspectIndex);
 static int m11_object_source_scale_index(int depthIndex, int relativeCell);
 
 static void m11_blit_scaled_flip(const M11_AssetSlot* slot,
@@ -17878,52 +17852,6 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
     return 1;
 }
 
-/* DM1 explosion-type -> explosion aspect index (0..3).
- * Ref: ReDMCSB DUNVIEW.C F0141 explosion draw loop (lines 1850-1878):
- *   FIREBALL / LIGHTNING_BOLT / REBIRTH_STEP2  -> C0_EXPLOSION_ASPECT_FIRE    (0)
- *   POISON_BOLT / POISON_CLOUD                 -> C2_EXPLOSION_ASPECT_POISON  (2)
- *   SMOKE                                      -> C3_EXPLOSION_ASPECT_SMOKE   (3)
- *   everything else (HARM_NON_MATERIAL, OPEN_DOOR, dispell, etc.)
- *                                              -> C1_EXPLOSION_ASPECT_SPELL   (1)
- *
- * Returns -1 for FLUXCAGE (not drawn through this path in DM1) and for
- * REBIRTH_STEP1 (handled separately in the original). */
-static int m11_explosion_type_to_aspect(int expType) {
-    if (expType < 0) return -1;
-    if (expType == C050_EXPLOSION_FLUXCAGE) return -1;
-    if (expType == C100_EXPLOSION_REBIRTH_STEP1) return -1;
-    if (expType == C000_EXPLOSION_FIREBALL
-            || expType == C002_EXPLOSION_LIGHTNING_BOLT
-            || expType == C101_EXPLOSION_REBIRTH_STEP2) {
-        return 0; /* FIRE */
-    }
-    if (expType == C007_EXPLOSION_POISON_CLOUD) {
-        /* In DM1 POISON_BOLT (type 6) also maps to POISON aspect, but
-         * our V1 header does not define C006.  The POISON_CLOUD branch
-         * covers the only on-viewport explosion variant we spawn. */
-        return 2; /* POISON */
-    }
-    if (expType == C040_EXPLOSION_SMOKE) {
-        return 3; /* SMOKE */
-    }
-    return 1; /* SPELL (HARM_NON_MATERIAL / OPEN_DOOR / default) */
-}
-
-/* DM1 explosion aspect -> native GRAPHICS.DAT index.
- * Ref: ReDMCSB DUNVIEW.C F0136 F0675_DUNGEONVIEW_GetScaledBitmap
- *   bitmap index = M614_GRAPHIC_FIRST_EXPLOSION (=486)
- *                + min(aspectIndex, C2_EXPLOSION_ASPECT_POISON)
- * Aspect 0 (fire)   -> 486
- * Aspect 1 (spell)  -> 487
- * Aspect 2 (poison) -> 488
- * Aspect 3 (smoke)  -> 488 (with smoke palette change on pixel values 6,7). */
-enum { M11_GFX_FIRST_EXPLOSION = 486 };
-static int m11_explosion_aspect_to_gfx(int aspect) {
-    if (aspect < 0) return -1;
-    if (aspect >= 2) return M11_GFX_FIRST_EXPLOSION + 2;
-    return M11_GFX_FIRST_EXPLOSION + aspect;
-}
-
 /* Draw a DM1 explosion bitmap from GRAPHICS.DAT.
  *
  * Replaces the previous cue-style palette-rect bloom with the real
@@ -18044,9 +17972,9 @@ static int m11_draw_explosion_sprite(const M11_GameViewState* state,
                                      int maxFrames,
                                      int attack,
                                      int depthIndex) {
-    int aspect = m11_explosion_type_to_aspect(expType);
-    int gfxIndex = m11_explosion_aspect_to_gfx(aspect);
-    int isSmoke = (aspect == 3);
+    int aspect = dm1_v1_explosion_type_to_aspect(expType);
+    int gfxIndex = dm1_v1_explosion_aspect_to_graphic(aspect);
+    int isSmoke = dm1_v1_explosion_is_smoke(expType);
     return m11_draw_explosion_sprite_bound(state,
                                            framebuffer,
                                            framebufferWidth,
@@ -18624,49 +18552,8 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     state->ornamentCacheLoaded[mapIndex] = 1;
 }
 
-static int m11_projectile_subtype_to_graphic_index(int subtype) {
-    /* ReDMCSB F0142 + DUNVIEW.C G0210_as_Graphic558_ProjectileAspects.
-     * M613_GRAPHIC_FIRST_PROJECTILE is 454.  Spell/explosion-like
-     * projectile subtypes map to projectile aspect native graphics, not
-     * to the older object/weapon graphics around 416. */
-    switch (subtype) {
-        case PROJECTILE_SUBTYPE_FIREBALL:
-            return 454 + 28; /* C10_PROJECTILE_ASPECT_EXPLOSION_FIREBALL */
-        case PROJECTILE_SUBTYPE_SLIME:
-            return 454 + 30; /* C12_PROJECTILE_ASPECT_EXPLOSION_SLIME */
-        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:
-            return 454 + 9;  /* C03_PROJECTILE_ASPECT_EXPLOSION_LIGHTNING_BOLT */
-        case PROJECTILE_SUBTYPE_POISON_BOLT:
-        case PROJECTILE_SUBTYPE_POISON_CLOUD:
-            return 454 + 31; /* C13_PROJECTILE_ASPECT_EXPLOSION_POISON */
-        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
-        case PROJECTILE_SUBTYPE_OPEN_DOOR:
-            return 454 + 29; /* C11_PROJECTILE_ASPECT_EXPLOSION_DEFAULT */
-        case PROJECTILE_SUBTYPE_KINETIC_ARROW:
-        default:
-            return 454;      /* first projectile aspect / safe kinetic fallback */
-    }
-}
-
 static int m11_projectile_subtype_to_aspect_index(int subtype) {
     return dm1_v1_projectile_subtype_to_aspect(subtype);
-}
-
-static int m11_projectile_aspect_first_native(int aspectIndex) {
-    static const unsigned char kFirstNative[14] = {
-        0,3,6,9,11,14,17,20,23,26,28,29,30,31
-    };
-    if (aspectIndex < 0 || aspectIndex >= 14) return -1;
-    return (int)kFirstNative[aspectIndex];
-}
-
-static unsigned int m11_projectile_aspect_graphic_info(int aspectIndex) {
-    static const unsigned short kGraphicInfo[14] = {
-        0x0011,0x0011,0x0010,0x0112,0x0011,0x0010,0x0010,
-        0x0011,0x0011,0x0012,0x0103,0x0103,0x0103,0x0103
-    };
-    if (aspectIndex < 0 || aspectIndex >= 14) return 0u;
-    return (unsigned int)kGraphicInfo[aspectIndex];
 }
 
 static int m11_projectile_aspect_bitmap_delta(int aspectIndex, int relativeDir) {
@@ -19244,7 +19131,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                 if (pIdx >= 0 && pIdx < state->world.things->projectileCount) {
                     int slot = (int)state->world.things->projectiles[pIdx].slot;
                     cell.firstProjectileSubtype = slot;
-                    cell.firstProjectileGfxIndex = m11_projectile_subtype_to_graphic_index(slot);
+                    cell.firstProjectileGfxIndex = dm1_v1_projectile_subtype_graphic_index(slot);
                 }
                 break;
             }
@@ -19272,7 +19159,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             if (rp->mapX != mapX || rp->mapY != mapY) continue;
             cell.firstProjectileSubtype = rp->projectileSubtype;
             cell.firstProjectileGfxIndex =
-                m11_projectile_subtype_to_graphic_index(rp->projectileSubtype);
+                dm1_v1_projectile_subtype_graphic_index(rp->projectileSubtype);
             break;
         }
     }
@@ -32273,15 +32160,15 @@ int M11_GameView_ProbeDm1WallOrnamentFlip(int viewWallIndex) {
 
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
                                                int relativeCell) {
-    return m11_projectile_source_scale_units(depthIndex, relativeCell);
+    return dm1_v1_projectile_scale_units(depthIndex, relativeCell);
 }
 
 int M11_GameView_GetProjectileAspectFirstNative(int aspectIndex) {
-    return m11_projectile_aspect_first_native(aspectIndex);
+    return dm1_v1_projectile_aspect_first_native(aspectIndex);
 }
 
 unsigned int M11_GameView_GetProjectileAspectGraphicInfo(int aspectIndex) {
-    return m11_projectile_aspect_graphic_info(aspectIndex);
+    return dm1_v1_projectile_aspect_graphic_info(aspectIndex);
 }
 
 int M11_GameView_GetProjectileAspectBitmapDelta(int aspectIndex, int relativeDir) {

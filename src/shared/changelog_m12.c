@@ -9,9 +9,9 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
-    "V3.0.62  (2026-07-07)",
-    "  - Packages current main after the CSB runtime thing-pass hook cleanup landed after v3.0.61 was tagged.",
-    "  - Release metadata now points at the latest main commit for the GitHub Actions release run.",
+    "V3.0.63  (2026-07-07)",
+    "  - Packages current main after the DM1 projectile/explosion helper ownership cleanup landed after v3.0.62 was tagged.",
+    "  - DM1 V1 projectile subtype, aspect metadata, scale, flip, and explosion queries now live in the source-locked DM1 compat helper used by M11.",
     "",
     "V3.0.61  (2026-07-07)",
     "  - Packages the CSB runtime thing-overlay ownership release with data-free CSB test target link fixes.",
@@ -500,5 +500,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.62";
+    return "3.0.63";
 }

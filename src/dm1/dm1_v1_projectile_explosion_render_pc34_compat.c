@@ -60,6 +60,16 @@ int dm1_v1_projectile_aspect_type(int aspectIndex) {
     return (int)(DM1_ProjectileAspects[aspectIndex].graphicInfo & 0x0003u);
 }
 
+int dm1_v1_projectile_aspect_first_native(int aspectIndex) {
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return -1;
+    return (int)DM1_ProjectileAspects[aspectIndex].firstNativeBitmapRelativeIndex;
+}
+
+unsigned int dm1_v1_projectile_aspect_graphic_info(int aspectIndex) {
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return 0u;
+    return (unsigned int)DM1_ProjectileAspects[aspectIndex].graphicInfo;
+}
+
 /* DUNVIEW.C:5746-5786, L0183_i_ProjectileBitmapIndexDelta. */
 int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir) {
     int aspectType;
@@ -93,6 +103,13 @@ int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir) {
     first = (int)DM1_ProjectileAspects[aspectIndex].firstNativeBitmapRelativeIndex;
     return DM1_GFX_FIRST_PROJECTILE + first +
            dm1_v1_projectile_bitmap_delta(aspectIndex, relativeDir);
+}
+
+int dm1_v1_projectile_subtype_graphic_index(int subtype) {
+    int aspectIndex = dm1_v1_projectile_subtype_to_aspect(subtype);
+    int first = dm1_v1_projectile_aspect_first_native(aspectIndex);
+    if (first < 0) return -1;
+    return DM1_GFX_FIRST_PROJECTILE + first;
 }
 
 /* DUNVIEW.C:5745-5806 flip flags.
