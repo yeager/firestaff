@@ -979,6 +979,61 @@ int theron_v1_startup_layout_hit_at(
     return 0;
 }
 
+int theron_v1_startup_handle_pointer_from_layout_state(
+    const Theron_StartupLayoutState *state,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    int x,
+    int y,
+    Theron_StartupResult *out_result,
+    Theron_StartupAction *out_action) {
+
+    Theron_StartupLayoutElement elements[16];
+    Theron_StartupHit hit;
+    Theron_StartupResult result;
+    int count;
+
+    if (out_result) {
+        *out_result = THERON_STARTUP_OK;
+    }
+    if (out_action) {
+        theron_v1_startup_action_init(out_action);
+    }
+    if (!state || !out_result || !out_action) {
+        if (out_result) {
+            *out_result = THERON_STARTUP_ERR_NULL;
+        }
+        return 0;
+    }
+
+    count = theron_v1_startup_layout_build(
+        state,
+        elements,
+        (int)(sizeof(elements) / sizeof(elements[0])));
+    if (!theron_v1_startup_layout_hit_at(
+            state->phase,
+            elements,
+            count,
+            x,
+            y,
+            &hit)) {
+        return 0;
+    }
+
+    result = theron_v1_startup_handle_hit_with_progression(
+        state->phase,
+        state->selected_dungeon,
+        state->progression,
+        soul_cursor,
+        continue_focus,
+        has_continue,
+        &hit,
+        out_action);
+    *out_result = result;
+    return 1;
+}
+
 static int tqr_startup_render_add_row(
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows,
