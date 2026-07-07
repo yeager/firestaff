@@ -48,6 +48,91 @@ typedef struct DM1_V1_BoxSpellAreaResultPc34 {
     int withinBoxBounds;
 } DM1_V1_BoxSpellAreaResultPc34;
 
+typedef struct DM1_V1_SpellAreaRectPc34 {
+    int x;
+    int y;
+    int w;
+    int h;
+} DM1_V1_SpellAreaRectPc34;
+
+/*
+ * ReDMCSB: CASTER.C F0394 draws C009 at the spell-area screen origin,
+ * SPELDRAW.C F0393 owns the champion caster tab row, and DEFS.H exposes
+ * C013/C221/C224 plus C009/C011.  The raw G0000 screen box remains
+ * 224..319,42..74 for full clears/hatching; the visible PC spell-area
+ * background is the native 87x25 graphic anchored at x=233,y=42, while
+ * COMMAND.C routes the C100 click family through the taller 87x33 box.
+ */
+enum {
+    DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 = 9,
+    DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 = 11,
+    DM1_V1_SPELL_AREA_ZONE_ID_PC34 = 13,
+    DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34 = 221,
+    DM1_V1_SPELL_CASTER_TAB_ZONE_ID_PC34 = 224,
+    DM1_V1_SPELL_AREA_CAST_ZONE_ID_PC34 = 252,
+    DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34 = 254,
+    DM1_V1_SPELL_AVAILABLE_SYMBOL_PARENT_ZONE_ID_BASE_PC34 = 245,
+    DM1_V1_SPELL_AVAILABLE_SYMBOL_ZONE_ID_BASE_PC34 = 255,
+    DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34 = 261
+};
+
+static inline DM1_V1_SpellAreaRectPc34
+dm1_v1_spell_area_graphic_rect_pc34(void)
+{
+    DM1_V1_SpellAreaRectPc34 r = { 233, 42, 87, 25 };
+    return r;
+}
+
+static inline DM1_V1_SpellAreaRectPc34
+dm1_v1_spell_area_click_rect_pc34(void)
+{
+    DM1_V1_SpellAreaRectPc34 r = { 233, 42, 87, 33 };
+    return r;
+}
+
+static inline DM1_V1_SpellAreaRectPc34
+dm1_v1_spell_area_source_box_rect_pc34(void)
+{
+    DM1_V1_SpellAreaRectPc34 r = { 224, 42, 96, 33 };
+    return r;
+}
+
+static inline DM1_V1_SpellAreaRectPc34
+dm1_v1_spell_caster_panel_rect_pc34(void)
+{
+    DM1_V1_SpellAreaRectPc34 r = { 233, 42, 87, 8 };
+    return r;
+}
+
+static inline DM1_V1_SpellAreaRectPc34
+dm1_v1_spell_caster_tab_rect_pc34(void)
+{
+    DM1_V1_SpellAreaRectPc34 r = { 233, 42, 45, 8 };
+    return r;
+}
+
+static inline int
+dm1_v1_spell_available_symbol_parent_zone_id_pc34(int symbol_index)
+{
+    if (symbol_index < 0 || symbol_index >= 6) return 0;
+    return DM1_V1_SPELL_AVAILABLE_SYMBOL_PARENT_ZONE_ID_BASE_PC34 +
+           symbol_index;
+}
+
+static inline int
+dm1_v1_spell_available_symbol_zone_id_pc34(int symbol_index)
+{
+    if (symbol_index < 0 || symbol_index >= 6) return 0;
+    return DM1_V1_SPELL_AVAILABLE_SYMBOL_ZONE_ID_BASE_PC34 + symbol_index;
+}
+
+static inline int
+dm1_v1_spell_champion_symbol_zone_id_pc34(int symbol_index)
+{
+    if (symbol_index < 0 || symbol_index >= 4) return 0;
+    return DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34 + symbol_index;
+}
+
 const int *
 dm1_v1_box_spell_area_table_pc34(void);
 
