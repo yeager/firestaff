@@ -616,55 +616,77 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
 static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
                                        DM2_V1_BootProfile *profile)
 {
+    DM2_V1_StartupMenuSnapshot snapshot;
+
     if (!state || !profile) {
+        return;
+    }
+    memset(&snapshot, 0, sizeof(snapshot));
+    snprintf(snapshot.save_root,
+             sizeof(snapshot.save_root),
+             "%s",
+             state->dm2State.startup_save_root[0]
+                 ? state->dm2State.startup_save_root
+                 : profile->save_root);
+    snapshot.resume_available = state->dm2State.startup_resume_available;
+    snapshot.slot_mask = state->dm2State.startup_slot_mask;
+    snapshot.row_count = state->dm2State.startup_menu_row_count;
+    snapshot.selected_row = state->dm2State.startup_menu_selected_row;
+    if (!dm2_v1_startup_menu_snapshot_scan_saves(&snapshot,
+                                                 profile->save_root)) {
         return;
     }
     snprintf(state->dm2State.startup_save_root,
              sizeof(state->dm2State.startup_save_root),
              "%s",
-             profile->save_root);
-    {
-        DM2_V1_StartupMenu menu;
-        dm2_v1_startup_menu_init(&menu, profile->save_root);
-        menu.selected_row = state->dm2State.startup_menu_selected_row;
-        (void)dm2_v1_startup_menu_scan_saves(&menu);
-        state->dm2State.startup_resume_available = menu.resume_available;
-        state->dm2State.startup_slot_mask = menu.slot_mask;
-        state->dm2State.startup_menu_row_count = menu.row_count;
-        state->dm2State.startup_menu_selected_row = menu.selected_row;
-    }
+             snapshot.save_root);
+    state->dm2State.startup_resume_available = snapshot.resume_available;
+    state->dm2State.startup_slot_mask = snapshot.slot_mask;
+    state->dm2State.startup_menu_row_count = snapshot.row_count;
+    state->dm2State.startup_menu_selected_row = snapshot.selected_row;
 }
 
 static void m11_dm2_startup_menu_from_state(
     const M11_GameViewState *state,
     DM2_V1_StartupMenu *menu)
 {
+    DM2_V1_StartupMenuSnapshot snapshot;
+
     if (!state || !menu) {
         return;
     }
-    dm2_v1_startup_menu_init(
-        menu,
-        state->dm2State.startup_save_root[0]
-            ? state->dm2State.startup_save_root
-            : NULL);
-    menu->selected_row = state->dm2State.startup_menu_selected_row;
-    (void)dm2_v1_startup_menu_refresh(
-        menu,
-        state->dm2State.startup_resume_available,
-        state->dm2State.startup_slot_mask);
+    memset(&snapshot, 0, sizeof(snapshot));
+    snprintf(snapshot.save_root,
+             sizeof(snapshot.save_root),
+             "%s",
+             state->dm2State.startup_save_root);
+    snapshot.resume_available = state->dm2State.startup_resume_available;
+    snapshot.slot_mask = state->dm2State.startup_slot_mask;
+    snapshot.row_count = state->dm2State.startup_menu_row_count;
+    snapshot.selected_row = state->dm2State.startup_menu_selected_row;
+    (void)dm2_v1_startup_menu_from_snapshot(&snapshot, menu);
 }
 
 static void m11_dm2_startup_menu_to_state(
     M11_GameViewState *state,
     const DM2_V1_StartupMenu *menu)
 {
+    DM2_V1_StartupMenuSnapshot snapshot;
+
     if (!state || !menu) {
         return;
     }
-    state->dm2State.startup_resume_available = menu->resume_available;
-    state->dm2State.startup_slot_mask = menu->slot_mask;
-    state->dm2State.startup_menu_row_count = menu->row_count;
-    state->dm2State.startup_menu_selected_row = menu->selected_row;
+    if (!dm2_v1_startup_menu_snapshot_from_menu(&snapshot, menu)) {
+        return;
+    }
+    snprintf(state->dm2State.startup_save_root,
+             sizeof(state->dm2State.startup_save_root),
+             "%s",
+             snapshot.save_root);
+    state->dm2State.startup_resume_available = snapshot.resume_available;
+    state->dm2State.startup_slot_mask = snapshot.slot_mask;
+    state->dm2State.startup_menu_row_count = snapshot.row_count;
+    state->dm2State.startup_menu_selected_row = snapshot.selected_row;
 }
 
 static int m11_dm2_startup_row_at(const M11_GameViewState *state,
@@ -672,13 +694,24 @@ static int m11_dm2_startup_row_at(const M11_GameViewState *state,
                                   DM2_V1_StartupRowKind *out_kind,
                                   int *out_slot)
 {
-    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupMenuSnapshot snapshot;
 
     if (!state) {
         return 0;
     }
-    m11_dm2_startup_menu_from_state(state, &menu);
-    return dm2_v1_startup_menu_row_at(&menu, row, out_kind, out_slot);
+    memset(&snapshot, 0, sizeof(snapshot));
+    snprintf(snapshot.save_root,
+             sizeof(snapshot.save_root),
+             "%s",
+             state->dm2State.startup_save_root);
+    snapshot.resume_available = state->dm2State.startup_resume_available;
+    snapshot.slot_mask = state->dm2State.startup_slot_mask;
+    snapshot.row_count = state->dm2State.startup_menu_row_count;
+    snapshot.selected_row = state->dm2State.startup_menu_selected_row;
+    return dm2_v1_startup_menu_snapshot_row_at(&snapshot,
+                                               row,
+                                               out_kind,
+                                               out_slot);
 }
 
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,

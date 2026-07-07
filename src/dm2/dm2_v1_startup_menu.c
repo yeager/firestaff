@@ -109,6 +109,93 @@ int dm2_v1_startup_menu_refresh(DM2_V1_StartupMenu *menu,
     return 1;
 }
 
+void dm2_v1_startup_menu_snapshot_init(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root)
+{
+    DM2_V1_StartupMenu menu;
+
+    if (!snapshot) {
+        return;
+    }
+    dm2_v1_startup_menu_init(&menu, save_root);
+    (void)dm2_v1_startup_menu_snapshot_from_menu(snapshot, &menu);
+}
+
+int dm2_v1_startup_menu_snapshot_scan_saves(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root)
+{
+    DM2_V1_StartupMenu menu;
+
+    if (!snapshot) {
+        return 0;
+    }
+    dm2_v1_startup_menu_init(
+        &menu,
+        save_root && save_root[0] ? save_root : snapshot->save_root);
+    menu.selected_row = snapshot->selected_row;
+    if (!dm2_v1_startup_menu_scan_saves(&menu)) {
+        return 0;
+    }
+    return dm2_v1_startup_menu_snapshot_from_menu(snapshot, &menu);
+}
+
+int dm2_v1_startup_menu_from_snapshot(
+    const DM2_V1_StartupMenuSnapshot *snapshot,
+    DM2_V1_StartupMenu *out_menu)
+{
+    if (!snapshot || !out_menu) {
+        return 0;
+    }
+    dm2_v1_startup_menu_init(
+        out_menu,
+        snapshot->save_root[0] ? snapshot->save_root : NULL);
+    out_menu->selected_row = snapshot->selected_row;
+    return dm2_v1_startup_menu_refresh(out_menu,
+                                       snapshot->resume_available,
+                                       snapshot->slot_mask);
+}
+
+int dm2_v1_startup_menu_snapshot_from_menu(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const DM2_V1_StartupMenu *menu)
+{
+    if (!snapshot || !menu) {
+        return 0;
+    }
+    memset(snapshot, 0, sizeof(*snapshot));
+    snprintf(snapshot->save_root,
+             sizeof(snapshot->save_root),
+             "%s",
+             menu->save_root);
+    snapshot->resume_available = menu->resume_available;
+    snapshot->slot_mask = menu->slot_mask;
+    snapshot->row_count = menu->row_count;
+    snapshot->selected_row = menu->selected_row;
+    return 1;
+}
+
+int dm2_v1_startup_menu_snapshot_row_at(
+    const DM2_V1_StartupMenuSnapshot *snapshot,
+    int row,
+    DM2_V1_StartupRowKind *out_kind,
+    int *out_slot)
+{
+    DM2_V1_StartupMenu menu;
+
+    if (!dm2_v1_startup_menu_from_snapshot(snapshot, &menu)) {
+        if (out_kind) {
+            *out_kind = DM2_V1_STARTUP_ROW_NONE;
+        }
+        if (out_slot) {
+            *out_slot = -1;
+        }
+        return 0;
+    }
+    return dm2_v1_startup_menu_row_at(&menu, row, out_kind, out_slot);
+}
+
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,
                                int row,
                                DM2_V1_StartupRowKind *out_kind,

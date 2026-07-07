@@ -249,6 +249,8 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupRect rect;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupMenu menu;
+    DM2_V1_StartupMenuSnapshot snapshot;
+    DM2_V1_StartupMenu restored_menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupRowKind row_kind = DM2_V1_STARTUP_ROW_NONE;
     DM2_V1_StartupDrawCommand commands[16];
@@ -285,6 +287,28 @@ static void expect_dm2_startup_layout_contract(void) {
                 "DM2 startup menu refresh accepts resume and slot mask");
     expect_true(menu.row_count == 3,
                 "DM2 startup menu counts CONTINUE, slot, and NEW GAME rows");
+    expect_true(dm2_v1_startup_menu_snapshot_from_menu(&snapshot, &menu) &&
+                    strcmp(snapshot.save_root,
+                           "/tmp/firestaff-dm2-test-saves") == 0 &&
+                    snapshot.resume_available == 1 &&
+                    snapshot.slot_mask == (1u << 3) &&
+                    snapshot.row_count == 3 &&
+                    snapshot.selected_row == 0,
+                "DM2 startup snapshot captures menu state");
+    snapshot.selected_row = 7;
+    expect_true(dm2_v1_startup_menu_from_snapshot(&snapshot,
+                                                  &restored_menu) &&
+                    restored_menu.row_count == 3 &&
+                    restored_menu.selected_row == 2,
+                "DM2 startup snapshot restore clamps stale selection");
+    expect_true(dm2_v1_startup_menu_snapshot_row_at(
+                    &snapshot,
+                    1,
+                    &row_kind,
+                    &slot) &&
+                    row_kind == DM2_V1_STARTUP_ROW_SLOT &&
+                    slot == 3,
+                "DM2 startup snapshot resolves rows without M11 menu policy");
     expect_true(dm2_v1_startup_menu_row_at(&menu, 0, &row_kind, &slot) &&
                     row_kind == DM2_V1_STARTUP_ROW_CONTINUE &&
                     slot == -1,
