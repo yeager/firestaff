@@ -229,6 +229,46 @@ static size_t build_skproject_custom_wall_button_fixture(uint8_t *buf,
     return size;
 }
 
+static size_t build_skproject_creature_possession_fixture(uint8_t *buf,
+                                                         size_t cap)
+{
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + 4u;
+    const size_t thing_base = sft_base + 2u;
+    const size_t creature_base = thing_base;
+    const size_t weapon_base = creature_base + 16u;
+    const size_t junk_base = weapon_base + 4u;
+    const size_t raw_map_base = junk_base + 4u;
+    uint8_t *desc;
+
+    if (cap < raw_map_base + 4u) return 0;
+    memset(buf, 0, cap);
+    buf[4] = 1;
+    put16le(buf + 10, 1);
+    put16le(buf + 20, 1);
+    put16le(buf + 22, 1);
+    put16le(buf + 32, 1);
+    desc = buf + header_size;
+    put16le(desc + 8, (uint16_t)((1u << 6) | (1u << 11)));
+    put16le(buf + column_base, 0);
+    put16le(buf + column_base + 2, 0);
+    put16le(buf + sft_base, 0x1000);
+    put16le(buf + creature_base, 0xfffe);
+    put16le(buf + creature_base + 2, 0x5400);
+    buf[creature_base + 4] = 0x06;
+    put16le(buf + weapon_base, 0xa800);
+    put16le(buf + weapon_base + 2, 0x0022);
+    put16le(buf + junk_base, 0xfffe);
+    put16le(buf + junk_base + 2, 0x0033);
+    buf[raw_map_base + 0] = 0x20;
+    buf[raw_map_base + 1] = 0x20;
+    buf[raw_map_base + 2] = 0x90;
+    buf[raw_map_base + 3] = 0x20;
+    return raw_map_base + 4u;
+}
+
 static size_t build_skproject_actuator_wall_button_fixture(uint8_t *buf,
                                                           size_t cap)
 {
@@ -594,6 +634,49 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "runtime records asset-backed carried leader-hand item draw");
         dm2_v1_runtime_set_leader_hand_object(0u);
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+    }
+
+    {
+        uint8_t fixture[144];
+        size_t fixture_size = build_skproject_creature_possession_fixture(
+            fixture, sizeof(fixture));
+        DM2_V1_DungeonData *replacement =
+            (DM2_V1_DungeonData *)calloc(1, sizeof(*replacement));
+        uint8_t framebuffer[320 * 200];
+        int fetch_count = 0;
+
+        CHECK(fixture_size > 0 && replacement != NULL,
+              "runtime creature-possession fixture allocates");
+        if (replacement &&
+            dm2_v1_dungeon_load(replacement, fixture, (int)fixture_size) == 0) {
+            DM2_V1_DungeonData *old_dd =
+                (DM2_V1_DungeonData *)profile.dungeon_data;
+            dm2_v1_dungeon_free(old_dd);
+            free(old_dd);
+            profile.dungeon_data = replacement;
+            replacement = NULL;
+            dm2_v1_runtime_set_position(0, 1, 1, 0);
+            dm2_v1_runtime_set_outdoor(0);
+            memset(s_item_pixels, 7, sizeof(s_item_pixels));
+            memset(framebuffer, 0, sizeof(framebuffer));
+            dm2_v1_runtime_set_viewport_asset_provider(
+                synthetic_viewport_asset_fetch, &fetch_count);
+            CHECK(dm2_v1_runtime_render_frame(
+                      0, 1, 1, framebuffer, 320, 320, 200) == 0,
+                  "runtime renders skproject creature possession chain");
+            CHECK(fetch_count >= 14,
+                  "runtime creature possession chain reaches item-map-chip fetch path");
+            CHECK(dm2_v1_runtime_last_asset_creature_possession_item_count() == 2 &&
+                  dm2_v1_runtime_last_fallback_creature_possession_item_count() == 0,
+                  "runtime records asset-backed creature possession item draws");
+            dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
+        } else {
+            CHECK(0, "runtime creature-possession fixture loads");
+        }
+        if (replacement) {
+            dm2_v1_dungeon_free(replacement);
+            free(replacement);
+        }
     }
 
     state->gold = 240;
