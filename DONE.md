@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-07 CSB runtime object sprite source-zone contract: `CSB_V1_ViewportRuntimeObjectSpriteBlit` now carries the full F0115/C2500 source-zone value alongside source row, transparency, and F0791 usage. D3L2/D3R2 object spec lookup accepts both DM1 alias squares and ReDMCSB view-square indices, preserving the object/creature shift mask in the blit contract.
+
 - ✅ 2026-07-07 Nexus startup champion palette/timing contract: `nexus_v1_startup_menu` now exposes frame-aware champion render rows with cursor highlight blink, selected text palette, shadow palette, portrait-border palette, and party-marker palette. M11 now advances a champion-select startup frame and consumes those Nexus-owned palette/timing fields while drawing the FACE roster.
 
 - ✅ 2026-07-07 Nexus startup champion roster paging: `nexus_v1_startup_layout` now exposes cursor-relative champion viewport paging and pointer hit mapping, `nexus_v1_startup_menu` renders the visible 12-row page around the active cursor, and M11 uses the same Nexus-owned cursor-relative hit-test path. The startup view can now render and select champions 12-23 instead of always showing only rows 0-11.

@@ -1005,6 +1005,7 @@ int csb_v1_viewport_runtime_object_sprite_blit(
     blit.viewport_w = placement->sprite_viewport_w;
     blit.viewport_h = placement->sprite_viewport_h;
     blit.depth_index = placement->sprite_depth_index;
+    blit.source_zone = placement->source_zone;
     blit.source_zone_row = placement->object_row;
     blit.transparent_color = placement->sprite_transparent_color;
     blit.uses_f0791_blit = placement->sprite_uses_f0791_blit;
@@ -3829,7 +3830,8 @@ const CSB_V1_ViewportObjectBlitSpec *csb_v1_viewport_get_object_blit_spec(size_t
 const CSB_V1_ViewportObjectBlitSpec *csb_v1_viewport_get_object_blit_spec_for_square(int view_square)
 {
     for (size_t i = 0; i < csb_v1_viewport_object_blit_spec_count(); ++i) {
-        if (s_object_blits[i].view_square == view_square) {
+        if (s_object_blits[i].view_square == view_square ||
+            s_object_blits[i].redmcsb_view_square_index == view_square) {
             return &s_object_blits[i];
         }
     }

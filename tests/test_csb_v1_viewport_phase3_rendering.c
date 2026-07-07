@@ -3067,6 +3067,24 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_icon_blit.draw_y, 121);
     check_int("csb.runtime_object_overlay.d1c.icon_blit.transparent",
               object_icon_blit.transparent_color, 0);
+    memset(&object_place, 0, sizeof(object_place));
+    check_true("csb.runtime_object_overlay.d3l2.cell3.visible",
+               csb_v1_viewport_runtime_object_overlay_placement(
+                   3, -2, 3, &object_place) == 1);
+    check_int("csb.runtime_object_overlay.d3l2.cell3.zone",
+              object_place.source_zone, 35283);
+    object_place.sprite_thing_type = THING_TYPE_WEAPON;
+    object_place.sprite_subtype_index = 8;
+    check_int("csb.runtime_object_overlay.d3l2.cell3.sprite_blit",
+              csb_v1_viewport_runtime_object_sprite_blit(
+                  &object_place, &object_sprite_blit), 1);
+    check_int("csb.runtime_object_overlay.d3l2.cell3.blit_zone",
+              object_sprite_blit.source_zone, 35283);
+    check_int("csb.runtime_object_overlay.d3l2.cell3.blit_row",
+              object_sprite_blit.source_zone_row, 3);
+    memset(&object_place, 0, sizeof(object_place));
+    (void)csb_v1_viewport_runtime_object_overlay_placement(
+        1, 0, 0, &object_place);
     {
         uint8_t screen[320 * 200];
         memset(screen, 0, sizeof(screen));
