@@ -1049,12 +1049,7 @@ static int m11_csb_viewport_projectile_material_resolver(
 static int m11_csb_viewport_projectile_sprite_drawer(
     void *user,
     const struct ProjectileInstance_Compat *projectile,
-    int forward,
-    int side,
-    int view_cell,
-    int source_zone,
-    int viewport_x,
-    int viewport_y,
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
     uint8_t *screen_pixels,
     int screen_stride)
 {
@@ -1066,13 +1061,8 @@ static int m11_csb_viewport_projectile_sprite_drawer(
     int relative_cell;
     int gfx_index;
     int flip_flags;
-    int pane_x;
-    int pane_y;
-    int pane_w;
-    int pane_h;
-    int source_zone_row;
 
-    if (!ctx || !ctx->state || !ctx->profile || !projectile ||
+    if (!ctx || !ctx->state || !ctx->profile || !projectile || !placement ||
         !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
@@ -1083,7 +1073,7 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         return 0;
     }
     relative_dir = (projectile->direction - runtime->party_dir) & 3;
-    relative_cell = (view_cell - runtime->party_dir) & 3;
+    relative_cell = (placement->view_cell - runtime->party_dir) & 3;
     gfx_index = dm1_v1_projectile_graphic_index(aspect, relative_dir);
     flip_flags = dm1_v1_projectile_flip_flags(
         aspect,
@@ -1091,16 +1081,6 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         relative_cell,
         projectile->mapX,
         projectile->mapY);
-    (void)csb_v1_viewport_runtime_projectile_sprite_rect(
-        source_zone,
-        viewport_x,
-        viewport_y,
-        &source_zone_row,
-        &pane_x,
-        &pane_y,
-        &pane_w,
-        &pane_h);
-    (void)side;
     /* ReDMCSB DUNVIEW.C F0115 lines 5710-5722 picks the scale row from
      * view depth/cell before the F0791 C10 projectile blit.  Reuse the
      * M11 DM1 sprite path here; CSB PC34 shares the projectile bitmap
@@ -1110,54 +1090,32 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
-        pane_x,
-        pane_y,
-        pane_w,
-        pane_h,
+        placement->sprite_x,
+        placement->sprite_y,
+        placement->sprite_w,
+        placement->sprite_h,
         gfx_index,
-        forward,
+        placement->forward,
         relative_dir,
         relative_cell,
         flip_flags,
-        source_zone_row);
+        placement->source_zone_row);
 }
 
 static int m11_csb_viewport_explosion_sprite_drawer(
     void *user,
     const struct ExplosionInstance_Compat *explosion,
-    int forward,
-    int side,
-    int view_cell,
-    int source_zone,
-    int viewport_x,
-    int viewport_y,
+    const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
-    int pane_x;
-    int pane_y;
-    int pane_w;
-    int pane_h;
-    int depth_index;
 
-    (void)side;
-    (void)view_cell;
-    if (!ctx || !ctx->state || !explosion || !screen_pixels ||
+    if (!ctx || !ctx->state || !explosion || !placement || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    (void)csb_v1_viewport_runtime_explosion_sprite_rect(
-        forward,
-        source_zone,
-        viewport_x,
-        viewport_y,
-        &depth_index,
-        &pane_x,
-        &pane_y,
-        &pane_w,
-        &pane_h);
     /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions in a
      * final pass with F0114/F0675 bitmap selection.  CSB PC34 shares
      * the DM1 explosion bitmap aspect mapping for this M11 bridge. */
@@ -1166,15 +1124,15 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
-        pane_x,
-        pane_y,
-        pane_w,
-        pane_h,
+        placement->sprite_x,
+        placement->sprite_y,
+        placement->sprite_w,
+        placement->sprite_h,
         explosion->explosionType,
         explosion->currentFrame,
         explosion->maxFrames,
         explosion->attack,
-        depth_index);
+        placement->depth_index);
 }
 
 static void m11_csb_runtime_overlay_stats_reset(

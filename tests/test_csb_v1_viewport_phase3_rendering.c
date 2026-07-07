@@ -50,6 +50,19 @@ static void write_fixture_u16(uint8_t *raw, int offset, uint16_t value)
     raw[offset + 1] = (uint8_t)(value >> 8);
 }
 
+typedef struct {
+    int calls;
+    int forward;
+    int view_cell;
+    int source_zone;
+    int source_zone_row;
+    int sprite_x;
+    int sprite_y;
+    int sprite_w;
+    int sprite_h;
+    int depth_index;
+} TestRuntimeSpritePlacementCapture;
+
 static int test_projectile_material_resolver(
     void *user,
     const struct ProjectileInstance_Compat *projectile)
@@ -63,50 +76,57 @@ static int test_projectile_material_resolver(
 static int test_projectile_sprite_drawer(
     void *user,
     const struct ProjectileInstance_Compat *projectile,
-    int forward,
-    int side,
-    int view_cell,
-    int source_zone,
-    int viewport_x,
-    int viewport_y,
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
     uint8_t *screen_pixels,
     int screen_stride)
 {
-    int *calls = (int *)user;
+    TestRuntimeSpritePlacementCapture *capture =
+        (TestRuntimeSpritePlacementCapture *)user;
     (void)projectile;
-    (void)forward;
-    (void)side;
-    (void)view_cell;
-    (void)source_zone;
-    if (!screen_pixels || screen_stride <= 0) return 0;
-    if (calls) ++*calls;
-    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + viewport_y) * screen_stride +
-                  DM1_VIEWPORT_SCREEN_X + viewport_x] = 0x05u;
+    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (capture) {
+        ++capture->calls;
+        capture->forward = placement->forward;
+        capture->view_cell = placement->view_cell;
+        capture->source_zone = placement->source_zone;
+        capture->source_zone_row = placement->source_zone_row;
+        capture->sprite_x = placement->sprite_x;
+        capture->sprite_y = placement->sprite_y;
+        capture->sprite_w = placement->sprite_w;
+        capture->sprite_h = placement->sprite_h;
+    }
+    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + placement->viewport_y) *
+                      screen_stride +
+                  DM1_VIEWPORT_SCREEN_X + placement->viewport_x] = 0x05u;
     return 1;
 }
 
 static int test_explosion_sprite_drawer(
     void *user,
     const struct ExplosionInstance_Compat *explosion,
-    int forward,
-    int side,
-    int view_cell,
-    int source_zone,
-    int viewport_x,
-    int viewport_y,
+    const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
     uint8_t *screen_pixels,
     int screen_stride)
 {
-    int *calls = (int *)user;
+    TestRuntimeSpritePlacementCapture *capture =
+        (TestRuntimeSpritePlacementCapture *)user;
     (void)explosion;
-    (void)forward;
-    (void)side;
-    (void)view_cell;
-    (void)source_zone;
-    if (!screen_pixels || screen_stride <= 0) return 0;
-    if (calls) ++*calls;
-    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + viewport_y) * screen_stride +
-                  DM1_VIEWPORT_SCREEN_X + viewport_x] = 0x0Bu;
+    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (capture) {
+        ++capture->calls;
+        capture->forward = placement->forward;
+        capture->view_cell = placement->view_cell;
+        capture->source_zone = placement->source_zone;
+        capture->source_zone_row = placement->source_zone_row;
+        capture->sprite_x = placement->sprite_x;
+        capture->sprite_y = placement->sprite_y;
+        capture->sprite_w = placement->sprite_w;
+        capture->sprite_h = placement->sprite_h;
+        capture->depth_index = placement->depth_index;
+    }
+    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + placement->viewport_y) *
+                      screen_stride +
+                  DM1_VIEWPORT_SCREEN_X + placement->viewport_x] = 0x0Bu;
     return 1;
 }
 
@@ -240,17 +260,34 @@ static void test_runtime_projectile_and_explosion_overlays(void)
     }
 
     {
-        int sprite_calls = 0;
+        TestRuntimeSpritePlacementCapture sprite_capture;
+        memset(&sprite_capture, 0, sizeof(sprite_capture));
         memset(framebuffer, 0, sizeof(framebuffer));
         cfg.projectile_sprite_drawer = test_projectile_sprite_drawer;
-        cfg.projectile_sprite_user = &sprite_calls;
+        cfg.projectile_sprite_user = &sprite_capture;
         cfg.runtime_projectile_sprite_drawn_count = 0;
         cfg.runtime_projectile_material_resolved_count = 0;
         cfg.runtime_projectile_marker_drawn_count = 0;
         csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
         check_int("runtime.projectile_sprite.center",
                   framebuffer[center_offset], 0x05);
-        check_int("runtime.projectile_sprite.calls", sprite_calls, 1);
+        check_int("runtime.projectile_sprite.calls", sprite_capture.calls, 1);
+        check_int("runtime.projectile_sprite.forward",
+                  sprite_capture.forward, 1);
+        check_int("runtime.projectile_sprite.cell",
+                  sprite_capture.view_cell, 2);
+        check_int("runtime.projectile_sprite.source_zone",
+                  sprite_capture.source_zone, -1);
+        check_int("runtime.projectile_sprite.source_row",
+                  sprite_capture.source_zone_row, -1);
+        check_int("runtime.projectile_sprite.rect_x",
+                  sprite_capture.sprite_x, 96);
+        check_int("runtime.projectile_sprite.rect_y",
+                  sprite_capture.sprite_y, 105);
+        check_int("runtime.projectile_sprite.rect_w",
+                  sprite_capture.sprite_w, 32);
+        check_int("runtime.projectile_sprite.rect_h",
+                  sprite_capture.sprite_h, 32);
         check_int("runtime.projectile_sprite.drawn_count",
                   cfg.runtime_projectile_sprite_drawn_count, 1);
         check_int("runtime.projectile_sprite.skips_material_count",
@@ -283,16 +320,35 @@ static void test_runtime_projectile_and_explosion_overlays(void)
               cfg.runtime_explosion_marker_drawn_count, 1);
 
     {
-        int explosion_calls = 0;
+        TestRuntimeSpritePlacementCapture explosion_capture;
+        memset(&explosion_capture, 0, sizeof(explosion_capture));
         memset(framebuffer, 0, sizeof(framebuffer));
         cfg.explosion_sprite_drawer = test_explosion_sprite_drawer;
-        cfg.explosion_sprite_user = &explosion_calls;
+        cfg.explosion_sprite_user = &explosion_capture;
         cfg.runtime_explosion_sprite_drawn_count = 0;
         cfg.runtime_explosion_marker_drawn_count = 0;
         csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
         check_int("runtime.explosion_sprite.center",
                   framebuffer[center_offset], 0x0B);
-        check_int("runtime.explosion_sprite.calls", explosion_calls, 1);
+        check_int("runtime.explosion_sprite.calls", explosion_capture.calls, 1);
+        check_int("runtime.explosion_sprite.forward",
+                  explosion_capture.forward, 1);
+        check_int("runtime.explosion_sprite.cell",
+                  explosion_capture.view_cell, EXPLOSION_CELL_CENTERED);
+        check_int("runtime.explosion_sprite.source_zone",
+                  explosion_capture.source_zone, -1);
+        check_int("runtime.explosion_sprite.source_row",
+                  explosion_capture.source_zone_row, -1);
+        check_int("runtime.explosion_sprite.depth",
+                  explosion_capture.depth_index, 1);
+        check_int("runtime.explosion_sprite.rect_x",
+                  explosion_capture.sprite_x, 96);
+        check_int("runtime.explosion_sprite.rect_y",
+                  explosion_capture.sprite_y, 105);
+        check_int("runtime.explosion_sprite.rect_w",
+                  explosion_capture.sprite_w, 32);
+        check_int("runtime.explosion_sprite.rect_h",
+                  explosion_capture.sprite_h, 32);
         check_int("runtime.explosion_sprite.drawn_count",
                   cfg.runtime_explosion_sprite_drawn_count, 1);
         check_int("runtime.explosion_sprite.skips_marker_count",
