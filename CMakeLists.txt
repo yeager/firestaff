@@ -17289,6 +17289,7 @@ if(BUILD_TESTING)
     )
     add_executable(test_title_frontend_c001_fallback_gate_pc34_compat
         tests/test_title_frontend_c001_fallback_gate_pc34_compat.c
+        src/dm1/dm1_v1_startup_sequence_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
@@ -17321,6 +17322,7 @@ endif()
 if(BUILD_TESTING)
     add_executable(test_dm1_v1_intro_skip_state_cleanup_pc34_compat
         tests/test_dm1_v1_intro_skip_state_cleanup_pc34_compat.c
+        src/dm1/dm1_v1_startup_sequence_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
         src/dm1/dm1_v1_title_screen_pc34_compat.c
