@@ -38604,98 +38604,50 @@ static void m11_theron_startup_layout_set_rect(
     element->h = h;
 }
 
-static void m11_theron_startup_chapter_label(
-    const M11_GameViewState* state,
-    char* out,
-    size_t out_size) {
-    const Theron_V1_BootProfile* profile;
-    const Theron_V1_World* world;
-    Theron_ChapterMarker marker;
-
-    if (!out || out_size == 0) {
-        return;
-    }
-    out[0] = '\0';
-    if (!state) {
-        snprintf(out, out_size, "Chapter ?");
-        return;
-    }
-
-    profile = (const Theron_V1_BootProfile*)state->theronBootProfile;
-    world = (const Theron_V1_World*)state->theronWorld;
-    theron_v1_chapter_marker_compute(profile,
-                                      world ? &world->progression : NULL,
-                                      NULL,
-                                      &marker);
-    snprintf(out,
-             out_size,
-             "%s",
-             marker.chapter_label[0] ? marker.chapter_label : "Chapter ?");
-}
-
 static int m11_theron_startup_build_layout_state(
     const M11_GameViewState* state,
     Theron_StartupLayoutState* layout_state) {
 
-    const Theron_V1_World* world;
-    int selected;
-    int i;
+    Theron_StartupLayoutStateRequest request;
 
     if (!state || !layout_state) {
         return 0;
     }
-    theron_v1_startup_layout_state_init(layout_state);
-    world = (const Theron_V1_World*)state->theronWorld;
-    selected = state->theronState.selected_dungeon;
-    if (selected < THERON_DUNGEON_1_HALL_OF_RECORDS ||
-        selected > THERON_DUNGEON_COUNT) {
-        selected = THERON_DUNGEON_1_HALL_OF_RECORDS;
-    }
-    layout_state->phase =
-        (Theron_StartupPhase)state->theronState.startup_phase;
-    layout_state->selected_dungeon = (Theron_DungeonID)selected;
-    layout_state->progression = world ? &world->progression : NULL;
-    layout_state->soul_cursor = state->theronState.startup_cursor;
-    layout_state->continue_focus =
-        state->theronState.save_resume_continue_focus;
+    memset(&request, 0, sizeof(request));
+    request.phase = (Theron_StartupPhase)state->theronState.startup_phase;
+    request.selected_dungeon = state->theronState.selected_dungeon;
+    request.boot_profile =
+        (const Theron_V1_BootProfile*)state->theronBootProfile;
+    request.world = (const Theron_V1_World*)state->theronWorld;
+    request.soul_cursor = state->theronState.startup_cursor;
+    request.continue_focus = state->theronState.save_resume_continue_focus;
     {
         Theron_V1StartupContinueAvailability continue_availability;
         if (m11_theron_continue_availability(state,
                                              &continue_availability)) {
-            layout_state->has_tqsv_continue =
+            request.has_tqsv_continue =
                 continue_availability.has_tqsv_continue;
-            layout_state->tqsv_slot = continue_availability.tqsv_slot;
-            layout_state->has_srm_continue =
+            request.tqsv_slot = continue_availability.tqsv_slot;
+            request.has_srm_continue =
                 continue_availability.has_srm_continue;
-            layout_state->srm_slot = continue_availability.srm_slot;
+            request.srm_slot = continue_availability.srm_slot;
         }
     }
-    m11_theron_startup_chapter_label(state,
-                                     layout_state->chapter_label,
-                                     sizeof(layout_state->chapter_label));
-    snprintf(layout_state->startup_text_prompt,
-             sizeof(layout_state->startup_text_prompt),
-             "%s",
-             state->theronState.startup_text_prompt);
-    layout_state->startup_roster_name_count =
+    request.startup_text_prompt = state->theronState.startup_text_prompt;
+    request.startup_roster_names =
+        (const char *const*)state->theronState.startup_roster_names;
+    request.startup_roster_titles =
+        (const char *const*)state->theronState.startup_roster_titles;
+    request.startup_roster_name_count =
         state->theronState.startup_roster_name_count;
-    for (i = 0;
-         i < THERON_STARTUP_LAYOUT_ROSTER_CAPACITY &&
-         i < (int)(sizeof(state->theronState.startup_roster_names) /
-                   sizeof(state->theronState.startup_roster_names[0]));
-         ++i) {
-        layout_state->startup_roster_names[i] =
-            state->theronState.startup_roster_names[i];
-        layout_state->startup_roster_titles[i] =
-            state->theronState.startup_roster_titles[i];
-    }
-    layout_state->selected_mirrors_mask =
+    request.selected_mirrors_mask =
         state->theronState.selected_mirrors_mask;
-    layout_state->selected_mirror_order =
+    request.selected_mirror_order =
         state->theronState.selected_mirror_order;
-    layout_state->selected_mirror_order_count =
+    request.selected_mirror_order_count =
         THERON_STARTUP_MAX_COMPANIONS;
-    return 1;
+    return theron_v1_startup_layout_state_from_request(&request,
+                                                       layout_state);
 }
 
 static M11_TheronStartupElementKind m11_theron_startup_element_kind_from_layout(

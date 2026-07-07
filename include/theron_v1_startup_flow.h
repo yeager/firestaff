@@ -265,6 +265,26 @@ typedef struct {
 } Theron_StartupLayoutState;
 
 typedef struct {
+    Theron_StartupPhase phase;
+    int selected_dungeon;
+    const void *boot_profile; /* Theron_V1_BootProfile*, kept opaque here. */
+    const Theron_V1_World *world;
+    int soul_cursor;
+    int continue_focus;
+    int has_tqsv_continue;
+    int tqsv_slot;
+    int has_srm_continue;
+    int srm_slot;
+    const char *startup_text_prompt;
+    const char *const *startup_roster_names;
+    const char *const *startup_roster_titles;
+    int startup_roster_name_count;
+    int selected_mirrors_mask;
+    const int *selected_mirror_order;
+    int selected_mirror_order_count;
+} Theron_StartupLayoutStateRequest;
+
+typedef struct {
     int x;
     int y;
     Theron_StartupRenderTextStyle style;
@@ -358,6 +378,9 @@ void theron_v1_startup_action_init(Theron_StartupAction *action);
 void theron_v1_startup_action_plan_init(Theron_StartupActionPlan *plan);
 void theron_v1_startup_hit_init(Theron_StartupHit *hit);
 void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state);
+int theron_v1_startup_layout_state_from_request(
+    const Theron_StartupLayoutStateRequest *request,
+    Theron_StartupLayoutState *out_state);
 Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
     const Theron_DungeonProgression *progression,

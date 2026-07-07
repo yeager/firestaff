@@ -69,7 +69,7 @@ typedef enum {
  *   - Quest structure: 7 dungeon goal sequence
  *   - No day/night outdoor cycle (all indoor on rails)
  */
-typedef struct {
+typedef struct Theron_V1_BootProfile {
     /* Tick rate: PC Engine HuC6280 VBlank drives same ~18.2 Hz ticks.
      * Each tick ≈ 55ms. No interpolation in V1. */
     uint32_t tick_rate_hz;          /* default: 18 */
