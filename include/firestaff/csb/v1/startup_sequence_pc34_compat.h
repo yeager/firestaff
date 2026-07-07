@@ -101,6 +101,12 @@ typedef enum CSB_V1_StartupRenderSurface_PC34 {
     CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 = 6
 } CSB_V1_StartupRenderSurface_PC34;
 
+typedef enum CSB_V1_StartupTitleBlitKind_PC34 {
+    CSB_V1_STARTUP_TITLE_BLIT_NONE_PC34 = 0,
+    CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34 = 1,
+    CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 = 2
+} CSB_V1_StartupTitleBlitKind_PC34;
+
 typedef struct CSB_V1_StartupRenderState_PC34 {
     int entrance_active;
     int entrance_frame;
@@ -119,6 +125,12 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int source_asset_id;
     int title_source_step;
     int title_stage;
+    int title_blit_kind;
+    int title_transparent_color;
+    int title_empty_fallback_x;
+    int title_empty_fallback_y;
+    int title_empty_fallback_style;
+    const char *title_empty_fallback_text;
     int title_source_x;
     int title_source_y;
     int title_source_w;

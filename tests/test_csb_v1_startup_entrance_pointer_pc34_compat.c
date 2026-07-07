@@ -217,6 +217,9 @@ int main(void)
               plan.title_source_y == 137 &&
               plan.title_source_w == 320 &&
               plan.title_source_h == 16 &&
+              plan.title_blit_kind ==
+                  CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34 &&
+              plan.title_transparent_color == -1 &&
               plan.title_dest_x == 0 &&
               plan.title_dest_y == 90 &&
               plan.title_dest_w == 320 &&
@@ -229,6 +232,10 @@ int main(void)
               plan.fallback_title_y == 52 &&
               plan.fallback_title_style == 1 &&
               strcmp(plan.fallback_title_text, "FTL PRESENTS") == 0 &&
+              plan.title_empty_fallback_x == 38 &&
+              plan.title_empty_fallback_y == 90 &&
+              plan.title_empty_fallback_style == 1 &&
+              strcmp(plan.title_empty_fallback_text, "FTL PRESENTS") == 0 &&
               plan.fallback_subtitle_x == 38 &&
               plan.fallback_subtitle_y == 86 &&
               plan.fallback_subtitle_style == 2 &&
@@ -250,6 +257,10 @@ int main(void)
               plan.title_source_y == 74 &&
               plan.title_source_w == 48 &&
               plan.title_source_h == 12 &&
+              plan.title_blit_kind ==
+                  CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
+              plan.title_transparent_color == -1 &&
+              plan.title_empty_fallback_text == NULL &&
               plan.title_dest_x == 0 &&
               plan.title_dest_y == 0 &&
               plan.title_dest_w == 320 &&
@@ -270,6 +281,10 @@ int main(void)
               plan.title_source_y == 80 &&
               plan.title_source_w == 320 &&
               plan.title_source_h == 57 &&
+              plan.title_blit_kind ==
+                  CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34 &&
+              plan.title_transparent_color == 0 &&
+              plan.title_empty_fallback_text == NULL &&
               plan.title_dest_x == 0 &&
               plan.title_dest_y == 118 &&
               plan.title_dest_w == 320 &&

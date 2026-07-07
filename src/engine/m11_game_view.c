@@ -2612,8 +2612,6 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
     const M11_AssetSlot *title = NULL;
-    V1_TitleFrontendSourceAnimationStep step;
-    int hasStep = 0;
 
     if (!state || !framebuffer || !plan || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -2628,16 +2626,11 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
     }
     if (title && title->width == 320u && title->height >= 175u) {
         /* ReDMCSB TITLE.C F0437 uses C001_GRAPHIC_TITLE: PRESENTS is
-         * blitted from source y=137 to screen y=90, CHAOS is rendered as
-         * the 18 shrink/zoom steps described by V1_TitleFrontend, and
-         * STRIKES BACK is blitted from source y=80 to screen y=118 before
-         * ENTRANCE.C F0806/F0441 takes over. */
-        if (plan->title_source_step > 0) {
-            hasStep = V1_TitleFrontend_GetSourceAnimationStep(
-                (unsigned int)plan->title_source_step,
-                &step);
-        }
-        if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
+         * blitted from source y=137 to screen y=90, then C425/C426 title
+         * strips are rendered before ENTRANCE.C F0806/F0441 takes over.
+         * CSB startup owns the blit command; M11 only executes it. */
+        if (plan->title_blit_kind ==
+            CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34) {
             M11_AssetLoader_BlitRegion(title,
                                        plan->title_source_x,
                                        plan->title_source_y,
@@ -2648,25 +2641,26 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        framebufferHeight,
                                        plan->title_dest_x,
                                        plan->title_dest_y,
-                                       -1);
-            if (m11_count_nonzero_pixels(framebuffer,
+                                       plan->title_transparent_color);
+            if (plan->title_empty_fallback_text &&
+                m11_count_nonzero_pixels(framebuffer,
                                          framebufferWidth,
                                          framebufferHeight,
                                          plan->title_dest_x,
                                          plan->title_dest_y,
                                          plan->title_dest_w,
                                          plan->title_dest_h) == 0) {
-                m11_draw_text(framebuffer,
-                              framebufferWidth,
-                              framebufferHeight,
-                              38,
-                              90,
-                              "FTL PRESENTS",
-                              &g_text_small);
+                m11_draw_csb_startup_plan_text(
+                    framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    plan->title_empty_fallback_x,
+                    plan->title_empty_fallback_y,
+                    plan->title_empty_fallback_style,
+                    plan->title_empty_fallback_text);
             }
-        } else if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-                   hasStep &&
-                   step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
+        } else if (plan->title_blit_kind ==
+                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34) {
             M11_AssetLoader_BlitSubRectScaled(title,
                                               framebuffer,
                                               framebufferWidth,
@@ -2679,19 +2673,7 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                               plan->title_dest_y,
                                               plan->title_dest_w,
                                               plan->title_dest_h,
-                                              -1);
-        } else {
-            M11_AssetLoader_BlitRegion(title,
-                                       plan->title_source_x,
-                                       plan->title_source_y,
-                                       plan->title_source_w,
-                                       plan->title_source_h,
-                                       framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight,
-                                       plan->title_dest_x,
-                                       plan->title_dest_y,
-                                       0);
+                                              plan->title_transparent_color);
         }
         return;
     }
