@@ -31,6 +31,19 @@ static void check_true(const char *label, int value)
     check_int(label, value ? 1 : 0, 1);
 }
 
+static void put_fixture_square16(uint8_t *raw,
+                                 int width,
+                                 int height,
+                                 int x,
+                                 int y,
+                                 uint16_t value)
+{
+    int offset = (x * height + y) * 2;
+    (void)width;
+    raw[offset] = (uint8_t)(value & 0xFFu);
+    raw[offset + 1] = (uint8_t)(value >> 8);
+}
+
 static int test_projectile_material_resolver(
     void *user,
     const struct ProjectileInstance_Compat *projectile)
@@ -2385,6 +2398,78 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                                               &map_x, &map_y);
     check_int("csb.runtime_overlay_scan.map_west.x", map_x, 7);
     check_int("csb.runtime_overlay_scan.map_west.y", map_y, 12);
+
+    {
+        uint8_t raw[8 * 8 * 2];
+        CSB_V1_DungeonData dungeon;
+        CSB_V1_ViewportRuntimeOverlayCell cells[16];
+        size_t cell_count;
+        int forward;
+        int side;
+        int thing_id = 17;
+
+        memset(raw, 0, sizeof(raw));
+        memset(&dungeon, 0, sizeof(dungeon));
+        dungeon.level_count = 1;
+        dungeon.level_widths[0] = 8;
+        dungeon.level_heights[0] = 8;
+        dungeon.level_offsets[0] = 0;
+        dungeon.square_bytes = 2;
+        dungeon.raw_data = raw;
+        dungeon.raw_size = (int)sizeof(raw);
+        for (forward = 3; forward >= 1; --forward) {
+            int side_min = 0;
+            int side_max = -1;
+            (void)csb_v1_viewport_runtime_overlay_side_range(
+                forward, &side_min, &side_max);
+            for (side = side_min; side <= side_max; ++side) {
+                int sx = 0;
+                int sy = 0;
+                csb_v1_viewport_runtime_map_from_relative(
+                    0, 4, 4, forward, side, &sx, &sy);
+                put_fixture_square16(raw,
+                                     8,
+                                     8,
+                                     sx,
+                                     sy,
+                                     (uint16_t)((thing_id++ << 5) | 1));
+            }
+        }
+
+        cell_count = csb_v1_viewport_runtime_collect_overlay_cells(
+            &dungeon, 0, 0, 4, 4, cells, sizeof(cells) / sizeof(cells[0]));
+        check_int("csb.runtime_overlay_scan.collect.count",
+                  (int)cell_count, 11);
+        check_int("csb.runtime_overlay_scan.collect.first.forward",
+                  cells[0].forward, 3);
+        check_int("csb.runtime_overlay_scan.collect.first.side",
+                  cells[0].side, -2);
+        check_int("csb.runtime_overlay_scan.collect.first.x",
+                  cells[0].map_x, 2);
+        check_int("csb.runtime_overlay_scan.collect.first.y",
+                  cells[0].map_y, 1);
+        check_int("csb.runtime_overlay_scan.collect.first.thing",
+                  cells[0].first_thing, 17);
+        check_int("csb.runtime_overlay_scan.collect.last.forward",
+                  cells[10].forward, 1);
+        check_int("csb.runtime_overlay_scan.collect.last.side",
+                  cells[10].side, 1);
+        check_int("csb.runtime_overlay_scan.collect.last.x",
+                  cells[10].map_x, 5);
+        check_int("csb.runtime_overlay_scan.collect.last.y",
+                  cells[10].map_y, 3);
+        check_int("csb.runtime_overlay_scan.collect.last.thing",
+                  cells[10].first_thing, 27);
+
+        put_fixture_square16(raw, 8, 8, 4, 3, 0);
+        cell_count = csb_v1_viewport_runtime_collect_overlay_cells(
+            &dungeon, 0, 0, 4, 4, cells, sizeof(cells) / sizeof(cells[0]));
+        check_int("csb.runtime_overlay_scan.collect.wall_filter_count",
+                  (int)cell_count, 10);
+        check_true("csb.runtime_overlay_scan.square_wall_reject",
+                   !csb_v1_viewport_runtime_square_allows_thing_overlay(
+                       &dungeon, 0, 4, 3));
+    }
 
     memset(&object_place, 0, sizeof(object_place));
     check_true("csb.runtime_object_overlay.d1c.visible",

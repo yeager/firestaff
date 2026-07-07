@@ -1175,34 +1175,6 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         depth_index);
 }
 
-static unsigned short m11_csb_runtime_next_thing(
-    const CSB_V1_DungeonData *dungeon,
-    unsigned short thing)
-{
-    const uint8_t *record;
-    int type = -1;
-    int size = 0;
-
-    if (!dungeon || thing == THING_NONE || thing == THING_ENDOFLIST) {
-        return THING_ENDOFLIST;
-    }
-    record = csb_v1_dungeon_get_thing_record(dungeon, thing, &type, NULL, &size);
-    if (!record || size < 2 || type < 0) {
-        return THING_ENDOFLIST;
-    }
-    return (unsigned short)(record[0] | ((unsigned short)record[1] << 8));
-}
-
-static int m11_csb_thing_type_is_floor_object(int thing_type)
-{
-    return thing_type == THING_TYPE_WEAPON ||
-           thing_type == THING_TYPE_ARMOUR ||
-           thing_type == THING_TYPE_SCROLL ||
-           thing_type == THING_TYPE_POTION ||
-           thing_type == THING_TYPE_CONTAINER ||
-           thing_type == THING_TYPE_JUNK;
-}
-
 static int m11_csb_runtime_object_subtype_from_record(
     int thing_type,
     const uint8_t *record,
@@ -1242,101 +1214,6 @@ static int m11_csb_runtime_object_subtype_from_record(
         return subtype <= 52 ? subtype : -1;
     }
     return -1;
-}
-
-static int m11_csb_runtime_group_direction(const uint8_t *record, int size)
-{
-    unsigned int flags;
-
-    if (!record || size < 16) {
-        return 0;
-    }
-    /* ReDMCSB GROUP.C stores the shared primary group direction in
-     * GROUP.Dir bits 8..9 for non-active C04 records. */
-    flags = (unsigned int)record[14] | ((unsigned int)record[15] << 8);
-    return (int)((flags >> 8) & 0x03u);
-}
-
-static int m11_csb_runtime_group_visible_count(const uint8_t *record, int size)
-{
-    unsigned int flags;
-    int count;
-
-    if (!record || size < 16) {
-        return 1;
-    }
-    if (record[5] == 0xFFu) {
-        return 1;
-    }
-    /* ReDMCSB DEFS.H GROUP.Count stores count - 1 in bits 5..6 of
-     * the PC34/I34E GROUP flag word.  Keep the render bridge bounded to
-     * the four source creature slots in a square. */
-    flags = (unsigned int)record[14] | ((unsigned int)record[15] << 8);
-    count = (int)((flags >> 5) & 0x03u) + 1;
-    if (count < 1) count = 1;
-    if (count > 4) count = 4;
-    return count;
-}
-
-static int m11_csb_runtime_group_creature_cell(const uint8_t *record,
-                                               int size,
-                                               int creature_index)
-{
-    if (!record || size < 16 || creature_index < 0) {
-        return 0;
-    }
-    if (record[5] == 0xFFu) {
-        return 0;
-    }
-    if (creature_index > 3) {
-        creature_index = 3;
-    }
-    /* ReDMCSB DEFS.H M050_CREATURE_VALUE reads packed GROUP.Cells:
-     * two bits per creature.  F0115 uses the creature cell as the
-     * C3200 view cell, so runtime GROUP overlays must not substitute the
-     * loop ordinal when creatures occupy non-sequential cells. */
-    return ((int)record[5] >> (creature_index << 1)) & 0x03;
-}
-
-static int m11_csb_square_allows_runtime_thing_overlay(
-    const CSB_V1_DungeonData *dungeon,
-    int level,
-    int x,
-    int y)
-{
-    int raw_square;
-    int square_type;
-    int door_state;
-
-    if (!dungeon) {
-        return 0;
-    }
-    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, x, y);
-    if (raw_square < 0) {
-        return 0;
-    }
-    square_type = (dungeon->square_bytes == 1)
-        ? ((raw_square >> 5) & 0x07)
-        : (raw_square & 0x1F);
-    if (square_type == 0) {
-        return 0;
-    }
-    if (square_type == 4) {
-        /* ReDMCSB CLIKMENU.C F0366 treats door states 0, 1, and 5 as
-         * passable/open enough for square interaction; closed doors block
-         * the runtime overlay bridge too. */
-        door_state = raw_square & 0x07;
-        return door_state == 0 || door_state == 1 || door_state == 5;
-    }
-    if (square_type == 6) {
-        /* ReDMCSB CLIKMENU.C F0366 permits only open or imaginary
-         * fakewalls. */
-        return (raw_square & 0x04) || (raw_square & 0x01);
-    }
-    return square_type == 1 ||
-           square_type == 2 ||
-           square_type == 3 ||
-           square_type == 5;
 }
 
 static void m11_csb_runtime_overlay_stats_reset(
@@ -1398,8 +1275,9 @@ static void m11_draw_csb_runtime_floor_object_overlays(
 {
     const CSB_V1_RuntimeProfile *runtime;
     const CSB_V1_DungeonData *dungeon;
-    int forward;
-    int side;
+    CSB_V1_ViewportRuntimeOverlayCell cells[16];
+    size_t cell_count;
+    size_t cell_index;
 
     if (!state || !profile || !framebuffer ||
         framebuffer_width <= 0 || framebuffer_height <= 0) {
@@ -1409,46 +1287,29 @@ static void m11_draw_csb_runtime_floor_object_overlays(
     dungeon = runtime->dungeon_handle;
     if (!dungeon) return;
 
-    for (forward = 3; forward >= 1; --forward) {
-        int side_min;
-        int side_max;
-        if (!csb_v1_viewport_runtime_overlay_side_range(
-                forward, &side_min, &side_max)) {
-            continue;
-        }
-        for (side = side_min; side <= side_max; ++side) {
-            int map_x;
-            int map_y;
-            int first_thing;
+    cell_count = csb_v1_viewport_runtime_collect_overlay_cells(
+        dungeon,
+        runtime->current_level,
+        runtime->party_dir,
+        runtime->party_x,
+        runtime->party_y,
+        cells,
+        sizeof(cells) / sizeof(cells[0]));
+    if (cell_count > sizeof(cells) / sizeof(cells[0])) {
+        cell_count = sizeof(cells) / sizeof(cells[0]);
+    }
+    for (cell_index = 0; cell_index < cell_count; ++cell_index) {
+            int forward = cells[cell_index].forward;
+            int side = cells[cell_index].side;
             unsigned short thing;
             int object_pile_index = 0;
             int safety = 0;
 
-            csb_v1_viewport_runtime_map_from_relative(runtime->party_dir,
-                                                      runtime->party_x,
-                                                      runtime->party_y,
-                                                      forward,
-                                                      side,
-                                                      &map_x,
-                                                      &map_y);
-            if (!m11_csb_square_allows_runtime_thing_overlay(
-                    dungeon,
-                    runtime->current_level,
-                    map_x,
-                    map_y)) {
-                continue;
-            }
-            first_thing = csb_v1_dungeon_get_first_thing(
-                dungeon,
-                runtime->current_level,
-                map_x,
-                map_y);
-            if (first_thing < 0) continue;
-            thing = (unsigned short)first_thing;
+            thing = (unsigned short)cells[cell_index].first_thing;
             while (thing != THING_ENDOFLIST && thing != THING_NONE &&
                    safety++ < 64) {
                 int type = (int)THING_GET_TYPE(thing);
-                if (m11_csb_thing_type_is_floor_object(type)) {
+                if (csb_v1_runtime_thing_type_is_floor_object(type)) {
                     int record_type = -1;
                     int record_size = 0;
                     const uint8_t *record =
@@ -1482,7 +1343,7 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                             side,
                             rel_cell,
                             &placement)) {
-                        thing = m11_csb_runtime_next_thing(dungeon, thing);
+                        thing = csb_v1_runtime_next_thing(dungeon, thing);
                         continue;
                     }
                     object_pile_index++;
@@ -1555,9 +1416,8 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                         m11_csb_runtime_overlay_stats_add_object_marker(state);
                     }
                 }
-                thing = m11_csb_runtime_next_thing(dungeon, thing);
+                thing = csb_v1_runtime_next_thing(dungeon, thing);
             }
-        }
     }
 }
 
@@ -1591,8 +1451,9 @@ static void m11_draw_csb_runtime_group_overlays(
 {
     const CSB_V1_RuntimeProfile *runtime;
     const CSB_V1_DungeonData *dungeon;
-    int forward;
-    int side;
+    CSB_V1_ViewportRuntimeOverlayCell cells[16];
+    size_t cell_count;
+    size_t cell_index;
 
     if (!state || !profile || !framebuffer ||
         framebuffer_width <= 0 || framebuffer_height <= 0) {
@@ -1602,41 +1463,24 @@ static void m11_draw_csb_runtime_group_overlays(
     dungeon = runtime->dungeon_handle;
     if (!dungeon) return;
 
-    for (forward = 3; forward >= 1; --forward) {
-        int side_min;
-        int side_max;
-        if (!csb_v1_viewport_runtime_overlay_side_range(
-                forward, &side_min, &side_max)) {
-            continue;
-        }
-        for (side = side_min; side <= side_max; ++side) {
-            int map_x;
-            int map_y;
-            int first_thing;
+    cell_count = csb_v1_viewport_runtime_collect_overlay_cells(
+        dungeon,
+        runtime->current_level,
+        runtime->party_dir,
+        runtime->party_x,
+        runtime->party_y,
+        cells,
+        sizeof(cells) / sizeof(cells[0]));
+    if (cell_count > sizeof(cells) / sizeof(cells[0])) {
+        cell_count = sizeof(cells) / sizeof(cells[0]);
+    }
+    for (cell_index = 0; cell_index < cell_count; ++cell_index) {
+            int forward = cells[cell_index].forward;
+            int side = cells[cell_index].side;
             unsigned short thing;
             int safety = 0;
 
-            csb_v1_viewport_runtime_map_from_relative(runtime->party_dir,
-                                                      runtime->party_x,
-                                                      runtime->party_y,
-                                                      forward,
-                                                      side,
-                                                      &map_x,
-                                                      &map_y);
-            if (!m11_csb_square_allows_runtime_thing_overlay(
-                    dungeon,
-                    runtime->current_level,
-                    map_x,
-                    map_y)) {
-                continue;
-            }
-            first_thing = csb_v1_dungeon_get_first_thing(
-                dungeon,
-                runtime->current_level,
-                map_x,
-                map_y);
-            if (first_thing < 0) continue;
-            thing = (unsigned short)first_thing;
+            thing = (unsigned short)cells[cell_index].first_thing;
             while (thing != THING_ENDOFLIST && thing != THING_NONE &&
                    safety++ < 64) {
                 int type = -1;
@@ -1650,9 +1494,9 @@ static void m11_draw_csb_runtime_group_overlays(
                 if (type == THING_TYPE_GROUP && record && size >= 16) {
                     int creature_type = (int)record[4];
                     int creature_dir =
-                        m11_csb_runtime_group_direction(record, size);
+                        csb_v1_runtime_group_record_direction(record, size);
                     int visible_count =
-                        m11_csb_runtime_group_visible_count(record, size);
+                        csb_v1_runtime_group_record_visible_count(record, size);
                     int coord_set =
                         m11_creature_coordinate_set(creature_type);
                     int depth_index = forward - 1;
@@ -1665,9 +1509,9 @@ static void m11_draw_csb_runtime_group_overlays(
                     for (slot = 0; slot < visible_count; ++slot) {
                         CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
                         int group_cell =
-                            m11_csb_runtime_group_creature_cell(record,
-                                                                size,
-                                                                slot);
+                            csb_v1_runtime_group_record_creature_cell(record,
+                                                                      size,
+                                                                      slot);
                         int x = 0;
                         int y = 0;
                         if (!csb_v1_viewport_runtime_group_overlay_slot_placement(
@@ -1706,9 +1550,8 @@ static void m11_draw_csb_runtime_group_overlays(
                     }
                     break;
                 }
-                thing = m11_csb_runtime_next_thing(dungeon, thing);
+                thing = csb_v1_runtime_next_thing(dungeon, thing);
             }
-        }
     }
 }
 

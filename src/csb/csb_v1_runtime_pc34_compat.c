@@ -8087,6 +8087,97 @@ int csb_v1_runtime_set_thing_next(
     return 1;
 }
 
+uint16_t csb_v1_runtime_next_thing(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing)
+{
+    const uint8_t *record;
+    int thing_type = -1;
+    int record_size = 0;
+
+    if (!dungeon || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record || record_size < 2 || thing_type < 0) {
+        return THING_ENDOFLIST;
+    }
+    /* ReDMCSB DUNGEON.C F0159/F0160 use the first word of every thing
+     * record as the compact Next link. */
+    return csb_v1_runtime_read_u16(record);
+}
+
+int csb_v1_runtime_thing_type_is_floor_object(int thing_type)
+{
+    return thing_type == THING_TYPE_WEAPON ||
+           thing_type == THING_TYPE_ARMOUR ||
+           thing_type == THING_TYPE_SCROLL ||
+           thing_type == THING_TYPE_POTION ||
+           thing_type == THING_TYPE_CONTAINER ||
+           thing_type == THING_TYPE_JUNK;
+}
+
+int csb_v1_runtime_group_record_direction(
+    const uint8_t *record,
+    int size)
+{
+    uint16_t flags;
+
+    if (!record || size < 16) {
+        return 0;
+    }
+    /* ReDMCSB GROUP.C stores the shared primary group direction in
+     * GROUP.Dir bits 8..9 for non-active C04 records. */
+    flags = csb_v1_runtime_read_u16(record + 14);
+    return (int)((flags >> 8) & 0x03u);
+}
+
+int csb_v1_runtime_group_record_visible_count(
+    const uint8_t *record,
+    int size)
+{
+    uint16_t flags;
+    int count;
+
+    if (!record || size < 16) {
+        return 1;
+    }
+    if (record[5] == 0xFFu) {
+        return 1;
+    }
+    /* ReDMCSB DEFS.H GROUP.Count stores count - 1 in bits 5..6 of the
+     * PC34/I34E GROUP flag word. */
+    flags = csb_v1_runtime_read_u16(record + 14);
+    count = (int)((flags >> 5) & 0x03u) + 1;
+    if (count < 1) count = 1;
+    if (count > 4) count = 4;
+    return count;
+}
+
+int csb_v1_runtime_group_record_creature_cell(
+    const uint8_t *record,
+    int size,
+    int creature_index)
+{
+    if (!record || size < 16 || creature_index < 0) {
+        return 0;
+    }
+    if (record[5] == 0xFFu) {
+        return 0;
+    }
+    if (creature_index > 3) {
+        creature_index = 3;
+    }
+    /* ReDMCSB DEFS.H M050_CREATURE_VALUE reads packed GROUP.Cells:
+     * two bits per creature.  F0115 uses this as the C3200 view cell. */
+    return ((int)record[5] >> (creature_index << 1)) & 0x03;
+}
+
 int csb_v1_runtime_write_container_slots(
     CSB_V1_RuntimeProfile *profile,
     uint16_t container_thing,
