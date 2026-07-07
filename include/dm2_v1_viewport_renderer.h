@@ -48,6 +48,7 @@
 #define DM2_VP_DUNGEON_Y  DM2_VP_STATUS_BAR
 #define DM2_V1_HUD_ACTION_ICON_COUNT 5
 #define DM2_V1_HUD_CHAMPION_SLOT_COUNT 4
+#define DM2_V1_HUD_CHAMPION_NAME_MAX 8
 
 /* ── Depth / distance rows ─────────────────────────────────────── */
 /* DM2 uses the same 4-row perspective as DM1:
@@ -191,7 +192,37 @@ typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
     uint8_t fill_color;
+    int occupied;
+    int leader;
+    uint8_t hp_pct;
+    uint8_t stamina_pct;
+    uint8_t mana_pct;
+    DM2_V1_ViewportRect leader_mark_rect;
+    DM2_V1_ViewportRect portrait_rect;
+    DM2_V1_ViewportRect name_marker_rect;
+    DM2_V1_ViewportRect hp_bar_rect;
+    DM2_V1_ViewportRect hp_fill_rect;
+    DM2_V1_ViewportRect stamina_bar_rect;
+    DM2_V1_ViewportRect stamina_fill_rect;
+    DM2_V1_ViewportRect mana_bar_rect;
+    DM2_V1_ViewportRect mana_fill_rect;
 } DM2_V1_HudChampionSlotRender;
+
+typedef struct {
+    int occupied;
+    int leader;
+    uint8_t portrait_index;
+    uint8_t hp_pct;
+    uint8_t stamina_pct;
+    uint8_t mana_pct;
+    char name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
+} DM2_V1_HudChampionState;
+
+typedef struct {
+    int champion_count;
+    int leader_index;
+    DM2_V1_HudChampionState champions[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
+} DM2_V1_HudPartyState;
 
 typedef struct {
     int outdoor;
@@ -214,6 +245,10 @@ typedef struct {
 
 int dm2_v1_viewport_build_hud_chrome_plan(
     int is_outdoor,
+    DM2_V1_HudChromeRenderPlan *out_plan);
+int dm2_v1_viewport_build_hud_chrome_plan_for_party(
+    int is_outdoor,
+    const DM2_V1_HudPartyState *party,
     DM2_V1_HudChromeRenderPlan *out_plan);
 
 typedef struct {
@@ -349,6 +384,8 @@ typedef struct {
     int carried_item_present;
     DM2_Projectile projectiles[DM2_MAX_PROJECTILES];
     int projectile_count;
+    DM2_V1_HudPartyState hud_party;
+    int hud_party_valid;
 
     /* Weather */
     int weather;               /* 0=clear, 1=rain, 2=fog, 3=storm */
@@ -392,6 +429,8 @@ void dm2_v1_viewport_set_outdoor(DM2_V1_ViewportState *s, int is_outdoor);
 void dm2_v1_viewport_set_level(DM2_V1_ViewportState *s, int level);
 void dm2_v1_viewport_set_weather(DM2_V1_ViewportState *s, int weather, int rain_intensity);
 void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day);
+void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
+                                   const DM2_V1_HudPartyState *party);
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                         DM2_V1_ViewportAssetFetch fetch,
                                         void *user);

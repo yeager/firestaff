@@ -926,6 +926,63 @@ static void dm2_runtime_populate_carried_item(const DM2_V1_RuntimeState *rt,
     viewport->carried_item_present = 1;
 }
 
+static uint8_t dm2_runtime_hud_pct_from_current_max(uint16_t current,
+                                                    uint16_t max)
+{
+    if (max == 0u) return 0u;
+    if (current >= max) return 100u;
+    return (uint8_t)(((uint32_t)current * 100u) / (uint32_t)max);
+}
+
+static uint8_t dm2_runtime_hud_pct_from_current(uint16_t current)
+{
+    if (current >= 100u) return 100u;
+    return (uint8_t)current;
+}
+
+static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
+                                           DM2_V1_ViewportState *viewport)
+{
+    DM2_V1_HudPartyState hud;
+
+    if (!rt || !viewport || !rt->session_snapshot_valid) return;
+
+    /* skproject/SKWIN keeps HP, stamina, mana, leader, and champion names in
+     * glbChampionSquad plus the selected leader field before the T560 HUD
+     * draw path consumes them.  This bridge gives the viewport renderer the
+     * same bounded party-state inputs without letting M11 rebuild HUD data. */
+    memset(&hud, 0, sizeof(hud));
+    hud.champion_count = rt->session_snapshot.champion_count;
+    if (hud.champion_count > DM2_V1_HUD_CHAMPION_SLOT_COUNT) {
+        hud.champion_count = DM2_V1_HUD_CHAMPION_SLOT_COUNT;
+    }
+    hud.leader_index = rt->session_snapshot.leader_index;
+    if (hud.leader_index < 0 || hud.leader_index >= hud.champion_count) {
+        hud.leader_index = 0;
+    }
+
+    for (int slot = 0; slot < hud.champion_count; ++slot) {
+        const DM2_ChampionRecord *champ =
+            (const DM2_ChampionRecord *)
+                rt->session_snapshot.champion_data[slot];
+        DM2_V1_HudChampionState *dst = &hud.champions[slot];
+
+        dst->occupied = champ->first_name[0] != '\0' ||
+                        champ->cur_hp != 0u || champ->max_hp != 0u;
+        dst->leader = slot == hud.leader_index;
+        dst->hp_pct =
+            dm2_runtime_hud_pct_from_current_max(champ->cur_hp,
+                                                 champ->max_hp);
+        dst->stamina_pct =
+            dm2_runtime_hud_pct_from_current(champ->stamina);
+        dst->mana_pct = dm2_runtime_hud_pct_from_current(champ->mana);
+        memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);
+        dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
+    }
+
+    dm2_v1_viewport_set_hud_party(viewport, &hud);
+}
+
 /* ── Viewport rendering ────────────────────────────────────────────── */
 
 /*
@@ -974,6 +1031,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_populate_creature_possession_items(
         rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_carried_item(rt, &viewport);
+    dm2_runtime_populate_hud_party(rt, &viewport);
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        rt->viewport_asset_fetch,
                                        rt->viewport_asset_user);

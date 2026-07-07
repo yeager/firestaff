@@ -269,6 +269,7 @@ static void test_hud_chrome_render_plan(void)
 {
     DM2_V1_HudChromeRenderPlan indoor;
     DM2_V1_HudChromeRenderPlan outdoor;
+    DM2_V1_HudPartyState party;
 
     memset(&indoor, 0x55, sizeof(indoor));
     CHECK("DM2 HUD chrome plan rejects null output",
@@ -300,6 +301,44 @@ static void test_hud_chrome_render_plan(void)
           outdoor.outdoor == 1 &&
               outdoor.champion_slot_count == 0 &&
               rect_equals(&outdoor.portrait_panel_rect, 0, 0, 0, 0));
+
+    memset(&party, 0, sizeof(party));
+    party.champion_count = 2;
+    party.leader_index = 1;
+    party.champions[0].occupied = 1;
+    party.champions[0].hp_pct = 50;
+    party.champions[0].stamina_pct = 70;
+    party.champions[0].mana_pct = 10;
+    memcpy(party.champions[0].name, "Theron", 6);
+    party.champions[1].occupied = 1;
+    party.champions[1].leader = 1;
+    party.champions[1].hp_pct = 25;
+    party.champions[1].stamina_pct = 40;
+    party.champions[1].mana_pct = 100;
+    memcpy(party.champions[1].name, "Karla", 5);
+    CHECK("DM2 HUD party plan binds champion bars and leader marker",
+          dm2_v1_viewport_build_hud_chrome_plan_for_party(
+              0, &party, &indoor) == 1 &&
+              indoor.champion_slots[0].occupied == 1 &&
+              indoor.champion_slots[0].hp_pct == 50 &&
+              rect_equals(&indoor.champion_slots[0].hp_bar_rect,
+                          270, 39, 34, 3) &&
+              rect_equals(&indoor.champion_slots[0].hp_fill_rect,
+                          270, 39, 17, 3) &&
+              rect_equals(&indoor.champion_slots[0].stamina_fill_rect,
+                          270, 44, 23, 3) &&
+              rect_equals(&indoor.champion_slots[0].mana_fill_rect,
+                          270, 49, 3, 3) &&
+              indoor.champion_slots[1].leader == 1 &&
+              rect_equals(&indoor.champion_slots[1].leader_mark_rect,
+                          246, 69, 3, 3) &&
+              rect_equals(&indoor.champion_slots[1].mana_fill_rect,
+                          270, 85, 34, 3));
+    CHECK("DM2 outdoor HUD party plan still suppresses champion slots",
+          dm2_v1_viewport_build_hud_chrome_plan_for_party(
+              1, &party, &outdoor) == 1 &&
+              outdoor.outdoor == 1 &&
+              outdoor.champion_slot_count == 0);
 }
 
 static void test_floor_ceiling_asset_provider(void)
@@ -597,6 +636,34 @@ static void test_sprite_asset_provider(void)
               framebuffer[180 * 320 + 222] == 12 &&
               framebuffer[138 * 320 + 244] == 7 &&
               framebuffer[140 * 320 + 246] == 14);
+
+    {
+        DM2_V1_HudPartyState party;
+
+        memset(&party, 0, sizeof(party));
+        party.champion_count = 1;
+        party.leader_index = 0;
+        party.champions[0].occupied = 1;
+        party.champions[0].leader = 1;
+        party.champions[0].hp_pct = 50;
+        party.champions[0].stamina_pct = 70;
+        party.champions[0].mana_pct = 10;
+        memcpy(party.champions[0].name, "Theron", 6);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, 320);
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
+        dm2_v1_render_ui_chrome(&viewport);
+        CHECK("DM2 UI chrome renders bound champion HUD bars",
+              framebuffer[33 * 320 + 246] == 15 &&
+                  framebuffer[34 * 320 + 248] == 15 &&
+                  framebuffer[32 * 320 + 250] == 9 &&
+                  framebuffer[39 * 320 + 270] == 2 &&
+                  framebuffer[39 * 320 + 287] == 0 &&
+                  framebuffer[44 * 320 + 292] == 11 &&
+                  framebuffer[44 * 320 + 294] == 0 &&
+                  framebuffer[49 * 320 + 272] == 12 &&
+                  framebuffer[49 * 320 + 274] == 0);
+    }
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
