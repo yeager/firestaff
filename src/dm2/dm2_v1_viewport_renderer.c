@@ -134,6 +134,79 @@ int dm2_v1_viewport_possession_slot_placement(
     return 1;
 }
 
+int dm2_v1_viewport_build_hud_chrome_plan(
+    int is_outdoor,
+    DM2_V1_HudChromeRenderPlan *out_plan)
+{
+    static const uint8_t icon_x[DM2_V1_HUD_ACTION_ICON_COUNT] =
+        { 20, 70, 120, 170, 220 };
+    const int action_y = DM2_VP_HEIGHT - DM2_VP_CHROME_BOT;
+    const int panel_x = 240;
+
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    out_plan->outdoor = is_outdoor ? 1 : 0;
+    out_plan->top_bar_rect =
+        (DM2_V1_ViewportRect){ 0, 0, DM2_VP_WIDTH, DM2_VP_CHROME_TOP };
+    out_plan->top_divider_rect =
+        (DM2_V1_ViewportRect){ 0, DM2_VP_CHROME_TOP, DM2_VP_WIDTH, 1 };
+    out_plan->action_strip_rect =
+        (DM2_V1_ViewportRect){ 0, action_y, DM2_VP_WIDTH, DM2_VP_CHROME_BOT };
+    out_plan->action_divider_rect =
+        (DM2_V1_ViewportRect){ 0, action_y - 1, DM2_VP_WIDTH, 1 };
+    out_plan->gold_box_rect =
+        (DM2_V1_ViewportRect){ DM2_VP_WIDTH - 40, action_y + 4, 36, 16 };
+    out_plan->gold_coin_rect =
+        (DM2_V1_ViewportRect){ out_plan->gold_box_rect.x + 2,
+                               out_plan->gold_box_rect.y + 2, 12, 12 };
+    out_plan->gold_label_rect =
+        (DM2_V1_ViewportRect){ out_plan->gold_box_rect.x + 16,
+                               out_plan->gold_box_rect.y + 3, 14, 7 };
+    out_plan->action_icon_count = DM2_V1_HUD_ACTION_ICON_COUNT;
+    for (int i = 0; i < out_plan->action_icon_count; ++i) {
+        DM2_V1_HudIconRender *icon = &out_plan->action_icons[i];
+        icon->frame_rect =
+            (DM2_V1_ViewportRect){ icon_x[i], action_y + 6, 20, 16 };
+        icon->fill_rect =
+            (DM2_V1_ViewportRect){ icon->frame_rect.x + 2,
+                                   icon->frame_rect.y + 2, 16, 12 };
+        icon->fill_color = (uint8_t)(8 + i);
+    }
+    if (!out_plan->outdoor) {
+        out_plan->portrait_separator_dark_rect =
+            (DM2_V1_ViewportRect){ panel_x, DM2_VP_CHROME_TOP, 1,
+                                   DM2_VP_HEIGHT - DM2_VP_CHROME_TOP -
+                                       DM2_VP_CHROME_BOT };
+        out_plan->portrait_separator_light_rect =
+            (DM2_V1_ViewportRect){ panel_x + 1, DM2_VP_CHROME_TOP, 1,
+                                   DM2_VP_HEIGHT - DM2_VP_CHROME_TOP -
+                                       DM2_VP_CHROME_BOT };
+        out_plan->portrait_panel_rect =
+            (DM2_V1_ViewportRect){ panel_x + 2, DM2_VP_CHROME_TOP,
+                                   DM2_VP_WIDTH - (panel_x + 2),
+                                   DM2_VP_HEIGHT - DM2_VP_CHROME_TOP -
+                                       DM2_VP_CHROME_BOT };
+        out_plan->champion_slot_count = DM2_V1_HUD_CHAMPION_SLOT_COUNT;
+        for (int slot = 0; slot < out_plan->champion_slot_count; ++slot) {
+            int py = DM2_VP_CHROME_TOP + 2 + slot * 36;
+            DM2_V1_HudChampionSlotRender *champ =
+                &out_plan->champion_slots[slot];
+            champ->frame_rect =
+                (DM2_V1_ViewportRect){ panel_x + 4, py,
+                                       DM2_VP_WIDTH - 8 - (panel_x + 4),
+                                       28 };
+            champ->fill_rect =
+                (DM2_V1_ViewportRect){ panel_x + 6, py + 2,
+                                       DM2_VP_WIDTH - 6 - (panel_x + 6),
+                                       22 };
+            champ->fill_color = (uint8_t)(8 + slot * 2);
+        }
+    }
+    return 1;
+}
+
 /* ── Transparency color (ReDMCSB DEFS.H C10_COLOR_FLESH = 10)
  * Used as skip color in wall blits. ── */
 #define DM2_COLOR_TRANSPARENT  10
@@ -325,6 +398,84 @@ enum DM2_ColorIndex {
     DM2_COL_SKY_CYAN = 3,
     DM2_COL_GROUND   = 6,
 };
+
+static void dm2_v1_fill_rect(uint8_t *fb,
+                             int stride,
+                             const DM2_V1_ViewportRect *rect,
+                             uint8_t color)
+{
+    int x0;
+    int y0;
+    int x1;
+    int y1;
+
+    if (!fb || !rect || stride <= 0 || rect->w <= 0 || rect->h <= 0) {
+        return;
+    }
+    x0 = rect->x < 0 ? 0 : rect->x;
+    y0 = rect->y < 0 ? 0 : rect->y;
+    x1 = rect->x + rect->w;
+    y1 = rect->y + rect->h;
+    if (x1 > DM2_VP_WIDTH) x1 = DM2_VP_WIDTH;
+    if (y1 > DM2_VP_HEIGHT) y1 = DM2_VP_HEIGHT;
+    if (x0 >= x1 || y0 >= y1) {
+        return;
+    }
+    for (int y = y0; y < y1; ++y) {
+        memset(fb + y * stride + x0, color, (size_t)(x1 - x0));
+    }
+}
+
+static void dm2_v1_stroke_rect(uint8_t *fb,
+                               int stride,
+                               const DM2_V1_ViewportRect *rect,
+                               uint8_t color)
+{
+    DM2_V1_ViewportRect line;
+
+    if (!fb || !rect || stride <= 0 || rect->w <= 0 || rect->h <= 0) {
+        return;
+    }
+    line = (DM2_V1_ViewportRect){ rect->x, rect->y, rect->w, 1 };
+    dm2_v1_fill_rect(fb, stride, &line, color);
+    line.y = rect->y + rect->h - 1;
+    dm2_v1_fill_rect(fb, stride, &line, color);
+    line = (DM2_V1_ViewportRect){ rect->x, rect->y, 1, rect->h };
+    dm2_v1_fill_rect(fb, stride, &line, color);
+    line.x = rect->x + rect->w - 1;
+    dm2_v1_fill_rect(fb, stride, &line, color);
+}
+
+static void dm2_v1_fill_coin_disc(uint8_t *fb,
+                                  int stride,
+                                  const DM2_V1_ViewportRect *rect,
+                                  uint8_t color)
+{
+    int cx;
+    int cy;
+    int radius_sq;
+
+    if (!fb || !rect || stride <= 0 || rect->w <= 0 || rect->h <= 0) {
+        return;
+    }
+    cx = rect->x + rect->w / 2;
+    cy = rect->y + rect->h / 2;
+    radius_sq = (rect->w < rect->h ? rect->w : rect->h);
+    radius_sq = (radius_sq * radius_sq) / 4;
+    for (int y = rect->y; y < rect->y + rect->h; ++y) {
+        if (y < 0 || y >= DM2_VP_HEIGHT) continue;
+        for (int x = rect->x; x < rect->x + rect->w; ++x) {
+            int dx;
+            int dy;
+            if (x < 0 || x >= DM2_VP_WIDTH) continue;
+            dx = x - cx;
+            dy = y - cy;
+            if (dx * dx + dy * dy < radius_sq) {
+                fb[y * stride + x] = color;
+            }
+        }
+    }
+}
 
 /* ── Initialization ───────────────────────────────────────────────── */
 
@@ -2357,6 +2508,7 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
 
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
 {
+    DM2_V1_HudChromeRenderPlan plan;
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
@@ -2373,120 +2525,38 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      *
      * Phase 3: render basic UI chrome with placeholder fills.
      */
-
-    /* Top status bar — dark blue-gray background (DM2 HUD style)
-     * Source: SKULL.ASM T560 — DM2 HUD rendering */
-    for (int y = 0; y < DM2_VP_CHROME_TOP; y++) {
-        for (int x = 0; x < DM2_VP_WIDTH; x++)
-            vp[y * stride + x] = DM2_COL_DKGRAY;
+    if (!dm2_v1_viewport_build_hud_chrome_plan(s->is_outdoor, &plan)) {
+        return;
     }
 
-    /* Divider line between status bar and dungeon view */
-    for (int x = 0; x < DM2_VP_WIDTH; x++)
-        vp[DM2_VP_CHROME_TOP * stride + x] = DM2_COL_MIDGRAY;
-
-    /* Bottom action strip — dark background */
-    int action_y = DM2_VP_HEIGHT - DM2_VP_CHROME_BOT;
-    for (int y = action_y; y < DM2_VP_HEIGHT; y++) {
-        for (int x = 0; x < DM2_VP_WIDTH; x++)
-            vp[y * stride + x] = DM2_COL_DKGRAY;
+    dm2_v1_fill_rect(vp, stride, &plan.top_bar_rect, DM2_COL_DKGRAY);
+    dm2_v1_fill_rect(vp, stride, &plan.top_divider_rect, DM2_COL_MIDGRAY);
+    dm2_v1_fill_rect(vp, stride, &plan.action_strip_rect, DM2_COL_DKGRAY);
+    dm2_v1_fill_rect(vp, stride, &plan.action_divider_rect, DM2_COL_MIDGRAY);
+    dm2_v1_fill_rect(vp, stride, &plan.gold_box_rect, DM2_COL_GROUND);
+    dm2_v1_fill_coin_disc(vp, stride, &plan.gold_coin_rect, 11);
+    dm2_v1_fill_rect(vp, stride, &plan.gold_label_rect, DM2_COL_LTGRAY);
+    for (int i = 0; i < plan.action_icon_count; ++i) {
+        dm2_v1_stroke_rect(vp, stride, &plan.action_icons[i].frame_rect,
+                           DM2_COL_MIDGRAY);
+        dm2_v1_fill_rect(vp, stride, &plan.action_icons[i].fill_rect,
+                         plan.action_icons[i].fill_color);
     }
 
-    /* Divider line above action strip */
-    for (int x = 0; x < DM2_VP_WIDTH; x++)
-        vp[(action_y - 1) * stride + x] = DM2_COL_MIDGRAY;
-
-    /* DM2 gold counter at bottom-right of action strip.
-     * Source: SKULL.ASM T560 (gold display in DM2 HUD).
-     * Draw a simple "GOLD" label box and coin icon placeholder. */
-    int gold_x = DM2_VP_WIDTH - 40;
-    int gold_y = action_y + 4;
-    /* Gold box background */
-    for (int y = gold_y; y < gold_y + 16; y++) {
-        for (int x = gold_x; x < gold_x + 36; x++)
-            vp[y * stride + x] = 6;  /* brown box */
-    }
-    /* Gold coin icon (yellow center) */
-    for (int y = gold_y + 2; y < gold_y + 14; y++) {
-        for (int x = gold_x + 2; x < gold_x + 14; x++) {
-            int dx = x - (gold_x + 8), dy = y - (gold_y + 8);
-            if (dx * dx + dy * dy < 36)  /* circle */
-                vp[y * stride + x] = 11;  /* yellow/gold */
-        }
-    }
-    /* "G" label in box */
-    for (int y = gold_y + 3; y < gold_y + 10; y++) {
-        for (int x = gold_x + 16; x < gold_x + 30; x++)
-            vp[y * stride + x] = DM2_COL_LTGRAY;
-    }
-
-    /* Action icon placeholders (Attack/Cast/Use/Drop/Move) in strip.
-     * Source: SKULL.ASM T560 — DM2 action strip icon positions.
-     * Five icons across, each 20px wide. */
-    {
-        static const uint8_t s_icon_x[5] = { 20, 70, 120, 170, 220 };
-        for (int i = 0; i < 5; i++) {
-            int ix = s_icon_x[i];
-            int iy = action_y + 6;
-            /* Icon border box */
-            for (int y = iy; y < iy + 16; y++) {
-                vp[y * stride + ix]     = DM2_COL_MIDGRAY;
-                vp[y * stride + ix + 19] = DM2_COL_MIDGRAY;
-            }
-            for (int x = ix; x < ix + 20; x++) {
-                vp[iy * stride + x]              = DM2_COL_MIDGRAY;
-                vp[(iy + 15) * stride + x]        = DM2_COL_MIDGRAY;
-            }
-            /* Icon fill (placeholder colored square) */
-            for (int y = iy + 2; y < iy + 14; y++) {
-                for (int x = ix + 2; x < ix + 18; x++) {
-                    vp[y * stride + x] = (uint8_t)(8 + i);  /* distinct gray per icon */
-                }
-            }
-        }
-    }
-
-    /* DM2 outdoor mode: no champion portrait panel.
-     * Source: SKULL.ASM T600 — outdoor mode has no party panel. */
-    if (!s->is_outdoor) {
-        /* Right portrait panel: 80px wide × 144px tall.
-         * Source: SKULL.ASM T560 — DM2 portrait panel rendering.
-         * Vertical separator line at x=240 with double-line effect. */
-        int panel_x = 240;
-        for (int y = DM2_VP_CHROME_TOP; y < DM2_VP_HEIGHT - DM2_VP_CHROME_BOT; y++) {
-            if (y < DM2_VP_HEIGHT) {
-                vp[y * stride + panel_x]     = DM2_COL_MIDGRAY;
-                if (y < DM2_VP_HEIGHT - 1)
-                    vp[y * stride + panel_x + 1] = DM2_COL_LTGRAY;
-            }
-        }
-        /* Panel background fill (dark gray) */
-        for (int y = DM2_VP_CHROME_TOP; y < DM2_VP_HEIGHT - DM2_VP_CHROME_BOT; y++) {
-            for (int x = panel_x + 2; x < DM2_VP_WIDTH; x++)
-                vp[y * stride + x] = DM2_COL_DKGRAY;
-        }
-        /* Champion portrait slot placeholders (4 champions).
-         * Source: SKULL.ASM T560 — 4 portrait slots stacked vertically.
-         * Each portrait ~18px tall with separator. */
-        for (int slot = 0; slot < 4; slot++) {
-            int py = DM2_VP_CHROME_TOP + 2 + slot * 36;
-            /* Portrait frame */
-            for (int y = py; y < py + 28; y++) {
-                if (y < DM2_VP_HEIGHT - DM2_VP_CHROME_BOT - 2) {
-                    for (int x = panel_x + 4; x < DM2_VP_WIDTH - 4; x++) {
-                        vp[y * stride + x] = DM2_COL_MIDGRAY;  /* frame border */
-                    }
-                }
-            }
-            /* Portrait fill (portrait color per champion slot) */
-            for (int y = py + 2; y < py + 24; y++) {
-                if (y < DM2_VP_HEIGHT - DM2_VP_CHROME_BOT - 2) {
-                    for (int x = panel_x + 6; x < DM2_VP_WIDTH - 6; x++) {
-                        /* Placeholder: each champion has a distinct shade */
-                        vp[y * stride + x] = (uint8_t)(8 + slot * 2);
-                    }
-                }
-            }
+    if (!plan.outdoor) {
+        dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_dark_rect,
+                         DM2_COL_MIDGRAY);
+        dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_light_rect,
+                         DM2_COL_LTGRAY);
+        dm2_v1_fill_rect(vp, stride, &plan.portrait_panel_rect,
+                         DM2_COL_DKGRAY);
+        for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
+            dm2_v1_fill_rect(vp, stride,
+                             &plan.champion_slots[slot].frame_rect,
+                             DM2_COL_MIDGRAY);
+            dm2_v1_fill_rect(vp, stride,
+                             &plan.champion_slots[slot].fill_rect,
+                             plan.champion_slots[slot].fill_color);
         }
     }
 }

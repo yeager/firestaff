@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.56  (2026-07-07)",
+    "  - Packages the latest DM2 V1 HUD chrome render-plan ownership now on main.",
+    "  - DM2 V1 viewport rendering now builds status bar, action strip, gold indicator, and indoor champion-panel placeholder geometry through a DM2-owned HUD chrome plan before drawing it.",
+    "",
     "V3.0.55  (2026-07-07)",
     "  - Packages the post-v3.0.53 CSB projectile/render ownership, Nexus champion-select render ownership, Theron startup render ownership, and release link fix now on main.",
     "  - CSB V1 release test targets now carry a data-free runtime overlay link stub for the viewport thing-overlay symbols they compile.",
@@ -472,5 +476,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.55";
+    return "3.0.56";
 }
