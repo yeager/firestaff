@@ -29,6 +29,9 @@ int main(void) {
     M12_StartupMenuState state;
     M12_MouseHit hit;
     int tabW = (1920 - 2 * (1920 / 30)) / M12_SETTINGS_TAB_COUNT;
+    const int settingsRowXRight = 96 + 36 + (1920 - 2 * 96 - 2 * 36) - 20;
+    const int settingsRowY0 = 260 + 36;
+    const int settingsRowStep = 70;
 
     printf("=== M12 settings tab hit-test (v2.7.15) ===\n");
 
@@ -91,6 +94,43 @@ int main(void) {
                         M12_SETTINGS_TAB_ACCESSIBILITY, 0 });
     CHECK(state.settingsTabIndex == M12_SETTINGS_TAB_ACCESSIBILITY,
           "M12_HIT_SETTINGS_TAB(ACCESSIBILITY) sets tab to 4");
+
+    memset(&state, 0, sizeof(state));
+    state.view = M12_MENU_VIEW_SETTINGS;
+
+    hit = M12_ModernMenu_HitTest(&state,
+                                 settingsRowXRight,
+                                 settingsRowY0 + 6 * settingsRowStep + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
+          "RetroAchievements visible row -> cycle hit");
+    CHECK(hit.index == 30,
+          "RetroAchievements visible row maps to M12_SETTINGS_ROW_RETROACHIEVEMENTS");
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(state.settings.retroAchievementsEnabled == 1,
+          "RetroAchievements click toggles enabled setting");
+
+    hit = M12_ModernMenu_HitTest(&state,
+                                 settingsRowXRight,
+                                 settingsRowY0 + 7 * settingsRowStep + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
+          "RA Hardcore visible row -> cycle hit");
+    CHECK(hit.index == 31,
+          "RA Hardcore visible row maps to M12_SETTINGS_ROW_RA_HARDCORE");
+    state.settings.retroAchievementsHardcore = 0;
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(state.settings.retroAchievementsHardcore == 1,
+          "RA Hardcore click toggles hardcore setting");
+
+    hit = M12_ModernMenu_HitTest(&state,
+                                 settingsRowXRight,
+                                 settingsRowY0 + 8 * settingsRowStep + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
+          "Session Timer visible row -> cycle hit");
+    CHECK(hit.index == 33,
+          "Session Timer visible row maps to M12_SETTINGS_ROW_SESSION_TIMER");
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(state.settings.sessionTimerIndex == 1,
+          "Session Timer click still cycles timer setting");
 
     printf("\n=== Summary: %d passed, %d failed ===\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;

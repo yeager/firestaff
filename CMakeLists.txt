@@ -5856,6 +5856,18 @@ if(BUILD_TESTING)
         COMMAND test_menu_hit_launch_direct_click_m12
     )
 
+    add_executable(test_menu_hit_settings_tab_m12
+        tests/test_menu_hit_settings_tab_m12.c
+    )
+    target_link_libraries(test_menu_hit_settings_tab_m12 PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_menu_hit_settings_tab_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME menu_hit_settings_tab_m12
+        COMMAND test_menu_hit_settings_tab_m12
+    )
+
     add_executable(test_csb_v1_launch_blocker_m12
         tests/test_csb_v1_launch_blocker_m12.c
     )

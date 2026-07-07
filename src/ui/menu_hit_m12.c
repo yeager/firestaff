@@ -55,15 +55,33 @@
 #define M12_HIT_GAMEOPT_ROW_Y0      (M12_HIT_GAMEOPT_PANEL_Y + 76)
 #define M12_HIT_GAMEOPT_ROW_STEP    52
 
-/* Modern renderer shows a small curated settings subset. Values are the
- * private M12_SETTINGS_ROW_* indices in menu_startup_m12.c. */
-static const int m12_hit_visible_settings_rows[] = {0, 1, 3, 14, 15, 16, 30, 42, 43};
+/* Modern renderer shows a small curated settings subset. Values mirror
+ * the private M12_SETTINGS_ROW_* indices in menu_startup_m12.c. */
+#define M12_HIT_SETTINGS_ROW_LANGUAGE            0
+#define M12_HIT_SETTINGS_ROW_GRAPHICS            1
+#define M12_HIT_SETTINGS_ROW_WINDOW_MODE         3
+#define M12_HIT_SETTINGS_ROW_SMOOTH_TURN_PAN    14
+#define M12_HIT_SETTINGS_ROW_DATA_DIR           15
+#define M12_HIT_SETTINGS_ROW_DATA_STATUS        16
+#define M12_HIT_SETTINGS_ROW_RETROACHIEVEMENTS  30
+#define M12_HIT_SETTINGS_ROW_RA_HARDCORE        31
+#define M12_HIT_SETTINGS_ROW_SESSION_TIMER      33
+#define M12_HIT_SETTINGS_ROW_EXPORT             42
+#define M12_HIT_SETTINGS_ROW_IMPORT             43
+
+static const int m12_hit_visible_settings_rows[] = {
+    M12_HIT_SETTINGS_ROW_LANGUAGE,
+    M12_HIT_SETTINGS_ROW_GRAPHICS,
+    M12_HIT_SETTINGS_ROW_WINDOW_MODE,
+    M12_HIT_SETTINGS_ROW_SMOOTH_TURN_PAN,
+    M12_HIT_SETTINGS_ROW_DATA_DIR,
+    M12_HIT_SETTINGS_ROW_DATA_STATUS,
+    M12_HIT_SETTINGS_ROW_RETROACHIEVEMENTS,
+    M12_HIT_SETTINGS_ROW_RA_HARDCORE,
+    M12_HIT_SETTINGS_ROW_SESSION_TIMER
+};
 #define M12_HIT_SETTINGS_VISIBLE_ROW_COUNT \
     ((int)(sizeof(m12_hit_visible_settings_rows) / sizeof(m12_hit_visible_settings_rows[0])))
-#define M12_HIT_SETTINGS_ROW_DATA_DIR 15
-#define M12_HIT_SETTINGS_ROW_EXPORT 42
-#define M12_HIT_SETTINGS_ROW_IMPORT 43
-#define M12_HIT_SETTINGS_ROW_LANGUAGE 0
 #define M12_HIT_LANGUAGE_POPUP_X      (M12_HIT_PANEL_X + M12_HIT_ROW_INDENT + M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT - 632)
 #define M12_HIT_LANGUAGE_POPUP_Y      (M12_HIT_SETTINGS_ROW_Y0 + 56)
 #define M12_HIT_LANGUAGE_POPUP_W      632
