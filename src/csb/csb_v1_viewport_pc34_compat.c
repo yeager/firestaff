@@ -439,6 +439,8 @@ size_t csb_v1_viewport_runtime_collect_thing_overlays(
                     overlay.group_slot_index = slot;
                     overlay.group_cell = group_cell;
                     overlay.group_info = group_info;
+                    overlay.group_placement.sprite_direction =
+                        group_info.direction;
                     if (out_overlays && count < out_capacity) {
                         out_overlays[count] = overlay;
                     }
@@ -989,13 +991,18 @@ int csb_v1_viewport_runtime_group_overlay_creature_placement(
     int creature_cell,
     CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement)
 {
-    return csb_v1_viewport_runtime_group_overlay_slot_placement(
+    int visible = csb_v1_viewport_runtime_group_overlay_slot_placement(
         forward,
         side,
         csb_v1_viewport_runtime_creature_coordinate_set(creature_type),
         visible_count,
         creature_cell,
         out_placement);
+    if (out_placement) {
+        out_placement->sprite_creature_type = creature_type;
+        out_placement->sprite_relative_side = side;
+    }
+    return visible;
 }
 
 int csb_v1_viewport_runtime_group_overlay_slot_placement(
@@ -1017,6 +1024,9 @@ int csb_v1_viewport_runtime_group_overlay_slot_placement(
     placement.view_cell = slot_index;
     placement.coordinate_set = coordinate_set;
     placement.depth_index = forward - 1;
+    placement.sprite_creature_type = -1;
+    placement.sprite_direction = 0;
+    placement.sprite_relative_side = side;
     placement.view_square =
         csb_v1_viewport_f0115_view_square_index(forward, side);
     placement.source_zone = -1;

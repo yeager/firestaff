@@ -2583,6 +2583,12 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                   overlays[2].group_slot_index, 0);
         check_int("csb.runtime_thing_overlay_plan.first_group_cell",
                   overlays[2].group_cell, 0);
+        check_int("csb.runtime_thing_overlay_plan.first_group_type",
+                  overlays[2].group_placement.sprite_creature_type, 6);
+        check_int("csb.runtime_thing_overlay_plan.first_group_direction",
+                  overlays[2].group_placement.sprite_direction, 0);
+        check_int("csb.runtime_thing_overlay_plan.first_group_side",
+                  overlays[2].group_placement.sprite_relative_side, 0);
         check_int("csb.runtime_thing_overlay_plan.second_group",
                   overlays[3].kind, CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP);
         check_int("csb.runtime_thing_overlay_plan.second_group_slot",
@@ -2724,6 +2730,12 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.used_source_zone, 1);
     check_int("csb.runtime_group_overlay.d1c.depth",
               group_place.depth_index, 0);
+    check_int("csb.runtime_group_overlay.d1c.sprite_type_default",
+              group_place.sprite_creature_type, -1);
+    check_int("csb.runtime_group_overlay.d1c.sprite_direction_default",
+              group_place.sprite_direction, 0);
+    check_int("csb.runtime_group_overlay.d1c.sprite_side",
+              group_place.sprite_relative_side, 0);
     check_int("csb.runtime_group_overlay.d1c.sprite_w",
               group_place.sprite_w, 54);
     check_int("csb.runtime_group_overlay.d1c.sprite_h",
@@ -2777,6 +2789,10 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                    1, 0, 0, 1, 0, &group_place) == 1);
     check_int("csb.runtime_group_overlay.creature_wrapper.type0.coord",
               group_place.coordinate_set, 1);
+    check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_type",
+              group_place.sprite_creature_type, 0);
+    check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_side",
+              group_place.sprite_relative_side, 0);
     check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_x",
               group_place.sprite_x, 85);
     check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_y",
