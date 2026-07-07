@@ -137,6 +137,14 @@ static const unsigned char kDungeonPayload[] =
     "ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789\n"
     "ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789\n";
 
+static const unsigned char kTitlePayload[] =
+    "Firestaff DM1 optional TITLE fixture - startup cache payload v1\n"
+    "TITLETITLETITLETITLETITLETITLETITLETITLETITLETITLETITLETITLETITLE\n";
+
+static const unsigned char kSwooshPayload[] =
+    "Firestaff DM1 optional SWOOSH fixture - startup cache payload v1\n"
+    "SWSHSWSHSWSHSWSHSWSHSWSHSWSHSWSHSWSHSWSHSWSHSWSHSWSHSWSHSWSH\n";
+
 static int write_payload_file(const char* path,
                               const unsigned char* payload,
                               size_t payloadSize) {
@@ -274,135 +282,124 @@ static int deflate_payload_owned(const unsigned char* payload,
 #endif
 }
 
-/* Build a multi-entry ZIP archive with two DEFLATED (method=8) entries.
- * Both payloads are deflated independently and the central directory is
+typedef struct TestZipEntry {
+    const char* name;
+    const unsigned char* payload;
+    size_t payloadSize;
+    unsigned char* compressed;
+    size_t compressedSize;
+    unsigned int localOffset;
+    unsigned int centralOffset;
+} TestZipEntry;
+
+/* Build a multi-entry ZIP archive with DEFLATED (method=8) entries.
+ * Payloads are deflated independently and the central directory is
  * laid out after all local file headers, matching the PKZIP spec. Returns
- * 1 on success. The graphics entry MUST be the first argument so the
- * cached files end up in a deterministic order.
+ * 1 on success. The graphics entry MUST be first so the cached files end up
+ * in a deterministic order.
  *
  * When zlib is unavailable, the fallback path copies the raw payload
- * bytes (no compression) and the central-directory method field is set
  * to 0 (stored) so the asset scanner can still read the entry. The
- * "nested deflate" headline contract is verified when zlib IS present;
+ * "nested deflate" headline contract is verified when zlib is present;
  * the stored-entry path is a graceful degradation that keeps the
  * cache-materialization regression exercising end-to-end. */
-static int write_two_entry_nested_zip(const char* path,
-                                      const char* entry1Name,
-                                      const unsigned char* entry1Payload,
-                                      size_t entry1Size,
-                                      const char* entry2Name,
-                                      const unsigned char* entry2Payload,
-                                      size_t entry2Size,
-                                      unsigned int* outEntry1Compressed,
-                                      unsigned int* outEntry2Compressed) {
+static int write_dm1_startup_nested_zip(const char* path,
+                                        TestZipEntry* entries,
+                                        size_t entryCount,
+                                        unsigned int* outEntry1Compressed,
+                                        unsigned int* outEntry2Compressed) {
     FILE* fp = fopen(path, "wb");
     unsigned char local[30] = {0};
     unsigned char central[46] = {0};
     unsigned char eocd[22] = {0};
-    unsigned char* compressed1 = NULL;
-    unsigned char* compressed2 = NULL;
-    size_t compressed1Size = 0U;
-    size_t compressed2Size = 0U;
-    unsigned int name1Len, name2Len;
     unsigned int centralOffset;
-    unsigned int entry1LocalOffset = 0U;
-    unsigned int entry2LocalOffset = 0U;
-    unsigned int entry2CentralOffset = 0U;
+    unsigned int centralEnd;
+    size_t i;
 #ifdef FIRESTAFF_HAS_ZLIB
     int method = 8;
 #else
     int method = 0;
 #endif
-    if (!fp) {
+    if (!fp || !entries || entryCount == 0U) {
+        if (fp) fclose(fp);
         return 0;
     }
-    if (!deflate_payload_owned(entry1Payload, entry1Size,
-                               &compressed1, &compressed1Size) ||
-        !deflate_payload_owned(entry2Payload, entry2Size,
-                               &compressed2, &compressed2Size)) {
-        free(compressed1);
-        free(compressed2);
+    for (i = 0U; i < entryCount; ++i) {
+        if (!deflate_payload_owned(entries[i].payload,
+                                   entries[i].payloadSize,
+                                   &entries[i].compressed,
+                                   &entries[i].compressedSize)) {
+            size_t j;
+            for (j = 0U; j <= i && j < entryCount; ++j) {
+                free(entries[j].compressed);
+                entries[j].compressed = NULL;
+            }
+            fclose(fp);
+            return 0;
+        }
+    }
+
+    for (i = 0U; i < entryCount; ++i) {
+        unsigned int nameLen = (unsigned int)strlen(entries[i].name);
+        entries[i].localOffset = (unsigned int)ftell(fp);
+        memset(local, 0, sizeof(local));
+        put32(local, 0x04034b50U);
+        put16(local + 4, 20U);
+        put16(local + 8, (unsigned int)method);
+        put32(local + 18, (unsigned int)entries[i].compressedSize);
+        put32(local + 22, (unsigned int)entries[i].payloadSize);
+        put16(local + 26, nameLen);
+        if (fwrite(local, 1U, sizeof(local), fp) != sizeof(local) ||
+            fwrite(entries[i].name, 1U, nameLen, fp) != nameLen ||
+            fwrite(entries[i].compressed, 1U, entries[i].compressedSize, fp) !=
+                entries[i].compressedSize) {
+            size_t j;
+            for (j = 0U; j < entryCount; ++j) free(entries[j].compressed);
+            fclose(fp);
+            return 0;
+        }
+    }
+
+    centralOffset = (unsigned int)ftell(fp);
+    for (i = 0U; i < entryCount; ++i) {
+        unsigned int nameLen = (unsigned int)strlen(entries[i].name);
+        entries[i].centralOffset = (unsigned int)ftell(fp);
+        memset(central, 0, sizeof(central));
+        put32(central, 0x02014b50U);
+        put16(central + 4, 20U);
+        put16(central + 6, 20U);
+        put16(central + 10, (unsigned int)method);
+        put32(central + 20, (unsigned int)entries[i].compressedSize);
+        put32(central + 24, (unsigned int)entries[i].payloadSize);
+        put16(central + 28, nameLen);
+        put32(central + 42, entries[i].localOffset);
+        if (fwrite(central, 1U, sizeof(central), fp) != sizeof(central) ||
+            fwrite(entries[i].name, 1U, nameLen, fp) != nameLen) {
+            size_t j;
+            for (j = 0U; j < entryCount; ++j) free(entries[j].compressed);
+            fclose(fp);
+            return 0;
+        }
+    }
+
+    centralEnd = (unsigned int)ftell(fp);
+    put32(eocd, 0x06054b50U);
+    put16(eocd + 8, (unsigned int)entryCount);
+    put16(eocd + 10, (unsigned int)entryCount);
+    put32(eocd + 12, centralEnd - centralOffset);
+    put32(eocd + 16, centralOffset);
+    if (fwrite(eocd, 1U, sizeof(eocd), fp) != sizeof(eocd)) {
+        for (i = 0U; i < entryCount; ++i) free(entries[i].compressed);
         fclose(fp);
         return 0;
     }
-    name1Len = (unsigned int)strlen(entry1Name);
-    name2Len = (unsigned int)strlen(entry2Name);
-
-    /* Local file headers + compressed payloads. */
-    entry1LocalOffset = (unsigned int)ftell(fp);
-    memset(local, 0, sizeof(local));
-    put32(local, 0x04034b50U);
-    put16(local + 4, 20U);
-    put16(local + 8, (unsigned int)method);
-    put32(local + 18, (unsigned int)compressed1Size);
-    put32(local + 22, (unsigned int)entry1Size);
-    put16(local + 26, name1Len);
-    if (fwrite(local, 1U, sizeof(local), fp) != sizeof(local) ||
-        fwrite(entry1Name, 1U, name1Len, fp) != name1Len ||
-        fwrite(compressed1, 1U, compressed1Size, fp) != compressed1Size) {
-        free(compressed1); free(compressed2); fclose(fp); return 0;
-    }
-    entry2LocalOffset = (unsigned int)ftell(fp);
-    memset(local, 0, sizeof(local));
-    put32(local, 0x04034b50U);
-    put16(local + 4, 20U);
-    put16(local + 8, (unsigned int)method);
-    put32(local + 18, (unsigned int)compressed2Size);
-    put32(local + 22, (unsigned int)entry2Size);
-    put16(local + 26, name2Len);
-    if (fwrite(local, 1U, sizeof(local), fp) != sizeof(local) ||
-        fwrite(entry2Name, 1U, name2Len, fp) != name2Len ||
-        fwrite(compressed2, 1U, compressed2Size, fp) != compressed2Size) {
-        free(compressed1); free(compressed2); fclose(fp); return 0;
-    }
-
-    /* Central directory: both entries side by side. */
-    centralOffset = (unsigned int)ftell(fp);
-    memset(central, 0, sizeof(central));
-    put32(central, 0x02014b50U);
-    put16(central + 4, 20U);
-    put16(central + 6, 20U);
-    put16(central + 10, (unsigned int)method);
-    put32(central + 20, (unsigned int)compressed1Size);
-    put32(central + 24, (unsigned int)entry1Size);
-    put16(central + 28, name1Len);
-    put32(central + 42, entry1LocalOffset);
-    if (fwrite(central, 1U, sizeof(central), fp) != sizeof(central) ||
-        fwrite(entry1Name, 1U, name1Len, fp) != name1Len) {
-        free(compressed1); free(compressed2); fclose(fp); return 0;
-    }
-    entry2CentralOffset = (unsigned int)ftell(fp);
-    memset(central, 0, sizeof(central));
-    put32(central, 0x02014b50U);
-    put16(central + 4, 20U);
-    put16(central + 6, 20U);
-    put16(central + 10, (unsigned int)method);
-    put32(central + 20, (unsigned int)compressed2Size);
-    put32(central + 24, (unsigned int)entry2Size);
-    put16(central + 28, name2Len);
-    put32(central + 42, entry2LocalOffset);
-    if (fwrite(central, 1U, sizeof(central), fp) != sizeof(central) ||
-        fwrite(entry2Name, 1U, name2Len, fp) != name2Len) {
-        free(compressed1); free(compressed2); fclose(fp); return 0;
-    }
-
-    /* End of central directory record. */
-    put32(eocd, 0x06054b50U);
-    put16(eocd + 8, 2U);
-    put16(eocd + 10, 2U);
-    put32(eocd + 12, (unsigned int)(entry2CentralOffset + sizeof(central) + name2Len - centralOffset));
-    put32(eocd + 16, centralOffset);
-    if (fwrite(eocd, 1U, sizeof(eocd), fp) != sizeof(eocd)) {
-        free(compressed1); free(compressed2); fclose(fp); return 0;
-    }
-    free(compressed1);
-    free(compressed2);
     if (outEntry1Compressed) {
-        *outEntry1Compressed = (unsigned int)compressed1Size;
+        *outEntry1Compressed = (unsigned int)entries[0].compressedSize;
     }
-    if (outEntry2Compressed) {
-        *outEntry2Compressed = (unsigned int)compressed2Size;
+    if (outEntry2Compressed && entryCount > 1U) {
+        *outEntry2Compressed = (unsigned int)entries[1].compressedSize;
     }
+    for (i = 0U; i < entryCount; ++i) free(entries[i].compressed);
     return fclose(fp) == 0;
 }
 
@@ -421,6 +418,10 @@ int main(void) {
         "nested/inner/level1/level2/GRAPHICS.DAT";
     static const char kDungeonEntry[] =
         "DUNGEON.DAT";
+    static const char kTitleEntry[] =
+        "nested/inner/level1/TITLE";
+    static const char kSwooshEntry[] =
+        "nested/inner/level1/SWOOSH";
 
     char home[M12_ASSET_DATA_DIR_CAPACITY];
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -434,6 +435,8 @@ int main(void) {
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char cachedGraphics[M12_ASSET_DATA_DIR_CAPACITY];
     char cachedDungeon[M12_ASSET_DATA_DIR_CAPACITY];
+    char cachedTitle[M12_ASSET_DATA_DIR_CAPACITY];
+    char cachedSwoosh[M12_ASSET_DATA_DIR_CAPACITY];
     char extractedPath[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus status;
     const M12_AssetRequiredFileStatus* required;
@@ -442,6 +445,9 @@ int main(void) {
     unsigned int dungeonCompressed = 0U;
     size_t graphicsSize = sizeof(kGraphicsPayload) - 1U;
     size_t dungeonSize = sizeof(kDungeonPayload) - 1U;
+    size_t titleSize = sizeof(kTitlePayload) - 1U;
+    size_t swooshSize = sizeof(kSwooshPayload) - 1U;
+    TestZipEntry entries[4];
 
     /* Stage an isolated $HOME so the asset cache resolves under our temp
      * directory instead of touching the user's real ~/.firestaff. */
@@ -456,15 +462,29 @@ int main(void) {
         !write_payload_file(graphicsPath, kGraphicsPayload, graphicsSize) ||
         !write_payload_file(dungeonPath, kDungeonPayload, dungeonSize) ||
         !m12_file_md5_hex(graphicsPath, graphicsMd5) ||
-        !m12_file_md5_hex(dungeonPath, dungeonMd5) ||
-        !write_two_entry_nested_zip(zipPath,
-                                    kGraphicsEntry, kGraphicsPayload,
-                                    graphicsSize,
-                                    kDungeonEntry, kDungeonPayload,
-                                    dungeonSize,
-                                    &graphicsCompressed,
-                                    &dungeonCompressed)) {
+        !m12_file_md5_hex(dungeonPath, dungeonMd5)) {
         fprintf(stderr, "fixture setup failed\n");
+        return 1;
+    }
+    memset(entries, 0, sizeof(entries));
+    entries[0].name = kGraphicsEntry;
+    entries[0].payload = kGraphicsPayload;
+    entries[0].payloadSize = graphicsSize;
+    entries[1].name = kDungeonEntry;
+    entries[1].payload = kDungeonPayload;
+    entries[1].payloadSize = dungeonSize;
+    entries[2].name = kTitleEntry;
+    entries[2].payload = kTitlePayload;
+    entries[2].payloadSize = titleSize;
+    entries[3].name = kSwooshEntry;
+    entries[3].payload = kSwooshPayload;
+    entries[3].payloadSize = swooshSize;
+    if (!write_dm1_startup_nested_zip(zipPath,
+                                      entries,
+                                      sizeof(entries) / sizeof(entries[0]),
+                                      &graphicsCompressed,
+                                      &dungeonCompressed)) {
+        fprintf(stderr, "zip fixture setup failed\n");
         return 1;
     }
 #ifdef FIRESTAFF_HAS_ZLIB
@@ -577,7 +597,11 @@ int main(void) {
               FSP_JoinPath(cachedGraphics, sizeof(cachedGraphics),
                            cacheRoot, "dm1/GRAPHICS.DAT") &&
               FSP_JoinPath(cachedDungeon, sizeof(cachedDungeon),
-                           cacheRoot, "dm1/DUNGEON.DAT"),
+                           cacheRoot, "dm1/DUNGEON.DAT") &&
+              FSP_JoinPath(cachedTitle, sizeof(cachedTitle),
+                           cacheRoot, "dm1/TITLE") &&
+              FSP_JoinPath(cachedSwoosh, sizeof(cachedSwoosh),
+                           cacheRoot, "dm1/SWOOSH"),
               "asset cache leaf paths should resolve");
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1"),
                      cacheRoot) == 0,
@@ -606,6 +630,12 @@ int main(void) {
                                    dungeonSize),
               "cached DUNGEON.DAT under asset-cache/dm1/ must be "
               "byte-identical to the original deflated entry payload");
+    check_int(file_matches_payload(cachedTitle, kTitlePayload, titleSize),
+              "cached optional TITLE under asset-cache/dm1/ must be "
+              "byte-identical to the sibling ZIP entry payload");
+    check_int(file_matches_payload(cachedSwoosh, kSwooshPayload, swooshSize),
+              "cached optional SWOOSH under asset-cache/dm1/ must be "
+              "byte-identical to the sibling ZIP entry payload");
 
     /* M11's DM1 handoff probes <runtimeDataDir>/dm1 first (see
      * m11_game_view.c m11_resolve_builtin_dungeon_path), so this asserts the cache
@@ -622,6 +652,18 @@ int main(void) {
                                                  kDungeonPayload,
                                                  dungeonSize),
               "DM1 launch lookup should open runtimeDataDir/dm1/DUNGEON.DAT "
+              "as an ordinary materialized cache file");
+    check_int(runtime_cache_file_matches_payload(&status, "dm1",
+                                                 "TITLE",
+                                                 kTitlePayload,
+                                                 titleSize),
+              "DM1 full startup should open runtimeDataDir/dm1/TITLE "
+              "as an ordinary materialized cache file");
+    check_int(runtime_cache_file_matches_payload(&status, "dm1",
+                                                 "SWOOSH",
+                                                 kSwooshPayload,
+                                                 swooshSize),
+              "DM1 full startup should open runtimeDataDir/dm1/SWOOSH "
               "as an ordinary materialized cache file");
 
     /* The cache leafs must NOT contain the virtual "::" separator after
