@@ -544,6 +544,231 @@ static const char *tqr_startup_selected_status(
     }
 }
 
+static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)
+{
+    if (!plan) {
+        return;
+    }
+    memset(plan, 0, sizeof(*plan));
+    plan->background_color = 0;
+    plan->border_x = 12;
+    plan->border_y = 10;
+    plan->border_w = 296;
+    plan->border_h = 180;
+    plan->border_color = 11;
+}
+
+static int tqr_startup_render_plan_add_text(
+    Theron_StartupRenderPlan *plan,
+    int x,
+    int y,
+    Theron_StartupRenderTextStyle style,
+    const char *text)
+{
+    Theron_StartupRenderTextCommand *command;
+
+    if (!plan ||
+        plan->text_count >= THERON_STARTUP_RENDER_TEXT_CAPACITY_MAX) {
+        return 0;
+    }
+    command = &plan->text[plan->text_count++];
+    command->x = x;
+    command->y = y;
+    command->style = style;
+    snprintf(command->text,
+             sizeof(command->text),
+             "%s",
+             text ? text : "");
+    return 1;
+}
+
+static void tqr_startup_render_plan_add_title_and_chapter(
+    Theron_StartupRenderPlan *plan,
+    const Theron_StartupLayoutElement *elements,
+    int element_count)
+{
+    int i;
+
+    if (!plan || !elements || element_count <= 0) {
+        return;
+    }
+    for (i = 0; i < element_count; ++i) {
+        const Theron_StartupLayoutElement *e = &elements[i];
+        if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_TITLE) {
+            (void)tqr_startup_render_plan_add_text(
+                plan, e->x, e->y, THERON_STARTUP_RENDER_TEXT_TITLE,
+                e->label);
+        } else if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_CHAPTER) {
+            (void)tqr_startup_render_plan_add_text(
+                plan, e->x, e->y, THERON_STARTUP_RENDER_TEXT_SMALL,
+                e->label);
+        }
+    }
+}
+
+int theron_v1_startup_render_plan_build(
+    const Theron_StartupLayoutState *state,
+    const Theron_StartupLayoutElement *elements,
+    int element_count,
+    Theron_StartupRenderPlan *out_plan)
+{
+    int i;
+
+    if (!state || !out_plan) {
+        return 0;
+    }
+    tqr_startup_render_plan_reset(out_plan);
+    out_plan->phase = state->phase;
+    tqr_startup_render_plan_add_title_and_chapter(
+        out_plan, elements, element_count);
+
+    if (state->phase == THERON_STARTUP_PHASE_TITLE) {
+        return tqr_startup_render_plan_add_text(
+            out_plan,
+            34,
+            76,
+            THERON_STARTUP_RENDER_TEXT_SHADOW,
+            "PRESS ENTER TO START");
+    }
+
+    if (state->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        int has_continue =
+            state->has_tqsv_continue || state->has_srm_continue;
+
+        (void)tqr_startup_render_plan_add_text(
+            out_plan,
+            34,
+            52,
+            THERON_STARTUP_RENDER_TEXT_SHADOW,
+            "CHOOSE A STAGE");
+        if (state->startup_roster_name_count > 0) {
+            char roster_row[THERON_STARTUP_RENDER_TEXT_CAPACITY];
+            int written = snprintf(roster_row,
+                                   sizeof(roster_row),
+                                   "ROSTER:");
+            for (i = 0;
+                 i < state->startup_roster_name_count &&
+                 i < THERON_STARTUP_LAYOUT_ROSTER_CAPACITY;
+                 ++i) {
+                const char *name = state->startup_roster_names[i];
+                if (written < 0 ||
+                    written >= (int)sizeof(roster_row) ||
+                    !name || !name[0]) {
+                    continue;
+                }
+                written += snprintf(roster_row + written,
+                                    sizeof(roster_row) - (size_t)written,
+                                    " %s",
+                                    name);
+            }
+            (void)tqr_startup_render_plan_add_text(
+                out_plan,
+                34,
+                164,
+                THERON_STARTUP_RENDER_TEXT_SMALL,
+                roster_row);
+        }
+        for (i = 0; i < element_count; ++i) {
+            const Theron_StartupLayoutElement *e = &elements[i];
+            char row[THERON_STARTUP_RENDER_TEXT_CAPACITY];
+            if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE) {
+                snprintf(row,
+                         sizeof(row),
+                         "%c CONTINUE  %s SLOT %d",
+                         e->cursor ? '>' : ' ',
+                         e->save_kind == 1 ? "TQSV" : "SRM",
+                         e->save_slot);
+                (void)tqr_startup_render_plan_add_text(
+                    out_plan,
+                    e->x,
+                    e->y,
+                    e->cursor ? THERON_STARTUP_RENDER_TEXT_ACTIVE
+                              : THERON_STARTUP_RENDER_TEXT_PICKED,
+                    row);
+            } else if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_STAGE) {
+                snprintf(row,
+                         sizeof(row),
+                         "%c %d  %s%s",
+                         e->cursor ? '>' : ' ',
+                         e->dungeon_id,
+                         e->label,
+                         e->enabled ? "" : "  LOCKED");
+                (void)tqr_startup_render_plan_add_text(
+                    out_plan,
+                    e->x,
+                    e->y,
+                    e->cursor
+                        ? THERON_STARTUP_RENDER_TEXT_ACTIVE
+                        : (e->enabled ? THERON_STARTUP_RENDER_TEXT_SMALL
+                                      : THERON_STARTUP_RENDER_TEXT_LOCKED),
+                    row);
+            }
+        }
+        return tqr_startup_render_plan_add_text(
+            out_plan,
+            34,
+            176,
+            THERON_STARTUP_RENDER_TEXT_SMALL,
+            has_continue
+                ? "UP/DOWN SELECT  ENTER CONTINUE/STAGE"
+                : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM");
+    }
+
+    (void)tqr_startup_render_plan_add_text(
+        out_plan, 34, 52, THERON_STARTUP_RENDER_TEXT_SHADOW, "SOUL ROOM");
+    (void)tqr_startup_render_plan_add_text(
+        out_plan,
+        34,
+        64,
+        THERON_STARTUP_RENDER_TEXT_SMALL,
+        state->startup_text_prompt[0] != '\0'
+            ? state->startup_text_prompt
+            : "THERON WAITS AT THE FORCEFIELD");
+    for (i = 0; i < element_count; ++i) {
+        const Theron_StartupLayoutElement *e = &elements[i];
+        char row[THERON_STARTUP_RENDER_TEXT_CAPACITY];
+        if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_MIRROR) {
+            snprintf(row,
+                     sizeof(row),
+                     "%c %-22s %-7s %s",
+                     e->cursor ? '>' : ' ',
+                     e->label,
+                     e->primary_class >= 0
+                        ? theron_v1_startup_class_name(
+                              (Theron_ChampionClass)e->primary_class)
+                        : "UNKNOWN",
+                     tqr_startup_selected_status(e));
+            (void)tqr_startup_render_plan_add_text(
+                out_plan,
+                e->x,
+                e->y,
+                e->selected ? THERON_STARTUP_RENDER_TEXT_PICKED
+                            : (e->cursor
+                                   ? THERON_STARTUP_RENDER_TEXT_ACTIVE
+                                   : THERON_STARTUP_RENDER_TEXT_SMALL),
+                row);
+        } else if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD) {
+            snprintf(row,
+                     sizeof(row),
+                     "%c ENTER FORCEFIELD",
+                     e->cursor ? '>' : ' ');
+            (void)tqr_startup_render_plan_add_text(
+                out_plan,
+                e->x,
+                e->y,
+                e->cursor ? THERON_STARTUP_RENDER_TEXT_ACTIVE
+                          : THERON_STARTUP_RENDER_TEXT_SMALL,
+                row);
+        }
+    }
+    return tqr_startup_render_plan_add_text(
+        out_plan,
+        34,
+        176,
+        THERON_STARTUP_RENDER_TEXT_SMALL,
+        "ENTER SELECTS MIRROR  ACTION ENTERS");
+}
+
 int theron_v1_startup_render_rows_build(
     const Theron_StartupLayoutState *state,
     const Theron_StartupLayoutElement *elements,

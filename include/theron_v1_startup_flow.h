@@ -130,10 +130,21 @@ typedef struct {
 enum {
     THERON_STARTUP_LAYOUT_LABEL_CAPACITY = 48,
     THERON_STARTUP_RENDER_ROW_CAPACITY = 80,
+    THERON_STARTUP_RENDER_TEXT_CAPACITY = 128,
+    THERON_STARTUP_RENDER_TEXT_CAPACITY_MAX = 24,
     THERON_STARTUP_LAYOUT_DECODED_NAME_CAPACITY = 16,
     THERON_STARTUP_LAYOUT_DECODED_TITLE_CAPACITY = 32,
     THERON_STARTUP_LAYOUT_ROSTER_CAPACITY = 8
 };
+
+typedef enum {
+    THERON_STARTUP_RENDER_TEXT_SMALL = 0,
+    THERON_STARTUP_RENDER_TEXT_SHADOW = 1,
+    THERON_STARTUP_RENDER_TEXT_TITLE = 2,
+    THERON_STARTUP_RENDER_TEXT_ACTIVE = 3,
+    THERON_STARTUP_RENDER_TEXT_LOCKED = 4,
+    THERON_STARTUP_RENDER_TEXT_PICKED = 5
+} Theron_StartupRenderTextStyle;
 
 typedef enum {
     THERON_STARTUP_LAYOUT_ELEMENT_TITLE = 1,
@@ -185,6 +196,26 @@ typedef struct {
     const int *selected_mirror_order;
     int selected_mirror_order_count;
 } Theron_StartupLayoutState;
+
+typedef struct {
+    int x;
+    int y;
+    Theron_StartupRenderTextStyle style;
+    char text[THERON_STARTUP_RENDER_TEXT_CAPACITY];
+} Theron_StartupRenderTextCommand;
+
+typedef struct {
+    Theron_StartupPhase phase;
+    int background_color;
+    int border_x;
+    int border_y;
+    int border_w;
+    int border_h;
+    int border_color;
+    Theron_StartupRenderTextCommand text[
+        THERON_STARTUP_RENDER_TEXT_CAPACITY_MAX];
+    int text_count;
+} Theron_StartupRenderPlan;
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
 void theron_v1_startup_action_init(Theron_StartupAction *action);
@@ -261,6 +292,11 @@ int theron_v1_startup_render_rows_build(
     int element_count,
     char rows[][THERON_STARTUP_RENDER_ROW_CAPACITY],
     int max_rows);
+int theron_v1_startup_render_plan_build(
+    const Theron_StartupLayoutState *state,
+    const Theron_StartupLayoutElement *elements,
+    int element_count,
+    Theron_StartupRenderPlan *out_plan);
 int theron_v1_startup_receipt_phase(
     Theron_StartupPhase phase,
     char *out_phase,

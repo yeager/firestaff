@@ -522,6 +522,7 @@ int main(void) {
         {
             Theron_StartupLayoutState layout_state;
             Theron_StartupLayoutElement elements[16];
+            Theron_StartupRenderPlan render_plan;
             char rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
             int order[THERON_STARTUP_MAX_COMPANIONS] = {6, 2, -1};
             int layout_count;
@@ -592,6 +593,49 @@ int main(void) {
             check_contains("layout stage rows cursor",
                            rows[4],
                            "> 1  Hall of Records");
+            check_int("layout stage render plan rc",
+                      theron_v1_startup_render_plan_build(
+                          &layout_state,
+                          elements,
+                          layout_count,
+                          &render_plan),
+                      1);
+            check_int("layout stage render plan phase",
+                      render_plan.phase,
+                      THERON_STARTUP_PHASE_STAGE_SELECT);
+            check_int("layout stage render plan border x",
+                      render_plan.border_x,
+                      12);
+            check_int("layout stage render plan border color",
+                      render_plan.border_color,
+                      11);
+            check_int("layout stage render plan text count",
+                      render_plan.text_count,
+                      12);
+            check_str("layout stage render plan title",
+                      render_plan.text[0].text,
+                      "THERON'S QUEST");
+            check_int("layout stage render plan title style",
+                      render_plan.text[0].style,
+                      THERON_STARTUP_RENDER_TEXT_TITLE);
+            check_str("layout stage render plan prompt",
+                      render_plan.text[2].text,
+                      "CHOOSE A STAGE");
+            check_int("layout stage render plan continue y",
+                      render_plan.text[3].y,
+                      66);
+            check_contains("layout stage render plan continue",
+                           render_plan.text[3].text,
+                           "CONTINUE  TQSV SLOT 2");
+            check_int("layout stage render plan selected style",
+                      render_plan.text[4].style,
+                      THERON_STARTUP_RENDER_TEXT_ACTIVE);
+            check_int("layout stage render plan locked style",
+                      render_plan.text[5].style,
+                      THERON_STARTUP_RENDER_TEXT_LOCKED);
+            check_contains("layout stage render plan footer",
+                           render_plan.text[11].text,
+                           "ENTER CONTINUE/STAGE");
 
             theron_v1_startup_layout_state_init(&layout_state);
             layout_state.phase = THERON_STARTUP_PHASE_READY;
@@ -667,6 +711,40 @@ int main(void) {
             check_contains("layout ready rows selected order",
                            rows[10],
                            "RESURRECTED #1");
+            check_int("layout ready render plan rc",
+                      theron_v1_startup_render_plan_build(
+                          &layout_state,
+                          elements,
+                          layout_count,
+                          &render_plan),
+                      1);
+            check_int("layout ready render plan phase",
+                      render_plan.phase,
+                      THERON_STARTUP_PHASE_READY);
+            check_int("layout ready render plan text count",
+                      render_plan.text_count,
+                      13);
+            check_str("layout ready render plan title",
+                      render_plan.text[0].text,
+                      "THERON'S QUEST");
+            check_str("layout ready render plan room",
+                      render_plan.text[2].text,
+                      "SOUL ROOM");
+            check_contains("layout ready render plan prompt",
+                           render_plan.text[3].text,
+                           "GO AWAY AND RESURRECT THERON");
+            check_contains("layout ready render plan decoded mirror",
+                           render_plan.text[4].text,
+                           "HAKAR");
+            check_int("layout ready render plan selected style",
+                      render_plan.text[10].style,
+                      THERON_STARTUP_RENDER_TEXT_PICKED);
+            check_int("layout ready render plan forcefield style",
+                      render_plan.text[11].style,
+                      THERON_STARTUP_RENDER_TEXT_ACTIVE);
+            check_contains("layout ready render plan footer",
+                           render_plan.text[12].text,
+                           "ACTION ENTERS");
         }
     }
 
