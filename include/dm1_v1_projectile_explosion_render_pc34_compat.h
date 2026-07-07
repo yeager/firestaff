@@ -203,6 +203,38 @@ int dm1_v1_explosion_pattern_graphic_index(int explosionType, int attack);
 int dm1_v1_explosion_base_scale(int viewDepth);
 int dm1_v1_explosion_is_smoke(int explosionType);
 
+typedef struct DM1_ExplosionSpriteBlitPlan {
+    int aspect_index;
+    int graphic_index;
+    int is_smoke;
+    int transparent_color;
+    int replace_src_a;
+    int replace_dst_a;
+    int replace_src_b;
+    int replace_dst_b;
+    int base_scale_percent;
+    int scale_percent;
+    int draw_x;
+    int draw_y;
+    int draw_w;
+    int draw_h;
+} DM1_ExplosionSpriteBlitPlan;
+
+int dm1_v1_explosion_sprite_blit_plan(DM1_ExplosionSpriteBlitPlan *out_plan,
+                                      int aspect,
+                                      int graphicIndex,
+                                      int isSmoke,
+                                      int frame,
+                                      int maxFrames,
+                                      int attack,
+                                      int depthIndex,
+                                      int paneX,
+                                      int paneY,
+                                      int paneW,
+                                      int paneH,
+                                      int spriteW,
+                                      int spriteH);
+
 /* ── Draw order verification ─────────────────────────────────────── */
 #define DM1_F0115_LAYER_FLOOR_ORNAMENTS  0
 #define DM1_F0115_LAYER_FLOOR_ITEMS      1
