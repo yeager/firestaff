@@ -214,8 +214,10 @@ typedef struct {
     int frame_gdat_index;
     int button_gdat_index;
     DM2_V1_ViewportRect panel_rect;
+    DM2_V1_ViewportRect panel_visible_rect;
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect button_rect;
+    uint8_t door_open_pct;
     uint8_t fallback_color;
 } DM2_V1_DoorRender;
 
@@ -369,6 +371,26 @@ typedef struct {
 } DM2_CreatureSprite;
 
 typedef struct {
+    int creature_index;
+    int creature_type;
+    int frame_index;
+    int direction;
+    int depth;
+    int center_x;
+    int center_y;
+    int gdat_index;
+    DM2_V1_ViewportRect fallback_rect;
+    uint8_t fallback_color;
+    DM2_V1_ViewportRect health_bg_rect;
+    DM2_V1_ViewportRect health_fill_rect;
+} DM2_V1_CreatureRender;
+
+typedef struct {
+    DM2_V1_CreatureRender creatures[DM2_MAX_CREATURES_PER_SQ];
+    int creature_count;
+} DM2_V1_CreatureRenderPlan;
+
+typedef struct {
     uint8_t  item_category;   /* GDAT category, 0 = miscellaneous fallback */
     uint8_t  item_type;       /* GDAT item index */
     uint8_t  frame_index;     /* animation frame */
@@ -486,6 +508,9 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
 int dm2_v1_viewport_build_door_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_DoorRenderPlan *out_plan);
+int dm2_v1_viewport_build_creature_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_CreatureRenderPlan *out_plan);
 
 /* ── Lighting helpers ─────────────────────────────────────────── */
 /* dm2_v1_viewport_object_light_level — compute object light intensity

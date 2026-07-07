@@ -1217,6 +1217,38 @@ static DM2_V1_ViewportRect dm2_v1_viewport_wall_frame_rect(int view_square)
     return rect;
 }
 
+static DM2_V1_ViewportRect dm2_v1_viewport_door_visible_panel_rect(
+    const DM2_V1_ViewportRect *panel_rect,
+    int door_open_pct)
+{
+    DM2_V1_ViewportRect rect = { 0, 0, 0, 0 };
+    int visible_pct;
+    int visible_h;
+
+    if (!panel_rect || panel_rect->w <= 0 || panel_rect->h <= 0) {
+        return rect;
+    }
+    if (door_open_pct < 0) {
+        door_open_pct = 0;
+    } else if (door_open_pct > 100) {
+        door_open_pct = 100;
+    }
+    visible_pct = 100 - door_open_pct;
+    if (visible_pct <= 0) {
+        return rect;
+    }
+    visible_h = (panel_rect->h * visible_pct + 99) / 100;
+    if (visible_h <= 0) {
+        visible_h = 1;
+    } else if (visible_h > panel_rect->h) {
+        visible_h = panel_rect->h;
+    }
+    rect = *panel_rect;
+    rect.y = panel_rect->y + (panel_rect->h - visible_h);
+    rect.h = visible_h;
+    return rect;
+}
+
 int dm2_v1_viewport_build_door_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_DoorRenderPlan *out_plan)
@@ -1252,8 +1284,12 @@ int dm2_v1_viewport_build_door_render_plan(
             dm2_v1_viewport_door_panel_graphic_index_for_square(square);
         row->frame_gdat_index =
             dm2_v1_viewport_door_frame_graphic_index_for_square(square);
+        row->door_open_pct = vs->door_open_pct;
         row->fallback_color = 10;
         row->panel_rect = panel_rect;
+        row->panel_visible_rect =
+            dm2_v1_viewport_door_visible_panel_rect(&panel_rect,
+                                                    row->door_open_pct);
         row->frame_rect = dm2_v1_viewport_wall_frame_rect(square);
         if (vs->door_button || vs->door_wall_button) {
             (void)dm2_v1_viewport_door_button_rect_for_square(
@@ -1551,6 +1587,82 @@ static int dm2_v1_viewport_scaled_sprite_extent(int src_extent,
     if (extent < min_extent) extent = min_extent;
     if (extent > max_extent) extent = max_extent;
     return extent;
+}
+
+static DM2_V1_ViewportRect dm2_v1_centered_rect(int center_x,
+                                                int center_y,
+                                                int w,
+                                                int h)
+{
+    DM2_V1_ViewportRect rect = { 0, 0, 0, 0 };
+    if (w <= 0 || h <= 0) {
+        return rect;
+    }
+    rect.x = center_x - w / 2;
+    rect.y = center_y - h / 2;
+    rect.w = w;
+    rect.h = h;
+    return rect;
+}
+
+int dm2_v1_viewport_build_creature_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_CreatureRenderPlan *out_plan)
+{
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s) {
+        return 1;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_TEMP_PICST/QUERY_DUNGEON_MAP_CHIP_PICT
+     * selects a creature map-chip image before DRAW_CHIP_OF_MAGIC_MAP scales it
+     * at the visible-cell center. Keep identity, fallback, and health geometry
+     * in a renderer-owned plan so the draw pass only fetches/copies pixels. */
+    for (int i = 0; i < s->creature_count &&
+                    i < DM2_MAX_CREATURES_PER_SQ; ++i) {
+        const DM2_CreatureSprite *src = &s->creatures[i];
+        DM2_V1_CreatureRender *row;
+        int fallback_size = 8;
+        int fallback_h = fallback_size;
+        int bar_w = 16;
+
+        if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
+            src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
+            out_plan->creature_count >= DM2_MAX_CREATURES_PER_SQ) {
+            continue;
+        }
+
+        row = &out_plan->creatures[out_plan->creature_count++];
+        row->creature_index = i;
+        row->creature_type = src->creature_type;
+        row->frame_index = src->frame_index;
+        row->direction = src->direction;
+        row->depth = src->depth;
+        row->center_x = src->screen_x;
+        row->center_y = src->screen_y;
+        row->gdat_index = dm2_v1_viewport_creature_graphic_index(
+            src->creature_type,
+            src->frame_index);
+        row->fallback_color = (uint8_t)(11 + (src->creature_type & 7));
+        row->fallback_rect = dm2_v1_centered_rect(row->center_x,
+                                                  row->center_y,
+                                                  fallback_size,
+                                                  fallback_size);
+        if (src->health_pct < 100) {
+            row->health_bg_rect =
+                (DM2_V1_ViewportRect){ row->center_x - bar_w / 2,
+                                       row->center_y - fallback_h / 2 - 4,
+                                       bar_w,
+                                       1 };
+            row->health_fill_rect = row->health_bg_rect;
+            row->health_fill_rect.w =
+                (bar_w * (int)src->health_pct) / 100;
+        }
+    }
+    return 1;
 }
 
 /* ── Populate view squares from world model ─────────────────────── */
@@ -1945,7 +2057,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     for (int i = 0; i < plan.door_count; i++) {
         const DM2_V1_DoorRender *door = &plan.doors[i];
 
-        if (door->panel_rect.w > 0 && door->panel_rect.h > 0) {
+        if (door->panel_visible_rect.w > 0 &&
+            door->panel_visible_rect.h > 0) {
             const uint8_t *panel_pixels = NULL;
             int panel_w = 0;
             int panel_h = 0;
@@ -1962,23 +2075,38 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                  * ~46402-46457 draws the panel through GDAT_CATEGORY_DOORS
                  * with image 0 for D0/D1 and image 1 for D2. Door type
                  * decoding is still boot-defaulted to index 0 here. */
-                dm2_v1_blit_scaled_bitmap(vp,
-                                          stride,
-                                          door->panel_rect.x,
-                                          door->panel_rect.y,
-                                          door->panel_rect.w,
-                                          door->panel_rect.h,
-                                          panel_pixels,
-                                          panel_w,
-                                          panel_h,
-                                          panel_stride > 0 ? panel_stride : panel_w,
-                                          DM2_COLOR_TRANSPARENT);
+                int source_y =
+                    ((door->panel_visible_rect.y - door->panel_rect.y) *
+                     panel_h) / door->panel_rect.h;
+                int source_h =
+                    (door->panel_visible_rect.h * panel_h +
+                     door->panel_rect.h - 1) / door->panel_rect.h;
+                if (source_y < 0) source_y = 0;
+                if (source_y > panel_h) source_y = panel_h;
+                if (source_h < 1) source_h = 1;
+                if (source_y + source_h > panel_h) {
+                    source_h = panel_h - source_y;
+                }
+                dm2_v1_blit_scaled_bitmap_region(
+                    vp,
+                    stride,
+                    door->panel_visible_rect.x,
+                    door->panel_visible_rect.y,
+                    door->panel_visible_rect.w,
+                    door->panel_visible_rect.h,
+                    panel_pixels,
+                    0,
+                    source_y,
+                    panel_w,
+                    source_h,
+                    panel_stride > 0 ? panel_stride : panel_w,
+                    DM2_COLOR_TRANSPARENT);
                 ++door_panel_asset_count;
             } else {
                 dm2_v1_draw_door_panel_fallback_rect(vp,
                                                      stride,
                                                      door->view_square,
-                                                     &door->panel_rect,
+                                                     &door->panel_visible_rect,
                                                      door->fallback_color);
                 ++door_fallback_count;
             }
@@ -2065,6 +2193,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
+    DM2_V1_CreatureRenderPlan plan;
 
     /* DM2 creature rendering:
      * skproject SKWIN/SkWinCore.cpp lines 10557-10619 routes creature
@@ -2073,23 +2202,22 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
      * for that map-chip bitmap first and only falls back to the old
      * placeholder when the GDAT image is unavailable. */
 
-    for (int i = 0; i < s->creature_count && i < DM2_MAX_CREATURES_PER_SQ; i++) {
-        DM2_CreatureSprite *c = &s->creatures[i];
-        int cx = c->screen_x;
-        int cy = c->screen_y;
+    if (!dm2_v1_viewport_build_creature_render_plan(s, &plan)) {
+        return;
+    }
+
+    for (int i = 0; i < plan.creature_count; i++) {
+        const DM2_V1_CreatureRender *c = &plan.creatures[i];
         int drawn_asset = 0;
         int drawn_h = 8;
-        if (cx < 0 || cx >= DM2_VP_WIDTH || cy < 0 || cy >= DM2_VP_HEIGHT) continue;
 
         {
             const uint8_t *pixels = NULL;
             int src_w = 0;
             int src_h = 0;
             int src_stride = 0;
-            int gdat_index = dm2_v1_viewport_creature_graphic_index(
-                c->creature_type, c->frame_index);
-            if (gdat_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+            if (c->gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s, c->gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 int frame_x = 0;
@@ -2120,8 +2248,8 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                 drawn_h = dst_h;
                 dm2_v1_blit_scaled_bitmap_region(vp,
                                                  stride,
-                                                 cx - (dst_w / 2),
-                                                 cy - (dst_h / 2),
+                                                 c->center_x - (dst_w / 2),
+                                                 c->center_y - (dst_h / 2),
                                                  dst_w,
                                                  dst_h,
                                                  pixels,
@@ -2136,33 +2264,35 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
             }
         }
         if (!drawn_asset) {
-            int sz = 8;
-            uint8_t color = (uint8_t)(11 + (c->creature_type & 7));
-            for (int dy = -sz/2; dy < sz/2; dy++) {
-                int sy = cy + dy;
+            int half_w = c->fallback_rect.w / 2;
+            int half_h = c->fallback_rect.h / 2;
+            for (int dy = -half_h; dy < half_h; dy++) {
+                int sy = c->center_y + dy;
                 if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
-                for (int dx = -sz/2; dx < sz/2; dx++) {
-                    int sx = cx + dx;
+                for (int dx = -half_w; dx < half_w; dx++) {
+                    int sx = c->center_x + dx;
                     if ((unsigned)sx < (unsigned)DM2_VP_WIDTH)
-                        vp[sy * stride + sx] = color;
+                        vp[sy * stride + sx] = c->fallback_color;
                 }
             }
             ++s->fallback_creature_drawn_count;
         }
         /* Health bar above creature */
-        if (c->health_pct < 100) {
-            int bar_w = 16;
-            int bar_x = cx - bar_w/2;
-            int bar_y = cy - (drawn_h / 2) - 4;
-            if (bar_y >= 0) {
-                for (int bx = bar_x; bx < bar_x + bar_w; bx++) {
+        if (c->health_bg_rect.w > 0) {
+            DM2_V1_ViewportRect bg = c->health_bg_rect;
+            DM2_V1_ViewportRect fill = c->health_fill_rect;
+            if (drawn_asset) {
+                bg.y = c->center_y - (drawn_h / 2) - 4;
+                fill.y = bg.y;
+            }
+            if (bg.y >= 0) {
+                for (int bx = bg.x; bx < bg.x + bg.w; bx++) {
                     if ((unsigned)bx < (unsigned)DM2_VP_WIDTH)
-                        vp[bar_y * stride + bx] = 4;  /* dark red = damaged */
+                        vp[bg.y * stride + bx] = 4;  /* dark red = damaged */
                 }
-                int fill_w = (bar_w * c->health_pct) / 100;
-                for (int bx = bar_x; bx < bar_x + fill_w; bx++) {
+                for (int bx = fill.x; bx < fill.x + fill.w; bx++) {
                     if ((unsigned)bx < (unsigned)DM2_VP_WIDTH)
-                        vp[bar_y * stride + bx] = 2;  /* green = health */
+                        vp[fill.y * stride + bx] = 2;  /* green = health */
                 }
             }
         }

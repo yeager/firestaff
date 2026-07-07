@@ -503,12 +503,42 @@ static void test_floor_ceiling_asset_provider(void)
               door_plan.doors[0].frame_gdat_index ==
                   dm2_v1_viewport_door_frame_graphic_index_for_square(
                       DM2_SQ_D0C) &&
+              door_plan.doors[0].door_open_pct == 0 &&
               rect_equals(&door_plan.doors[0].panel_rect, 80, 0, 160, 135) &&
+              rect_equals(&door_plan.doors[0].panel_visible_rect,
+                          80, 0, 160, 135) &&
               rect_equals(&door_plan.doors[0].frame_rect, 0, 0, 224, 136));
     dm2_v1_render_doors(&viewport);
     CHECK("door fallback counts when no asset provider is installed",
           viewport.asset_door_frame_drawn_count == 0 &&
               viewport.fallback_door_drawn_count == 1);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_open_pct = 50;
+    memset(&door_plan, 0, sizeof(door_plan));
+    CHECK("door render plan clips partially open panels from the top",
+          dm2_v1_viewport_build_door_render_plan(&viewport,
+                                                 &door_plan) == 1 &&
+              door_plan.door_count == 1 &&
+              door_plan.doors[0].door_open_pct == 50 &&
+              rect_equals(&door_plan.doors[0].panel_visible_rect,
+                          80, 67, 160, 68));
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_open_pct = 100;
+    s_asset_fetch_calls = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_doors(&viewport);
+    CHECK("fully open door skips panel blit but keeps frame routing",
+          s_asset_fetch_calls == 1 &&
+              viewport.asset_door_panel_drawn_count == 0 &&
+              viewport.asset_door_frame_drawn_count == 1);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -622,6 +652,7 @@ static void test_sprite_asset_provider(void)
 {
     uint8_t framebuffer[320 * 200];
     DM2_V1_ViewportState viewport;
+    DM2_V1_CreatureRenderPlan creature_plan;
 
     CHECK("DM2 creature asset index packs type and frame",
           dm2_v1_viewport_creature_graphic_index(0x12, 0x03) ==
@@ -830,12 +861,30 @@ static void test_sprite_asset_provider(void)
     viewport.creatures[0].frame_index = 0x01;
     viewport.creatures[0].screen_x = 40;
     viewport.creatures[0].screen_y = 50;
-    viewport.creatures[0].health_pct = 100;
+    viewport.creatures[0].health_pct = 75;
+    memset(&creature_plan, 0, sizeof(creature_plan));
+    CHECK("DM2 creature render plan owns sprite identity and fallback bounds",
+          dm2_v1_viewport_build_creature_render_plan(&viewport,
+                                                     &creature_plan) == 1 &&
+              creature_plan.creature_count == 1 &&
+              creature_plan.creatures[0].creature_index == 0 &&
+              creature_plan.creatures[0].gdat_index ==
+                  dm2_v1_viewport_creature_graphic_index(0x12, 0x01) &&
+              rect_equals(&creature_plan.creatures[0].fallback_rect,
+                          36, 46, 8, 8) &&
+              creature_plan.creatures[0].fallback_color ==
+                  (uint8_t)(11 + (0x12 & 7)) &&
+              rect_equals(&creature_plan.creatures[0].health_bg_rect,
+                          32, 42, 16, 1) &&
+              rect_equals(&creature_plan.creatures[0].health_fill_rect,
+                          32, 42, 12, 1));
     dm2_v1_render_creatures(&viewport);
     CHECK("creature fallback draws when no sprite asset provider is installed",
           viewport.asset_creature_drawn_count == 0 &&
               viewport.fallback_creature_drawn_count == 1 &&
-              framebuffer[(50 * 320) + 40] == (uint8_t)(11 + (0x12 & 7)));
+              framebuffer[(50 * 320) + 40] == (uint8_t)(11 + (0x12 & 7)) &&
+              framebuffer[(42 * 320) + 32] == 2 &&
+              framebuffer[(42 * 320) + 45] == 4);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -882,6 +931,25 @@ static void test_sprite_asset_provider(void)
           viewport.asset_creature_drawn_count == 1 &&
               framebuffer[((50 - 4) * 320) + (40 - 4)] == 9 &&
               framebuffer[(50 * 320) + 40] == 9);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.creature_count = 2;
+    viewport.creatures[0].creature_type = 0x12;
+    viewport.creatures[0].screen_x = -1;
+    viewport.creatures[0].screen_y = 50;
+    viewport.creatures[1].creature_type = 0x13;
+    viewport.creatures[1].frame_index = 0x02;
+    viewport.creatures[1].screen_x = 80;
+    viewport.creatures[1].screen_y = 90;
+    memset(&creature_plan, 0, sizeof(creature_plan));
+    CHECK("DM2 creature render plan filters offscreen sprites before draw",
+          dm2_v1_viewport_build_creature_render_plan(&viewport,
+                                                     &creature_plan) == 1 &&
+              creature_plan.creature_count == 1 &&
+              creature_plan.creatures[0].creature_index == 1 &&
+              creature_plan.creatures[0].center_x == 80 &&
+              creature_plan.creatures[0].center_y == 90);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
