@@ -1,0 +1,40 @@
+#ifndef THERON_V1_STARTUP_MEDIA_H
+#define THERON_V1_STARTUP_MEDIA_H
+
+#include "theron_v1_track02.h"
+
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define THERON_STARTUP_MEDIA_ROSTER_CAPACITY 8u
+#define THERON_STARTUP_MEDIA_PROMPT_CAPACITY 40u
+
+typedef struct {
+    int startup_roster_name_status;
+    int startup_roster_name_count;
+    char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
+                              [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
+    char startup_roster_titles[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
+                               [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
+    int startup_text_prompt_status;
+    int startup_text_prompt_count;
+    char startup_text_prompt[THERON_STARTUP_MEDIA_PROMPT_CAPACITY];
+} Theron_StartupMedia;
+
+void theron_v1_startup_media_init(Theron_StartupMedia *media);
+
+void theron_v1_startup_media_capture_track02(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_StartupMedia *out_media);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* THERON_V1_STARTUP_MEDIA_H */

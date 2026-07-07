@@ -13,6 +13,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_media.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
@@ -11971,12 +11972,11 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     return 1;
 }
 
-static void m11_theron_capture_track02_startup_roster(
+static void m11_theron_capture_track02_startup_media(
     M11_GameViewState* state,
     const TrAssetBundle* assets,
     const char* md5_hex) {
-    Theron_Track02StartupRosterNameCatalog catalog;
-    Theron_Track02SignalStatus status;
+    Theron_StartupMedia media;
     size_t i;
 
     if (!state) {
@@ -11991,86 +11991,45 @@ static void m11_theron_capture_track02_startup_roster(
     memset(state->theronState.startup_roster_titles,
            0,
            sizeof(state->theronState.startup_roster_titles));
-    if (!assets || !assets->hucard_rom || assets->hucard_rom_size == 0u ||
-        !md5_hex || md5_hex[0] == '\0') {
-        return;
-    }
+    state->theronState.startup_text_prompt_count = 0;
+    state->theronState.startup_text_prompt_status =
+        (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
+    state->theronState.startup_text_prompt[0] = '\0';
 
-    memset(&catalog, 0, sizeof(catalog));
-    status = theron_v1_track02_catalog_startup_roster_names(
-        assets->hucard_rom,
-        assets->hucard_rom_size,
+    theron_v1_startup_media_capture_track02(
+        assets ? assets->hucard_rom : NULL,
+        assets ? assets->hucard_rom_size : 0u,
         md5_hex,
-        &catalog);
-    state->theronState.startup_roster_name_status = (int)status;
-    if (status != THERON_TRACK02_SIGNAL_OK) {
+        &media);
+    state->theronState.startup_roster_name_status =
+        media.startup_roster_name_status;
+    state->theronState.startup_text_prompt_status =
+        media.startup_text_prompt_status;
+    state->theronState.startup_text_prompt_count =
+        media.startup_text_prompt_count;
+    snprintf(state->theronState.startup_text_prompt,
+             sizeof(state->theronState.startup_text_prompt),
+             "%s",
+             media.startup_text_prompt);
+    if (media.startup_roster_name_status != THERON_TRACK02_SIGNAL_OK) {
         return;
     }
 
     for (i = 0u;
-         i < catalog.name_count &&
+         i < (size_t)media.startup_roster_name_count &&
          i < sizeof(state->theronState.startup_roster_names) /
                  sizeof(state->theronState.startup_roster_names[0]);
          ++i) {
         snprintf(state->theronState.startup_roster_names[i],
                  sizeof(state->theronState.startup_roster_names[i]),
                  "%s",
-                 catalog.names[i].name);
+                 media.startup_roster_names[i]);
         snprintf(state->theronState.startup_roster_titles[i],
                  sizeof(state->theronState.startup_roster_titles[i]),
                  "%s",
-                 catalog.names[i].title);
+                 media.startup_roster_titles[i]);
     }
     state->theronState.startup_roster_name_count = (int)i;
-}
-
-static void m11_theron_capture_track02_startup_text(
-    M11_GameViewState* state,
-    const TrAssetBundle* assets,
-    const char* md5_hex) {
-    Theron_Track02StartupTextMarkerCatalog catalog;
-    Theron_Track02SignalStatus status;
-    size_t text_len = 0u;
-    Theron_Track02StartupTextMarker marker;
-
-    if (!state) {
-        return;
-    }
-    state->theronState.startup_text_prompt_count = 0;
-    state->theronState.startup_text_prompt_status =
-        (int)THERON_TRACK02_SIGNAL_BAD_INPUT;
-    state->theronState.startup_text_prompt[0] = '\0';
-    if (!assets || !assets->hucard_rom || assets->hucard_rom_size == 0u ||
-        !md5_hex || md5_hex[0] == '\0') {
-        return;
-    }
-
-    memset(&catalog, 0, sizeof(catalog));
-    status = theron_v1_track02_catalog_startup_text_markers(
-        assets->hucard_rom,
-        assets->hucard_rom_size,
-        md5_hex,
-        &catalog);
-    state->theronState.startup_text_prompt_status = (int)status;
-    if (status != THERON_TRACK02_SIGNAL_OK) {
-        return;
-    }
-
-    status = theron_v1_track02_copy_startup_text_marker(
-        assets->hucard_rom,
-        assets->hucard_rom_size,
-        md5_hex,
-        THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT,
-        0u,
-        state->theronState.startup_text_prompt,
-        sizeof(state->theronState.startup_text_prompt),
-        &text_len,
-        &marker);
-    if (status == THERON_TRACK02_SIGNAL_OK && text_len > 0u &&
-        marker.kind == THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT) {
-        state->theronState.startup_text_prompt_count =
-            (int)catalog.marker_count;
-    }
 }
 
 typedef struct {
@@ -12880,12 +12839,9 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     } else {
         state->theronState.save_resume_srm_root[0] = '\0';
     }
-    m11_theron_capture_track02_startup_roster(state,
-                                              assets,
-                                              profile->graphics_md5);
-    m11_theron_capture_track02_startup_text(state,
-                                            assets,
-                                            profile->graphics_md5);
+    m11_theron_capture_track02_startup_media(state,
+                                             assets,
+                                             profile->graphics_md5);
     m11_set_status(state, "BOOT", "THERON STARTUP");
     {
         char inspect[256];

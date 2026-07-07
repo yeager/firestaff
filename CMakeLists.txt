@@ -651,6 +651,7 @@ set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
 add_executable(firestaff_theron_v1_startup_flow_probe
     probes/theron/firestaff_theron_v1_startup_flow_probe.c
     src/theron/theron_v1_startup_flow.c
+    src/theron/theron_v1_startup_media.c
     src/theron/theron_v1_startup_runtime_entry.c
     src/theron/theron_v1_champions.c
     src/theron/theron_v1_dungeon_progression.c
