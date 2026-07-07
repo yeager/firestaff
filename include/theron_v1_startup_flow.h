@@ -51,6 +51,14 @@ typedef struct {
 } Theron_StartupFlow;
 
 typedef struct {
+    Theron_StartupPhase phase;
+    Theron_DungeonID selected_dungeon;
+    uint8_t selected_mirrors_mask;
+    uint8_t companion_count;
+    int selected_mirror_order[THERON_STARTUP_MAX_COMPANIONS];
+} Theron_StartupFlowSnapshot;
+
+typedef struct {
     const char *name;
     Theron_ChampionClass primary_class;
     uint8_t portrait_index;
@@ -221,6 +229,14 @@ typedef struct {
 } Theron_StartupRenderPlan;
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
+void theron_v1_startup_flow_snapshot_init(Theron_StartupFlowSnapshot *snapshot);
+void theron_v1_startup_flow_capture_snapshot(
+    const Theron_StartupFlow *flow,
+    Theron_StartupFlowSnapshot *snapshot);
+Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
+    const Theron_StartupFlowSnapshot *snapshot,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow);
 void theron_v1_startup_action_init(Theron_StartupAction *action);
 void theron_v1_startup_action_plan_init(Theron_StartupActionPlan *plan);
 void theron_v1_startup_hit_init(Theron_StartupHit *hit);
