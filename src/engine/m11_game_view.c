@@ -12286,6 +12286,7 @@ static M11_GameInputResult m11_theron_startup_apply_action(
     case THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR:
     case THERON_STARTUP_PLAN_TOGGLE_MIRROR: {
         Theron_StartupFlow flow;
+        Theron_StartupApplyReceipt applyReceipt;
         char receipt[96];
 
         receipt[0] = '\0';
@@ -12306,7 +12307,10 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                                  &world->progression,
                                                  &flow,
                                                  &execution) ||
-            execution.result != THERON_STARTUP_OK) {
+            !theron_v1_startup_apply_receipt_from_flow_execution(
+                &plan,
+                &execution,
+                &applyReceipt)) {
             m11_set_status(state, "STARTUP",
                            execution.result != THERON_STARTUP_OK
                                ? theron_v1_startup_result_name(
@@ -12316,26 +12320,27 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                       : "STARTUP ERROR"));
             return M11_GAME_INPUT_REDRAW;
         }
-        if (execution.flow_changed) {
+        if (applyReceipt.flow_changed) {
             m11_theron_sync_startup_state(state, &flow);
         }
-        if (execution.cursor_changed) {
-            state->theronState.startup_cursor = execution.cursor;
+        if (applyReceipt.cursor_changed) {
+            state->theronState.startup_cursor = applyReceipt.cursor;
         }
-        if (execution.continue_focus_changed) {
+        if (applyReceipt.continue_focus_changed) {
             state->theronState.save_resume_continue_focus =
-                execution.continue_focus;
+                applyReceipt.continue_focus;
         }
-        m11_set_status(state, "STARTUP",
-                       plan.kind == THERON_STARTUP_PLAN_TOGGLE_MIRROR
-                           ? (execution.mirror_selected
-                            ? (plan.status ? plan.status
-                                           : "HERO RESURRECTED")
-                            : (plan.alternate_status
-                                   ? plan.alternate_status
-                                   : "HERO RELEASED"))
-                           : (plan.status ? plan.status : "STARTUP"));
-        return M11_GAME_INPUT_REDRAW;
+        if (applyReceipt.status_scope || applyReceipt.status) {
+            m11_set_status(state,
+                           applyReceipt.status_scope
+                               ? applyReceipt.status_scope
+                               : "STARTUP",
+                           applyReceipt.status ? applyReceipt.status : "");
+        }
+        return applyReceipt.input_result ==
+                   THERON_STARTUP_INPUT_RESULT_REDRAW
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_IGNORED;
     }
 
     case THERON_STARTUP_PLAN_RETURN_TO_LAUNCHER:

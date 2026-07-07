@@ -610,6 +610,7 @@ int main(void) {
 
             {
                 Theron_StartupExecution execution;
+                Theron_StartupApplyReceipt receipt;
                 Theron_StartupFlow exec_flow;
 
                 theron_v1_startup_action_init(&action);
@@ -640,6 +641,21 @@ int main(void) {
                 check_int("exec stage-select cursor",
                           execution.cursor,
                           1);
+                check_int("exec stage-select receipt rc",
+                          theron_v1_startup_apply_receipt_from_flow_execution(
+                              &plan,
+                              &execution,
+                              &receipt),
+                          1);
+                check_int("exec stage-select receipt redraw",
+                          receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_int("exec stage-select receipt flow",
+                          receipt.flow_changed,
+                          1);
+                check_str("exec stage-select receipt status",
+                          receipt.status,
+                          "STAGE SELECT");
 
                 theron_v1_startup_action_init(&action);
                 action.kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
@@ -684,6 +700,15 @@ int main(void) {
                 check_int("exec mirror selected flag",
                           execution.mirror_selected,
                           1);
+                check_int("exec mirror receipt rc",
+                          theron_v1_startup_apply_receipt_from_flow_execution(
+                              &plan,
+                              &execution,
+                              &receipt),
+                          1);
+                check_str("exec mirror receipt selected",
+                          receipt.status,
+                          "HERO RESURRECTED");
                 check_int("exec mirror count",
                           exec_flow.companion_count,
                           1);
@@ -700,6 +725,15 @@ int main(void) {
                 check_int("exec mirror deselected flag",
                           execution.mirror_selected,
                           0);
+                check_int("exec mirror deselect receipt rc",
+                          theron_v1_startup_apply_receipt_from_flow_execution(
+                              &plan,
+                              &execution,
+                              &receipt),
+                          1);
+                check_str("exec mirror receipt deselected",
+                          receipt.status,
+                          "HERO RELEASED");
                 check_int("exec mirror count after deselect",
                           exec_flow.companion_count,
                           0);
