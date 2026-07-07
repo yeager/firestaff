@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_runtime_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 typedef int (*CSB_V1_ViewportProjectileMaterialResolver)(
@@ -545,6 +546,27 @@ typedef struct {
     int first_thing;
 } CSB_V1_ViewportRuntimeOverlayCell;
 
+typedef enum {
+    CSB_V1_VIEWPORT_RUNTIME_OVERLAY_OBJECT = 1,
+    CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP = 2
+} CSB_V1_ViewportRuntimeThingOverlayKind;
+
+typedef struct {
+    CSB_V1_ViewportRuntimeThingOverlayKind kind;
+    uint16_t thing;
+    int forward;
+    int side;
+    int map_x;
+    int map_y;
+    int object_pile_index;
+    int group_slot_index;
+    int group_cell;
+    CSB_V1_RuntimeObjectOverlayInfo object_info;
+    CSB_V1_RuntimeGroupOverlayInfo group_info;
+    CSB_V1_ViewportRuntimeObjectOverlayPlacement object_placement;
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement group_placement;
+} CSB_V1_ViewportRuntimeThingOverlay;
+
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
@@ -720,6 +742,10 @@ size_t csb_v1_viewport_runtime_collect_overlay_cells(
     int party_x,
     int party_y,
     CSB_V1_ViewportRuntimeOverlayCell *out_cells,
+    size_t out_capacity);
+size_t csb_v1_viewport_runtime_collect_thing_overlays(
+    const CSB_V1_RuntimeProfile *runtime,
+    CSB_V1_ViewportRuntimeThingOverlay *out_overlays,
     size_t out_capacity);
 int csb_v1_viewport_runtime_object_overlay_placement(
     int forward,

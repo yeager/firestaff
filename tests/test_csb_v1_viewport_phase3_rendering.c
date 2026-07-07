@@ -44,6 +44,12 @@ static void put_fixture_square16(uint8_t *raw,
     raw[offset + 1] = (uint8_t)(value >> 8);
 }
 
+static void write_fixture_u16(uint8_t *raw, int offset, uint16_t value)
+{
+    raw[offset] = (uint8_t)(value & 0xFFu);
+    raw[offset + 1] = (uint8_t)(value >> 8);
+}
+
 static int test_projectile_material_resolver(
     void *user,
     const struct ProjectileInstance_Compat *projectile)
@@ -2504,6 +2510,91 @@ static void test_csb_runtime_overlay_placement_contracts(void)
         check_true("csb.runtime_overlay_scan.square_wall_reject",
                    !csb_v1_viewport_runtime_square_allows_thing_overlay(
                        &dungeon, 0, 4, 3));
+    }
+
+    {
+        CSB_V1_RuntimeProfile runtime;
+        CSB_V1_DungeonData dungeon;
+        uint8_t raw[128];
+        CSB_V1_ViewportRuntimeThingOverlay overlays[8];
+        size_t overlay_count;
+        uint16_t group = (uint16_t)((THING_TYPE_GROUP << 10) | 0);
+        uint16_t dagger = (uint16_t)((THING_TYPE_WEAPON << 10) | 0);
+        uint16_t bow = (uint16_t)((THING_TYPE_WEAPON << 10) | 1);
+
+        memset(&runtime, 0, sizeof(runtime));
+        memset(&dungeon, 0, sizeof(dungeon));
+        memset(raw, 0, sizeof(raw));
+        dungeon.level_count = 1;
+        dungeon.level_widths[0] = 4;
+        dungeon.level_heights[0] = 3;
+        dungeon.level_offsets[0] = 66;
+        dungeon.square_bytes = 1;
+        dungeon.raw_map_data_base = 66;
+        dungeon.square_first_thing_base = 80;
+        dungeon.square_first_thing_count = 2;
+        dungeon.raw_data = raw;
+        dungeon.raw_size = (int)sizeof(raw);
+        dungeon.thing_type_counts[THING_TYPE_GROUP] = 1;
+        dungeon.thing_type_counts[THING_TYPE_WEAPON] = 2;
+        dungeon.thing_data_bases[THING_TYPE_GROUP] = 96;
+        dungeon.thing_data_bases[THING_TYPE_WEAPON] = 0;
+        raw[69] = (uint8_t)((1u << 5) | 0x10u);
+        write_fixture_u16(raw, 80, group);
+        write_fixture_u16(raw, 82, THING_ENDOFLIST);
+        write_fixture_u16(raw, 96, dagger);
+        write_fixture_u16(raw, 98, THING_ENDOFLIST);
+        raw[100] = 6u;
+        raw[101] = 0x08u;
+        write_fixture_u16(raw, 102, 80u);
+        write_fixture_u16(raw, 104, 70u);
+        write_fixture_u16(raw, 110, (uint16_t)(1u << 5));
+        write_fixture_u16(raw, 0, bow);
+        write_fixture_u16(raw, 2, 8u);
+        write_fixture_u16(raw, 4, THING_ENDOFLIST);
+        write_fixture_u16(raw, 6, 25u);
+        runtime.dungeon_handle = &dungeon;
+        runtime.current_level = 0;
+        runtime.party_x = 0;
+        runtime.party_y = 0;
+        runtime.party_dir = 1;
+
+        overlay_count = csb_v1_viewport_runtime_collect_thing_overlays(
+            &runtime, overlays, sizeof(overlays) / sizeof(overlays[0]));
+        check_int("csb.runtime_thing_overlay_plan.count",
+                  (int)overlay_count, 4);
+        check_int("csb.runtime_thing_overlay_plan.first_object",
+                  overlays[0].kind, CSB_V1_VIEWPORT_RUNTIME_OVERLAY_OBJECT);
+        check_int("csb.runtime_thing_overlay_plan.first_thing",
+                  overlays[0].thing, dagger);
+        check_int("csb.runtime_thing_overlay_plan.first_pile",
+                  overlays[0].object_pile_index, 0);
+        check_int("csb.runtime_thing_overlay_plan.first_marker_x",
+                  overlays[0].object_placement.marker_screen_x, 78);
+        check_int("csb.runtime_thing_overlay_plan.second_object",
+                  overlays[1].kind, CSB_V1_VIEWPORT_RUNTIME_OVERLAY_OBJECT);
+        check_int("csb.runtime_thing_overlay_plan.second_thing",
+                  overlays[1].thing, bow);
+        check_int("csb.runtime_thing_overlay_plan.second_pile",
+                  overlays[1].object_pile_index, 1);
+        check_int("csb.runtime_thing_overlay_plan.first_group",
+                  overlays[2].kind, CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP);
+        check_int("csb.runtime_thing_overlay_plan.first_group_slot",
+                  overlays[2].group_slot_index, 0);
+        check_int("csb.runtime_thing_overlay_plan.first_group_cell",
+                  overlays[2].group_cell, 0);
+        check_int("csb.runtime_thing_overlay_plan.second_group",
+                  overlays[3].kind, CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP);
+        check_int("csb.runtime_thing_overlay_plan.second_group_slot",
+                  overlays[3].group_slot_index, 1);
+        check_int("csb.runtime_thing_overlay_plan.second_group_cell",
+                  overlays[3].group_cell, 2);
+        check_int("csb.runtime_thing_overlay_plan.group_marker_x",
+                  overlays[3].group_placement.marker_screen_x, 148);
+        check_int("csb.runtime_thing_overlay_plan.null_runtime",
+                  (int)csb_v1_viewport_runtime_collect_thing_overlays(
+                      NULL, overlays, sizeof(overlays) / sizeof(overlays[0])),
+                  0);
     }
 
     memset(&object_place, 0, sizeof(object_place));

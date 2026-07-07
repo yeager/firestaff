@@ -323,6 +323,136 @@ size_t csb_v1_viewport_runtime_collect_overlay_cells(
     return count;
 }
 
+static void csb_v1_viewport_runtime_init_thing_overlay(
+    CSB_V1_ViewportRuntimeThingOverlay *overlay)
+{
+    if (!overlay) return;
+    memset(overlay, 0, sizeof(*overlay));
+    overlay->kind = (CSB_V1_ViewportRuntimeThingOverlayKind)0;
+    overlay->thing = THING_NONE;
+    overlay->object_pile_index = -1;
+    overlay->group_slot_index = -1;
+    overlay->group_cell = -1;
+}
+
+size_t csb_v1_viewport_runtime_collect_thing_overlays(
+    const CSB_V1_RuntimeProfile *runtime,
+    CSB_V1_ViewportRuntimeThingOverlay *out_overlays,
+    size_t out_capacity)
+{
+    const CSB_V1_DungeonData *dungeon;
+    CSB_V1_ViewportRuntimeOverlayCell cells[16];
+    size_t cell_count;
+    size_t count = 0;
+    size_t cell_index;
+
+    if (!runtime || !runtime->dungeon_handle) {
+        return 0;
+    }
+    dungeon = runtime->dungeon_handle;
+    cell_count = csb_v1_viewport_runtime_collect_overlay_cells(
+        dungeon,
+        runtime->current_level,
+        runtime->party_dir,
+        runtime->party_x,
+        runtime->party_y,
+        cells,
+        sizeof(cells) / sizeof(cells[0]));
+    if (cell_count > sizeof(cells) / sizeof(cells[0])) {
+        cell_count = sizeof(cells) / sizeof(cells[0]);
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115 draws visible floor objects before creature
+     * groups, then projectiles/explosions overpaint the thing pass.  The CSB
+     * viewport owns that ordered overlay plan; M11 only performs asset-backed
+     * draw attempts for each returned row. */
+    for (cell_index = 0; cell_index < cell_count; ++cell_index) {
+        const CSB_V1_ViewportRuntimeOverlayCell *cell = &cells[cell_index];
+        unsigned short thing = (unsigned short)cell->first_thing;
+        int object_pile_index = 0;
+        int safety = 0;
+
+        while (thing != THING_ENDOFLIST && thing != THING_NONE &&
+               safety++ < 64) {
+            CSB_V1_RuntimeObjectOverlayInfo object_info;
+            if (csb_v1_runtime_object_overlay_info(runtime,
+                                                   thing,
+                                                   &object_info)) {
+                CSB_V1_ViewportRuntimeThingOverlay overlay;
+                csb_v1_viewport_runtime_init_thing_overlay(&overlay);
+                if (csb_v1_viewport_runtime_object_overlay_pile_placement(
+                        cell->forward,
+                        cell->side,
+                        object_info.relative_cell,
+                        object_pile_index,
+                        &overlay.object_placement)) {
+                    overlay.kind = CSB_V1_VIEWPORT_RUNTIME_OVERLAY_OBJECT;
+                    overlay.thing = thing;
+                    overlay.forward = cell->forward;
+                    overlay.side = cell->side;
+                    overlay.map_x = cell->map_x;
+                    overlay.map_y = cell->map_y;
+                    overlay.object_pile_index = object_pile_index;
+                    overlay.object_info = object_info;
+                    if (out_overlays && count < out_capacity) {
+                        out_overlays[count] = overlay;
+                    }
+                    ++count;
+                }
+                ++object_pile_index;
+            }
+            thing = csb_v1_runtime_next_thing(dungeon, thing);
+        }
+    }
+
+    for (cell_index = 0; cell_index < cell_count; ++cell_index) {
+        const CSB_V1_ViewportRuntimeOverlayCell *cell = &cells[cell_index];
+        unsigned short thing = (unsigned short)cell->first_thing;
+        int safety = 0;
+
+        while (thing != THING_ENDOFLIST && thing != THING_NONE &&
+               safety++ < 64) {
+            CSB_V1_RuntimeGroupOverlayInfo group_info;
+            if (csb_v1_runtime_group_overlay_info(dungeon,
+                                                  thing,
+                                                  &group_info)) {
+                int slot;
+                for (slot = 0; slot < group_info.visible_count; ++slot) {
+                    CSB_V1_ViewportRuntimeThingOverlay overlay;
+                    int group_cell = group_info.cells[slot];
+                    csb_v1_viewport_runtime_init_thing_overlay(&overlay);
+                    if (!csb_v1_viewport_runtime_group_overlay_creature_placement(
+                            cell->forward,
+                            cell->side,
+                            group_info.creature_type,
+                            group_info.visible_count,
+                            group_cell,
+                            &overlay.group_placement)) {
+                        continue;
+                    }
+                    overlay.kind = CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP;
+                    overlay.thing = thing;
+                    overlay.forward = cell->forward;
+                    overlay.side = cell->side;
+                    overlay.map_x = cell->map_x;
+                    overlay.map_y = cell->map_y;
+                    overlay.group_slot_index = slot;
+                    overlay.group_cell = group_cell;
+                    overlay.group_info = group_info;
+                    if (out_overlays && count < out_capacity) {
+                        out_overlays[count] = overlay;
+                    }
+                    ++count;
+                }
+                break;
+            }
+            thing = csb_v1_runtime_next_thing(dungeon, thing);
+        }
+    }
+
+    return count;
+}
+
 static void csb_v1_viewport_plot_runtime_overlay_pixel(
     CSB_V1_ViewportConfig *cfg,
     int viewport_x,
