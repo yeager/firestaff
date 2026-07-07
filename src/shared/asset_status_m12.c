@@ -824,6 +824,132 @@ static int m12_materialize_required_file(const M12_AssetRequiredFileStatus* file
     return m12_copy_file_to_path(fileStatus->matchedPath, outPath);
 }
 
+static int m12_copy_optional_ordinary_if_present(const char* candidate,
+                                                 const char* outPath) {
+    FILE* fp;
+    if (!candidate || !outPath || candidate[0] == '\0' ||
+        m12_path_is_virtual_asset(candidate)) {
+        return 0;
+    }
+    fp = fopen(candidate, "rb");
+    if (!fp) {
+        return 0;
+    }
+    fclose(fp);
+    return m12_copy_file_to_path(candidate, outPath);
+}
+
+static int m12_materialize_optional_virtual_sibling(const char* seedVirtualPath,
+                                                   const char* entryDir,
+                                                   const char* label,
+                                                   const char* outPath) {
+    const char* sep;
+    char candidate[M12_ASSET_DATA_DIR_CAPACITY];
+    size_t prefixLen;
+    int rc;
+    if (!seedVirtualPath || !entryDir || !label || !outPath ||
+        !m12_path_is_virtual_asset(seedVirtualPath)) {
+        return 0;
+    }
+    sep = strstr(seedVirtualPath, "::");
+    if (!sep) {
+        return 0;
+    }
+    prefixLen = (size_t)(sep - seedVirtualPath) + 2U;
+    rc = entryDir[0] != '\0'
+             ? snprintf(candidate, sizeof(candidate), "%.*s%s/%s",
+                        (int)prefixLen, seedVirtualPath, entryDir, label)
+             : snprintf(candidate, sizeof(candidate), "%.*s%s",
+                        (int)prefixLen, seedVirtualPath, label);
+    if (rc <= 0 || (size_t)rc >= sizeof(candidate)) {
+        return 0;
+    }
+    return asset_extract_virtual_path(candidate, outPath);
+}
+
+static int m12_materialize_optional_for_cache_seed(const char* seedPath,
+                                                   const char* label,
+                                                   const char* outPath) {
+    char parent[M12_ASSET_DATA_DIR_CAPACITY];
+    char grandparent[M12_ASSET_DATA_DIR_CAPACITY];
+    char candidate[M12_ASSET_DATA_DIR_CAPACITY];
+    if (!seedPath || !label || !outPath || seedPath[0] == '\0') {
+        return 0;
+    }
+    if (m12_path_is_virtual_asset(seedPath)) {
+        const char* sep = strstr(seedPath, "::");
+        const char* entry = sep ? sep + 2 : NULL;
+        char entryDir[M12_ASSET_DATA_DIR_CAPACITY];
+        char entryParent[M12_ASSET_DATA_DIR_CAPACITY];
+        char* slash;
+        if (!entry || entry[0] == '\0') {
+            return 0;
+        }
+        m12_copy_string(entryDir, sizeof(entryDir), entry);
+        slash = strrchr(entryDir, '/');
+        if (!slash) {
+            slash = strrchr(entryDir, '\\');
+        }
+        if (slash) {
+            *slash = '\0';
+            if (m12_materialize_optional_virtual_sibling(seedPath,
+                                                        entryDir,
+                                                        label,
+                                                        outPath)) {
+                return 1;
+            }
+            m12_copy_string(entryParent, sizeof(entryParent), entryDir);
+            slash = strrchr(entryParent, '/');
+            if (!slash) {
+                slash = strrchr(entryParent, '\\');
+            }
+            if (slash) {
+                *slash = '\0';
+                if (m12_materialize_optional_virtual_sibling(seedPath,
+                                                            entryParent,
+                                                            label,
+                                                            outPath)) {
+                    return 1;
+                }
+            }
+        }
+        return m12_materialize_optional_virtual_sibling(seedPath, "", label, outPath);
+    }
+    if (FSP_ParentDir(parent, sizeof(parent), seedPath)) {
+        if (FSP_JoinPath(candidate, sizeof(candidate), parent, label) &&
+            m12_copy_optional_ordinary_if_present(candidate, outPath)) {
+            return 1;
+        }
+        if (FSP_ParentDir(grandparent, sizeof(grandparent), parent) &&
+            FSP_JoinPath(candidate, sizeof(candidate), grandparent, label) &&
+            m12_copy_optional_ordinary_if_present(candidate, outPath)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m12_materialize_dm1_startup_optional_cache(const char* seedPath,
+                                                       const char* gameCacheDir) {
+    static const char* const labels[] = {
+        "TITLE", "TITLE.DAT", "SWOOSH", "SWOOSH.DAT"
+    };
+    size_t i;
+    if (!seedPath || !gameCacheDir || seedPath[0] == '\0' ||
+        gameCacheDir[0] == '\0') {
+        return;
+    }
+    for (i = 0U; i < sizeof(labels) / sizeof(labels[0]); ++i) {
+        char outPath[M12_ASSET_DATA_DIR_CAPACITY];
+        if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, labels[i])) {
+            continue;
+        }
+        (void)m12_materialize_optional_for_cache_seed(seedPath,
+                                                      labels[i],
+                                                      outPath);
+    }
+}
+
 static int m12_required_file_needs_runtime_cache(const M12_AssetStatus* status,
                                                  int gameIndex,
                                                  const M12_AssetRequiredFileStatus* fileStatus) {
@@ -1907,12 +2033,14 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char gameCacheDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char optionalSeedPath[M12_ASSET_DATA_DIR_CAPACITY];
     size_t i;
     int needsRuntimeCache = 0;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
         return 1;
     }
     gameId = g_games[gameIndex].gameId;
+    optionalSeedPath[0] = '\0';
     if (!m12_game_uses_flat_dat_runtime(gameId) ||
         !M12_AssetStatus_GameAvailable(status, gameId)) {
         return 1;
@@ -1941,10 +2069,21 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
             !FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, fileStatus->label)) {
             return 0;
         }
+        if (optionalSeedPath[0] == '\0' && fileStatus->matchedPath[0] != '\0') {
+            m12_copy_string(optionalSeedPath, sizeof(optionalSeedPath), fileStatus->matchedPath);
+        }
         if (!m12_materialize_required_file(fileStatus, outPath)) {
             return 0;
         }
         m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), outPath);
+    }
+    if (strcmp(gameId, "dm1") == 0 && optionalSeedPath[0] != '\0') {
+        /* ReDMCSB boot order needs SWOOSH.C -> TITLE.C before ENTRANCE.C.
+         * When required DM1 files came from ZIP/ISO virtual paths, M11 later
+         * opens ordinary files under asset-cache/dm1/.  Bring optional TITLE
+         * and SWOOSH siblings across too so full original startup graphics do
+         * not silently degrade to only GRAPHICS.DAT C001 or no FTL logo. */
+        m12_materialize_dm1_startup_optional_cache(optionalSeedPath, gameCacheDir);
     }
     m12_copy_string(status->runtimeDataDirs[gameIndex],
                     sizeof(status->runtimeDataDirs[gameIndex]),
