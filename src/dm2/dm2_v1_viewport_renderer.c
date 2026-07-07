@@ -1645,12 +1645,65 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 
 /* ── Walls ───────────────────────────────────────────────────────── */
 
+static void dm2_v1_draw_wall_fallback_rect(uint8_t *vp,
+                                           int stride,
+                                           const DM2_WallFrame *frame,
+                                           uint8_t color)
+{
+    int x;
+    int y;
+    if (!vp || !frame || stride <= 0 ||
+        frame->byte_width == 0 || frame->height == 0) {
+        return;
+    }
+    for (y = frame->top_y; y <= frame->bottom_y && y < DM2_VP_HEIGHT; ++y) {
+        if (y < 0) {
+            continue;
+        }
+        for (x = frame->left_x; x <= frame->right_x && x < DM2_VP_WIDTH; ++x) {
+            if (x >= 0) {
+                vp[y * stride + x] = color;
+            }
+        }
+    }
+}
+
+static void dm2_v1_draw_legacy_wall_fallback(uint8_t *vp, int stride)
+{
+    int y;
+    int x;
+    if (!vp || stride <= 0) {
+        return;
+    }
+    for (y = 25; y < 25 + 51 && y < DM2_VP_HEIGHT; y++) {
+        for (x = 0; x < 84; x++) vp[y * stride + x] = 8;
+        for (x = 139; x < 224; x++) vp[y * stride + x] = 8;
+    }
+    for (y = 25; y < 25 + 50 && y < DM2_VP_HEIGHT; y++) {
+        for (x = 74; x < 150; x++) vp[y * stride + x] = 8;
+    }
+    for (y = 20; y < 20 + 71 && y < DM2_VP_HEIGHT; y++) {
+        for (x = 0; x < 75; x++) vp[y * stride + x] = 6;
+        for (x = 149; x < 224; x++) vp[y * stride + x] = 6;
+        for (x = 60; x < 164; x++) vp[y * stride + x] = 6;
+    }
+    for (y = 9; y < 9 + 111 && y < DM2_VP_HEIGHT; y++) {
+        for (x = 0; x < 64; x++) vp[y * stride + x] = 4;
+        for (x = 160; x < 224; x++) vp[y * stride + x] = 4;
+        for (x = 32; x < 192; x++) vp[y * stride + x] = 4;
+    }
+    for (y = 0; y < 136 && y < DM2_VP_HEIGHT; y++) {
+        for (x = 0; x < 224; x++) vp[y * stride + x] = 2;
+    }
+}
+
 void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
     int wall_asset_count = 0;
+    int wall_fallback_count = 0;
 
     /* DM2 wall rendering: draw back-to-front (D3→D2→D1→D0).
      * For each depth level, draw side walls first (L,R), then center (C).
@@ -1660,10 +1713,16 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
      * DM2 uses G3060 variant wall set (different from DM1's G2107).
      * Source: DUNVIEW.C:170-175, G3060_i_WallSet_Wall_D3C etc.
      *
-     * Phase 3 implementation: placeholder colored rectangles per wall zone.
-     * Real graphics are deferred to the asset system (dm2_v1_gfx_fetch).
-     * Each wall zone is drawn as a filled rectangle with the wall set color.
+     * If no asset provider is installed, retain the old aggregate fallback so
+     * no-data probes keep a deterministic frame. Once a provider exists, draw
+     * each source wall cell independently so asset-backed cells are not hidden
+     * behind a full-viewport placeholder blanket.
      */
+    if (!s->asset_fetch) {
+        dm2_v1_draw_legacy_wall_fallback(vp, stride);
+        ++s->fallback_wall_drawn_count;
+        return;
+    }
 
     /* DM2 wall zone Y positions (from g_dm2_wall_frames):
      *   D3: top_y=25, height=51 (lines ~25-76)
@@ -1695,103 +1754,6 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
  *         DUNVIEW.C F0100 (line 3048) wall bitmap blit with transparency
  */
 
-    /* Draw each depth zone: D3 (back) → D2 → D1 → D0 (front).
-     * Within each depth, side walls (L,R) drawn before center (C).
-     * Phase 3: draw colored wall zone rectangles as placeholders.
-     * Real GRAPHICS.DAT-based walls follow in Phase 4. */
-
-    /* D3 wall zone: lines 25-75, gray-8 */
-    {
-        int wall_top = 25, wall_h = 51;
-        /* D3L: left strip, x=0..83 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 0; x < 84; x++)
-                vp[y * stride + x] = 8;
-        }
-        /* D3R: right strip, x=139..223 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 139; x < 224; x++)
-                vp[y * stride + x] = 8;
-        }
-        /* D3C: center strip, x=74..149 */
-        for (int y = wall_top; y < wall_top + 50; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 74; x < 150; x++)
-                vp[y * stride + x] = 8;
-        }
-    }
-
-    /* D2 wall zone: lines 20-90, gray-6 */
-    {
-        int wall_top = 20, wall_h = 71;
-        /* D2L: left strip, x=0..74 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 0; x < 75; x++)
-                vp[y * stride + x] = 6;
-        }
-        /* D2R: right strip, x=149..223 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 149; x < 224; x++)
-                vp[y * stride + x] = 6;
-        }
-        /* D2C: center strip, x=60..163 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 60; x < 164; x++)
-                vp[y * stride + x] = 6;
-        }
-    }
-
-    /* D1 wall zone: lines 9-119, gray-4 */
-    {
-        int wall_top = 9, wall_h = 111;
-        /* D1L: left strip, x=0..63 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 0; x < 64; x++)
-                vp[y * stride + x] = 4;
-        }
-        /* D1R: right strip, x=160..223 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 160; x < 224; x++)
-                vp[y * stride + x] = 4;
-        }
-        /* D1C: center strip, x=32..191 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 32; x < 192; x++)
-                vp[y * stride + x] = 4;
-        }
-    }
-
-    /* D0 wall zone: lines 0-135 (full forward wall), gray-2 */
-    {
-        int wall_top = 0, wall_h = 136;
-        /* D0L: left strip, x=0..31 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 0; x < 32; x++)
-                vp[y * stride + x] = 2;
-        }
-        /* D0R: right strip, x=192..223 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 192; x < 224; x++)
-                vp[y * stride + x] = 2;
-        }
-        /* D0C: center strip (covers most of viewport), x=0..223 */
-        for (int y = wall_top; y < wall_top + wall_h; y++) {
-            if (y >= DM2_VP_HEIGHT) break;
-            for (int x = 0; x < 224; x++)
-                vp[y * stride + x] = 2;
-        }
-    }
-
     for (int step = 0; step < DM2_STEP_COUNT; ++step) {
         int square = s_step_to_square[step];
         const DM2_WallFrame *frame = dm2_v1_get_wall_frame(square);
@@ -1814,6 +1776,11 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                                         &wall_h,
                                         &wall_stride) != 0 ||
             !wall_pixels || wall_w <= 0 || wall_h <= 0) {
+            dm2_v1_draw_wall_fallback_rect(vp,
+                                           stride,
+                                           frame,
+                                           (uint8_t)(2 + (step / 3) * 2));
+            ++wall_fallback_count;
             continue;
         }
 
@@ -1835,9 +1802,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 
     if (wall_asset_count > 0) {
         s->asset_wall_drawn_count += wall_asset_count;
-    } else {
-        ++s->fallback_wall_drawn_count;
     }
+    s->fallback_wall_drawn_count += wall_fallback_count;
 }
 
 /* ── Doors ────────────────────────────────────────────────────────── */

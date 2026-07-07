@@ -21,6 +21,7 @@ static int s_projectile_seven_frame_fixture = 0;
 static int s_projectile_flip_fixture = 0;
 static int s_creature_directional_frame_fixture = 0;
 static int s_item_flip_fixture = 0;
+static int s_fail_asset_index = 0;
 
 #define CHECK(name_, cond_) do { \
     printf("  %s...\n", name_); \
@@ -118,6 +119,9 @@ static int test_dm2_asset_fetch(void *user,
     }
     ++s_asset_fetch_calls;
     s_last_asset_index = gdat_index;
+    if (s_fail_asset_index != 0 && gdat_index == s_fail_asset_index) {
+        return -1;
+    }
     if (gdat_index == -2) {
         if (out_pixels) *out_pixels = ceiling;
     } else if (gdat_index == -1) {
@@ -419,6 +423,21 @@ static void test_floor_ceiling_asset_provider(void)
               framebuffer[(135 * 320)] == 13 &&
               framebuffer[192] == 11 &&
               framebuffer[223] == 12);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    s_asset_fetch_calls = 0;
+    s_fail_asset_index =
+        dm2_v1_viewport_wall_graphic_index_for_square(DM2_SQ_D1C);
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_walls(&viewport);
+    CHECK("wall pass uses per-panel fallback when one asset is missing",
+          s_asset_fetch_calls == 10 &&
+              viewport.asset_wall_drawn_count == 9 &&
+              viewport.fallback_wall_drawn_count == 1);
+    s_fail_asset_index = 0;
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
