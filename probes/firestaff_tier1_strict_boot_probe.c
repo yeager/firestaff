@@ -9,6 +9,8 @@
  * --data-dir <path> --boot-probe under SDL_VIDEODRIVER=dummy and
  * asserts the per-game runtime receipt. Runtime phases are validated by
  * main_loop_m11.c as active=1, startupActive=0, and levelLoaded=1.
+ * The receipt must also expose the expected per-game startup/title
+ * animation contract after runtime handoff.
  *
  * Pass: all present in-scope paths reach their runtime receipt.
  *
@@ -43,65 +45,78 @@ typedef struct {
     const char* script;
     int boot_frames;
     const char* label;
+    const char* expect_animation;
+    int expect_animation_active;
+    int expect_title_frame_min;
+    int expect_title_frame_max;
+    int expect_title_frame_boundary;
+    int expect_title_ready;
 } Tier1PathSpec;
+
+#define EXPECT_DM1_RUNTIME   "dm1-title", 0, 53, 53, 53, 1
+#define EXPECT_CSB_RUNTIME   "csb-runtime", 0, 53, 53, 53, 1
+#define EXPECT_DM2_RUNTIME   "dm2-runtime", 0, 0, 0, 0, 1
+#define EXPECT_NEXUS_RUNTIME "nexus-runtime", 0, -1, -1, 54, 1
+#define EXPECT_THERON_RUNTIME "theron-runtime", 0, 0, 0, 0, 1
 
 static const Tier1PathSpec kPaths[] = {
     { "dm1",   "dm1",
       "dm1-runtime", NULL, 2,
-      "DM1 canonical" },
+      "DM1 canonical", EXPECT_DM1_RUNTIME },
     { "dm1",   "dm1-multilingual",
       "dm1-runtime", NULL, 2,
-      "DM1 multilingual explicit leaf" },
+      "DM1 multilingual explicit leaf", EXPECT_DM1_RUNTIME },
     { "dm1",   "dm1-extras/legacy-dos",
       "dm1-runtime", NULL, 2,
-      "DM1 legacy-dos (M11 hash-fallback)" },
+      "DM1 legacy-dos (M11 hash-fallback)", EXPECT_DM1_RUNTIME },
     { "dm1",   "dm1-extras/pc-3.4-en-3.5in",
       "dm1-runtime", NULL, 2,
-      "DM1 PC 3.4 EN 3.5in disk layout" },
+      "DM1 PC 3.4 EN 3.5in disk layout", EXPECT_DM1_RUNTIME },
     { "dm1",   "dm1-extras/pc-3.4-multi-3.5in",
       "dm1-runtime", NULL, 2,
-      "DM1 PC 3.4 multilingual 3.5in disk layout" },
+      "DM1 PC 3.4 multilingual 3.5in disk layout", EXPECT_DM1_RUNTIME },
     { "csb",   "csb",
       "csb-runtime", "enter", 240,
-      "CSB canonical (M11 stderr-pipe)" },
+      "CSB canonical (M11 stderr-pipe)", EXPECT_CSB_RUNTIME },
     { "csb",   "csb-atari-st-2x",
       "csb-runtime", "enter", 240,
-      "CSB Atari ST 2.x hard-disk explicit leaf" },
+      "CSB Atari ST 2.x hard-disk explicit leaf", EXPECT_CSB_RUNTIME },
     { "csb",   "csb-extras/legacy-amiga-dms",
       "csb-runtime", "enter", 240,
-      "CSB Amiga 3.3 Meynaf FR (M11 stderr-pipe)" },
+      "CSB Amiga 3.3 Meynaf FR (M11 stderr-pipe)", EXPECT_CSB_RUNTIME },
     { "dm2",   "dm2",
       "dm2-runtime", "enter", 2,
-      "DM2 canonical (M11 stderr-pipe)" },
+      "DM2 canonical (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
     { "dm2",   "dm2-extras/dos-en",
       "dm2-runtime", "enter", 2,
-      "DM2 DOS EN extras data/ layout (M11 stderr-pipe)" },
+      "DM2 DOS EN extras data/ layout (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
     { "dm2",   "dm2-extras/dos-fr",
       "dm2-runtime", "enter", 2,
-      "DM2 DOS FR extras data/ layout (M11 stderr-pipe)" },
+      "DM2 DOS FR extras data/ layout (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
     { "dm2",   "dm2-extras/pc-fr",
       "dm2-runtime", "enter", 2,
-      "DM2 PC FR extras DATA/ layout (M11 stderr-pipe)" },
+      "DM2 PC FR extras DATA/ layout (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
     { "dm2",   "dm2-extras/pc-de",
       "dm2-runtime", "enter", 2,
-      "DM2 PC DE extras DATA/ layout (M11 stderr-pipe)" },
+      "DM2 PC DE extras DATA/ layout (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
     { "nexus", "nexus",
       "nexus-runtime", "wait120,enter,enter,action", 2,
-      "Nexus canonical (Saturn ISO/CUE recursive scan)" },
+      "Nexus canonical (Saturn ISO/CUE recursive scan)", EXPECT_NEXUS_RUNTIME },
     { "nexus", "nexus-extras/saturn-ja",
       "nexus-runtime", "wait120,enter,enter,action", 2,
-      "Nexus Saturn JA extras (Track 1 BIN recursive scan)" },
+      "Nexus Saturn JA extras (Track 1 BIN recursive scan)", EXPECT_NEXUS_RUNTIME },
     { "theron", "theron",
       "theron-runtime", "enter,enter,action", 2,
-      "Theron JP canonical (Track 02.iso)" },
+      "Theron JP canonical (Track 02.iso)", EXPECT_THERON_RUNTIME },
     { "theron", "theron-extras/japan",
       "theron-runtime", "enter,enter,action", 2,
-      "Theron JP extras (Track 02.bin)" },
+      "Theron JP extras (Track 02.bin)", EXPECT_THERON_RUNTIME },
     { "theron", "theron-extras/usa",
       "theron-runtime", "enter,enter,action", 2,
-      "Theron US extras (Track 02.bin, first-matched-version fallback)" },
+      "Theron US extras (Track 02.bin, first-matched-version fallback)",
+      EXPECT_THERON_RUNTIME },
     /* Sentinel. */
-    { NULL, NULL, NULL, NULL, 0, NULL }
+    { NULL, NULL, NULL, NULL, 0, NULL, NULL, -1, -1, -1, -1, -1 }
 };
 
 static int g_pass = 0;
@@ -145,6 +160,61 @@ static int build_path(const char *root,
     return rc > 0 && (size_t)rc < out_size;
 }
 
+static int output_has_int_field(const char *buf,
+                                const char *name,
+                                int value) {
+    char needle[64];
+    int rc;
+    if (!buf || !name || value < 0) {
+        return 1;
+    }
+    rc = snprintf(needle, sizeof(needle), "%s=%d", name, value);
+    if (rc <= 0 || (size_t)rc >= sizeof(needle)) {
+        return 0;
+    }
+    return strstr(buf, needle) != NULL;
+}
+
+static int output_has_runtime_title_contract(const Tier1PathSpec *spec,
+                                             const char *buf) {
+    char needle[128];
+    int rc;
+    if (!spec || !buf) {
+        return 0;
+    }
+    if (spec->expect_animation && spec->expect_animation[0] != '\0') {
+        rc = snprintf(needle,
+                      sizeof(needle),
+                      "startupAnimation=%s",
+                      spec->expect_animation);
+        if (rc <= 0 || (size_t)rc >= sizeof(needle) ||
+            strstr(buf, needle) == NULL) {
+            return 0;
+        }
+    }
+    if (!output_has_int_field(buf,
+                              "startupAnimationActive",
+                              spec->expect_animation_active)) {
+        return 0;
+    }
+    if (spec->expect_title_frame_min >= 0 &&
+        spec->expect_title_frame_min == spec->expect_title_frame_max &&
+        !output_has_int_field(buf,
+                              "titleFrame",
+                              spec->expect_title_frame_min)) {
+        return 0;
+    }
+    if (!output_has_int_field(buf,
+                              "titleFrameMax",
+                              spec->expect_title_frame_boundary)) {
+        return 0;
+    }
+    if (!output_has_int_field(buf, "titleReady", spec->expect_title_ready)) {
+        return 0;
+    }
+    return 1;
+}
+
 static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
                                     const char *path,
                                     char *buf,
@@ -152,7 +222,12 @@ static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
     int pipefd[2];
     pid_t pid;
     char frames[32];
-    const char *argv[20];
+    char expect_animation_active[16];
+    char expect_title_frame_min[16];
+    char expect_title_frame_max[16];
+    char expect_title_frame_boundary[16];
+    char expect_title_ready[16];
+    const char *argv[64];
     int argc = 0;
     size_t used = 0;
     int status;
@@ -179,6 +254,50 @@ static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
     }
     argv[argc++] = "--boot-probe-expect-phase";
     argv[argc++] = spec->expect_phase;
+    if (spec->expect_animation && spec->expect_animation[0] != '\0') {
+        argv[argc++] = "--boot-probe-expect-startup-animation";
+        argv[argc++] = spec->expect_animation;
+    }
+    if (spec->expect_animation_active >= 0) {
+        snprintf(expect_animation_active,
+                 sizeof(expect_animation_active),
+                 "%d",
+                 spec->expect_animation_active);
+        argv[argc++] = "--boot-probe-expect-startup-animation-active";
+        argv[argc++] = expect_animation_active;
+    }
+    if (spec->expect_title_frame_min >= 0) {
+        snprintf(expect_title_frame_min,
+                 sizeof(expect_title_frame_min),
+                 "%d",
+                 spec->expect_title_frame_min);
+        argv[argc++] = "--boot-probe-expect-title-frame-min";
+        argv[argc++] = expect_title_frame_min;
+    }
+    if (spec->expect_title_frame_max >= 0) {
+        snprintf(expect_title_frame_max,
+                 sizeof(expect_title_frame_max),
+                 "%d",
+                 spec->expect_title_frame_max);
+        argv[argc++] = "--boot-probe-expect-title-frame-max";
+        argv[argc++] = expect_title_frame_max;
+    }
+    if (spec->expect_title_frame_boundary >= 0) {
+        snprintf(expect_title_frame_boundary,
+                 sizeof(expect_title_frame_boundary),
+                 "%d",
+                 spec->expect_title_frame_boundary);
+        argv[argc++] = "--boot-probe-expect-title-frame-boundary";
+        argv[argc++] = expect_title_frame_boundary;
+    }
+    if (spec->expect_title_ready >= 0) {
+        snprintf(expect_title_ready,
+                 sizeof(expect_title_ready),
+                 "%d",
+                 spec->expect_title_ready);
+        argv[argc++] = "--boot-probe-expect-title-ready";
+        argv[argc++] = expect_title_ready;
+    }
     argv[argc++] = "--duration";
     argv[argc++] = "0";
     argv[argc] = NULL;
@@ -290,9 +409,13 @@ static void run_path(const Tier1PathSpec* spec, const char *root) {
         strstr(buf, "FIRESTAFF BOOT PROBE READY") != NULL &&
         strstr(buf, spec->expect_phase) != NULL &&
         strstr(buf, "startupActive=0") != NULL &&
-        strstr(buf, "levelLoaded=1") != NULL) {
-        printf("  PASS: %s (exit=%d, phase=%s)\n",
-               spec->label, wait_status, spec->expect_phase);
+        strstr(buf, "levelLoaded=1") != NULL &&
+        output_has_runtime_title_contract(spec, buf)) {
+        printf("  PASS: %s (exit=%d, phase=%s, animation=%s)\n",
+               spec->label,
+               wait_status,
+               spec->expect_phase,
+               spec->expect_animation ? spec->expect_animation : "(none)");
         ++g_pass;
         return;
     }
