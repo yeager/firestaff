@@ -371,6 +371,8 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame);
 int csb_v1_startup_entrance_wait_stage_pc34(void);
 int csb_v1_startup_entrance_pre_open_delay_ticks_pc34(void);
 int csb_v1_startup_entrance_credits_ticks_pc34(void);
+CSB_V1_StartupInput_PC34 csb_v1_startup_input_from_firestaff_menu_code_pc34(
+    int menu_input);
 int csb_v1_startup_entrance_action_for_input_pc34(
     int credits_active,
     CSB_V1_StartupInput_PC34 input);

@@ -902,6 +902,21 @@ int main(void)
               command_state.credits_remaining_ticks == 0,
           "startup command state dismisses credits");
 
+    check(csb_v1_startup_input_from_firestaff_menu_code_pc34(0) ==
+              CSB_V1_STARTUP_INPUT_NONE_PC34 &&
+              csb_v1_startup_input_from_firestaff_menu_code_pc34(9) ==
+                  CSB_V1_STARTUP_INPUT_ACCEPT_PC34 &&
+              csb_v1_startup_input_from_firestaff_menu_code_pc34(10) ==
+                  CSB_V1_STARTUP_INPUT_BACK_PC34 &&
+              csb_v1_startup_input_from_firestaff_menu_code_pc34(11) ==
+                  CSB_V1_STARTUP_INPUT_ACTION_PC34 &&
+              csb_v1_startup_input_from_firestaff_menu_code_pc34(32) ==
+                  CSB_V1_STARTUP_INPUT_DISK_MENU_PC34,
+          "Firestaff menu input codes map through CSB startup input adapter");
+    check(csb_v1_startup_input_from_firestaff_menu_code_pc34(999) ==
+              CSB_V1_STARTUP_INPUT_NONE_PC34,
+          "unknown Firestaff menu input maps to CSB startup idle input");
+
     check(csb_v1_startup_entrance_command_for_action_pc34(
               CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34) ==
               CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&

@@ -686,6 +686,17 @@ _Static_assert(M12_MENU_INPUT_BACK == 10,
 _Static_assert(M12_MENU_INPUT_ACTION == 11,
                "CSB utility menu input code drift");
 
+_Static_assert(M12_MENU_INPUT_NONE == 0,
+               "CSB startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACCEPT == 9,
+               "CSB startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_BACK == 10,
+               "CSB startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACTION == 11,
+               "CSB startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_DISK_MENU == 32,
+               "CSB startup menu input code drift");
+
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session,
                                          const char *status)
@@ -3157,24 +3168,6 @@ static int m11_csb_startup_entrance_waiting_for_input(
     }
     m11_csb_startup_command_state_from_m11(state, &command_state);
     return csb_v1_startup_entrance_accepts_input_pc34(&command_state);
-}
-
-static CSB_V1_StartupInput_PC34 m11_csb_startup_input_from_m12(
-    M12_MenuInput input)
-{
-    switch (input) {
-        case M12_MENU_INPUT_ACCEPT:
-            return CSB_V1_STARTUP_INPUT_ACCEPT_PC34;
-        case M12_MENU_INPUT_ACTION:
-            return CSB_V1_STARTUP_INPUT_ACTION_PC34;
-        case M12_MENU_INPUT_BACK:
-            return CSB_V1_STARTUP_INPUT_BACK_PC34;
-        case M12_MENU_INPUT_DISK_MENU:
-            return CSB_V1_STARTUP_INPUT_DISK_MENU_PC34;
-        case M12_MENU_INPUT_NONE:
-        default:
-            return CSB_V1_STARTUP_INPUT_NONE_PC34;
-    }
 }
 
 static void m11_csb_startup_command_state_from_m11(
@@ -15313,7 +15306,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         {
             CSB_V1_StartupInput_PC34 csbInput =
-                m11_csb_startup_input_from_m12(input);
+                csb_v1_startup_input_from_firestaff_menu_code_pc34(
+                    (int)input);
             int action = csb_v1_startup_entrance_action_for_input_pc34(
                 state->csbState.startup_entrance_credits_active,
                 csbInput);
