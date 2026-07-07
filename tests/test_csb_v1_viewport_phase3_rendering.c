@@ -1921,6 +1921,7 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                   placement.sprite_flip_flags, 0);
         {
             struct ProjectileInstance_Compat projectile;
+            CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
             memset(&projectile, 0, sizeof(projectile));
             projectile.projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
             projectile.direction = 1;
@@ -1944,6 +1945,30 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                       placement.sprite_flip_flags,
                       dm1_v1_projectile_flip_flags(
                           DM1_PROJ_ASPECT_LIGHTNING_BOLT, 1, 2, 8, 7));
+            check_int("csb.projectile_overlay.d3l2_cell2.sprite_blit",
+                      csb_v1_viewport_runtime_projectile_sprite_blit(
+                          &placement, &blit), 1);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_x",
+                      blit.x, 0);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_y",
+                      blit.y, 33);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_w",
+                      blit.w, 224);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_h",
+                      blit.h, 136);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_gfx",
+                      blit.graphic_index,
+                      placement.sprite_graphic_index);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_forward",
+                      blit.forward, 3);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_rel_dir",
+                      blit.relative_dir, 1);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_rel_cell",
+                      blit.relative_cell, 2);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_flip",
+                      blit.flip_flags, placement.sprite_flip_flags);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_source_row",
+                      blit.source_zone_row, 3);
         }
 
         memset(&placement, 0, sizeof(placement));
@@ -3154,6 +3179,7 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               explosion_place.sprite_is_smoke, 0);
     {
         struct ExplosionInstance_Compat explosion;
+        CSB_V1_ViewportRuntimeExplosionSpriteBlit blit;
         memset(&explosion, 0, sizeof(explosion));
         explosion.explosionType = C007_EXPLOSION_POISON_CLOUD;
         explosion.currentFrame = 3;
@@ -3177,6 +3203,31 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                   explosion_place.sprite_max_frames, 6);
         check_int("csb.runtime_explosion_overlay.d3l2.center.bind_attack",
                   explosion_place.sprite_attack, 128);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.sprite_blit",
+                  csb_v1_viewport_runtime_explosion_sprite_blit(
+                      &explosion_place, &blit), 1);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_x",
+                  blit.x, 0);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_y",
+                  blit.y, 33);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_w",
+                  blit.w, 224);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_h",
+                  blit.h, 136);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_aspect",
+                  blit.aspect_index, DM1_EXPLOSION_ASPECT_POISON);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_gfx",
+                  blit.graphic_index, explosion_place.sprite_graphic_index);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_smoke",
+                  blit.is_smoke, 0);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_frame",
+                  blit.frame, 3);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_max",
+                  blit.max_frames, 6);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_attack",
+                  blit.attack, 128);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_depth",
+                  blit.depth_index, 2);
     }
 
     memset(&explosion_place, 0, sizeof(explosion_place));

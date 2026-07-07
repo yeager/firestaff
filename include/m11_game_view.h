@@ -852,6 +852,12 @@ int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
                                               int relSide,
                                               int* outLegacyLaneClear,
                                               int* outDrawsWithSourceOrder);
+int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* state,
+                                                    int* outDepthIndex,
+                                                    int* outRelForward,
+                                                    int* outMapX,
+                                                    int* outMapY,
+                                                    int* outElementType);
 int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
                                           int relSide,
                                           int* outGraphicIndex,

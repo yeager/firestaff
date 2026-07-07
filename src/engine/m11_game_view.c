@@ -1043,13 +1043,14 @@ static int m11_csb_viewport_projectile_sprite_drawer(
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
+    CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
 
     if (!ctx || !ctx->state || !ctx->profile || !projectile || !placement ||
         !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
     (void)projectile;
-    if (placement->sprite_graphic_index < 0) {
+    if (!csb_v1_viewport_runtime_projectile_sprite_blit(placement, &blit)) {
         return 0;
     }
     /* ReDMCSB DUNVIEW.C F0115 lines 5710-5722 picks the scale row from
@@ -1061,16 +1062,16 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
-        placement->sprite_x,
-        placement->sprite_y,
-        placement->sprite_w,
-        placement->sprite_h,
-        placement->sprite_graphic_index,
-        placement->forward,
-        placement->sprite_relative_dir,
-        placement->sprite_relative_cell,
-        placement->sprite_flip_flags,
-        placement->source_zone_row);
+        blit.x,
+        blit.y,
+        blit.w,
+        blit.h,
+        blit.graphic_index,
+        blit.forward,
+        blit.relative_dir,
+        blit.relative_cell,
+        blit.flip_flags,
+        blit.source_zone_row);
 }
 
 static int m11_csb_viewport_explosion_sprite_drawer(
@@ -1082,14 +1083,14 @@ static int m11_csb_viewport_explosion_sprite_drawer(
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
+    CSB_V1_ViewportRuntimeExplosionSpriteBlit blit;
 
     if (!ctx || !ctx->state || !explosion || !placement || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
     (void)explosion;
-    if (placement->sprite_graphic_index < 0 ||
-        placement->sprite_aspect_index < 0) {
+    if (!csb_v1_viewport_runtime_explosion_sprite_blit(placement, &blit)) {
         return 0;
     }
     /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions in a
@@ -1100,17 +1101,17 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
-        placement->sprite_x,
-        placement->sprite_y,
-        placement->sprite_w,
-        placement->sprite_h,
-        placement->sprite_aspect_index,
-        placement->sprite_graphic_index,
-        placement->sprite_is_smoke,
-        placement->sprite_frame,
-        placement->sprite_max_frames,
-        placement->sprite_attack,
-        placement->depth_index);
+        blit.x,
+        blit.y,
+        blit.w,
+        blit.h,
+        blit.aspect_index,
+        blit.graphic_index,
+        blit.is_smoke,
+        blit.frame,
+        blit.max_frames,
+        blit.attack,
+        blit.depth_index);
 }
 
 static void m11_csb_runtime_overlay_stats_reset(
@@ -32052,6 +32053,42 @@ int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
     draws = m11_viewport_cell_is_wall_like(&cell);
     if (outLegacyLaneClear) *outLegacyLaneClear = laneClear;
     if (outDrawsWithSourceOrder) *outDrawsWithSourceOrder = draws;
+    return 1;
+}
+
+int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* state,
+                                                    int* outDepthIndex,
+                                                    int* outRelForward,
+                                                    int* outMapX,
+                                                    int* outMapY,
+                                                    int* outElementType) {
+    M11_ViewportCell cells[3][3];
+    int depth;
+    int side;
+    int blockingDepth;
+    if (!state || !state->active) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        for (side = 0; side < 3; ++side) {
+            memset(&cells[depth][side], 0, sizeof(cells[depth][side]));
+            (void)m11_sample_viewport_cell(state, depth + 1, side - 1,
+                                           &cells[depth][side]);
+        }
+    }
+    blockingDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
+    if (outDepthIndex) *outDepthIndex = blockingDepth;
+    if (outRelForward) *outRelForward = blockingDepth >= 0 ? blockingDepth + 1 : -1;
+    if (blockingDepth >= 0) {
+        const M11_ViewportCell* cell = &cells[blockingDepth][1];
+        if (outMapX) *outMapX = cell->mapX;
+        if (outMapY) *outMapY = cell->mapY;
+        if (outElementType) *outElementType = cell->elementType;
+    } else {
+        if (outMapX) *outMapX = -1;
+        if (outMapY) *outMapY = -1;
+        if (outElementType) *outElementType = -1;
+    }
     return 1;
 }
 
