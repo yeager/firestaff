@@ -35116,6 +35116,143 @@ static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
                                       1);
 }
 
+typedef struct M11_DM2StartupDrawContext {
+    const M11_GameViewState *state;
+    unsigned char *framebuffer;
+    int framebufferWidth;
+    int framebufferHeight;
+} M11_DM2StartupDrawContext;
+
+static int m11_dm2_startup_exec_gdat_image(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    M11_DM2StartupDrawContext *context = (M11_DM2StartupDrawContext*)userdata;
+    DM2_V1_BootProfile *profile;
+    uint8_t *pixels = NULL;
+    int srcW = 0;
+    int srcH = 0;
+    int stride = 0;
+    int dstW;
+    int dstH;
+    int y;
+
+    if (!context || !context->state || !context->framebuffer || !command) {
+        return 0;
+    }
+    profile = (DM2_V1_BootProfile *)context->state->dm2BootProfile;
+    if (!profile ||
+        dm2_v1_boot_gdat_image_asset_fetch(profile,
+                                           command->gdat_category,
+                                           command->gdat_index,
+                                           command->gdat_field,
+                                           &pixels,
+                                           &srcW,
+                                           &srcH,
+                                           &stride) != 0 ||
+        !pixels || srcW <= 0 || srcH <= 0 || stride < srcW) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        return 0;
+    }
+    dstW = command->rect.w;
+    dstH = command->rect.h;
+    if (dstW <= 0) {
+        dstW = srcW;
+    }
+    if (dstH <= 0) {
+        dstH = srcH;
+    }
+    for (y = 0; y < dstH; ++y) {
+        int x;
+        int sy = y * srcH / dstH;
+        int dy = command->rect.y + y;
+        if (dy < 0 || dy >= context->framebufferHeight) {
+            continue;
+        }
+        for (x = 0; x < dstW; ++x) {
+            int sx = x * srcW / dstW;
+            int dx = command->rect.x + x;
+            unsigned char c;
+            if (dx < 0 || dx >= context->framebufferWidth) {
+                continue;
+            }
+            c = pixels[sy * stride + sx];
+            if (command->transparent_color >= 0 &&
+                c == (unsigned char)command->transparent_color) {
+                continue;
+            }
+            context->framebuffer[dy * context->framebufferWidth + dx] = c;
+        }
+    }
+    dm2_v1_boot_gdat_image_asset_free(pixels);
+    return 1;
+}
+
+static void m11_dm2_startup_exec_fill_rect(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    M11_DM2StartupDrawContext *context = (M11_DM2StartupDrawContext*)userdata;
+    unsigned char color;
+
+    if (!context || !context->framebuffer || !command) {
+        return;
+    }
+    color = command->style == DM2_V1_STARTUP_STYLE_SELECTED_FILL
+        ? M11_COLOR_RED
+        : M11_COLOR_BLACK;
+    m11_fill_rect(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  command->rect.x,
+                  command->rect.y,
+                  command->rect.w,
+                  command->rect.h,
+                  color);
+}
+
+static void m11_dm2_startup_exec_outline_rect(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    M11_DM2StartupDrawContext *context = (M11_DM2StartupDrawContext*)userdata;
+
+    if (!context || !context->framebuffer || !command) {
+        return;
+    }
+    m11_draw_rect(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  command->rect.x,
+                  command->rect.y,
+                  command->rect.w,
+                  command->rect.h,
+                  M11_COLOR_WHITE);
+}
+
+static void m11_dm2_startup_exec_text(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    M11_DM2StartupDrawContext *context = (M11_DM2StartupDrawContext*)userdata;
+    const M11_TextStyle *style;
+
+    if (!context || !context->framebuffer || !command) {
+        return;
+    }
+    style = command->style == DM2_V1_STARTUP_STYLE_TITLE ||
+            command->style == DM2_V1_STARTUP_STYLE_SELECTED_TEXT
+        ? &g_text_title
+        : &g_text_shadow;
+    m11_draw_text(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  command->x,
+                  command->y,
+                  command->text,
+                  style);
+}
+
 static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       unsigned char *framebuffer,
                                       int framebufferWidth,
@@ -35123,8 +35260,9 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
 {
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupDrawCommand commands[32];
+    DM2_V1_StartupDrawExecutor executor;
+    M11_DM2StartupDrawContext context;
     int command_count;
-    int i;
 
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return;
@@ -35138,87 +35276,19 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     if (command_count <= 0) {
         return;
     }
-    for (i = 0; i < command_count; ++i) {
-        const DM2_V1_StartupDrawCommand *command = &commands[i];
-        if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE) {
-            DM2_V1_BootProfile *profile =
-                (DM2_V1_BootProfile *)state->dm2BootProfile;
-            uint8_t *pixels = NULL;
-            int srcW = 0;
-            int srcH = 0;
-            int stride = 0;
-            if (profile &&
-                dm2_v1_boot_gdat_image_asset_fetch(profile,
-                                                   command->gdat_category,
-                                                   command->gdat_index,
-                                                   command->gdat_field,
-                                                   &pixels,
-                                                   &srcW,
-                                                   &srcH,
-                                                   &stride) == 0 &&
-                pixels && srcW > 0 && srcH > 0 && stride >= srcW) {
-                int y;
-                int dstW = command->rect.w;
-                int dstH = command->rect.h;
-                if (dstW <= 0) dstW = srcW;
-                if (dstH <= 0) dstH = srcH;
-                for (y = 0; y < dstH; ++y) {
-                    int x;
-                    int sy = y * srcH / dstH;
-                    int dy = command->rect.y + y;
-                    if (dy < 0 || dy >= framebufferHeight) continue;
-                    for (x = 0; x < dstW; ++x) {
-                        int sx = x * srcW / dstW;
-                        int dx = command->rect.x + x;
-                        unsigned char c;
-                        if (dx < 0 || dx >= framebufferWidth) continue;
-                        c = pixels[sy * stride + sx];
-                        if (command->transparent_color >= 0 &&
-                            c == (unsigned char)command->transparent_color) {
-                            continue;
-                        }
-                        framebuffer[dy * framebufferWidth + dx] = c;
-                    }
-                }
-            }
-            dm2_v1_boot_gdat_image_asset_free(pixels);
-        } else if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT) {
-            unsigned char color =
-                command->style == DM2_V1_STARTUP_STYLE_SELECTED_FILL
-                    ? M11_COLOR_RED
-                    : M11_COLOR_BLACK;
-            m11_fill_rect(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          command->rect.x,
-                          command->rect.y,
-                          command->rect.w,
-                          command->rect.h,
-                          color);
-        } else if (command->kind == DM2_V1_STARTUP_DRAW_OUTLINE_RECT) {
-            m11_draw_rect(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          command->rect.x,
-                          command->rect.y,
-                          command->rect.w,
-                          command->rect.h,
-                          M11_COLOR_WHITE);
-        } else if (command->kind == DM2_V1_STARTUP_DRAW_TEXT) {
-            const M11_TextStyle *style =
-                command->style == DM2_V1_STARTUP_STYLE_TITLE ||
-                        command->style == DM2_V1_STARTUP_STYLE_SELECTED_TEXT
-                    ? &g_text_title
-                    : &g_text_shadow;
-            m11_draw_text(framebuffer,
-                          framebufferWidth,
-                          framebufferHeight,
-                          command->x,
-                          command->y,
-                          command->text,
-                          style);
-        }
-    }
+    context.state = state;
+    context.framebuffer = framebuffer;
+    context.framebufferWidth = framebufferWidth;
+    context.framebufferHeight = framebufferHeight;
+    executor.userdata = &context;
+    executor.draw_gdat_image = m11_dm2_startup_exec_gdat_image;
+    executor.fill_rect = m11_dm2_startup_exec_fill_rect;
+    executor.outline_rect = m11_dm2_startup_exec_outline_rect;
+    executor.draw_text = m11_dm2_startup_exec_text;
+    (void)dm2_v1_startup_execute_draw_commands(
+        commands,
+        command_count,
+        &executor);
 }
 
 static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,

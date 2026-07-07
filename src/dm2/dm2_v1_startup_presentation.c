@@ -247,3 +247,38 @@ int dm2_v1_startup_presentation_build_from_snapshot(
                                              out_commands,
                                              max_commands);
 }
+
+int dm2_v1_startup_execute_draw_commands(
+    const DM2_V1_StartupDrawCommand *commands,
+    int command_count,
+    const DM2_V1_StartupDrawExecutor *executor)
+{
+    int i;
+
+    if (!commands || command_count < 0 || !executor ||
+        !executor->draw_gdat_image || !executor->fill_rect ||
+        !executor->outline_rect || !executor->draw_text) {
+        return 0;
+    }
+    for (i = 0; i < command_count; ++i) {
+        const DM2_V1_StartupDrawCommand *command = &commands[i];
+        switch (command->kind) {
+        case DM2_V1_STARTUP_DRAW_GDAT_IMAGE:
+            (void)executor->draw_gdat_image(executor->userdata, command);
+            break;
+        case DM2_V1_STARTUP_DRAW_FILL_RECT:
+            executor->fill_rect(executor->userdata, command);
+            break;
+        case DM2_V1_STARTUP_DRAW_OUTLINE_RECT:
+            executor->outline_rect(executor->userdata, command);
+            break;
+        case DM2_V1_STARTUP_DRAW_TEXT:
+            executor->draw_text(executor->userdata, command);
+            break;
+        case DM2_V1_STARTUP_DRAW_NONE:
+        default:
+            break;
+        }
+    }
+    return 1;
+}

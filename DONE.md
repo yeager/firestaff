@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM2 startup draw executor ownership: `dm2_v1_startup_presentation` now executes its startup draw commands through GDAT/fill/outline/text callbacks. M11 now only adapts those callbacks to boot-profile asset fetch, palette colors, text styles, and the 8-bit framebuffer. Verification: `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract` passed 52/52, Phase A passed 24/24, DM2 boot-probe passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron startup graphic executor ownership: `theron_v1_startup_flow` now executes its own startup graphic render plan through fill/rect/pixel callbacks. M11 now only adapts those callbacks to the 8-bit framebuffer, and the startup-flow probe proves title, stage-select, Soul Room mirror, and forcefield command execution. Verification: `firestaff_theron_v1_startup_flow_probe` passed 412/412, `test_theron_v1_m11_launcher_handoff_boundary` passed 26/26, Phase A passed 24/24, Theron boot-probe passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron full-start graphics step: `theron_v1_startup_flow` now owns graphic render commands for title backdrop/mark, stage panels, Soul Room mirror frames, and forcefield. M11 executes the Theron-owned plan before text, so startup is no longer text-only and has a clear handoff point for decoded original Track 02/Track 03 bitmap surfaces. Verification: `firestaff_theron_v1_startup_flow_probe`, `test_theron_v1_m11_launcher_handoff_boundary`, Phase A, and Theron boot-probe passed.
