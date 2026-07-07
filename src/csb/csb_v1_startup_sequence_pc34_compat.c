@@ -2060,6 +2060,71 @@ int csb_v1_startup_apply_runtime_plan_pc34(
     return 1;
 }
 
+void csb_v1_startup_runtime_apply_receipt_init_pc34(
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->result = CSB_V1_STARTUP_RUNTIME_APPLY_NOT_HANDLED_PC34;
+}
+
+int csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    const CSB_V1_StartupRuntimePlan_PC34 *runtime_plan,
+    int resume_available,
+    int resume_loaded,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome,
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 *out_receipt)
+{
+    int applied;
+
+    if (out_receipt) {
+        csb_v1_startup_runtime_apply_receipt_init_pc34(out_receipt);
+    }
+    if (!state || !runtime_plan ||
+        runtime_plan->kind == CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34) {
+        return 0;
+    }
+
+    applied = csb_v1_startup_apply_runtime_plan_pc34(state,
+                                                     runtime_plan,
+                                                     resume_available,
+                                                     resume_loaded,
+                                                     out_outcome);
+    if (!applied) {
+        return 0;
+    }
+    if (out_receipt) {
+        out_receipt->clear_import_preview = 1;
+        switch (runtime_plan->kind) {
+            case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_DUNGEON_PC34:
+                out_receipt->result =
+                    CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34;
+                out_receipt->bonus_requested_changed = 1;
+                out_receipt->bonus_requested = 0;
+                break;
+            case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34:
+                out_receipt->result =
+                    CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34;
+                out_receipt->bonus_requested_changed = 1;
+                out_receipt->bonus_requested = 1;
+                break;
+            case CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34:
+                out_receipt->result =
+                    CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34;
+                break;
+            case CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34:
+            default:
+                out_receipt->result =
+                    CSB_V1_STARTUP_RUNTIME_APPLY_IGNORED_PC34;
+                break;
+        }
+    }
+    return 1;
+}
+
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command)

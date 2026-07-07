@@ -111,6 +111,19 @@ typedef struct CSB_V1_StartupRuntimePlan_PC34 {
     const char *unavailable_status;
 } CSB_V1_StartupRuntimePlan_PC34;
 
+typedef enum CSB_V1_StartupRuntimeApplyResult_PC34 {
+    CSB_V1_STARTUP_RUNTIME_APPLY_NOT_HANDLED_PC34 = 0,
+    CSB_V1_STARTUP_RUNTIME_APPLY_IGNORED_PC34 = 1,
+    CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34 = 2
+} CSB_V1_StartupRuntimeApplyResult_PC34;
+
+typedef struct CSB_V1_StartupRuntimeApplyReceipt_PC34 {
+    CSB_V1_StartupRuntimeApplyResult_PC34 result;
+    int clear_import_preview;
+    int bonus_requested_changed;
+    int bonus_requested;
+} CSB_V1_StartupRuntimeApplyReceipt_PC34;
+
 typedef struct CSB_V1_StartupTickState_PC34 {
     int entrance_frame;
     int title_active;
@@ -544,6 +557,15 @@ int csb_v1_startup_apply_runtime_plan_pc34(
     int resume_available,
     int resume_loaded,
     CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome);
+void csb_v1_startup_runtime_apply_receipt_init_pc34(
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 *receipt);
+int csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    const CSB_V1_StartupRuntimePlan_PC34 *runtime_plan,
+    int resume_available,
+    int resume_loaded,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome,
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 *out_receipt);
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command);

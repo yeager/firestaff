@@ -3294,6 +3294,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 plan;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
     CSB_V1_StartupEntranceApplyResult_PC34 apply_result;
     int resume_available = 0;
@@ -3380,27 +3381,31 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     }
 
     m11_csb_startup_command_state_from_m11(state, &command_state);
-    (void)csb_v1_startup_apply_runtime_plan_pc34(
+    if (!csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
         &command_state,
         &runtime_plan,
         resume_available,
         resume_loaded,
-        &outcome);
+        &outcome,
+        &runtime_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
     m11_csb_startup_command_state_to_m11(state, &command_state);
-    state->csbState.startup_import_preview_active = 0;
+    if (runtime_receipt.clear_import_preview) {
+        state->csbState.startup_import_preview_active = 0;
+    }
     if (outcome.status) {
         m11_set_status(state, outcome.status_scope, outcome.status);
     }
-    switch (runtime_plan.kind) {
-        case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_DUNGEON_PC34:
-            state->csbState.startup_entrance_bonus_requested = 0;
+    if (runtime_receipt.bonus_requested_changed) {
+        state->csbState.startup_entrance_bonus_requested =
+            runtime_receipt.bonus_requested ? 1 : 0;
+    }
+    switch (runtime_receipt.result) {
+        case CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34:
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34:
-            state->csbState.startup_entrance_bonus_requested = 1;
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34:
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34:
+        case CSB_V1_STARTUP_RUNTIME_APPLY_IGNORED_PC34:
+        case CSB_V1_STARTUP_RUNTIME_APPLY_NOT_HANDLED_PC34:
         default:
             return M11_GAME_INPUT_IGNORED;
     }
