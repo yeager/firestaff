@@ -550,25 +550,32 @@ static int m11_draw_entrance_screen_asset(M11_GameViewState* gameView,
 
 static int m11_draw_entrance_closed_doors_asset(M11_GameViewState* gameView,
                                                 unsigned char* framebuffer) {
-    const M11_AssetSlot* leftDoor;
-    const M11_AssetSlot* rightDoor;
+    unsigned int ordinal;
     if (!gameView || !framebuffer || !gameView->assetsAvailable) {
         return 0;
     }
-    leftDoor = M11_AssetLoader_Load(&gameView->assetLoader, 2U);
-    rightDoor = M11_AssetLoader_Load(&gameView->assetLoader, 3U);
-    if (!leftDoor || !rightDoor || leftDoor->height < 161U || rightDoor->height < 161U) {
-        return 0;
+    for (ordinal = 1U; ordinal <= 2U; ++ordinal) {
+        EntranceCompatClosedDoorBlit blit;
+        const M11_AssetSlot* door;
+        if (!ENTRANCE_Compat_GetClosedDoorBlit(ordinal, &blit)) return 0;
+        door = M11_AssetLoader_Load(&gameView->assetLoader, blit.assetId);
+        if (!door ||
+            door->width < blit.srcX + blit.width ||
+            door->height < blit.srcY + blit.height) {
+            return 0;
+        }
+        M11_AssetLoader_BlitRegion(door,
+                                   (int)blit.srcX,
+                                   (int)blit.srcY,
+                                   (int)blit.width,
+                                   (int)blit.height,
+                                   framebuffer,
+                                   M11_FB_WIDTH,
+                                   M11_FB_HEIGHT,
+                                   (int)blit.dstX,
+                                   (int)blit.dstY,
+                                   blit.transparentColor);
     }
-    /* ReDMCSB DATA.C PC boxes: closed left {0,104,28,188},
-     * closed right {105,231,28,188}; ENTRANCE.C:574-579 blits C002/C003
-     * over C004 before the command wait / door opening. */
-    M11_AssetLoader_BlitRegion(leftDoor, 0, 0, 105, 161,
-                               framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                               0, 28, -1);
-    M11_AssetLoader_BlitRegion(rightDoor, 0, 0, 127, 161,
-                               framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                               105, 28, -1);
     return 1;
 }
 
@@ -699,20 +706,6 @@ static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
                                                      door);
 }
 
-static void m11_draw_entrance_door_panel(unsigned char* framebuffer,
-                                         int x,
-                                         int y,
-                                         int w,
-                                         int h,
-                                         unsigned char fill) {
-    if (!framebuffer || w <= 0 || h <= 0) return;
-    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y, w, h, fill);
-    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y, w, 1, 13);
-    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y + h - 1, w, 1, 0);
-    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x, y, 1, h, 13);
-    m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, x + w - 1, y, 1, h, 0);
-}
-
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
 static M12_MenuInput m11_next_script_input(const char** cursor);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
@@ -816,8 +809,9 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
          * and closed door panels so the first present is not a dungeon
          * viewport. */
         memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-        m11_draw_entrance_door_panel(framebuffer, 0, 28, 101, 161, 5);
-        m11_draw_entrance_door_panel(framebuffer, 109, 28, 123, 161, 5);
+        (void)ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer,
+                                                      M11_FB_WIDTH,
+                                                      M11_FB_HEIGHT);
     }
 
     /* ReDMCSB ENTRANCE.C source-lock:
@@ -843,30 +837,19 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
                 (void)m11_draw_entrance_closed_doors_asset(gameView, framebuffer);
             } else {
                 memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-                m11_draw_entrance_door_panel(framebuffer, 0, 28, 101, 161, 5);
-                m11_draw_entrance_door_panel(framebuffer, 109, 28, 123, 161, 5);
+                (void)ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer,
+                                                              M11_FB_WIDTH,
+                                                              M11_FB_HEIGHT);
             }
         } else if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP) {
             EntranceCompatDoorStep door;
             if (ENTRANCE_Compat_GetDoorAnimationStep(sourceStep - 6U, &door)) {
                 if (!m11_draw_entrance_opening_doors_asset(gameView, framebuffer, dungeonFrame, &door)) {
                     memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-                    if (door.leftBoxW > 0U) {
-                        m11_draw_entrance_door_panel(framebuffer,
-                                                     (int)door.leftBoxX,
-                                                     28 + (int)door.leftBoxY,
-                                                     (int)door.leftBoxW,
-                                                     (int)door.leftBoxH,
-                                                     5);
-                    }
-                    if (door.rightBoxW > 0U) {
-                        m11_draw_entrance_door_panel(framebuffer,
-                                                     (int)door.rightBoxX,
-                                                     28 + (int)door.rightBoxY,
-                                                     (int)door.rightBoxW,
-                                                     (int)door.rightBoxH,
-                                                     5);
-                    }
+                    (void)ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(framebuffer,
+                                                                       M11_FB_WIDTH,
+                                                                       M11_FB_HEIGHT,
+                                                                       &door);
                 }
             }
         } else {

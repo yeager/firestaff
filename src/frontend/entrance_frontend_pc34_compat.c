@@ -13,6 +13,9 @@
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_HEIGHT 136u
 #define ENTRANCE_COMPAT_VBLANK_DELAY_MS 20u
 #define ENTRANCE_COMPAT_CREDITS_WAIT_TICKS 1800u
+#define ENTRANCE_COMPAT_FALLBACK_DOOR_FILL 5u
+#define ENTRANCE_COMPAT_FALLBACK_DOOR_HILITE 13u
+#define ENTRANCE_COMPAT_FALLBACK_DOOR_SHADOW 0u
 
 static int entrance_copy_rect(unsigned char* dst,
                               unsigned int dstW,
@@ -49,6 +52,63 @@ static int entrance_copy_rect(unsigned char* dst,
     return 1;
 }
 
+static int entrance_fill_rect(unsigned char* dst,
+                              unsigned int dstW,
+                              unsigned int dstH,
+                              unsigned int x,
+                              unsigned int y,
+                              unsigned int w,
+                              unsigned int h,
+                              unsigned char value) {
+    unsigned int row;
+    if (!dst || dstW == 0u || dstH == 0u || w == 0u || h == 0u) {
+        return 0;
+    }
+    if (x >= dstW || y >= dstH) {
+        return 0;
+    }
+    if (w > dstW - x) w = dstW - x;
+    if (h > dstH - y) h = dstH - y;
+    for (row = 0u; row < h; ++row) {
+        memset(dst + (size_t)(y + row) * (size_t)dstW + (size_t)x,
+               value,
+               (size_t)w);
+    }
+    return 1;
+}
+
+static int entrance_draw_fallback_panel(unsigned char* framebuffer,
+                                        unsigned int framebufferWidth,
+                                        unsigned int framebufferHeight,
+                                        unsigned int x,
+                                        unsigned int y,
+                                        unsigned int w,
+                                        unsigned int h) {
+    if (!entrance_fill_rect(framebuffer,
+                            framebufferWidth,
+                            framebufferHeight,
+                            x,
+                            y,
+                            w,
+                            h,
+                            ENTRANCE_COMPAT_FALLBACK_DOOR_FILL)) {
+        return 0;
+    }
+    (void)entrance_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                             x, y, w, 1u, ENTRANCE_COMPAT_FALLBACK_DOOR_HILITE);
+    if (h > 0u) {
+        (void)entrance_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                 x, y + h - 1u, w, 1u, ENTRANCE_COMPAT_FALLBACK_DOOR_SHADOW);
+    }
+    (void)entrance_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                             x, y, 1u, h, ENTRANCE_COMPAT_FALLBACK_DOOR_HILITE);
+    if (w > 0u) {
+        (void)entrance_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                 x + w - 1u, y, 1u, h, ENTRANCE_COMPAT_FALLBACK_DOOR_SHADOW);
+    }
+    return 1;
+}
+
 unsigned int ENTRANCE_Compat_GetDoorAnimationStepCount(void) {
     return 31u;
 }
@@ -81,6 +141,24 @@ int ENTRANCE_Compat_GetDoorAnimationStep(unsigned int animationStep,
     }
     step.sourceLineEvidence = "ENTRANCE.C:142-304 loops animationStep=1..31; lines 152-168 rattle every step%3==1; lines 189-231 move door boxes by 4px; line 239 waits one VBlank per step";
     *outStep = step;
+    return 1;
+}
+
+int ENTRANCE_Compat_GetClosedDoorBlit(unsigned int ordinal,
+                                      EntranceCompatClosedDoorBlit* outBlit) {
+    EntranceCompatClosedDoorBlit blit;
+    if (!outBlit || ordinal < 1u || ordinal > 2u) return 0;
+    memset(&blit, 0, sizeof(blit));
+    blit.assetId = ordinal == 1u ? 2u : 3u;
+    blit.srcX = 0u;
+    blit.srcY = 0u;
+    blit.width = ordinal == 1u ? 105u : 127u;
+    blit.height = 161u;
+    blit.dstX = ordinal == 1u ? 0u : 105u;
+    blit.dstY = ENTRANCE_COMPAT_DOOR_SCREEN_Y;
+    blit.transparentColor = -1;
+    blit.sourceLineEvidence = "ENTRANCE.C:574-579 blits C002/C003 closed entrance doors over C004; DATA.C closed boxes left {0,104,28,188}, right {105,231,28,188}";
+    *outBlit = blit;
     return 1;
 }
 
@@ -347,6 +425,63 @@ int ENTRANCE_Compat_CompositeDoorOpeningFrame(unsigned char* framebuffer,
         drewDoor = 1;
     }
     return drewDoor || door->animationStep > 0u;
+}
+
+int ENTRANCE_Compat_DrawFallbackClosedDoors(unsigned char* framebuffer,
+                                            unsigned int framebufferWidth,
+                                            unsigned int framebufferHeight) {
+    int ok = 1;
+    /* Fallback for missing C002/C003 assets keeps the same source boxes as the
+     * closed-door blits above.  Palette indices are intentionally simple but
+     * geometry remains ENTRANCE.C/DATA.C owned. */
+    ok &= entrance_draw_fallback_panel(framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       0u,
+                                       ENTRANCE_COMPAT_DOOR_SCREEN_Y,
+                                       101u,
+                                       161u);
+    ok &= entrance_draw_fallback_panel(framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       109u,
+                                       ENTRANCE_COMPAT_DOOR_SCREEN_Y,
+                                       123u,
+                                       161u);
+    return ok;
+}
+
+int ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(unsigned char* framebuffer,
+                                                 unsigned int framebufferWidth,
+                                                 unsigned int framebufferHeight,
+                                                 const EntranceCompatDoorStep* door) {
+    int drew = 0;
+    if (!framebuffer || !door) return 0;
+    if (door->leftBoxW > 0u) {
+        if (!entrance_draw_fallback_panel(framebuffer,
+                                          framebufferWidth,
+                                          framebufferHeight,
+                                          door->leftBoxX,
+                                          ENTRANCE_COMPAT_DOOR_SCREEN_Y + door->leftBoxY,
+                                          door->leftBoxW,
+                                          door->leftBoxH)) {
+            return 0;
+        }
+        drew = 1;
+    }
+    if (door->rightBoxW > 0u) {
+        if (!entrance_draw_fallback_panel(framebuffer,
+                                          framebufferWidth,
+                                          framebufferHeight,
+                                          door->rightBoxX,
+                                          ENTRANCE_COMPAT_DOOR_SCREEN_Y + door->rightBoxY,
+                                          door->rightBoxW,
+                                          door->rightBoxH)) {
+            return 0;
+        }
+        drew = 1;
+    }
+    return drew;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
