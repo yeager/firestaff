@@ -75,6 +75,12 @@ typedef enum {
         CSB_V1_UTIL_ACTION_PLAN_STATUS_REDRAW
 } CSB_V1_UtilActionPlanKind;
 
+typedef enum {
+    CSB_V1_UTIL_APPLY_IGNORED = 0,
+    CSB_V1_UTIL_APPLY_REDRAW = 1,
+    CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND = 2
+} CSB_V1_UtilApplyResult;
+
 typedef struct {
     CSB_V1_UtilInputResultKind kind;
     CSB_V1_UtilFlowAction action;
@@ -92,6 +98,17 @@ typedef struct {
     const char *status_scope;
     const char *status;
 } CSB_V1_UtilActionPlan;
+
+typedef struct {
+    CSB_V1_UtilApplyResult result;
+    int selected_action_index_changed;
+    int selected_action_index;
+    int preview_active_changed;
+    int preview_active;
+    int entrance_command;
+    const char *status_scope;
+    const char *status;
+} CSB_V1_UtilApplyReceipt;
 
 typedef struct {
     CSB_V1_UtilFlowAction action;
@@ -241,6 +258,14 @@ int csb_v1_util_flow_entrance_command_for_action(
 void csb_v1_util_flow_action_plan_init(CSB_V1_UtilActionPlan *plan);
 int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
                                      CSB_V1_UtilActionPlan *out_plan);
+void csb_v1_util_flow_apply_receipt_init(
+    CSB_V1_UtilApplyReceipt *receipt);
+int csb_v1_util_flow_apply_receipt_from_action_plan(
+    const CSB_V1_UtilActionPlan *plan,
+    CSB_V1_UtilApplyReceipt *out_receipt);
+int csb_v1_util_flow_apply_receipt_from_input_result(
+    const CSB_V1_UtilInputResult *result,
+    CSB_V1_UtilApplyReceipt *out_receipt);
 int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
                                   CSB_V1_UtilInput input,
                                   int preview_active,

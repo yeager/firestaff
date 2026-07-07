@@ -23,6 +23,7 @@ int main(void)
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilInputResult result;
     CSB_V1_UtilActionPlan action_plan;
+    CSB_V1_UtilApplyReceipt apply_receipt;
     CSB_V1_UtilPanelLayout panel;
     CSB_V1_UtilRuntimeSnapshot snapshot;
     CSB_V1_UtilRenderRow rows[CSB_V1_UTIL_MENU_ROW_COUNT];
@@ -147,6 +148,16 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
               action_plan.preview_active == 0,
           "utility action plan resolves Load to entrance resume");
+    check(csb_v1_util_flow_apply_receipt_from_action_plan(
+              &action_plan,
+              &apply_receipt) &&
+              apply_receipt.result ==
+                  CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              apply_receipt.preview_active_changed &&
+              apply_receipt.preview_active == 0 &&
+              apply_receipt.entrance_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
+          "utility action receipt resolves Load to entrance command");
     check(csb_v1_util_flow_plan_for_action(
               CSB_V1_UTIL_ACTION_NEW,
               &action_plan) &&
@@ -171,6 +182,15 @@ int main(void)
               strcmp(action_plan.status_scope, "BOOT") == 0 &&
               strcmp(action_plan.status, "CSB PARTY READY") == 0,
           "utility action plan resolves View status");
+    check(csb_v1_util_flow_apply_receipt_from_action_plan(
+              &action_plan,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
+              apply_receipt.preview_active_changed &&
+              apply_receipt.preview_active == 1 &&
+              strcmp(apply_receipt.status_scope, "BOOT") == 0 &&
+              strcmp(apply_receipt.status, "CSB PARTY READY") == 0,
+          "utility action receipt resolves View status redraw");
     check(csb_v1_util_flow_plan_for_action(
               CSB_V1_UTIL_ACTION_EXIT,
               &action_plan) &&
@@ -190,6 +210,15 @@ int main(void)
               result.action == CSB_V1_UTIL_ACTION_LOAD &&
               result.preview_active == 0,
           "keyboard Down moves cursor and closes preview");
+    check(csb_v1_util_flow_apply_receipt_from_input_result(
+              &result,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
+              apply_receipt.selected_action_index_changed &&
+              apply_receipt.selected_action_index == 1 &&
+              apply_receipt.preview_active_changed &&
+              apply_receipt.preview_active == 0,
+          "utility input receipt resolves cursor move redraw");
     check(csb_v1_util_flow_handle_input(
               &flow,
               CSB_V1_UTIL_INPUT_ACTION,
@@ -199,6 +228,16 @@ int main(void)
               result.selected_action_index == 1 &&
               result.action == CSB_V1_UTIL_ACTION_LOAD,
           "keyboard Action activates selected Load row");
+    check(csb_v1_util_flow_apply_receipt_from_input_result(
+              &result,
+              &apply_receipt) &&
+              apply_receipt.result ==
+                  CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              apply_receipt.entrance_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+              apply_receipt.selected_action_index_changed &&
+              apply_receipt.selected_action_index == 1,
+          "utility input receipt resolves activation command");
     check(csb_v1_util_flow_handle_input(
               &flow,
               CSB_V1_UTIL_INPUT_BACK,
@@ -209,6 +248,14 @@ int main(void)
               strcmp(result.status_scope, "BOOT") == 0 &&
               strcmp(result.status, "CSB IMPORT READY") == 0,
           "keyboard Back close-preview result owns status");
+    check(csb_v1_util_flow_apply_receipt_from_input_result(
+              &result,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
+              apply_receipt.preview_active_changed &&
+              apply_receipt.preview_active == 0 &&
+              strcmp(apply_receipt.status, "CSB IMPORT READY") == 0,
+          "utility input receipt resolves close-preview status");
     check(csb_v1_util_flow_handle_firestaff_input_if_active(
               &flow,
               2,
