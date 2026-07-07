@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-07 CSB utility prompt render ownership: `csb_v1_utility_flow` now returns the startup utility prompt as a render row with CSB-owned position, text style, and copied text. M11 consumes that row instead of drawing the stored prompt through local panel coordinates.
+
 - ✅ 2026-07-07 CSB utility startup render material ownership: `csb_v1_utility_flow` now carries selected-highlight color, row text style, and prompt text style in its startup render contracts. M11 consumes those fields instead of choosing utility overlay material/style details locally.
 
 - ✅ 2026-07-07 CSB startup fallback render ownership: `csb_v1_startup_sequence_pc34_compat` now owns the no-asset entrance frame command plus formatted runtime start-pose detail row in `CSB_V1_StartupRenderPlan_PC34`. M11 only adapts the boot profile pose into render state and executes the CSB-owned fallback draw commands.

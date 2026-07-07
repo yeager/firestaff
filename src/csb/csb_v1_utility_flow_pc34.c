@@ -564,6 +564,28 @@ int csb_v1_util_flow_import_status_render_row(
     return 1;
 }
 
+int csb_v1_util_flow_prompt_render_row(
+    const CSB_V1_UtilFlowContext *ctx,
+    const char *prompt_override,
+    CSB_V1_UtilRenderTextRow *out_row)
+{
+    const char *prompt;
+
+    if (!ctx || !out_row) {
+        return 0;
+    }
+    memset(out_row, 0, sizeof(*out_row));
+    prompt = prompt_override;
+    if (!prompt || prompt[0] == '\0') {
+        return 0;
+    }
+    out_row->x = CSB_V1_UTIL_PANEL_X;
+    out_row->y = CSB_V1_UTIL_PROMPT_Y;
+    out_row->text_style = CSB_V1_UTIL_TEXT_STYLE_SMALL;
+    snprintf(out_row->text, sizeof(out_row->text), "%s", prompt);
+    return 1;
+}
+
 int csb_v1_util_flow_preview_render_rows(
     const CSB_V1_UtilFlowContext *ctx,
     CSB_V1_UtilRenderTextRow *rows,
