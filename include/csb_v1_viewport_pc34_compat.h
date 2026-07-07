@@ -8,6 +8,13 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
+typedef struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement
+    CSB_V1_ViewportRuntimeProjectileOverlayPlacement;
+typedef struct CSB_V1_ViewportRuntimeObjectOverlayPlacement
+    CSB_V1_ViewportRuntimeObjectOverlayPlacement;
+typedef struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement
+    CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
+
 typedef int (*CSB_V1_ViewportProjectileMaterialResolver)(
     void *user,
     const struct ProjectileInstance_Compat *projectile);
@@ -15,24 +22,14 @@ typedef int (*CSB_V1_ViewportProjectileMaterialResolver)(
 typedef int (*CSB_V1_ViewportProjectileSpriteDrawer)(
     void *user,
     const struct ProjectileInstance_Compat *projectile,
-    int forward,
-    int side,
-    int view_cell,
-    int source_zone,
-    int viewport_x,
-    int viewport_y,
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
     uint8_t *screen_pixels,
     int screen_stride);
 
 typedef int (*CSB_V1_ViewportExplosionSpriteDrawer)(
     void *user,
     const struct ExplosionInstance_Compat *explosion,
-    int forward,
-    int side,
-    int view_cell,
-    int source_zone,
-    int viewport_x,
-    int viewport_y,
+    const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
     uint8_t *screen_pixels,
     int screen_stride);
 
@@ -381,7 +378,7 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportProjectileBlitSpec;
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement {
     int visible;
     int forward;
     int side;
@@ -395,9 +392,9 @@ typedef struct {
     int sprite_y;
     int sprite_w;
     int sprite_h;
-} CSB_V1_ViewportRuntimeProjectileOverlayPlacement;
+};
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
     int visible;
     int forward;
     int side;
@@ -433,7 +430,7 @@ typedef struct {
     int icon_screen_y;
     int icon_draw_x;
     int icon_draw_y;
-} CSB_V1_ViewportRuntimeObjectOverlayPlacement;
+};
 
 typedef struct {
     int visible;
@@ -460,7 +457,7 @@ typedef struct {
     int marker_screen_y;
 } CSB_V1_ViewportRuntimeGroupOverlayPlacement;
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int visible;
     int forward;
     int side;
@@ -476,7 +473,7 @@ typedef struct {
     int sprite_y;
     int sprite_w;
     int sprite_h;
-} CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
+};
 
 typedef struct {
     int view_square;

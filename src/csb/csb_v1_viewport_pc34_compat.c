@@ -1460,12 +1460,7 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
             cfg->projectile_sprite_drawer(
                 cfg->projectile_sprite_user,
                 projectile,
-                placement.forward,
-                placement.side,
-                placement.view_cell,
-                placement.source_zone,
-                placement.viewport_x,
-                placement.viewport_y,
+                &placement,
                 cfg->viewport_pixels,
                 cfg->viewport_stride)) {
             ++cfg->runtime_projectile_sprite_drawn_count;
@@ -1525,12 +1520,7 @@ static void csb_v1_viewport_draw_runtime_explosion_overlays(
             cfg->explosion_sprite_drawer(
                 cfg->explosion_sprite_user,
                 explosion,
-                placement.forward,
-                placement.side,
-                placement.view_cell,
-                placement.source_zone,
-                placement.viewport_x,
-                placement.viewport_y,
+                &placement,
                 cfg->viewport_pixels,
                 cfg->viewport_stride)) {
             ++cfg->runtime_explosion_sprite_drawn_count;
