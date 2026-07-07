@@ -24,6 +24,8 @@ int main(void)
     DM2_V1_StartupActionPlan plan;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHit hit;
+    DM2_V1_StartupMenuSnapshot snapshot;
+    DM2_V1_StartupRowKind row_kind;
     DM2_V1_StartupRenderRow rows[4];
     DM2_V1_SessionState direct_session;
     DM2_V1_StartupSavePathResult save_path_result;
@@ -31,6 +33,7 @@ int main(void)
     char save_root[128];
     uint8_t save_slot;
     int last_session;
+    int row_slot;
     int startup_active;
     int row_count;
 
@@ -89,6 +92,12 @@ int main(void)
               menu.row_count == 3 &&
               menu.selected_row == 0,
           "refresh restores Continue, slot, and New Game rows");
+    check(dm2_v1_startup_menu_snapshot_from_menu(&snapshot, &menu) &&
+              dm2_v1_startup_menu_snapshot_row_at(
+                  &snapshot, 1, &row_kind, &row_slot) &&
+              row_kind == DM2_V1_STARTUP_ROW_SLOT &&
+              row_slot == 2,
+          "snapshot row lookup resolves slot without M11 row adapter");
     row_count = dm2_v1_startup_menu_build_render_rows(
         &menu,
         rows,

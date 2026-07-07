@@ -626,23 +626,6 @@ static void m11_dm2_startup_snapshot_to_state(
     state->dm2State.startup_menu_selected_row = snapshot->selected_row;
 }
 
-static int m11_dm2_startup_row_at(const M11_GameViewState *state,
-                                  int row,
-                                  DM2_V1_StartupRowKind *out_kind,
-                                  int *out_slot)
-{
-    DM2_V1_StartupMenuSnapshot snapshot;
-
-    if (!state) {
-        return 0;
-    }
-    m11_dm2_startup_snapshot_from_state(state, &snapshot);
-    return dm2_v1_startup_menu_snapshot_row_at(&snapshot,
-                                               row,
-                                               out_kind,
-                                               out_slot);
-}
-
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session,
                                          const char *status)
