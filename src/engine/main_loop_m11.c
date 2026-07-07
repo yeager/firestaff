@@ -3338,12 +3338,48 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_TEXTINPUT &&
+            menuState && useModernLauncher &&
+            (!gameView || !gameView->active) &&
+            M12_StartupMenu_ConsumeTextInput(menuState, ev.text.text)) {
+            if (menuPointerChanged) {
+                *menuPointerChanged = 1;
+            }
+            return M12_MENU_INPUT_NONE;
+        }
+        if (ev.type == SDL_TEXTINPUT &&
             m11_dm1_rename_consume_text_input(gameView,
                                               ev.text.text,
                                               gameViewResult)) {
             return M12_MENU_INPUT_NONE;
         }
         if (ev.type == SDL_KEYDOWN) {
+            if (menuState && useModernLauncher &&
+                (!gameView || !gameView->active) &&
+                M12_StartupMenu_TextEditActive(menuState)) {
+                switch (ev.key.keysym.sym) {
+                    case SDLK_BACKSPACE:
+                        (void)M12_StartupMenu_TextEditBackspace(menuState);
+                        if (menuPointerChanged) {
+                            *menuPointerChanged = 1;
+                        }
+                        return M12_MENU_INPUT_NONE;
+                    case SDLK_RETURN:
+                    case SDLK_KP_ENTER:
+                        (void)M12_StartupMenu_TextEditCommit(menuState);
+                        if (menuPointerChanged) {
+                            *menuPointerChanged = 1;
+                        }
+                        return M12_MENU_INPUT_NONE;
+                    case SDLK_ESCAPE:
+                        (void)M12_StartupMenu_TextEditCancel(menuState);
+                        if (menuPointerChanged) {
+                            *menuPointerChanged = 1;
+                        }
+                        return M12_MENU_INPUT_NONE;
+                    default:
+                        return M12_MENU_INPUT_NONE;
+                }
+            }
             if (m11_dm1_rename_text_input_active(gameView)) {
                 M11_GameInputResult renameResult =
                     m11_dm1_rename_handle_keydown(gameView,

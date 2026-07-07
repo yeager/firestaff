@@ -2,8 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
-- 🔧 2026-07-07 RetroAchievements follow-up: Firestaff now has a shared RetroAchievements runtime/config/event adapter, CLI activation flags, and persisted launcher settings for enable, hardcore mode, username, and API-token status. Remaining work is the real `rcheevos rc_client` backend, HTTP request bridge, editable account/login UI, badge/overlay rendering, and per-game achievement memory/event mapping.
-  - 2026-07-07 update: the modern start-menu settings panel now shows RetroAchievements, RA Hardcore, RA User, RA API Token, and Session Timer rows with matching hit-test/a11y/config state. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+- 🔧 2026-07-07 RetroAchievements follow-up: Firestaff now has a shared RetroAchievements runtime/config/event adapter, CLI activation flags, and persisted launcher settings for enable, hardcore mode, username, and API-token status. Remaining work is the real `rcheevos rc_client` backend, HTTP request bridge, login validation, badge/overlay rendering, and per-game achievement memory/event mapping.
+  - 2026-07-07 update: the modern start-menu settings panel now lets users edit RA username and API token directly, with token masking in visible UI. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
 
 - 🔧 2026-07-07 release follow-up: v3.0.65 packages the DM1 title/entrance and CSB startup ownership work after v3.0.64. Remaining release work is GitHub Actions packaging completion and asset publication proof.
 

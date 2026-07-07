@@ -130,6 +130,15 @@ int main(void) {
           "RA Username visible row -> cycle hit");
     CHECK(hit.index == 32,
           "RA Username visible row maps to M12_SETTINGS_ROW_RA_USERNAME");
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(M12_StartupMenu_TextEditActive(&state),
+          "RA Username click starts text edit");
+    CHECK(M12_StartupMenu_ConsumeTextInput(&state, "yeager") == 1,
+          "RA Username accepts text input");
+    CHECK(M12_StartupMenu_TextEditCommit(&state) == 1,
+          "RA Username commit succeeds");
+    CHECK(strcmp(state.settings.retroAchievementsUsername, "yeager") == 0,
+          "RA Username stored in menu settings");
 
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
@@ -138,6 +147,17 @@ int main(void) {
           "RA Token visible row -> cycle hit");
     CHECK(hit.index == 33,
           "RA Token visible row maps to M12_SETTINGS_ROW_RA_TOKEN");
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(M12_StartupMenu_TextEditActive(&state),
+          "RA Token click starts text edit");
+    CHECK(M12_StartupMenu_ConsumeTextInput(&state, "secret") == 1,
+          "RA Token accepts text input");
+    CHECK(M12_StartupMenu_TextEditBackspace(&state) == 1,
+          "RA Token supports backspace");
+    CHECK(M12_StartupMenu_TextEditCommit(&state) == 1,
+          "RA Token commit succeeds");
+    CHECK(strcmp(state.settings.retroAchievementsToken, "secre") == 0,
+          "RA Token stored without displaying raw token");
 
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
