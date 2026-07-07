@@ -2342,23 +2342,6 @@ static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
     }
 }
 
-static const char* m11_dm2_item_name(int item_id)
-{
-    const char *knownName = dm2_v1_tech_magic_item_name(item_id);
-    if (knownName) {
-        return knownName;
-    }
-    switch (item_id) {
-        case 1001: return "TORCH";
-        case 1002: return "BREAD";
-        case 1003: return "WATER";
-        case 1004: return "CHEESE";
-        case 1005: return "FOOT PLATE";
-        case 1006: return "LEG PLATE";
-        default: return NULL;
-    }
-}
-
 static const M11_TextStyle *m11_csb_startup_text_style(int style);
 static void m11_draw_csb_startup_plan_text(
     unsigned char *framebuffer,
@@ -3487,20 +3470,6 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
         return m11_csb_startup_activate_utility_action(state, result.action);
     }
     return M11_GAME_INPUT_IGNORED;
-}
-
-static void m11_format_dm2_item_name(int item_id, char* out, size_t out_size)
-{
-    const char* name;
-    if (!out || out_size == 0u) {
-        return;
-    }
-    name = m11_dm2_item_name(item_id);
-    if (name) {
-        snprintf(out, out_size, "%s", name);
-    } else {
-        snprintf(out, out_size, "ITEM %d", item_id);
-    }
 }
 
 static int m11_measure_text_pixels(const char* text,
@@ -5824,21 +5793,6 @@ static void m11_apply_champion_action_defense_before_action(
     state->world.party.champions[championIndex].actionDefense +=
         dm1_v1_graphic560_action_defense_get_pc34(actionIndex);
     state->world.party.champions[championIndex].actionIndex = actionIndex;
-}
-
-static void m11_disable_champion_action_after_action(
-        M11_GameViewState* state,
-        int championIndex,
-        unsigned char actionIndex) {
-    unsigned char ticks;
-    if (!state) return;
-    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
-    if (actionIndex >= 44) return;
-    ticks = m11_action_disabled_ticks_f0407(actionIndex);
-    state->actionDisabledTicks[championIndex] = ticks;
-    state->actionDisabledIndex[championIndex] =
-        state->actionDisabledTicks[championIndex] ? actionIndex : 0xFFu;
-    state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
 }
 
 static void m11_disable_champion_action_after_action_ticks(
@@ -21186,14 +21140,6 @@ static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
     return M11_GFX_DOOR_SET0_D3 + doorSet * 3 + depthOffset;
 }
 
-static int m11_dm1_scaled_dimension(int dimension, int scale) {
-    return ((dimension * scale) + (scale >> 1)) >> 5;
-}
-
-static int m11_dm1_wall_ornament_coord_set_index(int globalIndex) {
-    return dm1_v1_wall_ornament_coord_set_index_pc34(globalIndex);
-}
-
 int M11_GameView_GetDm1WallOrnamentZone(int coordSet,
                                         int viewWallIndex,
                                         int* outX,
@@ -21862,44 +21808,6 @@ static int m11_dm1_unreadable_inscription_box_height(int relForward,
         relForward, relSide, sideProjection, lineCount);
 }
 
-static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_line(const M11_GameViewState* state,
-                                                                   const char* text,
-                                                                   int* outLen) {
-    const M11_AssetSlot* fontSlot;
-    int i;
-    int len;
-    if (outLen) {
-        *outLen = 0;
-    }
-    if (!state || !text || !*text) {
-        return NULL;
-    }
-    if (!M11_AssetLoader_IsReady(&state->assetLoader)) {
-        return NULL;
-    }
-    fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
-    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
-        fontSlot->width < DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
-        fontSlot->height < DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
-        return NULL;
-    }
-    len = (int)strlen(text);
-    for (i = 0; i < len; ++i) {
-        int glyph = DM1_V1_InscriptionGlyphIndexForFontWidth(
-            (unsigned char)text[i],
-            (int)fontSlot->width);
-        if (glyph < 0 ||
-            (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontSlot->width) {
-            return NULL;
-        }
-    }
-    if (outLen) {
-        *outLen = len;
-    }
-    return fontSlot;
-}
-
 static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs(const M11_GameViewState* state,
                                                                      const unsigned char* glyphs,
                                                                      int glyphCount) {
@@ -21926,44 +21834,6 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs(const M11_G
         }
     }
     return fontSlot;
-}
-
-static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
-                                              unsigned char* framebuffer,
-                                              int fbW,
-                                              int fbH,
-                                              int x,
-                                              int y,
-                                              const char* text) {
-    const M11_AssetSlot* fontSlot;
-    int i;
-    int len;
-    if (!framebuffer) {
-        return 0;
-    }
-    fontSlot = m11_dm1_inscription_font_slot_for_line(state, text, &len);
-    if (!fontSlot) {
-        return 0;
-    }
-    /* ReDMCSB DUNVIEW.C:3619-3638 uses M648_GRAPHIC_INSCRIPTION_FONT
-     * and blits one 8x8 source cell per decoded glyph with C10 transparent. */
-    for (i = 0; i < len; ++i) {
-        int glyph = DM1_V1_InscriptionGlyphIndexForFontWidth(
-            (unsigned char)text[i],
-            (int)fontSlot->width);
-        M11_AssetLoader_BlitRegion(fontSlot,
-                                   glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
-                                   0,
-                                   DM1_V1_INSCRIPTION_GLYPH_WIDTH,
-                                   DM1_V1_INSCRIPTION_GLYPH_HEIGHT,
-                                   framebuffer,
-                                   fbW,
-                                   fbH,
-                                   x + i * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
-                                   y,
-                                   DM1_V1_INSCRIPTION_TRANSPARENT_COLOR);
-    }
-    return 1;
 }
 
 static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
@@ -27256,20 +27126,6 @@ static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
      * handler without requiring any M10 changes. */
     (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &firstMove);
     return 1;
-}
-
-static int m11_spawn_action_projectile(M11_GameViewState* state,
-                                       int championIndex,
-                                       int subtype,
-                                       int category,
-                                       int kineticEnergy,
-                                       int impactAttack,
-                                       int attackTypeCode) {
-    return m11_spawn_action_projectile_ex(state, championIndex, subtype,
-                                          category, kineticEnergy,
-                                          impactAttack, attackTypeCode,
-                                          -1, -1, 1, impactAttack,
-                                          THING_NONE, 0);
 }
 
 static const M11_DM1WeaponInfo* m11_dm1_weapon_info_for_thing(

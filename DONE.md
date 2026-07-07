@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 M11 viewport/startup dead-adapter cleanup: removed unused M11 wrappers left behind by recent DM1/DM2 ownership moves: generic DM2 item-name formatting, default action-disable wrapper, DM1 local scale/ornament-index shims, old ASCII inscription font-line route, and legacy non-extended action projectile spawn wrapper. M11 syntax now passes without unused-function warnings. Verification: `cc -std=c11 -Wall -Wextra -I. -Iinclude -Isrc -Isrc/engine -Isrc/shared -Isrc/dm1 -Isrc/csb -fsyntax-only src/engine/m11_game_view.c` passed cleanly, `SDL_VIDEODRIVER=dummy build-codex-menu-scan/firestaff_m11_inscription_font_probe` passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Nexus startup row-adapter cleanup: the unused M11-local `m11_nexus_startup_row_at()` bridge is removed, and the Nexus startup menu test now proves save-row lookup directly through `nexus_v1_startup_menu_snapshot_row_at()`. Verification: direct `test_nexus_v1_startup_menu_pc34_compat` build/run passed, M11 syntax passed with existing unused-function warnings, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM2 startup row-adapter cleanup: the unused M11-local `m11_dm2_startup_row_at()` bridge is removed, and the DM2 startup action contract now proves snapshot row lookup directly through `dm2_v1_startup_menu_snapshot_row_at()`. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 31/31, DM2 startup syntax passed, M11 syntax passed with existing unused-function warnings, and `git diff --check` passed.
