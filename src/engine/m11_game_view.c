@@ -523,65 +523,6 @@ static int m11_theron_startup_build_layout_state(
     const M11_GameViewState* state,
     Theron_StartupLayoutState* layout_state);
 
-static int m11_dm2_save_path_to_root_slot(const char *save_path,
-                                          char *out_root,
-                                          size_t out_root_cap,
-                                          unsigned char *out_slot,
-                                          int *out_last_session)
-{
-    const char *base;
-    const char *slash;
-    int slot;
-
-    if (!save_path || !save_path[0] || !out_root || out_root_cap == 0u ||
-        !out_slot || !out_last_session) {
-        return 0;
-    }
-    *out_last_session = 0;
-    slash = strrchr(save_path, '/');
-#ifdef _WIN32
-    {
-        const char *backslash = strrchr(save_path, '\\');
-        if (!slash || (backslash && backslash > slash)) {
-            slash = backslash;
-        }
-    }
-#endif
-    base = slash ? slash + 1 : save_path;
-    if (strcmp(base, "SKSave.dat") == 0 ||
-        strcmp(base, "SKSave.bak") == 0) {
-        slot = 0;
-        *out_last_session = 1;
-    } else {
-        if (strncmp(base, "SKSave", 6) != 0 ||
-            base[6] < '0' || base[6] > '9' ||
-            base[7] < '0' || base[7] > '9' ||
-            strcmp(base + 8, ".dat") != 0) {
-            return 0;
-        }
-        slot = (base[6] - '0') * 10 + (base[7] - '0');
-        if (slot < 0 || slot >= 10) {
-            return 0;
-        }
-    }
-    if (slash) {
-        size_t len = (size_t)(slash - save_path);
-        if (len == 0u || len >= out_root_cap) {
-            return 0;
-        }
-        memcpy(out_root, save_path, len);
-        out_root[len] = '\0';
-    } else {
-        if (out_root_cap < 2u) {
-            return 0;
-        }
-        out_root[0] = '.';
-        out_root[1] = '\0';
-    }
-    *out_slot = (unsigned char)slot;
-    return 1;
-}
-
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
                                          DM2_V1_BootProfile *profile,
                                          const char *save_path)
@@ -594,11 +535,12 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
     if (!state || !profile || !save_path || !save_path[0]) {
         return 0;
     }
-    if (!m11_dm2_save_path_to_root_slot(save_path,
-                                        save_root,
-                                        sizeof(save_root),
-                                        &slot,
-                                        &last_session)) {
+    if (!dm2_v1_startup_save_path_to_root_slot(
+            save_path,
+            save_root,
+            (int)sizeof(save_root),
+            &slot,
+            &last_session)) {
         m11_set_status(state, "BOOT", "DM2 RESUME PATH INVALID");
         return 0;
     }
