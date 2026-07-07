@@ -1357,15 +1357,21 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
 static void m11_sync_csb_state_from_profile(M11_GameViewState *state,
                                             const CSB_V1_BootProfile *profile)
 {
+    CSB_V1_RuntimeViewStateReceipt_PC34 receipt;
     if (!state || !profile) {
         return;
     }
-    state->csbState.level_loaded = profile->runtime.dungeon_handle ? 1 : 0;
-    state->csbState.current_level = profile->runtime.current_level;
-    state->csbState.party_x = profile->runtime.party_x;
-    state->csbState.party_y = profile->runtime.party_y;
-    state->csbState.party_dir = profile->runtime.party_dir;
-    state->csbState.tick_count = (int)profile->runtime.tick_count;
+    if (!csb_v1_runtime_view_state_receipt_from_profile_pc34(
+            &profile->runtime,
+            &receipt)) {
+        return;
+    }
+    state->csbState.level_loaded = receipt.level_loaded;
+    state->csbState.current_level = receipt.current_level;
+    state->csbState.party_x = receipt.party_x;
+    state->csbState.party_y = receipt.party_y;
+    state->csbState.party_dir = receipt.party_dir;
+    state->csbState.tick_count = receipt.tick_count;
     m11_sync_csb_party_from_runtime(state, &profile->runtime);
 }
 

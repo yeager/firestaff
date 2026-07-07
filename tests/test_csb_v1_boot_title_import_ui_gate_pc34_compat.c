@@ -467,7 +467,7 @@ static void test_utility_panel_layout_owns_visible_hit_area(void)
           flow.selected_action_index == 1,
           "utility pointer row activates through CSB-owned result");
     CHECK(csb_v1_util_flow_handle_point(&flow, 40, 92, 1, &point_result) &&
-          point_result.kind == CSB_V1_UTIL_INPUT_RESULT_NONE &&
+          point_result.kind == CSB_V1_UTIL_INPUT_RESULT_PANEL_CONSUMED &&
           point_result.selected_action_index == 1 &&
           point_result.preview_active == 1,
           "utility pointer panel whitespace is consumed through CSB-owned result");

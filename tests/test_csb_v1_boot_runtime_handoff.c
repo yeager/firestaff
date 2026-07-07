@@ -1486,6 +1486,36 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
     remove(path);
 }
 
+static void test_runtime_view_state_receipt_owns_scalar_handoff(void)
+{
+    CSB_V1_RuntimeProfile runtime;
+    CSB_V1_RuntimeViewStateReceipt_PC34 receipt;
+    CSB_V1_DungeonData dummy_dungeon;
+
+    csb_v1_runtime_init(&runtime, NULL);
+    memset(&dummy_dungeon, 0, sizeof(dummy_dungeon));
+    runtime.dungeon_handle = &dummy_dungeon;
+    runtime.current_level = 6;
+    runtime.party_x = 12;
+    runtime.party_y = 13;
+    runtime.party_dir = 2;
+    runtime.tick_count = 77;
+
+    CHECK(csb_v1_runtime_view_state_receipt_from_profile_pc34(
+              &runtime,
+              &receipt) == 1,
+          "runtime builds scalar view-state receipt for M11");
+    CHECK(receipt.level_loaded == 1 &&
+              receipt.current_level == 6 &&
+              receipt.party_x == 12 &&
+              receipt.party_y == 13 &&
+              receipt.party_dir == 2 &&
+              receipt.tick_count == 77,
+          "runtime view-state receipt mirrors loaded level, pose and tick");
+    runtime.dungeon_handle = NULL;
+    csb_v1_runtime_cleanup(&runtime);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
@@ -1493,6 +1523,7 @@ int main(void)
     test_enter_game_loads_m564_object_names_from_graphics_dat();
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_runtime_import_dm1_party_path_owns_utility_handoff();
+    test_runtime_view_state_receipt_owns_scalar_handoff();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();

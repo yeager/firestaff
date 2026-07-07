@@ -520,6 +520,9 @@ int csb_v1_util_flow_apply_receipt_from_input_result(
     case CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED:
         out_receipt->result = CSB_V1_UTIL_APPLY_REDRAW;
         return 1;
+    case CSB_V1_UTIL_INPUT_RESULT_PANEL_CONSUMED:
+        out_receipt->result = CSB_V1_UTIL_APPLY_REDRAW;
+        return 1;
     case CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW:
         out_receipt->result = CSB_V1_UTIL_APPLY_REDRAW;
         out_receipt->status_scope =
@@ -1051,7 +1054,7 @@ int csb_v1_util_flow_handle_point(CSB_V1_UtilFlowContext *ctx,
         }
     }
     if (csb_v1_util_flow_panel_contains_point(ctx, preview_active, x, y)) {
-        out_result->kind = CSB_V1_UTIL_INPUT_RESULT_NONE;
+        out_result->kind = CSB_V1_UTIL_INPUT_RESULT_PANEL_CONSUMED;
         out_result->action = CSB_V1_UTIL_ACTION_EXIT;
         out_result->selected_action_index = ctx->selected_action_index;
         out_result->preview_active = preview_active ? 1 : 0;

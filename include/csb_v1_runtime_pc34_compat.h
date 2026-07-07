@@ -996,6 +996,14 @@ typedef struct {
     int sync_profile_state;
     int sync_leader_hand;
 } CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34;
+typedef struct {
+    int level_loaded;
+    int current_level;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int tick_count;
+} CSB_V1_RuntimeViewStateReceipt_PC34;
 void csb_v1_runtime_startup_handoff_receipt_init_pc34(
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 *receipt);
 int csb_v1_runtime_apply_startup_handoff_pc34(
@@ -1021,6 +1029,11 @@ int csb_v1_runtime_apply_startup_sequence_plan_pc34(
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
     const char *resume_path,
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt);
+void csb_v1_runtime_view_state_receipt_init_pc34(
+    CSB_V1_RuntimeViewStateReceipt_PC34 *receipt);
+int csb_v1_runtime_view_state_receipt_from_profile_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_RuntimeViewStateReceipt_PC34 *out_receipt);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

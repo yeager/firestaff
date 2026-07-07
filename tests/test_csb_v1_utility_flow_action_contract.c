@@ -370,6 +370,21 @@ int main(void)
               apply_receipt.preview_active_changed &&
               apply_receipt.preview_active == 0,
           "pointer helper now returns CSB-owned apply receipt");
+    check(csb_v1_util_flow_apply_point_if_active(
+              &flow,
+              40,
+              92,
+              1,
+              0,
+              0,
+              1,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
+              apply_receipt.selected_action_index_changed &&
+              apply_receipt.selected_action_index == 1 &&
+              apply_receipt.preview_active_changed &&
+              apply_receipt.preview_active == 1,
+          "pointer helper consumes visible utility panel background");
     check(!csb_v1_util_flow_apply_point_if_active(
               &flow,
               40,
@@ -391,7 +406,7 @@ int main(void)
               flow.selected_action_index == 1,
           "pointer row activates through CSB-owned result");
     check(csb_v1_util_flow_handle_point(&flow, 40, 92, 1, &result) &&
-              result.kind == CSB_V1_UTIL_INPUT_RESULT_NONE &&
+              result.kind == CSB_V1_UTIL_INPUT_RESULT_PANEL_CONSUMED &&
               result.selected_action_index == 1 &&
               result.preview_active == 1,
           "pointer panel whitespace is consumed");
