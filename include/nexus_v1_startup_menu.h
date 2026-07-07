@@ -294,6 +294,15 @@ int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
                                      Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_menu_snapshot_refresh(
     Nexus_V1_StartupMenuSnapshot *snapshot);
+int nexus_v1_startup_menu_snapshot_from_facts(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row);
+int nexus_v1_startup_menu_snapshot_scan_or_new_game_from_facts(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const char *save_dir,
+    int selected_row);
 int nexus_v1_startup_menu_snapshot_row_at(
     const Nexus_V1_StartupMenuSnapshot *snapshot,
     int row,
@@ -363,6 +372,12 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
 int nexus_v1_startup_champion_snapshot_refresh(
     const Nexus_V1_ChampionPool *pool,
     Nexus_V1_StartupChampionSnapshot *snapshot);
+int nexus_v1_startup_champion_snapshot_from_facts(
+    const Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot,
+    unsigned int slot_mask,
+    int cursor,
+    int frame);
 int nexus_v1_startup_champion_snapshot_handle_input(
     Nexus_V1_ChampionPool *pool,
     Nexus_V1_StartupChampionSnapshot *snapshot,

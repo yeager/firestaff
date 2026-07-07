@@ -369,6 +369,18 @@ int main(void)
         memset(&champion_snapshot, 0, sizeof(champion_snapshot));
         champion_snapshot.cursor = 0;
         champion_snapshot.frame = 12;
+        expect(nexus_v1_startup_champion_snapshot_from_facts(
+                   &champions,
+                   &champion_snapshot,
+                   0x0fffu,
+                   99,
+                   -5) &&
+                   champion_snapshot.slot_mask == 0x00ffu &&
+                   champion_snapshot.cursor == 0 &&
+                   champion_snapshot.frame == 0,
+               "Nexus champion snapshot facts helper clamps cursor and frame");
+        champion_snapshot.cursor = 0;
+        champion_snapshot.frame = 12;
         expect(nexus_v1_startup_champion_snapshot_handle_input(
                    &champions,
                    &champion_snapshot,
@@ -963,6 +975,26 @@ int main(void)
                    snapshot_kind == NEXUS_V1_STARTUP_ROW_SLOT &&
                    snapshot_slot == 3,
                "startup snapshot row lookup resolves slot without M11 row adapter");
+        expect(nexus_v1_startup_menu_snapshot_from_facts(
+                   &snapshot,
+                   save_dir,
+                   menu.slot_mask,
+                   99) &&
+                   strcmp(snapshot.save_dir, save_dir) == 0 &&
+                   snapshot.slot_mask == menu.slot_mask &&
+                   snapshot.row_count == 2 &&
+                   snapshot.selected_row == 1,
+               "startup snapshot facts helper owns save row clamp");
+        expect(nexus_v1_startup_menu_snapshot_scan_or_new_game_from_facts(
+                   &snapshot,
+                   save_dir,
+                   99) &&
+                   strcmp(snapshot.save_dir, save_dir) == 0 &&
+                   snapshot.slot_mask == menu.slot_mask &&
+                   snapshot.row_count == 2 &&
+                   snapshot.selected_row == 1,
+               "startup snapshot scan helper owns save scan from facts");
+        snapshot.selected_row = 0;
         expect(nexus_v1_startup_menu_snapshot_handle_input(
                    &snapshot,
                    NEXUS_V1_STARTUP_INPUT_DOWN,

@@ -615,6 +615,45 @@ int nexus_v1_startup_menu_snapshot_refresh(
     return 1;
 }
 
+int nexus_v1_startup_menu_snapshot_from_facts(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row)
+{
+    Nexus_V1_StartupMenu menu;
+
+    if (!snapshot) {
+        return 0;
+    }
+    nexus_v1_startup_menu_init(&menu, save_dir);
+    menu.selected_row = selected_row;
+    if (!nexus_v1_startup_menu_refresh(&menu, slot_mask)) {
+        return 0;
+    }
+    nexus_v1_startup_menu_to_snapshot(&menu, snapshot);
+    return 1;
+}
+
+int nexus_v1_startup_menu_snapshot_scan_or_new_game_from_facts(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const char *save_dir,
+    int selected_row)
+{
+    Nexus_V1_StartupMenu menu;
+
+    if (!snapshot) {
+        return 0;
+    }
+    nexus_v1_startup_menu_init(&menu, save_dir);
+    menu.selected_row = selected_row;
+    if (!nexus_v1_startup_menu_scan_or_new_game(&menu)) {
+        return 0;
+    }
+    nexus_v1_startup_menu_to_snapshot(&menu, snapshot);
+    return 1;
+}
+
 int nexus_v1_startup_menu_snapshot_row_at(
     const Nexus_V1_StartupMenuSnapshot *snapshot,
     int row,
@@ -1274,6 +1313,23 @@ int nexus_v1_startup_champion_snapshot_refresh(
         snapshot->frame = 0;
     }
     return 1;
+}
+
+int nexus_v1_startup_champion_snapshot_from_facts(
+    const Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot,
+    unsigned int slot_mask,
+    int cursor,
+    int frame)
+{
+    if (!snapshot) {
+        return 0;
+    }
+    memset(snapshot, 0, sizeof(*snapshot));
+    snapshot->slot_mask = nexus_v1_startup_slot_mask_clamp(slot_mask);
+    snapshot->cursor = cursor;
+    snapshot->frame = frame;
+    return nexus_v1_startup_champion_snapshot_refresh(pool, snapshot);
 }
 
 int nexus_v1_startup_champion_snapshot_handle_input(
