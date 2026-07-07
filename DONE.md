@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 CSB startup render-executor ownership: `csb_v1_startup_sequence_pc34_compat` now owns startup render-command iteration, title stop, full-surface fallback routing, door-opening early exit, closed-door versus fallback routing, and wait-loop utility-panel gating through `csb_v1_startup_execute_render_plan_pc34()`. M11 now supplies only rendering callbacks for CSB-owned commands. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.
+
 - ✅ 2026-07-07 CSB title-empty fallback ownership: `csb_v1_startup_sequence_pc34_compat` now owns the PRESENTS title-region empty-pixel fallback policy. M11 only executes the CSB startup render plan and draws the requested fallback text when the CSB module says it is needed. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 TITLE.DAT framebuffer unpack ownership: `title_frontend_v1` now owns 4bpp packed TITLE screen unpacking into indexed pixels. M11 consumes `V1_TitleFrontend_Unpack4bppScreenToIndexed()` instead of carrying TITLE framebuffer layout code locally. Verification: `title_frontend_runtime_cadence_source_lock`, `title_frontend_c001_fallback_gate_pc34_compat`, and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.

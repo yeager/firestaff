@@ -358,6 +358,26 @@ typedef int (*CSB_V1_StartupOpeningCompositeExecutor_PC34)(
     void *user,
     const CSB_V1_StartupOpeningComposite_PC34 *composite);
 
+typedef struct CSB_V1_StartupRenderExecutor_PC34 {
+    void *user;
+    int (*draw_title)(void *user,
+                      const CSB_V1_StartupRenderPlan_PC34 *plan);
+    void (*clear_black)(void *user,
+                        const CSB_V1_StartupRenderPlan_PC34 *plan);
+    int (*draw_full_surface)(void *user,
+                             const CSB_V1_StartupRenderPlan_PC34 *plan);
+    int (*draw_opening_frame)(void *user,
+                              const CSB_V1_StartupRenderPlan_PC34 *plan);
+    void (*draw_closed_doors)(void *user,
+                              const CSB_V1_StartupRenderPlan_PC34 *plan);
+    void (*draw_door_fallback)(void *user,
+                               const CSB_V1_StartupRenderPlan_PC34 *plan);
+    void (*draw_fallback_text)(void *user,
+                               const CSB_V1_StartupRenderPlan_PC34 *plan);
+    void (*draw_utility_panel)(void *user,
+                               const CSB_V1_StartupRenderPlan_PC34 *plan);
+} CSB_V1_StartupRenderExecutor_PC34;
+
 typedef struct CSB_V1_StartupCommandState_PC34 {
     int title_active;
     int title_frame;
@@ -422,6 +442,9 @@ int csb_v1_startup_execute_opening_composite_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
     void *user);
+int csb_v1_startup_execute_render_plan_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor);
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int skip_startup);
