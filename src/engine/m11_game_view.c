@@ -14502,21 +14502,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
+            Theron_StartupLayoutState layout_state;
             Theron_StartupAction action;
             Theron_StartupResult action_result;
-            Theron_V1StartupContinueAvailability continue_availability;
-            int has_continue = 0;
-            if (m11_theron_continue_availability(state,
-                                                 &continue_availability)) {
-                has_continue = continue_availability.has_any_continue;
+            if (!m11_theron_startup_build_layout_state(state,
+                                                       &layout_state)) {
+                return M11_GAME_INPUT_IGNORED;
             }
-            action_result = theron_v1_startup_handle_input_with_progression(
-                (Theron_StartupPhase)state->theronState.startup_phase,
-                (Theron_DungeonID)state->theronState.selected_dungeon,
-                &world->progression,
-                state->theronState.startup_cursor,
-                state->theronState.save_resume_continue_focus,
-                has_continue,
+            action_result = theron_v1_startup_handle_input_from_layout_state(
+                &layout_state,
                 theron_v1_startup_input_from_firestaff_menu_code((int)input),
                 &action);
             if (action_result != THERON_STARTUP_OK) {

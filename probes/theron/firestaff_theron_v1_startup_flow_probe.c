@@ -567,6 +567,22 @@ int main(void) {
             check_int("startup stage pointer miss action",
                       pointer_action.kind,
                       THERON_STARTUP_ACTION_NONE);
+            layout_state.has_tqsv_continue = 1;
+            layout_state.tqsv_slot = 2;
+            layout_state.continue_focus = 0;
+            handled = theron_v1_startup_handle_input_from_layout_state(
+                &layout_state,
+                THERON_STARTUP_INPUT_UP,
+                &pointer_action);
+            check_int("startup layout input result",
+                      handled,
+                      THERON_STARTUP_OK);
+            check_int("startup layout input action",
+                      pointer_action.kind,
+                      THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR);
+            check_int("startup layout input focuses continue",
+                      pointer_action.continue_focus,
+                      1);
         }
 
         layout_state.phase = THERON_STARTUP_PHASE_SOUL_ROOM;
