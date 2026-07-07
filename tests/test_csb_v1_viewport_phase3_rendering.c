@@ -2615,6 +2615,9 @@ static void test_csb_runtime_overlay_placement_contracts(void)
     CSB_V1_ViewportRuntimeObjectOverlayPlacement object_place;
     CSB_V1_ViewportRuntimeGroupOverlayPlacement group_place;
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement explosion_place;
+    CSB_V1_ViewportRuntimeObjectSpriteBlit object_sprite_blit;
+    CSB_V1_ViewportRuntimeObjectIconBlit object_icon_blit;
+    CSB_V1_ViewportRuntimeGroupSpriteBlit group_sprite_blit;
     int min_side = 99;
     int max_side = -99;
     int map_x = 0;
@@ -2884,6 +2887,37 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_place.icon_draw_x, 72);
     check_int("csb.runtime_object_overlay.d1c.pile0.icon_draw_y",
               object_place.icon_draw_y, 121);
+    object_place.sprite_thing_type = THING_TYPE_WEAPON;
+    object_place.sprite_subtype_index = 8;
+    object_place.icon_index = 32;
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit",
+              csb_v1_viewport_runtime_object_sprite_blit(
+                  &object_place, &object_sprite_blit), 1);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.type",
+              object_sprite_blit.thing_type, THING_TYPE_WEAPON);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.subtype",
+              object_sprite_blit.subtype_index, 8);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.cell",
+              object_sprite_blit.relative_cell, 0);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.pile",
+              object_sprite_blit.pile_index, 0);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.vx",
+              object_sprite_blit.viewport_x, 0);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.vy",
+              object_sprite_blit.viewport_y, DM1_VIEWPORT_SCREEN_Y);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.row",
+              object_sprite_blit.source_zone_row, 8);
+    check_int("csb.runtime_object_overlay.d1c.icon_blit",
+              csb_v1_viewport_runtime_object_icon_blit(
+                  &object_place, &object_icon_blit), 1);
+    check_int("csb.runtime_object_overlay.d1c.icon_blit.icon",
+              object_icon_blit.icon_index, 32);
+    check_int("csb.runtime_object_overlay.d1c.icon_blit.x",
+              object_icon_blit.draw_x, 72);
+    check_int("csb.runtime_object_overlay.d1c.icon_blit.y",
+              object_icon_blit.draw_y, 121);
+    check_int("csb.runtime_object_overlay.d1c.icon_blit.transparent",
+              object_icon_blit.transparent_color, 0);
     {
         uint8_t screen[320 * 200];
         memset(screen, 0, sizeof(screen));
@@ -2987,6 +3021,23 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.marker_screen_x, 112);
     check_int("csb.runtime_group_overlay.d1c.marker_y",
               group_place.marker_screen_y, 144);
+    group_place.sprite_creature_type = 6;
+    group_place.sprite_direction = 2;
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit",
+              csb_v1_viewport_runtime_group_sprite_blit(
+                  &group_place, &group_sprite_blit), 1);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.type",
+              group_sprite_blit.creature_type, 6);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.direction",
+              group_sprite_blit.direction, 2);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.side",
+              group_sprite_blit.relative_side, 0);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.x",
+              group_sprite_blit.x, 85);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.y",
+              group_sprite_blit.y, 74);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.depth",
+              group_sprite_blit.depth_index, 0);
     check_int("csb.runtime_group_overlay.coord.giant_scorpion",
               csb_v1_viewport_runtime_creature_coordinate_set(0), 1);
     check_int("csb.runtime_group_overlay.coord.swamp_slime",

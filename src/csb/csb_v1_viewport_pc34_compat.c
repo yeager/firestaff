@@ -970,6 +970,61 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
     return placement.visible;
 }
 
+int csb_v1_viewport_runtime_object_sprite_blit(
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeObjectSpriteBlit *out_blit)
+{
+    CSB_V1_ViewportRuntimeObjectSpriteBlit blit;
+
+    memset(&blit, 0, sizeof(blit));
+    blit.thing_type = -1;
+    blit.subtype_index = -1;
+    if (!placement || !out_blit || !placement->visible ||
+        placement->sprite_subtype_index < 0) {
+        if (out_blit) *out_blit = blit;
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115 object draw path routes all runtime
+     * floor-object asset parameters through the current view cell's
+     * C2500/object-row contract.  Expose that as one CSB-owned blit
+     * record so callers only perform the asset copy. */
+    blit.thing_type = placement->sprite_thing_type;
+    blit.subtype_index = placement->sprite_subtype_index;
+    blit.relative_cell = placement->sprite_relative_cell;
+    blit.pile_index = placement->sprite_pile_index;
+    blit.viewport_x = placement->sprite_viewport_x;
+    blit.viewport_y = placement->sprite_viewport_y;
+    blit.viewport_w = placement->sprite_viewport_w;
+    blit.viewport_h = placement->sprite_viewport_h;
+    blit.depth_index = placement->sprite_depth_index;
+    blit.source_zone_row = placement->object_row;
+    *out_blit = blit;
+    return blit.thing_type >= 0;
+}
+
+int csb_v1_viewport_runtime_object_icon_blit(
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeObjectIconBlit *out_blit)
+{
+    CSB_V1_ViewportRuntimeObjectIconBlit blit;
+
+    memset(&blit, 0, sizeof(blit));
+    blit.icon_index = -1;
+    if (!placement || !out_blit || !placement->visible ||
+        placement->icon_index < 0) {
+        if (out_blit) *out_blit = blit;
+        return 0;
+    }
+
+    blit.icon_index = placement->icon_index;
+    blit.draw_x = placement->icon_draw_x;
+    blit.draw_y = placement->icon_draw_y;
+    blit.transparent_color = 0;
+    *out_blit = blit;
+    return 1;
+}
+
 int csb_v1_viewport_runtime_group_overlay_placement(
     int forward,
     int side,
@@ -1089,6 +1144,32 @@ int csb_v1_viewport_runtime_group_overlay_slot_placement(
     placement.marker_screen_y = placement.screen_y;
     if (out_placement) *out_placement = placement;
     return placement.visible;
+}
+
+int csb_v1_viewport_runtime_group_sprite_blit(
+    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeGroupSpriteBlit *out_blit)
+{
+    CSB_V1_ViewportRuntimeGroupSpriteBlit blit;
+
+    memset(&blit, 0, sizeof(blit));
+    blit.creature_type = -1;
+    if (!placement || !out_blit || !placement->visible ||
+        placement->sprite_creature_type < 0) {
+        if (out_blit) *out_blit = blit;
+        return 0;
+    }
+
+    blit.creature_type = placement->sprite_creature_type;
+    blit.direction = placement->sprite_direction;
+    blit.relative_side = placement->sprite_relative_side;
+    blit.x = placement->sprite_x;
+    blit.y = placement->sprite_y;
+    blit.w = placement->sprite_w;
+    blit.h = placement->sprite_h;
+    blit.depth_index = placement->depth_index;
+    *out_blit = blit;
+    return 1;
 }
 
 int csb_v1_viewport_runtime_overlay_side_range(
