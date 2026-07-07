@@ -87,6 +87,26 @@ int main(void)
               save_slot == 0u &&
               last_session == 1,
           "direct resume session loader reports missing last-session after parsing");
+    memset(save_root, 0, sizeof(save_root));
+    check(dm2_v1_startup_execute_save_path(
+              "/tmp/firestaff-dm2-startup-missing/Other.dat",
+              save_root,
+              (int)sizeof(save_root),
+              &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+              strcmp(execution.status, "DM2 RESUME PATH INVALID") == 0 &&
+              save_root[0] == '\0',
+          "direct resume path execution reports invalid save path");
+    memset(save_root, 0, sizeof(save_root));
+    check(dm2_v1_startup_execute_save_path(
+              "/tmp/firestaff-dm2-startup-missing/SKSave03.dat",
+              save_root,
+              (int)sizeof(save_root),
+              &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+              strcmp(execution.status, "DM2 RESUME FAILED") == 0 &&
+              strcmp(save_root, "/tmp/firestaff-dm2-startup-missing") == 0,
+          "direct resume path execution reports missing parsed slot");
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-startup");
     check(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 2)) &&

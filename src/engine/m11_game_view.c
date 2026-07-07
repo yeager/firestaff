@@ -529,30 +529,33 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
                                          const char *save_path)
 {
     char save_root[M11_GAME_VIEW_PATH_CAPACITY];
-    DM2_V1_SessionState session;
-    DM2_V1_StartupSavePathResult load_result;
+    DM2_V1_StartupExecution execution;
 
     if (!state || !profile || !save_path || !save_path[0]) {
         return 0;
     }
-    load_result = dm2_v1_startup_load_session_from_save_path(
+    if (!dm2_v1_startup_execute_save_path(
             save_path,
             save_root,
             (int)sizeof(save_root),
-            &session,
-            NULL,
-            NULL);
-    if (load_result == DM2_V1_STARTUP_SAVE_PATH_INVALID) {
-        m11_set_status(state, "BOOT", "DM2 RESUME PATH INVALID");
+            &execution)) {
         return 0;
     }
-    dm2_v1_boot_set_save_root(profile, save_root);
-    if (load_result != DM2_V1_STARTUP_SAVE_PATH_LOADED ||
-        dm2_v1_runtime_apply_session(&session) != 0) {
+    if (save_root[0]) {
+        dm2_v1_boot_set_save_root(profile, save_root);
+    }
+    if (execution.kind != DM2_V1_STARTUP_EXEC_SESSION_READY) {
+        m11_set_status(state,
+                       "BOOT",
+                       execution.status ? execution.status
+                                        : "DM2 RESUME FAILED");
+        return 0;
+    }
+    if (dm2_v1_runtime_apply_session(&execution.session) != 0) {
         m11_set_status(state, "BOOT", "DM2 RESUME FAILED");
         return 0;
     }
-    m11_dm2_mirror_session_party(state, &session);
+    m11_dm2_mirror_session_party(state, &execution.session);
     return 1;
 }
 

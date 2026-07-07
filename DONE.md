@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM2 direct resume execution ownership: `dm2_v1_startup_menu` now exposes `dm2_v1_startup_execute_save_path()`, so direct `SKSave.dat` / `SKSave.bak` / `SKSaveNN.dat` startup handoff resolves invalid paths, missing parsed saves, status text, and loaded session execution inside the DM2 startup layer. M11 now only sets the parsed save root and applies a returned ready session. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 39/39, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 V1 movement input adapter ownership: `dm1_v1_movement_pc34_compat` now maps Firestaff menu input codes to source movement commands through `DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat()`. M11 consumes that adapter for DM1 V1 pipeline ticks and only asserts the M12 enum code contract. Verification: direct `test_dm1_v1_movement_core_pc34_compat` build/run passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB entrance input adapter ownership: `csb_v1_startup_sequence_pc34_compat` now maps Firestaff menu input codes to CSB startup entrance inputs through `csb_v1_startup_input_from_firestaff_menu_code_pc34()`. M11 consumes that adapter for entrance keyboard handling and only asserts the M12 enum code contract. Verification: direct `test_csb_v1_startup_entrance_pointer_pc34_compat` build/run passed 79/79, M11 syntax passed cleanly, and `git diff --check` passed.
