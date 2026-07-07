@@ -5,7 +5,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.60 LANGUAGES C)
+project(Firestaff VERSION 3.0.61 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -17690,6 +17690,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
         src/csb/csb_v1_csbgraphics_dat_real_scan.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c
@@ -17727,6 +17728,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
         src/csb/csb_v1_csbgraphics_dat_real_scan.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c
