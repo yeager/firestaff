@@ -48,6 +48,45 @@ const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index) 
     return &g_tqr_mirror_meta[mirror_index];
 }
 
+Theron_StartupInput theron_v1_startup_input_from_firestaff_menu_code(
+    int menu_input)
+{
+    enum {
+        FIRESTAFF_MENU_INPUT_NONE = 0,
+        FIRESTAFF_MENU_INPUT_UP = 1,
+        FIRESTAFF_MENU_INPUT_DOWN = 2,
+        FIRESTAFF_MENU_INPUT_LEFT = 3,
+        FIRESTAFF_MENU_INPUT_RIGHT = 4,
+        FIRESTAFF_MENU_INPUT_TURN_LEFT = 7,
+        FIRESTAFF_MENU_INPUT_TURN_RIGHT = 8,
+        FIRESTAFF_MENU_INPUT_ACCEPT = 9,
+        FIRESTAFF_MENU_INPUT_BACK = 10,
+        FIRESTAFF_MENU_INPUT_ACTION = 11
+    };
+
+    switch (menu_input) {
+    case FIRESTAFF_MENU_INPUT_UP:
+        return THERON_STARTUP_INPUT_UP;
+    case FIRESTAFF_MENU_INPUT_DOWN:
+        return THERON_STARTUP_INPUT_DOWN;
+    case FIRESTAFF_MENU_INPUT_LEFT:
+    case FIRESTAFF_MENU_INPUT_TURN_LEFT:
+        return THERON_STARTUP_INPUT_LEFT;
+    case FIRESTAFF_MENU_INPUT_RIGHT:
+    case FIRESTAFF_MENU_INPUT_TURN_RIGHT:
+        return THERON_STARTUP_INPUT_RIGHT;
+    case FIRESTAFF_MENU_INPUT_ACCEPT:
+        return THERON_STARTUP_INPUT_ACCEPT;
+    case FIRESTAFF_MENU_INPUT_ACTION:
+        return THERON_STARTUP_INPUT_ACTION;
+    case FIRESTAFF_MENU_INPUT_BACK:
+        return THERON_STARTUP_INPUT_BACK;
+    case FIRESTAFF_MENU_INPUT_NONE:
+    default:
+        return THERON_STARTUP_INPUT_NONE;
+    }
+}
+
 int theron_v1_startup_roster_index_for_mirror(int mirror_index) {
     if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
         return -1;
