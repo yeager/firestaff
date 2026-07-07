@@ -54,6 +54,58 @@ static void expect_true(int condition, const char* message) {
     }
 }
 
+typedef struct {
+    int gdat_count;
+    int fill_count;
+    int outline_count;
+    int text_count;
+} DM2StartupDrawProbe;
+
+static int dm2_startup_probe_gdat(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    DM2StartupDrawProbe *probe = (DM2StartupDrawProbe*)userdata;
+    if (probe && command &&
+        command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE) {
+        ++probe->gdat_count;
+    }
+    return 1;
+}
+
+static void dm2_startup_probe_fill(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    DM2StartupDrawProbe *probe = (DM2StartupDrawProbe*)userdata;
+    if (probe && command &&
+        command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT) {
+        ++probe->fill_count;
+    }
+}
+
+static void dm2_startup_probe_outline(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    DM2StartupDrawProbe *probe = (DM2StartupDrawProbe*)userdata;
+    if (probe && command &&
+        command->kind == DM2_V1_STARTUP_DRAW_OUTLINE_RECT) {
+        ++probe->outline_count;
+    }
+}
+
+static void dm2_startup_probe_text(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    DM2StartupDrawProbe *probe = (DM2StartupDrawProbe*)userdata;
+    if (probe && command &&
+        command->kind == DM2_V1_STARTUP_DRAW_TEXT) {
+        ++probe->text_count;
+    }
+}
+
 static int write_tiny_file(const char* path, const char* bytes) {
     FILE* f = fopen(path, "wb");
     if (!f) {
@@ -254,6 +306,8 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupAction action;
     DM2_V1_StartupRowKind row_kind = DM2_V1_STARTUP_ROW_NONE;
     DM2_V1_StartupDrawCommand commands[16];
+    DM2_V1_StartupDrawExecutor executor;
+    DM2StartupDrawProbe draw_probe;
     int command_count;
     char label[64];
     char save_root[128];
@@ -368,6 +422,21 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands[6].row == 0 &&
                     strcmp(commands[6].text, "CONTINUE") == 0,
                 "DM2 startup presentation builds from snapshot");
+    memset(&draw_probe, 0, sizeof(draw_probe));
+    executor.userdata = &draw_probe;
+    executor.draw_gdat_image = dm2_startup_probe_gdat;
+    executor.fill_rect = dm2_startup_probe_fill;
+    executor.outline_rect = dm2_startup_probe_outline;
+    executor.draw_text = dm2_startup_probe_text;
+    expect_true(dm2_v1_startup_execute_draw_commands(
+                    commands,
+                    command_count,
+                    &executor) &&
+                    draw_probe.gdat_count == 1 &&
+                    draw_probe.fill_count == 2 &&
+                    draw_probe.outline_count == 1 &&
+                    draw_probe.text_count == 6,
+                "DM2 startup presentation owns draw-command executor dispatch");
     expect_true(dm2_v1_startup_menu_row_at(&menu, 0, &row_kind, &slot) &&
                     row_kind == DM2_V1_STARTUP_ROW_CONTINUE &&
                     slot == -1,

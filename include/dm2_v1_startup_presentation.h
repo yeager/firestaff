@@ -35,6 +35,26 @@ typedef struct {
     char text[64];
 } DM2_V1_StartupDrawCommand;
 
+typedef int (*DM2_V1_StartupDrawGdatImageFn)(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command);
+
+typedef void (*DM2_V1_StartupDrawRectFn)(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command);
+
+typedef void (*DM2_V1_StartupDrawTextFn)(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command);
+
+typedef struct {
+    void *userdata;
+    DM2_V1_StartupDrawGdatImageFn draw_gdat_image;
+    DM2_V1_StartupDrawRectFn fill_rect;
+    DM2_V1_StartupDrawRectFn outline_rect;
+    DM2_V1_StartupDrawTextFn draw_text;
+} DM2_V1_StartupDrawExecutor;
+
 int dm2_v1_startup_row_label(DM2_V1_StartupRowKind kind,
                              int slot,
                              char *out_label,
@@ -47,5 +67,9 @@ int dm2_v1_startup_presentation_build_from_snapshot(
     const DM2_V1_StartupMenuSnapshot *snapshot,
     DM2_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int dm2_v1_startup_execute_draw_commands(
+    const DM2_V1_StartupDrawCommand *commands,
+    int command_count,
+    const DM2_V1_StartupDrawExecutor *executor);
 
 #endif
