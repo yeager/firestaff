@@ -256,7 +256,38 @@ static void expect_dm2_startup_layout_contract(void) {
     DM2_V1_StartupDrawCommand commands[16];
     int command_count;
     char label[64];
+    char save_root[128];
+    uint8_t save_slot = 99u;
+    int last_session = 0;
     int slot = -1;
+
+    expect_true(dm2_v1_startup_save_path_to_root_slot(
+                    "/tmp/firestaff-dm2-test-saves/SKSave.dat",
+                    save_root,
+                    (int)sizeof(save_root),
+                    &save_slot,
+                    &last_session) &&
+                    strcmp(save_root, "/tmp/firestaff-dm2-test-saves") == 0 &&
+                    save_slot == 0u &&
+                    last_session == 1,
+                "DM2 startup owns SKSave.dat direct resume path parsing");
+    expect_true(dm2_v1_startup_save_path_to_root_slot(
+                    "/tmp/firestaff-dm2-test-saves/SKSave03.dat",
+                    save_root,
+                    (int)sizeof(save_root),
+                    &save_slot,
+                    &last_session) &&
+                    strcmp(save_root, "/tmp/firestaff-dm2-test-saves") == 0 &&
+                    save_slot == 3u &&
+                    last_session == 0,
+                "DM2 startup owns SKSaveNN.dat slot path parsing");
+    expect_true(!dm2_v1_startup_save_path_to_root_slot(
+                    "/tmp/firestaff-dm2-test-saves/SKSave10.dat",
+                    save_root,
+                    (int)sizeof(save_root),
+                    &save_slot,
+                    &last_session),
+                "DM2 startup rejects out-of-range SKSave slot paths");
 
     expect_true(dm2_v1_startup_panel_rect(&rect) &&
                     rect.x == 78 && rect.y == 50 &&
