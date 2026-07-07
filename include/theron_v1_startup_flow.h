@@ -67,6 +67,9 @@ typedef enum {
     THERON_STARTUP_INPUT_BACK
 } Theron_StartupInput;
 
+Theron_StartupInput theron_v1_startup_input_from_firestaff_menu_code(
+    int menu_input);
+
 typedef enum {
     THERON_STARTUP_ACTION_NONE = 0,
     THERON_STARTUP_ACTION_RETURN_TO_LAUNCHER,

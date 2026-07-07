@@ -58,6 +58,39 @@ int main(void) {
     check_int("init phase", flow.phase, THERON_STARTUP_PHASE_TITLE);
     check_int("init selected dungeon", flow.selected_dungeon, THERON_DUNGEON_INVALID);
     check_int("init companion count", flow.companion_count, 0);
+    check_int("Firestaff none input maps to Theron idle",
+              theron_v1_startup_input_from_firestaff_menu_code(0),
+              THERON_STARTUP_INPUT_NONE);
+    check_int("Firestaff up input maps to Theron up",
+              theron_v1_startup_input_from_firestaff_menu_code(1),
+              THERON_STARTUP_INPUT_UP);
+    check_int("Firestaff down input maps to Theron down",
+              theron_v1_startup_input_from_firestaff_menu_code(2),
+              THERON_STARTUP_INPUT_DOWN);
+    check_int("Firestaff left input maps to Theron left",
+              theron_v1_startup_input_from_firestaff_menu_code(3),
+              THERON_STARTUP_INPUT_LEFT);
+    check_int("Firestaff right input maps to Theron right",
+              theron_v1_startup_input_from_firestaff_menu_code(4),
+              THERON_STARTUP_INPUT_RIGHT);
+    check_int("Firestaff turn-left input maps to Theron left",
+              theron_v1_startup_input_from_firestaff_menu_code(7),
+              THERON_STARTUP_INPUT_LEFT);
+    check_int("Firestaff turn-right input maps to Theron right",
+              theron_v1_startup_input_from_firestaff_menu_code(8),
+              THERON_STARTUP_INPUT_RIGHT);
+    check_int("Firestaff accept input maps to Theron accept",
+              theron_v1_startup_input_from_firestaff_menu_code(9),
+              THERON_STARTUP_INPUT_ACCEPT);
+    check_int("Firestaff back input maps to Theron back",
+              theron_v1_startup_input_from_firestaff_menu_code(10),
+              THERON_STARTUP_INPUT_BACK);
+    check_int("Firestaff action input maps to Theron action",
+              theron_v1_startup_input_from_firestaff_menu_code(11),
+              THERON_STARTUP_INPUT_ACTION);
+    check_int("unknown Firestaff input maps to Theron idle",
+              theron_v1_startup_input_from_firestaff_menu_code(999),
+              THERON_STARTUP_INPUT_NONE);
     check_int("startup availability stage 1",
               theron_v1_startup_stage_available(
                   &progression,

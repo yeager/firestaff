@@ -652,6 +652,27 @@ _Static_assert(M12_MENU_INPUT_BACK == 10,
 _Static_assert(M12_MENU_INPUT_ACTION == 11,
                "Nexus startup menu input code drift");
 
+_Static_assert(M12_MENU_INPUT_NONE == 0,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_UP == 1,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_DOWN == 2,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_LEFT == 3,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_RIGHT == 4,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_TURN_LEFT == 7,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_TURN_RIGHT == 8,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACCEPT == 9,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_BACK == 10,
+               "Theron startup menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACTION == 11,
+               "Theron startup menu input code drift");
+
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session,
                                          const char *status)
@@ -12323,26 +12344,6 @@ static void m11_theron_sync_startup_state(M11_GameViewState* state,
     }
 }
 
-static Theron_StartupInput m11_theron_startup_input_from_m12(
-    M12_MenuInput input) {
-    switch (input) {
-    case M12_MENU_INPUT_UP: return THERON_STARTUP_INPUT_UP;
-    case M12_MENU_INPUT_DOWN: return THERON_STARTUP_INPUT_DOWN;
-    case M12_MENU_INPUT_LEFT:
-    case M12_MENU_INPUT_TURN_LEFT:
-        return THERON_STARTUP_INPUT_LEFT;
-    case M12_MENU_INPUT_RIGHT:
-    case M12_MENU_INPUT_TURN_RIGHT:
-        return THERON_STARTUP_INPUT_RIGHT;
-    case M12_MENU_INPUT_ACCEPT: return THERON_STARTUP_INPUT_ACCEPT;
-    case M12_MENU_INPUT_ACTION: return THERON_STARTUP_INPUT_ACTION;
-    case M12_MENU_INPUT_BACK: return THERON_STARTUP_INPUT_BACK;
-    case M12_MENU_INPUT_NONE:
-    default:
-        return THERON_STARTUP_INPUT_NONE;
-    }
-}
-
 static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
                                            const Theron_DungeonProgression* progression,
                                            Theron_StartupFlow* flow,
@@ -15465,7 +15466,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 state->theronState.startup_cursor,
                 state->theronState.save_resume_continue_focus,
                 has_continue,
-                m11_theron_startup_input_from_m12(input),
+                theron_v1_startup_input_from_firestaff_menu_code((int)input),
                 &action);
             if (action_result != THERON_STARTUP_OK) {
                 m11_set_status(state, "STARTUP",
