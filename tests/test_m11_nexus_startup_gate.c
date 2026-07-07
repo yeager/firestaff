@@ -622,6 +622,15 @@ int main(void) {
                         "real Nexus startup exposes level path");
             expect_true(view.nexusState.title_active == 1,
                         "real Nexus startup enters title phase");
+            expect_true(view.nexusEngine &&
+                            nexus_v1_startup_surfaces_expected_count(
+                                view.nexusEngine) >= 4 &&
+                            nexus_v1_startup_surfaces_loaded_count(
+                                view.nexusEngine) >= 4 &&
+                            nexus_v1_startup_surfaces_fallback_count(
+                                view.nexusEngine) == 0 &&
+                            nexus_v1_startup_surfaces_ready(view.nexusEngine),
+                        "real Nexus startup caches full TITLE/WARNING/GAMEOVER/STABG graphics");
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,

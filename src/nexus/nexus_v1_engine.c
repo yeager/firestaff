@@ -151,6 +151,47 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     free(face_data);
 }
 
+static void nexus_v1_load_startup_surface_file(Nexus_V1_Engine *engine,
+                                               const char *name,
+                                               int (*loader)(Nexus_UI_Manager *,
+                                                             const uint8_t *,
+                                                             int,
+                                                             const uint32_t *)) {
+    int size = 0;
+    int load_result;
+    uint8_t *data;
+
+    if (!engine || !name || !loader) return;
+    data = nexus_v1_read_file(engine, name, &size);
+    if (!data || size <= 0) {
+        free(data);
+        return;
+    }
+    engine->ui_startup_surfaces_expected++;
+    load_result = loader(&engine->ui, data, size, NULL);
+    if (load_result > 0) {
+        engine->ui_startup_surfaces_loaded++;
+    } else if (load_result == 0) {
+        engine->ui_startup_surfaces_fallback++;
+    }
+    free(data);
+}
+
+static void nexus_v1_load_startup_surfaces(Nexus_V1_Engine *engine) {
+    if (!engine) return;
+    engine->ui_startup_surfaces_loaded = 0;
+    engine->ui_startup_surfaces_expected = 0;
+    engine->ui_startup_surfaces_fallback = 0;
+    nexus_v1_load_startup_surface_file(engine, "TITLE.CG",
+                                       nexus_ui_load_title);
+    nexus_v1_load_startup_surface_file(engine, "WARNING.BIN",
+                                       nexus_ui_load_warning);
+    nexus_v1_load_startup_surface_file(engine, "GAMEOVER.BIN",
+                                       nexus_ui_load_gameover);
+    nexus_v1_load_startup_surface_file(engine, "STABG.BIN",
+                                       nexus_ui_load_stabg);
+}
+
 int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     char disc_path[512];
     if (!engine || !data_dir) return -1;
@@ -183,6 +224,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
 
     /* Init startup UI surfaces after source selection and champion roster. */
     nexus_ui_manager_init(&engine->ui);
+    nexus_v1_load_startup_surfaces(engine);
     nexus_v1_load_startup_faces(engine);
 
     /* Init creature manager */
@@ -406,4 +448,24 @@ int nexus_v1_startup_faces_ready(const Nexus_V1_Engine *engine) {
     return engine->ui_faces_expected > 0 &&
            engine->ui_faces_loaded + engine->ui_faces_fallback ==
                engine->ui_faces_expected;
+}
+
+int nexus_v1_startup_surfaces_loaded_count(const Nexus_V1_Engine *engine) {
+    return engine ? engine->ui_startup_surfaces_loaded : 0;
+}
+
+int nexus_v1_startup_surfaces_expected_count(const Nexus_V1_Engine *engine) {
+    return engine ? engine->ui_startup_surfaces_expected : 0;
+}
+
+int nexus_v1_startup_surfaces_fallback_count(const Nexus_V1_Engine *engine) {
+    return engine ? engine->ui_startup_surfaces_fallback : 0;
+}
+
+int nexus_v1_startup_surfaces_ready(const Nexus_V1_Engine *engine) {
+    if (!engine) return 0;
+    return engine->ui_startup_surfaces_expected > 0 &&
+           engine->ui_startup_surfaces_loaded +
+                   engine->ui_startup_surfaces_fallback ==
+               engine->ui_startup_surfaces_expected;
 }
