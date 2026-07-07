@@ -630,6 +630,13 @@ int main(void)
                strcmp(title_execution.status_scope, "STARTUP") == 0 &&
                strcmp(title_execution.status, "NEXUS TITLE") == 0,
            "startup title execution resolves hold-title redraw");
+    expect(nexus_v1_startup_title_execution_mode_update(
+               &title_execution,
+               &mode_update) &&
+               !mode_update.set_title_active &&
+               !mode_update.set_save_select_active &&
+               !mode_update.set_champion_select_active,
+           "startup title hold owns no-op mode update");
     expect(nexus_v1_title_frame(30, 200, &title_frame) &&
                title_frame.phase == NEXUS_V1_TITLE_PHASE_HOLD &&
                title_frame.boot_reveal_complete &&
@@ -656,6 +663,18 @@ int main(void)
                strcmp(title_execution.status_scope, "STARTUP") == 0 &&
                strcmp(title_execution.status, "NEXUS LOAD GAME") == 0,
            "startup title execution resolves save-select handoff");
+    expect(nexus_v1_startup_title_execution_mode_update(
+               &title_execution,
+               &mode_update) &&
+               mode_update.set_title_active &&
+               mode_update.title_active == 0 &&
+               mode_update.set_title_frame &&
+               mode_update.title_frame == 0 &&
+               mode_update.set_save_select_active &&
+               mode_update.save_select_active == 1 &&
+               mode_update.set_save_selected_row &&
+               mode_update.save_selected_row == 0,
+           "startup title execution owns save-select mode update");
     expect(nexus_v1_startup_title_handle_hit(
                54,
                menu.slot_mask,
@@ -687,6 +706,18 @@ int main(void)
                strcmp(title_execution.status_scope, "STARTUP") == 0 &&
                strcmp(title_execution.status, "NEXUS CHAMPIONS") == 0,
            "startup title execution resolves champion-select handoff");
+    expect(nexus_v1_startup_title_execution_mode_update(
+               &title_execution,
+               &mode_update) &&
+               mode_update.set_title_active &&
+               mode_update.title_active == 0 &&
+               mode_update.set_champion_select_active &&
+               mode_update.champion_select_active == 1 &&
+               mode_update.set_champion_cursor &&
+               mode_update.champion_cursor == 0 &&
+               mode_update.set_champion_frame &&
+               mode_update.champion_frame == 0,
+           "startup title execution owns champion-select mode update");
     expect(nexus_v1_startup_title_handle_input(
                12,
                menu.slot_mask,
@@ -701,6 +732,12 @@ int main(void)
                strcmp(title_execution.status_scope, "RETURN") == 0 &&
                strcmp(title_execution.status, "BACK TO LAUNCHER") == 0,
            "startup title execution resolves launcher return");
+    expect(nexus_v1_startup_title_execution_mode_update(
+               &title_execution,
+               &mode_update) &&
+               !mode_update.set_title_active &&
+               !mode_update.set_save_select_active,
+           "startup title launcher return owns no-op mode update");
     expect(nexus_v1_boot_frame(0, 200, &boot_frame) &&
                boot_frame.phase == NEXUS_V1_BOOT_PHASE_WARNING &&
                boot_frame.warning_visible &&
@@ -766,6 +803,13 @@ int main(void)
                strcmp(execution.failure_status, "NEXUS LOAD FAILED") == 0 &&
                strstr(execution.path, "nexus_save_03.dat") != NULL,
            "startup save execution resolves load-slot handoff");
+    expect(nexus_v1_startup_save_execution_mode_update(
+               &execution,
+               &mode_update) &&
+               mode_update.set_save_select_active &&
+               mode_update.save_select_active == 0 &&
+               !mode_update.set_champion_select_active,
+           "startup save execution owns load-slot mode update");
     expect(nexus_v1_startup_menu_handle_input(
                &menu,
                NEXUS_V1_STARTUP_INPUT_DOWN,
@@ -778,6 +822,12 @@ int main(void)
                execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW &&
                strcmp(execution.status, "NEXUS SAVE SELECT") == 0,
            "startup save execution resolves navigation redraw");
+    expect(nexus_v1_startup_save_execution_mode_update(
+               &execution,
+               &mode_update) &&
+               !mode_update.set_save_select_active &&
+               !mode_update.set_champion_select_active,
+           "startup save navigation owns no-op mode update");
     expect(nexus_v1_startup_menu_handle_input(
                &menu,
                NEXUS_V1_STARTUP_INPUT_DOWN,
@@ -875,6 +925,18 @@ int main(void)
                execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_CHAMPIONS &&
                strcmp(execution.status, "NEXUS CHAMPIONS") == 0,
            "startup save execution resolves new-game champion select");
+    expect(nexus_v1_startup_save_execution_mode_update(
+               &execution,
+               &mode_update) &&
+               mode_update.set_save_select_active &&
+               mode_update.save_select_active == 0 &&
+               mode_update.set_champion_select_active &&
+               mode_update.champion_select_active == 1 &&
+               mode_update.set_champion_cursor &&
+               mode_update.champion_cursor == 0 &&
+               mode_update.set_champion_frame &&
+               mode_update.champion_frame == 0,
+           "startup save execution owns champion-select mode update");
     expect(nexus_v1_startup_menu_handle_input(
                &menu,
                NEXUS_V1_STARTUP_INPUT_BACK,
@@ -885,6 +947,16 @@ int main(void)
                execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE &&
                strcmp(execution.status, "NEXUS TITLE") == 0,
            "startup save execution resolves return-to-title");
+    expect(nexus_v1_startup_save_execution_mode_update(
+               &execution,
+               &mode_update) &&
+               mode_update.set_save_select_active &&
+               mode_update.save_select_active == 0 &&
+               mode_update.set_title_active &&
+               mode_update.title_active == 1 &&
+               mode_update.set_title_frame &&
+               mode_update.title_frame == 0,
+           "startup save execution owns title-return mode update");
     expect(nexus_v1_startup_menu_move_selected(&menu, -5) &&
                menu.selected_row == 0,
            "startup menu move selected clamps at first row");

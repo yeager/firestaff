@@ -10601,11 +10601,15 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupSaveExecution execution;
+    Nexus_V1_StartupModeUpdate update;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!nexus_v1_startup_execute_save_action(action, &execution)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!nexus_v1_startup_save_execution_mode_update(&execution, &update)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW) {
@@ -10625,7 +10629,7 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
                                : "NEXUS LOAD FAILED");
             return M11_GAME_INPUT_REDRAW;
         }
-        state->nexusState.startup_save_select_active = 0;
+        m11_nexus_apply_startup_mode_update(state, &update);
         m11_set_status(state,
                        execution.status_scope ? execution.status_scope
                                               : "BOOT",
@@ -10634,10 +10638,7 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
         return M11_GAME_INPUT_REDRAW;
     }
     if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_CHAMPIONS) {
-        state->nexusState.startup_save_select_active = 0;
-        state->nexusState.champion_select_active = 1;
-        state->nexusState.champion_cursor = 0;
-        state->nexusState.champion_select_frame = 0;
+        m11_nexus_apply_startup_mode_update(state, &update);
         m11_set_status(state,
                        execution.status_scope ? execution.status_scope
                                               : "STARTUP",
@@ -10646,9 +10647,7 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
         return M11_GAME_INPUT_REDRAW;
     }
     if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE) {
-        state->nexusState.startup_save_select_active = 0;
-        state->nexusState.title_active = 1;
-        state->nexusState.title_frame = 0;
+        m11_nexus_apply_startup_mode_update(state, &update);
         m11_set_status(state,
                        execution.status_scope ? execution.status_scope
                                               : "STARTUP",
@@ -10664,11 +10663,15 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupTitleExecution execution;
+    Nexus_V1_StartupModeUpdate update;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!nexus_v1_startup_execute_title_action(action, &execution)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!nexus_v1_startup_title_execution_mode_update(&execution, &update)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (execution.kind ==
@@ -10688,12 +10691,9 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
                                         : "NEXUS TITLE");
         return M11_GAME_INPUT_REDRAW;
     }
-    state->nexusState.title_active = 0;
-    state->nexusState.title_frame = 0;
     if (execution.kind ==
         NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_SAVE_SELECT) {
-        state->nexusState.startup_save_select_active = 1;
-        state->nexusState.startup_save_selected_row = 0;
+        m11_nexus_apply_startup_mode_update(state, &update);
         m11_set_status(state,
                        execution.status_scope ? execution.status_scope
                                               : "STARTUP",
@@ -10703,9 +10703,7 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
     }
     if (execution.kind ==
         NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_CHAMPIONS) {
-        state->nexusState.champion_select_active = 1;
-        state->nexusState.champion_cursor = 0;
-        state->nexusState.champion_select_frame = 0;
+        m11_nexus_apply_startup_mode_update(state, &update);
         m11_set_status(state,
                        execution.status_scope ? execution.status_scope
                                               : "STARTUP",

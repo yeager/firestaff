@@ -254,9 +254,15 @@ int nexus_v1_startup_execute_title_action(
 int nexus_v1_startup_execute_save_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupSaveExecution *out_execution);
+int nexus_v1_startup_save_execution_mode_update(
+    const Nexus_V1_StartupSaveExecution *execution,
+    Nexus_V1_StartupModeUpdate *out_update);
 int nexus_v1_startup_execute_champion_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupChampionExecution *out_execution);
+int nexus_v1_startup_title_execution_mode_update(
+    const Nexus_V1_StartupTitleExecution *execution,
+    Nexus_V1_StartupModeUpdate *out_update);
 int nexus_v1_startup_champion_execution_mode_update(
     const Nexus_V1_StartupChampionExecution *execution,
     int save_row_count,
