@@ -11623,6 +11623,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
             &out->startupFrame);
+        out->startupTitleFrameMax = csb_v1_startup_title_total_ticks_pc34();
         if (state->csbState.startup_title_active) {
             snprintf(out->startupAnimation,
                      sizeof(out->startupAnimation),
@@ -11637,6 +11638,7 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                      "%s",
                      "csb-entrance-opening");
             out->startupAnimationActive = 1;
+            out->startupTitleFrame = out->startupTitleFrameMax;
             out->startupTitleReady = 1;
         } else if (state->csbState.startup_entrance_active) {
             snprintf(out->startupAnimation,
@@ -11644,12 +11646,14 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                      "%s",
                      "csb-entrance");
             out->startupAnimationActive = 0;
+            out->startupTitleFrame = out->startupTitleFrameMax;
             out->startupTitleReady = 1;
         } else {
             snprintf(out->startupAnimation,
                      sizeof(out->startupAnimation),
                      "%s",
                      "csb-runtime");
+            out->startupTitleFrame = out->startupTitleFrameMax;
             out->startupTitleReady = 1;
         }
         return 1;

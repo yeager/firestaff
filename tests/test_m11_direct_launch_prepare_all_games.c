@@ -328,6 +328,12 @@ static void run_real_data_handoff_if_available(void) {
             expect_true(receipt.startupTitleFrame == receipt.startupTitleFrameMax &&
                             receipt.startupTitleFrameMax == 53,
                         "DM1 receipt exposes the source TITLE frame-bank completion boundary");
+        } else if (strcmp(kCases[i].gameId, "csb") == 0) {
+            expect_true(receipt.startupAnimationActive == 1 &&
+                            receipt.startupTitleFrame == 0 &&
+                            receipt.startupTitleFrameMax == 53 &&
+                            receipt.startupTitleReady == 0,
+                        "CSB receipt exposes active title prelude frame and ready boundary");
         } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
             expect_true(receipt.startupAnimationActive == 1 &&
                             receipt.startupTitleFrame == 0 &&
