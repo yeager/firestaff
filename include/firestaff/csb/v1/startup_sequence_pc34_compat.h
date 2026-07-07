@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_CSB_V1_STARTUP_SEQUENCE_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_STARTUP_SEQUENCE_PC34_COMPAT_H
 
+#include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_text_material_pc34_compat.h"
 
 #ifdef __cplusplus
@@ -420,6 +421,32 @@ typedef struct CSB_V1_StartupCommandState_PC34 {
     int pending_command;
 } CSB_V1_StartupCommandState_PC34;
 
+#define CSB_V1_STARTUP_PATH_CAP_PC34 512
+#define CSB_V1_STARTUP_PROMPT_CAP_PC34 192
+
+typedef struct CSB_V1_StartupSessionOptionsInput_PC34 {
+    int direct_resume_loaded;
+    const char *import_dm1_save_path;
+    int import_party_loaded;
+    int import_champion_count;
+    int import_utility_state;
+    const char *import_utility_prompt;
+    const char *entrance_resume_save_path;
+    int entrance_resume_can_load;
+} CSB_V1_StartupSessionOptionsInput_PC34;
+
+typedef struct CSB_V1_StartupSessionOptions_PC34 {
+    int entrance_resume_available;
+    char entrance_resume_path[CSB_V1_STARTUP_PATH_CAP_PC34];
+    int import_available;
+    int import_champion_count;
+    int import_selected_action_index;
+    int import_preview_active;
+    int import_utility_state;
+    char import_dm1_save_path[CSB_V1_STARTUP_PATH_CAP_PC34];
+    char import_utility_prompt[CSB_V1_STARTUP_PROMPT_CAP_PC34];
+} CSB_V1_StartupSessionOptions_PC34;
+
 const char* csb_v1_startup_stage_name_pc34(CSB_V1_StartupStage_PC34 stage);
 int csb_v1_startup_stage_after_pc34(CSB_V1_StartupStage_PC34 later,
                                     CSB_V1_StartupStage_PC34 earlier);
@@ -479,6 +506,11 @@ int csb_v1_startup_execute_render_plan_pc34(
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int skip_startup);
+void csb_v1_startup_session_options_init_pc34(
+    CSB_V1_StartupSessionOptions_PC34 *options);
+int csb_v1_startup_build_session_options_pc34(
+    const CSB_V1_StartupSessionOptionsInput_PC34 *input,
+    CSB_V1_StartupSessionOptions_PC34 *out_options);
 int csb_v1_startup_entrance_accepts_input_pc34(
     const CSB_V1_StartupCommandState_PC34 *state);
 int csb_v1_startup_resolve_entrance_command_pc34(

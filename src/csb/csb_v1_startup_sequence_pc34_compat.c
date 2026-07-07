@@ -1609,6 +1609,75 @@ int csb_v1_startup_init_command_state_pc34(
     return 1;
 }
 
+void csb_v1_startup_session_options_init_pc34(
+    CSB_V1_StartupSessionOptions_PC34 *options)
+{
+    if (!options) {
+        return;
+    }
+    memset(options, 0, sizeof(*options));
+    options->import_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
+}
+
+static int csb_v1_startup_copy_bounded_string_pc34(char *dst,
+                                                   size_t dst_size,
+                                                   const char *src)
+{
+    int rc;
+    if (!dst || dst_size == 0u) {
+        return 0;
+    }
+    dst[0] = '\0';
+    if (!src || src[0] == '\0') {
+        return 0;
+    }
+    rc = snprintf(dst, dst_size, "%s", src);
+    if (rc <= 0 || (size_t)rc >= dst_size) {
+        dst[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
+int csb_v1_startup_build_session_options_pc34(
+    const CSB_V1_StartupSessionOptionsInput_PC34 *input,
+    CSB_V1_StartupSessionOptions_PC34 *out_options)
+{
+    if (!out_options) {
+        return 0;
+    }
+    csb_v1_startup_session_options_init_pc34(out_options);
+    if (!input || input->direct_resume_loaded) {
+        return 1;
+    }
+
+    if (input->import_party_loaded &&
+        input->import_champion_count > 0 &&
+        csb_v1_startup_copy_bounded_string_pc34(
+            out_options->import_dm1_save_path,
+            sizeof(out_options->import_dm1_save_path),
+            input->import_dm1_save_path)) {
+        out_options->import_available = 1;
+        out_options->import_champion_count = input->import_champion_count;
+        out_options->import_selected_action_index = 0;
+        out_options->import_preview_active = 0;
+        out_options->import_utility_state = input->import_utility_state;
+        (void)csb_v1_startup_copy_bounded_string_pc34(
+            out_options->import_utility_prompt,
+            sizeof(out_options->import_utility_prompt),
+            input->import_utility_prompt);
+    }
+
+    if (input->entrance_resume_can_load &&
+        csb_v1_startup_copy_bounded_string_pc34(
+            out_options->entrance_resume_path,
+            sizeof(out_options->entrance_resume_path),
+            input->entrance_resume_save_path)) {
+        out_options->entrance_resume_available = 1;
+    }
+    return 1;
+}
+
 int csb_v1_startup_entrance_accepts_input_pc34(
     const CSB_V1_StartupCommandState_PC34 *state)
 {
