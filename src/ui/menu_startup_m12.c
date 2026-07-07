@@ -112,6 +112,8 @@ enum {
     M12_SETTINGS_ROW_QUICK_RESUME,
     M12_SETTINGS_ROW_RETROACHIEVEMENTS,
     M12_SETTINGS_ROW_RA_HARDCORE,
+    M12_SETTINGS_ROW_RA_USERNAME,
+    M12_SETTINGS_ROW_RA_TOKEN,
     M12_SETTINGS_ROW_SAVE_BROWSER,
     M12_SETTINGS_ROW_SESSION_TIMER,
     M12_SETTINGS_ROW_MINIMAP,
@@ -222,6 +224,9 @@ static M12_ExtSettingsRow m12_ext_settings[] = {
     {"Message Log",         "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Tooltip",             "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"RetroAchievements",   "Off",       1, M12_SETTINGS_TAB_GAME},
+    {"RA Hardcore",         "On",        1, M12_SETTINGS_TAB_GAME},
+    {"RA Username",         "Not Set",   1, M12_SETTINGS_TAB_GAME},
+    {"RA API Token",        "Not Set",   1, M12_SETTINGS_TAB_GAME},
     {"Stat Tracker",        "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Pathfinding Overlay", "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Inventory Sort",      "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
@@ -2649,6 +2654,14 @@ static void m12_save_config(const M12_StartupMenuState* state) {
         state->settings.retroAchievementsEnabled ? 1 : 0;
     config.retroAchievementsHardcore =
         state->settings.retroAchievementsHardcore ? 1 : 0;
+    snprintf(config.retroAchievementsUsername,
+             sizeof(config.retroAchievementsUsername),
+             "%s",
+             state->settings.retroAchievementsUsername);
+    snprintf(config.retroAchievementsToken,
+             sizeof(config.retroAchievementsToken),
+             "%s",
+             state->settings.retroAchievementsToken);
     config.sessionTimerIndex = state->settings.sessionTimerIndex;
     config.minimapEnabled = state->settings.minimapEnabled;
     config.minimapSize = state->settings.minimapSize;
@@ -2872,6 +2885,14 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
         config.retroAchievementsEnabled ? 1 : 0;
     state->settings.retroAchievementsHardcore =
         config.retroAchievementsHardcore ? 1 : 0;
+    snprintf(state->settings.retroAchievementsUsername,
+             sizeof(state->settings.retroAchievementsUsername),
+             "%s",
+             config.retroAchievementsUsername);
+    snprintf(state->settings.retroAchievementsToken,
+             sizeof(state->settings.retroAchievementsToken),
+             "%s",
+             config.retroAchievementsToken);
     state->settings.sessionTimerIndex = m12_clamp_index(config.sessionTimerIndex, 5);
     state->settings.minimapEnabled = config.minimapEnabled ? 1 : 0;
     state->settings.minimapSize = config.minimapSize;
@@ -3488,6 +3509,14 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
             return m12_tr(state, g_toggleModes[state && state->settings.retroAchievementsEnabled ? 1 : 0]);
         case M12_SETTINGS_ROW_RA_HARDCORE:
             return m12_tr(state, g_toggleModes[state && state->settings.retroAchievementsHardcore ? 1 : 0]);
+        case M12_SETTINGS_ROW_RA_USERNAME:
+            return (state && state->settings.retroAchievementsUsername[0])
+                       ? state->settings.retroAchievementsUsername
+                       : m12_tr(state, "NOT SET");
+        case M12_SETTINGS_ROW_RA_TOKEN:
+            return (state && state->settings.retroAchievementsToken[0])
+                       ? m12_tr(state, "SET")
+                       : m12_tr(state, "NOT SET");
         case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "OPEN...");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_settings_value_session_timer(state);
         case M12_SETTINGS_ROW_MINIMAP: return m12_settings_value_minimap(state);
@@ -3700,6 +3729,8 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         state->settings.retroAchievementsEnabled ? 1 : 0;
     state->settings.retroAchievementsHardcore =
         state->settings.retroAchievementsHardcore ? 1 : 0;
+    state->settings.retroAchievementsUsername[sizeof(state->settings.retroAchievementsUsername) - 1] = '\0';
+    state->settings.retroAchievementsToken[sizeof(state->settings.retroAchievementsToken) - 1] = '\0';
     state->settings.sessionTimerIndex = m12_clamp_index(state->settings.sessionTimerIndex, 5);
     state->settings.minimapEnabled = state->settings.minimapEnabled ? 1 : 0;
     state->settings.autoMapEnabled = state->settings.autoMapEnabled ? 1 : 0;

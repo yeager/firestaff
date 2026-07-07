@@ -254,6 +254,8 @@ static const SettingsRowSpec kSettingsRows[] = {
     { "ROW_QUICK_RESUME",      "Quick Resume" },
     { "ROW_RETROACHIEVEMENTS", "RetroAchievements" },
     { "ROW_RA_HARDCORE",       "RA Hardcore" },
+    { "ROW_RA_USERNAME",       "RA Username" },
+    { "ROW_RA_TOKEN",          "RA API Token" },
     { "ROW_SESSION_TIMER",     "Session Timer" },
     { "ROW_MINIMAP",           "Minimap" },
     { "ROW_AUTOMAP",           "Automap" },
@@ -401,51 +403,59 @@ static const char* setting_row_value(const M12_StartupMenuState* state,
         snprintf(out, outSize, "%s", on_off(s ? s->retroAchievementsHardcore : 0));
         break;
     case 32:
-        snprintf(out, outSize, "INDEX %d", s ? s->sessionTimerIndex : 0);
+        snprintf(out, outSize, "%s",
+                 (s && s->retroAchievementsUsername[0]) ? s->retroAchievementsUsername : "NOT SET");
         break;
     case 33:
-        snprintf(out, outSize, "%s", on_off(s ? s->minimapEnabled : 0));
-        break;
-    case 34:
-        snprintf(out, outSize, "%s", on_off(s ? s->autoMapEnabled : 0));
+        snprintf(out, outSize, "%s",
+                 (s && s->retroAchievementsToken[0]) ? "SET" : "NOT SET");
         break;
     case 35:
-        snprintf(out, outSize, "%s", on_off(s ? s->combatLogEnabled : 0));
+        snprintf(out, outSize, "INDEX %d", s ? s->sessionTimerIndex : 0);
         break;
     case 36:
-        snprintf(out, outSize, "INDEX %d", s ? s->soundtrackMode : 0);
+        snprintf(out, outSize, "%s", on_off(s ? s->minimapEnabled : 0));
         break;
     case 37:
-        snprintf(out, outSize, "%s", on_off(s ? s->ambientEnabled : 0));
+        snprintf(out, outSize, "%s", on_off(s ? s->autoMapEnabled : 0));
         break;
     case 38:
-        snprintf(out, outSize, "%d%%", s ? s->ambientVolume : 0);
+        snprintf(out, outSize, "%s", on_off(s ? s->combatLogEnabled : 0));
         break;
     case 39:
-        snprintf(out, outSize, "%d%%", s ? s->uiScale : 100);
+        snprintf(out, outSize, "INDEX %d", s ? s->soundtrackMode : 0);
         break;
     case 40:
-        snprintf(out, outSize, "%s", set_default(s ? s->customMusicPath : NULL));
+        snprintf(out, outSize, "%s", on_off(s ? s->ambientEnabled : 0));
         break;
     case 41:
-        snprintf(out, outSize, "%s", set_default(s ? s->customDungeonPath : NULL));
+        snprintf(out, outSize, "%d%%", s ? s->ambientVolume : 0);
         break;
     case 42:
-        snprintf(out, outSize, "%s", set_default(s ? s->screenshotPath : NULL));
+        snprintf(out, outSize, "%d%%", s ? s->uiScale : 100);
         break;
     case 43:
-        snprintf(out, outSize, "%s", on_off(s ? s->streamerMode : 0));
+        snprintf(out, outSize, "%s", set_default(s ? s->customMusicPath : NULL));
         break;
     case 44:
-        snprintf(out, outSize, "WRITE");
+        snprintf(out, outSize, "%s", set_default(s ? s->customDungeonPath : NULL));
         break;
     case 45:
-        snprintf(out, outSize, "READ");
+        snprintf(out, outSize, "%s", set_default(s ? s->screenshotPath : NULL));
         break;
     case 46:
-        snprintf(out, outSize, "NOT CONFIGURED");
+        snprintf(out, outSize, "%s", on_off(s ? s->streamerMode : 0));
         break;
     case 47:
+        snprintf(out, outSize, "WRITE");
+        break;
+    case 48:
+        snprintf(out, outSize, "READ");
+        break;
+    case 49:
+        snprintf(out, outSize, "NOT CONFIGURED");
+        break;
+    case 50:
         snprintf(out, outSize, "LOCAL ONLY");
         break;
     default:
