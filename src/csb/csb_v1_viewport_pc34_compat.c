@@ -1451,10 +1451,16 @@ int csb_v1_viewport_runtime_projectile_sprite_blit(
      * source row, view-relative direction/cell, flip flags, and target
      * rectangle before the bitmap copy. Keep that draw contract in the
      * CSB viewport layer so M11 only blits the resolved asset. */
+    blit.view_cell = placement->view_cell;
+    blit.source_zone = placement->source_zone;
+    blit.source_zone_row = placement->source_zone_row;
+    blit.viewport_x = placement->viewport_x;
+    blit.viewport_y = placement->viewport_y;
     blit.x = placement->sprite_x;
     blit.y = placement->sprite_y;
     blit.w = placement->sprite_w;
     blit.h = placement->sprite_h;
+    blit.aspect_index = placement->sprite_aspect_index;
     blit.graphic_index = placement->sprite_graphic_index;
     blit.forward = placement->forward;
     blit.relative_dir = placement->sprite_relative_dir;
@@ -1551,10 +1557,16 @@ int csb_v1_viewport_runtime_explosion_sprite_blit(
      * aspect, GRAPHICS.DAT bitmap, animation frame, attack strength, and
      * source-zone rectangle before the F0114/F0675 draw. M11 consumes this
      * CSB-owned blit record without reinterpreting placement fields. */
+    blit.view_cell = placement->view_cell;
+    blit.source_zone = placement->source_zone;
+    blit.source_zone_row = placement->source_zone_row;
+    blit.viewport_x = placement->viewport_x;
+    blit.viewport_y = placement->viewport_y;
     blit.x = placement->sprite_x;
     blit.y = placement->sprite_y;
     blit.w = placement->sprite_w;
     blit.h = placement->sprite_h;
+    blit.forward = placement->forward;
     blit.aspect_index = placement->sprite_aspect_index;
     blit.graphic_index = placement->sprite_graphic_index;
     blit.is_smoke = placement->sprite_is_smoke;
@@ -1723,15 +1735,18 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
         /* ReDMCSB DUNVIEW.C F0115 lines 5668-5683 map projectiles through
          * G2028 and C2900_ZONE_ + row*4 + ViewCell.  OBJECT.C F0032/F0033
          * resolves the material thing identity used by the fallback marker. */
-        if (cfg->projectile_sprite_drawer &&
-            cfg->projectile_sprite_drawer(
-                cfg->projectile_sprite_user,
-                projectile,
-                &placement,
-                cfg->viewport_pixels,
-                cfg->viewport_stride)) {
-            ++cfg->runtime_projectile_sprite_drawn_count;
-            continue;
+        if (cfg->projectile_sprite_drawer) {
+            CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
+            if (csb_v1_viewport_runtime_projectile_sprite_blit(
+                    &placement, &blit) &&
+                cfg->projectile_sprite_drawer(
+                    cfg->projectile_sprite_user,
+                    &blit,
+                    cfg->viewport_pixels,
+                    cfg->viewport_stride)) {
+                ++cfg->runtime_projectile_sprite_drawn_count;
+                continue;
+            }
         }
         material_icon_index = placement.material_icon_index;
         if (material_icon_index >= 0) {
@@ -1869,15 +1884,18 @@ static void csb_v1_viewport_draw_runtime_explosion_overlays(
         /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 restarts the thing list
          * for explosions after all object/creature/projectile cells and maps
          * D3L2/D3R2 through C3014/C3031 via G2034. */
-        if (cfg->explosion_sprite_drawer &&
-            cfg->explosion_sprite_drawer(
-                cfg->explosion_sprite_user,
-                explosion,
-                &placement,
-                cfg->viewport_pixels,
-                cfg->viewport_stride)) {
-            ++cfg->runtime_explosion_sprite_drawn_count;
-            continue;
+        if (cfg->explosion_sprite_drawer) {
+            CSB_V1_ViewportRuntimeExplosionSpriteBlit blit;
+            if (csb_v1_viewport_runtime_explosion_sprite_blit(
+                    &placement, &blit) &&
+                cfg->explosion_sprite_drawer(
+                    cfg->explosion_sprite_user,
+                    &blit,
+                    cfg->viewport_pixels,
+                    cfg->viewport_stride)) {
+                ++cfg->runtime_explosion_sprite_drawn_count;
+                continue;
+            }
         }
         csb_v1_viewport_draw_runtime_overlay_cross(
             cfg,

@@ -858,6 +858,8 @@ int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* sta
                                                     int* outMapX,
                                                     int* outMapY,
                                                     int* outElementType);
+int M11_GameView_ProbeDm1CenterContentVisibleDepthMask(const M11_GameViewState* state,
+                                                       int* outDepthMask);
 int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
                                           int relSide,
                                           int* outGraphicIndex,

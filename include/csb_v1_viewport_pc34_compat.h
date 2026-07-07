@@ -16,18 +16,20 @@ typedef struct CSB_V1_ViewportRuntimeGroupOverlayPlacement
     CSB_V1_ViewportRuntimeGroupOverlayPlacement;
 typedef struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
+typedef struct CSB_V1_ViewportRuntimeProjectileSpriteBlit
+    CSB_V1_ViewportRuntimeProjectileSpriteBlit;
+typedef struct CSB_V1_ViewportRuntimeExplosionSpriteBlit
+    CSB_V1_ViewportRuntimeExplosionSpriteBlit;
 
 typedef int (*CSB_V1_ViewportProjectileSpriteDrawer)(
     void *user,
-    const struct ProjectileInstance_Compat *projectile,
-    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeProjectileSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride);
 
 typedef int (*CSB_V1_ViewportExplosionSpriteDrawer)(
     void *user,
-    const struct ExplosionInstance_Compat *explosion,
-    const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeExplosionSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride);
 
@@ -420,18 +422,23 @@ struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement {
     int material_icon_index;
 };
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeProjectileSpriteBlit {
+    int view_cell;
+    int source_zone;
+    int viewport_x;
+    int viewport_y;
     int x;
     int y;
     int w;
     int h;
+    int aspect_index;
     int graphic_index;
     int forward;
     int relative_dir;
     int relative_cell;
     int flip_flags;
     int source_zone_row;
-} CSB_V1_ViewportRuntimeProjectileSpriteBlit;
+};
 
 struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
     int visible;
@@ -551,11 +558,17 @@ struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int sprite_attack;
 };
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeExplosionSpriteBlit {
+    int view_cell;
+    int source_zone;
+    int source_zone_row;
+    int viewport_x;
+    int viewport_y;
     int x;
     int y;
     int w;
     int h;
+    int forward;
     int aspect_index;
     int graphic_index;
     int is_smoke;
@@ -563,7 +576,7 @@ typedef struct {
     int max_frames;
     int attack;
     int depth_index;
-} CSB_V1_ViewportRuntimeExplosionSpriteBlit;
+};
 
 typedef struct {
     int view_square;

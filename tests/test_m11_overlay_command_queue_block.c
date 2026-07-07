@@ -1257,6 +1257,8 @@ static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
         int mapX = -2;
         int mapY = -2;
         int element = -2;
+        int contentMask = -1;
+        int expectedMask = (1 << cases[i].expectedDepth) - 1;
 
         memset(squareData, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
                sizeof(squareData));
@@ -1271,6 +1273,10 @@ static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
         ASSERT_EQ(mapX, cases[i].wallMapX, cases[i].label);
         ASSERT_EQ(mapY, cases[i].wallMapY, cases[i].label);
         ASSERT_EQ(element, DUNGEON_ELEMENT_WALL, cases[i].label);
+        ASSERT_EQ(M11_GameView_ProbeDm1CenterContentVisibleDepthMask(
+                      &state, &contentMask),
+                  1, cases[i].label);
+        ASSERT_EQ(contentMask, expectedMask, cases[i].label);
     }
 
     memset(squareData, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
@@ -1281,6 +1287,7 @@ static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
         int mapX = -2;
         int mapY = -2;
         int element = -2;
+        int contentMask = -1;
         ASSERT_EQ(M11_GameView_ProbeDm1NearestBlockingCenterDepth(
                       &state, &depth, &relForward, &mapX, &mapY, &element),
                   1, "open center corridor resolves");
@@ -1289,6 +1296,10 @@ static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
         ASSERT_EQ(mapX, -1, "open center corridor has no blocker x");
         ASSERT_EQ(mapY, -1, "open center corridor has no blocker y");
         ASSERT_EQ(element, -1, "open center corridor has no blocker element");
+        ASSERT_EQ(M11_GameView_ProbeDm1CenterContentVisibleDepthMask(
+                      &state, &contentMask),
+                  1, "open center corridor content mask resolves");
+        ASSERT_EQ(contentMask, 7, "open center corridor draws D1/D2/D3 contents");
     }
 }
 
