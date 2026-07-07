@@ -56,6 +56,15 @@ typedef struct {
     uint8_t door_count;
 } M11_WO_OrnamentState;
 
+typedef struct DM1_WallOrnamentZoneBlitPc34 {
+    int srcX;
+    int srcY;
+    int dstX;
+    int dstY;
+    int width;
+    int height;
+} DM1_WallOrnamentZoneBlitPc34;
+
 void m11_wo_init(M11_WO_OrnamentState* state);
 void m11_wo_set_level_ornaments(M11_WO_OrnamentState* state,
                                  uint8_t wall_count, uint8_t floor_count,
@@ -64,6 +73,13 @@ bool m11_wo_is_alcove(const M11_WO_OrnamentDef* orn);
 const M11_WO_OrnCoord* m11_wo_get_coord(const M11_WO_OrnamentDef* orn,
                                           int16_t depth, int16_t side);
 void m11_wo_setup_default_coords(M11_WO_OrnamentDef* orn);
+
+int dm1_v1_wall_ornament_coord_set_index_pc34(int globalIndex);
+int dm1_v1_wall_ornament_zone_pc34(int coordSet,
+                                   int viewWallIndex,
+                                   DM1_WallOrnamentZoneBlitPc34* outBlit);
+int dm1_v1_wall_ornament_flip_horizontal_pc34(int viewWallIndex);
+int dm1_v1_wall_ornament_is_alcove_global_pc34(int globalIndex);
 
 #ifdef __cplusplus
 }
