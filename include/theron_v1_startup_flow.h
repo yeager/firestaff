@@ -271,6 +271,30 @@ typedef struct {
     char text[THERON_STARTUP_RENDER_TEXT_CAPACITY];
 } Theron_StartupRenderTextCommand;
 
+typedef enum {
+    THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT = 0,
+    THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT,
+    THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK,
+    THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL,
+    THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME,
+    THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD
+} Theron_StartupRenderGraphicKind;
+
+typedef struct {
+    Theron_StartupRenderGraphicKind kind;
+    int x;
+    int y;
+    int w;
+    int h;
+    int color;
+    int color2;
+    int selected;
+    int cursor;
+    int ordinal;
+} Theron_StartupRenderGraphicCommand;
+
+#define THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX 32
+
 typedef struct {
     Theron_StartupPhase phase;
     int background_color;
@@ -282,6 +306,9 @@ typedef struct {
     Theron_StartupRenderTextCommand text[
         THERON_STARTUP_RENDER_TEXT_CAPACITY_MAX];
     int text_count;
+    Theron_StartupRenderGraphicCommand graphics[
+        THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX];
+    int graphic_count;
 } Theron_StartupRenderPlan;
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
