@@ -15,6 +15,12 @@ typedef struct AssetExecutorProbe {
     int seen_asset_id[CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34];
 } AssetExecutorProbe;
 
+typedef struct OpeningCompositeProbe {
+    int call_count;
+    int fail;
+    CSB_V1_StartupOpeningComposite_PC34 seen;
+} OpeningCompositeProbe;
+
 unsigned int ENTRANCE_Compat_GetMouseRouteCount(void)
 {
     return 5u;
@@ -98,6 +104,19 @@ static int asset_executor_probe(void *user,
     return cmd->kind != probe->fail_kind;
 }
 
+static int opening_composite_probe(
+    void *user,
+    const CSB_V1_StartupOpeningComposite_PC34 *composite)
+{
+    OpeningCompositeProbe *probe = (OpeningCompositeProbe *)user;
+    if (!probe || !composite) {
+        return 0;
+    }
+    probe->seen = *composite;
+    ++probe->call_count;
+    return !probe->fail;
+}
+
 static void expect_action(const char *message,
                           int x,
                           int y,
@@ -128,6 +147,7 @@ int main(void)
     CSB_V1_StartupEntranceDecision_PC34 decision;
     CSB_V1_TextMaterial_PC34 material;
     AssetExecutorProbe probe;
+    OpeningCompositeProbe composite_probe;
     char phase[64];
     int startup_active;
     int startup_frame;
@@ -759,6 +779,31 @@ int main(void)
               plan.render_commands[3].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34,
           "startup render plan owns door-opening command order");
+    memset(&composite_probe, 0, sizeof(composite_probe));
+    check(csb_v1_startup_execute_opening_composite_pc34(
+              &plan,
+              opening_composite_probe,
+              &composite_probe) &&
+              composite_probe.call_count == 1 &&
+              composite_probe.seen.screen_asset_id == 4 &&
+              composite_probe.seen.left_door_asset_id == 2 &&
+              composite_probe.seen.right_door_asset_id == 3 &&
+              composite_probe.seen.animation_step == 2 &&
+              composite_probe.seen.left_box_x == 0 &&
+              composite_probe.seen.left_box_w == 97 &&
+              composite_probe.seen.right_box_x == 113 &&
+              composite_probe.seen.right_box_w == 119 &&
+              composite_probe.seen.left_source_x == 0 &&
+              composite_probe.seen.right_source_x == 8,
+          "startup opening composite executor dispatches source door frame");
+    memset(&composite_probe, 0, sizeof(composite_probe));
+    composite_probe.fail = 1;
+    check(!csb_v1_startup_execute_opening_composite_pc34(
+              &plan,
+              opening_composite_probe,
+              &composite_probe) &&
+              composite_probe.call_count == 1,
+          "startup opening composite executor reports callback failure");
 
     memset(&command_state, 0, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 0) &&

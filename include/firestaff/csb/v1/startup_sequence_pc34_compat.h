@@ -325,6 +325,27 @@ typedef int (*CSB_V1_StartupAssetExecutor_PC34)(
     void *user,
     const CSB_V1_StartupAssetCommand_PC34 *command);
 
+typedef struct CSB_V1_StartupOpeningComposite_PC34 {
+    int screen_asset_id;
+    int left_door_asset_id;
+    int right_door_asset_id;
+    int animation_step;
+    int left_box_x;
+    int left_box_y;
+    int left_box_w;
+    int left_box_h;
+    int right_box_x;
+    int right_box_y;
+    int right_box_w;
+    int right_box_h;
+    int left_source_x;
+    int right_source_x;
+} CSB_V1_StartupOpeningComposite_PC34;
+
+typedef int (*CSB_V1_StartupOpeningCompositeExecutor_PC34)(
+    void *user,
+    const CSB_V1_StartupOpeningComposite_PC34 *composite);
+
 typedef struct CSB_V1_StartupCommandState_PC34 {
     int title_active;
     int title_frame;
@@ -374,6 +395,10 @@ int csb_v1_startup_execute_asset_commands_kind_pc34(
 int csb_v1_startup_execute_closed_door_asset_commands_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupAssetExecutor_PC34 executor,
+    void *user);
+int csb_v1_startup_execute_opening_composite_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
     void *user);
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,

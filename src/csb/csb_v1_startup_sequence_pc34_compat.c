@@ -659,6 +659,39 @@ int csb_v1_startup_execute_closed_door_asset_commands_pc34(
     return left > 0 && right > 0;
 }
 
+int csb_v1_startup_execute_opening_composite_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
+    void *user)
+{
+    CSB_V1_StartupOpeningComposite_PC34 composite;
+    if (!plan || !executor || !plan->opening_composite_valid ||
+        plan->opening_composite_screen_asset_id <= 0 ||
+        plan->opening_composite_left_asset_id <= 0 ||
+        plan->opening_composite_right_asset_id <= 0 ||
+        plan->opening_composite_left_box_w <= 0 ||
+        plan->opening_composite_left_box_h <= 0 ||
+        plan->opening_composite_right_box_w <= 0 ||
+        plan->opening_composite_right_box_h <= 0) {
+        return 0;
+    }
+    composite.screen_asset_id = plan->opening_composite_screen_asset_id;
+    composite.left_door_asset_id = plan->opening_composite_left_asset_id;
+    composite.right_door_asset_id = plan->opening_composite_right_asset_id;
+    composite.animation_step = plan->opening_composite_animation_step;
+    composite.left_box_x = plan->opening_composite_left_box_x;
+    composite.left_box_y = plan->opening_composite_left_box_y;
+    composite.left_box_w = plan->opening_composite_left_box_w;
+    composite.left_box_h = plan->opening_composite_left_box_h;
+    composite.right_box_x = plan->opening_composite_right_box_x;
+    composite.right_box_y = plan->opening_composite_right_box_y;
+    composite.right_box_w = plan->opening_composite_right_box_w;
+    composite.right_box_h = plan->opening_composite_right_box_h;
+    composite.left_source_x = plan->opening_composite_left_source_x;
+    composite.right_source_x = plan->opening_composite_right_source_x;
+    return executor(user, &composite) ? 1 : 0;
+}
+
 static void csb_v1_startup_rebuild_primitive_commands_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
