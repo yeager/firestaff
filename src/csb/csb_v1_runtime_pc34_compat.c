@@ -116,6 +116,130 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
 static uint16_t csb_v1_runtime_csbwin_item16_group_thing(
     uint16_t monster_index);
 
+static unsigned short csb_v1_runtime_clamp_u16(int value)
+{
+    if (value <= 0) return 0u;
+    if (value > 65535) return 65535u;
+    return (unsigned short)value;
+}
+
+static void csb_v1_runtime_pack_printable(unsigned char *dst,
+                                          int dst_len,
+                                          const char *src,
+                                          int src_len)
+{
+    int i;
+    if (!dst || dst_len <= 0) {
+        return;
+    }
+    for (i = 0; i < dst_len; ++i) {
+        dst[i] = ' ';
+    }
+    if (!src || src_len <= 0) {
+        return;
+    }
+    for (i = 0; i < dst_len && i < src_len && src[i] != '\0'; ++i) {
+        unsigned char ch = (unsigned char)src[i];
+        dst[i] = (ch >= 0x20u && ch <= 0x7eu) ? ch : ' ';
+    }
+}
+
+static void csb_v1_runtime_copy_stat(struct ChampionStat_Compat *dst,
+                                     int current,
+                                     int maximum)
+{
+    unsigned short max_value;
+    unsigned int shifted;
+    if (!dst) return;
+    max_value = csb_v1_runtime_clamp_u16(maximum);
+    if (max_value == 0u) {
+        max_value = csb_v1_runtime_clamp_u16(current);
+    }
+    dst->current = csb_v1_runtime_clamp_u16(current);
+    dst->maximum = max_value;
+    shifted = (unsigned int)max_value << 1;
+    dst->shifted = (unsigned short)(shifted > 65535u ? 65535u : shifted);
+}
+
+static int csb_v1_runtime_m11_inventory_slot_for_csb_slot(int csb_slot)
+{
+    if (csb_slot == CSB_V1_SLOT_READY_HAND) return CHAMPION_SLOT_HAND_LEFT;
+    if (csb_slot == CSB_V1_SLOT_ACTION_HAND) return CHAMPION_SLOT_ACTION_HAND;
+    if (csb_slot >= CSB_V1_SLOT_BELT_1 && csb_slot <= CSB_V1_SLOT_BELT_4) {
+        return CHAMPION_SLOT_POUCH_1 + (csb_slot - CSB_V1_SLOT_BELT_1);
+    }
+    if (csb_slot >= CSB_V1_SLOT_PACK_1 && csb_slot <= CSB_V1_SLOT_PACK_8) {
+        return CHAMPION_SLOT_BACKPACK_1 + (csb_slot - CSB_V1_SLOT_PACK_1);
+    }
+    if (csb_slot >= CSB_V1_SLOT_PACK_9 && csb_slot <= CSB_V1_SLOT_PACK_12) {
+        return CHAMPION_SLOT_BACKPACK_9 + (csb_slot - CSB_V1_SLOT_PACK_9);
+    }
+    return -1;
+}
+
+static int csb_v1_runtime_copy_portrait_compat(
+    struct ChampionState_Compat *dst,
+    const CSB_V1_Champion *src)
+{
+    int i;
+    int compatible_nonzero = 0;
+    int wide_nonzero = 0;
+    if (!dst || !src) return 0;
+    for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
+        if (src->Portrait[i] != 0u) {
+            compatible_nonzero = 1;
+            break;
+        }
+    }
+    if (compatible_nonzero) {
+        /* ReDMCSB: PANEL.C F0354 draws status-box portraits from
+         * M516_CHAMPIONS[i].Portrait. Utility Disk CMP import and DM1 save
+         * import keep the DM1-compatible 32x29x4bpp packed portrait in the
+         * first 464 bytes, so preserve that byte-exact fast path. */
+        memcpy(dst->portraitBitmap,
+               src->Portrait,
+               CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
+        dst->portraitBitmapValid = 1;
+        return 1;
+    }
+    for (i = CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT;
+         i < CSB_V1_PORTRAIT_BYTE_COUNT;
+         ++i) {
+        if (src->Portrait[i] != 0u) {
+            wide_nonzero = 1;
+            break;
+        }
+    }
+    if (!wide_nonzero) {
+        dst->portraitBitmapValid = 0;
+        memset(dst->portraitBitmap, 0, sizeof(dst->portraitBitmap));
+        return 0;
+    }
+
+    /* ReDMCSB: CEDT006.C F7048 copies loaded portraits into the 464-byte
+     * on-screen portrait bitmap, and PORTRAIT.C F7251/F7252 convert between
+     * Atari ST planar storage and that packed 4bpp HUD bitmap. */
+    for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
+        const int base = i * 8;
+        unsigned int left = 0u;
+        unsigned int right = 0u;
+        if (base + 7 < CSB_V1_PORTRAIT_BYTE_COUNT) {
+            left = (unsigned int)(src->Portrait[base] |
+                                  src->Portrait[base + 1] |
+                                  src->Portrait[base + 2] |
+                                  src->Portrait[base + 3]);
+            right = (unsigned int)(src->Portrait[base + 4] |
+                                   src->Portrait[base + 5] |
+                                   src->Portrait[base + 6] |
+                                   src->Portrait[base + 7]);
+        }
+        dst->portraitBitmap[i] =
+            (unsigned char)(((left & 0x0fu) << 4) | (right & 0x0fu));
+    }
+    dst->portraitBitmapValid = 1;
+    return 1;
+}
+
 typedef struct {
     const CSB_V1_RuntimeProfile *profile;
     const CSB_V1_DungeonData *dungeon;
@@ -1667,6 +1791,127 @@ int csb_v1_runtime_view_state_receipt_from_profile_pc34(
     out_receipt->party_y = profile->party_y;
     out_receipt->party_dir = profile->party_dir;
     out_receipt->tick_count = (int)profile->tick_count;
+    return 1;
+}
+
+void csb_v1_runtime_party_mirror_receipt_init_pc34(
+    CSB_V1_RuntimePartyMirrorReceipt_PC34 *receipt)
+{
+    int i;
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&receipt->party.champions[i]);
+    }
+    receipt->party.activeChampionIndex = -1;
+}
+
+int csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_RuntimePartyMirrorReceipt_PC34 *out_receipt)
+{
+    const CSB_V1_PartyState *src_party;
+    int count;
+    int leader;
+    int i;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_runtime_party_mirror_receipt_init_pc34(out_receipt);
+    if (!profile) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->party.championCount = 0;
+    out_receipt->party.mapIndex = profile->current_level;
+    out_receipt->party.mapX = profile->party_x;
+    out_receipt->party.mapY = profile->party_y;
+    out_receipt->party.direction = profile->party_dir & 3;
+    out_receipt->party.activeChampionIndex = -1;
+
+    if (!profile->party_state_valid) {
+        return 1;
+    }
+
+    src_party = &profile->party_state;
+    count = src_party->ChampionCount;
+    if (count < 0) count = 0;
+    if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
+    out_receipt->party.championCount = count;
+
+    leader = profile->leader_index;
+    if (leader < 0 || leader >= count) {
+        leader = src_party->LeaderIndex;
+    }
+    if (leader < 0 || leader >= count) {
+        leader = (count > 0) ? 0 : -1;
+    }
+    out_receipt->party.activeChampionIndex = leader;
+
+    for (i = 0; i < count; ++i) {
+        const CSB_V1_Champion *src = &src_party->Champions[i];
+        struct ChampionState_Compat *dst = &out_receipt->party.champions[i];
+        int attr;
+        int skill;
+        int csb_slot;
+
+        F0600_CHAMPION_InitEmpty_Compat(dst);
+        dst->present = 1;
+        dst->portraitIndex = i;
+        csb_v1_runtime_pack_printable(dst->name,
+                                      CHAMPION_NAME_LENGTH,
+                                      src->Name,
+                                      CSB_V1_MAX_NAME_LEN);
+        csb_v1_runtime_pack_printable(dst->title,
+                                      CHAMPION_TITLE_LENGTH,
+                                      src->Title,
+                                      CSB_V1_MAX_TITLE_LEN);
+        csb_v1_runtime_copy_stat(&dst->hp,
+                                 src->CurrentHealth,
+                                 src->MaximumHealth);
+        csb_v1_runtime_copy_stat(&dst->stamina,
+                                 src->CurrentStamina,
+                                 src->MaximumStamina);
+        csb_v1_runtime_copy_stat(&dst->mana,
+                                 src->CurrentMana,
+                                 src->MaximumMana);
+        for (attr = 0; attr < CHAMPION_ATTR_COUNT &&
+                       attr < CSB_V1_STAT_COUNT; ++attr) {
+            dst->attributes[attr] =
+                csb_v1_runtime_clamp_u16((int)src->Statistics[attr][CSB_V1_STAT_CUR]);
+            dst->attributeMaximums[attr] =
+                csb_v1_runtime_clamp_u16((int)src->Statistics[attr][CSB_V1_STAT_MAX]);
+        }
+        for (skill = 0; skill < CHAMPION_SKILL_COUNT &&
+                        skill < CSB_V1_SKILL_COUNT; ++skill) {
+            dst->skillLevels[skill] = src->Skills[skill];
+        }
+        /* ReDMCSB: DEFS.H C00_SLOT_READY_HAND/C01_SLOT_ACTION_HAND and
+         * PANEL.C F0354 status boxes read champion slots by semantic slot.
+         * Only storage slots with a clear shared M11 equivalent are mirrored;
+         * CSB chest slots remain runtime-owned. */
+        for (csb_slot = 0; csb_slot < CSB_V1_SLOT_COUNT; ++csb_slot) {
+            int dst_slot = csb_v1_runtime_m11_inventory_slot_for_csb_slot(csb_slot);
+            if (dst_slot >= 0 && dst_slot < CHAMPION_SLOT_COUNT) {
+                dst->inventory[dst_slot] = src->Slots[csb_slot];
+            }
+        }
+        dst->load = src->Load;
+        dst->maxLoad = 0u;
+        dst->cell = (unsigned char)(src->Cell & 3u);
+        dst->direction = (unsigned char)(src->Direction & 3u);
+        dst->wounds = src->Wounds;
+        dst->poisonDose = src->PoisonDose;
+        dst->food = src->Food;
+        dst->water = src->Water;
+        dst->actionDefense = 0;
+        dst->actionIndex = src->ActionIndex;
+        (void)csb_v1_runtime_copy_portrait_compat(dst, src);
+    }
     return 1;
 }
 

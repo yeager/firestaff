@@ -56,6 +56,7 @@
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "memory_champion_state_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 struct CSB_V1_StartupRuntimePlan_PC34;
@@ -1004,6 +1005,10 @@ typedef struct {
     int party_dir;
     int tick_count;
 } CSB_V1_RuntimeViewStateReceipt_PC34;
+typedef struct {
+    int valid;
+    struct PartyState_Compat party;
+} CSB_V1_RuntimePartyMirrorReceipt_PC34;
 void csb_v1_runtime_startup_handoff_receipt_init_pc34(
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 *receipt);
 int csb_v1_runtime_apply_startup_handoff_pc34(
@@ -1034,6 +1039,11 @@ void csb_v1_runtime_view_state_receipt_init_pc34(
 int csb_v1_runtime_view_state_receipt_from_profile_pc34(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_RuntimeViewStateReceipt_PC34 *out_receipt);
+void csb_v1_runtime_party_mirror_receipt_init_pc34(
+    CSB_V1_RuntimePartyMirrorReceipt_PC34 *receipt);
+int csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_RuntimePartyMirrorReceipt_PC34 *out_receipt);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);
