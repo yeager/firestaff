@@ -1876,6 +1876,91 @@ int dm2_v1_viewport_build_projectile_render_plan(
     return 1;
 }
 
+int dm2_v1_viewport_projectile_asset_blit(
+    const DM2_V1_ProjectileRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    int party_direction,
+    int tick_count,
+    uint32_t *random_seed,
+    DM2_V1_ProjectileAssetBlit *out_blit)
+{
+    DM2_V1_ProjectileAssetBlit blit;
+    int frame_x = 0;
+    int frame_w = src_w;
+    int render_frame;
+    int flip_mirror;
+    int dst_w;
+    int dst_h;
+
+    if (!out_blit) {
+        return 0;
+    }
+    memset(&blit, 0, sizeof(blit));
+    blit.gdat_index = -1;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    if (!render || render->gdat_index == 0 ||
+        src_w <= 0 || src_h <= 0) {
+        *out_blit = blit;
+        return 0;
+    }
+
+    render_frame = render->frame_index;
+    flip_mirror = render->flip_mirror;
+    if (!dm2_v1_prepare_projectile_map_chip_frame(src_w,
+                                                  src_h,
+                                                  render->frame_index,
+                                                  render->direction,
+                                                  render->object_direction,
+                                                  party_direction,
+                                                  render->frame_class,
+                                                  &frame_x,
+                                                  &frame_w)) {
+        frame_x = 0;
+        frame_w = src_w;
+    }
+
+    if (render->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD) {
+        int frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
+        if (render->cloud_flip_from_seed) {
+            flip_mirror = dm2_v1_viewport_cloud_flip_for_seed(random_seed);
+        }
+        render_frame = dm2_v1_viewport_cloud_frame_for_tick(tick_count,
+                                                            frame_count);
+        if (!dm2_v1_prepare_map_chip_frame(src_w, src_h, render_frame,
+                                           &frame_x, &frame_w)) {
+            frame_x = 0;
+            frame_w = src_w;
+        }
+    }
+
+    dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
+                                                  render->depth,
+                                                  3,
+                                                  32);
+    dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                  render->depth,
+                                                  3,
+                                                  32);
+
+    blit.gdat_index = render->gdat_index;
+    blit.frame_x = frame_x;
+    blit.frame_y = 0;
+    blit.frame_w = frame_w;
+    blit.frame_h = src_h;
+    blit.dst_rect.x = render->center_x - (dst_w / 2);
+    blit.dst_rect.y = render->center_y - (dst_h / 2);
+    blit.dst_rect.w = dst_w;
+    blit.dst_rect.h = dst_h;
+    blit.src_stride = src_stride > 0 ? src_stride : src_w;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    blit.flip_mirror = flip_mirror;
+    blit.render_frame = render_frame;
+    *out_blit = blit;
+    return frame_w > 0 && dst_w > 0 && dst_h > 0;
+}
+
 int dm2_v1_viewport_build_weather_overlay_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_WeatherOverlayRenderPlan *out_plan)
@@ -2840,66 +2925,34 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 dm2_v1_fetch_viewport_asset(s, p->gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
-                int frame_x = 0;
-                int frame_w = src_w;
-                int render_frame = p->frame_index;
-                int flip_mirror = p->flip_mirror;
-                if (!dm2_v1_prepare_projectile_map_chip_frame(src_w,
-                                                              src_h,
-                                                              p->frame_index,
-                                                              p->direction,
-                                                              p->object_direction,
-                                                              s->party_dir,
-                                                              p->frame_class,
-                                                              &frame_x,
-                                                              &frame_w)) {
-                    frame_x = 0;
-                    frame_w = src_w;
+                DM2_V1_ProjectileAssetBlit blit;
+                if (dm2_v1_viewport_projectile_asset_blit(
+                        p,
+                        src_w,
+                        src_h,
+                        src_stride,
+                        s->party_dir,
+                        s->tick_count,
+                        &s->random_seed,
+                        &blit)) {
+                    dm2_v1_blit_scaled_bitmap_region_ex(
+                        vp,
+                        stride,
+                        blit.dst_rect.x,
+                        blit.dst_rect.y,
+                        blit.dst_rect.w,
+                        blit.dst_rect.h,
+                        pixels,
+                        blit.frame_x,
+                        blit.frame_y,
+                        blit.frame_w,
+                        blit.frame_h,
+                        blit.src_stride,
+                        blit.transparent_color,
+                        blit.flip_mirror);
+                    ++s->asset_projectile_drawn_count;
+                    drawn_asset = 1;
                 }
-                if (p->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD) {
-                    int frame_count =
-                        dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
-                    if (p->cloud_flip_from_seed) {
-                        flip_mirror =
-                            dm2_v1_viewport_cloud_flip_for_seed(
-                                &s->random_seed);
-                    }
-                    render_frame =
-                        dm2_v1_viewport_cloud_frame_for_tick(s->tick_count,
-                                                             frame_count);
-                    if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
-                                                       render_frame,
-                                                       &frame_x,
-                                                       &frame_w)) {
-                        frame_x = 0;
-                        frame_w = src_w;
-                    }
-                }
-                int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
-                                                                  p->depth,
-                                                                  3,
-                                                                  32);
-                int dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
-                                                                  p->depth,
-                                                                  3,
-                                                                  32);
-                dm2_v1_blit_scaled_bitmap_region_ex(
-                    vp,
-                    stride,
-                    p->center_x - (dst_w / 2),
-                    p->center_y - (dst_h / 2),
-                    dst_w,
-                    dst_h,
-                    pixels,
-                    frame_x,
-                    0,
-                    frame_w,
-                    src_h,
-                    src_stride > 0 ? src_stride : src_w,
-                    DM2_COLOR_TRANSPARENT,
-                    flip_mirror);
-                ++s->asset_projectile_drawn_count;
-                drawn_asset = 1;
             }
         }
         if (!drawn_asset) {
