@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-07 CSB runtime projectile/explosion material consumption: M11 now consumes CSB-owned `transparent_color` from `CSB_V1_ViewportRuntimeProjectileSpriteBlit` and `CSB_V1_ViewportRuntimeExplosionSpriteBlit` through explicit helper variants. DM1 projectile/explosion callers keep the existing DM1 plan default, while CSB no longer relies on implicit M11 material defaults for these sprite paths.
+
 - ✅ 2026-07-07 CSB runtime creature material consumption: M11 now consumes the CSB-owned `transparent_color` from `CSB_V1_ViewportRuntimeGroupSpriteBlit` when drawing runtime creature-group sprites, instead of always resolving the key color through the DM1 creature table inside the renderer. The DM1 creature draw path keeps the existing wrapper default, while the CSB callback uses the explicit material variant. Verification: `cc -std=c11 -Wall -Wextra -I/tmp/firestaff-remote-main-finalcheck -I/tmp/firestaff-remote-main-finalcheck/include -I/tmp/firestaff-remote-main-finalcheck/src -fsyntax-only src/engine/m11_game_view.c` passed with only existing unused-function warnings.
 
 - ✅ 2026-07-07 CSB runtime projectile material icon fallback: CSB viewport rendering now resolves thrown/material-bound projectile objects into a centered `CSB_V1_ViewportRuntimeObjectIconBlit` and calls the existing asset-backed icon drawer before using the diagnostic marker. The runtime draw-count contract now records material-icon draws separately from material resolution and marker fallback.
