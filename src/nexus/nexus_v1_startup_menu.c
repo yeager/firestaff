@@ -651,6 +651,7 @@ int nexus_v1_startup_menu_build_champion_render_rows(
 {
     int row;
     int count = 0;
+    int first_row = 0;
 
     if (!pool || !rows || max_rows <= 0) {
         return 0;
@@ -670,12 +671,14 @@ int nexus_v1_startup_menu_build_champion_render_rows(
                  pool->party_count,
                  NEXUS_MAX_PARTY);
     }
-    for (row = 0; row < pool->champion_count && count < max_rows; ++row) {
+    first_row = nexus_v1_startup_champion_visible_first_row(
+        pool->champion_count, cursor, max_rows);
+    for (row = first_row; row < pool->champion_count && count < max_rows; ++row) {
         Nexus_V1_StartupChampionRenderRow *out = &rows[count];
         int in_party = 0;
         int party_index;
 
-        if (!nexus_v1_startup_champion_row_rect(row, &out->rect)) {
+        if (!nexus_v1_startup_champion_row_rect(count, &out->rect)) {
             continue;
         }
         for (party_index = 0; party_index < pool->party_count; ++party_index) {
