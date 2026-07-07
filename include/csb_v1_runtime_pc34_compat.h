@@ -58,6 +58,8 @@
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
+struct CSB_V1_StartupRuntimePlan_PC34;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1003,6 +1005,11 @@ void csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(
 int csb_v1_runtime_apply_startup_runtime_plan_pc34(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_RuntimeStartupRuntimePlan_PC34 *runtime_plan,
+    const char *resume_path,
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt);
+int csb_v1_runtime_apply_startup_sequence_plan_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
     const char *resume_path,
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt);
 int csb_v1_runtime_import_csbgame_roster_from_path(

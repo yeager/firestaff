@@ -3286,7 +3286,6 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 plan;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
-    CSB_V1_RuntimeStartupRuntimePlan_PC34 runtime_exec_plan;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_exec_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
@@ -3333,16 +3332,10 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    memset(&runtime_exec_plan, 0, sizeof(runtime_exec_plan));
-    runtime_exec_plan.kind =
-        (CSB_V1_RuntimeStartupRuntimePlanKind_PC34)runtime_plan.kind;
-    runtime_exec_plan.set_bonus_dungeon = runtime_plan.set_bonus_dungeon;
-    runtime_exec_plan.bonus_dungeon = runtime_plan.bonus_dungeon;
-    runtime_exec_plan.requires_resume_load = runtime_plan.requires_resume_load;
     if (!state->csbBootProfile ||
-        !csb_v1_runtime_apply_startup_runtime_plan_pc34(
+        !csb_v1_runtime_apply_startup_sequence_plan_pc34(
             &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime,
-            &runtime_exec_plan,
+            &runtime_plan,
             state->csbState.startup_entrance_resume_available
                 ? state->csbState.startup_entrance_resume_path
                 : NULL,

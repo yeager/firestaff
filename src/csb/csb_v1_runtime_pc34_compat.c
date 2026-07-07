@@ -23,6 +23,7 @@
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
@@ -1517,6 +1518,52 @@ int csb_v1_runtime_apply_startup_runtime_plan_pc34(
         }
     }
     return 1;
+}
+
+int csb_v1_runtime_apply_startup_sequence_plan_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
+    const char *resume_path,
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt)
+{
+    CSB_V1_RuntimeStartupRuntimePlan_PC34 runtime_plan;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(out_receipt);
+    if (!startup_plan ||
+        startup_plan->kind == CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34) {
+        return 0;
+    }
+
+    memset(&runtime_plan, 0, sizeof(runtime_plan));
+    runtime_plan.set_bonus_dungeon = startup_plan->set_bonus_dungeon;
+    runtime_plan.bonus_dungeon = startup_plan->bonus_dungeon;
+    runtime_plan.requires_resume_load = startup_plan->requires_resume_load;
+
+    switch (startup_plan->kind) {
+        case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_DUNGEON_PC34:
+            runtime_plan.kind =
+                CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_DUNGEON_PC34;
+            break;
+        case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34:
+            runtime_plan.kind =
+                CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_BONUS_DUNGEON_PC34;
+            break;
+        case CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34:
+            runtime_plan.kind =
+                CSB_V1_RUNTIME_STARTUP_PLAN_RESUME_PC34;
+            break;
+        case CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34:
+        default:
+            return 0;
+    }
+
+    return csb_v1_runtime_apply_startup_runtime_plan_pc34(profile,
+                                                          &runtime_plan,
+                                                          resume_path,
+                                                          out_receipt);
 }
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
