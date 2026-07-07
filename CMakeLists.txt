@@ -310,6 +310,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_fade_transition_pc34_compat.c
     src/dm1/dm1_v1_room_transition_pc34_compat.c
     src/dm1/dm1_v1_portrait_panel_pc34_compat.c
+    src/dm1/dm1_v1_center_door_render_pc34_compat.c
     src/dm1/dm1_v1_floor_ornament_pc34_compat.c
     src/dm1/dm1_v1_floor_pit_pc34_compat.c
     src/dm1/dm1_v1_side_door_render_pc34_compat.c
@@ -325,13 +326,16 @@ set(M11_SOURCES
     src/dm1/dm1_v1_dialog_scroll_pc34_compat.c
     src/dm1/dm1_v1_text_message_pc34_compat.c
     src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
+    src/dm1/dm1_v1_g0180_pc34_compat.c
     src/dm1/dm1_v1_g0179_pc34_compat.c
     src/dm1/dm1_v1_g0181_pc34_compat.c
     src/dm1/dm1_v1_g0182_pc34_compat.c
+    src/dm1/dm1_v1_g0183_pc34_compat.c
     src/dm1/dm1_v1_g0184_pc34_compat.c
     src/dm1/dm1_v1_g0185_pc34_compat.c
+    src/dm1/dm1_v1_g0186_pc34_compat.c
     src/dm1/dm1_v1_g0187_pc34_compat.c
-        src/dm1/dm1_v1_sound_pc34_compat.c
+    src/dm1/dm1_v1_sound_pc34_compat.c
     src/dm1/dm1_v1_click_routing_pc34_compat.c
     src/shared/firestaff_po_loader.c
     src/dm1/dm1_v1_engine_pc34_compat.c
@@ -15868,6 +15872,15 @@ firestaff_add_dm1_v1_viewport_contract_test(
     tests/test_dm1_v1_field_teleporter_effect_pc34_compat.c
     src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
     dm1_v1_field_teleporter_effect_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_center_door_render_pc34_compat
+    tests/test_dm1_v1_center_door_render_pc34_compat.c
+    src/dm1/dm1_v1_center_door_render_pc34_compat.c
+    dm1_v1_center_door_render_pc34_compat
+    src/dm1/dm1_v1_g0180_pc34_compat.c
+    src/dm1/dm1_v1_g0183_pc34_compat.c
+    src/dm1/dm1_v1_g0186_pc34_compat.c
 )
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_side_door_render_pc34_compat
