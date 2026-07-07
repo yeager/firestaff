@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron chapter-inspect facts ownership: `theron_v1_startup_flow` now returns chapter inspect receipts directly from boot profile, world, and prefix facts. M11 no longer builds `Theron_StartupChapterInspectRequest` for startup inspect readouts. Verification: Theron startup-flow probe passed 487/487, Theron direct-launch passed, Theron M11 launcher handoff passed 26/26, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron runtime-entry facts ownership: `theron_v1_startup_runtime_entry` now builds forcefield-entry runtime requests directly from raw M11 facts, including HuCard/media facts and fixed Track 02 roster-name arrays. M11 no longer builds `Theron_V1StartupRuntimeEntryRequest` or transient roster pointer arrays for forcefield entry. Verification: Theron startup-flow probe passed 484/484, Theron direct-launch passed, Theron M11 launcher handoff passed 26/26, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron Continue facts ownership: `theron_v1_startup_save_resume` now builds Continue request and inspect request from raw startup facts and returns the existing result/apply/state receipts. M11 no longer constructs `Theron_V1StartupContinueRequest` for the Continue path. Verification: Theron startup-flow probe passed 478/478, Theron direct-launch passed, Theron M11 launcher handoff passed 26/26, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

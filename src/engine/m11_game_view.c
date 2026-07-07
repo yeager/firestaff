@@ -11929,18 +11929,16 @@ static int m11_theron_continue_availability(
 
 static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
                                            const char* prefix) {
-    Theron_StartupChapterInspectRequest request;
     Theron_StartupChapterInspectReceipt receipt;
 
     if (!state) {
         return;
     }
-    memset(&request, 0, sizeof(request));
-    request.boot_profile = state->theronBootProfile;
-    request.world = (const Theron_V1_World*)state->theronWorld;
-    request.prefix = prefix;
-    if (!theron_v1_startup_chapter_inspect_receipt_from_request(&request,
-                                                                &receipt)) {
+    if (!theron_v1_startup_chapter_inspect_receipt_from_facts(
+            state->theronBootProfile,
+            (const Theron_V1_World*)state->theronWorld,
+            prefix,
+            &receipt)) {
         return;
     }
     m11_set_inspect_readout(state,
