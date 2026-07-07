@@ -287,6 +287,8 @@ int main(void) {
         CHECK(csb_v1_runtime_import_csbgame_roster_from_path(&runtime, path)
                   == CSB_V1_LOAD_OK,
               "runtime imports raw CSBGAME roster file");
+        CHECK(csb_v1_runtime_can_load_resume_path(path),
+              "runtime resume validator accepts raw CSBGAME roster file");
         CHECK(runtime.champion_count == 3,
               "runtime CSBGAME import sets champion count");
         CHECK(strncmp(runtime.party_state.Champions[2].Name, "RUNEC", 5) == 0,
@@ -325,6 +327,8 @@ int main(void) {
 
         CHECK(firestaff_test_write_csbwin_resume_fixture(path, 0),
               "write verified CSBWin runtime import fixture");
+        CHECK(csb_v1_runtime_can_load_resume_path(path),
+              "runtime resume validator accepts verified CSBWin save body");
         csb_v1_runtime_init(&runtime, NULL);
         runtime.party_x = 1;
         runtime.party_y = 1;
