@@ -17083,6 +17083,7 @@ if(BUILD_TESTING)
     # be diff'd across OSes / renderer backends / Apple Silicon hw.
     add_executable(firestaff_v1_dm_title_palette_regression_probe
         probes/v1/firestaff_v1_dm_title_palette_regression_probe.c
+        src/dm1/dm1_v1_startup_sequence_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
         src/shared/vga_palette_pc34_compat.c
