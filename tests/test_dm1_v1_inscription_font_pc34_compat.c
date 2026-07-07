@@ -20,6 +20,10 @@ int main(void)
 {
     const int compactWidth = DM1_V1_INSCRIPTION_FONT_WIDTH_PC34;
     const int realAsciiWidth = 128 * DM1_V1_INSCRIPTION_GLYPH_WIDTH;
+    unsigned short textWords[2];
+    unsigned char glyphs[32];
+    DM1_V1_InscriptionLinePlanPc34 linePlan;
+    int decodedLen;
 
     check_int("source.raw.A",
               DM1_V1_InscriptionGlyphIndexFromSourceByte(0),
@@ -72,6 +76,65 @@ int main(void)
     check_int("unsupported.question",
               DM1_V1_InscriptionGlyphIndexForFontWidth('?', realAsciiWidth),
               -1);
+
+    textWords[0] = (unsigned short)((0 << 10) | (1 << 5) | 28);
+    textWords[1] = (unsigned short)((29 << 10) | (2 << 5) | 31);
+    decodedLen = DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
+        textWords, 2, 0, glyphs, (int)sizeof(glyphs));
+    check_int("decode.len", decodedLen, 8);
+    check_int("decode.glyph.0", glyphs[0], 0);
+    check_int("decode.glyph.1", glyphs[1], 1);
+    check_int("decode.separator", glyphs[2], 0x80);
+    check_int("decode.escape.T", glyphs[3], 19);
+    check_int("decode.escape.H", glyphs[4], 7);
+    check_int("decode.escape.E", glyphs[5], 4);
+    check_int("decode.escape.space", glyphs[6], 26);
+    check_int("decode.terminator", glyphs[7], 0x81);
+    check_int("decode.bad.offset",
+              DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
+                  textWords, 2, 5, glyphs, (int)sizeof(glyphs)),
+              0);
+    (void)DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
+        textWords, 2, 0, glyphs, (int)sizeof(glyphs));
+
+    check_int("unreadable.d3.side.1line",
+              DM1_V1_InscriptionUnreadableBoxHeightPc34(3, -2, 1, 1),
+              5);
+    check_int("unreadable.d3.front.3line",
+              DM1_V1_InscriptionUnreadableBoxHeightPc34(3, 0, 0, 3),
+              20);
+    check_int("unreadable.d2.side.2line",
+              DM1_V1_InscriptionUnreadableBoxHeightPc34(2, 1, 1, 2),
+              12);
+    check_int("unreadable.d1.side.3line",
+              DM1_V1_InscriptionUnreadableBoxHeightPc34(1, -1, 0, 3),
+              33);
+    check_int("unreadable.d1.front.none",
+              DM1_V1_InscriptionUnreadableBoxHeightPc34(1, 0, 0, 2),
+              0);
+
+    check_int("line0.plan.ok",
+              DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
+                  glyphs, (int)sizeof(glyphs), 0, 0, &linePlan),
+              1);
+    check_int("line0.start", linePlan.glyphStart, 0);
+    check_int("line0.count", linePlan.glyphCount, 2);
+    check_int("line0.x", linePlan.textX, 104);
+    check_int("line0.y", linePlan.textY, 41);
+    check_int("line0.width", linePlan.textWidth, 16);
+    check_int("line0.next", linePlan.nextCursor, 3);
+    check_int("line0.done", linePlan.done, 0);
+    check_int("line1.plan.ok",
+              DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
+                  glyphs, (int)sizeof(glyphs), linePlan.nextCursor, 1,
+                  &linePlan),
+              1);
+    check_int("line1.start", linePlan.glyphStart, 3);
+    check_int("line1.count", linePlan.glyphCount, 4);
+    check_int("line1.x", linePlan.textX, 96);
+    check_int("line1.y", linePlan.textY, 52);
+    check_int("line1.width", linePlan.textWidth, 32);
+    check_int("line1.done", linePlan.done, 1);
 
     printf("DM1 V1 inscription font glyph gate: %d/%d passed\n",
            g_passed, g_tests);

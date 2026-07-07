@@ -21697,97 +21697,11 @@ static int m11_dm1_visible_wall_text_line_count(const M11_GameViewState* state,
     return m11_dm1_decoded_inscription_line_count(decoded);
 }
 
-static int m11_dm1_append_inscription_raw_glyph(unsigned char* outGlyphs,
-                                                int outGlyphCapacity,
-                                                int* ioPos,
-                                                int glyph) {
-    if (!outGlyphs || !ioPos || glyph < 0 || glyph > 35) {
-        return 0;
-    }
-    if (*ioPos >= outGlyphCapacity - 1) {
-        return 0;
-    }
-    outGlyphs[(*ioPos)++] = (unsigned char)glyph;
-    return 1;
-}
-
-static void m11_dm1_append_inscription_escape29_raw(unsigned char* outGlyphs,
-                                                    int outGlyphCapacity,
-                                                    int* ioPos,
-                                                    int code) {
-    /* ReDMCSB DUNGEON.C F0168 selects the inscription escape replacement
-     * table for source M648 rendering.  The table expands THE/YOU as raw
-     * glyph cells and maps the eight graphic symbols to cells 28..35. */
-    static const unsigned char kThe[] = {19, 7, 4, 26};
-    static const unsigned char kYou[] = {24, 14, 20, 26};
-    const unsigned char* seq = NULL;
-    int seqLen = 0;
-    int i;
-    if (code == 0 || code == 1) {
-        (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
-                                                   outGlyphCapacity,
-                                                   ioPos,
-                                                   28 + code);
-        return;
-    }
-    if (code == 2) {
-        seq = kThe;
-        seqLen = (int)(sizeof(kThe) / sizeof(kThe[0]));
-    } else if (code == 3) {
-        seq = kYou;
-        seqLen = (int)(sizeof(kYou) / sizeof(kYou[0]));
-    } else if (code >= 4 && code <= 9) {
-        (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
-                                                   outGlyphCapacity,
-                                                   ioPos,
-                                                   26 + code);
-        return;
-    }
-    for (i = 0; i < seqLen; ++i) {
-        (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
-                                                   outGlyphCapacity,
-                                                   ioPos,
-                                                   seq[i]);
-    }
-}
-
-static void m11_dm1_append_inscription_escape30_raw(unsigned char* outGlyphs,
-                                                    int outGlyphCapacity,
-                                                    int* ioPos,
-                                                    int code) {
-    /* Minimal source word escape coverage used by current PC34 HoC wall text.
-     * ReDMCSB DUNGEON.C F0168 handles these before DUNVIEW.C consumes the
-     * raw M648 glyph stream. */
-    static const unsigned char kThe[] = {19, 7, 4, 26};
-    static const unsigned char kYou[] = {24, 14, 20, 26};
-    const unsigned char* seq = NULL;
-    int seqLen = 0;
-    int i;
-    if (code == 2) {
-        seq = kThe;
-        seqLen = (int)(sizeof(kThe) / sizeof(kThe[0]));
-    } else if (code == 3) {
-        seq = kYou;
-        seqLen = (int)(sizeof(kYou) / sizeof(kYou[0]));
-    }
-    for (i = 0; i < seqLen; ++i) {
-        (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
-                                                   outGlyphCapacity,
-                                                   ioPos,
-                                                   seq[i]);
-    }
-}
-
 static int m11_dm1_decode_inscription_raw_glyphs_at_offset(
         const struct DungeonThings_Compat* things,
         int wordOffset,
         unsigned char* outGlyphs,
         int outGlyphCapacity) {
-    int wi;
-    int codeIdx = 0;
-    int pos = 0;
-    int escape = 0;
-    unsigned short w = 0;
     if (!things || !things->textData || wordOffset < 0 ||
         wordOffset >= things->textDataWordCount ||
         !outGlyphs || outGlyphCapacity < 2) {
@@ -21796,56 +21710,12 @@ static int m11_dm1_decode_inscription_raw_glyphs_at_offset(
         }
         return 0;
     }
-    wi = wordOffset;
-    while (pos < outGlyphCapacity - 1 && wi < things->textDataWordCount) {
-        int code;
-        if (codeIdx == 0) {
-            w = things->textData[wi];
-            code = (w >> 10) & 0x1F;
-        } else if (codeIdx == 1) {
-            code = (w >> 5) & 0x1F;
-        } else {
-            code = w & 0x1F;
-        }
-        ++codeIdx;
-        if (codeIdx >= 3) {
-            codeIdx = 0;
-            ++wi;
-        }
-        if (escape == 29) {
-            m11_dm1_append_inscription_escape29_raw(outGlyphs,
-                                                    outGlyphCapacity,
-                                                    &pos,
-                                                    code);
-            escape = 0;
-        } else if (escape == 30) {
-            m11_dm1_append_inscription_escape30_raw(outGlyphs,
-                                                    outGlyphCapacity,
-                                                    &pos,
-                                                    code);
-            escape = 0;
-        } else if (code < 28) {
-            (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
-                                                       outGlyphCapacity,
-                                                       &pos,
-                                                       code);
-        } else if (code == 28) {
-            if (pos < outGlyphCapacity - 1) {
-                outGlyphs[pos++] = 0x80U;
-            }
-        } else if (code == 29 || code == 30) {
-            escape = code;
-        } else {
-            break;
-        }
-    }
-    if (pos < outGlyphCapacity) {
-        outGlyphs[pos++] = 0x81U;
-    }
-    if (pos < outGlyphCapacity) {
-        outGlyphs[pos] = 0;
-    }
-    return pos;
+    return DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
+        things->textData,
+        things->textDataWordCount,
+        wordOffset,
+        outGlyphs,
+        outGlyphCapacity);
 }
 
 static int m11_decode_visible_wall_text_raw_glyphs(const M11_GameViewState* state,
@@ -21902,35 +21772,8 @@ static int m11_dm1_unreadable_inscription_box_height(int relForward,
                                                      int relSide,
                                                      int sideProjection,
                                                      int lineCount) {
-    /* ReDMCSB DUNVIEW.C:3864-3902 counts decoded inscription lines and,
-     * for unreadable non-D1C projections, passes a smaller bitmap height
-     * through G2155 before F0791/F0635 clips the blit.  The PC34/I34E
-     * height table is DUNVIEW.C:1327-1332 G0204:
-     *   D3 side 5/8/13, D3 front 7/13/20,
-     *   D2 side 5/12/19, D2 front 10/17/27,
-     *   D1 side 11/22/33. */
-    static const unsigned char kUnreadableBoxHeight[5][3] = {
-        {5, 8, 13},
-        {7, 13, 20},
-        {5, 12, 19},
-        {10, 17, 27},
-        {11, 22, 33}
-    };
-    int row = -1;
-    if (lineCount <= 0 || lineCount >= 4) {
-        return 0;
-    }
-    if (relForward == 3) {
-        row = (relSide != 0 && sideProjection) ? 0 : 1;
-    } else if (relForward == 2) {
-        row = (relSide != 0 && sideProjection) ? 2 : 3;
-    } else if (relForward == 1 && relSide != 0) {
-        row = 4;
-    }
-    if (row < 0) {
-        return 0;
-    }
-    return (int)kUnreadableBoxHeight[row][lineCount - 1];
+    return DM1_V1_InscriptionUnreadableBoxHeightPc34(
+        relForward, relSide, sideProjection, lineCount);
 }
 
 static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_line(const M11_GameViewState* state,
@@ -22126,7 +21969,6 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
                                                      unsigned char* framebuffer,
                                                      int fbW,
                                                      int fbH) {
-    static const int kLineBottomY[4] = {48, 59, 75, 86};
     unsigned char decoded[128];
     int cursor = 0;
     int line = 0;
@@ -22135,33 +21977,29 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
         return;
     }
     while (cursor < (int)sizeof(decoded) && line < 4) {
-        int start = cursor;
-        int glyphCount = 0;
-        while (cursor < (int)sizeof(decoded) &&
-               decoded[cursor] != 0x80U &&
-               decoded[cursor] != 0x81U) {
-            ++cursor;
-        }
-        glyphCount = cursor - start;
-        if (glyphCount > 0) {
-            int textWidth = DM1_V1_InscriptionTextWidth(glyphCount);
-            int textX = M11_VIEWPORT_X + DM1_V1_InscriptionTextX(glyphCount);
-            int textY = M11_VIEWPORT_Y + kLineBottomY[line] - 7;
-            if (m11_dm1_inscription_font_slot_for_glyphs(state,
-                                                         decoded + start,
-                                                         glyphCount)) {
-                m11_draw_dm1_front_wall_inscription_patch(state, framebuffer, fbW, fbH,
-                                                          textX, textY, textWidth);
-                (void)m11_draw_dm1_inscription_glyph_line(state, framebuffer,
-                                                          fbW, fbH, textX, textY,
-                                                          decoded + start,
-                                                          glyphCount);
-            }
-        }
-        if (cursor >= (int)sizeof(decoded) || decoded[cursor] == 0x81U) {
+        DM1_V1_InscriptionLinePlanPc34 linePlan;
+        if (!DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
+                decoded, (int)sizeof(decoded), cursor, line, &linePlan)) {
             break;
         }
-        ++cursor;
+        if (linePlan.glyphCount > 0) {
+            int textX = M11_VIEWPORT_X + linePlan.textX;
+            int textY = M11_VIEWPORT_Y + linePlan.textY;
+            if (m11_dm1_inscription_font_slot_for_glyphs(state,
+                                                         decoded + linePlan.glyphStart,
+                                                         linePlan.glyphCount)) {
+                m11_draw_dm1_front_wall_inscription_patch(state, framebuffer, fbW, fbH,
+                                                          textX, textY, linePlan.textWidth);
+                (void)m11_draw_dm1_inscription_glyph_line(state, framebuffer,
+                                                          fbW, fbH, textX, textY,
+                                                          decoded + linePlan.glyphStart,
+                                                          linePlan.glyphCount);
+            }
+        }
+        if (linePlan.done) {
+            break;
+        }
+        cursor = linePlan.nextCursor;
         ++line;
     }
 }
