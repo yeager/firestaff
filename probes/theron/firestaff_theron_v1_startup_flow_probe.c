@@ -658,6 +658,31 @@ int main(void) {
         check_int("snapshot rebuild order 2 fills masked mirror",
                   rebuilt.selected_mirror_order[2],
                   2);
+        result = theron_v1_startup_flow_rebuild_from_facts(
+            THERON_STARTUP_PHASE_READY,
+            THERON_DUNGEON_COUNT + 4,
+            (1 << 6) | (1 << 2) | 1,
+            THERON_STARTUP_MAX_COMPANIONS + 2,
+            request_order,
+            THERON_STARTUP_MAX_COMPANIONS + 1,
+            &progression,
+            &rebuilt);
+        check_int("facts rebuild rc", result, THERON_STARTUP_OK);
+        check_int("facts rebuild clamps dungeon",
+                  rebuilt.selected_dungeon,
+                  THERON_DUNGEON_1_HALL_OF_RECORDS);
+        check_int("facts rebuild companion count",
+                  rebuilt.companion_count,
+                  3);
+        check_int("facts rebuild order 0",
+                  rebuilt.selected_mirror_order[0],
+                  6);
+        check_int("facts rebuild order 1",
+                  rebuilt.selected_mirror_order[1],
+                  2);
+        check_int("facts rebuild order 2",
+                  rebuilt.selected_mirror_order[2],
+                  0);
     }
 
     {
