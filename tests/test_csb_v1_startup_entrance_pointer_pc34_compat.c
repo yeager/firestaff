@@ -108,6 +108,7 @@ int main(void)
     int startup_active;
     int startup_frame;
     int i;
+    unsigned char fb[320 * 200];
 
     expect_action("enter route becomes CSB startup Enter",
                   244, 45,
@@ -464,6 +465,19 @@ int main(void)
                   CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34,
           "startup render plan owns closed entrance command order");
 
+    memset(fb, 0xaa, sizeof(fb));
+    check(csb_v1_startup_execute_primitive_commands_pc34(&plan,
+                                                         fb,
+                                                         320,
+                                                         200) == 2 &&
+              fb[0] == 0 &&
+              fb[18 + 18 * 320] == 14 &&
+              fb[301 + 18 * 320] == 14 &&
+              fb[18 + 181 * 320] == 14 &&
+              fb[301 + 181 * 320] == 14 &&
+              fb[19 + 19 * 320] == 0,
+          "startup primitive executor draws CSB-owned clear plus fallback entrance frame");
+
     render_state.utility_overlay_active = 1;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               !plan.fallback_status_visible &&
@@ -582,6 +596,22 @@ int main(void)
               plan.render_commands[2].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34,
           "startup render plan owns door pre-open command order");
+
+    memset(fb, 0xaa, sizeof(fb));
+    check(csb_v1_startup_execute_primitive_commands_pc34(&plan,
+                                                         fb,
+                                                         320,
+                                                         200) == 3 &&
+              fb[0] == 0 &&
+              fb[0 + 28 * 320] == 2 &&
+              fb[104 + 28 * 320] == 0 &&
+              fb[0 + 188 * 320] == 2 &&
+              fb[104 + 188 * 320] == 0 &&
+              fb[1 + 29 * 320] == 12 &&
+              fb[105 + 28 * 320] == 2 &&
+              fb[231 + 188 * 320] == 0 &&
+              fb[106 + 29 * 320] == 12,
+          "startup primitive executor draws CSB-owned fallback door panels");
 
     render_state.opening_delay_ticks = 0;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&

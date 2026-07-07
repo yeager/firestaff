@@ -2571,88 +2571,17 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
     }
 }
 
-static void m11_draw_csb_entrance_door_panel(unsigned char *framebuffer,
-                                             int framebufferWidth,
-                                             int framebufferHeight,
-                                             int x,
-                                             int y,
-                                             int w,
-                                             int h,
-                                             unsigned char fill,
-                                             unsigned char lightEdge,
-                                             unsigned char darkEdge)
-{
-    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 ||
-        w <= 0 || h <= 0) {
-        return;
-    }
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x, y, w, h, fill);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x, y, w, 1, lightEdge);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x, y + h - 1, w, 1, darkEdge);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x, y, 1, h, lightEdge);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x + w - 1, y, 1, h, darkEdge);
-}
-
 static void m11_execute_csb_startup_primitive_commands(
     unsigned char *framebuffer,
     int framebufferWidth,
     int framebufferHeight,
     const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
-    int i;
-    if (!framebuffer || !plan) {
-        return;
-    }
-    for (i = 0; i < plan->primitive_command_count &&
-                i < CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34; ++i) {
-        const CSB_V1_StartupPrimitiveCommand_PC34 *cmd =
-            &plan->primitive_commands[i];
-        if (!cmd->visible) {
-            continue;
-        }
-        switch (cmd->kind) {
-            case CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34:
-                m11_fill_rect(framebuffer,
-                              framebufferWidth,
-                              framebufferHeight,
-                              cmd->x,
-                              cmd->y,
-                              cmd->w,
-                              cmd->h,
-                              (unsigned char)cmd->color);
-                break;
-            case CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34:
-                m11_draw_rect(framebuffer,
-                              framebufferWidth,
-                              framebufferHeight,
-                              cmd->x,
-                              cmd->y,
-                              cmd->w,
-                              cmd->h,
-                              (unsigned char)cmd->color);
-                break;
-            case CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34:
-                m11_draw_csb_entrance_door_panel(
-                    framebuffer,
-                    framebufferWidth,
-                    framebufferHeight,
-                    cmd->x,
-                    cmd->y,
-                    cmd->w,
-                    cmd->h,
-                    (unsigned char)cmd->color,
-                    (unsigned char)cmd->light_edge_color,
-                    (unsigned char)cmd->dark_edge_color);
-                break;
-            default:
-                break;
-        }
-    }
+    (void)csb_v1_startup_execute_primitive_commands_pc34(
+        plan,
+        framebuffer,
+        framebufferWidth,
+        framebufferHeight);
 }
 
 static int m11_execute_csb_startup_asset_command(
