@@ -12016,34 +12016,6 @@ static void m11_theron_capture_track02_startup_media(
     state->theronState.startup_roster_name_count = (int)i;
 }
 
-typedef struct {
-    const uint8_t* hucard_rom;
-    size_t hucard_rom_size;
-    const char* md5_hex;
-} M11_TheronStartupLevelLoadContext;
-
-static int m11_theron_startup_level_load_callback(
-    Theron_V1_World* world,
-    Theron_DungeonID dungeon_id,
-    void* userdata,
-    char* receipt,
-    size_t receipt_cap) {
-
-    const M11_TheronStartupLevelLoadContext* ctx =
-        (const M11_TheronStartupLevelLoadContext*)userdata;
-
-    if (!ctx) {
-        return 0;
-    }
-    return theron_v1_startup_runtime_load_initial_level(world,
-                                                        ctx->hucard_rom,
-                                                        ctx->hucard_rom_size,
-                                                        ctx->md5_hex,
-                                                        dungeon_id,
-                                                        receipt,
-                                                        receipt_cap);
-}
-
 static void m11_theron_sync_startup_state(M11_GameViewState* state,
                                           const Theron_StartupFlow* flow) {
     int i;
@@ -12118,9 +12090,9 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     Theron_V1_BootProfile* profile;
     TrAssetBundle* assets;
     Theron_StartupFlow flow;
-    Theron_StartupResult result;
     const char* rosterNames[8];
-    M11_TheronStartupLevelLoadContext levelLoadContext;
+    Theron_V1StartupRuntimeEntryRequest runtimeRequest;
+    Theron_V1StartupRuntimeEntryResult runtimeResult;
     char flowReceipt[128];
     int i;
 
@@ -12133,7 +12105,7 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     world = (Theron_V1_World*)state->theronWorld;
     profile = (Theron_V1_BootProfile*)state->theronBootProfile;
     assets = (TrAssetBundle*)state->theronAssets;
-    if (!world || !profile || !assets) {
+    if (!world) {
         return 0;
     }
 
@@ -12152,48 +12124,37 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     for (i = 0; i < (int)(sizeof(rosterNames) / sizeof(rosterNames[0])); ++i) {
         rosterNames[i] = state->theronState.startup_roster_names[i];
     }
-    result = theron_v1_startup_enter_forcefield_with_roster(
-        &flow,
-        &world->party,
-        rosterNames,
-        state->theronState.startup_roster_name_count);
-    if (result != THERON_STARTUP_OK) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "startup-flow forcefield failed: %s",
-                     theron_v1_startup_result_name(result));
-        }
-        return 0;
-    }
-
-    levelLoadContext.hucard_rom = assets->hucard_rom;
-    levelLoadContext.hucard_rom_size = assets->hucard_rom_size;
-    levelLoadContext.md5_hex = profile->graphics_md5;
-    result = theron_v1_startup_enter_runtime_from_forcefield(
+    theron_v1_startup_runtime_entry_request_init(&runtimeRequest);
+    runtimeRequest.hucard_rom = assets ? assets->hucard_rom : NULL;
+    runtimeRequest.hucard_rom_size = assets ? assets->hucard_rom_size : 0u;
+    runtimeRequest.md5_hex = profile ? profile->graphics_md5 : NULL;
+    runtimeRequest.roster_names = rosterNames;
+    runtimeRequest.roster_name_count =
+        state->theronState.startup_roster_name_count;
+    if (!theron_v1_startup_runtime_enter_from_forcefield(
         &flow,
         world,
-        m11_theron_startup_level_load_callback,
-        &levelLoadContext,
+        &runtimeRequest,
+        &runtimeResult,
         receipt,
-        receipt_cap);
-    if (result != THERON_STARTUP_OK) {
+        receipt_cap)) {
         if (receipt && receipt_cap > 0u) {
             if (receipt[0] == '\0') {
                 snprintf(receipt,
                          receipt_cap,
                          "startup-flow runtime entry failed: %s",
-                         theron_v1_startup_result_name(result));
+                         theron_v1_startup_result_name(
+                             runtimeResult.result));
             }
         }
         return 0;
     }
 
-    state->theronState.level_loaded = 1;
-    state->theronState.party_x = world->party.leader_x;
-    state->theronState.party_y = world->party.leader_y;
-    state->theronState.party_dir = world->party.leader_dir;
-    state->theronState.tick_count = (int)world->world_tick;
+    state->theronState.level_loaded = runtimeResult.level_loaded;
+    state->theronState.party_x = runtimeResult.party_x;
+    state->theronState.party_y = runtimeResult.party_y;
+    state->theronState.party_dir = runtimeResult.party_dir;
+    state->theronState.tick_count = runtimeResult.tick_count;
     m11_theron_sync_startup_state(state, &flow);
     return 1;
 }

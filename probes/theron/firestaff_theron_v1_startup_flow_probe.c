@@ -1330,6 +1330,84 @@ int main(void) {
                            load_receipt,
                            "fallback room stage=3");
         }
+        {
+            Theron_V1StartupRuntimeEntryRequest runtime_request;
+            Theron_V1StartupRuntimeEntryResult runtime_result;
+            const char *runtime_roster[8] = {
+                "THERON",
+                "MARA-JP",
+                "LINOS-JP",
+                "HEXA-JP",
+                "HAKAR-JP",
+                "TIRAN-JP",
+                "DOTAN-JP",
+                "PENTAI-JP"
+            };
+            char runtime_receipt[256];
+
+            theron_v1_startup_runtime_entry_request_init(&runtime_request);
+            theron_v1_startup_runtime_entry_result_init(&runtime_result);
+            check_int("runtime wrapper init result",
+                      runtime_result.result,
+                      THERON_STARTUP_OK);
+
+            theron_v1_startup_flow_init(&flow);
+            result = theron_v1_startup_runtime_enter_from_forcefield(
+                &flow,
+                &world,
+                &runtime_request,
+                &runtime_result,
+                runtime_receipt,
+                sizeof(runtime_receipt));
+            check_int("runtime wrapper not-ready rc", result, 0);
+            check_int("runtime wrapper not-ready result",
+                      runtime_result.result,
+                      THERON_STARTUP_ERR_NO_STAGE);
+
+            theron_v1_startup_flow_init(&flow);
+            theron_v1_world_init(&world);
+            result = theron_v1_startup_choose_stage(
+                &flow,
+                &progression,
+                THERON_DUNGEON_1_HALL_OF_RECORDS);
+            check_int("runtime wrapper choose rc",
+                      result,
+                      THERON_STARTUP_OK);
+            result = theron_v1_startup_select_mirror(&flow, 0);
+            check_int("runtime wrapper select mirror rc",
+                      result,
+                      THERON_STARTUP_OK);
+            runtime_request.roster_names = runtime_roster;
+            runtime_request.roster_name_count = 8;
+            runtime_receipt[0] = '\0';
+            check_int("runtime wrapper enter rc",
+                      theron_v1_startup_runtime_enter_from_forcefield(
+                          &flow,
+                          &world,
+                          &runtime_request,
+                          &runtime_result,
+                          runtime_receipt,
+                          sizeof(runtime_receipt)),
+                      1);
+            check_int("runtime wrapper result",
+                      runtime_result.result,
+                      THERON_STARTUP_OK);
+            check_int("runtime wrapper flow phase",
+                      flow.phase,
+                      THERON_STARTUP_PHASE_IN_DUNGEON);
+            check_int("runtime wrapper level loaded",
+                      runtime_result.level_loaded,
+                      1);
+            check_int("runtime wrapper world loaded",
+                      world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      1);
+            check_str("runtime wrapper roster name",
+                      world.party.champions[1].name,
+                      "HAKAR-JP");
+            check_contains("runtime wrapper receipt",
+                           runtime_receipt,
+                           "fallback room stage=1");
+        }
         theron_v1_startup_flow_init(&flow);
         result = theron_v1_startup_choose_stage(
             &flow,

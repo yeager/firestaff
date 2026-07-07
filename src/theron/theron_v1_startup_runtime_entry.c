@@ -5,6 +5,34 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef struct {
+    const uint8_t *hucard_rom;
+    size_t hucard_rom_size;
+    const char *md5_hex;
+} Theron_V1StartupRuntimeLevelLoadContext;
+
+static int theron_v1_startup_runtime_level_load_callback(
+    Theron_V1_World *world,
+    Theron_DungeonID dungeon_id,
+    void *userdata,
+    char *receipt,
+    size_t receipt_cap) {
+
+    const Theron_V1StartupRuntimeLevelLoadContext *ctx =
+        (const Theron_V1StartupRuntimeLevelLoadContext *)userdata;
+
+    if (!ctx) {
+        return 0;
+    }
+    return theron_v1_startup_runtime_load_initial_level(world,
+                                                        ctx->hucard_rom,
+                                                        ctx->hucard_rom_size,
+                                                        ctx->md5_hex,
+                                                        dungeon_id,
+                                                        receipt,
+                                                        receipt_cap);
+}
+
 static int theron_v1_startup_runtime_try_track02_initial_level(
     Theron_V1_World *world,
     const uint8_t *hucard_rom,
@@ -294,5 +322,109 @@ int theron_v1_startup_runtime_load_initial_level(
                  (int)preview.start_y,
                  (int)preview.start_dir);
     }
+    return 1;
+}
+
+void theron_v1_startup_runtime_entry_request_init(
+    Theron_V1StartupRuntimeEntryRequest *request) {
+
+    if (!request) {
+        return;
+    }
+    memset(request, 0, sizeof(*request));
+}
+
+void theron_v1_startup_runtime_entry_result_init(
+    Theron_V1StartupRuntimeEntryResult *result) {
+
+    if (!result) {
+        return;
+    }
+    memset(result, 0, sizeof(*result));
+    result->result = THERON_STARTUP_OK;
+}
+
+static void theron_v1_startup_runtime_entry_capture_result(
+    const Theron_V1_World *world,
+    Theron_V1StartupRuntimeEntryResult *out_result) {
+
+    if (!world || !out_result) {
+        return;
+    }
+    theron_v1_startup_runtime_entry_result_init(out_result);
+    out_result->result = THERON_STARTUP_OK;
+    out_result->level_loaded = 1;
+    out_result->party_x = world->party.leader_x;
+    out_result->party_y = world->party.leader_y;
+    out_result->party_dir = world->party.leader_dir;
+    out_result->tick_count = (int)world->world_tick;
+}
+
+int theron_v1_startup_runtime_enter_from_forcefield(
+    Theron_StartupFlow *flow,
+    Theron_V1_World *world,
+    const Theron_V1StartupRuntimeEntryRequest *request,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_V1StartupRuntimeLevelLoadContext level_load_context;
+    Theron_StartupResult result;
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (out_result) {
+        theron_v1_startup_runtime_entry_result_init(out_result);
+    }
+    if (!flow || !world || !request) {
+        if (out_result) {
+            out_result->result = THERON_STARTUP_ERR_NULL;
+        }
+        return 0;
+    }
+
+    result = theron_v1_startup_enter_forcefield_with_roster(
+        flow,
+        &world->party,
+        request->roster_names,
+        request->roster_name_count);
+    if (result != THERON_STARTUP_OK) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "startup-flow forcefield failed: %s",
+                     theron_v1_startup_result_name(result));
+        }
+        if (out_result) {
+            out_result->result = result;
+        }
+        return 0;
+    }
+
+    level_load_context.hucard_rom = request->hucard_rom;
+    level_load_context.hucard_rom_size = request->hucard_rom_size;
+    level_load_context.md5_hex = request->md5_hex;
+    result = theron_v1_startup_enter_runtime_from_forcefield(
+        flow,
+        world,
+        theron_v1_startup_runtime_level_load_callback,
+        &level_load_context,
+        receipt,
+        receipt_cap);
+    if (out_result) {
+        out_result->result = result;
+    }
+    if (result != THERON_STARTUP_OK) {
+        if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
+            snprintf(receipt,
+                     receipt_cap,
+                     "startup-flow runtime entry failed: %s",
+                     theron_v1_startup_result_name(result));
+        }
+        return 0;
+    }
+
+    theron_v1_startup_runtime_entry_capture_result(world, out_result);
     return 1;
 }
