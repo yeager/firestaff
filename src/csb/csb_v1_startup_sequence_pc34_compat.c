@@ -1467,6 +1467,38 @@ int csb_v1_startup_advance_tick_pc34(
     return 1;
 }
 
+int csb_v1_startup_render_state_from_command_state_pc34(
+    const CSB_V1_StartupCommandState_PC34 *command_state,
+    int entrance_frame,
+    int utility_overlay_active,
+    int runtime_start_valid,
+    int runtime_start_x,
+    int runtime_start_y,
+    int runtime_start_dir,
+    CSB_V1_StartupRenderState_PC34 *out_state)
+{
+    if (!command_state || !out_state) {
+        return 0;
+    }
+    memset(out_state, 0, sizeof(*out_state));
+    out_state->entrance_active = command_state->entrance_active;
+    out_state->entrance_frame = entrance_frame;
+    out_state->title_active = command_state->title_active;
+    out_state->title_frame = command_state->title_frame;
+    out_state->entrance_source_step =
+        command_state->entrance_source_step;
+    out_state->credits_active = command_state->credits_active;
+    out_state->opening_active = command_state->opening_active;
+    out_state->opening_delay_ticks = command_state->opening_delay_ticks;
+    out_state->opening_step = command_state->opening_step;
+    out_state->utility_overlay_active = utility_overlay_active ? 1 : 0;
+    out_state->runtime_start_valid = runtime_start_valid ? 1 : 0;
+    out_state->runtime_start_x = runtime_start_x;
+    out_state->runtime_start_y = runtime_start_y;
+    out_state->runtime_start_dir = runtime_start_dir;
+    return 1;
+}
+
 int csb_v1_startup_build_render_plan_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
