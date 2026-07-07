@@ -6902,6 +6902,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_shop_pc34_compat
         tests/test_dm2_v1_shop_pc34_compat.c
         src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_tech_magic.c
     )
     target_include_directories(test_dm2_v1_shop_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -6918,6 +6919,7 @@ if(BUILD_TESTING)
     add_executable(firestaff_dm2_v1_shop_probe
         probes/dm2/firestaff_dm2_v1_shop_probe.c
         src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_tech_magic.c
     )
     target_include_directories(firestaff_dm2_v1_shop_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -6936,6 +6938,7 @@ if(BUILD_TESTING)
     add_executable(firestaff_dm2_v1_shop_economy_determinism_probe
         probes/dm2/firestaff_dm2_v1_shop_economy_determinism_probe.c
         src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_tech_magic.c
     )
     target_include_directories(firestaff_dm2_v1_shop_economy_determinism_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

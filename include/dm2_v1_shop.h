@@ -48,6 +48,8 @@ extern "C" {
 #define DM2_NUM_NPCS              4     /* DM2 has 4 NPC personalities */
 #define DM2_NUM_BUILTIN_SHOPS     5     /* built-in shop count */
 #define DM2_NPC_DIALOG_LINES      6     /* dialog lines per NPC */
+#define DM2_SHOP_RENDER_MAX_ROWS  8
+#define DM2_SHOP_RENDER_TEXT_MAX  72
 
 /* Shop IDs (built-in catalog) */
 #define DM2_SHOP_ID_NONE          0
@@ -108,6 +110,50 @@ typedef struct {
     int      leave_count;
 } DM2_V1_ShopState;
 
+typedef enum {
+    DM2_SHOP_RENDER_ROW_STOCK = 0,
+    DM2_SHOP_RENDER_ROW_PACK = 1,
+    DM2_SHOP_RENDER_ROW_EMPTY_PACK = 2
+} DM2_V1_ShopRenderRowKind;
+
+typedef struct {
+    DM2_V1_ShopRenderRowKind kind;
+    int x;
+    int y;
+    int highlight_x;
+    int highlight_y;
+    int highlight_w;
+    int highlight_h;
+    int highlighted;
+    char text[DM2_SHOP_RENDER_TEXT_MAX];
+} DM2_V1_ShopRenderRow;
+
+typedef struct {
+    int active;
+    int panel_x;
+    int panel_y;
+    int panel_w;
+    int panel_h;
+    int header_x;
+    int header_y;
+    int header_w;
+    int header_h;
+    int title_x;
+    int title_y;
+    char title[DM2_SHOP_RENDER_TEXT_MAX];
+    int stock_label_x;
+    int stock_label_y;
+    int pack_label_x;
+    int pack_label_y;
+    int stock_row_count;
+    int pack_row_count;
+    DM2_V1_ShopRenderRow stock_rows[DM2_SHOP_RENDER_MAX_ROWS];
+    DM2_V1_ShopRenderRow pack_rows[DM2_SHOP_RENDER_MAX_ROWS];
+    int footer_x;
+    int footer_y;
+    char footer[DM2_SHOP_RENDER_TEXT_MAX];
+} DM2_V1_ShopPanelRender;
+
 /* ── Lifecycle / state ──────────────────────────────────────────── */
 void dm2_v1_shop_reset_state(void);
 void dm2_v1_shop_set_party_gold(uint32_t gold);
@@ -138,6 +184,11 @@ int  dm2_v1_shop_get_sell_price(int shop_id, int inv_idx);  /* 50% of base */
 const char *dm2_v1_npc_get_name(int npc_id);
 const char *dm2_v1_npc_get_dialog(int npc_id, int line_idx);  /* 0..5 */
 int  dm2_v1_npc_get_count(void);
+
+/* ── Render contract ───────────────────────────────────────────── */
+int dm2_v1_shop_build_panel_render(int selected_stock_idx,
+                                   int selected_pack_idx,
+                                   DM2_V1_ShopPanelRender *out);
 
 /* ── State accessor (read-only) ─────────────────────────────────── */
 const DM2_V1_ShopState *dm2_v1_shop_get_state(void);

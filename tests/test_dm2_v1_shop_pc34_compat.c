@@ -503,6 +503,86 @@ static int test_buy_sell_buy_roundtrip(void) {
     return n_before == 1 && n_after == 1;
 }
 
+/* ── Render contract ──────────────────────────────────────────── */
+
+static int test_render_inactive_returns_zero(void) {
+    DM2_V1_ShopPanelRender panel;
+    setup_clean();
+    memset(&panel, 0x7F, sizeof(panel));
+    return dm2_v1_shop_build_panel_render(0, 0, &panel) == 0
+        && panel.active == 0;
+}
+
+static int test_render_general_title_and_frame(void) {
+    DM2_V1_ShopPanelRender panel;
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_GENERAL);
+    if (!dm2_v1_shop_build_panel_render(0, 0, &panel)) return 0;
+    return panel.active == 1
+        && panel.panel_x == 16
+        && panel.panel_y == 24
+        && panel.panel_w == 288
+        && panel.panel_h == 142
+        && strcmp(panel.title, "Bromad the Trader") == 0
+        && panel.header_x == 18
+        && panel.header_y == 26;
+}
+
+static int test_render_stock_rows_include_price_and_highlight(void) {
+    DM2_V1_ShopPanelRender panel;
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_GENERAL);
+    if (!dm2_v1_shop_build_panel_render(2, 0, &panel)) return 0;
+    return panel.stock_row_count == 5
+        && panel.stock_rows[2].highlighted == 1
+        && panel.stock_rows[2].highlight_x == 23
+        && panel.stock_rows[2].highlight_w == 126
+        && panel.stock_rows[2].text[0] == '>'
+        && strstr(panel.stock_rows[2].text, "MANA POTION") != NULL
+        && strstr(panel.stock_rows[2].text, " 25") != NULL
+        && panel.stock_rows[1].highlighted == 0
+        && panel.stock_rows[1].text[0] == ' ';
+}
+
+static int test_render_empty_pack_row(void) {
+    DM2_V1_ShopPanelRender panel;
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_TAVERN);
+    if (!dm2_v1_shop_build_panel_render(0, 0, &panel)) return 0;
+    return panel.pack_row_count == 1
+        && panel.pack_rows[0].kind == DM2_SHOP_RENDER_ROW_EMPTY_PACK
+        && strcmp(panel.pack_rows[0].text, "EMPTY") == 0
+        && panel.pack_rows[0].highlighted == 0;
+}
+
+static int test_render_pack_rows_include_sell_price_and_highlight(void) {
+    DM2_V1_ShopPanelRender panel;
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_GENERAL);
+    dm2_v1_shop_add_inventory(DM2_ITEM_HEAL_POTION, 1);
+    dm2_v1_shop_add_inventory(DM2_ITEM_LANTERN, 1);
+    if (!dm2_v1_shop_build_panel_render(0, 1, &panel)) return 0;
+    return panel.pack_row_count == 2
+        && panel.pack_rows[1].kind == DM2_SHOP_RENDER_ROW_PACK
+        && panel.pack_rows[1].highlighted == 1
+        && panel.pack_rows[1].text[0] == '>'
+        && strstr(panel.pack_rows[1].text, "LANTERN") != NULL
+        && strstr(panel.pack_rows[1].text, " 15") != NULL
+        && panel.pack_rows[0].highlighted == 0
+        && panel.pack_rows[0].text[0] == ' ';
+}
+
+static int test_render_footer_owned_by_dm2(void) {
+    DM2_V1_ShopPanelRender panel;
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_BLACKSMITH);
+    if (!dm2_v1_shop_build_panel_render(0, 0, &panel)) return 0;
+    return panel.footer_x == 24
+        && panel.footer_y == 154
+        && strcmp(panel.footer,
+                  "UP/DOWN STOCK  LEFT/RIGHT PACK  ACTION BUY  DROP SELL") == 0;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -583,6 +663,14 @@ int main(void) {
 
     /* Round-trip */
     TEST(buy_sell_buy_roundtrip);
+
+    /* Render contract */
+    TEST(render_inactive_returns_zero);
+    TEST(render_general_title_and_frame);
+    TEST(render_stock_rows_include_price_and_highlight);
+    TEST(render_empty_pack_row);
+    TEST(render_pack_rows_include_sell_price_and_highlight);
+    TEST(render_footer_owned_by_dm2);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;
