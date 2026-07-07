@@ -470,3 +470,26 @@ int theron_v1_startup_runtime_entry_apply_receipt(
     out_receipt->log_first_line = "T0: THERON LOADED";
     return 1;
 }
+
+int theron_v1_startup_runtime_entry_state_receipt_from_result(
+    const Theron_StartupFlow *flow,
+    const Theron_V1StartupRuntimeEntryResult *result,
+    Theron_StartupStateReceipt *out_receipt) {
+
+    if (!flow || !result || !out_receipt ||
+        result->result != THERON_STARTUP_OK) {
+        return 0;
+    }
+    if (!theron_v1_startup_state_receipt_from_flow(flow, out_receipt)) {
+        return 0;
+    }
+    out_receipt->set_level_loaded = 1;
+    out_receipt->level_loaded = result->level_loaded;
+    out_receipt->set_party_pose = 1;
+    out_receipt->party_x = result->party_x;
+    out_receipt->party_y = result->party_y;
+    out_receipt->party_dir = result->party_dir;
+    out_receipt->set_tick_count = 1;
+    out_receipt->tick_count = result->tick_count;
+    return 1;
+}

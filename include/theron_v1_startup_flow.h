@@ -70,6 +70,23 @@ typedef struct {
 } Theron_StartupFlowSnapshot;
 
 typedef struct {
+    int flow_changed;
+    Theron_StartupFlowSnapshot flow;
+    int set_level_loaded;
+    int level_loaded;
+    int set_startup_cursor;
+    int startup_cursor;
+    int set_continue_focus;
+    int continue_focus;
+    int set_party_pose;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int set_tick_count;
+    int tick_count;
+} Theron_StartupStateReceipt;
+
+typedef struct {
     const char *name;
     Theron_ChampionClass primary_class;
     uint8_t portrait_index;
@@ -269,9 +286,14 @@ typedef struct {
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
 void theron_v1_startup_flow_snapshot_init(Theron_StartupFlowSnapshot *snapshot);
+void theron_v1_startup_state_receipt_init(
+    Theron_StartupStateReceipt *receipt);
 void theron_v1_startup_flow_capture_snapshot(
     const Theron_StartupFlow *flow,
     Theron_StartupFlowSnapshot *snapshot);
+int theron_v1_startup_state_receipt_from_flow(
+    const Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_receipt);
 Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
     const Theron_StartupFlowSnapshot *snapshot,
     const Theron_DungeonProgression *progression,

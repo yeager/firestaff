@@ -546,10 +546,17 @@ int main(void) {
             {
                 Theron_V1StartupContinueResult continue_result;
                 Theron_V1StartupContinueApplyReceipt continue_receipt;
+                Theron_StartupStateReceipt state_receipt;
 
                 theron_v1_startup_continue_result_init(&continue_result);
                 continue_result.source =
                     THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV;
+                continue_result.selected_dungeon =
+                    THERON_DUNGEON_4_TOMB_OF_WOE;
+                continue_result.party_x = 9;
+                continue_result.party_y = 10;
+                continue_result.party_dir = 2;
+                continue_result.tick_count = 77;
                 check_int("continue receipt rc",
                           theron_v1_startup_continue_apply_receipt(
                               &plan,
@@ -573,6 +580,26 @@ int main(void) {
                 check_contains("continue receipt marker",
                                continue_receipt.inspect_detail,
                                "chapter=1");
+                check_int("continue state receipt rc",
+                          theron_v1_startup_continue_state_receipt_from_result(
+                              &continue_result,
+                              &state_receipt),
+                          1);
+                check_int("continue state receipt flow",
+                          state_receipt.flow_changed,
+                          1);
+                check_int("continue state receipt phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_STAGE_SELECT);
+                check_int("continue state receipt dungeon",
+                          state_receipt.flow.selected_dungeon,
+                          THERON_DUNGEON_4_TOMB_OF_WOE);
+                check_int("continue state receipt pose",
+                          state_receipt.party_x,
+                          9);
+                check_int("continue state receipt tick",
+                          state_receipt.tick_count,
+                          77);
             }
 
             theron_v1_startup_action_init(&action);
@@ -633,9 +660,19 @@ int main(void) {
             {
                 Theron_V1StartupRuntimeEntryResult runtime_result;
                 Theron_V1StartupRuntimeEntryApplyReceipt runtime_receipt;
+                Theron_StartupStateReceipt state_receipt;
+                Theron_StartupFlow runtime_flow;
 
                 theron_v1_startup_runtime_entry_result_init(&runtime_result);
+                theron_v1_startup_flow_init(&runtime_flow);
+                runtime_flow.phase = THERON_STARTUP_PHASE_IN_DUNGEON;
+                runtime_flow.selected_dungeon =
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
                 runtime_result.level_loaded = 1;
+                runtime_result.party_x = 3;
+                runtime_result.party_y = 4;
+                runtime_result.party_dir = 1;
+                runtime_result.tick_count = 99;
                 check_int("runtime receipt rc",
                           theron_v1_startup_runtime_entry_apply_receipt(
                               &plan,
@@ -658,6 +695,24 @@ int main(void) {
                 check_int("runtime receipt logs receipt",
                           runtime_receipt.log_receipt,
                           1);
+                check_int("runtime state receipt rc",
+                          theron_v1_startup_runtime_entry_state_receipt_from_result(
+                              &runtime_flow,
+                              &runtime_result,
+                              &state_receipt),
+                          1);
+                check_int("runtime state receipt flow",
+                          state_receipt.flow_changed,
+                          1);
+                check_int("runtime state receipt phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_IN_DUNGEON);
+                check_int("runtime state receipt level",
+                          state_receipt.level_loaded,
+                          1);
+                check_int("runtime state receipt tick",
+                          state_receipt.tick_count,
+                          99);
             }
 
             theron_v1_startup_action_init(&action);
@@ -1501,6 +1556,27 @@ int main(void) {
             check_contains("runtime wrapper receipt",
                            runtime_receipt,
                            "fallback room stage=1");
+            {
+                Theron_StartupStateReceipt state_receipt;
+                check_int("runtime wrapper state receipt rc",
+                          theron_v1_startup_runtime_entry_state_receipt_from_result(
+                              &flow,
+                              &runtime_result,
+                              &state_receipt),
+                          1);
+                check_int("runtime wrapper state receipt phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_IN_DUNGEON);
+                check_int("runtime wrapper state receipt dungeon",
+                          state_receipt.flow.selected_dungeon,
+                          THERON_DUNGEON_1_HALL_OF_RECORDS);
+                check_int("runtime wrapper state receipt party x",
+                          state_receipt.party_x,
+                          runtime_result.party_x);
+                check_int("runtime wrapper state receipt level loaded",
+                          state_receipt.level_loaded,
+                          1);
+            }
         }
         theron_v1_startup_flow_init(&flow);
         result = theron_v1_startup_choose_stage(
