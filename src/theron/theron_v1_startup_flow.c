@@ -2892,6 +2892,43 @@ Theron_StartupResult theron_v1_startup_return_to_stage_select_after_exit(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_return_to_stage_select_after_exit_with_receipt(
+    Theron_V1_World *world,
+    Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+    Theron_StartupResult result;
+
+    if (out_state_receipt) {
+        theron_v1_startup_state_receipt_init(out_state_receipt);
+    }
+    result = theron_v1_startup_return_to_stage_select_after_exit(
+        world,
+        flow,
+        receipt,
+        receipt_cap);
+    if (result != THERON_STARTUP_OK) {
+        return result;
+    }
+    if (out_state_receipt &&
+        theron_v1_startup_state_receipt_from_flow(flow, out_state_receipt)) {
+        out_state_receipt->set_level_loaded = 1;
+        out_state_receipt->level_loaded = 0;
+        out_state_receipt->set_startup_cursor = 1;
+        out_state_receipt->startup_cursor = 0;
+        out_state_receipt->set_continue_focus = 1;
+        out_state_receipt->continue_focus = 0;
+        out_state_receipt->set_party_pose = 1;
+        out_state_receipt->party_x = world->party.leader_x;
+        out_state_receipt->party_y = world->party.leader_y;
+        out_state_receipt->party_dir = world->party.leader_dir;
+        out_state_receipt->set_tick_count = 1;
+        out_state_receipt->tick_count = (int)world->world_tick;
+    }
+    return THERON_STARTUP_OK;
+}
+
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     switch (phase) {
     case THERON_STARTUP_PHASE_TITLE: return "title";

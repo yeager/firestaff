@@ -2476,19 +2476,26 @@ int main(void) {
         }
         {
             char exit_receipt[128];
+            Theron_StartupStateReceipt state_receipt;
             theron_v1_world_init(&world);
             world.progression.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
                 THERON_DUNGEON_STATE_COMPLETE;
             world.party.champion_count = 4;
             world.party.active_slot = 2;
+            world.party.leader_x = 7;
+            world.party.leader_y = 8;
+            world.party.leader_dir = 3;
+            world.world_tick = 123;
             world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] = 1;
             world.dungeon_complete = 1;
             world.quest_items_in_dungeon = 1;
             theron_v1_startup_flow_init(&flow);
             exit_receipt[0] = '\0';
-            result = theron_v1_startup_return_to_stage_select_after_exit(
+            theron_v1_startup_state_receipt_init(&state_receipt);
+            result = theron_v1_startup_return_to_stage_select_after_exit_with_receipt(
                 &world,
                 &flow,
+                &state_receipt,
                 exit_receipt,
                 sizeof(exit_receipt));
             check_int("exit return rc", result, THERON_STARTUP_OK);
@@ -2514,6 +2521,34 @@ int main(void) {
             check_contains("exit return receipt",
                            exit_receipt,
                            "next stage=2");
+            check_int("exit return receipt flow changed",
+                      state_receipt.flow_changed,
+                      1);
+            check_int("exit return receipt phase",
+                      state_receipt.flow.phase,
+                      THERON_STARTUP_PHASE_STAGE_SELECT);
+            check_int("exit return receipt level loaded",
+                      state_receipt.set_level_loaded &&
+                          state_receipt.level_loaded == 0,
+                      1);
+            check_int("exit return receipt cursor reset",
+                      state_receipt.set_startup_cursor &&
+                          state_receipt.startup_cursor == 0,
+                      1);
+            check_int("exit return receipt continue focus reset",
+                      state_receipt.set_continue_focus &&
+                          state_receipt.continue_focus == 0,
+                      1);
+            check_int("exit return receipt party pose",
+                      state_receipt.set_party_pose &&
+                          state_receipt.party_x == 7 &&
+                          state_receipt.party_y == 8 &&
+                          state_receipt.party_dir == 3,
+                      1);
+            check_int("exit return receipt tick",
+                      state_receipt.set_tick_count &&
+                          state_receipt.tick_count == 123,
+                      1);
         }
         {
             char exit_receipt[128];

@@ -498,6 +498,12 @@ Theron_StartupResult theron_v1_startup_return_to_stage_select_after_exit(
     Theron_StartupFlow *flow,
     char *receipt,
     size_t receipt_cap);
+Theron_StartupResult theron_v1_startup_return_to_stage_select_after_exit_with_receipt(
+    Theron_V1_World *world,
+    Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap);
 int theron_v1_startup_stage_available(
     const Theron_DungeonProgression *progression,
     Theron_DungeonID dungeon_id);
