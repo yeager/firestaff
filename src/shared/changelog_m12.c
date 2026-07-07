@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.55  (2026-07-07)",
+    "  - Packages the post-v3.0.53 CSB projectile/render ownership, Nexus champion-select render ownership, Theron startup render ownership, and release link fix now on main.",
+    "  - CSB V1 release test targets now carry a data-free runtime overlay link stub for the viewport thing-overlay symbols they compile.",
+    "  - Nexus and Theron startup paths now expose row/footer/label render metadata from their game-owned startup modules before M11 draws them.",
+    "",
     "V3.0.48  (2026-07-06)",
     "  - Packages the post-v3.0.47 CSB title render metadata and startup special-palette presentation work now on main.",
     "  - CSB startup render plans now expose source title stages, C001 title blit boxes, and title/entrance/credits special palettes consumed by M11 presentation.",
@@ -467,5 +472,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.53";
+    return "3.0.55";
 }

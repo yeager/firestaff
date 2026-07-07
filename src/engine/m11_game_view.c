@@ -41238,17 +41238,21 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             int row;
             Nexus_V1_StartupMenu menu;
             Nexus_V1_StartupSaveRenderRow rows[16];
+            Nexus_V1_StartupChromeRender chrome;
             int row_count;
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          NEXUS_V1_STARTUP_TITLE_X,
-                          NEXUS_V1_STARTUP_TITLE_Y,
-                          "DUNGEON MASTER NEXUS",
-                          &g_text_title);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          NEXUS_V1_STARTUP_TITLE_X,
-                          NEXUS_V1_STARTUP_SUBTITLE_Y,
-                          "LOAD GAME", &g_text_shadow);
             directDraw = 1;
+            if (nexus_v1_startup_menu_build_save_chrome_render(&chrome)) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              chrome.title_x,
+                              chrome.title_y,
+                              chrome.title,
+                              &g_text_title);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              chrome.subtitle_x,
+                              chrome.subtitle_y,
+                              chrome.subtitle,
+                              &g_text_shadow);
+            }
             m11_nexus_startup_menu_from_state(state, &menu);
             row_count = nexus_v1_startup_menu_build_save_render_rows(
                 &menu,
@@ -41274,29 +41278,34 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                               render_row->label,
                               style);
             }
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          NEXUS_V1_STARTUP_FOOTER_X,
-                          NEXUS_V1_STARTUP_FOOTER_Y,
-                          "ACCEPT LOADS  ACTION STARTS",
-                          &g_text_small);
+            if (chrome.footer[0]) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              chrome.footer_x,
+                              chrome.footer_y,
+                              chrome.footer,
+                              &g_text_small);
+            }
         } else if (state->nexusState.champion_select_active &&
                    state->nexusEngine) {
             const Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
             Nexus_V1_StartupChampionRenderRow rows[12];
             Nexus_V1_StartupChampionFooterRender footer;
+            Nexus_V1_StartupChromeRender chrome;
             int row_count;
             int row;
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          NEXUS_V1_STARTUP_TITLE_X,
-                          NEXUS_V1_STARTUP_TITLE_Y,
-                          "DUNGEON MASTER NEXUS",
-                          &g_text_title);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          NEXUS_V1_STARTUP_TITLE_X,
-                          NEXUS_V1_STARTUP_SUBTITLE_Y,
-                          "SELECT CHAMPIONS",
-                          &g_text_shadow);
             directDraw = 1;
+            if (nexus_v1_startup_menu_build_champion_chrome_render(&chrome)) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              chrome.title_x,
+                              chrome.title_y,
+                              chrome.title,
+                              &g_text_title);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              chrome.subtitle_x,
+                              chrome.subtitle_y,
+                              chrome.subtitle,
+                              &g_text_shadow);
+            }
             row_count = nexus_v1_startup_menu_build_champion_render_rows(
                 pool,
                 state->nexusState.champion_cursor,

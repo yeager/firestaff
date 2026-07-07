@@ -77,8 +77,10 @@ int main(void)
     Nexus_V1_StartupTitleExecution title_execution;
     Nexus_V1_StartupChampionExecution champion_execution;
     Nexus_V1_StartupHit hit;
+    Nexus_V1_StartupSaveRenderRow save_rows[4];
     Nexus_V1_StartupChampionRenderRow champion_rows[12];
     Nexus_V1_StartupChampionFooterRender champion_footer;
+    Nexus_V1_StartupChromeRender chrome;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -399,6 +401,43 @@ int main(void)
            "startup menu slot mask exposes occupied slot 03");
     expect(menu.row_count == 2,
            "startup menu has one slot row plus NEW GAME");
+    {
+        Nexus_V1_StartupMenu render_menu;
+        nexus_v1_startup_menu_init(&render_menu, save_dir);
+        render_menu.selected_row = 1;
+        expect(nexus_v1_startup_menu_refresh(&render_menu, (1u << 3)),
+               "startup menu render fixture refreshes occupied slot rows");
+        memset(save_rows, 0, sizeof(save_rows));
+        memset(&chrome, 0, sizeof(chrome));
+        expect(nexus_v1_startup_menu_build_save_chrome_render(&chrome) &&
+                   strcmp(chrome.title, "DUNGEON MASTER NEXUS") == 0 &&
+                   strcmp(chrome.subtitle, "LOAD GAME") == 0 &&
+                   strcmp(chrome.footer, "ACCEPT LOADS  ACTION STARTS") == 0 &&
+                   chrome.title_x == NEXUS_V1_STARTUP_TITLE_X &&
+                   chrome.subtitle_y == NEXUS_V1_STARTUP_SUBTITLE_Y &&
+                   chrome.footer_x == NEXUS_V1_STARTUP_FOOTER_X,
+               "Nexus save-select chrome render metadata is Nexus-owned");
+        expect(nexus_v1_startup_menu_build_save_render_rows(
+                   &render_menu,
+                   save_rows,
+                   (int)(sizeof(save_rows) / sizeof(save_rows[0]))) == 2 &&
+                   save_rows[0].kind == NEXUS_V1_STARTUP_ROW_SLOT &&
+                   save_rows[0].slot == 3 &&
+                   save_rows[0].selected == 0 &&
+                   strstr(save_rows[0].label, "LOAD SLOT 03") != NULL &&
+                   save_rows[1].kind == NEXUS_V1_STARTUP_ROW_NEW_GAME &&
+                   save_rows[1].selected == 1 &&
+                   strstr(save_rows[1].label, "NEW GAME") != NULL,
+               "Nexus save-select render rows carry slot and New Game labels");
+        memset(&chrome, 0, sizeof(chrome));
+        expect(nexus_v1_startup_menu_build_champion_chrome_render(&chrome) &&
+                   strcmp(chrome.title, "DUNGEON MASTER NEXUS") == 0 &&
+                   strcmp(chrome.subtitle, "SELECT CHAMPIONS") == 0 &&
+                   chrome.footer[0] == '\0' &&
+                   chrome.title_x == NEXUS_V1_STARTUP_TITLE_X &&
+                   chrome.subtitle_y == NEXUS_V1_STARTUP_SUBTITLE_Y,
+               "Nexus champion-select chrome render metadata is Nexus-owned");
+    }
     menu.selected_row = 99;
     expect(nexus_v1_startup_menu_refresh(&menu, menu.slot_mask) &&
                menu.row_count == 2 &&

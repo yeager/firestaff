@@ -108,6 +108,7 @@ typedef struct {
 
 enum {
     NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96,
+    NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHAMPION_ROW_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHAMPION_FOOTER_LABEL_CAPACITY = 96
 };
@@ -123,6 +124,18 @@ typedef struct {
     int text_y;
     char label[NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY];
 } Nexus_V1_StartupSaveRenderRow;
+
+typedef struct {
+    int title_x;
+    int title_y;
+    int subtitle_x;
+    int subtitle_y;
+    int footer_x;
+    int footer_y;
+    char title[NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY];
+    char subtitle[NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY];
+    char footer[NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY];
+} Nexus_V1_StartupChromeRender;
 
 typedef struct {
     int row;
@@ -194,12 +207,16 @@ int nexus_v1_startup_menu_build_save_render_rows(
     const Nexus_V1_StartupMenu *menu,
     Nexus_V1_StartupSaveRenderRow *rows,
     int max_rows);
+int nexus_v1_startup_menu_build_save_chrome_render(
+    Nexus_V1_StartupChromeRender *out_chrome);
 int nexus_v1_startup_menu_build_champion_render_rows(
     const Nexus_V1_ChampionPool *pool,
     int cursor,
     Nexus_V1_StartupChampionRenderRow *rows,
     int max_rows,
     Nexus_V1_StartupChampionFooterRender *out_footer);
+int nexus_v1_startup_menu_build_champion_chrome_render(
+    Nexus_V1_StartupChromeRender *out_chrome);
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
                                            int *cursor,
                                            unsigned int slot_mask,
