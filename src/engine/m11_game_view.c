@@ -147,12 +147,6 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 static void m11_nexus_release_title(M11_GameViewState* state);
 static int m11_path_has_extension(const char* path, const char* ext);
 static int m11_path_tail_equals_ascii(const char* path, const char* tail);
-static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
-                                                 const char *path,
-                                                 int *out_count,
-                                                 int *out_utility_state,
-                                                 char *out_utility_prompt,
-                                                 size_t out_utility_prompt_size);
 static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
                                             const CSB_V1_RuntimeProfile *profile);
 static void m11_award_magic_xp(M11_GameViewState* state,
@@ -4670,98 +4664,6 @@ static uint32_t m11_read_u32_le(const unsigned char* src) {
            ((uint32_t)src[1] << 8) |
            ((uint32_t)src[2] << 16) |
            ((uint32_t)src[3] << 24);
-}
-
-static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
-                                                 const char *path,
-                                                 int *out_count,
-                                                 int *out_utility_state,
-                                                 char *out_utility_prompt,
-                                                 size_t out_utility_prompt_size)
-{
-    CSB_V1_UtilFlowContext flow;
-    CSB_V1_PartyState party;
-    int count;
-
-    if (out_count) {
-        *out_count = 0;
-    }
-    if (out_utility_state) {
-        *out_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
-    }
-    if (out_utility_prompt && out_utility_prompt_size > 0u) {
-        out_utility_prompt[0] = '\0';
-    }
-    if (!profile || !path || path[0] == '\0') {
-        return 0;
-    }
-
-    /* ReDMCSB/CSBWin utility startup imports a DM1 party before the
-     * CSB dungeon starts.  Keep this as a runtime-party handoff rather
-     * than a Resume save: the entrance still owns the final Enter click.
-     * Drive the CSB utility setup state machine so the runtime handoff
-     * follows the same IMPORT -> CONFIRM_IMPORT -> NEW_GAME surface used
-     * by the launcher utility path. */
-    csb_v1_util_flow_init(&flow);
-    csb_v1_util_flow_set_dm1_path(&flow, path);
-    csb_v1_util_flow_mark_utility_disk_verified(&flow, 1);
-    if (csb_v1_util_flow_step(&flow) != 0 ||
-        flow.state != CSB_V1_UTIL_FLOW_INSERT_DISK) {
-        return 0;
-    }
-    if (csb_v1_util_flow_step(&flow) != 0 ||
-        flow.state != CSB_V1_UTIL_FLOW_VERIFY_DISK) {
-        return 0;
-    }
-    if (csb_v1_util_flow_step(&flow) != 0 ||
-        flow.state != CSB_V1_UTIL_FLOW_DISK_OK) {
-        return 0;
-    }
-    if (csb_v1_util_flow_step(&flow) != 0 ||
-        flow.state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
-        return 0;
-    }
-    if (!csb_v1_util_flow_accept_import_action(&flow)) {
-        return 0;
-    }
-    if (csb_v1_util_flow_step(&flow) != 0 ||
-        flow.state != CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS) {
-        return 0;
-    }
-    if (csb_v1_util_flow_step(&flow) != 0 ||
-        flow.state != CSB_V1_UTIL_FLOW_CONFIRM_IMPORT) {
-        return 0;
-    }
-    csb_v1_util_flow_confirm_import(&flow, 1);
-    if (csb_v1_util_flow_step(&flow) != 0 ||
-        flow.state != CSB_V1_UTIL_FLOW_NEW_GAME) {
-        return 0;
-    }
-    if (csb_v1_util_flow_step(&flow) != 1 ||
-        flow.state != CSB_V1_UTIL_FLOW_DONE) {
-        return 0;
-    }
-    if (out_utility_state) {
-        *out_utility_state = (int)flow.state;
-    }
-    if (out_utility_prompt && out_utility_prompt_size > 0u) {
-        snprintf(out_utility_prompt,
-                 out_utility_prompt_size,
-                 "%s",
-                 csb_v1_util_flow_prompt(&flow));
-    }
-    memset(&party, 0, sizeof(party));
-    count = csb_v1_util_flow_get_party(&flow, &party);
-    if (count <= 0 || !party.ImportedFromDM1) {
-        return 0;
-    }
-    if (csb_v1_runtime_set_party_state(profile, &party) != 0) {
-        return 0;
-    }
-    if (out_count) {
-        *out_count = count;
-    }
-    return 1;
 }
 
 static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
@@ -11109,7 +11011,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             int utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
             char utility_prompt[sizeof(state->csbState.startup_import_utility_prompt)];
             utility_prompt[0] = '\0';
-            if (!m11_csb_runtime_import_dm1_party_path(
+            if (!csb_v1_runtime_import_dm1_party_path(
                     &profile->runtime,
                     spec->csbImportDm1SavePath,
                     &imported_count,
