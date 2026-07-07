@@ -1499,6 +1499,48 @@ int csb_v1_startup_render_state_from_command_state_pc34(
     return 1;
 }
 
+int csb_v1_startup_build_render_plan_from_request_pc34(
+    const CSB_V1_StartupRenderPlanRequest_PC34 *request,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan)
+{
+    CSB_V1_StartupCommandState_PC34 command_state;
+    CSB_V1_StartupRenderState_PC34 render_state;
+
+    if (!out_plan) {
+        return 0;
+    }
+    if (!request) {
+        return csb_v1_startup_build_render_plan_pc34(NULL, out_plan);
+    }
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.title_active = request->title_active;
+    command_state.title_frame = request->title_frame;
+    command_state.title_source_step = request->title_source_step;
+    command_state.entrance_active = request->entrance_active;
+    command_state.entrance_source_step = request->entrance_source_step;
+    command_state.entrance_dismissed = request->entrance_dismissed;
+    command_state.credits_active = request->credits_active;
+    command_state.credits_remaining_ticks = request->credits_remaining_ticks;
+    command_state.opening_active = request->opening_active;
+    command_state.opening_delay_ticks = request->opening_delay_ticks;
+    command_state.opening_step = request->opening_step;
+    command_state.pending_command = request->pending_command;
+
+    if (!csb_v1_startup_render_state_from_command_state_pc34(
+            &command_state,
+            request->entrance_frame,
+            request->utility_overlay_active,
+            request->runtime_start_valid,
+            request->runtime_start_x,
+            request->runtime_start_y,
+            request->runtime_start_dir,
+            &render_state)) {
+        return 0;
+    }
+    return csb_v1_startup_build_render_plan_pc34(&render_state, out_plan);
+}
+
 int csb_v1_startup_build_render_plan_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)

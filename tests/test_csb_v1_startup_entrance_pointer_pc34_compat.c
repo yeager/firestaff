@@ -264,6 +264,7 @@ int main(void)
     CSB_V1_StartupTickState_PC34 tick;
     CSB_V1_StartupTickResult_PC34 result;
     CSB_V1_StartupRenderState_PC34 render_state;
+    CSB_V1_StartupRenderPlanRequest_PC34 render_request;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
@@ -1049,6 +1050,36 @@ int main(void)
               render_state.runtime_start_y == 22 &&
               render_state.runtime_start_dir == 3,
           "startup render state is derived from command state by CSB module");
+
+    memset(&render_request, 0, sizeof(render_request));
+    render_request.title_active = command_state.title_active;
+    render_request.title_frame = command_state.title_frame;
+    render_request.title_source_step = command_state.title_source_step;
+    render_request.entrance_active = command_state.entrance_active;
+    render_request.entrance_source_step = command_state.entrance_source_step;
+    render_request.entrance_dismissed = command_state.entrance_dismissed;
+    render_request.credits_active = command_state.credits_active;
+    render_request.credits_remaining_ticks =
+        command_state.credits_remaining_ticks;
+    render_request.opening_active = command_state.opening_active;
+    render_request.opening_delay_ticks = command_state.opening_delay_ticks;
+    render_request.opening_step = command_state.opening_step;
+    render_request.pending_command = command_state.pending_command;
+    render_request.entrance_frame = 37;
+    render_request.utility_overlay_active = 1;
+    render_request.runtime_start_valid = 1;
+    render_request.runtime_start_x = 12;
+    render_request.runtime_start_y = 22;
+    render_request.runtime_start_dir = 3;
+    check(csb_v1_startup_build_render_plan_from_request_pc34(
+              &render_request,
+              &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              plan.title_source_step ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              plan.waiting_for_input == 0,
+          "startup render plan request owns M11 fact adapter");
 
     memset(&command_state, 0xff, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 1) &&
