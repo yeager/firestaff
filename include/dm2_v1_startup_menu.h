@@ -123,6 +123,14 @@ int dm2_v1_startup_menu_snapshot_row_at(
     int row,
     DM2_V1_StartupRowKind *out_kind,
     int *out_slot);
+int dm2_v1_startup_menu_snapshot_handle_input(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    DM2_V1_StartupInput input,
+    DM2_V1_StartupAction *out_action);
+int dm2_v1_startup_menu_snapshot_handle_hit(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const DM2_V1_StartupHit *hit,
+    DM2_V1_StartupAction *out_action);
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,
                                int row,
                                DM2_V1_StartupRowKind *out_kind,

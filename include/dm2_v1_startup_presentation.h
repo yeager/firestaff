@@ -38,5 +38,9 @@ int dm2_v1_startup_presentation_build(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int dm2_v1_startup_presentation_build_from_snapshot(
+    const DM2_V1_StartupMenuSnapshot *snapshot,
+    DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands);
 
 #endif
