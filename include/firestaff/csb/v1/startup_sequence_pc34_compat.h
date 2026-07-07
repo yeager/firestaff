@@ -108,6 +108,14 @@ typedef enum CSB_V1_StartupTitleBlitKind_PC34 {
 } CSB_V1_StartupTitleBlitKind_PC34;
 
 #define CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34 5
+#define CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34 4
+
+typedef enum CSB_V1_StartupPrimitiveCommandKind_PC34 {
+    CSB_V1_STARTUP_PRIMITIVE_NONE_PC34 = 0,
+    CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 = 1,
+    CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34 = 2,
+    CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 = 3
+} CSB_V1_StartupPrimitiveCommandKind_PC34;
 
 typedef struct CSB_V1_StartupFallbackTextRow_PC34 {
     int x;
@@ -116,6 +124,18 @@ typedef struct CSB_V1_StartupFallbackTextRow_PC34 {
     int visible;
     const char *text;
 } CSB_V1_StartupFallbackTextRow_PC34;
+
+typedef struct CSB_V1_StartupPrimitiveCommand_PC34 {
+    CSB_V1_StartupPrimitiveCommandKind_PC34 kind;
+    int x;
+    int y;
+    int w;
+    int h;
+    int color;
+    int light_edge_color;
+    int dark_edge_color;
+    int visible;
+} CSB_V1_StartupPrimitiveCommand_PC34;
 
 typedef struct CSB_V1_StartupRenderState_PC34 {
     int entrance_active;
@@ -230,6 +250,9 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int fallback_text_row_count;
     CSB_V1_StartupFallbackTextRow_PC34 fallback_text_rows[
         CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34];
+    int primitive_command_count;
+    CSB_V1_StartupPrimitiveCommand_PC34 primitive_commands[
+        CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34];
 } CSB_V1_StartupRenderPlan_PC34;
 
 typedef struct CSB_V1_StartupCommandState_PC34 {
