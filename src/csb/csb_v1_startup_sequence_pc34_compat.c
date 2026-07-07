@@ -126,12 +126,14 @@ static void csb_v1_startup_clear_door_rects_pc34(
     }
     plan->closed_left_source_x = 0;
     plan->closed_left_source_y = 0;
+    plan->closed_left_asset_id = 0;
     plan->closed_left_dest_x = 0;
     plan->closed_left_dest_y = 0;
     plan->closed_left_w = 0;
     plan->closed_left_h = 0;
     plan->closed_right_source_x = 0;
     plan->closed_right_source_y = 0;
+    plan->closed_right_asset_id = 0;
     plan->closed_right_dest_x = 0;
     plan->closed_right_dest_y = 0;
     plan->closed_right_w = 0;
@@ -245,12 +247,14 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
      * DATA.C places the closed left and right doors at screen y=28. */
     plan->closed_left_source_x = 0;
     plan->closed_left_source_y = 0;
+    plan->closed_left_asset_id = CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR_PC34;
     plan->closed_left_dest_x = 0;
     plan->closed_left_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
     plan->closed_left_w = 105;
     plan->closed_left_h = 161;
     plan->closed_right_source_x = 0;
     plan->closed_right_source_y = 0;
+    plan->closed_right_asset_id = CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34;
     plan->closed_right_dest_x = 105;
     plan->closed_right_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
     plan->closed_right_w = 127;

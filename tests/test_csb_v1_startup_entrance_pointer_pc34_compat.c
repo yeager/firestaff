@@ -313,6 +313,8 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               plan.source_asset_id == 4 &&
+              plan.closed_left_asset_id == 2 &&
+              plan.closed_right_asset_id == 3 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.waiting_for_input &&
               plan.blink_prompt_visible &&
@@ -385,6 +387,8 @@ int main(void)
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 &&
               plan.source_asset_id == 4 &&
+              plan.closed_left_asset_id == 2 &&
+              plan.closed_right_asset_id == 3 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.opening_step == 2,
           "startup render plan owns door pre-open surface");
@@ -394,6 +398,9 @@ int main(void)
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              plan.source_asset_id == 4 &&
+              plan.closed_left_asset_id == 2 &&
+              plan.closed_right_asset_id == 3 &&
               plan.opening_step == 2 &&
               plan.opening_door_valid &&
               plan.opening_door_step == 2 &&
