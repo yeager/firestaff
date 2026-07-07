@@ -17274,6 +17274,7 @@ endif()
 if(BUILD_TESTING)
     add_executable(test_title_frontend_runtime_cadence_pc34_compat
         tests/test_title_frontend_runtime_cadence_pc34_compat.c
+        src/dm1/dm1_v1_startup_sequence_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )

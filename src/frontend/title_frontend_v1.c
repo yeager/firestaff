@@ -12,6 +12,7 @@
 
 #include "title_frontend_v1.h"
 #include "dm1_v2_anim_timing.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "firestaff_graphics_dat_reader.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -193,19 +194,22 @@ int V1_TitleFrontend_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     V1_TitleFrontendSourceTiming timing;
     memset(&timing, 0, sizeof(timing));
-    timing.zoomStepCount = 18u;
+    timing.zoomStepCount = dm1_v1_startup_title_zoom_steps_pc34();
     /* ReDMCSB TITLE.C F0437 draws PRESENTS before it builds the 18
      * shrinked title bitmaps. On original hardware that build/fade work
      * leaves PRESENTS visible; Firestaff models it with the same 30-step
      * C001 cadence budget that previously sat after the final guard. */
-    timing.presentsHoldVblankCount = V1_TITLE_DAT_FRAME_MAX -
-                                     V1_TitleFrontend_GetSourceAnimationStepCount();
+    timing.presentsHoldVblankCount =
+        dm1_v1_startup_title_presents_hold_vblanks_pc34();
     timing.vblankBeforeEachZoomStep = 1u;
-    timing.postZoomVblankCount = 2u;
-    timing.finalFadeGuardVblankCount = 1u;
+    timing.postZoomVblankCount =
+        dm1_v1_startup_title_post_zoom_vblanks_pc34();
+    timing.finalFadeGuardVblankCount =
+        dm1_v1_startup_title_final_guard_vblanks_pc34();
     timing.firstMenuEligibleStep = V1_TITLE_DAT_FRAME_MAX + 1u;
     timing.sourceAnimationStepCount = V1_TitleFrontend_GetSourceAnimationStepCount();
-    timing.frameBankEquivalentStepCount = V1_TITLE_DAT_FRAME_MAX;
+    timing.frameBankEquivalentStepCount =
+        dm1_v1_startup_title_frame_bank_equivalent_steps_pc34();
     timing.sourceFile = "ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C";
     timing.sourceFunction = "F0437_STARTEND_DrawTitle";
     timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, source-side shrink-bitmap preparation while PRESENTS remains visible, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition. Firestaff uses the canonical V1 55 ms tick for these runtime waits and places the GRAPHICS.DAT C001 pad budget on the PRESENTS hold so the word does not flash by on fast machines.";
@@ -217,7 +221,7 @@ unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourc
         /* ReDMCSB: TITLE.C F0437 lines 385-409 wait on M526_WaitVerticalBlank();
          * GAMELOOP.C lines 47-50 locks input cadence to VBlank counts. Firestaff
          * uses the same canonical V1 tick as the rest of the runtime. */
-        return (unsigned int)V1_TICK_MS;
+        return dm1_v1_startup_title_vblank_tick_ms_pc34();
     }
     return 50u;
 }
@@ -226,10 +230,12 @@ unsigned int V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(const V1_TitleFronte
     if (!timing) {
         return 0u;
     }
-    if (timing->presentsHoldVblankCount > 0xffffffffu / (unsigned int)V1_TICK_MS) {
+    if (timing->presentsHoldVblankCount >
+        0xffffffffu / dm1_v1_startup_title_vblank_tick_ms_pc34()) {
         return 0xffffffffu;
     }
-    return timing->presentsHoldVblankCount * (unsigned int)V1_TICK_MS;
+    return timing->presentsHoldVblankCount *
+           dm1_v1_startup_title_vblank_tick_ms_pc34();
 }
 
 V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
@@ -330,7 +336,8 @@ unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontend
     if (!timing) {
         return 0u;
     }
-    return (timing->postZoomVblankCount + timing->finalFadeGuardVblankCount) * (unsigned int)V1_TICK_MS;
+    return (timing->postZoomVblankCount + timing->finalFadeGuardVblankCount) *
+           dm1_v1_startup_title_vblank_tick_ms_pc34();
 }
 
 unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFrontendSourceTiming* timing) {
@@ -345,10 +352,11 @@ unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFron
         return 0u;
     }
     missingSteps -= timing->presentsHoldVblankCount;
-    if (missingSteps > 0xffffffffu / (unsigned int)V1_TICK_MS) {
+    if (missingSteps >
+        0xffffffffu / dm1_v1_startup_title_vblank_tick_ms_pc34()) {
         return 0xffffffffu;
     }
-    return missingSteps * (unsigned int)V1_TICK_MS;
+    return missingSteps * dm1_v1_startup_title_vblank_tick_ms_pc34();
 }
 
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,

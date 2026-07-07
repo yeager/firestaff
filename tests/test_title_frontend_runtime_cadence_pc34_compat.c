@@ -1,5 +1,6 @@
 #include "title_frontend_v1.h"
 #include "dm1_v2_anim_timing.h"
+#include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -50,22 +51,32 @@ int main(void) {
 
     memset(&zero, 0, sizeof(zero));
 
-    expect_u("source zoom step count", timing.zoomStepCount, 18u);
-    expect_u("source animation step count", timing.sourceAnimationStepCount, 23u);
+    expect_u("source zoom step count",
+             timing.zoomStepCount,
+             dm1_v1_startup_title_zoom_steps_pc34());
+    expect_u("source animation step count",
+             timing.sourceAnimationStepCount,
+             dm1_v1_startup_title_source_animation_steps_pc34());
+    expect_u("DM1 startup contract matches TITLE source animation count",
+             dm1_v1_startup_title_source_animation_steps_pc34(),
+             V1_TitleFrontend_GetSourceAnimationStepCount());
     expect_u("source PRESENTS hold uses hidden C001 build/pad budget",
              timing.presentsHoldVblankCount,
-             V1_TITLE_DAT_FRAME_MAX - 23u);
+             dm1_v1_startup_title_presents_hold_vblanks_pc34());
     expect_u("C001 cadence pad target matches TITLE frame-bank cadence",
-             timing.frameBankEquivalentStepCount, V1_TITLE_DAT_FRAME_MAX);
+             timing.frameBankEquivalentStepCount,
+             dm1_v1_startup_title_frame_bank_equivalent_steps_pc34());
     expect_u("runtime frame delay from source vblank cadence",
              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing),
-             (unsigned int)V1_TICK_MS);
+             dm1_v1_startup_title_vblank_tick_ms_pc34());
     expect_u("runtime PRESENTS hold prevents one-tick flash",
              V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing),
-             (V1_TITLE_DAT_FRAME_MAX - 23u) * (unsigned int)V1_TICK_MS);
+             dm1_v1_startup_title_presents_hold_ms_pc34());
     expect_u("runtime final guard delay from source post/final vblanks",
              V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing),
-             3u * (unsigned int)V1_TICK_MS);
+             (dm1_v1_startup_title_post_zoom_vblanks_pc34() +
+              dm1_v1_startup_title_final_guard_vblanks_pc34()) *
+                 dm1_v1_startup_title_vblank_tick_ms_pc34());
     expect_u("runtime C001 cadence pad moved before zoom",
              V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&timing),
              0u);

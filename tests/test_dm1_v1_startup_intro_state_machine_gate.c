@@ -123,10 +123,12 @@ static void check_title_to_menu_boundary(void) {
      * STRIKES BACK, and final VBlank guard. Firestaff's decoded TITLE
      * frame bank must not make the menu eligible before frame 53 is held.
      */
-    expect_u("TITLE source step count", titleTiming.sourceAnimationStepCount, 23u);
+    expect_u("TITLE source step count",
+             titleTiming.sourceAnimationStepCount,
+             dm1_v1_startup_title_source_animation_steps_pc34());
     expect_u("TITLE PRESENTS hold uses C001 preparation budget",
              titleTiming.presentsHoldVblankCount,
-             V1_TITLE_DAT_FRAME_MAX - 23u);
+             dm1_v1_startup_title_presents_hold_vblanks_pc34());
     expect_u("TITLE first menu-eligible step",
              titleTiming.firstMenuEligibleStep,
              V1_TITLE_DAT_FRAME_MAX + 1u);

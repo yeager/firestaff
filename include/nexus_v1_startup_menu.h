@@ -102,6 +102,23 @@ typedef struct {
 } Nexus_V1_StartupChampionExecution;
 
 typedef struct {
+    int set_title_active;
+    int title_active;
+    int set_title_frame;
+    int title_frame;
+    int set_save_select_active;
+    int save_select_active;
+    int set_save_selected_row;
+    int save_selected_row;
+    int set_champion_select_active;
+    int champion_select_active;
+    int set_champion_cursor;
+    int champion_cursor;
+    int set_champion_frame;
+    int champion_frame;
+} Nexus_V1_StartupModeUpdate;
+
+typedef struct {
     char save_dir[512];
     unsigned int slot_mask;
     int row_count;
@@ -240,6 +257,10 @@ int nexus_v1_startup_execute_save_action(
 int nexus_v1_startup_execute_champion_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupChampionExecution *out_execution);
+int nexus_v1_startup_champion_execution_mode_update(
+    const Nexus_V1_StartupChampionExecution *execution,
+    int save_row_count,
+    Nexus_V1_StartupModeUpdate *out_update);
 int nexus_v1_startup_menu_build_save_render_rows(
     const Nexus_V1_StartupMenu *menu,
     Nexus_V1_StartupSaveRenderRow *rows,

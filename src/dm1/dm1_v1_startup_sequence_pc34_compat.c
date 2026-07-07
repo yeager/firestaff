@@ -2,6 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#define DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 18u
+#define DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34 23u
+#define DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 53u
+#define DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 2u
+#define DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34 1u
+#define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 55u
+
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage) {
     switch (stage) {
         case DM1_V1_STARTUP_STAGE_SWSH_LOGO_PC34:
@@ -90,4 +97,43 @@ int dm1_v1_startup_sequence_source_order_valid_pc34(void) {
 
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void) {
     return "ReDMCSB SWSH.C:39-47 -> STARTUP1.C:143 -> TITLE.C:319-409 -> ENTRANCE.C:850-883";
+}
+
+unsigned int dm1_v1_startup_title_zoom_steps_pc34(void) {
+    /* ReDMCSB: TITLE.C F0437 lines 340-360 prepares 18 shrinked title
+     * bitmaps, then lines 385-387 blit them in reverse order. */
+    return DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34;
+}
+
+unsigned int dm1_v1_startup_title_source_animation_steps_pc34(void) {
+    /* PRESENTS + 18 zoom blits + 2 post-zoom waits + STRIKES BACK + final
+     * guard. This is the source event count before Firestaff's frame-bank
+     * cadence padding. */
+    return DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34;
+}
+
+unsigned int dm1_v1_startup_title_frame_bank_equivalent_steps_pc34(void) {
+    return DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34;
+}
+
+unsigned int dm1_v1_startup_title_presents_hold_vblanks_pc34(void) {
+    return DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 -
+           DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34;
+}
+
+unsigned int dm1_v1_startup_title_vblank_tick_ms_pc34(void) {
+    return DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34;
+}
+
+unsigned int dm1_v1_startup_title_presents_hold_ms_pc34(void) {
+    return dm1_v1_startup_title_presents_hold_vblanks_pc34() *
+           DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34;
+}
+
+unsigned int dm1_v1_startup_title_post_zoom_vblanks_pc34(void) {
+    return DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34;
+}
+
+unsigned int dm1_v1_startup_title_final_guard_vblanks_pc34(void) {
+    return DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34;
 }

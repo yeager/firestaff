@@ -33,6 +33,14 @@ int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int out_phase_size);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
+unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);
+unsigned int dm1_v1_startup_title_source_animation_steps_pc34(void);
+unsigned int dm1_v1_startup_title_frame_bank_equivalent_steps_pc34(void);
+unsigned int dm1_v1_startup_title_presents_hold_vblanks_pc34(void);
+unsigned int dm1_v1_startup_title_vblank_tick_ms_pc34(void);
+unsigned int dm1_v1_startup_title_presents_hold_ms_pc34(void);
+unsigned int dm1_v1_startup_title_post_zoom_vblanks_pc34(void);
+unsigned int dm1_v1_startup_title_final_guard_vblanks_pc34(void);
 
 #ifdef __cplusplus
 }

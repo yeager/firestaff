@@ -102,6 +102,17 @@ static void nexus_v1_startup_champion_execution_clear(
     execution->cursor = -1;
 }
 
+static void nexus_v1_startup_mode_update_clear(
+    Nexus_V1_StartupModeUpdate *update)
+{
+    if (!update) {
+        return;
+    }
+    memset(update, 0, sizeof(*update));
+    update->save_selected_row = -1;
+    update->champion_cursor = -1;
+}
+
 Nexus_V1_StartupInput nexus_v1_startup_input_from_firestaff_menu_code(
     int menu_input)
 {
@@ -661,6 +672,57 @@ int nexus_v1_startup_execute_champion_action(
             out_execution->kind =
                 NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE;
             out_execution->status = "NEXUS TITLE";
+            return 1;
+        default:
+            break;
+    }
+    return 0;
+}
+
+int nexus_v1_startup_champion_execution_mode_update(
+    const Nexus_V1_StartupChampionExecution *execution,
+    int save_row_count,
+    Nexus_V1_StartupModeUpdate *out_update)
+{
+    if (!execution || !out_update ||
+        execution->kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_IGNORE) {
+        return 0;
+    }
+    nexus_v1_startup_mode_update_clear(out_update);
+    switch (execution->kind) {
+        case NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW:
+            return 1;
+        case NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR:
+            out_update->set_champion_cursor = 1;
+            out_update->champion_cursor = execution->cursor;
+            return 1;
+        case NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON:
+            out_update->set_champion_select_active = 1;
+            out_update->champion_select_active = 0;
+            out_update->set_champion_frame = 1;
+            out_update->champion_frame = 0;
+            return 1;
+        case NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_SAVE_SELECT:
+            out_update->set_champion_select_active = 1;
+            out_update->champion_select_active = 0;
+            out_update->set_champion_frame = 1;
+            out_update->champion_frame = 0;
+            out_update->set_save_select_active = 1;
+            out_update->save_select_active = 1;
+            if (execution->select_last_save_row && save_row_count > 0) {
+                out_update->set_save_selected_row = 1;
+                out_update->save_selected_row = save_row_count - 1;
+            }
+            return 1;
+        case NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE:
+            out_update->set_champion_select_active = 1;
+            out_update->champion_select_active = 0;
+            out_update->set_champion_frame = 1;
+            out_update->champion_frame = 0;
+            out_update->set_title_active = 1;
+            out_update->title_active = 1;
+            out_update->set_title_frame = 1;
+            out_update->title_frame = 0;
             return 1;
         default:
             break;
