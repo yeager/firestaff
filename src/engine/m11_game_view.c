@@ -10586,12 +10586,37 @@ static void m11_nexus_apply_startup_mode_update(
     }
 }
 
+static M11_GameInputResult m11_nexus_apply_startup_receipt(
+    M11_GameViewState *state,
+    const Nexus_V1_StartupApplyReceipt *receipt)
+{
+    if (!state || !receipt) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    m11_nexus_apply_startup_mode_update(state, &receipt->mode_update);
+    if (receipt->status_scope || receipt->status) {
+        m11_set_status(state,
+                       receipt->status_scope ? receipt->status_scope
+                                             : "STARTUP",
+                       receipt->status ? receipt->status : "");
+    }
+    if (receipt->result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW) {
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (receipt->result ==
+        NEXUS_V1_STARTUP_APPLY_RESULT_RETURN_TO_LAUNCHER) {
+        return M11_GAME_INPUT_RETURN_TO_MENU;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 static M11_GameInputResult m11_nexus_startup_apply_save_action(
     M11_GameViewState *state,
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupSaveExecution execution;
-    Nexus_V1_StartupModeUpdate update;
+    Nexus_V1_StartupApplyReceipt receipt;
+    int load_success = 1;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
@@ -10599,53 +10624,16 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
     if (!nexus_v1_startup_execute_save_action(action, &execution)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_save_execution_mode_update(&execution, &update)) {
+    if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT) {
+        load_success = m11_nexus_resume_from_save_path(state, execution.path);
+    }
+    if (!nexus_v1_startup_apply_receipt_from_save_execution(
+            &execution,
+            load_success,
+            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW) {
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS SAVE SELECT");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT) {
-        if (!m11_nexus_resume_from_save_path(state, execution.path)) {
-            m11_set_status(state,
-                           "STARTUP",
-                           execution.failure_status
-                               ? execution.failure_status
-                               : "NEXUS LOAD FAILED");
-            return M11_GAME_INPUT_REDRAW;
-        }
-        m11_nexus_apply_startup_mode_update(state, &update);
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "BOOT",
-                       execution.status ? execution.status
-                                        : "NEXUS RESUMED");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_CHAMPIONS) {
-        m11_nexus_apply_startup_mode_update(state, &update);
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS CHAMPIONS");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE) {
-        m11_nexus_apply_startup_mode_update(state, &update);
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS TITLE");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    return M11_GAME_INPUT_IGNORED;
+    return m11_nexus_apply_startup_receipt(state, &receipt);
 }
 
 static M11_GameInputResult m11_nexus_startup_apply_title_action(
@@ -10653,7 +10641,7 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupTitleExecution execution;
-    Nexus_V1_StartupModeUpdate update;
+    Nexus_V1_StartupApplyReceipt receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
@@ -10661,47 +10649,11 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
     if (!nexus_v1_startup_execute_title_action(action, &execution)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_title_execution_mode_update(&execution, &update)) {
+    if (!nexus_v1_startup_apply_receipt_from_title_execution(&execution,
+                                                             &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (execution.kind ==
-        NEXUS_V1_STARTUP_TITLE_EXEC_RETURN_TO_LAUNCHER) {
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "RETURN",
-                       execution.status ? execution.status
-                                        : "BACK TO LAUNCHER");
-        return M11_GAME_INPUT_RETURN_TO_MENU;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_TITLE_EXEC_HOLD_TITLE) {
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS TITLE");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind ==
-        NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_SAVE_SELECT) {
-        m11_nexus_apply_startup_mode_update(state, &update);
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS LOAD GAME");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind ==
-        NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_CHAMPIONS) {
-        m11_nexus_apply_startup_mode_update(state, &update);
-        m11_set_status(state,
-                       execution.status_scope ? execution.status_scope
-                                              : "STARTUP",
-                       execution.status ? execution.status
-                                        : "NEXUS CHAMPIONS");
-        return M11_GAME_INPUT_REDRAW;
-    }
-    return M11_GAME_INPUT_IGNORED;
+    return m11_nexus_apply_startup_receipt(state, &receipt);
 }
 
 static M11_GameInputResult m11_nexus_startup_handle_save_input(
@@ -10734,7 +10686,7 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupChampionExecution execution;
-    Nexus_V1_StartupModeUpdate update;
+    Nexus_V1_StartupApplyReceipt receipt;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
@@ -10742,19 +10694,13 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
     if (!nexus_v1_startup_execute_champion_action(action, &execution)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_champion_execution_mode_update(
+    if (!nexus_v1_startup_apply_receipt_from_champion_execution(
             &execution,
             state->nexusState.startup_save_row_count,
-            &update)) {
+            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_nexus_apply_startup_mode_update(state, &update);
-    m11_set_status(state,
-                   execution.status_scope ? execution.status_scope
-                                          : "STARTUP",
-                   execution.status ? execution.status
-                                    : "NEXUS CHAMPIONS");
-    return M11_GAME_INPUT_REDRAW;
+    return m11_nexus_apply_startup_receipt(state, &receipt);
 }
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {

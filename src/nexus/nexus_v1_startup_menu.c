@@ -113,6 +113,16 @@ static void nexus_v1_startup_mode_update_clear(
     update->champion_cursor = -1;
 }
 
+static void nexus_v1_startup_apply_receipt_clear(
+    Nexus_V1_StartupApplyReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->result = NEXUS_V1_STARTUP_APPLY_RESULT_IGNORE;
+}
+
 Nexus_V1_StartupInput nexus_v1_startup_input_from_firestaff_menu_code(
     int menu_input)
 {
@@ -760,6 +770,74 @@ int nexus_v1_startup_save_execution_mode_update(
     return 0;
 }
 
+int nexus_v1_startup_apply_receipt_from_save_execution(
+    const Nexus_V1_StartupSaveExecution *execution,
+    int load_success,
+    Nexus_V1_StartupApplyReceipt *out_receipt)
+{
+    Nexus_V1_StartupModeUpdate update;
+
+    if (!execution || !out_receipt ||
+        execution->kind == NEXUS_V1_STARTUP_SAVE_EXEC_IGNORE) {
+        return 0;
+    }
+    nexus_v1_startup_apply_receipt_clear(out_receipt);
+    if (execution->kind == NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT &&
+        !load_success) {
+        out_receipt->result = NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = execution->failure_status
+                                  ? execution->failure_status
+                                  : "NEXUS LOAD FAILED";
+        return 1;
+    }
+    if (!nexus_v1_startup_save_execution_mode_update(execution, &update)) {
+        return 0;
+    }
+    out_receipt->mode_update = update;
+    out_receipt->result = NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW;
+    out_receipt->status_scope = execution->status_scope
+                                    ? execution->status_scope
+                                    : "STARTUP";
+    out_receipt->status = execution->status ? execution->status
+                                            : "NEXUS SAVE SELECT";
+    if (execution->kind == NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT) {
+        out_receipt->status_scope = execution->status_scope
+                                        ? execution->status_scope
+                                        : "BOOT";
+        out_receipt->status = execution->status ? execution->status
+                                                : "NEXUS RESUMED";
+    }
+    return 1;
+}
+
+int nexus_v1_startup_apply_receipt_from_title_execution(
+    const Nexus_V1_StartupTitleExecution *execution,
+    Nexus_V1_StartupApplyReceipt *out_receipt)
+{
+    Nexus_V1_StartupModeUpdate update;
+
+    if (!execution || !out_receipt ||
+        execution->kind == NEXUS_V1_STARTUP_TITLE_EXEC_IGNORE) {
+        return 0;
+    }
+    if (!nexus_v1_startup_title_execution_mode_update(execution, &update)) {
+        return 0;
+    }
+    nexus_v1_startup_apply_receipt_clear(out_receipt);
+    out_receipt->mode_update = update;
+    out_receipt->status_scope = execution->status_scope
+                                    ? execution->status_scope
+                                    : "STARTUP";
+    out_receipt->status = execution->status ? execution->status
+                                            : "NEXUS TITLE";
+    out_receipt->result =
+        execution->kind == NEXUS_V1_STARTUP_TITLE_EXEC_RETURN_TO_LAUNCHER
+            ? NEXUS_V1_STARTUP_APPLY_RESULT_RETURN_TO_LAUNCHER
+            : NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW;
+    return 1;
+}
+
 int nexus_v1_startup_champion_execution_mode_update(
     const Nexus_V1_StartupChampionExecution *execution,
     int save_row_count,
@@ -809,6 +887,34 @@ int nexus_v1_startup_champion_execution_mode_update(
             break;
     }
     return 0;
+}
+
+int nexus_v1_startup_apply_receipt_from_champion_execution(
+    const Nexus_V1_StartupChampionExecution *execution,
+    int save_row_count,
+    Nexus_V1_StartupApplyReceipt *out_receipt)
+{
+    Nexus_V1_StartupModeUpdate update;
+
+    if (!execution || !out_receipt ||
+        execution->kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_IGNORE) {
+        return 0;
+    }
+    if (!nexus_v1_startup_champion_execution_mode_update(
+            execution,
+            save_row_count,
+            &update)) {
+        return 0;
+    }
+    nexus_v1_startup_apply_receipt_clear(out_receipt);
+    out_receipt->mode_update = update;
+    out_receipt->result = NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW;
+    out_receipt->status_scope = execution->status_scope
+                                    ? execution->status_scope
+                                    : "STARTUP";
+    out_receipt->status = execution->status ? execution->status
+                                            : "NEXUS CHAMPIONS";
+    return 1;
 }
 
 int nexus_v1_startup_menu_build_save_render_rows(
