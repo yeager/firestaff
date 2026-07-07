@@ -67,6 +67,73 @@ static void check_render_plan_graphic(
     check_int(label, plan_has_graphic_kind(plan, kind), 1);
 }
 
+typedef struct GraphicProbe {
+    int fill_count;
+    int rect_count;
+    int pixel_count;
+} GraphicProbe;
+
+static void graphic_probe_fill(
+    void *userdata, int x, int y, int w, int h, int color) {
+    GraphicProbe *probe = (GraphicProbe*)userdata;
+    (void)x;
+    (void)y;
+    (void)w;
+    (void)h;
+    (void)color;
+    if (probe) {
+        ++probe->fill_count;
+    }
+}
+
+static void graphic_probe_rect(
+    void *userdata, int x, int y, int w, int h, int color) {
+    GraphicProbe *probe = (GraphicProbe*)userdata;
+    (void)x;
+    (void)y;
+    (void)w;
+    (void)h;
+    (void)color;
+    if (probe) {
+        ++probe->rect_count;
+    }
+}
+
+static void graphic_probe_pixel(void *userdata, int x, int y, int color) {
+    GraphicProbe *probe = (GraphicProbe*)userdata;
+    (void)x;
+    (void)y;
+    (void)color;
+    if (probe) {
+        ++probe->pixel_count;
+    }
+}
+
+static void check_render_plan_executor(
+    const char *label,
+    const Theron_StartupRenderPlan *plan,
+    int expect_pixels) {
+    GraphicProbe probe;
+    Theron_StartupGraphicExecutor executor;
+    char scoped[128];
+
+    memset(&probe, 0, sizeof(probe));
+    executor.userdata = &probe;
+    executor.fill_rect = graphic_probe_fill;
+    executor.draw_rect = graphic_probe_rect;
+    executor.plot_pixel = graphic_probe_pixel;
+    snprintf(scoped, sizeof(scoped), "%s executor rc", label);
+    check_int(scoped, theron_v1_startup_execute_graphics_plan(plan, &executor), 1);
+    snprintf(scoped, sizeof(scoped), "%s executor fill", label);
+    check_int(scoped, probe.fill_count > 0, 1);
+    snprintf(scoped, sizeof(scoped), "%s executor rect", label);
+    check_int(scoped, probe.rect_count > 0, 1);
+    if (expect_pixels) {
+        snprintf(scoped, sizeof(scoped), "%s executor pixels", label);
+        check_int(scoped, probe.pixel_count > 0, 1);
+    }
+}
+
 static void raw_sector_put_text(unsigned char *sector,
                                 size_t sector_size,
                                 size_t user_offset,
@@ -272,6 +339,10 @@ int main(void) {
             "startup title owns title mark graphic",
             &render_plan,
             THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK);
+        check_render_plan_executor(
+            "startup title",
+            &render_plan,
+            1);
 
         layout_state.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
         layout_state.progression = &progression;
@@ -285,6 +356,10 @@ int main(void) {
             "startup stage owns stage-panel graphics",
             &render_plan,
             THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL);
+        check_render_plan_executor(
+            "startup stage",
+            &render_plan,
+            0);
 
         layout_state.phase = THERON_STARTUP_PHASE_SOUL_ROOM;
         layout_state.soul_cursor = 0;
@@ -302,6 +377,10 @@ int main(void) {
             "startup soul-room owns forcefield graphic",
             &render_plan,
             THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD);
+        check_render_plan_executor(
+            "startup soul-room",
+            &render_plan,
+            0);
     }
 
     {

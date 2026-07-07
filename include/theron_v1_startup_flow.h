@@ -311,6 +311,35 @@ typedef struct {
     int graphic_count;
 } Theron_StartupRenderPlan;
 
+typedef void (*Theron_StartupFillRectFn)(
+    void *userdata,
+    int x,
+    int y,
+    int w,
+    int h,
+    int color);
+
+typedef void (*Theron_StartupDrawRectFn)(
+    void *userdata,
+    int x,
+    int y,
+    int w,
+    int h,
+    int color);
+
+typedef void (*Theron_StartupPlotPixelFn)(
+    void *userdata,
+    int x,
+    int y,
+    int color);
+
+typedef struct {
+    void *userdata;
+    Theron_StartupFillRectFn fill_rect;
+    Theron_StartupDrawRectFn draw_rect;
+    Theron_StartupPlotPixelFn plot_pixel;
+} Theron_StartupGraphicExecutor;
+
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);
 void theron_v1_startup_flow_snapshot_init(Theron_StartupFlowSnapshot *snapshot);
 void theron_v1_startup_state_receipt_init(
@@ -443,6 +472,9 @@ int theron_v1_startup_render_plan_build(
     const Theron_StartupLayoutElement *elements,
     int element_count,
     Theron_StartupRenderPlan *out_plan);
+int theron_v1_startup_execute_graphics_plan(
+    const Theron_StartupRenderPlan *plan,
+    const Theron_StartupGraphicExecutor *executor);
 int theron_v1_startup_receipt_phase(
     Theron_StartupPhase phase,
     char *out_phase,

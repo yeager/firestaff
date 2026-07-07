@@ -38559,102 +38559,61 @@ static const M11_TextStyle *m11_theron_startup_text_style(
     }
 }
 
-static void m11_theron_draw_startup_title_mark(
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const Theron_StartupRenderGraphicCommand *command)
-{
-    int cx;
-    int cy;
-    int i;
+typedef struct M11_TheronStartupGraphicContext {
+    unsigned char *framebuffer;
+    int framebufferWidth;
+    int framebufferHeight;
+} M11_TheronStartupGraphicContext;
 
-    if (!framebuffer || !command) {
+static void m11_theron_startup_exec_fill_rect(
+    void *userdata, int x, int y, int w, int h, int color)
+{
+    M11_TheronStartupGraphicContext *context =
+        (M11_TheronStartupGraphicContext*)userdata;
+    if (!context || !context->framebuffer) {
         return;
     }
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  command->x, command->y, command->w, command->h,
-                  command->color);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  command->x + 4, command->y + 4,
-                  command->w - 8, command->h - 8,
-                  command->color2);
-    cx = command->x + command->w / 2;
-    cy = command->y + command->h / 2;
-    for (i = -28; i <= 28; ++i) {
-        int x = cx + i;
-        int y1 = cy + i / 2;
-        int y2 = cy - i / 2;
-        if (x >= 0 && x < framebufferWidth) {
-            if (y1 >= 0 && y1 < framebufferHeight) {
-                framebuffer[y1 * framebufferWidth + x] =
-                    (unsigned char)command->color;
-            }
-            if (y2 >= 0 && y2 < framebufferHeight) {
-                framebuffer[y2 * framebufferWidth + x] =
-                    (unsigned char)command->color2;
-            }
-        }
-    }
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  cx - 18, cy - 5, 36, 10, command->color);
+    m11_fill_rect(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  x,
+                  y,
+                  w,
+                  h,
+                  color);
 }
 
-static void m11_theron_draw_startup_mirror_frame(
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const Theron_StartupRenderGraphicCommand *command)
+static void m11_theron_startup_exec_draw_rect(
+    void *userdata, int x, int y, int w, int h, int color)
 {
-    int portrait_color;
-    int inset_color;
-
-    if (!framebuffer || !command) {
+    M11_TheronStartupGraphicContext *context =
+        (M11_TheronStartupGraphicContext*)userdata;
+    if (!context || !context->framebuffer) {
         return;
     }
-    portrait_color = 2 + ((command->ordinal > 0 ? command->ordinal : 1) % 12);
-    inset_color = command->selected ? 10 : portrait_color;
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  command->x, command->y, command->w, command->h, 0);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  command->x, command->y, command->w, command->h,
-                  command->cursor ? command->color2 : command->color);
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  command->x + 4, command->y + 4, 18, command->h - 8,
-                  inset_color);
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  command->x + 26, command->y + 5,
-                  command->w - 32, command->h - 10,
-                  command->selected ? 10 : 8);
+    m11_draw_rect(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  x,
+                  y,
+                  w,
+                  h,
+                  color);
 }
 
-static void m11_theron_draw_startup_forcefield(
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const Theron_StartupRenderGraphicCommand *command)
+static void m11_theron_startup_exec_plot_pixel(
+    void *userdata, int x, int y, int color)
 {
-    int i;
-    int cx;
-
-    if (!framebuffer || !command) {
+    M11_TheronStartupGraphicContext *context =
+        (M11_TheronStartupGraphicContext*)userdata;
+    if (!context || !context->framebuffer ||
+        x < 0 || y < 0 ||
+        x >= context->framebufferWidth ||
+        y >= context->framebufferHeight) {
         return;
     }
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  command->x, command->y, command->w, command->h,
-                  command->color2);
-    cx = command->x + command->w / 2;
-    for (i = 0; i < command->w / 2; i += 6) {
-        int x = cx - i;
-        int w = i * 2;
-        if (w <= 0) {
-            continue;
-        }
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      x, command->y + 2 + (i % 12) / 2,
-                      w, command->h - 4 - (i % 12),
-                      command->color);
-    }
+    context->framebuffer[y * context->framebufferWidth + x] =
+        (unsigned char)color;
 }
 
 static void m11_theron_draw_startup_graphics(
@@ -38663,56 +38622,20 @@ static void m11_theron_draw_startup_graphics(
     int framebufferWidth,
     int framebufferHeight)
 {
-    int i;
+    M11_TheronStartupGraphicContext context;
+    Theron_StartupGraphicExecutor executor;
 
     if (!plan || !framebuffer) {
         return;
     }
-    for (i = 0; i < plan->graphic_count; ++i) {
-        const Theron_StartupRenderGraphicCommand *command =
-            &plan->graphics[i];
-        switch (command->kind) {
-        case THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          command->x, command->y, command->w, command->h,
-                          command->color);
-            break;
-        case THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT:
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          command->x, command->y, command->w, command->h,
-                          command->color);
-            break;
-        case THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK:
-            m11_theron_draw_startup_title_mark(framebuffer,
-                                               framebufferWidth,
-                                               framebufferHeight,
-                                               command);
-            break;
-        case THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL:
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          command->x, command->y, command->w, command->h,
-                          command->selected ? command->color : 0);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          command->x, command->y, command->w, command->h,
-                          command->cursor ? command->color2
-                                          : command->color);
-            break;
-        case THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME:
-            m11_theron_draw_startup_mirror_frame(framebuffer,
-                                                 framebufferWidth,
-                                                 framebufferHeight,
-                                                 command);
-            break;
-        case THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD:
-            m11_theron_draw_startup_forcefield(framebuffer,
-                                               framebufferWidth,
-                                               framebufferHeight,
-                                               command);
-            break;
-        default:
-            break;
-        }
-    }
+    context.framebuffer = framebuffer;
+    context.framebufferWidth = framebufferWidth;
+    context.framebufferHeight = framebufferHeight;
+    executor.userdata = &context;
+    executor.fill_rect = m11_theron_startup_exec_fill_rect;
+    executor.draw_rect = m11_theron_startup_exec_draw_rect;
+    executor.plot_pixel = m11_theron_startup_exec_plot_pixel;
+    (void)theron_v1_startup_execute_graphics_plan(plan, &executor);
 }
 
 static void m11_theron_draw_startup_screen(const M11_GameViewState* state,

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron startup graphic executor ownership: `theron_v1_startup_flow` now executes its own startup graphic render plan through fill/rect/pixel callbacks. M11 now only adapts those callbacks to the 8-bit framebuffer, and the startup-flow probe proves title, stage-select, Soul Room mirror, and forcefield command execution. Verification: `firestaff_theron_v1_startup_flow_probe` passed 412/412, `test_theron_v1_m11_launcher_handoff_boundary` passed 26/26, Phase A passed 24/24, Theron boot-probe passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron full-start graphics step: `theron_v1_startup_flow` now owns graphic render commands for title backdrop/mark, stage panels, Soul Room mirror frames, and forcefield. M11 executes the Theron-owned plan before text, so startup is no longer text-only and has a clear handoff point for decoded original Track 02/Track 03 bitmap surfaces. Verification: `firestaff_theron_v1_startup_flow_probe`, `test_theron_v1_m11_launcher_handoff_boundary`, Phase A, and Theron boot-probe passed.
 
 - ✅ 2026-07-07 DM2 full startup graphics: DM2 startup now draws the original GDAT title backdrop from `GRAPHICS.DAT` before the startup menu, with boot-profile caching and a pixel test proving the framebuffer uses the title art. Archive-backed DM2 launches also copy HMP music and alternate `DUNGEON_*.dat` sidecars into `asset-cache/dm2/`. Verification: `test_dm2_v1_m11_startup_profile_gate`, `test_asset_status_dm2_iso_required_cache_gate`, Phase A, and DM2 boot-probe passed.
