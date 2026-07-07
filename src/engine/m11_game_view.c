@@ -15093,13 +15093,11 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     int x,
     int y) {
     Theron_StartupLayoutState layout_state;
-    Theron_StartupLayoutElement elements[16];
-    Theron_StartupHit hit;
     Theron_StartupAction action;
     Theron_StartupResult result;
     Theron_V1StartupContinueAvailability continue_availability;
     int has_continue = 0;
-    int count;
+    int handled;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
@@ -15111,41 +15109,30 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     if (!m11_theron_startup_build_layout_state(state, &layout_state)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    count = theron_v1_startup_layout_build(
-        &layout_state,
-        elements,
-        (int)(sizeof(elements) / sizeof(elements[0])));
     if (m11_theron_continue_availability(state, &continue_availability)) {
         has_continue = continue_availability.has_any_continue;
     }
-    if (theron_v1_startup_layout_hit_at(
-            (Theron_StartupPhase)state->theronState.startup_phase,
-            elements,
-            count,
-            x,
-            y,
-            &hit)) {
-        Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
-        result = theron_v1_startup_handle_hit_with_progression(
-            (Theron_StartupPhase)state->theronState.startup_phase,
-            (Theron_DungeonID)state->theronState.selected_dungeon,
-            world ? &world->progression : NULL,
-            state->theronState.startup_cursor,
-            state->theronState.save_resume_continue_focus,
-            has_continue,
-            &hit,
-            &action);
-        if (result != THERON_STARTUP_OK) {
-            m11_set_status(state, "STARTUP",
-                           theron_v1_startup_result_name(result));
-            return M11_GAME_INPUT_REDRAW;
-        }
-        if (action.kind == THERON_STARTUP_ACTION_NONE) {
-            return M11_GAME_INPUT_REDRAW;
-        }
-        return m11_theron_startup_apply_action(state, &action);
+    handled = theron_v1_startup_handle_pointer_from_layout_state(
+        &layout_state,
+        state->theronState.startup_cursor,
+        state->theronState.save_resume_continue_focus,
+        has_continue,
+        x,
+        y,
+        &result,
+        &action);
+    if (!handled) {
+        return M11_GAME_INPUT_IGNORED;
     }
-    return M11_GAME_INPUT_IGNORED;
+    if (result != THERON_STARTUP_OK) {
+        m11_set_status(state, "STARTUP",
+                       theron_v1_startup_result_name(result));
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (action.kind == THERON_STARTUP_ACTION_NONE) {
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return m11_theron_startup_apply_action(state, &action);
 }
 
 static M11_GameInputResult m11_nexus_handle_startup_pointer(

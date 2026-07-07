@@ -527,6 +527,47 @@ int main(void) {
             "startup stage",
             &render_plan,
             0);
+        {
+            Theron_StartupAction pointer_action;
+            Theron_StartupResult pointer_result = THERON_STARTUP_ERR_NULL;
+            int handled;
+
+            handled = theron_v1_startup_handle_pointer_from_layout_state(
+                &layout_state,
+                0,
+                0,
+                0,
+                44,
+                66,
+                &pointer_result,
+                &pointer_action);
+            check_int("startup stage pointer handled", handled, 1);
+            check_int("startup stage pointer result",
+                      pointer_result,
+                      THERON_STARTUP_OK);
+            check_int("startup stage pointer action",
+                      pointer_action.kind,
+                      THERON_STARTUP_ACTION_CHOOSE_STAGE);
+            check_int("startup stage pointer selected dungeon",
+                      pointer_action.selected_dungeon,
+                      THERON_DUNGEON_1_HALL_OF_RECORDS);
+            handled = theron_v1_startup_handle_pointer_from_layout_state(
+                &layout_state,
+                0,
+                0,
+                0,
+                1,
+                1,
+                &pointer_result,
+                &pointer_action);
+            check_int("startup stage pointer miss ignored", handled, 0);
+            check_int("startup stage pointer miss result",
+                      pointer_result,
+                      THERON_STARTUP_OK);
+            check_int("startup stage pointer miss action",
+                      pointer_action.kind,
+                      THERON_STARTUP_ACTION_NONE);
+        }
 
         layout_state.phase = THERON_STARTUP_PHASE_SOUL_ROOM;
         layout_state.soul_cursor = 0;
@@ -548,6 +589,29 @@ int main(void) {
             "startup soul-room",
             &render_plan,
             0);
+        {
+            Theron_StartupAction pointer_action;
+            Theron_StartupResult pointer_result = THERON_STARTUP_ERR_NULL;
+            int handled = theron_v1_startup_handle_pointer_from_layout_state(
+                &layout_state,
+                0,
+                0,
+                0,
+                50,
+                78,
+                &pointer_result,
+                &pointer_action);
+            check_int("startup soul pointer handled", handled, 1);
+            check_int("startup soul pointer result",
+                      pointer_result,
+                      THERON_STARTUP_OK);
+            check_int("startup soul pointer action",
+                      pointer_action.kind,
+                      THERON_STARTUP_ACTION_TOGGLE_MIRROR);
+            check_int("startup soul pointer mirror",
+                      pointer_action.mirror_index,
+                      0);
+        }
     }
 
     {

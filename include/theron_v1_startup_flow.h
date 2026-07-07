@@ -562,6 +562,15 @@ int theron_v1_startup_layout_hit_at(
     int x,
     int y,
     Theron_StartupHit *out_hit);
+int theron_v1_startup_handle_pointer_from_layout_state(
+    const Theron_StartupLayoutState *state,
+    int soul_cursor,
+    int continue_focus,
+    int has_continue,
+    int x,
+    int y,
+    Theron_StartupResult *out_result,
+    Theron_StartupAction *out_action);
 int theron_v1_startup_render_rows_build(
     const Theron_StartupLayoutState *state,
     const Theron_StartupLayoutElement *elements,
