@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 center-line viewport ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 center-line clear and center visible-depth mask contracts used by M11 side-content, center-content, and deferred explosion passes. M11 now supplies valid/open depth masks and consumes DM1-owned decisions. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, DM1 viewport syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 side-wall envelope ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 primary side-wall max-forward contract and the side-lane clear/occlusion decision. M11 runtime/probe code now passes only an open-depth mask and consumes the DM1-owned APIs instead of carrying private local F0128 side-lane rules. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM2 startup mode-update ownership: `dm2_v1_startup_menu` now exposes `DM2_V1_StartupModeUpdate` plus `dm2_v1_startup_execution_mode_update()`, so `SESSION_READY` owns the startup-menu close transition. M11 applies the DM2-owned update only after successful runtime session handoff. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 42/42, DM2 startup syntax passed, M11 syntax passed, and `git diff --check` passed.

@@ -197,6 +197,30 @@ int dm1_viewport_3d_primary_side_wall_max_forward_pc34(
     return 3;
 }
 
+int dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
+    unsigned int blocking_depth_mask)
+{
+    int depth;
+    /* ReDMCSB DUNVIEW.C F0128 lines 8496-8533 dispatch the center lane as
+     * D3C, D2C, then D1C source squares.  Firestaff samples in party-near
+     * order, so the first set bit in the D1..D3 mask is the nearest center
+     * wall/door that limits same-lane visibility. */
+    for (depth = 0; depth < 3; ++depth) {
+        if ((blocking_depth_mask & (1u << (unsigned int)depth)) != 0u) {
+            return depth;
+        }
+    }
+    return -1;
+}
+
+int dm1_viewport_3d_max_visible_forward_from_center_pc34(
+    unsigned int blocking_depth_mask)
+{
+    int nearest = dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
+        blocking_depth_mask);
+    return nearest >= 0 ? nearest + 1 : 3;
+}
+
 int dm1_viewport_3d_side_lane_clear_for_rel_pc34(int rel_forward,
                                                  int rel_side,
                                                  unsigned int open_depth_mask)
@@ -216,6 +240,42 @@ int dm1_viewport_3d_side_lane_clear_for_rel_pc34(int rel_forward,
         }
     }
     return 1;
+}
+
+int dm1_viewport_3d_center_line_clear_before_depth_pc34(
+    int depth_index,
+    unsigned int open_depth_mask)
+{
+    int d;
+    if (depth_index <= 0) {
+        return 1;
+    }
+    /* ReDMCSB DUNVIEW.C F0128 draws center squares in depth order D3C,
+     * D2C, D1C. A nearer non-open center square blocks farther center
+     * content and the late split side-content repair passes. */
+    for (d = 0; d < depth_index && d < 3; ++d) {
+        if ((open_depth_mask & (1u << (unsigned int)d)) == 0u) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int dm1_viewport_3d_center_visible_depth_mask_pc34(
+    unsigned int valid_depth_mask,
+    unsigned int open_depth_mask)
+{
+    int depth;
+    unsigned int mask = 0u;
+    for (depth = 0; depth < 3; ++depth) {
+        unsigned int bit = 1u << (unsigned int)depth;
+        if ((valid_depth_mask & bit) == 0u ||
+            (open_depth_mask & bit) == 0u) {
+            break;
+        }
+        mask |= bit;
+    }
+    return (int)mask;
 }
 
 static void dm1_viewport_3d_notify_pre_square_draw(
