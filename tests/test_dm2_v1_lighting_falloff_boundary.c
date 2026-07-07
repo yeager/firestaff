@@ -361,6 +361,78 @@ static void test_hud_chrome_render_plan(void)
               outdoor.champion_slot_count == 0);
 }
 
+static void test_weather_overlay_render_plan(void)
+{
+    uint8_t framebuffer[320 * 200];
+    DM2_V1_ViewportState viewport;
+    DM2_V1_WeatherOverlayRenderPlan plan;
+
+    memset(framebuffer, 7, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+
+    CHECK("DM2 weather plan rejects null output",
+          dm2_v1_viewport_build_weather_overlay_render_plan(
+              &viewport, NULL) == 0);
+    CHECK("DM2 clear weather builds empty overlay plan",
+          dm2_v1_viewport_build_weather_overlay_render_plan(
+              &viewport, &plan) == 1 &&
+              plan.kind == DM2_V1_WEATHER_OVERLAY_NONE);
+
+    viewport.weather = DM2_V1_WEATHER_OVERLAY_RAIN;
+    viewport.rain_intensity = 64;
+    viewport.tick_count = 3;
+    CHECK("DM2 rain plan owns density and scroll",
+          dm2_v1_viewport_build_weather_overlay_render_plan(
+              &viewport, &plan) == 1 &&
+              plan.kind == DM2_V1_WEATHER_OVERLAY_RAIN &&
+              plan.density == 7 &&
+              plan.scroll == 4 &&
+              plan.streak_step == 3 &&
+              plan.rain_color == 15);
+    dm2_v1_render_weather_overlay(&viewport);
+    CHECK("DM2 rain overlay applies planned diagonal streak color",
+          framebuffer[1] == 7 &&
+              framebuffer[4] == 15 &&
+              framebuffer[(3 * 320) + 4] == 15);
+
+    memset(framebuffer, 8, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.weather = DM2_V1_WEATHER_OVERLAY_FOG;
+    viewport.rain_intensity = 32;
+    CHECK("DM2 fog plan owns alpha blend",
+          dm2_v1_viewport_build_weather_overlay_render_plan(
+              &viewport, &plan) == 1 &&
+              plan.kind == DM2_V1_WEATHER_OVERLAY_FOG &&
+              plan.alpha == 4 &&
+              plan.fog_target_color == 0);
+    dm2_v1_render_weather_overlay(&viewport);
+    CHECK("DM2 fog overlay applies planned alpha over framebuffer",
+          framebuffer[0] == 6);
+
+    memset(framebuffer, 3, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.weather = DM2_V1_WEATHER_OVERLAY_STORM;
+    viewport.rain_intensity = 70;
+    viewport.tick_count = 121;
+    CHECK("DM2 storm plan owns lightning gate",
+          dm2_v1_viewport_build_weather_overlay_render_plan(
+              &viewport, &plan) == 1 &&
+              plan.kind == DM2_V1_WEATHER_OVERLAY_STORM &&
+              plan.density == 7 &&
+              plan.scroll == 1 &&
+              plan.lightning_flash == 1);
+    dm2_v1_render_weather_overlay(&viewport);
+    CHECK("DM2 storm lightning applies planned full-screen flash",
+          framebuffer[0] == 15 &&
+              framebuffer[(199 * 320) + 319] == 15);
+
+    memset(&plan, 0x55, sizeof(plan));
+    CHECK("DM2 weather plan is null-state safe",
+          dm2_v1_viewport_build_weather_overlay_render_plan(
+              NULL, &plan) == 1 &&
+              plan.kind == DM2_V1_WEATHER_OVERLAY_NONE);
+}
+
 static void test_floor_ceiling_asset_provider(void)
 {
     uint8_t framebuffer[320 * 200];
@@ -1380,6 +1452,7 @@ int main(void)
     }
     test_door_rect_contracts();
     test_hud_chrome_render_plan();
+    test_weather_overlay_render_plan();
     test_floor_ceiling_asset_provider();
     test_sprite_asset_provider();
 

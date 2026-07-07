@@ -473,6 +473,26 @@ typedef struct {
     int projectile_count;
 } DM2_V1_ProjectileRenderPlan;
 
+typedef enum {
+    DM2_V1_WEATHER_OVERLAY_NONE = 0,
+    DM2_V1_WEATHER_OVERLAY_RAIN = 1,
+    DM2_V1_WEATHER_OVERLAY_FOG = 2,
+    DM2_V1_WEATHER_OVERLAY_STORM = 3
+} DM2_V1_WeatherOverlayKind;
+
+typedef struct {
+    DM2_V1_WeatherOverlayKind kind;
+    int intensity;
+    int density;
+    int scroll;
+    int alpha;
+    int streak_step;
+    int lightning_flash;
+    uint8_t rain_color;
+    uint8_t fog_target_color;
+    uint8_t lightning_color;
+} DM2_V1_WeatherOverlayRenderPlan;
+
 typedef int (*DM2_V1_ViewportAssetFetch)(
     void *user,
     int gdat_index,
@@ -580,6 +600,9 @@ int dm2_v1_viewport_build_creature_possession_item_render_plan(
 int dm2_v1_viewport_build_projectile_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ProjectileRenderPlan *out_plan);
+int dm2_v1_viewport_build_weather_overlay_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_WeatherOverlayRenderPlan *out_plan);
 
 /* ── Lighting helpers ─────────────────────────────────────────── */
 /* dm2_v1_viewport_object_light_level — compute object light intensity

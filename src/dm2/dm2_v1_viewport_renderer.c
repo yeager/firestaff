@@ -1876,6 +1876,48 @@ int dm2_v1_viewport_build_projectile_render_plan(
     return 1;
 }
 
+int dm2_v1_viewport_build_weather_overlay_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_WeatherOverlayRenderPlan *out_plan)
+{
+    int stride2;
+
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s || s->weather <= 0 || s->rain_intensity <= 0) {
+        return 1;
+    }
+
+    out_plan->kind = (DM2_V1_WeatherOverlayKind)s->weather;
+    out_plan->intensity = s->rain_intensity;
+    out_plan->streak_step = 3;
+    out_plan->rain_color = DM2_COL_WHITE;
+    out_plan->fog_target_color = DM2_COL_BLACK;
+    out_plan->lightning_color = DM2_COL_WHITE;
+
+    /* skproject SKWIN outdoor weather resolves overlay density and animated
+     * scroll from the weather/tick state before the blitline_48-style pass.
+     * Keep those render decisions in a DM2-owned plan; the pass below only
+     * applies the already-bound overlay command. */
+    if (s->weather == DM2_V1_WEATHER_OVERLAY_RAIN) {
+        out_plan->density = (s->rain_intensity + 9) / 10;
+        stride2 = s->rain_intensity / 5;
+        out_plan->scroll = (s->tick_count * stride2) & 7;
+    } else if (s->weather == DM2_V1_WEATHER_OVERLAY_FOG) {
+        out_plan->alpha = (s->rain_intensity + 7) / 8;
+    } else if (s->weather == DM2_V1_WEATHER_OVERLAY_STORM) {
+        out_plan->density = (s->rain_intensity + 5) / 10;
+        stride2 = s->rain_intensity / 4;
+        out_plan->scroll = (s->tick_count * stride2) & 7;
+        out_plan->lightning_flash = ((s->tick_count % 120) < 2);
+    } else {
+        out_plan->kind = DM2_V1_WEATHER_OVERLAY_NONE;
+    }
+    return 1;
+}
+
 /* ── Populate view squares from world model ─────────────────────── */
 
 /*
@@ -2884,8 +2926,12 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
+    DM2_V1_WeatherOverlayRenderPlan plan;
 
-    if (s->weather <= 0 || s->rain_intensity <= 0) return;
+    if (!dm2_v1_viewport_build_weather_overlay_render_plan(s, &plan) ||
+        plan.kind == DM2_V1_WEATHER_OVERLAY_NONE) {
+        return;
+    }
 
     /* DM2 outdoor weather: rain, fog, storm.
      * Source: SKULL.ASM T600 (outdoor tick, weather effects)
@@ -2898,64 +2944,60 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
      * DM2 weather rendering uses blitline_48 (16→8-bit) for overlay.
      * Source: DUNVIEW.C:line ~5900 (weather overlay pass)
      */
-    if (s->weather == 1) {  /* Rain */
+    if (plan.kind == DM2_V1_WEATHER_OVERLAY_RAIN) {
         /* DM2 rain: diagonal streaks falling at ~30° angle.
          * Tick count scrolls the pattern diagonally.
          * Source: SKULL.ASM T600 rain streak animation. */
-        int density = (s->rain_intensity + 9) / 10;  /* 0-10 */
-        int stride2 = s->rain_intensity / 5;  /* scroll speed */
         for (int y = 0; y < DM2_VP_HEIGHT; y++) {
             for (int x = 0; x < DM2_VP_WIDTH; x += 2) {
                 /* Diagonal pattern: (x + y + scroll) % density < threshold */
-                int scroll = (s->tick_count * stride2) & 7;
-                if (((x + y + scroll) & 7) < density) {
+                if (((x + y + plan.scroll) & 7) < plan.density) {
                     /* Streak: mark a few vertical pixels */
                     int sy = y;
                     while (sy < DM2_VP_HEIGHT && sy >= 0) {
                         if (sy < DM2_VP_HEIGHT)
-                            vp[sy * stride + x] = DM2_COL_WHITE;
-                        sy += 3;  /* spaced drops for streaks */
+                            vp[sy * stride + x] = plan.rain_color;
+                        sy += plan.streak_step;
                     }
                 }
             }
         }
-    } else if (s->weather == 2) {  /* Fog */
+    } else if (plan.kind == DM2_V1_WEATHER_OVERLAY_FOG) {
         /* Semi-transparent gray overlay.
          * Source: SKULL.ASM T600 fog rendering (blitline_48). */
-        int alpha = (s->rain_intensity + 7) / 8;  /* 0-12 */
-        if (alpha > 0) {
+        if (plan.alpha > 0) {
             for (int y = 0; y < DM2_VP_HEIGHT; y++) {
                 for (int x = 0; x < DM2_VP_WIDTH; x++) {
                     uint8_t fg = vp[y * stride + x];
                     /* Simple alpha blend: fg*alpha/16 + black*(16-alpha)/16 */
-                    vp[y * stride + x] = (uint8_t)((fg * (16 - (uint8_t)alpha) + DM2_COL_BLACK * (uint8_t)alpha) / 16);
+                    vp[y * stride + x] =
+                        (uint8_t)((fg * (16 - (uint8_t)plan.alpha) +
+                                   plan.fog_target_color *
+                                       (uint8_t)plan.alpha) / 16);
                 }
             }
         }
-    } else if (s->weather == 3) {  /* Storm = heavy rain + darkening */
+    } else if (plan.kind == DM2_V1_WEATHER_OVERLAY_STORM) {
         /* Storm: rain streaks + ambient darkening + occasional lightning.
          * Source: SKULL.ASM T600 storm overlay. */
-        int density = (s->rain_intensity + 5) / 10;  /* heavier than rain */
-        int stride2 = s->rain_intensity / 4;
         for (int y = 0; y < DM2_VP_HEIGHT; y++) {
             for (int x = 0; x < DM2_VP_WIDTH; x += 2) {
-                int scroll = (s->tick_count * stride2) & 7;
-                if (((x + y + scroll) & 7) < density) {
+                if (((x + y + plan.scroll) & 7) < plan.density) {
                     int sy = y;
                     while (sy < DM2_VP_HEIGHT && sy >= 0) {
                         if (sy < DM2_VP_HEIGHT)
-                            vp[sy * stride + x] = DM2_COL_WHITE;
-                        sy += 3;
+                            vp[sy * stride + x] = plan.rain_color;
+                        sy += plan.streak_step;
                     }
                 }
             }
         }
         /* Lightning flash: every ~120 ticks, brighten screen for 1-2 ticks.
          * Source: SKULL.ASM T600 lightning flash. */
-        if ((s->tick_count % 120) < 2) {
+        if (plan.lightning_flash) {
             for (int y = 0; y < DM2_VP_HEIGHT; y++) {
                 for (int x = 0; x < DM2_VP_WIDTH; x++)
-                    vp[y * stride + x] = DM2_COL_WHITE;
+                    vp[y * stride + x] = plan.lightning_color;
             }
         }
     }
