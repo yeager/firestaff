@@ -3314,6 +3314,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 plan;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
+    CSB_V1_StartupEntranceApplyResult_PC34 apply_result;
     int resume_available = 0;
     int resume_loaded = 0;
 
@@ -3328,21 +3329,29 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             &plan)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (plan.kind ==
-        CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34) {
-        (void)csb_v1_startup_dismiss_credits_pc34(&command_state);
+
+    apply_result = csb_v1_startup_apply_pure_entrance_plan_pc34(
+        &command_state,
+        &plan,
+        &outcome);
+    if (apply_result !=
+        CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34) {
         m11_csb_startup_command_state_to_m11(state, &command_state);
-        (void)csb_v1_startup_entrance_input_outcome_pc34(
-            &plan,
-            0,
-            0,
-            &outcome);
-        m11_set_status(state, outcome.status_scope, outcome.status);
-        return M11_GAME_INPUT_REDRAW;
+        if (outcome.status) {
+            m11_set_status(state, outcome.status_scope, outcome.status);
+        }
+        switch (apply_result) {
+            case CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34:
+                return M11_GAME_INPUT_REDRAW;
+            case CSB_V1_STARTUP_ENTRANCE_APPLY_RETURN_TO_LAUNCHER_PC34:
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            case CSB_V1_STARTUP_ENTRANCE_APPLY_IGNORED_PC34:
+            case CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34:
+            default:
+                return M11_GAME_INPUT_IGNORED;
+        }
     }
-    if (plan.kind == CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34) {
-        return M11_GAME_INPUT_IGNORED;
-    }
+
     state->csbState.startup_entrance_last_command = commandId;
     switch (plan.kind) {
         case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34:
@@ -3402,25 +3411,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             m11_set_status(state, outcome.status_scope, outcome.status);
             return M11_GAME_INPUT_REDRAW;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34:
-            (void)csb_v1_startup_begin_credits_pc34(&command_state);
-            m11_csb_startup_command_state_to_m11(state, &command_state);
-            (void)csb_v1_startup_entrance_input_outcome_pc34(
-                &plan,
-                0,
-                0,
-                &outcome);
-            m11_set_status(state, outcome.status_scope, outcome.status);
-            return M11_GAME_INPUT_REDRAW;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34:
-            (void)csb_v1_startup_quit_to_launcher_pc34(&command_state);
-            m11_csb_startup_command_state_to_m11(state, &command_state);
-            (void)csb_v1_startup_entrance_input_outcome_pc34(
-                &plan,
-                0,
-                0,
-                &outcome);
-            m11_set_status(state, outcome.status_scope, outcome.status);
-            return M11_GAME_INPUT_RETURN_TO_MENU;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34:
         case CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34:
         default:

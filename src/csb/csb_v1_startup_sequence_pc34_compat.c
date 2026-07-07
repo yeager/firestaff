@@ -1795,6 +1795,60 @@ int csb_v1_startup_entrance_input_outcome_pc34(
     }
 }
 
+CSB_V1_StartupEntranceApplyResult_PC34
+csb_v1_startup_apply_pure_entrance_plan_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome)
+{
+    if (out_outcome) {
+        memset(out_outcome, 0, sizeof(*out_outcome));
+        out_outcome->result = CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
+    }
+    if (!state || !plan) {
+        return CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34;
+    }
+
+    switch (plan->kind) {
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34:
+            (void)csb_v1_startup_dismiss_credits_pc34(state);
+            (void)csb_v1_startup_entrance_input_outcome_pc34(
+                plan,
+                0,
+                0,
+                out_outcome);
+            return CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34:
+            (void)csb_v1_startup_begin_credits_pc34(state);
+            (void)csb_v1_startup_entrance_input_outcome_pc34(
+                plan,
+                0,
+                0,
+                out_outcome);
+            return CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34:
+            (void)csb_v1_startup_quit_to_launcher_pc34(state);
+            (void)csb_v1_startup_entrance_input_outcome_pc34(
+                plan,
+                0,
+                0,
+                out_outcome);
+            return CSB_V1_STARTUP_ENTRANCE_APPLY_RETURN_TO_LAUNCHER_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34:
+            (void)csb_v1_startup_entrance_input_outcome_pc34(
+                plan,
+                0,
+                0,
+                out_outcome);
+            return CSB_V1_STARTUP_ENTRANCE_APPLY_IGNORED_PC34;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34:
+        default:
+            return CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34;
+    }
+}
+
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command)
