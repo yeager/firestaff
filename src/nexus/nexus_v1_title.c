@@ -183,152 +183,282 @@ int nexus_title_start_ready(int frame) {
     return title_frame.start_ready;
 }
 
-static void nexus_title_draw_prompt(Nexus_Framebuffer *fb,
-                                    const Nexus_V1_TitleFrame *title_frame)
+static void nexus_title_plan_add_rect(Nexus_V1_TitleRenderPlan *plan,
+                                      int x,
+                                      int y,
+                                      int w,
+                                      int h,
+                                      uint8_t color)
+{
+    Nexus_V1_TitleRenderRect *rect;
+    if (!plan || plan->rect_count >= NEXUS_V1_TITLE_RENDER_MAX_RECTS) {
+        return;
+    }
+    rect = &plan->rects[plan->rect_count++];
+    rect->x = x;
+    rect->y = y;
+    rect->w = w;
+    rect->h = h;
+    rect->color = color;
+}
+
+static void nexus_title_plan_add_prompt(Nexus_V1_TitleRenderPlan *plan,
+                                        const Nexus_V1_TitleFrame *title_frame)
 {
     int x;
     int y;
     uint8_t base;
-    if (!fb || !title_frame || !title_frame->prompt_visible) {
+    if (!plan || !title_frame || !title_frame->prompt_visible) {
         return;
     }
     base = (uint8_t)(18 + ((title_frame->hold_frame / 6) & 3));
+    plan->prompt_visible = 1;
+    plan->prompt_base_color = base;
     y = NEXUS_FB_H - 18;
     for (x = 86; x < 234; x += 18) {
-        nexus_title_draw_rect(fb, x, y, 12, 2, base);
-        nexus_title_draw_rect(fb, x, y + 4, 10, 2, (uint8_t)(base - 2));
-        nexus_title_draw_rect(fb, x, y + 8, 12, 2, base);
+        nexus_title_plan_add_rect(plan, x, y, 12, 2, base);
+        nexus_title_plan_add_rect(plan, x, y + 4, 10, 2,
+                                  (uint8_t)(base - 2));
+        nexus_title_plan_add_rect(plan, x, y + 8, 12, 2, base);
     }
-    nexus_title_draw_rect(fb, 74, y - 6, 172, 1, (uint8_t)(base - 4));
-    nexus_title_draw_rect(fb, 74, y + 14, 172, 1, (uint8_t)(base - 4));
+    nexus_title_plan_add_rect(plan, 74, y - 6, 172, 1,
+                              (uint8_t)(base - 4));
+    nexus_title_plan_add_rect(plan, 74, y + 14, 172, 1,
+                              (uint8_t)(base - 4));
 }
 
-static void nexus_render_title_art(const Nexus_TitleScreen *title,
-                                   Nexus_Framebuffer *fb, int title_frame_no) {
-    int y;
-    Nexus_V1_TitleFrame title_frame;
-    if (!fb) {
-        return;
-    }
-    nexus_fb_clear(fb);
-    if (!title || !title->loaded || !title->pixels ||
-        title->width <= 0 || title->height <= 0) {
-        nexus_render_title_fallback(fb, title_frame_no);
-        return;
-    }
-    /* Nexus boot presentation: keep the real TITLE.CG artwork, but make the
-     * startup title phase frame-dependent instead of a static blit. This is a
-     * bounded Saturn-style reveal until the original VDP1/VDP2 title program
-     * is decoded from NEXUS.BIN. */
-    if (title_frame_no < 0) {
-        title_frame_no = 0;
-    }
-    if (!nexus_v1_title_frame(title_frame_no, NEXUS_FB_H, &title_frame)) {
-        return;
-    }
-    for (y = title_frame.reveal_y0;
-         y < title_frame.reveal_y1 && y < title->height &&
-                 y < NEXUS_FB_H; ++y) {
-        int copy_w = title->width < NEXUS_FB_W ? title->width : NEXUS_FB_W;
-        memcpy(&fb->color_buffer[y * NEXUS_FB_W],
-               &title->pixels[y * title->width],
-               (size_t)copy_w);
-    }
-    nexus_title_draw_rect(fb, 0, title_frame.reveal_y0 - 1,
-                          NEXUS_FB_W, 1, title_frame.edge_color);
-    nexus_title_draw_rect(fb, 0, title_frame.reveal_y1,
-                          NEXUS_FB_W, 1, title_frame.edge_color);
-    nexus_title_draw_prompt(fb, &title_frame);
-}
-
-static void nexus_render_title_warning_art(const Nexus_TitleScreen *title,
-                                           Nexus_Framebuffer *fb,
-                                           int frame)
+static void nexus_title_plan_reset(Nexus_V1_TitleRenderPlan *plan)
 {
-    int y;
-    int copy_w;
-    if (!fb) {
-        return;
-    }
-    nexus_fb_clear(fb);
-    if (!title || !title->warning_loaded || !title->warning_pixels ||
-        title->warning_width <= 0 || title->warning_height <= 0) {
-        nexus_render_title_warning_fallback(fb, frame);
-        return;
-    }
-    copy_w = title->warning_width < NEXUS_FB_W ? title->warning_width : NEXUS_FB_W;
-    for (y = 0; y < title->warning_height && y < NEXUS_FB_H; ++y) {
-        memcpy(&fb->color_buffer[y * NEXUS_FB_W],
-               &title->warning_pixels[y * title->warning_width],
-               (size_t)copy_w);
+    if (plan) {
+        memset(plan, 0, sizeof(*plan));
     }
 }
 
-void nexus_render_title(const Nexus_TitleScreen *title,
-                        Nexus_Framebuffer *fb, int frame) {
-    Nexus_V1_BootFrame boot_frame;
-    if (!fb) {
-        return;
-    }
-    if (!nexus_v1_boot_frame(frame, NEXUS_FB_H, &boot_frame)) {
-        nexus_fb_clear(fb);
-        return;
-    }
-    if (boot_frame.phase == NEXUS_V1_BOOT_PHASE_WARNING) {
-        nexus_render_title_warning_art(title, fb, boot_frame.frame_in_phase);
-        return;
-    }
-    nexus_render_title_art(title, fb, boot_frame.title_frame);
-}
-
-void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame) {
-    int y;
-    int pulse;
+int nexus_v1_title_build_fallback_render_plan(
+    int frame,
+    Nexus_V1_TitleRenderPlan *out_plan)
+{
     Nexus_V1_TitleFrame title_frame;
-    if (!fb) {
-        return;
+    int pulse;
+    if (!out_plan) {
+        return 0;
     }
     if (frame < 0) {
         frame = 0;
     }
     if (!nexus_v1_title_frame(frame, NEXUS_FB_H, &title_frame)) {
-        return;
+        nexus_title_plan_reset(out_plan);
+        return 0;
     }
-    nexus_fb_clear(fb);
+    nexus_title_plan_reset(out_plan);
     pulse = (frame / 8) & 3;
-    for (y = 0; y < NEXUS_FB_H; ++y) {
-        uint8_t shade = (uint8_t)(2 + (y / 28));
-        memset(&fb->color_buffer[y * NEXUS_FB_W], shade, NEXUS_FB_W);
-    }
-    nexus_title_draw_rect(fb, 54, 28, 212, 18, (uint8_t)(10 + pulse));
-    nexus_title_draw_rect(fb, 70, 56, 180, 8, 14);
-    nexus_title_draw_rect(fb, 90, 74, 140, 6, 12);
-    nexus_title_draw_rect(fb, 32, 104, 256, 3, 18);
-    nexus_title_draw_rect(fb, 48, 124, 224, 3, 16);
-    nexus_title_draw_rect(fb, 68, 144, 184, 3, 14);
-    nexus_title_draw_rect(fb, 96, 164, 128, 3, 12);
-    nexus_title_draw_rect(fb, 20 + pulse * 2, 190, 280 - pulse * 4, 2, 22);
-    nexus_title_draw_prompt(fb, &title_frame);
+    out_plan->kind = NEXUS_V1_TITLE_RENDER_PLAN_TITLE_FALLBACK;
+    out_plan->boot_phase = NEXUS_V1_BOOT_PHASE_TITLE;
+    out_plan->input_frame = frame;
+    out_plan->frame_in_phase = frame;
+    out_plan->title_frame = frame;
+    out_plan->reveal_y0 = title_frame.reveal_y0;
+    out_plan->reveal_y1 = title_frame.reveal_y1;
+    out_plan->edge_color = title_frame.edge_color;
+    out_plan->pulse = pulse;
+    out_plan->gradient_base = 2;
+    out_plan->gradient_step_y = 28;
+    out_plan->gradient_mod_mask = -1;
+    nexus_title_plan_add_rect(out_plan, 54, 28, 212, 18,
+                              (uint8_t)(10 + pulse));
+    nexus_title_plan_add_rect(out_plan, 70, 56, 180, 8, 14);
+    nexus_title_plan_add_rect(out_plan, 90, 74, 140, 6, 12);
+    nexus_title_plan_add_rect(out_plan, 32, 104, 256, 3, 18);
+    nexus_title_plan_add_rect(out_plan, 48, 124, 224, 3, 16);
+    nexus_title_plan_add_rect(out_plan, 68, 144, 184, 3, 14);
+    nexus_title_plan_add_rect(out_plan, 96, 164, 128, 3, 12);
+    nexus_title_plan_add_rect(out_plan, 20 + pulse * 2, 190,
+                              280 - pulse * 4, 2, 22);
+    nexus_title_plan_add_prompt(out_plan, &title_frame);
+    return 1;
 }
 
-void nexus_render_title_warning_fallback(Nexus_Framebuffer *fb, int frame) {
-    int y;
+int nexus_v1_title_build_warning_fallback_render_plan(
+    int frame,
+    Nexus_V1_TitleRenderPlan *out_plan)
+{
     int pulse;
-    if (!fb) {
-        return;
+    if (!out_plan) {
+        return 0;
     }
     if (frame < 0) {
         frame = 0;
     }
-    nexus_fb_clear(fb);
+    nexus_title_plan_reset(out_plan);
     pulse = (frame / 10) & 3;
-    for (y = 0; y < NEXUS_FB_H; ++y) {
-        uint8_t shade = (uint8_t)(1 + ((y / 40) & 3));
-        memset(&fb->color_buffer[y * NEXUS_FB_W], shade, NEXUS_FB_W);
+    out_plan->kind = NEXUS_V1_TITLE_RENDER_PLAN_WARNING_FALLBACK;
+    out_plan->boot_phase = NEXUS_V1_BOOT_PHASE_WARNING;
+    out_plan->input_frame = frame;
+    out_plan->frame_in_phase = frame;
+    out_plan->pulse = pulse;
+    out_plan->gradient_base = 1;
+    out_plan->gradient_step_y = 40;
+    out_plan->gradient_mod_mask = 3;
+    nexus_title_plan_add_rect(out_plan, 36, 34, 248, 24,
+                              (uint8_t)(32 + pulse));
+    nexus_title_plan_add_rect(out_plan, 54, 74, 212, 4, 38);
+    nexus_title_plan_add_rect(out_plan, 54, 92, 212, 4, 36);
+    nexus_title_plan_add_rect(out_plan, 54, 110, 212, 4, 34);
+    nexus_title_plan_add_rect(out_plan, 68, 150, 184, 3, 40);
+    return 1;
+}
+
+int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
+                                     int frame,
+                                     Nexus_V1_TitleRenderPlan *out_plan)
+{
+    Nexus_V1_BootFrame boot_frame;
+    if (!out_plan) {
+        return 0;
     }
-    nexus_title_draw_rect(fb, 36, 34, 248, 24, (uint8_t)(32 + pulse));
-    nexus_title_draw_rect(fb, 54, 74, 212, 4, 38);
-    nexus_title_draw_rect(fb, 54, 92, 212, 4, 36);
-    nexus_title_draw_rect(fb, 54, 110, 212, 4, 34);
-    nexus_title_draw_rect(fb, 68, 150, 184, 3, 40);
+    if (!nexus_v1_boot_frame(frame, NEXUS_FB_H, &boot_frame)) {
+        nexus_title_plan_reset(out_plan);
+        return 0;
+    }
+    if (boot_frame.phase == NEXUS_V1_BOOT_PHASE_WARNING) {
+        if (!title || !title->warning_loaded || !title->warning_pixels ||
+            title->warning_width <= 0 || title->warning_height <= 0) {
+            return nexus_v1_title_build_warning_fallback_render_plan(
+                boot_frame.frame_in_phase,
+                out_plan);
+        }
+        nexus_title_plan_reset(out_plan);
+        out_plan->kind = NEXUS_V1_TITLE_RENDER_PLAN_WARNING_ART;
+        out_plan->boot_phase = NEXUS_V1_BOOT_PHASE_WARNING;
+        out_plan->input_frame = frame;
+        out_plan->frame_in_phase = boot_frame.frame_in_phase;
+        out_plan->copy_width = title->warning_width < NEXUS_FB_W
+                                   ? title->warning_width
+                                   : NEXUS_FB_W;
+        out_plan->copy_height = title->warning_height < NEXUS_FB_H
+                                    ? title->warning_height
+                                    : NEXUS_FB_H;
+        return 1;
+    }
+    if (!title || !title->loaded || !title->pixels ||
+        title->width <= 0 || title->height <= 0) {
+        return nexus_v1_title_build_fallback_render_plan(boot_frame.title_frame,
+                                                         out_plan);
+    }
+    nexus_title_plan_reset(out_plan);
+    out_plan->kind = NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART;
+    out_plan->boot_phase = NEXUS_V1_BOOT_PHASE_TITLE;
+    out_plan->input_frame = frame;
+    out_plan->frame_in_phase = boot_frame.frame_in_phase;
+    out_plan->title_frame = boot_frame.title_frame;
+    out_plan->reveal_y0 = boot_frame.title.reveal_y0;
+    out_plan->reveal_y1 = boot_frame.title.reveal_y1;
+    out_plan->edge_color = boot_frame.title.edge_color;
+    out_plan->copy_width = title->width < NEXUS_FB_W
+                               ? title->width
+                               : NEXUS_FB_W;
+    out_plan->copy_height = title->height < NEXUS_FB_H
+                                ? title->height
+                                : NEXUS_FB_H;
+    nexus_title_plan_add_rect(out_plan, 0, boot_frame.title.reveal_y0 - 1,
+                              NEXUS_FB_W, 1, boot_frame.title.edge_color);
+    nexus_title_plan_add_rect(out_plan, 0, boot_frame.title.reveal_y1,
+                              NEXUS_FB_W, 1, boot_frame.title.edge_color);
+    nexus_title_plan_add_prompt(out_plan, &boot_frame.title);
+    return 1;
+}
+
+static void nexus_render_title_plan(const Nexus_TitleScreen *title,
+                                    Nexus_Framebuffer *fb,
+                                    const Nexus_V1_TitleRenderPlan *plan)
+{
+    int y;
+    int i;
+    if (!fb) {
+        return;
+    }
+    nexus_fb_clear(fb);
+    if (!plan) {
+        return;
+    }
+    if (plan->kind == NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART) {
+        /* Nexus boot presentation: keep the real TITLE.CG artwork, but make
+         * startup title presentation frame-owned by Nexus title code until the
+         * original VDP1/VDP2 title program is decoded from NEXUS.BIN. */
+        if (title && title->pixels && title->width > 0 && title->height > 0) {
+            for (y = plan->reveal_y0;
+                 y < plan->reveal_y1 && y < plan->copy_height &&
+                     y < NEXUS_FB_H;
+                 ++y) {
+                memcpy(&fb->color_buffer[y * NEXUS_FB_W],
+                       &title->pixels[y * title->width],
+                       (size_t)plan->copy_width);
+            }
+        }
+    } else if (plan->kind == NEXUS_V1_TITLE_RENDER_PLAN_WARNING_ART) {
+        if (title && title->warning_pixels && title->warning_width > 0) {
+            for (y = 0; y < plan->copy_height && y < NEXUS_FB_H; ++y) {
+                memcpy(&fb->color_buffer[y * NEXUS_FB_W],
+                       &title->warning_pixels[y * title->warning_width],
+                       (size_t)plan->copy_width);
+            }
+        }
+    } else {
+        for (y = 0; y < NEXUS_FB_H; ++y) {
+            int band = plan->gradient_step_y > 0
+                           ? y / plan->gradient_step_y
+                           : 0;
+            uint8_t shade = (uint8_t)(plan->gradient_base +
+                                      (plan->gradient_mod_mask >= 0
+                                           ? (band & plan->gradient_mod_mask)
+                                           : band));
+            memset(&fb->color_buffer[y * NEXUS_FB_W], shade, NEXUS_FB_W);
+        }
+    }
+    for (i = 0; i < plan->rect_count; ++i) {
+        const Nexus_V1_TitleRenderRect *rect = &plan->rects[i];
+        nexus_title_draw_rect(fb,
+                              rect->x,
+                              rect->y,
+                              rect->w,
+                              rect->h,
+                              rect->color);
+    }
+}
+
+void nexus_render_title(const Nexus_TitleScreen *title,
+                        Nexus_Framebuffer *fb, int frame) {
+    Nexus_V1_TitleRenderPlan plan;
+    if (!fb) {
+        return;
+    }
+    if (!nexus_v1_title_build_render_plan(title, frame, &plan)) {
+        nexus_fb_clear(fb);
+        return;
+    }
+    nexus_render_title_plan(title, fb, &plan);
+}
+
+void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame) {
+    Nexus_V1_TitleRenderPlan plan;
+    if (!fb) {
+        return;
+    }
+    if (!nexus_v1_title_build_fallback_render_plan(frame, &plan)) {
+        nexus_fb_clear(fb);
+        return;
+    }
+    nexus_render_title_plan(NULL, fb, &plan);
+}
+
+void nexus_render_title_warning_fallback(Nexus_Framebuffer *fb, int frame) {
+    Nexus_V1_TitleRenderPlan plan;
+    if (!fb) {
+        return;
+    }
+    if (!nexus_v1_title_build_warning_fallback_render_plan(frame, &plan)) {
+        nexus_fb_clear(fb);
+        return;
+    }
+    nexus_render_title_plan(NULL, fb, &plan);
 }
