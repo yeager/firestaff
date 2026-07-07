@@ -21307,30 +21307,28 @@ static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* s
                                9);
 }
 
-static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[3][3]) {
+static unsigned int m11_dm1_center_blocking_depth_mask(const M11_ViewportCell cells[3][3]) {
     int depth;
+    unsigned int mask = 0u;
     if (!cells) {
-        return 3;
+        return 0u;
     }
     for (depth = 0; depth < 3; ++depth) {
         if (cells[depth][1].valid && !m11_viewport_cell_is_open(&cells[depth][1])) {
-            return depth + 1;
+            mask |= (1u << (unsigned int)depth);
         }
     }
-    return 3;
+    return mask;
+}
+
+static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[3][3]) {
+    return dm1_viewport_3d_max_visible_forward_from_center_pc34(
+        m11_dm1_center_blocking_depth_mask(cells));
 }
 
 static int m11_dm1_nearest_blocking_center_depth_index(const M11_ViewportCell cells[3][3]) {
-    int depth;
-    if (!cells) {
-        return -1;
-    }
-    for (depth = 0; depth < 3; ++depth) {
-        if (cells[depth][1].valid && !m11_viewport_cell_is_open(&cells[depth][1])) {
-            return depth;
-        }
-    }
-    return -1;
+    return dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
+        m11_dm1_center_blocking_depth_mask(cells));
 }
 
 static int m11_dm1_nearest_blocking_center_door_depth(const M11_ViewportCell cells[3][3]) {
@@ -24053,37 +24051,36 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 }
 
-static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3][3],
-                                                  int depthIndex) {
-    int d;
-    if (!cells || depthIndex <= 0) {
-        return 1;
-    }
-    for (d = 0; d < depthIndex && d < 3; ++d) {
-        if (!m11_viewport_cell_is_open(&cells[d][1])) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-static int m11_dm1_center_content_visible_depth_mask(const M11_ViewportCell cells[3][3]) {
+static unsigned int m11_dm1_center_depth_mask(const M11_ViewportCell cells[3][3],
+                                              int requireOpen) {
     int depth;
-    int mask = 0;
+    unsigned int mask = 0u;
     if (!cells) {
         return 0;
     }
     for (depth = 0; depth < 3; ++depth) {
         const M11_ViewportCell* cell = &cells[depth][1];
         if (!cell->valid) {
-            break;
+            continue;
         }
-        if (!m11_viewport_cell_is_open(cell)) {
-            break;
+        if (!requireOpen || m11_viewport_cell_is_open(cell)) {
+            mask |= (1u << (unsigned int)depth);
         }
-        mask |= (1 << depth);
     }
     return mask;
+}
+
+static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3][3],
+                                                  int depthIndex) {
+    return dm1_viewport_3d_center_line_clear_before_depth_pc34(
+        depthIndex,
+        m11_dm1_center_depth_mask(cells, 1));
+}
+
+static int m11_dm1_center_content_visible_depth_mask(const M11_ViewportCell cells[3][3]) {
+    return dm1_viewport_3d_center_visible_depth_mask_pc34(
+        m11_dm1_center_depth_mask(cells, 0),
+        m11_dm1_center_depth_mask(cells, 1));
 }
 
 static void m11_draw_dm1_side_contents(const M11_GameViewState* state,

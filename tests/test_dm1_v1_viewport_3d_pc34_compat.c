@@ -3674,6 +3674,30 @@ static void test_primary_side_wall_max_forward_contract(void)
               dm1_viewport_3d_primary_side_wall_max_forward_pc34(0), 3);
 }
 
+static void test_center_lane_blocking_contract(void)
+{
+    check_int("F0128.center_block.none.nearest",
+              dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(0u), -1);
+    check_int("F0128.center_block.none.max_visible",
+              dm1_viewport_3d_max_visible_forward_from_center_pc34(0u), 3);
+    check_int("F0128.center_block.d1.nearest",
+              dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(0x1u), 0);
+    check_int("F0128.center_block.d1.max_visible",
+              dm1_viewport_3d_max_visible_forward_from_center_pc34(0x1u), 1);
+    check_int("F0128.center_block.d2.nearest",
+              dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(0x2u), 1);
+    check_int("F0128.center_block.d2.max_visible",
+              dm1_viewport_3d_max_visible_forward_from_center_pc34(0x2u), 2);
+    check_int("F0128.center_block.d3.nearest",
+              dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(0x4u), 2);
+    check_int("F0128.center_block.d3.max_visible",
+              dm1_viewport_3d_max_visible_forward_from_center_pc34(0x4u), 3);
+    check_int("F0128.center_block.nearest_wins",
+              dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(0x6u), 1);
+    check_int("F0128.center_block.ignores_far_bits",
+              dm1_viewport_3d_max_visible_forward_from_center_pc34(0x8u), 3);
+}
+
 static void test_side_lane_clear_contract(void)
 {
     check_int("F0128.side_lane.center_always_clear",
@@ -3688,6 +3712,26 @@ static void test_side_lane_clear_contract(void)
               dm1_viewport_3d_side_lane_clear_for_rel_pc34(3, 1, 0x3u), 1);
     check_int("F0128.side_lane.d3_blocks_on_d2_door",
               dm1_viewport_3d_side_lane_clear_for_rel_pc34(3, 1, 0x1u), 0);
+}
+
+static void test_center_line_clear_contract(void)
+{
+    check_int("F0128.center_line.depth0_clear",
+              dm1_viewport_3d_center_line_clear_before_depth_pc34(0, 0u), 1);
+    check_int("F0128.center_line.d2_requires_d1_open",
+              dm1_viewport_3d_center_line_clear_before_depth_pc34(1, 0x1u), 1);
+    check_int("F0128.center_line.d2_blocks_on_d1_wall",
+              dm1_viewport_3d_center_line_clear_before_depth_pc34(1, 0x0u), 0);
+    check_int("F0128.center_line.d3_requires_d1_d2_open",
+              dm1_viewport_3d_center_line_clear_before_depth_pc34(2, 0x3u), 1);
+    check_int("F0128.center_line.d3_blocks_on_d2_door",
+              dm1_viewport_3d_center_line_clear_before_depth_pc34(2, 0x1u), 0);
+    check_int("F0128.center_visible_mask.all_open",
+              dm1_viewport_3d_center_visible_depth_mask_pc34(0x7u, 0x7u), 0x7);
+    check_int("F0128.center_visible_mask.invalid_d2_stops",
+              dm1_viewport_3d_center_visible_depth_mask_pc34(0x5u, 0x7u), 0x1);
+    check_int("F0128.center_visible_mask.closed_d2_stops",
+              dm1_viewport_3d_center_visible_depth_mask_pc34(0x7u, 0x5u), 0x1);
 }
 
 int main(void)
@@ -3727,7 +3771,9 @@ int main(void)
     test_projectile_wall_zone_movement_visibility_gate();
     test_f0115_object_zone_contract();
     test_primary_side_wall_max_forward_contract();
+    test_center_lane_blocking_contract();
     test_side_lane_clear_contract();
+    test_center_line_clear_contract();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();

@@ -522,9 +522,19 @@ int dm1_viewport_3d_c3200_creature_side_zone_point(int coord_set,
                                                    int *out_y);
 int dm1_viewport_3d_primary_side_wall_max_forward_pc34(
     int center_max_visible_forward);
+int dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
+    unsigned int blocking_depth_mask);
+int dm1_viewport_3d_max_visible_forward_from_center_pc34(
+    unsigned int blocking_depth_mask);
 int dm1_viewport_3d_side_lane_clear_for_rel_pc34(int rel_forward,
                                                  int rel_side,
                                                  unsigned int open_depth_mask);
+int dm1_viewport_3d_center_line_clear_before_depth_pc34(
+    int depth_index,
+    unsigned int open_depth_mask);
+int dm1_viewport_3d_center_visible_depth_mask_pc34(
+    unsigned int valid_depth_mask,
+    unsigned int open_depth_mask);
 
 /* Source-locked no-write coverage for a read-only view square.  The allowed
  * list records the other F0128 view-square callbacks that remain eligible to
