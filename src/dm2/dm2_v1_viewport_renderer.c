@@ -1810,6 +1810,74 @@ int dm2_v1_viewport_build_creature_possession_item_render_plan(
     return 1;
 }
 
+int dm2_v1_viewport_item_asset_blit(
+    const DM2_V1_ItemRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    int scale_base,
+    int scale_max,
+    DM2_V1_ItemAssetBlit *out_blit)
+{
+    DM2_V1_ItemAssetBlit blit;
+    int frame_x = 0;
+    int frame_w = src_w;
+    int frame_count;
+    int render_frame = 0;
+    int dst_w;
+    int dst_h;
+
+    if (!out_blit) {
+        return 0;
+    }
+    memset(&blit, 0, sizeof(blit));
+    blit.gdat_index = -1;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    if (!render || render->gdat_index == 0 ||
+        src_w <= 0 || src_h <= 0 ||
+        scale_base <= 0 || scale_max <= 0) {
+        *out_blit = blit;
+        return 0;
+    }
+
+    frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
+    render_frame = dm2_v1_viewport_map_chip_frame_index(render->frame_index,
+                                                        frame_count);
+    if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                       render_frame,
+                                       &frame_x,
+                                       &frame_w)) {
+        frame_x = 0;
+        frame_w = src_w;
+        render_frame = 0;
+    }
+
+    dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
+                                                  render->depth,
+                                                  scale_base,
+                                                  scale_max);
+    dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                  render->depth,
+                                                  scale_base,
+                                                  scale_max);
+
+    blit.gdat_index = render->gdat_index;
+    blit.frame_x = frame_x;
+    blit.frame_y = 0;
+    blit.frame_w = frame_w;
+    blit.frame_h = src_h;
+    blit.dst_rect.x = render->center_x - (dst_w / 2);
+    blit.dst_rect.y = render->center_y - (dst_h / 2);
+    blit.dst_rect.w = dst_w;
+    blit.dst_rect.h = dst_h;
+    blit.src_stride = src_stride > 0 ? src_stride : src_w;
+    blit.transparent_color = DM2_COLOR_TRANSPARENT;
+    blit.flip_mirror = render->flip_mirror;
+    blit.render_frame = render_frame;
+    *out_blit = blit;
+    return frame_w > 0 && dst_w > 0 && dst_h > 0;
+}
+
 int dm2_v1_viewport_build_projectile_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ProjectileRenderPlan *out_plan)
@@ -2670,38 +2738,32 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                 dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
-                int frame_x = 0;
-                int frame_w = src_w;
-                if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
-                                                   it->frame_index,
-                                                   &frame_x,
-                                                   &frame_w)) {
-                    frame_x = 0;
-                    frame_w = src_w;
+                DM2_V1_ItemAssetBlit blit;
+                if (dm2_v1_viewport_item_asset_blit(it,
+                                                    src_w,
+                                                    src_h,
+                                                    src_stride,
+                                                    4,
+                                                    32,
+                                                    &blit)) {
+                    dm2_v1_blit_scaled_bitmap_region_ex(
+                        vp,
+                        stride,
+                        blit.dst_rect.x,
+                        blit.dst_rect.y,
+                        blit.dst_rect.w,
+                        blit.dst_rect.h,
+                        pixels,
+                        blit.frame_x,
+                        blit.frame_y,
+                        blit.frame_w,
+                        blit.frame_h,
+                        blit.src_stride,
+                        blit.transparent_color,
+                        blit.flip_mirror);
+                    ++s->asset_item_drawn_count;
+                    drawn_asset = 1;
                 }
-                int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
-                                                                  it->depth,
-                                                                  4,
-                                                                  32);
-                int dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
-                                                                  it->depth,
-                                                                  4,
-                                                                  32);
-                dm2_v1_blit_scaled_bitmap_region(vp,
-                                                 stride,
-                                                 it->center_x - (dst_w / 2),
-                                                 it->center_y - (dst_h / 2),
-                                                 dst_w,
-                                                 dst_h,
-                                                 pixels,
-                                                 frame_x,
-                                                 0,
-                                                 frame_w,
-                                                 src_h,
-                                                 src_stride > 0 ? src_stride : src_w,
-                                                 DM2_COLOR_TRANSPARENT);
-                ++s->asset_item_drawn_count;
-                drawn_asset = 1;
             }
         }
         if (!drawn_asset) {
@@ -2754,36 +2816,32 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                 dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
-                int frame_x = 0;
-                int frame_w = src_w;
-                if (!dm2_v1_prepare_map_chip_frame(src_w, src_h, 0,
-                                                   &frame_x, &frame_w)) {
-                    frame_x = 0;
-                    frame_w = src_w;
-                }
-                {
-                    int dst_w = dm2_v1_viewport_scaled_sprite_extent(
-                        frame_w, it->depth, 4, 32);
-                    int dst_h = dm2_v1_viewport_scaled_sprite_extent(
-                        src_h, it->depth, 4, 32);
+                DM2_V1_ItemAssetBlit blit;
+                if (dm2_v1_viewport_item_asset_blit(it,
+                                                    src_w,
+                                                    src_h,
+                                                    src_stride,
+                                                    4,
+                                                    32,
+                                                    &blit)) {
                     dm2_v1_blit_scaled_bitmap_region_ex(
                         vp,
                         stride,
-                        it->center_x - (dst_w / 2),
-                        it->center_y - (dst_h / 2),
-                        dst_w,
-                        dst_h,
+                        blit.dst_rect.x,
+                        blit.dst_rect.y,
+                        blit.dst_rect.w,
+                        blit.dst_rect.h,
                         pixels,
-                        frame_x,
-                        0,
-                        frame_w,
-                        src_h,
-                        src_stride > 0 ? src_stride : src_w,
-                        DM2_COLOR_TRANSPARENT,
-                        it->flip_mirror);
+                        blit.frame_x,
+                        blit.frame_y,
+                        blit.frame_w,
+                        blit.frame_h,
+                        blit.src_stride,
+                        blit.transparent_color,
+                        blit.flip_mirror);
+                    ++s->asset_creature_possession_item_drawn_count;
+                    drawn_asset = 1;
                 }
-                ++s->asset_creature_possession_item_drawn_count;
-                drawn_asset = 1;
             }
         }
 
@@ -2840,38 +2898,32 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
             dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
                                         &src_w, &src_h, &src_stride) == 0 &&
             pixels && src_w > 0 && src_h > 0) {
-            int frame_x = 0;
-            int frame_w = src_w;
-            if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
-                                               it->frame_index,
-                                               &frame_x,
-                                               &frame_w)) {
-                frame_x = 0;
-                frame_w = src_w;
+            DM2_V1_ItemAssetBlit blit;
+            if (dm2_v1_viewport_item_asset_blit(it,
+                                                src_w,
+                                                src_h,
+                                                src_stride,
+                                                8,
+                                                40,
+                                                &blit)) {
+                dm2_v1_blit_scaled_bitmap_region_ex(
+                    vp,
+                    stride,
+                    blit.dst_rect.x,
+                    blit.dst_rect.y,
+                    blit.dst_rect.w,
+                    blit.dst_rect.h,
+                    pixels,
+                    blit.frame_x,
+                    blit.frame_y,
+                    blit.frame_w,
+                    blit.frame_h,
+                    blit.src_stride,
+                    blit.transparent_color,
+                    blit.flip_mirror);
+                ++s->asset_carried_item_drawn_count;
+                drawn_asset = 1;
             }
-            int dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
-                                                              0,
-                                                              8,
-                                                              40);
-            int dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
-                                                              0,
-                                                              8,
-                                                              40);
-            dm2_v1_blit_scaled_bitmap_region(vp,
-                                             stride,
-                                             it->center_x - (dst_w / 2),
-                                             it->center_y - (dst_h / 2),
-                                             dst_w,
-                                             dst_h,
-                                             pixels,
-                                             frame_x,
-                                             0,
-                                             frame_w,
-                                             src_h,
-                                             src_stride > 0 ? src_stride : src_w,
-                                             DM2_COLOR_TRANSPARENT);
-            ++s->asset_carried_item_drawn_count;
-            drawn_asset = 1;
         }
     }
 
