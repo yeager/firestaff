@@ -229,6 +229,44 @@ static int tqr_startup_layout_selected_order(
     return 0;
 }
 
+static const char *tqr_startup_layout_roster_name(
+    const Theron_StartupLayoutState *state,
+    int mirror_index) {
+
+    int roster_index;
+
+    if (!state || mirror_index < 0 ||
+        mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
+        return NULL;
+    }
+    roster_index = theron_v1_startup_roster_index_for_mirror(mirror_index);
+    if (roster_index < 0 ||
+        roster_index >= state->startup_roster_name_count ||
+        roster_index >= THERON_STARTUP_LAYOUT_ROSTER_CAPACITY) {
+        return NULL;
+    }
+    return state->startup_roster_names[roster_index];
+}
+
+static const char *tqr_startup_layout_roster_title(
+    const Theron_StartupLayoutState *state,
+    int mirror_index) {
+
+    int roster_index;
+
+    if (!state || mirror_index < 0 ||
+        mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
+        return NULL;
+    }
+    roster_index = theron_v1_startup_roster_index_for_mirror(mirror_index);
+    if (roster_index < 0 ||
+        roster_index >= state->startup_roster_name_count ||
+        roster_index >= THERON_STARTUP_LAYOUT_ROSTER_CAPACITY) {
+        return NULL;
+    }
+    return state->startup_roster_titles[roster_index];
+}
+
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,
@@ -265,7 +303,11 @@ int theron_v1_startup_layout_build(
     elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_CHAPTER;
     elements[count].phase = state->phase;
     elements[count].enabled = 1;
-    tqr_startup_layout_set_label(&elements[count], "Chapter ?");
+    tqr_startup_layout_set_label(
+        &elements[count],
+        state->chapter_label[0]
+            ? state->chapter_label
+            : "Chapter ?");
     tqr_startup_layout_set_rect(&elements[count], 34, 38, 220, 10);
     ++count;
     if (count >= max_elements ||
@@ -325,6 +367,10 @@ int theron_v1_startup_layout_build(
          ++i) {
         const Theron_StartupMirrorMeta *meta =
             theron_v1_startup_mirror_meta(i);
+        const char *decoded_name =
+            tqr_startup_layout_roster_name(state, i);
+        const char *decoded_title =
+            tqr_startup_layout_roster_title(state, i);
         int selected_mirror =
             (state->selected_mirrors_mask & (1 << i)) != 0;
         elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_MIRROR;
@@ -337,9 +383,23 @@ int theron_v1_startup_layout_build(
             tqr_startup_layout_selected_order(state, i);
         elements[count].portrait_index = meta ? meta->portrait_index : -1;
         elements[count].primary_class = meta ? (int)meta->primary_class : -1;
+        if (decoded_name && decoded_name[0]) {
+            snprintf(elements[count].decoded_name,
+                     sizeof(elements[count].decoded_name),
+                     "%s",
+                     decoded_name);
+        }
+        if (decoded_title && decoded_title[0]) {
+            snprintf(elements[count].decoded_title,
+                     sizeof(elements[count].decoded_title),
+                     "%s",
+                     decoded_title);
+        }
         tqr_startup_layout_set_label(
             &elements[count],
-            meta ? meta->name : "Hero Mirror");
+            elements[count].decoded_name[0]
+                ? elements[count].decoded_name
+                : (meta ? meta->name : "Hero Mirror"));
         tqr_startup_layout_set_rect(
             &elements[count], 46, 78 + i * 11, 230, 10);
         ++count;

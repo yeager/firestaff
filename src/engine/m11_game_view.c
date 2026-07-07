@@ -40639,35 +40639,6 @@ static void m11_theron_startup_layout_set_rect(
     element->h = h;
 }
 
-static void m11_theron_startup_layout_bind_decoded_roster(
-    const M11_GameViewState* state,
-    M11_TheronStartupElement* element,
-    int mirror_index) {
-    int roster_index;
-    if (!state || !element) {
-        return;
-    }
-    roster_index =
-        theron_v1_startup_roster_index_for_mirror(mirror_index);
-    if (roster_index < 0 ||
-        roster_index >= state->theronState.startup_roster_name_count ||
-        roster_index >= (int)(sizeof(state->theronState.startup_roster_names) /
-                              sizeof(state->theronState.startup_roster_names[0]))) {
-        return;
-    }
-    snprintf(element->decodedName,
-             sizeof(element->decodedName),
-             "%s",
-             state->theronState.startup_roster_names[roster_index]);
-    snprintf(element->decodedTitle,
-             sizeof(element->decodedTitle),
-             "%s",
-             state->theronState.startup_roster_titles[roster_index]);
-    if (element->decodedName[0] != '\0') {
-        m11_theron_startup_layout_set_label(element, element->decodedName);
-    }
-}
-
 static void m11_theron_startup_chapter_label(
     const M11_GameViewState* state,
     char* out,
@@ -40703,6 +40674,7 @@ static int m11_theron_startup_build_layout_state(
 
     const Theron_V1_World* world;
     int selected;
+    int i;
 
     if (!state || !layout_state) {
         return 0;
@@ -40727,6 +40699,21 @@ static int m11_theron_startup_build_layout_state(
     layout_state->has_srm_continue =
         m11_theron_srm_continue_available(state);
     layout_state->srm_slot = state->theronState.save_resume_srm_active_slot;
+    m11_theron_startup_chapter_label(state,
+                                     layout_state->chapter_label,
+                                     sizeof(layout_state->chapter_label));
+    layout_state->startup_roster_name_count =
+        state->theronState.startup_roster_name_count;
+    for (i = 0;
+         i < THERON_STARTUP_LAYOUT_ROSTER_CAPACITY &&
+         i < (int)(sizeof(state->theronState.startup_roster_names) /
+                   sizeof(state->theronState.startup_roster_names[0]));
+         ++i) {
+        layout_state->startup_roster_names[i] =
+            state->theronState.startup_roster_names[i];
+        layout_state->startup_roster_titles[i] =
+            state->theronState.startup_roster_titles[i];
+    }
     layout_state->selected_mirrors_mask =
         state->theronState.selected_mirrors_mask;
     layout_state->selected_mirror_order =
@@ -40803,18 +40790,16 @@ int M11_GameView_GetTheronStartupLayout(
         elements[i].saveKind = src->save_kind;
         elements[i].saveSlot = src->save_slot;
         m11_theron_startup_layout_set_label(&elements[i], src->label);
+        snprintf(elements[i].decodedName,
+                 sizeof(elements[i].decodedName),
+                 "%s",
+                 src->decoded_name);
+        snprintf(elements[i].decodedTitle,
+                 sizeof(elements[i].decodedTitle),
+                 "%s",
+                 src->decoded_title);
         m11_theron_startup_layout_set_rect(
             &elements[i], src->x, src->y, src->w, src->h);
-        if (elements[i].kind == M11_THERON_STARTUP_ELEMENT_CHAPTER) {
-            char chapter[M11_THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
-            m11_theron_startup_chapter_label(state, chapter, sizeof(chapter));
-            m11_theron_startup_layout_set_label(&elements[i], chapter);
-        } else if (elements[i].kind == M11_THERON_STARTUP_ELEMENT_MIRROR) {
-            m11_theron_startup_layout_bind_decoded_roster(
-                state,
-                &elements[i],
-                elements[i].mirrorIndex);
-        }
     }
     return count;
 }
