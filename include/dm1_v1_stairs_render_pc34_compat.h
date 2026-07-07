@@ -6,7 +6,8 @@ extern "C" {
 #endif
 
 enum {
-    DM1_V1_STAIRS_UP_MASK_PC34 = 0x04
+    DM1_V1_STAIRS_UP_MASK_PC34 = 0x04,
+    DM1_V1_STAIRS_NORTH_SOUTH_MASK_PC34 = 0x08
 };
 
 typedef struct DM1_StairsBlitPc34 {
@@ -43,6 +44,15 @@ int dm1_v1_stairs_render_plan_for_facing_pc34(
     int relForward,
     int relSide,
     int frontFacing,
+    DM1_StairsRenderPlanPc34* outPlan);
+
+int dm1_v1_stairs_front_facing_pc34(int square, int partyDirection);
+
+int dm1_v1_stairs_render_plan_for_square_pc34(
+    int relForward,
+    int relSide,
+    int square,
+    int partyDirection,
     DM1_StairsRenderPlanPc34* outPlan);
 
 int dm1_v1_stairs_square_is_up_pc34(int square);

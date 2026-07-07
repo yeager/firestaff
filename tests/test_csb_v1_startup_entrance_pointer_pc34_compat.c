@@ -144,6 +144,7 @@ int main(void)
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
+    CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
     CSB_V1_StartupEntranceDecision_PC34 decision;
     CSB_V1_TextMaterial_PC34 material;
     AssetExecutorProbe probe;
@@ -1082,6 +1083,64 @@ int main(void)
               command_plan.kind ==
                   CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34,
           "startup command plan resolves ignored command");
+
+    check(csb_v1_startup_entrance_input_outcome_pc34(
+              &command_plan,
+              0,
+              0,
+              &outcome) &&
+              outcome.result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34 &&
+              outcome.status == NULL,
+          "startup input outcome ignores ignored command plans");
+
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
+              &command_plan) &&
+              csb_v1_startup_entrance_input_outcome_pc34(
+                  &command_plan,
+                  0,
+                  0,
+                  &outcome) &&
+              outcome.result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              strcmp(outcome.status_scope, "BOOT") == 0 &&
+              strcmp(outcome.status, "CSB RESUME UNAVAILABLE") == 0,
+          "startup input outcome reports unavailable resume status");
+    check(csb_v1_startup_entrance_input_outcome_pc34(
+              &command_plan,
+              1,
+              0,
+              &outcome) &&
+              outcome.result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              strcmp(outcome.status, "CSB RESUME FAILED") == 0,
+          "startup input outcome reports failed resume status");
+    check(csb_v1_startup_entrance_input_outcome_pc34(
+              &command_plan,
+              1,
+              1,
+              &outcome) &&
+              outcome.result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              strcmp(outcome.status, "CSB DOORS") == 0,
+          "startup input outcome reports loaded resume status");
+
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34,
+              &command_plan) &&
+              csb_v1_startup_entrance_input_outcome_pc34(
+                  &command_plan,
+                  0,
+                  0,
+                  &outcome) &&
+              outcome.result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34 &&
+              strcmp(outcome.status_scope, "RETURN") == 0 &&
+              strcmp(outcome.status, "BACK TO LAUNCHER") == 0,
+          "startup input outcome reports quit-to-launcher result");
 
     command_state.title_active = 1;
     command_state.title_frame = 7;

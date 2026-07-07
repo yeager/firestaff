@@ -86,10 +86,32 @@ int main(void)
 
     expect_int("square.down", dm1_v1_stairs_square_is_up_pc34(0x60), 0);
     expect_int("square.up", dm1_v1_stairs_square_is_up_pc34(0x60 | 0x04), 1);
+    expect_int("facing.ns.north",
+               dm1_v1_stairs_front_facing_pc34(0x60 | 0x08, 0), 1);
+    expect_int("facing.ns.east",
+               dm1_v1_stairs_front_facing_pc34(0x60 | 0x08, 1), 0);
+    expect_int("facing.ns.south",
+               dm1_v1_stairs_front_facing_pc34(0x60 | 0x08, 2), 1);
+    expect_int("facing.ew.east",
+               dm1_v1_stairs_front_facing_pc34(0x60, 1), 1);
+    expect_int("facing.ew.west",
+               dm1_v1_stairs_front_facing_pc34(0x60, 3), 1);
+    expect_int("facing.direction_wrap",
+               dm1_v1_stairs_front_facing_pc34(0x60 | 0x08, 4), 1);
+    expect_int("plan.square.front",
+               dm1_v1_stairs_render_plan_for_square_pc34(
+                   1, 0, 0x60 | 0x08, 0, &plan), 1);
+    expect_int("plan.square.frontOnly", plan.frontOnly, 1);
+    expect_int("plan.square.side",
+               dm1_v1_stairs_render_plan_for_square_pc34(
+                   1, -1, 0x60, 0, &plan), 1);
+    expect_int("plan.square.sideOnly", plan.sideOnly, 1);
     expect_int("bad.rel", dm1_v1_stairs_render_plan_pc34(4, 0, &plan), 0);
     expect_int("bad.null", dm1_v1_stairs_render_plan_pc34(0, 1, 0), 0);
     expect_int("bad.facing.rel", dm1_v1_stairs_render_plan_for_facing_pc34(3, -2, 0, &plan), 0);
     expect_int("bad.facing.null", dm1_v1_stairs_render_plan_for_facing_pc34(0, 1, 0, 0), 0);
+    expect_int("bad.square.null",
+               dm1_v1_stairs_render_plan_for_square_pc34(0, 1, 0x60, 0, 0), 0);
     expect_int("at.valid", dm1_v1_stairs_render_plan_at_pc34(18, &plan), 1);
     expect_int("at.bad", dm1_v1_stairs_render_plan_at_pc34(19, &plan), 0);
     expect_int("at.null", dm1_v1_stairs_render_plan_at_pc34(0, 0), 0);

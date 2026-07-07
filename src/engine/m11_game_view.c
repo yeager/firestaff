@@ -3306,6 +3306,9 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
 {
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 plan;
+    CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
+    int resume_available = 0;
+    int resume_loaded = 0;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
@@ -3322,9 +3325,12 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34) {
         (void)csb_v1_startup_dismiss_credits_pc34(&command_state);
         m11_csb_startup_command_state_to_m11(state, &command_state);
-        m11_set_status(state,
-                       plan.status_scope ? plan.status_scope : "BOOT",
-                       plan.status ? plan.status : "CSB ENTRANCE");
+        (void)csb_v1_startup_entrance_input_outcome_pc34(
+            &plan,
+            0,
+            0,
+            &outcome);
+        m11_set_status(state, outcome.status_scope, outcome.status);
         return M11_GAME_INPUT_REDRAW;
     }
     if (plan.kind == CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34) {
@@ -3353,9 +3359,11 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
             m11_csb_startup_begin_door_opening(state, &plan);
             return M11_GAME_INPUT_REDRAW;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34:
-            if (state->csbState.startup_entrance_resume_available &&
+            resume_available =
+                state->csbState.startup_entrance_resume_available &&
                 state->csbState.startup_entrance_resume_path[0] != '\0' &&
-                state->csbBootProfile) {
+                state->csbBootProfile;
+            if (resume_available) {
                 CSB_V1_BootProfile *profile =
                     (CSB_V1_BootProfile *)state->csbBootProfile;
                 /* ReDMCSB COMMAND.C M566 enters the saved-game load path from
@@ -3365,35 +3373,46 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                         &profile->runtime,
                         state->csbState.startup_entrance_resume_path) ==
                     CSB_V1_LOAD_OK) {
+                    resume_loaded = 1;
                     m11_sync_csb_state_from_profile(state, profile);
                     m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
                     m11_csb_startup_begin_door_opening(state, &plan);
                     return M11_GAME_INPUT_REDRAW;
                 }
-                m11_set_status(state,
-                               plan.status_scope ? plan.status_scope : "BOOT",
-                               plan.failure_status ? plan.failure_status
-                                                   : "CSB RESUME FAILED");
+                (void)csb_v1_startup_entrance_input_outcome_pc34(
+                    &plan,
+                    resume_available,
+                    resume_loaded,
+                    &outcome);
+                m11_set_status(state, outcome.status_scope, outcome.status);
                 return M11_GAME_INPUT_REDRAW;
             }
-            m11_set_status(state,
-                           plan.status_scope ? plan.status_scope : "BOOT",
-                           plan.unavailable_status ? plan.unavailable_status
-                                                   : "CSB RESUME UNAVAILABLE");
+            (void)csb_v1_startup_entrance_input_outcome_pc34(
+                &plan,
+                resume_available,
+                resume_loaded,
+                &outcome);
+            m11_set_status(state, outcome.status_scope, outcome.status);
             return M11_GAME_INPUT_REDRAW;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34:
             (void)csb_v1_startup_begin_credits_pc34(&command_state);
             m11_csb_startup_command_state_to_m11(state, &command_state);
-            m11_set_status(state,
-                           plan.status_scope ? plan.status_scope : "BOOT",
-                           plan.status ? plan.status : "CSB CREDITS");
+            (void)csb_v1_startup_entrance_input_outcome_pc34(
+                &plan,
+                0,
+                0,
+                &outcome);
+            m11_set_status(state, outcome.status_scope, outcome.status);
             return M11_GAME_INPUT_REDRAW;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34:
             (void)csb_v1_startup_quit_to_launcher_pc34(&command_state);
             m11_csb_startup_command_state_to_m11(state, &command_state);
-            m11_set_status(state,
-                           plan.status_scope ? plan.status_scope : "RETURN",
-                           plan.status ? plan.status : "BACK TO LAUNCHER");
+            (void)csb_v1_startup_entrance_input_outcome_pc34(
+                &plan,
+                0,
+                0,
+                &outcome);
+            m11_set_status(state, outcome.status_scope, outcome.status);
             return M11_GAME_INPUT_RETURN_TO_MENU;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34:
         case CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34:
@@ -22225,19 +22244,6 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
     }
 }
 
-static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
-                                       const M11_ViewportCell* cell) {
-    int northSouth;
-    if (!state || !cell) {
-        return 1;
-    }
-    /* ReDMCSB/DEFS.H: stairs bit 0x08 marks north/south orientation. */
-    northSouth = (cell->square & 0x08) ? 1 : 0;
-    return northSouth ?
-        (state->world.party.direction == DIR_NORTH || state->world.party.direction == DIR_SOUTH) :
-        (state->world.party.direction == DIR_EAST || state->world.party.direction == DIR_WEST);
-}
-
 static int m11_dm1_wall_graphic_index(DM1_WallSetIndex wall)
 {
     return M11_GFX_WALLSET0_D0R + (int)wall;
@@ -22263,6 +22269,19 @@ static int m11_dm1_side_wall_blit_for_rel(int relForward,
     outBlit->width = spec->runtime_width;
     outBlit->height = spec->runtime_height;
     return 1;
+}
+
+static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
+                                       const M11_ViewportCell* cell) {
+    int northSouth;
+    if (!state || !cell) {
+        return 1;
+    }
+    /* ReDMCSB/DEFS.H: stairs bit 0x08 marks north/south orientation. */
+    northSouth = (cell->square & 0x08) ? 1 : 0;
+    return northSouth ?
+        (state->world.party.direction == DIR_NORTH || state->world.party.direction == DIR_SOUTH) :
+        (state->world.party.direction == DIR_EAST || state->world.party.direction == DIR_WEST);
 }
 
 static void m11_draw_dm1_stairs(const M11_GameViewState* state,

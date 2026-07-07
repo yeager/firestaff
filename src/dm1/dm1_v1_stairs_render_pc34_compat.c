@@ -106,6 +106,30 @@ int dm1_v1_stairs_render_plan_for_facing_pc34(
     return 0;
 }
 
+int dm1_v1_stairs_front_facing_pc34(int square, int partyDirection)
+{
+    int stairNorthSouth = (square & DM1_V1_STAIRS_NORTH_SOUTH_MASK_PC34) != 0;
+    int partyNorthSouth = ((partyDirection & 3) & 1) == 0;
+    /* ReDMCSB DEFS.H/DUNGEON.C F0172 stores stairs orientation in bit
+     * 0x08. DUNVIEW.C then chooses front stairs when the party looks along
+     * the same north/south versus east/west axis as that source bit. */
+    return stairNorthSouth == partyNorthSouth;
+}
+
+int dm1_v1_stairs_render_plan_for_square_pc34(
+    int relForward,
+    int relSide,
+    int square,
+    int partyDirection,
+    DM1_StairsRenderPlanPc34* outPlan)
+{
+    return dm1_v1_stairs_render_plan_for_facing_pc34(
+        relForward,
+        relSide,
+        dm1_v1_stairs_front_facing_pc34(square, partyDirection),
+        outPlan);
+}
+
 int dm1_v1_stairs_square_is_up_pc34(int square)
 {
     return (square & DM1_V1_STAIRS_UP_MASK_PC34) != 0;

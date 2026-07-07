@@ -71,6 +71,18 @@ typedef struct CSB_V1_StartupEntranceCommandPlan_PC34 {
     const char *unavailable_status;
 } CSB_V1_StartupEntranceCommandPlan_PC34;
 
+typedef enum CSB_V1_StartupEntranceInputResult_PC34 {
+    CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34 = 0,
+    CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 = 1,
+    CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34 = 2
+} CSB_V1_StartupEntranceInputResult_PC34;
+
+typedef struct CSB_V1_StartupEntranceInputOutcome_PC34 {
+    CSB_V1_StartupEntranceInputResult_PC34 result;
+    const char *status_scope;
+    const char *status;
+} CSB_V1_StartupEntranceInputOutcome_PC34;
+
 typedef struct CSB_V1_StartupTickState_PC34 {
     int entrance_frame;
     int title_active;
@@ -420,6 +432,11 @@ int csb_v1_startup_plan_for_entrance_command_pc34(
     const CSB_V1_StartupCommandState_PC34 *state,
     int command_id,
     CSB_V1_StartupEntranceCommandPlan_PC34 *out_plan);
+int csb_v1_startup_entrance_input_outcome_pc34(
+    const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
+    int resume_available,
+    int resume_loaded,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome);
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command);

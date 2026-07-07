@@ -6013,6 +6013,7 @@ if(BUILD_TESTING)
         tests/test_csb_v1_startup_entrance_pointer_pc34_compat.c
         src/csb/csb_v1_startup_entrance_pointer_pc34_compat.c
         src/csb/csb_v1_startup_sequence_pc34_compat.c
+        src/dm1/dm1_v1_startup_sequence_pc34_compat.c
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )

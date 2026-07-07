@@ -3,6 +3,7 @@
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
+#include <string.h>
 
 enum {
     CSB_V1_TITLE_TOTAL_TICKS_PC34 = 53,
@@ -1598,6 +1599,62 @@ int csb_v1_startup_plan_for_entrance_command_pc34(
         case CSB_V1_STARTUP_ENTRANCE_DECISION_IGNORED_PC34:
         default:
             out_plan->kind = CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34;
+            return 1;
+    }
+}
+
+int csb_v1_startup_entrance_input_outcome_pc34(
+    const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
+    int resume_available,
+    int resume_loaded,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome)
+{
+    if (!out_outcome) {
+        return 0;
+    }
+    memset(out_outcome, 0, sizeof(*out_outcome));
+    out_outcome->result = CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
+    if (!plan) {
+        return 0;
+    }
+
+    switch (plan->kind) {
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34:
+            out_outcome->result = CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
+            out_outcome->status_scope =
+                plan->status_scope ? plan->status_scope : "BOOT";
+            out_outcome->status = plan->status ? plan->status : "CSB DOORS";
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34:
+            out_outcome->result = CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34;
+            out_outcome->status_scope =
+                plan->status_scope ? plan->status_scope : "BOOT";
+            if (resume_loaded) {
+                out_outcome->status =
+                    plan->status ? plan->status : "CSB DOORS";
+            } else if (resume_available) {
+                out_outcome->status = plan->failure_status
+                    ? plan->failure_status
+                    : "CSB RESUME FAILED";
+            } else {
+                out_outcome->status = plan->unavailable_status
+                    ? plan->unavailable_status
+                    : "CSB RESUME UNAVAILABLE";
+            }
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34:
+            out_outcome->result =
+                CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34;
+            out_outcome->status_scope =
+                plan->status_scope ? plan->status_scope : "RETURN";
+            out_outcome->status =
+                plan->status ? plan->status : "BACK TO LAUNCHER";
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34:
+        default:
             return 1;
     }
 }
