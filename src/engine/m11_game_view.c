@@ -1488,9 +1488,7 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                                              forward - 1,
                                              row)) {
                         m11_csb_runtime_overlay_stats_add_object_sprite(state);
-                        break;
-                    }
-                    if (icon >= 0 &&
+                    } else if (icon >= 0 &&
                         m11_draw_dm_object_icon_index(
                             state,
                             framebuffer,
@@ -1501,10 +1499,8 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                             y - 8,
                             0)) {
                         m11_csb_runtime_overlay_stats_add_object_icon(state);
-                        break;
-                    }
-                    if (marker_x >= 1 && marker_x + 1 < framebuffer_width &&
-                        marker_y >= 1 && marker_y + 1 < framebuffer_height) {
+                    } else if (marker_x >= 1 && marker_x + 1 < framebuffer_width &&
+                               marker_y >= 1 && marker_y + 1 < framebuffer_height) {
                         unsigned char color =
                             (unsigned char)csb_v1_viewport_projectile_material_overlay_color(icon);
                         framebuffer[marker_y * framebuffer_width + marker_x] = color;
@@ -1514,7 +1510,6 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                         framebuffer[(marker_y + 1) * framebuffer_width + marker_x] = color;
                         m11_csb_runtime_overlay_stats_add_object_marker(state);
                     }
-                    break;
                 }
                 thing = m11_csb_runtime_next_thing(dungeon, thing);
             }

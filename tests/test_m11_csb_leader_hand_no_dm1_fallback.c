@@ -357,6 +357,27 @@ int main(void)
             check(framebuffer[object_marker_y * 320 + object_marker_x] ==
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
                   "CSB M11 draw marks a runtime floor object from CSB square thing chain without DM1 world.things");
+            write_u16(raw + 0, bow);
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&state, framebuffer, 320, 200);
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+                      &state,
+                      &object_sprite_count,
+                      &object_icon_count,
+                      &object_marker_count,
+                      &group_sprite_count,
+                      &group_marker_count,
+                      &projectile_sprite_count,
+                      &projectile_material_count,
+                      &projectile_marker_count,
+                      &explosion_sprite_count,
+                      &explosion_marker_count),
+                  "CSB M11 draw exposes multi-object runtime overlay draw stats");
+            check(object_sprite_count == 0 && object_icon_count == 0 &&
+                      object_marker_count == 2 && group_sprite_count == 0 &&
+                      group_marker_count == 1,
+                  "CSB M11 draw stats prove multiple floor objects in one square chain");
+            write_u16(raw + 0, THING_ENDOFLIST);
             raw[69] = (unsigned char)(1u << 5);
             raw[77] = (unsigned char)((1u << 5) | 0x10u);
             write_u16(raw + 80, (unsigned short)((THING_TYPE_GROUP << 10) | 0));
