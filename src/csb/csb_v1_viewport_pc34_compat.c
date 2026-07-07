@@ -3128,12 +3128,6 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
         cfg, party_dir, party_x, party_y, 1);
     if (cfg->runtime_profile) {
         csb_v1_viewport_draw_runtime_thing_overlays(cfg);
-    } else if (cfg->runtime_thing_pass_drawer) {
-        /* Legacy synthetic hook for data-free ordering tests. */
-        cfg->runtime_thing_pass_drawer(
-            cfg->runtime_thing_pass_user,
-            cfg->viewport_pixels,
-            cfg->viewport_stride);
     }
     csb_v1_viewport_draw_runtime_projectile_overlays(
         cfg, party_dir, party_x, party_y);
