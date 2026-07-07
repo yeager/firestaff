@@ -1339,38 +1339,6 @@ static int m11_csb_square_allows_runtime_thing_overlay(
            square_type == 5;
 }
 
-static void m11_csb_map_from_relative(int party_dir,
-                                      int party_x,
-                                      int party_y,
-                                      int forward,
-                                      int side,
-                                      int *out_x,
-                                      int *out_y)
-{
-    int x = party_x;
-    int y = party_y;
-    switch (party_dir & 3) {
-        case 0:
-            x += side;
-            y -= forward;
-            break;
-        case 1:
-            x += forward;
-            y += side;
-            break;
-        case 2:
-            x -= side;
-            y += forward;
-            break;
-        default:
-            x -= forward;
-            y -= side;
-            break;
-    }
-    if (out_x) *out_x = x;
-    if (out_y) *out_y = y;
-}
-
 static void m11_csb_runtime_overlay_stats_reset(
     const M11_GameViewState *state)
 {
@@ -1456,13 +1424,13 @@ static void m11_draw_csb_runtime_floor_object_overlays(
             int object_pile_index = 0;
             int safety = 0;
 
-            m11_csb_map_from_relative(runtime->party_dir,
-                                      runtime->party_x,
-                                      runtime->party_y,
-                                      forward,
-                                      side,
-                                      &map_x,
-                                      &map_y);
+            csb_v1_viewport_runtime_map_from_relative(runtime->party_dir,
+                                                      runtime->party_x,
+                                                      runtime->party_y,
+                                                      forward,
+                                                      side,
+                                                      &map_x,
+                                                      &map_y);
             if (!m11_csb_square_allows_runtime_thing_overlay(
                     dungeon,
                     runtime->current_level,
@@ -1648,13 +1616,13 @@ static void m11_draw_csb_runtime_group_overlays(
             unsigned short thing;
             int safety = 0;
 
-            m11_csb_map_from_relative(runtime->party_dir,
-                                      runtime->party_x,
-                                      runtime->party_y,
-                                      forward,
-                                      side,
-                                      &map_x,
-                                      &map_y);
+            csb_v1_viewport_runtime_map_from_relative(runtime->party_dir,
+                                                      runtime->party_x,
+                                                      runtime->party_y,
+                                                      forward,
+                                                      side,
+                                                      &map_x,
+                                                      &map_y);
             if (!m11_csb_square_allows_runtime_thing_overlay(
                     dungeon,
                     runtime->current_level,

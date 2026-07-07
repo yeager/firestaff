@@ -642,6 +642,14 @@ int csb_v1_viewport_runtime_overlay_side_range(
     int forward,
     int *out_min_side,
     int *out_max_side);
+void csb_v1_viewport_runtime_map_from_relative(
+    int party_dir,
+    int party_x,
+    int party_y,
+    int forward,
+    int side,
+    int *out_x,
+    int *out_y);
 int csb_v1_viewport_runtime_object_overlay_placement(
     int forward,
     int side,
