@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 optional boot asset scan candidates: the asset scanner now treats `TITLE`, `TITLE.DAT`, `SWOOSH`, and `SWOOSH.DAT` as original-file candidates, while keeping the DM1 launch gate on required `GRAPHICS.DAT` plus `DUNGEON.DAT`. Verification: direct `test_asset_status_scan_metrics` build/run passed, `firestaff_m11_phase_a_probe` passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-07 CSB entrance pointer dispatch ownership: `csb_v1_startup_entrance_pointer_pc34_compat` now owns pointer-to-entrance-command dispatch through `csb_v1_startup_entrance_command_for_pointer_pc34()`, including credits-dismiss handling. M11 no longer maps CSB startup pointer action enums to command ids. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 100/100, `test_csb_v1_utility_flow_action_contract` passed 39/39, `firestaff_m11_phase_a_probe` passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB entrance keyboard dispatch ownership: `csb_v1_startup_sequence_pc34_compat` now owns Firestaff keyboard dispatch into CSB entrance command ids through `csb_v1_startup_entrance_command_for_firestaff_input_pc34()`, including credits-dismiss handling. M11 no longer maps CSB startup keyboard input through local action/command branches. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 97/97, `test_csb_v1_utility_flow_action_contract` passed 39/39, `firestaff_m11_phase_a_probe` passed 24/24, and `git diff --check` passed.

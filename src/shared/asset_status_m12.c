@@ -357,6 +357,10 @@ static const char* const g_assetCandidateSubdirs[] = {
 static const char* const g_originalCandidateNames[] = {
     "GRAPHICS.DAT",
     "DUNGEON.DAT",
+    "TITLE",
+    "TITLE.DAT",
+    "SWOOSH",
+    "SWOOSH.DAT",
     "DUNGEONF.DAT",
     "DUNGEONG.DAT",
     "CSBGRAPH.DAT",
