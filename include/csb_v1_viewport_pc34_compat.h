@@ -963,6 +963,9 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
 int csb_v1_viewport_runtime_object_sprite_blit(
     const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
     CSB_V1_ViewportRuntimeObjectSpriteBlit *out_blit);
+int csb_v1_viewport_runtime_object_source_zone_row(
+    int source_zone,
+    int fallback_source_zone_row);
 int csb_v1_viewport_runtime_object_icon_blit(
     const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
     CSB_V1_ViewportRuntimeObjectIconBlit *out_blit);

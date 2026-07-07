@@ -23365,22 +23365,6 @@ static unsigned int m11_inventory_thing_sprite_index(
     return dm1_item_sprite_index(thingType, subtype);
 }
 
-/* Draw an item sprite from GRAPHICS.DAT at the given viewport position.
- * Falls back to the primitive item cue if the asset is unavailable.
- * Returns 1 if a real sprite was drawn. */
-static int m11_csb_object_source_zone_row(int sourceZone,
-                                          int sourceZoneRow) {
-    int baseZone;
-    if (sourceZone < 0) {
-        return sourceZoneRow;
-    }
-    baseZone = sourceZone & ~0x8000;
-    if (baseZone >= 2500 && baseZone < 2900) {
-        return (baseZone - 2500) / 4;
-    }
-    return sourceZoneRow;
-}
-
 static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -23412,7 +23396,8 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
     effectiveSourceZoneRow =
-        m11_csb_object_source_zone_row(sourceZone, sourceZoneRow);
+        csb_v1_viewport_runtime_object_source_zone_row(sourceZone,
+                                                       sourceZoneRow);
     if (!dm1_item_sprite_blit_plan(&plan, thingType, subtype,
                                    relativeCell, pileIndex, depthIndex,
                                    effectiveSourceZoneRow,

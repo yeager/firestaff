@@ -709,6 +709,25 @@ static int csb_v1_viewport_c2500_source_zone_point(
     return 1;
 }
 
+int csb_v1_viewport_runtime_object_source_zone_row(
+    int source_zone,
+    int fallback_source_zone_row)
+{
+    int base_zone;
+
+    if (source_zone < 0) {
+        return fallback_source_zone_row;
+    }
+    /* ReDMCSB: DUNVIEW.C F0115, C2500 rows may be tagged with
+     * MASK0x8000_SHIFT_OBJECTS_AND_CREATURES before the blit material is
+     * consumed. */
+    base_zone = source_zone & ~0x8000;
+    if (base_zone >= 2500 && base_zone < 2900) {
+        return (base_zone - 2500) / 4;
+    }
+    return fallback_source_zone_row;
+}
+
 static int csb_v1_viewport_creature_front_point_index(
     int coordinate_set,
     int visible_count,
