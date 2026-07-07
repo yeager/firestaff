@@ -268,6 +268,7 @@ int main(void)
     CSB_V1_StartupCommandStateRequest_PC34 command_request;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
+    CSB_V1_StartupCommandStateReceipt_PC34 command_state_receipt;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
     CSB_V1_StartupEntranceCommandReceipt_PC34 command_receipt;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
@@ -359,6 +360,35 @@ int main(void)
               command_state.pending_command ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
           "startup command state facts helper owns M11 field adapter");
+    memset(&command_state_receipt, 0, sizeof(command_state_receipt));
+    check(csb_v1_startup_command_state_receipt_from_state_pc34(
+              &command_state,
+              &command_state_receipt) &&
+              command_state_receipt.title_active == command_state.title_active &&
+              command_state_receipt.opening_active == command_state.opening_active &&
+              command_state_receipt.pending_command ==
+                  command_state.pending_command,
+          "startup command state receipt mirrors CSB-owned state");
+    memset(&command_state_receipt, 0, sizeof(command_state_receipt));
+    check(csb_v1_startup_command_state_receipt_from_facts_pc34(
+              2,
+              37,
+              CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+              1,
+              CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
+              0,
+              1,
+              444,
+              3,
+              12,
+              4,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &command_state_receipt) &&
+              command_state_receipt.title_active == 1 &&
+              command_state_receipt.opening_active == 1 &&
+              command_state_receipt.pending_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+          "startup command state receipt facts helper owns M11 copy contract");
 
     expect_action("enter route becomes CSB startup Enter",
                   244, 45,
@@ -1256,6 +1286,20 @@ int main(void)
         csb_v1_startup_entrance_wait_stage_pc34();
     check(csb_v1_startup_entrance_accepts_input_pc34(&command_state),
           "startup entrance gate accepts wait-loop input");
+    check(csb_v1_startup_entrance_accepts_input_from_facts_pc34(
+              command_state.title_active,
+              command_state.title_frame,
+              command_state.title_source_step,
+              command_state.entrance_active,
+              command_state.entrance_source_step,
+              command_state.entrance_dismissed,
+              command_state.credits_active,
+              command_state.credits_remaining_ticks,
+              command_state.opening_active,
+              command_state.opening_delay_ticks,
+              command_state.opening_step,
+              command_state.pending_command),
+          "startup entrance gate facts helper accepts wait-loop input");
 
     command_state.opening_active = 1;
     check(!csb_v1_startup_entrance_accepts_input_pc34(&command_state),

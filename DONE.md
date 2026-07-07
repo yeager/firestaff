@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB startup command-state receipts: `csb_v1_startup_sequence_pc34_compat` now publishes entrance command-state receipts plus a raw-facts input-wait helper. M11 applies the CSB-owned receipt instead of copying the command-state struct directly for entrance boot state updates. Verification: CSB startup entrance pointer contract passed 125/125, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup keyboard ownership: `theron_v1_startup_flow` now handles startup keyboard/menu action selection from layout state, including Continue availability and progression. M11 no longer reads those facts directly before Theron startup keyboard routing. Verification: Theron startup-flow probe passed 501/501, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup pointer ownership: `theron_v1_startup_flow` now handles startup pointer hit-test and action selection from layout state. M11 no longer builds Theron layout elements or hit objects before routing mouse/touch startup input. Verification: Theron startup-flow probe passed 498/498, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
