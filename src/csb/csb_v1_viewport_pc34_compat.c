@@ -2279,6 +2279,16 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
     (void)csb_v1_viewport_apply_configured_custom_backgrounds(
         cfg, party_dir, party_x, party_y, 1);
+    if (cfg->runtime_thing_pass_drawer) {
+        /* ReDMCSB DUNVIEW.C F0115 draws ordinary objects and creature
+         * groups before projectile and explosion passes.  M11 owns the
+         * current runtime thing-list decode, but CSB viewport owns the
+         * draw-order slot where that bridge is allowed to run. */
+        cfg->runtime_thing_pass_drawer(
+            cfg->runtime_thing_pass_user,
+            cfg->viewport_pixels,
+            cfg->viewport_stride);
+    }
     csb_v1_viewport_draw_runtime_projectile_overlays(
         cfg, party_dir, party_x, party_y);
     csb_v1_viewport_draw_runtime_explosion_overlays(

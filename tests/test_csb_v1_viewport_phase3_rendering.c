@@ -91,6 +91,18 @@ static int test_explosion_sprite_drawer(
     return 1;
 }
 
+static void test_runtime_thing_pass_drawer(
+    void *user,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    int *calls = (int *)user;
+    if (!screen_pixels || screen_stride <= 0) return;
+    if (calls) ++*calls;
+    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + 88) * screen_stride +
+                  DM1_VIEWPORT_SCREEN_X + 112] = 0x03u;
+}
+
 static void test_config_defaults_and_setters(void)
 {
     CSB_V1_ViewportConfig cfg;
@@ -168,6 +180,23 @@ static void test_runtime_projectile_and_explosion_overlays(void)
               cfg.runtime_projectile_material_resolved_count, 0);
     check_int("runtime.projectile_overlay.default_marker_count",
               cfg.runtime_projectile_marker_drawn_count, 1);
+
+    {
+        int thing_pass_calls = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        cfg.runtime_thing_pass_drawer = test_runtime_thing_pass_drawer;
+        cfg.runtime_thing_pass_user = &thing_pass_calls;
+        cfg.runtime_projectile_marker_drawn_count = 0;
+        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+        check_int("runtime.thing_pass.before_projectile.calls",
+                  thing_pass_calls, 1);
+        check_int("runtime.thing_pass.projectile_overpaints",
+                  framebuffer[center_offset], 0x0E);
+        check_int("runtime.thing_pass.projectile_marker_count",
+                  cfg.runtime_projectile_marker_drawn_count, 1);
+        cfg.runtime_thing_pass_drawer = NULL;
+        cfg.runtime_thing_pass_user = NULL;
+    }
 
     {
         int seen_thing = 0;
@@ -251,6 +280,23 @@ static void test_runtime_projectile_and_explosion_overlays(void)
                   cfg.runtime_explosion_marker_drawn_count, 0);
         cfg.explosion_sprite_drawer = NULL;
         cfg.explosion_sprite_user = NULL;
+    }
+
+    {
+        int thing_pass_calls = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        cfg.runtime_thing_pass_drawer = test_runtime_thing_pass_drawer;
+        cfg.runtime_thing_pass_user = &thing_pass_calls;
+        cfg.runtime_explosion_marker_drawn_count = 0;
+        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+        check_int("runtime.thing_pass.before_explosion.calls",
+                  thing_pass_calls, 1);
+        check_int("runtime.thing_pass.explosion_overpaints",
+                  framebuffer[center_offset], 0x0C);
+        check_int("runtime.thing_pass.explosion_marker_count",
+                  cfg.runtime_explosion_marker_drawn_count, 1);
+        cfg.runtime_thing_pass_drawer = NULL;
+        cfg.runtime_thing_pass_user = NULL;
     }
 }
 
