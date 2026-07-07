@@ -184,6 +184,8 @@ static void test_item_pile_zone_flip_and_transparency_contract(void)
 
 static void test_item_sprite_metadata_ownership(void)
 {
+    DM1_ItemSpriteBlitPlan plan;
+
     expect_int("item.graphic.first_object", DM1_GRAPHIC_FIRST_OBJECT, 498,
                "DEFS.H:2386 M612_GRAPHIC_FIRST_OBJECT");
     expect_int("item.graphic.first_creature", DM1_GRAPHIC_FIRST_CREATURE, 584,
@@ -221,6 +223,165 @@ static void test_item_sprite_metadata_ownership(void)
                "DUNVIEW.C G0209 object aspect CoordinateSet");
     expect_int("object.aspect.coord.14", dm1_object_aspect_coordinate_set(14), 2,
                "DUNVIEW.C G0209 object aspect CoordinateSet");
+
+    expect_int("item.blit_plan.source.ok",
+               dm1_item_sprite_blit_plan(&plan, 5, 0, 2, 0, 1, 8,
+                                         0, 33, 0, 33, 224, 136,
+                                         32, 32), 1,
+               "DUNVIEW.C F0115 C2500 source-zone object placement");
+    expect_int("item.blit_plan.source.graphic", (int)plan.graphic_index, 537,
+               "M612 + G0209 FirstNativeBitmapRelativeIndex");
+    expect_int("item.blit_plan.source.aspect", plan.aspect_index, 38,
+               "DUNVIEW.C G0208 object-info aspect");
+    expect_int("item.blit_plan.source.mirror", plan.use_mirror, 0,
+               "G0209 GraphicInfo mirror flag");
+    expect_int("item.blit_plan.source.transparent", plan.transparent_color, 10,
+               "DUNVIEW.C F0115 item blit uses C10 transparency");
+    expect_int("item.blit_plan.source.scale", plan.scale_index, 1,
+               "G2030 object source scale bucket");
+    expect_int("item.blit_plan.source.shift_set", plan.shift_set, 1,
+               "G0223 object pile shift set");
+    expect_int("item.blit_plan.source.shift_x", plan.shift_x_index, 2,
+               "G0217 pile x shift index");
+    expect_int("item.blit_plan.source.shift_y", plan.shift_y_index, 5,
+               "G0217 pile y shift index");
+    expect_int("item.blit_plan.source.x", plan.draw_x, 141,
+               "C2500 row 8 cell 2 plus pile shift");
+    expect_int("item.blit_plan.source.y", plan.draw_y, 125,
+               "C2500 row 8 cell 2 plus pile shift");
+    expect_int("item.blit_plan.source.w", plan.draw_w, 21,
+               "G2030 object source scale units");
+    expect_int("item.blit_plan.source.h", plan.draw_h, 21,
+               "source aspect-preserving scaled height");
+
+    expect_int("item.blit_plan.fallback.ok",
+               dm1_item_sprite_blit_plan(&plan, 5, 0, 0, 3, 3, -1,
+                                         0, 33, 100, 50, 60, 30,
+                                         32, 16), 1,
+               "fallback pane placement remains DM1-owned");
+    expect_int("item.blit_plan.fallback.scale", plan.scale_index, 4,
+               "D3 object source scale bucket");
+    expect_int("item.blit_plan.fallback.shift_set", plan.shift_set, 2,
+               "D3 object pile shift set");
+    expect_int("item.blit_plan.fallback.shift_x", plan.shift_x_index, 3,
+               "G0217 pile x shift index");
+    expect_int("item.blit_plan.fallback.shift_y", plan.shift_y_index, 0,
+               "G0217 pile y shift index");
+    expect_int("item.blit_plan.fallback.x", plan.draw_x, 115,
+               "fallback pane x plus relative-cell/pile shift");
+    expect_int("item.blit_plan.fallback.y", plan.draw_y, 70,
+               "fallback pane y plus relative-cell/pile shift");
+    expect_int("item.blit_plan.fallback.w", plan.draw_w, 12,
+               "G2030 scaled fallback width");
+    expect_int("item.blit_plan.fallback.h", plan.draw_h, 6,
+               "aspect-preserving fallback height");
+
+    expect_int("item.blit_plan.mirror.ok",
+               dm1_item_sprite_blit_plan(&plan, 10, 39, 3, 0, 1, 8,
+                                         0, 33, 0, 33, 224, 136,
+                                         40, 20), 1,
+               "G0209 GraphicInfo mirrors right-cell item aspects");
+    expect_int("item.blit_plan.mirror.aspect", plan.aspect_index, 63,
+               "junk subtype 39 maps to mirrored object aspect");
+    expect_int("item.blit_plan.mirror.flag", plan.use_mirror, 1,
+               "right-cell mirrored item flag");
+    expect_int("item.blit_plan.invalid", dm1_item_sprite_blit_plan(NULL, 5, 0, 2, 0, 1, 8,
+                                                                    0, 33, 0, 33, 224, 136,
+                                                                    32, 32), 0,
+               "null output is rejected");
+}
+
+static void test_item_sprite_blit_plan_ownership(void)
+{
+    DM1_ItemSpriteBlitPlan plan;
+
+    memset(&plan, 0, sizeof(plan));
+    expect_int("item.blit.fallback.ok",
+               dm1_item_sprite_blit_plan(&plan,
+                                         7, 0,
+                                         0, 0, 1,
+                                         -1,
+                                         0, 0,
+                                         10, 20, 100, 70,
+                                         32, 16),
+               1,
+               "DUNVIEW.C F0115 object plan fallback pane");
+    expect_int("item.blit.fallback.graphic", (int)plan.graphic_index, 500,
+               "G0209 scroll native object graphic");
+    expect_int("item.blit.fallback.aspect", plan.aspect_index, 1,
+               "G0208 scroll object-info aspect");
+    expect_int("item.blit.fallback.mirror", plan.use_mirror, 0,
+               "DUNVIEW.C F0115 right-cell mirror flag not active");
+    expect_int("item.blit.fallback.transparent", plan.transparent_color, 10,
+               "DUNVIEW.C F0791 C10 transparent blit");
+    expect_int("item.blit.fallback.scale", plan.scale_index, 2,
+               "DUNVIEW.C G2030 object scale bucket");
+    expect_int("item.blit.fallback.shift_set", plan.shift_set, 1,
+               "DUNVIEW.C G0223 shift set from source scale");
+    expect_int("item.blit.fallback.shift_x_index", plan.shift_x_index, 2,
+               "DUNVIEW.C G0217 pile shift X index");
+    expect_int("item.blit.fallback.shift_y_index", plan.shift_y_index, 5,
+               "DUNVIEW.C G0217 pile shift Y index");
+    expect_int("item.blit.fallback.x", plan.draw_x, 36,
+               "DUNVIEW.C F0115 fallback pane X with G0223 shift");
+    expect_int("item.blit.fallback.y", plan.draw_y, 75,
+               "DUNVIEW.C F0115 fallback pane Y with G0223 shift");
+    expect_int("item.blit.fallback.w", plan.draw_w, 18,
+               "DUNVIEW.C G2030 18/32 object scale");
+    expect_int("item.blit.fallback.h", plan.draw_h, 9,
+               "DUNVIEW.C G2030 aspect-preserving object scale");
+
+    memset(&plan, 0, sizeof(plan));
+    expect_int("item.blit.c2500.ok",
+               dm1_item_sprite_blit_plan(&plan,
+                                         9, 0,
+                                         3, 1, 1,
+                                         8,
+                                         0, 0,
+                                         0, 0, 224, 136,
+                                         32, 16),
+               1,
+               "DUNVIEW.C F0115 C2500 source-row object plan");
+    expect_int("item.blit.c2500.graphic", (int)plan.graphic_index, 498,
+               "M612 + G0209 container native object graphic");
+    expect_int("item.blit.c2500.aspect", plan.aspect_index, 0,
+               "G0208 container object-info aspect");
+    expect_int("item.blit.c2500.mirror", plan.use_mirror, 1,
+               "DUNVIEW.C G0209 mirror-on-right flag");
+    expect_int("item.blit.c2500.transparent", plan.transparent_color, 10,
+               "DUNVIEW.C F0791 C10 transparent blit");
+    expect_int("item.blit.c2500.scale", plan.scale_index, 1,
+               "DUNVIEW.C G2030 front-half object scale bucket");
+    expect_int("item.blit.c2500.shift_set", plan.shift_set, 1,
+               "DUNVIEW.C G0223 shift set from source scale");
+    expect_int("item.blit.c2500.shift_x_index", plan.shift_x_index, 0,
+               "DUNVIEW.C G0217 pile shift X index");
+    expect_int("item.blit.c2500.shift_y_index", plan.shift_y_index, 6,
+               "DUNVIEW.C G0217 pile shift Y index");
+    expect_int("item.blit.c2500.x", plan.draw_x, 66,
+               "DUNVIEW.C F0115 C2500 row 8 cell 3 X plus G0223 shift");
+    expect_int("item.blit.c2500.y", plan.draw_y, 104,
+               "DUNVIEW.C F0115 C2500 row 8 cell 3 Y plus G0223 shift");
+    expect_int("item.blit.c2500.w", plan.draw_w, 21,
+               "DUNVIEW.C G2030 21/32 object scale");
+    expect_int("item.blit.c2500.h", plan.draw_h, 10,
+               "DUNVIEW.C G2030 aspect-preserving object scale");
+
+    expect_int("item.blit.invalid_null",
+               dm1_item_sprite_blit_plan(NULL, 7, 0, 0, 0, 1, -1,
+                                         0, 0, 0, 0, 100, 70, 32, 16),
+               0,
+               "null output guard");
+    expect_int("item.blit.invalid_sprite",
+               dm1_item_sprite_blit_plan(&plan, 7, 0, 0, 0, 1, -1,
+                                         0, 0, 0, 0, 100, 70, 0, 16),
+               0,
+               "invalid bitmap guard");
+    expect_int("item.blit.invalid_type",
+               dm1_item_sprite_blit_plan(&plan, 1, 0, 0, 0, 1, -1,
+                                         0, 0, 0, 0, 100, 70, 32, 16),
+               0,
+               "non-object THING type guard");
 }
 
 static void test_source_evidence_mentions_required_anchors(void)
@@ -271,6 +432,7 @@ int main(void)
     test_floor_ornament_variants_and_palettes();
     test_item_pile_zone_flip_and_transparency_contract();
     test_item_sprite_metadata_ownership();
+    test_item_sprite_blit_plan_ownership();
     test_source_evidence_mentions_required_anchors();
 
     if (g_failures) {
