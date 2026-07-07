@@ -206,6 +206,30 @@ int dm1_creature_place_group_cells(int creatureCount, int creatureSize,
                                    void* rngUser);
 int dm1_creature_coordinate_set(int creatureType);
 int dm1_creature_transparent_color(int creatureType);
+unsigned int dm1_creature_sprite_for_depth(int creatureType, int depthIndex);
+unsigned int dm1_creature_sprite_for_view(int creatureType,
+                                          int depthIndex,
+                                          int creatureDir,
+                                          int partyDir,
+                                          int attacking,
+                                          int *outMirror);
+unsigned int dm1_creature_graphic_info(int creatureType);
+int dm1_creature_additional(int creatureType);
+int dm1_creature_has_special_d2_front(int creatureType);
+int dm1_creature_has_d2_front_is_flipped_front(int creatureType);
+int dm1_creature_has_flip_during_attack(int creatureType);
+int dm1_creature_native_bitmap_count(int creatureType);
+int dm1_creature_derived_bitmap_count(int creatureType);
+int dm1_creature_max_horizontal_offset_for_type(int creatureType);
+int dm1_creature_max_vertical_offset_for_type(int creatureType);
+int dm1_creature_has_side_bitmap(int creatureType);
+int dm1_creature_has_back_bitmap(int creatureType);
+int dm1_creature_has_attack_bitmap(int creatureType);
+int dm1_creature_has_flip_non_attack(int creatureType);
+int dm1_creature_has_flip_attack(int creatureType);
+int dm1_creature_replacement_colors(int creatureType,
+                                    int *outReplDst9,
+                                    int *outReplDst10);
 const unsigned char* dm1_creature_palette_d3(void);
 const unsigned char* dm1_creature_palette_d2(void);
 
