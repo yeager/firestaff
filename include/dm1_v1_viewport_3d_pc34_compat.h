@@ -524,6 +524,9 @@ int dm1_viewport_3d_primary_side_wall_max_forward_pc34(
     int center_max_visible_forward);
 int dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
     unsigned int blocking_depth_mask);
+int dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(
+    unsigned int blocking_depth_mask,
+    unsigned int blocking_door_depth_mask);
 int dm1_viewport_3d_max_visible_forward_from_center_pc34(
     unsigned int blocking_depth_mask);
 int dm1_viewport_3d_side_lane_clear_for_rel_pc34(int rel_forward,

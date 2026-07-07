@@ -213,6 +213,24 @@ int dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
     return -1;
 }
 
+int dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(
+    unsigned int blocking_depth_mask,
+    unsigned int blocking_door_depth_mask)
+{
+    int nearest = dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(
+        blocking_depth_mask);
+    if (nearest < 0) {
+        return -1;
+    }
+    /* ReDMCSB DUNVIEW.C F0124/F0121/F0118 draws the nearest blocking
+     * center square as a complete wall/door.  Door ornaments, destroyed
+     * masks, and buttons belong only to that same blocking center door;
+     * farther center doors behind a nearer wall/door cannot decorate over it. */
+    return (blocking_door_depth_mask & (1u << (unsigned int)nearest)) != 0u
+        ? nearest
+        : -1;
+}
+
 int dm1_viewport_3d_max_visible_forward_from_center_pc34(
     unsigned int blocking_depth_mask)
 {
