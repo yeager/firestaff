@@ -411,6 +411,10 @@ typedef struct {
     int shift_y_index;
     int pile_shift_x;
     int pile_shift_y;
+    int marker_screen_x;
+    int marker_screen_y;
+    int icon_screen_x;
+    int icon_screen_y;
 } CSB_V1_ViewportRuntimeObjectOverlayPlacement;
 
 typedef struct {
@@ -426,6 +430,13 @@ typedef struct {
     int screen_x;
     int screen_y;
     int used_source_zone;
+    int depth_index;
+    int sprite_x;
+    int sprite_y;
+    int sprite_w;
+    int sprite_h;
+    int marker_screen_x;
+    int marker_screen_y;
 } CSB_V1_ViewportRuntimeGroupOverlayPlacement;
 
 typedef struct {
