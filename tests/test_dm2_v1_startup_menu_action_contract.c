@@ -23,6 +23,7 @@ int main(void)
     DM2_V1_StartupAction action;
     DM2_V1_StartupActionPlan plan;
     DM2_V1_StartupExecution execution;
+    DM2_V1_StartupModeUpdate mode_update;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupRowKind row_kind;
@@ -185,6 +186,9 @@ int main(void)
               execution.rescan_saves == 1 &&
               strcmp(execution.status, "DM2 CONTINUE FAILED") == 0,
           "Continue action executes through DM2-owned startup wrapper");
+    check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
+              !mode_update.set_startup_menu_active,
+          "failed Continue redraw owns no-op startup mode update");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -255,6 +259,10 @@ int main(void)
               execution.session.party_y == 15 &&
               strcmp(execution.status, "DM2 NEW GAME") == 0,
           "New Game action executes through DM2-owned startup wrapper");
+    check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
+              mode_update.set_startup_menu_active &&
+              mode_update.startup_menu_active == 0,
+          "session-ready execution owns startup-menu close update");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
@@ -275,6 +283,9 @@ int main(void)
               execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER &&
               strcmp(execution.status, "BACK TO LAUNCHER") == 0,
           "Back action executes through DM2-owned startup wrapper");
+    check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
+              !mode_update.set_startup_menu_active,
+          "launcher-return execution owns no-op startup mode update");
 
     hit.kind = DM2_V1_STARTUP_HIT_PANEL;
     hit.row = -1;

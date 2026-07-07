@@ -187,6 +187,16 @@ static const DM1_ViewportDrawStep s_draw_order[] = {
     { DM1_VIEW_SQUARE_D0C, 0,  0, "F0127_DUNGEONVIEW_DrawSquareD0C", "DUNVIEW.C:8542" },
 };
 
+int dm1_viewport_3d_primary_side_wall_max_forward_pc34(
+    int center_max_visible_forward)
+{
+    (void)center_max_visible_forward;
+    /* ReDMCSB DUNVIEW.C F0128 lines 8446-8542 draws D3/D2/D1 side
+     * squares before the same-depth center square, so the first side-wall
+     * pass walks the full three-step envelope. */
+    return 3;
+}
+
 static void dm1_viewport_3d_notify_pre_square_draw(
     DM1_Viewport3DState *state,
     DM1_ViewSquareIndex square,

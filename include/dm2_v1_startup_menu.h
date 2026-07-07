@@ -70,6 +70,11 @@ typedef struct {
 } DM2_V1_StartupExecution;
 
 typedef struct {
+    int set_startup_menu_active;
+    int startup_menu_active;
+} DM2_V1_StartupModeUpdate;
+
+typedef struct {
     char save_root[512];
     int resume_available;
     unsigned int slot_mask;
@@ -178,6 +183,9 @@ int dm2_v1_startup_execute_action(
     const DM2_V1_StartupAction *action,
     const char *save_root,
     DM2_V1_StartupExecution *out_execution);
+int dm2_v1_startup_execution_mode_update(
+    const DM2_V1_StartupExecution *execution,
+    DM2_V1_StartupModeUpdate *out_update);
 int dm2_v1_startup_execute_save_path(
     const char *save_path,
     char *out_save_root,
