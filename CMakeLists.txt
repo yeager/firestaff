@@ -504,7 +504,7 @@ endif()
 # (M11_GameView_HandleInput) the live M11_GameView_StartTheron() handoff
 # would route through once Track 02 data is verified, against the
 # deterministic 8x8 starter room produced by
-# m11_theron_load_initial_level(). Locks the wall-block boundary in all
+# theron_v1_startup_runtime_load_initial_level(). Locks the wall-block boundary in all
 # four directions: dispatch returns M11_GAME_INPUT_IGNORED, status =
 # "MOVE"/"BLOCKED", party coords + FNV-1a state_hash unchanged.
 # Source-locked against THQUEST.ASM T520/T600/T700, ReDMCSB
@@ -651,8 +651,10 @@ set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
 add_executable(firestaff_theron_v1_startup_flow_probe
     probes/theron/firestaff_theron_v1_startup_flow_probe.c
     src/theron/theron_v1_startup_flow.c
+    src/theron/theron_v1_startup_runtime_entry.c
     src/theron/theron_v1_champions.c
     src/theron/theron_v1_dungeon_progression.c
+    src/theron/theron_v1_track02.c
     src/theron/theron_v1_world.c
 )
 target_include_directories(firestaff_theron_v1_startup_flow_probe PRIVATE

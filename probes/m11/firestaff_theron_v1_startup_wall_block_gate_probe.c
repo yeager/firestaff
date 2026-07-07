@@ -4,7 +4,7 @@
  * Theron's Quest V1 startup-adjacent input/movement wall-block gate.
  *
  * This is the deterministic bridge between the M11 Theron startup
- * state produced by m11_theron_load_initial_level() (the same
+ * state produced by theron_v1_startup_runtime_load_initial_level() (the same
  * deterministic 8x8 room the M11 launcher hands off to once Track 02
  * data is verified) and the M11 game-view input dispatcher
  * (M11_GameView_HandleInput with M12_MENU_INPUT_UP / DOWN / LEFT /
@@ -116,12 +116,10 @@ static void record(InvTally* t, const char* id, int ok, const char* msg) {
     } \
 } while (0)
 
-/* ── Synthetic startup room data (mirrors m11_theron_load_initial_level) ─
+/* ── Synthetic startup room data (mirrors Theron runtime-entry fallback) ─
  *
- * Mirrors the deterministic 8x8 starter room the M11 startup helper
- * builds.  We do not call m11_theron_load_initial_level() directly
- * because it is static and would force the probe to drag in the full
- * Track 02 asset + boot profile stack.  Instead, the probe builds the
+ * Mirrors the deterministic 8x8 starter room the Theron runtime-entry
+ * fallback builds. The probe builds the
  * same byte stream so the room semantics are byte-identical and the
  * wall-block boundary can be proven without real Track 02 data.
  *
@@ -162,12 +160,12 @@ static const uint8_t kStartupLevelData[12 + 8 * 8] = {
 /* ── Helpers ───────────────────────────────────────────────────── */
 
 /*
- * apply_startup_level — replicate m11_theron_load_initial_level so the
+ * apply_startup_level — replicate Theron runtime-entry fallback so the
  * probe can stand up the same Theron_V1_World without going through
  * M11_GameView_StartTheron (which requires real Track 02 + asset data).
  *
  * Returns 0 on success, -1 on failure. Source-locked against
- * src/engine/m11_game_view.c m11_theron_load_initial_level().
+ * src/theron/theron_v1_startup_runtime_entry.c.
  */
 static int apply_startup_level(Theron_V1_World* world) {
     Theron_MapLoadResult r;
@@ -189,7 +187,7 @@ static int apply_startup_level(Theron_V1_World* world) {
         return -1;
     }
 
-    /* m11_theron_load_initial_level() forces these spawn values
+    /* theron_v1_startup_runtime_load_initial_level() forces these spawn values
      * (overriding what the grid-parse default selected). */
     world->levels[0][0].start_x   = STARTUP_PARTY_X;
     world->levels[0][0].start_y   = STARTUP_PARTY_Y;
@@ -646,7 +644,7 @@ int main(int argc, char** argv) {
     printf("# firestaff_theron_v1_startup_wall_block_gate_probe\n");
     printf("# Source: THQUEST.ASM T520/T600/T700 + ReDMCSB CLIKMENU.C:270-314 F0366\n");
     printf("#         + ReDMCSB MOVESENS.C F0267 + docs/source-lock/movement_collision.md\n");
-    printf("# Data: data-free (mirrors m11_theron_load_initial_level startup room)\n");
+    printf("# Data: data-free (mirrors Theron runtime-entry fallback startup room)\n");
     printf("# Headless: SDL_VIDEODRIVER=dummy is enforced above.\n");
     printf("#\n");
 
