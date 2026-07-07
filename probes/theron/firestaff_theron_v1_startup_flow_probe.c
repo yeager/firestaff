@@ -45,6 +45,28 @@ static void check_str(const char *label, const char *got, const char *expected) 
     }
 }
 
+static int plan_has_graphic_kind(
+    const Theron_StartupRenderPlan *plan,
+    Theron_StartupRenderGraphicKind kind) {
+    int i;
+    if (!plan) {
+        return 0;
+    }
+    for (i = 0; i < plan->graphic_count; ++i) {
+        if (plan->graphics[i].kind == kind) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void check_render_plan_graphic(
+    const char *label,
+    const Theron_StartupRenderPlan *plan,
+    Theron_StartupRenderGraphicKind kind) {
+    check_int(label, plan_has_graphic_kind(plan, kind), 1);
+}
+
 static void raw_sector_put_text(unsigned char *sector,
                                 size_t sector_size,
                                 size_t user_offset,
@@ -228,6 +250,59 @@ int main(void) {
                   &progression,
                   THERON_DUNGEON_INVALID),
               0);
+    {
+        Theron_StartupLayoutState layout_state;
+        Theron_StartupLayoutElement elements[16];
+        Theron_StartupRenderPlan render_plan;
+        int element_count;
+
+        theron_v1_startup_layout_state_init(&layout_state);
+        layout_state.phase = THERON_STARTUP_PHASE_TITLE;
+        layout_state.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        snprintf(layout_state.chapter_label,
+                 sizeof(layout_state.chapter_label),
+                 "Chapter 1: Hall of Records");
+        element_count = theron_v1_startup_layout_build(
+            &layout_state, elements, 16);
+        check_int("startup title render plan builds",
+                  theron_v1_startup_render_plan_build(
+                      &layout_state, elements, element_count, &render_plan),
+                  1);
+        check_render_plan_graphic(
+            "startup title owns title mark graphic",
+            &render_plan,
+            THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK);
+
+        layout_state.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+        layout_state.progression = &progression;
+        element_count = theron_v1_startup_layout_build(
+            &layout_state, elements, 16);
+        check_int("startup stage render plan builds",
+                  theron_v1_startup_render_plan_build(
+                      &layout_state, elements, element_count, &render_plan),
+                  1);
+        check_render_plan_graphic(
+            "startup stage owns stage-panel graphics",
+            &render_plan,
+            THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL);
+
+        layout_state.phase = THERON_STARTUP_PHASE_SOUL_ROOM;
+        layout_state.soul_cursor = 0;
+        element_count = theron_v1_startup_layout_build(
+            &layout_state, elements, 16);
+        check_int("startup soul-room render plan builds",
+                  theron_v1_startup_render_plan_build(
+                      &layout_state, elements, element_count, &render_plan),
+                  1);
+        check_render_plan_graphic(
+            "startup soul-room owns mirror graphics",
+            &render_plan,
+            THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME);
+        check_render_plan_graphic(
+            "startup soul-room owns forcefield graphic",
+            &render_plan,
+            THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD);
+    }
 
     {
         int selected = -1;

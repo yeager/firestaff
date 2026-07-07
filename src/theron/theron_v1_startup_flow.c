@@ -804,6 +804,39 @@ static int tqr_startup_render_plan_add_text(
     return 1;
 }
 
+static int tqr_startup_render_plan_add_graphic(
+    Theron_StartupRenderPlan *plan,
+    Theron_StartupRenderGraphicKind kind,
+    int x,
+    int y,
+    int w,
+    int h,
+    int color,
+    int color2,
+    int selected,
+    int cursor,
+    int ordinal)
+{
+    Theron_StartupRenderGraphicCommand *command;
+
+    if (!plan ||
+        plan->graphic_count >= THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX) {
+        return 0;
+    }
+    command = &plan->graphics[plan->graphic_count++];
+    command->kind = kind;
+    command->x = x;
+    command->y = y;
+    command->w = w;
+    command->h = h;
+    command->color = color;
+    command->color2 = color2;
+    command->selected = selected ? 1 : 0;
+    command->cursor = cursor ? 1 : 0;
+    command->ordinal = ordinal;
+    return 1;
+}
+
 static void tqr_startup_render_plan_add_title_and_chapter(
     Theron_StartupRenderPlan *plan,
     const Theron_StartupLayoutElement *elements,
@@ -828,6 +861,110 @@ static void tqr_startup_render_plan_add_title_and_chapter(
     }
 }
 
+static void tqr_startup_render_plan_add_title_graphics(
+    Theron_StartupRenderPlan *plan)
+{
+    if (!plan) {
+        return;
+    }
+
+    /* THQUEST.ASM T000/T080 title and startup entry:
+     * keep startup imagery in the Theron-owned render plan.  This bounded
+     * command layer is the handoff point for raw Track 02 / Track 03 title
+     * surfaces when their bitmap decoder is complete. */
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT,
+        0, 0, 320, 200, 0, 0, 0, 0, 0);
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT,
+        18, 14, 284, 172, 1, 0, 0, 0, 0);
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT,
+        18, 14, 284, 172, 11, 0, 0, 0, 0);
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK,
+        74, 62, 172, 70, 14, 5, 0, 0, 0);
+}
+
+static void tqr_startup_render_plan_add_stage_graphics(
+    Theron_StartupRenderPlan *plan,
+    const Theron_StartupLayoutElement *elements,
+    int element_count)
+{
+    int i;
+
+    if (!plan || !elements) {
+        return;
+    }
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT,
+        22, 48, 276, 138, 1, 0, 0, 0, 0);
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT,
+        22, 48, 276, 138, 11, 0, 0, 0, 0);
+    for (i = 0; i < element_count; ++i) {
+        const Theron_StartupLayoutElement *e = &elements[i];
+        if (e->kind != THERON_STARTUP_LAYOUT_ELEMENT_STAGE &&
+            e->kind != THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE) {
+            continue;
+        }
+        (void)tqr_startup_render_plan_add_graphic(
+            plan, THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL,
+            e->x - 6, e->y - 2, 236, e->h + 4,
+            e->enabled ? 3 : 8,
+            e->cursor ? 14 : 7,
+            e->selected,
+            e->cursor,
+            e->dungeon_id);
+    }
+}
+
+static void tqr_startup_render_plan_add_soul_room_graphics(
+    Theron_StartupRenderPlan *plan,
+    const Theron_StartupLayoutElement *elements,
+    int element_count)
+{
+    int i;
+
+    if (!plan || !elements) {
+        return;
+    }
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT,
+        18, 48, 284, 138, 1, 0, 0, 0, 0);
+    (void)tqr_startup_render_plan_add_graphic(
+        plan, THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT,
+        18, 48, 284, 138, 11, 0, 0, 0, 0);
+    for (i = 0; i < element_count; ++i) {
+        const Theron_StartupLayoutElement *e = &elements[i];
+        if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_MIRROR) {
+            (void)tqr_startup_render_plan_add_graphic(
+                plan, THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME,
+                28 + (e->mirror_index % 4) * 70,
+                82 + (e->mirror_index / 4) * 36,
+                54,
+                28,
+                e->selected ? 10 : 3,
+                e->cursor ? 14 : 7,
+                e->selected,
+                e->cursor,
+                e->portrait_index);
+        } else if (e->kind == THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD) {
+            (void)tqr_startup_render_plan_add_graphic(
+                plan, THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD,
+                108,
+                150,
+                104,
+                28,
+                e->enabled ? 14 : 8,
+                e->cursor ? 15 : 5,
+                e->enabled,
+                e->cursor,
+                0);
+        }
+    }
+}
+
 int theron_v1_startup_render_plan_build(
     const Theron_StartupLayoutState *state,
     const Theron_StartupLayoutElement *elements,
@@ -845,6 +982,7 @@ int theron_v1_startup_render_plan_build(
         out_plan, elements, element_count);
 
     if (state->phase == THERON_STARTUP_PHASE_TITLE) {
+        tqr_startup_render_plan_add_title_graphics(out_plan);
         return tqr_startup_render_plan_add_text(
             out_plan,
             34,
@@ -857,6 +995,8 @@ int theron_v1_startup_render_plan_build(
         int has_continue =
             state->has_tqsv_continue || state->has_srm_continue;
 
+        tqr_startup_render_plan_add_stage_graphics(
+            out_plan, elements, element_count);
         (void)tqr_startup_render_plan_add_text(
             out_plan,
             34,
@@ -936,6 +1076,8 @@ int theron_v1_startup_render_plan_build(
                 : "UP/DOWN SELECT  ENTER OPEN SOUL ROOM");
     }
 
+    tqr_startup_render_plan_add_soul_room_graphics(
+        out_plan, elements, element_count);
     (void)tqr_startup_render_plan_add_text(
         out_plan, 34, 52, THERON_STARTUP_RENDER_TEXT_SHADOW, "SOUL ROOM");
     (void)tqr_startup_render_plan_add_text(
