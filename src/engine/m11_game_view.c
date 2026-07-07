@@ -3006,19 +3006,19 @@ static int m11_draw_csb_entrance_opening_frame_asset(
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0 || !dungeonFrame || !plan ||
-        !plan->opening_door_valid ||
+        !plan->opening_composite_valid ||
         !state->assetsAvailable) {
         return 0;
     }
     entranceScreen = M11_AssetLoader_Load(
         (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)plan->source_asset_id);
+        (unsigned int)plan->opening_composite_screen_asset_id);
     leftDoor = M11_AssetLoader_Load(
         (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)plan->closed_left_asset_id);
+        (unsigned int)plan->opening_composite_left_asset_id);
     rightDoor = M11_AssetLoader_Load(
         (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)plan->closed_right_asset_id);
+        (unsigned int)plan->opening_composite_right_asset_id);
     if (!entranceScreen || !leftDoor || !rightDoor) {
         return 0;
     }
@@ -3036,17 +3036,17 @@ static int m11_draw_csb_entrance_opening_frame_asset(
     pixels.rightDoorWidth = rightDoor->width;
     pixels.rightDoorHeight = rightDoor->height;
     memset(&door, 0, sizeof(door));
-    door.animationStep = (unsigned int)plan->opening_door_step;
-    door.leftBoxX = (unsigned int)plan->opening_left_dest_x;
-    door.leftBoxY = (unsigned int)plan->opening_left_source_y;
-    door.leftBoxW = (unsigned int)plan->opening_left_w;
-    door.leftBoxH = (unsigned int)plan->opening_left_h;
-    door.rightBoxX = (unsigned int)plan->opening_right_dest_x;
-    door.rightBoxY = (unsigned int)plan->opening_right_source_y;
-    door.rightBoxW = (unsigned int)plan->opening_right_w;
-    door.rightBoxH = (unsigned int)plan->opening_right_h;
-    door.leftSourceX = (unsigned int)plan->opening_left_source_x;
-    door.rightSourceX = (unsigned int)plan->opening_right_source_x;
+    door.animationStep = (unsigned int)plan->opening_composite_animation_step;
+    door.leftBoxX = (unsigned int)plan->opening_composite_left_box_x;
+    door.leftBoxY = (unsigned int)plan->opening_composite_left_box_y;
+    door.leftBoxW = (unsigned int)plan->opening_composite_left_box_w;
+    door.leftBoxH = (unsigned int)plan->opening_composite_left_box_h;
+    door.rightBoxX = (unsigned int)plan->opening_composite_right_box_x;
+    door.rightBoxY = (unsigned int)plan->opening_composite_right_box_y;
+    door.rightBoxW = (unsigned int)plan->opening_composite_right_box_w;
+    door.rightBoxH = (unsigned int)plan->opening_composite_right_box_h;
+    door.leftSourceX = (unsigned int)plan->opening_composite_left_source_x;
+    door.rightSourceX = (unsigned int)plan->opening_composite_right_source_x;
     return ENTRANCE_Compat_CompositeDoorOpeningFrame(
         framebuffer,
         (unsigned int)framebufferWidth,
