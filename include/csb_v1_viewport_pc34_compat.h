@@ -450,6 +450,9 @@ struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement {
     int sprite_relative_cell;
     int sprite_graphic_index;
     int sprite_flip_flags;
+    int sprite_derived_bitmap_cache_slot;
+    int sprite_transparent_color;
+    int sprite_uses_f0791_blit;
     int material_thing;
     int material_icon_index;
 };
@@ -470,6 +473,9 @@ struct CSB_V1_ViewportRuntimeProjectileSpriteBlit {
     int relative_cell;
     int flip_flags;
     int source_zone_row;
+    int derived_bitmap_cache_slot;
+    int transparent_color;
+    int uses_f0791_blit;
 };
 
 struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
@@ -508,6 +514,8 @@ struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
     int icon_screen_y;
     int icon_draw_x;
     int icon_draw_y;
+    int sprite_transparent_color;
+    int sprite_uses_f0791_blit;
 };
 
 struct CSB_V1_ViewportRuntimeObjectSpriteBlit {
@@ -521,6 +529,8 @@ struct CSB_V1_ViewportRuntimeObjectSpriteBlit {
     int viewport_h;
     int depth_index;
     int source_zone_row;
+    int transparent_color;
+    int uses_f0791_blit;
 };
 
 struct CSB_V1_ViewportRuntimeObjectIconBlit {
@@ -588,6 +598,8 @@ struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int sprite_frame;
     int sprite_max_frames;
     int sprite_attack;
+    int sprite_transparent_color;
+    int sprite_uses_f0791_blit;
 };
 
 struct CSB_V1_ViewportRuntimeExplosionSpriteBlit {
@@ -608,6 +620,8 @@ struct CSB_V1_ViewportRuntimeExplosionSpriteBlit {
     int max_frames;
     int attack;
     int depth_index;
+    int transparent_color;
+    int uses_f0791_blit;
 };
 
 typedef struct {
