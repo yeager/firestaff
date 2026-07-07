@@ -223,6 +223,19 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int depthIndex,
                                        int sideHint,
                                        int creatureDir);
+static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
+                                                unsigned char* framebuffer,
+                                                int fbW,
+                                                int fbH,
+                                                int x,
+                                                int y,
+                                                int w,
+                                                int h,
+                                                int creatureType,
+                                                int depthIndex,
+                                                int sideHint,
+                                                int creatureDir,
+                                                int transparentColor);
 static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
@@ -1144,7 +1157,7 @@ static int m11_csb_viewport_group_sprite_drawer(
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    return m11_draw_creature_sprite_ex(ctx->state,
+    return m11_draw_creature_sprite_ex_material(ctx->state,
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
@@ -1155,7 +1168,8 @@ static int m11_csb_viewport_group_sprite_drawer(
         blit->creature_type,
         blit->depth_index,
         blit->relative_side,
-        blit->direction);
+        blit->direction,
+        blit->transparent_color);
 }
 
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
@@ -23575,6 +23589,15 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int depthIndex,
                                        int sideHint,
                                        int creatureDir);
+static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
+                                                unsigned char* framebuffer,
+                                                int fbW, int fbH,
+                                                int x, int y, int w, int h,
+                                                int creatureType,
+                                                int depthIndex,
+                                                int sideHint,
+                                                int creatureDir,
+                                                int transparentColor);
 
 /* Draw a creature sprite from GRAPHICS.DAT at the given viewport position.
  * depthIndex 0 = near (large sprite), 1 = mid, 2 = far (small sprite).
@@ -23610,6 +23633,25 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
                                        int depthIndex,
                                        int sideHint,
                                        int creatureDir) {
+    return m11_draw_creature_sprite_ex_material(
+        state, framebuffer, fbW, fbH,
+        x, y, w, h, creatureType, depthIndex, sideHint, creatureDir,
+        dm1_creature_transparent_color(creatureType));
+}
+
+static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
+                                                unsigned char* framebuffer,
+                                                int fbW,
+                                                int fbH,
+                                                int x,
+                                                int y,
+                                                int w,
+                                                int h,
+                                                int creatureType,
+                                                int depthIndex,
+                                                int sideHint,
+                                                int creatureDir,
+                                                int transparentColor) {
     unsigned int spriteIdx;
     const M11_AssetSlot* slot;
     int spriteW, spriteH;
@@ -23748,7 +23790,7 @@ static int m11_draw_creature_sprite_ex(const M11_GameViewState* state,
      * replacing palette indices 9 and 10 with creature-specific colors.
      * This is how e.g. PainRat and Mummy share set 0 but look different. */
     {
-        int transpColor = dm1_creature_transparent_color(creatureType);
+        int transpColor = transparentColor;
         if (hasReplColors) {
             if (useMirror) {
                 M11_AssetLoader_BlitScaledMirrorReplace(
