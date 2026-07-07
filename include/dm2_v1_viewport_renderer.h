@@ -469,6 +469,19 @@ typedef struct {
 } DM2_V1_ProjectileRender;
 
 typedef struct {
+    int gdat_index;
+    int frame_x;
+    int frame_y;
+    int frame_w;
+    int frame_h;
+    DM2_V1_ViewportRect dst_rect;
+    int src_stride;
+    int transparent_color;
+    int flip_mirror;
+    int render_frame;
+} DM2_V1_ProjectileAssetBlit;
+
+typedef struct {
     DM2_V1_ProjectileRender projectiles[DM2_MAX_PROJECTILES];
     int projectile_count;
 } DM2_V1_ProjectileRenderPlan;
@@ -600,6 +613,15 @@ int dm2_v1_viewport_build_creature_possession_item_render_plan(
 int dm2_v1_viewport_build_projectile_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ProjectileRenderPlan *out_plan);
+int dm2_v1_viewport_projectile_asset_blit(
+    const DM2_V1_ProjectileRender *render,
+    int src_w,
+    int src_h,
+    int src_stride,
+    int party_direction,
+    int tick_count,
+    uint32_t *random_seed,
+    DM2_V1_ProjectileAssetBlit *out_blit);
 int dm2_v1_viewport_build_weather_overlay_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_WeatherOverlayRenderPlan *out_plan);

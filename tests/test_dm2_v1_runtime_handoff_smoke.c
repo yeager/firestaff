@@ -956,11 +956,45 @@ static void test_first_tick_after_boot_profile_handoff(void)
     {
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
+        DM2_V1_ProjectileRender direct_projectile;
+        DM2_V1_ProjectileAssetBlit direct_blit;
+        uint32_t direct_seed = 0x12345678u;
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
         memset(s_projectile_pixels, 13, sizeof(s_projectile_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
+        memset(&direct_projectile, 0, sizeof(direct_projectile));
+        memset(&direct_blit, 0, sizeof(direct_blit));
+        direct_projectile.gdat_index =
+            dm2_v1_viewport_projectile_graphic_index(
+                0x0d, DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL, 0);
+        direct_projectile.frame_index = 0;
+        direct_projectile.direction = 0;
+        direct_projectile.object_direction = 0;
+        direct_projectile.frame_class =
+            DM2_V1_PROJECTILE_FRAME_CLASS_FRONT_ONLY;
+        direct_projectile.render_kind = DM2_V1_PROJECTILE_RENDER_MISSILE;
+        direct_projectile.depth = 1;
+        direct_projectile.center_x = 112;
+        direct_projectile.center_y = 84;
+        CHECK(dm2_v1_viewport_projectile_asset_blit(
+                  &direct_projectile,
+                  16, 8, 16, 0, 77, &direct_seed, &direct_blit) == 1,
+              "projectile asset blit contract builds");
+        CHECK(direct_blit.dst_rect.x == 109 &&
+              direct_blit.dst_rect.y == 81 &&
+              direct_blit.dst_rect.w == 6 &&
+              direct_blit.dst_rect.h == 6,
+              "projectile asset blit owns scaled destination");
+        CHECK(direct_blit.frame_x == 0 &&
+              direct_blit.frame_y == 0 &&
+              direct_blit.frame_w == 8 &&
+              direct_blit.frame_h == 8,
+              "projectile asset blit owns source frame");
+        CHECK(direct_blit.transparent_color == 10 &&
+              direct_blit.flip_mirror == 0,
+              "projectile asset blit owns material and flip");
         dm2_v1_projectile_test_reset_list();
         dm2_v1_runtime_set_outdoor(0);
         dm2_v1_runtime_set_position(0, 10, 6, 0);
