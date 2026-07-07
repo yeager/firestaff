@@ -1251,6 +1251,63 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
     return csb_v1_runtime_apply_save_image(profile, &image, &header);
 }
 
+int csb_v1_runtime_can_load_resume_path(const char *path)
+{
+    enum { MAX_CSBWIN_RESUME_BYTES = 4 * 1024 * 1024 };
+    CSB_V1_SaveHeader header;
+    CSB_V1_CSBWin512BodyReport report;
+    CSB_V1_PartyState party;
+    FILE *fp;
+    long file_size_long;
+    size_t file_size;
+    uint8_t *bytes;
+    size_t got;
+    int rc;
+
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    memset(&header, 0, sizeof(header));
+    if (csb_v1_load_game(path, NULL, 0, &header) == CSB_V1_LOAD_OK &&
+        header.Magic == CSB_V1_SAVE_MAGIC_CSB) {
+        return 1;
+    }
+
+    fp = fopen(path, "rb");
+    if (fp) {
+        if (fseek(fp, 0L, SEEK_END) == 0 &&
+            (file_size_long = ftell(fp)) >= 0 &&
+            (file_size = (size_t)file_size_long) <=
+                (size_t)MAX_CSBWIN_RESUME_BYTES &&
+            fseek(fp, 0L, SEEK_SET) == 0) {
+            bytes = (uint8_t *)malloc(file_size > 0u ? file_size : 1u);
+            if (bytes) {
+                got = fread(bytes, 1u, file_size, fp);
+                if (got == file_size) {
+                    memset(&report, 0, sizeof(report));
+                    rc = csb_v1_csbwin_512_verify_save_body(
+                        bytes,
+                        file_size,
+                        0u,
+                        &report);
+                    if (rc == CSB_V1_CSBWIN_512_OK &&
+                        report.header.verdict ==
+                            CSB_V1_CSBWIN_512_VERDICT_CSB) {
+                        free(bytes);
+                        fclose(fp);
+                        return 1;
+                    }
+                }
+                free(bytes);
+            }
+        }
+        fclose(fp);
+    }
+
+    memset(&party, 0, sizeof(party));
+    return csb_v1_import_csb_save_file(&party, path) > 0;
+}
+
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
 
