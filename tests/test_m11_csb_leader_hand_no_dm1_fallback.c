@@ -228,6 +228,25 @@ int main(void)
             40;
         profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] =
             120;
+
+        check(csb_v1_runtime_next_thing(&dungeon, dagger) == THING_ENDOFLIST,
+              "CSB runtime next-thing helper reads compact object records");
+        check(csb_v1_runtime_thing_type_is_floor_object(THING_TYPE_WEAPON),
+              "CSB runtime classifies weapons as floor objects for overlays");
+        check(!csb_v1_runtime_thing_type_is_floor_object(THING_TYPE_GROUP),
+              "CSB runtime keeps GROUP records out of floor-object overlays");
+        check(csb_v1_runtime_group_record_visible_count(raw + 96, 16) == 1,
+              "CSB runtime decodes one-creature GROUP.Count for overlays");
+        check(csb_v1_runtime_group_record_direction(raw + 96, 16) == 0,
+              "CSB runtime decodes GROUP.Dir for overlay sprite routing");
+        check(csb_v1_runtime_group_record_creature_cell(raw + 96, 16, 0) == 0,
+              "CSB runtime decodes centered GROUP.Cells for overlays");
+        check(csb_v1_viewport_runtime_square_allows_thing_overlay(&dungeon, 0, 1, 0),
+              "CSB viewport permits corridor thing overlays");
+        raw[69] = 0x10u;
+        check(!csb_v1_viewport_runtime_square_allows_thing_overlay(&dungeon, 0, 1, 0),
+              "CSB viewport blocks wall thing overlays");
+        raw[69] = (unsigned char)((1u << 5) | 0x10u);
         profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_CUR] =
             80;
         profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MAX] =

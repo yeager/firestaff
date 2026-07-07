@@ -748,6 +748,28 @@ int csb_v1_runtime_set_thing_next(
     uint16_t thing,
     uint16_t next_thing);
 
+/* Runtime render/interaction helpers for CSB thing chains.  These decode
+ * CSB dungeon records directly so M11 overlay code does not duplicate C04
+ * GROUP or object-chain layout knowledge from ReDMCSB DEFS.H/DUNGEON.C. */
+uint16_t csb_v1_runtime_next_thing(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing);
+
+int csb_v1_runtime_thing_type_is_floor_object(int thing_type);
+
+int csb_v1_runtime_group_record_direction(
+    const uint8_t *record,
+    int size);
+
+int csb_v1_runtime_group_record_visible_count(
+    const uint8_t *record,
+    int size);
+
+int csb_v1_runtime_group_record_creature_cell(
+    const uint8_t *record,
+    int size,
+    int creature_index);
+
 /* Bounded champion action-hand THROW boundary for M11 CSB playability.
  * Uses the CSB runtime party snapshot and projectile list directly, without
  * DM1 GameWorld thing arrays. On success the champion action-hand slot is

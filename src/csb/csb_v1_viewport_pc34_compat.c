@@ -224,6 +224,105 @@ void csb_v1_viewport_runtime_map_from_relative(
     if (out_y) *out_y = y;
 }
 
+int csb_v1_viewport_runtime_square_allows_thing_overlay(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y)
+{
+    int raw_square;
+    int square_type;
+    int door_state;
+
+    if (!dungeon) {
+        return 0;
+    }
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, x, y);
+    if (raw_square < 0) {
+        return 0;
+    }
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    if (square_type == 0) {
+        return 0;
+    }
+    if (square_type == 4) {
+        /* ReDMCSB CLIKMENU.C F0366 treats door states 0, 1, and 5 as
+         * passable/open enough for square interaction.  CSB F0115 runtime
+         * overlays follow the same open-door gate before thing-list drawing. */
+        door_state = raw_square & 0x07;
+        return door_state == 0 || door_state == 1 || door_state == 5;
+    }
+    if (square_type == 6) {
+        /* ReDMCSB CLIKMENU.C F0366 permits only open or imaginary fakewalls. */
+        return (raw_square & 0x04) || (raw_square & 0x01);
+    }
+    return square_type == 1 ||
+           square_type == 2 ||
+           square_type == 3 ||
+           square_type == 5;
+}
+
+size_t csb_v1_viewport_runtime_collect_overlay_cells(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int party_dir,
+    int party_x,
+    int party_y,
+    CSB_V1_ViewportRuntimeOverlayCell *out_cells,
+    size_t out_capacity)
+{
+    size_t count = 0;
+    int forward;
+
+    if (!dungeon) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0128/F0115 scans far-to-near visible thing
+     * cells.  Keeping this in the CSB viewport module prevents M11 from
+     * carrying private CSB view-envelope and square-blocking rules. */
+    for (forward = 3; forward >= 1; --forward) {
+        int side_min;
+        int side_max;
+        int side;
+        if (!csb_v1_viewport_runtime_overlay_side_range(
+                forward, &side_min, &side_max)) {
+            continue;
+        }
+        for (side = side_min; side <= side_max; ++side) {
+            int map_x = 0;
+            int map_y = 0;
+            int first_thing;
+            csb_v1_viewport_runtime_map_from_relative(party_dir,
+                                                      party_x,
+                                                      party_y,
+                                                      forward,
+                                                      side,
+                                                      &map_x,
+                                                      &map_y);
+            if (!csb_v1_viewport_runtime_square_allows_thing_overlay(
+                    dungeon, level, map_x, map_y)) {
+                continue;
+            }
+            first_thing =
+                csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+            if (first_thing < 0) {
+                continue;
+            }
+            if (out_cells && count < out_capacity) {
+                out_cells[count].forward = forward;
+                out_cells[count].side = side;
+                out_cells[count].map_x = map_x;
+                out_cells[count].map_y = map_y;
+                out_cells[count].first_thing = first_thing;
+            }
+            ++count;
+        }
+    }
+    return count;
+}
+
 static void csb_v1_viewport_plot_runtime_overlay_pixel(
     CSB_V1_ViewportConfig *cfg,
     int viewport_x,

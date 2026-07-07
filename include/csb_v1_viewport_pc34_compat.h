@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 typedef int (*CSB_V1_ViewportProjectileMaterialResolver)(
@@ -507,6 +508,14 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportDoorPanelBlitSpec;
 
+typedef struct {
+    int forward;
+    int side;
+    int map_x;
+    int map_y;
+    int first_thing;
+} CSB_V1_ViewportRuntimeOverlayCell;
+
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
@@ -650,6 +659,19 @@ void csb_v1_viewport_runtime_map_from_relative(
     int side,
     int *out_x,
     int *out_y);
+int csb_v1_viewport_runtime_square_allows_thing_overlay(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y);
+size_t csb_v1_viewport_runtime_collect_overlay_cells(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int party_dir,
+    int party_x,
+    int party_y,
+    CSB_V1_ViewportRuntimeOverlayCell *out_cells,
+    size_t out_capacity);
 int csb_v1_viewport_runtime_object_overlay_placement(
     int forward,
     int side,
