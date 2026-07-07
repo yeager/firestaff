@@ -80,6 +80,10 @@ typedef struct {
     int last_object_type;
     int last_object_subtype;
     int last_object_pile;
+    int last_object_source_zone;
+    int last_object_source_zone_row;
+    int last_object_transparent_color;
+    int last_object_uses_f0791_blit;
     int last_object_icon;
     int last_group_type;
     int last_group_direction;
@@ -164,6 +168,10 @@ static int test_object_sprite_drawer(
         capture->last_object_type = blit->thing_type;
         capture->last_object_subtype = blit->subtype_index;
         capture->last_object_pile = blit->pile_index;
+        capture->last_object_source_zone = blit->source_zone;
+        capture->last_object_source_zone_row = blit->source_zone_row;
+        capture->last_object_transparent_color = blit->transparent_color;
+        capture->last_object_uses_f0791_blit = blit->uses_f0791_blit;
     }
     screen_pixels[blit->viewport_y * screen_stride +
                   blit->viewport_x] = 0x21u;
@@ -3599,6 +3607,14 @@ static void test_csb_runtime_thing_pass_render_config(void)
               capture.last_object_subtype, 25);
     check_int("csb.runtime_thing_pass.render.last_object_pile",
               capture.last_object_pile, 1);
+    check_int("csb.runtime_thing_pass.render.last_object_source_zone",
+              capture.last_object_source_zone, -1);
+    check_int("csb.runtime_thing_pass.render.last_object_source_row",
+              capture.last_object_source_zone_row, 8);
+    check_int("csb.runtime_thing_pass.render.last_object_transparent",
+              capture.last_object_transparent_color, 10);
+    check_int("csb.runtime_thing_pass.render.last_object_uses_f0791",
+              capture.last_object_uses_f0791_blit, 1);
     check_int("csb.runtime_thing_pass.render.last_group_type",
               capture.last_group_type, 6);
     check_int("csb.runtime_thing_pass.render.last_group_direction",
