@@ -2510,6 +2510,7 @@ static void m11_execute_csb_startup_primitive_commands(
 typedef struct M11_CSBStartupAssetContext {
     const M11_GameViewState *state;
     unsigned char *framebuffer;
+    const unsigned char *dungeonFrame;
     int framebufferWidth;
     int framebufferHeight;
 } M11_CSBStartupAssetContext;
@@ -2611,6 +2612,7 @@ static void m11_csb_startup_asset_context_init(
     }
     context->state = state;
     context->framebuffer = framebuffer;
+    context->dungeonFrame = NULL;
     context->framebufferWidth = framebufferWidth;
     context->framebufferHeight = framebufferHeight;
 }
@@ -2887,34 +2889,42 @@ static void m11_draw_csb_startup_fallback_text_rows(
 }
 
 static int m11_draw_csb_entrance_opening_frame_asset(
-    const M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const unsigned char *dungeonFrame,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
+    void *user,
+    const CSB_V1_StartupOpeningComposite_PC34 *composite)
 {
+    M11_CSBStartupAssetContext *context =
+        (M11_CSBStartupAssetContext *)user;
+    const M11_GameViewState *state;
+    unsigned char *framebuffer;
+    int framebufferWidth;
+    int framebufferHeight;
     const M11_AssetSlot *entranceScreen;
     const M11_AssetSlot *leftDoor;
     const M11_AssetSlot *rightDoor;
     EntranceCompatDoorStep door;
     EntranceCompatCompositePixels pixels;
 
+    if (!context || !composite) {
+        return 0;
+    }
+    state = context->state;
+    framebuffer = context->framebuffer;
+    framebufferWidth = context->framebufferWidth;
+    framebufferHeight = context->framebufferHeight;
     if (!state || !framebuffer || framebufferWidth <= 0 ||
-        framebufferHeight <= 0 || !dungeonFrame || !plan ||
-        !plan->opening_composite_valid ||
+        framebufferHeight <= 0 || !context->dungeonFrame ||
         !state->assetsAvailable) {
         return 0;
     }
     entranceScreen = M11_AssetLoader_Load(
         (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)plan->opening_composite_screen_asset_id);
+        (unsigned int)composite->screen_asset_id);
     leftDoor = M11_AssetLoader_Load(
         (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)plan->opening_composite_left_asset_id);
+        (unsigned int)composite->left_door_asset_id);
     rightDoor = M11_AssetLoader_Load(
         (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)plan->opening_composite_right_asset_id);
+        (unsigned int)composite->right_door_asset_id);
     if (!entranceScreen || !leftDoor || !rightDoor) {
         return 0;
     }
@@ -2922,7 +2932,7 @@ static int m11_draw_csb_entrance_opening_frame_asset(
     pixels.entranceScreen = entranceScreen->pixels;
     pixels.entranceWidth = entranceScreen->width;
     pixels.entranceHeight = entranceScreen->height;
-    pixels.dungeonFrame = dungeonFrame;
+    pixels.dungeonFrame = context->dungeonFrame;
     pixels.dungeonFrameWidth = (unsigned int)framebufferWidth;
     pixels.dungeonFrameHeight = (unsigned int)framebufferHeight;
     pixels.leftDoor = leftDoor->pixels;
@@ -2932,23 +2942,50 @@ static int m11_draw_csb_entrance_opening_frame_asset(
     pixels.rightDoorWidth = rightDoor->width;
     pixels.rightDoorHeight = rightDoor->height;
     memset(&door, 0, sizeof(door));
-    door.animationStep = (unsigned int)plan->opening_composite_animation_step;
-    door.leftBoxX = (unsigned int)plan->opening_composite_left_box_x;
-    door.leftBoxY = (unsigned int)plan->opening_composite_left_box_y;
-    door.leftBoxW = (unsigned int)plan->opening_composite_left_box_w;
-    door.leftBoxH = (unsigned int)plan->opening_composite_left_box_h;
-    door.rightBoxX = (unsigned int)plan->opening_composite_right_box_x;
-    door.rightBoxY = (unsigned int)plan->opening_composite_right_box_y;
-    door.rightBoxW = (unsigned int)plan->opening_composite_right_box_w;
-    door.rightBoxH = (unsigned int)plan->opening_composite_right_box_h;
-    door.leftSourceX = (unsigned int)plan->opening_composite_left_source_x;
-    door.rightSourceX = (unsigned int)plan->opening_composite_right_source_x;
+    door.animationStep = (unsigned int)composite->animation_step;
+    door.leftBoxX = (unsigned int)composite->left_box_x;
+    door.leftBoxY = (unsigned int)composite->left_box_y;
+    door.leftBoxW = (unsigned int)composite->left_box_w;
+    door.leftBoxH = (unsigned int)composite->left_box_h;
+    door.rightBoxX = (unsigned int)composite->right_box_x;
+    door.rightBoxY = (unsigned int)composite->right_box_y;
+    door.rightBoxW = (unsigned int)composite->right_box_w;
+    door.rightBoxH = (unsigned int)composite->right_box_h;
+    door.leftSourceX = (unsigned int)composite->left_source_x;
+    door.rightSourceX = (unsigned int)composite->right_source_x;
     return ENTRANCE_Compat_CompositeDoorOpeningFrame(
         framebuffer,
         (unsigned int)framebufferWidth,
         (unsigned int)framebufferHeight,
         &pixels,
         &door);
+}
+
+static int m11_execute_csb_entrance_opening_composite(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const unsigned char *dungeonFrame,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupAssetContext context;
+
+    if (!state || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0 || !dungeonFrame || !plan ||
+        !state->assetsAvailable) {
+        return 0;
+    }
+    m11_csb_startup_asset_context_init(&context,
+                                       state,
+                                       framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight);
+    context.dungeonFrame = dungeonFrame;
+    return csb_v1_startup_execute_opening_composite_pc34(
+        plan,
+        m11_draw_csb_entrance_opening_frame_asset,
+        &context);
 }
 
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
@@ -3029,7 +3066,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                                      dungeonFrame,
                                                      320,
                                                      200) &&
-                        m11_draw_csb_entrance_opening_frame_asset(
+                        m11_execute_csb_entrance_opening_composite(
                             state,
                             framebuffer,
                             framebufferWidth,
