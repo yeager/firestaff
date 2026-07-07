@@ -1596,6 +1596,9 @@ static void m11_draw_dm1_v2_enhanced_effects_framepath(
     gate.v2PresentationEnabled =
         (state->presentationMode != M12_PRESENTATION_V1_ORIGINAL) ? 1 : 0;
     gate.v2ConfigPersistenceEnabled = 1;
+    if (!gate.v2PresentationEnabled) {
+        return;
+    }
 
     dm1_v2_settings_defaults(&settings);
     if (state->presentationMode == M12_PRESENTATION_V20_FILTERED) {
@@ -36763,18 +36766,18 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
-    /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3922-3928: the C127
-     * champion portrait belongs to the D1C front champion-mirror wall
-     * ornament.  Firestaff's current V1 renderer still batches primitive
-     * classes, so draw this D1C mirror route after the center content stack
-     * has finished; otherwise the Hall stone/content pass can erase the C346
-     * mirror backing while leaving C026-looking pixels floating on the wall. */
-    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
-                                    framebufferWidth, framebufferHeight);
-
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
+
+    /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3922-3928: the C127
+     * champion portrait belongs to the D1C front champion-mirror wall
+     * ornament.  Firestaff's current V1 renderer still batches primitive
+     * classes, so draw this D1C mirror route after all content/effect passes
+     * have finished; otherwise stale HoC payload/effect classification can
+     * erase the C346 mirror backing and C026 portrait. */
+    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
+                                    framebufferWidth, framebufferHeight);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
      * DRAWVIEW output.  It stays available in debug HUD mode, but normal
@@ -36917,20 +36920,21 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                         M11_VIEWPORT_W, M11_VIEWPORT_H,
                                         paletteIndex);
     }
-    /* V2.2 render path: prefer cached in-place modern-art bitmaps when the
-     * optional V22 cache is available. If no cache/bitmap is available, keep
-     * the previous placeholder overlay as the visible data-flow fallback.
-     *
-     * Both paths are presentation-only and read the same V22 shape cache
-     * populated above from the V1 source viewport square sample. */
-    if (m11_v22_inplace_render_pass(framebuffer,
-                                    framebufferWidth,
-                                    framebufferHeight) == 0) {
-        int paletteIndex = m11_compute_dungeon_palette_index(state);
-        (void)m11_v22_render_overlay_with_palette(framebuffer,
-                                                  framebufferWidth,
-                                                  framebufferHeight,
-                                                  paletteIndex);
+    if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+        /* V2.2 render path: prefer cached in-place modern-art bitmaps when the
+         * optional V22 cache is available. If no cache/bitmap is available,
+         * keep the previous placeholder overlay as the visible data-flow
+         * fallback.  This is presentation-only; V1 original must keep the
+         * already-rendered GRAPHICS.DAT indices untouched. */
+        if (m11_v22_inplace_render_pass(framebuffer,
+                                        framebufferWidth,
+                                        framebufferHeight) == 0) {
+            int paletteIndex = m11_compute_dungeon_palette_index(state);
+            (void)m11_v22_render_overlay_with_palette(framebuffer,
+                                                      framebufferWidth,
+                                                      framebufferHeight,
+                                                      paletteIndex);
+        }
     }
 
     m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,
