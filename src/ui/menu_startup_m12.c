@@ -524,11 +524,9 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
      * INV_M12_18.  Leave V2.0/V2.1/V2.2 resolution untouched so
      * the row cycle controls the full range (320x200 → 640x400
      * → 1280x960 → 1920x1080 → 2560x1440 → 3840x2160). */
-    /* Nexus V1 — only V1.ORIGINAL is supported in Phase 1.
-     * V2.0/V2.1/V2.2 render paths are not yet available for Nexus.
-     * Lock presentation mode if attempting a non-V1 mode for nexus.
-     * ReDMCSB: COMMAND.C F0359 "LoadGameSettings". */
-    /* (presentation mode enforcement for non-Nexus games handled by caller) */
+    /* Game-specific launch gates live in M12_StartupMenu_GetLaunchIntent().
+     * Nexus V2 presentation currently keeps V1 gameplay/source state locked
+     * and falls back to the full WARNING.BIN/TITLE.CG startup presentation. */
 }
 
 static void m12_clamp_game_options(M12_GameOptions* opts) {
@@ -4418,7 +4416,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         !M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus)) {
                         /* Assets not installed — proceed with launch; fallback
                          * happens at runtime via m11_v22_best_available_shape_source(). */
-                    } else if (pmode == M12_PRESENTATION_V22_MODERN) {
+                    } else if (pmode == M12_PRESENTATION_V22_MODERN &&
+                               (!launchEntry || !launchEntry->gameId ||
+                                strcmp(launchEntry->gameId, "nexus") != 0)) {
                         /* V2.2 selected and installed — currently blocked as
                          * "COMING SOON" since the V2.2 renderer is not yet
                          * implemented. Remove this block once rendering is wired. */
@@ -6116,13 +6116,13 @@ static const char *g_game_select_labels[M12_GAME_SELECT_COUNT] = {
 /* g_game_select_tags_ready: per-game display tags for game-select menu.
  * DM1: V1/V2.0/V2.1/V2.2 all available.
  * CSB/DM2: V1 + V2 available.
- * Nexus: V1 only (Phase 1 gate — V2 not yet implemented).
+ * Nexus: V1 gameplay/source state with V2 presentation fallback available.
  * ReDMCSB: COMMAND.C F0359 "LoadGameSettings". */
 static const char *g_game_select_tags_ready[] = {
     _("V1 / V2.0 / V2.1 / V2.2"),
     _("V1 / V2"),
     _("V1 / V2"),
-    _("V1 Only (Phase 1)"),    /* nexus — V2 not yet available */
+    _("V1 / V2"),
     _("V1 Only (Phase 1)")      /* theron — Track 02 provenance gate passed */
 };
 static const char *g_game_select_tags_missing[] = {
@@ -8963,9 +8963,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
             const char* launchLabel = (entry && entry->gameId &&
                                        !M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId))
                                           ? m12_tr(state, "> DATA FILES NOT FOUND")
-                                          : (pmode == M12_PRESENTATION_V22_MODERN ||
-                                             !M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
-                                          ? m12_tr(state, "> DATA FILES NOT FOUND")
+                                          : (!M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
+                                          ? m12_tr(state, "> RENDERER UNAVAILABLE")
                                           : m12_tr(state, "> LAUNCH");
             m12_draw_text(framebuffer,
                           framebufferWidth,
@@ -9452,10 +9451,13 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.gameId = state->entries[state->activatedIndex].gameId;
     pmode = m12_clamp_index(state->gameOptions[gi].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
-    /* V2.2 is launchable for DM1; keep the global experimental mode gate for
-     * other games until their M11 presentation paths have matching coverage. */
+    /* V2.2 is launchable for DM1 and Nexus. Nexus keeps V1 gameplay/source
+     * state locked and uses full original startup graphics as presentation
+     * fallback while wider V2 runtime rendering is hardened. */
     if (pmode == M12_PRESENTATION_V22_MODERN &&
-        (!intent.gameId || strcmp(intent.gameId, "dm1") != 0)) {
+        (!intent.gameId ||
+         (strcmp(intent.gameId, "dm1") != 0 &&
+          strcmp(intent.gameId, "nexus") != 0))) {
         return intent;
     }
     version = m12_selected_version_status(state, gi);
@@ -9520,15 +9522,6 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
                    state->entries[state->activatedIndex].available &&
                    M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId) &&
                    version && version->matched ? 1 : 0;
-    /* Nexus Phase 1 gate: only V1.ORIGINAL is supported.
-     * Block V2.0/V2.1/V2.2 for nexus until those render paths are implemented.
-     * Ref: ReDMCSB COMMAND.C F0359.
-     * Diagnosed in: docs/source-lock/nexus_v1_phase1_boot_H2318.md */
-    if (intent.valid && strcmp(intent.gameId, "nexus") == 0) {
-        if (intent.presentationMode != M12_PRESENTATION_V1_ORIGINAL) {
-            intent.valid = 0;
-        }
-    }
     return intent;
 }
 

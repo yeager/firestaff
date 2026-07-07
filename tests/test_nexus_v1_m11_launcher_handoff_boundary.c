@@ -192,6 +192,74 @@ static void run_nexus_runtime_path_resolution(void) {
                 "Nexus runtime resolver keeps broad dataDir fallback");
 }
 
+static void seed_synthetic_nexus_available(M12_StartupMenuState* menu,
+                                           const char* data_dir) {
+    const int gi = 3;
+    M12_AssetVersionStatus* version;
+
+    init_menu_without_gallery(menu, data_dir, "nexus");
+    dismiss_initial_message(menu);
+
+    menu->assetStatus.nexusAvailable = 1;
+    menu->assetStatus.originalFileCandidateFound = 1;
+    menu->entries[gi].available = 1;
+    menu->entries[gi].gameId = "nexus";
+    menu->entries[gi].kind = M12_MENU_ENTRY_GAME;
+    menu->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+    menu->selectedIndex = gi;
+    menu->activatedIndex = gi;
+    menu->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+
+    version = &menu->assetStatus.versions[gi][0];
+    memset(version, 0, sizeof(*version));
+    version->gameId = "nexus";
+    version->versionId = "nexus-saturn-jp";
+    version->label = "Saturn JP";
+    version->shortLabel = "Saturn JP";
+    version->matched = 1;
+    menu->gameOptions[gi].versionIndex = 0;
+}
+
+static void expect_nexus_launch_intent_mode(M12_StartupMenuState* menu,
+                                            int mode,
+                                            const char* label) {
+    M12_LaunchIntent intent;
+    const int gi = 3;
+
+    menu->settings.graphicsIndex = mode;
+    menu->gameOptions[gi].presentationModeIndex = mode;
+    menu->launchRequested = 1;
+    intent = M12_StartupMenu_GetLaunchIntent(menu);
+    expect_true(intent.valid == 1, label);
+    expect_true(intent.gameId && strcmp(intent.gameId, "nexus") == 0,
+                "Nexus launch intent keeps gameId in V2 mode");
+    expect_true(intent.presentationMode == mode,
+                "Nexus launch intent preserves selected presentation mode");
+}
+
+static void run_synthetic_nexus_v2_launch_modes(void) {
+    M12_StartupMenuState menu;
+    char empty_dir[512];
+
+    make_empty_data_dir(empty_dir);
+    expect_true(empty_dir[0] != '\0',
+                "Nexus synthetic launch data dir path was created");
+    seed_synthetic_nexus_available(&menu, empty_dir);
+
+    expect_nexus_launch_intent_mode(&menu,
+                                    M12_PRESENTATION_V1_ORIGINAL,
+                                    "Nexus V1 original launch intent remains valid");
+    expect_nexus_launch_intent_mode(&menu,
+                                    M12_PRESENTATION_V20_FILTERED,
+                                    "Nexus V2.0 launch intent is valid with full startup graphics fallback");
+    expect_nexus_launch_intent_mode(&menu,
+                                    M12_PRESENTATION_V21_UPSCALED,
+                                    "Nexus V2.1 launch intent is valid with full startup graphics fallback");
+    expect_nexus_launch_intent_mode(&menu,
+                                    M12_PRESENTATION_V22_MODERN,
+                                    "Nexus V2.2 launch intent is valid with full startup graphics fallback");
+}
+
 static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
     M12_LaunchIntent intent;
@@ -316,6 +384,7 @@ int main(void) {
 
     run_empty_launcher_boundary();
     run_nexus_runtime_path_resolution();
+    run_synthetic_nexus_v2_launch_modes();
     run_real_launcher_handoff_if_available();
 
     printf("\nNexus V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
