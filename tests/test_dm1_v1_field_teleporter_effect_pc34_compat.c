@@ -48,7 +48,6 @@ static void expect_plan(const char* name,
 int main(void)
 {
     DM1_FieldRenderPlanPc34 plan;
-    DM1_FieldBlitPc34 blit;
 
     expect_int("plan.count", dm1_v1_field_render_plan_count_pc34(), 16);
     expect_plan("plan.d3l2", 0, 3, -2, 0, 25, 36, 49, 0x3f, 0x0a, 0x00);
@@ -74,36 +73,31 @@ int main(void)
     expect_int("relative.d2r2.h", plan.dstH, 52);
     expect_int("relative.bad.side", dm1_v1_field_render_plan_for_relative_pc34(3, -3, &plan), 0);
     expect_int("relative.bad.null", dm1_v1_field_render_plan_for_relative_pc34(3, -2, 0), 0);
-
-    expect_int("blit.bad.null_plan", dm1_v1_field_build_blit_pc34(0, 0, &blit), 0);
-    expect_int("blit.bad.null_out", dm1_v1_field_build_blit_pc34(&plan, 0, 0), 0);
-    expect_int("blit.d3l2.plan", dm1_v1_field_render_plan_at_pc34(0, &plan), 1);
-    expect_int("blit.d3l2.ok", dm1_v1_field_build_blit_pc34(&plan, 6, &blit), 1);
-    expect_int("blit.d3l2.x", blit.dstX, 0);
-    expect_int("blit.d3l2.w", blit.dstW, 36);
-    expect_int("blit.d3l2.field_start", blit.fieldStartUnit, 0x40);
-    expect_int("blit.d3l2.phase", blit.fieldYPhase, 10);
-    expect_int("blit.d3l2.transparent", blit.transparentColor, 0x0a);
-    expect_int("blit.d3l2.skip_color", blit.transparentSkipColor, 0x0a);
-    expect_int("blit.d3l2.skip_enabled", blit.transparentSkipEnabled, 1);
-    expect_int("blit.d3l2.mask_index", blit.maskIndex, 0);
-    expect_int("blit.d3l2.mask_flip", blit.maskFlip, 0);
-    expect_int("blit.d3l2.uses_mask", blit.usesMask, 1);
-    expect_int("blit.d3l2.uses_f0133", blit.usesF0133FieldBlit, 1);
-
-    expect_int("blit.d3r2.plan", dm1_v1_field_render_plan_at_pc34(1, &plan), 1);
-    expect_int("blit.d3r2.ok", dm1_v1_field_build_blit_pc34(&plan, 0, &blit), 1);
-    expect_int("blit.d3r2.mask_index", blit.maskIndex, 0);
-    expect_int("blit.d3r2.mask_flip", blit.maskFlip, 1);
-
-    expect_int("blit.d0c.plan", dm1_v1_field_render_plan_at_pc34(14, &plan), 1);
-    expect_int("blit.d0c.ok", dm1_v1_field_build_blit_pc34(&plan, 5, &blit), 1);
-    expect_int("blit.d0c.field_start", blit.fieldStartUnit, 0x3b);
-    expect_int("blit.d0c.transparent", blit.transparentColor, 0x8a);
-    expect_int("blit.d0c.skip_color", blit.transparentSkipColor, 0x0a);
-    expect_int("blit.d0c.skip_enabled", blit.transparentSkipEnabled, 1);
-    expect_int("blit.d0c.uses_mask", blit.usesMask, 0);
-    expect_int("blit.d0c.mask_index", blit.maskIndex, -1);
+    {
+        DM1_FieldBitmapSamplePc34 sample;
+        expect_int("sample.d3l2.lookup", dm1_v1_field_render_plan_for_relative_pc34(3, -2, &plan), 1);
+        expect_int("sample.d3l2.ok", dm1_v1_field_bitmap_sample_pc34(&plan, 0, 0, 0, 128, 64, 16, 8, &sample), 1);
+        expect_int("sample.d3l2.fieldX", sample.fieldX, 112);
+        expect_int("sample.d3l2.fieldY", sample.fieldY, 0);
+        expect_int("sample.d3l2.maskPresent", sample.maskPresent, 1);
+        expect_int("sample.d3l2.maskFlip", sample.maskFlip, 0);
+        expect_int("sample.d3l2.maskX", sample.maskX, 0);
+        expect_int("sample.d3l2.maskY", sample.maskY, 0);
+        expect_int("sample.d2r2.lookup", dm1_v1_field_render_plan_for_relative_pc34(2, 2, &plan), 1);
+        expect_int("sample.d2r2.tick0", dm1_v1_field_bitmap_sample_pc34(&plan, 0, 7, 51, 256, 128, 32, 16, &sample), 1);
+        expect_int("sample.d2r2.fieldX", sample.fieldX, 247);
+        expect_int("sample.d2r2.fieldY", sample.fieldY, 51);
+        expect_int("sample.d2r2.maskPresent", sample.maskPresent, 1);
+        expect_int("sample.d2r2.maskFlip", sample.maskFlip, 1);
+        expect_int("sample.d2r2.maskX", sample.maskX, 3);
+        expect_int("sample.d2r2.maskY", sample.maskY, 15);
+        expect_int("sample.d2r2.transparent", sample.transparentColor, 0x0a);
+        expect_int("sample.d2r2.tick3", dm1_v1_field_bitmap_sample_pc34(&plan, 3, 0, 0, 256, 128, 32, 16, &sample), 1);
+        expect_int("sample.d2r2.tick3.fieldX", sample.fieldX, 0);
+        expect_int("sample.d2r2.tick3.fieldY", sample.fieldY, 21);
+        expect_int("sample.bad.local", dm1_v1_field_bitmap_sample_pc34(&plan, 0, plan.dstW, 0, 256, 128, 32, 16, &sample), 0);
+        expect_int("sample.bad.field_size", dm1_v1_field_bitmap_sample_pc34(&plan, 0, 0, 0, 0, 128, 32, 16, &sample), 0);
+    }
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed == 0 ? 0 : 1;

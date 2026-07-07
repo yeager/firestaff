@@ -20854,57 +20854,64 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int fbW,
                                    int fbH,
-                                   const DM1_FieldBlitPc34* blit) {
+                                   const DM1_FieldRenderPlanPc34* plan) {
     const M11_AssetSlot* field;
     const M11_AssetSlot* mask = NULL;
     int y;
-    if (!state || !state->assetsAvailable || !framebuffer ||
-        !blit || blit->dstW <= 0 || blit->dstH <= 0) {
+    int dstX;
+    int dstY;
+    int dstW;
+    int dstH;
+    if (!state || !state->assetsAvailable || !framebuffer || !plan ||
+        plan->dstW <= 0 || plan->dstH <= 0) {
         return 0;
     }
+    dstX = plan->dstX;
+    dstY = plan->dstY;
+    dstW = plan->dstW;
+    dstH = plan->dstH;
     field = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                  M11_GFX_DM1_FIELD_TELEPORTER);
     if (!field || !field->loaded || !field->pixels || field->width <= 0 || field->height <= 0) {
         return 0;
     }
-    if (blit->usesMask && blit->maskIndex >= 0) {
+    if (plan->maskIndexAndFlip != 255) {
+        int maskIndex = plan->maskIndexAndFlip & 0x7f;
         mask = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    M11_GFX_DM1_FIELD_MASK_BASE + blit->maskIndex);
+                                    M11_GFX_DM1_FIELD_MASK_BASE + maskIndex);
         if (!mask || !mask->loaded || !mask->pixels || mask->width <= 0 || mask->height <= 0) {
             mask = NULL;
         }
     }
-    for (y = 0; y < blit->dstH; ++y) {
-        int fbY = M11_VIEWPORT_Y + blit->dstY + y;
+    for (y = 0; y < dstH; ++y) {
+        int fbY = M11_VIEWPORT_Y + dstY + y;
         int x;
         if (fbY < 0 || fbY >= fbH) {
             continue;
         }
-        for (x = 0; x < blit->dstW; ++x) {
-            int fbX = M11_VIEWPORT_X + blit->dstX + x;
-            int sx;
-            int sy;
+        for (x = 0; x < dstW; ++x) {
+            int fbX = M11_VIEWPORT_X + dstX + x;
+            int maskWidth = mask ? (int)mask->width : 0;
+            int maskHeight = mask ? (int)mask->height : 0;
+            DM1_FieldBitmapSamplePc34 sample;
             unsigned char pixel;
             if (fbX < 0 || fbX >= fbW) {
                 continue;
             }
-            if (mask) {
-                int mx = x * (int)mask->width / blit->dstW;
-                int my = y * (int)mask->height / blit->dstH;
-                unsigned char maskPixel;
-                if (blit->maskFlip) {
-                    mx = (int)mask->width - 1 - mx;
-                }
-                maskPixel = mask->pixels[my * (int)mask->width + mx];
+            if (!dm1_v1_field_bitmap_sample_pc34(plan, state->animTick, x, y,
+                                                 (int)field->width, (int)field->height,
+                                                 maskWidth, maskHeight, &sample)) {
+                continue;
+            }
+            if (sample.maskPresent && mask) {
+                unsigned char maskPixel = mask->pixels[sample.maskY * (int)mask->width + sample.maskX];
                 if (maskPixel == 0) {
                     continue;
                 }
             }
-            sx = (x + (blit->fieldStartUnit * 16)) % (int)field->width;
-            sy = (y + blit->fieldYPhase) % (int)field->height;
-            pixel = field->pixels[sy * (int)field->width + sx];
-            if (blit->transparentSkipEnabled &&
-                pixel == (unsigned char)blit->transparentSkipColor) {
+            pixel = field->pixels[sample.fieldY * (int)field->width + sample.fieldX];
+            if ((sample.transparentColor & 0x7f) != 0x7f &&
+                pixel == (unsigned char)(sample.transparentColor & 0x7f)) {
                 continue;
             }
             framebuffer[fbY * fbW + fbX] = pixel;
@@ -22443,13 +22450,7 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
         if (!dm1_v1_field_square_is_visible_open_pc34(cell.square)) {
             continue;
         }
-        {
-            DM1_FieldBlitPc34 blit;
-            if (dm1_v1_field_build_blit_pc34(&plan, state->animTick, &blit)) {
-                (void)m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH,
-                                              &blit);
-            }
-        }
+        (void)m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH, &plan);
     }
 }
 
