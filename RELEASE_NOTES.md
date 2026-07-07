@@ -1,39 +1,6 @@
 
 # Unreleased
 
-# Firestaff v3.0.54
-
-Firestaff v3.0.54 packages the current `main` after the latest CSB V1
-projectile rendering ownership work, Nexus champion-select render ownership
-work and the DM1 rebirth explosion constant namespace fix.
-
-## Highlights since v3.0.53
-
-- **CSB V1 projectile source tables**: M11 now consumes CSB-owned projectile
-  graphic-index, flip-flag, bitmap-delta, scale-unit and aspect mapping helpers
-  instead of routing those tables through the shared game view.
-- **CSB V1 render ownership**: CSB floor-object, creature-group and projectile
-  overlay paths now keep more of their source-shaped placement logic on the CSB
-  side before exact material/sprite parity work.
-- **Nexus champion-select render ownership**: the Nexus startup module now
-  builds champion row and footer render metadata that M11 consumes directly for
-  champion selection.
-- **DM1 V1 rebirth explosion namespace**: resurrection thing IDs remain separate
-  from C100/C101 explosion render type IDs, keeping the DM1/M11 projectile
-  render handoff warning-free.
-- **Release metadata**: In-app version strings, CMake metadata and release
-  notes are synchronized to `v3.0.54`.
-
-## Verification
-
-- Local release verification covers version synchronization, focused DM1
-  projectile/explosion and resurrection gates, focused CSB V1 viewport/render
-  gates, the Nexus startup menu gate, the Phase A probe and `git diff --check`
-  before GitHub Actions packaging.
-- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
-  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
-  from the `v3.0.54` release run.
-
 # Firestaff v3.0.53
 
 Firestaff v3.0.53 packages the current `main` after the latest CSB V1
