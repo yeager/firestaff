@@ -251,6 +251,20 @@ Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
 
     selected = tqr_startup_clamp_stage(snapshot->selected_dungeon);
     theron_v1_startup_flow_init(flow);
+
+    if (snapshot->phase == THERON_STARTUP_PHASE_TITLE) {
+        return THERON_STARTUP_OK;
+    }
+    if (snapshot->phase == THERON_STARTUP_PHASE_STAGE_SELECT) {
+        return theron_v1_startup_show_stage_select(flow, selected);
+    }
+    if (snapshot->phase == THERON_STARTUP_PHASE_IN_DUNGEON) {
+        flow->phase = THERON_STARTUP_PHASE_IN_DUNGEON;
+        flow->selected_dungeon = selected;
+        flow->forcefield_entered = 1;
+        return THERON_STARTUP_OK;
+    }
+
     result = theron_v1_startup_choose_stage(flow, progression, selected);
     if (result != THERON_STARTUP_OK) {
         return result;

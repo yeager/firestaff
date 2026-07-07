@@ -541,6 +541,24 @@ int main(void) {
                   snapshot.selected_mirror_order[2],
                   0);
 
+        snapshot.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+        snapshot.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        snapshot.selected_mirrors_mask = 0;
+        snapshot.companion_count = 0;
+        result = theron_v1_startup_flow_rebuild_from_snapshot(
+            &snapshot,
+            &progression,
+            &rebuilt);
+        check_int("snapshot rebuild stage-select rc",
+                  result,
+                  THERON_STARTUP_OK);
+        check_int("snapshot rebuild stage-select phase",
+                  rebuilt.phase,
+                  THERON_STARTUP_PHASE_STAGE_SELECT);
+        check_int("snapshot rebuild stage-select companion count",
+                  rebuilt.companion_count,
+                  0);
+
         theron_v1_startup_flow_init(&flow);
         result = theron_v1_startup_choose_stage(
             &flow,
