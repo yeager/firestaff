@@ -585,6 +585,43 @@ void theron_v1_startup_continue_apply_receipt_init(
     receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
 }
 
+void theron_v1_startup_continue_availability_init(
+    Theron_V1StartupContinueAvailability *availability) {
+
+    if (!availability) {
+        return;
+    }
+    memset(availability, 0, sizeof(*availability));
+    availability->tqsv_slot = -1;
+    availability->srm_slot = -1;
+}
+
+int theron_v1_startup_continue_availability_from_state(
+    Theron_V1StartupResumeClaim resume_claim,
+    int tqsv_slot_index,
+    int srm_slot_index,
+    Theron_V1SrmProgressImportStatus srm_import_status,
+    Theron_V1StartupContinueAvailability *out_availability) {
+
+    if (!out_availability) {
+        return 0;
+    }
+    theron_v1_startup_continue_availability_init(out_availability);
+    out_availability->tqsv_slot = tqsv_slot_index;
+    out_availability->srm_slot = srm_slot_index;
+    out_availability->has_tqsv_continue =
+        tqsv_slot_index >= 0 &&
+        (resume_claim == THERON_V1_STARTUP_RESUME_TQSV ||
+         resume_claim == THERON_V1_STARTUP_RESUME_DUAL);
+    out_availability->has_srm_continue =
+        srm_slot_index >= 0 &&
+        srm_import_status == THERON_V1_SRM_PROGRESS_IMPORT_OK;
+    out_availability->has_any_continue =
+        out_availability->has_tqsv_continue ||
+        out_availability->has_srm_continue;
+    return 1;
+}
+
 static void theron_v1_startup_continue_capture_result(
     const Theron_V1_World *world,
     Theron_V1StartupContinueSource source,

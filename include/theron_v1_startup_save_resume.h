@@ -168,6 +168,14 @@ typedef struct {
     char inspect_detail[320];
 } Theron_V1StartupContinueApplyReceipt;
 
+typedef struct {
+    int has_tqsv_continue;
+    int tqsv_slot;
+    int has_srm_continue;
+    int srm_slot;
+    int has_any_continue;
+} Theron_V1StartupContinueAvailability;
+
 /* Resolve both save roots deterministically:
  *   tqsv_root: profile->save_root when non-empty, otherwise
  *              theron_v1_save_default_root() result.
@@ -203,6 +211,14 @@ void theron_v1_startup_continue_result_init(
     Theron_V1StartupContinueResult *result);
 void theron_v1_startup_continue_apply_receipt_init(
     Theron_V1StartupContinueApplyReceipt *receipt);
+void theron_v1_startup_continue_availability_init(
+    Theron_V1StartupContinueAvailability *availability);
+int theron_v1_startup_continue_availability_from_state(
+    Theron_V1StartupResumeClaim resume_claim,
+    int tqsv_slot_index,
+    int srm_slot_index,
+    Theron_V1SrmProgressImportStatus srm_import_status,
+    Theron_V1StartupContinueAvailability *out_availability);
 int theron_v1_startup_continue_apply_request(
     Theron_V1_World *world,
     const Theron_V1StartupContinueRequest *request,

@@ -700,6 +700,7 @@ int main(void) {
             {
                 Theron_V1StartupContinueResult continue_result;
                 Theron_V1StartupContinueApplyReceipt continue_receipt;
+                Theron_V1StartupContinueAvailability continue_availability;
                 Theron_StartupStateReceipt state_receipt;
 
                 theron_v1_startup_continue_result_init(&continue_result);
@@ -734,6 +735,45 @@ int main(void) {
                 check_contains("continue receipt marker",
                                continue_receipt.inspect_detail,
                                "chapter=1");
+                check_int("continue availability tqsv rc",
+                          theron_v1_startup_continue_availability_from_state(
+                              THERON_V1_STARTUP_RESUME_TQSV,
+                              2,
+                              -1,
+                              THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
+                              &continue_availability),
+                          1);
+                check_int("continue availability tqsv",
+                          continue_availability.has_tqsv_continue,
+                          1);
+                check_int("continue availability any",
+                          continue_availability.has_any_continue,
+                          1);
+                check_int("continue availability srm off",
+                          continue_availability.has_srm_continue,
+                          0);
+                check_int("continue availability srm rc",
+                          theron_v1_startup_continue_availability_from_state(
+                              THERON_V1_STARTUP_RESUME_NONE,
+                              -1,
+                              3,
+                              THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                              &continue_availability),
+                          1);
+                check_int("continue availability srm",
+                          continue_availability.has_srm_continue,
+                          1);
+                check_int("continue availability srm slot",
+                          continue_availability.srm_slot,
+                          3);
+                check_int("continue availability null",
+                          theron_v1_startup_continue_availability_from_state(
+                              THERON_V1_STARTUP_RESUME_DUAL,
+                              1,
+                              2,
+                              THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                              NULL),
+                          0);
                 check_int("continue state receipt rc",
                           theron_v1_startup_continue_state_receipt_from_result(
                               &continue_result,

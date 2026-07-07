@@ -12166,24 +12166,20 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
     return 1;
 }
 
-static int m11_theron_srm_continue_available(const M11_GameViewState* state) {
-    if (!state) {
-        return 0;
-    }
-    return state->theronState.save_resume_srm_active_slot >= 0 &&
-           state->theronState.save_resume_srm_import_status ==
-                THERON_V1_SRM_PROGRESS_IMPORT_OK;
-}
+static int m11_theron_continue_availability(
+    const M11_GameViewState* state,
+    Theron_V1StartupContinueAvailability* availability) {
 
-static int m11_theron_tqsv_continue_available(const M11_GameViewState* state) {
-    if (!state) {
+    if (!state || !availability) {
         return 0;
     }
-    return state->theronState.save_resume_active_slot >= 0 &&
-           (state->theronState.save_resume_claim ==
-                THERON_V1_STARTUP_RESUME_TQSV ||
-            state->theronState.save_resume_claim ==
-                THERON_V1_STARTUP_RESUME_DUAL);
+    return theron_v1_startup_continue_availability_from_state(
+        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
+        state->theronState.save_resume_active_slot,
+        state->theronState.save_resume_srm_active_slot,
+        (Theron_V1SrmProgressImportStatus)
+            state->theronState.save_resume_srm_import_status,
+        availability);
 }
 
 static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
@@ -14812,9 +14808,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             !state->theronState.level_loaded) {
             Theron_StartupAction action;
             Theron_StartupResult action_result;
-            int has_continue =
-                    m11_theron_tqsv_continue_available(state) ||
-                    m11_theron_srm_continue_available(state);
+            Theron_V1StartupContinueAvailability continue_availability;
+            int has_continue = 0;
+            if (m11_theron_continue_availability(state,
+                                                 &continue_availability)) {
+                has_continue = continue_availability.has_any_continue;
+            }
             action_result = theron_v1_startup_handle_input_with_progression(
                 (Theron_StartupPhase)state->theronState.startup_phase,
                 (Theron_DungeonID)state->theronState.selected_dungeon,
@@ -15402,7 +15401,8 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     Theron_StartupHit hit;
     Theron_StartupAction action;
     Theron_StartupResult result;
-    int has_continue;
+    Theron_V1StartupContinueAvailability continue_availability;
+    int has_continue = 0;
     int count;
 
     if (!state ||
@@ -15419,9 +15419,9 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         &layout_state,
         elements,
         (int)(sizeof(elements) / sizeof(elements[0])));
-    has_continue =
-        m11_theron_tqsv_continue_available(state) ||
-        m11_theron_srm_continue_available(state);
+    if (m11_theron_continue_availability(state, &continue_availability)) {
+        has_continue = continue_availability.has_any_continue;
+    }
     if (theron_v1_startup_layout_hit_at(
             (Theron_StartupPhase)state->theronState.startup_phase,
             elements,
@@ -38620,12 +38620,18 @@ static int m11_theron_startup_build_layout_state(
     layout_state->soul_cursor = state->theronState.startup_cursor;
     layout_state->continue_focus =
         state->theronState.save_resume_continue_focus;
-    layout_state->has_tqsv_continue =
-        m11_theron_tqsv_continue_available(state);
-    layout_state->tqsv_slot = state->theronState.save_resume_active_slot;
-    layout_state->has_srm_continue =
-        m11_theron_srm_continue_available(state);
-    layout_state->srm_slot = state->theronState.save_resume_srm_active_slot;
+    {
+        Theron_V1StartupContinueAvailability continue_availability;
+        if (m11_theron_continue_availability(state,
+                                             &continue_availability)) {
+            layout_state->has_tqsv_continue =
+                continue_availability.has_tqsv_continue;
+            layout_state->tqsv_slot = continue_availability.tqsv_slot;
+            layout_state->has_srm_continue =
+                continue_availability.has_srm_continue;
+            layout_state->srm_slot = continue_availability.srm_slot;
+        }
+    }
     m11_theron_startup_chapter_label(state,
                                      layout_state->chapter_label,
                                      sizeof(layout_state->chapter_label));
