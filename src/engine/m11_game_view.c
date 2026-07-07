@@ -191,7 +191,8 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
                                          int relativeCell,
                                          int flipFlags,
                                          int sourceZoneRow,
-                                         int transparentColor);
+                                         int transparentColor,
+                                         int usesF0791Blit);
 static int m11_draw_explosion_sprite(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int framebufferWidth,
@@ -226,7 +227,8 @@ static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
                                               int maxFrames,
                                               int attack,
                                               int depthIndex,
-                                              int transparentColor);
+                                              int transparentColor,
+                                              int usesF0791Blit);
 static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -1057,7 +1059,8 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         blit->relative_cell,
         blit->flip_flags,
         blit->source_zone_row,
-        blit->transparent_color);
+        blit->transparent_color,
+        blit->uses_f0791_blit);
 }
 
 static int m11_csb_viewport_explosion_sprite_drawer(
@@ -1092,7 +1095,8 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         blit->max_frames,
         blit->attack,
         blit->depth_index,
-        blit->transparent_color);
+        blit->transparent_color,
+        blit->uses_f0791_blit);
 }
 
 static void m11_csb_runtime_overlay_stats_apply(
@@ -17406,7 +17410,8 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                         relativeCell,
                                         flipFlags,
                                         sourceZoneRow,
-                                        -1);
+                                        -1,
+                                        0);
 }
 
 static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
@@ -17419,9 +17424,11 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
                                          int relativeCell,
                                          int flipFlags,
                                          int sourceZoneRow,
-                                         int transparentColor) {
+                                         int transparentColor,
+                                         int usesF0791Blit) {
     const M11_AssetSlot* slot;
     DM1_ProjectileSpriteBlitPlan plan;
+    int effectiveTransparentColor;
     if (!state || !state->assetsAvailable || gfxIndex < 454 ||
         gfxIndex >= 486) return 0;
     (void)relativeDir;
@@ -17446,12 +17453,19 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
             (int)slot->height)) {
         return 0;
     }
+    /* ReDMCSB DUNVIEW.C F0115 uses F0791/C10 for CSB C2900 projectile
+     * source-zone blits.  DM1 wrapper calls and non-F0791 callers keep the
+     * projectile plan's native transparent color instead of blindly trusting
+     * a caller-provided material color. */
+    effectiveTransparentColor =
+        (usesF0791Blit && transparentColor >= 0)
+            ? transparentColor
+            : plan.transparent_color;
     if (plan.flip_flags & 0x02) {
         m11_blit_scaled_flip(slot, framebuffer, framebufferWidth, framebufferHeight,
                              plan.draw_x, plan.draw_y,
                              plan.draw_w, plan.draw_h,
-                             transparentColor >= 0 ? transparentColor
-                                                   : plan.transparent_color,
+                             effectiveTransparentColor,
                              (plan.flip_flags & 0x01) ? 1 : 0,
                              1);
     } else if (plan.flip_flags & 0x01) {
@@ -17459,17 +17473,13 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
                                          framebufferHeight,
                                          plan.draw_x, plan.draw_y,
                                          plan.draw_w, plan.draw_h,
-                                         transparentColor >= 0
-                                             ? transparentColor
-                                             : plan.transparent_color);
+                                         effectiveTransparentColor);
     } else {
         M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
                                    framebufferHeight,
                                    plan.draw_x, plan.draw_y,
                                    plan.draw_w, plan.draw_h,
-                                   transparentColor >= 0
-                                       ? transparentColor
-                                       : plan.transparent_color);
+                                   effectiveTransparentColor);
     }
     return 1;
 }
@@ -17526,7 +17536,8 @@ static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
                                              maxFrames,
                                              attack,
                                              depthIndex,
-                                             -1);
+                                             -1,
+                                             0);
 }
 
 static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
@@ -17541,9 +17552,11 @@ static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
                                               int maxFrames,
                                               int attack,
                                               int depthIndex,
-                                              int transparentColor) {
+                                              int transparentColor,
+                                              int usesF0791Blit) {
     const M11_AssetSlot* slot;
     DM1_ExplosionSpriteBlitPlan plan;
+    int effectiveTransparentColor;
     if (!state || !state->assetsAvailable) return 0;
     if (aspect < 0 || gfxIndex < 0) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
@@ -17566,19 +17579,26 @@ static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
                                            (int)slot->height)) {
         return 0;
     }
+    /* CSB explosion blit records carry the F0791 material decision from the
+     * CSB viewport layer.  Without this gate, M11 can accidentally apply a
+     * CSB source-zone transparent color to ordinary DM1 explosion draws. */
+    effectiveTransparentColor =
+        (usesF0791Blit && transparentColor >= 0)
+            ? transparentColor
+            : plan.transparent_color;
 
     if (plan.is_smoke) {
         M11_AssetLoader_BlitScaledReplace(
             slot, framebuffer, framebufferWidth, framebufferHeight,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
-            transparentColor >= 0 ? transparentColor : plan.transparent_color,
+            effectiveTransparentColor,
             plan.replace_src_a, plan.replace_dst_a,
             plan.replace_src_b, plan.replace_dst_b);
     } else {
         M11_AssetLoader_BlitScaled(
             slot, framebuffer, framebufferWidth, framebufferHeight,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
-            transparentColor >= 0 ? transparentColor : plan.transparent_color);
+            effectiveTransparentColor);
     }
     return 1;
 }
