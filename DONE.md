@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 RetroAchievements start-menu settings: M12 settings now include persisted `RETROACHIEVEMENTS` and `RA HARDCORE` rows, modern settings rendering shows both rows, the accessibility manifest mirrors them, config import/export carries them, and M11 enables the RA runtime bridge from either CLI or start-menu settings. Verification: DM1 V2 settings persistence test, RetroAchievements unit test, Phase A 24/24, `firestaff` build, and `git diff --check` passed.
+
 - ✅ 2026-07-07 RetroAchievements adapter foundation: added a shared `firestaff_retroachievements` library with disabled-by-default config, username/API-token handling with token redaction, game binding for DM1/CSB/DM2/Nexus/Theron, status labels, and an achievement/event queue. M11/M12 now link the adapter, and the main binary exposes `--retroachievements`, `--ra-user`, `--ra-token`, and `--ra-hardcore`. Verification: RetroAchievements unit test, Phase A 24/24, CLI help smoke, build of `firestaff`, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB startup session options ownership: `csb_v1_runtime_pc34_compat` now builds startup session options from the runtime startup handoff, imported party state, and entrance resume validation. M11 no longer assembles the import/resume options input locally. Verification: CSB boot runtime handoff passed 261/261, startup entrance pointer contract passed 116/116, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.
