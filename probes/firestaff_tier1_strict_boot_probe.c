@@ -244,13 +244,21 @@ static int make_startup_spec(const Tier1PathSpec *runtime_spec,
     if (!runtime_spec || !startup_spec || !label || label_size == 0U) {
         return 0;
     }
-    if (strcmp(runtime_spec->game, "dm1") == 0) {
-        return 0;
-    }
     *startup_spec = *runtime_spec;
     startup_spec->script = NULL;
     startup_spec->boot_frames = 2;
-    if (strcmp(runtime_spec->game, "csb") == 0) {
+    if (strcmp(runtime_spec->game, "dm1") == 0) {
+        startup_spec->expect_phase = "dm1-runtime";
+        startup_spec->expect_startup_active = 0;
+        startup_spec->expect_level_loaded = 1;
+        startup_spec->expect_runtime_tick_max = -1;
+        startup_spec->expect_animation = "dm1-title";
+        startup_spec->expect_animation_active = 0;
+        startup_spec->expect_title_frame_min = 53;
+        startup_spec->expect_title_frame_max = 53;
+        startup_spec->expect_title_frame_boundary = 53;
+        startup_spec->expect_title_ready = 1;
+    } else if (strcmp(runtime_spec->game, "csb") == 0) {
         startup_spec->expect_phase = "csb-title-1";
         startup_spec->expect_startup_active = 1;
         startup_spec->expect_level_loaded = 1;
