@@ -268,6 +268,7 @@ int main(void)
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_StartupSessionOptionsInput_PC34 session_input;
     CSB_V1_StartupSessionOptions_PC34 session_options;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
@@ -1496,6 +1497,56 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
               strcmp(outcome.status, "CSB DOORS") == 0,
           "startup runtime apply begins normal dungeon door opening");
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    csb_v1_startup_runtime_apply_receipt_init_pc34(&runtime_receipt);
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &command_plan) &&
+              csb_v1_startup_runtime_plan_for_entrance_plan_pc34(
+                  &command_plan,
+                  &runtime_plan) &&
+              csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
+                  &command_state,
+                  &runtime_plan,
+                  0,
+                  0,
+                  &outcome,
+                  &runtime_receipt) &&
+              runtime_receipt.result ==
+                  CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34 &&
+              runtime_receipt.clear_import_preview &&
+              runtime_receipt.bonus_requested_changed &&
+              runtime_receipt.bonus_requested == 0 &&
+              command_state.opening_active,
+          "startup runtime receipt owns normal dungeon redraw state");
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34,
+              &command_plan) &&
+              csb_v1_startup_runtime_plan_for_entrance_plan_pc34(
+                  &command_plan,
+                  &runtime_plan) &&
+              csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
+                  &command_state,
+                  &runtime_plan,
+                  0,
+                  0,
+                  &outcome,
+                  &runtime_receipt) &&
+              runtime_receipt.result ==
+                  CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34 &&
+              runtime_receipt.bonus_requested_changed &&
+              runtime_receipt.bonus_requested == 1,
+          "startup runtime receipt owns bonus dungeon redraw state");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
@@ -1528,6 +1579,30 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
               strcmp(outcome.status, "CSB DOORS") == 0,
           "startup runtime apply begins door after loaded resume");
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
+              &command_plan) &&
+              csb_v1_startup_runtime_plan_for_entrance_plan_pc34(
+                  &command_plan,
+                  &runtime_plan) &&
+              csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
+                  &command_state,
+                  &runtime_plan,
+                  1,
+                  1,
+                  &outcome,
+                  &runtime_receipt) &&
+              runtime_receipt.result ==
+                  CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34 &&
+              runtime_receipt.clear_import_preview &&
+              !runtime_receipt.bonus_requested_changed &&
+              command_state.opening_active,
+          "startup runtime receipt owns resume redraw state");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
