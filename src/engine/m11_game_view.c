@@ -3212,33 +3212,38 @@ static void m11_csb_startup_command_state_from_m11(
     const M11_GameViewState *state,
     CSB_V1_StartupCommandState_PC34 *out_state)
 {
+    CSB_V1_StartupCommandStateRequest_PC34 request;
     if (!out_state) {
         return;
     }
-    memset(out_state, 0, sizeof(*out_state));
+    memset(&request, 0, sizeof(request));
     if (!state) {
+        (void)csb_v1_startup_command_state_from_request_pc34(NULL,
+                                                             out_state);
         return;
     }
-    out_state->title_active = state->csbState.startup_title_active;
-    out_state->title_frame = state->csbState.startup_title_frame;
-    out_state->title_source_step = state->csbState.startup_title_source_step;
-    out_state->entrance_active = state->csbState.startup_entrance_active;
-    out_state->entrance_source_step =
+    request.title_active = state->csbState.startup_title_active;
+    request.title_frame = state->csbState.startup_title_frame;
+    request.title_source_step = state->csbState.startup_title_source_step;
+    request.entrance_active = state->csbState.startup_entrance_active;
+    request.entrance_source_step =
         state->csbState.startup_entrance_source_step;
-    out_state->entrance_dismissed =
+    request.entrance_dismissed =
         state->csbState.startup_entrance_dismissed;
-    out_state->credits_active =
+    request.credits_active =
         state->csbState.startup_entrance_credits_active;
-    out_state->credits_remaining_ticks =
+    request.credits_remaining_ticks =
         state->csbState.startup_entrance_credits_remaining_ticks;
-    out_state->opening_active =
+    request.opening_active =
         state->csbState.startup_entrance_opening_active;
-    out_state->opening_delay_ticks =
+    request.opening_delay_ticks =
         state->csbState.startup_entrance_opening_delay_ticks;
-    out_state->opening_step =
+    request.opening_step =
         state->csbState.startup_entrance_opening_step;
-    out_state->pending_command =
+    request.pending_command =
         state->csbState.startup_entrance_pending_command;
+    (void)csb_v1_startup_command_state_from_request_pc34(&request,
+                                                         out_state);
 }
 
 static void m11_csb_startup_command_state_to_m11(

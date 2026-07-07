@@ -434,6 +434,21 @@ typedef struct CSB_V1_StartupCommandState_PC34 {
     int pending_command;
 } CSB_V1_StartupCommandState_PC34;
 
+typedef struct CSB_V1_StartupCommandStateRequest_PC34 {
+    int title_active;
+    int title_frame;
+    int title_source_step;
+    int entrance_active;
+    int entrance_source_step;
+    int entrance_dismissed;
+    int credits_active;
+    int credits_remaining_ticks;
+    int opening_active;
+    int opening_delay_ticks;
+    int opening_step;
+    int pending_command;
+} CSB_V1_StartupCommandStateRequest_PC34;
+
 typedef struct CSB_V1_StartupRenderPlanRequest_PC34 {
     int title_active;
     int title_frame;
@@ -549,6 +564,9 @@ int csb_v1_startup_execute_opening_composite_pc34(
 int csb_v1_startup_execute_render_plan_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     const CSB_V1_StartupRenderExecutor_PC34 *executor);
+int csb_v1_startup_command_state_from_request_pc34(
+    const CSB_V1_StartupCommandStateRequest_PC34 *request,
+    CSB_V1_StartupCommandState_PC34 *out_state);
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int skip_startup);

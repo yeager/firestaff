@@ -265,6 +265,7 @@ int main(void)
     CSB_V1_StartupTickResult_PC34 result;
     CSB_V1_StartupRenderState_PC34 render_state;
     CSB_V1_StartupRenderPlanRequest_PC34 render_request;
+    CSB_V1_StartupCommandStateRequest_PC34 command_request;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
@@ -300,6 +301,42 @@ int main(void)
               material.shadow_dx == 1 &&
               material.shadow_dy == 1,
           "startup shadow text material owns CSB fallback shadow");
+
+    memset(&command_request, 0, sizeof(command_request));
+    command_request.title_active = 2;
+    command_request.title_frame = 37;
+    command_request.title_source_step =
+        CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
+    command_request.entrance_active = 1;
+    command_request.entrance_source_step =
+        CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34;
+    command_request.entrance_dismissed = 0;
+    command_request.credits_active = 1;
+    command_request.credits_remaining_ticks = 444;
+    command_request.opening_active = 3;
+    command_request.opening_delay_ticks = 12;
+    command_request.opening_step = 4;
+    command_request.pending_command =
+        CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34;
+    memset(&command_state, 0, sizeof(command_state));
+    check(csb_v1_startup_command_state_from_request_pc34(
+              &command_request,
+              &command_state) &&
+              command_state.title_active == 1 &&
+              command_state.title_frame == 37 &&
+              command_state.title_source_step ==
+                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              command_state.entrance_active == 1 &&
+              command_state.entrance_source_step ==
+                  CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34 &&
+              command_state.credits_active == 1 &&
+              command_state.credits_remaining_ticks == 444 &&
+              command_state.opening_active == 1 &&
+              command_state.opening_delay_ticks == 12 &&
+              command_state.opening_step == 4 &&
+              command_state.pending_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+          "startup command state request owns M11 raw field normalization");
 
     expect_action("enter route becomes CSB startup Enter",
                   244, 45,
