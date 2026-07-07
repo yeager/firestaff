@@ -41423,7 +41423,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         } else if (state->nexusState.champion_select_active &&
                    state->nexusEngine) {
             const Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
-            int i;
+            Nexus_V1_StartupChampionRenderRow rows[12];
+            Nexus_V1_StartupChampionFooterRender footer;
+            int row_count;
+            int row;
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           NEXUS_V1_STARTUP_TITLE_X,
                           NEXUS_V1_STARTUP_TITLE_Y,
@@ -41435,21 +41438,16 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           "SELECT CHAMPIONS",
                           &g_text_shadow);
             directDraw = 1;
-            for (i = 0; i < pool->champion_count && i < 12; ++i) {
-                char row[96];
-                int inParty = 0;
-                int p;
-                Nexus_V1_StartupRect rowRect;
-                int portraitIndex = pool->champions[i].portrait_index;
-                if (!nexus_v1_startup_champion_row_rect(i, &rowRect)) {
-                    continue;
-                }
-                for (p = 0; p < pool->party_count; ++p) {
-                    if (pool->party[p] == i) {
-                        inParty = 1;
-                        break;
-                    }
-                }
+            row_count = nexus_v1_startup_menu_build_champion_render_rows(
+                pool,
+                state->nexusState.champion_cursor,
+                rows,
+                (int)(sizeof(rows) / sizeof(rows[0])),
+                &footer);
+            for (row = 0; row < row_count; ++row) {
+                const Nexus_V1_StartupChampionRenderRow *render_row =
+                    &rows[row];
+                int portraitIndex = render_row->portrait_index;
                 if (state->nexusEngine->ui_faces_loaded > 0 &&
                     portraitIndex >= 0 && portraitIndex < 24) {
                     const Nexus_UI_Surface* face =
@@ -41459,33 +41457,23 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                    framebuffer,
                                                    framebufferWidth,
                                                    framebufferHeight,
-                                                   NEXUS_V1_STARTUP_CHAMPION_PORTRAIT_X,
-                                                   rowRect.y + 1,
-                                                   10,
-                                                   10);
+                                                   render_row->portrait_x,
+                                                   render_row->portrait_y,
+                                                   render_row->portrait_w,
+                                                   render_row->portrait_h);
                 }
-                snprintf(row, sizeof(row), "%c %s %s HP %d MP %d",
-                         i == state->nexusState.champion_cursor ? '>' : ' ',
-                         inParty ? "*" : " ",
-                         pool->champions[i].name_ascii,
-                         pool->champions[i].max_health,
-                         pool->champions[i].max_mana);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X,
-                              rowRect.y + 1, row,
-                              i == state->nexusState.champion_cursor
+                              render_row->text_x,
+                              render_row->text_y,
+                              render_row->label,
+                              render_row->selected
                                   ? &g_text_shadow : &g_text_small);
             }
-            {
-                char footer[80];
-                snprintf(footer, sizeof(footer),
-                         "PARTY %d/%d  ACCEPT ADD  ACTION START",
-                         pool->party_count, NEXUS_MAX_PARTY);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              NEXUS_V1_STARTUP_FOOTER_X,
-                              NEXUS_V1_STARTUP_FOOTER_Y,
-                              footer, &g_text_small);
-            }
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          footer.text_x,
+                          footer.text_y,
+                          footer.label,
+                          &g_text_small);
         } else if (state->nexusEngine) {
             Nexus_Viewport vp;
             nexus_viewport_init(&vp);
