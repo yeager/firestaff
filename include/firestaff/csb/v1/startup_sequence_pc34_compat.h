@@ -137,6 +137,24 @@ typedef struct CSB_V1_StartupPrimitiveCommand_PC34 {
     int visible;
 } CSB_V1_StartupPrimitiveCommand_PC34;
 
+#define CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34 8
+
+typedef enum CSB_V1_StartupRenderCommandKind_PC34 {
+    CSB_V1_STARTUP_RENDER_COMMAND_NONE_PC34 = 0,
+    CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 = 1,
+    CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34 = 2,
+    CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34 = 3,
+    CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34 = 4,
+    CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34 = 5,
+    CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34 = 6,
+    CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34 = 7,
+    CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34 = 8
+} CSB_V1_StartupRenderCommandKind_PC34;
+
+typedef struct CSB_V1_StartupRenderCommand_PC34 {
+    CSB_V1_StartupRenderCommandKind_PC34 kind;
+} CSB_V1_StartupRenderCommand_PC34;
+
 typedef struct CSB_V1_StartupRenderState_PC34 {
     int entrance_active;
     int entrance_frame;
@@ -253,6 +271,9 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int primitive_command_count;
     CSB_V1_StartupPrimitiveCommand_PC34 primitive_commands[
         CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34];
+    int render_command_count;
+    CSB_V1_StartupRenderCommand_PC34 render_commands[
+        CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34];
 } CSB_V1_StartupRenderPlan_PC34;
 
 typedef struct CSB_V1_StartupCommandState_PC34 {
