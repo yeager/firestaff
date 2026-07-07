@@ -74,11 +74,63 @@ static void test_action_row_and_icon_cells_stay_source_locked(void)
     check_int("icon3 x", x, 299);
 }
 
+static void test_spell_area_boxes_stay_source_locked(void)
+{
+    int x, y, w, h;
+    check_int("spell area zone id", M11_GameView_GetV1SpellAreaZoneId(), 13);
+    check_true("spell area", M11_GameView_GetV1SpellAreaZone(&x, &y, &w, &h));
+    check_int("spell area x", x, 233);
+    check_int("spell area y", y, 42);
+    check_int("spell area w", w, 87);
+    check_int("spell area h", h, 25);
+    check_int("spell bg graphic", M11_GameView_GetV1SpellAreaBackgroundGraphicId(), 9);
+    check_int("spell lines graphic", M11_GameView_GetV1SpellAreaLinesGraphicId(), 11);
+
+    check_int("caster panel zone id",
+              M11_GameView_GetV1SpellCasterPanelZoneId(), 221);
+    check_true("caster panel",
+               M11_GameView_GetV1SpellCasterPanelZone(&x, &y, &w, &h));
+    check_int("caster panel x", x, 233);
+    check_int("caster panel y", y, 42);
+    check_int("caster panel w", w, 87);
+    check_int("caster panel h", h, 8);
+    check_int("caster tab zone id",
+              M11_GameView_GetV1SpellCasterTabZoneId(), 224);
+    check_true("caster tab",
+               M11_GameView_GetV1SpellCasterTabZone(&x, &y, &w, &h));
+    check_int("caster tab x", x, 233);
+    check_int("caster tab y", y, 42);
+    check_int("caster tab w", w, 45);
+    check_int("caster tab h", h, 8);
+
+    check_int("available parent 0",
+              M11_GameView_GetV1SpellAvailableSymbolParentZoneId(0), 245);
+    check_int("available parent 5",
+              M11_GameView_GetV1SpellAvailableSymbolParentZoneId(5), 250);
+    check_int("available parent bad",
+              M11_GameView_GetV1SpellAvailableSymbolParentZoneId(6), 0);
+    check_int("available symbol 0",
+              M11_GameView_GetV1SpellAvailableSymbolZoneId(0), 255);
+    check_int("available symbol 5",
+              M11_GameView_GetV1SpellAvailableSymbolZoneId(5), 260);
+    check_int("available symbol bad",
+              M11_GameView_GetV1SpellAvailableSymbolZoneId(-1), 0);
+    check_int("champion symbol 0",
+              M11_GameView_GetV1SpellChampionSymbolZoneId(0), 261);
+    check_int("champion symbol 3",
+              M11_GameView_GetV1SpellChampionSymbolZoneId(3), 264);
+    check_int("champion symbol bad",
+              M11_GameView_GetV1SpellChampionSymbolZoneId(4), 0);
+    check_int("spell cast zone", M11_GameView_GetV1SpellCastZoneId(), 252);
+    check_int("spell recant zone", M11_GameView_GetV1SpellRecantZoneId(), 254);
+}
+
 int main(void)
 {
     test_action_area_box();
     test_action_menu_graphic_boxes();
     test_action_row_and_icon_cells_stay_source_locked();
+    test_spell_area_boxes_stay_source_locked();
     printf("test_m11_v1_action_area_geometry_pc34_compat: %d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
     return g_failures == 0 ? 0 : 1;

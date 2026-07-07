@@ -38,6 +38,59 @@ static void test_accessor_functions(void)
     CHECK(dm1_v1_box_spell_area_h_pc34() == 74);
 }
 
+static void test_screen_contract_helpers(void)
+{
+    DM1_V1_SpellAreaRectPc34 graphic = dm1_v1_spell_area_graphic_rect_pc34();
+    DM1_V1_SpellAreaRectPc34 click = dm1_v1_spell_area_click_rect_pc34();
+    DM1_V1_SpellAreaRectPc34 source = dm1_v1_spell_area_source_box_rect_pc34();
+    DM1_V1_SpellAreaRectPc34 caster_panel =
+        dm1_v1_spell_caster_panel_rect_pc34();
+    DM1_V1_SpellAreaRectPc34 caster_tab =
+        dm1_v1_spell_caster_tab_rect_pc34();
+
+    CHECK(DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 == 9);
+    CHECK(DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 11);
+    CHECK(DM1_V1_SPELL_AREA_ZONE_ID_PC34 == 13);
+    CHECK(DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34 == 221);
+    CHECK(DM1_V1_SPELL_CASTER_TAB_ZONE_ID_PC34 == 224);
+    CHECK(DM1_V1_SPELL_AREA_CAST_ZONE_ID_PC34 == 252);
+    CHECK(DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34 == 254);
+
+    CHECK(graphic.x == 233);
+    CHECK(graphic.y == 42);
+    CHECK(graphic.w == 87);
+    CHECK(graphic.h == 25);
+    CHECK(click.x == 233);
+    CHECK(click.y == 42);
+    CHECK(click.w == 87);
+    CHECK(click.h == 33);
+    CHECK(source.x == 224);
+    CHECK(source.y == 42);
+    CHECK(source.w == 96);
+    CHECK(source.h == 33);
+    CHECK(caster_panel.x == 233);
+    CHECK(caster_panel.y == 42);
+    CHECK(caster_panel.w == 87);
+    CHECK(caster_panel.h == 8);
+    CHECK(caster_tab.x == 233);
+    CHECK(caster_tab.y == 42);
+    CHECK(caster_tab.w == 45);
+    CHECK(caster_tab.h == 8);
+
+    CHECK(dm1_v1_spell_available_symbol_parent_zone_id_pc34(0) == 245);
+    CHECK(dm1_v1_spell_available_symbol_parent_zone_id_pc34(5) == 250);
+    CHECK(dm1_v1_spell_available_symbol_parent_zone_id_pc34(-1) == 0);
+    CHECK(dm1_v1_spell_available_symbol_parent_zone_id_pc34(6) == 0);
+    CHECK(dm1_v1_spell_available_symbol_zone_id_pc34(0) == 255);
+    CHECK(dm1_v1_spell_available_symbol_zone_id_pc34(5) == 260);
+    CHECK(dm1_v1_spell_available_symbol_zone_id_pc34(-1) == 0);
+    CHECK(dm1_v1_spell_available_symbol_zone_id_pc34(6) == 0);
+    CHECK(dm1_v1_spell_champion_symbol_zone_id_pc34(0) == 261);
+    CHECK(dm1_v1_spell_champion_symbol_zone_id_pc34(3) == 264);
+    CHECK(dm1_v1_spell_champion_symbol_zone_id_pc34(-1) == 0);
+    CHECK(dm1_v1_spell_champion_symbol_zone_id_pc34(4) == 0);
+}
+
 static void test_get_function(void)
 {
     int v;
@@ -106,6 +159,7 @@ int main(void)
 {
     test_table_values();
     test_accessor_functions();
+    test_screen_contract_helpers();
     test_get_function();
     test_components_non_negative();
     test_run_accepted();

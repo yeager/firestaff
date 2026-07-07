@@ -93,6 +93,7 @@
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
@@ -7968,35 +7969,27 @@ static void m11_get_rune_abbrev(int row, int col, char out[3]) {
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void) {
     /* C011_GRAPHIC_MENU_SPELL_AREA_LINES; kept near rune-cell blitter so
      * the source graphic id is probe-visible before the asset enum block. */
-    return 11;
+    return DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
 }
 
 int M11_GameView_GetV1SpellAvailableSymbolParentZoneId(int symbolIndex) {
-    if (symbolIndex < 0 || symbolIndex >= 6) return 0;
-    /* Source layout-696 C245..C250 parent zones for available spell symbols. */
-    return 245 + symbolIndex;
+    return dm1_v1_spell_available_symbol_parent_zone_id_pc34(symbolIndex);
 }
 
 int M11_GameView_GetV1SpellAvailableSymbolZoneId(int symbolIndex) {
-    if (!M11_GameView_GetV1SpellAvailableSymbolParentZoneId(symbolIndex)) return 0;
-    /* Source layout-696 C255..C260 draw zones for available spell symbols. */
-    return 255 + symbolIndex;
+    return dm1_v1_spell_available_symbol_zone_id_pc34(symbolIndex);
 }
 
 int M11_GameView_GetV1SpellChampionSymbolZoneId(int symbolIndex) {
-    if (symbolIndex < 0 || symbolIndex >= 4) return 0;
-    /* Source layout-696 C261..C264 selected/champion spell-symbol zones. */
-    return 261 + symbolIndex;
+    return dm1_v1_spell_champion_symbol_zone_id_pc34(symbolIndex);
 }
 
 int M11_GameView_GetV1SpellCastZoneId(void) {
-    /* Source layout-696 C252_ZONE_SPELL_AREA_CAST_SPELL. */
-    return 252;
+    return DM1_V1_SPELL_AREA_CAST_ZONE_ID_PC34;
 }
 
 int M11_GameView_GetV1SpellRecantZoneId(void) {
-    /* Source layout-696 C254_ZONE_SPELL_AREA_RECANT_SYMBOL. */
-    return 254;
+    return DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34;
 }
 
 int M11_GameView_GetV1SpellLabelCellSourceZone(int selectedLine,
@@ -25393,16 +25386,6 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
 #define M11_DM_ACTION_AREA_Y     77
 #define M11_DM_ACTION_AREA_W     87
 #define M11_DM_ACTION_AREA_H     45
-#define M11_DM_SPELL_AREA_X     233
-#define M11_DM_SPELL_AREA_Y      42
-#define M11_DM_SPELL_AREA_W      87
-#define M11_DM_SPELL_AREA_H      25
-/* COMMAND.C's C013 mouse/input zone is taller than the 87x25
- * C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND bitmap: the cast/recant
- * symbol zones live in the lower source rows down to y=74.  Keep
- * M11_DM_SPELL_AREA_H as the native graphic height, but use this
- * source hit height for primary mouse routing. */
-#define M11_DM_SPELL_AREA_CLICK_H 33
 #define M11_DM_MOVEMENT_ARROWS_OUTER_X 224
 #define M11_DM_MOVEMENT_ARROWS_OUTER_Y 124
 #define M11_DM_MOVEMENT_ARROWS_OUTER_W  96
@@ -33152,18 +33135,19 @@ int M11_GameView_GetV1ActionAreaZone(int* outX,
 }
 
 int M11_GameView_GetV1SpellAreaZoneId(void) {
-    return 13;
+    return DM1_V1_SPELL_AREA_ZONE_ID_PC34;
 }
 
 int M11_GameView_GetV1SpellAreaZone(int* outX,
                                        int* outY,
                                        int* outW,
                                        int* outH) {
+    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_area_graphic_rect_pc34();
     if (!M11_GameView_GetV1SpellAreaZoneId()) return 0;
-    if (outX) *outX = M11_DM_SPELL_AREA_X;
-    if (outY) *outY = M11_DM_SPELL_AREA_Y;
-    if (outW) *outW = M11_DM_SPELL_AREA_W;
-    if (outH) *outH = M11_DM_SPELL_AREA_H;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -33171,10 +33155,11 @@ static int m11_get_v1_spell_area_click_zone(int* outX,
                                              int* outY,
                                              int* outW,
                                              int* outH) {
-    if (outX) *outX = M11_DM_SPELL_AREA_X;
-    if (outY) *outY = M11_DM_SPELL_AREA_Y;
-    if (outW) *outW = M11_DM_SPELL_AREA_W;
-    if (outH) *outH = M11_DM_SPELL_AREA_CLICK_H;
+    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_area_click_rect_pc34();
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -33244,45 +33229,41 @@ int M11_GameView_GetV1ActionPassZone(int* outX,
 }
 
 int M11_GameView_GetV1SpellCasterPanelZoneId(void) {
-    /* Source layout-696 C221_ZONE_SPELL_AREA_SET_MAGIC_CASTER. */
-    return 221;
+    return DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34;
 }
 
 int M11_GameView_GetV1SpellCasterPanelZone(int* outX,
                                            int* outY,
                                            int* outW,
                                            int* outH) {
-    int spellX, spellY;
-    if (!M11_GameView_GetV1SpellCasterPanelZoneId() ||
-        !M11_GameView_GetV1SpellAreaZone(&spellX, &spellY, NULL, NULL)) {
+    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_caster_panel_rect_pc34();
+    if (!M11_GameView_GetV1SpellCasterPanelZoneId()) {
         return 0;
     }
-    if (outX) *outX = spellX;
-    if (outY) *outY = spellY;
-    if (outW) *outW = 87;
-    if (outH) *outH = 8;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1SpellCasterTabZoneId(void) {
     if (!M11_GameView_GetV1SpellCasterPanelZoneId()) return 0;
-    /* Source layout-696 C224_ZONE_SPELL_AREA_MAGIC_CASTER_TAB. */
-    return 224;
+    return DM1_V1_SPELL_CASTER_TAB_ZONE_ID_PC34;
 }
 
 int M11_GameView_GetV1SpellCasterTabZone(int* outX,
                                          int* outY,
                                          int* outW,
                                          int* outH) {
-    int panelX, panelY;
-    if (!M11_GameView_GetV1SpellCasterTabZoneId() ||
-        !M11_GameView_GetV1SpellCasterPanelZone(&panelX, &panelY, NULL, NULL)) {
+    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_caster_tab_rect_pc34();
+    if (!M11_GameView_GetV1SpellCasterTabZoneId()) {
         return 0;
     }
-    if (outX) *outX = panelX;
-    if (outY) *outY = panelY;
-    if (outW) *outW = 45;
-    if (outH) *outH = 8;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -33306,7 +33287,7 @@ int M11_GameView_GetV1ActionSpellStripZone(int* outX,
 }
 
 int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void) {
-    return M11_GFX_SPELL_AREA_BG;
+    return DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34;
 }
 
 int M11_GameView_GetV1ChampionPortraitGraphicId(void) {
@@ -36238,20 +36219,25 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     }
 
     if (m11_v2_vertical_slice_enabled()) {
+        int spellX = 0, spellY = 0, spellW = 0, spellH = 0;
+        (void)M11_GameView_GetV1SpellAreaZone(
+            &spellX, &spellY, &spellW, &spellH);
+        (void)spellW;
+        (void)spellH;
         m11_blit_v2_slice_asset(&m11_v2_action_area_base,
                                 framebuffer, framebufferWidth, framebufferHeight,
                                 224, 45, 1);
         m11_blit_v2_slice_asset(&m11_v2_spell_area_base,
                                 framebuffer, framebufferWidth, framebufferHeight,
-                                M11_DM_SPELL_AREA_X, M11_DM_SPELL_AREA_Y, 1);
+                                spellX, spellY, 1);
         m11_blit_v2_slice_asset(&m11_v2_spell_area_rune_bed,
                                 framebuffer, framebufferWidth, framebufferHeight,
-                                M11_DM_SPELL_AREA_X, M11_DM_SPELL_AREA_Y, 1);
+                                spellX, spellY, 1);
         m11_blit_v2_slice_asset(state->spellPanelOpen
                                     ? &m11_v2_spell_area_active
                                     : &m11_v2_spell_area_highlight,
                                 framebuffer, framebufferWidth, framebufferHeight,
-                                M11_DM_SPELL_AREA_X, M11_DM_SPELL_AREA_Y, 1);
+                                spellX, spellY, 1);
         drewAuthenticFrames = 1;
     }
 
