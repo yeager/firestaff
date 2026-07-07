@@ -12096,6 +12096,7 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
     Theron_V1_World* world;
     Theron_V1_BootProfile* profile;
     Theron_V1StartupContinueRequest request;
+    Theron_StartupChapterInspectRequest inspectRequest;
     Theron_V1StartupContinueResult result;
     Theron_V1StartupContinueApplyReceipt applyReceipt;
     Theron_StartupStateReceipt stateReceipt;
@@ -12121,11 +12122,15 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
         (Theron_V1SrmProgressImportStatus)
             state->theronState.save_resume_srm_import_status;
     request.srm_root = state->theronState.save_resume_srm_root;
-    if (!theron_v1_startup_continue_apply_request_with_receipts(
+    memset(&inspectRequest, 0, sizeof(inspectRequest));
+    inspectRequest.boot_profile = state->theronBootProfile;
+    inspectRequest.world = (const Theron_V1_World*)state->theronWorld;
+    inspectRequest.prefix = receipt;
+    if (!theron_v1_startup_continue_apply_request_with_inspect_receipts(
             world,
             &request,
             plan,
-            NULL,
+            &inspectRequest,
             &result,
             &applyReceipt,
             &stateReceipt,
@@ -12268,8 +12273,6 @@ static M11_GameInputResult m11_theron_startup_apply_action(
 
     case THERON_STARTUP_PLAN_CONTINUE_SAVE: {
         char receipt[96];
-        Theron_StartupChapterInspectRequest inspectRequest;
-        Theron_StartupChapterInspectReceipt inspectReceipt;
         Theron_V1StartupContinueResult continueResult;
         Theron_V1StartupContinueApplyReceipt applyReceipt;
         int continued = m11_theron_continue_startup(state,
@@ -12282,26 +12285,10 @@ static M11_GameInputResult m11_theron_startup_apply_action(
             m11_set_status(state, "STARTUP",
                            receipt[0] ? receipt :
                            (plan.failure_status ? plan.failure_status
-                                                : "CONTINUE FAILED"));
+	                                                : "CONTINUE FAILED"));
             return M11_GAME_INPUT_REDRAW;
         }
-        memset(&inspectRequest, 0, sizeof(inspectRequest));
-        inspectRequest.boot_profile = state->theronBootProfile;
-        inspectRequest.world = (const Theron_V1_World*)state->theronWorld;
-        inspectRequest.prefix = receipt;
-        theron_v1_startup_chapter_inspect_receipt_init(&inspectReceipt);
-        (void)theron_v1_startup_chapter_inspect_receipt_from_request(
-            &inspectRequest,
-            &inspectReceipt);
         if (applyReceipt.input_result == THERON_STARTUP_INPUT_RESULT_REDRAW) {
-            if (inspectReceipt.marker_line[0] != '\0') {
-                (void)theron_v1_startup_continue_apply_receipt(
-                    &plan,
-                    &continueResult,
-                    receipt,
-                    inspectReceipt.marker_line,
-                    &applyReceipt);
-            }
             m11_set_status(state,
                            applyReceipt.status_scope
                                ? applyReceipt.status_scope

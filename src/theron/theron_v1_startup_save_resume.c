@@ -836,6 +836,40 @@ int theron_v1_startup_continue_apply_request_with_receipts(
     return 1;
 }
 
+int theron_v1_startup_continue_apply_request_with_inspect_receipts(
+    Theron_V1_World *world,
+    const Theron_V1StartupContinueRequest *request,
+    const Theron_StartupActionPlan *plan,
+    const Theron_StartupChapterInspectRequest *inspect_request,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_V1StartupContinueApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_StartupChapterInspectReceipt inspect_receipt;
+    const char *chapter_marker_line = NULL;
+
+    theron_v1_startup_chapter_inspect_receipt_init(&inspect_receipt);
+    if (inspect_request &&
+        theron_v1_startup_chapter_inspect_receipt_from_request(
+            inspect_request,
+            &inspect_receipt) &&
+        inspect_receipt.marker_line[0] != '\0') {
+        chapter_marker_line = inspect_receipt.marker_line;
+    }
+    return theron_v1_startup_continue_apply_request_with_receipts(
+        world,
+        request,
+        plan,
+        chapter_marker_line,
+        out_result,
+        out_apply_receipt,
+        out_state_receipt,
+        receipt,
+        receipt_cap);
+}
+
 size_t theron_v1_startup_save_resume_format(
     const Theron_V1StartupSaveResume *snap,
     char *buf,
