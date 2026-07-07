@@ -1753,6 +1753,16 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                   placement.viewport_x, 2);
         check_int("csb.projectile_overlay.d3l2_cell2.y",
                   placement.viewport_y, 47);
+        check_int("csb.projectile_overlay.d3l2_cell2.source_row",
+                  placement.source_zone_row, 3);
+        check_int("csb.projectile_overlay.d3l2_cell2.sprite_x",
+                  placement.sprite_x, 0);
+        check_int("csb.projectile_overlay.d3l2_cell2.sprite_y",
+                  placement.sprite_y, 33);
+        check_int("csb.projectile_overlay.d3l2_cell2.sprite_w",
+                  placement.sprite_w, 224);
+        check_int("csb.projectile_overlay.d3l2_cell2.sprite_h",
+                  placement.sprite_h, 136);
 
         memset(&placement, 0, sizeof(placement));
         check_int("csb.projectile_overlay.d3l2_cell3.visible",
@@ -1807,6 +1817,31 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                   placement.viewport_x, 112);
         check_int("csb.projectile_overlay.fallback_y",
                   placement.viewport_y, 70);
+        check_int("csb.projectile_overlay.fallback_source_row",
+                  placement.source_zone_row, -1);
+        check_int("csb.projectile_overlay.fallback_sprite_x",
+                  placement.sprite_x, 96);
+        check_int("csb.projectile_overlay.fallback_sprite_y",
+                  placement.sprite_y, 87);
+        check_int("csb.projectile_overlay.fallback_sprite_w",
+                  placement.sprite_w, 32);
+        check_int("csb.projectile_overlay.fallback_sprite_h",
+                  placement.sprite_h, 32);
+        {
+            int row = 99;
+            int x = 0;
+            int y = 0;
+            int w = 0;
+            int h = 0;
+            check_int("csb.projectile_overlay.rect.helper",
+                      csb_v1_viewport_runtime_projectile_sprite_rect(
+                          2914, 2, 47, &row, &x, &y, &w, &h), 1);
+            check_int("csb.projectile_overlay.rect.helper.row", row, 3);
+            check_int("csb.projectile_overlay.rect.helper.x", x, 0);
+            check_int("csb.projectile_overlay.rect.helper.y", y, 33);
+            check_int("csb.projectile_overlay.rect.helper.w", w, 224);
+            check_int("csb.projectile_overlay.rect.helper.h", h, 136);
+        }
     }
 
     {
@@ -2674,6 +2709,16 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               explosion_place.viewport_x, 28);
     check_int("csb.runtime_explosion_overlay.d3l2.center.y",
               explosion_place.viewport_y, 52);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.depth",
+              explosion_place.depth_index, 2);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.sprite_x",
+              explosion_place.sprite_x, 0);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.sprite_y",
+              explosion_place.sprite_y, 33);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.sprite_w",
+              explosion_place.sprite_w, 224);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.sprite_h",
+              explosion_place.sprite_h, 136);
 
     memset(&explosion_place, 0, sizeof(explosion_place));
     check_true("csb.runtime_explosion_overlay.d3r2.side1.visible",
@@ -2702,6 +2747,31 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               explosion_place.view_square, -1);
     check_int("csb.runtime_explosion_overlay.d2c.generic.source",
               explosion_place.used_source_zone, 0);
+    check_int("csb.runtime_explosion_overlay.d2c.generic.depth",
+              explosion_place.depth_index, 2);
+    check_int("csb.runtime_explosion_overlay.d2c.generic.sprite_x",
+              explosion_place.sprite_x, 96);
+    check_int("csb.runtime_explosion_overlay.d2c.generic.sprite_y",
+              explosion_place.sprite_y, 87);
+    check_int("csb.runtime_explosion_overlay.d2c.generic.sprite_w",
+              explosion_place.sprite_w, 32);
+    check_int("csb.runtime_explosion_overlay.d2c.generic.sprite_h",
+              explosion_place.sprite_h, 32);
+    {
+        int depth = 99;
+        int x = 0;
+        int y = 0;
+        int w = 0;
+        int h = 0;
+        check_int("csb.runtime_explosion_overlay.rect.helper",
+                  csb_v1_viewport_runtime_explosion_sprite_rect(
+                      3, 3020, 28, 52, &depth, &x, &y, &w, &h), 1);
+        check_int("csb.runtime_explosion_overlay.rect.helper.depth", depth, 2);
+        check_int("csb.runtime_explosion_overlay.rect.helper.x", x, 0);
+        check_int("csb.runtime_explosion_overlay.rect.helper.y", y, 33);
+        check_int("csb.runtime_explosion_overlay.rect.helper.w", w, 224);
+        check_int("csb.runtime_explosion_overlay.rect.helper.h", h, 136);
+    }
 }
 
 static void test_csb_d3l2_d3r2_thing_pass_route_binding_contracts(void)

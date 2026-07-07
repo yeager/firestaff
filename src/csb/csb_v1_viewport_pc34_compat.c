@@ -966,6 +966,37 @@ static int csb_v1_viewport_c2900_source_zone_point(
     return 1;
 }
 
+int csb_v1_viewport_runtime_projectile_sprite_rect(
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    int *out_source_zone_row,
+    int *out_x,
+    int *out_y,
+    int *out_w,
+    int *out_h)
+{
+    int source_zone_row = -1;
+    int x = viewport_x - 16;
+    int y = DM1_VIEWPORT_SCREEN_Y + viewport_y - 16;
+    int w = 32;
+    int h = 32;
+
+    if (source_zone >= 2900) {
+        source_zone_row = (source_zone - 2900) / 4;
+        x = 0;
+        y = DM1_VIEWPORT_SCREEN_Y;
+        w = DM1_VIEWPORT_WIDTH;
+        h = DM1_VIEWPORT_HEIGHT;
+    }
+    if (out_source_zone_row) *out_source_zone_row = source_zone_row;
+    if (out_x) *out_x = x;
+    if (out_y) *out_y = y;
+    if (out_w) *out_w = w;
+    if (out_h) *out_h = h;
+    return 1;
+}
+
 int csb_v1_viewport_runtime_projectile_overlay_placement(
     int party_dir,
     int party_x,
@@ -984,6 +1015,7 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     placement.view_square = -1;
     placement.view_cell = projectile_cell;
     placement.source_zone = -1;
+    placement.source_zone_row = -1;
     placement.viewport_x = 0;
     placement.viewport_y = 0;
     csb_v1_viewport_runtime_relative_position(
@@ -1021,6 +1053,15 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
             return 0;
         }
         placement.visible = 1;
+        csb_v1_viewport_runtime_projectile_sprite_rect(
+            placement.source_zone,
+            placement.viewport_x,
+            placement.viewport_y,
+            &placement.source_zone_row,
+            &placement.sprite_x,
+            &placement.sprite_y,
+            &placement.sprite_w,
+            &placement.sprite_h);
         if (out_placement) *out_placement = placement;
         return 1;
     }
@@ -1039,7 +1080,49 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     placement.visible = 1;
     placement.viewport_x = x;
     placement.viewport_y = y;
+    csb_v1_viewport_runtime_projectile_sprite_rect(
+        placement.source_zone,
+        placement.viewport_x,
+        placement.viewport_y,
+        &placement.source_zone_row,
+        &placement.sprite_x,
+        &placement.sprite_y,
+        &placement.sprite_w,
+        &placement.sprite_h);
     if (out_placement) *out_placement = placement;
+    return 1;
+}
+
+int csb_v1_viewport_runtime_explosion_sprite_rect(
+    int forward,
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    int *out_depth_index,
+    int *out_x,
+    int *out_y,
+    int *out_w,
+    int *out_h)
+{
+    int depth_index = forward;
+    int x = viewport_x - 16;
+    int y = DM1_VIEWPORT_SCREEN_Y + viewport_y - 16;
+    int w = 32;
+    int h = 32;
+
+    if (depth_index < 0) depth_index = 0;
+    if (depth_index > 2) depth_index = 2;
+    if (source_zone >= 0) {
+        x = 0;
+        y = DM1_VIEWPORT_SCREEN_Y;
+        w = DM1_VIEWPORT_WIDTH;
+        h = DM1_VIEWPORT_HEIGHT;
+    }
+    if (out_depth_index) *out_depth_index = depth_index;
+    if (out_x) *out_x = x;
+    if (out_y) *out_y = y;
+    if (out_w) *out_w = w;
+    if (out_h) *out_h = h;
     return 1;
 }
 
@@ -1061,6 +1144,8 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
     placement.view_square = -1;
     placement.view_cell = explosion_cell;
     placement.source_zone = -1;
+    placement.source_zone_row = -1;
+    placement.depth_index = 0;
     csb_v1_viewport_runtime_relative_position(
         party_dir,
         party_x,
@@ -1109,6 +1194,17 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
         placement.used_source_zone = 1;
         placement.viewport_x = x;
         placement.viewport_y = y;
+        placement.source_zone_row = 0;
+        csb_v1_viewport_runtime_explosion_sprite_rect(
+            placement.forward,
+            placement.source_zone,
+            placement.viewport_x,
+            placement.viewport_y,
+            &placement.depth_index,
+            &placement.sprite_x,
+            &placement.sprite_y,
+            &placement.sprite_w,
+            &placement.sprite_h);
         if (out_placement) *out_placement = placement;
         return 1;
     }
@@ -1127,6 +1223,16 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
     placement.visible = 1;
     placement.viewport_x = x;
     placement.viewport_y = y;
+    csb_v1_viewport_runtime_explosion_sprite_rect(
+        placement.forward,
+        placement.source_zone,
+        placement.viewport_x,
+        placement.viewport_y,
+        &placement.depth_index,
+        &placement.sprite_x,
+        &placement.sprite_y,
+        &placement.sprite_w,
+        &placement.sprite_h);
     if (out_placement) *out_placement = placement;
     return 1;
 }

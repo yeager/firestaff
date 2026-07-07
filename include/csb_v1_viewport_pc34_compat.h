@@ -389,6 +389,11 @@ typedef struct {
     int source_zone;
     int viewport_x;
     int viewport_y;
+    int source_zone_row;
+    int sprite_x;
+    int sprite_y;
+    int sprite_w;
+    int sprite_h;
 } CSB_V1_ViewportRuntimeProjectileOverlayPlacement;
 
 typedef struct {
@@ -449,6 +454,12 @@ typedef struct {
     int viewport_x;
     int viewport_y;
     int used_source_zone;
+    int source_zone_row;
+    int depth_index;
+    int sprite_x;
+    int sprite_y;
+    int sprite_w;
+    int sprite_h;
 } CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
 
 typedef struct {
@@ -676,6 +687,15 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     int projectile_map_y,
     int projectile_cell,
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_projectile_sprite_rect(
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    int *out_source_zone_row,
+    int *out_x,
+    int *out_y,
+    int *out_w,
+    int *out_h);
 int csb_v1_viewport_runtime_overlay_side_range(
     int forward,
     int *out_min_side,
@@ -740,6 +760,16 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
     int explosion_map_y,
     int explosion_cell,
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_explosion_sprite_rect(
+    int forward,
+    int source_zone,
+    int viewport_x,
+    int viewport_y,
+    int *out_depth_index,
+    int *out_x,
+    int *out_y,
+    int *out_w,
+    int *out_h);
 int csb_v1_viewport_projectile_blit_pixels(const CSB_V1_ViewportProjectileBlitSpec *spec,
                                            int flip_flags,
                                            const uint8_t *source,
