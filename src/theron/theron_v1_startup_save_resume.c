@@ -870,6 +870,50 @@ int theron_v1_startup_continue_apply_request_with_inspect_receipts(
         receipt_cap);
 }
 
+int theron_v1_startup_continue_apply_facts_with_inspect_receipts(
+    Theron_V1_World *world,
+    Theron_V1StartupResumeClaim resume_claim,
+    int tqsv_slot_index,
+    const char *tqsv_root,
+    int srm_slot_index,
+    Theron_V1SrmProgressImportStatus srm_import_status,
+    const char *srm_root,
+    const Theron_StartupActionPlan *plan,
+    const void *boot_profile,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_V1StartupContinueApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_V1StartupContinueRequest request;
+    Theron_StartupChapterInspectRequest inspect_request;
+
+    theron_v1_startup_continue_request_init(&request);
+    request.resume_claim = resume_claim;
+    request.tqsv_slot_index = tqsv_slot_index;
+    request.tqsv_root = tqsv_root;
+    request.srm_slot_index = srm_slot_index;
+    request.srm_import_status = srm_import_status;
+    request.srm_root = srm_root;
+
+    memset(&inspect_request, 0, sizeof(inspect_request));
+    inspect_request.boot_profile = boot_profile;
+    inspect_request.world = world;
+    inspect_request.prefix = receipt;
+
+    return theron_v1_startup_continue_apply_request_with_inspect_receipts(
+        world,
+        &request,
+        plan,
+        &inspect_request,
+        out_result,
+        out_apply_receipt,
+        out_state_receipt,
+        receipt,
+        receipt_cap);
+}
+
 size_t theron_v1_startup_save_resume_format(
     const Theron_V1StartupSaveResume *snap,
     char *buf,

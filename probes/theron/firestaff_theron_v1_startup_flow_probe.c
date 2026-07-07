@@ -1043,6 +1043,29 @@ int main(void) {
                     check_contains("continue combined no-source text",
                                    continue_receipt_text,
                                    "Continue requires");
+                    check_int("continue facts no-source rc",
+                              theron_v1_startup_continue_apply_facts_with_inspect_receipts(
+                                  &world,
+                                  THERON_V1_STARTUP_RESUME_NONE,
+                                  -1,
+                                  NULL,
+                                  -1,
+                                  THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT,
+                                  NULL,
+                                  &plan,
+                                  NULL,
+                                  &continue_result,
+                                  &continue_receipt,
+                                  &state_receipt,
+                                  continue_receipt_text,
+                                  sizeof(continue_receipt_text)),
+                              0);
+                    check_int("continue facts no-source result",
+                              continue_result.source,
+                              THERON_V1_STARTUP_CONTINUE_SOURCE_NONE);
+                    check_int("continue facts no-source receipt",
+                              continue_receipt.input_result,
+                              THERON_STARTUP_INPUT_RESULT_IGNORED);
                 }
             }
 

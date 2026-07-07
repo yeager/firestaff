@@ -11877,8 +11877,6 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
                                        size_t receipt_cap) {
     Theron_V1_World* world;
     Theron_V1_BootProfile* profile;
-    Theron_V1StartupContinueRequest request;
-    Theron_StartupChapterInspectRequest inspectRequest;
     Theron_V1StartupContinueResult result;
     Theron_V1StartupContinueApplyReceipt applyReceipt;
     Theron_StartupStateReceipt stateReceipt;
@@ -11894,25 +11892,17 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
     if (!world || !profile) {
         return 0;
     }
-    theron_v1_startup_continue_request_init(&request);
-    request.resume_claim =
-        (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim;
-    request.tqsv_slot_index = state->theronState.save_resume_active_slot;
-    request.tqsv_root = profile->save_root;
-    request.srm_slot_index = state->theronState.save_resume_srm_active_slot;
-    request.srm_import_status =
-        (Theron_V1SrmProgressImportStatus)
-            state->theronState.save_resume_srm_import_status;
-    request.srm_root = state->theronState.save_resume_srm_root;
-    memset(&inspectRequest, 0, sizeof(inspectRequest));
-    inspectRequest.boot_profile = state->theronBootProfile;
-    inspectRequest.world = (const Theron_V1_World*)state->theronWorld;
-    inspectRequest.prefix = receipt;
-    if (!theron_v1_startup_continue_apply_request_with_inspect_receipts(
+    if (!theron_v1_startup_continue_apply_facts_with_inspect_receipts(
             world,
-            &request,
+            (Theron_V1StartupResumeClaim)state->theronState.save_resume_claim,
+            state->theronState.save_resume_active_slot,
+            profile->save_root,
+            state->theronState.save_resume_srm_active_slot,
+            (Theron_V1SrmProgressImportStatus)
+                state->theronState.save_resume_srm_import_status,
+            state->theronState.save_resume_srm_root,
             plan,
-            &inspectRequest,
+            state->theronBootProfile,
             &result,
             &applyReceipt,
             &stateReceipt,
