@@ -191,6 +191,18 @@ static int m11_draw_explosion_sprite(const M11_GameViewState* state,
                                      int maxFrames,
                                      int attack,
                                      int depthIndex);
+static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight,
+                                           int x, int y, int w, int h,
+                                           int aspect,
+                                           int gfxIndex,
+                                           int isSmoke,
+                                           int frame,
+                                           int maxFrames,
+                                           int attack,
+                                           int depthIndex);
 static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -1099,10 +1111,13 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
+    if (placement->sprite_graphic_index < 0) {
+        return 0;
+    }
     /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions in a
      * final pass with F0114/F0675 bitmap selection.  CSB PC34 shares
      * the DM1 explosion bitmap aspect mapping for this M11 bridge. */
-    return m11_draw_explosion_sprite(
+    return m11_draw_explosion_sprite_bound(
         ctx->state,
         screen_pixels,
         screen_stride,
@@ -1111,7 +1126,9 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         placement->sprite_y,
         placement->sprite_w,
         placement->sprite_h,
-        explosion->explosionType,
+        placement->sprite_aspect_index,
+        placement->sprite_graphic_index,
+        placement->sprite_is_smoke,
         explosion->currentFrame,
         explosion->maxFrames,
         explosion->attack,
@@ -18001,28 +18018,24 @@ static int m11_explosion_aspect_to_gfx(int aspect) {
  *
  * Returns 1 if a real bitmap was blit, 0 if the loader is not ready
  * (in which case callers draw the fallback palette-rect cue). */
-static int m11_draw_explosion_sprite(const M11_GameViewState* state,
-                                     unsigned char* framebuffer,
-                                     int framebufferWidth,
-                                     int framebufferHeight,
-                                     int x, int y, int w, int h,
-                                     int expType,
-                                     int frame,
-                                     int maxFrames,
-                                     int attack,
-                                     int depthIndex) {
+static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
+                                           unsigned char* framebuffer,
+                                           int framebufferWidth,
+                                           int framebufferHeight,
+                                           int x, int y, int w, int h,
+                                           int aspect,
+                                           int gfxIndex,
+                                           int isSmoke,
+                                           int frame,
+                                           int maxFrames,
+                                           int attack,
+                                           int depthIndex) {
     const M11_AssetSlot* slot;
-    int aspect;
-    int gfxIndex;
     int baseScale;
     int scale;
     int drawW, drawH, drawX, drawY;
-    int isSmoke;
     if (!state || !state->assetsAvailable) return 0;
-    aspect = m11_explosion_type_to_aspect(expType);
-    if (aspect < 0) return 0;
-    gfxIndex = m11_explosion_aspect_to_gfx(aspect);
-    if (gfxIndex < 0) return 0;
+    if (aspect < 0 || gfxIndex < 0) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)gfxIndex);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
@@ -18071,7 +18084,6 @@ static int m11_draw_explosion_sprite(const M11_GameViewState* state,
     drawX = x + (w - drawW) / 2;
     drawY = y + (h - drawH) / 2;
 
-    isSmoke = (aspect == 3);
     if (isSmoke) {
         /* DM1 G0212_auc_Graphic558_PaletteChanges_Smoke identity-maps
          * everything except pixel 6 -> 12 (DARK_GRAY) and 7 -> 1
@@ -18089,6 +18101,36 @@ static int m11_draw_explosion_sprite(const M11_GameViewState* state,
             drawX, drawY, drawW, drawH, /*transparentColor*/ 0);
     }
     return 1;
+}
+
+static int m11_draw_explosion_sprite(const M11_GameViewState* state,
+                                     unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     int x, int y, int w, int h,
+                                     int expType,
+                                     int frame,
+                                     int maxFrames,
+                                     int attack,
+                                     int depthIndex) {
+    int aspect = m11_explosion_type_to_aspect(expType);
+    int gfxIndex = m11_explosion_aspect_to_gfx(aspect);
+    int isSmoke = (aspect == 3);
+    return m11_draw_explosion_sprite_bound(state,
+                                           framebuffer,
+                                           framebufferWidth,
+                                           framebufferHeight,
+                                           x,
+                                           y,
+                                           w,
+                                           h,
+                                           aspect,
+                                           gfxIndex,
+                                           isSmoke,
+                                           frame,
+                                           maxFrames,
+                                           attack,
+                                           depthIndex);
 }
 
 /* Draw a pit visual effect: darkened floor area with depth gradient.
