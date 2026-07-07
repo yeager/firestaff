@@ -365,6 +365,7 @@ static void test_floor_ceiling_asset_provider(void)
 {
     uint8_t framebuffer[320 * 200];
     DM2_V1_ViewportState viewport;
+    DM2_V1_WallPanelRenderPlan wall_plan;
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -375,6 +376,23 @@ static void test_floor_ceiling_asset_provider(void)
               framebuffer[0] == 1 &&
               framebuffer[(66 * 320)] == 5);
 
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    memset(&wall_plan, 0, sizeof(wall_plan));
+    CHECK("wall panel render plan builds explicit asset-backed cells",
+          dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
+                                                       &wall_plan) == 1 &&
+              wall_plan.panel_count == 10 &&
+              wall_plan.panels[0].render_step == 0 &&
+              wall_plan.panels[0].view_square == DM2_SQ_D3L &&
+              wall_plan.panels[0].gdat_index ==
+                  dm2_v1_viewport_wall_graphic_index_for_square(
+                      DM2_SQ_D3L) &&
+              wall_plan.panels[8].view_square == DM2_SQ_D0L &&
+              rect_equals(&wall_plan.panels[8].src_rect, 0, 0, 16, 136) &&
+              rect_equals(&wall_plan.panels[8].dst_rect, 0, 0, 32, 136) &&
+              wall_plan.panels[9].view_square == DM2_SQ_D0R &&
+              rect_equals(&wall_plan.panels[9].dst_rect, 192, 0, 32, 136));
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     s_asset_fetch_calls = 0;
