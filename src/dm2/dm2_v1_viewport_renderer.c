@@ -1665,6 +1665,120 @@ int dm2_v1_viewport_build_creature_render_plan(
     return 1;
 }
 
+int dm2_v1_viewport_build_item_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ItemRenderPlan *out_plan)
+{
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s) {
+        return 1;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP/DRAW_TEMP_PICST routes
+     * floor possessions through QUERY_DUNGEON_MAP_CHIP_PICT before the
+     * scaled draw call. Keep the object identity and bounded fallback in a
+     * DM2-owned plan; source-frame clipping still depends on the fetched
+     * bitmap dimensions and is resolved in the blit pass. */
+    for (int i = 0; i < s->item_count && i < DM2_MAX_ITEMS_PER_SQ; ++i) {
+        const DM2_ItemSprite *src = &s->items[i];
+        DM2_V1_ItemRender *row;
+        int category;
+
+        if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
+            src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
+            out_plan->item_count >= DM2_MAX_ITEMS_PER_SQ) {
+            continue;
+        }
+
+        category = src->item_category ? src->item_category : 0x15;
+        row = &out_plan->items[out_plan->item_count++];
+        row->item_index = i;
+        row->item_category = category;
+        row->item_type = src->item_type;
+        row->frame_index = src->frame_index;
+        row->direction = src->direction;
+        row->depth = src->depth;
+        row->center_x = src->screen_x;
+        row->center_y = src->screen_y;
+        row->gdat_index = dm2_v1_viewport_item_graphic_index(
+            category,
+            src->item_type,
+            src->frame_index);
+        row->fallback_radius = 4;
+        row->fallback_color = 3;
+    }
+    return 1;
+}
+
+int dm2_v1_viewport_build_projectile_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ProjectileRenderPlan *out_plan)
+{
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s) {
+        return 1;
+    }
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_TEMP_PICST and DRAW_MAP_CHIP first
+     * resolve missile/cloud map-chip identity, direction class, and mirror
+     * before DRAW_CHIP_OF_MAGIC_MAP handles bitmap dimensions. Clouds still
+     * draw their random mirror in the blit pass so the runtime seed advances
+     * exactly when an asset-backed cloud is actually rendered. */
+    for (int i = 0; i < s->projectile_count &&
+                    i < DM2_MAX_PROJECTILES; ++i) {
+        const DM2_Projectile *src = &s->projectiles[i];
+        DM2_V1_ProjectileRender *row;
+        int category;
+        int speed;
+
+        if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
+            src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
+            out_plan->projectile_count >= DM2_MAX_PROJECTILES) {
+            continue;
+        }
+
+        category = src->projectile_category ?
+            src->projectile_category : 0x0d;
+        row = &out_plan->projectiles[out_plan->projectile_count++];
+        row->projectile_index = i;
+        row->projectile_category = category;
+        row->projectile_type = src->projectile_type;
+        row->frame_index = src->frame_index;
+        row->render_frame = src->frame_index;
+        row->direction = src->direction;
+        row->object_direction = src->object_direction;
+        row->frame_class = src->frame_class;
+        row->render_kind = src->render_kind;
+        row->depth = src->depth;
+        row->center_x = src->screen_x;
+        row->center_y = src->screen_y;
+        row->gdat_index = dm2_v1_viewport_projectile_graphic_index(
+            category,
+            src->projectile_type,
+            src->frame_index);
+        row->flip_mirror = dm2_v1_viewport_projectile_flip_for_direction(
+            src->direction,
+            s->party_dir);
+        row->cloud_flip_from_seed =
+            (src->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD);
+        row->fallback_color = (uint8_t)(15 - (src->palette_shift & 7));
+        row->fallback_len = 3;
+        speed = (int)sqrtf((float)(src->velocity_x * src->velocity_x +
+                                   src->velocity_y * src->velocity_y));
+        if (speed > 0) {
+            row->fallback_dx = (src->velocity_x * row->fallback_len) / speed;
+            row->fallback_dy = (src->velocity_y * row->fallback_len) / speed;
+        }
+    }
+    return 1;
+}
+
 /* ── Populate view squares from world model ─────────────────────── */
 
 /*
@@ -2306,6 +2420,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
+    DM2_V1_ItemRenderPlan plan;
 
     /* DM2 item rendering:
      * skproject SKWIN/SkWinCore.cpp lines 10523-10549 draws floor items
@@ -2314,23 +2429,21 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
      * available; older population code leaves it at zero and therefore uses
      * miscellaneous as a bounded fallback category. */
 
-    for (int i = 0; i < s->item_count && i < DM2_MAX_ITEMS_PER_SQ; i++) {
-        DM2_ItemSprite *it = &s->items[i];
-        int ix = it->screen_x;
-        int iy = it->screen_y;
+    if (!dm2_v1_viewport_build_item_render_plan(s, &plan)) {
+        return;
+    }
+
+    for (int i = 0; i < plan.item_count; i++) {
+        const DM2_V1_ItemRender *it = &plan.items[i];
         int drawn_asset = 0;
-        if (ix < 0 || ix >= DM2_VP_WIDTH || iy < 0 || iy >= DM2_VP_HEIGHT) continue;
 
         {
             const uint8_t *pixels = NULL;
             int src_w = 0;
             int src_h = 0;
             int src_stride = 0;
-            int category = it->item_category ? it->item_category : 0x15;
-            int gdat_index = dm2_v1_viewport_item_graphic_index(
-                category, it->item_type, it->frame_index);
-            if (gdat_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+            if (it->gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 int frame_x = 0;
@@ -2352,8 +2465,8 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                                                                   32);
                 dm2_v1_blit_scaled_bitmap_region(vp,
                                                  stride,
-                                                 ix - (dst_w / 2),
-                                                 iy - (dst_h / 2),
+                                                 it->center_x - (dst_w / 2),
+                                                 it->center_y - (dst_h / 2),
                                                  dst_w,
                                                  dst_h,
                                                  pixels,
@@ -2368,15 +2481,15 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
             }
         }
         if (!drawn_asset) {
-            int sz = 4;
+            int sz = it->fallback_radius;
             for (int dy = -sz; dy <= sz; dy++) {
-                int sy = iy + dy;
+                int sy = it->center_y + dy;
                 if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
                 for (int dx = -sz; dx <= sz; dx++) {
-                    int sx = ix + dx;
+                    int sx = it->center_x + dx;
                     if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
                     if (abs(dx) + abs(dy) <= sz)
-                        vp[sy * stride + sx] = 3;  /* cyan */
+                        vp[sy * stride + sx] = it->fallback_color;
                 }
             }
             ++s->fallback_item_drawn_count;
@@ -2576,6 +2689,7 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
+    DM2_V1_ProjectileRenderPlan plan;
 
     /* DM2 projectile rendering:
      * skproject SKWIN/SkWinCore.cpp lines 10672-10750 routes missiles and
@@ -2583,30 +2697,27 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
      * The runtime drain gives this pass a GDAT category/type pair; missing
      * or unmapped graphics keep the bounded streak fallback. */
 
-    for (int i = 0; i < s->projectile_count && i < DM2_MAX_PROJECTILES; i++) {
-        DM2_Projectile *p = &s->projectiles[i];
-        int px = p->screen_x;
-        int py = p->screen_y;
+    if (!dm2_v1_viewport_build_projectile_render_plan(s, &plan)) {
+        return;
+    }
+
+    for (int i = 0; i < plan.projectile_count; i++) {
+        const DM2_V1_ProjectileRender *p = &plan.projectiles[i];
         int drawn_asset = 0;
-        if (px < 0 || px >= DM2_VP_WIDTH || py < 0 || py >= DM2_VP_HEIGHT) continue;
 
         {
             const uint8_t *pixels = NULL;
             int src_w = 0;
             int src_h = 0;
             int src_stride = 0;
-            int category = p->projectile_category ? p->projectile_category : 0x0d;
-            int gdat_index = dm2_v1_viewport_projectile_graphic_index(
-                category, p->projectile_type, p->frame_index);
-            if (gdat_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+            if (p->gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s, p->gdat_index, &pixels,
                                             &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 int frame_x = 0;
                 int frame_w = src_w;
                 int render_frame = p->frame_index;
-                int flip_mirror = dm2_v1_viewport_projectile_flip_for_direction(
-                    p->direction, s->party_dir);
+                int flip_mirror = p->flip_mirror;
                 if (!dm2_v1_prepare_projectile_map_chip_frame(src_w,
                                                               src_h,
                                                               p->frame_index,
@@ -2622,8 +2733,11 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 if (p->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD) {
                     int frame_count =
                         dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
-                    flip_mirror =
-                        dm2_v1_viewport_cloud_flip_for_seed(&s->random_seed);
+                    if (p->cloud_flip_from_seed) {
+                        flip_mirror =
+                            dm2_v1_viewport_cloud_flip_for_seed(
+                                &s->random_seed);
+                    }
                     render_frame =
                         dm2_v1_viewport_cloud_frame_for_tick(s->tick_count,
                                                              frame_count);
@@ -2646,8 +2760,8 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                 dm2_v1_blit_scaled_bitmap_region_ex(
                     vp,
                     stride,
-                    px - (dst_w / 2),
-                    py - (dst_h / 2),
+                    p->center_x - (dst_w / 2),
+                    p->center_y - (dst_h / 2),
                     dst_w,
                     dst_h,
                     pixels,
@@ -2663,23 +2777,16 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
             }
         }
         if (!drawn_asset) {
-            int vx = p->velocity_x;
-            int vy = p->velocity_y;
-            uint8_t color = (uint8_t)(15 - (p->palette_shift & 7));
-            int speed = (int)sqrtf((float)(vx*vx + vy*vy));
-            if (speed > 0) {
-                int len = 3;
-                int dx = (vx * len) / speed;
-                int dy = (vy * len) / speed;
-                for (int t = 0; t < len; t++) {
-                    int sx = px + dx * t;
-                    int sy = py + dy * t;
+            if (p->fallback_dx != 0 || p->fallback_dy != 0) {
+                for (int t = 0; t < p->fallback_len; t++) {
+                    int sx = p->center_x + p->fallback_dx * t;
+                    int sy = p->center_y + p->fallback_dy * t;
                     if ((unsigned)sx < (unsigned)DM2_VP_WIDTH &&
                         (unsigned)sy < (unsigned)DM2_VP_HEIGHT)
-                        vp[sy * stride + sx] = color;
+                        vp[sy * stride + sx] = p->fallback_color;
                 }
             } else {
-                vp[py * stride + px] = color;
+                vp[p->center_y * stride + p->center_x] = p->fallback_color;
             }
             ++s->fallback_projectile_drawn_count;
         }
