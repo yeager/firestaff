@@ -44,8 +44,10 @@ int main(void)
               rows[0].selected == 1 &&
               rows[0].highlight_x == rows[0].x - 2 &&
               rows[0].highlight_y == rows[0].y &&
+              rows[0].highlight_color == 12 &&
               rows[0].text_x == rows[0].x &&
               rows[0].text_y == rows[0].y + 2 &&
+              rows[0].text_style == 1 &&
               rows[0].label[0] == '>' &&
               strstr(rows[0].label, "IMPORT") != NULL,
           "selected Import render row owns marker, highlight, and label");
@@ -176,6 +178,7 @@ int main(void)
     check(csb_v1_util_flow_panel_layout(&flow, 1, &panel) &&
               panel.x == 38 &&
               panel.y == 80 &&
+              panel.prompt_text_style == 1 &&
               panel.preview_max_rows == 4,
           "utility panel geometry remains source-shaped");
     flow.imported_champion_count = 2;

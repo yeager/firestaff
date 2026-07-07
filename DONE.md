@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-07 CSB utility startup render material ownership: `csb_v1_utility_flow` now carries selected-highlight color, row text style, and prompt text style in its startup render contracts. M11 consumes those fields instead of choosing utility overlay material/style details locally.
+
 - ✅ 2026-07-07 CSB startup fallback render ownership: `csb_v1_startup_sequence_pc34_compat` now owns the no-asset entrance frame command plus formatted runtime start-pose detail row in `CSB_V1_StartupRenderPlan_PC34`. M11 only adapts the boot profile pose into render state and executes the CSB-owned fallback draw commands.
 
 - ✅ 2026-07-07 DM1 V1 F0113 field asset classification: `dm1_v1_field_teleporter_effect_pc34_compat` now owns the GRAPHICS.DAT asset indices for teleporter field bitmap C076 and optional C070..C075 field masks through `dm1_v1_field_asset_indices_pc34()`. M11 no longer hard-codes the field/mask asset route; it only loads the assets requested by the DM1 field plan before passing pixels back into the DM1 material API. Verification: `cmake --build /tmp/firestaff-goal3-build --target test_dm1_v1_field_teleporter_effect_pc34_compat --parallel 2` passed, `/tmp/firestaff-goal3-build/test_dm1_v1_field_teleporter_effect_pc34_compat` passed 113/0, and `cc -std=c11 -Wall -Wextra -I. -Iinclude -Isrc -fsyntax-only src/engine/m11_game_view.c` passed with only existing unused-function warnings.

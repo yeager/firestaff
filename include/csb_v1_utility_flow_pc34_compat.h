@@ -123,8 +123,10 @@ typedef struct {
     int highlight_y;
     int highlight_w;
     int highlight_h;
+    int highlight_color;
     int text_x;
     int text_y;
+    int text_style;
     char label[CSB_V1_UTIL_RENDER_ROW_LABEL_CAPACITY];
 } CSB_V1_UtilRenderRow;
 
@@ -144,6 +146,7 @@ typedef struct {
     int import_status_y;
     int prompt_x;
     int prompt_y;
+    int prompt_text_style;
     int preview_x;
     int preview_y;
     int preview_row_h;
