@@ -39,6 +39,7 @@
 #define DM2_GDAT_DOOR_BUTTON_FIELD_CACHE_LIMIT 0x08
 #define DM2_GDAT_WALL_BUTTON_CACHE_LIMIT 8
 #define DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT 16
+#define DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT 8
 #define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
 #define DM2_GDAT_IMG_MAP_CHIP 0xF9
 
@@ -92,6 +93,9 @@ typedef struct {
     uint8_t *projectile_pixels[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
     int projectile_w[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
     int projectile_h[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
+    uint8_t *hud_portrait_pixels[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
+    int hud_portrait_w[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
+    int hud_portrait_h[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -240,6 +244,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
         dm2_v1_asset_free_pixels(gfx->creature_pixels[i]);
         dm2_v1_asset_free_pixels(gfx->item_pixels[i]);
         dm2_v1_asset_free_pixels(gfx->projectile_pixels[i]);
+    }
+    for (int i = 0; i < DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT; ++i) {
+        dm2_v1_asset_free_pixels(gfx->hud_portrait_pixels[i]);
     }
     dm2_v1_asset_loader_free(&gfx->loader);
     free(gfx->bytes);
@@ -902,6 +909,19 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_w = &gfx->creature_w[slot];
         cache_h = &gfx->creature_h[slot];
         gfx->creature_keys[slot] = gdat_index;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - gdat_index <
+                   (0x100 << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT)) {
+        int packed = DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - gdat_index;
+        index = (packed >> DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT) & 0xff;
+        field = packed & DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_MASK;
+        if (index < 0 || index >= DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT) {
+            return -1;
+        }
+        cache_pixels = &gfx->hud_portrait_pixels[index];
+        cache_w = &gfx->hud_portrait_w[index];
+        cache_h = &gfx->hud_portrait_h[index];
+        category = DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE) {
         int packed = DM2_V1_VIEWPORT_GFX_WALL_BUTTON_FIELD_BASE - gdat_index;
         int slot = -1;

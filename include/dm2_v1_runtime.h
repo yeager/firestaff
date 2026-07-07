@@ -88,6 +88,8 @@ int dm2_v1_runtime_last_asset_creature_possession_item_count(void);
 int dm2_v1_runtime_last_fallback_creature_possession_item_count(void);
 int dm2_v1_runtime_last_asset_projectile_count(void);
 int dm2_v1_runtime_last_fallback_projectile_count(void);
+int dm2_v1_runtime_last_asset_hud_portrait_count(void);
+int dm2_v1_runtime_last_fallback_hud_portrait_count(void);
 
 /* ── Party position accessors ─────────────────────────────────────── */
 

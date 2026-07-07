@@ -892,6 +892,22 @@ int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
     return DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - packed;
 }
 
+int dm2_v1_viewport_hud_portrait_graphic_index(int portrait_index)
+{
+    int packed;
+    if (portrait_index < 0 || portrait_index >= DM2_V1_HUD_PORTRAIT_COUNT) {
+        return 0;
+    }
+    /* skproject SKWIN/SkWinCore.cpp T560 draws the right-side status
+     * portraits through UI GDAT image queries.  Firestaff packs the
+     * portrait ordinal into a renderer-private index so the boot profile can
+     * resolve the current GRAPHICS.DAT charsheet image and preserve the
+     * placeholder fill when the asset is absent. */
+    packed = (portrait_index << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT) |
+             DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD;
+    return DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - packed;
+}
+
 int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h)
 {
     if (src_w <= 0 || src_h <= 0) return 0;
@@ -2681,9 +2697,38 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                              &plan.champion_slots[slot].fill_rect,
                              plan.champion_slots[slot].fill_color);
             if (plan.champion_slots[slot].occupied) {
-                dm2_v1_fill_rect(vp, stride,
-                                 &plan.champion_slots[slot].portrait_rect,
-                                 plan.champion_slots[slot].portrait_fill_color);
+                const uint8_t *portrait_pixels = NULL;
+                int portrait_w = 0;
+                int portrait_h = 0;
+                int portrait_stride = 0;
+                int portrait_gdat =
+                    dm2_v1_viewport_hud_portrait_graphic_index(
+                        plan.champion_slots[slot].portrait_index);
+                if (portrait_gdat != 0 &&
+                    dm2_v1_fetch_viewport_asset(s,
+                                                portrait_gdat,
+                                                &portrait_pixels,
+                                                &portrait_w,
+                                                &portrait_h,
+                                                &portrait_stride) == 0) {
+                    dm2_v1_blit_scaled_bitmap(vp,
+                                              stride,
+                                              plan.champion_slots[slot].portrait_rect.x,
+                                              plan.champion_slots[slot].portrait_rect.y,
+                                              plan.champion_slots[slot].portrait_rect.w,
+                                              plan.champion_slots[slot].portrait_rect.h,
+                                              portrait_pixels,
+                                              portrait_w,
+                                              portrait_h,
+                                              portrait_stride,
+                                              DM2_COLOR_TRANSPARENT);
+                    ++s->asset_hud_portrait_drawn_count;
+                } else {
+                    dm2_v1_fill_rect(vp, stride,
+                                     &plan.champion_slots[slot].portrait_rect,
+                                     plan.champion_slots[slot].portrait_fill_color);
+                    ++s->fallback_hud_portrait_drawn_count;
+                }
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].name_marker_rect,
                                  DM2_COL_WHITE);
@@ -2744,6 +2789,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->fallback_carried_item_drawn_count = 0;
     s->asset_projectile_drawn_count = 0;
     s->fallback_projectile_drawn_count = 0;
+    s->asset_hud_portrait_drawn_count = 0;
+    s->fallback_hud_portrait_drawn_count = 0;
 
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view

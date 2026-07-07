@@ -43,6 +43,7 @@ static int test_dm2_asset_fetch(void *user,
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
     static const uint8_t door_button[4] = { 4, 5, 6, 7 };
     static const uint8_t wall_button[4] = { 12, 13, 14, 15 };
+    static const uint8_t hud_portrait[4] = { 3, 4, 5, 6 };
     static const uint8_t creature_atlas[21 * 7] = {
         4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
         4,4,4,4,4,4,4, 12,12,12,12,12,12,12, 14,14,14,14,14,14,14,
@@ -141,6 +142,10 @@ static int test_dm2_asset_fetch(void *user,
                    DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FRONT &&
                DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - gdat_index < 0x04) {
         if (out_pixels) *out_pixels = door_panel;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE &&
+               DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE - gdat_index <
+                   (0x100 << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT)) {
+        if (out_pixels) *out_pixels = hud_portrait;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE &&
                (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >= 0x10 &&
@@ -237,6 +242,14 @@ static void test_door_rect_contracts(void)
     CHECK("DM2 custom wall button asset index rejects invalid arguments",
           dm2_v1_viewport_wall_button_graphic_index(-1, 0) == 0 &&
               dm2_v1_viewport_wall_button_graphic_index(0, 0x100) == 0);
+    CHECK("DM2 HUD portrait asset index packs portrait ordinal and field",
+          dm2_v1_viewport_hud_portrait_graphic_index(3) ==
+              DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD_BASE -
+                  ((3 << DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_INDEX_SHIFT) |
+                   DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD) &&
+              dm2_v1_viewport_hud_portrait_graphic_index(-1) == 0 &&
+              dm2_v1_viewport_hud_portrait_graphic_index(
+                  DM2_V1_HUD_PORTRAIT_COUNT) == 0);
 
     CHECK("DM2 D0C door panel rect is the startup front-door bound",
           dm2_v1_viewport_door_panel_rect_for_square(DM2_SQ_D0C, &rect) &&
@@ -667,6 +680,28 @@ static void test_sprite_asset_provider(void)
                   framebuffer[44 * 320 + 294] == 0 &&
                   framebuffer[49 * 320 + 272] == 12 &&
                   framebuffer[49 * 320 + 274] == 0);
+        CHECK("DM2 UI chrome tracks placeholder portrait fallback",
+              viewport.asset_hud_portrait_drawn_count == 0 &&
+                  viewport.fallback_hud_portrait_drawn_count == 1);
+
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, 320);
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
+        s_asset_fetch_calls = 0;
+        dm2_v1_viewport_set_asset_provider(&viewport,
+                                           test_dm2_asset_fetch,
+                                           NULL);
+        dm2_v1_render_ui_chrome(&viewport);
+        CHECK("DM2 UI chrome fetches and scales HUD portrait assets",
+              s_asset_fetch_calls == 1 &&
+                  viewport.asset_hud_portrait_drawn_count == 1 &&
+                  viewport.fallback_hud_portrait_drawn_count == 0 &&
+                  s_last_asset_index ==
+                      dm2_v1_viewport_hud_portrait_graphic_index(3) &&
+                  framebuffer[34 * 320 + 250] == 3 &&
+                  framebuffer[34 * 320 + 262] == 4 &&
+                  framebuffer[44 * 320 + 250] == 5 &&
+                  framebuffer[44 * 320 + 262] == 6);
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));

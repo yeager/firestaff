@@ -98,6 +98,8 @@ static int g_dm2_last_asset_carried_item_count = 0;
 static int g_dm2_last_fallback_carried_item_count = 0;
 static int g_dm2_last_asset_projectile_count = 0;
 static int g_dm2_last_fallback_projectile_count = 0;
+static int g_dm2_last_asset_hud_portrait_count = 0;
+static int g_dm2_last_fallback_hud_portrait_count = 0;
 
 static int dm2_runtime_door_state(uint16_t square_raw) {
     return (int)(square_raw & 0x0007u);
@@ -1064,6 +1066,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_projectile_drawn_count;
     g_dm2_last_fallback_projectile_count =
         viewport.fallback_projectile_drawn_count;
+    g_dm2_last_asset_hud_portrait_count =
+        viewport.asset_hud_portrait_drawn_count;
+    g_dm2_last_fallback_hud_portrait_count =
+        viewport.fallback_hud_portrait_drawn_count;
     rt->weather.weather_seed = viewport.random_seed;
 
     return 0;
@@ -1145,6 +1151,14 @@ int dm2_v1_runtime_last_asset_projectile_count(void) {
 
 int dm2_v1_runtime_last_fallback_projectile_count(void) {
     return g_dm2_last_fallback_projectile_count;
+}
+
+int dm2_v1_runtime_last_asset_hud_portrait_count(void) {
+    return g_dm2_last_asset_hud_portrait_count;
+}
+
+int dm2_v1_runtime_last_fallback_hud_portrait_count(void) {
+    return g_dm2_last_fallback_hud_portrait_count;
 }
 
 /* ── Movement ──────────────────────────────────────────────────────── */
