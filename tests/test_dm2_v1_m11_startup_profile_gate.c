@@ -422,6 +422,24 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands[6].row == 0 &&
                     strcmp(commands[6].text, "CONTINUE") == 0,
                 "DM2 startup presentation builds from snapshot");
+    command_count = dm2_v1_startup_presentation_build_from_facts(
+        "",
+        "/tmp/firestaff-dm2-test-saves",
+        1,
+        (1u << 3),
+        9,
+        commands,
+        (int)(sizeof(commands) / sizeof(commands[0])));
+    expect_true(command_count == 10 &&
+                    commands[7].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[7].style ==
+                        DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
+                    commands[7].row == 2 &&
+                    commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[8].style ==
+                        DM2_V1_STARTUP_STYLE_SELECTED_TEXT &&
+                    strcmp(commands[8].text, "NEW GAME") == 0,
+                "DM2 startup presentation builds directly from runtime facts");
     memset(&draw_probe, 0, sizeof(draw_probe));
     executor.userdata = &draw_probe;
     executor.draw_gdat_image = dm2_startup_probe_gdat;
