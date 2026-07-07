@@ -128,7 +128,10 @@ typedef struct {
 } Theron_StartupHit;
 
 enum {
-    THERON_STARTUP_LAYOUT_LABEL_CAPACITY = 48
+    THERON_STARTUP_LAYOUT_LABEL_CAPACITY = 48,
+    THERON_STARTUP_LAYOUT_DECODED_NAME_CAPACITY = 16,
+    THERON_STARTUP_LAYOUT_DECODED_TITLE_CAPACITY = 32,
+    THERON_STARTUP_LAYOUT_ROSTER_CAPACITY = 8
 };
 
 typedef enum {
@@ -158,6 +161,8 @@ typedef struct {
     int w;
     int h;
     char label[THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
+    char decoded_name[THERON_STARTUP_LAYOUT_DECODED_NAME_CAPACITY];
+    char decoded_title[THERON_STARTUP_LAYOUT_DECODED_TITLE_CAPACITY];
 } Theron_StartupLayoutElement;
 
 typedef struct {
@@ -170,6 +175,10 @@ typedef struct {
     int tqsv_slot;
     int has_srm_continue;
     int srm_slot;
+    char chapter_label[THERON_STARTUP_LAYOUT_LABEL_CAPACITY];
+    const char *startup_roster_names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY];
+    const char *startup_roster_titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY];
+    int startup_roster_name_count;
     int selected_mirrors_mask;
     const int *selected_mirror_order;
     int selected_mirror_order_count;
