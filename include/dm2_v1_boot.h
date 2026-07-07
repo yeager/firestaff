@@ -159,6 +159,21 @@ int dm2_v1_boot_object_icon_asset_fetch(
 
 void dm2_v1_boot_object_icon_asset_free(uint8_t *pixels);
 
+/* Fetch a GDAT image directly from the boot-owned GRAPHICS.DAT handle.
+ * Used by startup/title/credits presentation code where the DM2 module
+ * owns the GDAT address and M11 only executes the resulting blit. */
+int dm2_v1_boot_gdat_image_asset_fetch(
+    DM2_V1_BootProfile *profile,
+    int category,
+    int index,
+    int field,
+    uint8_t **out_pixels,
+    int *out_w,
+    int *out_h,
+    int *out_stride);
+
+void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels);
+
 /* Free resources allocated during boot (but not the profile itself). */
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile);
 

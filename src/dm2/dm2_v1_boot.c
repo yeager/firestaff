@@ -96,6 +96,9 @@ typedef struct {
     uint8_t *hud_portrait_pixels[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_w[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_h[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
+    uint8_t *startup_title_pixels;
+    int startup_title_w;
+    int startup_title_h;
 } DM2_V1_BootGraphicsDat;
 
 /* ── MD5 implementation (same as asset_find_by_hash.c) ─────────────── */
@@ -248,6 +251,7 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     for (int i = 0; i < DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->hud_portrait_pixels[i]);
     }
+    dm2_v1_asset_free_pixels(gfx->startup_title_pixels);
     dm2_v1_asset_loader_free(&gfx->loader);
     free(gfx->bytes);
     memset(gfx, 0, sizeof(*gfx));
@@ -1075,6 +1079,81 @@ int dm2_v1_boot_object_icon_asset_fetch(
 }
 
 void dm2_v1_boot_object_icon_asset_free(uint8_t *pixels)
+{
+    dm2_v1_asset_free_pixels(pixels);
+}
+
+int dm2_v1_boot_gdat_image_asset_fetch(
+    DM2_V1_BootProfile *profile,
+    int category,
+    int index,
+    int field,
+    uint8_t **out_pixels,
+    int *out_w,
+    int *out_h,
+    int *out_stride)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    DM2_ImageFormat fmt = DM2_IMG_FMT_UNKNOWN;
+    uint8_t *pixels;
+    size_t bytes;
+
+    if (out_pixels) *out_pixels = NULL;
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    if (out_stride) *out_stride = 0;
+    if (!profile || !profile->graphics_dat || !out_pixels) return -1;
+
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (category == DM2_GDAT_CATEGORY_TITLE && index == 0 && field == 1) {
+        if (!gfx->startup_title_pixels) {
+            gfx->startup_title_pixels =
+                dm2_v1_asset_load_image_field(&gfx->loader,
+                                              category,
+                                              index,
+                                              field,
+                                              &gfx->startup_title_w,
+                                              &gfx->startup_title_h,
+                                              &fmt);
+            if (!gfx->startup_title_pixels ||
+                gfx->startup_title_w <= 0 ||
+                gfx->startup_title_h <= 0) {
+                dm2_v1_asset_free_pixels(gfx->startup_title_pixels);
+                gfx->startup_title_pixels = NULL;
+                gfx->startup_title_w = 0;
+                gfx->startup_title_h = 0;
+                return -1;
+            }
+        }
+        bytes = (size_t)gfx->startup_title_w * (size_t)gfx->startup_title_h;
+        pixels = (uint8_t *)malloc(bytes ? bytes : 1U);
+        if (!pixels) return -1;
+        memcpy(pixels, gfx->startup_title_pixels, bytes);
+        *out_pixels = pixels;
+        if (out_w) *out_w = gfx->startup_title_w;
+        if (out_h) *out_h = gfx->startup_title_h;
+        if (out_stride) *out_stride = gfx->startup_title_w;
+        return 0;
+    }
+
+    pixels = dm2_v1_asset_load_image_field(&gfx->loader,
+                                           category,
+                                           index,
+                                           field,
+                                           out_w,
+                                           out_h,
+                                           &fmt);
+    if (!pixels || !out_w || !out_h || *out_w <= 0 || *out_h <= 0) {
+        dm2_v1_asset_free_pixels(pixels);
+        return -1;
+    }
+    *out_pixels = pixels;
+    if (out_stride) *out_stride = *out_w;
+    (void)fmt;
+    return 0;
+}
+
+void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels)
 {
     dm2_v1_asset_free_pixels(pixels);
 }

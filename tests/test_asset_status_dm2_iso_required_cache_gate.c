@@ -26,6 +26,10 @@ static const unsigned char kGraphicsPayload[] =
     "synthetic DM2 graphics payload for ISO required cache gate\n";
 static const unsigned char kDungeonPayload[] =
     "synthetic DM2 dungeon payload for ISO required cache gate\n";
+static const unsigned char kMusicPayload[] =
+    "synthetic DM2 startup music sidecar for ISO cache gate\n";
+static const unsigned char kShopDungeonPayload[] =
+    "synthetic DM2 shop dungeon sidecar for ISO cache gate\n";
 
 static void put32(unsigned char* p, unsigned int v) {
     p[0] = (unsigned char)(v & 0xffU);
@@ -135,12 +139,16 @@ static int write_two_file_iso(const char* path) {
     static const unsigned char dotdot = 1;
     static const unsigned char graphicsName[] = "GRAPHICS.DAT;1";
     static const unsigned char dungeonName[] = "DUNGEON.DAT;1";
+    static const unsigned char musicName[] = "00.HMP.MID;1";
+    static const unsigned char shopName[] = "DUNGEON_SHOP.DAT;1";
     FILE* fp = fopen(path, "wb");
     unsigned char zero[2048] = {0};
     unsigned char pvd[2048] = {0};
     unsigned char dir[2048] = {0};
     unsigned char graphicsSector[2048] = {0};
     unsigned char dungeonSector[2048] = {0};
+    unsigned char musicSector[2048] = {0};
+    unsigned char shopSector[2048] = {0};
     int offset = 0;
     int recLen;
     int i;
@@ -199,14 +207,36 @@ static int write_two_file_iso(const char* path) {
         fclose(fp);
         return 0;
     }
+    offset += recLen;
+    recLen = write_iso_dir_record(dir, offset, 23U,
+                                  (unsigned int)(sizeof(kMusicPayload) - 1U),
+                                  0, musicName,
+                                  (int)(sizeof(musicName) - 1U));
+    if (!recLen) {
+        fclose(fp);
+        return 0;
+    }
+    offset += recLen;
+    recLen = write_iso_dir_record(dir, offset, 24U,
+                                  (unsigned int)(sizeof(kShopDungeonPayload) - 1U),
+                                  0, shopName,
+                                  (int)(sizeof(shopName) - 1U));
+    if (!recLen) {
+        fclose(fp);
+        return 0;
+    }
     if (fwrite(dir, 1U, sizeof(dir), fp) != sizeof(dir)) {
         fclose(fp);
         return 0;
     }
     memcpy(graphicsSector, kGraphicsPayload, sizeof(kGraphicsPayload) - 1U);
     memcpy(dungeonSector, kDungeonPayload, sizeof(kDungeonPayload) - 1U);
+    memcpy(musicSector, kMusicPayload, sizeof(kMusicPayload) - 1U);
+    memcpy(shopSector, kShopDungeonPayload, sizeof(kShopDungeonPayload) - 1U);
     if (fwrite(graphicsSector, 1U, sizeof(graphicsSector), fp) != sizeof(graphicsSector) ||
-        fwrite(dungeonSector, 1U, sizeof(dungeonSector), fp) != sizeof(dungeonSector)) {
+        fwrite(dungeonSector, 1U, sizeof(dungeonSector), fp) != sizeof(dungeonSector) ||
+        fwrite(musicSector, 1U, sizeof(musicSector), fp) != sizeof(musicSector) ||
+        fwrite(shopSector, 1U, sizeof(shopSector), fp) != sizeof(shopSector)) {
         fclose(fp);
         return 0;
     }
@@ -264,6 +294,8 @@ static void scan_iso_fixture_case(int blockCache) {
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char cachedGraphics[M12_ASSET_DATA_DIR_CAPACITY];
     char cachedDungeon[M12_ASSET_DATA_DIR_CAPACITY];
+    char cachedMusic[M12_ASSET_DATA_DIR_CAPACITY];
+    char cachedShopDungeon[M12_ASSET_DATA_DIR_CAPACITY];
     char graphicsMd5[M12_ASSET_MD5_CAPACITY];
     char dungeonMd5[M12_ASSET_MD5_CAPACITY];
     char foundPath[ASSET_PATH_MAX];
@@ -356,7 +388,11 @@ static void scan_iso_fixture_case(int blockCache) {
               FSP_JoinPath(cachedGraphics, sizeof(cachedGraphics),
                            cacheRoot, "dm2/GRAPHICS.DAT") &&
               FSP_JoinPath(cachedDungeon, sizeof(cachedDungeon),
-                           cacheRoot, "dm2/DUNGEON.DAT"),
+                           cacheRoot, "dm2/DUNGEON.DAT") &&
+              FSP_JoinPath(cachedMusic, sizeof(cachedMusic),
+                           cacheRoot, "dm2/00.hmp.mid") &&
+              FSP_JoinPath(cachedShopDungeon, sizeof(cachedShopDungeon),
+                           cacheRoot, "dm2/DUNGEON_SHOP.DAT"),
               "asset cache leaf paths should resolve");
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
                      cacheRoot) == 0,
@@ -392,6 +428,22 @@ static void scan_iso_fixture_case(int blockCache) {
                                                  kDungeonPayload,
                                                  sizeof(kDungeonPayload) - 1U),
               "DM2 launch lookup should open cached DUNGEON.DAT as an ordinary file");
+    check_int(file_matches_payload(cachedMusic, kMusicPayload,
+                                   sizeof(kMusicPayload) - 1U),
+              "cached DM2 startup music should contain the ISO sidecar payload");
+    check_int(file_matches_payload(cachedShopDungeon, kShopDungeonPayload,
+                                   sizeof(kShopDungeonPayload) - 1U),
+              "cached DM2 dungeon sidecar should contain the ISO sidecar payload");
+    check_int(runtime_cache_file_matches_payload(&status, "dm2",
+                                                 "00.hmp.mid",
+                                                 kMusicPayload,
+                                                 sizeof(kMusicPayload) - 1U),
+              "DM2 launch lookup should open cached 00.hmp.mid as an ordinary file");
+    check_int(runtime_cache_file_matches_payload(&status, "dm2",
+                                                 "DUNGEON_SHOP.DAT",
+                                                 kShopDungeonPayload,
+                                                 sizeof(kShopDungeonPayload) - 1U),
+              "DM2 launch lookup should open cached DUNGEON_SHOP.DAT as an ordinary file");
 }
 
 int main(void) {

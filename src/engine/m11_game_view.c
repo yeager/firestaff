@@ -35140,7 +35140,49 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     }
     for (i = 0; i < command_count; ++i) {
         const DM2_V1_StartupDrawCommand *command = &commands[i];
-        if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT) {
+        if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE) {
+            DM2_V1_BootProfile *profile =
+                (DM2_V1_BootProfile *)state->dm2BootProfile;
+            uint8_t *pixels = NULL;
+            int srcW = 0;
+            int srcH = 0;
+            int stride = 0;
+            if (profile &&
+                dm2_v1_boot_gdat_image_asset_fetch(profile,
+                                                   command->gdat_category,
+                                                   command->gdat_index,
+                                                   command->gdat_field,
+                                                   &pixels,
+                                                   &srcW,
+                                                   &srcH,
+                                                   &stride) == 0 &&
+                pixels && srcW > 0 && srcH > 0 && stride >= srcW) {
+                int y;
+                int dstW = command->rect.w;
+                int dstH = command->rect.h;
+                if (dstW <= 0) dstW = srcW;
+                if (dstH <= 0) dstH = srcH;
+                for (y = 0; y < dstH; ++y) {
+                    int x;
+                    int sy = y * srcH / dstH;
+                    int dy = command->rect.y + y;
+                    if (dy < 0 || dy >= framebufferHeight) continue;
+                    for (x = 0; x < dstW; ++x) {
+                        int sx = x * srcW / dstW;
+                        int dx = command->rect.x + x;
+                        unsigned char c;
+                        if (dx < 0 || dx >= framebufferWidth) continue;
+                        c = pixels[sy * stride + sx];
+                        if (command->transparent_color >= 0 &&
+                            c == (unsigned char)command->transparent_color) {
+                            continue;
+                        }
+                        framebuffer[dy * framebufferWidth + dx] = c;
+                    }
+                }
+            }
+            dm2_v1_boot_gdat_image_asset_free(pixels);
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_FILL_RECT) {
             unsigned char color =
                 command->style == DM2_V1_STARTUP_STYLE_SELECTED_FILL
                     ? M11_COLOR_RED
