@@ -181,6 +181,17 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       int relativeCell,
                                       int flipFlags,
                                       int sourceZoneRow);
+static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight,
+                                         int x, int y, int w, int h,
+                                         int gfxIndex, int depthIndex,
+                                         int relativeDir,
+                                         int relativeCell,
+                                         int flipFlags,
+                                         int sourceZoneRow,
+                                         int transparentColor);
 static int m11_draw_explosion_sprite(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int framebufferWidth,
@@ -203,6 +214,19 @@ static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
                                            int maxFrames,
                                            int attack,
                                            int depthIndex);
+static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight,
+                                              int x, int y, int w, int h,
+                                              int aspect,
+                                              int gfxIndex,
+                                              int isSmoke,
+                                              int frame,
+                                              int maxFrames,
+                                              int attack,
+                                              int depthIndex,
+                                              int transparentColor);
 static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -1001,7 +1025,7 @@ static int m11_csb_viewport_projectile_sprite_drawer(
      * view depth/cell before the F0791 C10 projectile blit.  Reuse the
      * M11 DM1 sprite path here; CSB PC34 shares the projectile bitmap
      * indices and viewport coordinate tables for this bounded draw step. */
-    return m11_draw_projectile_sprite(
+    return m11_draw_projectile_sprite_ex(
         ctx->state,
         screen_pixels,
         screen_stride,
@@ -1015,7 +1039,8 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         blit->relative_dir,
         blit->relative_cell,
         blit->flip_flags,
-        blit->source_zone_row);
+        blit->source_zone_row,
+        blit->transparent_color);
 }
 
 static int m11_csb_viewport_explosion_sprite_drawer(
@@ -1034,7 +1059,7 @@ static int m11_csb_viewport_explosion_sprite_drawer(
     /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions in a
      * final pass with F0114/F0675 bitmap selection.  CSB PC34 shares
      * the DM1 explosion bitmap aspect mapping for this M11 bridge. */
-    return m11_draw_explosion_sprite_bound(
+    return m11_draw_explosion_sprite_bound_ex(
         ctx->state,
         screen_pixels,
         screen_stride,
@@ -1049,7 +1074,8 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         blit->frame,
         blit->max_frames,
         blit->attack,
-        blit->depth_index);
+        blit->depth_index,
+        blit->transparent_color);
 }
 
 static void m11_csb_runtime_overlay_stats_apply(
@@ -17332,6 +17358,34 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       int relativeCell,
                                       int flipFlags,
                                       int sourceZoneRow) {
+    return m11_draw_projectile_sprite_ex(state,
+                                        framebuffer,
+                                        framebufferWidth,
+                                        framebufferHeight,
+                                        x,
+                                        y,
+                                        w,
+                                        h,
+                                        gfxIndex,
+                                        depthIndex,
+                                        relativeDir,
+                                        relativeCell,
+                                        flipFlags,
+                                        sourceZoneRow,
+                                        -1);
+}
+
+static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight,
+                                         int x, int y, int w, int h,
+                                         int gfxIndex, int depthIndex,
+                                         int relativeDir,
+                                         int relativeCell,
+                                         int flipFlags,
+                                         int sourceZoneRow,
+                                         int transparentColor) {
     const M11_AssetSlot* slot;
     DM1_ProjectileSpriteBlitPlan plan;
     if (!state || !state->assetsAvailable || gfxIndex < 454 ||
@@ -17362,7 +17416,8 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
         m11_blit_scaled_flip(slot, framebuffer, framebufferWidth, framebufferHeight,
                              plan.draw_x, plan.draw_y,
                              plan.draw_w, plan.draw_h,
-                             plan.transparent_color,
+                             transparentColor >= 0 ? transparentColor
+                                                   : plan.transparent_color,
                              (plan.flip_flags & 0x01) ? 1 : 0,
                              1);
     } else if (plan.flip_flags & 0x01) {
@@ -17370,13 +17425,17 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                          framebufferHeight,
                                          plan.draw_x, plan.draw_y,
                                          plan.draw_w, plan.draw_h,
-                                         plan.transparent_color);
+                                         transparentColor >= 0
+                                             ? transparentColor
+                                             : plan.transparent_color);
     } else {
         M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
                                    framebufferHeight,
                                    plan.draw_x, plan.draw_y,
                                    plan.draw_w, plan.draw_h,
-                                   plan.transparent_color);
+                                   transparentColor >= 0
+                                       ? transparentColor
+                                       : plan.transparent_color);
     }
     return 1;
 }
@@ -17418,6 +17477,37 @@ static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
                                            int maxFrames,
                                            int attack,
                                            int depthIndex) {
+    return m11_draw_explosion_sprite_bound_ex(state,
+                                             framebuffer,
+                                             framebufferWidth,
+                                             framebufferHeight,
+                                             x,
+                                             y,
+                                             w,
+                                             h,
+                                             aspect,
+                                             gfxIndex,
+                                             isSmoke,
+                                             frame,
+                                             maxFrames,
+                                             attack,
+                                             depthIndex,
+                                             -1);
+}
+
+static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight,
+                                              int x, int y, int w, int h,
+                                              int aspect,
+                                              int gfxIndex,
+                                              int isSmoke,
+                                              int frame,
+                                              int maxFrames,
+                                              int attack,
+                                              int depthIndex,
+                                              int transparentColor) {
     const M11_AssetSlot* slot;
     DM1_ExplosionSpriteBlitPlan plan;
     if (!state || !state->assetsAvailable) return 0;
@@ -17447,14 +17537,14 @@ static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
         M11_AssetLoader_BlitScaledReplace(
             slot, framebuffer, framebufferWidth, framebufferHeight,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
-            plan.transparent_color,
+            transparentColor >= 0 ? transparentColor : plan.transparent_color,
             plan.replace_src_a, plan.replace_dst_a,
             plan.replace_src_b, plan.replace_dst_b);
     } else {
         M11_AssetLoader_BlitScaled(
             slot, framebuffer, framebufferWidth, framebufferHeight,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
-            plan.transparent_color);
+            transparentColor >= 0 ? transparentColor : plan.transparent_color);
     }
     return 1;
 }
