@@ -235,6 +235,10 @@ int main(void)
               "CSB runtime classifies weapons as floor objects for overlays");
         check(!csb_v1_runtime_thing_type_is_floor_object(THING_TYPE_GROUP),
               "CSB runtime keeps GROUP records out of floor-object overlays");
+        check(csb_v1_runtime_group_record_creature_type(raw + 96, 16) == 6,
+              "CSB runtime decodes GROUP creature type for overlay sprite routing");
+        check(csb_v1_runtime_group_record_creature_type(raw + 96, 4) == -1,
+              "CSB runtime rejects short GROUP creature-type records");
         check(csb_v1_runtime_group_record_visible_count(raw + 96, 16) == 1,
               "CSB runtime decodes one-creature GROUP.Count for overlays");
         check(csb_v1_runtime_group_record_direction(raw + 96, 16) == 0,

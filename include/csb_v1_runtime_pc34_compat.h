@@ -763,6 +763,10 @@ uint16_t csb_v1_runtime_next_thing(
 
 int csb_v1_runtime_thing_type_is_floor_object(int thing_type);
 
+int csb_v1_runtime_group_record_creature_type(
+    const uint8_t *record,
+    int size);
+
 int csb_v1_runtime_group_record_direction(
     const uint8_t *record,
     int size);
