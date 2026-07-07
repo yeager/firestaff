@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+static Theron_DungeonID tqr_startup_clamp_stage(Theron_DungeonID dungeon_id);
+
 static int tqr_stage_is_available(const Theron_DungeonProgression *progression,
                                   Theron_DungeonID dungeon_id) {
     Theron_DungeonState state;
@@ -126,6 +128,100 @@ void theron_v1_startup_flow_init(Theron_StartupFlow *flow) {
         flow->selected_mirror_order[i] = 0xffu;
     }
     flow->phase = THERON_STARTUP_PHASE_TITLE;
+}
+
+void theron_v1_startup_flow_snapshot_init(Theron_StartupFlowSnapshot *snapshot) {
+    int i;
+    if (!snapshot) {
+        return;
+    }
+    memset(snapshot, 0, sizeof(*snapshot));
+    snapshot->phase = THERON_STARTUP_PHASE_TITLE;
+    snapshot->selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        snapshot->selected_mirror_order[i] = -1;
+    }
+}
+
+void theron_v1_startup_flow_capture_snapshot(
+    const Theron_StartupFlow *flow,
+    Theron_StartupFlowSnapshot *snapshot) {
+
+    int i;
+    if (!snapshot) {
+        return;
+    }
+    theron_v1_startup_flow_snapshot_init(snapshot);
+    if (!flow) {
+        return;
+    }
+    snapshot->phase = flow->phase;
+    snapshot->selected_dungeon = flow->selected_dungeon;
+    snapshot->selected_mirrors_mask = flow->selected_mirrors_mask;
+    snapshot->companion_count = flow->companion_count;
+    for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
+        snapshot->selected_mirror_order[i] =
+            flow->selected_mirror_order[i] == 0xffu
+                ? -1
+                : (int)flow->selected_mirror_order[i];
+    }
+}
+
+Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
+    const Theron_StartupFlowSnapshot *snapshot,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow) {
+
+    Theron_StartupResult result;
+    Theron_DungeonID selected;
+    int replayed_mask = 0;
+    int slot;
+    int mirror;
+
+    if (!snapshot || !progression || !flow) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+
+    selected = tqr_startup_clamp_stage(snapshot->selected_dungeon);
+    theron_v1_startup_flow_init(flow);
+    result = theron_v1_startup_choose_stage(flow, progression, selected);
+    if (result != THERON_STARTUP_OK) {
+        return result;
+    }
+
+    for (slot = 0;
+         slot < snapshot->companion_count &&
+         slot < THERON_STARTUP_MAX_COMPANIONS;
+         ++slot) {
+        mirror = snapshot->selected_mirror_order[slot];
+        if (mirror < 0 || mirror >= THERON_STARTUP_HERO_MIRROR_COUNT ||
+            (replayed_mask & (1 << mirror)) != 0 ||
+            (snapshot->selected_mirrors_mask & (uint8_t)(1u << mirror)) == 0u) {
+            continue;
+        }
+        result = theron_v1_startup_select_mirror(flow, mirror);
+        if (result != THERON_STARTUP_OK) {
+            return result;
+        }
+        replayed_mask |= (1 << mirror);
+    }
+
+    for (mirror = 0; mirror < THERON_STARTUP_HERO_MIRROR_COUNT; ++mirror) {
+        if ((snapshot->selected_mirrors_mask & (uint8_t)(1u << mirror)) == 0u ||
+            (replayed_mask & (1 << mirror)) != 0) {
+            continue;
+        }
+        result = theron_v1_startup_select_mirror(flow, mirror);
+        if (result != THERON_STARTUP_OK) {
+            return result;
+        }
+    }
+
+    if (snapshot->phase == THERON_STARTUP_PHASE_READY &&
+        flow->phase == THERON_STARTUP_PHASE_SOUL_ROOM) {
+        flow->phase = THERON_STARTUP_PHASE_READY;
+    }
+    return THERON_STARTUP_OK;
 }
 
 void theron_v1_startup_action_init(Theron_StartupAction *action) {

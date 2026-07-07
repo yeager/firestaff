@@ -111,6 +111,47 @@ int main(void) {
     check_int("mirror before stage rejected", result, THERON_STARTUP_ERR_NO_STAGE);
 
     {
+        Theron_StartupFlow rebuilt;
+        Theron_StartupFlowSnapshot snapshot;
+        theron_v1_startup_flow_init(&flow);
+        result = theron_v1_startup_choose_stage(
+            &flow,
+            &progression,
+            THERON_DUNGEON_1_HALL_OF_RECORDS);
+        check_int("snapshot stage choose rc", result, THERON_STARTUP_OK);
+        check_int("snapshot select mirror 6 rc",
+                  theron_v1_startup_select_mirror(&flow, 6),
+                  THERON_STARTUP_OK);
+        check_int("snapshot select mirror 2 rc",
+                  theron_v1_startup_select_mirror(&flow, 2),
+                  THERON_STARTUP_OK);
+        check_int("snapshot select mirror 0 rc",
+                  theron_v1_startup_select_mirror(&flow, 0),
+                  THERON_STARTUP_OK);
+        theron_v1_startup_flow_capture_snapshot(&flow, &snapshot);
+        check_int("snapshot phase", snapshot.phase, THERON_STARTUP_PHASE_READY);
+        check_int("snapshot companion count", snapshot.companion_count, 3);
+        check_int("snapshot order 0", snapshot.selected_mirror_order[0], 6);
+        check_int("snapshot order 1", snapshot.selected_mirror_order[1], 2);
+        check_int("snapshot order 2", snapshot.selected_mirror_order[2], 0);
+        snapshot.selected_mirror_order[1] = 6;
+        result = theron_v1_startup_flow_rebuild_from_snapshot(
+            &snapshot,
+            &progression,
+            &rebuilt);
+        check_int("snapshot rebuild rc", result, THERON_STARTUP_OK);
+        check_int("snapshot rebuild phase", rebuilt.phase, THERON_STARTUP_PHASE_READY);
+        check_int("snapshot rebuild companion count", rebuilt.companion_count, 3);
+        check_int("snapshot rebuild order 0", rebuilt.selected_mirror_order[0], 6);
+        check_int("snapshot rebuild order 1 skips duplicate",
+                  rebuilt.selected_mirror_order[1],
+                  0);
+        check_int("snapshot rebuild order 2 fills masked mirror",
+                  rebuilt.selected_mirror_order[2],
+                  2);
+    }
+
+    {
         Theron_StartupAction action;
         Theron_StartupHit hit;
         result = theron_v1_startup_handle_input(

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron startup flow snapshot ownership: `theron_v1_startup_flow` now owns capture/rebuild of startup phase, selected stage, selected mirror mask, and companion order from a bounded snapshot. M11 no longer replays mirror selection policy locally when entering the forcefield. Verification: direct `firestaff_theron_v1_startup_flow_probe` build/run passed 254/254, M11 syntax passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 optional boot asset scan candidates: the asset scanner now treats `TITLE`, `TITLE.DAT`, `SWOOSH`, and `SWOOSH.DAT` as original-file candidates, while keeping the DM1 launch gate on required `GRAPHICS.DAT` plus `DUNGEON.DAT`. Verification: direct `test_asset_status_scan_metrics` build/run passed, `firestaff_m11_phase_a_probe` passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB entrance pointer dispatch ownership: `csb_v1_startup_entrance_pointer_pc34_compat` now owns pointer-to-entrance-command dispatch through `csb_v1_startup_entrance_command_for_pointer_pc34()`, including credits-dismiss handling. M11 no longer maps CSB startup pointer action enums to command ids. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 100/100, `test_csb_v1_utility_flow_action_contract` passed 39/39, `firestaff_m11_phase_a_probe` passed 24/24, and `git diff --check` passed.
