@@ -1455,6 +1455,33 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
     CHECK(receipt.import_utility_state == (int)CSB_V1_UTIL_FLOW_DONE &&
               strstr(receipt.import_utility_prompt, "READY") != NULL,
           "runtime startup handoff receipt carries utility state");
+    {
+        CSB_V1_StartupSessionOptions_PC34 options;
+        CHECK(csb_v1_runtime_build_startup_session_options_pc34(
+                  &runtime,
+                  &receipt,
+                  path,
+                  NULL,
+                  &options) == 1,
+              "runtime builds startup session options from import handoff");
+        CHECK(options.import_available &&
+                  options.import_champion_count == 2 &&
+                  options.import_utility_state ==
+                      (int)CSB_V1_UTIL_FLOW_DONE &&
+                  strcmp(options.import_dm1_save_path, path) == 0 &&
+                  strstr(options.import_utility_prompt, "READY") != NULL,
+              "runtime session options publish imported DM1 party");
+        receipt.direct_resume_loaded = 1;
+        CHECK(csb_v1_runtime_build_startup_session_options_pc34(
+                  &runtime,
+                  &receipt,
+                  path,
+                  path,
+                  &options) == 1 &&
+                  !options.import_available &&
+                  !options.entrance_resume_available,
+              "runtime session options suppress choices after direct resume");
+    }
     csb_v1_runtime_cleanup(&runtime);
     remove(path);
 }

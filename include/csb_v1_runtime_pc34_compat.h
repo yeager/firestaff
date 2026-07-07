@@ -972,6 +972,9 @@ typedef struct {
     const char *status_scope;
     const char *status;
 } CSB_V1_RuntimeStartupHandoffReceipt_PC34;
+
+#include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
+
 typedef enum {
     CSB_V1_RUNTIME_STARTUP_PLAN_NONE_PC34 = 0,
     CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_DUNGEON_PC34 = 1,
@@ -1000,6 +1003,12 @@ int csb_v1_runtime_apply_startup_handoff_pc34(
     const char *save_path,
     const char *import_dm1_save_path,
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 *out_receipt);
+int csb_v1_runtime_build_startup_session_options_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeStartupHandoffReceipt_PC34 *handoff,
+    const char *import_dm1_save_path,
+    const char *entrance_resume_save_path,
+    CSB_V1_StartupSessionOptions_PC34 *out_options);
 void csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *receipt);
 int csb_v1_runtime_apply_startup_runtime_plan_pc34(
