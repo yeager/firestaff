@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.60  (2026-07-07)",
+    "  - Packages CSB viewport-owned runtime object and creature-group overlay drawing on main.",
+    "  - CSB V1 now owns runtime thing overlay collection/draw order while M11 supplies only asset-backed sprite/icon blitters.",
+    "",
     "V3.0.59  (2026-07-07)",
     "  - Packages CSB runtime object draw binding ownership now on main.",
     "  - CSB runtime object overlay placements now carry sprite and icon binding data for M11 drawing.",
@@ -488,5 +492,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.59";
+    return "3.0.60";
 }
