@@ -1124,93 +1124,81 @@ static void m11_csb_runtime_overlay_stats_reset(
 
 static int m11_csb_viewport_object_sprite_drawer(
     void *user,
-    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeObjectSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
-    CSB_V1_ViewportRuntimeObjectSpriteBlit blit;
 
-    if (!ctx || !ctx->state || !placement || !screen_pixels ||
+    if (!ctx || !ctx->state || !blit || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
-        return 0;
-    }
-    if (!csb_v1_viewport_runtime_object_sprite_blit(placement, &blit)) {
         return 0;
     }
     return m11_draw_item_sprite(ctx->state,
                                 screen_pixels,
                                 screen_stride,
                                 ctx->framebuffer_height,
-                                blit.viewport_x,
-                                blit.viewport_y,
-                                blit.viewport_w,
-                                blit.viewport_h,
-                                blit.thing_type,
-                                blit.subtype_index,
-                                blit.relative_cell,
-                                blit.pile_index,
-                                blit.depth_index,
-                                blit.source_zone_row);
+                                blit->viewport_x,
+                                blit->viewport_y,
+                                blit->viewport_w,
+                                blit->viewport_h,
+                                blit->thing_type,
+                                blit->subtype_index,
+                                blit->relative_cell,
+                                blit->pile_index,
+                                blit->depth_index,
+                                blit->source_zone_row);
 }
 
 static int m11_csb_viewport_object_icon_drawer(
     void *user,
-    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeObjectIconBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
-    CSB_V1_ViewportRuntimeObjectIconBlit blit;
 
-    if (!ctx || !ctx->state || !placement || !screen_pixels ||
+    if (!ctx || !ctx->state || !blit || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
-        return 0;
-    }
-    if (!csb_v1_viewport_runtime_object_icon_blit(placement, &blit)) {
         return 0;
     }
     return m11_draw_dm_object_icon_index(ctx->state,
                                          screen_pixels,
                                          screen_stride,
                                          ctx->framebuffer_height,
-                                         blit.icon_index,
-                                         blit.draw_x,
-                                         blit.draw_y,
-                                         blit.transparent_color);
+                                         blit->icon_index,
+                                         blit->draw_x,
+                                         blit->draw_y,
+                                         blit->transparent_color);
 }
 
 static int m11_csb_viewport_group_sprite_drawer(
     void *user,
-    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeGroupSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
-    CSB_V1_ViewportRuntimeGroupSpriteBlit blit;
 
-    if (!ctx || !ctx->state || !placement || !screen_pixels ||
+    if (!ctx || !ctx->state || !blit || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
-        return 0;
-    }
-    if (!csb_v1_viewport_runtime_group_sprite_blit(placement, &blit)) {
         return 0;
     }
     return m11_draw_creature_sprite_ex(ctx->state,
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
-        blit.x,
-        blit.y,
-        blit.w,
-        blit.h,
-        blit.creature_type,
-        blit.depth_index,
-        blit.relative_side,
-        blit.direction);
+        blit->x,
+        blit->y,
+        blit->w,
+        blit->h,
+        blit->creature_type,
+        blit->depth_index,
+        blit->relative_side,
+        blit->direction);
 }
 
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,

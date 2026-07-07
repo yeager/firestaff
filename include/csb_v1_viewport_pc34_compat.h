@@ -18,6 +18,12 @@ typedef struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
 typedef struct CSB_V1_ViewportRuntimeProjectileSpriteBlit
     CSB_V1_ViewportRuntimeProjectileSpriteBlit;
+typedef struct CSB_V1_ViewportRuntimeObjectSpriteBlit
+    CSB_V1_ViewportRuntimeObjectSpriteBlit;
+typedef struct CSB_V1_ViewportRuntimeObjectIconBlit
+    CSB_V1_ViewportRuntimeObjectIconBlit;
+typedef struct CSB_V1_ViewportRuntimeGroupSpriteBlit
+    CSB_V1_ViewportRuntimeGroupSpriteBlit;
 typedef struct CSB_V1_ViewportRuntimeExplosionSpriteBlit
     CSB_V1_ViewportRuntimeExplosionSpriteBlit;
 
@@ -35,19 +41,19 @@ typedef int (*CSB_V1_ViewportExplosionSpriteDrawer)(
 
 typedef int (*CSB_V1_ViewportObjectSpriteDrawer)(
     void *user,
-    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeObjectSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride);
 
 typedef int (*CSB_V1_ViewportObjectIconDrawer)(
     void *user,
-    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeObjectIconBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride);
 
 typedef int (*CSB_V1_ViewportGroupSpriteDrawer)(
     void *user,
-    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeGroupSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride);
 
@@ -478,7 +484,7 @@ struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
     int icon_draw_y;
 };
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeObjectSpriteBlit {
     int thing_type;
     int subtype_index;
     int relative_cell;
@@ -489,14 +495,14 @@ typedef struct {
     int viewport_h;
     int depth_index;
     int source_zone_row;
-} CSB_V1_ViewportRuntimeObjectSpriteBlit;
+};
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeObjectIconBlit {
     int icon_index;
     int draw_x;
     int draw_y;
     int transparent_color;
-} CSB_V1_ViewportRuntimeObjectIconBlit;
+};
 
 struct CSB_V1_ViewportRuntimeGroupOverlayPlacement {
     int visible;
@@ -523,7 +529,7 @@ struct CSB_V1_ViewportRuntimeGroupOverlayPlacement {
     int marker_screen_y;
 };
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeGroupSpriteBlit {
     int creature_type;
     int direction;
     int relative_side;
@@ -532,7 +538,7 @@ typedef struct {
     int w;
     int h;
     int depth_index;
-} CSB_V1_ViewportRuntimeGroupSpriteBlit;
+};
 
 struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int visible;
