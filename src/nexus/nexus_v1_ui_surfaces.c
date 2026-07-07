@@ -251,6 +251,41 @@ int nexus_ui_face_layout_detect(const uint8_t *data,
     return layout.entry_count > 0;
 }
 
+int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
+    int record_size,
+    uint8_t *out_pixels,
+    int out_size,
+    Nexus_UI_FaceRecordDecodeInfo *out_info)
+{
+    Nexus_UI_FaceRecordDecodeInfo info;
+    int copy_size;
+    const int entry_size = 48 * 48;
+    memset(&info, 0, sizeof(info));
+    info.kind = NEXUS_UI_FACE_RECORD_NONE;
+    info.source_size = record_size;
+    info.portrait_w = 48;
+    info.portrait_h = 48;
+    if (!out_pixels || out_size < entry_size) {
+        if (out_info) *out_info = info;
+        return -1;
+    }
+    memset(out_pixels, 0, (size_t)entry_size);
+    info.zero_padded_pixels = entry_size;
+    if (!record_data || record_size <= 0) {
+        if (out_info) *out_info = info;
+        return 0;
+    }
+    copy_size = record_size < entry_size ? record_size : entry_size;
+    memcpy(out_pixels, record_data, (size_t)copy_size);
+    info.copied_pixels = copy_size;
+    info.zero_padded_pixels = entry_size - copy_size;
+    info.kind = (record_size >= entry_size)
+                    ? NEXUS_UI_FACE_RECORD_RAW_48X48
+                    : NEXUS_UI_FACE_RECORD_COMPACT_PADDED;
+    if (out_info) *out_info = info;
+    return 1;
+}
+
 int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     const uint8_t *record_data,
     int record_size,
@@ -260,7 +295,7 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     const uint32_t *palette)
 {
     int entry_size;
-    int copy_size;
+    int expand_result;
     Nexus_UI_Surface *surf;
     (void)palette;
     if (!mgr) return -1;
@@ -288,9 +323,15 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
         return -1;
     }
     surf->owns_data = 1;
-    copy_size = record_size < entry_size ? record_size : entry_size;
-    memcpy(surf->data, record_data, (size_t)copy_size);
-    return 1;
+    expand_result = nexus_ui_expand_face_record_48x48(record_data,
+                                                      record_size,
+                                                      surf->data,
+                                                      entry_size,
+                                                      NULL);
+    if (expand_result < 0) {
+        return -1;
+    }
+    return expand_result > 0 ? 1 : 0;
 }
 
 int nexus_ui_load_face_placeholder(Nexus_UI_Manager *mgr,
