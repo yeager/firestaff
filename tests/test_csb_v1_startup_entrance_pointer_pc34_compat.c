@@ -244,8 +244,18 @@ int main(void)
               plan.fallback_prompt_y == 112 &&
               plan.fallback_prompt_style == 3 &&
               strcmp(plan.fallback_prompt_text, "STRIKES BACK") == 0 &&
+              plan.fallback_text_row_count == 3 &&
+              plan.fallback_text_rows[0].visible &&
+              plan.fallback_text_rows[0].x == 38 &&
+              plan.fallback_text_rows[0].y == 52 &&
+              plan.fallback_text_rows[0].style == 1 &&
+              strcmp(plan.fallback_text_rows[0].text, "FTL PRESENTS") == 0 &&
+              plan.fallback_text_rows[1].visible &&
+              strcmp(plan.fallback_text_rows[1].text, "CHAOS") == 0 &&
+              plan.fallback_text_rows[2].visible &&
+              strcmp(plan.fallback_text_rows[2].text, "STRIKES BACK") == 0 &&
               !plan.waiting_for_input,
-          "startup render plan owns title PRESENTS surface, boxes, palette, and fallback text");
+          "startup render plan owns title PRESENTS surface, boxes, palette, and fallback rows");
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34() + 1;
@@ -374,20 +384,34 @@ int main(void)
               plan.fallback_prompt_x == 38 &&
               plan.fallback_prompt_y == 154 &&
               plan.fallback_prompt_style == 3 &&
-              strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0,
-          "startup render plan owns closed entrance prompt, fallback text, and door boxes");
+              strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0 &&
+              plan.fallback_text_row_count == 5 &&
+              strcmp(plan.fallback_text_rows[0].text, "CHAOS STRIKES BACK") == 0 &&
+              strcmp(plan.fallback_text_rows[1].text, "ENTRANCE") == 0 &&
+              strcmp(plan.fallback_text_rows[2].text, "CSB RUNTIME READY") == 0 &&
+              strcmp(plan.fallback_text_rows[3].text, "START 5,7 DIR 2") == 0 &&
+              strcmp(plan.fallback_text_rows[4].text, "PRESS ENTER") == 0,
+          "startup render plan owns closed entrance prompt, fallback rows, and door boxes");
 
     render_state.utility_overlay_active = 1;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               !plan.fallback_status_visible &&
               !plan.fallback_detail_visible &&
-              plan.fallback_runtime_detail_visible,
+              plan.fallback_runtime_detail_visible &&
+              plan.fallback_text_row_count == 5 &&
+              plan.fallback_text_rows[0].visible &&
+              plan.fallback_text_rows[1].visible &&
+              !plan.fallback_text_rows[2].visible &&
+              !plan.fallback_text_rows[3].visible &&
+              plan.fallback_text_rows[4].visible,
           "startup render plan suppresses fallback status rows behind utility overlay");
 
     render_state.utility_overlay_active = 0;
     render_state.entrance_frame = 12;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
-              !plan.blink_prompt_visible,
+              !plan.blink_prompt_visible &&
+              plan.fallback_text_row_count == 5 &&
+              !plan.fallback_text_rows[4].visible,
           "startup render plan owns prompt blink cadence");
 
     memset(&render_state, 0, sizeof(render_state));
@@ -413,8 +437,12 @@ int main(void)
               plan.fallback_prompt_x == 38 &&
               plan.fallback_prompt_y == 154 &&
               plan.fallback_prompt_style == 1 &&
-              strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0,
-          "startup render plan owns credits surface, asset, and fallback text");
+              strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0 &&
+              plan.fallback_text_row_count == 3 &&
+              strcmp(plan.fallback_text_rows[0].text, "CHAOS STRIKES BACK") == 0 &&
+              strcmp(plan.fallback_text_rows[1].text, "CREDITS") == 0 &&
+              strcmp(plan.fallback_text_rows[2].text, "PRESS ENTER") == 0,
+          "startup render plan owns credits surface, asset, and fallback rows");
 
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;

@@ -2423,6 +2423,11 @@ static void m11_draw_csb_startup_plan_text(
     int y,
     int style,
     const char *text);
+static void m11_draw_csb_startup_fallback_text_rows(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const CSB_V1_StartupRenderPlan_PC34 *plan);
 
 static void m11_csb_startup_build_utility_flow(
     const M11_GameViewState *state,
@@ -2748,27 +2753,10 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         }
         return;
     }
-    m11_draw_csb_startup_plan_text(framebuffer,
-                                   framebufferWidth,
-                                   framebufferHeight,
-                                   plan->fallback_title_x,
-                                   plan->fallback_title_y,
-                                   plan->fallback_title_style,
-                                   plan->fallback_title_text);
-    m11_draw_csb_startup_plan_text(framebuffer,
-                                   framebufferWidth,
-                                   framebufferHeight,
-                                   plan->fallback_subtitle_x,
-                                   plan->fallback_subtitle_y,
-                                   plan->fallback_subtitle_style,
-                                   plan->fallback_subtitle_text);
-    m11_draw_csb_startup_plan_text(framebuffer,
-                                   framebufferWidth,
-                                   framebufferHeight,
-                                   plan->fallback_prompt_x,
-                                   plan->fallback_prompt_y,
-                                   plan->fallback_prompt_style,
-                                   plan->fallback_prompt_text);
+    m11_draw_csb_startup_fallback_text_rows(framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight,
+                                            plan);
 }
 
 static const M11_TextStyle *m11_csb_startup_text_style(int style)
@@ -2804,6 +2792,33 @@ static void m11_draw_csb_startup_plan_text(
                   y,
                   text,
                   m11_csb_startup_text_style(style));
+}
+
+static void m11_draw_csb_startup_fallback_text_rows(
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int i;
+    if (!framebuffer || !plan) {
+        return;
+    }
+    for (i = 0; i < plan->fallback_text_row_count &&
+                i < CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34; ++i) {
+        const CSB_V1_StartupFallbackTextRow_PC34 *row =
+            &plan->fallback_text_rows[i];
+        if (!row->visible) {
+            continue;
+        }
+        m11_draw_csb_startup_plan_text(framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       row->x,
+                                       row->y,
+                                       row->style,
+                                       row->text);
+    }
 }
 
 static int m11_draw_csb_entrance_closed_doors_asset(
@@ -2967,27 +2982,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                  plan.surface_dest_y,
                                  plan.surface_transparent_color);
         } else {
-            m11_draw_csb_startup_plan_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan.fallback_title_x,
-                                           plan.fallback_title_y,
-                                           plan.fallback_title_style,
-                                           plan.fallback_title_text);
-            m11_draw_csb_startup_plan_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan.fallback_subtitle_x,
-                                           plan.fallback_subtitle_y,
-                                           plan.fallback_subtitle_style,
-                                           plan.fallback_subtitle_text);
-            m11_draw_csb_startup_plan_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan.fallback_prompt_x,
-                                           plan.fallback_prompt_y,
-                                           plan.fallback_prompt_style,
-                                           plan.fallback_prompt_text);
+            m11_draw_csb_startup_fallback_text_rows(framebuffer,
+                                                    framebufferWidth,
+                                                    framebufferHeight,
+                                                    &plan);
         }
         return;
     }
@@ -3087,50 +3085,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                           plan.fallback_frame_h,
                           (unsigned char)plan.fallback_frame_color);
         }
-        m11_draw_csb_startup_plan_text(framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight,
-                                       plan.fallback_title_x,
-                                       plan.fallback_title_y,
-                                       plan.fallback_title_style,
-                                       plan.fallback_title_text);
-        m11_draw_csb_startup_plan_text(framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight,
-                                       plan.fallback_subtitle_x,
-                                       plan.fallback_subtitle_y,
-                                       plan.fallback_subtitle_style,
-                                       plan.fallback_subtitle_text);
-        if (plan.fallback_status_visible) {
-            m11_draw_csb_startup_plan_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan.fallback_status_x,
-                                           plan.fallback_status_y,
-                                           plan.fallback_status_style,
-                                           plan.fallback_status_text);
-        }
-        if (plan.fallback_detail_visible) {
-            const char *detail = plan.fallback_runtime_detail_visible
-                ? plan.fallback_runtime_detail_text
-                : plan.fallback_detail_text;
-            m11_draw_csb_startup_plan_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan.fallback_detail_x,
-                                           plan.fallback_detail_y,
-                                           plan.fallback_detail_style,
-                                           detail);
-        }
-        if (plan.blink_prompt_visible) {
-            m11_draw_csb_startup_plan_text(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           plan.fallback_prompt_x,
-                                           plan.fallback_prompt_y,
-                                           plan.fallback_prompt_style,
-                                           plan.fallback_prompt_text);
-        }
+        m11_draw_csb_startup_fallback_text_rows(framebuffer,
+                                                framebufferWidth,
+                                                framebufferHeight,
+                                                &plan);
     }
     if (plan.waiting_for_input) {
         m11_draw_csb_startup_utility_panel(state,
