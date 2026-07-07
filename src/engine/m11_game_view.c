@@ -528,27 +528,25 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
                                          const char *save_path)
 {
     char save_root[M11_GAME_VIEW_PATH_CAPACITY];
-    unsigned char slot = 0u;
-    int last_session = 0;
     DM2_V1_SessionState session;
+    DM2_V1_StartupSavePathResult load_result;
 
     if (!state || !profile || !save_path || !save_path[0]) {
         return 0;
     }
-    if (!dm2_v1_startup_save_path_to_root_slot(
+    load_result = dm2_v1_startup_load_session_from_save_path(
             save_path,
             save_root,
             (int)sizeof(save_root),
-            &slot,
-            &last_session)) {
+            &session,
+            NULL,
+            NULL);
+    if (load_result == DM2_V1_STARTUP_SAVE_PATH_INVALID) {
         m11_set_status(state, "BOOT", "DM2 RESUME PATH INVALID");
         return 0;
     }
     dm2_v1_boot_set_save_root(profile, save_root);
-    memset(&session, 0, sizeof(session));
-    if ((last_session
-            ? dm2_v1_session_load_last_session(profile->save_root, &session)
-            : dm2_v1_session_load_slot(profile->save_root, slot, &session)) != 0 ||
+    if (load_result != DM2_V1_STARTUP_SAVE_PATH_LOADED ||
         dm2_v1_runtime_apply_session(&session) != 0) {
         m11_set_status(state, "BOOT", "DM2 RESUME FAILED");
         return 0;

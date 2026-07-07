@@ -95,6 +95,45 @@ int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
     return 1;
 }
 
+DM2_V1_StartupSavePathResult
+dm2_v1_startup_load_session_from_save_path(const char *save_path,
+                                           char *out_root,
+                                           int out_root_cap,
+                                           DM2_V1_SessionState *out_session,
+                                           uint8_t *out_slot,
+                                           int *out_last_session)
+{
+    char parsed_root[512];
+    uint8_t slot = 0u;
+    int last_session = 0;
+    int load_result;
+
+    if (!out_session ||
+        !dm2_v1_startup_save_path_to_root_slot(save_path,
+                                               parsed_root,
+                                               (int)sizeof(parsed_root),
+                                               &slot,
+                                               &last_session)) {
+        return DM2_V1_STARTUP_SAVE_PATH_INVALID;
+    }
+    if (out_root && out_root_cap > 0) {
+        snprintf(out_root, (size_t)out_root_cap, "%s", parsed_root);
+    }
+    if (out_slot) {
+        *out_slot = slot;
+    }
+    if (out_last_session) {
+        *out_last_session = last_session;
+    }
+    memset(out_session, 0, sizeof(*out_session));
+    load_result = last_session
+        ? dm2_v1_session_load_last_session(parsed_root, out_session)
+        : dm2_v1_session_load_slot(parsed_root, slot, out_session);
+    return load_result == 0
+        ? DM2_V1_STARTUP_SAVE_PATH_LOADED
+        : DM2_V1_STARTUP_SAVE_PATH_LOAD_FAILED;
+}
+
 void dm2_v1_startup_menu_init(DM2_V1_StartupMenu *menu,
                               const char *save_root)
 {

@@ -98,11 +98,24 @@ typedef struct {
     char label[DM2_V1_STARTUP_ROW_LABEL_CAPACITY];
 } DM2_V1_StartupRenderRow;
 
+typedef enum {
+    DM2_V1_STARTUP_SAVE_PATH_INVALID = 0,
+    DM2_V1_STARTUP_SAVE_PATH_LOADED = 1,
+    DM2_V1_STARTUP_SAVE_PATH_LOAD_FAILED = 2
+} DM2_V1_StartupSavePathResult;
+
 int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
                                           char *out_root,
                                           int out_root_cap,
                                           uint8_t *out_slot,
                                           int *out_last_session);
+DM2_V1_StartupSavePathResult
+dm2_v1_startup_load_session_from_save_path(const char *save_path,
+                                           char *out_root,
+                                           int out_root_cap,
+                                           DM2_V1_SessionState *out_session,
+                                           uint8_t *out_slot,
+                                           int *out_last_session);
 void dm2_v1_startup_menu_init(DM2_V1_StartupMenu *menu,
                               const char *save_root);
 int dm2_v1_startup_menu_count_rows(int resume_available,
