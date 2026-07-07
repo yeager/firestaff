@@ -21398,9 +21398,6 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
     }
 }
 
-static int m11_dm1_side_lane_clear_before_depth(const M11_ViewportCell cells[3][3],
-                                                 int depthIndex,
-                                                 int sideIndex);
 static int m11_dm1_side_lane_clear_for_rel(const M11_ViewportCell cells[3][3],
                                            int relForward,
                                            int relSide);
@@ -21579,40 +21576,29 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
     }
 }
 
-static int m11_dm1_side_lane_clear_before_depth(const M11_ViewportCell cells[3][3],
-                                                 int depthIndex,
-                                                 int sideIndex) {
+static unsigned int m11_dm1_side_lane_open_depth_mask(const M11_ViewportCell cells[3][3],
+                                                      int sideIndex) {
     int d;
-    if (!cells || depthIndex <= 0) {
-        return 1;
-    }
+    unsigned int mask = 0u;
+    if (!cells) return 0u;
     if (sideIndex != 0 && sideIndex != 2) {
-        return 1;
+        return 0x7u;
     }
-    for (d = 0; d < depthIndex && d < 3; ++d) {
-        /* Source lock: DUNVIEW.C F0128 draws complete side squares in
-         * far-to-near order (D3L/D3R before D3C, then D2L/D2R before D2C,
-         * then D1L/D1R before D1C; see ReDMCSB DUNVIEW.C:8488-8533).
-         * Side-square functions route doors/walls through F0115 content
-         * and then their wall/door/field passes, so a nearer non-open side
-         * square must occlude all farther side-lane wall/content/projectile
-         * blits in that lane, not only wall-like elements. */
-        if (!m11_viewport_cell_is_open(&cells[d][sideIndex])) {
-            return 0;
+    for (d = 0; d < 3; ++d) {
+        if (m11_viewport_cell_is_open(&cells[d][sideIndex])) {
+            mask |= (1u << (unsigned int)d);
         }
     }
-    return 1;
+    return mask;
 }
 
 static int m11_dm1_side_lane_clear_for_rel(const M11_ViewportCell cells[3][3],
                                            int relForward,
                                            int relSide) {
-    if (relSide == 0 || relForward <= 0) {
-        return 1;
-    }
-    return m11_dm1_side_lane_clear_before_depth(cells,
-                                                     relForward - 1,
-                                                     relSide < 0 ? 0 : 2);
+    return dm1_viewport_3d_side_lane_clear_for_rel_pc34(
+        relForward,
+        relSide,
+        m11_dm1_side_lane_open_depth_mask(cells, relSide < 0 ? 0 : 2));
 }
 
 static int m11_decode_visible_wall_text(const M11_GameViewState* state,
@@ -24152,7 +24138,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
             if (!cell->valid || !m11_viewport_cell_is_open(cell)) {
                 continue;
             }
-            if (!m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)) {
+            if (!m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)) {
                 continue;
             }
             if (side < 0) {
@@ -24436,7 +24422,7 @@ static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state,
             if (!m11_dm1_center_line_clear_before_depth(cells, depth)) {
                 continue;
             }
-            if (!m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)) {
+            if (!m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)) {
                 continue;
             }
             m11_draw_dm1_deferred_side_explosion(

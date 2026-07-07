@@ -197,6 +197,27 @@ int dm1_viewport_3d_primary_side_wall_max_forward_pc34(
     return 3;
 }
 
+int dm1_viewport_3d_side_lane_clear_for_rel_pc34(int rel_forward,
+                                                 int rel_side,
+                                                 unsigned int open_depth_mask)
+{
+    int d;
+    if (rel_side == 0 || rel_forward <= 0) {
+        return 1;
+    }
+    /* Source lock: DUNVIEW.C F0128 draws complete side squares in
+     * far-to-near order (D3L/D3R before D3C, then D2L/D2R before D2C,
+     * then D1L/D1R before D1C; see ReDMCSB DUNVIEW.C:8488-8533).
+     * A nearer non-open side square therefore occludes farther side-lane
+     * floor, pit, field, content, projectile, and ornament passes. */
+    for (d = 0; d < rel_forward - 1 && d < 3; ++d) {
+        if ((open_depth_mask & (1u << (unsigned int)d)) == 0u) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void dm1_viewport_3d_notify_pre_square_draw(
     DM1_Viewport3DState *state,
     DM1_ViewSquareIndex square,
