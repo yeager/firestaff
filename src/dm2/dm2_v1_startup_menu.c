@@ -619,6 +619,23 @@ int dm2_v1_startup_execute_plan(
     return 0;
 }
 
+int dm2_v1_startup_execute_action(
+    const DM2_V1_StartupAction *action,
+    const char *save_root,
+    DM2_V1_StartupExecution *out_execution)
+{
+    DM2_V1_StartupActionPlan plan;
+
+    if (!out_execution) {
+        return 0;
+    }
+    dm2_v1_startup_execution_clear(out_execution);
+    if (!dm2_v1_startup_plan_for_action(action, &plan)) {
+        return 0;
+    }
+    return dm2_v1_startup_execute_plan(&plan, save_root, out_execution);
+}
+
 int dm2_v1_startup_menu_build_render_rows(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupRenderRow *rows,

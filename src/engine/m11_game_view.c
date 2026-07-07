@@ -78,6 +78,7 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
@@ -697,6 +698,23 @@ _Static_assert(M12_MENU_INPUT_ACTION == 11,
 _Static_assert(M12_MENU_INPUT_DISK_MENU == 32,
                "CSB startup menu input code drift");
 
+_Static_assert(M12_MENU_INPUT_UP == 1,
+               "DM1 movement menu input code drift");
+_Static_assert(M12_MENU_INPUT_DOWN == 2,
+               "DM1 movement menu input code drift");
+_Static_assert(M12_MENU_INPUT_LEFT == 3,
+               "DM1 movement menu input code drift");
+_Static_assert(M12_MENU_INPUT_RIGHT == 4,
+               "DM1 movement menu input code drift");
+_Static_assert(M12_MENU_INPUT_STRAFE_LEFT == 5,
+               "DM1 movement menu input code drift");
+_Static_assert(M12_MENU_INPUT_STRAFE_RIGHT == 6,
+               "DM1 movement menu input code drift");
+_Static_assert(M12_MENU_INPUT_TURN_LEFT == 7,
+               "DM1 movement menu input code drift");
+_Static_assert(M12_MENU_INPUT_TURN_RIGHT == 8,
+               "DM1 movement menu input code drift");
+
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session,
                                          const char *status)
@@ -724,7 +742,6 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
     const DM2_V1_StartupAction *action)
 {
     DM2_V1_BootProfile *profile;
-    DM2_V1_StartupActionPlan plan;
     DM2_V1_StartupExecution execution;
 
     if (!state || !state->dm2State.startup_menu_active ||
@@ -732,12 +749,9 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (!dm2_v1_startup_plan_for_action(action, &plan)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!dm2_v1_startup_execute_plan(&plan,
-                                     profile->save_root,
-                                     &execution)) {
+    if (!dm2_v1_startup_execute_action(action,
+                                       profile->save_root,
+                                       &execution)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW) {
@@ -5742,7 +5756,6 @@ static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
                                              uint8_t command,
                                              const char* actionLabel,
                                              int actionIndex);
-static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input);
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state);
 static int m11_start_v1_mouth_animation(M11_GameViewState* state,
                                         const DM1ConsumableResultPc34* result);
@@ -13987,35 +14000,6 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     return M11_GAME_INPUT_REDRAW;
 }
 
-static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input) {
-    switch (input) {
-        /* v2.8.x: arrow LEFT/RIGHT now mean strafe-left/strafe-right
-         * (the original DM1 PC 3.4 convention; see also the user's
-         * keyboard-mapping request).  M12_MENU_INPUT_LEFT/RIGHT retain
-         * their historical turn-left/turn-right semantics in the
-         * gameplay pipeline so existing probe and test code keeps
-         * working unchanged.  Defensive aliasing for
-         * M12_MENU_INPUT_TURN_LEFT/RIGHT keeps the new explicit
-         * API consistent. */
-        case M12_MENU_INPUT_LEFT:
-        case M12_MENU_INPUT_TURN_LEFT:
-            return DM1_V1_COMMAND_TURN_LEFT;
-        case M12_MENU_INPUT_RIGHT:
-        case M12_MENU_INPUT_TURN_RIGHT:
-            return DM1_V1_COMMAND_TURN_RIGHT;
-        case M12_MENU_INPUT_UP:
-            return DM1_V1_COMMAND_MOVE_FORWARD;
-        case M12_MENU_INPUT_STRAFE_RIGHT:
-            return DM1_V1_COMMAND_MOVE_RIGHT;
-        case M12_MENU_INPUT_DOWN:
-            return DM1_V1_COMMAND_MOVE_BACKWARD;
-        case M12_MENU_INPUT_STRAFE_LEFT:
-            return DM1_V1_COMMAND_MOVE_LEFT;
-        default:
-            return DM1_V1_COMMAND_NONE;
-    }
-}
-
 int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,
                                               M12_MenuInput input) {
     if (!state || !state->active ||
@@ -14026,7 +14010,8 @@ int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,
         strncmp(state->sourceId, "csb", 3) == 0) {
         return 0;
     }
-    return m11_dm1_v1_pipeline_command_for_input(input) != DM1_V1_COMMAND_NONE;
+    return DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(
+               (int)input) != DM1_V1_COMMAND_NONE;
 }
 
 int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state) {
@@ -14043,7 +14028,8 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     if (!state || !state->active) {
         return 0;
     }
-    command = m11_dm1_v1_pipeline_command_for_input(input);
+    command = DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(
+        (int)input);
     if (command == DM1_V1_COMMAND_NONE) {
         return 0;
     }
@@ -16002,7 +15988,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         default:
             return M11_GAME_INPUT_IGNORED;
     }
-    if (m11_dm1_v1_pipeline_command_for_input(input) != DM1_V1_COMMAND_NONE) {
+    if (DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat((int)input) !=
+        DM1_V1_COMMAND_NONE) {
         if (!m11_apply_dm1_v1_pipeline_tick(state, input, label)) {
             return M11_GAME_INPUT_IGNORED;
         }

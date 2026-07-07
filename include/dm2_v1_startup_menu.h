@@ -174,6 +174,10 @@ int dm2_v1_startup_execute_plan(
     const DM2_V1_StartupActionPlan *plan,
     const char *save_root,
     DM2_V1_StartupExecution *out_execution);
+int dm2_v1_startup_execute_action(
+    const DM2_V1_StartupAction *action,
+    const char *save_root,
+    DM2_V1_StartupExecution *out_execution);
 int dm2_v1_startup_menu_build_render_rows(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupRenderRow *rows,
