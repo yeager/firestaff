@@ -29,6 +29,7 @@ int main(void)
     CSB_V1_UtilRenderTextRow status_row;
     CSB_V1_UtilRenderTextRow prompt_row;
     CSB_V1_UtilRenderTextRow preview_rows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
+    CSB_V1_UtilRenderPlan render_plan;
     int row_count;
 
     csb_v1_util_flow_init(&flow);
@@ -226,6 +227,34 @@ int main(void)
               preview_rows[1].y == 164 &&
               strcmp(preview_rows[1].text, "2 BETA  HP 22/33") == 0,
           "utility flow owns imported champion preview rows");
+    check(csb_v1_util_flow_render_plan(
+              &flow,
+              "CHAOS STRIKES BACK READY",
+              1,
+              &render_plan) &&
+              render_plan.panel.x == 38 &&
+              render_plan.has_status_row == 1 &&
+              render_plan.has_prompt_row == 1 &&
+              render_plan.menu_row_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
+              render_plan.preview_active == 1 &&
+              render_plan.preview_row_count == 2 &&
+              strcmp(render_plan.status_row.text,
+                     "DM1 IMPORT READY: 2 CHAMPIONS") == 0 &&
+              strcmp(render_plan.prompt_row.text,
+                     "CHAOS STRIKES BACK READY") == 0 &&
+              strcmp(render_plan.preview_rows[0].text,
+                     "1 ALPHA  HP 31/44") == 0,
+          "utility flow owns complete startup render plan");
+    check(csb_v1_util_flow_render_plan(
+              &flow,
+              "",
+              0,
+              &render_plan) &&
+              render_plan.has_status_row == 1 &&
+              render_plan.has_prompt_row == 0 &&
+              render_plan.preview_active == 0 &&
+              render_plan.preview_row_count == 0,
+          "utility render plan gates optional prompt and preview rows");
     check(csb_v1_util_flow_action_at_point(&flow, 40, 116) ==
               CSB_V1_UTIL_ACTION_LOAD,
           "legacy point lookup still resolves Load row");

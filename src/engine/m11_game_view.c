@@ -2466,12 +2466,7 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                                int framebufferHeight)
 {
     CSB_V1_UtilFlowContext flow;
-    CSB_V1_UtilPanelLayout panel;
-    CSB_V1_UtilRenderRow renderRows[CSB_V1_UTIL_MENU_ROW_COUNT];
-    CSB_V1_UtilRenderTextRow statusRow;
-    CSB_V1_UtilRenderTextRow promptRow;
-    CSB_V1_UtilRenderTextRow previewRows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
-    int renderRowCount;
+    CSB_V1_UtilRenderPlan plan;
     int i;
 
     if (!state || !state->csbState.startup_import_available) {
@@ -2479,35 +2474,34 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
     }
 
     m11_csb_startup_build_utility_flow(state, &flow);
-    if ((renderRowCount = csb_v1_util_flow_menu_render_rows(
-             &flow,
-             renderRows,
-             (int)(sizeof(renderRows) / sizeof(renderRows[0])))) <= 0 ||
-        !csb_v1_util_flow_panel_layout(
-            &flow,
-            state->csbState.startup_import_preview_active,
-            &panel) ||
-        !csb_v1_util_flow_import_status_render_row(&flow, &statusRow)) {
-        return;
-    }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  statusRow.x, statusRow.y, statusRow.text,
-                  m11_csb_startup_text_style(statusRow.text_style));
-    if (csb_v1_util_flow_prompt_render_row(
+    if (!csb_v1_util_flow_render_plan(
             &flow,
             state->csbState.startup_import_utility_prompt,
-            &promptRow)) {
+            state->csbState.startup_import_preview_active,
+            &plan)) {
+        return;
+    }
+    if (plan.has_status_row) {
         m11_draw_text(framebuffer,
                       framebufferWidth,
                       framebufferHeight,
-                      promptRow.x,
-                      promptRow.y,
-                      promptRow.text,
-                      m11_csb_startup_text_style(promptRow.text_style));
+                      plan.status_row.x,
+                      plan.status_row.y,
+                      plan.status_row.text,
+                      m11_csb_startup_text_style(plan.status_row.text_style));
+    }
+    if (plan.has_prompt_row) {
+        m11_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      plan.prompt_row.x,
+                      plan.prompt_row.y,
+                      plan.prompt_row.text,
+                      m11_csb_startup_text_style(plan.prompt_row.text_style));
     }
 
-    for (i = 0; i < renderRowCount; ++i) {
-        const CSB_V1_UtilRenderRow *menuRow = &renderRows[i];
+    for (i = 0; i < plan.menu_row_count; ++i) {
+        const CSB_V1_UtilRenderRow *menuRow = &plan.menu_rows[i];
         if (menuRow->selected) {
             m11_fill_rect(framebuffer,
                           framebufferWidth,
@@ -2526,20 +2520,16 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                        menuRow->text_style,
                                        menuRow->label);
     }
-    if (state->csbState.startup_import_preview_active) {
-        int count = csb_v1_util_flow_preview_render_rows(
-            &flow,
-            previewRows,
-            (int)(sizeof(previewRows) / sizeof(previewRows[0])));
-        for (i = 0; i < count; ++i) {
+    if (plan.preview_active) {
+        for (i = 0; i < plan.preview_row_count; ++i) {
             m11_draw_text(framebuffer,
                           framebufferWidth,
                           framebufferHeight,
-                          previewRows[i].x,
-                          previewRows[i].y,
-                          previewRows[i].text,
+                          plan.preview_rows[i].x,
+                          plan.preview_rows[i].y,
+                          plan.preview_rows[i].text,
                           m11_csb_startup_text_style(
-                              previewRows[i].text_style));
+                              plan.preview_rows[i].text_style));
         }
     }
 }
