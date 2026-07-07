@@ -450,6 +450,10 @@ int theron_v1_startup_apply_receipt_from_flow_execution(
     const Theron_StartupActionPlan *plan,
     const Theron_StartupExecution *execution,
     Theron_StartupApplyReceipt *out_receipt);
+int theron_v1_startup_state_receipt_from_flow_apply(
+    const Theron_StartupFlow *flow,
+    const Theron_StartupApplyReceipt *apply_receipt,
+    Theron_StartupStateReceipt *out_receipt);
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,

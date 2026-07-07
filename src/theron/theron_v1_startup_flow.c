@@ -766,6 +766,39 @@ int theron_v1_startup_apply_receipt_from_flow_execution(
     return 1;
 }
 
+int theron_v1_startup_state_receipt_from_flow_apply(
+    const Theron_StartupFlow *flow,
+    const Theron_StartupApplyReceipt *apply_receipt,
+    Theron_StartupStateReceipt *out_receipt) {
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_state_receipt_init(out_receipt);
+    if (!apply_receipt) {
+        return 0;
+    }
+    if (apply_receipt->flow_changed) {
+        if (!flow) {
+            return 0;
+        }
+        out_receipt->flow_changed = 1;
+        theron_v1_startup_flow_capture_snapshot(flow,
+                                                &out_receipt->flow);
+    }
+    if (apply_receipt->cursor_changed) {
+        out_receipt->set_startup_cursor = 1;
+        out_receipt->startup_cursor = apply_receipt->cursor;
+    }
+    if (apply_receipt->continue_focus_changed) {
+        out_receipt->set_continue_focus = 1;
+        out_receipt->continue_focus = apply_receipt->continue_focus;
+    }
+    return out_receipt->flow_changed ||
+           out_receipt->set_startup_cursor ||
+           out_receipt->set_continue_focus;
+}
+
 static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)
 {
     if (!plan) {

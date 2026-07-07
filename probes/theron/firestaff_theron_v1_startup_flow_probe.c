@@ -880,6 +880,7 @@ int main(void) {
             {
                 Theron_StartupExecution execution;
                 Theron_StartupApplyReceipt receipt;
+                Theron_StartupStateReceipt state_receipt;
                 Theron_StartupFlow exec_flow;
 
                 theron_v1_startup_action_init(&action);
@@ -921,6 +922,24 @@ int main(void) {
                           THERON_STARTUP_INPUT_RESULT_REDRAW);
                 check_int("exec stage-select receipt flow",
                           receipt.flow_changed,
+                          1);
+                check_int("exec stage-select state receipt rc",
+                          theron_v1_startup_state_receipt_from_flow_apply(
+                              &exec_flow,
+                              &receipt,
+                              &state_receipt),
+                          1);
+                check_int("exec stage-select state receipt flow",
+                          state_receipt.flow_changed,
+                          1);
+                check_int("exec stage-select state receipt phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_STAGE_SELECT);
+                check_int("exec stage-select state receipt cursor set",
+                          state_receipt.set_startup_cursor,
+                          1);
+                check_int("exec stage-select state receipt cursor",
+                          state_receipt.startup_cursor,
                           1);
                 check_str("exec stage-select receipt status",
                           receipt.status,
