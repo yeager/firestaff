@@ -36,6 +36,15 @@ static void expect(int condition, const char *message)
     }
 }
 
+static int startup_load_success(void *userdata, const char *save_path)
+{
+    int *calls = (int *)userdata;
+    if (calls) {
+        *calls += 1;
+    }
+    return save_path && strstr(save_path, "nexus_save_03.dat") ? 1 : 0;
+}
+
 static int make_temp_root(char *out, size_t out_size)
 {
     const char *base = getenv("TMPDIR");
@@ -93,6 +102,7 @@ int main(void)
     int cursor;
     int draw_count;
     int portrait_draws;
+    int load_calls;
     Nexus_V1_ChampionPool empty_champions;
 
     if (!make_temp_root(root, sizeof(root))) {
@@ -487,6 +497,18 @@ int main(void)
                receipt.mode_update.champion_cursor == 2 &&
                strcmp(receipt.status, "NEXUS CHAMPION CURSOR") == 0,
            "Nexus champion apply receipt owns cursor redraw policy");
+    expect(nexus_v1_startup_execute_champion_action_with_receipt(
+               &action,
+               2,
+               &champion_execution,
+               &receipt) &&
+               champion_execution.kind ==
+                   NEXUS_V1_STARTUP_CHAMPION_EXEC_SET_CURSOR &&
+               receipt.result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW &&
+               receipt.mode_update.set_champion_cursor &&
+               receipt.mode_update.champion_cursor == 2 &&
+               strcmp(receipt.status, "NEXUS CHAMPION CURSOR") == 0,
+           "Nexus champion action helper owns execution and receipt");
     hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER;
     hit.row = -1;
     expect(nexus_v1_startup_champion_handle_hit(
@@ -817,6 +839,17 @@ int main(void)
                receipt.mode_update.save_select_active == 1 &&
                strcmp(receipt.status, "NEXUS LOAD GAME") == 0,
            "startup title apply receipt owns save-select redraw policy");
+    expect(nexus_v1_startup_execute_title_action_with_receipt(
+               &action,
+               &title_execution,
+               &receipt) &&
+               title_execution.kind ==
+                   NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_SAVE_SELECT &&
+               receipt.result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW &&
+               receipt.mode_update.set_save_select_active &&
+               receipt.mode_update.save_select_active == 1 &&
+               strcmp(receipt.status, "NEXUS LOAD GAME") == 0,
+           "startup title action helper owns execution and receipt");
     expect(nexus_v1_startup_title_handle_hit(
                54,
                menu.slot_mask,
@@ -969,6 +1002,20 @@ int main(void)
                strcmp(receipt.status_scope, "BOOT") == 0 &&
                strcmp(receipt.status, "NEXUS RESUMED") == 0,
            "startup save apply receipt owns successful load policy");
+    load_calls = 0;
+    expect(nexus_v1_startup_execute_save_action_with_receipt(
+               &action,
+               startup_load_success,
+               &load_calls,
+               &execution,
+               &receipt) &&
+               load_calls == 1 &&
+               receipt.result == NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW &&
+               receipt.mode_update.set_save_select_active &&
+               receipt.mode_update.save_select_active == 0 &&
+               strcmp(receipt.status_scope, "BOOT") == 0 &&
+               strcmp(receipt.status, "NEXUS RESUMED") == 0,
+           "startup save action helper owns execution, load callback, and receipt");
     expect(nexus_v1_startup_apply_receipt_from_save_execution(
                &execution,
                0,
