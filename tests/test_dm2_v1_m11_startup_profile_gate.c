@@ -309,6 +309,33 @@ static void expect_dm2_startup_layout_contract(void) {
                     row_kind == DM2_V1_STARTUP_ROW_SLOT &&
                     slot == 3,
                 "DM2 startup snapshot resolves rows without M11 menu policy");
+    expect_true(dm2_v1_startup_menu_snapshot_handle_input(
+                    &snapshot,
+                    DM2_V1_STARTUP_INPUT_UP,
+                    &action) &&
+                    snapshot.selected_row == 1 &&
+                    action.kind == DM2_V1_STARTUP_ACTION_NONE,
+                "DM2 startup snapshot handles input and stores selection");
+    hit.kind = DM2_V1_STARTUP_HIT_ROW;
+    hit.row = 0;
+    expect_true(dm2_v1_startup_menu_snapshot_handle_hit(
+                    &snapshot,
+                    &hit,
+                    &action) &&
+                    snapshot.selected_row == 0 &&
+                    action.kind == DM2_V1_STARTUP_ACTION_CONTINUE,
+                "DM2 startup snapshot handles row hits and stores selection");
+    command_count = dm2_v1_startup_presentation_build_from_snapshot(
+        &snapshot,
+        commands,
+        (int)(sizeof(commands) / sizeof(commands[0])));
+    expect_true(command_count == 9 &&
+                    commands[4].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[4].row == 0 &&
+                    commands[5].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[5].row == 0 &&
+                    strcmp(commands[5].text, "CONTINUE") == 0,
+                "DM2 startup presentation builds from snapshot");
     expect_true(dm2_v1_startup_menu_row_at(&menu, 0, &row_kind, &slot) &&
                     row_kind == DM2_V1_STARTUP_ROW_CONTINUE &&
                     slot == -1,

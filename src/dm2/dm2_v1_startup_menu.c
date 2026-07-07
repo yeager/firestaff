@@ -196,6 +196,48 @@ int dm2_v1_startup_menu_snapshot_row_at(
     return dm2_v1_startup_menu_row_at(&menu, row, out_kind, out_slot);
 }
 
+int dm2_v1_startup_menu_snapshot_handle_input(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    DM2_V1_StartupInput input,
+    DM2_V1_StartupAction *out_action)
+{
+    DM2_V1_StartupMenu menu;
+    int handled;
+
+    if (!snapshot) {
+        dm2_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    if (!dm2_v1_startup_menu_from_snapshot(snapshot, &menu)) {
+        dm2_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    handled = dm2_v1_startup_menu_handle_input(&menu, input, out_action);
+    (void)dm2_v1_startup_menu_snapshot_from_menu(snapshot, &menu);
+    return handled;
+}
+
+int dm2_v1_startup_menu_snapshot_handle_hit(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const DM2_V1_StartupHit *hit,
+    DM2_V1_StartupAction *out_action)
+{
+    DM2_V1_StartupMenu menu;
+    int handled;
+
+    if (!snapshot) {
+        dm2_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    if (!dm2_v1_startup_menu_from_snapshot(snapshot, &menu)) {
+        dm2_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    handled = dm2_v1_startup_menu_handle_hit(&menu, hit, out_action);
+    (void)dm2_v1_startup_menu_snapshot_from_menu(snapshot, &menu);
+    return handled;
+}
+
 int dm2_v1_startup_menu_row_at(const DM2_V1_StartupMenu *menu,
                                int row,
                                DM2_V1_StartupRowKind *out_kind,

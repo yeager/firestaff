@@ -646,47 +646,42 @@ static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
     state->dm2State.startup_menu_selected_row = snapshot.selected_row;
 }
 
-static void m11_dm2_startup_menu_from_state(
+static void m11_dm2_startup_snapshot_from_state(
     const M11_GameViewState *state,
-    DM2_V1_StartupMenu *menu)
+    DM2_V1_StartupMenuSnapshot *snapshot)
 {
-    DM2_V1_StartupMenuSnapshot snapshot;
-
-    if (!state || !menu) {
+    if (!snapshot) {
         return;
     }
-    memset(&snapshot, 0, sizeof(snapshot));
-    snprintf(snapshot.save_root,
-             sizeof(snapshot.save_root),
+    memset(snapshot, 0, sizeof(*snapshot));
+    if (!state) {
+        return;
+    }
+    snprintf(snapshot->save_root,
+             sizeof(snapshot->save_root),
              "%s",
              state->dm2State.startup_save_root);
-    snapshot.resume_available = state->dm2State.startup_resume_available;
-    snapshot.slot_mask = state->dm2State.startup_slot_mask;
-    snapshot.row_count = state->dm2State.startup_menu_row_count;
-    snapshot.selected_row = state->dm2State.startup_menu_selected_row;
-    (void)dm2_v1_startup_menu_from_snapshot(&snapshot, menu);
+    snapshot->resume_available = state->dm2State.startup_resume_available;
+    snapshot->slot_mask = state->dm2State.startup_slot_mask;
+    snapshot->row_count = state->dm2State.startup_menu_row_count;
+    snapshot->selected_row = state->dm2State.startup_menu_selected_row;
 }
 
-static void m11_dm2_startup_menu_to_state(
+static void m11_dm2_startup_snapshot_to_state(
     M11_GameViewState *state,
-    const DM2_V1_StartupMenu *menu)
+    const DM2_V1_StartupMenuSnapshot *snapshot)
 {
-    DM2_V1_StartupMenuSnapshot snapshot;
-
-    if (!state || !menu) {
-        return;
-    }
-    if (!dm2_v1_startup_menu_snapshot_from_menu(&snapshot, menu)) {
+    if (!state || !snapshot) {
         return;
     }
     snprintf(state->dm2State.startup_save_root,
              sizeof(state->dm2State.startup_save_root),
              "%s",
-             snapshot.save_root);
-    state->dm2State.startup_resume_available = snapshot.resume_available;
-    state->dm2State.startup_slot_mask = snapshot.slot_mask;
-    state->dm2State.startup_menu_row_count = snapshot.row_count;
-    state->dm2State.startup_menu_selected_row = snapshot.selected_row;
+             snapshot->save_root);
+    state->dm2State.startup_resume_available = snapshot->resume_available;
+    state->dm2State.startup_slot_mask = snapshot->slot_mask;
+    state->dm2State.startup_menu_row_count = snapshot->row_count;
+    state->dm2State.startup_menu_selected_row = snapshot->selected_row;
 }
 
 static int m11_dm2_startup_row_at(const M11_GameViewState *state,
@@ -699,15 +694,7 @@ static int m11_dm2_startup_row_at(const M11_GameViewState *state,
     if (!state) {
         return 0;
     }
-    memset(&snapshot, 0, sizeof(snapshot));
-    snprintf(snapshot.save_root,
-             sizeof(snapshot.save_root),
-             "%s",
-             state->dm2State.startup_save_root);
-    snapshot.resume_available = state->dm2State.startup_resume_available;
-    snapshot.slot_mask = state->dm2State.startup_slot_mask;
-    snapshot.row_count = state->dm2State.startup_menu_row_count;
-    snapshot.selected_row = state->dm2State.startup_menu_selected_row;
+    m11_dm2_startup_snapshot_from_state(state, &snapshot);
     return dm2_v1_startup_menu_snapshot_row_at(&snapshot,
                                                row,
                                                out_kind,
@@ -808,22 +795,22 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupAction action;
 
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_startup_menu_from_state(state, &menu);
-    if (!dm2_v1_startup_menu_handle_input(
-            &menu,
+    m11_dm2_startup_snapshot_from_state(state, &snapshot);
+    if (!dm2_v1_startup_menu_snapshot_handle_input(
+            &snapshot,
             m11_dm2_startup_input_from_m12(input),
             &action)) {
         return input == M12_MENU_INPUT_NONE
                    ? M11_GAME_INPUT_IGNORED
                    : M11_GAME_INPUT_REDRAW;
     }
-    m11_dm2_startup_menu_to_state(state, &menu);
+    m11_dm2_startup_snapshot_to_state(state, &snapshot);
     return m11_dm2_startup_apply_action(state, &action);
 }
 
@@ -16325,7 +16312,7 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     int y)
 {
     DM2_V1_StartupHit hit;
-    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupAction action;
 
     if (!state ||
@@ -16339,11 +16326,11 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
                             &hit)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_startup_menu_from_state(state, &menu);
-    if (!dm2_v1_startup_menu_handle_hit(&menu, &hit, &action)) {
+    m11_dm2_startup_snapshot_from_state(state, &snapshot);
+    if (!dm2_v1_startup_menu_snapshot_handle_hit(&snapshot, &hit, &action)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_startup_menu_to_state(state, &menu);
+    m11_dm2_startup_snapshot_to_state(state, &snapshot);
     return m11_dm2_startup_apply_action(state, &action);
 }
 
@@ -36142,7 +36129,7 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       int framebufferWidth,
                                       int framebufferHeight)
 {
-    DM2_V1_StartupMenu menu;
+    DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupDrawCommand commands[32];
     int command_count;
     int i;
@@ -36150,12 +36137,12 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return;
     }
-    m11_dm2_startup_menu_from_state(state, &menu);
+    m11_dm2_startup_snapshot_from_state(state, &snapshot);
     command_count =
-        dm2_v1_startup_presentation_build(&menu,
-                                          commands,
-                                          (int)(sizeof(commands) /
-                                                sizeof(commands[0])));
+        dm2_v1_startup_presentation_build_from_snapshot(
+            &snapshot,
+            commands,
+            (int)(sizeof(commands) / sizeof(commands[0])));
     if (command_count <= 0) {
         return;
     }
