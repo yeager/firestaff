@@ -305,6 +305,24 @@ Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_flow_rebuild_from_request(
+    const Theron_StartupFlowSnapshotRequest *request,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow) {
+
+    Theron_StartupFlowSnapshot snapshot;
+
+    if (!request || !progression || !flow) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+    if (!theron_v1_startup_flow_snapshot_from_request(request, &snapshot)) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+    return theron_v1_startup_flow_rebuild_from_snapshot(&snapshot,
+                                                        progression,
+                                                        flow);
+}
+
 void theron_v1_startup_action_init(Theron_StartupAction *action) {
     if (!action) {
         return;

@@ -11762,7 +11762,6 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
                                            char* receipt,
                                            size_t receipt_cap) {
     Theron_StartupResult result;
-    Theron_StartupFlowSnapshot snapshot;
     Theron_StartupFlowSnapshotRequest request;
 
     if (receipt && receipt_cap > 0u) {
@@ -11782,12 +11781,9 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
         state->theronState.selected_mirror_order;
     request.selected_mirror_order_count =
         THERON_STARTUP_MAX_COMPANIONS;
-    if (!theron_v1_startup_flow_snapshot_from_request(&request, &snapshot)) {
-        return 0;
-    }
-    result = theron_v1_startup_flow_rebuild_from_snapshot(&snapshot,
-                                                          progression,
-                                                          flow);
+    result = theron_v1_startup_flow_rebuild_from_request(&request,
+                                                         progression,
+                                                         flow);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,

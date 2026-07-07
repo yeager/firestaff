@@ -212,6 +212,31 @@ int main(void) {
     check_int("init selected dungeon", flow.selected_dungeon, THERON_DUNGEON_INVALID);
     check_int("init companion count", flow.companion_count, 0);
     {
+        int order[THERON_STARTUP_MAX_COMPANIONS] = { 2, 4, 1 };
+        Theron_StartupFlowSnapshotRequest request;
+        memset(&request, 0, sizeof(request));
+        request.phase = THERON_STARTUP_PHASE_SOUL_ROOM;
+        request.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        request.selected_mirrors_mask = (1 << 2) | (1 << 4) | (1 << 1);
+        request.companion_count = 99;
+        request.selected_mirror_order = order;
+        request.selected_mirror_order_count = THERON_STARTUP_MAX_COMPANIONS;
+        result = theron_v1_startup_flow_rebuild_from_request(&request,
+                                                             &progression,
+                                                             &flow);
+        check_int("rebuild from request result", result, THERON_STARTUP_OK);
+        check_int("rebuild from request phase",
+                  flow.phase,
+                  THERON_STARTUP_PHASE_READY);
+        check_int("rebuild from request selected dungeon",
+                  flow.selected_dungeon,
+                  THERON_DUNGEON_1_HALL_OF_RECORDS);
+        check_int("rebuild from request companion clamp",
+                  flow.companion_count,
+                  THERON_STARTUP_MAX_COMPANIONS);
+        theron_v1_startup_flow_init(&flow);
+    }
+    {
         unsigned char us_sector[THERON_TRACK02_RAW_SECTOR_BYTES];
         Theron_StartupMedia media;
         memset(us_sector, 0, sizeof(us_sector));
