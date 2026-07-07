@@ -984,49 +984,6 @@ static void m11_sync_csb_party_from_runtime(M11_GameViewState *state,
     }
 }
 
-static int m11_csb_build_viewport_grid(uint8_t grid[32 * 32])
-{
-    const CSB_V1_DungeonData *dungeon = csb_v1_dungeon_get_current();
-    int level;
-    int width;
-    int height;
-    int max_w;
-    int max_h;
-    int x;
-    int y;
-
-    if (!grid) {
-        return 0;
-    }
-    memset(grid, 0, 32 * 32);
-    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) {
-        return 0;
-    }
-
-    level = csb_v1_dungeon_get_current_level();
-    if (level < 0 || level >= dungeon->level_count) {
-        level = 0;
-    }
-    width = dungeon->level_widths[level];
-    height = dungeon->level_heights[level];
-    if (width <= 0 || height <= 0) {
-        return 0;
-    }
-    max_w = width < 32 ? width : 32;
-    max_h = height < 32 ? height : 32;
-
-    /* ReDMCSB DUNGEON.C F0151 stores CSB/DM1 squares column-major;
-     * the loader accessor exposes only the low square-type bits that
-     * DUNVIEW.C F0128 needs for wall/door/pit routing. */
-    for (y = 0; y < max_h; ++y) {
-        for (x = 0; x < max_w; ++x) {
-            int square_type = csb_v1_dungeon_get_square_type(dungeon, level, x, y);
-            grid[y * 32 + x] = (square_type >= 0) ? (uint8_t)square_type : 0U;
-        }
-    }
-    return 1;
-}
-
 typedef struct {
     const M11_GameViewState *state;
     const CSB_V1_BootProfile *profile;
@@ -1228,7 +1185,10 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     }
     m11_csb_runtime_overlay_stats_reset(state);
 
-    (void)m11_csb_build_viewport_grid(dungeon_grid);
+    (void)csb_v1_viewport_build_dungeon_grid(
+        profile->runtime.dungeon_handle,
+        profile->runtime.current_level,
+        dungeon_grid);
     memset(&cfg, 0, sizeof(cfg));
     cfg.viewport_pixels = framebuffer;
     cfg.viewport_stride = framebufferWidth;
