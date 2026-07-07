@@ -21307,38 +21307,31 @@ static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* s
                                9);
 }
 
-static unsigned int m11_dm1_center_blocking_depth_mask(const M11_ViewportCell cells[3][3]) {
+static DM1_ViewportCenterLaneMasksPc34 m11_dm1_center_lane_masks(
+    const M11_ViewportCell cells[3][3])
+{
     int valid[3] = {0, 0, 0};
     int open[3] = {0, 0, 0};
     int door[3] = {0, 0, 0};
     int depth;
-    DM1_ViewportCenterLaneMasksPc34 masks;
-    if (!cells) return 0u;
+    if (!cells) {
+        return dm1_viewport_3d_center_lane_masks_from_cells_pc34(NULL,
+                                                                 NULL,
+                                                                 NULL);
+    }
     for (depth = 0; depth < 3; ++depth) {
         const M11_ViewportCell* cell = &cells[depth][1];
         valid[depth] = cell->valid ? 1 : 0;
         open[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;
         door[depth] = cell->elementType == DUNGEON_ELEMENT_DOOR ? 1 : 0;
     }
-    masks = dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid, open, door);
-    return masks.blocking_depth_mask;
+    return dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid,
+                                                             open,
+                                                             door);
 }
 
-static unsigned int m11_dm1_center_blocking_door_depth_mask(const M11_ViewportCell cells[3][3]) {
-    int valid[3] = {0, 0, 0};
-    int open[3] = {0, 0, 0};
-    int door[3] = {0, 0, 0};
-    int depth;
-    DM1_ViewportCenterLaneMasksPc34 masks;
-    if (!cells) return 0u;
-    for (depth = 0; depth < 3; ++depth) {
-        const M11_ViewportCell* cell = &cells[depth][1];
-        valid[depth] = cell->valid ? 1 : 0;
-        open[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;
-        door[depth] = cell->elementType == DUNGEON_ELEMENT_DOOR ? 1 : 0;
-    }
-    masks = dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid, open, door);
-    return masks.blocking_door_depth_mask;
+static unsigned int m11_dm1_center_blocking_depth_mask(const M11_ViewportCell cells[3][3]) {
+    return m11_dm1_center_lane_masks(cells).blocking_depth_mask;
 }
 
 static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[3][3]) {
@@ -21352,9 +21345,10 @@ static int m11_dm1_nearest_blocking_center_depth_index(const M11_ViewportCell ce
 }
 
 static int m11_dm1_nearest_blocking_center_door_depth(const M11_ViewportCell cells[3][3]) {
+    DM1_ViewportCenterLaneMasksPc34 masks = m11_dm1_center_lane_masks(cells);
     return dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(
-        m11_dm1_center_blocking_depth_mask(cells),
-        m11_dm1_center_blocking_door_depth_mask(cells));
+        masks.blocking_depth_mask,
+        masks.blocking_door_depth_mask);
 }
 
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
