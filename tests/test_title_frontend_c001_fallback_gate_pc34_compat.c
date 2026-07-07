@@ -138,6 +138,11 @@ static void check_selection_contract(void) {
 static void check_palette_cross_source_contract(void) {
     V1_TitleFrontendSourceAnimationStep presentsStep;
     V1_TitleFrontendSourceAnimationStep zoomStep;
+    V1_TitleFrontendSourceAnimationStep strikesStep;
+    V1_TitleFrontendC001BlitPlan presentsPlan;
+    V1_TitleFrontendC001BlitPlan zoomPlan;
+    V1_TitleFrontendC001BlitPlan strikesPlan;
+    V1_TitleFrontendC001BlitPlan waitPlan;
     int presentsPalette = -1;
     int fallbackPresentsPalette = -1;
     int zoomPalette = -1;
@@ -146,6 +151,11 @@ static void check_palette_cross_source_contract(void) {
 
     memset(&presentsStep, 0, sizeof(presentsStep));
     memset(&zoomStep, 0, sizeof(zoomStep));
+    memset(&strikesStep, 0, sizeof(strikesStep));
+    memset(&presentsPlan, 0, sizeof(presentsPlan));
+    memset(&zoomPlan, 0, sizeof(zoomPlan));
+    memset(&strikesPlan, 0, sizeof(strikesPlan));
+    memset(&waitPlan, 0, sizeof(waitPlan));
 
     expect_i("C001 source step 1 exists",
              V1_TitleFrontend_GetSourceAnimationStep(1u, &presentsStep),
@@ -159,6 +169,12 @@ static void check_palette_cross_source_contract(void) {
     expect_u("C001 source step 19 is ZOOM",
              (unsigned int)zoomStep.kind,
              (unsigned int)V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT);
+    expect_i("C001 source step 22 exists",
+             V1_TitleFrontend_GetSourceAnimationStep(22u, &strikesStep),
+             1);
+    expect_u("C001 source step 22 is STRIKES BACK",
+             (unsigned int)strikesStep.kind,
+             (unsigned int)V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT);
 
     expect_i("C001 PRESENTS palette resolves",
              V1_TitleFrontend_GetStepPalette(presentsStep.kind, &presentsPalette),
@@ -194,6 +210,66 @@ static void check_palette_cross_source_contract(void) {
              VGA_PALETTE_PC34_SPECIAL_TITLE);
     expect_truth("PRESENTS and ZOOM palettes remain distinct",
                  presentsPalette != zoomPalette);
+
+    expect_i("PRESENTS C001 blit plan resolves",
+             V1_TitleFrontend_GetC001BlitPlanForStep(&presentsStep, &presentsPlan),
+             1);
+    expect_u("PRESENTS blit kind",
+             (unsigned int)presentsPlan.kind,
+             (unsigned int)V1_TITLE_FRONTEND_C001_BLIT_REGION);
+    expect_u("PRESENTS source y",
+             presentsPlan.srcY,
+             137u);
+    expect_u("PRESENTS destination y",
+             presentsPlan.dstY,
+             90u);
+    expect_u("PRESENTS height",
+             presentsPlan.srcH,
+             16u);
+    expect_i("PRESENTS clears first",
+             presentsPlan.clearBeforeBlit,
+             1);
+
+    expect_i("ZOOM C001 blit plan resolves",
+             V1_TitleFrontend_GetC001BlitPlanForStep(&zoomStep, &zoomPlan),
+             1);
+    expect_u("ZOOM blit kind",
+             (unsigned int)zoomPlan.kind,
+             (unsigned int)V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION);
+    expect_u("ZOOM destination width",
+             zoomPlan.dstW,
+             320u);
+    expect_u("ZOOM destination height",
+             zoomPlan.dstH,
+             80u);
+    expect_i("ZOOM clears first",
+             zoomPlan.clearBeforeBlit,
+             1);
+
+    expect_i("STRIKES BACK C001 blit plan resolves",
+             V1_TitleFrontend_GetC001BlitPlanForStep(&strikesStep, &strikesPlan),
+             1);
+    expect_u("STRIKES BACK blit kind",
+             (unsigned int)strikesPlan.kind,
+             (unsigned int)V1_TITLE_FRONTEND_C001_BLIT_REGION);
+    expect_u("STRIKES BACK source y",
+             strikesPlan.srcY,
+             80u);
+    expect_u("STRIKES BACK destination y",
+             strikesPlan.dstY,
+             118u);
+    expect_i("STRIKES BACK uses black transparency",
+             strikesPlan.transparentColor,
+             0);
+
+    expect_i("wait step C001 blit plan resolves",
+             V1_TitleFrontend_GetC001BlitPlanForStep(&((V1_TitleFrontendSourceAnimationStep){
+                 .kind = V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK
+             }), &waitPlan),
+             1);
+    expect_u("wait step has no blit",
+             (unsigned int)waitPlan.kind,
+             (unsigned int)V1_TITLE_FRONTEND_C001_BLIT_NONE);
 }
 
 int main(void) {

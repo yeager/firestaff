@@ -1252,42 +1252,43 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
      */
     for (sourceStep = 1U; sourceStep <= V1_TitleFrontend_GetSourceAnimationStepCount(); ++sourceStep) {
         V1_TitleFrontendSourceAnimationStep step;
+        V1_TitleFrontendC001BlitPlan blitPlan;
         int stepPalette;
         if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
             break;
         }
-        if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS) {
+        if (!V1_TitleFrontend_GetC001BlitPlanForStep(&step, &blitPlan)) {
+            break;
+        }
+        if (blitPlan.clearBeforeBlit) {
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+        }
+        if (blitPlan.kind == V1_TITLE_FRONTEND_C001_BLIT_REGION) {
             M11_AssetLoader_BlitRegion(titleGraphic,
-                                       0, 137, 320, 16,
+                                       (int)blitPlan.srcX,
+                                       (int)blitPlan.srcY,
+                                       (int)blitPlan.srcW,
+                                       (int)blitPlan.srcH,
                                        framebuffer,
                                        M11_FB_WIDTH,
                                        M11_FB_HEIGHT,
-                                       0, 90,
-                                       -1);
-        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT) {
-            memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+                                       (int)blitPlan.dstX,
+                                       (int)blitPlan.dstY,
+                                       blitPlan.transparentColor);
+        } else if (blitPlan.kind == V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION) {
             M11_AssetLoader_BlitSubRectScaled(titleGraphic,
                                               framebuffer,
                                               M11_FB_WIDTH,
                                               M11_FB_HEIGHT,
-                                              (int)step.x,
-                                              (int)step.y,
-                                              (int)step.width,
-                                              (int)step.height,
-                                              0,
-                                              0,
-                                              320,
-                                              80,
-                                              -1);
-        } else if (step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT) {
-            M11_AssetLoader_BlitRegion(titleGraphic,
-                                       0, 80, 320, 57,
-                                       framebuffer,
-                                       M11_FB_WIDTH,
-                                       M11_FB_HEIGHT,
-                                       0, 118,
-                                       0);
+                                              (int)blitPlan.srcX,
+                                              (int)blitPlan.srcY,
+                                              (int)blitPlan.srcW,
+                                              (int)blitPlan.srcH,
+                                              (int)blitPlan.dstX,
+                                              (int)blitPlan.dstY,
+                                              (int)blitPlan.dstW,
+                                              (int)blitPlan.dstH,
+                                              blitPlan.transparentColor);
         } else {
             if (m11_delay_ms_with_intro_event_pump(
                     V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
