@@ -1039,24 +1039,44 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         blit->depth_index);
 }
 
-static void m11_csb_runtime_overlay_stats_reset(
-    const M11_GameViewState *state)
+static void m11_csb_runtime_overlay_stats_apply(
+    const M11_GameViewState *state,
+    const CSB_V1_ViewportRuntimeDrawCounts *counts)
 {
     M11_GameViewState *mutable_state = (M11_GameViewState *)state;
 
-    if (!mutable_state) {
+    if (!mutable_state || !counts) {
         return;
     }
-    mutable_state->csbState.runtime_object_sprite_drawn_count = 0;
-    mutable_state->csbState.runtime_object_icon_drawn_count = 0;
-    mutable_state->csbState.runtime_object_marker_drawn_count = 0;
-    mutable_state->csbState.runtime_group_sprite_drawn_count = 0;
-    mutable_state->csbState.runtime_group_marker_drawn_count = 0;
-    mutable_state->csbState.runtime_projectile_sprite_drawn_count = 0;
-    mutable_state->csbState.runtime_projectile_material_resolved_count = 0;
-    mutable_state->csbState.runtime_projectile_marker_drawn_count = 0;
-    mutable_state->csbState.runtime_explosion_sprite_drawn_count = 0;
-    mutable_state->csbState.runtime_explosion_marker_drawn_count = 0;
+    mutable_state->csbState.runtime_object_sprite_drawn_count =
+        counts->object_sprite_drawn_count;
+    mutable_state->csbState.runtime_object_icon_drawn_count =
+        counts->object_icon_drawn_count;
+    mutable_state->csbState.runtime_object_marker_drawn_count =
+        counts->object_marker_drawn_count;
+    mutable_state->csbState.runtime_group_sprite_drawn_count =
+        counts->group_sprite_drawn_count;
+    mutable_state->csbState.runtime_group_marker_drawn_count =
+        counts->group_marker_drawn_count;
+    mutable_state->csbState.runtime_projectile_sprite_drawn_count =
+        counts->projectile_sprite_drawn_count;
+    mutable_state->csbState.runtime_projectile_material_resolved_count =
+        counts->projectile_material_resolved_count;
+    mutable_state->csbState.runtime_projectile_marker_drawn_count =
+        counts->projectile_marker_drawn_count;
+    mutable_state->csbState.runtime_explosion_sprite_drawn_count =
+        counts->explosion_sprite_drawn_count;
+    mutable_state->csbState.runtime_explosion_marker_drawn_count =
+        counts->explosion_marker_drawn_count;
+}
+
+static void m11_csb_runtime_overlay_stats_reset(
+    const M11_GameViewState *state)
+{
+    CSB_V1_ViewportRuntimeDrawCounts counts;
+
+    csb_v1_viewport_runtime_draw_counts_reset(&counts);
+    m11_csb_runtime_overlay_stats_apply(state, &counts);
 }
 
 static int m11_csb_viewport_object_sprite_drawer(
@@ -1145,6 +1165,8 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
 {
     CSB_V1_BootProfile *profile;
     CSB_V1_ViewportConfig cfg;
+    CSB_V1_ViewportRuntimeDrawerBinding drawer_binding;
+    CSB_V1_ViewportRuntimeDrawCounts draw_counts;
     const CSB_V1_CSBGraphicsM11RuntimePlan *plan;
     const CSB_V1_CSBGraphicsDatRealCache *cache;
     M11_CSB_RuntimeSpriteContext runtime_sprite_context;
@@ -1169,7 +1191,7 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
         profile->runtime.dungeon_handle,
         profile->runtime.current_level,
         dungeon_grid);
-    memset(&cfg, 0, sizeof(cfg));
+    csb_v1_viewport_init(&cfg);
     cfg.viewport_pixels = framebuffer;
     cfg.viewport_stride = framebufferWidth;
     cfg.dungeon_grid = dungeon_grid;
@@ -1183,21 +1205,23 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     runtime_sprite_context.profile = profile;
     runtime_sprite_context.framebuffer_width = framebufferWidth;
     runtime_sprite_context.framebuffer_height = framebufferHeight;
-    cfg.projectile_sprite_drawer =
+    memset(&drawer_binding, 0, sizeof(drawer_binding));
+    drawer_binding.projectile_sprite_drawer =
         m11_csb_viewport_projectile_sprite_drawer;
-    cfg.projectile_sprite_user = &runtime_sprite_context;
-    cfg.explosion_sprite_drawer =
+    drawer_binding.projectile_sprite_user = &runtime_sprite_context;
+    drawer_binding.explosion_sprite_drawer =
         m11_csb_viewport_explosion_sprite_drawer;
-    cfg.explosion_sprite_user = &runtime_sprite_context;
-    cfg.object_sprite_drawer =
+    drawer_binding.explosion_sprite_user = &runtime_sprite_context;
+    drawer_binding.object_sprite_drawer =
         m11_csb_viewport_object_sprite_drawer;
-    cfg.object_sprite_user = &runtime_sprite_context;
-    cfg.object_icon_drawer =
+    drawer_binding.object_sprite_user = &runtime_sprite_context;
+    drawer_binding.object_icon_drawer =
         m11_csb_viewport_object_icon_drawer;
-    cfg.object_icon_user = &runtime_sprite_context;
-    cfg.group_sprite_drawer =
+    drawer_binding.object_icon_user = &runtime_sprite_context;
+    drawer_binding.group_sprite_drawer =
         m11_csb_viewport_group_sprite_drawer;
-    cfg.group_sprite_user = &runtime_sprite_context;
+    drawer_binding.group_sprite_user = &runtime_sprite_context;
+    csb_v1_viewport_apply_runtime_drawer_binding(&cfg, &drawer_binding);
     plan = csb_v1_boot_csbgraphics_m11_plan(profile);
     cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.csbgraphics_plan = plan;
@@ -1225,26 +1249,8 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
                                   profile->runtime.party_dir,
                                   profile->runtime.party_x,
                                   profile->runtime.party_y);
-    ((M11_GameViewState *)state)->csbState.runtime_projectile_sprite_drawn_count =
-        cfg.runtime_projectile_sprite_drawn_count;
-    ((M11_GameViewState *)state)->csbState.runtime_projectile_material_resolved_count =
-        cfg.runtime_projectile_material_resolved_count;
-    ((M11_GameViewState *)state)->csbState.runtime_projectile_marker_drawn_count =
-        cfg.runtime_projectile_marker_drawn_count;
-    ((M11_GameViewState *)state)->csbState.runtime_explosion_sprite_drawn_count =
-        cfg.runtime_explosion_sprite_drawn_count;
-    ((M11_GameViewState *)state)->csbState.runtime_explosion_marker_drawn_count =
-        cfg.runtime_explosion_marker_drawn_count;
-    ((M11_GameViewState *)state)->csbState.runtime_object_sprite_drawn_count =
-        cfg.runtime_object_sprite_drawn_count;
-    ((M11_GameViewState *)state)->csbState.runtime_object_icon_drawn_count =
-        cfg.runtime_object_icon_drawn_count;
-    ((M11_GameViewState *)state)->csbState.runtime_object_marker_drawn_count =
-        cfg.runtime_object_marker_drawn_count;
-    ((M11_GameViewState *)state)->csbState.runtime_group_sprite_drawn_count =
-        cfg.runtime_group_sprite_drawn_count;
-    ((M11_GameViewState *)state)->csbState.runtime_group_marker_drawn_count =
-        cfg.runtime_group_marker_drawn_count;
+    csb_v1_viewport_runtime_draw_counts_from_config(&cfg, &draw_counts);
+    m11_csb_runtime_overlay_stats_apply(state, &draw_counts);
     if (plan && plan->ready && cache && cache->loaded) {
         for (i = 0u; i < plan->planned_count; ++i) {
             CSB_V1_CSBGraphicsM11Binding binding;

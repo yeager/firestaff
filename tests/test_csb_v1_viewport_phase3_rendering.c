@@ -236,6 +236,95 @@ static void test_config_defaults_and_setters(void)
     csb_v1_viewport_render_frame(NULL, 0, 0, 0);
 }
 
+static void test_runtime_drawer_binding_and_count_helpers(void)
+{
+    CSB_V1_ViewportConfig cfg;
+    CSB_V1_ViewportRuntimeDrawerBinding binding;
+    CSB_V1_ViewportRuntimeDrawCounts counts;
+    TestRuntimeSpritePlacementCapture projectile_capture;
+    TestRuntimeThingDrawCapture thing_capture;
+
+    memset(&projectile_capture, 0, sizeof(projectile_capture));
+    memset(&thing_capture, 0, sizeof(thing_capture));
+    memset(&binding, 0, sizeof(binding));
+    csb_v1_viewport_init(&cfg);
+
+    binding.object_sprite_drawer = test_object_sprite_drawer;
+    binding.object_sprite_user = &thing_capture;
+    binding.object_icon_drawer = test_object_icon_drawer;
+    binding.object_icon_user = &thing_capture;
+    binding.group_sprite_drawer = test_group_sprite_drawer;
+    binding.group_sprite_user = &thing_capture;
+    binding.projectile_sprite_drawer = test_projectile_sprite_drawer;
+    binding.projectile_sprite_user = &projectile_capture;
+    binding.explosion_sprite_drawer = test_explosion_sprite_drawer;
+    binding.explosion_sprite_user = &projectile_capture;
+    csb_v1_viewport_apply_runtime_drawer_binding(&cfg, &binding);
+
+    check_true("runtime.binding.object_sprite",
+               cfg.object_sprite_drawer == test_object_sprite_drawer);
+    check_true("runtime.binding.object_sprite_user",
+               cfg.object_sprite_user == &thing_capture);
+    check_true("runtime.binding.object_icon",
+               cfg.object_icon_drawer == test_object_icon_drawer);
+    check_true("runtime.binding.group_sprite",
+               cfg.group_sprite_drawer == test_group_sprite_drawer);
+    check_true("runtime.binding.projectile_sprite",
+               cfg.projectile_sprite_drawer == test_projectile_sprite_drawer);
+    check_true("runtime.binding.explosion_sprite",
+               cfg.explosion_sprite_drawer == test_explosion_sprite_drawer);
+
+    cfg.runtime_object_sprite_drawn_count = 11;
+    cfg.runtime_object_icon_drawn_count = 12;
+    cfg.runtime_object_marker_drawn_count = 13;
+    cfg.runtime_group_sprite_drawn_count = 14;
+    cfg.runtime_group_marker_drawn_count = 15;
+    cfg.runtime_projectile_sprite_drawn_count = 16;
+    cfg.runtime_projectile_material_resolved_count = 17;
+    cfg.runtime_projectile_marker_drawn_count = 18;
+    cfg.runtime_explosion_sprite_drawn_count = 19;
+    cfg.runtime_explosion_marker_drawn_count = 20;
+    csb_v1_viewport_runtime_draw_counts_from_config(&cfg, &counts);
+
+    check_int("runtime.counts.object_sprite",
+              counts.object_sprite_drawn_count, 11);
+    check_int("runtime.counts.object_icon",
+              counts.object_icon_drawn_count, 12);
+    check_int("runtime.counts.object_marker",
+              counts.object_marker_drawn_count, 13);
+    check_int("runtime.counts.group_sprite",
+              counts.group_sprite_drawn_count, 14);
+    check_int("runtime.counts.group_marker",
+              counts.group_marker_drawn_count, 15);
+    check_int("runtime.counts.projectile_sprite",
+              counts.projectile_sprite_drawn_count, 16);
+    check_int("runtime.counts.projectile_material",
+              counts.projectile_material_resolved_count, 17);
+    check_int("runtime.counts.projectile_marker",
+              counts.projectile_marker_drawn_count, 18);
+    check_int("runtime.counts.explosion_sprite",
+              counts.explosion_sprite_drawn_count, 19);
+    check_int("runtime.counts.explosion_marker",
+              counts.explosion_marker_drawn_count, 20);
+
+    csb_v1_viewport_apply_runtime_drawer_binding(&cfg, NULL);
+    check_true("runtime.binding.clear_object",
+               cfg.object_sprite_drawer == NULL &&
+               cfg.object_sprite_user == NULL);
+    check_true("runtime.binding.clear_projectile",
+               cfg.projectile_sprite_drawer == NULL &&
+               cfg.projectile_sprite_user == NULL);
+
+    counts.object_sprite_drawn_count = 99;
+    csb_v1_viewport_runtime_draw_counts_reset(&counts);
+    check_int("runtime.counts.reset_object", counts.object_sprite_drawn_count, 0);
+    csb_v1_viewport_runtime_draw_counts_from_config(NULL, &counts);
+    check_int("runtime.counts.null_config", counts.explosion_marker_drawn_count, 0);
+    csb_v1_viewport_apply_runtime_drawer_binding(NULL, &binding);
+    csb_v1_viewport_runtime_draw_counts_reset(NULL);
+    csb_v1_viewport_runtime_draw_counts_from_config(&cfg, NULL);
+}
+
 static void test_null_framebuffer_render_is_noop(void)
 {
     CSB_V1_ViewportConfig cfg;
@@ -3567,6 +3656,7 @@ static void test_source_evidence(void)
 int main(void)
 {
     test_config_defaults_and_setters();
+    test_runtime_drawer_binding_and_count_helpers();
     test_null_framebuffer_render_is_noop();
     test_runtime_projectile_and_explosion_overlays();
     test_csb_custom_background_slot_contracts();

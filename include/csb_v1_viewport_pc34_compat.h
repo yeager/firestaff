@@ -150,6 +150,32 @@ typedef struct {
 } CSB_V1_ViewportConfig;
 
 typedef struct {
+    CSB_V1_ViewportObjectSpriteDrawer object_sprite_drawer;
+    void *object_sprite_user;
+    CSB_V1_ViewportObjectIconDrawer object_icon_drawer;
+    void *object_icon_user;
+    CSB_V1_ViewportGroupSpriteDrawer group_sprite_drawer;
+    void *group_sprite_user;
+    CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
+    void *projectile_sprite_user;
+    CSB_V1_ViewportExplosionSpriteDrawer explosion_sprite_drawer;
+    void *explosion_sprite_user;
+} CSB_V1_ViewportRuntimeDrawerBinding;
+
+typedef struct {
+    int object_sprite_drawn_count;
+    int object_icon_drawn_count;
+    int object_marker_drawn_count;
+    int group_sprite_drawn_count;
+    int group_marker_drawn_count;
+    int projectile_sprite_drawn_count;
+    int projectile_material_resolved_count;
+    int projectile_marker_drawn_count;
+    int explosion_sprite_drawn_count;
+    int explosion_marker_drawn_count;
+} CSB_V1_ViewportRuntimeDrawCounts;
+
+typedef struct {
     int room_num;
     int relative_forward;
     int relative_side;
@@ -691,6 +717,14 @@ typedef struct {
 void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg);
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set);
 void csb_v1_viewport_set_custom_background(CSB_V1_ViewportConfig *cfg, int bg_id);
+void csb_v1_viewport_apply_runtime_drawer_binding(
+    CSB_V1_ViewportConfig *cfg,
+    const CSB_V1_ViewportRuntimeDrawerBinding *binding);
+void csb_v1_viewport_runtime_draw_counts_reset(
+    CSB_V1_ViewportRuntimeDrawCounts *counts);
+void csb_v1_viewport_runtime_draw_counts_from_config(
+    const CSB_V1_ViewportConfig *cfg,
+    CSB_V1_ViewportRuntimeDrawCounts *counts);
 size_t csb_v1_viewport_custom_background_slot_spec_count(void);
 const CSB_V1_ViewportCustomBackgroundSlotSpec *
 csb_v1_viewport_get_custom_background_slot_spec(size_t index);
