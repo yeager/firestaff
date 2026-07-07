@@ -23089,23 +23089,11 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
                                              int fbW,
                                              int fbH,
                                              const M11_ViewportCell cells[3][3]) {
-    static const unsigned char kButtonD3Palette[16] = {
-        0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
-    };
-    static const unsigned char kButtonD2Palette[16] = {
-        0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
-    };
-    static const M11_DM1ZoneBlit kButtons[3] = {
-        /* G0208[0][C3_VIEW_DOOR_BUTTON_D1C]: native bitmap at (160,44) 16x9 */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 160, 44, 16, 9},
-        /* G0208[0][C2_VIEW_DOOR_BUTTON_D2C]: scaled to (144,42) 12x6 */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 144, 42, 12, 6},
-        /* G0208[0][C1_VIEW_DOOR_BUTTON_D3C]: scaled to (136,41) 6x4 */
-        {M11_GFX_DOOR_BUTTON_BASE, 0, 0, 136, 41, 6, 4}
-    };
     int depth;
     const M11_ViewportCell* cell;
     const M11_AssetSlot* slot;
+    DM1_ViewDoorButtonIndex viewIndex;
+    const DM1_WallFrame* frame;
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -23132,15 +23120,24 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return;
     }
+    viewIndex = depth == 0 ? DM1_VIEW_DOOR_BUTTON_D1C :
+        (depth == 1 ? DM1_VIEW_DOOR_BUTTON_D2C : DM1_VIEW_DOOR_BUTTON_D3C);
+    frame = dm1_v1_viewport_get_door_button_frame_pc34(1, viewIndex);
+    if (!frame) {
+        return;
+    }
+    /* ReDMCSB DUNVIEW.C F0110 line 4163 selects G0208[button][view],
+     * then lines 4204-4207 blit C0_DOOR_BUTTON with C10 transparency.
+     * Geometry and derived D2/D3 remaps are owned by dm1_v1_viewport_3d. */
     m11_blit_scaled_palette_map(slot,
                                 framebuffer, fbW, fbH,
-                                M11_VIEWPORT_X + kButtons[depth].dstX,
-                                M11_VIEWPORT_Y + kButtons[depth].dstY,
-                                kButtons[depth].width,
-                                kButtons[depth].height,
+                                M11_VIEWPORT_X + frame->left_x,
+                                M11_VIEWPORT_Y + frame->top_y,
+                                (int)frame->right_x - (int)frame->left_x + 1,
+                                (int)frame->bottom_y - (int)frame->top_y + 1,
                                 10,
-                                depth == 2 ? kButtonD3Palette :
-                                    (depth == 1 ? kButtonD2Palette : NULL));
+                                dm1_v1_viewport_get_door_button_palette_remap_pc34(
+                                    viewIndex));
 }
 
 static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
@@ -23149,11 +23146,9 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
                                          int fbH,
                                          int maxVisibleForward,
                                          const M11_ViewportCell cells[3][3]) {
-    static const unsigned char kButtonD3Palette[16] = {
-        0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
-    };
     M11_ViewportCell cell;
     const M11_AssetSlot* slot;
+    const DM1_WallFrame* frame;
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -23181,14 +23176,21 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return;
     }
-    /* G0208[0][C0_VIEW_DOOR_BUTTON_D3R]: scaled to (199,41) 6x4 */
+    frame = dm1_v1_viewport_get_door_button_frame_pc34(1,
+                                                       DM1_VIEW_DOOR_BUTTON_D3R);
+    if (!frame) {
+        return;
+    }
+    /* G0208[0][C0_VIEW_DOOR_BUTTON_D3R], ReDMCSB F0110. */
     m11_blit_scaled_palette_map(slot,
                                 framebuffer, fbW, fbH,
-                                M11_VIEWPORT_X + 199,
-                                M11_VIEWPORT_Y + 41,
-                                6, 4,
+                                M11_VIEWPORT_X + frame->left_x,
+                                M11_VIEWPORT_Y + frame->top_y,
+                                (int)frame->right_x - (int)frame->left_x + 1,
+                                (int)frame->bottom_y - (int)frame->top_y + 1,
                                 10,
-                                kButtonD3Palette);
+                                dm1_v1_viewport_get_door_button_palette_remap_pc34(
+                                    DM1_VIEW_DOOR_BUTTON_D3R));
 }
 
 typedef struct M11_DM1SideDoorSpec {
