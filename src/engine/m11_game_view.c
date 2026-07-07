@@ -1057,11 +1057,11 @@ static int m11_csb_viewport_projectile_sprite_drawer(
     int relative_cell;
     int gfx_index;
     int flip_flags;
-    int source_zone_row = -1;
     int pane_x;
     int pane_y;
     int pane_w;
     int pane_h;
+    int source_zone_row;
 
     if (!ctx || !ctx->state || !ctx->profile || !projectile ||
         !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
@@ -1082,19 +1082,15 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         relative_cell,
         projectile->mapX,
         projectile->mapY);
-    if (source_zone >= 2900) {
-        source_zone_row = (source_zone - 2900) / 4;
-    }
-    pane_x = 0 + viewport_x - 16;
-    pane_y = 33 + viewport_y - 16;
-    pane_w = 32;
-    pane_h = 32;
-    if (source_zone_row >= 0) {
-        pane_x = 0;
-        pane_y = 33;
-        pane_w = 224;
-        pane_h = 136;
-    }
+    (void)csb_v1_viewport_runtime_projectile_sprite_rect(
+        source_zone,
+        viewport_x,
+        viewport_y,
+        &source_zone_row,
+        &pane_x,
+        &pane_y,
+        &pane_w,
+        &pane_h);
     (void)side;
     /* ReDMCSB DUNVIEW.C F0115 lines 5710-5722 picks the scale row from
      * view depth/cell before the F0791 C10 projectile blit.  Reuse the
@@ -1143,19 +1139,16 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    pane_x = viewport_x - 16;
-    pane_y = 33 + viewport_y - 16;
-    pane_w = 32;
-    pane_h = 32;
-    if (source_zone >= 0) {
-        pane_x = 0;
-        pane_y = 33;
-        pane_w = 224;
-        pane_h = 136;
-    }
-    depth_index = forward;
-    if (depth_index < 0) depth_index = 0;
-    if (depth_index > 2) depth_index = 2;
+    (void)csb_v1_viewport_runtime_explosion_sprite_rect(
+        forward,
+        source_zone,
+        viewport_x,
+        viewport_y,
+        &depth_index,
+        &pane_x,
+        &pane_y,
+        &pane_w,
+        &pane_h);
     /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions in a
      * final pass with F0114/F0675 bitmap selection.  CSB PC34 shares
      * the DM1 explosion bitmap aspect mapping for this M11 bridge. */
