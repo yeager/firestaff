@@ -245,6 +245,14 @@ int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
                                   CSB_V1_UtilInput input,
                                   int preview_active,
                                   CSB_V1_UtilInputResult *out_result);
+int csb_v1_util_flow_handle_firestaff_input_if_active(
+    CSB_V1_UtilFlowContext *ctx,
+    int menu_input,
+    int import_available,
+    int credits_active,
+    int opening_active,
+    int preview_active,
+    CSB_V1_UtilInputResult *out_result);
 int csb_v1_util_flow_overlay_accepts_input(int import_available,
                                            int credits_active,
                                            int opening_active);

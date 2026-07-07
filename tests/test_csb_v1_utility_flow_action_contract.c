@@ -209,6 +209,30 @@ int main(void)
               strcmp(result.status_scope, "BOOT") == 0 &&
               strcmp(result.status, "CSB IMPORT READY") == 0,
           "keyboard Back close-preview result owns status");
+    check(csb_v1_util_flow_handle_firestaff_input_if_active(
+              &flow,
+              2,
+              1,
+              0,
+              0,
+              1,
+              &result) &&
+              result.kind == CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED &&
+              result.selected_action_index == 2 &&
+              result.action == CSB_V1_UTIL_ACTION_NEW &&
+              result.preview_active == 0,
+          "Firestaff keyboard helper owns overlay gate and input mapping");
+    check(!csb_v1_util_flow_handle_firestaff_input_if_active(
+              &flow,
+              2,
+              0,
+              0,
+              0,
+              1,
+              &result) &&
+              result.kind == CSB_V1_UTIL_INPUT_RESULT_NONE &&
+              result.preview_active == 1,
+          "Firestaff keyboard helper rejects inactive overlay");
     check(csb_v1_util_flow_overlay_accepts_input(1, 0, 0) &&
               !csb_v1_util_flow_overlay_accepts_input(0, 0, 0) &&
               !csb_v1_util_flow_overlay_accepts_input(1, 1, 0) &&
