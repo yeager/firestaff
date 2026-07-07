@@ -8191,6 +8191,53 @@ int csb_v1_runtime_group_record_creature_cell(
     return ((int)record[5] >> (creature_index << 1)) & 0x03;
 }
 
+int csb_v1_runtime_group_overlay_info(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    CSB_V1_RuntimeGroupOverlayInfo *out_info)
+{
+    const uint8_t *record;
+    int thing_type = -1;
+    int record_size = 0;
+    int i;
+
+    if (!dungeon || !out_info ||
+        group_thing == THING_NONE ||
+        group_thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP) {
+        return 0;
+    }
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        group_thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record || record_size < 16 || thing_type != THING_TYPE_GROUP) {
+        return 0;
+    }
+
+    memset(out_info, 0, sizeof(*out_info));
+    /* ReDMCSB DEFS.H GROUP: C04 records carry Type, Cells, Count, and
+     * Direction in the compact record consumed by DUNVIEW.C F0115 when the
+     * thing chain reaches a creature group. */
+    out_info->creature_type =
+        csb_v1_runtime_group_record_creature_type(record, record_size);
+    out_info->direction =
+        csb_v1_runtime_group_record_direction(record, record_size);
+    out_info->visible_count =
+        csb_v1_runtime_group_record_visible_count(record, record_size);
+    if (out_info->visible_count < 1) out_info->visible_count = 1;
+    if (out_info->visible_count > 4) out_info->visible_count = 4;
+    for (i = 0; i < out_info->visible_count; ++i) {
+        out_info->cells[i] =
+            csb_v1_runtime_group_record_creature_cell(record,
+                                                      record_size,
+                                                      i);
+    }
+    return 1;
+}
+
 int csb_v1_runtime_write_container_slots(
     CSB_V1_RuntimeProfile *profile,
     uint16_t container_thing,

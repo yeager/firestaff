@@ -401,6 +401,13 @@ typedef struct {
 } CSB_V1_ChampionPortraitRenderSource;
 
 typedef struct {
+    int creature_type;
+    int direction;
+    int visible_count;
+    int cells[4];
+} CSB_V1_RuntimeGroupOverlayInfo;
+
+typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
     int old_party_y;
@@ -779,6 +786,11 @@ int csb_v1_runtime_group_record_creature_cell(
     const uint8_t *record,
     int size,
     int creature_index);
+
+int csb_v1_runtime_group_overlay_info(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    CSB_V1_RuntimeGroupOverlayInfo *out_info);
 
 /* Bounded champion action-hand THROW boundary for M11 CSB playability.
  * Uses the CSB runtime party snapshot and projectile list directly, without
