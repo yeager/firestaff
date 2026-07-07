@@ -104,6 +104,7 @@ static int has_extracted(const char *dir) {
 
 static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     int face_size = 0;
+    int full_face_count;
     int i;
     uint8_t *face_data;
     if (!engine) return;
@@ -112,6 +113,7 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     engine->ui_faces_fallback = 0;
     face_data = nexus_v1_read_file(engine, "FACE.BIN", &face_size);
     if (!face_data) return;
+    full_face_count = nexus_ui_face_full_entry_count(face_size, 48, 48);
 
     /* DM Nexus FACE.BIN is the startup champion portrait source. Keep the
      * full 24-row startup roster visible even when a specific dump exposes
@@ -121,14 +123,21 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
         int load_result;
         if (portrait_index < 0 || portrait_index >= 24) continue;
         engine->ui_faces_expected++;
-        load_result = nexus_ui_load_faces(&engine->ui,
-                                          face_data,
-                                          portrait_index * 48 * 48,
-                                          face_size,
-                                          portrait_index,
-                                          48,
-                                          48,
-                                          NULL);
+        if (portrait_index < full_face_count) {
+            load_result = nexus_ui_load_faces(&engine->ui,
+                                              face_data,
+                                              portrait_index * 48 * 48,
+                                              face_size,
+                                              portrait_index,
+                                              48,
+                                              48,
+                                              NULL);
+        } else {
+            load_result = nexus_ui_load_face_placeholder(&engine->ui,
+                                                        portrait_index,
+                                                        48,
+                                                        48);
+        }
         if (load_result > 0) {
             engine->ui_faces_loaded++;
         } else if (load_result == 0) {
