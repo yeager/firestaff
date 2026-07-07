@@ -631,6 +631,10 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     int projectile_map_y,
     int projectile_cell,
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_overlay_side_range(
+    int forward,
+    int *out_min_side,
+    int *out_max_side);
 int csb_v1_viewport_runtime_object_overlay_placement(
     int forward,
     int side,

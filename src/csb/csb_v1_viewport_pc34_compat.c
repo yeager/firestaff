@@ -519,6 +519,30 @@ int csb_v1_viewport_runtime_group_overlay_placement(
     return placement.visible;
 }
 
+int csb_v1_viewport_runtime_overlay_side_range(
+    int forward,
+    int *out_min_side,
+    int *out_max_side)
+{
+    int min_side = -1;
+    int max_side = 1;
+
+    if (forward < 1 || forward > 3) {
+        if (out_min_side) *out_min_side = 0;
+        if (out_max_side) *out_max_side = -1;
+        return 0;
+    }
+    if (forward == 3) {
+        /* ReDMCSB DUNVIEW.C F0676/F0677 adds CSB's D3L2/D3R2
+         * side squares around the normal D3L/D3C/D3R thing pass. */
+        min_side = -2;
+        max_side = 2;
+    }
+    if (out_min_side) *out_min_side = min_side;
+    if (out_max_side) *out_max_side = max_side;
+    return 1;
+}
+
 static int csb_v1_viewport_c2900_source_zone_point(
     int row_index,
     int view_cell,
