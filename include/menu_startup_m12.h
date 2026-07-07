@@ -398,6 +398,9 @@ typedef struct M12_StartupMenuState {
     int languageExplicit;
     int languagePopupOpen;
     int languagePopupSelectedIndex;
+    int textEditActive;
+    int textEditRow;
+    char textEditBuffer[128];
     M12_AssetStatus assetStatus;
     M12_GameOptions gameOptions[M12_CONFIG_GAME_COUNT];
     int gameOptSelectedRow;
@@ -462,6 +465,12 @@ int M12_StartupMenu_SessionTimerRemainingSeconds(const M12_StartupMenuState* sta
                                                  int elapsedSeconds);
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input);
+int M12_StartupMenu_TextEditActive(const M12_StartupMenuState* state);
+int M12_StartupMenu_ConsumeTextInput(M12_StartupMenuState* state,
+                                     const char* text);
+int M12_StartupMenu_TextEditBackspace(M12_StartupMenuState* state);
+int M12_StartupMenu_TextEditCommit(M12_StartupMenuState* state);
+int M12_StartupMenu_TextEditCancel(M12_StartupMenuState* state);
 int M12_StartupMenu_Update(M12_StartupMenuState* state);
 void M12_StartupMenu_Destroy(M12_StartupMenuState* state);
 void m12_redesigned_handle_input(M12_StartupMenuState* state,

@@ -3124,6 +3124,9 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
     state->settingsSelectedIndex = 0;
     state->languagePopupOpen = 0;
     state->languagePopupSelectedIndex = state->settings.languageIndex;
+    state->textEditActive = 0;
+    state->textEditRow = -1;
+    state->textEditBuffer[0] = '\0';
     state->gameOptSelectedRow = 0;
     state->museumSelectedIndex = 0;
     state->museumPageIndex = 0;
@@ -3170,6 +3173,103 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
     state->frameTick = 0;
     state->hoverX = -1;
     state->hoverY = -1;
+}
+
+static int m12_ra_text_row_capacity(int row) {
+    switch (row) {
+        case M12_SETTINGS_ROW_RA_USERNAME:
+            return 63;
+        case M12_SETTINGS_ROW_RA_TOKEN:
+            return 127;
+        default:
+            return 0;
+    }
+}
+
+static void m12_begin_ra_text_edit(M12_StartupMenuState* state, int row) {
+    const char* current;
+    if (!state || m12_ra_text_row_capacity(row) <= 0) {
+        return;
+    }
+    current = (row == M12_SETTINGS_ROW_RA_USERNAME)
+                  ? state->settings.retroAchievementsUsername
+                  : state->settings.retroAchievementsToken;
+    state->languagePopupOpen = 0;
+    state->textEditActive = 1;
+    state->textEditRow = row;
+    snprintf(state->textEditBuffer, sizeof(state->textEditBuffer), "%s", current);
+}
+
+int M12_StartupMenu_TextEditActive(const M12_StartupMenuState* state) {
+    return state && state->textEditActive;
+}
+
+int M12_StartupMenu_ConsumeTextInput(M12_StartupMenuState* state,
+                                     const char* text) {
+    size_t len;
+    int cap;
+    if (!state || !state->textEditActive || !text) {
+        return 0;
+    }
+    cap = m12_ra_text_row_capacity(state->textEditRow);
+    if (cap <= 0) {
+        return 0;
+    }
+    len = strlen(state->textEditBuffer);
+    while (*text && len < (size_t)cap) {
+        unsigned char ch = (unsigned char)*text++;
+        if (ch >= 32U && ch <= 126U) {
+            state->textEditBuffer[len++] = (char)ch;
+        }
+    }
+    state->textEditBuffer[len] = '\0';
+    return 1;
+}
+
+int M12_StartupMenu_TextEditBackspace(M12_StartupMenuState* state) {
+    size_t len;
+    if (!state || !state->textEditActive) {
+        return 0;
+    }
+    len = strlen(state->textEditBuffer);
+    if (len > 0U) {
+        state->textEditBuffer[len - 1U] = '\0';
+    }
+    return 1;
+}
+
+int M12_StartupMenu_TextEditCommit(M12_StartupMenuState* state) {
+    if (!state || !state->textEditActive) {
+        return 0;
+    }
+    if (state->textEditRow == M12_SETTINGS_ROW_RA_USERNAME) {
+        snprintf(state->settings.retroAchievementsUsername,
+                 sizeof(state->settings.retroAchievementsUsername),
+                 "%s",
+                 state->textEditBuffer);
+    } else if (state->textEditRow == M12_SETTINGS_ROW_RA_TOKEN) {
+        snprintf(state->settings.retroAchievementsToken,
+                 sizeof(state->settings.retroAchievementsToken),
+                 "%s",
+                 state->textEditBuffer);
+    } else {
+        return 0;
+    }
+    state->textEditActive = 0;
+    state->textEditRow = -1;
+    state->textEditBuffer[0] = '\0';
+    m12_save_config(state);
+    return 1;
+}
+
+int M12_StartupMenu_TextEditCancel(M12_StartupMenuState* state) {
+    if (!state || !state->textEditActive) {
+        return 0;
+    }
+    state->textEditActive = 0;
+    state->textEditRow = -1;
+    state->textEditBuffer[0] = '\0';
+    return 1;
 }
 
 static const char* m12_settings_value_language(const M12_StartupMenuState* state) {
@@ -3510,10 +3610,18 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_RA_HARDCORE:
             return m12_tr(state, g_toggleModes[state && state->settings.retroAchievementsHardcore ? 1 : 0]);
         case M12_SETTINGS_ROW_RA_USERNAME:
+            if (state && state->textEditActive &&
+                state->textEditRow == M12_SETTINGS_ROW_RA_USERNAME) {
+                return state->textEditBuffer[0] ? state->textEditBuffer : m12_tr(state, "EDITING");
+            }
             return (state && state->settings.retroAchievementsUsername[0])
                        ? state->settings.retroAchievementsUsername
                        : m12_tr(state, "NOT SET");
         case M12_SETTINGS_ROW_RA_TOKEN:
+            if (state && state->textEditActive &&
+                state->textEditRow == M12_SETTINGS_ROW_RA_TOKEN) {
+                return m12_tr(state, "EDITING");
+            }
             return (state && state->settings.retroAchievementsToken[0])
                        ? m12_tr(state, "SET")
                        : m12_tr(state, "NOT SET");
@@ -4100,6 +4208,10 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.retroAchievementsHardcore,
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_RA_USERNAME:
+        case M12_SETTINGS_ROW_RA_TOKEN:
+            m12_begin_ra_text_edit(state, state->settingsSelectedIndex);
             break;
         case M12_SETTINGS_ROW_SAVE_BROWSER:
             (void)M12_StartupMenu_OpenSaveBrowser(state);
@@ -4785,6 +4897,19 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     }
 
     if (state->view == M12_MENU_VIEW_SETTINGS) {
+        if (state->textEditActive) {
+            switch (input) {
+                case M12_MENU_INPUT_ACCEPT:
+                    (void)M12_StartupMenu_TextEditCommit(state);
+                    return;
+                case M12_MENU_INPUT_BACK:
+                    (void)M12_StartupMenu_TextEditCancel(state);
+                    return;
+                case M12_MENU_INPUT_NONE:
+                default:
+                    return;
+            }
+        }
         if (state->languagePopupOpen) {
             int count = M12_UI_LANGUAGE_COUNT;
             switch (input) {

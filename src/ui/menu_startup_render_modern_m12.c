@@ -1533,6 +1533,12 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int gi = state->settings.graphicsIndex;
     int wi = state->settings.windowModeIndex;
     int sessionMinutes = M12_StartupMenu_SessionTimerLimitMinutes(state);
+    const char* raUserValue = state->settings.retroAchievementsUsername[0]
+                                  ? state->settings.retroAchievementsUsername
+                                  : "NOT SET";
+    const char* raTokenValue = state->settings.retroAchievementsToken[0]
+                                   ? "SET"
+                                   : "NOT SET";
     if (li < 0) li = 0;
     if (li >= M12_StartupMenu_GetLanguageCount()) li = 0;
     if (gi < 0) gi = 0;
@@ -1544,6 +1550,13 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
         snprintf(sessionTimer, sizeof(sessionTimer), "%s", "OFF");
     } else {
         snprintf(sessionTimer, sizeof(sessionTimer), "%d MIN", sessionMinutes);
+    }
+    if (M12_StartupMenu_TextEditActive(state)) {
+        if (state->settingsSelectedIndex == 32) {
+            raUserValue = state->textEditBuffer[0] ? state->textEditBuffer : "EDITING";
+        } else if (state->settingsSelectedIndex == 33) {
+            raTokenValue = "EDITING";
+        }
     }
 
     int rowX = panelX + 36;
@@ -1568,10 +1581,10 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settings.retroAchievementsHardcore ? "ON" : "OFF",
                      state->settingsSelectedIndex == 31);
     draw_setting_row(c, rowX, rowY + 504, rowW, "RA USER",
-                     state->settings.retroAchievementsUsername[0] ? state->settings.retroAchievementsUsername : "NOT SET",
+                     raUserValue,
                      state->settingsSelectedIndex == 32);
     draw_setting_row(c, rowX, rowY + 560, rowW, "RA API TOKEN",
-                     state->settings.retroAchievementsToken[0] ? "SET" : "NOT SET",
+                     raTokenValue,
                      state->settingsSelectedIndex == 33);
     draw_setting_row(c, rowX, rowY + 616, rowW, "SESSION TIMER", sessionTimer,
                      state->settingsSelectedIndex == 35);
