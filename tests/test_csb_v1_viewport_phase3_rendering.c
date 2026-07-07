@@ -3122,6 +3122,17 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_sprite_blit.source_zone, 35283);
     check_int("csb.runtime_object_overlay.d3l2.cell3.blit_row",
               object_sprite_blit.source_zone_row, 3);
+    check_int("csb.runtime_object_overlay.d3l2.cell3.material_row",
+              csb_v1_viewport_runtime_object_source_zone_row(
+                  object_sprite_blit.source_zone,
+                  object_sprite_blit.source_zone_row), 3);
+    check_int("csb.runtime_object_overlay.c2500.material_row",
+              csb_v1_viewport_runtime_object_source_zone_row(
+                  0x8000 | 2532, -1), 8);
+    check_int("csb.runtime_object_overlay.material_row_fallback",
+              csb_v1_viewport_runtime_object_source_zone_row(-1, 6), 6);
+    check_int("csb.runtime_object_overlay.material_row_non_c2500",
+              csb_v1_viewport_runtime_object_source_zone_row(2914, 7), 7);
     memset(&object_place, 0, sizeof(object_place));
     (void)csb_v1_viewport_runtime_object_overlay_placement(
         1, 0, 0, &object_place);
