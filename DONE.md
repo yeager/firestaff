@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 entrance runtime command ownership: `entrance_frontend_pc34_compat` now owns the DM1 entrance key-command policy, source-command path mapping, credits wait ticks, vblank delay, headless timeout policy, and resume save-path resolution. M11 now only adapts SDL input/events and uses the DM1 entrance compat contract. Verification: `test_entrance_runtime_dispatch_source_lock`, `test_m11_entrance_wait_policy`, `test_entrance_door_opening_composite_pc34_compat`, and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 creature draw-plan ownership: `dm1_v1_creature_render_pc34_compat` now owns center/side creature group and duplicate draw-plan expansion for M11. Verification: `dm1_v1_creature_render_source_lock` passed, `firestaff_m11_phase_a_probe` built and passed 24/24.
 
 - ✅ 2026-07-07 DM1 projectile render decision ownership: `dm1_v1_projectile_explosion_render_pc34_compat` now owns projectile renderability plus V2 projectile effect particle color/size decisions. M11 consumes those DM1 APIs instead of branching locally on projectile count, graphic availability, and subtype. Verification: CMake `test_dm1_v1_projectile_explosion_render_pc34_compat` target built and passed, projectile syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.

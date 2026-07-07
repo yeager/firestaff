@@ -573,11 +573,11 @@ static int m11_draw_entrance_closed_doors_asset(M11_GameViewState* gameView,
 }
 
 typedef enum {
-    M11_ENTRANCE_COMMAND_QUIT = -1,
-    M11_ENTRANCE_COMMAND_NONE = 0,
-    M11_ENTRANCE_COMMAND_ENTER = 1,
-    M11_ENTRANCE_COMMAND_RESUME = 2,
-    M11_ENTRANCE_COMMAND_CREDITS = 3
+    M11_ENTRANCE_COMMAND_QUIT = ENTRANCE_COMPAT_COMMAND_PATH_QUIT,
+    M11_ENTRANCE_COMMAND_NONE = ENTRANCE_COMPAT_COMMAND_PATH_NONE,
+    M11_ENTRANCE_COMMAND_ENTER = ENTRANCE_COMPAT_COMMAND_PATH_ENTER,
+    M11_ENTRANCE_COMMAND_RESUME = ENTRANCE_COMPAT_COMMAND_PATH_RESUME,
+    M11_ENTRANCE_COMMAND_CREDITS = ENTRANCE_COMPAT_COMMAND_PATH_CREDITS
 } M11_EntranceCommand;
 
 static int m11_draw_entrance_credits_asset(M11_GameViewState* gameView,
@@ -610,7 +610,7 @@ static int m11_wait_for_entrance_credits_done(void) {
     while (SDL_PollEvent(&ev)) {
         (void)ev;
     }
-    for (ticks = 0U; ticks < 1800U; ++ticks) {
+    for (ticks = 0U; ticks < ENTRANCE_Compat_GetCreditsWaitTicks(); ++ticks) {
         while (SDL_PollEvent(&ev)) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
@@ -636,7 +636,7 @@ static int m11_wait_for_entrance_credits_done(void) {
             }
 #endif
         }
-        SDL_Delay(20);
+        SDL_Delay(ENTRANCE_Compat_GetVblankDelayMs());
     }
     return M11_ENTRANCE_COMMAND_NONE;
 }
@@ -735,21 +735,25 @@ int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
     return (int)route.commandId;
 }
 
-int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
-    /* ReDMCSB ENTRANCE.C:850-883 PC/F20 path checks raw keyboard input in the
-     * entrance wait loop and maps carriage return to C001_MODE_LOAD_DUNGEON.
-     * Keep Space inert because the PC/F20 source path does not activate the
-     * entrance with Space. */
+static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
     switch (keyCode) {
     case SDLK_RETURN:
+        return ENTRANCE_COMPAT_KEY_RETURN;
     case SDLK_KP_ENTER:
-        return M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON;
+        return ENTRANCE_COMPAT_KEY_KEYPAD_RETURN;
     case SDLK_ESCAPE:
+        return ENTRANCE_COMPAT_KEY_ESCAPE;
     case SDLK_Q:
-        return M11_ENTRANCE_RUNTIME_COMMAND_QUIT;
+        return ENTRANCE_COMPAT_KEY_Q;
+    case SDLK_SPACE:
+        return ENTRANCE_COMPAT_KEY_SPACE;
     default:
-        return M11_ENTRANCE_RUNTIME_COMMAND_NONE;
+        return ENTRANCE_COMPAT_KEY_OTHER;
     }
+}
+
+int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
+    return ENTRANCE_Compat_DispatchKeyCommand(m11_entrance_compat_key_from_sdl_key(keyCode));
 }
 
 int M11_Entrance_ResolveDm1ResumeSavePath(const char* sourceId,
@@ -758,52 +762,24 @@ int M11_Entrance_ResolveDm1ResumeSavePath(const char* sourceId,
                                           const char* quickResumeSavePath,
                                           char* outPath,
                                           size_t outPathBytes) {
-    const char* sid;
-    int rc;
-    if (!outPath || outPathBytes == 0U) {
-        return 0;
-    }
-    outPath[0] = '\0';
-    sid = (sourceId && sourceId[0] != '\0') ? sourceId : "dm1";
-    if (quickResumeAvailable &&
-        quickResumeGameId && strcmp(quickResumeGameId, "dm1") == 0 &&
-        quickResumeSavePath && quickResumeSavePath[0] != '\0') {
-        rc = snprintf(outPath, outPathBytes, "%s", quickResumeSavePath);
-        return rc > 0 && rc < (int)outPathBytes;
-    }
-    /* ReDMCSB COMMAND.C M566 enters saved-game load from the entrance.  This
-     * fallback preserves Firestaff's pre-existing source-id quicksave name
-     * for users who have no launcher-resolved quick resume path. */
-    rc = snprintf(outPath, outPathBytes, "firestaff-%s-dm1save.sav", sid);
-    return rc > 0 && rc < (int)outPathBytes;
+    return ENTRANCE_Compat_ResolveDm1ResumeSavePath(sourceId,
+                                                    quickResumeAvailable,
+                                                    quickResumeGameId,
+                                                    quickResumeSavePath,
+                                                    outPath,
+                                                    outPathBytes);
 }
 
 static M11_EntranceCommand m11_entrance_command_path_from_source_command(int commandId) {
-    switch (commandId) {
-    case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON:
-    case M11_ENTRANCE_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON:
-        return M11_ENTRANCE_COMMAND_ENTER;
-    case M11_ENTRANCE_RUNTIME_COMMAND_RESUME:
-        return M11_ENTRANCE_COMMAND_RESUME;
-    case M11_ENTRANCE_RUNTIME_COMMAND_DRAW_CREDITS:
-        return M11_ENTRANCE_COMMAND_CREDITS;
-    case M11_ENTRANCE_RUNTIME_COMMAND_QUIT:
-        return M11_ENTRANCE_COMMAND_QUIT;
-    default:
-        return M11_ENTRANCE_COMMAND_NONE;
-    }
+    return (M11_EntranceCommand)ENTRANCE_Compat_CommandPathFromSourceCommand(commandId);
 }
 
 int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
                                            int autoEnterAfterMs,
                                            uint64_t elapsedMs) {
-    if (!allowHeadlessTimeout) {
-        return 0;
-    }
-    if (autoEnterAfterMs > 0 && elapsedMs > (uint64_t)autoEnterAfterMs) {
-        return 1;
-    }
-    return elapsedMs > 5000U;
+    return ENTRANCE_Compat_ShouldAutoEnterForTimeout(allowHeadlessTimeout,
+                                                     autoEnterAfterMs,
+                                                     (unsigned long long)elapsedMs);
 }
 
 static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int autoEnterAfterMs) {

@@ -1,4 +1,5 @@
 #include "main_loop_m11.h"
+#include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 
 #include <SDL3/SDL.h>
@@ -35,6 +36,26 @@ static int expect_key(const char* label, int key, int want) {
     return 1;
 }
 
+static int expect_compat_key(const char* label, EntranceCompatKey key, int want) {
+    int got = ENTRANCE_Compat_DispatchKeyCommand(key);
+    if (got != want) {
+        fprintf(stderr, "%s: got %d want %d\n", label, got, want);
+        return 0;
+    }
+    printf("%s=%d\n", label, got);
+    return 1;
+}
+
+static int expect_path(const char* label, int command, EntranceCompatCommandPath want) {
+    EntranceCompatCommandPath got = ENTRANCE_Compat_CommandPathFromSourceCommand(command);
+    if (got != want) {
+        fprintf(stderr, "%s: got %d want %d\n", label, (int)got, (int)want);
+        return 0;
+    }
+    printf("%s=%d\n", label, (int)got);
+    return 1;
+}
+
 static int expect_resume_path(const char* label,
                               const char* sourceId,
                               int quickAvailable,
@@ -61,10 +82,12 @@ static int expect_resume_path(const char* label,
 
 int main(void) {
     const char* evidence = ENTRANCE_Compat_GetMouseRouteEvidence();
+    const char* commandEvidence = ENTRANCE_Compat_GetRuntimeCommandEvidence();
     int ok = 1;
 
     printf("probe=firestaff_entrance_runtime_dispatch_source_lock\n");
     printf("entranceMouseRouteEvidence=%s\n", evidence);
+    printf("entranceRuntimeCommandEvidence=%s\n", commandEvidence);
 
     ok &= strstr(evidence, "ENTRANCE.C:739-747") != NULL;
     ok &= strstr(evidence, "ENTRANCE.C:850-883") != NULL;
@@ -73,6 +96,9 @@ int main(void) {
     ok &= strstr(evidence, "COMMAND.C:1641-1660") != NULL;
     ok &= strstr(evidence, "COORD.C:1903-1920") != NULL;
     ok &= strstr(evidence, "DEFS.H:375-384") != NULL;
+    ok &= strstr(commandEvidence, "ENTRANCE.C:850-883") != NULL;
+    ok &= strstr(commandEvidence, "ENTRANCE.C:1012-1091") != NULL;
+    ok &= strstr(commandEvidence, "COMMAND.C M566/M567") != NULL;
 
     ok &= expect_command("enter", 244, 45,
                          ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
@@ -103,6 +129,28 @@ int main(void) {
                      M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
     ok &= expect_key("escape_quit", SDLK_ESCAPE,
                      M11_ENTRANCE_RUNTIME_COMMAND_QUIT);
+    ok &= expect_compat_key("compat_return_enter", ENTRANCE_COMPAT_KEY_RETURN,
+                            ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON);
+    ok &= expect_compat_key("compat_space_not_activation", ENTRANCE_COMPAT_KEY_SPACE,
+                            ENTRANCE_COMPAT_RUNTIME_COMMAND_NONE);
+    ok &= expect_compat_key("compat_keypad_enter", ENTRANCE_COMPAT_KEY_KEYPAD_RETURN,
+                            ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON);
+    ok &= expect_compat_key("compat_escape_quit", ENTRANCE_COMPAT_KEY_ESCAPE,
+                            ENTRANCE_COMPAT_RUNTIME_COMMAND_QUIT);
+    ok &= expect_path("compat_enter_path", ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,
+                      ENTRANCE_COMPAT_COMMAND_PATH_ENTER);
+    ok &= expect_path("compat_bonus_path", ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_BONUS_DUNGEON,
+                      ENTRANCE_COMPAT_COMMAND_PATH_ENTER);
+    ok &= expect_path("compat_resume_path", ENTRANCE_COMPAT_RUNTIME_COMMAND_RESUME,
+                      ENTRANCE_COMPAT_COMMAND_PATH_RESUME);
+    ok &= expect_path("compat_credits_path", ENTRANCE_COMPAT_RUNTIME_COMMAND_DRAW_CREDITS,
+                      ENTRANCE_COMPAT_COMMAND_PATH_CREDITS);
+    ok &= expect_path("compat_quit_path", ENTRANCE_COMPAT_RUNTIME_COMMAND_QUIT,
+                      ENTRANCE_COMPAT_COMMAND_PATH_QUIT);
+    ok &= ENTRANCE_Compat_GetCreditsWaitTicks() == 1800u;
+    ok &= ENTRANCE_Compat_GetVblankDelayMs() == 20u;
+    ok &= ENTRANCE_Compat_ShouldAutoEnterForTimeout(0, 1200, 6000ull) == 0;
+    ok &= ENTRANCE_Compat_ShouldAutoEnterForTimeout(1, 1200, 1201ull) == 1;
 
     ok &= expect_resume_path("resume_dm1_quick_path",
                              "dm1",
