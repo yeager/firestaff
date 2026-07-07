@@ -51,6 +51,12 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-startup-active <0|1> Fail unless startup-active flag matches\n"
             "  --boot-probe-expect-startup-frame-min <n> Fail unless startup frame is at least n\n"
             "  --boot-probe-expect-startup-frame-max <n> Fail unless startup frame is at most n\n"
+            "  --boot-probe-expect-startup-animation <id> Fail unless startup/title animation matches\n"
+            "  --boot-probe-expect-startup-animation-active <0|1> Fail unless animation-active flag matches\n"
+            "  --boot-probe-expect-title-frame-min <n> Fail unless title frame is at least n\n"
+            "  --boot-probe-expect-title-frame-max <n> Fail unless title frame is at most n\n"
+            "  --boot-probe-expect-title-frame-boundary <n> Fail unless title frame max matches n\n"
+            "  --boot-probe-expect-title-ready <0|1> Fail unless title-ready flag matches\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -272,6 +278,37 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--boot-probe-expect-startup-frame-max") == 0 &&
             i + 1 < argc) {
             opts.bootProbeExpectStartupFrameMax = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-startup-animation") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectStartupAnimation = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-startup-animation-active") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectStartupAnimationActive =
+                atoi(argv[++i]) ? 1 : 0;
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-title-frame-min") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectTitleFrameMin = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-title-frame-max") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectTitleFrameMax = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-title-frame-boundary") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectTitleFrameBoundary = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--boot-probe-expect-title-ready") == 0 &&
+            i + 1 < argc) {
+            opts.bootProbeExpectTitleReady = atoi(argv[++i]) ? 1 : 0;
             continue;
         }
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {

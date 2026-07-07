@@ -59,6 +59,12 @@ typedef struct {
     int bootProbeExpectStartupActive; /* -1 ignore, otherwise exact 0/1. */
     int bootProbeExpectStartupFrameMin; /* Require startupFrame >= value. */
     int bootProbeExpectStartupFrameMax; /* Require startupFrame <= value. */
+    const char* bootProbeExpectStartupAnimation; /* Optional exact animation id. */
+    int bootProbeExpectStartupAnimationActive; /* -1 ignore, otherwise exact. */
+    int bootProbeExpectTitleFrameMin; /* Require startupTitleFrame >= value. */
+    int bootProbeExpectTitleFrameMax; /* Require startupTitleFrame <= value. */
+    int bootProbeExpectTitleFrameBoundary; /* Exact startupTitleFrameMax. */
+    int bootProbeExpectTitleReady; /* -1 ignore, otherwise exact 0/1. */
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

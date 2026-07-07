@@ -1726,6 +1726,12 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectStartupActive = -1;
     opts->bootProbeExpectStartupFrameMin = -1;
     opts->bootProbeExpectStartupFrameMax = -1;
+    opts->bootProbeExpectStartupAnimation = NULL;
+    opts->bootProbeExpectStartupAnimationActive = -1;
+    opts->bootProbeExpectTitleFrameMin = -1;
+    opts->bootProbeExpectTitleFrameMax = -1;
+    opts->bootProbeExpectTitleFrameBoundary = -1;
+    opts->bootProbeExpectTitleReady = -1;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
@@ -3935,6 +3941,70 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             "firestaff: boot-probe expected startup frame <= %d but got %d\n",
                             o->bootProbeExpectStartupFrameMax,
                             receipt.startupFrame);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectStartupAnimation &&
+                o->bootProbeExpectStartupAnimation[0] != '\0') {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    strcmp(receipt.startupAnimation,
+                           o->bootProbeExpectStartupAnimation) != 0) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected startup animation '%s' but got '%s'\n",
+                            o->bootProbeExpectStartupAnimation,
+                            receipt.startupAnimation);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectStartupAnimationActive >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.startupAnimationActive !=
+                        o->bootProbeExpectStartupAnimationActive) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected startupAnimationActive=%d but got %d\n",
+                            o->bootProbeExpectStartupAnimationActive,
+                            receipt.startupAnimationActive);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectTitleFrameMin >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.startupTitleFrame < o->bootProbeExpectTitleFrameMin) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected title frame >= %d but got %d\n",
+                            o->bootProbeExpectTitleFrameMin,
+                            receipt.startupTitleFrame);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectTitleFrameMax >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.startupTitleFrame > o->bootProbeExpectTitleFrameMax) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected title frame <= %d but got %d\n",
+                            o->bootProbeExpectTitleFrameMax,
+                            receipt.startupTitleFrame);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectTitleFrameBoundary >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.startupTitleFrameMax !=
+                        o->bootProbeExpectTitleFrameBoundary) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected title frame boundary %d but got %d\n",
+                            o->bootProbeExpectTitleFrameBoundary,
+                            receipt.startupTitleFrameMax);
+                    runRc = 4;
+                }
+            }
+            if (o->bootProbeExpectTitleReady >= 0) {
+                if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
+                    receipt.startupTitleReady != o->bootProbeExpectTitleReady) {
+                    fprintf(stderr,
+                            "firestaff: boot-probe expected titleReady=%d but got %d\n",
+                            o->bootProbeExpectTitleReady,
+                            receipt.startupTitleReady);
                     runRc = 4;
                 }
             }

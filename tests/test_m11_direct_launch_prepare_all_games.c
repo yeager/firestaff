@@ -212,6 +212,18 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe startup-frame minimum expectation is opt-in");
     expect_true(opts.bootProbeExpectStartupFrameMax == -1,
                 "boot-probe startup-frame maximum expectation is opt-in");
+    expect_true(opts.bootProbeExpectStartupAnimation == NULL,
+                "boot-probe startup-animation expectation is opt-in");
+    expect_true(opts.bootProbeExpectStartupAnimationActive == -1,
+                "boot-probe startup-animation-active expectation is opt-in");
+    expect_true(opts.bootProbeExpectTitleFrameMin == -1,
+                "boot-probe title-frame minimum expectation is opt-in");
+    expect_true(opts.bootProbeExpectTitleFrameMax == -1,
+                "boot-probe title-frame maximum expectation is opt-in");
+    expect_true(opts.bootProbeExpectTitleFrameBoundary == -1,
+                "boot-probe title-frame boundary expectation is opt-in");
+    expect_true(opts.bootProbeExpectTitleReady == -1,
+                "boot-probe title-ready expectation is opt-in");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
@@ -450,6 +462,11 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectPhase = "csb-title-1";
                 opts.bootProbeExpectStartupActive = 1;
                 opts.bootProbeExpectStartupFrameMin = 1;
+                opts.bootProbeExpectStartupAnimation = "csb-title";
+                opts.bootProbeExpectStartupAnimationActive = 1;
+                opts.bootProbeExpectTitleFrameMin = 1;
+                opts.bootProbeExpectTitleFrameBoundary = 53;
+                opts.bootProbeExpectTitleReady = 0;
                 opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
@@ -467,6 +484,11 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 opts.bootProbeExpectStartupFrameMax = 0;
+                opts.bootProbeExpectStartupAnimation = "dm2-startup-menu";
+                opts.bootProbeExpectStartupAnimationActive = 1;
+                opts.bootProbeExpectTitleFrameMax = 0;
+                opts.bootProbeExpectTitleFrameBoundary = 0;
+                opts.bootProbeExpectTitleReady = 0;
                 opts.bootProbeExpectParty = 1;
                 opts.bootProbeExpectPartyX = 15;
                 opts.bootProbeExpectPartyY = 15;
@@ -485,6 +507,11 @@ static void run_real_data_handoff_if_available(void) {
                 opts.durationMs = 0;
                 opts.bootProbeExpectPhase = "nexus-title";
                 opts.bootProbeExpectStartupActive = 1;
+                opts.bootProbeExpectStartupAnimation = "nexus-title";
+                opts.bootProbeExpectStartupAnimationActive = 1;
+                opts.bootProbeExpectTitleFrameMin = 1;
+                opts.bootProbeExpectTitleFrameBoundary = 54;
+                opts.bootProbeExpectTitleReady = 0;
                 opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
@@ -499,6 +526,11 @@ static void run_real_data_handoff_if_available(void) {
                 opts.durationMs = 0;
                 opts.bootProbeExpectPhase = "theron-startup-0";
                 opts.bootProbeExpectStartupActive = 1;
+                opts.bootProbeExpectStartupAnimation = "theron-title";
+                opts.bootProbeExpectStartupAnimationActive = 1;
+                opts.bootProbeExpectTitleFrameMax = 0;
+                opts.bootProbeExpectTitleFrameBoundary = 0;
+                opts.bootProbeExpectTitleReady = 0;
                 opts.bootProbeExpectLevelLoaded = 0;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
