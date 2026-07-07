@@ -3249,20 +3249,26 @@ static void m11_csb_startup_command_state_to_m11(
         command_state->pending_command;
 }
 
-static void m11_csb_startup_begin_door_opening(M11_GameViewState *state,
-                                               int commandId)
+static void m11_csb_startup_begin_door_opening(
+    M11_GameViewState *state,
+    const CSB_V1_StartupEntranceCommandPlan_PC34 *plan)
 {
     CSB_V1_StartupCommandState_PC34 command_state;
+    int commandId;
     if (!state) {
         return;
     }
+    commandId = plan ? plan->command_id
+                     : CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
     m11_csb_startup_command_state_from_m11(state, &command_state);
     (void)csb_v1_startup_begin_door_opening_pc34(
         &command_state,
         commandId);
     m11_csb_startup_command_state_to_m11(state, &command_state);
     state->csbState.startup_import_preview_active = 0;
-    m11_set_status(state, "BOOT", "CSB DOORS");
+    m11_set_status(state,
+                   plan && plan->status_scope ? plan->status_scope : "BOOT",
+                   plan && plan->status ? plan->status : "CSB DOORS");
 }
 
 static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
@@ -3315,7 +3321,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                     (CSB_V1_BootProfile *)state->csbBootProfile;
                 csb_v1_runtime_set_load_bonus_dungeon(&profile->runtime, 0);
             }
-            m11_csb_startup_begin_door_opening(state, commandId);
+            m11_csb_startup_begin_door_opening(state, &plan);
             return M11_GAME_INPUT_REDRAW;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34:
             state->csbState.startup_entrance_bonus_requested = 1;
@@ -3326,7 +3332,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                 (void)csb_v1_runtime_try_load_bonus_dungeon(&profile->runtime);
                 m11_sync_csb_state_from_profile(state, profile);
             }
-            m11_csb_startup_begin_door_opening(state, commandId);
+            m11_csb_startup_begin_door_opening(state, &plan);
             return M11_GAME_INPUT_REDRAW;
         case CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34:
             if (state->csbState.startup_entrance_resume_available &&
@@ -3342,7 +3348,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
                         state->csbState.startup_entrance_resume_path)) {
                     m11_sync_csb_state_from_profile(state, profile);
                     m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
-                    m11_csb_startup_begin_door_opening(state, commandId);
+                    m11_csb_startup_begin_door_opening(state, &plan);
                     return M11_GAME_INPUT_REDRAW;
                 }
                 m11_set_status(state,

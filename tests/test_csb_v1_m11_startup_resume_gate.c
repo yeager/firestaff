@@ -1367,6 +1367,8 @@ int main(void) {
                         M11_DM1_MOUSE_MASK_LEFT) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 CSB entrance enter button accepts source-locked pointer command");
+        expect_true(strcmp(view.lastOutcome, "CSB DOORS") == 0,
+                    "M11 CSB entrance enter status consumes CSB command plan");
         drive_csb_entrance_opening(&view,
                                    "M11 CSB entrance dismisses to dungeon runtime");
         expect_true(view.csbState.startup_entrance_last_command ==
