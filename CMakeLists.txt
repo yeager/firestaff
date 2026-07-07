@@ -17677,6 +17677,7 @@ if(BUILD_TESTING)
 
     add_executable(test_csb_v1_viewport_custom_background_mask_pc34_compat
         tests/test_csb_v1_viewport_custom_background_mask_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
@@ -17688,6 +17689,7 @@ if(BUILD_TESTING)
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_viewport_custom_background_mask_pc34_compat PRIVATE
@@ -17712,6 +17714,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_csbgraphics_m11_runtime_plan
         tests/test_csb_v1_csbgraphics_m11_runtime_plan.c
         src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
@@ -17722,6 +17725,7 @@ if(BUILD_TESTING)
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_csbgraphics_m11_runtime_plan PRIVATE
