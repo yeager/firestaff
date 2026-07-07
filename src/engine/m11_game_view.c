@@ -17371,74 +17371,42 @@ static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
                                            int attack,
                                            int depthIndex) {
     const M11_AssetSlot* slot;
-    int baseScale;
-    int scale;
-    int drawW, drawH, drawX, drawY;
+    DM1_ExplosionSpriteBlitPlan plan;
     if (!state || !state->assetsAvailable) return 0;
     if (aspect < 0 || gfxIndex < 0) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)gfxIndex);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
-    /* Depth-based base scale: fills most of the face at depth 0, smaller
-     * at greater depths.  Matches the DM1 look where a point-blank
-     * fireball swallows the viewport cell while a distant one is a
-     * small orange blob. */
-    baseScale = (depthIndex == 0) ? 100
-               : (depthIndex == 1) ? 70
-               : 45;
-    scale = baseScale;
-
-    /* Per-frame bloom/fade modulation for the one-shot aspects
-     * (fire / spell).  DM1's F0822 ADVANCES the explosion frame
-     * counter and despawns one-shots after maxFrames; we bloom on
-     * frame 0, peak on frame 1, and fade on frame 2+. */
-    if (aspect == 0 || aspect == 1) {
-        if (frame >= 0 && maxFrames > 0) {
-            if (frame == 0)      scale = (baseScale * 110) / 100; /* 110% */
-            else if (frame == 1) scale = baseScale;                /* 100% */
-            else                 scale = (baseScale * 65) / 100;  /*  65% */
-        }
-    } else if (aspect == 2 || aspect == 3) {
-        /* Poison cloud / smoke: size tracks residual attack instead of
-         * the frame index.  F0822 decays attack by 3 (poison) or 40
-         * (smoke) per tick, so the cloud naturally shrinks as it
-         * dissipates.  Clamp to [60%, 115%] of baseScale. */
-        if (attack >= 0) {
-            int a = attack > 200 ? 200 : attack;
-            int pct = 60 + (a * 55) / 200;
-            if (pct < 60)  pct = 60;
-            if (pct > 115) pct = 115;
-            scale = (baseScale * pct) / 100;
-        }
+    if (!dm1_v1_explosion_sprite_blit_plan(&plan,
+                                           aspect,
+                                           gfxIndex,
+                                           isSmoke,
+                                           frame,
+                                           maxFrames,
+                                           attack,
+                                           depthIndex,
+                                           x,
+                                           y,
+                                           w,
+                                           h,
+                                           (int)slot->width,
+                                           (int)slot->height)) {
+        return 0;
     }
 
-    drawW = (int)slot->width  * scale / 100;
-    drawH = (int)slot->height * scale / 100;
-    /* Minimum visible footprint so we never collapse to a single pixel. */
-    if (drawW < 4) drawW = 4;
-    if (drawH < 4) drawH = 4;
-    /* Clamp to the face box so we do not spill into neighbouring cells. */
-    if (drawW > w) drawW = w;
-    if (drawH > h) drawH = h;
-    drawX = x + (w - drawW) / 2;
-    drawY = y + (h - drawH) / 2;
-
-    if (isSmoke) {
-        /* DM1 G0212_auc_Graphic558_PaletteChanges_Smoke identity-maps
-         * everything except pixel 6 -> 12 (DARK_GRAY) and 7 -> 1
-         * (NAVY).  BlitScaledReplace has two replacement slots; use
-         * them for exactly those two. */
+    if (plan.is_smoke) {
         M11_AssetLoader_BlitScaledReplace(
             slot, framebuffer, framebufferWidth, framebufferHeight,
-            drawX, drawY, drawW, drawH,
-            /*transparentColor*/ 0,
-            /*replSrc9*/ 6,  /*replDst9*/ M11_COLOR_DARK_GRAY,
-            /*replSrc10*/ 7, /*replDst10*/ M11_COLOR_NAVY);
+            plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
+            plan.transparent_color,
+            plan.replace_src_a, plan.replace_dst_a,
+            plan.replace_src_b, plan.replace_dst_b);
     } else {
         M11_AssetLoader_BlitScaled(
             slot, framebuffer, framebufferWidth, framebufferHeight,
-            drawX, drawY, drawW, drawH, /*transparentColor*/ 0);
+            plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
+            plan.transparent_color);
     }
     return 1;
 }

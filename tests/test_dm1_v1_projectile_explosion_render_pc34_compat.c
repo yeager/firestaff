@@ -415,6 +415,96 @@ static void test_smoke_detection(void) {
     ASSERT_EQ(dm1_v1_explosion_is_smoke(DM1_EXPLOSION_POISON_CLOUD), 0, "poison=0");
 }
 
+static void test_explosion_sprite_blit_plan(void) {
+    DM1_ExplosionSpriteBlitPlan plan;
+    printf("  explosion sprite blit plan...\n");
+
+    memset(&plan, 0, sizeof(plan));
+    ASSERT_EQ(dm1_v1_explosion_sprite_blit_plan(&plan,
+                                                DM1_EXPLOSION_ASPECT_FIRE,
+                                                DM1_GFX_FIRST_EXPLOSION,
+                                                0,
+                                                0,
+                                                3,
+                                                64,
+                                                1,
+                                                10, 20, 100, 70,
+                                                40, 20),
+              1, "fire frame0 plan ok");
+    ASSERT_EQ(plan.aspect_index, DM1_EXPLOSION_ASPECT_FIRE, "fire aspect");
+    ASSERT_EQ(plan.graphic_index, DM1_GFX_FIRST_EXPLOSION, "fire graphic");
+    ASSERT_EQ(plan.is_smoke, 0, "fire not smoke");
+    ASSERT_EQ(plan.transparent_color, 0, "fire transparent black");
+    ASSERT_EQ(plan.base_scale_percent, 70, "fire D1 base scale");
+    ASSERT_EQ(plan.scale_percent, 77, "fire frame0 bloom scale");
+    ASSERT_EQ(plan.draw_w, 30, "fire frame0 width");
+    ASSERT_EQ(plan.draw_h, 15, "fire frame0 height");
+    ASSERT_EQ(plan.draw_x, 45, "fire centered x");
+    ASSERT_EQ(plan.draw_y, 47, "fire centered y");
+
+    memset(&plan, 0, sizeof(plan));
+    ASSERT_EQ(dm1_v1_explosion_sprite_blit_plan(&plan,
+                                                DM1_EXPLOSION_ASPECT_SPELL,
+                                                DM1_GFX_FIRST_EXPLOSION + 1,
+                                                0,
+                                                2,
+                                                3,
+                                                64,
+                                                2,
+                                                0, 0, 30, 12,
+                                                80, 40),
+              1, "spell fade clamp plan ok");
+    ASSERT_EQ(plan.base_scale_percent, 45, "spell D2 base scale");
+    ASSERT_EQ(plan.scale_percent, 29, "spell frame2 fade scale");
+    ASSERT_EQ(plan.draw_w, 23, "spell clamped width");
+    ASSERT_EQ(plan.draw_h, 11, "spell clamped height");
+    ASSERT_EQ(plan.draw_x, 3, "spell centered x");
+    ASSERT_EQ(plan.draw_y, 0, "spell centered y");
+
+    memset(&plan, 0, sizeof(plan));
+    ASSERT_EQ(dm1_v1_explosion_sprite_blit_plan(&plan,
+                                                DM1_EXPLOSION_ASPECT_SMOKE,
+                                                DM1_GFX_FIRST_EXPLOSION + 2,
+                                                1,
+                                                0,
+                                                0,
+                                                200,
+                                                0,
+                                                0, 0, 100, 70,
+                                                40, 20),
+              1, "smoke attack-scale plan ok");
+    ASSERT_EQ(plan.is_smoke, 1, "smoke flag");
+    ASSERT_EQ(plan.base_scale_percent, 100, "smoke D0 base scale");
+    ASSERT_EQ(plan.scale_percent, 115, "smoke max attack scale");
+    ASSERT_EQ(plan.draw_w, 46, "smoke width");
+    ASSERT_EQ(plan.draw_h, 23, "smoke height");
+    ASSERT_EQ(plan.draw_x, 27, "smoke centered x");
+    ASSERT_EQ(plan.draw_y, 23, "smoke centered y");
+    ASSERT_EQ(plan.replace_src_a, DM1_SMOKE_RECOLOR_SRC_A, "smoke repl src A");
+    ASSERT_EQ(plan.replace_dst_a, DM1_SMOKE_RECOLOR_DST_A, "smoke repl dst A");
+    ASSERT_EQ(plan.replace_src_b, DM1_SMOKE_RECOLOR_SRC_B, "smoke repl src B");
+    ASSERT_EQ(plan.replace_dst_b, DM1_SMOKE_RECOLOR_DST_B, "smoke repl dst B");
+
+    ASSERT_EQ(dm1_v1_explosion_sprite_blit_plan(NULL,
+                                                DM1_EXPLOSION_ASPECT_FIRE,
+                                                DM1_GFX_FIRST_EXPLOSION,
+                                                0, 0, 3, 64, 1,
+                                                0, 0, 100, 70, 40, 20),
+              0, "null plan rejected");
+    ASSERT_EQ(dm1_v1_explosion_sprite_blit_plan(&plan,
+                                                -1,
+                                                DM1_GFX_FIRST_EXPLOSION,
+                                                0, 0, 3, 64, 1,
+                                                0, 0, 100, 70, 40, 20),
+              0, "invalid aspect rejected");
+    ASSERT_EQ(dm1_v1_explosion_sprite_blit_plan(&plan,
+                                                DM1_EXPLOSION_ASPECT_FIRE,
+                                                -1,
+                                                0, 0, 3, 64, 1,
+                                                0, 0, 100, 70, 40, 20),
+              0, "invalid graphic rejected");
+}
+
 
 /* ── Test: F0115 draw order verification ─────────────────────────── */
 
@@ -881,6 +971,7 @@ int main(void) {
     test_explosion_pattern_graphic();
     test_explosion_base_scale();
     test_smoke_detection();
+    test_explosion_sprite_blit_plan();
     test_draw_order();
     test_aspect_data_cross_check();
     test_spell_graphic_indices();

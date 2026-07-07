@@ -383,6 +383,80 @@ int dm1_v1_explosion_is_smoke(int explosionType) {
     return explosionType == DM1_EXPLOSION_SMOKE ? 1 : 0;
 }
 
+int dm1_v1_explosion_sprite_blit_plan(DM1_ExplosionSpriteBlitPlan *out_plan,
+                                      int aspect,
+                                      int graphicIndex,
+                                      int isSmoke,
+                                      int frame,
+                                      int maxFrames,
+                                      int attack,
+                                      int depthIndex,
+                                      int paneX,
+                                      int paneY,
+                                      int paneW,
+                                      int paneH,
+                                      int spriteW,
+                                      int spriteH)
+{
+    DM1_ExplosionSpriteBlitPlan plan;
+
+    if (!out_plan || aspect < 0 || graphicIndex < 0 ||
+        paneW <= 0 || paneH <= 0 || spriteW <= 0 || spriteH <= 0) {
+        return 0;
+    }
+
+    memset(&plan, 0, sizeof(plan));
+    plan.aspect_index = aspect;
+    plan.graphic_index = graphicIndex;
+    plan.is_smoke = isSmoke ? 1 : 0;
+    plan.transparent_color = 0;
+    plan.replace_src_a = DM1_SMOKE_RECOLOR_SRC_A;
+    plan.replace_dst_a = DM1_SMOKE_RECOLOR_DST_A;
+    plan.replace_src_b = DM1_SMOKE_RECOLOR_SRC_B;
+    plan.replace_dst_b = DM1_SMOKE_RECOLOR_DST_B;
+
+    /* This preserves Firestaff's current bounded explosion bitmap sizing
+     * while moving the decision out of M11.  ReDMCSB source anchors are
+     * DUNVIEW.C F0115/F0136/F0675 and G0212 smoke palette remapping. */
+    plan.base_scale_percent = (depthIndex == 0) ? 100
+                            : (depthIndex == 1) ? 70
+                            : 45;
+    plan.scale_percent = plan.base_scale_percent;
+    if (aspect == DM1_EXPLOSION_ASPECT_FIRE ||
+        aspect == DM1_EXPLOSION_ASPECT_SPELL) {
+        if (frame >= 0 && maxFrames > 0) {
+            if (frame == 0) {
+                plan.scale_percent = (plan.base_scale_percent * 110) / 100;
+            } else if (frame == 1) {
+                plan.scale_percent = plan.base_scale_percent;
+            } else {
+                plan.scale_percent = (plan.base_scale_percent * 65) / 100;
+            }
+        }
+    } else if (aspect == DM1_EXPLOSION_ASPECT_POISON ||
+               aspect == DM1_EXPLOSION_ASPECT_SMOKE) {
+        if (attack >= 0) {
+            int a = attack > 200 ? 200 : attack;
+            int pct = 60 + (a * 55) / 200;
+            if (pct < 60) pct = 60;
+            if (pct > 115) pct = 115;
+            plan.scale_percent = (plan.base_scale_percent * pct) / 100;
+        }
+    }
+
+    plan.draw_w = spriteW * plan.scale_percent / 100;
+    plan.draw_h = spriteH * plan.scale_percent / 100;
+    if (plan.draw_w < 4) plan.draw_w = 4;
+    if (plan.draw_h < 4) plan.draw_h = 4;
+    if (plan.draw_w > paneW) plan.draw_w = paneW;
+    if (plan.draw_h > paneH) plan.draw_h = paneH;
+    plan.draw_x = paneX + (paneW - plan.draw_w) / 2;
+    plan.draw_y = paneY + (paneH - plan.draw_h) / 2;
+
+    *out_plan = plan;
+    return 1;
+}
+
 
 /* ── Draw order verification ─────────────────────────────────────── */
 
