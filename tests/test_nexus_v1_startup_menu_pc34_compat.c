@@ -372,6 +372,7 @@ int main(void)
            "Nexus champion execution resolves recruited champion redraw");
     {
         Nexus_V1_StartupChampionSnapshot champion_snapshot;
+        Nexus_V1_StartupChampionStateReceipt champion_receipt;
         Nexus_V1_StartupChampionRenderRow snapshot_rows[4];
         Nexus_V1_StartupChampionFooterRender snapshot_footer;
         int snapshot_row_count;
@@ -413,9 +414,39 @@ int main(void)
                        facts_snapshot.slot_mask == 0x00ffu &&
                        facts_snapshot.cursor == 2 &&
                        facts_snapshot.frame == 0 &&
-                       action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR,
-                   "Nexus champion facts input helper owns M11 keyboard construction");
+                   action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR,
+               "Nexus champion facts input helper owns M11 keyboard construction");
         }
+        expect(nexus_v1_startup_champion_state_receipt_from_snapshot(
+                   &champion_snapshot,
+                   &champion_receipt) &&
+                   champion_receipt.slot_mask == champion_snapshot.slot_mask &&
+                   champion_receipt.cursor == champion_snapshot.cursor &&
+                   champion_receipt.frame == champion_snapshot.frame,
+               "Nexus champion state receipt mirrors sanitized snapshot state");
+        expect(nexus_v1_startup_champion_state_receipt_from_facts(
+                   &champions,
+                   &champion_receipt,
+                   0x0fffu,
+                   99,
+                   -5) &&
+                   champion_receipt.slot_mask == 0x00ffu &&
+                   champion_receipt.cursor == 0 &&
+                   champion_receipt.frame == 0,
+               "Nexus champion state receipt facts helper owns M11 state clamp");
+        expect(nexus_v1_startup_champion_handle_firestaff_input_from_facts_with_receipt(
+                   &champions,
+                   &champion_receipt,
+                   0x0fffu,
+                   99,
+                   -5,
+                   2,
+                   &action) &&
+                   champion_receipt.slot_mask == 0x00ffu &&
+                   champion_receipt.cursor == 2 &&
+                   champion_receipt.frame == 0 &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR,
+               "Nexus champion receipt input helper owns M11 keyboard state");
         snapshot_row_count =
             nexus_v1_startup_champion_snapshot_build_render_rows(
                 &champions,
@@ -454,6 +485,25 @@ int main(void)
                    action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED &&
                    action.row == 12,
                "Nexus champion facts pointer helper owns M11 pointer hit construction");
+        {
+            Nexus_V1_ChampionPool receipt_pool;
+            nexus_v1_champions_init(&receipt_pool);
+            expect(nexus_v1_startup_champion_handle_pointer_from_facts_with_receipt(
+                       &receipt_pool,
+                       &champion_receipt,
+                       0x0fffu,
+                       13,
+                       12,
+                       20,
+                       38,
+                       &action) &&
+                       champion_receipt.slot_mask == 0x00ffu &&
+                       champion_receipt.cursor == 13 &&
+                       champion_receipt.frame == 12 &&
+                       action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED &&
+                       action.row == 12,
+                   "Nexus champion receipt pointer helper owns M11 pointer state");
+        }
         {
             Nexus_V1_StartupDrawCommand commands[80];
             int command_count =
@@ -1051,6 +1101,7 @@ int main(void)
            "startup menu Down clamps at last row");
     {
         Nexus_V1_StartupMenuSnapshot snapshot;
+        Nexus_V1_StartupMenuStateReceipt state_receipt;
         Nexus_V1_StartupSaveRenderRow snapshot_rows[4];
         Nexus_V1_StartupRowKind snapshot_kind;
         int snapshot_slot;
@@ -1108,6 +1159,45 @@ int main(void)
                    snapshot.selected_row == 1 &&
                    action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
                "startup snapshot facts input owns M11 save input construction");
+        expect(nexus_v1_startup_menu_state_receipt_from_snapshot(
+                   &snapshot,
+                   &state_receipt) &&
+                   strcmp(state_receipt.save_dir, save_dir) == 0 &&
+                   state_receipt.slot_mask == snapshot.slot_mask &&
+                   state_receipt.row_count == snapshot.row_count &&
+                   state_receipt.selected_row == snapshot.selected_row,
+               "Nexus save state receipt mirrors sanitized snapshot state");
+        expect(nexus_v1_startup_menu_state_receipt_from_facts(
+                   &state_receipt,
+                   save_dir,
+                   menu.slot_mask,
+                   99) &&
+                   strcmp(state_receipt.save_dir, save_dir) == 0 &&
+                   state_receipt.slot_mask == menu.slot_mask &&
+                   state_receipt.row_count == 2 &&
+                   state_receipt.selected_row == 1,
+               "Nexus save state receipt facts helper owns M11 row clamp");
+        expect(nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_facts(
+                   &state_receipt,
+                   save_dir,
+                   99) &&
+                   strcmp(state_receipt.save_dir, save_dir) == 0 &&
+                   state_receipt.slot_mask == menu.slot_mask &&
+                   state_receipt.row_count == 2 &&
+                   state_receipt.selected_row == 1,
+               "Nexus save state receipt scan helper owns M11 save scan");
+        expect(nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
+                   &state_receipt,
+                   save_dir,
+                   menu.slot_mask,
+                   0,
+                   2,
+                   &action) &&
+                   strcmp(state_receipt.save_dir, save_dir) == 0 &&
+                   state_receipt.row_count == 2 &&
+                   state_receipt.selected_row == 1 &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
+               "Nexus save receipt input helper owns M11 keyboard state");
         snapshot_row_count =
             nexus_v1_startup_menu_snapshot_build_save_render_rows(
                 &snapshot,
@@ -1162,6 +1252,22 @@ int main(void)
                    action.slot == 3 &&
                    strstr(action.path, "nexus_save_03.dat") != NULL,
                "startup snapshot facts pointer helper owns M11 save hit construction");
+        expect(nexus_v1_startup_menu_handle_pointer_from_facts_with_receipt(
+                   &state_receipt,
+                   save_dir,
+                   menu.slot_mask,
+                   1,
+                   menu.row_count,
+                   20,
+                   44,
+                   &action) &&
+                   strcmp(state_receipt.save_dir, save_dir) == 0 &&
+                   state_receipt.row_count == 2 &&
+                   state_receipt.selected_row == 0 &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT &&
+                   action.slot == 3 &&
+                   strstr(action.path, "nexus_save_03.dat") != NULL,
+               "Nexus save receipt pointer helper owns M11 pointer state");
     }
     memset(&hit, 0, sizeof(hit));
     hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_PANEL;

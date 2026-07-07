@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus startup state receipt ownership: `nexus_v1_startup_menu` now emits M11-ready save/champion state receipts for save scans, keyboard/menu input, and pointer input. M11 applies those receipts instead of copying `Nexus_V1_StartupMenuSnapshot` / `Nexus_V1_StartupChampionSnapshot` fields directly. Verification: Nexus startup menu test passed, Phase A passed 24/24, targeted `firestaff` build passed, `firestaff --version` passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 DM2 startup state receipt ownership: `dm2_v1_startup_menu` now emits M11-ready startup state receipts for save scans, keyboard/menu input, and pointer input. M11 applies those receipts instead of copying `DM2_V1_StartupMenuSnapshot` fields directly. Verification: DM2 startup action contract passed 63/63, Phase A passed 24/24, targeted `firestaff` build passed, and `firestaff --version` passed.
 
 - ✅ 2026-07-08 CSB startup tick receipt ownership: `csb_v1_startup_sequence_pc34_compat` now advances startup title/entrance/credits/door-opening ticks from raw M11 facts and returns an M11-ready tick receipt with entrance frame, tick result, and command-state receipt. M11 applies that receipt instead of building/unpacking `CSB_V1_StartupTickState_PC34` manually each entrance animation frame. Verification: CSB startup entrance pointer test passed 135/135, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
