@@ -412,6 +412,21 @@ int main(void)
                    &action) &&
                    action.kind == NEXUS_V1_STARTUP_ACTION_START_DUNGEON,
                "Nexus champion snapshot owns footer hit action");
+        expect(nexus_v1_startup_champion_handle_pointer_from_facts(
+                   &champions,
+                   &champion_snapshot,
+                   0x0fffu,
+                   13,
+                   12,
+                   20,
+                   38,
+                   &action) &&
+                   champion_snapshot.slot_mask == 0x00ffu &&
+                   champion_snapshot.cursor == 13 &&
+                   champion_snapshot.frame == 12 &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED &&
+                   action.row == 12,
+               "Nexus champion facts pointer helper owns M11 pointer hit construction");
     }
     action.kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR;
     action.row = 2;
@@ -1038,6 +1053,22 @@ int main(void)
                    action.slot == 3 &&
                    strstr(action.path, "nexus_save_03.dat") != NULL,
                "startup snapshot pointer hit owns save activation");
+        expect(nexus_v1_startup_menu_handle_pointer_from_facts(
+                   &snapshot,
+                   save_dir,
+                   menu.slot_mask,
+                   1,
+                   menu.row_count,
+                   20,
+                   44,
+                   &action) &&
+                   strcmp(snapshot.save_dir, save_dir) == 0 &&
+                   snapshot.row_count == 2 &&
+                   snapshot.selected_row == 0 &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT &&
+                   action.slot == 3 &&
+                   strstr(action.path, "nexus_save_03.dat") != NULL,
+               "startup snapshot facts pointer helper owns M11 save hit construction");
     }
     memset(&hit, 0, sizeof(hit));
     hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_PANEL;

@@ -15168,22 +15168,17 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return m11_nexus_startup_apply_title_action(state, &action);
     }
     if (state->nexusState.startup_save_select_active) {
-        Nexus_V1_StartupHit hit;
         Nexus_V1_StartupMenuSnapshot snapshot;
         Nexus_V1_StartupAction action;
-        if (!nexus_v1_startup_save_hit(
+        if (!nexus_v1_startup_menu_handle_pointer_from_facts(
+                &snapshot,
+                state->nexusState.startup_save_dir,
+                state->nexusState.startup_save_slot_mask,
+                state->nexusState.startup_save_selected_row,
                 state->nexusState.startup_save_row_count,
                 x,
                 y,
-                &hit)) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        if (!m11_nexus_startup_snapshot_from_state(state, &snapshot)) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        if (!nexus_v1_startup_menu_snapshot_handle_hit(&snapshot,
-                                                       &hit,
-                                                       &action)) {
+                &action)) {
             return M11_GAME_INPUT_IGNORED;
         }
         m11_nexus_startup_snapshot_to_state(state, &snapshot);
@@ -15192,23 +15187,15 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     if (state->nexusState.champion_select_active) {
         Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
         Nexus_V1_StartupChampionSnapshot snapshot;
-        Nexus_V1_StartupHit hit;
         Nexus_V1_StartupAction action;
-        if (!m11_nexus_champion_snapshot_from_state(state, &snapshot)) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        if (!nexus_v1_startup_champion_hit_at_cursor(
-                pool->champion_count,
-                snapshot.cursor,
-                x,
-                y,
-                &hit)) {
-                return M11_GAME_INPUT_IGNORED;
-        }
-        if (!nexus_v1_startup_champion_snapshot_handle_hit(
+        if (!nexus_v1_startup_champion_handle_pointer_from_facts(
                 pool,
                 &snapshot,
-                &hit,
+                state->nexusState.startup_save_slot_mask,
+                state->nexusState.champion_cursor,
+                state->nexusState.champion_select_frame,
+                x,
+                y,
                 &action)) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -15231,12 +15218,15 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!m11_dm2_startup_snapshot_from_state(state, &snapshot)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!dm2_v1_startup_menu_snapshot_handle_pointer(
+    if (!dm2_v1_startup_menu_handle_pointer_from_facts(
             &snapshot,
-            snapshot.row_count,
+            state->dm2State.startup_save_root,
+            ((const DM2_V1_BootProfile *)state->dm2BootProfile)
+                ? ((const DM2_V1_BootProfile *)state->dm2BootProfile)->save_root
+                : NULL,
+            state->dm2State.startup_resume_available,
+            state->dm2State.startup_slot_mask,
+            state->dm2State.startup_menu_selected_row,
             x,
             y,
             &action)) {

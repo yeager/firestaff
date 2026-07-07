@@ -462,6 +462,21 @@ int main(void)
                   &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
           "snapshot pointer helper owns pointer hit-test and action");
+    check(dm2_v1_startup_menu_handle_pointer_from_facts(
+              &snapshot,
+              "",
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              0,
+              panel_rect.x + 8,
+              panel_rect.y + 8,
+              &action) &&
+              snapshot.save_root[0] == '/' &&
+              snapshot.row_count == 3 &&
+              snapshot.selected_row == 0 &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE,
+          "snapshot facts pointer helper owns M11 pointer snapshot construction");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");

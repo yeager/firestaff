@@ -726,6 +726,34 @@ int nexus_v1_startup_menu_snapshot_handle_hit(
     return handled;
 }
 
+int nexus_v1_startup_menu_handle_pointer_from_facts(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row,
+    int row_count,
+    int x,
+    int y,
+    Nexus_V1_StartupAction *out_action)
+{
+    Nexus_V1_StartupHit hit;
+
+    if (!nexus_v1_startup_save_hit(row_count, x, y, &hit)) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    if (!nexus_v1_startup_menu_snapshot_from_facts(snapshot,
+                                                  save_dir,
+                                                  slot_mask,
+                                                  selected_row)) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return nexus_v1_startup_menu_snapshot_handle_hit(snapshot,
+                                                    &hit,
+                                                    out_action);
+}
+
 int nexus_v1_startup_execute_save_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupSaveExecution *out_execution)
@@ -1401,6 +1429,41 @@ int nexus_v1_startup_champion_snapshot_handle_hit(
     snapshot->cursor = cursor;
     (void)nexus_v1_startup_champion_snapshot_refresh(pool, snapshot);
     return handled;
+}
+
+int nexus_v1_startup_champion_handle_pointer_from_facts(
+    Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot,
+    unsigned int slot_mask,
+    int cursor,
+    int frame,
+    int x,
+    int y,
+    Nexus_V1_StartupAction *out_action)
+{
+    Nexus_V1_StartupHit hit;
+
+    if (!nexus_v1_startup_champion_snapshot_from_facts(pool,
+                                                       snapshot,
+                                                       slot_mask,
+                                                       cursor,
+                                                       frame)) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    if (!nexus_v1_startup_champion_hit_at_cursor(
+            pool ? pool->champion_count : 0,
+            snapshot->cursor,
+            x,
+            y,
+            &hit)) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return nexus_v1_startup_champion_snapshot_handle_hit(pool,
+                                                        snapshot,
+                                                        &hit,
+                                                        out_action);
 }
 
 int nexus_v1_startup_champion_snapshot_build_render_rows(
