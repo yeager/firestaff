@@ -20136,57 +20136,39 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
      * DUNVIEW.C:5244-5247: single centered creature waits until all
      * object cells are drawn before rendering over the floor-object pass. */
     if (cell->creatureGroupCount > 0) {
-        /* ReDMCSB: Hall of Champions (map 0) never has visible creatures.
-         * Creature rendering is skipped when g_drawState reports map 0. */
-        int gi;
-        int groupCount = cell->creatureGroupCount;
-        for (gi = 0; gi < groupCount; ++gi) {
-            int countInGroup = cell->creatureCountsPerGroup[gi];
-            int visibleDups = countInGroup;
-            int di;
-            DM1_CreatureDrawPlacement firstPlacement;
-            int haveFirstPlacement = 0;
-            if (cell->creatureTypes[gi] < 0) continue;
-            if (visibleDups > 4) visibleDups = 4;
-            if (visibleDups < 1) visibleDups = 1;
-            for (di = 0; di < visibleDups; ++di) {
-                DM1_CreatureDrawPlacement placement;
-                if (!dm1_creature_center_draw_placement(cell->creatureTypes[gi],
-                                                        depthIndex,
-                                                        faceX,
-                                                        faceY,
-                                                        faceW,
-                                                        faceH,
-                                                        groupCount,
-                                                        gi,
-                                                        countInGroup,
-                                                        di,
-                                                        &placement)) {
-                    continue;
-                }
-                if (!haveFirstPlacement) {
-                    firstPlacement = placement;
-                    haveFirstPlacement = 1;
-                }
-                if (!g_drawState ||
-                    !m11_draw_creature_sprite(g_drawState, framebuffer,
-                                              framebufferWidth, framebufferHeight,
-                                              placement.x, placement.y,
-                                              placement.w, placement.h,
-                                              cell->creatureTypes[gi], depthIndex,
-                                              cell->creatureDirections[gi])) {
-                    m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                          placement.x, placement.y,
-                                          placement.w, placement.h,
-                                          depthIndex);
-                }
+        DM1_CreatureDrawPlan plan;
+        int pi;
+        dm1_creature_center_draw_plan(cell->creatureTypes,
+                                      cell->creatureCountsPerGroup,
+                                      cell->creatureDirections,
+                                      cell->creatureGroupCount,
+                                      depthIndex,
+                                      faceX,
+                                      faceY,
+                                      faceW,
+                                      faceH,
+                                      &plan);
+        for (pi = 0; pi < plan.count; ++pi) {
+            const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
+            const DM1_CreatureDrawPlacement *placement = &entry->placement;
+            if (!g_drawState ||
+                !m11_draw_creature_sprite(g_drawState, framebuffer,
+                                          framebufferWidth, framebufferHeight,
+                                          placement->x, placement->y,
+                                          placement->w, placement->h,
+                                          entry->creature_type, depthIndex,
+                                          entry->creature_direction)) {
+                m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                      placement->x, placement->y,
+                                      placement->w, placement->h,
+                                      depthIndex);
             }
-            if (countInGroup > 1 && haveFirstPlacement &&
-                firstPlacement.w >= 12 && firstPlacement.h >= 12) {
+            if (entry->first_in_group && entry->creature_count > 1 &&
+                placement->w >= 12 && placement->h >= 12) {
                 char countStr[4];
-                int badgeX = firstPlacement.x + firstPlacement.w - 8;
-                int badgeY = firstPlacement.y + firstPlacement.h - 8;
-                snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+                int badgeX = placement->x + placement->w - 8;
+                int badgeY = placement->y + placement->h - 8;
+                snprintf(countStr, sizeof(countStr), "%d", entry->creature_count);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               badgeX - 1, badgeY - 1, 9, 9, M11_COLOR_BLACK);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
@@ -23916,57 +23898,41 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
         /* Layer 2: Side-pane creatures.
          * Duplicate sprites with vertical offsets in narrow pane. */
         if (cell->creatureGroupCount > 0) {
-            int gi;
-            int groupCount = cell->creatureGroupCount;
-            for (gi = 0; gi < groupCount; ++gi) {
-                int countInGroup = cell->creatureCountsPerGroup[gi];
-                int visibleDups = countInGroup;
-                int di;
-                DM1_CreatureDrawPlacement firstPlacement;
-                int haveFirstPlacement = 0;
-                if (cell->creatureTypes[gi] < 0) continue;
-                if (visibleDups > 3) visibleDups = 3;
-                if (visibleDups < 1) visibleDups = 1;
-                for (di = 0; di < visibleDups; ++di) {
-                    DM1_CreatureDrawPlacement placement;
-                    if (!dm1_creature_side_draw_placement(cell->creatureTypes[gi],
-                                                          depthIndex,
-                                                          side,
-                                                          paneX,
-                                                          paneY,
-                                                          paneW,
-                                                          paneH,
-                                                          groupCount,
-                                                          gi,
-                                                          countInGroup,
-                                                          di,
-                                                          &placement)) {
-                        continue;
-                    }
-                    if (!haveFirstPlacement) {
-                        firstPlacement = placement;
-                        haveFirstPlacement = 1;
-                    }
-                    if (!g_drawState ||
-                        !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
-                                                     framebufferWidth, framebufferHeight,
-                                                     placement.x, placement.y,
-                                                     placement.w, placement.h,
-                                                     cell->creatureTypes[gi], depthIndex,
-                                                     placement.side_hint,
-                                                     cell->creatureDirections[gi])) {
-                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                      paneX + paneW / 2 - 1,
-                                      placement.y + placement.h / 2 - 2,
-                                      3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
-                    }
+            DM1_CreatureDrawPlan plan;
+            int pi;
+            dm1_creature_side_draw_plan(cell->creatureTypes,
+                                        cell->creatureCountsPerGroup,
+                                        cell->creatureDirections,
+                                        cell->creatureGroupCount,
+                                        depthIndex,
+                                        side,
+                                        paneX,
+                                        paneY,
+                                        paneW,
+                                        paneH,
+                                        &plan);
+            for (pi = 0; pi < plan.count; ++pi) {
+                const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
+                const DM1_CreatureDrawPlacement *placement = &entry->placement;
+                if (!g_drawState ||
+                    !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
+                                                 framebufferWidth, framebufferHeight,
+                                                 placement->x, placement->y,
+                                                 placement->w, placement->h,
+                                                 entry->creature_type, depthIndex,
+                                                 placement->side_hint,
+                                                 entry->creature_direction)) {
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  paneX + paneW / 2 - 1,
+                                  placement->y + placement->h / 2 - 2,
+                                  3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
                 }
-                if (countInGroup > 1 && haveFirstPlacement &&
-                    paneW >= 10 && firstPlacement.h >= 10) {
+                if (entry->first_in_group && entry->creature_count > 1 &&
+                    paneW >= 10 && placement->h >= 10) {
                     char countStr[4];
                     int badgeX = paneX + paneW - 9;
-                    int badgeY = firstPlacement.y + firstPlacement.h - 8;
-                    snprintf(countStr, sizeof(countStr), "%d", countInGroup);
+                    int badgeY = placement->y + placement->h - 8;
+                    snprintf(countStr, sizeof(countStr), "%d", entry->creature_count);
                     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                   badgeX - 1, badgeY - 1, 9, 9, M11_COLOR_BLACK);
                     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
@@ -24136,44 +24102,34 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
             }
 
             if (cell->creatureGroupCount > 0) {
-                int gi;
-                int groupCount = cell->creatureGroupCount;
-                for (gi = 0; gi < groupCount; ++gi) {
-                    int countInGroup = cell->creatureCountsPerGroup[gi];
-                    int visibleDups = countInGroup;
-                    int di;
-                    if (cell->creatureTypes[gi] < 0) continue;
-                    if (visibleDups > 3) visibleDups = 3;
-                    if (visibleDups < 1) visibleDups = 1;
-                    for (di = 0; di < visibleDups; ++di) {
-                        DM1_CreatureDrawPlacement placement;
-                        if (!dm1_creature_side_draw_placement(cell->creatureTypes[gi],
-                                                              depth,
-                                                              side,
-                                                              paneX,
-                                                              paneY,
-                                                              paneW,
-                                                              paneH,
-                                                              groupCount,
-                                                              gi,
-                                                              countInGroup,
-                                                              di,
-                                                              &placement)) {
-                            continue;
-                        }
-                        if (!g_drawState ||
-                            !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
-                                                         framebufferWidth, framebufferHeight,
-                                                         placement.x, placement.y,
-                                                         placement.w, placement.h,
-                                                         cell->creatureTypes[gi], depth,
-                                                         placement.side_hint,
-                                                         cell->creatureDirections[gi])) {
-                            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                          paneX + paneW / 2 - 1,
-                                          placement.y + placement.h / 2 - 2,
-                                          3, 5, depth == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
-                        }
+                DM1_CreatureDrawPlan plan;
+                int pi;
+                dm1_creature_side_draw_plan(cell->creatureTypes,
+                                            cell->creatureCountsPerGroup,
+                                            cell->creatureDirections,
+                                            cell->creatureGroupCount,
+                                            depth,
+                                            side,
+                                            paneX,
+                                            paneY,
+                                            paneW,
+                                            paneH,
+                                            &plan);
+                for (pi = 0; pi < plan.count; ++pi) {
+                    const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
+                    const DM1_CreatureDrawPlacement *placement = &entry->placement;
+                    if (!g_drawState ||
+                        !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
+                                                     framebufferWidth, framebufferHeight,
+                                                     placement->x, placement->y,
+                                                     placement->w, placement->h,
+                                                     entry->creature_type, depth,
+                                                     placement->side_hint,
+                                                     entry->creature_direction)) {
+                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                      paneX + paneW / 2 - 1,
+                                      placement->y + placement->h / 2 - 2,
+                                      3, 5, depth == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
                     }
                 }
             }
