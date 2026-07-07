@@ -413,6 +413,8 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     const Nexus_UI_Surface* placeholder;
     const Nexus_UI_Surface* compact_surface;
     Nexus_UI_FaceLayout layout;
+    Nexus_UI_FaceRecordDecodeInfo decode_info;
+    unsigned char expanded_face[48 * 48];
     int i;
 
     for (i = 0; i < (int)sizeof(face_bytes); ++i) {
@@ -463,6 +465,20 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                                           48,
                                           NULL) > 0,
                 "Nexus FACE loader accepts compact source record for final portrait");
+    memset(&decode_info, 0, sizeof(decode_info));
+    memset(expanded_face, 0xaa, sizeof(expanded_face));
+    expect_true(nexus_ui_expand_face_record_48x48(compact_face + 32 + 23 * 1878,
+                                                  1878,
+                                                  expanded_face,
+                                                  (int)sizeof(expanded_face),
+                                                  &decode_info) > 0 &&
+                    decode_info.kind == NEXUS_UI_FACE_RECORD_COMPACT_PADDED &&
+                    decode_info.source_size == 1878 &&
+                    decode_info.copied_pixels == 1878 &&
+                    decode_info.zero_padded_pixels == (48 * 48) - 1878 &&
+                    expanded_face[1877] == compact_face[32 + 24 * 1878 - 1] &&
+                    expanded_face[1878] == 0,
+                "Nexus FACE compact record decode reports copied and padded pixels");
     compact_surface = &ui.surfaces[NEXUS_SURFACE_FACE0 + 23];
     expect_true(compact_surface->data != NULL &&
                     compact_surface->data[0] ==
@@ -471,6 +487,16 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                         compact_face[32 + 24 * 1878 - 1] &&
                     compact_surface->data[1878] == 0,
                 "Nexus FACE compact record is copied and padded without warning fallback");
+    memset(&decode_info, 0, sizeof(decode_info));
+    expect_true(nexus_ui_expand_face_record_48x48(face_bytes,
+                                                  (int)sizeof(face_bytes),
+                                                  expanded_face,
+                                                  (int)sizeof(expanded_face),
+                                                  &decode_info) > 0 &&
+                    decode_info.kind == NEXUS_UI_FACE_RECORD_RAW_48X48 &&
+                    decode_info.copied_pixels == 48 * 48 &&
+                    decode_info.zero_padded_pixels == 0,
+                "Nexus FACE raw record decode reports a complete 48x48 portrait");
     expect_true(nexus_ui_load_faces(&ui,
                                     face_bytes,
                                     0,

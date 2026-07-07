@@ -67,6 +67,21 @@ typedef struct {
     int portrait_h;
 } Nexus_UI_FaceLayout;
 
+typedef enum {
+    NEXUS_UI_FACE_RECORD_NONE = 0,
+    NEXUS_UI_FACE_RECORD_RAW_48X48,
+    NEXUS_UI_FACE_RECORD_COMPACT_PADDED
+} Nexus_UI_FaceRecordDecodeKind;
+
+typedef struct {
+    Nexus_UI_FaceRecordDecodeKind kind;
+    int source_size;
+    int copied_pixels;
+    int zero_padded_pixels;
+    int portrait_w;
+    int portrait_h;
+} Nexus_UI_FaceRecordDecodeInfo;
+
 /* ── Manager lifecycle ─────────────────────────────────────────── */
 void nexus_ui_manager_init(Nexus_UI_Manager *mgr);
 void nexus_ui_manager_free(Nexus_UI_Manager *mgr);
@@ -119,6 +134,11 @@ int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h
 int nexus_ui_face_layout_detect(const uint8_t *data,
     int data_size,
     Nexus_UI_FaceLayout *out_layout);
+int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
+    int record_size,
+    uint8_t *out_pixels,
+    int out_size,
+    Nexus_UI_FaceRecordDecodeInfo *out_info);
 int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     const uint8_t *record_data,
     int record_size,
