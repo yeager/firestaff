@@ -30,7 +30,17 @@ int main(void)
     CSB_V1_UtilRenderTextRow prompt_row;
     CSB_V1_UtilRenderTextRow preview_rows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
     CSB_V1_UtilRenderPlan render_plan;
+    CSB_V1_TextMaterial_PC34 material;
     int row_count;
+
+    material = csb_v1_text_material_pc34(CSB_V1_TEXT_STYLE_SMALL_PC34);
+    check(material.scale_x == 1 &&
+              material.scale_y == 1 &&
+              material.color == 15 &&
+              material.shadow_dx == 0 &&
+              material.shadow_dy == 0 &&
+              material.shadow_color == 0,
+          "CSB small text material owns utility row palette");
 
     csb_v1_util_flow_init(&flow);
     flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;

@@ -2881,16 +2881,16 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
 
 static const M11_TextStyle *m11_csb_startup_text_style(int style)
 {
-    switch (style) {
-        case 1:
-            return &g_text_small;
-        case 2:
-            return &g_text_title;
-        case 3:
-            return &g_text_shadow;
-        default:
-            return &g_text_small;
-    }
+    static M11_TextStyle resolved;
+    CSB_V1_TextMaterial_PC34 material = csb_v1_text_material_pc34(style);
+
+    resolved.scale = material.scale_x;
+    resolved.tracking = material.scale_y;
+    resolved.color = (unsigned char)material.color;
+    resolved.shadowDx = material.shadow_dx;
+    resolved.shadowDy = material.shadow_dy;
+    resolved.shadowColor = (unsigned char)material.shadow_color;
+    return &resolved;
 }
 
 static void m11_draw_csb_startup_plan_text(

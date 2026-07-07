@@ -2,6 +2,7 @@
 #define FIRESTAFF_CSB_V1_UTILITY_FLOW_PC34_COMPAT_H
 
 #include "csb_v1_character_pc34_compat.h"
+#include "csb_v1_text_material_pc34_compat.h"
 
 /*
  * CSB V1 Phase 6 — Utility Setup Flow
