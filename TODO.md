@@ -8,6 +8,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: legacy and modern settings grouping now treats RetroAchievements enable, hardcore, username, and token rows as one ONLINE section with visible username/token labels. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
   - 2026-07-08 update: the start-menu public settings-row contract now exposes RetroAchievements enable, hardcore, username, and token rows, and modern hit-testing/tests consume that contract instead of private row numbers. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
   - 2026-07-08 update: modern settings keyboard navigation now skips hidden rows and reaches the visible RetroAchievements block directly from Original Data. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+  - 2026-07-08 update: modern RA settings rendering now uses the public settings-row contract for username/token edit state, and the settings hit-test gate covers token long-paste clamping plus cancel-without-persist. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
 
 - 🔧 2026-07-07 release follow-up: v3.0.65 packages the DM1 title/entrance and CSB startup ownership work after v3.0.64. Remaining release work is GitHub Actions packaging completion and asset publication proof.
 

@@ -1603,9 +1603,9 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
         snprintf(sessionTimer, sizeof(sessionTimer), "%d MIN", sessionMinutes);
     }
     if (M12_StartupMenu_TextEditActive(state)) {
-        if (state->settingsSelectedIndex == 32) {
+        if (state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_USERNAME) {
             raUserValue = state->textEditBuffer[0] ? state->textEditBuffer : "EDITING";
-        } else if (state->settingsSelectedIndex == 33) {
+        } else if (state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_TOKEN) {
             raTokenValue = "EDITING";
         }
     }
@@ -1633,10 +1633,10 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 31);
     draw_setting_row(c, rowX, rowY + 504, rowW, "RA USER",
                      raUserValue,
-                     state->settingsSelectedIndex == 32);
+                     state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_USERNAME);
     draw_setting_row(c, rowX, rowY + 560, rowW, "RA API TOKEN",
                      raTokenValue,
-                     state->settingsSelectedIndex == 33);
+                     state->settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RA_TOKEN);
     draw_setting_row(c, rowX, rowY + 616, rowW, "SESSION TIMER", sessionTimer,
                      state->settingsSelectedIndex == 35);
     if (state->languagePopupOpen) {
