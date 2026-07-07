@@ -2517,10 +2517,6 @@ static int m11_execute_csb_startup_closed_door_asset_commands(
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state);
 
-static void m11_csb_startup_command_state_from_m11(
-    const M11_GameViewState *state,
-    CSB_V1_StartupCommandState_PC34 *out_state);
-
 static void m11_csb_startup_command_state_receipt_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupCommandStateReceipt_PC34 *receipt);
@@ -3009,50 +3005,6 @@ static int m11_csb_startup_entrance_waiting_for_input(
         state->csbState.startup_entrance_opening_delay_ticks,
         state->csbState.startup_entrance_opening_step,
         state->csbState.startup_entrance_pending_command);
-}
-
-static void m11_csb_startup_command_state_from_m11(
-    const M11_GameViewState *state,
-    CSB_V1_StartupCommandState_PC34 *out_state)
-{
-    if (!out_state) {
-        return;
-    }
-    if (!state) {
-        (void)csb_v1_startup_command_state_from_request_pc34(NULL,
-                                                             out_state);
-        return;
-    }
-    (void)csb_v1_startup_command_state_from_facts_pc34(
-        state->csbState.startup_title_active,
-        state->csbState.startup_title_frame,
-        state->csbState.startup_title_source_step,
-        state->csbState.startup_entrance_active,
-        state->csbState.startup_entrance_source_step,
-        state->csbState.startup_entrance_dismissed,
-        state->csbState.startup_entrance_credits_active,
-        state->csbState.startup_entrance_credits_remaining_ticks,
-        state->csbState.startup_entrance_opening_active,
-        state->csbState.startup_entrance_opening_delay_ticks,
-        state->csbState.startup_entrance_opening_step,
-        state->csbState.startup_entrance_pending_command,
-        out_state);
-}
-
-static void m11_csb_startup_command_state_to_m11(
-    M11_GameViewState *state,
-    const CSB_V1_StartupCommandState_PC34 *command_state)
-{
-    CSB_V1_StartupCommandStateReceipt_PC34 receipt;
-
-    if (!state || !command_state) {
-        return;
-    }
-    if (!csb_v1_startup_command_state_receipt_from_state_pc34(command_state,
-                                                              &receipt)) {
-        return;
-    }
-    m11_csb_startup_command_state_receipt_to_m11(state, &receipt);
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(
@@ -10775,11 +10727,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbBootProfile = profile;
         m11_sync_csb_state_from_profile(state, profile);
         {
-            CSB_V1_StartupCommandState_PC34 command_state;
-            (void)csb_v1_startup_init_command_state_pc34(
-                &command_state,
-                spec->savePath && spec->savePath[0] != '\0');
-            m11_csb_startup_command_state_to_m11(state, &command_state);
+            CSB_V1_StartupCommandStateReceipt_PC34 receipt;
+            if (csb_v1_startup_init_command_state_receipt_pc34(
+                    spec->savePath && spec->savePath[0] != '\0',
+                    &receipt)) {
+                m11_csb_startup_command_state_receipt_to_m11(state,
+                                                             &receipt);
+            }
         }
         state->csbState.startup_entrance_frame = 0;
         state->csbState.startup_entrance_last_command =
@@ -11290,7 +11244,6 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->dm1WorldTick = state->world.gameTick;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_StartupCommandState_PC34 command_state;
         out->levelLoaded = state->csbState.level_loaded;
         out->mapIndex = state->csbState.current_level;
         out->partyX = state->csbState.party_x;
@@ -11298,9 +11251,19 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->csbState.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->csbState.tick_count;
-        m11_csb_startup_command_state_from_m11(state, &command_state);
-        (void)csb_v1_startup_receipt_phase_pc34(
-            &command_state,
+        (void)csb_v1_startup_receipt_phase_from_facts_pc34(
+            state->csbState.startup_title_active,
+            state->csbState.startup_title_frame,
+            state->csbState.startup_title_source_step,
+            state->csbState.startup_entrance_active,
+            state->csbState.startup_entrance_source_step,
+            state->csbState.startup_entrance_dismissed,
+            state->csbState.startup_entrance_credits_active,
+            state->csbState.startup_entrance_credits_remaining_ticks,
+            state->csbState.startup_entrance_opening_active,
+            state->csbState.startup_entrance_opening_delay_ticks,
+            state->csbState.startup_entrance_opening_step,
+            state->csbState.startup_entrance_pending_command,
             state->csbState.startup_entrance_frame,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
