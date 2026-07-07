@@ -1,6 +1,30 @@
 
 # Unreleased
 
+# Firestaff v3.0.65
+
+Firestaff v3.0.65 packages the current `main` after the DM1 and CSB startup
+ownership passes landed after `v3.0.64` was tagged.
+
+## Highlights since v3.0.64
+
+- **DM1 title/entrance ownership**: DM1 V1 startup now owns TITLE.DAT unpacking,
+  C001 title blit planning, entrance command policy, and no-asset entrance
+  fallback rendering.
+- **CSB title/entrance ownership**: CSB startup now owns title fallback policy,
+  render-plan execution routing, and pure entrance command application.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.65`.
+
+## Verification
+
+- Local release verification covers version synchronization, the Phase A probe,
+  focused DM1 title/entrance and CSB startup targets, and `git diff --check`
+  before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.65` release run.
+
 # Firestaff v3.0.64
 
 Firestaff v3.0.64 packages the current `main` after the DM1 V1 creature

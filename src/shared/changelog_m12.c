@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.65  (2026-07-07)",
+    "  - Packages current main after DM1 title/entrance and CSB startup ownership work landed after v3.0.64.",
+    "  - DM1 V1 owns title unpack/blit planning and entrance fallback/command policy; CSB owns startup render routing and pure entrance command application.",
+    "",
     "V3.0.64  (2026-07-07)",
     "  - Packages current main after DM1 V1 creature draw-plan ownership landed after v3.0.63.",
     "  - DM1 V1 creature group and duplicate draw expansion now lives in the source-locked DM1 compat helper used by M11.",
@@ -504,5 +508,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.64";
+    return "3.0.65";
 }

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 v3.0.65 release prep: version metadata and release notes now target v3.0.65 for the current DM1 title/entrance and CSB startup ownership work. Verification will run before tag/release workflow dispatch.
+
 - ✅ 2026-07-07 CSB pure entrance command ownership: `csb_v1_startup_sequence_pc34_compat` now owns pure startup entrance command application for credits dismissal, credits start, ignored commands, and quit-to-launcher through `csb_v1_startup_apply_pure_entrance_plan_pc34()`. M11 now keeps only runtime side effects for dungeon entry, bonus dungeon, and resume loading. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB startup render-executor ownership: `csb_v1_startup_sequence_pc34_compat` now owns startup render-command iteration, title stop, full-surface fallback routing, door-opening early exit, closed-door versus fallback routing, and wait-loop utility-panel gating through `csb_v1_startup_execute_render_plan_pc34()`. M11 now supplies only rendering callbacks for CSB-owned commands. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.
