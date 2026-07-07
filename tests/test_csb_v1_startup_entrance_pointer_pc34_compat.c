@@ -1640,6 +1640,32 @@ int main(void)
               strcmp(command_receipt.outcome.status, "CSB ENTRANCE") == 0,
           "startup entrance command receipt owns pure credits dismissal");
 
+    memset(&command_state_receipt, 0, sizeof(command_state_receipt));
+    check(csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
+              0,
+              0,
+              0,
+              1,
+              csb_v1_startup_entrance_wait_stage_pc34(),
+              0,
+              1,
+              99,
+              0,
+              0,
+              0,
+              0,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34,
+              &command_receipt,
+              &command_state_receipt) &&
+              command_receipt.handled &&
+              !command_receipt.requires_runtime_plan &&
+              command_receipt.pure_apply_result ==
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34 &&
+              !command_state_receipt.credits_active &&
+              command_receipt.outcome.status &&
+              strcmp(command_receipt.outcome.status, "CSB ENTRANCE") == 0,
+          "startup entrance command facts helper owns pure command receipt");
+
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
     command_state.entrance_source_step =
@@ -1658,6 +1684,31 @@ int main(void)
               command_receipt.runtime_plan.bonus_dungeon &&
               command_receipt.runtime_plan.begin_door_opening,
           "startup entrance command receipt owns runtime handoff plan");
+
+    memset(&command_state_receipt, 0, sizeof(command_state_receipt));
+    check(csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
+              0,
+              0,
+              0,
+              1,
+              csb_v1_startup_entrance_wait_stage_pc34(),
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34,
+              &command_receipt,
+              &command_state_receipt) &&
+              command_receipt.handled &&
+              command_receipt.requires_runtime_plan &&
+              command_receipt.runtime_plan.kind ==
+                  CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34 &&
+              command_receipt.runtime_plan.bonus_dungeon &&
+              command_state_receipt.entrance_active,
+          "startup entrance command facts helper owns runtime handoff receipt");
 
     check(csb_v1_startup_plan_for_entrance_command_pc34(
               &command_state,
@@ -1757,6 +1808,34 @@ int main(void)
               runtime_receipt.bonus_requested == 0 &&
               command_state.opening_active,
           "startup runtime receipt owns normal dungeon redraw state");
+
+    memset(&command_state_receipt, 0, sizeof(command_state_receipt));
+    check(csb_v1_startup_apply_runtime_plan_from_facts_with_receipts_pc34(
+              0,
+              0,
+              0,
+              1,
+              csb_v1_startup_entrance_wait_stage_pc34(),
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              &runtime_plan,
+              0,
+              0,
+              &outcome,
+              &runtime_receipt,
+              &command_state_receipt) &&
+              runtime_receipt.result ==
+                  CSB_V1_STARTUP_RUNTIME_APPLY_REDRAW_PC34 &&
+              runtime_receipt.clear_import_preview &&
+              command_state_receipt.opening_active &&
+              command_state_receipt.pending_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+          "startup runtime facts helper owns normal dungeon receipt");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;

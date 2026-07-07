@@ -3115,8 +3115,8 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     M11_GameViewState *state,
     int commandId)
 {
-    CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandReceipt_PC34 command_receipt;
+    CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_exec_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
@@ -3125,11 +3125,22 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         !state->csbState.startup_entrance_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_csb_startup_command_state_from_m11(state, &command_state);
-    if (!csb_v1_startup_apply_entrance_command_with_receipt_pc34(
-            &command_state,
+    if (!csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
+            state->csbState.startup_title_active,
+            state->csbState.startup_title_frame,
+            state->csbState.startup_title_source_step,
+            state->csbState.startup_entrance_active,
+            state->csbState.startup_entrance_source_step,
+            state->csbState.startup_entrance_dismissed,
+            state->csbState.startup_entrance_credits_active,
+            state->csbState.startup_entrance_credits_remaining_ticks,
+            state->csbState.startup_entrance_opening_active,
+            state->csbState.startup_entrance_opening_delay_ticks,
+            state->csbState.startup_entrance_opening_step,
+            state->csbState.startup_entrance_pending_command,
             commandId,
-            &command_receipt) ||
+            &command_receipt,
+            &state_receipt) ||
         !command_receipt.handled) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -3138,7 +3149,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         command_receipt.command_id;
     if (command_receipt.pure_apply_result !=
         CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34) {
-        m11_csb_startup_command_state_to_m11(state, &command_state);
+        m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
         if (command_receipt.outcome.status) {
             m11_set_status(state,
                            command_receipt.outcome.status_scope,
@@ -3179,17 +3190,28 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         }
     }
 
-    m11_csb_startup_command_state_from_m11(state, &command_state);
-    if (!csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
-        &command_state,
-        &command_receipt.runtime_plan,
-        runtime_exec_receipt.resume_available,
-        runtime_exec_receipt.resume_loaded,
-        &outcome,
-        &runtime_receipt)) {
+    if (!csb_v1_startup_apply_runtime_plan_from_facts_with_receipts_pc34(
+            state->csbState.startup_title_active,
+            state->csbState.startup_title_frame,
+            state->csbState.startup_title_source_step,
+            state->csbState.startup_entrance_active,
+            state->csbState.startup_entrance_source_step,
+            state->csbState.startup_entrance_dismissed,
+            state->csbState.startup_entrance_credits_active,
+            state->csbState.startup_entrance_credits_remaining_ticks,
+            state->csbState.startup_entrance_opening_active,
+            state->csbState.startup_entrance_opening_delay_ticks,
+            state->csbState.startup_entrance_opening_step,
+            state->csbState.startup_entrance_pending_command,
+            &command_receipt.runtime_plan,
+            runtime_exec_receipt.resume_available,
+            runtime_exec_receipt.resume_loaded,
+            &outcome,
+            &runtime_receipt,
+            &state_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_csb_startup_command_state_to_m11(state, &command_state);
+    m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
     if (runtime_receipt.clear_import_preview) {
         state->csbState.startup_import_preview_active = 0;
     }

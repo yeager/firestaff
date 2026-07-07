@@ -55,34 +55,18 @@
 #define M12_HIT_GAMEOPT_ROW_Y0      (M12_HIT_GAMEOPT_PANEL_Y + 76)
 #define M12_HIT_GAMEOPT_ROW_STEP    52
 
-/* Modern renderer shows a small curated settings subset. Values mirror
- * the private M12_SETTINGS_ROW_* indices in menu_startup_m12.c. */
-#define M12_HIT_SETTINGS_ROW_LANGUAGE            0
-#define M12_HIT_SETTINGS_ROW_GRAPHICS            1
-#define M12_HIT_SETTINGS_ROW_WINDOW_MODE         3
-#define M12_HIT_SETTINGS_ROW_SMOOTH_TURN_PAN    14
-#define M12_HIT_SETTINGS_ROW_DATA_DIR           15
-#define M12_HIT_SETTINGS_ROW_DATA_STATUS        16
-#define M12_HIT_SETTINGS_ROW_RETROACHIEVEMENTS  30
-#define M12_HIT_SETTINGS_ROW_RA_HARDCORE        31
-#define M12_HIT_SETTINGS_ROW_RA_USERNAME        32
-#define M12_HIT_SETTINGS_ROW_RA_TOKEN           33
-#define M12_HIT_SETTINGS_ROW_SESSION_TIMER      35
-#define M12_HIT_SETTINGS_ROW_EXPORT             44
-#define M12_HIT_SETTINGS_ROW_IMPORT             45
-
 static const int m12_hit_visible_settings_rows[] = {
-    M12_HIT_SETTINGS_ROW_LANGUAGE,
-    M12_HIT_SETTINGS_ROW_GRAPHICS,
-    M12_HIT_SETTINGS_ROW_WINDOW_MODE,
-    M12_HIT_SETTINGS_ROW_SMOOTH_TURN_PAN,
-    M12_HIT_SETTINGS_ROW_DATA_DIR,
-    M12_HIT_SETTINGS_ROW_DATA_STATUS,
-    M12_HIT_SETTINGS_ROW_RETROACHIEVEMENTS,
-    M12_HIT_SETTINGS_ROW_RA_HARDCORE,
-    M12_HIT_SETTINGS_ROW_RA_USERNAME,
-    M12_HIT_SETTINGS_ROW_RA_TOKEN,
-    M12_HIT_SETTINGS_ROW_SESSION_TIMER
+    M12_STARTUP_SETTINGS_ROW_LANGUAGE,
+    M12_STARTUP_SETTINGS_ROW_GRAPHICS,
+    M12_STARTUP_SETTINGS_ROW_WINDOW_MODE,
+    M12_STARTUP_SETTINGS_ROW_SMOOTH_TURN_PAN,
+    M12_STARTUP_SETTINGS_ROW_DATA_DIR,
+    M12_STARTUP_SETTINGS_ROW_DATA_STATUS,
+    M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
+    M12_STARTUP_SETTINGS_ROW_RA_HARDCORE,
+    M12_STARTUP_SETTINGS_ROW_RA_USERNAME,
+    M12_STARTUP_SETTINGS_ROW_RA_TOKEN,
+    M12_STARTUP_SETTINGS_ROW_SESSION_TIMER
 };
 #define M12_HIT_SETTINGS_VISIBLE_ROW_COUNT \
     ((int)(sizeof(m12_hit_visible_settings_rows) / sizeof(m12_hit_visible_settings_rows[0])))
@@ -310,12 +294,12 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                 if (m12_hit_settings_row_rect(i, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
                     int rowIndex = m12_hit_visible_settings_rows[i];
-                    if (rowIndex == M12_HIT_SETTINGS_ROW_LANGUAGE) {
+                    if (rowIndex == M12_STARTUP_SETTINGS_ROW_LANGUAGE) {
                         hit.kind = M12_HIT_SETTINGS_ROW;
                         hit.index = rowIndex;
-                    } else if (rowIndex == M12_HIT_SETTINGS_ROW_DATA_DIR ||
-                        rowIndex == M12_HIT_SETTINGS_ROW_EXPORT ||
-                        rowIndex == M12_HIT_SETTINGS_ROW_IMPORT) {
+                    } else if (rowIndex == M12_STARTUP_SETTINGS_ROW_DATA_DIR ||
+                        rowIndex == M12_STARTUP_SETTINGS_ROW_EXPORT ||
+                        rowIndex == M12_STARTUP_SETTINGS_ROW_IMPORT) {
                         hit.kind = M12_HIT_SETTINGS_CYCLE;
                         hit.index = rowIndex;
                         hit.delta = 1;
@@ -449,7 +433,7 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                 M12_StartupMenu_HandleInput(state, mv);
                 if (state->settingsSelectedIndex == before) break;
             }
-            if (hit.index == M12_HIT_SETTINGS_ROW_LANGUAGE) {
+            if (hit.index == M12_STARTUP_SETTINGS_ROW_LANGUAGE) {
                 state->languagePopupOpen = !state->languagePopupOpen;
                 state->languagePopupSelectedIndex = state->settings.languageIndex;
                 return 1;
@@ -473,7 +457,7 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             int guard = 0;
             int count = M12_StartupMenu_GetLanguageCount();
             if (hit.index < 0 || hit.index >= count) return 0;
-            state->settingsSelectedIndex = M12_HIT_SETTINGS_ROW_LANGUAGE;
+            state->settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_LANGUAGE;
             state->languagePopupOpen = 0;
             while (state->settings.languageIndex != hit.index && guard++ < count + 1) {
                 M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_VALUE_RIGHT);

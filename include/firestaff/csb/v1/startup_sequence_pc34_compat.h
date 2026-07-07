@@ -681,6 +681,22 @@ int csb_v1_startup_apply_entrance_command_with_receipt_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int command_id,
     CSB_V1_StartupEntranceCommandReceipt_PC34 *out_receipt);
+int csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int command_id,
+    CSB_V1_StartupEntranceCommandReceipt_PC34 *out_command_receipt,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt);
 int csb_v1_startup_entrance_input_outcome_pc34(
     const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
     int resume_available,
@@ -711,6 +727,25 @@ int csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
     int resume_loaded,
     CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome,
     CSB_V1_StartupRuntimeApplyReceipt_PC34 *out_receipt);
+int csb_v1_startup_apply_runtime_plan_from_facts_with_receipts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    const CSB_V1_StartupRuntimePlan_PC34 *runtime_plan,
+    int resume_available,
+    int resume_loaded,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome,
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 *out_runtime_receipt,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt);
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command);

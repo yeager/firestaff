@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 RetroAchievements start-menu settings contract: M12 now exposes public settings-row IDs for RetroAchievements enable, hardcore, username, and API token. Modern hit-testing and tests use that contract, keeping visible RA settings tied to persisted menu behavior. Verification: settings hit-test passed 38/38, RetroAchievements unit test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
+- ✅ 2026-07-08 CSB entrance command facts receipts: `csb_v1_startup_sequence_pc34_compat` now applies entrance commands and runtime plans directly from raw startup facts and returns command-state receipts. M11 no longer constructs CSB command-state for entrance command routing. Verification: CSB startup entrance pointer contract passed 129/129, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB door-opening finish receipt: `csb_v1_startup_sequence_pc34_compat` now finishes entrance door-opening from raw facts and returns a command-state receipt. M11 applies that receipt instead of rebuilding and mutating a local CSB command-state for the door-finish path. Verification: CSB startup entrance pointer contract passed 126/126, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup command-state receipts: `csb_v1_startup_sequence_pc34_compat` now publishes entrance command-state receipts plus a raw-facts input-wait helper. M11 applies the CSB-owned receipt instead of copying the command-state struct directly for entrance boot state updates. Verification: CSB startup entrance pointer contract passed 125/125, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

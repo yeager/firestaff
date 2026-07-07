@@ -2167,6 +2167,55 @@ int csb_v1_startup_apply_entrance_command_with_receipt_pc34(
     return 1;
 }
 
+int csb_v1_startup_apply_entrance_command_from_facts_with_receipts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int command_id,
+    CSB_V1_StartupEntranceCommandReceipt_PC34 *out_command_receipt,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt)
+{
+    CSB_V1_StartupCommandState_PC34 state;
+
+    if (out_state_receipt) {
+        csb_v1_startup_command_state_receipt_init_pc34(out_state_receipt);
+    }
+    if (!csb_v1_startup_command_state_from_facts_pc34(
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            &state)) {
+        return 0;
+    }
+    if (!csb_v1_startup_apply_entrance_command_with_receipt_pc34(
+            &state,
+            command_id,
+            out_command_receipt)) {
+        return 0;
+    }
+    return csb_v1_startup_command_state_receipt_from_state_pc34(
+        &state,
+        out_state_receipt);
+}
+
 int csb_v1_startup_entrance_input_outcome_pc34(
     const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
     int resume_available,
@@ -2464,6 +2513,61 @@ int csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
         }
     }
     return 1;
+}
+
+int csb_v1_startup_apply_runtime_plan_from_facts_with_receipts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    const CSB_V1_StartupRuntimePlan_PC34 *runtime_plan,
+    int resume_available,
+    int resume_loaded,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome,
+    CSB_V1_StartupRuntimeApplyReceipt_PC34 *out_runtime_receipt,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_state_receipt)
+{
+    CSB_V1_StartupCommandState_PC34 state;
+
+    if (out_state_receipt) {
+        csb_v1_startup_command_state_receipt_init_pc34(out_state_receipt);
+    }
+    if (!csb_v1_startup_command_state_from_facts_pc34(
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            &state)) {
+        return 0;
+    }
+    if (!csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
+            &state,
+            runtime_plan,
+            resume_available,
+            resume_loaded,
+            out_outcome,
+            out_runtime_receipt)) {
+        return 0;
+    }
+    return csb_v1_startup_command_state_receipt_from_state_pc34(
+        &state,
+        out_state_receipt);
 }
 
 int csb_v1_startup_begin_door_opening_pc34(
