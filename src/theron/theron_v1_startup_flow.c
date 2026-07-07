@@ -1633,6 +1633,52 @@ Theron_StartupResult theron_v1_startup_enter_runtime_from_forcefield(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_return_to_stage_select_after_exit(
+    Theron_V1_World *world,
+    Theron_StartupFlow *flow,
+    char *receipt,
+    size_t receipt_cap) {
+    Theron_DungeonID next;
+
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!world || !flow) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+
+    next = theron_v1_dungeon_exit(&world->progression);
+    if (next == THERON_DUNGEON_INVALID &&
+        !theron_v1_quest_complete(&world->progression)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "dungeon exit rejected");
+        }
+        return THERON_STARTUP_ERR_DUNGEON_ENTRY;
+    }
+
+    theron_v1_party_dungeon_exit(&world->party);
+    world->party.champion_count = 1;
+    world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+    world->current_dungeon = world->progression.current_dungeon;
+    world->current_level = 0;
+    world->dungeon_complete = 0;
+    world->quest_items_in_dungeon = 0;
+    memset(world->level_loaded, 0, sizeof(world->level_loaded));
+
+    (void)theron_v1_startup_show_stage_select(
+        flow,
+        world->progression.current_dungeon);
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt,
+                 receipt_cap,
+                 theron_v1_quest_complete(&world->progression)
+                    ? "quest complete"
+                    : "dungeon complete; next stage=%d",
+                 (int)world->progression.current_dungeon);
+    }
+    return THERON_STARTUP_OK;
+}
+
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     switch (phase) {
     case THERON_STARTUP_PHASE_TITLE: return "title";

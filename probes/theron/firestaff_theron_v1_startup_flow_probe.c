@@ -1213,6 +1213,64 @@ int main(void) {
                            runtime_receipt,
                            "level load failed");
         }
+        {
+            char exit_receipt[128];
+            theron_v1_world_init(&world);
+            world.progression.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
+                THERON_DUNGEON_STATE_COMPLETE;
+            world.party.champion_count = 4;
+            world.party.active_slot = 2;
+            world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] = 1;
+            world.dungeon_complete = 1;
+            world.quest_items_in_dungeon = 1;
+            theron_v1_startup_flow_init(&flow);
+            exit_receipt[0] = '\0';
+            result = theron_v1_startup_return_to_stage_select_after_exit(
+                &world,
+                &flow,
+                exit_receipt,
+                sizeof(exit_receipt));
+            check_int("exit return rc", result, THERON_STARTUP_OK);
+            check_int("exit return current dungeon",
+                      world.progression.current_dungeon,
+                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+            check_int("exit return phase",
+                      flow.phase,
+                      THERON_STARTUP_PHASE_STAGE_SELECT);
+            check_int("exit return selected dungeon",
+                      flow.selected_dungeon,
+                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+            check_int("exit return party count", world.party.champion_count, 1);
+            check_int("exit return active slot",
+                      world.party.active_slot,
+                      THERON_CHAMPION_SLOT_THERON);
+            check_int("exit return clears level",
+                      world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      0);
+            check_int("exit return clears dungeon flag",
+                      world.dungeon_complete,
+                      0);
+            check_contains("exit return receipt",
+                           exit_receipt,
+                           "next stage=2");
+        }
+        {
+            char exit_receipt[128];
+            theron_v1_world_init(&world);
+            theron_v1_startup_flow_init(&flow);
+            exit_receipt[0] = '\0';
+            result = theron_v1_startup_return_to_stage_select_after_exit(
+                &world,
+                &flow,
+                exit_receipt,
+                sizeof(exit_receipt));
+            check_int("exit return rejects incomplete rc",
+                      result,
+                      THERON_STARTUP_ERR_DUNGEON_ENTRY);
+            check_contains("exit return rejects incomplete receipt",
+                           exit_receipt,
+                           "dungeon exit rejected");
+        }
     }
 
     check_contains("mirror 0 meta", theron_v1_startup_mirror_meta(0)->name, "Hakar");
