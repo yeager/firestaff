@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB utility-flow runtime-profile facts ownership: `csb_v1_utility_flow_pc34` now builds utility panel state directly from selected action, imported champion count, and runtime-profile facts. M11 no longer copies imported party state before utility panel render/input. Verification: utility-flow action contract passed 52/52, CSB M11 startup/resume gate passed, CSB boot-runtime handoff passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron chapter-inspect facts ownership: `theron_v1_startup_flow` now returns chapter inspect receipts directly from boot profile, world, and prefix facts. M11 no longer builds `Theron_StartupChapterInspectRequest` for startup inspect readouts. Verification: Theron startup-flow probe passed 487/487, Theron direct-launch passed, Theron M11 launcher handoff passed 26/26, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron runtime-entry facts ownership: `theron_v1_startup_runtime_entry` now builds forcefield-entry runtime requests directly from raw M11 facts, including HuCard/media facts and fixed Track 02 roster-name arrays. M11 no longer builds `Theron_V1StartupRuntimeEntryRequest` or transient roster pointer arrays for forcefield entry. Verification: Theron startup-flow probe passed 484/484, Theron direct-launch passed, Theron M11 launcher handoff passed 26/26, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

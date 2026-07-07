@@ -2238,25 +2238,15 @@ static void m11_csb_startup_build_utility_flow(
     const M11_GameViewState *state,
     CSB_V1_UtilFlowContext *flow)
 {
-    CSB_V1_PartyState imported_party;
-    int imported_party_available = 0;
-
     if (!flow) {
         return;
     }
-    memset(&imported_party, 0, sizeof(imported_party));
-    if (state && state->csbBootProfile) {
-        if (csb_v1_runtime_get_party_state(
-                &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime,
-                &imported_party) >= 0) {
-            imported_party_available = 1;
-        }
-    }
-    (void)csb_v1_util_flow_build_from_runtime_facts(
+    (void)csb_v1_util_flow_build_from_runtime_profile_facts(
         state ? state->csbState.startup_import_selected_action_index : 0,
         state ? state->csbState.startup_import_champion_count : 0,
-        &imported_party,
-        imported_party_available,
+        state && state->csbBootProfile
+            ? &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime
+            : NULL,
         flow);
 }
 

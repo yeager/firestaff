@@ -242,6 +242,11 @@ int csb_v1_util_flow_build_from_runtime_facts(
     const CSB_V1_PartyState *imported_party,
     int imported_party_available,
     CSB_V1_UtilFlowContext *out_ctx);
+int csb_v1_util_flow_build_from_runtime_profile_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const void *runtime_profile,
+    CSB_V1_UtilFlowContext *out_ctx);
 
 /* ── Run one step of the utility flow ──────────────────────────────── */
 /* Returns: 0 = running (not done), 1 = done, negative = error.
