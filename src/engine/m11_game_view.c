@@ -16034,7 +16034,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 }
 static int m11_object_icon_index_for_thing(const M11_GameViewState* state, const struct DungeonThings_Compat* things, unsigned short thing);
 
-static int m11_dm1_wall_ornament_is_alcove_global(int globalIndex);
 static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_process_v1_eye_click(M11_GameViewState* state);
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
@@ -19121,7 +19120,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     facingAlcove = frontCell.valid &&
                    frontCell.elementType == DUNGEON_ELEMENT_WALL &&
                    frontCell.wallOrnamentOrdinal >= 0 &&
-                   m11_dm1_wall_ornament_is_alcove_global(frontCell.wallOrnamentOrdinal);
+                   dm1_v1_wall_ornament_is_alcove_global_pc34(
+                       frontCell.wallOrnamentOrdinal);
     facingWall = frontCell.valid &&
                  frontCell.elementType == DUNGEON_ELEMENT_WALL;
 
@@ -21308,34 +21308,37 @@ static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* s
 }
 
 static unsigned int m11_dm1_center_blocking_depth_mask(const M11_ViewportCell cells[3][3]) {
+    int valid[3] = {0, 0, 0};
+    int open[3] = {0, 0, 0};
+    int door[3] = {0, 0, 0};
     int depth;
-    unsigned int mask = 0u;
-    if (!cells) {
-        return 0u;
-    }
+    DM1_ViewportCenterLaneMasksPc34 masks;
+    if (!cells) return 0u;
     for (depth = 0; depth < 3; ++depth) {
-        if (cells[depth][1].valid && !m11_viewport_cell_is_open(&cells[depth][1])) {
-            mask |= (1u << (unsigned int)depth);
-        }
+        const M11_ViewportCell* cell = &cells[depth][1];
+        valid[depth] = cell->valid ? 1 : 0;
+        open[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;
+        door[depth] = cell->elementType == DUNGEON_ELEMENT_DOOR ? 1 : 0;
     }
-    return mask;
+    masks = dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid, open, door);
+    return masks.blocking_depth_mask;
 }
 
 static unsigned int m11_dm1_center_blocking_door_depth_mask(const M11_ViewportCell cells[3][3]) {
+    int valid[3] = {0, 0, 0};
+    int open[3] = {0, 0, 0};
+    int door[3] = {0, 0, 0};
     int depth;
-    unsigned int mask = 0u;
-    if (!cells) {
-        return 0u;
-    }
+    DM1_ViewportCenterLaneMasksPc34 masks;
+    if (!cells) return 0u;
     for (depth = 0; depth < 3; ++depth) {
         const M11_ViewportCell* cell = &cells[depth][1];
-        if (cell->valid &&
-            cell->elementType == DUNGEON_ELEMENT_DOOR &&
-            !m11_viewport_cell_is_open(cell)) {
-            mask |= (1u << (unsigned int)depth);
-        }
+        valid[depth] = cell->valid ? 1 : 0;
+        open[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;
+        door[depth] = cell->elementType == DUNGEON_ELEMENT_DOOR ? 1 : 0;
     }
-    return mask;
+    masks = dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid, open, door);
+    return masks.blocking_door_depth_mask;
 }
 
 static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[3][3]) {
@@ -21526,14 +21529,6 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
     }
 }
 
-static int m11_dm1_wall_ornament_is_alcove_global(int globalIndex) {
-    return dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
-}
-
-static int m11_dm1_wall_ornament_flip_horizontal_pc34(int viewWallIndex) {
-    return dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
-}
-
 static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int fbW,
@@ -21582,17 +21577,15 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
 static unsigned int m11_dm1_side_lane_open_depth_mask(const M11_ViewportCell cells[3][3],
                                                       int sideIndex) {
     int d;
-    unsigned int mask = 0u;
+    int open[3] = {0, 0, 0};
     if (!cells) return 0u;
     if (sideIndex != 0 && sideIndex != 2) {
         return 0x7u;
     }
     for (d = 0; d < 3; ++d) {
-        if (m11_viewport_cell_is_open(&cells[d][sideIndex])) {
-            mask |= (1u << (unsigned int)d);
-        }
+        open[d] = m11_viewport_cell_is_open(&cells[d][sideIndex]) ? 1 : 0;
     }
-    return mask;
+    return dm1_viewport_3d_open_depth_mask_from_cells_pc34(open);
 }
 
 static int m11_dm1_side_lane_clear_for_rel(const M11_ViewportCell cells[3][3],
@@ -24039,21 +24032,20 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
 
 static unsigned int m11_dm1_center_depth_mask(const M11_ViewportCell cells[3][3],
                                               int requireOpen) {
+    int valid[3] = {0, 0, 0};
+    int open[3] = {0, 0, 0};
+    int door[3] = {0, 0, 0};
     int depth;
-    unsigned int mask = 0u;
-    if (!cells) {
-        return 0;
-    }
+    DM1_ViewportCenterLaneMasksPc34 masks;
+    if (!cells) return 0u;
     for (depth = 0; depth < 3; ++depth) {
         const M11_ViewportCell* cell = &cells[depth][1];
-        if (!cell->valid) {
-            continue;
-        }
-        if (!requireOpen || m11_viewport_cell_is_open(cell)) {
-            mask |= (1u << (unsigned int)depth);
-        }
+        valid[depth] = cell->valid ? 1 : 0;
+        open[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;
+        door[depth] = cell->elementType == DUNGEON_ELEMENT_DOOR ? 1 : 0;
     }
-    return mask;
+    masks = dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid, open, door);
+    return requireOpen ? masks.open_depth_mask : masks.valid_depth_mask;
 }
 
 static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3][3],
@@ -30694,7 +30686,7 @@ int M11_GameView_ProbeDm1WallOrnamentFlip(int viewWallIndex) {
     if (viewWallIndex < 0 || viewWallIndex >= 13) {
         return -1;
     }
-    return m11_dm1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
+    return dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
 }
 
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,

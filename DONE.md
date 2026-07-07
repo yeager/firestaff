@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 wall-ornament predicate ownership: M11 now calls `dm1_v1_wall_ornament_pc34_compat` directly for wall-ornament alcove classification and source horizontal-flip decisions. The local M11 wrapper predicates are gone, keeping the HoC viewport path on the DM1-owned wall-ornament contract. Verification: M11 syntax passed cleanly, DM1 wall-ornament syntax passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM2 startup input-outcome ownership: `dm2_v1_startup_menu` now owns the Firestaff-agnostic input outcome policy for startup executions: redraw versus launcher return, save-rescan requests, status scope/text, and failed runtime-session apply status. M11 now applies the DM2-owned outcome instead of branching locally on every execution kind. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 46/46, DM2 startup syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 side-wall spec lookup ownership: `dm1_v1_viewport_3d_pc34_compat` now owns side-wall draw-spec lookup by relative forward/side cell and parity bitmap selection. M11 consumes those DM1-owned APIs and keeps only asset-id adaptation plus framebuffer draw execution. Verification: `cmake --build /tmp/firestaff-build-active --target test_dm1_v1_viewport_3d_pc34_compat --parallel 4` passed, `/tmp/firestaff-build-active/test_dm1_v1_viewport_3d_pc34_compat` passed, M11 syntax passed cleanly, and `git diff --check` passed.
