@@ -351,6 +351,81 @@ static void test_redmcsb_f0115_creature_c3200_geometry(void)
     }
 }
 
+static void test_redmcsb_f0115_projectile_c2900_geometry(void)
+{
+    static const int expected_c2900[5][4][2] = {
+        {{   0,  0 }, {   0,  0 }, { 129, 47 }, {  95, 47 }},
+        {{   0,  0 }, {   0,  0 }, {  62, 47 }, {  25, 47 }},
+        {{   0,  0 }, {   0,  0 }, { 200, 47 }, { 162, 47 }},
+        {{   0,  0 }, {   0,  0 }, {   2, 47 }, { -35, 47 }},
+        {{   0,  0 }, {   0,  0 }, { 258, 47 }, { 202, 47 }}
+    };
+    static const int raw_samples[][4] = {
+        {  5, 0,  92, 47 },
+        {  5, 1, 132, 46 },
+        {  8, 2, 148, 47 },
+        { 10, 2, 301, 47 },
+        { 11, 1, 158, 47 }
+    };
+
+    for (int scale = 0; scale < 5; ++scale) {
+        for (int cell = 0; cell < 4; ++cell) {
+            int x = -999;
+            int y = -999;
+            int present = dm1_viewport_3d_c2900_projectile_zone_point(scale,
+                                                                      cell,
+                                                                      &x,
+                                                                      &y);
+            char id[112];
+            snprintf(id, sizeof(id), "F0115.projectile.c2900.%d.%d.present",
+                     scale, cell);
+            check_int(id, present, expected_c2900[scale][cell][0] != 0 ||
+                                   expected_c2900[scale][cell][1] != 0);
+            if (!present) continue;
+            snprintf(id, sizeof(id), "F0115.projectile.c2900.%d.%d.x",
+                     scale, cell);
+            check_int(id, x, expected_c2900[scale][cell][0]);
+            snprintf(id, sizeof(id), "F0115.projectile.c2900.%d.%d.y",
+                     scale, cell);
+            check_int(id, y, expected_c2900[scale][cell][1]);
+        }
+    }
+    {
+        int x = -999;
+        int y = -999;
+        check_int("F0115.projectile.c2900.clamp_low",
+                  dm1_viewport_3d_c2900_projectile_zone_point(-9, 2, &x, &y),
+                  1);
+        check_int("F0115.projectile.c2900.clamp_low.x", x, 129);
+        check_int("F0115.projectile.c2900.clamp_low.y", y, 47);
+        check_int("F0115.projectile.c2900.bad_cell",
+                  dm1_viewport_3d_c2900_projectile_zone_point(0, 4, &x, &y),
+                  0);
+    }
+
+    for (size_t i = 0; i < sizeof(raw_samples) / sizeof(raw_samples[0]); ++i) {
+        int x = -999;
+        int y = -999;
+        char id[112];
+        int present = dm1_viewport_3d_c2900_projectile_raw_zone_point(
+            raw_samples[i][0], raw_samples[i][1], &x, &y);
+        snprintf(id, sizeof(id), "F0115.projectile.c2900.raw.%zu.present", i);
+        check_int(id, present, 1);
+        snprintf(id, sizeof(id), "F0115.projectile.c2900.raw.%zu.x", i);
+        check_int(id, x, raw_samples[i][2]);
+        snprintf(id, sizeof(id), "F0115.projectile.c2900.raw.%zu.y", i);
+        check_int(id, y, raw_samples[i][3]);
+    }
+    check_int("F0115.projectile.c2900.raw.invalid_row",
+              dm1_viewport_3d_c2900_projectile_raw_zone_point(12, 0,
+                                                              NULL, NULL),
+              0);
+    check_int("F0115.projectile.c2900.raw.empty_cell",
+              dm1_viewport_3d_c2900_projectile_raw_zone_point(11, 2,
+                                                              NULL, NULL),
+              0);
+}
+
 
 static void test_redmcsb_g0163_wall_frames_resolve_clip_gate(void)
 {
@@ -3524,6 +3599,7 @@ int main(void)
     test_redmcsb_g0163_wall_frames();
     test_redmcsb_f0115_object_c2500_geometry();
     test_redmcsb_f0115_creature_c3200_geometry();
+    test_redmcsb_f0115_projectile_c2900_geometry();
     test_redmcsb_g0163_wall_frames_resolve_clip_gate();
     test_redmcsb_f0128_draw_order();
     test_f0128_d4_far_object_pass_order();

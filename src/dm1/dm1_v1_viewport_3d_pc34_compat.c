@@ -334,6 +334,70 @@ int dm1_viewport_3d_c2500_object_raw_zone_point(int row_index,
     return 1;
 }
 
+int dm1_viewport_3d_c2900_projectile_zone_point(int scale_index,
+                                                int relative_cell,
+                                                int *out_x,
+                                                int *out_y)
+{
+    /* ReDMCSB DUNVIEW.C F0115 lines 5667-5683 binds projectile placement
+     * through C2900_ZONE_ plus G2028 row and AL0126_i_ViewCell.  These
+     * five rows mirror Firestaff's source-scale buckets for the current
+     * projectile renderer path. */
+    static const short k_c2900[5][4][2] = {
+        {{   0,  0 }, {   0,  0 }, { 129, 47 }, {  95, 47 }},
+        {{   0,  0 }, {   0,  0 }, {  62, 47 }, {  25, 47 }},
+        {{   0,  0 }, {   0,  0 }, { 200, 47 }, { 162, 47 }},
+        {{   0,  0 }, {   0,  0 }, {   2, 47 }, { -35, 47 }},
+        {{   0,  0 }, {   0,  0 }, { 258, 47 }, { 202, 47 }}
+    };
+    int zx;
+    int zy;
+    if (scale_index < 0) scale_index = 0;
+    if (scale_index > 4) scale_index = 4;
+    if (relative_cell < 0 || relative_cell > 3) return 0;
+    zx = (int)k_c2900[scale_index][relative_cell][0];
+    zy = (int)k_c2900[scale_index][relative_cell][1];
+    if (zx == 0 && zy == 0) return 0;
+    if (out_x) *out_x = zx;
+    if (out_y) *out_y = zy;
+    return 1;
+}
+
+int dm1_viewport_3d_c2900_projectile_raw_zone_point(int row_index,
+                                                    int relative_cell,
+                                                    int *out_x,
+                                                    int *out_y)
+{
+    /* ReDMCSB DUNVIEW.C F0115 lines 5635-5683 restores the projectile
+     * view cell and resolves C2900_ZONE_ through G2028 rows.  Layout-696
+     * source rows C2900..C2947 are kept visible here so D1/D2/D3 side and
+     * deep projectile placement cannot silently fall back to synthetic panes. */
+    static const short k_c2900_raw[12][4][2] = {
+        {{   0,  0 }, {   0,  0 }, { 129, 47 }, {  95, 47 }},
+        {{   0,  0 }, {   0,  0 }, {  62, 47 }, {  25, 47 }},
+        {{   0,  0 }, {   0,  0 }, { 200, 47 }, { 162, 47 }},
+        {{   0,  0 }, {   0,  0 }, {   2, 47 }, { -35, 47 }},
+        {{   0,  0 }, {   0,  0 }, { 258, 47 }, { 202, 47 }},
+        {{  92, 47 }, { 132, 46 }, { 136, 47 }, {  88, 47 }},
+        {{  10, 47 }, {  53, 47 }, {  41, 47 }, { -14, 47 }},
+        {{ 171, 47 }, { 218, 47 }, { 236, 47 }, { 183, 47 }},
+        {{  83, 47 }, { 140, 47 }, { 148, 47 }, {  76, 47 }},
+        {{ -40, 47 }, {  26, 47 }, {   5, 47 }, { -79, 47 }},
+        {{ 197, 47 }, { 262, 47 }, { 301, 47 }, { 220, 47 }},
+        {{  66, 47 }, { 158, 47 }, {   0,  0 }, {   0,  0 }}
+    };
+    int zx;
+    int zy;
+    if (row_index < 0 || row_index >= 12) return 0;
+    if (relative_cell < 0 || relative_cell > 3) return 0;
+    zx = (int)k_c2900_raw[row_index][relative_cell][0];
+    zy = (int)k_c2900_raw[row_index][relative_cell][1];
+    if (zx == 0 && zy == 0) return 0;
+    if (out_x) *out_x = zx;
+    if (out_y) *out_y = zy;
+    return 1;
+}
+
 static int dm1_viewport_3d_creature_front_point_index(int coord_set,
                                                       int visible_count,
                                                       int slot_index)
