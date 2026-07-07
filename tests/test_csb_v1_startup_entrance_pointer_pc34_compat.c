@@ -313,6 +313,11 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               plan.source_asset_id == 4 &&
+              plan.surface_dest_x == 0 &&
+              plan.surface_dest_y == 0 &&
+              plan.surface_w == 320 &&
+              plan.surface_h == 200 &&
+              plan.surface_transparent_color == -1 &&
               plan.closed_left_asset_id == 2 &&
               plan.closed_right_asset_id == 3 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
@@ -363,6 +368,11 @@ int main(void)
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
               plan.source_asset_id == 5 &&
+              plan.surface_dest_x == 0 &&
+              plan.surface_dest_y == 0 &&
+              plan.surface_w == 320 &&
+              plan.surface_h == 200 &&
+              plan.surface_transparent_color == -1 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS &&
               plan.fallback_title_x == 38 &&
               plan.fallback_title_y == 42 &&
@@ -387,6 +397,11 @@ int main(void)
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 &&
               plan.source_asset_id == 4 &&
+              plan.surface_dest_x == 0 &&
+              plan.surface_dest_y == 0 &&
+              plan.surface_w == 320 &&
+              plan.surface_h == 200 &&
+              plan.surface_transparent_color == -1 &&
               plan.closed_left_asset_id == 2 &&
               plan.closed_right_asset_id == 3 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
@@ -399,6 +414,11 @@ int main(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.source_asset_id == 4 &&
+              plan.surface_dest_x == 0 &&
+              plan.surface_dest_y == 0 &&
+              plan.surface_w == 320 &&
+              plan.surface_h == 200 &&
+              plan.surface_transparent_color == -1 &&
               plan.closed_left_asset_id == 2 &&
               plan.closed_right_asset_id == 3 &&
               plan.opening_step == 2 &&

@@ -123,6 +123,11 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     CSB_V1_StartupRenderSurface_PC34 surface;
     int waiting_for_input;
     int source_asset_id;
+    int surface_dest_x;
+    int surface_dest_y;
+    int surface_w;
+    int surface_h;
+    int surface_transparent_color;
     int title_source_step;
     int title_stage;
     int title_blit_kind;

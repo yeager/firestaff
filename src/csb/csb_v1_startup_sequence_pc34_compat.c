@@ -118,6 +118,32 @@ static void csb_v1_startup_clear_title_rect_pc34(
     plan->special_palette = -1;
 }
 
+static void csb_v1_startup_clear_surface_blit_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    plan->surface_dest_x = 0;
+    plan->surface_dest_y = 0;
+    plan->surface_w = 0;
+    plan->surface_h = 0;
+    plan->surface_transparent_color = -1;
+}
+
+static void csb_v1_startup_set_full_surface_blit_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    plan->surface_dest_x = 0;
+    plan->surface_dest_y = 0;
+    plan->surface_w = 320;
+    plan->surface_h = 200;
+    plan->surface_transparent_color = -1;
+}
+
 static void csb_v1_startup_clear_door_rects_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
@@ -526,6 +552,7 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.source_asset_id = 0;
     plan.title_source_step = 0;
     plan.title_stage = 0;
+    csb_v1_startup_clear_surface_blit_pc34(&plan);
     csb_v1_startup_clear_title_rect_pc34(&plan);
     csb_v1_startup_clear_door_rects_pc34(&plan);
     csb_v1_startup_clear_fallback_text_pc34(&plan);
@@ -555,6 +582,7 @@ int csb_v1_startup_build_render_plan_pc34(
     if (state->credits_active) {
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34;
         plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_CREDITS_PC34;
+        csb_v1_startup_set_full_surface_blit_pc34(&plan);
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
         csb_v1_startup_set_credits_fallback_text_pc34(&plan);
         *out_plan = plan;
@@ -574,6 +602,7 @@ int csb_v1_startup_build_render_plan_pc34(
             : CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
         plan.opening_step = state->opening_step;
         plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
+        csb_v1_startup_set_full_surface_blit_pc34(&plan);
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
         csb_v1_startup_set_closed_door_rects_pc34(&plan);
         if (plan.surface ==
@@ -585,6 +614,7 @@ int csb_v1_startup_build_render_plan_pc34(
     }
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
+    csb_v1_startup_set_full_surface_blit_pc34(&plan);
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
     csb_v1_startup_set_entrance_fallback_text_pc34(&plan);
