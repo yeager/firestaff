@@ -652,6 +652,13 @@ int csb_v1_viewport_runtime_group_overlay_placement(
     int side,
     int coordinate_set,
     CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_group_overlay_slot_placement(
+    int forward,
+    int side,
+    int coordinate_set,
+    int visible_count,
+    int slot_index,
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement);
 int csb_v1_viewport_runtime_explosion_overlay_placement(
     int party_dir,
     int party_x,

@@ -1257,6 +1257,27 @@ static int m11_csb_runtime_group_direction(const uint8_t *record, int size)
     return (int)((flags >> 8) & 0x03u);
 }
 
+static int m11_csb_runtime_group_visible_count(const uint8_t *record, int size)
+{
+    unsigned int flags;
+    int count;
+
+    if (!record || size < 16) {
+        return 1;
+    }
+    if (record[5] == 0xFFu) {
+        return 1;
+    }
+    /* ReDMCSB DEFS.H GROUP.Count stores count - 1 in bits 5..6 of
+     * the PC34/I34E GROUP flag word.  Keep the render bridge bounded to
+     * the four source creature slots in a square. */
+    flags = (unsigned int)record[14] | ((unsigned int)record[15] << 8);
+    count = (int)((flags >> 5) & 0x03u) + 1;
+    if (count < 1) count = 1;
+    if (count > 4) count = 4;
+    return count;
+}
+
 static int m11_csb_square_allows_runtime_thing_overlay(
     const CSB_V1_DungeonData *dungeon,
     int level,
@@ -1642,49 +1663,55 @@ static void m11_draw_csb_runtime_group_overlays(
                     int creature_type = (int)record[4];
                     int creature_dir =
                         m11_csb_runtime_group_direction(record, size);
+                    int visible_count =
+                        m11_csb_runtime_group_visible_count(record, size);
                     int coord_set =
                         m11_creature_coordinate_set(creature_type);
-                    CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
                     int depth_index = forward - 1;
-                    int x = 0;
-                    int y = 0;
                     int sprite_w = 54 - depth_index * 12;
                     int sprite_h = 70 - depth_index * 14;
+                    int slot;
 
                     if (sprite_w < 20) sprite_w = 20;
                     if (sprite_h < 28) sprite_h = 28;
-                    if (!csb_v1_viewport_runtime_group_overlay_placement(
-                            forward,
-                            side,
-                            coord_set,
-                            &placement)) {
-                        thing = m11_csb_runtime_next_thing(dungeon, thing);
-                        continue;
+                    for (slot = 0; slot < visible_count; ++slot) {
+                        CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
+                        int x = 0;
+                        int y = 0;
+                        if (!csb_v1_viewport_runtime_group_overlay_slot_placement(
+                                forward,
+                                side,
+                                coord_set,
+                                visible_count,
+                                slot,
+                                &placement)) {
+                            continue;
+                        }
+                        x = placement.screen_x;
+                        y = placement.screen_y;
+                        if (creature_type >= 0 &&
+                            m11_draw_creature_sprite_ex(state,
+                                                        framebuffer,
+                                                        framebuffer_width,
+                                                        framebuffer_height,
+                                                        x - sprite_w / 2,
+                                                        y - sprite_h,
+                                                        sprite_w,
+                                                        sprite_h,
+                                                        creature_type,
+                                                        depth_index,
+                                                        side,
+                                                        creature_dir)) {
+                            m11_csb_runtime_overlay_stats_add_group_sprite(state);
+                        } else {
+                            m11_csb_mark_runtime_group(framebuffer,
+                                                       framebuffer_width,
+                                                       framebuffer_height,
+                                                       x,
+                                                       y);
+                            m11_csb_runtime_overlay_stats_add_group_marker(state);
+                        }
                     }
-                    x = placement.screen_x;
-                    y = placement.screen_y;
-                    if (creature_type >= 0 &&
-                        m11_draw_creature_sprite_ex(state,
-                                                    framebuffer,
-                                                    framebuffer_width,
-                                                    framebuffer_height,
-                                                    x - sprite_w / 2,
-                                                    y - sprite_h,
-                                                    sprite_w,
-                                                    sprite_h,
-                                                    creature_type,
-                                                    depth_index,
-                                                    side,
-                                                    creature_dir)) {
-                        m11_csb_runtime_overlay_stats_add_group_sprite(state);
-                        break;
-                    }
-                    m11_csb_mark_runtime_group(framebuffer,
-                                               framebuffer_width,
-                                               framebuffer_height,
-                                               x,
-                                               y);
-                    m11_csb_runtime_overlay_stats_add_group_marker(state);
                     break;
                 }
                 thing = m11_csb_runtime_next_thing(dungeon, thing);

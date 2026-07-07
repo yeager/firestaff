@@ -348,6 +348,8 @@ static int csb_v1_viewport_c3200_creature_zone_point(
     int coordinate_set,
     int depth_index,
     int side,
+    int visible_count,
+    int slot_index,
     int *out_x,
     int *out_y)
 {
@@ -401,7 +403,7 @@ static int csb_v1_viewport_c3200_creature_zone_point(
     if (depth_index < 0) depth_index = 0;
     if (depth_index > 2) depth_index = 2;
     point_index = csb_v1_viewport_creature_front_point_index(
-        coordinate_set, 1, 0);
+        coordinate_set, visible_count, slot_index);
     if (side < 0 || side > 0) {
         side_index = side < 0 ? 0 : 1;
         if (out_x) *out_x =
@@ -475,6 +477,18 @@ int csb_v1_viewport_runtime_group_overlay_placement(
     int coordinate_set,
     CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement)
 {
+    return csb_v1_viewport_runtime_group_overlay_slot_placement(
+        forward, side, coordinate_set, 1, 0, out_placement);
+}
+
+int csb_v1_viewport_runtime_group_overlay_slot_placement(
+    int forward,
+    int side,
+    int coordinate_set,
+    int visible_count,
+    int slot_index,
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement)
+{
     CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
     const CSB_V1_ViewportCreatureVisibilitySpec *spec = NULL;
     int x = 0;
@@ -483,7 +497,7 @@ int csb_v1_viewport_runtime_group_overlay_placement(
     memset(&placement, 0, sizeof(placement));
     placement.forward = forward;
     placement.side = side;
-    placement.view_cell = 0;
+    placement.view_cell = slot_index;
     placement.coordinate_set = coordinate_set;
     placement.view_square =
         csb_v1_viewport_f0115_view_square_index(forward, side);
@@ -501,7 +515,13 @@ int csb_v1_viewport_runtime_group_overlay_placement(
             spec, coordinate_set, 0);
     }
     if (csb_v1_viewport_c3200_creature_zone_point(
-            coordinate_set, forward - 1, side, &x, &y)) {
+            coordinate_set,
+            forward - 1,
+            side,
+            visible_count,
+            slot_index,
+            &x,
+            &y)) {
         placement.visible = 1;
         placement.used_source_zone = 1;
         placement.viewport_x = x;
