@@ -8,6 +8,13 @@
 static int g_passed;
 static int g_failed;
 
+typedef struct AssetExecutorProbe {
+    int call_count;
+    CSB_V1_StartupAssetCommandKind_PC34 fail_kind;
+    int seen_kind[CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34];
+    int seen_asset_id[CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34];
+} AssetExecutorProbe;
+
 unsigned int ENTRANCE_Compat_GetMouseRouteCount(void)
 {
     return 5u;
@@ -76,6 +83,21 @@ static void check(int condition, const char *message)
     }
 }
 
+static int asset_executor_probe(void *user,
+                                const CSB_V1_StartupAssetCommand_PC34 *cmd)
+{
+    AssetExecutorProbe *probe = (AssetExecutorProbe *)user;
+    if (!probe || !cmd) {
+        return 0;
+    }
+    if (probe->call_count < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34) {
+        probe->seen_kind[probe->call_count] = cmd->kind;
+        probe->seen_asset_id[probe->call_count] = cmd->asset_id;
+    }
+    ++probe->call_count;
+    return cmd->kind != probe->fail_kind;
+}
+
 static void expect_action(const char *message,
                           int x,
                           int y,
@@ -105,6 +127,7 @@ int main(void)
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
     CSB_V1_StartupEntranceDecision_PC34 decision;
     CSB_V1_TextMaterial_PC34 material;
+    AssetExecutorProbe probe;
     char phase[64];
     int startup_active;
     int startup_frame;
@@ -292,6 +315,17 @@ int main(void)
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
           "startup render plan owns title draw command");
+    memset(&probe, 0, sizeof(probe));
+    check(csb_v1_startup_execute_asset_commands_kind_pc34(
+              &plan,
+              CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34,
+              asset_executor_probe,
+              &probe) == 1 &&
+              probe.call_count == 1 &&
+              probe.seen_kind[0] ==
+                  CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
+              probe.seen_asset_id[0] == 1,
+          "startup asset executor dispatches PRESENTS title region");
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34() + 1;
@@ -480,6 +514,38 @@ int main(void)
               plan.render_commands[4].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34,
           "startup render plan owns closed entrance command order");
+    memset(&probe, 0, sizeof(probe));
+    check(csb_v1_startup_execute_asset_commands_kind_pc34(
+              &plan,
+              CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34,
+              asset_executor_probe,
+              &probe) == 1 &&
+              probe.call_count == 1 &&
+              probe.seen_kind[0] ==
+                  CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
+              probe.seen_asset_id[0] == 4,
+          "startup asset executor dispatches closed entrance surface");
+    memset(&probe, 0, sizeof(probe));
+    check(csb_v1_startup_execute_closed_door_asset_commands_pc34(
+              &plan,
+              asset_executor_probe,
+              &probe) &&
+              probe.call_count == 2 &&
+              probe.seen_kind[0] ==
+                  CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 &&
+              probe.seen_kind[1] ==
+                  CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34 &&
+              probe.seen_asset_id[0] == 2 &&
+              probe.seen_asset_id[1] == 3,
+          "startup asset executor dispatches closed entrance door pair");
+    memset(&probe, 0, sizeof(probe));
+    probe.fail_kind = CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34;
+    check(!csb_v1_startup_execute_closed_door_asset_commands_pc34(
+              &plan,
+              asset_executor_probe,
+              &probe) &&
+              probe.call_count == 2,
+          "startup asset executor requires both closed doors");
 
     memset(fb, 0xaa, sizeof(fb));
     check(csb_v1_startup_execute_primitive_commands_pc34(&plan,

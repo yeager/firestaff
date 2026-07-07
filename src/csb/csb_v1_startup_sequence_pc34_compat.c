@@ -612,6 +612,53 @@ int csb_v1_startup_execute_primitive_commands_pc34(
     return executed;
 }
 
+int csb_v1_startup_execute_asset_commands_kind_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupAssetCommandKind_PC34 kind,
+    CSB_V1_StartupAssetExecutor_PC34 executor,
+    void *user)
+{
+    int i;
+    int executed = 0;
+    if (!plan || !executor || kind == CSB_V1_STARTUP_ASSET_NONE_PC34) {
+        return 0;
+    }
+    for (i = 0; i < plan->asset_command_count &&
+                i < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34; ++i) {
+        const CSB_V1_StartupAssetCommand_PC34 *cmd =
+            &plan->asset_commands[i];
+        if (cmd->kind != kind || !cmd->visible || cmd->asset_id <= 0 ||
+            cmd->source_w <= 0 || cmd->source_h <= 0 ||
+            cmd->dest_w <= 0 || cmd->dest_h <= 0) {
+            continue;
+        }
+        if (executor(user, cmd)) {
+            ++executed;
+        }
+    }
+    return executed;
+}
+
+int csb_v1_startup_execute_closed_door_asset_commands_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupAssetExecutor_PC34 executor,
+    void *user)
+{
+    int left;
+    int right;
+    left = csb_v1_startup_execute_asset_commands_kind_pc34(
+        plan,
+        CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34,
+        executor,
+        user);
+    right = csb_v1_startup_execute_asset_commands_kind_pc34(
+        plan,
+        CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34,
+        executor,
+        user);
+    return left > 0 && right > 0;
+}
+
 static void csb_v1_startup_rebuild_primitive_commands_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {

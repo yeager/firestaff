@@ -2584,14 +2584,32 @@ static void m11_execute_csb_startup_primitive_commands(
         framebufferHeight);
 }
 
+typedef struct M11_CSBStartupAssetContext {
+    const M11_GameViewState *state;
+    unsigned char *framebuffer;
+    int framebufferWidth;
+    int framebufferHeight;
+} M11_CSBStartupAssetContext;
+
 static int m11_execute_csb_startup_asset_command(
-    const M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
+    void *user,
     const CSB_V1_StartupAssetCommand_PC34 *cmd)
 {
+    const M11_CSBStartupAssetContext *context =
+        (const M11_CSBStartupAssetContext *)user;
+    const M11_GameViewState *state;
     const M11_AssetSlot *asset;
+    unsigned char *framebuffer;
+    int framebufferWidth;
+    int framebufferHeight;
+
+    if (!context) {
+        return 0;
+    }
+    state = context->state;
+    framebuffer = context->framebuffer;
+    framebufferWidth = context->framebufferWidth;
+    framebufferHeight = context->framebufferHeight;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0 || !cmd || !cmd->visible ||
@@ -2658,6 +2676,22 @@ static int m11_execute_csb_startup_asset_command(
     }
 }
 
+static void m11_csb_startup_asset_context_init(
+    M11_CSBStartupAssetContext *context,
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    if (!context) {
+        return;
+    }
+    context->state = state;
+    context->framebuffer = framebuffer;
+    context->framebufferWidth = framebufferWidth;
+    context->framebufferHeight = framebufferHeight;
+}
+
 static int m11_execute_csb_startup_asset_commands_kind(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
@@ -2666,26 +2700,21 @@ static int m11_execute_csb_startup_asset_commands_kind(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupAssetCommandKind_PC34 kind)
 {
-    int i;
-    int drew = 0;
+    M11_CSBStartupAssetContext context;
 
     if (!plan) {
         return 0;
     }
-    for (i = 0; i < plan->asset_command_count &&
-                i < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34; ++i) {
-        const CSB_V1_StartupAssetCommand_PC34 *cmd =
-            &plan->asset_commands[i];
-        if (cmd->kind != kind) {
-            continue;
-        }
-        drew |= m11_execute_csb_startup_asset_command(state,
-                                                      framebuffer,
-                                                      framebufferWidth,
-                                                      framebufferHeight,
-                                                      cmd);
-    }
-    return drew ? 1 : 0;
+    m11_csb_startup_asset_context_init(&context,
+                                       state,
+                                       framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight);
+    return csb_v1_startup_execute_asset_commands_kind_pc34(
+               plan,
+               kind,
+               m11_execute_csb_startup_asset_command,
+               &context) > 0;
 }
 
 static int m11_execute_csb_startup_closed_door_asset_commands(
@@ -2695,24 +2724,17 @@ static int m11_execute_csb_startup_closed_door_asset_commands(
     int framebufferHeight,
     const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
-    int left;
-    int right;
+    M11_CSBStartupAssetContext context;
 
-    left = m11_execute_csb_startup_asset_commands_kind(
-        state,
-        framebuffer,
-        framebufferWidth,
-        framebufferHeight,
+    m11_csb_startup_asset_context_init(&context,
+                                       state,
+                                       framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight);
+    return csb_v1_startup_execute_closed_door_asset_commands_pc34(
         plan,
-        CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34);
-    right = m11_execute_csb_startup_asset_commands_kind(
-        state,
-        framebuffer,
-        framebufferWidth,
-        framebufferHeight,
-        plan,
-        CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34);
-    return left && right;
+        m11_execute_csb_startup_asset_command,
+        &context);
 }
 
 static int m11_csb_startup_entrance_waiting_for_input(

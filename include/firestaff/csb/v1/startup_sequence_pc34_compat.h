@@ -321,6 +321,10 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
         CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34];
 } CSB_V1_StartupRenderPlan_PC34;
 
+typedef int (*CSB_V1_StartupAssetExecutor_PC34)(
+    void *user,
+    const CSB_V1_StartupAssetCommand_PC34 *command);
+
 typedef struct CSB_V1_StartupCommandState_PC34 {
     int title_active;
     int title_frame;
@@ -362,6 +366,15 @@ int csb_v1_startup_execute_primitive_commands_pc34(
     unsigned char *framebuffer,
     int framebuffer_width,
     int framebuffer_height);
+int csb_v1_startup_execute_asset_commands_kind_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupAssetCommandKind_PC34 kind,
+    CSB_V1_StartupAssetExecutor_PC34 executor,
+    void *user);
+int csb_v1_startup_execute_closed_door_asset_commands_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupAssetExecutor_PC34 executor,
+    void *user);
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int skip_startup);
