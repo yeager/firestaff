@@ -49,6 +49,7 @@
 #define DM2_V1_HUD_ACTION_ICON_COUNT 5
 #define DM2_V1_HUD_CHAMPION_SLOT_COUNT 4
 #define DM2_V1_HUD_CHAMPION_NAME_MAX 8
+#define DM2_V1_HUD_PORTRAIT_COUNT 8
 
 /* ── Depth / distance rows ─────────────────────────────────────── */
 /* DM2 uses the same 4-row perspective as DM1:
@@ -197,6 +198,8 @@ typedef struct {
     uint8_t hp_pct;
     uint8_t stamina_pct;
     uint8_t mana_pct;
+    uint8_t portrait_index;
+    uint8_t portrait_fill_color;
     DM2_V1_ViewportRect leader_mark_rect;
     DM2_V1_ViewportRect portrait_rect;
     DM2_V1_ViewportRect name_marker_rect;

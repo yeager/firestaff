@@ -274,6 +274,10 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
         dst->hp_pct = dm2_v1_hud_clamp_pct((int)src->hp_pct);
         dst->stamina_pct = dm2_v1_hud_clamp_pct((int)src->stamina_pct);
         dst->mana_pct = dm2_v1_hud_clamp_pct((int)src->mana_pct);
+        dst->portrait_index =
+            (uint8_t)(src->portrait_index % DM2_V1_HUD_PORTRAIT_COUNT);
+        dst->portrait_fill_color =
+            (uint8_t)(8u + (dst->portrait_index & 7u));
         dst->fill_color = dst->leader ? 9u : 8u;
         dst->leader_mark_rect =
             (DM2_V1_ViewportRect){ dst->frame_rect.x + 2, py + 3, 3, 3 };
@@ -2679,9 +2683,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             if (plan.champion_slots[slot].occupied) {
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].portrait_rect,
-                                 (uint8_t)(plan.champion_slots[slot].leader
-                                               ? DM2_COL_LTGRAY
-                                               : DM2_COL_GROUND));
+                                 plan.champion_slots[slot].portrait_fill_color);
                 dm2_v1_fill_rect(vp, stride,
                                  &plan.champion_slots[slot].name_marker_rect,
                                  DM2_COL_WHITE);

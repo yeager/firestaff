@@ -123,6 +123,8 @@ static void test_build_champion_record(void)
     CHECK(rec.absolute_direction == 0, "Direction set to North");
     CHECK(rec.squad_position == DM2_VIEW_CELL_FRONT_LEFT,
           "View cell set correctly");
+    CHECK(rec.portrait_index == DM2_PORTRAIT_FIGHTER_MALE,
+          "Portrait index is stored in champion record tail metadata");
     CHECK(rec.cur_hp == rec.max_hp, "HP cur == max at creation");
     CHECK(rec.cur_hp == DM2_INITIAL_HP_FIGHTER,
           "Fighter HP matches class default");
@@ -160,6 +162,8 @@ static void test_build_champion_record(void)
           "Wizard starts with non-zero mana");
     CHECK(wiz.cur_hp == DM2_INITIAL_HP_WIZARD,
           "Wizard HP is lower than Fighter");
+    CHECK(wiz.portrait_index == DM2_PORTRAIT_WIZARD_MALE,
+          "Wizard portrait index is stored");
 }
 
 /* ── Test 3: Session new (new game state) ── */
@@ -333,6 +337,8 @@ static void test_serialize_roundtrip(void)
           "Champion 0 name preserved through round-trip");
     CHECK(l0->cur_hp == r0->cur_hp, "Champion 0 HP preserved");
     CHECK(l0->mana == r0->mana, "Champion 0 mana preserved");
+    CHECK(l0->portrait_index == r0->portrait_index,
+          "Champion 0 portrait index preserved through round-trip");
 
     /* Validate loaded session */
     CHECK(dm2_v1_session_validate(&loaded),

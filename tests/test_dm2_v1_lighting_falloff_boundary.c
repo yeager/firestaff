@@ -309,6 +309,7 @@ static void test_hud_chrome_render_plan(void)
     party.champions[0].hp_pct = 50;
     party.champions[0].stamina_pct = 70;
     party.champions[0].mana_pct = 10;
+    party.champions[0].portrait_index = 3;
     memcpy(party.champions[0].name, "Theron", 6);
     party.champions[1].occupied = 1;
     party.champions[1].leader = 1;
@@ -321,6 +322,8 @@ static void test_hud_chrome_render_plan(void)
               0, &party, &indoor) == 1 &&
               indoor.champion_slots[0].occupied == 1 &&
               indoor.champion_slots[0].hp_pct == 50 &&
+              indoor.champion_slots[0].portrait_index == 3 &&
+              indoor.champion_slots[0].portrait_fill_color == 11 &&
               rect_equals(&indoor.champion_slots[0].hp_bar_rect,
                           270, 39, 34, 3) &&
               rect_equals(&indoor.champion_slots[0].hp_fill_rect,
@@ -648,6 +651,7 @@ static void test_sprite_asset_provider(void)
         party.champions[0].hp_pct = 50;
         party.champions[0].stamina_pct = 70;
         party.champions[0].mana_pct = 10;
+        party.champions[0].portrait_index = 3;
         memcpy(party.champions[0].name, "Theron", 6);
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -655,7 +659,7 @@ static void test_sprite_asset_provider(void)
         dm2_v1_render_ui_chrome(&viewport);
         CHECK("DM2 UI chrome renders bound champion HUD bars",
               framebuffer[33 * 320 + 246] == 15 &&
-                  framebuffer[34 * 320 + 248] == 15 &&
+                  framebuffer[34 * 320 + 250] == 11 &&
                   framebuffer[32 * 320 + 250] == 9 &&
                   framebuffer[39 * 320 + 270] == 2 &&
                   framebuffer[39 * 320 + 287] == 0 &&
