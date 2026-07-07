@@ -465,6 +465,23 @@ int theron_v1_startup_chapter_inspect_receipt_from_request(
     return 1;
 }
 
+int theron_v1_startup_chapter_inspect_receipt_from_facts(
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const char *prefix,
+    Theron_StartupChapterInspectReceipt *out_receipt) {
+
+    Theron_StartupChapterInspectRequest request;
+
+    memset(&request, 0, sizeof(request));
+    request.boot_profile = boot_profile;
+    request.world = world;
+    request.prefix = prefix;
+    return theron_v1_startup_chapter_inspect_receipt_from_request(
+        &request,
+        out_receipt);
+}
+
 int theron_v1_startup_layout_state_from_request(
     const Theron_StartupLayoutStateRequest *request,
     Theron_StartupLayoutState *out_state) {

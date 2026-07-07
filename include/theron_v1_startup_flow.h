@@ -443,6 +443,11 @@ void theron_v1_startup_chapter_inspect_receipt_init(
 int theron_v1_startup_chapter_inspect_receipt_from_request(
     const Theron_StartupChapterInspectRequest *request,
     Theron_StartupChapterInspectReceipt *out_receipt);
+int theron_v1_startup_chapter_inspect_receipt_from_facts(
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    const char *prefix,
+    Theron_StartupChapterInspectReceipt *out_receipt);
 Theron_StartupResult theron_v1_startup_choose_stage(
     Theron_StartupFlow *flow,
     const Theron_DungeonProgression *progression,

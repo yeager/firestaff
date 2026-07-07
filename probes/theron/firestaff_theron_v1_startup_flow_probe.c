@@ -491,6 +491,19 @@ int main(void) {
             check_contains("chapter inspect receipt detail marker",
                            inspect_receipt.inspect_detail,
                            "Chapter 2");
+            check_int("chapter inspect facts receipt builds",
+                      theron_v1_startup_chapter_inspect_receipt_from_facts(
+                          &profile,
+                          &world,
+                          "forcefield",
+                          &inspect_receipt),
+                      1);
+            check_contains("chapter inspect facts marker",
+                           inspect_receipt.marker_line,
+                           "Chapter 2");
+            check_contains("chapter inspect facts detail prefix",
+                           inspect_receipt.inspect_detail,
+                           "forcefield");
         }
 
         theron_v1_startup_layout_state_init(&layout_state);
