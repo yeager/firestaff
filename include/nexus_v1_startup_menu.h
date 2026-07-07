@@ -166,7 +166,8 @@ typedef enum {
     NEXUS_V1_STARTUP_DRAW_FILL_RECT = 2,
     NEXUS_V1_STARTUP_DRAW_OUTLINE_RECT = 3,
     NEXUS_V1_STARTUP_DRAW_TEXT = 4,
-    NEXUS_V1_STARTUP_DRAW_PORTRAIT = 5
+    NEXUS_V1_STARTUP_DRAW_PORTRAIT = 5,
+    NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME = 6
 } Nexus_V1_StartupDrawKind;
 
 typedef enum {
@@ -181,6 +182,7 @@ typedef struct {
     int x;
     int y;
     int portrait_index;
+    int title_frame;
     int text_color;
     int shadow_color;
     Nexus_V1_StartupTextStyle text_style;
@@ -198,6 +200,7 @@ typedef struct {
     Nexus_V1_StartupDrawFn outline_rect;
     Nexus_V1_StartupDrawFn draw_text;
     Nexus_V1_StartupDrawFn draw_portrait;
+    Nexus_V1_StartupDrawFn draw_boot_title_frame;
 } Nexus_V1_StartupDrawExecutor;
 
 typedef struct {
@@ -376,6 +379,10 @@ int nexus_v1_startup_champion_snapshot_build_render_rows(
     Nexus_V1_StartupChampionFooterRender *out_footer);
 int nexus_v1_startup_menu_build_champion_chrome_render(
     Nexus_V1_StartupChromeRender *out_chrome);
+int nexus_v1_startup_presentation_build_title(
+    int title_frame,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands);
 int nexus_v1_startup_presentation_build_save(
     const Nexus_V1_StartupMenuSnapshot *snapshot,
     Nexus_V1_StartupDrawCommand *out_commands,

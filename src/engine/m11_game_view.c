@@ -35362,6 +35362,39 @@ static void m11_nexus_startup_exec_title_background(
     }
 }
 
+static void m11_nexus_startup_exec_boot_title_frame(
+    void *userdata,
+    const Nexus_V1_StartupDrawCommand *command)
+{
+    M11_NexusStartupDrawContext *context =
+        (M11_NexusStartupDrawContext*)userdata;
+    Nexus_Framebuffer nexusFb;
+    int y;
+    int copyW;
+    int copyH;
+    if (!context || !context->framebuffer || !command) {
+        return;
+    }
+    nexus_fb_init(&nexusFb);
+    nexus_render_title((const Nexus_TitleScreen*)(
+                           context->state
+                               ? context->state->nexusTitleScreen
+                               : NULL),
+                       &nexusFb,
+                       command->title_frame);
+    copyW = context->framebufferWidth < NEXUS_FB_W
+                ? context->framebufferWidth
+                : NEXUS_FB_W;
+    copyH = context->framebufferHeight < NEXUS_FB_H
+                ? context->framebufferHeight
+                : NEXUS_FB_H;
+    for (y = 0; y < copyH; ++y) {
+        memcpy(&context->framebuffer[y * context->framebufferWidth],
+               &nexusFb.color_buffer[y * NEXUS_FB_W],
+               (size_t)copyW);
+    }
+}
+
 static void m11_nexus_startup_exec_fill_rect(
     void *userdata,
     const Nexus_V1_StartupDrawCommand *command)
@@ -35484,6 +35517,7 @@ static void m11_draw_nexus_startup_commands(
     executor.outline_rect = m11_nexus_startup_exec_outline_rect;
     executor.draw_text = m11_nexus_startup_exec_text;
     executor.draw_portrait = m11_nexus_startup_exec_portrait;
+    executor.draw_boot_title_frame = m11_nexus_startup_exec_boot_title_frame;
     (void)nexus_v1_startup_presentation_execute(commands,
                                                 command_count,
                                                 &executor);
@@ -39110,9 +39144,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int directDraw = 0;
         nexus_fb_init(&nexusFb);
         if (state->nexusState.title_active) {
-            nexus_render_title((const Nexus_TitleScreen*)state->nexusTitleScreen,
-                               &nexusFb,
-                               state->nexusState.title_frame);
+            Nexus_V1_StartupDrawCommand commands[4];
+            int command_count;
+            directDraw = 1;
+            command_count = nexus_v1_startup_presentation_build_title(
+                state->nexusState.title_frame,
+                commands,
+                (int)(sizeof(commands) / sizeof(commands[0])));
+            m11_draw_nexus_startup_commands(state,
+                                            framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight,
+                                            commands,
+                                            command_count);
         } else if (state->nexusState.startup_save_select_active) {
             Nexus_V1_StartupMenuSnapshot snapshot;
             Nexus_V1_StartupDrawCommand commands[48];

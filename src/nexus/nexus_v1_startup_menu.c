@@ -225,6 +225,19 @@ static int nexus_v1_startup_push_portrait(
     return nexus_v1_startup_push_draw(commands, max_commands, count, &command);
 }
 
+static int nexus_v1_startup_push_boot_title_frame(
+    Nexus_V1_StartupDrawCommand *commands,
+    int max_commands,
+    int *count,
+    int title_frame)
+{
+    Nexus_V1_StartupDrawCommand command;
+    nexus_v1_startup_draw_clear(&command);
+    command.kind = NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME;
+    command.title_frame = title_frame < 0 ? 0 : title_frame;
+    return nexus_v1_startup_push_draw(commands, max_commands, count, &command);
+}
+
 Nexus_V1_StartupInput nexus_v1_startup_input_from_firestaff_menu_code(
     int menu_input)
 {
@@ -1408,6 +1421,26 @@ int nexus_v1_startup_presentation_build_save(
     return count;
 }
 
+int nexus_v1_startup_presentation_build_title(
+    int title_frame,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    int count = 0;
+
+    if (!out_commands || max_commands <= 0) {
+        return 0;
+    }
+    memset(out_commands,
+           0,
+           (size_t)max_commands * sizeof(out_commands[0]));
+    (void)nexus_v1_startup_push_boot_title_frame(out_commands,
+                                                max_commands,
+                                                &count,
+                                                title_frame);
+    return count;
+}
+
 int nexus_v1_startup_presentation_build_champion(
     const Nexus_V1_ChampionPool *pool,
     const Nexus_V1_StartupChampionSnapshot *snapshot,
@@ -1552,6 +1585,12 @@ int nexus_v1_startup_presentation_execute(
             case NEXUS_V1_STARTUP_DRAW_PORTRAIT:
                 if (executor->draw_portrait) {
                     executor->draw_portrait(executor->userdata, command);
+                }
+                break;
+            case NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME:
+                if (executor->draw_boot_title_frame) {
+                    executor->draw_boot_title_frame(executor->userdata,
+                                                    command);
                 }
                 break;
             case NEXUS_V1_STARTUP_DRAW_NONE:
