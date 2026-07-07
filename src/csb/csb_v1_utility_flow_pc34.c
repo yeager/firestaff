@@ -89,6 +89,34 @@ const char *csb_v1_utility_flow_source_evidence(void)
         "MEDIA332_F20E_F21E_A31E_F31E: CSB utility vs game disk\n";
 }
 
+CSB_V1_UtilInput csb_v1_util_input_from_firestaff_menu_code(int menu_input)
+{
+    enum {
+        FIRESTAFF_MENU_INPUT_NONE = 0,
+        FIRESTAFF_MENU_INPUT_UP = 1,
+        FIRESTAFF_MENU_INPUT_DOWN = 2,
+        FIRESTAFF_MENU_INPUT_ACCEPT = 9,
+        FIRESTAFF_MENU_INPUT_BACK = 10,
+        FIRESTAFF_MENU_INPUT_ACTION = 11
+    };
+
+    switch (menu_input) {
+        case FIRESTAFF_MENU_INPUT_UP:
+            return CSB_V1_UTIL_INPUT_UP;
+        case FIRESTAFF_MENU_INPUT_DOWN:
+            return CSB_V1_UTIL_INPUT_DOWN;
+        case FIRESTAFF_MENU_INPUT_ACCEPT:
+            return CSB_V1_UTIL_INPUT_ACCEPT;
+        case FIRESTAFF_MENU_INPUT_ACTION:
+            return CSB_V1_UTIL_INPUT_ACTION;
+        case FIRESTAFF_MENU_INPUT_BACK:
+            return CSB_V1_UTIL_INPUT_BACK;
+        case FIRESTAFF_MENU_INPUT_NONE:
+        default:
+            return CSB_V1_UTIL_INPUT_NONE;
+    }
+}
+
 /* ── Initialize ─────────────────────────────────────────────────────── */
 void csb_v1_util_flow_init(CSB_V1_UtilFlowContext *ctx)
 {

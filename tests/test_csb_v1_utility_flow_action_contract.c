@@ -33,6 +33,23 @@ int main(void)
     CSB_V1_TextMaterial_PC34 material;
     int row_count;
 
+    check(csb_v1_util_input_from_firestaff_menu_code(0) ==
+              CSB_V1_UTIL_INPUT_NONE &&
+              csb_v1_util_input_from_firestaff_menu_code(1) ==
+                  CSB_V1_UTIL_INPUT_UP &&
+              csb_v1_util_input_from_firestaff_menu_code(2) ==
+                  CSB_V1_UTIL_INPUT_DOWN &&
+              csb_v1_util_input_from_firestaff_menu_code(9) ==
+                  CSB_V1_UTIL_INPUT_ACCEPT &&
+              csb_v1_util_input_from_firestaff_menu_code(10) ==
+                  CSB_V1_UTIL_INPUT_BACK &&
+              csb_v1_util_input_from_firestaff_menu_code(11) ==
+                  CSB_V1_UTIL_INPUT_ACTION,
+          "Firestaff menu input codes map through CSB utility input adapter");
+    check(csb_v1_util_input_from_firestaff_menu_code(999) ==
+              CSB_V1_UTIL_INPUT_NONE,
+          "unknown Firestaff menu input maps to CSB utility idle input");
+
     material = csb_v1_text_material_pc34(CSB_V1_TEXT_STYLE_SMALL_PC34);
     check(material.scale_x == 1 &&
               material.scale_y == 1 &&
