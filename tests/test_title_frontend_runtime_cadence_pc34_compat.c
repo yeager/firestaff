@@ -48,8 +48,12 @@ static void expect_step(unsigned int ordinal,
 int main(void) {
     V1_TitleFrontendSourceTiming timing = V1_TitleFrontend_GetSourceTimingEvidence();
     V1_TitleFrontendSourceTiming zero;
+    unsigned char packed[4];
+    unsigned char indexed[12];
 
     memset(&zero, 0, sizeof(zero));
+    memset(packed, 0, sizeof(packed));
+    memset(indexed, 0xee, sizeof(indexed));
 
     expect_u("source zoom step count",
              timing.zoomStepCount,
@@ -117,6 +121,32 @@ int main(void) {
     expect_step(23u, V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK, 1u, 0u, 0u, 0u, 0u, 0u);
     expect_u("source step 24 is rejected",
              (unsigned int)V1_TitleFrontend_GetSourceAnimationStep(24u, NULL),
+             0u);
+
+    packed[0] = 0x12u;
+    packed[1] = 0x34u;
+    packed[2] = 0xabu;
+    packed[3] = 0xcdu;
+    expect_u("TITLE 4bpp unpack accepts valid even-width surface",
+             (unsigned int)V1_TitleFrontend_Unpack4bppScreenToIndexed(
+                 packed, 4u, 2u, indexed, 6u),
+             1u);
+    expect_u("TITLE 4bpp row0 pixel0", indexed[0], 1u);
+    expect_u("TITLE 4bpp row0 pixel1", indexed[1], 2u);
+    expect_u("TITLE 4bpp row0 pixel2", indexed[2], 3u);
+    expect_u("TITLE 4bpp row0 pixel3", indexed[3], 4u);
+    expect_u("TITLE 4bpp stride gap preserved", indexed[4], 0xeeu);
+    expect_u("TITLE 4bpp row1 pixel0", indexed[6], 0x0au);
+    expect_u("TITLE 4bpp row1 pixel1", indexed[7], 0x0bu);
+    expect_u("TITLE 4bpp row1 pixel2", indexed[8], 0x0cu);
+    expect_u("TITLE 4bpp row1 pixel3", indexed[9], 0x0du);
+    expect_u("TITLE 4bpp rejects odd width",
+             (unsigned int)V1_TitleFrontend_Unpack4bppScreenToIndexed(
+                 packed, 3u, 2u, indexed, 6u),
+             0u);
+    expect_u("TITLE 4bpp rejects short stride",
+             (unsigned int)V1_TitleFrontend_Unpack4bppScreenToIndexed(
+                 packed, 4u, 2u, indexed, 3u),
              0u);
 
     if (failures) {
