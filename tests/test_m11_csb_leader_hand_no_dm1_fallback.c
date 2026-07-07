@@ -241,6 +241,17 @@ int main(void)
               "CSB runtime decodes GROUP.Dir for overlay sprite routing");
         check(csb_v1_runtime_group_record_creature_cell(raw + 96, 16, 0) == 0,
               "CSB runtime decodes centered GROUP.Cells for overlays");
+        check(csb_v1_runtime_object_subtype_index(&profile.runtime, dagger) == 8,
+              "CSB runtime resolves weapon subtype for overlay sprite routing");
+        check(csb_v1_runtime_object_subtype_index(&profile.runtime, bow) == 25,
+              "CSB runtime resolves bow subtype for overlay sprite routing");
+        check(csb_v1_runtime_object_subtype_index(&profile.runtime, ven_potion) == 3,
+              "CSB runtime resolves potion subtype high byte for overlay sprite routing");
+        check(csb_v1_runtime_object_subtype_index(&profile.runtime, chest) == 0,
+              "CSB runtime resolves chest subtype from CONTAINER.Type for overlays");
+        check(csb_v1_runtime_object_subtype_index(&profile.runtime,
+                                                  (unsigned short)((THING_TYPE_GROUP << 10) | 0)) == -1,
+              "CSB runtime rejects non-object subtype requests");
         check(csb_v1_viewport_runtime_square_allows_thing_overlay(&dungeon, 0, 1, 0),
               "CSB viewport permits corridor thing overlays");
         raw[69] = 0x10u;

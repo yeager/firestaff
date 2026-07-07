@@ -717,6 +717,12 @@ int csb_v1_runtime_object_icon_index(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing);
 
+/* Resolve the object subtype index used by the current V1 item sprite bridge.
+ * This is the source object subtype, not the dynamic OBJECT.C F0033 icon. */
+int csb_v1_runtime_object_subtype_index(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing);
+
 /* Resolve a CSB runtime object thing to the ReDMCSB DUNGLOB.C ObjectInfo
  * ActionSetIndex used by MENU.C F0386/F0389, without using DM1 M11
  * world thing arrays. */
