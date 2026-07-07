@@ -86,6 +86,7 @@
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_floor_pit_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_stairs_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -22553,44 +22554,50 @@ static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
         (state->world.party.direction == DIR_EAST || state->world.party.direction == DIR_WEST);
 }
 
-static const M11_DM1WallFrontBlit kM11_DM1SideWallBlits[] = {
-    /* Far to near, matching the first source-bound subset of
-     * DUNVIEW.C F0097/F012x wall-zone order.  The relForward/relSide
-     * coordinates name the viewed square; dst rects are layout-696
-     * F0635_-resolved viewport zones.
-     * Entries are paired: [0]+[1], [2]+[3], ... = L+R at same depth. */
-    {3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49},  /* 0: D3L2 */
-    {3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49},  /* 1: D3R2 */
-    {3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49},  /* 2: D3L  */
-    {3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49},  /* 3: D3R  */
-    {2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52},  /* 4: D2L2 */
-    {2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52},  /* 5: D2R2 */
-    /* ReDMCSB DUNVIEW.C F0119/F0120 lines 6945-6973/7096-7166 draw
-     * D2L/D2R through G0163 frame rows 4/5: C710 x=0..74,y=20..90 and
-     * C711 x=149..223,y=20..90.  Keeping M11 on the older 78x74
-     * approximate rectangles made these side walls visually vanish into
-     * adjacent floor/ceiling in Hall/open-corridor views until the party
-     * advanced to D1. */
-    {2, 2, -1, M11_GFX_WALLSET0_D2L,  0,   20, 75, 71},  /* 6: D2L  */
-    {2, 2,  1, M11_GFX_WALLSET0_D2R,  149, 20, 75, 71},  /* 7: D2R  */
-    {1, 1, -1, M11_GFX_WALLSET0_D1L,  0,   9,  60, 111}, /* 8: D1L  */
-    {1, 1,  1, M11_GFX_WALLSET0_D1R,  164, 9,  60, 111}, /* 9: D1R  */
-    {0, 0, -1, M11_GFX_WALLSET0_D0L,  0,   0,  33, 136}, /*10: D0L  */
-    {0, 0,  1, M11_GFX_WALLSET0_D0R,  191, 0,  33, 136}  /*11: D0R  */
-};
+static int m11_dm1_wall_graphic_index(DM1_WallSetIndex wall)
+{
+    return M11_GFX_WALLSET0_D0R + (int)wall;
+}
 
-static const M11_DM1WallFrontBlit* m11_dm1_side_wall_blit_for_rel(
+static const DM1_ViewportWallDrawSpec* m11_dm1_side_wall_spec_for_rel(
     int relForward,
-    int relSide) {
+    int relSide)
+{
     size_t i;
-    for (i = 0; i < sizeof(kM11_DM1SideWallBlits) /
-                    sizeof(kM11_DM1SideWallBlits[0]); ++i) {
-        if (kM11_DM1SideWallBlits[i].relForward == relForward &&
-            kM11_DM1SideWallBlits[i].relSide == relSide) {
-            return &kM11_DM1SideWallBlits[i];
+    for (i = 0; i < dm1_viewport_3d_wall_draw_spec_count(); ++i) {
+        const DM1_ViewportWallDrawSpec* spec =
+            dm1_viewport_3d_get_wall_draw_spec(i);
+        if (!spec || spec->center_wall) {
+            continue;
+        }
+        if (spec->runtime_rel_forward == relForward &&
+            spec->runtime_rel_side == relSide) {
+            return spec;
         }
     }
     return NULL;
+}
+
+static int m11_dm1_side_wall_blit_for_rel(int relForward,
+                                          int relSide,
+                                          M11_DM1WallFrontBlit* outBlit) {
+    const DM1_ViewportWallDrawSpec* spec;
+    if (!outBlit) {
+        return 0;
+    }
+    spec = m11_dm1_side_wall_spec_for_rel(relForward, relSide);
+    if (!spec) {
+        return 0;
+    }
+    outBlit->depthIndex = spec->runtime_rel_forward;
+    outBlit->relForward = spec->runtime_rel_forward;
+    outBlit->relSide = spec->runtime_rel_side;
+    outBlit->graphicIndex = m11_dm1_wall_graphic_index(spec->native_wall);
+    outBlit->dstX = spec->runtime_dst_x;
+    outBlit->dstY = spec->runtime_dst_y;
+    outBlit->width = spec->runtime_width;
+    outBlit->height = spec->runtime_height;
+    return 1;
 }
 
 static void m11_draw_dm1_stairs(const M11_GameViewState* state,
@@ -22698,31 +22705,43 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     const M11_ViewportCell cells[3][3]) {
     size_t i;
     int flipWalls;
-    const M11_DM1WallFrontBlit* kSideBlits = kM11_DM1SideWallBlits;
     if (!state || !state->assetsAvailable) {
         return;
     }
     flipWalls = m11_dm1_use_flipped_walls(state);
-    for (i = 0; i < sizeof(kM11_DM1SideWallBlits) /
-                    sizeof(kM11_DM1SideWallBlits[0]); ++i) {
+    for (i = 0; i < dm1_viewport_3d_wall_draw_spec_count(); ++i) {
         M11_ViewportCell cell;
+        M11_DM1WallFrontBlit blit;
+        const DM1_ViewportWallDrawSpec* spec =
+            dm1_viewport_3d_get_wall_draw_spec(i);
+        if (!spec || spec->center_wall) {
+            continue;
+        }
+        blit.depthIndex = spec->runtime_rel_forward;
+        blit.relForward = spec->runtime_rel_forward;
+        blit.relSide = spec->runtime_rel_side;
+        blit.graphicIndex = m11_dm1_wall_graphic_index(spec->native_wall);
+        blit.dstX = spec->runtime_dst_x;
+        blit.dstY = spec->runtime_dst_y;
+        blit.width = spec->runtime_width;
+        blit.height = spec->runtime_height;
         /* Far to near: ReDMCSB DUNVIEW.C F0128 lines 8478-8533 draws side wall
          * squares far-to-near without testing nearer side-lane occupancy;
          * nearer D1/D2 side walls and center walls overpaint farther panels.
          * Firestaff's split primitive passes still must honor the nearest
          * center blocker; same-side blockers are drawn later in the same
          * far-to-near pass and overpaint the farther side panel. */
-        if (kM11_DM1SideWallBlits[i].relForward > maxVisibleForward) {
+        if (blit.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             kSideBlits[i].relForward,
-                                             kSideBlits[i].relSide)) {
+                                             blit.relForward,
+                                             blit.relSide)) {
             continue;
         }
         if (!m11_sample_viewport_cell(state,
-                                      kSideBlits[i].relForward,
-                                      kSideBlits[i].relSide,
+                                      blit.relForward,
+                                      blit.relSide,
                                       &cell)) {
             continue;
         }
@@ -22735,11 +22754,15 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
             if (flipWalls) {
                 /* ReDMCSB F0116/F0117 (MEDIA709/720 path): when flipped,
                  * left zones use the right-side graphic flipped horizontally
-                 * and vice versa.  The paired entry is at i^1 (XOR toggles
-                 * the LSB to swap even/odd = L/R partner). */
-                size_t partner = i ^ 1;
-                M11_DM1WallFrontBlit swapped = kSideBlits[i];
-                swapped.graphicIndex = kSideBlits[partner].graphicIndex;
+                 * and vice versa. */
+                const DM1_ViewportWallDrawSpec* partnerSpec =
+                    m11_dm1_side_wall_spec_for_rel(blit.relForward,
+                                                   -blit.relSide);
+                M11_DM1WallFrontBlit swapped = blit;
+                if (partnerSpec) {
+                    swapped.graphicIndex =
+                        m11_dm1_wall_graphic_index(partnerSpec->native_wall);
+                }
                 (void)m11_draw_dm1_wall_blit_flipped(state,
                                                      framebuffer,
                                                      fbW,
@@ -22751,7 +22774,7 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                                                framebuffer,
                                                                fbW,
                                                                fbH,
-                                                               &kM11_DM1SideWallBlits[i],
+                                                               &blit,
                                                                10);
             }
         }
@@ -23151,158 +23174,21 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
                                     DM1_VIEW_DOOR_BUTTON_D3R));
 }
 
-typedef struct M11_DM1SideDoorSpec {
-    int relForward;
-    int relSide;
-    int depthIndex;
-    M11_DM1ZoneBlit panel;
-    M11_DM1ZoneBlit frameA;
-    M11_DM1ZoneBlit frameB;
-    int frameCount;
-} M11_DM1SideDoorSpec;
-
-static int m11_dm1_side_door_frame_get_pc34(const M11_DM1SideDoorSpec* spec,
-                                            int frameIndex,
-                                            int valueIndex) {
-    if (!spec) {
-        return -1;
+static M11_DM1ZoneBlit m11_dm1_side_door_blit_from_plan(
+    const DM1_SideDoorBlitPc34* planBlit) {
+    M11_DM1ZoneBlit blit;
+    memset(&blit, 0, sizeof(blit));
+    if (!planBlit) {
+        return blit;
     }
-    /* ReDMCSB: DUNVIEW.C lines 610-645 define G0179/G0181 D3 side
-     * DOOR_FRAMES, lines 646-681 define G0182/G0184 D2 side DOOR_FRAMES,
-     * lines 682-717 define G0185/G0187 D1 side DOOR_FRAMES,
-     * and F0111/F0100 lines 4310-4313 draws Vertical or both
-     * LeftHorizontal/RightHorizontal frame records for opening doors. */
-    if (spec->relForward == 3 && spec->relSide == -1) {
-        return dm1_v1_g0179_get_pc34(frameIndex, valueIndex);
-    }
-    if (spec->relForward == 3 && spec->relSide == 1) {
-        return dm1_v1_g0181_get_pc34(frameIndex, valueIndex);
-    }
-    if (spec->relForward == 2 && spec->relSide == -1) {
-        return dm1_v1_g0182_get_pc34(frameIndex, valueIndex);
-    }
-    if (spec->relForward == 2 && spec->relSide == 1) {
-        return dm1_v1_g0184_get_pc34(frameIndex, valueIndex);
-    }
-    if (spec->relForward == 1 && spec->relSide == -1) {
-        return dm1_v1_g0185_get_pc34(frameIndex, valueIndex);
-    }
-    if (spec->relForward == 1 && spec->relSide == 1) {
-        return dm1_v1_g0187_get_pc34(frameIndex, valueIndex);
-    }
-    return -1;
-}
-
-static int m11_dm1_side_door_frame_blit_pc34(const M11_DM1SideDoorSpec* spec,
-                                             int frameIndex,
-                                             M11_DM1ZoneBlit* outBlit) {
-    int x1;
-    int x2;
-    int y1;
-    int y2;
-    int srcX;
-    int srcY;
-    if (!spec || !outBlit) {
-        return 0;
-    }
-    x1 = m11_dm1_side_door_frame_get_pc34(spec, frameIndex, 0);
-    x2 = m11_dm1_side_door_frame_get_pc34(spec, frameIndex, 1);
-    y1 = m11_dm1_side_door_frame_get_pc34(spec, frameIndex, 2);
-    y2 = m11_dm1_side_door_frame_get_pc34(spec, frameIndex, 3);
-    srcX = m11_dm1_side_door_frame_get_pc34(spec, frameIndex, 6);
-    srcY = m11_dm1_side_door_frame_get_pc34(spec, frameIndex, 7);
-    if (x1 < 0 || x2 < x1 || y1 < 0 || y2 < y1 ||
-        srcX < 0 || srcY < 0) {
-        return 0;
-    }
-    /* Some side-door DOOR_FRAMES halves are all zero because that half is
-     * fully outside the side view.  ReDMCSB's zone resolver effectively
-     * rejects them; keep the runtime path from drawing a 1x1 top-left dot. */
-    if (x1 == 0 && x2 == 0 && y1 == 0 && y2 == 0 &&
-        srcX == 0 && srcY == 0) {
-        return 0;
-    }
-    *outBlit = spec->panel;
-    outBlit->srcX = srcX;
-    outBlit->srcY = srcY;
-    outBlit->dstX = x1;
-    outBlit->dstY = y1;
-    outBlit->width = x2 - x1 + 1;
-    outBlit->height = y2 - y1 + 1;
-    return 1;
-}
-
-static int m11_dm1_side_door_panel_blits_for_cell(const M11_DM1SideDoorSpec* spec,
-                                                  const M11_ViewportCell* cell,
-                                                  M11_DM1ZoneBlit outBlits[2]) {
-    int frameIndex;
-    int count = 0;
-    if (!spec || !cell || !outBlits || cell->doorState == 0) {
-        return 0;
-    }
-    if (spec->relForward > 3) {
-        return 0;
-    }
-    if (cell->doorState >= 1 && cell->doorState <= 3) {
-        int stateIndex = cell->doorState - 1;
-        if (cell->doorVertical) {
-            frameIndex = 1 + stateIndex; /* Vertical[0..2]. */
-            return m11_dm1_side_door_frame_blit_pc34(spec, frameIndex,
-                                                     &outBlits[0]) ? 1 : 0;
-        }
-        frameIndex = 4 + stateIndex; /* LeftHorizontal[0..2]. */
-        if (m11_dm1_side_door_frame_blit_pc34(spec, frameIndex,
-                                              &outBlits[count])) {
-            ++count;
-        }
-        frameIndex = 7 + stateIndex; /* RightHorizontal[0..2]. */
-        if (m11_dm1_side_door_frame_blit_pc34(spec, frameIndex,
-                                              &outBlits[count])) {
-            ++count;
-        }
-        return count;
-    }
-    return m11_dm1_side_door_frame_blit_pc34(spec, 0, &outBlits[0]) ? 1 : 0;
-}
-
-static int m11_dm1_side_door_panel_blits_for_draw(const M11_DM1SideDoorSpec* spec,
-                                                  const M11_ViewportCell* cell,
-                                                  M11_DM1ZoneBlit outBlits[2]) {
-    int count = m11_dm1_side_door_panel_blits_for_cell(spec, cell, outBlits);
-    if (count > 0) {
-        return count;
-    }
-    if (!spec || !cell || !outBlits || cell->doorState == 0) {
-        return 0;
-    }
-    outBlits[0] = spec->panel;
-    if (cell->doorState >= 1 && cell->doorState <= 3) {
-        static const int kDoorOpenSrcY[3][4] = {
-            {0, 65, 43, 21},
-            {0, 44, 29, 14},
-            {0, 27, 17, 7}
-        };
-        static const int kDoorOpenHeight[3][4] = {
-            {0, 23, 45, 67},
-            {0, 17, 32, 47},
-            {0, 11, 21, 31}
-        };
-        outBlits[0].srcY = kDoorOpenSrcY[spec->depthIndex][cell->doorState];
-        outBlits[0].height = kDoorOpenHeight[spec->depthIndex][cell->doorState];
-        if (spec->depthIndex == 2) {
-            outBlits[0].dstY = (spec->relSide == -1 || spec->relSide == 1) ? 29 : 28;
-            if (spec->relSide == -1) {
-                outBlits[0].srcX = 0;
-                outBlits[0].dstX = 30;
-                outBlits[0].width = 44;
-            } else if (spec->relSide == 1) {
-                outBlits[0].srcX = 0;
-                outBlits[0].dstX = 150;
-                outBlits[0].width = 44;
-            }
-        }
-    }
-    return 1;
+    blit.graphicIndex = planBlit->graphicIndex;
+    blit.srcX = planBlit->srcX;
+    blit.srcY = planBlit->srcY;
+    blit.dstX = planBlit->dstX;
+    blit.dstY = planBlit->dstY;
+    blit.width = planBlit->width;
+    blit.height = planBlit->height;
+    return blit;
 }
 
 static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
@@ -23311,47 +23197,34 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
                                     int fbH,
                                     int maxVisibleForward,
                                     const M11_ViewportCell cells[3][3]) {
-    static const M11_DM1SideDoorSpec kSpecs[] = {
-        /* D3L2/R2 doors have only the clipped door panel in DUNVIEW.C. */
-        {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
-        {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
-        /* D3L/R side doors: side frame pair + clipped D3 panel. */
-        {3, -1, 2, {M11_GFX_DOOR_SET0_D3, 1,  0, 30,  29, 43, 38},
-                   {M11_GFX_DOOR_FRAME_D3W, 0, 0, 16, 27, 16, 43},
-                   {M11_GFX_DOOR_FRAME_D3W, 0, 0, 73, 27, 16, 43}, 2},
-        {3,  1, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 151, 29, 43, 38},
-                   {M11_GFX_DOOR_FRAME_D3W, 0, 0, 147, 27, 16, 43},
-                   {M11_GFX_DOOR_FRAME_D3W, 0, 0, 192, 26, 16, 43}, 2},
-        /* D2L/R: top frame + clipped D2 panel. */
-        {2, -1, 1, {M11_GFX_DOOR_SET0_D2, 4, 0, 0,   24, 60, 59},
-                   {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 6, 22, 70, 3}, {0}, 1},
-        {2,  1, 1, {M11_GFX_DOOR_SET0_D2, 0, 0, 164, 23, 60, 59},
-                   {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 160, 22, 64, 3}, {0}, 1},
-        /* D1L/R: top frame + clipped D1 panel. */
-        {1, -1, 0, {M11_GFX_DOOR_SET0_D1, 64, 0, 0,   18, 32, 86},
-                   {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 0, 14, 102, 4}, {0}, 1},
-        {1,  1, 0, {M11_GFX_DOOR_SET0_D1, 0,  0, 192, 18, 32, 86},
-                   {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 122, 14, 102, 4}, {0}, 1}
-    };
-    size_t i;
+    int i;
+    int planCount;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (i = 0; i < sizeof(kSpecs) / sizeof(kSpecs[0]); ++i) {
+    planCount = dm1_v1_side_door_render_plan_count_pc34();
+    for (i = 0; i < planCount; ++i) {
         M11_ViewportCell cell;
+        DM1_SideDoorRenderPlanPc34 plan;
+        DM1_SideDoorBlitPc34 panelPlans[2];
         M11_DM1ZoneBlit panels[2];
+        M11_DM1ZoneBlit frameA;
+        M11_DM1ZoneBlit frameB;
         int panelGraphic;
         int panelCount;
         int panelIndex;
-        if (kSpecs[i].relForward > maxVisibleForward) {
+        if (!dm1_v1_side_door_render_plan_at_pc34(i, &plan)) {
+            continue;
+        }
+        if (plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                                  kSpecs[i].relForward,
-                                                  kSpecs[i].relSide)) {
+                                                  plan.relForward,
+                                                  plan.relSide)) {
             continue;
         }
-        if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
+        if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR) {
@@ -23359,25 +23232,30 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         }
         /* ReDMCSB: door frame persists at all door states.
          * Only the panel is hidden when fully open. */
-        if (kSpecs[i].frameCount >= 1) {
+        if (plan.frameCount >= 1) {
+            frameA = m11_dm1_side_door_blit_from_plan(&plan.frameA);
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                         &kSpecs[i].frameA, 10);
+                                         &frameA, 10);
         }
-        if (kSpecs[i].frameCount >= 2) {
+        if (plan.frameCount >= 2) {
+            frameB = m11_dm1_side_door_blit_from_plan(&plan.frameB);
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                         &kSpecs[i].frameB, 10);
+                                         &frameB, 10);
         }
         if (m11_viewport_cell_is_open(&cell)) {
             continue; /* Frame drawn, skip panel for open doors */
         }
-        panelCount = m11_dm1_side_door_panel_blits_for_draw(&kSpecs[i],
-                                                            &cell,
-                                                            panels);
+        panelCount = dm1_v1_side_door_panel_blits_for_draw_pc34(
+            &plan,
+            cell.doorState,
+            cell.doorVertical,
+            panelPlans);
         if (panelCount <= 0) {
             continue;
         }
-        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, kSpecs[i].depthIndex);
+        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, plan.depthIndex);
         for (panelIndex = 0; panelIndex < panelCount; ++panelIndex) {
+            panels[panelIndex] = m11_dm1_side_door_blit_from_plan(&panelPlans[panelIndex]);
             if (panelGraphic >= 0) {
                 panels[panelIndex].graphicIndex = panelGraphic;
             }
@@ -23393,55 +23271,55 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
                                              int fbH,
                                              int maxVisibleForward,
                                              const M11_ViewportCell cells[3][3]) {
-    static const M11_DM1SideDoorSpec kSpecs[] = {
-        {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
-        {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
-        {3, -1, 2, {M11_GFX_DOOR_SET0_D3, 1,  0, 30,  29, 43, 38}, {0}, {0}, 0},
-        {3,  1, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 151, 29, 43, 38}, {0}, {0}, 0},
-        {2, -1, 1, {M11_GFX_DOOR_SET0_D2, 4, 0, 0,   24, 60, 59}, {0}, {0}, 0},
-        {2,  1, 1, {M11_GFX_DOOR_SET0_D2, 0, 0, 164, 23, 60, 59}, {0}, {0}, 0},
-        {1, -1, 0, {M11_GFX_DOOR_SET0_D1, 64, 0, 0,   18, 32, 86}, {0}, {0}, 0},
-        {1,  1, 0, {M11_GFX_DOOR_SET0_D1, 0,  0, 192, 18, 32, 86}, {0}, {0}, 0}
-    };
-    size_t i;
+    int i;
+    int planCount;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (i = 0; i < sizeof(kSpecs) / sizeof(kSpecs[0]); ++i) {
+    planCount = dm1_v1_side_door_render_plan_count_pc34();
+    for (i = 0; i < planCount; ++i) {
         M11_ViewportCell cell;
+        DM1_SideDoorRenderPlanPc34 plan;
+        DM1_SideDoorBlitPc34 panelPlans[2];
         M11_DM1ZoneBlit panels[2];
         int panelGraphic;
         int panelCount;
         int panelIndex;
-        if (kSpecs[i].relForward > maxVisibleForward) {
+        if (!dm1_v1_side_door_render_plan_at_pc34(i, &plan)) {
+            continue;
+        }
+        if (plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                                  kSpecs[i].relForward,
-                                                  kSpecs[i].relSide)) {
+                                                  plan.relForward,
+                                                  plan.relSide)) {
             continue;
         }
-        if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
+        if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR ||
             m11_viewport_cell_is_open(&cell) || cell.doorOrnamentOrdinal <= 0) {
             continue;
         }
-        panelCount = m11_dm1_side_door_panel_blits_for_draw(&kSpecs[i],
-                                                            &cell,
-                                                            panels);
+        panelCount = dm1_v1_side_door_panel_blits_for_draw_pc34(
+            &plan,
+            cell.doorState,
+            cell.doorVertical,
+            panelPlans);
         if (panelCount <= 0) {
             continue;
         }
-        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, kSpecs[i].depthIndex);
+        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, plan.depthIndex);
         for (panelIndex = 0; panelIndex < panelCount; ++panelIndex) {
+            panels[panelIndex] = m11_dm1_side_door_blit_from_plan(&panelPlans[panelIndex]);
             if (panelGraphic >= 0) {
                 panels[panelIndex].graphicIndex = panelGraphic;
             }
             m11_draw_dm1_door_ornament_on_panel(state, framebuffer, fbW, fbH,
                                                 &panels[panelIndex],
-                                                kSpecs[i].depthIndex,
+                                                plan.depthIndex,
                                                 cell.doorOrnamentOrdinal);
         }
     }
@@ -23453,46 +23331,46 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
                                                    int fbH,
                                                    int maxVisibleForward,
                                                    const M11_ViewportCell cells[3][3]) {
-    static const M11_DM1SideDoorSpec kSpecs[] = {
-        {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
-        {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
-        {3, -1, 2, {M11_GFX_DOOR_SET0_D3, 1,  0, 30,  29, 43, 38}, {0}, {0}, 0},
-        {3,  1, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 151, 29, 43, 38}, {0}, {0}, 0},
-        {2, -1, 1, {M11_GFX_DOOR_SET0_D2, 4, 0, 0,   24, 60, 59}, {0}, {0}, 0},
-        {2,  1, 1, {M11_GFX_DOOR_SET0_D2, 0, 0, 164, 23, 60, 59}, {0}, {0}, 0},
-        {1, -1, 0, {M11_GFX_DOOR_SET0_D1, 64, 0, 0,   18, 32, 86}, {0}, {0}, 0},
-        {1,  1, 0, {M11_GFX_DOOR_SET0_D1, 0,  0, 192, 18, 32, 86}, {0}, {0}, 0}
-    };
-    size_t i;
+    int i;
+    int planCount;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (i = 0; i < sizeof(kSpecs) / sizeof(kSpecs[0]); ++i) {
+    planCount = dm1_v1_side_door_render_plan_count_pc34();
+    for (i = 0; i < planCount; ++i) {
         M11_ViewportCell cell;
+        DM1_SideDoorRenderPlanPc34 plan;
+        DM1_SideDoorBlitPc34 panelPlans[2];
         M11_DM1ZoneBlit panels[2];
         int panelGraphic;
         int panelCount;
-        if (kSpecs[i].relForward > maxVisibleForward) {
+        if (!dm1_v1_side_door_render_plan_at_pc34(i, &plan)) {
+            continue;
+        }
+        if (plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                                  kSpecs[i].relForward,
-                                                  kSpecs[i].relSide)) {
+                                                  plan.relForward,
+                                                  plan.relSide)) {
             continue;
         }
-        if (!m11_sample_viewport_cell(state, kSpecs[i].relForward, kSpecs[i].relSide, &cell)) {
+        if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_DOOR || cell.doorState != 5) {
             continue;
         }
-        panelCount = m11_dm1_side_door_panel_blits_for_draw(&kSpecs[i],
-                                                            &cell,
-                                                            panels);
+        panelCount = dm1_v1_side_door_panel_blits_for_draw_pc34(
+            &plan,
+            cell.doorState,
+            cell.doorVertical,
+            panelPlans);
         if (panelCount <= 0) {
             continue;
         }
-        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, kSpecs[i].depthIndex);
+        panels[0] = m11_dm1_side_door_blit_from_plan(&panelPlans[0]);
+        panelGraphic = m11_dm1_door_panel_graphic(state, &cell, plan.depthIndex);
         if (panelGraphic >= 0) {
             panels[0].graphicIndex = panelGraphic;
         }
@@ -31059,16 +30937,15 @@ int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
                                           int* outDstY,
                                           int* outWidth,
                                           int* outHeight) {
-    const M11_DM1WallFrontBlit* blit =
-        m11_dm1_side_wall_blit_for_rel(relForward, relSide);
-    if (!blit) {
+    M11_DM1WallFrontBlit blit;
+    if (!m11_dm1_side_wall_blit_for_rel(relForward, relSide, &blit)) {
         return 0;
     }
-    if (outGraphicIndex) *outGraphicIndex = blit->graphicIndex;
-    if (outDstX) *outDstX = blit->dstX;
-    if (outDstY) *outDstY = blit->dstY;
-    if (outWidth) *outWidth = blit->width;
-    if (outHeight) *outHeight = blit->height;
+    if (outGraphicIndex) *outGraphicIndex = blit.graphicIndex;
+    if (outDstX) *outDstX = blit.dstX;
+    if (outDstY) *outDstY = blit.dstY;
+    if (outWidth) *outWidth = blit.width;
+    if (outHeight) *outHeight = blit.height;
     return 1;
 }
 
@@ -31147,49 +31024,29 @@ int M11_GameView_ProbeDm1SideDoorPanelBlit(int relForward,
                                            int* outDstY,
                                            int* outWidth,
                                            int* outHeight) {
-    static const M11_DM1SideDoorSpec kProbeSpecs[] = {
-        {3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}, {0}, {0}, 0},
-        {3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}, {0}, {0}, 0},
-        {3, -1, 2, {M11_GFX_DOOR_SET0_D3, 1,  0, 30,  29, 43, 38}, {0}, {0}, 0},
-        {3,  1, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 151, 29, 43, 38}, {0}, {0}, 0},
-        {2, -1, 1, {M11_GFX_DOOR_SET0_D2, 4, 0, 0,   24, 60, 59}, {0}, {0}, 0},
-        {2,  1, 1, {M11_GFX_DOOR_SET0_D2, 0, 0, 164, 23, 60, 59}, {0}, {0}, 0},
-        {1, -1, 0, {M11_GFX_DOOR_SET0_D1, 64, 0, 0,   18, 32, 86}, {0}, {0}, 0},
-        {1,  1, 0, {M11_GFX_DOOR_SET0_D1, 0,  0, 192, 18, 32, 86}, {0}, {0}, 0}
-    };
-    M11_ViewportCell cell;
-    M11_DM1ZoneBlit panels[2];
-    const M11_DM1SideDoorSpec* spec = NULL;
+    DM1_SideDoorRenderPlanPc34 plan;
+    DM1_SideDoorBlitPc34 panelPlans[2];
     int panelCount;
-    size_t i;
-    for (i = 0; i < sizeof(kProbeSpecs) / sizeof(kProbeSpecs[0]); ++i) {
-        if (kProbeSpecs[i].relForward == relForward &&
-            kProbeSpecs[i].relSide == relSide) {
-            spec = &kProbeSpecs[i];
-            break;
-        }
-    }
-    if (!spec) {
+    if (!dm1_v1_side_door_render_plan_for_rel_pc34(relForward, relSide, &plan)) {
         return 0;
     }
-    memset(&cell, 0, sizeof(cell));
-    cell.valid = 1;
-    cell.elementType = DUNGEON_ELEMENT_DOOR;
-    cell.doorState = doorState;
-    cell.doorVertical = doorVertical ? 1 : 0;
-    panelCount = m11_dm1_side_door_panel_blits_for_draw(spec, &cell, panels);
+    panelCount = dm1_v1_side_door_panel_blits_for_draw_pc34(
+        &plan,
+        doorState,
+        doorVertical ? 1 : 0,
+        panelPlans);
     if (blitIndex < 0) {
         return panelCount;
     }
     if (panelCount <= 0 || blitIndex >= panelCount) {
         return 0;
     }
-    if (outSrcX) *outSrcX = panels[blitIndex].srcX;
-    if (outSrcY) *outSrcY = panels[blitIndex].srcY;
-    if (outDstX) *outDstX = panels[blitIndex].dstX;
-    if (outDstY) *outDstY = panels[blitIndex].dstY;
-    if (outWidth) *outWidth = panels[blitIndex].width;
-    if (outHeight) *outHeight = panels[blitIndex].height;
+    if (outSrcX) *outSrcX = panelPlans[blitIndex].srcX;
+    if (outSrcY) *outSrcY = panelPlans[blitIndex].srcY;
+    if (outDstX) *outDstX = panelPlans[blitIndex].dstX;
+    if (outDstY) *outDstY = panelPlans[blitIndex].dstY;
+    if (outWidth) *outWidth = panelPlans[blitIndex].width;
+    if (outHeight) *outHeight = panelPlans[blitIndex].height;
     return 1;
 }
 
