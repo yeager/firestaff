@@ -45,6 +45,8 @@
 #define CSB_V1_UTIL_PREVIEW_ROW_H 10
 #define CSB_V1_UTIL_PREVIEW_MAX_ROWS 4
 #define CSB_V1_UTIL_TEXT_STYLE_SMALL 1
+#define CSB_V1_UTIL_PANEL_FILL_COLOR 0
+#define CSB_V1_UTIL_PANEL_BORDER_COLOR 14
 #define CSB_V1_UTIL_SELECTED_HIGHLIGHT_COLOR 12
 
 static const CSB_V1_UtilFlowAction s_csb_v1_util_menu_actions[
@@ -642,6 +644,10 @@ int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
     out_layout->x = CSB_V1_UTIL_PANEL_X;
     out_layout->y = CSB_V1_UTIL_PANEL_Y;
     out_layout->w = CSB_V1_UTIL_PANEL_W;
+    out_layout->fill_visible = 1;
+    out_layout->fill_color = CSB_V1_UTIL_PANEL_FILL_COLOR;
+    out_layout->border_visible = 1;
+    out_layout->border_color = CSB_V1_UTIL_PANEL_BORDER_COLOR;
     out_layout->import_status_x = CSB_V1_UTIL_PANEL_X;
     out_layout->import_status_y = CSB_V1_UTIL_PANEL_Y;
     out_layout->prompt_x = CSB_V1_UTIL_PANEL_X;
