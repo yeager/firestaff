@@ -1,6 +1,30 @@
 
 # Unreleased
 
+# Firestaff v3.0.64
+
+Firestaff v3.0.64 packages the current `main` after the DM1 V1 creature
+draw-plan ownership pass landed after `v3.0.63` was tagged.
+
+## Highlights since v3.0.63
+
+- **DM1 creature draw-plan ownership**: DM1 V1 creature group and duplicate
+  draw expansion for center and side squares now lives in the source-locked
+  DM1 compat helper used by M11.
+- **Viewport cleanup**: M11 now consumes DM1-owned creature draw-plan entries
+  instead of branching locally over creature groups, visible duplicates and
+  first-in-group badge placement.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.64`.
+
+## Verification
+
+- Local release verification covers the DM1 creature render source-lock gate,
+  the Phase A probe and `git diff --check` before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.64` release run.
+
 # Firestaff v3.0.63
 
 Firestaff v3.0.63 packages the current `main` after the DM1 projectile and
