@@ -1271,15 +1271,15 @@ static void m11_draw_csb_runtime_thing_overlays(
                                      framebuffer,
                                      framebuffer_width,
                                      framebuffer_height,
-                                     0,
-                                     33,
-                                     224,
-                                     136,
+                                     placement->sprite_viewport_x,
+                                     placement->sprite_viewport_y,
+                                     placement->sprite_viewport_w,
+                                     placement->sprite_viewport_h,
                                      type,
                                      subtype,
                                      rel_cell,
                                      pile_index,
-                                     overlay->forward - 1,
+                                     placement->sprite_depth_index,
                                      row)) {
                 m11_csb_runtime_overlay_stats_add_object_sprite(state);
             } else if (icon >= 0 &&
