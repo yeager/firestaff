@@ -413,6 +413,11 @@ int csb_v1_startup_execute_closed_door_asset_commands_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupAssetExecutor_PC34 executor,
     void *user);
+int csb_v1_startup_title_empty_fallback_needed_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height);
 int csb_v1_startup_execute_opening_composite_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,

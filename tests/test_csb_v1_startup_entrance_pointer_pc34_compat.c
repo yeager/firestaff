@@ -347,6 +347,29 @@ int main(void)
                   CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
               probe.seen_asset_id[0] == 1,
           "startup asset executor dispatches PRESENTS title region");
+    {
+        unsigned char framebuffer[320 * 200];
+        memset(framebuffer, 0, sizeof(framebuffer));
+        check(csb_v1_startup_title_empty_fallback_needed_pc34(
+                  &plan,
+                  framebuffer,
+                  320,
+                  200),
+              "startup title policy requests fallback when PRESENTS blit is empty");
+        framebuffer[plan.title_dest_y * 320 + plan.title_dest_x] = 7u;
+        check(!csb_v1_startup_title_empty_fallback_needed_pc34(
+                  &plan,
+                  framebuffer,
+                  320,
+                  200),
+              "startup title policy suppresses fallback when PRESENTS pixels exist");
+        check(!csb_v1_startup_title_empty_fallback_needed_pc34(
+                  NULL,
+                  framebuffer,
+                  320,
+                  200),
+              "startup title policy ignores missing render plan");
+    }
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34() + 1;

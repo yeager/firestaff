@@ -2791,49 +2791,6 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
     return plan.special_palette;
 }
 
-static int m11_count_nonzero_pixels(const unsigned char *framebuffer,
-                                    int framebufferWidth,
-                                    int framebufferHeight,
-                                    int x,
-                                    int y,
-                                    int w,
-                                    int h)
-{
-    int yy;
-    int xx;
-    int count = 0;
-    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 ||
-        w <= 0 || h <= 0) {
-        return 0;
-    }
-    if (x < 0) {
-        w += x;
-        x = 0;
-    }
-    if (y < 0) {
-        h += y;
-        y = 0;
-    }
-    if (x + w > framebufferWidth) {
-        w = framebufferWidth - x;
-    }
-    if (y + h > framebufferHeight) {
-        h = framebufferHeight - y;
-    }
-    if (w <= 0 || h <= 0) {
-        return 0;
-    }
-    for (yy = y; yy < y + h; ++yy) {
-        const unsigned char *row = framebuffer + yy * framebufferWidth;
-        for (xx = x; xx < x + w; ++xx) {
-            if (row[xx] != 0u) {
-                ++count;
-            }
-        }
-    }
-    return count;
-}
-
 static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        unsigned char *framebuffer,
                                        int framebufferWidth,
@@ -2868,14 +2825,11 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         plan,
         CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34);
     if (drew_title) {
-        if (plan->title_empty_fallback_text &&
-            m11_count_nonzero_pixels(framebuffer,
-                                     framebufferWidth,
-                                     framebufferHeight,
-                                     plan->title_dest_x,
-                                     plan->title_dest_y,
-                                     plan->title_dest_w,
-                                     plan->title_dest_h) == 0) {
+        if (csb_v1_startup_title_empty_fallback_needed_pc34(
+                plan,
+                framebuffer,
+                framebufferWidth,
+                framebufferHeight)) {
             m11_draw_csb_startup_plan_text(
                 framebuffer,
                 framebufferWidth,

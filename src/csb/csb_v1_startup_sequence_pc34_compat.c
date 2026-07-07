@@ -660,6 +660,71 @@ int csb_v1_startup_execute_closed_door_asset_commands_pc34(
     return left > 0 && right > 0;
 }
 
+static int csb_v1_startup_count_nonzero_region_pc34(
+    const unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int x,
+    int y,
+    int w,
+    int h)
+{
+    int yy;
+    int xx;
+    int count = 0;
+    if (!framebuffer || framebuffer_width <= 0 || framebuffer_height <= 0 ||
+        w <= 0 || h <= 0) {
+        return 0;
+    }
+    if (x < 0) {
+        w += x;
+        x = 0;
+    }
+    if (y < 0) {
+        h += y;
+        y = 0;
+    }
+    if (x + w > framebuffer_width) {
+        w = framebuffer_width - x;
+    }
+    if (y + h > framebuffer_height) {
+        h = framebuffer_height - y;
+    }
+    if (w <= 0 || h <= 0) {
+        return 0;
+    }
+    for (yy = y; yy < y + h; ++yy) {
+        const unsigned char *row = framebuffer + yy * framebuffer_width;
+        for (xx = x; xx < x + w; ++xx) {
+            if (row[xx] != 0u) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
+int csb_v1_startup_title_empty_fallback_needed_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height)
+{
+    if (!plan || !framebuffer || !plan->title_empty_fallback_text ||
+        plan->title_empty_fallback_text[0] == '\0' ||
+        plan->title_dest_w <= 0 || plan->title_dest_h <= 0) {
+        return 0;
+    }
+    return csb_v1_startup_count_nonzero_region_pc34(
+               framebuffer,
+               framebuffer_width,
+               framebuffer_height,
+               plan->title_dest_x,
+               plan->title_dest_y,
+               plan->title_dest_w,
+               plan->title_dest_h) == 0;
+}
+
 int csb_v1_startup_execute_opening_composite_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
