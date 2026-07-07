@@ -3498,7 +3498,9 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     state->csbState.startup_import_preview_active = result.preview_active;
 
     if (result.kind == CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW) {
-        m11_set_status(state, "BOOT", "CSB IMPORT READY");
+        m11_set_status(state,
+                       result.status_scope ? result.status_scope : "BOOT",
+                       result.status ? result.status : "CSB IMPORT READY");
         return M11_GAME_INPUT_REDRAW;
     }
     if (result.kind == CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED) {

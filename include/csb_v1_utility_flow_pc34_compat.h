@@ -74,6 +74,8 @@ typedef struct {
     CSB_V1_UtilFlowAction action;
     int selected_action_index;
     int preview_active;
+    const char *status_scope;
+    const char *status;
 } CSB_V1_UtilInputResult;
 
 typedef struct {

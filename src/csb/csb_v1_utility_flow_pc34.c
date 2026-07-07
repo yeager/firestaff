@@ -418,6 +418,8 @@ int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
         out_result->kind = CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW;
         out_result->selected_action_index = ctx->selected_action_index;
         out_result->preview_active = 0;
+        out_result->status_scope = "BOOT";
+        out_result->status = "CSB IMPORT READY";
         return 1;
     }
     if (input == CSB_V1_UTIL_INPUT_UP ||
