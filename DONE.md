@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup input facts ownership: `theron_v1_startup_flow` now routes startup keyboard and pointer input directly from raw phase/profile/world/roster/Continue facts. M11 no longer builds Theron layout state before startup input routing. Verification: Theron startup-flow probe passed 508/508, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup render facts ownership: `theron_v1_startup_flow` now builds startup render plans directly from raw phase/profile/world/roster/Continue facts. M11 no longer builds Theron layout elements before drawing the startup screen. Verification: Theron startup-flow probe passed 503/503, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 startup render facts ownership: `dm2_v1_startup_presentation` now builds startup draw commands directly from raw save-root/resume/slot/selection facts. M11 no longer builds a DM2 startup snapshot before rendering the startup menu. Verification: DM2 M11 startup/profile gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

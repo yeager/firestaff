@@ -374,6 +374,8 @@ int main(void) {
             Theron_StartupLayoutStateRequest request;
             Theron_StartupChapterInspectRequest inspect_request;
             Theron_StartupChapterInspectReceipt inspect_receipt;
+            Theron_StartupAction pointer_action;
+            Theron_StartupResult pointer_result = THERON_STARTUP_ERR_NULL;
             Theron_V1_BootProfile profile;
             Theron_V1_World world;
             char fact_names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1]
@@ -383,8 +385,10 @@ int main(void) {
             const char *names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
             const char *titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
             int order[THERON_STARTUP_MAX_COMPANIONS + 1] = { 6, 2, 1, 0 };
+            int handled;
 
             memset(&request, 0, sizeof(request));
+            theron_v1_startup_action_init(&pointer_action);
             memset(&profile, 0, sizeof(profile));
             memset(fact_names, 0, sizeof(fact_names));
             memset(fact_titles, 0, sizeof(fact_titles));
@@ -494,6 +498,60 @@ int main(void) {
                 "render plan facts helper owns stage-panel graphics",
                 &render_plan,
                 THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL);
+            check_int("input facts helper builds action",
+                      theron_v1_startup_handle_input_from_facts(
+                          THERON_STARTUP_PHASE_STAGE_SELECT,
+                          THERON_DUNGEON_COUNT + 99,
+                          &profile,
+                          &world,
+                          7,
+                          1,
+                          1,
+                          3,
+                          0,
+                          -1,
+                          "READY",
+                          fact_names,
+                          fact_titles,
+                          THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1,
+                          0x45,
+                          order,
+                          THERON_STARTUP_MAX_COMPANIONS + 1,
+                          THERON_STARTUP_INPUT_ACCEPT,
+                          &pointer_action),
+                      THERON_STARTUP_OK);
+            check_int("input facts helper returns continue",
+                      pointer_action.kind,
+                      THERON_STARTUP_ACTION_CONTINUE_SAVE);
+            handled = theron_v1_startup_handle_pointer_from_facts(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                THERON_DUNGEON_COUNT + 99,
+                &profile,
+                &world,
+                7,
+                1,
+                1,
+                3,
+                0,
+                -1,
+                "READY",
+                fact_names,
+                fact_titles,
+                THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1,
+                0x45,
+                order,
+                THERON_STARTUP_MAX_COMPANIONS + 1,
+                40,
+                66,
+                &pointer_result,
+                &pointer_action);
+            check_int("pointer facts helper handled", handled, 1);
+            check_int("pointer facts helper result",
+                      pointer_result,
+                      THERON_STARTUP_OK);
+            check_int("pointer facts helper action",
+                      pointer_action.kind,
+                      THERON_STARTUP_ACTION_CONTINUE_SAVE);
 
             memset(&inspect_request, 0, sizeof(inspect_request));
             inspect_request.boot_profile = &profile;
