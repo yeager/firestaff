@@ -102,6 +102,61 @@ static void test_run_accepted(void)
     }
 }
 
+static void test_action_area_render_contract(void)
+{
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_area_rect_pc34();
+    DM1_V1_ActionMenuRenderPlanPc34 plan;
+    DM1_V1_ActionAreaRectPc34 icon;
+    DM1_V1_ActionAreaRectPc34 inner;
+
+    CHECK(rect.x == 224);
+    CHECK(rect.y == 77);
+    CHECK(rect.w == 96);
+    CHECK(rect.h == 45);
+
+    CHECK(dm1_v1_action_menu_build_render_plan_pc34(3, &plan) == 1);
+    CHECK(plan.graphic_id == DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34);
+    CHECK(plan.graphic_zone_id == 11);
+    CHECK(plan.clear_rect.x == 224);
+    CHECK(plan.clear_rect.w == 96);
+    CHECK(plan.graphic_rect.h == 45);
+    CHECK(plan.header_rect.x == 224);
+    CHECK(plan.header_text.x == 235);
+    CHECK(plan.header_text.y == 83);
+    CHECK(plan.row_rects[0].x == 234);
+    CHECK(plan.row_rects[0].y == 86);
+    CHECK(plan.row_text[2].x == 241);
+    CHECK(plan.row_text[2].y == 117);
+    CHECK(plan.header_text_color == 0);
+    CHECK(plan.header_fill_color == 4);
+    CHECK(plan.row_text_color == 4);
+    CHECK(plan.row_fill_color == 0);
+
+    CHECK(dm1_v1_action_menu_build_render_plan_pc34(2, &plan) == 1);
+    CHECK(plan.graphic_zone_id == 77);
+    CHECK(plan.graphic_rect.h == 33);
+    CHECK(dm1_v1_action_menu_build_render_plan_pc34(1, &plan) == 1);
+    CHECK(plan.graphic_zone_id == 79);
+    CHECK(plan.graphic_rect.h == 21);
+    CHECK(dm1_v1_action_menu_build_render_plan_pc34(0, &plan) == 0);
+
+    CHECK(dm1_v1_action_icon_cell_zone_id_pc34(0) == 89);
+    CHECK(dm1_v1_action_icon_cell_zone_id_pc34(3) == 92);
+    CHECK(dm1_v1_action_icon_inner_zone_id_pc34(0) == 93);
+    CHECK(dm1_v1_action_icon_inner_zone_id_pc34(3) == 96);
+    icon = dm1_v1_action_icon_cell_rect_pc34(3);
+    CHECK(icon.x == 299);
+    CHECK(icon.y == 86);
+    CHECK(icon.w == 20);
+    CHECK(icon.h == 35);
+    inner = dm1_v1_action_icon_inner_rect_pc34(3);
+    CHECK(inner.x == 301);
+    CHECK(inner.y == 95);
+    CHECK(inner.w == 16);
+    CHECK(inner.h == 16);
+    CHECK(dm1_v1_action_icon_cell_zone_id_pc34(4) == 0);
+}
+
 int main(void)
 {
     test_table_values();
@@ -109,6 +164,7 @@ int main(void)
     test_get_function();
     test_components_non_negative();
     test_run_accepted();
+    test_action_area_render_contract();
     printf("dm1_v1_box_action_area: "
            "%d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
