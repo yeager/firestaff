@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup keyboard ownership: `theron_v1_startup_flow` now handles startup keyboard/menu action selection from layout state, including Continue availability and progression. M11 no longer reads those facts directly before Theron startup keyboard routing. Verification: Theron startup-flow probe passed 501/501, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup pointer ownership: `theron_v1_startup_flow` now handles startup pointer hit-test and action selection from layout state. M11 no longer builds Theron layout elements or hit objects before routing mouse/touch startup input. Verification: Theron startup-flow probe passed 498/498, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2/Nexus startup pointer facts ownership: DM2 startup menus and Nexus save/champion startup menus now handle pointer input directly from raw M11 facts, including snapshot construction, hit-test, selection normalization, and action return. M11 no longer builds those startup snapshots or hit objects before pointer routing.

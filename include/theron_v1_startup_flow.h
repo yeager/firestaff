@@ -508,6 +508,10 @@ Theron_StartupResult theron_v1_startup_handle_input_with_progression(
     int has_continue,
     Theron_StartupInput input,
     Theron_StartupAction *out_action);
+Theron_StartupResult theron_v1_startup_handle_input_from_layout_state(
+    const Theron_StartupLayoutState *state,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action);
 Theron_StartupResult theron_v1_startup_handle_hit(
     Theron_StartupPhase phase,
     Theron_DungeonID selected_dungeon,

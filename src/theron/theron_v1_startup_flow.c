@@ -2083,6 +2083,28 @@ Theron_StartupResult theron_v1_startup_handle_input(
                                                            out_action);
 }
 
+Theron_StartupResult theron_v1_startup_handle_input_from_layout_state(
+    const Theron_StartupLayoutState *state,
+    Theron_StartupInput input,
+    Theron_StartupAction *out_action) {
+
+    int has_continue;
+
+    if (!state || !out_action) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+    has_continue = state->has_tqsv_continue || state->has_srm_continue;
+    return theron_v1_startup_handle_input_with_progression(
+        state->phase,
+        state->selected_dungeon,
+        state->progression,
+        state->soul_cursor,
+        state->continue_focus,
+        has_continue,
+        input,
+        out_action);
+}
+
 Theron_StartupResult theron_v1_startup_handle_hit_with_progression(
     Theron_StartupPhase phase,
     Theron_DungeonID selected_dungeon,
