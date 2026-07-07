@@ -117,6 +117,7 @@ typedef struct CSB_V1_StartupRenderState_PC34 {
     int opening_active;
     int opening_delay_ticks;
     int opening_step;
+    int utility_overlay_active;
     int runtime_start_valid;
     int runtime_start_x;
     int runtime_start_y;
@@ -198,6 +199,7 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int fallback_status_y;
     int fallback_status_style;
     const char *fallback_status_text;
+    int fallback_status_visible;
     int fallback_frame_valid;
     int fallback_frame_x;
     int fallback_frame_y;
@@ -208,6 +210,7 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int fallback_detail_y;
     int fallback_detail_style;
     const char *fallback_detail_text;
+    int fallback_detail_visible;
     int fallback_runtime_detail_visible;
     char fallback_runtime_detail_text[96];
     int fallback_prompt_x;

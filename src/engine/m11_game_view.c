@@ -2596,6 +2596,8 @@ static int m11_csb_startup_build_render_plan(
         state->csbState.startup_entrance_opening_delay_ticks;
     render_state.opening_step =
         state->csbState.startup_entrance_opening_step;
+    render_state.utility_overlay_active =
+        state->csbState.startup_import_available;
     if (state->csbBootProfile) {
         const CSB_V1_BootProfile *profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
@@ -3089,7 +3091,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                        plan.fallback_subtitle_y,
                                        plan.fallback_subtitle_style,
                                        plan.fallback_subtitle_text);
-        if (!state->csbState.startup_import_available) {
+        if (plan.fallback_status_visible) {
             m11_draw_csb_startup_plan_text(framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,
@@ -3098,8 +3100,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                            plan.fallback_status_style,
                                            plan.fallback_status_text);
         }
-        if (state->csbBootProfile &&
-            !state->csbState.startup_import_available) {
+        if (plan.fallback_detail_visible) {
             const char *detail = plan.fallback_runtime_detail_visible
                 ? plan.fallback_runtime_detail_text
                 : plan.fallback_detail_text;
