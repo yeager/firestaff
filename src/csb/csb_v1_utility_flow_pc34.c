@@ -449,6 +449,13 @@ int csb_v1_util_flow_handle_input(CSB_V1_UtilFlowContext *ctx,
     return 0;
 }
 
+int csb_v1_util_flow_overlay_accepts_input(int import_available,
+                                           int credits_active,
+                                           int opening_active)
+{
+    return import_available && !credits_active && !opening_active;
+}
+
 int csb_v1_util_flow_menu_layout(const CSB_V1_UtilFlowContext *ctx,
                                  CSB_V1_UtilMenuLayout *out_layout)
 {
