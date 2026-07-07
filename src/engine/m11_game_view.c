@@ -22334,37 +22334,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         int fbH,
                                         int maxVisibleForwardLimit,
                                         const M11_ViewportCell cells[3][3]) {
-    typedef struct M11_DM1WallOrnSpec {
-        int relForward;
-        int relSide;
-        int viewWallIndex;
-        int flipHorizontal;
-        M11_DM1ZoneBlit blit;
-    } M11_DM1WallOrnSpec;
-    static const M11_DM1WallOrnSpec kWallOrnaments[] = {
-        {3,-2,0,1,{0,0,0,26,  21,10,42}},
-        {3, 2,1,1,{0,0,0,187, 22,10,42}},
-        {3,-1,2,0,{0,0,0,80,  22,10,42}},
-        {3, 1,4,1,{0,0,0,134, 22,10,42}},
-        {3,-1,2,0,{0,0,0,0,   16,90,56}},
-        {3, 0,3,0,{0,0,0,67,  16,90,56}},
-        {3, 1,4,0,{0,0,0,135, 16,89,56}},
-        {2,-1,5,0,{0,0,0,66,  24,10,42}},
-        {2, 1,6,1,{0,0,0,149, 24,10,42}},
-        {2,-1,7,0,{0,35,0,0,  19,55,56}},
-        {2, 0,8,0,{0,0,0,67,  19,90,56}},
-        {2, 1,9,0,{0,0,0,169, 19,55,56}},
-        {1,-1,10,0,{0,0,0,50,  28,10,42}},
-        {1, 1,11,1,{0,0,0,165, 28,10,42}},
-        {1, 0,12,0,{0,0,0,67,  22,90,56}}
-    };
-    static const unsigned char kOrnD3Palette[16] = {
-        0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
-    };
-    static const unsigned char kOrnD2Palette[16] = {
-        0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
-    };
-    size_t i;
+    int i;
     int maxVisibleForward = 3;
     if (!state || !state->assetsAvailable) {
         return;
@@ -22386,21 +22356,27 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
     if (maxVisibleForwardLimit > 0 && maxVisibleForwardLimit < maxVisibleForward) {
         maxVisibleForward = maxVisibleForwardLimit;
     }
-    for (i = 0; i < sizeof(kWallOrnaments) / sizeof(kWallOrnaments[0]); ++i) {
+    for (i = 0; i < dm1_v1_wall_ornament_view_spec_count_pc34(); ++i) {
+        DM1_WallOrnamentViewSpecPc34 spec;
         M11_ViewportCell cell;
-        M11_DM1ZoneBlit blit;
+        DM1_WallOrnamentRenderPlanPc34 plan;
+        M11_DM1ZoneBlit alcoveBlit;
         int localIdx;
         int mapIdx;
+        int maxHeight = 0;
         int ornGlobalIdx = -1;
-        if (kWallOrnaments[i].relForward > maxVisibleForward) {
+        if (!dm1_v1_wall_ornament_view_spec_pc34(i, &spec)) {
+            continue;
+        }
+        if (spec.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                                  kWallOrnaments[i].relForward,
-                                                  kWallOrnaments[i].relSide)) {
+                                             spec.relForward,
+                                             spec.relSide)) {
             continue;
         }
-        if (!m11_sample_viewport_cell(state, kWallOrnaments[i].relForward, kWallOrnaments[i].relSide, &cell)) {
+        if (!m11_sample_viewport_cell(state, spec.relForward, spec.relSide, &cell)) {
             continue;
         }
         if (!cell.valid) {
@@ -22411,7 +22387,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         }
         mapIdx = state->world.party.mapIndex;
         if (cell.wallOrnamentOrdinal <= 0 &&
-            kWallOrnaments[i].viewWallIndex == 12 &&
+            spec.viewWallIndex == 12 &&
             cell.championPortraitOrdinal >= 0 &&
             state->world.dungeon && mapIdx >= 0 &&
             mapIdx < (int)state->world.dungeon->header.mapCount &&
@@ -22432,32 +22408,22 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (ornGlobalIdx < 0) {
             continue;
         }
-        blit = kWallOrnaments[i].blit;
-        if (m11_dm1_wall_ornament_zone(m11_dm1_wall_ornament_coord_set_index(ornGlobalIdx),
-                                       kWallOrnaments[i].viewWallIndex,
-                                       &blit)) {
-            const M11_AssetSlot* slot;
-            if (ornGlobalIdx == 0 && kWallOrnaments[i].viewWallIndex != 12) {
-                int unreadableHeight =
-                    m11_dm1_unreadable_inscription_box_height(
-                        kWallOrnaments[i].relForward,
-                        kWallOrnaments[i].relSide,
-                        kWallOrnaments[i].blit.width <= 16,
-                        m11_dm1_visible_wall_text_line_count(state, &cell));
-                if (unreadableHeight > 0 && unreadableHeight < blit.height) {
-                    blit.height = unreadableHeight;
-                }
+        if (ornGlobalIdx == 0 && spec.viewWallIndex != 12) {
+            int unreadableHeight =
+                m11_dm1_unreadable_inscription_box_height(
+                    spec.relForward,
+                    spec.relSide,
+                    spec.unreadableInscriptionCompactBox,
+                    m11_dm1_visible_wall_text_line_count(state, &cell));
+            if (unreadableHeight > 0) {
+                maxHeight = unreadableHeight;
             }
-            /* ReDMCSB DUNVIEW.C F0107 increments the native wall-ornament
-             * bitmap for front-facing projections (and D1 side views), but not
-             * for D2L_RIGHT/D2R_LEFT side projections: D2R_LEFT reuses the base
-             * side bitmap and flips it horizontally. */
-            int nativeOffset = (kWallOrnaments[i].viewWallIndex >= 2 &&
-                                kWallOrnaments[i].viewWallIndex != 5 &&
-                                kWallOrnaments[i].viewWallIndex != 6) ? 1 : 0;
-            blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 + nativeOffset;
+        }
+        if (dm1_v1_wall_ornament_render_plan_pc34(
+                ornGlobalIdx, spec.viewWallIndex, maxHeight, &plan)) {
+            const M11_AssetSlot* slot;
             slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                        (unsigned int)blit.graphicIndex);
+                                        (unsigned int)plan.graphicIndex);
             /* ReDMCSB DUNVIEW.C F0107 lines 3590-3639 decodes the current
              * map inscription, and lines 3608-3717 handle D1C front-facing
              * inscriptions by patching the wall and drawing the inscription
@@ -22465,7 +22431,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
              * unreadable inscription bitmap is only the distant/side ornament
              * when there is decoded front text; drawing it under that readable
              * text makes Hall inscriptions look double-exposed and illegible. */
-            if (ornGlobalIdx == 0 && kWallOrnaments[i].viewWallIndex == 12 &&
+            if (ornGlobalIdx == 0 && spec.viewWallIndex == 12 &&
                 m11_dm1_visible_wall_text_line_count(state, &cell) > 0) {
                 m11_draw_dm1_front_wall_inscription_text(state, &cell,
                                                          framebuffer, fbW, fbH);
@@ -22473,13 +22439,12 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             }
             if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
                 m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
-                                                       M11_VIEWPORT_X + blit.dstX,
-                                                       M11_VIEWPORT_Y + blit.dstY,
-                                                       blit.width, blit.height,
-                                                       10,
-                                                       kWallOrnaments[i].viewWallIndex <= 4 ? kOrnD3Palette : kOrnD2Palette,
-                                                       m11_dm1_wall_ornament_flip_horizontal_pc34(
-                                                           kWallOrnaments[i].viewWallIndex));
+                                                       M11_VIEWPORT_X + plan.dstX,
+                                                       M11_VIEWPORT_Y + plan.dstY,
+                                                       plan.width, plan.height,
+                                                       plan.transparentColor,
+                                                       plan.paletteMapValid ? plan.paletteMap : NULL,
+                                                       plan.flipHorizontal);
                 /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3923-3928:
                  * champion portraits are owned by the D1C front-mirror route
                  * (`m11_draw_dm1_front_mirror_route`) after the full cell
@@ -22488,12 +22453,19 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                  * Sonja/Mophus/Wuuf-class portraits directly over stone wall
                  * texture, which made them look like they were floating or on
                  * the wrong Hall wall. */
-                if (m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx)) {
+                if (plan.isAlcove) {
+                    alcoveBlit.graphicIndex = plan.graphicIndex;
+                    alcoveBlit.srcX = plan.srcX;
+                    alcoveBlit.srcY = plan.srcY;
+                    alcoveBlit.dstX = plan.dstX;
+                    alcoveBlit.dstY = plan.dstY;
+                    alcoveBlit.width = plan.width;
+                    alcoveBlit.height = plan.height;
                     m11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,
-                                                   &cell, &blit,
+                                                   &cell, &alcoveBlit,
                                                    dm1_viewport_3d_f0115_c2500_c2900_row(
-                                                       kWallOrnaments[i].relForward,
-                                                       kWallOrnaments[i].relSide));
+                                                       spec.relForward,
+                                                       spec.relSide));
                 }
             }
         }

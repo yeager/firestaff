@@ -8,6 +8,45 @@
 #include "firestaff/dm1/v1/G0205_pc34_compat.h"
 #include <string.h>
 
+enum {
+    DM1_GFX_WALL_ORNAMENT_BASE_PC34 = 259,
+    DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34 = 10
+};
+
+static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
+    {3, -2,  0, 1},
+    {3,  2,  1, 1},
+    {3, -1,  2, 0},
+    {3,  1,  4, 0},
+    {3, -1,  2, 0},
+    {3,  0,  3, 0},
+    {3,  1,  4, 0},
+    {2, -1,  5, 0},
+    {2,  1,  6, 0},
+    {2, -1,  7, 0},
+    {2,  0,  8, 0},
+    {2,  1,  9, 0},
+    {1, -1, 10, 0},
+    {1,  1, 11, 0},
+    {1,  0, 12, 0}
+};
+
+static const unsigned char s_wallOrnamentPaletteD3[16] = {
+    0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
+};
+
+static const unsigned char s_wallOrnamentPaletteD2[16] = {
+    0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
+};
+
+static void copy_palette(unsigned char dst[16], const unsigned char src[16])
+{
+    int i;
+    for (i = 0; i < 16; ++i) {
+        dst[i] = src[i];
+    }
+}
+
 void m11_wo_init(M11_WO_OrnamentState* state) {
     if (!state) return;
     memset(state, 0, sizeof(M11_WO_OrnamentState));
@@ -135,4 +174,71 @@ int dm1_v1_wall_ornament_is_alcove_global_pc34(int globalIndex) {
      * DUNGEON.C F0149: current-map global wall ornaments 1, 2, and 3 are
      * alcoves for wall-cell object visibility. */
     return globalIndex == 1 || globalIndex == 2 || globalIndex == 3;
+}
+
+int dm1_v1_wall_ornament_view_spec_count_pc34(void) {
+    return (int)(sizeof(s_wallOrnamentViewSpecs) /
+                 sizeof(s_wallOrnamentViewSpecs[0]));
+}
+
+int dm1_v1_wall_ornament_view_spec_pc34(
+    int index,
+    DM1_WallOrnamentViewSpecPc34* outSpec) {
+    if (!outSpec || index < 0 ||
+        index >= dm1_v1_wall_ornament_view_spec_count_pc34()) {
+        return 0;
+    }
+    *outSpec = s_wallOrnamentViewSpecs[index];
+    return 1;
+}
+
+int dm1_v1_wall_ornament_render_plan_pc34(
+    int globalIndex,
+    int viewWallIndex,
+    int maxHeight,
+    DM1_WallOrnamentRenderPlanPc34* outPlan) {
+    DM1_WallOrnamentZoneBlitPc34 blit;
+    int coordSet;
+    int nativeOffset;
+    if (!outPlan || globalIndex < 0) {
+        return 0;
+    }
+    coordSet = dm1_v1_wall_ornament_coord_set_index_pc34(globalIndex);
+    if (!dm1_v1_wall_ornament_zone_pc34(coordSet, viewWallIndex, &blit)) {
+        return 0;
+    }
+    if (maxHeight > 0 && maxHeight < blit.height) {
+        blit.height = maxHeight;
+    }
+    if (blit.width <= 0 || blit.height <= 0) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0107 increments the native wall-ornament bitmap
+     * for front-facing projections and D1 side views, but not for
+     * D2L_RIGHT/D2R_LEFT side projections. */
+    nativeOffset = (viewWallIndex >= 2 &&
+                    viewWallIndex != 5 &&
+                    viewWallIndex != 6) ? 1 : 0;
+
+    outPlan->graphicIndex =
+        DM1_GFX_WALL_ORNAMENT_BASE_PC34 + globalIndex * 2 + nativeOffset;
+    outPlan->srcX = blit.srcX;
+    outPlan->srcY = blit.srcY;
+    outPlan->dstX = blit.dstX;
+    outPlan->dstY = blit.dstY;
+    outPlan->width = blit.width;
+    outPlan->height = blit.height;
+    outPlan->transparentColor = DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34;
+    outPlan->flipHorizontal =
+        dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
+    outPlan->paletteMapValid = 1;
+    if (viewWallIndex <= 4) {
+        copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD3);
+    } else {
+        copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD2);
+    }
+    outPlan->isAlcove =
+        dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
+    return 1;
 }

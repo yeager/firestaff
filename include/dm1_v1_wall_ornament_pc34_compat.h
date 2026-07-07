@@ -65,6 +65,28 @@ typedef struct DM1_WallOrnamentZoneBlitPc34 {
     int height;
 } DM1_WallOrnamentZoneBlitPc34;
 
+typedef struct DM1_WallOrnamentViewSpecPc34 {
+    int relForward;
+    int relSide;
+    int viewWallIndex;
+    int unreadableInscriptionCompactBox;
+} DM1_WallOrnamentViewSpecPc34;
+
+typedef struct DM1_WallOrnamentRenderPlanPc34 {
+    int graphicIndex;
+    int srcX;
+    int srcY;
+    int dstX;
+    int dstY;
+    int width;
+    int height;
+    int transparentColor;
+    int flipHorizontal;
+    int paletteMapValid;
+    unsigned char paletteMap[16];
+    int isAlcove;
+} DM1_WallOrnamentRenderPlanPc34;
+
 void m11_wo_init(M11_WO_OrnamentState* state);
 void m11_wo_set_level_ornaments(M11_WO_OrnamentState* state,
                                  uint8_t wall_count, uint8_t floor_count,
@@ -80,6 +102,15 @@ int dm1_v1_wall_ornament_zone_pc34(int coordSet,
                                    DM1_WallOrnamentZoneBlitPc34* outBlit);
 int dm1_v1_wall_ornament_flip_horizontal_pc34(int viewWallIndex);
 int dm1_v1_wall_ornament_is_alcove_global_pc34(int globalIndex);
+int dm1_v1_wall_ornament_view_spec_count_pc34(void);
+int dm1_v1_wall_ornament_view_spec_pc34(
+    int index,
+    DM1_WallOrnamentViewSpecPc34* outSpec);
+int dm1_v1_wall_ornament_render_plan_pc34(
+    int globalIndex,
+    int viewWallIndex,
+    int maxHeight,
+    DM1_WallOrnamentRenderPlanPc34* outPlan);
 
 #ifdef __cplusplus
 }
