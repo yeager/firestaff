@@ -12,6 +12,17 @@
 #define DM1_V1_INSCRIPTION_GLYPH_HEIGHT 8
 #define DM1_V1_INSCRIPTION_TRANSPARENT_COLOR 10
 #define DM1_V1_INSCRIPTION_CENTER_X 112
+#define DM1_V1_INSCRIPTION_MAX_LINES 4
+
+typedef struct DM1_V1_InscriptionLinePlanPc34 {
+    int glyphStart;
+    int glyphCount;
+    int textX;
+    int textY;
+    int textWidth;
+    int nextCursor;
+    int done;
+} DM1_V1_InscriptionLinePlanPc34;
 
 static inline int DM1_V1_InscriptionGlyphIndexFromSourceByte(unsigned char ch) {
     /* ReDMCSB DUNVIEW.C F0107 lines ~3631/~3704 blit decoded inscription
@@ -71,6 +82,202 @@ static inline int DM1_V1_InscriptionTextWidth(int characterCount) {
 
 static inline int DM1_V1_InscriptionTextX(int characterCount) {
     return DM1_V1_INSCRIPTION_CENTER_X - (DM1_V1_InscriptionTextWidth(characterCount) / 2);
+}
+
+static inline int DM1_V1_InscriptionAppendRawGlyphPc34(unsigned char* outGlyphs,
+                                                       int outGlyphCapacity,
+                                                       int* ioPos,
+                                                       int glyph) {
+    if (!outGlyphs || !ioPos || glyph < 0 || glyph > 35) {
+        return 0;
+    }
+    if (*ioPos >= outGlyphCapacity - 1) {
+        return 0;
+    }
+    outGlyphs[(*ioPos)++] = (unsigned char)glyph;
+    return 1;
+}
+
+static inline void DM1_V1_InscriptionAppendEscape29RawPc34(
+        unsigned char* outGlyphs,
+        int outGlyphCapacity,
+        int* ioPos,
+        int code) {
+    static const unsigned char kThe[] = {19, 7, 4, 26};
+    static const unsigned char kYou[] = {24, 14, 20, 26};
+    const unsigned char* seq = 0;
+    int seqLen = 0;
+    int i;
+    if (code == 0 || code == 1) {
+        (void)DM1_V1_InscriptionAppendRawGlyphPc34(
+            outGlyphs, outGlyphCapacity, ioPos, 28 + code);
+        return;
+    }
+    if (code == 2) {
+        seq = kThe;
+        seqLen = (int)(sizeof(kThe) / sizeof(kThe[0]));
+    } else if (code == 3) {
+        seq = kYou;
+        seqLen = (int)(sizeof(kYou) / sizeof(kYou[0]));
+    } else if (code >= 4 && code <= 9) {
+        (void)DM1_V1_InscriptionAppendRawGlyphPc34(
+            outGlyphs, outGlyphCapacity, ioPos, 26 + code);
+        return;
+    }
+    for (i = 0; i < seqLen; ++i) {
+        (void)DM1_V1_InscriptionAppendRawGlyphPc34(
+            outGlyphs, outGlyphCapacity, ioPos, seq[i]);
+    }
+}
+
+static inline void DM1_V1_InscriptionAppendEscape30RawPc34(
+        unsigned char* outGlyphs,
+        int outGlyphCapacity,
+        int* ioPos,
+        int code) {
+    static const unsigned char kThe[] = {19, 7, 4, 26};
+    static const unsigned char kYou[] = {24, 14, 20, 26};
+    const unsigned char* seq = 0;
+    int seqLen = 0;
+    int i;
+    if (code == 2) {
+        seq = kThe;
+        seqLen = (int)(sizeof(kThe) / sizeof(kThe[0]));
+    } else if (code == 3) {
+        seq = kYou;
+        seqLen = (int)(sizeof(kYou) / sizeof(kYou[0]));
+    }
+    for (i = 0; i < seqLen; ++i) {
+        (void)DM1_V1_InscriptionAppendRawGlyphPc34(
+            outGlyphs, outGlyphCapacity, ioPos, seq[i]);
+    }
+}
+
+static inline int DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
+        const unsigned short* textData,
+        int textDataWordCount,
+        int wordOffset,
+        unsigned char* outGlyphs,
+        int outGlyphCapacity) {
+    int wi;
+    int codeIdx = 0;
+    int pos = 0;
+    int escape = 0;
+    unsigned short w = 0;
+    if (!textData || wordOffset < 0 ||
+        wordOffset >= textDataWordCount ||
+        !outGlyphs || outGlyphCapacity < 2) {
+        if (outGlyphs && outGlyphCapacity > 0) {
+            outGlyphs[0] = 0x81U;
+        }
+        return 0;
+    }
+    wi = wordOffset;
+    while (pos < outGlyphCapacity - 1 && wi < textDataWordCount) {
+        int code;
+        if (codeIdx == 0) {
+            w = textData[wi];
+            code = (w >> 10) & 0x1F;
+        } else if (codeIdx == 1) {
+            code = (w >> 5) & 0x1F;
+        } else {
+            code = w & 0x1F;
+        }
+        ++codeIdx;
+        if (codeIdx >= 3) {
+            codeIdx = 0;
+            ++wi;
+        }
+        if (escape == 29) {
+            DM1_V1_InscriptionAppendEscape29RawPc34(
+                outGlyphs, outGlyphCapacity, &pos, code);
+            escape = 0;
+        } else if (escape == 30) {
+            DM1_V1_InscriptionAppendEscape30RawPc34(
+                outGlyphs, outGlyphCapacity, &pos, code);
+            escape = 0;
+        } else if (code < 28) {
+            (void)DM1_V1_InscriptionAppendRawGlyphPc34(
+                outGlyphs, outGlyphCapacity, &pos, code);
+        } else if (code == 28) {
+            if (pos < outGlyphCapacity - 1) {
+                outGlyphs[pos++] = 0x80U;
+            }
+        } else if (code == 29 || code == 30) {
+            escape = code;
+        } else {
+            break;
+        }
+    }
+    if (pos < outGlyphCapacity) {
+        outGlyphs[pos++] = 0x81U;
+    }
+    if (pos < outGlyphCapacity) {
+        outGlyphs[pos] = 0;
+    }
+    return pos;
+}
+
+static inline int DM1_V1_InscriptionUnreadableBoxHeightPc34(
+        int relForward,
+        int relSide,
+        int sideProjection,
+        int lineCount) {
+    static const unsigned char kUnreadableBoxHeight[5][3] = {
+        {5, 8, 13},
+        {7, 13, 20},
+        {5, 12, 19},
+        {10, 17, 27},
+        {11, 22, 33}
+    };
+    int row = -1;
+    if (lineCount <= 0 || lineCount >= 4) {
+        return 0;
+    }
+    if (relForward == 3) {
+        row = (relSide != 0 && sideProjection) ? 0 : 1;
+    } else if (relForward == 2) {
+        row = (relSide != 0 && sideProjection) ? 2 : 3;
+    } else if (relForward == 1 && relSide != 0) {
+        row = 4;
+    }
+    if (row < 0) {
+        return 0;
+    }
+    return (int)kUnreadableBoxHeight[row][lineCount - 1];
+}
+
+static inline int DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
+        const unsigned char* glyphs,
+        int glyphCapacity,
+        int cursor,
+        int line,
+        DM1_V1_InscriptionLinePlanPc34* outPlan) {
+    static const int kLineBottomY[DM1_V1_INSCRIPTION_MAX_LINES] = {
+        48, 59, 75, 86
+    };
+    int start;
+    int glyphCount;
+    if (!glyphs || !outPlan || glyphCapacity <= 0 ||
+        cursor < 0 || cursor >= glyphCapacity ||
+        line < 0 || line >= DM1_V1_INSCRIPTION_MAX_LINES) {
+        return 0;
+    }
+    start = cursor;
+    while (cursor < glyphCapacity &&
+           glyphs[cursor] != 0x80U &&
+           glyphs[cursor] != 0x81U) {
+        ++cursor;
+    }
+    glyphCount = cursor - start;
+    outPlan->glyphStart = start;
+    outPlan->glyphCount = glyphCount;
+    outPlan->textWidth = DM1_V1_InscriptionTextWidth(glyphCount);
+    outPlan->textX = DM1_V1_InscriptionTextX(glyphCount);
+    outPlan->textY = kLineBottomY[line] - 7;
+    outPlan->done = (cursor >= glyphCapacity || glyphs[cursor] == 0x81U);
+    outPlan->nextCursor = outPlan->done ? cursor : cursor + 1;
+    return 1;
 }
 
 #endif /* FIRESTAFF_DM1_V1_INSCRIPTION_FONT_PC34_COMPAT_H */
