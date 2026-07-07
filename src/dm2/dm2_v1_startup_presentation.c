@@ -1,4 +1,5 @@
 #include "dm2_v1_startup_presentation.h"
+#include "dm2_v1_asset_loader.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -11,6 +12,33 @@ static void dm2_v1_startup_draw_clear(DM2_V1_StartupDrawCommand *command)
     memset(command, 0, sizeof(*command));
     command->kind = DM2_V1_STARTUP_DRAW_NONE;
     command->row = -1;
+    command->transparent_color = -1;
+}
+
+static int dm2_v1_startup_push_gdat_image(DM2_V1_StartupDrawCommand *commands,
+                                          int max_commands,
+                                          int *count,
+                                          int category,
+                                          int index,
+                                          int field,
+                                          const DM2_V1_StartupRect *rect,
+                                          int transparent_color)
+{
+    DM2_V1_StartupDrawCommand *command;
+    if (!commands || !count || !rect || max_commands <= 0 ||
+        *count < 0 || *count >= max_commands) {
+        return 0;
+    }
+    command = &commands[*count];
+    dm2_v1_startup_draw_clear(command);
+    command->kind = DM2_V1_STARTUP_DRAW_GDAT_IMAGE;
+    command->rect = *rect;
+    command->gdat_category = category;
+    command->gdat_index = index;
+    command->gdat_field = field;
+    command->transparent_color = transparent_color;
+    ++(*count);
+    return 1;
 }
 
 static int dm2_v1_startup_push_rect(DM2_V1_StartupDrawCommand *commands,
@@ -104,7 +132,22 @@ int dm2_v1_startup_presentation_build(
     for (row = 0; row < max_commands; ++row) {
         dm2_v1_startup_draw_clear(&out_commands[row]);
     }
-    if (!dm2_v1_startup_panel_rect(&rect) ||
+    /* skproject/SKWin: ANIM_BOOTSTRAP_TITLE() leads into the GDAT-backed
+     * title/main-menu art; category 0x05 is TITLE and field 0x01 is the
+     * 320x200 base title surface in PC GRAPHICS.DAT. */
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = 320;
+    rect.h = 200;
+    if (!dm2_v1_startup_push_gdat_image(out_commands,
+                                        max_commands,
+                                        &count,
+                                        DM2_GDAT_CATEGORY_TITLE,
+                                        0,
+                                        1,
+                                        &rect,
+                                        -1) ||
+        !dm2_v1_startup_panel_rect(&rect) ||
         !dm2_v1_startup_push_rect(out_commands,
                                   max_commands,
                                   &count,

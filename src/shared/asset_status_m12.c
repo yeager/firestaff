@@ -373,6 +373,42 @@ static const char* const g_originalCandidateNames[] = {
     "DM2GRAPHICS.DAT",
     "DM2DUNGEON.DAT",
     "SKULLKEEP.GFX",
+    "DUNGEON_PC9821.dat",
+    "DUNGEON_MOD.DAT",
+    "DUNGEON_BETA.dat",
+    "DUNGEON_TEST.DAT",
+    "DUNGEON_XMAP.dat",
+    "DUNGEON_SHOP.DAT",
+    "DUNGEON_1MONS.dat",
+    "00.hmp.mid",
+    "01.hmp.mid",
+    "02.hmp.mid",
+    "03.hmp.mid",
+    "04.hmp.mid",
+    "05.hmp.mid",
+    "06.hmp.mid",
+    "07.hmp.mid",
+    "08.hmp.mid",
+    "09.hmp.mid",
+    "0a.hmp.mid",
+    "0b.hmp.mid",
+    "0c.hmp.mid",
+    "0d.hmp.mid",
+    "0e.hmp.mid",
+    "0f.hmp.mid",
+    "10.hmp.mid",
+    "11.hmp.mid",
+    "12.hmp.mid",
+    "13.hmp.mid",
+    "14.hmp.mid",
+    "15.hmp.mid",
+    "16.hmp.mid",
+    "17.hmp.mid",
+    "18.hmp.mid",
+    "19.hmp.mid",
+    "1a.hmp.mid",
+    "1b.hmp.mid",
+    "1c.hmp.mid",
     "DM.BIN",                  /* Nexus Sega Saturn primary CD image */
     "SEGADATA.BIN",       /* Nexus Sega Saturn data track */
     "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
@@ -960,6 +996,38 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
     static const char* const labels[] = {
         "DUNGEONB.DAT", "HCSB.HTC", "HCSBF.HTC", "HCSBG.HTC",
         "CSBGAME.DAT", "CSB.DAT", "CSBGRAPH.DAT"
+    };
+    size_t i;
+    if (!seedPath || !gameCacheDir || seedPath[0] == '\0' ||
+        gameCacheDir[0] == '\0') {
+        return;
+    }
+    for (i = 0U; i < sizeof(labels) / sizeof(labels[0]); ++i) {
+        char outPath[M12_ASSET_DATA_DIR_CAPACITY];
+        if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, labels[i])) {
+            continue;
+        }
+        (void)m12_materialize_optional_for_cache_seed(seedPath,
+                                                      labels[i],
+                                                      outPath);
+    }
+}
+
+static void m12_materialize_dm2_startup_optional_cache(const char* seedPath,
+                                                       const char* gameCacheDir) {
+    static const char* const labels[] = {
+        "DM2GRAPHICS.DAT", "DM2DUNGEON.DAT", "SKULLKEEP.GFX",
+        "DUNGEON_PC9821.dat", "DUNGEON_MOD.DAT", "DUNGEON_BETA.dat",
+        "DUNGEON_TEST.DAT", "DUNGEON_XMAP.dat", "DUNGEON_SHOP.DAT",
+        "DUNGEON_1MONS.dat",
+        "00.hmp.mid", "01.hmp.mid", "02.hmp.mid", "03.hmp.mid",
+        "04.hmp.mid", "05.hmp.mid", "06.hmp.mid", "07.hmp.mid",
+        "08.hmp.mid", "09.hmp.mid", "0a.hmp.mid", "0b.hmp.mid",
+        "0c.hmp.mid", "0d.hmp.mid", "0e.hmp.mid", "0f.hmp.mid",
+        "10.hmp.mid", "11.hmp.mid", "12.hmp.mid", "13.hmp.mid",
+        "14.hmp.mid", "15.hmp.mid", "16.hmp.mid", "17.hmp.mid",
+        "18.hmp.mid", "19.hmp.mid", "1a.hmp.mid", "1b.hmp.mid",
+        "1c.hmp.mid"
     };
     size_t i;
     if (!seedPath || !gameCacheDir || seedPath[0] == '\0' ||
@@ -2118,6 +2186,12 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
          * opens ordinary paths under asset-cache/csb/, so archive-backed CSB
          * launches must carry these startup/utility siblings with GRAPHICS.DAT. */
         m12_materialize_csb_startup_optional_cache(optionalSeedPath, gameCacheDir);
+    }
+    if (strcmp(gameId, "dm2") == 0 && optionalSeedPath[0] != '\0') {
+        /* skproject/SKWin opens GRAPHICS.DAT plus DATA/%02x.hmp.mid music and
+         * alternate DUNGEON_*.dat startup/runtime variants from the install
+         * data directory. M11 gets ordinary paths under asset-cache/dm2/. */
+        m12_materialize_dm2_startup_optional_cache(optionalSeedPath, gameCacheDir);
     }
     m12_copy_string(status->runtimeDataDirs[gameIndex],
                     sizeof(status->runtimeDataDirs[gameIndex]),

@@ -360,12 +360,13 @@ static void expect_dm2_startup_layout_contract(void) {
         &snapshot,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 9 &&
-                    commands[4].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
-                    commands[4].row == 0 &&
-                    commands[5].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+    expect_true(command_count == 10 &&
+                    commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                    commands[5].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
                     commands[5].row == 0 &&
-                    strcmp(commands[5].text, "CONTINUE") == 0,
+                    commands[6].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[6].row == 0 &&
+                    strcmp(commands[6].text, "CONTINUE") == 0,
                 "DM2 startup presentation builds from snapshot");
     expect_true(dm2_v1_startup_menu_row_at(&menu, 0, &row_kind, &slot) &&
                     row_kind == DM2_V1_STARTUP_ROW_CONTINUE &&
@@ -447,28 +448,35 @@ static void expect_dm2_startup_layout_contract(void) {
         &menu,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 9,
-                "DM2 startup presentation emits panel, text, rows, and footer");
-    expect_true(commands[0].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
-                    commands[0].style == DM2_V1_STARTUP_STYLE_PANEL &&
-                    commands[0].rect.x == 78 &&
-                    commands[0].rect.y == 50,
+    expect_true(command_count == 10,
+                "DM2 startup presentation emits GDAT title, panel, text, rows, and footer");
+    expect_true(commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                    commands[0].gdat_category == 5 &&
+                    commands[0].gdat_index == 0 &&
+                    commands[0].gdat_field == 1 &&
+                    commands[0].rect.w == 320 &&
+                    commands[0].rect.h == 200,
+                "DM2 startup presentation owns original GDAT title backdrop command");
+    expect_true(commands[1].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[1].style == DM2_V1_STARTUP_STYLE_PANEL &&
+                    commands[1].rect.x == 78 &&
+                    commands[1].rect.y == 50,
                 "DM2 startup presentation owns panel fill command");
-    expect_true(commands[2].kind == DM2_V1_STARTUP_DRAW_TEXT &&
-                    commands[2].style == DM2_V1_STARTUP_STYLE_TITLE &&
-                    strcmp(commands[2].text, "DUNGEON MASTER II") == 0,
+    expect_true(commands[3].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[3].style == DM2_V1_STARTUP_STYLE_TITLE &&
+                    strcmp(commands[3].text, "DUNGEON MASTER II") == 0,
                 "DM2 startup presentation owns title command");
-    expect_true(commands[5].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
-                    commands[5].style == DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
-                    commands[5].row == 1,
+    expect_true(commands[6].kind == DM2_V1_STARTUP_DRAW_FILL_RECT &&
+                    commands[6].style == DM2_V1_STARTUP_STYLE_SELECTED_FILL &&
+                    commands[6].row == 1,
                 "DM2 startup presentation owns selected-row highlight command");
-    expect_true(commands[6].kind == DM2_V1_STARTUP_DRAW_TEXT &&
-                    commands[6].style == DM2_V1_STARTUP_STYLE_SELECTED_TEXT &&
-                    commands[6].row == 1 &&
-                    strcmp(commands[6].text, "LOAD SLOT 03") == 0,
+    expect_true(commands[7].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    commands[7].style == DM2_V1_STARTUP_STYLE_SELECTED_TEXT &&
+                    commands[7].row == 1 &&
+                    strcmp(commands[7].text, "LOAD SLOT 03") == 0,
                 "DM2 startup presentation owns selected-row text command");
-    expect_true(commands[8].kind == DM2_V1_STARTUP_DRAW_TEXT &&
-                    strcmp(commands[8].text, "ENTER/ACTION STARTS") == 0,
+    expect_true(commands[9].kind == DM2_V1_STARTUP_DRAW_TEXT &&
+                    strcmp(commands[9].text, "ENTER/ACTION STARTS") == 0,
                 "DM2 startup presentation owns footer command");
     menu.selected_row = 9;
     expect_true(dm2_v1_startup_menu_refresh(&menu, 0, 0u) &&
@@ -736,6 +744,47 @@ int main(void) {
                 view.dm2State.tick_count == 0 &&
                 dm2_v1_runtime_get_tick_count() == 0,
                 "M11 DM2 no-save startup menu keeps runtime tick frozen");
+    profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    if (profile && profile->graphics_dat) {
+        uint8_t *title_pixels = NULL;
+        int title_w = 0;
+        int title_h = 0;
+        int title_stride = 0;
+        int title_x = -1;
+        int title_y = -1;
+        if (dm2_v1_boot_gdat_image_asset_fetch(profile,
+                                               5,
+                                               0,
+                                               1,
+                                               &title_pixels,
+                                               &title_w,
+                                               &title_h,
+                                               &title_stride) == 0 &&
+            title_pixels && title_w == 320 && title_h == 200 &&
+            title_stride >= title_w) {
+            int y;
+            for (y = 0; y < title_h && title_x < 0; ++y) {
+                int x;
+                for (x = 0; x < title_w; ++x) {
+                    if (x >= 78 && x < 242 && y >= 50 && y < 140) {
+                        continue;
+                    }
+                    if (title_pixels[y * title_stride + x] != 0) {
+                        title_x = x;
+                        title_y = y;
+                        break;
+                    }
+                }
+            }
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(title_x >= 0 &&
+                            framebuffer[title_y * 320 + title_x] ==
+                                title_pixels[title_y * title_stride + title_x],
+                        "M11 DM2 startup menu draws the original GDAT title backdrop");
+        }
+        dm2_v1_boot_gdat_image_asset_free(title_pixels);
+    }
     while (view.dm2State.startup_menu_selected_row + 1 <
            view.dm2State.startup_menu_row_count) {
         expect_true(M11_GameView_HandleInput(&view,

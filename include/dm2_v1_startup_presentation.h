@@ -8,7 +8,8 @@ typedef enum {
     DM2_V1_STARTUP_DRAW_NONE = 0,
     DM2_V1_STARTUP_DRAW_FILL_RECT = 1,
     DM2_V1_STARTUP_DRAW_OUTLINE_RECT = 2,
-    DM2_V1_STARTUP_DRAW_TEXT = 3
+    DM2_V1_STARTUP_DRAW_TEXT = 3,
+    DM2_V1_STARTUP_DRAW_GDAT_IMAGE = 4
 } DM2_V1_StartupDrawKind;
 
 typedef enum {
@@ -27,6 +28,10 @@ typedef struct {
     int x;
     int y;
     int row;
+    int gdat_category;
+    int gdat_index;
+    int gdat_field;
+    int transparent_color;
     char text[64];
 } DM2_V1_StartupDrawCommand;
 
