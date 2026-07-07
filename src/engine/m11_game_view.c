@@ -38434,10 +38434,12 @@ int M11_GameView_GetTheronStartupRenderRows(
     const M11_GameViewState* state,
     char rows[][M11_THERON_STARTUP_RENDER_ROW_CAPACITY],
     int maxRows) {
-    Theron_StartupLayoutState layout_state;
-    Theron_StartupLayoutElement elements[16];
-    int element_count;
+    Theron_V1StartupContinueAvailability continue_availability;
     char theron_rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
+    int has_tqsv_continue = 0;
+    int tqsv_slot = -1;
+    int has_srm_continue = 0;
+    int srm_slot = -1;
     int row_count;
     int i;
 
@@ -38448,17 +38450,30 @@ int M11_GameView_GetTheronStartupRenderRows(
         return 0;
     }
 
-    if (!m11_theron_startup_build_layout_state(state, &layout_state)) {
-        return 0;
+    if (m11_theron_continue_availability(state, &continue_availability)) {
+        has_tqsv_continue = continue_availability.has_tqsv_continue;
+        tqsv_slot = continue_availability.tqsv_slot;
+        has_srm_continue = continue_availability.has_srm_continue;
+        srm_slot = continue_availability.srm_slot;
     }
-    element_count = theron_v1_startup_layout_build(
-        &layout_state,
-        elements,
-        (int)(sizeof(elements) / sizeof(elements[0])));
-    row_count = theron_v1_startup_render_rows_build(
-        &layout_state,
-        elements,
-        element_count,
+    row_count = theron_v1_startup_render_rows_build_from_facts(
+        (Theron_StartupPhase)state->theronState.startup_phase,
+        state->theronState.selected_dungeon,
+        (const Theron_V1_BootProfile*)state->theronBootProfile,
+        (const Theron_V1_World*)state->theronWorld,
+        state->theronState.startup_cursor,
+        state->theronState.save_resume_continue_focus,
+        has_tqsv_continue,
+        tqsv_slot,
+        has_srm_continue,
+        srm_slot,
+        state->theronState.startup_text_prompt,
+        state->theronState.startup_roster_names,
+        state->theronState.startup_roster_titles,
+        state->theronState.startup_roster_name_count,
+        state->theronState.selected_mirrors_mask,
+        state->theronState.selected_mirror_order,
+        THERON_STARTUP_MAX_COMPANIONS,
         theron_rows,
         (int)(sizeof(theron_rows) / sizeof(theron_rows[0])));
     if (row_count > maxRows) {

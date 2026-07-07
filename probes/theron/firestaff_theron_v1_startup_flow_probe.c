@@ -382,10 +382,14 @@ int main(void) {
                            [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
             char fact_titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1]
                             [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
+            char fact_rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
             const char *names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
             const char *titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
             int order[THERON_STARTUP_MAX_COMPANIONS + 1] = { 6, 2, 1, 0 };
+            int found_continue_row = 0;
             int handled;
+            int row_index;
+            int row_count;
 
             memset(&request, 0, sizeof(request));
             theron_v1_startup_action_init(&pointer_action);
@@ -498,6 +502,38 @@ int main(void) {
                 "render plan facts helper owns stage-panel graphics",
                 &render_plan,
                 THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL);
+            row_count = theron_v1_startup_render_rows_build_from_facts(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                THERON_DUNGEON_COUNT + 99,
+                &profile,
+                &world,
+                7,
+                1,
+                1,
+                3,
+                0,
+                -1,
+                "READY",
+                fact_names,
+                fact_titles,
+                THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1,
+                0x45,
+                order,
+                THERON_STARTUP_MAX_COMPANIONS + 1,
+                fact_rows,
+                (int)(sizeof(fact_rows) / sizeof(fact_rows[0])));
+            check_int("render rows facts helper builds", row_count > 0, 1);
+            check_contains("render rows facts helper chapter",
+                           fact_rows[1],
+                           "Chapter 2");
+            for (row_index = 0; row_index < row_count; ++row_index) {
+                if (strstr(fact_rows[row_index], "CONTINUE") != NULL) {
+                    found_continue_row = 1;
+                }
+            }
+            check_int("render rows facts helper continue",
+                      found_continue_row,
+                      1);
             check_int("input facts helper builds action",
                       theron_v1_startup_handle_input_from_facts(
                           THERON_STARTUP_PHASE_STAGE_SELECT,

@@ -111,6 +111,16 @@ int main(void) {
     CHECK(state.settings.retroAchievementsEnabled == 1,
           "RetroAchievements click toggles enabled setting");
 
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_DATA_STATUS;
+    state.settings.retroAchievementsEnabled = 0;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    CHECK(state.settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
+          "settings keyboard DOWN skips hidden rows and reaches RetroAchievements");
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.settings.retroAchievementsEnabled == 1,
+          "settings keyboard ACCEPT toggles RetroAchievements");
+
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,
                                  settingsRowY0 + settingsRowYOffset[7] + 25);
