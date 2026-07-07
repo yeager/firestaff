@@ -209,6 +209,37 @@ static void test_projectile_d4_far_box(void) {
     ASSERT_TRUE(lx < cx && cx < rx, "D4 boxes stay left-center-right");
 }
 
+static void test_projectile_renderable_and_effect_particle(void) {
+    uint32_t color = 0;
+    float size = 0.0f;
+    printf("  projectile renderable and effect particle...\n");
+
+    ASSERT_EQ(dm1_v1_projectile_renderable_pc34(0, DM1_GFX_FIRST_PROJECTILE),
+              0, "no projectile count is not renderable");
+    ASSERT_EQ(dm1_v1_projectile_renderable_pc34(1, -1),
+              0, "missing projectile graphic is not renderable");
+    ASSERT_EQ(dm1_v1_projectile_renderable_pc34(1, DM1_GFX_FIRST_PROJECTILE),
+              1, "projectile count plus graphic is renderable");
+
+    ASSERT_EQ(dm1_v1_projectile_effect_particle_pc34(
+                  PROJECTILE_SUBTYPE_LIGHTNING_BOLT, &color, &size),
+              1, "lightning effect particle");
+    ASSERT_EQ((int)color, (int)0x00ffffffu, "lightning effect color");
+    ASSERT_EQ((int)(size * 10.0f), 10, "lightning effect size");
+
+    ASSERT_EQ(dm1_v1_projectile_effect_particle_pc34(
+                  PROJECTILE_SUBTYPE_POISON_BOLT, &color, &size),
+              1, "poison effect particle");
+    ASSERT_EQ((int)color, (int)0x00ff00ffu, "poison effect color");
+    ASSERT_EQ((int)(size * 10.0f), 20, "poison effect size");
+
+    ASSERT_EQ(dm1_v1_projectile_effect_particle_pc34(
+                  PROJECTILE_SUBTYPE_FIREBALL, &color, &size),
+              1, "fireball/default effect particle");
+    ASSERT_EQ((int)color, (int)0xffaa00ffu, "fireball/default effect color");
+    ASSERT_EQ((int)(size * 10.0f), 20, "fireball/default effect size");
+}
+
 static void test_projectile_sprite_blit_plan(void) {
     DM1_ProjectileSpriteBlitPlan plan;
     printf("  projectile sprite blit plan...\n");
@@ -963,6 +994,7 @@ int main(void) {
     test_projectile_subtype_mapping();
     test_projectile_scale();
     test_projectile_d4_far_box();
+    test_projectile_renderable_and_effect_particle();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();

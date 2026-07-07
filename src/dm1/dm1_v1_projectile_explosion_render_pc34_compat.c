@@ -181,6 +181,35 @@ int dm1_v1_projectile_subtype_to_aspect(int subtype) {
     }
 }
 
+int dm1_v1_projectile_renderable_pc34(int projectileCount,
+                                      int graphicIndex)
+{
+    return projectileCount > 0 && graphicIndex >= 0;
+}
+
+int dm1_v1_projectile_effect_particle_pc34(int subtype,
+                                           uint32_t *outColor,
+                                           float *outSize)
+{
+    uint32_t color = 0xffaa00ffu;
+    float size = 2.0f;
+    if (subtype == PROJECTILE_SUBTYPE_LIGHTNING_BOLT) {
+        color = 0x00ffffffu;
+        size = 1.0f;
+    } else if (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
+               subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) {
+        color = 0x00ff00ffu;
+        size = 2.0f;
+    }
+    if (outColor) {
+        *outColor = color;
+    }
+    if (outSize) {
+        *outSize = size;
+    }
+    return 1;
+}
+
 int dm1_v1_projectile_d4_far_box(int relSide,
                                  int *outX,
                                  int *outY,

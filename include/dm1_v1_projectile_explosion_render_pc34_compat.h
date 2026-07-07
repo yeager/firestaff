@@ -158,6 +158,11 @@ int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY);
 int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);
 int dm1_v1_projectile_subtype_to_aspect(int subtype);
+int dm1_v1_projectile_renderable_pc34(int projectileCount,
+                                      int graphicIndex);
+int dm1_v1_projectile_effect_particle_pc34(int subtype,
+                                           uint32_t *outColor,
+                                           float *outSize);
 int dm1_v1_projectile_d4_far_box(int relSide,
                                  int *outX,
                                  int *outY,
