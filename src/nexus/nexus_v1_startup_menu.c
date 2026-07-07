@@ -123,6 +123,108 @@ static void nexus_v1_startup_apply_receipt_clear(
     receipt->result = NEXUS_V1_STARTUP_APPLY_RESULT_IGNORE;
 }
 
+static void nexus_v1_startup_draw_clear(
+    Nexus_V1_StartupDrawCommand *command)
+{
+    if (!command) {
+        return;
+    }
+    memset(command, 0, sizeof(*command));
+    command->portrait_index = -1;
+    command->text_style = NEXUS_V1_STARTUP_TEXT_SMALL;
+}
+
+static int nexus_v1_startup_push_draw(
+    Nexus_V1_StartupDrawCommand *commands,
+    int max_commands,
+    int *count,
+    const Nexus_V1_StartupDrawCommand *src)
+{
+    if (!commands || !count || !src || *count < 0 ||
+        *count >= max_commands) {
+        return 0;
+    }
+    commands[*count] = *src;
+    ++(*count);
+    return 1;
+}
+
+static int nexus_v1_startup_push_background(
+    Nexus_V1_StartupDrawCommand *commands,
+    int max_commands,
+    int *count)
+{
+    Nexus_V1_StartupDrawCommand command;
+    nexus_v1_startup_draw_clear(&command);
+    command.kind = NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND;
+    return nexus_v1_startup_push_draw(commands, max_commands, count, &command);
+}
+
+static int nexus_v1_startup_push_rect(
+    Nexus_V1_StartupDrawCommand *commands,
+    int max_commands,
+    int *count,
+    Nexus_V1_StartupDrawKind kind,
+    const Nexus_V1_StartupRect *rect,
+    int color)
+{
+    Nexus_V1_StartupDrawCommand command;
+    if (!rect) {
+        return 0;
+    }
+    nexus_v1_startup_draw_clear(&command);
+    command.kind = kind;
+    command.rect = *rect;
+    command.text_color = color;
+    return nexus_v1_startup_push_draw(commands, max_commands, count, &command);
+}
+
+static int nexus_v1_startup_push_text(
+    Nexus_V1_StartupDrawCommand *commands,
+    int max_commands,
+    int *count,
+    int x,
+    int y,
+    const char *text,
+    Nexus_V1_StartupTextStyle style,
+    int text_color,
+    int shadow_color)
+{
+    Nexus_V1_StartupDrawCommand command;
+    if (!text || !text[0]) {
+        return 1;
+    }
+    nexus_v1_startup_draw_clear(&command);
+    command.kind = NEXUS_V1_STARTUP_DRAW_TEXT;
+    command.x = x;
+    command.y = y;
+    command.text_style = style;
+    command.text_color = text_color;
+    command.shadow_color = shadow_color;
+    snprintf(command.label, sizeof(command.label), "%s", text);
+    return nexus_v1_startup_push_draw(commands, max_commands, count, &command);
+}
+
+static int nexus_v1_startup_push_portrait(
+    Nexus_V1_StartupDrawCommand *commands,
+    int max_commands,
+    int *count,
+    const Nexus_V1_StartupChampionRenderRow *row)
+{
+    Nexus_V1_StartupDrawCommand command;
+    if (!row || row->portrait_index < 0) {
+        return 1;
+    }
+    nexus_v1_startup_draw_clear(&command);
+    command.kind = NEXUS_V1_STARTUP_DRAW_PORTRAIT;
+    command.rect.x = row->portrait_x;
+    command.rect.y = row->portrait_y;
+    command.rect.w = row->portrait_w;
+    command.rect.h = row->portrait_h;
+    command.portrait_index = row->portrait_index;
+    return nexus_v1_startup_push_draw(commands, max_commands, count, &command);
+}
+
 Nexus_V1_StartupInput nexus_v1_startup_input_from_firestaff_menu_code(
     int menu_input)
 {
@@ -1217,6 +1319,247 @@ int nexus_v1_startup_champion_snapshot_build_render_rows(
         rows,
         max_rows,
         out_footer);
+}
+
+int nexus_v1_startup_presentation_build_save(
+    const Nexus_V1_StartupMenuSnapshot *snapshot,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    Nexus_V1_StartupChromeRender chrome;
+    Nexus_V1_StartupSaveRenderRow rows[16];
+    int row_count;
+    int row;
+    int count = 0;
+
+    if (!snapshot || !out_commands || max_commands <= 0) {
+        return 0;
+    }
+    memset(out_commands,
+           0,
+           (size_t)max_commands * sizeof(out_commands[0]));
+    if (!nexus_v1_startup_push_background(out_commands,
+                                          max_commands,
+                                          &count)) {
+        return count;
+    }
+    if (nexus_v1_startup_menu_build_save_chrome_render(&chrome)) {
+        if (!nexus_v1_startup_push_text(out_commands,
+                                        max_commands,
+                                        &count,
+                                        chrome.title_x,
+                                        chrome.title_y,
+                                        chrome.title,
+                                        NEXUS_V1_STARTUP_TEXT_TITLE,
+                                        15,
+                                        0) ||
+            !nexus_v1_startup_push_text(out_commands,
+                                        max_commands,
+                                        &count,
+                                        chrome.subtitle_x,
+                                        chrome.subtitle_y,
+                                        chrome.subtitle,
+                                        NEXUS_V1_STARTUP_TEXT_SHADOW,
+                                        15,
+                                        0)) {
+            return count;
+        }
+    }
+    row_count = nexus_v1_startup_menu_snapshot_build_save_render_rows(
+        snapshot,
+        rows,
+        (int)(sizeof(rows) / sizeof(rows[0])));
+    for (row = 0; row < row_count; ++row) {
+        const Nexus_V1_StartupSaveRenderRow *render_row = &rows[row];
+        if (render_row->selected &&
+            !nexus_v1_startup_push_rect(out_commands,
+                                        max_commands,
+                                        &count,
+                                        NEXUS_V1_STARTUP_DRAW_FILL_RECT,
+                                        &render_row->highlight_rect,
+                                        8)) {
+            return count;
+        }
+        if (!nexus_v1_startup_push_text(out_commands,
+                                        max_commands,
+                                        &count,
+                                        render_row->text_x,
+                                        render_row->text_y,
+                                        render_row->label,
+                                        render_row->selected
+                                            ? NEXUS_V1_STARTUP_TEXT_SHADOW
+                                            : NEXUS_V1_STARTUP_TEXT_SMALL,
+                                        15,
+                                        0)) {
+            return count;
+        }
+    }
+    if (chrome.footer[0]) {
+        (void)nexus_v1_startup_push_text(out_commands,
+                                         max_commands,
+                                         &count,
+                                         chrome.footer_x,
+                                         chrome.footer_y,
+                                         chrome.footer,
+                                         NEXUS_V1_STARTUP_TEXT_SMALL,
+                                         15,
+                                         0);
+    }
+    return count;
+}
+
+int nexus_v1_startup_presentation_build_champion(
+    const Nexus_V1_ChampionPool *pool,
+    const Nexus_V1_StartupChampionSnapshot *snapshot,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    Nexus_V1_StartupChromeRender chrome;
+    Nexus_V1_StartupChampionRenderRow rows[12];
+    Nexus_V1_StartupChampionFooterRender footer;
+    int row_count;
+    int row;
+    int count = 0;
+
+    if (!pool || !snapshot || !out_commands || max_commands <= 0) {
+        return 0;
+    }
+    memset(out_commands,
+           0,
+           (size_t)max_commands * sizeof(out_commands[0]));
+    if (!nexus_v1_startup_push_background(out_commands,
+                                          max_commands,
+                                          &count)) {
+        return count;
+    }
+    if (nexus_v1_startup_menu_build_champion_chrome_render(&chrome)) {
+        if (!nexus_v1_startup_push_text(out_commands,
+                                        max_commands,
+                                        &count,
+                                        chrome.title_x,
+                                        chrome.title_y,
+                                        chrome.title,
+                                        NEXUS_V1_STARTUP_TEXT_TITLE,
+                                        15,
+                                        0) ||
+            !nexus_v1_startup_push_text(out_commands,
+                                        max_commands,
+                                        &count,
+                                        chrome.subtitle_x,
+                                        chrome.subtitle_y,
+                                        chrome.subtitle,
+                                        NEXUS_V1_STARTUP_TEXT_SHADOW,
+                                        15,
+                                        0)) {
+            return count;
+        }
+    }
+    row_count = nexus_v1_startup_champion_snapshot_build_render_rows(
+        pool,
+        snapshot,
+        rows,
+        (int)(sizeof(rows) / sizeof(rows[0])),
+        &footer);
+    for (row = 0; row < row_count; ++row) {
+        const Nexus_V1_StartupChampionRenderRow *render_row = &rows[row];
+        if (render_row->highlight_visible &&
+            !nexus_v1_startup_push_rect(out_commands,
+                                        max_commands,
+                                        &count,
+                                        NEXUS_V1_STARTUP_DRAW_OUTLINE_RECT,
+                                        &render_row->highlight_rect,
+                                        render_row->text_color)) {
+            return count;
+        }
+        if (!nexus_v1_startup_push_portrait(out_commands,
+                                            max_commands,
+                                            &count,
+                                            render_row)) {
+            return count;
+        }
+        if (render_row->portrait_border_color > 0) {
+            Nexus_V1_StartupRect border;
+            border.x = render_row->portrait_x - 1;
+            border.y = render_row->portrait_y - 1;
+            border.w = render_row->portrait_w + 2;
+            border.h = render_row->portrait_h + 2;
+            if (!nexus_v1_startup_push_rect(out_commands,
+                                            max_commands,
+                                            &count,
+                                            NEXUS_V1_STARTUP_DRAW_OUTLINE_RECT,
+                                            &border,
+                                            render_row->portrait_border_color)) {
+                return count;
+            }
+        }
+        if (!nexus_v1_startup_push_text(out_commands,
+                                        max_commands,
+                                        &count,
+                                        render_row->text_x,
+                                        render_row->text_y,
+                                        render_row->label,
+                                        NEXUS_V1_STARTUP_TEXT_SMALL,
+                                        render_row->text_color,
+                                        render_row->shadow_color)) {
+            return count;
+        }
+    }
+    (void)nexus_v1_startup_push_text(out_commands,
+                                     max_commands,
+                                     &count,
+                                     footer.text_x,
+                                     footer.text_y,
+                                     footer.label,
+                                     NEXUS_V1_STARTUP_TEXT_SMALL,
+                                     15,
+                                     0);
+    return count;
+}
+
+int nexus_v1_startup_presentation_execute(
+    const Nexus_V1_StartupDrawCommand *commands,
+    int command_count,
+    const Nexus_V1_StartupDrawExecutor *executor)
+{
+    int i;
+    if (!commands || command_count <= 0 || !executor) {
+        return 0;
+    }
+    for (i = 0; i < command_count; ++i) {
+        const Nexus_V1_StartupDrawCommand *command = &commands[i];
+        switch (command->kind) {
+            case NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND:
+                if (executor->draw_title_background) {
+                    executor->draw_title_background(executor->userdata,
+                                                    command);
+                }
+                break;
+            case NEXUS_V1_STARTUP_DRAW_FILL_RECT:
+                if (executor->fill_rect) {
+                    executor->fill_rect(executor->userdata, command);
+                }
+                break;
+            case NEXUS_V1_STARTUP_DRAW_OUTLINE_RECT:
+                if (executor->outline_rect) {
+                    executor->outline_rect(executor->userdata, command);
+                }
+                break;
+            case NEXUS_V1_STARTUP_DRAW_TEXT:
+                if (executor->draw_text) {
+                    executor->draw_text(executor->userdata, command);
+                }
+                break;
+            case NEXUS_V1_STARTUP_DRAW_PORTRAIT:
+                if (executor->draw_portrait) {
+                    executor->draw_portrait(executor->userdata, command);
+                }
+                break;
+            case NEXUS_V1_STARTUP_DRAW_NONE:
+            default:
+                break;
+        }
+    }
+    return 1;
 }
 
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,

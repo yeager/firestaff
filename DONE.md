@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Nexus full startup graphics step: `nexus_v1_startup_menu` now owns save/champion startup draw-command presentation, starting from loaded `TITLE.CG` art and routing `FACE.BIN` portrait commands through an M11 framebuffer executor. M11 no longer hand-draws Nexus save/champion startup rows. Verification: `test_nexus_v1_startup_menu_pc34_compat`, `test_m11_nexus_startup_gate`, Phase A, and Nexus boot-probe passed.
+
 - ✅ 2026-07-07 CSB utility runtime-facts ownership: `csb_v1_utility_flow_pc34` now builds startup utility contexts directly from runtime facts, including selected action, imported count, and optional imported party preview. M11 no longer assembles `CSB_V1_UtilRuntimeSnapshot` before drawing/routing the startup utility panel. Verification: `test_csb_v1_utility_flow_action_contract` passed 45/45, `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 116/116, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB startup render-state ownership: `csb_v1_startup_sequence_pc34_compat` now derives render state from the CSB command-state plus runtime-start facts before building title/entrance render plans. M11 no longer fills the CSB render-state field-by-field. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 116/116, `test_csb_v1_boot_runtime_handoff` passed 256/256, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.

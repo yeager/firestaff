@@ -156,8 +156,49 @@ enum {
     NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHAMPION_ROW_LABEL_CAPACITY = 96,
-    NEXUS_V1_STARTUP_CHAMPION_FOOTER_LABEL_CAPACITY = 96
+    NEXUS_V1_STARTUP_CHAMPION_FOOTER_LABEL_CAPACITY = 96,
+    NEXUS_V1_STARTUP_DRAW_LABEL_CAPACITY = 96
 };
+
+typedef enum {
+    NEXUS_V1_STARTUP_DRAW_NONE = 0,
+    NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND = 1,
+    NEXUS_V1_STARTUP_DRAW_FILL_RECT = 2,
+    NEXUS_V1_STARTUP_DRAW_OUTLINE_RECT = 3,
+    NEXUS_V1_STARTUP_DRAW_TEXT = 4,
+    NEXUS_V1_STARTUP_DRAW_PORTRAIT = 5
+} Nexus_V1_StartupDrawKind;
+
+typedef enum {
+    NEXUS_V1_STARTUP_TEXT_SMALL = 0,
+    NEXUS_V1_STARTUP_TEXT_SHADOW = 1,
+    NEXUS_V1_STARTUP_TEXT_TITLE = 2
+} Nexus_V1_StartupTextStyle;
+
+typedef struct {
+    Nexus_V1_StartupDrawKind kind;
+    Nexus_V1_StartupRect rect;
+    int x;
+    int y;
+    int portrait_index;
+    int text_color;
+    int shadow_color;
+    Nexus_V1_StartupTextStyle text_style;
+    char label[NEXUS_V1_STARTUP_DRAW_LABEL_CAPACITY];
+} Nexus_V1_StartupDrawCommand;
+
+typedef void (*Nexus_V1_StartupDrawFn)(
+    void *userdata,
+    const Nexus_V1_StartupDrawCommand *command);
+
+typedef struct {
+    void *userdata;
+    Nexus_V1_StartupDrawFn draw_title_background;
+    Nexus_V1_StartupDrawFn fill_rect;
+    Nexus_V1_StartupDrawFn outline_rect;
+    Nexus_V1_StartupDrawFn draw_text;
+    Nexus_V1_StartupDrawFn draw_portrait;
+} Nexus_V1_StartupDrawExecutor;
 
 typedef struct {
     Nexus_V1_StartupRowKind kind;
@@ -335,6 +376,19 @@ int nexus_v1_startup_champion_snapshot_build_render_rows(
     Nexus_V1_StartupChampionFooterRender *out_footer);
 int nexus_v1_startup_menu_build_champion_chrome_render(
     Nexus_V1_StartupChromeRender *out_chrome);
+int nexus_v1_startup_presentation_build_save(
+    const Nexus_V1_StartupMenuSnapshot *snapshot,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands);
+int nexus_v1_startup_presentation_build_champion(
+    const Nexus_V1_ChampionPool *pool,
+    const Nexus_V1_StartupChampionSnapshot *snapshot,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands);
+int nexus_v1_startup_presentation_execute(
+    const Nexus_V1_StartupDrawCommand *commands,
+    int command_count,
+    const Nexus_V1_StartupDrawExecutor *executor);
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
                                            int *cursor,
                                            unsigned int slot_mask,
