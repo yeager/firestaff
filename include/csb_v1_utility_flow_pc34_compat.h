@@ -153,6 +153,19 @@ typedef struct {
     int preview_max_rows;
 } CSB_V1_UtilPanelLayout;
 
+typedef struct {
+    CSB_V1_UtilPanelLayout panel;
+    CSB_V1_UtilRenderTextRow status_row;
+    int has_status_row;
+    CSB_V1_UtilRenderTextRow prompt_row;
+    int has_prompt_row;
+    CSB_V1_UtilRenderRow menu_rows[CSB_V1_UTIL_MENU_ROW_COUNT];
+    int menu_row_count;
+    CSB_V1_UtilRenderTextRow preview_rows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
+    int preview_row_count;
+    int preview_active;
+} CSB_V1_UtilRenderPlan;
+
 /* ── Disk verification result ──────────────────────────────────────── */
 typedef enum {
     CSB_V1_UTIL_DISK_OK          = 0,
@@ -239,6 +252,10 @@ int csb_v1_util_flow_preview_render_rows(
 int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
                                   int preview_active,
                                   CSB_V1_UtilPanelLayout *out_layout);
+int csb_v1_util_flow_render_plan(const CSB_V1_UtilFlowContext *ctx,
+                                 const char *prompt_override,
+                                 int preview_active,
+                                 CSB_V1_UtilRenderPlan *out_plan);
 CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
     const CSB_V1_UtilFlowContext *ctx,
     int x,

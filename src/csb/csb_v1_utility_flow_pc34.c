@@ -665,6 +665,47 @@ int csb_v1_util_flow_panel_layout(const CSB_V1_UtilFlowContext *ctx,
     return 1;
 }
 
+int csb_v1_util_flow_render_plan(const CSB_V1_UtilFlowContext *ctx,
+                                 const char *prompt_override,
+                                 int preview_active,
+                                 CSB_V1_UtilRenderPlan *out_plan)
+{
+    if (!ctx || !out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    out_plan->preview_active = preview_active ? 1 : 0;
+    if (!csb_v1_util_flow_panel_layout(ctx,
+                                       out_plan->preview_active,
+                                       &out_plan->panel)) {
+        return 0;
+    }
+    out_plan->has_status_row =
+        csb_v1_util_flow_import_status_render_row(
+            ctx,
+            &out_plan->status_row) ? 1 : 0;
+    out_plan->has_prompt_row =
+        csb_v1_util_flow_prompt_render_row(
+            ctx,
+            prompt_override,
+            &out_plan->prompt_row) ? 1 : 0;
+    out_plan->menu_row_count =
+        csb_v1_util_flow_menu_render_rows(
+            ctx,
+            out_plan->menu_rows,
+            (int)(sizeof(out_plan->menu_rows) /
+                  sizeof(out_plan->menu_rows[0])));
+    if (out_plan->preview_active) {
+        out_plan->preview_row_count =
+            csb_v1_util_flow_preview_render_rows(
+                ctx,
+                out_plan->preview_rows,
+                (int)(sizeof(out_plan->preview_rows) /
+                      sizeof(out_plan->preview_rows[0])));
+    }
+    return out_plan->menu_row_count > 0 && out_plan->has_status_row;
+}
+
 CSB_V1_UtilFlowAction csb_v1_util_flow_action_at_point(
     const CSB_V1_UtilFlowContext *ctx,
     int x,
