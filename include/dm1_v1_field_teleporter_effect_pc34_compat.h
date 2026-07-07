@@ -82,6 +82,11 @@ int dm1_v1_field_render_plan_at_pc34(
     int planIndex,
     DM1_FieldRenderPlanPc34* outPlan);
 
+int dm1_v1_field_render_plan_for_relative_pc34(
+    int relForward,
+    int relSide,
+    DM1_FieldRenderPlanPc34* outPlan);
+
 int dm1_v1_field_square_is_visible_open_pc34(int square);
 
 #ifdef __cplusplus

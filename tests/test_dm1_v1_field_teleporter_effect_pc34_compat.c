@@ -65,6 +65,14 @@ int main(void)
     expect_int("at.bad.negative", dm1_v1_field_render_plan_at_pc34(-1, &plan), 0);
     expect_int("at.bad.end", dm1_v1_field_render_plan_at_pc34(16, &plan), 0);
     expect_int("at.bad.null", dm1_v1_field_render_plan_at_pc34(0, 0), 0);
+    expect_int("relative.d3l2.ok", dm1_v1_field_render_plan_for_relative_pc34(3, -2, &plan), 1);
+    expect_int("relative.d3l2.x", plan.dstX, 0);
+    expect_int("relative.d3l2.w", plan.dstW, 36);
+    expect_int("relative.d2r2.ok", dm1_v1_field_render_plan_for_relative_pc34(2, 2, &plan), 1);
+    expect_int("relative.d2r2.x", plan.dstX, 216);
+    expect_int("relative.d2r2.h", plan.dstH, 52);
+    expect_int("relative.bad.side", dm1_v1_field_render_plan_for_relative_pc34(3, -3, &plan), 0);
+    expect_int("relative.bad.null", dm1_v1_field_render_plan_for_relative_pc34(3, -2, 0), 0);
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed == 0 ? 0 : 1;
