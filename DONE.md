@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron flow rebuild request ownership: `theron_v1_startup_flow` now rebuilds startup flow directly from `Theron_StartupFlowSnapshotRequest`, including companion-count clamp, mirror-order normalization, progression checks, and READY normalization. M11 now passes raw state facts to the Theron-owned rebuild helper instead of creating an intermediate snapshot locally. Verification: Theron startup-flow probe passed 465/465, Theron M11 launcher handoff passed 26/26, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Nexus startup snapshot facts ownership: `nexus_v1_startup_menu` now builds save-menu snapshots, save-scan snapshots, and champion snapshots from raw M11 facts, including save-row clamp, save scan normalization, slot-mask clamp, cursor clamp, and frame clamp. M11 now consumes Nexus-owned snapshots instead of assembling them locally. Verification: Nexus startup menu test passed, M11 Nexus startup gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM2 startup snapshot facts ownership: `dm2_v1_startup_menu` now builds and scans startup menu snapshots from raw save-root/resume/slot/selection facts, including fallback-root choice and selection clamping. M11 now applies the returned snapshot instead of assembling/scanning menu state locally. Verification: DM2 startup action contract passed 56/56, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

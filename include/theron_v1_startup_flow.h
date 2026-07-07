@@ -398,6 +398,10 @@ Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
     const Theron_StartupFlowSnapshot *snapshot,
     const Theron_DungeonProgression *progression,
     Theron_StartupFlow *flow);
+Theron_StartupResult theron_v1_startup_flow_rebuild_from_request(
+    const Theron_StartupFlowSnapshotRequest *request,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow);
 void theron_v1_startup_action_init(Theron_StartupAction *action);
 void theron_v1_startup_action_plan_init(Theron_StartupActionPlan *plan);
 void theron_v1_startup_hit_init(Theron_StartupHit *hit);
