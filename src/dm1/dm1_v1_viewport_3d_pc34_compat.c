@@ -12,6 +12,7 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -2245,59 +2246,33 @@ int dm1_viewport_3d_get_dungeon_element(const DM1_Viewport3DState *state,
  * dm1_viewport_3d_draw_field
  *
  * Draw a field effect (teleporter/fluxcage) at the viewport position
- * corresponding to the given zone constant.
+ * corresponding to the relative view square.
  *
- * This is a simplified placeholder: it draws a solid colored rectangle
- * at the zone's known viewport position.  The full implementation would
- * look up the field graphic from G0188_aauc_Graphic558_FieldAspects and
- * call F0113_DUNGEONVIEW_DrawField with proper zone resolution.
+ * This still fills with one color until the field bitmap decoder is wired,
+ * but the destination rectangle comes from the shared F0113 source-locked
+ * render plan rather than an ad hoc wall-frame rectangle.
  *
  * field_color: VGA palette index for the field effect (default 0x1C=cyan).
- * zone: the viewport zone constant (e.g. DM1_PC34_ZONE_WALL_D2L2=707).
  *
  * Source: ReDMCSB DUNVIEW.C F0113_DUNGEONVIEW_DrawField (line 4119)
  * ──────────────────────────────────────────────────────────────────────── */
 static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
-                                        int zone,
+                                        int rel_forward,
+                                        int rel_side,
                                         int field_color)
 {
+    DM1_FieldRenderPlanPc34 plan;
     if (!state || !state->viewport_pixels) return;
 
-    /* Zone-to-viewport-position mapping for CSB back/near-wall field effects.
-     * These are derived from the frame descriptors in s_csb_back_wall_frames
-     * and s_csb_near_wall_frames.
-     *
-     * Zone 702/703: D3L2/D3R2 back wall — not used for field effects
-     * Zone 707: D2L2 near wall — draws in the D2L2 viewport region
-     * Zone 708: D2R2 near wall — draws in the D2R2 viewport region
-     *
-     * Source: ReDMCSB DUNVIEW.C:6863-6865 (F0678/F0679 TELEPORTER branch).
-     * The zone constant is passed directly to F0113 as the viewport blit zone. */
-    int dst_x = 0, dst_y = 0, width = 0, height = 0;
-
-    switch (zone) {
-    case 707: /* D2L2 — uses D2L2 frame position */
-        /* D2L2 frame: left_x=0, right_x=37, top_y=20, bottom_y=90 */
-        dst_x = 0; dst_y = 20; width = 38; height = 71;
-        break;
-    case 708: /* D2R2 — uses D2R2 frame position */
-        /* D2R2 frame: left_x=186, right_x=223, top_y=20, bottom_y=90 */
-        dst_x = 186; dst_y = 20; width = 38; height = 71;
-        break;
-    case 702: /* D3L2 wall zone — also used for D3L2 teleporter field */
-        /* D3L2 frame: left_x=0, right_x=15, top_y=25, bottom_y=73 */
-        dst_x = 0; dst_y = 25; width = 16; height = 49;
-        break;
-    case 703: /* D3R2 wall zone — also used for D3R2 teleporter field */
-        /* D3R2 frame: left_x=208, right_x=223, top_y=25, bottom_y=73 */
-        dst_x = 208; dst_y = 25; width = 16; height = 49;
-        break;
-    default:
-        /* Unknown zone — no-op */
+    if (!dm1_v1_field_render_plan_for_relative_pc34(rel_forward, rel_side, &plan)) {
         return;
     }
 
-    /* Clip to viewport bounds */
+    int dst_x = plan.dstX;
+    int dst_y = plan.dstY;
+    int width = plan.dstW;
+    int height = plan.dstH;
+
     if (dst_x < 0) { width += dst_x; dst_x = 0; }
     if (dst_y < 0) { height += dst_y; dst_y = 0; }
     if (dst_x + width > DM1_VIEWPORT_WIDTH) width = DM1_VIEWPORT_WIDTH - dst_x;
@@ -2430,17 +2405,21 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
     /* D3L2 uses D3L2 frame; D3R2 uses D3R2 frame */
     const DM1_WallFrame *fr = NULL;
     int wall_zone = 0;
+    int rel_forward = 3;
+    int rel_side = 0;
     DM1_WallSetIndex native_wall = DM1_WALL_D3L2;
     DM1_WallSetIndex parity_wall = DM1_WALL_D3R2;
 
     if (square == DM1_VIEW_SQUARE_D3L2) {
         fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3L2);
         wall_zone = DM1_PC34_ZONE_WALL_D3L2; /* 702 */
+        rel_side = -2;
         native_wall = DM1_WALL_D3L2;
         parity_wall = DM1_WALL_D3R2;
     } else if (square == DM1_VIEW_SQUARE_D3R2) {
         fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3R2);
         wall_zone = DM1_PC34_ZONE_WALL_D3R2; /* 703 */
+        rel_side = 2;
         native_wall = DM1_WALL_D3R2;
         parity_wall = DM1_WALL_D3L2;
     } else {
@@ -2476,7 +2455,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * F0113_DUNGEONVIEW_DrawField draws the teleporter swirl effect
      * at the wall zone. */
     if (element == DM1_VP_ELEMENT_TELEPORTER) { /* C05_ELEMENT_TELEPORTER */
-        dm1_viewport_3d_draw_field(state, wall_zone, 0x1C); /* cyan field */
+        dm1_viewport_3d_draw_field(state, rel_forward, rel_side, 0x1C);
         return;
     }
 
@@ -2581,7 +2560,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         /* Teleporter field effect — only for TELEPORTER element.
          * Source: DUNVIEW.C:6288-6289 (F0676) · DUNVIEW.C:6355-6356 (F0677) */
         if (element == DM1_VP_ELEMENT_TELEPORTER) { /* TELEPORTER */
-            dm1_viewport_3d_draw_field(state, wall_zone, 0x1C);
+            dm1_viewport_3d_draw_field(state, rel_forward, rel_side, 0x1C);
         }
     }
 
@@ -2635,22 +2614,27 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
     /* D2L2 uses D2L2 frame; D2R2 uses D2R2 frame */
     const DM1_WallFrame *fr = NULL;
     int wall_zone = 0;
+    int rel_forward = 2;
+    int rel_side = 0;
     DM1_WallSetIndex native_wall = DM1_WALL_D2L2;
     DM1_WallSetIndex parity_wall = DM1_WALL_D2R2;
 
     if (square == DM1_VIEW_SQUARE_D2L2) {
         fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L2);
         wall_zone = DM1_PC34_ZONE_WALL_D2L2; /* 707 */
+        rel_side = -2;
         native_wall = DM1_WALL_D2L2;
         parity_wall = DM1_WALL_D2R2;
     } else if (square == DM1_VIEW_SQUARE_D2R2) {
         fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2R2);
         wall_zone = DM1_PC34_ZONE_WALL_D2R2; /* 708 */
+        rel_side = 2;
         native_wall = DM1_WALL_D2R2;
         parity_wall = DM1_WALL_D2L2;
     } else {
         return; /* Not a near-wall square */
     }
+    (void)wall_zone; /* kept as source-map evidence for F0678/F0679 comments */
 
     /* ── WALL case: draw wall bitmap, then return ──
      * ReDMCSB F0678 lines 6848-6862 / F0679 lines 6879-6893.
@@ -2675,7 +2659,7 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
      * F0113_DUNGEONVIEW_DrawField draws the teleporter field at
      * zone C707 (D2L2) or C708 (D2R2). */
     if (element == DM1_VP_ELEMENT_TELEPORTER) { /* C05_ELEMENT_TELEPORTER */
-        dm1_viewport_3d_draw_field(state, wall_zone, 0x1C); /* cyan field */
+        dm1_viewport_3d_draw_field(state, rel_forward, rel_side, 0x1C);
         return;
     }
 

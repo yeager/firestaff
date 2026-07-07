@@ -53,6 +53,25 @@ int dm1_v1_field_render_plan_at_pc34(
     return 1;
 }
 
+int dm1_v1_field_render_plan_for_relative_pc34(
+    int relForward,
+    int relSide,
+    DM1_FieldRenderPlanPc34* outPlan)
+{
+    int i;
+    if (!outPlan) {
+        return 0;
+    }
+    for (i = 0; i < dm1_v1_field_render_plan_count_pc34(); ++i) {
+        const DM1_FieldRenderPlanPc34* plan = &s_fieldRenderPlans[i];
+        if (plan->relForward == relForward && plan->relSide == relSide) {
+            *outPlan = *plan;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int dm1_v1_field_square_is_visible_open_pc34(int square)
 {
     return (square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0 &&

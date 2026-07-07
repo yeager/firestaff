@@ -2445,15 +2445,21 @@ static void test_d2l2_d2r2_near_wall_pixel_and_no_thing_gate(void)
     grid[1 * 4 + 1] = DM1_VP_ELEMENT_TELEPORTER;
     dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2R2, 0, 1, 1);
     check_int("d2l2_d2r2_gate.teleporter_writes_d2r2_zone",
-              viewport[20 * DM1_VIEWPORT_WIDTH + 186], 0x1c);
+              viewport[24 * DM1_VIEWPORT_WIDTH + 216], 0x1c);
+    check_int("d2l2_d2r2_gate.teleporter_d2r2_right_edge",
+              viewport[75 * DM1_VIEWPORT_WIDTH + 223], 0x1c);
+    check_int("d2l2_d2r2_gate.teleporter_d2r2_left_neighbor_untouched",
+              viewport[24 * DM1_VIEWPORT_WIDTH + 215], 0xee);
     check_int("d2l2_d2r2_gate.teleporter_left_zone_untouched",
-              viewport[20 * DM1_VIEWPORT_WIDTH + 0], 0xee);
+              viewport[24 * DM1_VIEWPORT_WIDTH + 0], 0xee);
     memset(viewport, 0xee, sizeof(viewport));
     dm1_viewport_3d_draw_csb_near_wall(&state, DM1_VIEW_SQUARE_D2L2, 0, 1, 1);
     check_int("d2l2_d2r2_gate.teleporter_writes_d2l2_zone",
-              viewport[20 * DM1_VIEWPORT_WIDTH + 0], 0x1c);
+              viewport[24 * DM1_VIEWPORT_WIDTH + 0], 0x1c);
+    check_int("d2l2_d2r2_gate.teleporter_d2l2_right_edge",
+              viewport[75 * DM1_VIEWPORT_WIDTH + 7], 0x1c);
     check_int("d2l2_d2r2_gate.teleporter_d2l2_zone_untouched",
-              viewport[20 * DM1_VIEWPORT_WIDTH + 38], 0xee);
+              viewport[24 * DM1_VIEWPORT_WIDTH + 8], 0xee);
 
     dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
 }
@@ -2681,11 +2687,11 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     state.parity_flip = true;
     dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3R2, 0, 1, 1);
     check_int("d3l2_d3r2_gate.d3r2_teleporter_field_parity_ignored_left_edge",
-              viewport[25 * DM1_VIEWPORT_WIDTH + 208], 0x1c);
+              viewport[25 * DM1_VIEWPORT_WIDTH + 188], 0x1c);
     check_int("d3l2_d3r2_gate.d3r2_teleporter_field_right_edge",
               viewport[73 * DM1_VIEWPORT_WIDTH + 223], 0x1c);
     check_int("d3l2_d3r2_gate.d3r2_teleporter_field_left_neighbor_untouched",
-              viewport[25 * DM1_VIEWPORT_WIDTH + 207], 0xee);
+              viewport[25 * DM1_VIEWPORT_WIDTH + 187], 0xee);
     check_int("d3l2_d3r2_gate.d3r2_teleporter_field_d3l2_zone_untouched",
               viewport[25 * DM1_VIEWPORT_WIDTH + 0], 0xee);
     check_int("d3l2_d3r2_gate.d3r2_teleporter_field_row_after_untouched",
