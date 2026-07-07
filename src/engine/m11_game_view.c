@@ -1302,12 +1302,9 @@ static void m11_draw_csb_runtime_thing_overlays(
                 m11_csb_runtime_overlay_stats_add_object_marker(state);
             }
         } else if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP) {
-            const CSB_V1_RuntimeGroupOverlayInfo *group_info =
-                &overlay->group_info;
             const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement =
                 &overlay->group_placement;
-            int creature_type = group_info->creature_type;
-            int creature_dir = group_info->direction;
+            int creature_type = placement->sprite_creature_type;
 
             if (creature_type >= 0 &&
                 m11_draw_creature_sprite_ex(state,
@@ -1320,8 +1317,8 @@ static void m11_draw_csb_runtime_thing_overlays(
                                             placement->sprite_h,
                                             creature_type,
                                             placement->depth_index,
-                                            overlay->side,
-                                            creature_dir)) {
+                                            placement->sprite_relative_side,
+                                            placement->sprite_direction)) {
                 m11_csb_runtime_overlay_stats_add_group_sprite(state);
             } else if (csb_v1_viewport_draw_runtime_group_marker(
                            framebuffer,

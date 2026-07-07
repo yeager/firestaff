@@ -444,6 +444,9 @@ typedef struct {
     int screen_y;
     int used_source_zone;
     int depth_index;
+    int sprite_creature_type;
+    int sprite_direction;
+    int sprite_relative_side;
     int sprite_x;
     int sprite_y;
     int sprite_w;
