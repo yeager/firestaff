@@ -85,16 +85,6 @@ typedef struct {
     int last_group_direction;
 } TestRuntimeThingDrawCapture;
 
-static int test_projectile_material_resolver(
-    void *user,
-    const struct ProjectileInstance_Compat *projectile)
-{
-    int *seen_thing = (int *)user;
-    if (!projectile) return -1;
-    if (seen_thing) *seen_thing = projectile->reserved1;
-    return 32;
-}
-
 static int test_projectile_sprite_drawer(
     void *user,
     const struct ProjectileInstance_Compat *projectile,
@@ -300,28 +290,6 @@ static void test_runtime_projectile_and_explosion_overlays(void)
               cfg.runtime_projectile_material_resolved_count, 0);
     check_int("runtime.projectile_overlay.default_marker_count",
               cfg.runtime_projectile_marker_drawn_count, 1);
-
-    {
-        int seen_thing = 0;
-        int material_color =
-            csb_v1_viewport_projectile_material_overlay_color(32);
-        memset(framebuffer, 0, sizeof(framebuffer));
-        cfg.projectile_material_resolver = test_projectile_material_resolver;
-        cfg.projectile_material_user = &seen_thing;
-        cfg.runtime_projectile_material_resolved_count = 0;
-        cfg.runtime_projectile_marker_drawn_count = 0;
-        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
-        check_int("runtime.projectile_overlay.material_color",
-                  framebuffer[center_offset], material_color);
-        check_int("runtime.projectile_overlay.material_count",
-                  cfg.runtime_projectile_material_resolved_count, 1);
-        check_int("runtime.projectile_overlay.material_marker_count",
-                  cfg.runtime_projectile_marker_drawn_count, 1);
-        check_int("runtime.projectile_overlay.material_thing",
-                  seen_thing, 0x1400);
-        cfg.projectile_material_resolver = NULL;
-        cfg.projectile_material_user = NULL;
-    }
 
     {
         CSB_V1_RuntimeProfile runtime;
@@ -1943,6 +1911,10 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                   placement.sprite_relative_dir, -1);
         check_int("csb.projectile_overlay.d3l2_cell2.relative_cell_default",
                   placement.sprite_relative_cell, -1);
+        check_int("csb.projectile_overlay.d3l2_cell2.material_thing_default",
+                  placement.material_thing, -1);
+        check_int("csb.projectile_overlay.d3l2_cell2.material_icon_default",
+                  placement.material_icon_index, -1);
         check_int("csb.projectile_overlay.d3l2_cell2.gfx_default",
                   placement.sprite_graphic_index, -1);
         check_int("csb.projectile_overlay.d3l2_cell2.flip_default",
@@ -2051,6 +2023,48 @@ static void test_csb_f0115_projectile_blit_contracts(void)
             check_int("csb.projectile_overlay.rect.helper.y", y, 33);
             check_int("csb.projectile_overlay.rect.helper.w", w, 224);
             check_int("csb.projectile_overlay.rect.helper.h", h, 136);
+        }
+        {
+            CSB_V1_RuntimeProfile runtime;
+            CSB_V1_DungeonData dungeon;
+            struct ProjectileInstance_Compat projectile;
+            uint8_t raw[16];
+            uint16_t dagger = (uint16_t)((THING_TYPE_WEAPON << 10) | 0);
+
+            memset(&runtime, 0, sizeof(runtime));
+            memset(&dungeon, 0, sizeof(dungeon));
+            memset(&projectile, 0, sizeof(projectile));
+            memset(raw, 0, sizeof(raw));
+            dungeon.raw_data = raw;
+            dungeon.raw_size = (int)sizeof(raw);
+            dungeon.thing_type_counts[THING_TYPE_WEAPON] = 1;
+            dungeon.thing_data_bases[THING_TYPE_WEAPON] = 0;
+            write_fixture_u16(raw, 0, THING_ENDOFLIST);
+            write_fixture_u16(raw, 2, 8u);
+            runtime.dungeon_handle = &dungeon;
+            projectile.reserved1 = dagger;
+            placement.material_thing = -1;
+            placement.material_icon_index = -1;
+
+            check_int("csb.projectile_overlay.material_bind",
+                      csb_v1_viewport_runtime_bind_projectile_material(
+                          &runtime, &projectile, &placement),
+                      1);
+            check_int("csb.projectile_overlay.material_bind_thing",
+                      placement.material_thing, dagger);
+            check_int("csb.projectile_overlay.material_bind_icon",
+                      placement.material_icon_index, 32);
+
+            placement.material_thing = -1;
+            placement.material_icon_index = -1;
+            check_int("csb.projectile_overlay.material_bind_no_runtime",
+                      csb_v1_viewport_runtime_bind_projectile_material(
+                          NULL, &projectile, &placement),
+                      0);
+            check_int("csb.projectile_overlay.material_bind_no_runtime_thing",
+                      placement.material_thing, dagger);
+            check_int("csb.projectile_overlay.material_bind_no_runtime_icon",
+                      placement.material_icon_index, -1);
         }
     }
 

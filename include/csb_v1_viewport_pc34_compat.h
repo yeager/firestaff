@@ -17,10 +17,6 @@ typedef struct CSB_V1_ViewportRuntimeGroupOverlayPlacement
 typedef struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
 
-typedef int (*CSB_V1_ViewportProjectileMaterialResolver)(
-    void *user,
-    const struct ProjectileInstance_Compat *projectile);
-
 typedef int (*CSB_V1_ViewportProjectileSpriteDrawer)(
     void *user,
     const struct ProjectileInstance_Compat *projectile,
@@ -112,8 +108,6 @@ typedef struct {
     void *group_sprite_user;
     int runtime_group_sprite_drawn_count;
     int runtime_group_marker_drawn_count;
-    CSB_V1_ViewportProjectileMaterialResolver projectile_material_resolver;
-    void *projectile_material_user;
     int runtime_projectile_material_resolved_count;
     CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
     void *projectile_sprite_user;
@@ -422,6 +416,8 @@ struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement {
     int sprite_relative_cell;
     int sprite_graphic_index;
     int sprite_flip_flags;
+    int material_thing;
+    int material_icon_index;
 };
 
 struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
@@ -761,6 +757,10 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement *out_placement);
 int csb_v1_viewport_runtime_bind_projectile_sprite(
     int party_dir,
+    const struct ProjectileInstance_Compat *projectile,
+    CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement);
+int csb_v1_viewport_runtime_bind_projectile_material(
+    const CSB_V1_RuntimeProfile *runtime,
     const struct ProjectileInstance_Compat *projectile,
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement);
 int csb_v1_viewport_runtime_projectile_sprite_rect(

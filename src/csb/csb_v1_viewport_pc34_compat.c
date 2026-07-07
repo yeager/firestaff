@@ -1207,6 +1207,8 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     placement.sprite_relative_cell = -1;
     placement.sprite_graphic_index = -1;
     placement.sprite_flip_flags = 0;
+    placement.material_thing = -1;
+    placement.material_icon_index = -1;
     placement.viewport_x = 0;
     placement.viewport_y = 0;
     csb_v1_viewport_runtime_relative_position(
@@ -1321,6 +1323,30 @@ int csb_v1_viewport_runtime_bind_projectile_sprite(
                                      projectile->mapX,
                                      projectile->mapY);
     return placement->sprite_graphic_index >= 0;
+}
+
+int csb_v1_viewport_runtime_bind_projectile_material(
+    const CSB_V1_RuntimeProfile *runtime,
+    const struct ProjectileInstance_Compat *projectile,
+    CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement)
+{
+    unsigned short thing;
+
+    if (!projectile || !placement) {
+        return 0;
+    }
+
+    thing = (unsigned short)projectile->reserved1;
+    placement->material_thing = (int)thing;
+    placement->material_icon_index = -1;
+
+    if (!runtime || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return 0;
+    }
+
+    placement->material_icon_index =
+        csb_v1_runtime_object_icon_index(runtime, thing);
+    return placement->material_icon_index >= 0;
 }
 
 int csb_v1_viewport_runtime_explosion_sprite_rect(
@@ -1536,6 +1562,10 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
             party_dir,
             projectile,
             &placement);
+        (void)csb_v1_viewport_runtime_bind_projectile_material(
+            cfg->runtime_profile,
+            projectile,
+            &placement);
         /* ReDMCSB DUNVIEW.C F0115 lines 5668-5683 map projectiles through
          * G2028 and C2900_ZONE_ + row*4 + ViewCell.  OBJECT.C F0032/F0033
          * resolves the material thing identity used by the fallback marker. */
@@ -1549,18 +1579,7 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
             ++cfg->runtime_projectile_sprite_drawn_count;
             continue;
         }
-        if (cfg->projectile_material_resolver) {
-            material_icon_index = cfg->projectile_material_resolver(
-                cfg->projectile_material_user,
-                projectile);
-        } else if (cfg->runtime_profile) {
-            unsigned short thing = (unsigned short)projectile->reserved1;
-            if (thing != THING_NONE && thing != THING_ENDOFLIST) {
-                material_icon_index = csb_v1_runtime_object_icon_index(
-                    cfg->runtime_profile,
-                    thing);
-            }
-        }
+        material_icon_index = placement.material_icon_index;
         if (material_icon_index >= 0) {
             ++cfg->runtime_projectile_material_resolved_count;
         }
