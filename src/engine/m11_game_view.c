@@ -12028,7 +12028,9 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
 }
 
 static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
+                                               const Theron_StartupActionPlan* plan,
                                                Theron_V1StartupRuntimeEntryResult* out_result,
+                                               Theron_V1StartupRuntimeEntryApplyReceipt* out_apply_receipt,
                                                char* receipt,
                                                size_t receipt_cap) {
     Theron_V1_World* world;
@@ -12038,6 +12040,7 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     const char* rosterNames[8];
     Theron_V1StartupRuntimeEntryRequest runtimeRequest;
     Theron_V1StartupRuntimeEntryResult runtimeResult;
+    Theron_V1StartupRuntimeEntryApplyReceipt applyReceipt;
     Theron_StartupStateReceipt stateReceipt;
     char flowReceipt[128];
     int i;
@@ -12077,11 +12080,14 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     runtimeRequest.roster_names = rosterNames;
     runtimeRequest.roster_name_count =
         state->theronState.startup_roster_name_count;
-    if (!theron_v1_startup_runtime_enter_from_forcefield(
+    if (!theron_v1_startup_runtime_enter_from_forcefield_with_receipts(
         &flow,
         world,
         &runtimeRequest,
+        plan,
         &runtimeResult,
+        &applyReceipt,
+        &stateReceipt,
         receipt,
         receipt_cap)) {
         if (receipt && receipt_cap > 0u) {
@@ -12099,24 +12105,24 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     if (out_result) {
         *out_result = runtimeResult;
     }
-    if (!theron_v1_startup_runtime_entry_state_receipt_from_result(
-            &flow,
-            &runtimeResult,
-            &stateReceipt)) {
-        return 0;
+    if (out_apply_receipt) {
+        *out_apply_receipt = applyReceipt;
     }
     m11_theron_apply_startup_state_receipt(state, &stateReceipt);
     return 1;
 }
 
 static int m11_theron_continue_startup(M11_GameViewState* state,
+                                       const Theron_StartupActionPlan* plan,
                                        Theron_V1StartupContinueResult* out_result,
+                                       Theron_V1StartupContinueApplyReceipt* out_apply_receipt,
                                        char* receipt,
                                        size_t receipt_cap) {
     Theron_V1_World* world;
     Theron_V1_BootProfile* profile;
     Theron_V1StartupContinueRequest request;
     Theron_V1StartupContinueResult result;
+    Theron_V1StartupContinueApplyReceipt applyReceipt;
     Theron_StartupStateReceipt stateReceipt;
 
     if (receipt && receipt_cap > 0u) {
@@ -12140,22 +12146,24 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
         (Theron_V1SrmProgressImportStatus)
             state->theronState.save_resume_srm_import_status;
     request.srm_root = state->theronState.save_resume_srm_root;
-    if (!theron_v1_startup_continue_apply_request(world,
-                                                  &request,
-                                                  &result,
-                                                  receipt,
-                                                  receipt_cap)) {
-        return 0;
-    }
-
-    if (!theron_v1_startup_continue_state_receipt_from_result(
+    if (!theron_v1_startup_continue_apply_request_with_receipts(
+            world,
+            &request,
+            plan,
+            NULL,
             &result,
-            &stateReceipt)) {
+            &applyReceipt,
+            &stateReceipt,
+            receipt,
+            receipt_cap)) {
         return 0;
     }
     m11_theron_apply_startup_state_receipt(state, &stateReceipt);
     if (out_result) {
         *out_result = result;
+    }
+    if (out_apply_receipt) {
+        *out_apply_receipt = applyReceipt;
     }
     return 1;
 }
@@ -12316,7 +12324,9 @@ static M11_GameInputResult m11_theron_startup_apply_action(
         Theron_V1StartupContinueResult continueResult;
         Theron_V1StartupContinueApplyReceipt applyReceipt;
         int continued = m11_theron_continue_startup(state,
+                                                    &plan,
                                                     &continueResult,
+                                                    &applyReceipt,
                                                     receipt,
                                                     sizeof(receipt));
         if (!continued) {
@@ -12331,12 +12341,15 @@ static M11_GameInputResult m11_theron_startup_apply_action(
         theron_v1_chapter_marker_format(&marker,
                                         markerLine,
                                         sizeof(markerLine));
-        if (theron_v1_startup_continue_apply_receipt(
-                &plan,
-                &continueResult,
-                receipt,
-                markerLine,
-                &applyReceipt)) {
+        if (applyReceipt.input_result == THERON_STARTUP_INPUT_RESULT_REDRAW) {
+            if (markerLine[0] != '\0') {
+                (void)theron_v1_startup_continue_apply_receipt(
+                    &plan,
+                    &continueResult,
+                    receipt,
+                    markerLine,
+                    &applyReceipt);
+            }
             m11_set_status(state,
                            applyReceipt.status_scope
                                ? applyReceipt.status_scope
@@ -12361,7 +12374,9 @@ static M11_GameInputResult m11_theron_startup_apply_action(
         Theron_V1StartupRuntimeEntryResult runtimeResult;
         Theron_V1StartupRuntimeEntryApplyReceipt applyReceipt;
         if (!m11_theron_enter_startup_forcefield(state,
+                                                 &plan,
                                                  &runtimeResult,
+                                                 &applyReceipt,
                                                  receipt,
                                                  sizeof(receipt))) {
             m11_set_status(state, "STARTUP",
@@ -12370,11 +12385,7 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                                 : "FORCEFIELD FAILED"));
             return M11_GAME_INPUT_REDRAW;
         }
-        if (!theron_v1_startup_runtime_entry_apply_receipt(
-                &plan,
-                &runtimeResult,
-                receipt,
-                &applyReceipt)) {
+        if (applyReceipt.input_result != THERON_STARTUP_INPUT_RESULT_REDRAW) {
             m11_set_status(state,
                            plan.status_scope ? plan.status_scope : "BOOT",
                            plan.status ? plan.status : "THERON READY");

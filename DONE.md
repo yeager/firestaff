@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron Continue/forcefield combined receipts: `theron_v1_startup_save_resume` and `theron_v1_startup_runtime_entry` now own combined execution plus apply/state receipt wrappers for Continue and forcefield runtime entry. M11 supplies request facts and applies returned receipts instead of assembling those receipt chains locally. Verification: startup-flow probe passed 442/442, save-resume probe passed 66/66, M11 launcher handoff passed 26/26, Theron boot-probe passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Nexus full start V2 launch fallback: the M12 launcher now allows Nexus V2.0/V2.1/V2.2 choices to start instead of forcing V1-only or showing the V2.2 coming-soon/data-missing path. Nexus still keeps V1 gameplay/source state locked and uses full original WARNING.BIN/TITLE.CG startup graphics as the presentation fallback. Verification: Nexus launcher handoff passed 151/151, M11 startup gate passed, startup menu test passed, V2.1 and V2.2 Nexus boot-probes passed with title boundary 102, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM2 startup combined receipt ownership: `dm2_v1_startup_menu` now owns action execution through optional runtime session-apply callback and final apply receipt construction. M11 supplies only the DM2 runtime apply callback and applies the returned receipt. Verification: DM2 startup action contract passed 54/54, M11 startup/profile gate passed, DM2 boot-probe passed, Phase A passed 24/24, and `git diff --check` passed.

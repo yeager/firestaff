@@ -790,6 +790,52 @@ int theron_v1_startup_continue_state_receipt_from_result(
     return 1;
 }
 
+int theron_v1_startup_continue_apply_request_with_receipts(
+    Theron_V1_World *world,
+    const Theron_V1StartupContinueRequest *request,
+    const Theron_StartupActionPlan *plan,
+    const char *chapter_marker_line,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_V1StartupContinueApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_V1StartupContinueResult local_result;
+    Theron_V1StartupContinueResult *result =
+        out_result ? out_result : &local_result;
+
+    theron_v1_startup_continue_result_init(result);
+    if (out_apply_receipt) {
+        theron_v1_startup_continue_apply_receipt_init(out_apply_receipt);
+    }
+    if (out_state_receipt) {
+        theron_v1_startup_state_receipt_init(out_state_receipt);
+    }
+    if (!theron_v1_startup_continue_apply_request(world,
+                                                  request,
+                                                  result,
+                                                  receipt,
+                                                  receipt_cap)) {
+        return 0;
+    }
+    if (out_state_receipt &&
+        !theron_v1_startup_continue_state_receipt_from_result(
+            result,
+            out_state_receipt)) {
+        return 0;
+    }
+    if (out_apply_receipt &&
+        !theron_v1_startup_continue_apply_receipt(plan,
+                                                  result,
+                                                  receipt,
+                                                  chapter_marker_line,
+                                                  out_apply_receipt)) {
+        return 0;
+    }
+    return 1;
+}
+
 size_t theron_v1_startup_save_resume_format(
     const Theron_V1StartupSaveResume *snap,
     char *buf,

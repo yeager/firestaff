@@ -234,6 +234,16 @@ int theron_v1_startup_continue_apply_receipt(
 int theron_v1_startup_continue_state_receipt_from_result(
     const Theron_V1StartupContinueResult *result,
     Theron_StartupStateReceipt *out_receipt);
+int theron_v1_startup_continue_apply_request_with_receipts(
+    Theron_V1_World *world,
+    const Theron_V1StartupContinueRequest *request,
+    const Theron_StartupActionPlan *plan,
+    const char *chapter_marker_line,
+    Theron_V1StartupContinueResult *out_result,
+    Theron_V1StartupContinueApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap);
 
 /* Pretty-printer. Writes a multi-line diagnostic to `buf` up to
  * `buf_size` bytes (always NUL-terminated).  Returns bytes written
