@@ -2809,6 +2809,79 @@ void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg) {
     cfg->custom_background_room_num = -1;
 }
 
+void csb_v1_viewport_apply_runtime_drawer_binding(
+    CSB_V1_ViewportConfig *cfg,
+    const CSB_V1_ViewportRuntimeDrawerBinding *binding)
+{
+    if (!cfg) {
+        return;
+    }
+    if (!binding) {
+        cfg->object_sprite_drawer = NULL;
+        cfg->object_sprite_user = NULL;
+        cfg->object_icon_drawer = NULL;
+        cfg->object_icon_user = NULL;
+        cfg->group_sprite_drawer = NULL;
+        cfg->group_sprite_user = NULL;
+        cfg->projectile_sprite_drawer = NULL;
+        cfg->projectile_sprite_user = NULL;
+        cfg->explosion_sprite_drawer = NULL;
+        cfg->explosion_sprite_user = NULL;
+        return;
+    }
+    cfg->object_sprite_drawer = binding->object_sprite_drawer;
+    cfg->object_sprite_user = binding->object_sprite_user;
+    cfg->object_icon_drawer = binding->object_icon_drawer;
+    cfg->object_icon_user = binding->object_icon_user;
+    cfg->group_sprite_drawer = binding->group_sprite_drawer;
+    cfg->group_sprite_user = binding->group_sprite_user;
+    cfg->projectile_sprite_drawer = binding->projectile_sprite_drawer;
+    cfg->projectile_sprite_user = binding->projectile_sprite_user;
+    cfg->explosion_sprite_drawer = binding->explosion_sprite_drawer;
+    cfg->explosion_sprite_user = binding->explosion_sprite_user;
+}
+
+void csb_v1_viewport_runtime_draw_counts_reset(
+    CSB_V1_ViewportRuntimeDrawCounts *counts)
+{
+    if (counts) {
+        memset(counts, 0, sizeof(*counts));
+    }
+}
+
+void csb_v1_viewport_runtime_draw_counts_from_config(
+    const CSB_V1_ViewportConfig *cfg,
+    CSB_V1_ViewportRuntimeDrawCounts *counts)
+{
+    if (!counts) {
+        return;
+    }
+    csb_v1_viewport_runtime_draw_counts_reset(counts);
+    if (!cfg) {
+        return;
+    }
+    counts->object_sprite_drawn_count =
+        cfg->runtime_object_sprite_drawn_count;
+    counts->object_icon_drawn_count =
+        cfg->runtime_object_icon_drawn_count;
+    counts->object_marker_drawn_count =
+        cfg->runtime_object_marker_drawn_count;
+    counts->group_sprite_drawn_count =
+        cfg->runtime_group_sprite_drawn_count;
+    counts->group_marker_drawn_count =
+        cfg->runtime_group_marker_drawn_count;
+    counts->projectile_sprite_drawn_count =
+        cfg->runtime_projectile_sprite_drawn_count;
+    counts->projectile_material_resolved_count =
+        cfg->runtime_projectile_material_resolved_count;
+    counts->projectile_marker_drawn_count =
+        cfg->runtime_projectile_marker_drawn_count;
+    counts->explosion_sprite_drawn_count =
+        cfg->runtime_explosion_sprite_drawn_count;
+    counts->explosion_marker_drawn_count =
+        cfg->runtime_explosion_marker_drawn_count;
+}
+
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set) {
     if (cfg) cfg->wall_set_index = set;
 }
