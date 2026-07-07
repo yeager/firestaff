@@ -117,6 +117,7 @@ typedef struct {
     int runtime_group_sprite_drawn_count;
     int runtime_group_marker_drawn_count;
     int runtime_projectile_material_resolved_count;
+    int runtime_projectile_material_icon_drawn_count;
     CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
     void *projectile_sprite_user;
     int runtime_projectile_sprite_drawn_count;
@@ -170,6 +171,7 @@ typedef struct {
     int group_marker_drawn_count;
     int projectile_sprite_drawn_count;
     int projectile_material_resolved_count;
+    int projectile_material_icon_drawn_count;
     int projectile_marker_drawn_count;
     int explosion_sprite_drawn_count;
     int explosion_marker_drawn_count;
@@ -906,6 +908,9 @@ int csb_v1_viewport_runtime_bind_projectile_material(
 int csb_v1_viewport_runtime_projectile_sprite_blit(
     const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
     CSB_V1_ViewportRuntimeProjectileSpriteBlit *out_blit);
+int csb_v1_viewport_runtime_projectile_material_icon_blit(
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeObjectIconBlit *out_blit);
 int csb_v1_viewport_runtime_projectile_sprite_rect(
     int source_zone,
     int viewport_x,

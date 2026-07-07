@@ -1509,6 +1509,31 @@ int csb_v1_viewport_runtime_projectile_sprite_blit(
     return 1;
 }
 
+int csb_v1_viewport_runtime_projectile_material_icon_blit(
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeObjectIconBlit *out_blit)
+{
+    CSB_V1_ViewportRuntimeObjectIconBlit blit;
+
+    memset(&blit, 0, sizeof(blit));
+    blit.icon_index = -1;
+    if (!placement || !out_blit || !placement->visible ||
+        placement->material_icon_index < 0) {
+        if (out_blit) *out_blit = blit;
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115 draws visible thrown-object material at the
+     * projectile C2900 point when no spell projectile bitmap is bound.
+     * Keep the centered icon fallback in the CSB viewport contract. */
+    blit.icon_index = placement->material_icon_index;
+    blit.draw_x = DM1_VIEWPORT_SCREEN_X + placement->viewport_x - 8;
+    blit.draw_y = DM1_VIEWPORT_SCREEN_Y + placement->viewport_y - 8;
+    blit.transparent_color = 0;
+    *out_blit = blit;
+    return 1;
+}
+
 int csb_v1_viewport_runtime_explosion_sprite_rect(
     int forward,
     int source_zone,
@@ -1750,6 +1775,10 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
     int i;
 
     if (!cfg || !cfg->runtime_projectiles) return;
+    cfg->runtime_projectile_sprite_drawn_count = 0;
+    cfg->runtime_projectile_material_resolved_count = 0;
+    cfg->runtime_projectile_material_icon_drawn_count = 0;
+    cfg->runtime_projectile_marker_drawn_count = 0;
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat *projectile =
             &cfg->runtime_projectiles->entries[i];
@@ -1795,6 +1824,19 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
         }
         if (placement.material_icon_index >= 0) {
             ++cfg->runtime_projectile_material_resolved_count;
+            if (cfg->object_icon_drawer) {
+                CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
+                if (csb_v1_viewport_runtime_projectile_material_icon_blit(
+                        &placement, &icon_blit) &&
+                    cfg->object_icon_drawer(
+                        cfg->object_icon_user,
+                        &icon_blit,
+                        cfg->viewport_pixels,
+                        cfg->viewport_stride)) {
+                    ++cfg->runtime_projectile_material_icon_drawn_count;
+                    continue;
+                }
+            }
         }
         color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
             placement.material_icon_index);
@@ -2918,6 +2960,8 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
         cfg->runtime_projectile_sprite_drawn_count;
     counts->projectile_material_resolved_count =
         cfg->runtime_projectile_material_resolved_count;
+    counts->projectile_material_icon_drawn_count =
+        cfg->runtime_projectile_material_icon_drawn_count;
     counts->projectile_marker_drawn_count =
         cfg->runtime_projectile_marker_drawn_count;
     counts->explosion_sprite_drawn_count =
