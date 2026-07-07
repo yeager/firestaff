@@ -104,7 +104,7 @@ static int has_extracted(const char *dir) {
 
 static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     int face_size = 0;
-    int full_face_count;
+    Nexus_UI_FaceLayout face_layout;
     int i;
     uint8_t *face_data;
     if (!engine) return;
@@ -113,25 +113,29 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     engine->ui_faces_fallback = 0;
     face_data = nexus_v1_read_file(engine, "FACE.BIN", &face_size);
     if (!face_data) return;
-    full_face_count = nexus_ui_face_full_entry_count(face_size, 48, 48);
+    (void)nexus_ui_face_layout_detect(face_data, face_size, &face_layout);
 
     /* DM Nexus FACE.BIN is the startup champion portrait source. Keep the
      * full 24-row startup roster visible even when a specific dump exposes
-     * fewer full raw 48x48 entries; fallback rows are counted explicitly. */
+     * compact FACE records rather than raw 48x48 entries. */
     for (i = 0; i < engine->champions.champion_count && i < 24; ++i) {
         const int portrait_index = engine->champions.champions[i].portrait_index;
         int load_result;
         if (portrait_index < 0 || portrait_index >= 24) continue;
         engine->ui_faces_expected++;
-        if (portrait_index < full_face_count) {
-            load_result = nexus_ui_load_faces(&engine->ui,
-                                              face_data,
-                                              portrait_index * 48 * 48,
-                                              face_size,
-                                              portrait_index,
-                                              48,
-                                              48,
-                                              NULL);
+        if (face_layout.valid &&
+            portrait_index < face_layout.entry_count &&
+            face_layout.entry_size > 0 &&
+            face_layout.header_size + (portrait_index + 1) * face_layout.entry_size <= face_size) {
+            const int record_offset =
+                face_layout.header_size + portrait_index * face_layout.entry_size;
+            load_result = nexus_ui_load_face_record(&engine->ui,
+                                                    face_data + record_offset,
+                                                    face_layout.entry_size,
+                                                    portrait_index,
+                                                    face_layout.portrait_w,
+                                                    face_layout.portrait_h,
+                                                    NULL);
         } else {
             load_result = nexus_ui_load_face_placeholder(&engine->ui,
                                                         portrait_index,

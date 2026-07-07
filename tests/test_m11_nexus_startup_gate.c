@@ -408,12 +408,27 @@ static void cleanup_nexus_default_save_dir(const char* home) {
 static void expect_face_loader_counts_real_vs_fallback(void) {
     Nexus_UI_Manager ui;
     unsigned char face_bytes[48 * 48];
+    unsigned char compact_face[45104];
     unsigned char short_bytes[16];
     const Nexus_UI_Surface* placeholder;
+    const Nexus_UI_Surface* compact_surface;
+    Nexus_UI_FaceLayout layout;
     int i;
 
     for (i = 0; i < (int)sizeof(face_bytes); ++i) {
         face_bytes[i] = (unsigned char)((i % 31) + 1);
+    }
+    memset(compact_face, 0, sizeof(compact_face));
+    memcpy(compact_face, "FACE", 4);
+    compact_face[4] = 0x00;
+    compact_face[5] = 0x00;
+    compact_face[6] = 0xb0;
+    compact_face[7] = 0x30;
+    compact_face[8] = 0x00;
+    compact_face[9] = 0x14;
+    compact_face[15] = 0x10;
+    for (i = 32; i < (int)sizeof(compact_face); ++i) {
+        compact_face[i] = (unsigned char)((i % 251) + 1);
     }
     memset(short_bytes, 3, sizeof(short_bytes));
     nexus_ui_manager_init(&ui);
@@ -429,6 +444,33 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                                                48,
                                                48) == 24,
                 "Nexus FACE loader caps startup portraits at roster size");
+    memset(&layout, 0, sizeof(layout));
+    expect_true(nexus_ui_face_layout_detect(compact_face,
+                                            (int)sizeof(compact_face),
+                                            &layout) &&
+                    layout.valid &&
+                    layout.header_size == 32 &&
+                    layout.entry_count == 24 &&
+                    layout.entry_size == 1878 &&
+                    layout.portrait_w == 48 &&
+                    layout.portrait_h == 48,
+                "Nexus FACE loader detects compact FACE header layout");
+    expect_true(nexus_ui_load_face_record(&ui,
+                                          compact_face + 32 + 23 * 1878,
+                                          1878,
+                                          23,
+                                          48,
+                                          48,
+                                          NULL) > 0,
+                "Nexus FACE loader accepts compact source record for final portrait");
+    compact_surface = &ui.surfaces[NEXUS_SURFACE_FACE0 + 23];
+    expect_true(compact_surface->data != NULL &&
+                    compact_surface->data[0] ==
+                        compact_face[32 + 23 * 1878] &&
+                    compact_surface->data[1877] ==
+                        compact_face[32 + 24 * 1878 - 1] &&
+                    compact_surface->data[1878] == 0,
+                "Nexus FACE compact record is copied and padded without warning fallback");
     expect_true(nexus_ui_load_faces(&ui,
                                     face_bytes,
                                     0,
