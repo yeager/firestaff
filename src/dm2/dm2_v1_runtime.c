@@ -271,8 +271,15 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
             door->square_type =
                 (uint8_t)(square_type >= 0 ? square_type : type);
             door->flags |= DM2_SQF_HAS_DOOR | DM2_SQF_HAS_WALL;
-            door->door_open_pct =
-                (uint8_t)(dm2_runtime_door_state((uint16_t)raw) * 25);
+            {
+                int door_state = dm2_runtime_door_state((uint16_t)raw);
+                if (door_state < 0) {
+                    door_state = 0;
+                } else if (door_state > 4) {
+                    door_state = 4;
+                }
+                door->door_open_pct = (uint8_t)((4 - door_state) * 25);
+            }
             dm2_runtime_apply_door_record_metadata(
                 dd, rt->dungeon_level, map_x, map_y, dir,
                 rt->map_wall_gfx_list, rt->map_wall_gfx_count, door);
