@@ -70,6 +70,7 @@
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
@@ -82,6 +83,7 @@
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
@@ -228,17 +230,8 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
-static int m11_object_source_scale_index(int depthIndex, int relativeCell);
-static void m11_object_source_pile_shift_indices(int pileIndex,
-                                                 int* outXIndex,
-                                                 int* outYIndex);
-static int m11_object_source_shift_value(int shiftSet, int shiftIndex);
 static int m11_creature_coordinate_set(int creatureType);
 static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
-static int m11_c2500_object_raw_zone_point(int rowIndex,
-                                           int relativeCell,
-                                           int* outX,
-                                           int* outY);
 static int m11_c3200_creature_zone_point(int coordSet,
                                          int depthIndex,
                                          int visibleCount,
@@ -17553,8 +17546,6 @@ static void m11_draw_item_cue(unsigned char* framebuffer,
  * G218_aaaauc_Graphic558_ObjectCoordinateSets to position projectiles
  * within the viewport cell based on their sub-cell.
  * Returns 1 if a real sprite was drawn, 0 for fallback. */
-static int m11_object_source_scale_index(int depthIndex, int relativeCell);
-
 static void m11_blit_scaled_flip(const M11_AssetSlot* slot,
                                  unsigned char* framebuffer,
                                  int fbW,
@@ -17704,7 +17695,8 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
     if (relativeCell >= 0 && relativeCell <= 3) {
         int zoneX = 0;
         int zoneY = 0;
-        int scaleIndex = m11_object_source_scale_index(depthIndex, relativeCell);
+        int scaleIndex = dm1_viewport_3d_object_source_scale_index(depthIndex,
+                                                                   relativeCell);
         int qx = w / 4;  /* quarter-width offset */
         int qy = h / 4;  /* quarter-height offset */
         if (x >= M11_VIEWPORT_X && y >= M11_VIEWPORT_Y &&
@@ -24072,135 +24064,6 @@ static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide) {
     return (int)kG2028[viewSquare];
 }
 
-static int m11_object_source_scale_units(int scaleIndex) {
-    /* DUNVIEW.C G2030_auc_ObjectScales: source object scale units for
-     * the five distance/cell scale buckets used by F0115. */
-    static const unsigned char kObjectScales[5] = {27, 21, 18, 14, 12};
-    if (scaleIndex < 0) scaleIndex = 0;
-    if (scaleIndex > 4) scaleIndex = 4;
-    return kObjectScales[scaleIndex];
-}
-
-static int m11_object_source_scale_index(int depthIndex, int relativeCell) {
-    /* F0115 object path:
-     *   D1/native uses scale bucket 0.
-     *   deeper rows use (viewDepth * 2) - 1 - (viewCell >> 1).
-     * relativeCell 0/1 = back row, 2/3 = front row. */
-    int frontRow = relativeCell >= 2;
-    int idx;
-    if (depthIndex <= 0) return 0;
-    idx = depthIndex * 2 - (frontRow ? 1 : 0);
-    if (idx < 0) idx = 0;
-    if (idx > 4) idx = 4;
-    return idx;
-}
-
-static void m11_object_source_pile_shift_indices(int pileIndex,
-                                                 int* outXIndex,
-                                                 int* outYIndex) {
-    /* DUNVIEW.C G0217_aauc_Graphic558_ObjectPileShiftSetIndices. */
-    static const unsigned char kPileShiftIndices[16][2] = {
-        {2,5}, {0,6}, {5,7}, {3,0},
-        {7,1}, {1,2}, {6,3}, {3,3},
-        {5,5}, {2,6}, {7,7}, {1,0},
-        {3,1}, {6,2}, {1,3}, {5,3}
-    };
-    if (pileIndex < 0) pileIndex = 0;
-    pileIndex &= 0x0F;
-    if (outXIndex) *outXIndex = (int)kPileShiftIndices[pileIndex][0];
-    if (outYIndex) *outYIndex = (int)kPileShiftIndices[pileIndex][1];
-}
-
-static int m11_object_source_shift_value(int shiftSet, int shiftIndex) {
-    /* DUNVIEW.C G0223_aac_Graphic558_ShiftSets. */
-    static const signed char kShiftSets[3][8] = {
-        { 0, 1, 2, 3, 0,-3,-2,-1},
-        { 0, 1, 1, 2, 0,-2,-1,-1},
-        { 0, 1, 1, 1, 0,-1,-1,-1}
-    };
-    if (shiftSet < 0) shiftSet = 0;
-    if (shiftSet > 2) shiftSet = 2;
-    if (shiftIndex < 0) shiftIndex = 0;
-    if (shiftIndex > 7) shiftIndex = 7;
-    return (int)kShiftSets[shiftSet][shiftIndex];
-}
-
-static int m11_c2500_object_zone_point(int scaleIndex,
-                                       int relativeCell,
-                                       int* outX,
-                                       int* outY) {
-    /* Layout-696 C2500_ZONE_ table used by DUNVIEW.C F0115 for
-     * non-alcove object/creature placement with
-     * MASK0x8000_SHIFT_OBJECTS_AND_CREATURES.  Five scale buckets
-     * (G2030) × four view cells.  Entries whose source coordinates are
-     * 0,0 are intentionally unusable for that distance/cell. */
-    /* ReDMCSB COORD.C F0640/F0641 loads C696_GRAPHIC_LAYOUT for
-     * PC34/I34E instead of the static fallback G3024 table.  These
-     * coordinates are hash-locked to the canonical DM1 PC 3.4
-     * GRAPHICS.DAT layout-696 dump in data/zones_h_reconstruction.json. */
-    static const short kC2500[5][4][2] = {
-        {{   0,   0}, {   0,   0}, { 127,  70}, {  98,  70}},
-        {{   0,   0}, {   0,   0}, {  62,  70}, {  25,  70}},
-        {{   0,   0}, {   0,   0}, { 200,  70}, { 162,  70}},
-        {{   0,   0}, {   0,   0}, {   2,  70}, { -35,  70}},
-        {{   0,   0}, {   0,   0}, { 258,  70}, { 222,  70}}
-    };
-    int zx;
-    int zy;
-    if (scaleIndex < 0) scaleIndex = 0;
-    if (scaleIndex > 4) scaleIndex = 4;
-    if (relativeCell < 0 || relativeCell > 3) return 0;
-    zx = (int)kC2500[scaleIndex][relativeCell][0];
-    zy = (int)kC2500[scaleIndex][relativeCell][1];
-    if (zx == 0 && zy == 0) return 0;
-    if (outX) *outX = zx;
-    if (outY) *outY = zy;
-    return 1;
-}
-
-
-static int m11_c2500_object_raw_zone_point(int rowIndex,
-                                           int relativeCell,
-                                           int* outX,
-                                           int* outY) {
-    /* Full layout-696 C2500_ZONE_ family (C2500..C2567).  This raw
-     * evidence helper keeps all 17 source rows probe-visible while the
-     * renderer's normal object path remains on the existing five-row
-     * helper pending the exact F0115 viewSquareTo mapping. */
-    /* Canonical DM1 PC 3.4 GRAPHICS.DAT layout-696 zones C2500..C2567.
-     * ReDMCSB DUNVIEW.C F0115 selects rows with G2028; COORD.C
-     * F0637 applies MASK0x8000_SHIFT_OBJECTS_AND_CREATURES pile shifts. */
-    static const short kC2500Raw[17][4][2] = {
-        {{   0,   0}, {   0,   0}, { 127,  70}, {  98,  70}},
-        {{   0,   0}, {   0,   0}, {  62,  70}, {  25,  70}},
-        {{   0,   0}, {   0,   0}, { 200,  70}, { 162,  70}},
-        {{   0,   0}, {   0,   0}, {   2,  70}, { -35,  70}},
-        {{   0,   0}, {   0,   0}, { 258,  70}, { 222,  70}},
-        {{  94,  78}, { 131,  78}, { 136,  88}, {  89,  88}},
-        {{  10,  78}, {  53,  79}, {  41,  88}, { -14,  89}},
-        {{ 171,  78}, { 218,  78}, { 236,  89}, { 184,  88}},
-        {{  83,  99}, { 141,  99}, { 150, 115}, {  76, 115}},
-        {{ -40, 101}, {  24,  99}, {   5, 114}, { -79, 117}},
-        {{ 200,  99}, { 262, 101}, { 301, 117}, { 220, 114}},
-        {{  66, 133}, { 158, 133}, {   0,   0}, {   0,   0}},
-        {{ 113,  62}, {  46,  61}, { 180,  61}, { 115,  74}},
-        {{   8,  73}, { 220,  74}, { 115,  92}, { 112,  60}},
-        {{  45,  61}, { 179,  60}, { 114,  73}, {   4,  73}},
-        {{ 219,  73}, { 114,  88}, { 113,  63}, {  45,  62}},
-        {{ 181,  62}, { 114,  74}, {  11,  73}, { 218,  74}}
-    };
-    int zx;
-    int zy;
-    if (rowIndex < 0 || rowIndex >= 17) return 0;
-    if (relativeCell < 0 || relativeCell > 3) return 0;
-    zx = (int)kC2500Raw[rowIndex][relativeCell][0];
-    zy = (int)kC2500Raw[rowIndex][relativeCell][1];
-    if (zx == 0 && zy == 0) return 0;
-    if (outX) *outX = zx;
-    if (outY) *outY = zy;
-    return 1;
-}
-
 static unsigned int m11_object_aspect_graphic_info(int aspectIndex) {
     /* DUNVIEW.C G0209_as_Graphic558_ObjectAspects[].GraphicInfo. */
     static const unsigned char kGraphicInfo[85] = {
@@ -24332,8 +24195,10 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
      * object scale buckets; this keeps the current center-cell renderer
      * aligned with the future C2500 zone pass instead of using invented
      * depth percentages. */
-    scaleIndex = m11_object_source_scale_index(depthIndex, relativeCell);
-    drawW = (int)slot->width * m11_object_source_scale_units(scaleIndex) / 32;
+    scaleIndex = dm1_viewport_3d_object_source_scale_index(depthIndex,
+                                                           relativeCell);
+    drawW = (int)slot->width *
+            dm1_viewport_3d_object_source_scale_units(scaleIndex) / 32;
     drawH = (drawW * spriteH) / spriteW;
     if (drawH > h) {
         drawH = h;
@@ -24357,19 +24222,33 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
         int zoneY = 0;
         shiftSet = (scaleIndex + 1) >> 1;
         if (shiftSet > 2) shiftSet = 2;
-        m11_object_source_pile_shift_indices(pileIndex, &shiftXIndex, &shiftYIndex);
+        dm1_viewport_3d_object_pile_shift_indices(pileIndex,
+                                                  &shiftXIndex,
+                                                  &shiftYIndex);
         if (x >= M11_VIEWPORT_X && y >= M11_VIEWPORT_Y &&
             ((sourceZoneRow >= 0 &&
-              m11_c2500_object_raw_zone_point(sourceZoneRow, relativeCell, &zoneX, &zoneY)) ||
+              dm1_viewport_3d_c2500_object_raw_zone_point(sourceZoneRow,
+                                                          relativeCell,
+                                                          &zoneX,
+                                                          &zoneY)) ||
              (sourceZoneRow < 0 &&
-              m11_c2500_object_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)))) {
+              dm1_viewport_3d_c2500_object_zone_point(scaleIndex,
+                                                      relativeCell,
+                                                      &zoneX,
+                                                      &zoneY)))) {
             drawX = M11_VIEWPORT_X + zoneX - (drawW / 2) +
-                    m11_object_source_shift_value(shiftSet, shiftXIndex);
+                    dm1_viewport_3d_object_source_shift_value(shiftSet,
+                                                              shiftXIndex);
             drawY = M11_VIEWPORT_Y + zoneY - drawH +
-                    m11_object_source_shift_value(shiftSet, shiftYIndex);
+                    dm1_viewport_3d_object_source_shift_value(shiftSet,
+                                                              shiftYIndex);
         } else {
-            drawX = x + halfW + cellX + m11_object_source_shift_value(shiftSet, shiftXIndex);
-            drawY = y + h - drawH - 2 + cellY + m11_object_source_shift_value(shiftSet, shiftYIndex);
+            drawX = x + halfW + cellX +
+                    dm1_viewport_3d_object_source_shift_value(shiftSet,
+                                                              shiftXIndex);
+            drawY = y + h - drawH - 2 + cellY +
+                    dm1_viewport_3d_object_source_shift_value(shiftSet,
+                                                              shiftYIndex);
         }
         if (drawX < x) drawX = x;
         if (drawY < y) drawY = y;
@@ -32223,7 +32102,7 @@ unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
 }
 
 int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex) {
-    return m11_object_source_scale_units(scaleIndex);
+    return dm1_viewport_3d_object_source_scale_units(scaleIndex);
 }
 
 int M11_GameView_GetF0115ViewSquareIndex(int relForward, int relSide) {
@@ -32269,21 +32148,27 @@ int M11_GameView_GetDM1FloorOrnamentSourceZone(int relForward,
 }
 
 int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell) {
-    return m11_object_source_scale_index(depthIndex, relativeCell);
+    return dm1_viewport_3d_object_source_scale_index(depthIndex, relativeCell);
 }
 
 int M11_GameView_GetC2500ObjectZonePoint(int scaleIndex,
                                          int relativeCell,
                                          int* outX,
                                          int* outY) {
-    return m11_c2500_object_zone_point(scaleIndex, relativeCell, outX, outY);
+    return dm1_viewport_3d_c2500_object_zone_point(scaleIndex,
+                                                   relativeCell,
+                                                   outX,
+                                                   outY);
 }
 
 int M11_GameView_GetC2500ObjectRawZonePoint(int rowIndex,
                                             int relativeCell,
                                             int* outX,
                                             int* outY) {
-    return m11_c2500_object_raw_zone_point(rowIndex, relativeCell, outX, outY);
+    return dm1_viewport_3d_c2500_object_raw_zone_point(rowIndex,
+                                                       relativeCell,
+                                                       outX,
+                                                       outY);
 }
 
 int M11_GameView_GetC2900ProjectileZonePoint(int scaleIndex,
@@ -32418,11 +32303,13 @@ int M11_GameView_GetC3200CreatureSideZonePoint(int coordSet,
 void M11_GameView_GetObjectPileShiftIndices(int pileIndex,
                                             int* outXIndex,
                                             int* outYIndex) {
-    m11_object_source_pile_shift_indices(pileIndex, outXIndex, outYIndex);
+    dm1_viewport_3d_object_pile_shift_indices(pileIndex,
+                                              outXIndex,
+                                              outYIndex);
 }
 
 int M11_GameView_GetObjectShiftValue(int shiftSet, int shiftIndex) {
-    return m11_object_source_shift_value(shiftSet, shiftIndex);
+    return dm1_viewport_3d_object_source_shift_value(shiftSet, shiftIndex);
 }
 
 unsigned int M11_GameView_GetObjectAspectGraphicInfo(int aspectIndex) {
