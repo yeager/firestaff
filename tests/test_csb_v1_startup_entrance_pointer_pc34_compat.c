@@ -1334,6 +1334,25 @@ int main(void)
               command_state.pending_command == 0 &&
               command_state.entrance_source_step == 0,
           "startup command state finishes door opening");
+    check(csb_v1_startup_finish_door_opening_from_facts_with_receipt_pc34(
+              0,
+              0,
+              0,
+              1,
+              CSB_V1_STARTUP_STAGE_ENTRANCE_DOOR_OPENING_PC34,
+              0,
+              0,
+              0,
+              1,
+              0,
+              3,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &command_state_receipt) &&
+              !command_state_receipt.opening_active &&
+              !command_state_receipt.entrance_active &&
+              command_state_receipt.entrance_dismissed &&
+              command_state_receipt.pending_command == 0,
+          "startup door finish facts helper returns command-state receipt");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
