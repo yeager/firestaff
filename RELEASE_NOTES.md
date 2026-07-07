@@ -1,6 +1,29 @@
 
 # Unreleased
 
+# Firestaff v3.0.56
+
+Firestaff v3.0.56 packages the current `main` after the latest DM2 V1 viewport
+HUD chrome render ownership work.
+
+## Highlights since v3.0.55
+
+- **DM2 V1 HUD chrome ownership**: DM2 viewport rendering now builds the status
+  bar, action strip, gold indicator, action-icon placeholders and indoor
+  champion-panel placeholder geometry through a DM2-owned render plan before
+  drawing those regions.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.56`.
+
+## Verification
+
+- Local release verification covers version synchronization, the focused DM2 V1
+  lighting/render gate, the Phase A probe and `git diff --check` before GitHub
+  Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.56` release run.
+
 # Firestaff v3.0.55
 
 Firestaff v3.0.55 packages the current `main` after the latest CSB V1 render

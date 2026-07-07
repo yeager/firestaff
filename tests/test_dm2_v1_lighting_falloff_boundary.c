@@ -265,6 +265,43 @@ static void test_door_rect_contracts(void)
               rect_equals(&rect, 0, 0, 0, 0));
 }
 
+static void test_hud_chrome_render_plan(void)
+{
+    DM2_V1_HudChromeRenderPlan indoor;
+    DM2_V1_HudChromeRenderPlan outdoor;
+
+    memset(&indoor, 0x55, sizeof(indoor));
+    CHECK("DM2 HUD chrome plan rejects null output",
+          dm2_v1_viewport_build_hud_chrome_plan(0, NULL) == 0);
+    CHECK("DM2 indoor HUD chrome plan builds",
+          dm2_v1_viewport_build_hud_chrome_plan(0, &indoor) == 1);
+    CHECK("DM2 indoor HUD top bar uses source viewport width",
+          rect_equals(&indoor.top_bar_rect, 0, 0,
+                      DM2_VP_WIDTH, DM2_VP_CHROME_TOP));
+    CHECK("DM2 indoor HUD action strip is anchored at bottom",
+          rect_equals(&indoor.action_strip_rect, 0,
+                      DM2_VP_HEIGHT - DM2_VP_CHROME_BOT,
+                      DM2_VP_WIDTH, DM2_VP_CHROME_BOT));
+    CHECK("DM2 HUD exposes five action-icon placements",
+          indoor.action_icon_count == DM2_V1_HUD_ACTION_ICON_COUNT &&
+              rect_equals(&indoor.action_icons[0].frame_rect, 20, 178,
+                          20, 16) &&
+              rect_equals(&indoor.action_icons[4].fill_rect, 222, 180,
+                          16, 12));
+    CHECK("DM2 indoor HUD exposes four champion slots",
+          indoor.champion_slot_count == DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
+              rect_equals(&indoor.portrait_panel_rect, 242, 28, 78, 144) &&
+              rect_equals(&indoor.champion_slots[3].fill_rect,
+                          246, 140, 68, 22));
+
+    CHECK("DM2 outdoor HUD chrome plan builds",
+          dm2_v1_viewport_build_hud_chrome_plan(1, &outdoor) == 1);
+    CHECK("DM2 outdoor HUD suppresses champion portrait panel",
+          outdoor.outdoor == 1 &&
+              outdoor.champion_slot_count == 0 &&
+              rect_equals(&outdoor.portrait_panel_rect, 0, 0, 0, 0));
+}
+
 static void test_floor_ceiling_asset_provider(void)
 {
     uint8_t framebuffer[320 * 200];
@@ -520,6 +557,54 @@ static void test_sprite_asset_provider(void)
                   slot.screen_x == p.screen_x + 12 &&
                   slot.screen_y == p.screen_y + 8);
     }
+    {
+        DM2_V1_HudChromeRenderPlan hud;
+
+        CHECK("DM2 HUD chrome plan owns status and action strip bounds",
+              dm2_v1_viewport_build_hud_chrome_plan(0, &hud) == 1 &&
+                  hud.top_bar_rect.x == 0 &&
+                  hud.top_bar_rect.y == 0 &&
+                  hud.top_bar_rect.w == 320 &&
+                  hud.top_bar_rect.h == 28 &&
+                  hud.action_strip_rect.y == 172 &&
+                  hud.action_strip_rect.h == 28);
+        CHECK("DM2 HUD chrome plan owns gold and action icon bounds",
+              hud.gold_box_rect.x == 280 &&
+                  hud.gold_box_rect.y == 176 &&
+                  hud.action_icon_count == DM2_V1_HUD_ACTION_ICON_COUNT &&
+                  hud.action_icons[4].frame_rect.x == 220 &&
+                  hud.action_icons[4].fill_color == 12);
+        CHECK("DM2 indoor HUD chrome plan includes portrait panel slots",
+              hud.champion_slot_count == DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
+                  hud.portrait_panel_rect.x == 242 &&
+                  hud.champion_slots[3].frame_rect.y == 138 &&
+                  hud.champion_slots[3].fill_color == 14);
+        CHECK("DM2 outdoor HUD chrome plan omits portrait panel slots",
+              dm2_v1_viewport_build_hud_chrome_plan(1, &hud) == 1 &&
+                  hud.outdoor == 1 &&
+                  hud.champion_slot_count == 0 &&
+                  hud.portrait_panel_rect.w == 0);
+    }
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_render_ui_chrome(&viewport);
+    CHECK("DM2 UI chrome render consumes HUD plan regions",
+          framebuffer[0] == 1 &&
+              framebuffer[28 * 320] == 7 &&
+              framebuffer[176 * 320 + 280] == 6 &&
+              framebuffer[180 * 320 + 288] == 11 &&
+              framebuffer[180 * 320 + 222] == 12 &&
+              framebuffer[138 * 320 + 244] == 7 &&
+              framebuffer[140 * 320 + 246] == 14);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    dm2_v1_viewport_set_outdoor(&viewport, 1);
+    dm2_v1_render_ui_chrome(&viewport);
+    CHECK("DM2 outdoor UI chrome skips portrait panel region",
+          framebuffer[140 * 320 + 246] == 0 &&
+              framebuffer[180 * 320 + 222] == 12);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -875,6 +960,7 @@ int main(void)
               e != NULL && strstr(e, "docs/dm2_palette.md") != NULL);
     }
     test_door_rect_contracts();
+    test_hud_chrome_render_plan();
     test_floor_ceiling_asset_provider();
     test_sprite_asset_provider();
 

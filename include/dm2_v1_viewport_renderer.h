@@ -46,6 +46,8 @@
 #define DM2_VP_CHROME_TOP  DM2_VP_STATUS_BAR
 #define DM2_VP_CHROME_BOT  DM2_VP_ACTION_STRIP
 #define DM2_VP_DUNGEON_Y  DM2_VP_STATUS_BAR
+#define DM2_V1_HUD_ACTION_ICON_COUNT 5
+#define DM2_V1_HUD_CHAMPION_SLOT_COUNT 4
 
 /* ── Depth / distance rows ─────────────────────────────────────── */
 /* DM2 uses the same 4-row perspective as DM1:
@@ -178,6 +180,41 @@ typedef struct {
     int w;
     int h;
 } DM2_V1_ViewportRect;
+
+typedef struct {
+    DM2_V1_ViewportRect frame_rect;
+    DM2_V1_ViewportRect fill_rect;
+    uint8_t fill_color;
+} DM2_V1_HudIconRender;
+
+typedef struct {
+    DM2_V1_ViewportRect frame_rect;
+    DM2_V1_ViewportRect fill_rect;
+    uint8_t fill_color;
+} DM2_V1_HudChampionSlotRender;
+
+typedef struct {
+    int outdoor;
+    DM2_V1_ViewportRect top_bar_rect;
+    DM2_V1_ViewportRect top_divider_rect;
+    DM2_V1_ViewportRect action_strip_rect;
+    DM2_V1_ViewportRect action_divider_rect;
+    DM2_V1_ViewportRect gold_box_rect;
+    DM2_V1_ViewportRect gold_coin_rect;
+    DM2_V1_ViewportRect gold_label_rect;
+    DM2_V1_HudIconRender action_icons[DM2_V1_HUD_ACTION_ICON_COUNT];
+    int action_icon_count;
+    DM2_V1_ViewportRect portrait_separator_dark_rect;
+    DM2_V1_ViewportRect portrait_separator_light_rect;
+    DM2_V1_ViewportRect portrait_panel_rect;
+    DM2_V1_HudChampionSlotRender champion_slots[
+        DM2_V1_HUD_CHAMPION_SLOT_COUNT];
+    int champion_slot_count;
+} DM2_V1_HudChromeRenderPlan;
+
+int dm2_v1_viewport_build_hud_chrome_plan(
+    int is_outdoor,
+    DM2_V1_HudChromeRenderPlan *out_plan);
 
 typedef struct {
     int visible;
