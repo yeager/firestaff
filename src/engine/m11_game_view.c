@@ -83,6 +83,7 @@
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
+#include "dm1_v1_floor_pit_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -21429,65 +21430,53 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
                                     int fbH,
                                     int maxVisibleForward,
                                     const M11_ViewportCell cells[3][3]) {
-    typedef struct M11_DM1PitSpec {
-        int relForward;
-        int relSide;
-        M11_DM1ZoneBlit blit;
-        M11_DM1ZoneBlit invisibleBlit;
-        int hasInvisibleBlit;
-    } M11_DM1PitSpec;
-    static const M11_DM1PitSpec kPits[] = {
-        {3, -2, {M11_GFX_FLOOR_PIT_D3L2, 0, 0, 0,   66, 22, 10}, {0}, 0},
-        {3,  2, {M11_GFX_FLOOR_PIT_D3L2, 0, 0, 202, 66, 22, 10}, {0}, 0},
-        {3, -1, {M11_GFX_FLOOR_PIT_D3L,  0, 0, 4,   65, 78, 8},  {0}, 0},
-        {3,  0, {M11_GFX_FLOOR_PIT_D3C,  0, 0, 79,  65, 64, 8},  {0}, 0},
-        {3,  1, {M11_GFX_FLOOR_PIT_D3L,  0, 0, 142, 65, 78, 8},  {0}, 0},
-        {2, -1, {M11_GFX_FLOOR_PIT_D2L,  1, 0, 0,   76, 71, 13}, {M11_GFX_FLOOR_PIT_INVISIBLE_D2L, 1,0,0,   76,71,12}, 1},
-        {2,  0, {M11_GFX_FLOOR_PIT_D2C,  0, 0, 66,  77, 92, 12}, {M11_GFX_FLOOR_PIT_INVISIBLE_D2C, 0,0,66,  77,92,12}, 1},
-        {2,  1, {M11_GFX_FLOOR_PIT_D2L,  0, 0, 153, 76, 71, 13}, {M11_GFX_FLOOR_PIT_INVISIBLE_D2L, 0,0,153, 76,71,12}, 1},
-        {1, -1, {M11_GFX_FLOOR_PIT_D1L,  3, 0, 0,   94, 54, 24}, {M11_GFX_FLOOR_PIT_INVISIBLE_D1L, 3,0,0,   94,49,24}, 1},
-        {1,  0, {M11_GFX_FLOOR_PIT_D1C,  0, 0, 43,  94, 139,24}, {M11_GFX_FLOOR_PIT_INVISIBLE_D1C, 0,0,41,  94,144,24},1},
-        {1,  1, {M11_GFX_FLOOR_PIT_D1L,  0, 0, 169, 94, 55, 24}, {M11_GFX_FLOOR_PIT_INVISIBLE_D1L, 0,0,174, 94,50,24}, 1},
-        {0, -1, {M11_GFX_FLOOR_PIT_D0L,  4, 0, 0,   126,20, 10}, {M11_GFX_FLOOR_PIT_INVISIBLE_D0L, 4,0,0,   126,14,10}, 1},
-        {0,  0, {M11_GFX_FLOOR_PIT_D0C,  0, 0, 27,  127,170,9},  {M11_GFX_FLOOR_PIT_INVISIBLE_D0C, 0,0,25,  127,174,9},1},
-        {0,  1, {M11_GFX_FLOOR_PIT_D0L,  0, 0, 200, 126,24, 10}, {M11_GFX_FLOOR_PIT_INVISIBLE_D0L, 0,0,206, 126,18,10}, 1}
-    };
-    size_t i;
+    int i;
+    int planCount;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (i = 0; i < sizeof(kPits) / sizeof(kPits[0]); ++i) {
+    planCount = dm1_v1_floor_pit_plan_count_pc34();
+    for (i = 0; i < planCount; ++i) {
         M11_ViewportCell cell;
-        if (kPits[i].relForward > maxVisibleForward) {
+        M11_DM1ZoneBlit blit;
+        const DM1_FloorPitBlitPc34* pitBlit;
+        DM1_FloorPitRenderPlanPc34 plan;
+        if (!dm1_v1_floor_pit_render_plan_at_pc34(i, &plan)) {
+            continue;
+        }
+        if (plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             kPits[i].relForward,
-                                             kPits[i].relSide)) {
+                                             plan.relForward,
+                                             plan.relSide)) {
             continue;
         }
-        if (!m11_sample_viewport_cell(state, kPits[i].relForward, kPits[i].relSide, &cell)) {
+        if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_PIT) {
             continue;
         }
-        /* ReDMCSB DUNGEON.C F0172: closed pit renders as corridor.
-         * Only open pits (MASK0x0008_PIT_OPEN) show the hole graphic.
-         * Ref: DEFS.H line 1027, DUNGEON.C line 2629. */
-        if (!(cell.square & 0x08)) { /* not PIT_OPEN */
+        if (!dm1_v1_floor_pit_square_draws_pc34(cell.square)) {
             continue;
         }
-        if (cell.square & 0x04) { /* MASK0x0004_PIT_INVISIBLE */
-            if (!kPits[i].hasInvisibleBlit) {
+        if (dm1_v1_floor_pit_square_uses_invisible_pc34(cell.square)) {
+            if (!plan.hasInvisibleBlit) {
                 continue;
             }
-            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                         &kPits[i].invisibleBlit, 10);
+            pitBlit = &plan.invisibleBlit;
         } else {
-            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                         &kPits[i].blit, 10);
+            pitBlit = &plan.visibleBlit;
         }
+        blit.graphicIndex = pitBlit->graphicIndex;
+        blit.srcX = pitBlit->srcX;
+        blit.srcY = pitBlit->srcY;
+        blit.dstX = pitBlit->dstX;
+        blit.dstY = pitBlit->dstY;
+        blit.width = pitBlit->width;
+        blit.height = pitBlit->height;
+        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &blit, 10);
     }
 }
 
@@ -21746,6 +21735,207 @@ static int m11_dm1_visible_wall_text_line_count(const M11_GameViewState* state,
     return m11_dm1_decoded_inscription_line_count(decoded);
 }
 
+static int m11_dm1_append_inscription_raw_glyph(unsigned char* outGlyphs,
+                                                int outGlyphCapacity,
+                                                int* ioPos,
+                                                int glyph) {
+    if (!outGlyphs || !ioPos || glyph < 0 || glyph > 35) {
+        return 0;
+    }
+    if (*ioPos >= outGlyphCapacity - 1) {
+        return 0;
+    }
+    outGlyphs[(*ioPos)++] = (unsigned char)glyph;
+    return 1;
+}
+
+static void m11_dm1_append_inscription_escape29_raw(unsigned char* outGlyphs,
+                                                    int outGlyphCapacity,
+                                                    int* ioPos,
+                                                    int code) {
+    /* ReDMCSB DUNGEON.C F0168 selects the inscription escape replacement
+     * table for source M648 rendering.  The table expands THE/YOU as raw
+     * glyph cells and maps the eight graphic symbols to cells 28..35. */
+    static const unsigned char kThe[] = {19, 7, 4, 26};
+    static const unsigned char kYou[] = {24, 14, 20, 26};
+    const unsigned char* seq = NULL;
+    int seqLen = 0;
+    int i;
+    if (code == 0 || code == 1) {
+        (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
+                                                   outGlyphCapacity,
+                                                   ioPos,
+                                                   28 + code);
+        return;
+    }
+    if (code == 2) {
+        seq = kThe;
+        seqLen = (int)(sizeof(kThe) / sizeof(kThe[0]));
+    } else if (code == 3) {
+        seq = kYou;
+        seqLen = (int)(sizeof(kYou) / sizeof(kYou[0]));
+    } else if (code >= 4 && code <= 9) {
+        (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
+                                                   outGlyphCapacity,
+                                                   ioPos,
+                                                   26 + code);
+        return;
+    }
+    for (i = 0; i < seqLen; ++i) {
+        (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
+                                                   outGlyphCapacity,
+                                                   ioPos,
+                                                   seq[i]);
+    }
+}
+
+static void m11_dm1_append_inscription_escape30_raw(unsigned char* outGlyphs,
+                                                    int outGlyphCapacity,
+                                                    int* ioPos,
+                                                    int code) {
+    /* Minimal source word escape coverage used by current PC34 HoC wall text.
+     * ReDMCSB DUNGEON.C F0168 handles these before DUNVIEW.C consumes the
+     * raw M648 glyph stream. */
+    static const unsigned char kThe[] = {19, 7, 4, 26};
+    static const unsigned char kYou[] = {24, 14, 20, 26};
+    const unsigned char* seq = NULL;
+    int seqLen = 0;
+    int i;
+    if (code == 2) {
+        seq = kThe;
+        seqLen = (int)(sizeof(kThe) / sizeof(kThe[0]));
+    } else if (code == 3) {
+        seq = kYou;
+        seqLen = (int)(sizeof(kYou) / sizeof(kYou[0]));
+    }
+    for (i = 0; i < seqLen; ++i) {
+        (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
+                                                   outGlyphCapacity,
+                                                   ioPos,
+                                                   seq[i]);
+    }
+}
+
+static int m11_dm1_decode_inscription_raw_glyphs_at_offset(
+        const struct DungeonThings_Compat* things,
+        int wordOffset,
+        unsigned char* outGlyphs,
+        int outGlyphCapacity) {
+    int wi;
+    int codeIdx = 0;
+    int pos = 0;
+    int escape = 0;
+    unsigned short w = 0;
+    if (!things || !things->textData || wordOffset < 0 ||
+        wordOffset >= things->textDataWordCount ||
+        !outGlyphs || outGlyphCapacity < 2) {
+        if (outGlyphs && outGlyphCapacity > 0) {
+            outGlyphs[0] = 0x81U;
+        }
+        return 0;
+    }
+    wi = wordOffset;
+    while (pos < outGlyphCapacity - 1 && wi < things->textDataWordCount) {
+        int code;
+        if (codeIdx == 0) {
+            w = things->textData[wi];
+            code = (w >> 10) & 0x1F;
+        } else if (codeIdx == 1) {
+            code = (w >> 5) & 0x1F;
+        } else {
+            code = w & 0x1F;
+        }
+        ++codeIdx;
+        if (codeIdx >= 3) {
+            codeIdx = 0;
+            ++wi;
+        }
+        if (escape == 29) {
+            m11_dm1_append_inscription_escape29_raw(outGlyphs,
+                                                    outGlyphCapacity,
+                                                    &pos,
+                                                    code);
+            escape = 0;
+        } else if (escape == 30) {
+            m11_dm1_append_inscription_escape30_raw(outGlyphs,
+                                                    outGlyphCapacity,
+                                                    &pos,
+                                                    code);
+            escape = 0;
+        } else if (code < 28) {
+            (void)m11_dm1_append_inscription_raw_glyph(outGlyphs,
+                                                       outGlyphCapacity,
+                                                       &pos,
+                                                       code);
+        } else if (code == 28) {
+            if (pos < outGlyphCapacity - 1) {
+                outGlyphs[pos++] = 0x80U;
+            }
+        } else if (code == 29 || code == 30) {
+            escape = code;
+        } else {
+            break;
+        }
+    }
+    if (pos < outGlyphCapacity) {
+        outGlyphs[pos++] = 0x81U;
+    }
+    if (pos < outGlyphCapacity) {
+        outGlyphs[pos] = 0;
+    }
+    return pos;
+}
+
+static int m11_decode_visible_wall_text_raw_glyphs(const M11_GameViewState* state,
+                                                   const M11_ViewportCell* cell,
+                                                   unsigned char* outGlyphs,
+                                                   int outGlyphCapacity) {
+    unsigned short thing;
+    int safety = 0;
+    if (!state || !cell || !outGlyphs || outGlyphCapacity < 2 ||
+        !state->world.things || !state->world.things->textStrings ||
+        !state->world.things->textData ||
+        state->world.things->textDataWordCount <= 0) {
+        if (outGlyphs && outGlyphCapacity > 0) {
+            outGlyphs[0] = 0x81U;
+        }
+        return 0;
+    }
+    if (cell->inscriptionTextIndex >= 0 &&
+        cell->inscriptionTextIndex < state->world.things->textStringCount) {
+        const struct DungeonTextString_Compat* text =
+            &state->world.things->textStrings[cell->inscriptionTextIndex];
+        if (text->visible) {
+            return m11_dm1_decode_inscription_raw_glyphs_at_offset(
+                state->world.things,
+                (int)text->textDataWordOffset,
+                outGlyphs,
+                outGlyphCapacity) > 1;
+        }
+    }
+    thing = cell->firstThing;
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING) {
+            int textIdx = THING_GET_INDEX(thing);
+            if (textIdx >= 0 && textIdx < state->world.things->textStringCount) {
+                const struct DungeonTextString_Compat* text =
+                    &state->world.things->textStrings[textIdx];
+                if (text->visible) {
+                    return m11_dm1_decode_inscription_raw_glyphs_at_offset(
+                        state->world.things,
+                        (int)text->textDataWordOffset,
+                        outGlyphs,
+                        outGlyphCapacity) > 1;
+                }
+            }
+        }
+        thing = m11_raw_next_thing(state->world.things, thing);
+        ++safety;
+    }
+    outGlyphs[0] = 0x81U;
+    return 0;
+}
+
 static int m11_dm1_unreadable_inscription_box_height(int relForward,
                                                      int relSide,
                                                      int sideProjection,
@@ -21819,6 +22009,34 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_line(const M11_Gam
     return fontSlot;
 }
 
+static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs(const M11_GameViewState* state,
+                                                                     const unsigned char* glyphs,
+                                                                     int glyphCount) {
+    const M11_AssetSlot* fontSlot;
+    int i;
+    if (!state || !glyphs || glyphCount <= 0) {
+        return NULL;
+    }
+    if (!M11_AssetLoader_IsReady(&state->assetLoader)) {
+        return NULL;
+    }
+    fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
+        fontSlot->width < DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        fontSlot->height < DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+        return NULL;
+    }
+    for (i = 0; i < glyphCount; ++i) {
+        int glyph = DM1_V1_InscriptionGlyphIndexFromSourceByte(glyphs[i]);
+        if (glyph < 0 ||
+            (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontSlot->width) {
+            return NULL;
+        }
+    }
+    return fontSlot;
+}
+
 static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
                                               unsigned char* framebuffer,
                                               int fbW,
@@ -21842,6 +22060,44 @@ static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
         int glyph = DM1_V1_InscriptionGlyphIndexForFontWidth(
             (unsigned char)text[i],
             (int)fontSlot->width);
+        M11_AssetLoader_BlitRegion(fontSlot,
+                                   glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   0,
+                                   DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   DM1_V1_INSCRIPTION_GLYPH_HEIGHT,
+                                   framebuffer,
+                                   fbW,
+                                   fbH,
+                                   x + i * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   y,
+                                   DM1_V1_INSCRIPTION_TRANSPARENT_COLOR);
+    }
+    return 1;
+}
+
+static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
+                                               unsigned char* framebuffer,
+                                               int fbW,
+                                               int fbH,
+                                               int x,
+                                               int y,
+                                               const unsigned char* glyphs,
+                                               int glyphCount) {
+    const M11_AssetSlot* fontSlot;
+    int i;
+    if (!framebuffer) {
+        return 0;
+    }
+    fontSlot = m11_dm1_inscription_font_slot_for_glyphs(state,
+                                                        glyphs,
+                                                        glyphCount);
+    if (!fontSlot) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0107 lines ~3631/~3704 blit each decoded
+     * inscription byte from M648 at source_x = byte << 3. */
+    for (i = 0; i < glyphCount; ++i) {
+        int glyph = DM1_V1_InscriptionGlyphIndexFromSourceByte(glyphs[i]);
         M11_AssetLoader_BlitRegion(fontSlot,
                                    glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
                                    0,
@@ -21909,35 +22165,41 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
                                                      int fbW,
                                                      int fbH) {
     static const int kLineBottomY[4] = {48, 59, 75, 86};
-    char decoded[128];
-    char* cursor;
+    unsigned char decoded[128];
+    int cursor = 0;
     int line = 0;
-    if (!m11_decode_visible_wall_text(state, cell, decoded, sizeof(decoded))) {
+    if (!m11_decode_visible_wall_text_raw_glyphs(state, cell, decoded,
+                                                 (int)sizeof(decoded))) {
         return;
     }
-    cursor = decoded;
-    while (cursor && *cursor && line < 4) {
-        char* next = strchr(cursor, '\n');
-        char saved = '\0';
-        if (next) {
-            saved = *next;
-            *next = '\0';
+    while (cursor < (int)sizeof(decoded) && line < 4) {
+        int start = cursor;
+        int glyphCount = 0;
+        while (cursor < (int)sizeof(decoded) &&
+               decoded[cursor] != 0x80U &&
+               decoded[cursor] != 0x81U) {
+            ++cursor;
         }
-        if (*cursor) {
-            int charCount = (int)strlen(cursor);
-            int textWidth = DM1_V1_InscriptionTextWidth(charCount);
-            int textX = M11_VIEWPORT_X + DM1_V1_InscriptionTextX(charCount);
+        glyphCount = cursor - start;
+        if (glyphCount > 0) {
+            int textWidth = DM1_V1_InscriptionTextWidth(glyphCount);
+            int textX = M11_VIEWPORT_X + DM1_V1_InscriptionTextX(glyphCount);
             int textY = M11_VIEWPORT_Y + kLineBottomY[line] - 7;
-            if (m11_dm1_inscription_font_slot_for_line(state, cursor, NULL)) {
+            if (m11_dm1_inscription_font_slot_for_glyphs(state,
+                                                         decoded + start,
+                                                         glyphCount)) {
                 m11_draw_dm1_front_wall_inscription_patch(state, framebuffer, fbW, fbH,
                                                           textX, textY, textWidth);
-                (void)m11_draw_dm1_inscription_font_line(state, framebuffer, fbW, fbH,
-                                                         textX, textY, cursor);
+                (void)m11_draw_dm1_inscription_glyph_line(state, framebuffer,
+                                                          fbW, fbH, textX, textY,
+                                                          decoded + start,
+                                                          glyphCount);
             }
         }
-        if (!next) break;
-        *next = saved;
-        cursor = next + 1;
+        if (cursor >= (int)sizeof(decoded) || decoded[cursor] == 0x81U) {
+            break;
+        }
+        ++cursor;
         ++line;
     }
 }
