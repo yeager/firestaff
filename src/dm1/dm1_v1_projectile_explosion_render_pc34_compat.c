@@ -8,7 +8,10 @@
  */
 
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+
+#include <string.h>
 
 /* ── G0215_auc_Graphic558_ProjectileScales ───────────────────────────
  * 7 scale units out of 32.
@@ -197,6 +200,128 @@ int dm1_v1_projectile_d4_far_box(int relSide,
     if (outY) *outY = 42;
     if (outW) *outW = 10;
     if (outH) *outH = 8;
+    return 1;
+}
+
+int dm1_v1_projectile_sprite_blit_plan(DM1_ProjectileSpriteBlitPlan *out_plan,
+                                       int graphicIndex,
+                                       int depthIndex,
+                                       int relativeCell,
+                                       int flipFlags,
+                                       int sourceZoneRow,
+                                       int viewportX,
+                                       int viewportY,
+                                       int viewportW,
+                                       int viewportH,
+                                       int paneX,
+                                       int paneY,
+                                       int paneW,
+                                       int paneH,
+                                       int spriteW,
+                                       int spriteH)
+{
+    DM1_ProjectileSpriteBlitPlan plan;
+    int zoneX = 0;
+    int zoneY = 0;
+
+    if (!out_plan || graphicIndex < DM1_GFX_FIRST_PROJECTILE ||
+        graphicIndex >= DM1_GFX_FIRST_EXPLOSION ||
+        paneW <= 0 || paneH <= 0 || spriteW <= 0 || spriteH <= 0 ||
+        viewportW <= 0 || viewportH <= 0) {
+        return 0;
+    }
+
+    memset(&plan, 0, sizeof(plan));
+    plan.graphic_index = graphicIndex;
+    plan.transparent_color = 10;
+    plan.flip_flags = flipFlags & 0x03;
+
+    /* ReDMCSB DUNVIEW.C F0115 lines 5635-5897 restores the projectile
+     * view cell, resolves C2900 through the current view square/cell,
+     * applies G0215 projectile scaling, and blits with transparent C10. */
+    plan.scale_units = dm1_v1_projectile_scale_units(depthIndex, relativeCell);
+    plan.draw_w = spriteW * plan.scale_units / 32;
+    plan.draw_h = spriteH * plan.scale_units / 32;
+    if (plan.draw_w < 3) plan.draw_w = 3;
+    if (plan.draw_h < 3) plan.draw_h = 3;
+    if (plan.draw_w > paneW) plan.draw_w = paneW;
+    if (plan.draw_h > paneH) plan.draw_h = paneH;
+
+    if (relativeCell >= 0 && relativeCell <= 3) {
+        plan.source_scale_index =
+            dm1_viewport_3d_object_source_scale_index(depthIndex,
+                                                      relativeCell);
+        if (paneX >= viewportX && paneY >= viewportY &&
+            ((sourceZoneRow >= 0 &&
+              dm1_viewport_3d_c2900_projectile_raw_zone_point(sourceZoneRow,
+                                                              relativeCell,
+                                                              &zoneX,
+                                                              &zoneY)) ||
+             (sourceZoneRow < 0 &&
+              dm1_viewport_3d_c2900_projectile_zone_point(plan.source_scale_index,
+                                                          relativeCell,
+                                                          &zoneX,
+                                                          &zoneY)))) {
+            plan.uses_source_row = sourceZoneRow >= 0 ? 1 : 0;
+            plan.draw_x = viewportX + zoneX - plan.draw_w / 2;
+            plan.draw_y = viewportY + zoneY - plan.draw_h / 2;
+        } else {
+            int qx = paneW / 4;
+            int qy = paneH / 4;
+            if (depthIndex >= 1) {
+                qx = qx * 2 / 3;
+                qy = qy * 2 / 3;
+            }
+            if (depthIndex >= 2) {
+                qx /= 2;
+                qy /= 2;
+            }
+            switch (relativeCell) {
+                case 0:
+                    plan.draw_x = paneX + (paneW / 2 - qx) - plan.draw_w / 2;
+                    plan.draw_y = paneY + (paneH / 2 - qy) - plan.draw_h / 2;
+                    break;
+                case 1:
+                    plan.draw_x = paneX + (paneW / 2 + qx) - plan.draw_w / 2;
+                    plan.draw_y = paneY + (paneH / 2 - qy) - plan.draw_h / 2;
+                    break;
+                case 2:
+                    plan.draw_x = paneX + (paneW / 2 - qx) - plan.draw_w / 2;
+                    plan.draw_y = paneY + (paneH / 2 + qy) - plan.draw_h / 2;
+                    break;
+                default:
+                    plan.draw_x = paneX + (paneW / 2 + qx) - plan.draw_w / 2;
+                    plan.draw_y = paneY + (paneH / 2 + qy) - plan.draw_h / 2;
+                    break;
+            }
+        }
+
+        if (sourceZoneRow >= 0) {
+            int minX = viewportX - plan.draw_w + 1;
+            int minY = viewportY - plan.draw_h + 1;
+            int maxX = viewportX + viewportW - 1;
+            int maxY = viewportY + viewportH - 1;
+            if (plan.draw_x < minX) plan.draw_x = minX;
+            if (plan.draw_y < minY) plan.draw_y = minY;
+            if (plan.draw_x > maxX) plan.draw_x = maxX;
+            if (plan.draw_y > maxY) plan.draw_y = maxY;
+        } else {
+            if (plan.draw_x < paneX) plan.draw_x = paneX;
+            if (plan.draw_y < paneY) plan.draw_y = paneY;
+            if (plan.draw_x + plan.draw_w > paneX + paneW) {
+                plan.draw_x = paneX + paneW - plan.draw_w;
+            }
+            if (plan.draw_y + plan.draw_h > paneY + paneH) {
+                plan.draw_y = paneY + paneH - plan.draw_h;
+            }
+        }
+    } else {
+        plan.source_scale_index = -1;
+        plan.draw_x = paneX + (paneW - plan.draw_w) / 2;
+        plan.draw_y = paneY + (paneH - plan.draw_h) / 2;
+    }
+
+    *out_plan = plan;
     return 1;
 }
 

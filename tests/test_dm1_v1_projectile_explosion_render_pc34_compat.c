@@ -209,6 +209,79 @@ static void test_projectile_d4_far_box(void) {
     ASSERT_TRUE(lx < cx && cx < rx, "D4 boxes stay left-center-right");
 }
 
+static void test_projectile_sprite_blit_plan(void) {
+    DM1_ProjectileSpriteBlitPlan plan;
+    printf("  projectile sprite blit plan...\n");
+
+    memset(&plan, 0, sizeof(plan));
+    ASSERT_EQ(dm1_v1_projectile_sprite_blit_plan(&plan,
+                                                 DM1_GFX_FIRST_PROJECTILE + 28,
+                                                 1,
+                                                 0,
+                                                 0,
+                                                 -1,
+                                                 0, 0, 224, 136,
+                                                 10, 20, 100, 70,
+                                                 32, 16),
+              1, "fallback plan ok");
+    ASSERT_EQ(plan.graphic_index, DM1_GFX_FIRST_PROJECTILE + 28,
+              "fallback graphic index");
+    ASSERT_EQ(plan.transparent_color, 10, "fallback transparent C10");
+    ASSERT_EQ(plan.flip_flags, 0, "fallback flip flags");
+    ASSERT_EQ(plan.scale_units, 21, "fallback D1 back-row scale");
+    ASSERT_EQ(plan.source_scale_index, 2, "fallback source scale index");
+    ASSERT_EQ(plan.draw_x, 34, "fallback quadrant x");
+    ASSERT_EQ(plan.draw_y, 39, "fallback quadrant y");
+    ASSERT_EQ(plan.draw_w, 21, "fallback scaled width");
+    ASSERT_EQ(plan.draw_h, 10, "fallback scaled height");
+    ASSERT_EQ(plan.uses_source_row, 0, "fallback no source row");
+
+    memset(&plan, 0, sizeof(plan));
+    ASSERT_EQ(dm1_v1_projectile_sprite_blit_plan(&plan,
+                                                 DM1_GFX_FIRST_PROJECTILE + 9,
+                                                 1,
+                                                 3,
+                                                 3,
+                                                 8,
+                                                 0, 0, 224, 136,
+                                                 0, 0, 224, 136,
+                                                 32, 16),
+              1, "C2900 raw plan ok");
+    ASSERT_EQ(plan.graphic_index, DM1_GFX_FIRST_PROJECTILE + 9,
+              "C2900 graphic index");
+    ASSERT_EQ(plan.transparent_color, 10, "C2900 transparent C10");
+    ASSERT_EQ(plan.flip_flags, 3, "C2900 preserves flip flags");
+    ASSERT_EQ(plan.scale_units, 27, "C2900 D1 front-row scale");
+    ASSERT_EQ(plan.source_scale_index, 1, "C2900 source scale index");
+    ASSERT_EQ(plan.draw_x, 63, "C2900 raw row 8 cell 3 x");
+    ASSERT_EQ(plan.draw_y, 41, "C2900 raw row 8 cell 3 y");
+    ASSERT_EQ(plan.draw_w, 27, "C2900 scaled width");
+    ASSERT_EQ(plan.draw_h, 13, "C2900 scaled height");
+    ASSERT_EQ(plan.uses_source_row, 1, "C2900 uses raw source row");
+
+    ASSERT_EQ(dm1_v1_projectile_sprite_blit_plan(NULL,
+                                                 DM1_GFX_FIRST_PROJECTILE,
+                                                 1, 0, 0, -1,
+                                                 0, 0, 224, 136,
+                                                 0, 0, 100, 70,
+                                                 32, 16),
+              0, "null plan rejected");
+    ASSERT_EQ(dm1_v1_projectile_sprite_blit_plan(&plan,
+                                                 DM1_GFX_FIRST_EXPLOSION,
+                                                 1, 0, 0, -1,
+                                                 0, 0, 224, 136,
+                                                 0, 0, 100, 70,
+                                                 32, 16),
+              0, "non-projectile graphic rejected");
+    ASSERT_EQ(dm1_v1_projectile_sprite_blit_plan(&plan,
+                                                 DM1_GFX_FIRST_PROJECTILE,
+                                                 1, 0, 0, -1,
+                                                 0, 0, 224, 136,
+                                                 0, 0, 100, 70,
+                                                 0, 16),
+              0, "invalid sprite dimensions rejected");
+}
+
 
 /* ── Test: Flip flags basic sanity ───────────────────────────────── */
 
@@ -800,6 +873,7 @@ int main(void) {
     test_projectile_subtype_mapping();
     test_projectile_scale();
     test_projectile_d4_far_box();
+    test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();
     test_explosion_aspect_to_graphic();

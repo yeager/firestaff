@@ -164,6 +164,36 @@ int dm1_v1_projectile_d4_far_box(int relSide,
                                  int *outW,
                                  int *outH);
 
+typedef struct DM1_ProjectileSpriteBlitPlan {
+    int graphic_index;
+    int transparent_color;
+    int flip_flags;
+    int scale_units;
+    int source_scale_index;
+    int draw_x;
+    int draw_y;
+    int draw_w;
+    int draw_h;
+    int uses_source_row;
+} DM1_ProjectileSpriteBlitPlan;
+
+int dm1_v1_projectile_sprite_blit_plan(DM1_ProjectileSpriteBlitPlan *out_plan,
+                                       int graphicIndex,
+                                       int depthIndex,
+                                       int relativeCell,
+                                       int flipFlags,
+                                       int sourceZoneRow,
+                                       int viewportX,
+                                       int viewportY,
+                                       int viewportW,
+                                       int viewportH,
+                                       int paneX,
+                                       int paneY,
+                                       int paneW,
+                                       int paneH,
+                                       int spriteW,
+                                       int spriteH);
+
 /* ── Explosion rendering queries ─────────────────────────────────── */
 
 int dm1_v1_explosion_type_to_aspect(int explosionType);
