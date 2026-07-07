@@ -402,6 +402,16 @@ void csb_v1_util_flow_action_plan_init(CSB_V1_UtilActionPlan *plan)
     plan->preview_active = 0;
 }
 
+void csb_v1_util_flow_apply_receipt_init(
+    CSB_V1_UtilApplyReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->result = CSB_V1_UTIL_APPLY_IGNORED;
+}
+
 int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
                                      CSB_V1_UtilActionPlan *out_plan)
 {
@@ -433,6 +443,89 @@ int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
     case CSB_V1_UTIL_ACTION_EXIT:
     default:
         out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_IGNORE;
+        return 1;
+    }
+}
+
+int csb_v1_util_flow_apply_receipt_from_action_plan(
+    const CSB_V1_UtilActionPlan *plan,
+    CSB_V1_UtilApplyReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_util_flow_apply_receipt_init(out_receipt);
+    if (!plan) {
+        return 0;
+    }
+
+    out_receipt->preview_active_changed = 1;
+    out_receipt->preview_active = plan->preview_active ? 1 : 0;
+    switch (plan->kind) {
+    case CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND:
+        out_receipt->result = CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND;
+        out_receipt->entrance_command = plan->entrance_command;
+        return 1;
+    case CSB_V1_UTIL_ACTION_PLAN_STATUS_REDRAW:
+        out_receipt->result = CSB_V1_UTIL_APPLY_REDRAW;
+        out_receipt->status_scope =
+            plan->status_scope ? plan->status_scope : "BOOT";
+        out_receipt->status =
+            plan->status ? plan->status : "CSB UTILITY";
+        return 1;
+    case CSB_V1_UTIL_ACTION_PLAN_IGNORE:
+    default:
+        out_receipt->result = CSB_V1_UTIL_APPLY_IGNORED;
+        out_receipt->preview_active_changed = 0;
+        return 1;
+    }
+}
+
+int csb_v1_util_flow_apply_receipt_from_input_result(
+    const CSB_V1_UtilInputResult *result,
+    CSB_V1_UtilApplyReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_util_flow_apply_receipt_init(out_receipt);
+    if (!result) {
+        return 0;
+    }
+
+    out_receipt->selected_action_index_changed = 1;
+    out_receipt->selected_action_index = result->selected_action_index;
+    out_receipt->preview_active_changed = 1;
+    out_receipt->preview_active = result->preview_active ? 1 : 0;
+    switch (result->kind) {
+    case CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED:
+        out_receipt->result = CSB_V1_UTIL_APPLY_REDRAW;
+        return 1;
+    case CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW:
+        out_receipt->result = CSB_V1_UTIL_APPLY_REDRAW;
+        out_receipt->status_scope =
+            result->status_scope ? result->status_scope : "BOOT";
+        out_receipt->status =
+            result->status ? result->status : "CSB IMPORT READY";
+        return 1;
+    case CSB_V1_UTIL_INPUT_RESULT_ACTIVATE: {
+        CSB_V1_UtilActionPlan plan;
+        CSB_V1_UtilApplyReceipt action_receipt;
+        if (!csb_v1_util_flow_plan_for_action(result->action, &plan) ||
+            !csb_v1_util_flow_apply_receipt_from_action_plan(
+                &plan,
+                &action_receipt)) {
+            out_receipt->result = CSB_V1_UTIL_APPLY_IGNORED;
+            return 1;
+        }
+        action_receipt.selected_action_index_changed = 1;
+        action_receipt.selected_action_index = result->selected_action_index;
+        *out_receipt = action_receipt;
+        return 1;
+    }
+    case CSB_V1_UTIL_INPUT_RESULT_NONE:
+    default:
+        out_receipt->result = CSB_V1_UTIL_APPLY_IGNORED;
         return 1;
     }
 }

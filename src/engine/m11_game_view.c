@@ -3407,38 +3407,6 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     }
 }
 
-static M11_GameInputResult m11_csb_startup_activate_utility_action(
-    M11_GameViewState *state,
-    CSB_V1_UtilFlowAction action)
-{
-    CSB_V1_UtilActionPlan plan;
-
-    if (!state) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!csb_v1_util_flow_plan_for_action(action, &plan)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    switch (plan.kind) {
-        case CSB_V1_UTIL_ACTION_PLAN_ENTRANCE_COMMAND:
-            state->csbState.startup_import_preview_active =
-                plan.preview_active;
-            return m11_csb_startup_handle_entrance_command(
-                state,
-                plan.entrance_command);
-        case CSB_V1_UTIL_ACTION_PLAN_STATUS_REDRAW:
-            state->csbState.startup_import_preview_active =
-                plan.preview_active;
-            m11_set_status(state,
-                           plan.status_scope ? plan.status_scope : "BOOT",
-                           plan.status ? plan.status : "CSB UTILITY");
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_PLAN_IGNORE:
-        default:
-            return M11_GAME_INPUT_IGNORED;
-    }
-}
-
 static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     M11_GameViewState *state,
     int x,
@@ -3446,6 +3414,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
 {
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilInputResult result;
+    CSB_V1_UtilApplyReceipt receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
@@ -3464,13 +3433,32 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
             &result)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    state->csbState.startup_import_selected_action_index =
-        result.selected_action_index;
-    state->csbState.startup_import_preview_active = result.preview_active;
-    if (result.kind == CSB_V1_UTIL_INPUT_RESULT_ACTIVATE) {
-        return m11_csb_startup_activate_utility_action(state, result.action);
+    if (!csb_v1_util_flow_apply_receipt_from_input_result(&result,
+                                                          &receipt)) {
+        return M11_GAME_INPUT_IGNORED;
     }
-    return M11_GAME_INPUT_REDRAW;
+    if (receipt.selected_action_index_changed) {
+        state->csbState.startup_import_selected_action_index =
+            receipt.selected_action_index;
+    }
+    if (receipt.preview_active_changed) {
+        state->csbState.startup_import_preview_active =
+            receipt.preview_active;
+    }
+    if (receipt.status) {
+        m11_set_status(state,
+                       receipt.status_scope ? receipt.status_scope : "BOOT",
+                       receipt.status);
+    }
+    if (receipt.result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND) {
+        return m11_csb_startup_handle_entrance_command(
+            state,
+            receipt.entrance_command);
+    }
+    if (receipt.result == CSB_V1_UTIL_APPLY_REDRAW) {
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
@@ -3479,6 +3467,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
 {
     CSB_V1_UtilFlowContext flow;
     CSB_V1_UtilInputResult result;
+    CSB_V1_UtilApplyReceipt receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
@@ -3497,21 +3486,30 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    state->csbState.startup_import_selected_action_index =
-        result.selected_action_index;
-    state->csbState.startup_import_preview_active = result.preview_active;
-
-    if (result.kind == CSB_V1_UTIL_INPUT_RESULT_CLOSE_PREVIEW) {
+    if (!csb_v1_util_flow_apply_receipt_from_input_result(&result,
+                                                          &receipt)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (receipt.selected_action_index_changed) {
+        state->csbState.startup_import_selected_action_index =
+            receipt.selected_action_index;
+    }
+    if (receipt.preview_active_changed) {
+        state->csbState.startup_import_preview_active =
+            receipt.preview_active;
+    }
+    if (receipt.status) {
         m11_set_status(state,
-                       result.status_scope ? result.status_scope : "BOOT",
-                       result.status ? result.status : "CSB IMPORT READY");
-        return M11_GAME_INPUT_REDRAW;
+                       receipt.status_scope ? receipt.status_scope : "BOOT",
+                       receipt.status);
     }
-    if (result.kind == CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED) {
-        return M11_GAME_INPUT_REDRAW;
+    if (receipt.result == CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND) {
+        return m11_csb_startup_handle_entrance_command(
+            state,
+            receipt.entrance_command);
     }
-    if (result.kind == CSB_V1_UTIL_INPUT_RESULT_ACTIVATE) {
-        return m11_csb_startup_activate_utility_action(state, result.action);
+    if (receipt.result == CSB_V1_UTIL_APPLY_REDRAW) {
+        return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
 }
