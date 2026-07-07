@@ -444,6 +444,21 @@ int main(void)
                    action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_ADDED &&
                    action.row == 12,
                "Nexus champion facts pointer helper owns M11 pointer hit construction");
+        {
+            Nexus_V1_StartupDrawCommand commands[80];
+            int command_count =
+                nexus_v1_startup_presentation_build_champion_from_facts(
+                    &champions,
+                    0x0fffu,
+                    13,
+                    12,
+                    commands,
+                    (int)(sizeof(commands) / sizeof(commands[0])));
+            expect(command_count > 3 &&
+                       commands[0].kind ==
+                           NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
+                   "Nexus champion presentation facts helper owns M11 render snapshot construction");
+        }
     }
     action.kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR;
     action.row = 2;
@@ -1058,6 +1073,20 @@ int main(void)
                    snapshot_rows[1].kind == NEXUS_V1_STARTUP_ROW_NEW_GAME &&
                    snapshot_rows[1].selected == 1,
                "startup snapshot render rows preserve slot and selection");
+        {
+            Nexus_V1_StartupDrawCommand commands[48];
+            int command_count =
+                nexus_v1_startup_presentation_build_save_from_facts(
+                    save_dir,
+                    menu.slot_mask,
+                    1,
+                    commands,
+                    (int)(sizeof(commands) / sizeof(commands[0])));
+            expect(command_count > 3 &&
+                       commands[0].kind ==
+                           NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND,
+                   "startup save presentation facts helper owns M11 render snapshot construction");
+        }
         memset(&hit, 0, sizeof(hit));
         hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_ROW;
         hit.row = 0;

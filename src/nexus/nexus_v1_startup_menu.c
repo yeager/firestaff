@@ -1596,6 +1596,31 @@ int nexus_v1_startup_presentation_build_save(
     return count;
 }
 
+int nexus_v1_startup_presentation_build_save_from_facts(
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    Nexus_V1_StartupMenuSnapshot snapshot;
+
+    if (!nexus_v1_startup_menu_snapshot_from_facts(&snapshot,
+                                                   save_dir,
+                                                   slot_mask,
+                                                   selected_row)) {
+        if (out_commands && max_commands > 0) {
+            memset(out_commands,
+                   0,
+                   (size_t)max_commands * sizeof(out_commands[0]));
+        }
+        return 0;
+    }
+    return nexus_v1_startup_presentation_build_save(&snapshot,
+                                                    out_commands,
+                                                    max_commands);
+}
+
 int nexus_v1_startup_presentation_build_title(
     int title_frame,
     Nexus_V1_StartupDrawCommand *out_commands,
@@ -1732,6 +1757,34 @@ int nexus_v1_startup_presentation_build_champion(
                                      15,
                                      0);
     return count;
+}
+
+int nexus_v1_startup_presentation_build_champion_from_facts(
+    const Nexus_V1_ChampionPool *pool,
+    unsigned int slot_mask,
+    int cursor,
+    int frame,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    Nexus_V1_StartupChampionSnapshot snapshot;
+
+    if (!nexus_v1_startup_champion_snapshot_from_facts(pool,
+                                                       &snapshot,
+                                                       slot_mask,
+                                                       cursor,
+                                                       frame)) {
+        if (out_commands && max_commands > 0) {
+            memset(out_commands,
+                   0,
+                   (size_t)max_commands * sizeof(out_commands[0]));
+        }
+        return 0;
+    }
+    return nexus_v1_startup_presentation_build_champion(pool,
+                                                        &snapshot,
+                                                        out_commands,
+                                                        max_commands);
 }
 
 int nexus_v1_startup_presentation_execute(

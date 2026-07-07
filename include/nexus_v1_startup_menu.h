@@ -437,9 +437,22 @@ int nexus_v1_startup_presentation_build_save(
     const Nexus_V1_StartupMenuSnapshot *snapshot,
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands);
+int nexus_v1_startup_presentation_build_save_from_facts(
+    const char *save_dir,
+    unsigned int slot_mask,
+    int selected_row,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands);
 int nexus_v1_startup_presentation_build_champion(
     const Nexus_V1_ChampionPool *pool,
     const Nexus_V1_StartupChampionSnapshot *snapshot,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands);
+int nexus_v1_startup_presentation_build_champion_from_facts(
+    const Nexus_V1_ChampionPool *pool,
+    unsigned int slot_mask,
+    int cursor,
+    int frame,
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands);
 int nexus_v1_startup_presentation_execute(
