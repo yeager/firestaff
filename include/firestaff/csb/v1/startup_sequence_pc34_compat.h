@@ -449,6 +449,21 @@ typedef struct CSB_V1_StartupCommandStateRequest_PC34 {
     int pending_command;
 } CSB_V1_StartupCommandStateRequest_PC34;
 
+typedef struct CSB_V1_StartupCommandStateReceipt_PC34 {
+    int title_active;
+    int title_frame;
+    int title_source_step;
+    int entrance_active;
+    int entrance_source_step;
+    int entrance_dismissed;
+    int credits_active;
+    int credits_remaining_ticks;
+    int opening_active;
+    int opening_delay_ticks;
+    int opening_step;
+    int pending_command;
+} CSB_V1_StartupCommandStateReceipt_PC34;
+
 typedef struct CSB_V1_StartupEntranceCommandReceipt_PC34 {
     int command_id;
     int handled;
@@ -610,6 +625,38 @@ int csb_v1_startup_command_state_from_facts_pc34(
     int opening_step,
     int pending_command,
     CSB_V1_StartupCommandState_PC34 *out_state);
+void csb_v1_startup_command_state_receipt_init_pc34(
+    CSB_V1_StartupCommandStateReceipt_PC34 *receipt);
+int csb_v1_startup_command_state_receipt_from_state_pc34(
+    const CSB_V1_StartupCommandState_PC34 *state,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt);
+int csb_v1_startup_command_state_receipt_from_facts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt);
+int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command);
 int csb_v1_startup_init_command_state_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int skip_startup);

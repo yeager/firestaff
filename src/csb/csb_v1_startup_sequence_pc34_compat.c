@@ -1652,6 +1652,114 @@ int csb_v1_startup_command_state_from_facts_pc34(
                                                           out_state);
 }
 
+void csb_v1_startup_command_state_receipt_init_pc34(
+    CSB_V1_StartupCommandStateReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+}
+
+int csb_v1_startup_command_state_receipt_from_state_pc34(
+    const CSB_V1_StartupCommandState_PC34 *state,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt)
+{
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    csb_v1_startup_command_state_receipt_init_pc34(out_receipt);
+    out_receipt->title_active = state->title_active;
+    out_receipt->title_frame = state->title_frame;
+    out_receipt->title_source_step = state->title_source_step;
+    out_receipt->entrance_active = state->entrance_active;
+    out_receipt->entrance_source_step = state->entrance_source_step;
+    out_receipt->entrance_dismissed = state->entrance_dismissed;
+    out_receipt->credits_active = state->credits_active;
+    out_receipt->credits_remaining_ticks = state->credits_remaining_ticks;
+    out_receipt->opening_active = state->opening_active;
+    out_receipt->opening_delay_ticks = state->opening_delay_ticks;
+    out_receipt->opening_step = state->opening_step;
+    out_receipt->pending_command = state->pending_command;
+    return 1;
+}
+
+int csb_v1_startup_command_state_receipt_from_facts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupCommandState_PC34 state;
+
+    if (!csb_v1_startup_command_state_from_facts_pc34(
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            &state)) {
+        if (out_receipt) {
+            csb_v1_startup_command_state_receipt_init_pc34(out_receipt);
+        }
+        return 0;
+    }
+    return csb_v1_startup_command_state_receipt_from_state_pc34(
+        &state,
+        out_receipt);
+}
+
+int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command)
+{
+    CSB_V1_StartupCommandState_PC34 state;
+
+    if (!csb_v1_startup_command_state_from_facts_pc34(
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            &state)) {
+        return 0;
+    }
+    return csb_v1_startup_entrance_accepts_input_pc34(&state);
+}
+
 int csb_v1_startup_build_render_plan_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)

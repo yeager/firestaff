@@ -2521,6 +2521,10 @@ static void m11_csb_startup_command_state_from_m11(
     const M11_GameViewState *state,
     CSB_V1_StartupCommandState_PC34 *out_state);
 
+static void m11_csb_startup_command_state_receipt_to_m11(
+    M11_GameViewState *state,
+    const CSB_V1_StartupCommandStateReceipt_PC34 *receipt);
+
 static int m11_csb_startup_build_render_plan(
     const M11_GameViewState *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
@@ -2989,12 +2993,22 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state)
 {
-    CSB_V1_StartupCommandState_PC34 command_state;
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
-    m11_csb_startup_command_state_from_m11(state, &command_state);
-    return csb_v1_startup_entrance_accepts_input_pc34(&command_state);
+    return csb_v1_startup_entrance_accepts_input_from_facts_pc34(
+        state->csbState.startup_title_active,
+        state->csbState.startup_title_frame,
+        state->csbState.startup_title_source_step,
+        state->csbState.startup_entrance_active,
+        state->csbState.startup_entrance_source_step,
+        state->csbState.startup_entrance_dismissed,
+        state->csbState.startup_entrance_credits_active,
+        state->csbState.startup_entrance_credits_remaining_ticks,
+        state->csbState.startup_entrance_opening_active,
+        state->csbState.startup_entrance_opening_delay_ticks,
+        state->csbState.startup_entrance_opening_step,
+        state->csbState.startup_entrance_pending_command);
 }
 
 static void m11_csb_startup_command_state_from_m11(
@@ -3029,31 +3043,47 @@ static void m11_csb_startup_command_state_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupCommandState_PC34 *command_state)
 {
+    CSB_V1_StartupCommandStateReceipt_PC34 receipt;
+
     if (!state || !command_state) {
         return;
     }
-    state->csbState.startup_title_active = command_state->title_active;
-    state->csbState.startup_title_frame = command_state->title_frame;
+    if (!csb_v1_startup_command_state_receipt_from_state_pc34(command_state,
+                                                              &receipt)) {
+        return;
+    }
+    m11_csb_startup_command_state_receipt_to_m11(state, &receipt);
+}
+
+static void m11_csb_startup_command_state_receipt_to_m11(
+    M11_GameViewState *state,
+    const CSB_V1_StartupCommandStateReceipt_PC34 *receipt)
+{
+    if (!state || !receipt) {
+        return;
+    }
+    state->csbState.startup_title_active = receipt->title_active;
+    state->csbState.startup_title_frame = receipt->title_frame;
     state->csbState.startup_title_source_step =
-        command_state->title_source_step;
+        receipt->title_source_step;
     state->csbState.startup_entrance_active =
-        command_state->entrance_active;
+        receipt->entrance_active;
     state->csbState.startup_entrance_source_step =
-        command_state->entrance_source_step;
+        receipt->entrance_source_step;
     state->csbState.startup_entrance_dismissed =
-        command_state->entrance_dismissed;
+        receipt->entrance_dismissed;
     state->csbState.startup_entrance_credits_active =
-        command_state->credits_active;
+        receipt->credits_active;
     state->csbState.startup_entrance_credits_remaining_ticks =
-        command_state->credits_remaining_ticks;
+        receipt->credits_remaining_ticks;
     state->csbState.startup_entrance_opening_active =
-        command_state->opening_active;
+        receipt->opening_active;
     state->csbState.startup_entrance_opening_delay_ticks =
-        command_state->opening_delay_ticks;
+        receipt->opening_delay_ticks;
     state->csbState.startup_entrance_opening_step =
-        command_state->opening_step;
+        receipt->opening_step;
     state->csbState.startup_entrance_pending_command =
-        command_state->pending_command;
+        receipt->pending_command;
 }
 
 static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
