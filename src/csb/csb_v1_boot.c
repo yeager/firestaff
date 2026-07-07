@@ -43,6 +43,15 @@ static const char *const g_csb_boot_dungeon_hashes[] = {
     NULL
 };
 
+static const char *const g_csb_boot_fast_scan_subdirs[] = {
+    "csb",
+    "csb-atari-st-2x",
+    "csb-amiga-35-en",
+    "csb-amiga-35-multilingual",
+    "csb-extras",
+    NULL
+};
+
 /* ── DM1-assumption rejection strings ────────────────────────────────────
  *
  * Each csb_v1_boot_assume_no_dm1_runtime() failure has a stable reason
@@ -548,6 +557,68 @@ static void csb_v1_boot_reset_csbgraphics(CSB_V1_BootProfile *profile)
            sizeof(profile->csbgraphics_skin_def_words));
 }
 
+static int csb_v1_boot_scan_required_paths(const char *root,
+                                           char *graphics_path,
+                                           size_t graphics_path_size,
+                                           int *graphics_match,
+                                           char *dungeon_path,
+                                           size_t dungeon_path_size,
+                                           int *dungeon_match)
+{
+    int graphics_verified;
+    int dungeon_verified;
+    if (!root || !graphics_path || !graphics_match ||
+        !dungeon_path || !dungeon_match) {
+        return 0;
+    }
+
+    graphics_path[0] = '\0';
+    dungeon_path[0] = '\0';
+    *graphics_match = -1;
+    *dungeon_match = -1;
+    graphics_verified =
+        asset_find_by_md5_list(root, g_csb_boot_graphics_hashes,
+                               graphics_path, (int)graphics_path_size,
+                               graphics_match, 4);
+    dungeon_verified =
+        asset_find_by_md5_list(root, g_csb_boot_dungeon_hashes,
+                               dungeon_path, (int)dungeon_path_size,
+                               dungeon_match, 4);
+    return graphics_verified && dungeon_verified;
+}
+
+static int csb_v1_boot_scan_required_paths_fast(const char *root,
+                                                char *graphics_path,
+                                                size_t graphics_path_size,
+                                                int *graphics_match,
+                                                char *dungeon_path,
+                                                size_t dungeon_path_size,
+                                                int *dungeon_match)
+{
+    size_t i;
+    char candidate[ASSET_PATH_MAX];
+    if (!root || !root[0]) {
+        return 0;
+    }
+    for (i = 0U; g_csb_boot_fast_scan_subdirs[i] != NULL; ++i) {
+        if (snprintf(candidate, sizeof(candidate), "%s/%s", root,
+                     g_csb_boot_fast_scan_subdirs[i]) >=
+            (int)sizeof(candidate)) {
+            continue;
+        }
+        if (csb_v1_boot_scan_required_paths(candidate,
+                                            graphics_path,
+                                            graphics_path_size,
+                                            graphics_match,
+                                            dungeon_path,
+                                            dungeon_path_size,
+                                            dungeon_match)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
                                  const char *cache_dir)
 {
@@ -744,14 +815,23 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
         profile->runtime.dungeon_handle = NULL;
     }
 
-    profile->graphics_verified =
-        asset_find_by_md5_list(root, g_csb_boot_graphics_hashes,
-                               graphics_path, sizeof(graphics_path),
-                               &graphics_match, 4);
-    profile->dungeon_verified =
-        asset_find_by_md5_list(root, g_csb_boot_dungeon_hashes,
-                               dungeon_path, sizeof(dungeon_path),
-                               &dungeon_match, 4);
+    if (csb_v1_boot_scan_required_paths_fast(root,
+                                             graphics_path,
+                                             sizeof(graphics_path),
+                                             &graphics_match,
+                                             dungeon_path,
+                                             sizeof(dungeon_path),
+                                             &dungeon_match) ||
+        csb_v1_boot_scan_required_paths(root,
+                                        graphics_path,
+                                        sizeof(graphics_path),
+                                        &graphics_match,
+                                        dungeon_path,
+                                        sizeof(dungeon_path),
+                                        &dungeon_match)) {
+        profile->graphics_verified = 1;
+        profile->dungeon_verified = 1;
+    }
     if (profile->graphics_verified) {
         csb_v1_boot_copy(profile->graphics_path, sizeof(profile->graphics_path),
                          graphics_path);

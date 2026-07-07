@@ -918,6 +918,7 @@ static void check_incomplete_required_files_block_m11(const char* label,
 static const char* csb_data_dir(char fallback[512]) {
     const char* data_dir = getenv("FIRESTAFF_CSB_V1_DATA_DIR");
     const char* home;
+    struct stat st;
     if (!data_dir || !data_dir[0]) {
         data_dir = getenv("FIRESTAFF_CSB_CANONICAL_DIR");
     }
@@ -927,6 +928,10 @@ static const char* csb_data_dir(char fallback[512]) {
     home = getenv("HOME");
     if (!home || !home[0]) {
         return NULL;
+    }
+    snprintf(fallback, 512, "%s/.firestaff/data/csb", home);
+    if (stat(fallback, &st) == 0) {
+        return fallback;
     }
     snprintf(fallback, 512, "%s/.firestaff/data", home);
     return fallback;
@@ -1632,7 +1637,10 @@ int main(void) {
 
     {
         M12_StartupMenuState menu;
-        M12_StartupMenu_InitWithDataDir(&menu, data_dir, NULL);
+        M12_StartupMenuInitOptions menu_options;
+        memset(&menu_options, 0, sizeof(menu_options));
+        menu_options.skipScreenshotGalleryScan = 1;
+        M12_StartupMenu_InitWithOptions(&menu, data_dir, NULL, &menu_options);
         force_csb_menu_available(&menu);
         menu.csbImportDm1LaunchRequested = 1;
         snprintf(menu.csbImportDm1SavePath,
