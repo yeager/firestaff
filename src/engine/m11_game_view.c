@@ -1396,7 +1396,9 @@ static void m11_draw_csb_runtime_floor_object_overlays(
     if (!dungeon) return;
 
     for (forward = 3; forward >= 1; --forward) {
-        for (side = -1; side <= 1; ++side) {
+        int side_min = forward == 3 ? -2 : -1;
+        int side_max = forward == 3 ? 2 : 1;
+        for (side = side_min; side <= side_max; ++side) {
             int map_x;
             int map_y;
             int first_thing;
@@ -1558,7 +1560,9 @@ static void m11_draw_csb_runtime_group_overlays(
     if (!dungeon) return;
 
     for (forward = 3; forward >= 1; --forward) {
-        for (side = -1; side <= 1; ++side) {
+        int side_min = forward == 3 ? -2 : -1;
+        int side_max = forward == 3 ? 2 : 1;
+        for (side = side_min; side <= side_max; ++side) {
             int map_x;
             int map_y;
             int first_thing;

@@ -44,13 +44,13 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     memset(dungeon, 0, sizeof(*dungeon));
     memset(raw, 0, raw_size);
     dungeon->level_count = 1;
-    dungeon->level_widths[0] = 3;
-    dungeon->level_heights[0] = 1;
+    dungeon->level_widths[0] = 4;
+    dungeon->level_heights[0] = 3;
     dungeon->level_offsets[0] = 66;
     dungeon->square_bytes = 1;
     dungeon->raw_map_data_base = 66;
     dungeon->square_first_thing_base = 80;
-    dungeon->square_first_thing_count = 1;
+    dungeon->square_first_thing_count = 2;
     dungeon->map_door_set0[0] = 1; /* Wooden door defense: 42. */
     dungeon->raw_data = raw;
     dungeon->raw_size = (int)raw_size;
@@ -68,8 +68,10 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     write_u16(raw + 60, 0u);
     write_u16(raw + 62, 0u);
     write_u16(raw + 64, 0u);
-    raw[67] = (unsigned char)((1u << 5) | 0x10u); /* corridor with thing-list-present, one step east. */
+    raw[69] = (unsigned char)((1u << 5) | 0x10u); /* corridor with thing-list-present, one step east. */
+    raw[77] = (unsigned char)(1u << 5); /* D3R2 corridor slot, enabled by the focused draw test. */
     write_u16(raw + 80, group);
+    write_u16(raw + 82, THING_ENDOFLIST);
     write_u16(raw + 96, THING_ENDOFLIST);
     write_u16(raw + 98, THING_ENDOFLIST);
     raw[100] = 6u;   /* Screamer. */
@@ -143,6 +145,11 @@ int main(void)
         int object_marker_y = 117;
         int group_marker_x = 112;
         int group_marker_y = 144;
+        int d3_object_marker_x = 0;
+        int d3_object_marker_y = 0;
+        int d3_group_marker_x = 0;
+        int d3_group_marker_y = 0;
+        int d3_bow_icon = -1;
         int object_sprite_count = -1;
         int object_icon_count = -1;
         int object_marker_count = -1;
@@ -270,8 +277,27 @@ int main(void)
                       &group_marker_y),
                   "CSB draw checks resolve front-square group marker through C3200");
             group_marker_y += sy;
+            f0115_row = M11_GameView_GetF0115C2500C2900Row(3, 2);
+            check(f0115_row >= 0 &&
+                      M11_GameView_GetC2500ObjectRawZonePoint(
+                          f0115_row,
+                          3,
+                          &d3_object_marker_x,
+                          &d3_object_marker_y),
+                  "CSB draw checks resolve D3R2 object marker through C2500");
+            d3_object_marker_y += sy;
+            check(M11_GameView_GetC3200CreatureSideZonePoint(
+                      0,
+                      2,
+                      1,
+                      1,
+                      0,
+                      &d3_group_marker_x,
+                      &d3_group_marker_y),
+                  "CSB draw checks resolve D3R2 group marker through C3200");
+            d3_group_marker_y += sy;
             write_u16(raw + 96, dagger);
-            raw[67] = 0x10u; /* wall with thing-list-present: overlays must stay hidden. */
+            raw[69] = 0x10u; /* wall with thing-list-present: overlays must stay hidden. */
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
             check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
@@ -301,7 +327,7 @@ int main(void)
             check(framebuffer[object_marker_y * 320 + object_marker_x] !=
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
                   "CSB M11 draw hides runtime floor objects on blocking wall squares");
-            raw[67] = (unsigned char)((1u << 5) | 0x10u);
+            raw[69] = (unsigned char)((1u << 5) | 0x10u);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
             check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
@@ -331,6 +357,43 @@ int main(void)
             check(framebuffer[object_marker_y * 320 + object_marker_x] ==
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
                   "CSB M11 draw marks a runtime floor object from CSB square thing chain without DM1 world.things");
+            raw[69] = (unsigned char)(1u << 5);
+            raw[77] = (unsigned char)((1u << 5) | 0x10u);
+            write_u16(raw + 80, (unsigned short)((THING_TYPE_GROUP << 10) | 0));
+            write_u16(raw + 82, THING_ENDOFLIST);
+            write_u16(raw + 96, bow);
+            d3_bow_icon = csb_v1_runtime_object_icon_index(
+                &profile.runtime, bow);
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&state, framebuffer, 320, 200);
+            check(M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+                      &state,
+                      &object_sprite_count,
+                      &object_icon_count,
+                      &object_marker_count,
+                      &group_sprite_count,
+                      &group_marker_count,
+                      &projectile_sprite_count,
+                      &projectile_material_count,
+                      &projectile_marker_count,
+                      &explosion_sprite_count,
+                      &explosion_marker_count),
+                  "CSB M11 draw exposes D3R2 runtime overlay draw stats");
+            check(object_sprite_count == 0 && object_icon_count == 0 &&
+                      object_marker_count == 1 && group_sprite_count == 0 &&
+                      group_marker_count == 1,
+                  "CSB M11 draw stats prove D3R2 group/object marker fallback paths");
+            check(framebuffer[d3_group_marker_y * 320 + d3_group_marker_x] ==
+                      0x0D,
+                  "CSB M11 draw scans D3R2 runtime groups through C3200");
+            check(framebuffer[d3_object_marker_y * 320 + d3_object_marker_x] ==
+                      (unsigned char)csb_v1_viewport_projectile_material_overlay_color(d3_bow_icon),
+                  "CSB M11 draw scans D3R2 runtime floor objects through C2500");
+            raw[69] = (unsigned char)((1u << 5) | 0x10u);
+            raw[77] = (unsigned char)(1u << 5);
+            write_u16(raw + 80, (unsigned short)((THING_TYPE_GROUP << 10) | 0));
+            write_u16(raw + 82, THING_ENDOFLIST);
+            write_u16(raw + 96, dagger);
         }
         check(M11_GameView_TriggerActionRow(&state, 0) == 1,
               "CSB dagger THROW action dispatches through CSB runtime without DM1 world.things");
@@ -384,7 +447,7 @@ int main(void)
         check(profile.runtime.party_state.Champions[0].CurrentStamina < 100,
               "CSB STAB writes M11 stamina cost back to runtime");
         state.actionDisabledTicks[0] = 0;
-        raw[67] = (unsigned char)((4u << 5) | 0x10u | 4u);
+        raw[69] = (unsigned char)((4u << 5) | 0x10u | 4u);
         write_u16(raw + 80, (unsigned short)((THING_TYPE_DOOR << 10) | 0));
         write_u16(raw + 2, 2u); /* Weapon type 2: action set 5 => SWING. */
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
@@ -403,7 +466,7 @@ int main(void)
             int event_count_before = profile.runtime.timeline_queue.eventCount;
             check(M11_GameView_TriggerActionRow(&state, 0) == 1,
                   "CSB SWING closed-door action dispatches through CSB runtime");
-            check((raw[67] & 0x07u) == 4u,
+            check((raw[69] & 0x07u) == 4u,
                   "CSB SWING leaves closed door unchanged before C02 event");
             check(profile.runtime.timeline_queue.eventCount ==
                       event_count_before + 1,
