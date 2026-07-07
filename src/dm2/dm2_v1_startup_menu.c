@@ -297,6 +297,52 @@ int dm2_v1_startup_menu_snapshot_scan_saves(
     return dm2_v1_startup_menu_snapshot_from_menu(snapshot, &menu);
 }
 
+int dm2_v1_startup_menu_snapshot_from_facts(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root,
+    const char *fallback_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row)
+{
+    DM2_V1_StartupMenu menu;
+    const char *root;
+
+    if (!snapshot) {
+        return 0;
+    }
+    root = save_root && save_root[0] ? save_root : fallback_save_root;
+    dm2_v1_startup_menu_init(&menu, root);
+    menu.selected_row = selected_row;
+    if (!dm2_v1_startup_menu_refresh(&menu,
+                                     resume_available,
+                                     slot_mask)) {
+        return 0;
+    }
+    return dm2_v1_startup_menu_snapshot_from_menu(snapshot, &menu);
+}
+
+int dm2_v1_startup_menu_snapshot_scan_saves_from_facts(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root,
+    const char *fallback_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    const char *scan_save_root)
+{
+    if (!dm2_v1_startup_menu_snapshot_from_facts(snapshot,
+                                                save_root,
+                                                fallback_save_root,
+                                                resume_available,
+                                                slot_mask,
+                                                selected_row)) {
+        return 0;
+    }
+    return dm2_v1_startup_menu_snapshot_scan_saves(snapshot,
+                                                  scan_save_root);
+}
+
 int dm2_v1_startup_menu_from_snapshot(
     const DM2_V1_StartupMenuSnapshot *snapshot,
     DM2_V1_StartupMenu *out_menu)

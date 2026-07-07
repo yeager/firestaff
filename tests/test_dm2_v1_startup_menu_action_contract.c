@@ -153,6 +153,32 @@ int main(void)
               row_kind == DM2_V1_STARTUP_ROW_SLOT &&
               row_slot == 2,
           "snapshot row lookup resolves slot without M11 row adapter");
+    check(dm2_v1_startup_menu_snapshot_from_facts(
+              &snapshot,
+              "",
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              99) &&
+              strcmp(snapshot.save_root, "/tmp/firestaff-dm2-startup") == 0 &&
+              snapshot.resume_available == 1 &&
+              snapshot.slot_mask == (1u << 2) &&
+              snapshot.row_count == 3 &&
+              snapshot.selected_row == 2,
+          "snapshot facts helper owns fallback root and selected-row clamp");
+    check(dm2_v1_startup_menu_snapshot_scan_saves_from_facts(
+              &snapshot,
+              "",
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              "/tmp/firestaff-dm2-startup") &&
+              snapshot.resume_available == 0 &&
+              snapshot.slot_mask == 0u &&
+              snapshot.row_count == 1 &&
+              snapshot.selected_row == 0,
+          "snapshot facts scan helper owns save scan normalization");
     row_count = dm2_v1_startup_menu_build_render_rows(
         &menu,
         rows,

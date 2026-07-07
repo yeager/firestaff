@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM2 startup snapshot facts ownership: `dm2_v1_startup_menu` now builds and scans startup menu snapshots from raw save-root/resume/slot/selection facts, including fallback-root choice and selection clamping. M11 now applies the returned snapshot instead of assembling/scanning menu state locally. Verification: DM2 startup action contract passed 56/56, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 CSB party mirror receipt ownership: `csb_v1_runtime_pc34_compat` now builds the shared M11 party mirror receipt for CSB startup/resume handoff, including imported champion names, vitals, attributes, hand-slot mapping, active leader, pose, and compatible portrait bytes. M11 now applies that receipt instead of rebuilding the party mirror locally. Verification: CSB boot-runtime handoff passed 271/271, CSB M11 startup/resume gate passed, CSB runtime champion inventory handoff passed 36/36, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 RetroAchievements editable start-menu settings: the modern launcher now opens inline text editing for RA User and RA API Token rows, accepts SDL text input, supports backspace, commits with Enter, cancels with Esc, masks token display, and persists values through the existing M12 config path. Verification: settings hit-test passed 38/38, DM1 V2 settings persistence passed, RetroAchievements unit test passed, Phase A passed 24/24, and `git diff --check` passed.
