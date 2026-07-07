@@ -1,6 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 CSB entrance input adapter ownership: `csb_v1_startup_sequence_pc34_compat` now maps Firestaff menu input codes to CSB startup entrance inputs through `csb_v1_startup_input_from_firestaff_menu_code_pc34()`. M11 consumes that adapter for entrance keyboard handling and only asserts the M12 enum code contract. Verification: direct `test_csb_v1_startup_entrance_pointer_pc34_compat` build/run passed 79/79, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 CSB utility input adapter ownership: `csb_v1_utility_flow_pc34` now maps Firestaff menu input codes to CSB utility inputs through `csb_v1_util_input_from_firestaff_menu_code()`. M11 consumes that adapter for utility keyboard input and only asserts the M12 enum code contract. Verification: direct `test_csb_v1_utility_flow_action_contract` build/run passed 35/35, M11 syntax passed cleanly, and `git diff --check` passed.
+
+- ✅ 2026-07-07 CSB startup input-code adapter ownership: `csb_v1_startup_sequence_pc34_compat` now maps Firestaff menu input codes to CSB startup entrance inputs through `csb_v1_startup_input_from_firestaff_menu_code_pc34()`. M11 consumes that adapter instead of keeping a local CSB startup input switch. Verification: `cmake --build /tmp/firestaff-build-active --target test_csb_v1_startup_entrance_pointer_pc34_compat --parallel 4` passed; `/tmp/firestaff-build-active/test_csb_v1_startup_entrance_pointer_pc34_compat` passed 79/79; M11 syntax check passed; `git diff --check` passed.
 
 - ✅ 2026-07-07 Nexus startup input adapter ownership: `nexus_v1_startup_menu` now maps Firestaff menu input codes to Nexus startup inputs through `nexus_v1_startup_input_from_firestaff_menu_code()`. M11 consumes that adapter for title, save-select, and champion-select startup input and only asserts the M12 enum code contract. Verification: direct `test_nexus_v1_startup_menu_pc34_compat` build/run passed, Nexus startup syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
 

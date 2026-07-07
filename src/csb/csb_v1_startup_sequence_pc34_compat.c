@@ -1163,6 +1163,32 @@ int csb_v1_startup_entrance_credits_ticks_pc34(void)
     return CSB_V1_ENTRANCE_CREDITS_TICKS_PC34;
 }
 
+CSB_V1_StartupInput_PC34 csb_v1_startup_input_from_firestaff_menu_code_pc34(
+    int menu_input)
+{
+    enum {
+        FIRESTAFF_MENU_INPUT_NONE = 0,
+        FIRESTAFF_MENU_INPUT_ACCEPT = 9,
+        FIRESTAFF_MENU_INPUT_BACK = 10,
+        FIRESTAFF_MENU_INPUT_ACTION = 11,
+        FIRESTAFF_MENU_INPUT_DISK_MENU = 32
+    };
+
+    switch (menu_input) {
+        case FIRESTAFF_MENU_INPUT_ACCEPT:
+            return CSB_V1_STARTUP_INPUT_ACCEPT_PC34;
+        case FIRESTAFF_MENU_INPUT_ACTION:
+            return CSB_V1_STARTUP_INPUT_ACTION_PC34;
+        case FIRESTAFF_MENU_INPUT_BACK:
+            return CSB_V1_STARTUP_INPUT_BACK_PC34;
+        case FIRESTAFF_MENU_INPUT_DISK_MENU:
+            return CSB_V1_STARTUP_INPUT_DISK_MENU_PC34;
+        case FIRESTAFF_MENU_INPUT_NONE:
+        default:
+            return CSB_V1_STARTUP_INPUT_NONE_PC34;
+    }
+}
+
 int csb_v1_startup_entrance_action_for_input_pc34(
     int credits_active,
     CSB_V1_StartupInput_PC34 input)
