@@ -1075,6 +1075,8 @@ static void m11_csb_runtime_overlay_stats_apply(
         counts->projectile_sprite_drawn_count;
     mutable_state->csbState.runtime_projectile_material_resolved_count =
         counts->projectile_material_resolved_count;
+    mutable_state->csbState.runtime_projectile_material_icon_drawn_count =
+        counts->projectile_material_icon_drawn_count;
     mutable_state->csbState.runtime_projectile_marker_drawn_count =
         counts->projectile_marker_drawn_count;
     mutable_state->csbState.runtime_explosion_sprite_drawn_count =
