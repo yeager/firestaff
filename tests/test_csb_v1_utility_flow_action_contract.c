@@ -291,6 +291,31 @@ int main(void)
               result.kind == CSB_V1_UTIL_INPUT_RESULT_NONE &&
               result.preview_active == 1,
           "Firestaff keyboard helper rejects inactive overlay");
+    flow.selected_action_index = 0;
+    check(csb_v1_util_flow_apply_firestaff_input_if_active(
+              &flow,
+              2,
+              1,
+              0,
+              0,
+              1,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_REDRAW &&
+              apply_receipt.selected_action_index_changed &&
+              apply_receipt.selected_action_index == 1 &&
+              apply_receipt.preview_active_changed &&
+              apply_receipt.preview_active == 0,
+          "Firestaff keyboard helper now returns CSB-owned apply receipt");
+    check(!csb_v1_util_flow_apply_firestaff_input_if_active(
+              &flow,
+              2,
+              0,
+              0,
+              0,
+              1,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_IGNORED,
+          "Firestaff keyboard apply helper rejects inactive overlay");
     check(csb_v1_util_flow_overlay_accepts_input(1, 0, 0) &&
               !csb_v1_util_flow_overlay_accepts_input(0, 0, 0) &&
               !csb_v1_util_flow_overlay_accepts_input(1, 1, 0) &&
@@ -326,6 +351,36 @@ int main(void)
               result.selected_action_index == 1 &&
               result.preview_active == 1,
           "pointer helper rejects inactive overlay");
+    flow.selected_action_index = 0;
+    check(csb_v1_util_flow_apply_point_if_active(
+              &flow,
+              40,
+              116,
+              1,
+              0,
+              0,
+              1,
+              &apply_receipt) &&
+              apply_receipt.result ==
+                  CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              apply_receipt.entrance_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+              apply_receipt.selected_action_index_changed &&
+              apply_receipt.selected_action_index == 1 &&
+              apply_receipt.preview_active_changed &&
+              apply_receipt.preview_active == 0,
+          "pointer helper now returns CSB-owned apply receipt");
+    check(!csb_v1_util_flow_apply_point_if_active(
+              &flow,
+              40,
+              116,
+              0,
+              0,
+              0,
+              1,
+              &apply_receipt) &&
+              apply_receipt.result == CSB_V1_UTIL_APPLY_IGNORED,
+          "pointer apply helper rejects inactive overlay");
 
     flow.selected_action_index = 0;
     check(csb_v1_util_flow_handle_point(&flow, 40, 116, 1, &result) &&

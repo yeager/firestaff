@@ -3395,7 +3395,6 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     int y)
 {
     CSB_V1_UtilFlowContext flow;
-    CSB_V1_UtilInputResult result;
     CSB_V1_UtilApplyReceipt receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -3404,7 +3403,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     }
 
     m11_csb_startup_build_utility_flow(state, &flow);
-    if (!csb_v1_util_flow_handle_point_if_active(
+    if (!csb_v1_util_flow_apply_point_if_active(
             &flow,
             x,
             y,
@@ -3412,11 +3411,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
             state->csbState.startup_entrance_credits_active,
             state->csbState.startup_entrance_opening_active,
             state->csbState.startup_import_preview_active,
-            &result)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!csb_v1_util_flow_apply_receipt_from_input_result(&result,
-                                                          &receipt)) {
+            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (receipt.selected_action_index_changed) {
@@ -3448,7 +3443,6 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     M12_MenuInput input)
 {
     CSB_V1_UtilFlowContext flow;
-    CSB_V1_UtilInputResult result;
     CSB_V1_UtilApplyReceipt receipt;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -3457,19 +3451,14 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     }
 
     m11_csb_startup_build_utility_flow(state, &flow);
-    if (!csb_v1_util_flow_handle_firestaff_input_if_active(
+    if (!csb_v1_util_flow_apply_firestaff_input_if_active(
             &flow,
             (int)input,
             state->csbState.startup_import_available,
             state->csbState.startup_entrance_credits_active,
             state->csbState.startup_entrance_opening_active,
             state->csbState.startup_import_preview_active,
-            &result)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-
-    if (!csb_v1_util_flow_apply_receipt_from_input_result(&result,
-                                                          &receipt)) {
+            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (receipt.selected_action_index_changed) {
