@@ -104,11 +104,27 @@ int main(void)
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
     CSB_V1_StartupEntranceDecision_PC34 decision;
+    CSB_V1_TextMaterial_PC34 material;
     char phase[64];
     int startup_active;
     int startup_frame;
     int i;
     unsigned char fb[320 * 200];
+
+    material = csb_v1_text_material_pc34(CSB_V1_TEXT_STYLE_TITLE_PC34);
+    check(material.scale_x == 2 &&
+              material.scale_y == 1 &&
+              material.color == 11 &&
+              material.shadow_dx == 1 &&
+              material.shadow_dy == 1 &&
+              material.shadow_color == 0,
+          "startup title text material owns CSB title palette");
+    material = csb_v1_text_material_pc34(CSB_V1_TEXT_STYLE_SHADOW_PC34);
+    check(material.scale_x == 1 &&
+              material.color == 15 &&
+              material.shadow_dx == 1 &&
+              material.shadow_dy == 1,
+          "startup shadow text material owns CSB fallback shadow");
 
     expect_action("enter route becomes CSB startup Enter",
                   244, 45,

@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_CSB_V1_STARTUP_SEQUENCE_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_STARTUP_SEQUENCE_PC34_COMPAT_H
 
+#include "csb_v1_text_material_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
