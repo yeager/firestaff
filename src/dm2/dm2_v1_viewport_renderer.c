@@ -207,6 +207,98 @@ int dm2_v1_viewport_build_hud_chrome_plan(
     return 1;
 }
 
+static uint8_t dm2_v1_hud_clamp_pct(int pct)
+{
+    if (pct < 0) {
+        return 0;
+    }
+    if (pct > 100) {
+        return 100;
+    }
+    return (uint8_t)pct;
+}
+
+static int dm2_v1_hud_name_marker_width(const char *name)
+{
+    int len = 0;
+    if (!name) {
+        return 0;
+    }
+    while (len < DM2_V1_HUD_CHAMPION_NAME_MAX && name[len]) {
+        ++len;
+    }
+    return len * 3;
+}
+
+static DM2_V1_ViewportRect dm2_v1_hud_bar_fill(
+    const DM2_V1_ViewportRect *bar,
+    uint8_t pct)
+{
+    DM2_V1_ViewportRect fill = { 0, 0, 0, 0 };
+    if (!bar || bar->w <= 0 || bar->h <= 0) {
+        return fill;
+    }
+    fill = *bar;
+    fill.w = (bar->w * (int)dm2_v1_hud_clamp_pct((int)pct)) / 100;
+    return fill;
+}
+
+int dm2_v1_viewport_build_hud_chrome_plan_for_party(
+    int is_outdoor,
+    const DM2_V1_HudPartyState *party,
+    DM2_V1_HudChromeRenderPlan *out_plan)
+{
+    if (!dm2_v1_viewport_build_hud_chrome_plan(is_outdoor, out_plan)) {
+        return 0;
+    }
+    if (!party || out_plan->outdoor) {
+        return 1;
+    }
+    for (int slot = 0; slot < out_plan->champion_slot_count; ++slot) {
+        DM2_V1_HudChampionSlotRender *dst =
+            &out_plan->champion_slots[slot];
+        const DM2_V1_HudChampionState *src = NULL;
+        int py = dst->frame_rect.y;
+        int marker_w;
+
+        if (slot < party->champion_count &&
+            slot < DM2_V1_HUD_CHAMPION_SLOT_COUNT) {
+            src = &party->champions[slot];
+        }
+        if (!src || !src->occupied) {
+            continue;
+        }
+
+        dst->occupied = 1;
+        dst->leader = src->leader || slot == party->leader_index;
+        dst->hp_pct = dm2_v1_hud_clamp_pct((int)src->hp_pct);
+        dst->stamina_pct = dm2_v1_hud_clamp_pct((int)src->stamina_pct);
+        dst->mana_pct = dm2_v1_hud_clamp_pct((int)src->mana_pct);
+        dst->fill_color = dst->leader ? 9u : 8u;
+        dst->leader_mark_rect =
+            (DM2_V1_ViewportRect){ dst->frame_rect.x + 2, py + 3, 3, 3 };
+        dst->portrait_rect =
+            (DM2_V1_ViewportRect){ dst->frame_rect.x + 4, py + 4, 18, 18 };
+        marker_w = dm2_v1_hud_name_marker_width(src->name);
+        dst->name_marker_rect =
+            (DM2_V1_ViewportRect){ dst->frame_rect.x + 26, py + 4,
+                                   marker_w, marker_w > 0 ? 3 : 0 };
+        dst->hp_bar_rect =
+            (DM2_V1_ViewportRect){ dst->frame_rect.x + 26, py + 9, 34, 3 };
+        dst->stamina_bar_rect =
+            (DM2_V1_ViewportRect){ dst->frame_rect.x + 26, py + 14, 34, 3 };
+        dst->mana_bar_rect =
+            (DM2_V1_ViewportRect){ dst->frame_rect.x + 26, py + 19, 34, 3 };
+        dst->hp_fill_rect = dm2_v1_hud_bar_fill(&dst->hp_bar_rect,
+                                                dst->hp_pct);
+        dst->stamina_fill_rect = dm2_v1_hud_bar_fill(&dst->stamina_bar_rect,
+                                                     dst->stamina_pct);
+        dst->mana_fill_rect = dm2_v1_hud_bar_fill(&dst->mana_bar_rect,
+                                                  dst->mana_pct);
+    }
+    return 1;
+}
+
 /* ── Transparency color (ReDMCSB DEFS.H C10_COLOR_FLESH = 10)
  * Used as skip color in wall blits. ── */
 #define DM2_COLOR_TRANSPARENT  10
@@ -557,6 +649,31 @@ void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day)
 {
     if (!s) return;
     s->time_of_day = (time_of_day < 0) ? 0 : (time_of_day > 1 ? 1 : time_of_day);
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
+                                   const DM2_V1_HudPartyState *party)
+{
+    if (!s) {
+        return;
+    }
+    memset(&s->hud_party, 0, sizeof(s->hud_party));
+    s->hud_party_valid = 0;
+    if (party) {
+        s->hud_party = *party;
+        if (s->hud_party.champion_count < 0) {
+            s->hud_party.champion_count = 0;
+        }
+        if (s->hud_party.champion_count > DM2_V1_HUD_CHAMPION_SLOT_COUNT) {
+            s->hud_party.champion_count = DM2_V1_HUD_CHAMPION_SLOT_COUNT;
+        }
+        if (s->hud_party.leader_index < 0 ||
+            s->hud_party.leader_index >= s->hud_party.champion_count) {
+            s->hud_party.leader_index = 0;
+        }
+        s->hud_party_valid = 1;
+    }
     s->dirty = 1;
 }
 
@@ -2525,7 +2642,9 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      *
      * Phase 3: render basic UI chrome with placeholder fills.
      */
-    if (!dm2_v1_viewport_build_hud_chrome_plan(s->is_outdoor, &plan)) {
+    if (!dm2_v1_viewport_build_hud_chrome_plan_for_party(
+            s->is_outdoor, s->hud_party_valid ? &s->hud_party : NULL,
+            &plan)) {
         return;
     }
 
@@ -2557,6 +2676,40 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             dm2_v1_fill_rect(vp, stride,
                              &plan.champion_slots[slot].fill_rect,
                              plan.champion_slots[slot].fill_color);
+            if (plan.champion_slots[slot].occupied) {
+                dm2_v1_fill_rect(vp, stride,
+                                 &plan.champion_slots[slot].portrait_rect,
+                                 (uint8_t)(plan.champion_slots[slot].leader
+                                               ? DM2_COL_LTGRAY
+                                               : DM2_COL_GROUND));
+                dm2_v1_fill_rect(vp, stride,
+                                 &plan.champion_slots[slot].name_marker_rect,
+                                 DM2_COL_WHITE);
+                dm2_v1_fill_rect(vp, stride,
+                                 &plan.champion_slots[slot].hp_bar_rect,
+                                 DM2_COL_BLACK);
+                dm2_v1_fill_rect(vp, stride,
+                                 &plan.champion_slots[slot].hp_fill_rect,
+                                 2);
+                dm2_v1_fill_rect(vp, stride,
+                                 &plan.champion_slots[slot].stamina_bar_rect,
+                                 DM2_COL_BLACK);
+                dm2_v1_fill_rect(vp, stride,
+                                 &plan.champion_slots[slot].stamina_fill_rect,
+                                 11);
+                dm2_v1_fill_rect(vp, stride,
+                                 &plan.champion_slots[slot].mana_bar_rect,
+                                 DM2_COL_BLACK);
+                dm2_v1_fill_rect(vp, stride,
+                                 &plan.champion_slots[slot].mana_fill_rect,
+                                 12);
+                if (plan.champion_slots[slot].leader) {
+                    dm2_v1_fill_rect(
+                        vp, stride,
+                        &plan.champion_slots[slot].leader_mark_rect,
+                        DM2_COL_WHITE);
+                }
+            }
         }
     }
 }
