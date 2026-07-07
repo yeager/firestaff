@@ -373,6 +373,96 @@ int csb_v1_viewport_projectile_material_overlay_color(int material_icon_index)
     return 0x06 + (material_icon_index & 0x07);
 }
 
+static void csb_v1_viewport_plot_screen_overlay_pixel(
+    uint8_t *screen_pixels,
+    int screen_stride,
+    int screen_height,
+    int screen_x,
+    int screen_y,
+    uint8_t color)
+{
+    if (!screen_pixels || screen_stride <= 0 || screen_height <= 0) return;
+    if (screen_x < 0 || screen_x >= screen_stride ||
+        screen_y < 0 || screen_y >= screen_height) {
+        return;
+    }
+    screen_pixels[screen_y * screen_stride + screen_x] = color;
+}
+
+static int csb_v1_viewport_draw_screen_overlay_cross(
+    uint8_t *screen_pixels,
+    int screen_stride,
+    int screen_height,
+    int screen_x,
+    int screen_y,
+    uint8_t color,
+    int radius)
+{
+    int d;
+
+    if (!screen_pixels || screen_stride <= 0 || screen_height <= 0 ||
+        screen_x - radius < 0 || screen_x + radius >= screen_stride ||
+        screen_y - radius < 0 || screen_y + radius >= screen_height) {
+        return 0;
+    }
+    csb_v1_viewport_plot_screen_overlay_pixel(
+        screen_pixels, screen_stride, screen_height, screen_x, screen_y, color);
+    for (d = 1; d <= radius; ++d) {
+        csb_v1_viewport_plot_screen_overlay_pixel(
+            screen_pixels, screen_stride, screen_height,
+            screen_x - d, screen_y, color);
+        csb_v1_viewport_plot_screen_overlay_pixel(
+            screen_pixels, screen_stride, screen_height,
+            screen_x + d, screen_y, color);
+        csb_v1_viewport_plot_screen_overlay_pixel(
+            screen_pixels, screen_stride, screen_height,
+            screen_x, screen_y - d, color);
+        csb_v1_viewport_plot_screen_overlay_pixel(
+            screen_pixels, screen_stride, screen_height,
+            screen_x, screen_y + d, color);
+    }
+    return 1;
+}
+
+int csb_v1_viewport_draw_runtime_object_marker(
+    uint8_t *screen_pixels,
+    int screen_stride,
+    int screen_height,
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    int material_icon_index)
+{
+    uint8_t color;
+
+    if (!placement || !placement->visible) return 0;
+    color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
+        material_icon_index);
+    return csb_v1_viewport_draw_screen_overlay_cross(
+        screen_pixels,
+        screen_stride,
+        screen_height,
+        placement->marker_screen_x,
+        placement->marker_screen_y,
+        color,
+        1);
+}
+
+int csb_v1_viewport_draw_runtime_group_marker(
+    uint8_t *screen_pixels,
+    int screen_stride,
+    int screen_height,
+    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement)
+{
+    if (!placement || !placement->visible) return 0;
+    return csb_v1_viewport_draw_screen_overlay_cross(
+        screen_pixels,
+        screen_stride,
+        screen_height,
+        placement->marker_screen_x,
+        placement->marker_screen_y,
+        0x0Du,
+        2);
+}
+
 static int csb_v1_viewport_runtime_overlay_position(
     int party_dir,
     int party_x,

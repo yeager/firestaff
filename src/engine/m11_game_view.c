@@ -1318,49 +1318,18 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                         placement.icon_screen_y - 8,
                         0)) {
                     m11_csb_runtime_overlay_stats_add_object_icon(state);
-                } else if (placement.marker_screen_x >= 1 &&
-                           placement.marker_screen_x + 1 < framebuffer_width &&
-                           placement.marker_screen_y >= 1 &&
-                           placement.marker_screen_y + 1 < framebuffer_height) {
-                    unsigned char color =
-                        (unsigned char)csb_v1_viewport_projectile_material_overlay_color(icon);
-                    framebuffer[placement.marker_screen_y * framebuffer_width +
-                                placement.marker_screen_x] = color;
-                    framebuffer[placement.marker_screen_y * framebuffer_width +
-                                placement.marker_screen_x - 1] = color;
-                    framebuffer[placement.marker_screen_y * framebuffer_width +
-                                placement.marker_screen_x + 1] = color;
-                    framebuffer[(placement.marker_screen_y - 1) * framebuffer_width +
-                                placement.marker_screen_x] = color;
-                    framebuffer[(placement.marker_screen_y + 1) * framebuffer_width +
-                                placement.marker_screen_x] = color;
+                } else if (csb_v1_viewport_draw_runtime_object_marker(
+                               framebuffer,
+                               framebuffer_width,
+                               framebuffer_height,
+                               &placement,
+                               icon)) {
                     m11_csb_runtime_overlay_stats_add_object_marker(state);
                 }
             }
             thing = csb_v1_runtime_next_thing(dungeon, thing);
         }
     }
-}
-
-static void m11_csb_mark_runtime_group(unsigned char *framebuffer,
-                                       int framebuffer_width,
-                                       int framebuffer_height,
-                                       int x,
-                                       int y)
-{
-    static const unsigned char color = 0x0Du;
-
-    if (!framebuffer || x < 2 || x + 2 >= framebuffer_width ||
-        y < 2 || y + 2 >= framebuffer_height) {
-        return;
-    }
-    framebuffer[y * framebuffer_width + x] = color;
-    framebuffer[(y - 1) * framebuffer_width + x] = color;
-    framebuffer[(y + 1) * framebuffer_width + x] = color;
-    framebuffer[y * framebuffer_width + x - 1] = color;
-    framebuffer[y * framebuffer_width + x + 1] = color;
-    framebuffer[(y - 2) * framebuffer_width + x] = color;
-    framebuffer[(y + 2) * framebuffer_width + x] = color;
 }
 
 static void m11_draw_csb_runtime_group_overlays(
@@ -1442,12 +1411,13 @@ static void m11_draw_csb_runtime_group_overlays(
                                                     creature_dir)) {
                         m11_csb_runtime_overlay_stats_add_group_sprite(state);
                     } else {
-                        m11_csb_mark_runtime_group(framebuffer,
-                                                   framebuffer_width,
-                                                   framebuffer_height,
-                                                   placement.marker_screen_x,
-                                                   placement.marker_screen_y);
-                        m11_csb_runtime_overlay_stats_add_group_marker(state);
+                        if (csb_v1_viewport_draw_runtime_group_marker(
+                                framebuffer,
+                                framebuffer_width,
+                                framebuffer_height,
+                                &placement)) {
+                            m11_csb_runtime_overlay_stats_add_group_marker(state);
+                        }
                     }
                 }
                 break;

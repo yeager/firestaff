@@ -2499,6 +2499,25 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_place.icon_screen_x, 80);
     check_int("csb.runtime_object_overlay.d1c.pile0.icon_y",
               object_place.icon_screen_y, 129);
+    {
+        uint8_t screen[320 * 200];
+        memset(screen, 0, sizeof(screen));
+        check_int("csb.runtime_object_overlay.marker.draw",
+                  csb_v1_viewport_draw_runtime_object_marker(
+                      screen, 320, 200, &object_place, 3), 1);
+        check_int("csb.runtime_object_overlay.marker.center",
+                  screen[object_place.marker_screen_y * 320 +
+                         object_place.marker_screen_x], 0x09);
+        check_int("csb.runtime_object_overlay.marker.left",
+                  screen[object_place.marker_screen_y * 320 +
+                         object_place.marker_screen_x - 1], 0x09);
+        check_int("csb.runtime_object_overlay.marker.up",
+                  screen[(object_place.marker_screen_y - 1) * 320 +
+                         object_place.marker_screen_x], 0x09);
+        check_int("csb.runtime_object_overlay.marker.bad_height",
+                  csb_v1_viewport_draw_runtime_object_marker(
+                      screen, 320, 0, &object_place, 3), 0);
+    }
 
     memset(&object_place, 0, sizeof(object_place));
     check_true("csb.runtime_object_overlay.d2c.pile1.visible",
@@ -2569,6 +2588,25 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.marker_screen_x, 112);
     check_int("csb.runtime_group_overlay.d1c.marker_y",
               group_place.marker_screen_y, 144);
+    {
+        uint8_t screen[320 * 200];
+        memset(screen, 0, sizeof(screen));
+        check_int("csb.runtime_group_overlay.marker.draw",
+                  csb_v1_viewport_draw_runtime_group_marker(
+                      screen, 320, 200, &group_place), 1);
+        check_int("csb.runtime_group_overlay.marker.center",
+                  screen[group_place.marker_screen_y * 320 +
+                         group_place.marker_screen_x], 0x0D);
+        check_int("csb.runtime_group_overlay.marker.down2",
+                  screen[(group_place.marker_screen_y + 2) * 320 +
+                         group_place.marker_screen_x], 0x0D);
+        check_int("csb.runtime_group_overlay.marker.left2",
+                  screen[group_place.marker_screen_y * 320 +
+                         group_place.marker_screen_x - 2], 0x0D);
+        check_int("csb.runtime_group_overlay.marker.bad_height",
+                  csb_v1_viewport_draw_runtime_group_marker(
+                      screen, 320, 0, &group_place), 0);
+    }
 
     memset(&group_place, 0, sizeof(group_place));
     check_true("csb.runtime_group_overlay.d1c.cell2.visible",
