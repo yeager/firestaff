@@ -408,6 +408,13 @@ typedef struct {
 } CSB_V1_RuntimeGroupOverlayInfo;
 
 typedef struct {
+    int thing_type;
+    int relative_cell;
+    int icon_index;
+    int subtype_index;
+} CSB_V1_RuntimeObjectOverlayInfo;
+
+typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
     int old_party_y;
@@ -769,6 +776,11 @@ uint16_t csb_v1_runtime_next_thing(
     uint16_t thing);
 
 int csb_v1_runtime_thing_type_is_floor_object(int thing_type);
+
+int csb_v1_runtime_object_overlay_info(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t object_thing,
+    CSB_V1_RuntimeObjectOverlayInfo *out_info);
 
 int csb_v1_runtime_group_record_creature_type(
     const uint8_t *record,

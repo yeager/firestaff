@@ -260,6 +260,37 @@ int main(void)
               "CSB runtime classifies weapons as floor objects for overlays");
         check(!csb_v1_runtime_thing_type_is_floor_object(THING_TYPE_GROUP),
               "CSB runtime keeps GROUP records out of floor-object overlays");
+        {
+            CSB_V1_RuntimeObjectOverlayInfo object_info;
+            check(csb_v1_runtime_object_overlay_info(&profile.runtime,
+                                                     dagger,
+                                                     &object_info) == 1,
+                  "CSB runtime builds object overlay info from object things");
+            check(object_info.thing_type == THING_TYPE_WEAPON,
+                  "CSB runtime object overlay info carries thing type");
+            check(object_info.relative_cell == 3,
+                  "CSB runtime object overlay info carries party-relative cell");
+            check(object_info.subtype_index == 8,
+                  "CSB runtime object overlay info carries object subtype");
+            check(object_info.icon_index >= 0,
+                  "CSB runtime object overlay info carries icon index");
+            check(csb_v1_runtime_object_overlay_info(&profile.runtime,
+                                                     ven_potion,
+                                                     &object_info) == 1 &&
+                  object_info.thing_type == THING_TYPE_POTION &&
+                  object_info.subtype_index == 3,
+                  "CSB runtime object overlay info decodes potion subtypes");
+            check(csb_v1_runtime_object_overlay_info(&profile.runtime,
+                                                     chest,
+                                                     &object_info) == 1 &&
+                  object_info.thing_type == THING_TYPE_CONTAINER &&
+                  object_info.subtype_index == 0,
+                  "CSB runtime object overlay info decodes container Type");
+            check(csb_v1_runtime_object_overlay_info(&profile.runtime,
+                                                     (unsigned short)((THING_TYPE_GROUP << 10) | 0),
+                                                     &object_info) == 0,
+                  "CSB runtime rejects non-object overlay info requests");
+        }
         check(csb_v1_runtime_group_record_creature_type(raw + 96, 16) == 6,
               "CSB runtime decodes GROUP creature type for overlay sprite routing");
         check(csb_v1_runtime_group_record_creature_type(raw + 96, 4) == -1,
