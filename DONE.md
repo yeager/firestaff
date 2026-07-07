@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron flow state receipt ownership: `theron_v1_startup_flow` now converts flow apply receipts into state receipts for flow snapshot, startup cursor, and Continue focus. M11 applies the Theron-owned receipt instead of copying those fields locally. Verification: startup-flow probe passed 417/417, save-resume probe passed 66/66, M11 launcher handoff passed 26/26, Phase A passed 24/24, Theron boot-probe passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Nexus full startup graphics step: `nexus_v1_startup_menu` now owns save/champion startup draw-command presentation, starting from loaded `TITLE.CG` art and routing `FACE.BIN` portrait commands through an M11 framebuffer executor. M11 no longer hand-draws Nexus save/champion startup rows. Verification: `test_nexus_v1_startup_menu_pc34_compat`, `test_m11_nexus_startup_gate`, Phase A, and Nexus boot-probe passed.
 
 - ✅ 2026-07-07 CSB utility runtime-facts ownership: `csb_v1_utility_flow_pc34` now builds startup utility contexts directly from runtime facts, including selected action, imported count, and optional imported party preview. M11 no longer assembles `CSB_V1_UtilRuntimeSnapshot` before drawing/routing the startup utility panel. Verification: `test_csb_v1_utility_flow_action_contract` passed 45/45, `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 116/116, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.

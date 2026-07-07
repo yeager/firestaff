@@ -12270,6 +12270,7 @@ static M11_GameInputResult m11_theron_startup_apply_action(
     case THERON_STARTUP_PLAN_TOGGLE_MIRROR: {
         Theron_StartupFlow flow;
         Theron_StartupApplyReceipt applyReceipt;
+        Theron_StartupStateReceipt stateReceipt;
         char receipt[96];
 
         receipt[0] = '\0';
@@ -12303,15 +12304,11 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                       : "STARTUP ERROR"));
             return M11_GAME_INPUT_REDRAW;
         }
-        if (applyReceipt.flow_changed) {
-            m11_theron_sync_startup_state(state, &flow);
-        }
-        if (applyReceipt.cursor_changed) {
-            state->theronState.startup_cursor = applyReceipt.cursor;
-        }
-        if (applyReceipt.continue_focus_changed) {
-            state->theronState.save_resume_continue_focus =
-                applyReceipt.continue_focus;
+        if (theron_v1_startup_state_receipt_from_flow_apply(
+                &flow,
+                &applyReceipt,
+                &stateReceipt)) {
+            m11_theron_apply_startup_state_receipt(state, &stateReceipt);
         }
         if (applyReceipt.status_scope || applyReceipt.status) {
             m11_set_status(state,
