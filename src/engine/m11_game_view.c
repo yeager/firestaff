@@ -3276,28 +3276,6 @@ static void m11_csb_startup_command_state_to_m11(
         command_state->pending_command;
 }
 
-static void m11_csb_startup_begin_door_opening(
-    M11_GameViewState *state,
-    const CSB_V1_StartupEntranceCommandPlan_PC34 *plan)
-{
-    CSB_V1_StartupCommandState_PC34 command_state;
-    int commandId;
-    if (!state) {
-        return;
-    }
-    commandId = plan ? plan->command_id
-                     : CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
-    m11_csb_startup_command_state_from_m11(state, &command_state);
-    (void)csb_v1_startup_begin_door_opening_pc34(
-        &command_state,
-        commandId);
-    m11_csb_startup_command_state_to_m11(state, &command_state);
-    state->csbState.startup_import_preview_active = 0;
-    m11_set_status(state,
-                   plan && plan->status_scope ? plan->status_scope : "BOOT",
-                   plan && plan->status ? plan->status : "CSB DOORS");
-}
-
 static void m11_csb_startup_finish_door_opening(M11_GameViewState *state)
 {
     CSB_V1_StartupCommandState_PC34 command_state;
@@ -3315,6 +3293,7 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
 {
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 plan;
+    CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
     CSB_V1_StartupEntranceApplyResult_PC34 apply_result;
     int resume_available = 0;
@@ -3355,67 +3334,73 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     }
 
     state->csbState.startup_entrance_last_command = commandId;
-    switch (plan.kind) {
-        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34:
-            state->csbState.startup_entrance_bonus_requested = 0;
-            if (state->csbBootProfile) {
-                CSB_V1_BootProfile *profile =
-                    (CSB_V1_BootProfile *)state->csbBootProfile;
-                csb_v1_runtime_set_load_bonus_dungeon(&profile->runtime, 0);
-            }
-            m11_csb_startup_begin_door_opening(state, &plan);
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34:
-            state->csbState.startup_entrance_bonus_requested = 1;
-            if (state->csbBootProfile) {
-                CSB_V1_BootProfile *profile =
-                    (CSB_V1_BootProfile *)state->csbBootProfile;
-                csb_v1_runtime_set_load_bonus_dungeon(&profile->runtime, 1);
-                (void)csb_v1_runtime_try_load_bonus_dungeon(&profile->runtime);
+    if (!csb_v1_startup_runtime_plan_for_entrance_plan_pc34(
+            &plan,
+            &runtime_plan)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (runtime_plan.set_bonus_dungeon) {
+        state->csbState.startup_entrance_bonus_requested =
+            runtime_plan.bonus_dungeon ? 1 : 0;
+        if (state->csbBootProfile) {
+            CSB_V1_BootProfile *profile =
+                (CSB_V1_BootProfile *)state->csbBootProfile;
+            csb_v1_runtime_set_load_bonus_dungeon(
+                &profile->runtime,
+                runtime_plan.bonus_dungeon ? 1 : 0);
+            if (runtime_plan.bonus_dungeon) {
+                (void)csb_v1_runtime_try_load_bonus_dungeon(
+                    &profile->runtime);
                 m11_sync_csb_state_from_profile(state, profile);
             }
-            m11_csb_startup_begin_door_opening(state, &plan);
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34:
-            resume_available =
-                state->csbState.startup_entrance_resume_available &&
-                state->csbState.startup_entrance_resume_path[0] != '\0' &&
-                state->csbBootProfile;
-            if (resume_available) {
-                CSB_V1_BootProfile *profile =
-                    (CSB_V1_BootProfile *)state->csbBootProfile;
-                /* ReDMCSB COMMAND.C M566 enters the saved-game load path from
-                 * the entrance.  Use M12's already validated CSB resume path
-                 * instead of probing a DM1-style fallback filename. */
-                if (csb_v1_runtime_load_game_from_path(
-                        &profile->runtime,
-                        state->csbState.startup_entrance_resume_path) ==
-                    CSB_V1_LOAD_OK) {
-                    resume_loaded = 1;
-                    m11_sync_csb_state_from_profile(state, profile);
-                    m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
-                    m11_csb_startup_begin_door_opening(state, &plan);
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                (void)csb_v1_startup_entrance_input_outcome_pc34(
-                    &plan,
-                    resume_available,
-                    resume_loaded,
-                    &outcome);
-                m11_set_status(state, outcome.status_scope, outcome.status);
-                return M11_GAME_INPUT_REDRAW;
+        }
+    }
+
+    if (runtime_plan.requires_resume_load) {
+        resume_available =
+            state->csbState.startup_entrance_resume_available &&
+            state->csbState.startup_entrance_resume_path[0] != '\0' &&
+            state->csbBootProfile;
+        if (resume_available) {
+            CSB_V1_BootProfile *profile =
+                (CSB_V1_BootProfile *)state->csbBootProfile;
+            /* ReDMCSB COMMAND.C M566 enters the saved-game load path from
+             * the entrance.  Use M12's already validated CSB resume path
+             * instead of probing a DM1-style fallback filename. */
+            if (csb_v1_runtime_load_game_from_path(
+                    &profile->runtime,
+                    state->csbState.startup_entrance_resume_path) ==
+                CSB_V1_LOAD_OK) {
+                resume_loaded = 1;
+                m11_sync_csb_state_from_profile(state, profile);
+                m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
             }
-            (void)csb_v1_startup_entrance_input_outcome_pc34(
-                &plan,
-                resume_available,
-                resume_loaded,
-                &outcome);
-            m11_set_status(state, outcome.status_scope, outcome.status);
+        }
+    }
+
+    m11_csb_startup_command_state_from_m11(state, &command_state);
+    (void)csb_v1_startup_apply_runtime_plan_pc34(
+        &command_state,
+        &runtime_plan,
+        resume_available,
+        resume_loaded,
+        &outcome);
+    m11_csb_startup_command_state_to_m11(state, &command_state);
+    state->csbState.startup_import_preview_active = 0;
+    if (outcome.status) {
+        m11_set_status(state, outcome.status_scope, outcome.status);
+    }
+    switch (runtime_plan.kind) {
+        case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_DUNGEON_PC34:
+            state->csbState.startup_entrance_bonus_requested = 0;
             return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34:
-        case CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34:
-        case CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34:
-        case CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34:
+        case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34:
+            state->csbState.startup_entrance_bonus_requested = 1;
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34:
+            return M11_GAME_INPUT_REDRAW;
+        case CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34:
         default:
             return M11_GAME_INPUT_IGNORED;
     }

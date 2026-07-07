@@ -90,6 +90,26 @@ typedef struct CSB_V1_StartupEntranceInputOutcome_PC34 {
     const char *status;
 } CSB_V1_StartupEntranceInputOutcome_PC34;
 
+typedef enum CSB_V1_StartupRuntimePlanKind_PC34 {
+    CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34 = 0,
+    CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_DUNGEON_PC34 = 1,
+    CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34 = 2,
+    CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34 = 3
+} CSB_V1_StartupRuntimePlanKind_PC34;
+
+typedef struct CSB_V1_StartupRuntimePlan_PC34 {
+    CSB_V1_StartupRuntimePlanKind_PC34 kind;
+    int command_id;
+    int set_bonus_dungeon;
+    int bonus_dungeon;
+    int requires_resume_load;
+    int begin_door_opening;
+    const char *status_scope;
+    const char *status;
+    const char *failure_status;
+    const char *unavailable_status;
+} CSB_V1_StartupRuntimePlan_PC34;
+
 typedef struct CSB_V1_StartupTickState_PC34 {
     int entrance_frame;
     int title_active;
@@ -480,6 +500,17 @@ CSB_V1_StartupEntranceApplyResult_PC34
 csb_v1_startup_apply_pure_entrance_plan_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome);
+void csb_v1_startup_runtime_plan_init_pc34(
+    CSB_V1_StartupRuntimePlan_PC34 *runtime_plan);
+int csb_v1_startup_runtime_plan_for_entrance_plan_pc34(
+    const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
+    CSB_V1_StartupRuntimePlan_PC34 *out_runtime_plan);
+int csb_v1_startup_apply_runtime_plan_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    const CSB_V1_StartupRuntimePlan_PC34 *runtime_plan,
+    int resume_available,
+    int resume_loaded,
     CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome);
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,

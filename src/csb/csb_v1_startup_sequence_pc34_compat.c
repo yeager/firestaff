@@ -1867,6 +1867,130 @@ csb_v1_startup_apply_pure_entrance_plan_pc34(
     }
 }
 
+void csb_v1_startup_runtime_plan_init_pc34(
+    CSB_V1_StartupRuntimePlan_PC34 *runtime_plan)
+{
+    if (!runtime_plan) {
+        return;
+    }
+    memset(runtime_plan, 0, sizeof(*runtime_plan));
+    runtime_plan->kind = CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34;
+    runtime_plan->command_id = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+}
+
+int csb_v1_startup_runtime_plan_for_entrance_plan_pc34(
+    const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
+    CSB_V1_StartupRuntimePlan_PC34 *out_runtime_plan)
+{
+    if (!out_runtime_plan) {
+        return 0;
+    }
+    csb_v1_startup_runtime_plan_init_pc34(out_runtime_plan);
+    if (!plan) {
+        return 0;
+    }
+    out_runtime_plan->command_id = plan->command_id;
+    out_runtime_plan->status_scope = plan->status_scope;
+    out_runtime_plan->status = plan->status;
+    out_runtime_plan->failure_status = plan->failure_status;
+    out_runtime_plan->unavailable_status = plan->unavailable_status;
+
+    switch (plan->kind) {
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34:
+            out_runtime_plan->kind =
+                CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_DUNGEON_PC34;
+            out_runtime_plan->set_bonus_dungeon = 1;
+            out_runtime_plan->bonus_dungeon = 0;
+            out_runtime_plan->begin_door_opening = 1;
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34:
+            out_runtime_plan->kind =
+                CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34;
+            out_runtime_plan->set_bonus_dungeon = 1;
+            out_runtime_plan->bonus_dungeon = 1;
+            out_runtime_plan->begin_door_opening = 1;
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34:
+            out_runtime_plan->kind = CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34;
+            out_runtime_plan->requires_resume_load = 1;
+            out_runtime_plan->begin_door_opening = 1;
+            return 1;
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_DISMISS_CREDITS_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_BEGIN_CREDITS_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_QUIT_PC34:
+        case CSB_V1_STARTUP_ENTRANCE_PLAN_IGNORE_PC34:
+        default:
+            return 0;
+    }
+}
+
+int csb_v1_startup_apply_runtime_plan_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    const CSB_V1_StartupRuntimePlan_PC34 *runtime_plan,
+    int resume_available,
+    int resume_loaded,
+    CSB_V1_StartupEntranceInputOutcome_PC34 *out_outcome)
+{
+    CSB_V1_StartupEntranceCommandPlan_PC34 outcome_plan;
+
+    if (out_outcome) {
+        memset(out_outcome, 0, sizeof(*out_outcome));
+        out_outcome->result = CSB_V1_STARTUP_ENTRANCE_INPUT_IGNORE_PC34;
+    }
+    if (!state || !runtime_plan) {
+        return 0;
+    }
+    if (runtime_plan->kind == CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34) {
+        return 0;
+    }
+
+    csb_v1_startup_entrance_command_plan_init_pc34(&outcome_plan);
+    outcome_plan.command_id = runtime_plan->command_id;
+    outcome_plan.status_scope = runtime_plan->status_scope;
+    outcome_plan.status = runtime_plan->status;
+    outcome_plan.failure_status = runtime_plan->failure_status;
+    outcome_plan.unavailable_status = runtime_plan->unavailable_status;
+
+    switch (runtime_plan->kind) {
+        case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_DUNGEON_PC34:
+            outcome_plan.kind =
+                CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_DUNGEON_PC34;
+            break;
+        case CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34:
+            outcome_plan.kind =
+                CSB_V1_STARTUP_ENTRANCE_PLAN_ENTER_BONUS_DUNGEON_PC34;
+            break;
+        case CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34:
+            outcome_plan.kind = CSB_V1_STARTUP_ENTRANCE_PLAN_RESUME_PC34;
+            if (!resume_available || !resume_loaded) {
+                (void)csb_v1_startup_entrance_input_outcome_pc34(
+                    &outcome_plan,
+                    resume_available,
+                    resume_loaded,
+                    out_outcome);
+                return 1;
+            }
+            break;
+        case CSB_V1_STARTUP_RUNTIME_PLAN_NONE_PC34:
+        default:
+            return 0;
+    }
+
+    if (runtime_plan->begin_door_opening) {
+        (void)csb_v1_startup_begin_door_opening_pc34(
+            state,
+            runtime_plan->command_id);
+    }
+    (void)csb_v1_startup_entrance_input_outcome_pc34(
+        &outcome_plan,
+        resume_available,
+        runtime_plan->kind == CSB_V1_STARTUP_RUNTIME_PLAN_RESUME_PC34
+            ? resume_loaded
+            : 0,
+        out_outcome);
+    return 1;
+}
+
 int csb_v1_startup_begin_door_opening_pc34(
     CSB_V1_StartupCommandState_PC34 *state,
     int pending_command)
