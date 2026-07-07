@@ -3290,11 +3290,11 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 plan;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
+    CSB_V1_RuntimeStartupRuntimePlan_PC34 runtime_exec_plan;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_exec_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
     CSB_V1_StartupEntranceApplyResult_PC34 apply_result;
-    int resume_available = 0;
-    int resume_loaded = 0;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbState.startup_entrance_active) {
@@ -3337,42 +3337,28 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    if (runtime_plan.set_bonus_dungeon) {
-        state->csbState.startup_entrance_bonus_requested =
-            runtime_plan.bonus_dungeon ? 1 : 0;
-        if (state->csbBootProfile) {
-            CSB_V1_BootProfile *profile =
-                (CSB_V1_BootProfile *)state->csbBootProfile;
-            csb_v1_runtime_set_load_bonus_dungeon(
-                &profile->runtime,
-                runtime_plan.bonus_dungeon ? 1 : 0);
-            if (runtime_plan.bonus_dungeon) {
-                (void)csb_v1_runtime_try_load_bonus_dungeon(
-                    &profile->runtime);
-                m11_sync_csb_state_from_profile(state, profile);
-            }
-        }
+    memset(&runtime_exec_plan, 0, sizeof(runtime_exec_plan));
+    runtime_exec_plan.kind =
+        (CSB_V1_RuntimeStartupRuntimePlanKind_PC34)runtime_plan.kind;
+    runtime_exec_plan.set_bonus_dungeon = runtime_plan.set_bonus_dungeon;
+    runtime_exec_plan.bonus_dungeon = runtime_plan.bonus_dungeon;
+    runtime_exec_plan.requires_resume_load = runtime_plan.requires_resume_load;
+    if (!state->csbBootProfile ||
+        !csb_v1_runtime_apply_startup_runtime_plan_pc34(
+            &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime,
+            &runtime_exec_plan,
+            state->csbState.startup_entrance_resume_available
+                ? state->csbState.startup_entrance_resume_path
+                : NULL,
+            &runtime_exec_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
     }
-
-    if (runtime_plan.requires_resume_load) {
-        resume_available =
-            state->csbState.startup_entrance_resume_available &&
-            state->csbState.startup_entrance_resume_path[0] != '\0' &&
-            state->csbBootProfile;
-        if (resume_available) {
-            CSB_V1_BootProfile *profile =
-                (CSB_V1_BootProfile *)state->csbBootProfile;
-            /* ReDMCSB COMMAND.C M566 enters the saved-game load path from
-             * the entrance.  Use M12's already validated CSB resume path
-             * instead of probing a DM1-style fallback filename. */
-            if (csb_v1_runtime_load_game_from_path(
-                    &profile->runtime,
-                    state->csbState.startup_entrance_resume_path) ==
-                CSB_V1_LOAD_OK) {
-                resume_loaded = 1;
-                m11_sync_csb_state_from_profile(state, profile);
-                m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
-            }
+    if (runtime_exec_receipt.sync_profile_state) {
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile *)state->csbBootProfile;
+        m11_sync_csb_state_from_profile(state, profile);
+        if (runtime_exec_receipt.sync_leader_hand) {
+            m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         }
     }
 
@@ -3380,8 +3366,8 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
     if (!csb_v1_startup_apply_runtime_plan_with_receipt_pc34(
         &command_state,
         &runtime_plan,
-        resume_available,
-        resume_loaded,
+        runtime_exec_receipt.resume_available,
+        runtime_exec_receipt.resume_loaded,
         &outcome,
         &runtime_receipt)) {
         return M11_GAME_INPUT_IGNORED;

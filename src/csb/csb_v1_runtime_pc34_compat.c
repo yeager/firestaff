@@ -1465,6 +1465,60 @@ int csb_v1_runtime_apply_startup_handoff_pc34(
     return 1;
 }
 
+void csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+}
+
+int csb_v1_runtime_apply_startup_runtime_plan_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeStartupRuntimePlan_PC34 *runtime_plan,
+    const char *resume_path,
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(out_receipt);
+    if (!profile || !runtime_plan ||
+        runtime_plan->kind == CSB_V1_RUNTIME_STARTUP_PLAN_NONE_PC34) {
+        return 0;
+    }
+
+    if (runtime_plan->set_bonus_dungeon) {
+        (void)csb_v1_runtime_set_load_bonus_dungeon(
+            profile,
+            runtime_plan->bonus_dungeon ? 1 : 0);
+        out_receipt->bonus_requested_changed = 1;
+        out_receipt->bonus_requested =
+            runtime_plan->bonus_dungeon ? 1 : 0;
+        if (runtime_plan->bonus_dungeon) {
+            out_receipt->bonus_dungeon_loaded =
+                csb_v1_runtime_try_load_bonus_dungeon(profile) ? 1 : 0;
+            if (out_receipt->bonus_dungeon_loaded) {
+                out_receipt->sync_profile_state = 1;
+            }
+        }
+    }
+
+    if (runtime_plan->requires_resume_load) {
+        out_receipt->resume_available =
+            (resume_path && resume_path[0] != '\0') ? 1 : 0;
+        if (out_receipt->resume_available &&
+            csb_v1_runtime_load_game_from_path(profile, resume_path) ==
+                CSB_V1_LOAD_OK) {
+            out_receipt->resume_loaded = 1;
+            out_receipt->sync_profile_state = 1;
+            out_receipt->sync_leader_hand = 1;
+        }
+    }
+    return 1;
+}
+
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
 

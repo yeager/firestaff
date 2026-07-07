@@ -45,6 +45,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
 #include "asset_find_by_hash.h"
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
@@ -969,6 +970,27 @@ typedef struct {
     const char *status_scope;
     const char *status;
 } CSB_V1_RuntimeStartupHandoffReceipt_PC34;
+typedef enum {
+    CSB_V1_RUNTIME_STARTUP_PLAN_NONE_PC34 = 0,
+    CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_DUNGEON_PC34 = 1,
+    CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_BONUS_DUNGEON_PC34 = 2,
+    CSB_V1_RUNTIME_STARTUP_PLAN_RESUME_PC34 = 3
+} CSB_V1_RuntimeStartupRuntimePlanKind_PC34;
+typedef struct {
+    CSB_V1_RuntimeStartupRuntimePlanKind_PC34 kind;
+    int set_bonus_dungeon;
+    int bonus_dungeon;
+    int requires_resume_load;
+} CSB_V1_RuntimeStartupRuntimePlan_PC34;
+typedef struct {
+    int resume_available;
+    int resume_loaded;
+    int bonus_requested_changed;
+    int bonus_requested;
+    int bonus_dungeon_loaded;
+    int sync_profile_state;
+    int sync_leader_hand;
+} CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34;
 void csb_v1_runtime_startup_handoff_receipt_init_pc34(
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 *receipt);
 int csb_v1_runtime_apply_startup_handoff_pc34(
@@ -976,6 +998,13 @@ int csb_v1_runtime_apply_startup_handoff_pc34(
     const char *save_path,
     const char *import_dm1_save_path,
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 *out_receipt);
+void csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *receipt);
+int csb_v1_runtime_apply_startup_runtime_plan_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeStartupRuntimePlan_PC34 *runtime_plan,
+    const char *resume_path,
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);
