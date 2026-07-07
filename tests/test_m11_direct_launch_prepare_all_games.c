@@ -60,14 +60,15 @@ typedef struct {
     const char* gameId;
     int slot;
     M11_GameSourceKind sourceKind;
+    const char* startupAnimation;
 } DirectLaunchCase;
 
 static const DirectLaunchCase kCases[] = {
-    {"dm1", 0, M11_GAME_SOURCE_BUILTIN_CATALOG},
-    {"csb", 1, M11_GAME_SOURCE_CSB_BOOT},
-    {"dm2", 2, M11_GAME_SOURCE_DM2_BOOT},
-    {"nexus", 3, M11_GAME_SOURCE_NEXUS_DGN},
-    {"theron", 4, M11_GAME_SOURCE_THERON_TRACK02},
+    {"dm1", 0, M11_GAME_SOURCE_BUILTIN_CATALOG, "dm1-title"},
+    {"csb", 1, M11_GAME_SOURCE_CSB_BOOT, "csb-title"},
+    {"dm2", 2, M11_GAME_SOURCE_DM2_BOOT, "dm2-startup-menu"},
+    {"nexus", 3, M11_GAME_SOURCE_NEXUS_DGN, "nexus-title"},
+    {"theron", 4, M11_GAME_SOURCE_THERON_TRACK02, "theron-title"},
 };
 
 static int g_failures = 0;
@@ -317,6 +318,26 @@ static void run_real_data_handoff_if_available(void) {
                     "direct launch boot receipt proves selected-entry launcher handoff");
         expect_true(receipt.startupPhase[0] != '\0',
                     "direct launch boot receipt names startup/runtime phase");
+        expect_true(strcmp(receipt.startupAnimation,
+                           kCases[i].startupAnimation) == 0,
+                    "direct launch boot receipt names per-game startup/title animation");
+        expect_true(receipt.startupTitleReady == 0 ||
+                        receipt.startupTitleReady == 1,
+                    "direct launch boot receipt exports title readiness as a boolean");
+        if (strcmp(kCases[i].gameId, "dm1") == 0) {
+            expect_true(receipt.startupTitleFrame == receipt.startupTitleFrameMax &&
+                            receipt.startupTitleFrameMax == 53,
+                        "DM1 receipt exposes the source TITLE frame-bank completion boundary");
+        } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
+            expect_true(receipt.startupAnimationActive == 1 &&
+                            receipt.startupTitleFrame == 0 &&
+                            receipt.startupTitleFrameMax == 54 &&
+                            receipt.startupTitleReady == 0,
+                        "Nexus receipt exposes active title reveal frame and ready boundary");
+        } else {
+            expect_true(receipt.startupAnimationActive == 1,
+                        "direct launch boot receipt marks non-DM1 startup surface active");
+        }
         if (strcmp(kCases[i].gameId, "dm1") == 0) {
             expect_true(strcmp(receipt.startupPhase, "dm1-runtime") == 0,
                         "direct launch boot receipt names DM1 runtime phase");

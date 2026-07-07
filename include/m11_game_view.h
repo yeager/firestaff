@@ -168,6 +168,7 @@ typedef struct {
 enum {
     M11_BOOT_RECEIPT_SOURCE_ID_CAPACITY = 32,
     M11_BOOT_RECEIPT_PHASE_CAPACITY = 48,
+    M11_BOOT_RECEIPT_ANIMATION_CAPACITY = 48,
     M11_BOOT_RECEIPT_MD5_CAPACITY = 33
 };
 
@@ -181,6 +182,11 @@ typedef struct {
     int startupActive;
     char startupPhase[M11_BOOT_RECEIPT_PHASE_CAPACITY];
     int startupFrame;
+    char startupAnimation[M11_BOOT_RECEIPT_ANIMATION_CAPACITY];
+    int startupAnimationActive;
+    int startupTitleFrame;
+    int startupTitleFrameMax;
+    int startupTitleReady;
     int levelLoaded;
     int mapIndex;
     int partyX;

@@ -11578,6 +11578,13 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     }
     memset(out, 0, sizeof(*out));
     snprintf(out->startupPhase, sizeof(out->startupPhase), "%s", "inactive");
+    snprintf(out->startupAnimation,
+             sizeof(out->startupAnimation),
+             "%s",
+             "none");
+    out->startupTitleFrame = -1;
+    out->startupTitleFrameMax = -1;
+    out->startupTitleReady = 1;
     out->mapIndex = -1;
     out->partyX = -1;
     out->partyY = -1;
@@ -11616,6 +11623,35 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
             &out->startupFrame);
+        if (state->csbState.startup_title_active) {
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation),
+                     "%s",
+                     "csb-title");
+            out->startupAnimationActive = 1;
+            out->startupTitleFrame = state->csbState.startup_title_frame;
+            out->startupTitleReady = 0;
+        } else if (state->csbState.startup_entrance_opening_active) {
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation),
+                     "%s",
+                     "csb-entrance-opening");
+            out->startupAnimationActive = 1;
+            out->startupTitleReady = 1;
+        } else if (state->csbState.startup_entrance_active) {
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation),
+                     "%s",
+                     "csb-entrance");
+            out->startupAnimationActive = 0;
+            out->startupTitleReady = 1;
+        } else {
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation),
+                     "%s",
+                     "csb-runtime");
+            out->startupTitleReady = 1;
+        }
         return 1;
     }
 
@@ -11632,6 +11668,18 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive);
+        snprintf(out->startupAnimation,
+                 sizeof(out->startupAnimation),
+                 "%s",
+                 state->dm2State.startup_menu_active
+                     ? "dm2-startup-menu"
+                     : "dm2-runtime");
+        out->startupAnimationActive =
+            state->dm2State.startup_menu_active ? 1 : 0;
+        out->startupTitleFrame = 0;
+        out->startupTitleFrameMax = 0;
+        out->startupTitleReady =
+            state->dm2State.startup_menu_active ? 0 : 1;
         return 1;
     }
 
@@ -11656,6 +11704,23 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             (int)sizeof(out->startupPhase),
             &out->startupActive,
             &out->startupFrame);
+        snprintf(out->startupAnimation,
+                 sizeof(out->startupAnimation),
+                 "%s",
+                 state->nexusState.title_active
+                     ? "nexus-title"
+                     : (state->nexusState.champion_select_active
+                            ? "nexus-champion-select"
+                            : "nexus-runtime"));
+        out->startupAnimationActive =
+            state->nexusState.title_active ? 1 : 0;
+        out->startupTitleFrame = state->nexusState.title_active
+            ? state->nexusState.title_frame
+            : -1;
+        out->startupTitleFrameMax = nexus_v1_title_start_ready_frames();
+        out->startupTitleReady =
+            !state->nexusState.title_active ||
+            state->nexusState.title_frame >= nexus_v1_title_start_ready_frames();
         return 1;
     }
 
@@ -11676,6 +11741,25 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->startupPhase,
             (int)sizeof(out->startupPhase),
             &out->startupActive);
+        snprintf(out->startupAnimation,
+                 sizeof(out->startupAnimation),
+                 "%s",
+                 state->theronState.startup_phase ==
+                         THERON_STARTUP_PHASE_TITLE
+                     ? "theron-title"
+                     : (state->theronState.startup_phase ==
+                                THERON_STARTUP_PHASE_IN_DUNGEON
+                            ? "theron-runtime"
+                            : "theron-startup"));
+        out->startupAnimationActive =
+            state->theronState.startup_phase !=
+                    THERON_STARTUP_PHASE_IN_DUNGEON
+                ? 1
+                : 0;
+        out->startupTitleFrame = 0;
+        out->startupTitleFrameMax = 0;
+        out->startupTitleReady =
+            state->theronState.startup_phase != THERON_STARTUP_PHASE_TITLE;
         return 1;
     }
 
@@ -11692,9 +11776,25 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->dm1StartupIntroBypassed,
             out->startupPhase,
             (int)sizeof(out->startupPhase));
+        snprintf(out->startupAnimation,
+                 sizeof(out->startupAnimation),
+                 "%s",
+                 out->dm1StartupIntroBypassed
+                     ? "dm1-title-bypassed"
+                     : "dm1-title");
+        out->startupAnimationActive = 0;
+        out->startupTitleFrame = V1_TITLE_DAT_FRAME_MAX;
+        out->startupTitleFrameMax = V1_TITLE_DAT_FRAME_MAX;
+        out->startupTitleReady = 1;
     } else {
         snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
                  out->levelLoaded ? "runtime" : "loading");
+        snprintf(out->startupAnimation,
+                 sizeof(out->startupAnimation),
+                 "%s",
+                 out->levelLoaded ? "runtime" : "loading");
+        out->startupAnimationActive = 0;
+        out->startupTitleReady = out->levelLoaded ? 1 : 0;
     }
     return 1;
 }
