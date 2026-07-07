@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron Continue facts ownership: `theron_v1_startup_save_resume` now builds Continue request and inspect request from raw startup facts and returns the existing result/apply/state receipts. M11 no longer constructs `Theron_V1StartupContinueRequest` for the Continue path. Verification: Theron startup-flow probe passed 478/478, Theron direct-launch passed, Theron M11 launcher handoff passed 26/26, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron flow facts rebuild ownership: `theron_v1_startup_flow` now rebuilds startup flow directly from raw startup facts, including selected dungeon, mirror mask, companion count, and mirror order. M11 no longer constructs `Theron_StartupFlowSnapshotRequest` before rebuilding menu/forcefield state. Verification: Theron startup-flow probe passed 475/475, Theron direct-launch passed, Theron M11 launcher handoff passed 26/26, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB startup facts helper ownership: `csb_v1_startup_sequence_pc34_compat` now exposes direct raw-facts helpers for startup command-state and render-plan construction, and M11 consumes those helpers instead of building CSB request structs locally. Verification: CSB startup entrance pointer contract passed 122/122, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
