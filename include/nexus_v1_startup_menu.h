@@ -113,6 +113,12 @@ typedef struct {
     int selected_row;
 } Nexus_V1_StartupMenuSnapshot;
 
+typedef struct {
+    unsigned int slot_mask;
+    int cursor;
+    int frame;
+} Nexus_V1_StartupChampionSnapshot;
+
 enum {
     NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY = 96,
@@ -251,6 +257,25 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
     const Nexus_V1_ChampionPool *pool,
     int cursor,
     int frame,
+    Nexus_V1_StartupChampionRenderRow *rows,
+    int max_rows,
+    Nexus_V1_StartupChampionFooterRender *out_footer);
+int nexus_v1_startup_champion_snapshot_refresh(
+    const Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot);
+int nexus_v1_startup_champion_snapshot_handle_input(
+    Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot,
+    Nexus_V1_StartupInput input,
+    Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_champion_snapshot_handle_hit(
+    Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot,
+    const Nexus_V1_StartupHit *hit,
+    Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_champion_snapshot_build_render_rows(
+    const Nexus_V1_ChampionPool *pool,
+    const Nexus_V1_StartupChampionSnapshot *snapshot,
     Nexus_V1_StartupChampionRenderRow *rows,
     int max_rows,
     Nexus_V1_StartupChampionFooterRender *out_footer);

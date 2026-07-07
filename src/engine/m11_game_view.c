@@ -10672,6 +10672,31 @@ static void m11_nexus_startup_snapshot_to_state(
     state->nexusState.startup_save_selected_row = snapshot->selected_row;
 }
 
+static void m11_nexus_champion_snapshot_from_state(
+    const M11_GameViewState *state,
+    Nexus_V1_StartupChampionSnapshot *snapshot)
+{
+    if (!state || !snapshot) {
+        return;
+    }
+    memset(snapshot, 0, sizeof(*snapshot));
+    snapshot->slot_mask = state->nexusState.startup_save_slot_mask;
+    snapshot->cursor = state->nexusState.champion_cursor;
+    snapshot->frame = state->nexusState.champion_select_frame;
+}
+
+static void m11_nexus_champion_snapshot_to_state(
+    M11_GameViewState *state,
+    const Nexus_V1_StartupChampionSnapshot *snapshot)
+{
+    if (!state || !snapshot) {
+        return;
+    }
+    state->nexusState.startup_save_slot_mask = snapshot->slot_mask;
+    state->nexusState.champion_cursor = snapshot->cursor;
+    state->nexusState.champion_select_frame = snapshot->frame;
+}
+
 static Nexus_V1_StartupInput m11_nexus_startup_input_from_m12(
     M12_MenuInput input)
 {
@@ -15526,17 +15551,17 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->nexusState.champion_select_active) {
             Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+            Nexus_V1_StartupChampionSnapshot snapshot;
             Nexus_V1_StartupAction action;
-            int cursor = state->nexusState.champion_cursor;
-            if (!nexus_v1_startup_champion_handle_input(
+            m11_nexus_champion_snapshot_from_state(state, &snapshot);
+            if (!nexus_v1_startup_champion_snapshot_handle_input(
                     pool,
-                    &cursor,
-                    state->nexusState.startup_save_slot_mask,
+                    &snapshot,
                     m11_nexus_startup_input_from_m12(input),
                     &action)) {
                 return M11_GAME_INPUT_IGNORED;
             }
-            state->nexusState.champion_cursor = cursor;
+            m11_nexus_champion_snapshot_to_state(state, &snapshot);
             return m11_nexus_startup_apply_champion_action(state, &action);
         }
         if (input == M12_MENU_INPUT_BACK) {
@@ -16283,26 +16308,26 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     }
     if (state->nexusState.champion_select_active) {
         Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+        Nexus_V1_StartupChampionSnapshot snapshot;
         Nexus_V1_StartupHit hit;
         Nexus_V1_StartupAction action;
-        int cursor = state->nexusState.champion_cursor;
+        m11_nexus_champion_snapshot_from_state(state, &snapshot);
         if (!nexus_v1_startup_champion_hit_at_cursor(
                 pool->champion_count,
-                cursor,
+                snapshot.cursor,
                 x,
                 y,
                 &hit)) {
                 return M11_GAME_INPUT_IGNORED;
         }
-        if (!nexus_v1_startup_champion_handle_hit(
+        if (!nexus_v1_startup_champion_snapshot_handle_hit(
                 pool,
-                &cursor,
-                state->nexusState.startup_save_slot_mask,
+                &snapshot,
                 &hit,
                 &action)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        state->nexusState.champion_cursor = cursor;
+        m11_nexus_champion_snapshot_to_state(state, &snapshot);
         return m11_nexus_startup_apply_champion_action(state, &action);
     }
     return M11_GAME_INPUT_IGNORED;
@@ -39805,6 +39830,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         } else if (state->nexusState.champion_select_active &&
                    state->nexusEngine) {
             const Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
+            Nexus_V1_StartupChampionSnapshot snapshot;
             Nexus_V1_StartupChampionRenderRow rows[12];
             Nexus_V1_StartupChampionFooterRender footer;
             Nexus_V1_StartupChromeRender chrome;
@@ -39823,10 +39849,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                               chrome.subtitle,
                               &g_text_shadow);
             }
-            row_count = nexus_v1_startup_menu_build_champion_render_rows_for_frame(
+            m11_nexus_champion_snapshot_from_state(state, &snapshot);
+            row_count = nexus_v1_startup_champion_snapshot_build_render_rows(
                 pool,
-                state->nexusState.champion_cursor,
-                state->nexusState.champion_select_frame,
+                &snapshot,
                 rows,
                 (int)(sizeof(rows) / sizeof(rows[0])),
                 &footer);

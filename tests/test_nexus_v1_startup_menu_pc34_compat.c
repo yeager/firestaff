@@ -336,6 +336,47 @@ int main(void)
                strcmp(champion_execution.status,
                       "NEXUS CHAMPION ADDED") == 0,
            "Nexus champion execution resolves recruited champion redraw");
+    {
+        Nexus_V1_StartupChampionSnapshot champion_snapshot;
+        Nexus_V1_StartupChampionRenderRow snapshot_rows[4];
+        Nexus_V1_StartupChampionFooterRender snapshot_footer;
+        int snapshot_row_count;
+
+        memset(&champion_snapshot, 0, sizeof(champion_snapshot));
+        champion_snapshot.cursor = 0;
+        champion_snapshot.frame = 12;
+        expect(nexus_v1_startup_champion_snapshot_handle_input(
+                   &champions,
+                   &champion_snapshot,
+                   NEXUS_V1_STARTUP_INPUT_DOWN,
+                   &action) &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR &&
+                   champion_snapshot.cursor == 2,
+               "Nexus champion snapshot owns cursor input");
+        snapshot_row_count =
+            nexus_v1_startup_champion_snapshot_build_render_rows(
+                &champions,
+                &champion_snapshot,
+                snapshot_rows,
+                (int)(sizeof(snapshot_rows) / sizeof(snapshot_rows[0])),
+                &snapshot_footer);
+        expect(snapshot_row_count > 0 &&
+                   snapshot_rows[0].row == 0 &&
+                   snapshot_rows[2].row == 2 &&
+                   snapshot_rows[2].selected == 1 &&
+                   snapshot_rows[2].highlight_visible == 0 &&
+                   strstr(snapshot_footer.label, "PARTY 1/") != NULL,
+               "Nexus champion snapshot owns frame-aware render rows");
+        hit.kind = NEXUS_V1_STARTUP_HIT_CHAMPION_FOOTER;
+        hit.row = -1;
+        expect(nexus_v1_startup_champion_snapshot_handle_hit(
+                   &champions,
+                   &champion_snapshot,
+                   &hit,
+                   &action) &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_START_DUNGEON,
+               "Nexus champion snapshot owns footer hit action");
+    }
     action.kind = NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR;
     action.row = 2;
     expect(nexus_v1_startup_execute_champion_action(&action,
