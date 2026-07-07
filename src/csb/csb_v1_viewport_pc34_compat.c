@@ -1107,6 +1107,11 @@ int csb_v1_viewport_runtime_group_overlay_slot_placement(
     placement.sprite_creature_type = -1;
     placement.sprite_direction = 0;
     placement.sprite_relative_side = side;
+    placement.sprite_coordinate_set = coordinate_set;
+    placement.sprite_source_zone = -1;
+    placement.sprite_shift_mask = CSB_V1_CREATURE_SHIFT_MASK;
+    placement.sprite_transparent_color = CSB_V1_F0115_TRANSPARENT_COLOR;
+    placement.sprite_uses_f0791_blit = 1;
     placement.view_square =
         csb_v1_viewport_f0115_view_square_index(forward, side);
     placement.source_zone = -1;
@@ -1121,6 +1126,10 @@ int csb_v1_viewport_runtime_group_overlay_slot_placement(
             placement.view_square);
         placement.source_zone = csb_v1_viewport_creature_visibility_zone(
             spec, coordinate_set, 0);
+        placement.sprite_source_zone = placement.source_zone;
+        if (spec) {
+            placement.sprite_shift_mask = spec->shifts_objects_and_creatures;
+        }
     }
     if (csb_v1_viewport_c3200_creature_zone_point(
             coordinate_set,
@@ -1177,6 +1186,11 @@ int csb_v1_viewport_runtime_group_sprite_blit(
     blit.w = placement->sprite_w;
     blit.h = placement->sprite_h;
     blit.depth_index = placement->depth_index;
+    blit.coordinate_set = placement->sprite_coordinate_set;
+    blit.source_zone = placement->sprite_source_zone;
+    blit.shift_mask = placement->sprite_shift_mask;
+    blit.transparent_color = placement->sprite_transparent_color;
+    blit.uses_f0791_blit = placement->sprite_uses_f0791_blit;
     *out_blit = blit;
     return 1;
 }
@@ -3948,7 +3962,9 @@ const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibi
 const CSB_V1_ViewportCreatureVisibilitySpec *csb_v1_viewport_get_creature_visibility_spec_for_square(int view_square)
 {
     for (size_t i = 0; i < csb_v1_viewport_creature_visibility_spec_count(); ++i) {
-        if (s_creature_visibility_routes[i].view_square == view_square) {
+        if (s_creature_visibility_routes[i].view_square == view_square ||
+            s_creature_visibility_routes[i].redmcsb_view_square_index ==
+                view_square) {
             return &s_creature_visibility_routes[i];
         }
     }
