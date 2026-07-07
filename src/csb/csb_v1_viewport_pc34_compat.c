@@ -88,6 +88,7 @@ enum {
     CSB_V1_EXPLOSION_CENTERED_ZONE_BASE = 3014, /* C3014_ZONE_ */
     CSB_V1_EXPLOSION_SIDE_ZONE_BASE = 3031, /* C3031_ZONE_ */
     CSB_V1_EXPLOSION_SIDE_ZONE_CELL_STRIDE = 2,
+    CSB_V1_F0115_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
     CSB_V1_FIELD_ZONE_D3L2 = 702, /* C702_ZONE_WALL_D3L2 */
     CSB_V1_FIELD_ZONE_D3R2 = 703, /* C703_ZONE_WALL_D3R2 */
     CSB_V1_FIELD_ZONE_D2L2 = 707, /* C707_ZONE_WALL_D2L2 */
@@ -133,7 +134,7 @@ enum {
     CSB_V1_FLIP_HORIZONTAL = 1, /* MASK0x0001_FLIP_HORIZONTAL */
     CSB_V1_FLIP_VERTICAL = 2, /* MASK0x0002_FLIP_VERTICAL */
     CSB_V1_PROJECTILE_DERIVED_BITMAP_NONE = -1, /* CM1_DERIVED_BITMAP_NONE */
-    CSB_V1_PROJECTILE_TRANSPARENT_COLOR = 10, /* C10_COLOR_FLESH */
+    CSB_V1_PROJECTILE_TRANSPARENT_COLOR = CSB_V1_F0115_TRANSPARENT_COLOR,
     CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_GRAPHIC_ID = 1,
     CSB_V1_CUSTOM_BACKGROUND_SKIN_DEF_MIN_BYTES = 18,
     CSB_V1_CUSTOM_BACKGROUND_LARGE_BITMAP_SKIN_DEF_INDEX = 0,
@@ -901,6 +902,8 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
     placement.sprite_viewport_w = DM1_VIEWPORT_WIDTH;
     placement.sprite_viewport_h = DM1_VIEWPORT_HEIGHT;
     placement.sprite_depth_index = forward - 1;
+    placement.sprite_transparent_color = CSB_V1_F0115_TRANSPARENT_COLOR;
+    placement.sprite_uses_f0791_blit = 1;
     if (placement.sprite_depth_index < 0) {
         placement.sprite_depth_index = 0;
     }
@@ -930,6 +933,10 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
             placement.view_square);
         placement.source_zone = csb_v1_viewport_object_blit_zone(
             spec, (unsigned char)relative_cell);
+        if (spec) {
+            placement.sprite_transparent_color = spec->transparent_color;
+            placement.sprite_uses_f0791_blit = spec->uses_f0791_blit;
+        }
     }
     if (placement.object_row >= 0 &&
         csb_v1_viewport_c2500_source_zone_point(
@@ -999,6 +1006,8 @@ int csb_v1_viewport_runtime_object_sprite_blit(
     blit.viewport_h = placement->sprite_viewport_h;
     blit.depth_index = placement->sprite_depth_index;
     blit.source_zone_row = placement->object_row;
+    blit.transparent_color = placement->sprite_transparent_color;
+    blit.uses_f0791_blit = placement->sprite_uses_f0791_blit;
     *out_blit = blit;
     return blit.thing_type >= 0;
 }
@@ -1288,6 +1297,10 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     placement.sprite_relative_cell = -1;
     placement.sprite_graphic_index = -1;
     placement.sprite_flip_flags = 0;
+    placement.sprite_derived_bitmap_cache_slot =
+        CSB_V1_PROJECTILE_DERIVED_BITMAP_NONE;
+    placement.sprite_transparent_color = CSB_V1_F0115_TRANSPARENT_COLOR;
+    placement.sprite_uses_f0791_blit = 1;
     placement.material_thing = -1;
     placement.material_icon_index = -1;
     placement.viewport_x = 0;
@@ -1317,6 +1330,12 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
         placement.source_zone =
             csb_v1_viewport_projectile_blit_zone(
                 spec, (unsigned char)projectile_cell);
+        if (spec) {
+            placement.sprite_derived_bitmap_cache_slot =
+                spec->derived_bitmap_cache_slot_for_scaled_path;
+            placement.sprite_transparent_color = spec->transparent_color;
+            placement.sprite_uses_f0791_blit = spec->uses_f0791_blit;
+        }
         if (placement.source_zone < 0 ||
             !csb_v1_viewport_c2900_source_zone_point(
                 spec ? spec->projectile_visibility_row : -1,
@@ -1467,6 +1486,10 @@ int csb_v1_viewport_runtime_projectile_sprite_blit(
     blit.relative_cell = placement->sprite_relative_cell;
     blit.flip_flags = placement->sprite_flip_flags;
     blit.source_zone_row = placement->source_zone_row;
+    blit.derived_bitmap_cache_slot =
+        placement->sprite_derived_bitmap_cache_slot;
+    blit.transparent_color = placement->sprite_transparent_color;
+    blit.uses_f0791_blit = placement->sprite_uses_f0791_blit;
     *out_blit = blit;
     return 1;
 }
@@ -1574,6 +1597,8 @@ int csb_v1_viewport_runtime_explosion_sprite_blit(
     blit.max_frames = placement->sprite_max_frames;
     blit.attack = placement->sprite_attack;
     blit.depth_index = placement->depth_index;
+    blit.transparent_color = placement->sprite_transparent_color;
+    blit.uses_f0791_blit = placement->sprite_uses_f0791_blit;
     *out_blit = blit;
     return 1;
 }
@@ -1604,6 +1629,8 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
     placement.sprite_frame = -1;
     placement.sprite_max_frames = -1;
     placement.sprite_attack = -1;
+    placement.sprite_transparent_color = CSB_V1_F0115_TRANSPARENT_COLOR;
+    placement.sprite_uses_f0791_blit = 1;
     csb_v1_viewport_runtime_relative_position(
         party_dir,
         party_x,
@@ -1625,6 +1652,10 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
                                : (int)DM1_VIEW_SQUARE_D3R2;
         spec = csb_v1_viewport_get_explosion_blit_spec_for_square(
             placement.view_square);
+        if (spec) {
+            placement.sprite_transparent_color = spec->transparent_color;
+            placement.sprite_uses_f0791_blit = spec->uses_f0791_blit;
+        }
         if (explosion_cell == EXPLOSION_CELL_CENTERED) {
             placement.source_zone =
                 csb_v1_viewport_explosion_centered_zone(spec);
@@ -1708,7 +1739,6 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
         const struct ProjectileInstance_Compat *projectile =
             &cfg->runtime_projectiles->entries[i];
         CSB_V1_ViewportRuntimeProjectileOverlayPlacement placement;
-        int material_icon_index = -1;
         uint8_t color = 0x0Eu;
 
         if (projectile->reserved3 == 0 || projectile->slotIndex < 0) {
@@ -1748,12 +1778,11 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
                 continue;
             }
         }
-        material_icon_index = placement.material_icon_index;
-        if (material_icon_index >= 0) {
+        if (placement.material_icon_index >= 0) {
             ++cfg->runtime_projectile_material_resolved_count;
         }
         color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
-            material_icon_index);
+            placement.material_icon_index);
         csb_v1_viewport_draw_runtime_overlay_cross(
             cfg,
             placement.viewport_x,

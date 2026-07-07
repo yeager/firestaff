@@ -2004,6 +2004,12 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                   placement.sprite_graphic_index, -1);
         check_int("csb.projectile_overlay.d3l2_cell2.flip_default",
                   placement.sprite_flip_flags, 0);
+        check_int("csb.projectile_overlay.d3l2_cell2.derived_none",
+                  placement.sprite_derived_bitmap_cache_slot, -1);
+        check_int("csb.projectile_overlay.d3l2_cell2.transparent",
+                  placement.sprite_transparent_color, 10);
+        check_int("csb.projectile_overlay.d3l2_cell2.uses_f0791",
+                  placement.sprite_uses_f0791_blit, 1);
         {
             struct ProjectileInstance_Compat projectile;
             CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
@@ -2054,6 +2060,12 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                       blit.flip_flags, placement.sprite_flip_flags);
             check_int("csb.projectile_overlay.d3l2_cell2.blit_source_row",
                       blit.source_zone_row, 3);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_derived_none",
+                      blit.derived_bitmap_cache_slot, -1);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_transparent",
+                      blit.transparent_color, 10);
+            check_int("csb.projectile_overlay.d3l2_cell2.blit_uses_f0791",
+                      blit.uses_f0791_blit, 1);
         }
 
         memset(&placement, 0, sizeof(placement));
@@ -3040,6 +3052,10 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_sprite_blit.viewport_y, DM1_VIEWPORT_SCREEN_Y);
     check_int("csb.runtime_object_overlay.d1c.sprite_blit.row",
               object_sprite_blit.source_zone_row, 8);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.transparent",
+              object_sprite_blit.transparent_color, 10);
+    check_int("csb.runtime_object_overlay.d1c.sprite_blit.uses_f0791",
+              object_sprite_blit.uses_f0791_blit, 1);
     check_int("csb.runtime_object_overlay.d1c.icon_blit",
               csb_v1_viewport_runtime_object_icon_blit(
                   &object_place, &object_icon_blit), 1);
@@ -3285,6 +3301,10 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               explosion_place.sprite_graphic_index, -1);
     check_int("csb.runtime_explosion_overlay.d3l2.center.smoke_default",
               explosion_place.sprite_is_smoke, 0);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.transparent",
+              explosion_place.sprite_transparent_color, 10);
+    check_int("csb.runtime_explosion_overlay.d3l2.center.uses_f0791",
+              explosion_place.sprite_uses_f0791_blit, 1);
     {
         struct ExplosionInstance_Compat explosion;
         CSB_V1_ViewportRuntimeExplosionSpriteBlit blit;
@@ -3336,6 +3356,10 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                   blit.attack, 128);
         check_int("csb.runtime_explosion_overlay.d3l2.center.blit_depth",
                   blit.depth_index, 2);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_transparent",
+                  blit.transparent_color, 10);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.blit_uses_f0791",
+                  blit.uses_f0791_blit, 1);
     }
 
     memset(&explosion_place, 0, sizeof(explosion_place));
