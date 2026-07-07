@@ -17785,6 +17785,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
         src/csb/csb_v1_csbgraphics_dat_real_scan.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
@@ -17823,6 +17824,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_csbgraphics_m11_binding_readiness.c
         src/csb/csb_v1_csbgraphics_dat_real_scan.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
