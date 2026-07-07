@@ -107,6 +107,42 @@ int main(void) {
                   THERON_DUNGEON_INVALID),
               0);
 
+    {
+        int selected = -1;
+        result = theron_v1_startup_show_stage_select(
+            &flow,
+            THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+        check_int("show stage-select rc", result, THERON_STARTUP_OK);
+        check_int("show stage-select phase",
+                  flow.phase,
+                  THERON_STARTUP_PHASE_STAGE_SELECT);
+        check_int("show stage-select selected dungeon",
+                  flow.selected_dungeon,
+                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+        result = theron_v1_startup_toggle_mirror(&flow, 0, &selected);
+        check_int("toggle mirror before choose rejected",
+                  result,
+                  THERON_STARTUP_ERR_NO_STAGE);
+        result = theron_v1_startup_choose_stage(
+            &flow,
+            &progression,
+            THERON_DUNGEON_1_HALL_OF_RECORDS);
+        check_int("toggle fixture choose rc", result, THERON_STARTUP_OK);
+        result = theron_v1_startup_toggle_mirror(&flow, 2, &selected);
+        check_int("toggle mirror selects rc", result, THERON_STARTUP_OK);
+        check_int("toggle mirror selected flag", selected, 1);
+        check_int("toggle mirror selected mask",
+                  flow.selected_mirrors_mask,
+                  1 << 2);
+        result = theron_v1_startup_toggle_mirror(&flow, 2, &selected);
+        check_int("toggle mirror deselects rc", result, THERON_STARTUP_OK);
+        check_int("toggle mirror deselected flag", selected, 0);
+        check_int("toggle mirror deselected mask",
+                  flow.selected_mirrors_mask,
+                  0);
+    }
+
+    theron_v1_startup_flow_init(&flow);
     result = theron_v1_startup_select_mirror(&flow, 0);
     check_int("mirror before stage rejected", result, THERON_STARTUP_ERR_NO_STAGE);
 

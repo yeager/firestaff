@@ -1331,6 +1331,20 @@ Theron_StartupResult theron_v1_startup_choose_stage(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_show_stage_select(
+    Theron_StartupFlow *flow,
+    Theron_DungeonID dungeon_id) {
+
+    if (!flow) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+
+    theron_v1_startup_flow_init(flow);
+    flow->phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+    flow->selected_dungeon = tqr_startup_clamp_stage(dungeon_id);
+    return THERON_STARTUP_OK;
+}
+
 Theron_StartupResult theron_v1_startup_select_mirror(
     Theron_StartupFlow *flow,
     int mirror_index) {
@@ -1408,6 +1422,40 @@ Theron_StartupResult theron_v1_startup_deselect_mirror(
         ? THERON_STARTUP_PHASE_READY
         : THERON_STARTUP_PHASE_SOUL_ROOM;
     return THERON_STARTUP_OK;
+}
+
+Theron_StartupResult theron_v1_startup_toggle_mirror(
+    Theron_StartupFlow *flow,
+    int mirror_index,
+    int *out_selected) {
+
+    Theron_StartupResult result;
+    uint8_t bit;
+
+    if (out_selected) {
+        *out_selected = 0;
+    }
+    if (!flow) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+    if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
+        return THERON_STARTUP_ERR_BAD_MIRROR;
+    }
+
+    bit = (uint8_t)(1u << mirror_index);
+    if ((flow->selected_mirrors_mask & bit) != 0u) {
+        result = theron_v1_startup_deselect_mirror(flow, mirror_index);
+        if (out_selected) {
+            *out_selected = 0;
+        }
+        return result;
+    }
+
+    result = theron_v1_startup_select_mirror(flow, mirror_index);
+    if (out_selected && result == THERON_STARTUP_OK) {
+        *out_selected = 1;
+    }
+    return result;
 }
 
 Theron_StartupResult theron_v1_startup_enter_forcefield(
