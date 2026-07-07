@@ -1,4 +1,5 @@
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_media.h"
 #include "theron_v1_startup_runtime_entry.h"
 
 #include <stdio.h>
@@ -41,6 +42,19 @@ static void check_str(const char *label, const char *got, const char *expected) 
                expected ? expected : "(null)");
         ++g_fail;
     }
+}
+
+static void raw_sector_put_text(unsigned char *sector,
+                                size_t sector_size,
+                                size_t user_offset,
+                                const char *text) {
+    size_t text_len = text ? strlen(text) : 0u;
+    size_t raw_offset = THERON_TRACK02_RAW_USER_DATA_OFFSET + user_offset;
+    if (!sector || !text || raw_offset >= sector_size ||
+        text_len > sector_size - raw_offset) {
+        return;
+    }
+    memcpy(sector + raw_offset, text, text_len);
 }
 
 static int fake_runtime_level_load(Theron_V1_World *world,
@@ -106,6 +120,65 @@ int main(void) {
     check_int("init phase", flow.phase, THERON_STARTUP_PHASE_TITLE);
     check_int("init selected dungeon", flow.selected_dungeon, THERON_DUNGEON_INVALID);
     check_int("init companion count", flow.companion_count, 0);
+    {
+        unsigned char us_sector[THERON_TRACK02_RAW_SECTOR_BYTES];
+        Theron_StartupMedia media;
+        memset(us_sector, 0, sizeof(us_sector));
+        raw_sector_put_text(us_sector,
+                            sizeof(us_sector),
+                            32u,
+                            "GO AWAY AND RESURRECT THERON");
+        theron_v1_startup_media_capture_track02(us_sector,
+                                                sizeof(us_sector),
+                                                THERON_TRACK02_MD5_US_BIN,
+                                                &media);
+        check_int("startup media US text status",
+                  media.startup_text_prompt_status,
+                  THERON_TRACK02_SIGNAL_OK);
+        check_int("startup media US text count",
+                  media.startup_text_prompt_count,
+                  1);
+        check_str("startup media US text",
+                  media.startup_text_prompt,
+                  "GO AWAY AND RESURRECT THERON");
+        check_int("startup media US roster unsupported",
+                  media.startup_roster_name_status,
+                  THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+    }
+    {
+        unsigned char jp_sector[THERON_TRACK02_RAW_SECTOR_BYTES];
+        Theron_StartupMedia media;
+        memset(jp_sector, 0, sizeof(jp_sector));
+        raw_sector_put_text(jp_sector,
+                            sizeof(jp_sector),
+                            48u,
+                            "THERON MARA GUARDIAN OF WISDO LINOS THE RESOLUTE "
+                            "HEXA LORD OF FEALTY HAKAR THE BRAVE TIRAN "
+                            "KNIGHT OF STRENGT DOTAN MASTER OF THE WIN "
+                            "PENTAI THE SURVIVOR");
+        theron_v1_startup_media_capture_track02(jp_sector,
+                                                sizeof(jp_sector),
+                                                THERON_TRACK02_MD5_JP_BIN,
+                                                &media);
+        check_int("startup media JP roster status",
+                  media.startup_roster_name_status,
+                  THERON_TRACK02_SIGNAL_OK);
+        check_int("startup media JP roster count",
+                  media.startup_roster_name_count,
+                  8);
+        check_str("startup media JP mirror 0 roster",
+                  media.startup_roster_names[4],
+                  "HAKAR");
+        check_str("startup media JP mirror 6 title",
+                  media.startup_roster_titles[7],
+                  "THE SURVIVOR");
+        check_int("startup media JP text status",
+                  media.startup_text_prompt_status,
+                  THERON_TRACK02_SIGNAL_OK);
+        check_int("startup media JP US prompt absent",
+                  media.startup_text_prompt_count,
+                  0);
+    }
     check_int("Firestaff none input maps to Theron idle",
               theron_v1_startup_input_from_firestaff_menu_code(0),
               THERON_STARTUP_INPUT_NONE);
