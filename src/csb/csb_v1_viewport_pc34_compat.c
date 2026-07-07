@@ -576,11 +576,24 @@ int csb_v1_viewport_draw_runtime_object_marker(
         1);
 }
 
+int csb_v1_viewport_creature_marker_overlay_color(int creature_type)
+{
+    if (creature_type < 0) {
+        return 0x0Du;
+    }
+    /* Runtime group markers are Firestaff's no-sprite diagnostic fallback.
+     * Keep them keyed by C04 GROUP.Type so data-free captures can distinguish
+     * creature families while preserving the historic type-6 marker colour
+     * used by the M11 CSB fallback gate. */
+    return 0x07 + (creature_type & 0x07);
+}
+
 int csb_v1_viewport_draw_runtime_group_marker(
     uint8_t *screen_pixels,
     int screen_stride,
     int screen_height,
-    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement)
+    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    int creature_type)
 {
     if (!placement || !placement->visible) return 0;
     return csb_v1_viewport_draw_screen_overlay_cross(
@@ -589,7 +602,7 @@ int csb_v1_viewport_draw_runtime_group_marker(
         screen_height,
         placement->marker_screen_x,
         placement->marker_screen_y,
-        0x0Du,
+        (uint8_t)csb_v1_viewport_creature_marker_overlay_color(creature_type),
         2);
 }
 
