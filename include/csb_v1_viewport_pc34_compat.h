@@ -392,6 +392,11 @@ struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement {
     int sprite_y;
     int sprite_w;
     int sprite_h;
+    int sprite_aspect_index;
+    int sprite_relative_dir;
+    int sprite_relative_cell;
+    int sprite_graphic_index;
+    int sprite_flip_flags;
 };
 
 struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
@@ -723,6 +728,10 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     int projectile_map_y,
     int projectile_cell,
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement *out_placement);
+int csb_v1_viewport_runtime_bind_projectile_sprite(
+    int party_dir,
+    const struct ProjectileInstance_Compat *projectile,
+    CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement);
 int csb_v1_viewport_runtime_projectile_sprite_rect(
     int source_zone,
     int viewport_x,
