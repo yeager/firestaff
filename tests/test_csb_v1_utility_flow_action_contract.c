@@ -131,7 +131,7 @@ int main(void)
     check(csb_v1_util_flow_plan_for_action(
               CSB_V1_UTIL_ACTION_IMPORT,
               &action_plan) &&
-              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY &&
+              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_STATUS_REDRAW &&
               action_plan.preview_active == 0 &&
               strcmp(action_plan.status_scope, "BOOT") == 0 &&
               strcmp(action_plan.status, "CSB IMPORT READY") == 0,
@@ -139,7 +139,7 @@ int main(void)
     check(csb_v1_util_flow_plan_for_action(
               CSB_V1_UTIL_ACTION_VIEW,
               &action_plan) &&
-              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_VIEW_READY &&
+              action_plan.kind == CSB_V1_UTIL_ACTION_PLAN_STATUS_REDRAW &&
               action_plan.preview_active == 1 &&
               strcmp(action_plan.status_scope, "BOOT") == 0 &&
               strcmp(action_plan.status, "CSB PARTY READY") == 0,
