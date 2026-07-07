@@ -532,6 +532,18 @@ int dm1_viewport_3d_max_visible_forward_from_center_pc34(
 int dm1_viewport_3d_side_lane_clear_for_rel_pc34(int rel_forward,
                                                  int rel_side,
                                                  unsigned int open_depth_mask);
+unsigned int dm1_viewport_3d_open_depth_mask_from_cells_pc34(
+    const int open_by_depth[3]);
+typedef struct DM1_ViewportCenterLaneMasksPc34 {
+    unsigned int valid_depth_mask;
+    unsigned int open_depth_mask;
+    unsigned int blocking_depth_mask;
+    unsigned int blocking_door_depth_mask;
+} DM1_ViewportCenterLaneMasksPc34;
+DM1_ViewportCenterLaneMasksPc34 dm1_viewport_3d_center_lane_masks_from_cells_pc34(
+    const int valid_by_depth[3],
+    const int open_by_depth[3],
+    const int door_by_depth[3]);
 int dm1_viewport_3d_center_line_clear_before_depth_pc34(
     int depth_index,
     unsigned int open_depth_mask);
