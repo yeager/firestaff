@@ -1356,6 +1356,36 @@ int csb_v1_viewport_runtime_explosion_sprite_rect(
     return 1;
 }
 
+int csb_v1_viewport_runtime_bind_explosion_sprite(
+    const struct ExplosionInstance_Compat *explosion,
+    CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement)
+{
+    int aspect;
+
+    if (!explosion || !placement) {
+        return 0;
+    }
+    aspect = dm1_v1_explosion_type_to_aspect(explosion->explosionType);
+    if (aspect < 0) {
+        placement->sprite_aspect_index = -1;
+        placement->sprite_graphic_index = -1;
+        placement->sprite_is_smoke = 0;
+        placement->sprite_frame = -1;
+        placement->sprite_max_frames = -1;
+        placement->sprite_attack = -1;
+        return 0;
+    }
+    placement->sprite_aspect_index = aspect;
+    placement->sprite_graphic_index =
+        dm1_v1_explosion_aspect_to_graphic(aspect);
+    placement->sprite_is_smoke =
+        dm1_v1_explosion_is_smoke(explosion->explosionType);
+    placement->sprite_frame = explosion->currentFrame;
+    placement->sprite_max_frames = explosion->maxFrames;
+    placement->sprite_attack = explosion->attack;
+    return placement->sprite_graphic_index >= 0;
+}
+
 int csb_v1_viewport_runtime_explosion_overlay_placement(
     int party_dir,
     int party_x,
@@ -1379,6 +1409,9 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
     placement.sprite_aspect_index = -1;
     placement.sprite_graphic_index = -1;
     placement.sprite_is_smoke = 0;
+    placement.sprite_frame = -1;
+    placement.sprite_max_frames = -1;
+    placement.sprite_attack = -1;
     csb_v1_viewport_runtime_relative_position(
         party_dir,
         party_x,
@@ -1468,30 +1501,6 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
         &placement.sprite_h);
     if (out_placement) *out_placement = placement;
     return 1;
-}
-
-int csb_v1_viewport_runtime_bind_explosion_sprite(
-    const struct ExplosionInstance_Compat *explosion,
-    CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement)
-{
-    int aspect;
-
-    if (!explosion || !placement) {
-        return 0;
-    }
-    aspect = dm1_v1_explosion_type_to_aspect(explosion->explosionType);
-    if (aspect < 0) {
-        placement->sprite_aspect_index = -1;
-        placement->sprite_graphic_index = -1;
-        placement->sprite_is_smoke = 0;
-        return 0;
-    }
-    placement->sprite_aspect_index = aspect;
-    placement->sprite_graphic_index = dm1_v1_explosion_aspect_to_graphic(
-        aspect);
-    placement->sprite_is_smoke = dm1_v1_explosion_is_smoke(
-        explosion->explosionType);
-    return placement->sprite_graphic_index >= 0;
 }
 
 static void csb_v1_viewport_draw_runtime_projectile_overlays(

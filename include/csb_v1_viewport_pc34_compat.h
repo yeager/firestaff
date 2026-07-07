@@ -481,6 +481,9 @@ struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int sprite_aspect_index;
     int sprite_graphic_index;
     int sprite_is_smoke;
+    int sprite_frame;
+    int sprite_max_frames;
+    int sprite_attack;
 };
 
 typedef struct {

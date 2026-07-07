@@ -1111,7 +1111,9 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    if (placement->sprite_graphic_index < 0) {
+    (void)explosion;
+    if (placement->sprite_graphic_index < 0 ||
+        placement->sprite_aspect_index < 0) {
         return 0;
     }
     /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions in a
@@ -1129,9 +1131,9 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         placement->sprite_aspect_index,
         placement->sprite_graphic_index,
         placement->sprite_is_smoke,
-        explosion->currentFrame,
-        explosion->maxFrames,
-        explosion->attack,
+        placement->sprite_frame,
+        placement->sprite_max_frames,
+        placement->sprite_attack,
         placement->depth_index);
 }
 

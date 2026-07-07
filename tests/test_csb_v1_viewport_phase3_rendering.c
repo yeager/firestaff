@@ -67,6 +67,10 @@ typedef struct {
     int relative_cell;
     int graphic_index;
     int flip_flags;
+    int is_smoke;
+    int frame;
+    int max_frames;
+    int attack;
 } TestRuntimeSpritePlacementCapture;
 
 static int test_projectile_material_resolver(
@@ -136,7 +140,10 @@ static int test_explosion_sprite_drawer(
         capture->depth_index = placement->depth_index;
         capture->aspect_index = placement->sprite_aspect_index;
         capture->graphic_index = placement->sprite_graphic_index;
-        capture->flip_flags = placement->sprite_is_smoke;
+        capture->is_smoke = placement->sprite_is_smoke;
+        capture->frame = placement->sprite_frame;
+        capture->max_frames = placement->sprite_max_frames;
+        capture->attack = placement->sprite_attack;
     }
     screen_pixels[(DM1_VIEWPORT_SCREEN_Y + placement->viewport_y) *
                       screen_stride +
@@ -333,6 +340,9 @@ static void test_runtime_projectile_and_explosion_overlays(void)
     explosions.entries[0].mapY = 1;
     explosions.entries[0].cell = EXPLOSION_CELL_CENTERED;
     explosions.entries[0].explosionType = C040_EXPLOSION_SMOKE;
+    explosions.entries[0].currentFrame = 2;
+    explosions.entries[0].maxFrames = 5;
+    explosions.entries[0].attack = 96;
 
     csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
     check_int("runtime.explosion_overlay.after_projectile",
@@ -382,7 +392,13 @@ static void test_runtime_projectile_and_explosion_overlays(void)
                   dm1_v1_explosion_aspect_to_graphic(
                       DM1_EXPLOSION_ASPECT_SMOKE));
         check_int("runtime.explosion_sprite.smoke",
-                  explosion_capture.flip_flags, 1);
+                  explosion_capture.is_smoke, 1);
+        check_int("runtime.explosion_sprite.frame",
+                  explosion_capture.frame, 2);
+        check_int("runtime.explosion_sprite.max_frames",
+                  explosion_capture.max_frames, 5);
+        check_int("runtime.explosion_sprite.attack",
+                  explosion_capture.attack, 96);
         check_int("runtime.explosion_sprite.drawn_count",
                   cfg.runtime_explosion_sprite_drawn_count, 1);
         check_int("runtime.explosion_sprite.skips_marker_count",
@@ -3012,19 +3028,28 @@ static void test_csb_runtime_overlay_placement_contracts(void)
     {
         struct ExplosionInstance_Compat explosion;
         memset(&explosion, 0, sizeof(explosion));
-        explosion.explosionType = C000_EXPLOSION_FIREBALL;
+        explosion.explosionType = C007_EXPLOSION_POISON_CLOUD;
+        explosion.currentFrame = 3;
+        explosion.maxFrames = 6;
+        explosion.attack = 128;
         check_int("csb.runtime_explosion_overlay.d3l2.center.bind_sprite",
                   csb_v1_viewport_runtime_bind_explosion_sprite(
                       &explosion, &explosion_place), 1);
         check_int("csb.runtime_explosion_overlay.d3l2.center.bind_aspect",
                   explosion_place.sprite_aspect_index,
-                  DM1_EXPLOSION_ASPECT_FIRE);
+                  DM1_EXPLOSION_ASPECT_POISON);
         check_int("csb.runtime_explosion_overlay.d3l2.center.bind_gfx",
                   explosion_place.sprite_graphic_index,
                   dm1_v1_explosion_aspect_to_graphic(
-                      DM1_EXPLOSION_ASPECT_FIRE));
+                      DM1_EXPLOSION_ASPECT_POISON));
         check_int("csb.runtime_explosion_overlay.d3l2.center.bind_smoke",
                   explosion_place.sprite_is_smoke, 0);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.bind_frame",
+                  explosion_place.sprite_frame, 3);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.bind_max",
+                  explosion_place.sprite_max_frames, 6);
+        check_int("csb.runtime_explosion_overlay.d3l2.center.bind_attack",
+                  explosion_place.sprite_attack, 128);
     }
 
     memset(&explosion_place, 0, sizeof(explosion_place));
