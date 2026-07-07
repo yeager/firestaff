@@ -44,6 +44,7 @@ int main(void)
     DM1_WallOrnamentZoneBlitPc34 blit;
     DM1_WallOrnamentViewSpecPc34 spec;
     DM1_WallOrnamentRenderPlanPc34 plan;
+    DM1_FrontMirrorRenderPlanPc34 mirrorPlan;
 
     /* ReDMCSB DUNVIEW.C G0194: wall ornament global index to G0205
      * coordinate-set index. */
@@ -166,6 +167,39 @@ int main(void)
     expect_int("plan.d2r_left.graphic", plan.graphicIndex, 261);
     expect_int("plan.d2r_left.flip", plan.flipHorizontal, 1);
     expect_int("plan.d2r_left.palette1", plan.paletteMap[1], 12);
+
+    /* DUNVIEW.C:3913-3928 front champion mirror render plan:
+     * C346 ornament + C026 atlas portrait inside G0109. */
+    expect_int("mirror.plan.null",
+               dm1_v1_front_mirror_render_plan_pc34(0, NULL), 0);
+    expect_int("mirror.plan.bad_ordinal",
+               dm1_v1_front_mirror_render_plan_pc34(-1, &mirrorPlan), 0);
+    expect_int("mirror.plan.18.ok",
+               dm1_v1_front_mirror_render_plan_pc34(18, &mirrorPlan), 1);
+    expect_int("mirror.plan.18.orn_graphic",
+               mirrorPlan.ornament.graphicIndex, 346);
+    expect_int("mirror.plan.18.orn_dstX", mirrorPlan.ornament.dstX, 80);
+    expect_int("mirror.plan.18.orn_dstY", mirrorPlan.ornament.dstY, 29);
+    expect_int("mirror.plan.18.orn_w", mirrorPlan.ornament.width, 64);
+    expect_int("mirror.plan.18.orn_h", mirrorPlan.ornament.height, 43);
+    expect_int("mirror.plan.18.orn_transparent",
+               mirrorPlan.ornament.transparentColor, 10);
+    expect_int("mirror.plan.18.orn_palette1",
+               mirrorPlan.ornament.paletteMap[1], 12);
+    expect_int("mirror.plan.18.portrait_graphic",
+               mirrorPlan.portraitGraphicIndex, 26);
+    expect_int("mirror.plan.18.srcX", mirrorPlan.portraitSrcX, 64);
+    expect_int("mirror.plan.18.srcY", mirrorPlan.portraitSrcY, 58);
+    expect_int("mirror.plan.18.dstX", mirrorPlan.portraitDstX, 96);
+    expect_int("mirror.plan.18.dstY", mirrorPlan.portraitDstY, 35);
+    expect_int("mirror.plan.18.w", mirrorPlan.portraitWidth, 32);
+    expect_int("mirror.plan.18.h", mirrorPlan.portraitHeight, 29);
+    expect_int("mirror.plan.18.transparent",
+               mirrorPlan.portraitTransparentColor, 1);
+    expect_int("mirror.plan.18.backingX", mirrorPlan.backingDstX, 80);
+    expect_int("mirror.plan.18.backingY", mirrorPlan.backingDstY, 29);
+    expect_int("mirror.plan.18.backingW", mirrorPlan.backingWidth, 64);
+    expect_int("mirror.plan.18.backingH", mirrorPlan.backingHeight, 43);
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed == 0 ? 0 : 1;
