@@ -2345,6 +2345,8 @@ static void test_csb_runtime_overlay_placement_contracts(void)
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement explosion_place;
     int min_side = 99;
     int max_side = -99;
+    int map_x = 0;
+    int map_y = 0;
 
     check_true("csb.runtime_overlay_scan.d1.range",
                csb_v1_viewport_runtime_overlay_side_range(
@@ -2366,6 +2368,23 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                   4, &min_side, &max_side), 0);
     check_int("csb.runtime_overlay_scan.bad_min", min_side, 0);
     check_int("csb.runtime_overlay_scan.bad_max", max_side, -1);
+
+    csb_v1_viewport_runtime_map_from_relative(0, 10, 10, 3, -2,
+                                              &map_x, &map_y);
+    check_int("csb.runtime_overlay_scan.map_north.x", map_x, 8);
+    check_int("csb.runtime_overlay_scan.map_north.y", map_y, 7);
+    csb_v1_viewport_runtime_map_from_relative(1, 10, 10, 3, -2,
+                                              &map_x, &map_y);
+    check_int("csb.runtime_overlay_scan.map_east.x", map_x, 13);
+    check_int("csb.runtime_overlay_scan.map_east.y", map_y, 8);
+    csb_v1_viewport_runtime_map_from_relative(2, 10, 10, 3, -2,
+                                              &map_x, &map_y);
+    check_int("csb.runtime_overlay_scan.map_south.x", map_x, 12);
+    check_int("csb.runtime_overlay_scan.map_south.y", map_y, 13);
+    csb_v1_viewport_runtime_map_from_relative(3, 10, 10, 3, -2,
+                                              &map_x, &map_y);
+    check_int("csb.runtime_overlay_scan.map_west.x", map_x, 7);
+    check_int("csb.runtime_overlay_scan.map_west.y", map_y, 12);
 
     memset(&object_place, 0, sizeof(object_place));
     check_true("csb.runtime_object_overlay.d1c.visible",

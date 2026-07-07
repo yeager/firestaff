@@ -186,6 +186,44 @@ static void csb_v1_viewport_runtime_relative_position(
     if (out_side) *out_side = side;
 }
 
+void csb_v1_viewport_runtime_map_from_relative(
+    int party_dir,
+    int party_x,
+    int party_y,
+    int forward,
+    int side,
+    int *out_x,
+    int *out_y)
+{
+    int x = party_x;
+    int y = party_y;
+
+    /* ReDMCSB DUNVIEW.C F0128/F0115 walks visible squares by party
+     * direction, forward depth, and side lane.  Runtime object/group
+     * overlay scans use that same relative view-space envelope before
+     * resolving C2500/C3200 placement. */
+    switch (party_dir & 3) {
+    case 0:
+        x += side;
+        y -= forward;
+        break;
+    case 1:
+        x += forward;
+        y += side;
+        break;
+    case 2:
+        x -= side;
+        y += forward;
+        break;
+    default:
+        x -= forward;
+        y -= side;
+        break;
+    }
+    if (out_x) *out_x = x;
+    if (out_y) *out_y = y;
+}
+
 static void csb_v1_viewport_plot_runtime_overlay_pixel(
     CSB_V1_ViewportConfig *cfg,
     int viewport_x,
