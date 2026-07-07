@@ -13,6 +13,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
@@ -11970,210 +11971,6 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     return 1;
 }
 
-static int m11_theron_try_track02_initial_level(Theron_V1_World* world,
-                                                const TrAssetBundle* assets,
-                                                const char* md5_hex,
-                                                Theron_DungeonID dungeon_id,
-                                                char* receipt,
-                                                size_t receipt_cap) {
-    Theron_Track02BankSignal signal;
-    Theron_Track02SignalStatus signal_status;
-    Theron_Track02UserDataWindowCatalog user_window_catalog;
-    Theron_Track02StartupTextMarkerCatalog text_marker_catalog;
-    size_t user_window_descriptor_count = 0u;
-    size_t user_window_span_count = 0u;
-    size_t user_window_initial_count = 0u;
-    size_t startup_text_us_count = 0u;
-    size_t startup_text_jp_count = 0u;
-    size_t anchor;
-    size_t entry;
-    int tried = 0;
-
-    if (receipt && receipt_cap > 0u) {
-        receipt[0] = '\0';
-    }
-    if (!world || !assets || !assets->hucard_rom || assets->hucard_rom_size == 0u ||
-        !md5_hex || md5_hex[0] == '\0') {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "no raw Track 02 bytes");
-        }
-        return 0;
-    }
-    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track 02 initial candidate pending for stage %d",
-                     (int)dungeon_id);
-        }
-        return 0;
-    }
-
-    signal_status = theron_v1_track02_find_bank_signal(assets->hucard_rom,
-                                                       assets->hucard_rom_size,
-                                                       md5_hex,
-                                                       &signal);
-    if (signal_status != THERON_TRACK02_SIGNAL_OK) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track 02 bank signal %s",
-                     theron_v1_track02_signal_status_name(signal_status));
-        }
-        return 0;
-    }
-
-    memset(&user_window_catalog, 0, sizeof(user_window_catalog));
-    if (theron_v1_track02_catalog_user_data_windows(assets->hucard_rom,
-                                                    assets->hucard_rom_size,
-                                                    md5_hex,
-                                                    &user_window_catalog) ==
-        THERON_TRACK02_SIGNAL_OK) {
-        size_t i;
-        for (i = 0u; i < user_window_catalog.entry_count; ++i) {
-            switch (user_window_catalog.entries[i].role) {
-            case THERON_TRACK02_USER_DATA_WINDOW_BANK_DESCRIPTOR_TABLE:
-                ++user_window_descriptor_count;
-                break;
-            case THERON_TRACK02_USER_DATA_WINDOW_POST_BOUNDARY_SPAN:
-                ++user_window_span_count;
-                break;
-            case THERON_TRACK02_USER_DATA_WINDOW_INITIAL_LEVEL_CANDIDATE:
-                ++user_window_initial_count;
-                break;
-            case THERON_TRACK02_USER_DATA_WINDOW_UNKNOWN:
-            default:
-                break;
-            }
-        }
-    }
-
-    memset(&text_marker_catalog, 0, sizeof(text_marker_catalog));
-    if (theron_v1_track02_catalog_startup_text_markers(
-            assets->hucard_rom,
-            assets->hucard_rom_size,
-            md5_hex,
-            &text_marker_catalog) == THERON_TRACK02_SIGNAL_OK) {
-        size_t i;
-        for (i = 0u; i < text_marker_catalog.marker_count; ++i) {
-            switch (text_marker_catalog.markers[i].kind) {
-            case THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT:
-                ++startup_text_us_count;
-                break;
-            case THERON_TRACK02_STARTUP_TEXT_JP_CHAMPION_ROSTER_CLUSTER:
-                ++startup_text_jp_count;
-                break;
-            case THERON_TRACK02_STARTUP_TEXT_UNKNOWN:
-            default:
-                break;
-            }
-        }
-    }
-
-    for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
-        Theron_Track02LevelHandoff initial_handoff;
-        Theron_Track02LevelHandoffStatus initial_status;
-        Theron_V1_Level initial_candidate;
-
-        initial_status = theron_v1_track02_load_initial_level_candidate(
-            assets->hucard_rom,
-            assets->hucard_rom_size,
-            md5_hex,
-            signal.descriptor_offsets[anchor],
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
-            0,
-            &initial_candidate,
-            &initial_handoff);
-        ++tried;
-        if (initial_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
-            world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-            world->current_level = 0;
-            world->levels[0][0] = initial_candidate;
-            world->level_loaded[0][0] = 1;
-            theron_v1_party_place(world,
-                                  world->levels[0][0].start_x,
-                                  world->levels[0][0].start_y,
-                                  world->levels[0][0].start_dir);
-            if (receipt && receipt_cap > 0u) {
-                snprintf(receipt,
-                         receipt_cap,
-                         "Track 02 initial level bind=%s anchor=%zu offset=0x%zx user_valid=%d user=0x%zx user_windows=%zu user_desc=%zu user_span=%zu user_initial=%zu text_markers=%zu text_us=%zu text_jp=%zu expected=0x%zx delta=0x%zx candidates=%zu match=%d header=%ux%u seed=0x%08x start=(%d,%d,%d)",
-                         theron_v1_track02_level_handoff_status_name(
-                             (Theron_Track02LevelHandoffStatus)
-                                 initial_handoff.binding_status),
-                         anchor,
-                         initial_handoff.absolute_offset,
-                         initial_handoff.user_data_offset_valid,
-                         initial_handoff.user_data_offset,
-                         user_window_catalog.entry_count,
-                         user_window_descriptor_count,
-                         user_window_span_count,
-                         user_window_initial_count,
-                         text_marker_catalog.marker_count,
-                         startup_text_us_count,
-                         startup_text_jp_count,
-                         initial_handoff.expected_offset,
-                         initial_handoff.descriptor_delta,
-                         initial_handoff.candidate_count,
-                         initial_handoff.matches_initial_anchor,
-                         (unsigned)initial_handoff.header_width,
-                         (unsigned)initial_handoff.header_height,
-                         (unsigned)initial_handoff.header_seed,
-                         (int)world->levels[0][0].start_x,
-                         (int)world->levels[0][0].start_y,
-                         (int)world->levels[0][0].start_dir);
-            }
-            return 1;
-        }
-
-        for (entry = 0u; entry < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++entry) {
-            Theron_Track02LevelHandoff handoff;
-            Theron_Track02LevelHandoffStatus level_status;
-            Theron_V1_Level candidate;
-
-            level_status = theron_v1_track02_load_descriptor_window_level(
-                assets->hucard_rom,
-                assets->hucard_rom_size,
-                signal.descriptor_offsets[anchor],
-                entry,
-                THERON_DUNGEON_1_HALL_OF_RECORDS,
-                (int)entry,
-                &candidate,
-                &handoff);
-            ++tried;
-            if (level_status == THERON_TRACK02_LEVEL_HANDOFF_OK) {
-                world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-                world->current_level = 0;
-                world->levels[0][0] = candidate;
-                world->level_loaded[0][0] = 1;
-                theron_v1_party_place(world,
-                                      world->levels[0][0].start_x,
-                                      world->levels[0][0].start_y,
-                                      world->levels[0][0].start_dir);
-                if (receipt && receipt_cap > 0u) {
-                    snprintf(receipt,
-                             receipt_cap,
-                             "Track 02 level anchor=%zu entry=%zu offset=0x%zx size=%zu",
-                             anchor,
-                             entry,
-                             handoff.absolute_offset,
-                             handoff.byte_count);
-                }
-                return 1;
-            }
-        }
-    }
-
-    if (receipt && receipt_cap > 0u) {
-        snprintf(receipt,
-                 receipt_cap,
-                 "Track 02 descriptors scanned anchors=%zu windows=%d; no level claim yet",
-                 signal.anchor_count,
-                 tried);
-    }
-    return 0;
-}
-
 static void m11_theron_capture_track02_startup_roster(
     M11_GameViewState* state,
     const TrAssetBundle* assets,
@@ -12276,91 +12073,9 @@ static void m11_theron_capture_track02_startup_text(
     }
 }
 
-static int m11_theron_load_initial_level(Theron_V1_World* world,
-                                         const TrAssetBundle* assets,
-                                         const char* md5_hex,
-                                         Theron_DungeonID dungeon_id,
-                                         char* receipt,
-                                         size_t receipt_cap) {
-    uint8_t level_data[12 + 10 * 10];
-    const Theron_DungeonMeta* meta;
-    Theron_V1_Level preview;
-    size_t level_size;
-    int dungeon_index;
-    uint32_t seed;
-    Theron_MapLoadResult r;
-    if (!world) {
-        return 0;
-    }
-    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
-        dungeon_id > THERON_DUNGEON_COUNT) {
-        dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
-    }
-    dungeon_index = (int)dungeon_id - 1;
-    if (m11_theron_try_track02_initial_level(world,
-                                             assets,
-                                             md5_hex,
-                                             dungeon_id,
-                                             receipt,
-                                             receipt_cap)) {
-        return 1;
-    }
-
-    /* Small deterministic launch room used until the real Track 02 dungeon
-     * bank offsets are promoted into the parser. It still enters through
-     * theron_v1_level_load(), so runtime movement/rendering consume the same
-     * Theron world model as parsed maps.  Stage 1 is intentionally kept at
-     * the long-standing 8x8 pose; stages 2..7 get bounded distinct room
-     * metadata so the startup handoff stays stage-specific while Track 02
-     * bank promotion is still pending. Source: THQUEST.ASM T400/T520/T560. */
-    meta = theron_v1_dungeon_meta(dungeon_id);
-    seed = meta ? meta->dungeon_seed : 313u;
-    memset(&preview, 0, sizeof(preview));
-    level_size = theron_v1_startup_fallback_room_synthesize(
-        level_data,
-        sizeof(level_data),
-        dungeon_id,
-        &preview);
-    if (level_size == 0u) {
-        return 0;
-    }
-
-    world->current_dungeon = dungeon_id;
-    world->current_level = 0;
-    r = theron_v1_level_load(&world->levels[dungeon_index][0],
-                             level_data,
-                             (int)level_size,
-                             (int)world->current_dungeon,
-                             world->current_level);
-    if (r != THERON_MAP_OK) {
-        return 0;
-    }
-    world->levels[dungeon_index][0].start_x = preview.start_x;
-    world->levels[dungeon_index][0].start_y = preview.start_y;
-    world->levels[dungeon_index][0].start_dir =
-        preview.start_dir; /* THQUEST.ASM T520: north */
-    world->level_loaded[dungeon_index][0] = 1;
-    theron_v1_party_place(world,
-                          world->levels[dungeon_index][0].start_x,
-                          world->levels[dungeon_index][0].start_y,
-                          world->levels[dungeon_index][0].start_dir);
-    if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
-        snprintf(receipt,
-                 receipt_cap,
-                 "Track 02 descriptor scan unavailable; fallback room stage=%d size=%dx%d seed=%u start=(%d,%d,%d)",
-                 (int)dungeon_id,
-                 preview.width,
-                 preview.height,
-                 (unsigned)seed,
-                 (int)preview.start_x,
-                 (int)preview.start_y,
-                 (int)preview.start_dir);
-    }
-    return 1;
-}
-
 typedef struct {
-    const TrAssetBundle* assets;
+    const uint8_t* hucard_rom;
+    size_t hucard_rom_size;
     const char* md5_hex;
 } M11_TheronStartupLevelLoadContext;
 
@@ -12377,12 +12092,13 @@ static int m11_theron_startup_level_load_callback(
     if (!ctx) {
         return 0;
     }
-    return m11_theron_load_initial_level(world,
-                                         ctx->assets,
-                                         ctx->md5_hex,
-                                         dungeon_id,
-                                         receipt,
-                                         receipt_cap);
+    return theron_v1_startup_runtime_load_initial_level(world,
+                                                        ctx->hucard_rom,
+                                                        ctx->hucard_rom_size,
+                                                        ctx->md5_hex,
+                                                        dungeon_id,
+                                                        receipt,
+                                                        receipt_cap);
 }
 
 static void m11_theron_sync_startup_state(M11_GameViewState* state,
@@ -12508,7 +12224,8 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
-    levelLoadContext.assets = assets;
+    levelLoadContext.hucard_rom = assets->hucard_rom;
+    levelLoadContext.hucard_rom_size = assets->hucard_rom_size;
     levelLoadContext.md5_hex = profile->graphics_md5;
     result = theron_v1_startup_enter_runtime_from_forcefield(
         &flow,

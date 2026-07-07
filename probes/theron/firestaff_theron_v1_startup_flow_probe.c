@@ -1,4 +1,5 @@
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_runtime_entry.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1081,6 +1082,33 @@ int main(void) {
             check_contains("runtime entry receipt",
                            runtime_receipt,
                            "fake level stage=1");
+        }
+        {
+            char load_receipt[192];
+            load_receipt[0] = '\0';
+            theron_v1_world_init(&world);
+            result = theron_v1_startup_runtime_load_initial_level(
+                &world,
+                NULL,
+                0u,
+                NULL,
+                THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                load_receipt,
+                sizeof(load_receipt));
+            check_int("runtime loader fallback rc", result, 1);
+            check_int("runtime loader fallback dungeon",
+                      world.current_dungeon,
+                      THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+            check_int("runtime loader fallback level", world.current_level, 0);
+            check_int("runtime loader fallback loaded",
+                      world.level_loaded[THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1][0],
+                      1);
+            check_int("runtime loader fallback party x",
+                      world.party.leader_x,
+                      world.levels[THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1][0].start_x);
+            check_contains("runtime loader fallback receipt",
+                           load_receipt,
+                           "fallback room stage=3");
         }
         theron_v1_startup_flow_init(&flow);
         result = theron_v1_startup_choose_stage(
