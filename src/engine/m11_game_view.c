@@ -22171,31 +22171,32 @@ static void m11_draw_dm1_front_champion_portrait(const M11_GameViewState* state,
                                                  unsigned char* framebuffer,
                                                  int fbW,
                                                  int fbH) {
+    DM1_FrontMirrorRenderPlanPc34 plan;
     const M11_AssetSlot* portraits;
     int portraitIdx;
     if (!state || !cell) {
         return;
     }
     portraitIdx = cell->championPortraitOrdinal;
-    if (portraitIdx < 0) {
+    if (!dm1_v1_front_mirror_render_plan_pc34(portraitIdx, &plan)) {
         return;
     }
     portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                     (unsigned int)M11_GFX_CHAMPION_PORTRAITS);
+                                     (unsigned int)plan.portraitGraphicIndex);
     if (!portraits || !portraits->loaded || !portraits->pixels) {
         return;
     }
     M11_AssetLoader_BlitRegion(portraits,
-                               (portraitIdx & 7) * M11_PORTRAIT_W,
-                               (portraitIdx >> 3) * M11_PORTRAIT_H,
-                               M11_PORTRAIT_W,
-                               M11_PORTRAIT_H,
+                               plan.portraitSrcX,
+                               plan.portraitSrcY,
+                               plan.portraitWidth,
+                               plan.portraitHeight,
                                framebuffer,
                                fbW,
                                fbH,
-                               M11_VIEWPORT_X + 96,
-                               M11_VIEWPORT_Y + 35,
-                               1);
+                               M11_VIEWPORT_X + plan.portraitDstX,
+                               M11_VIEWPORT_Y + plan.portraitDstY,
+                               plan.portraitTransparentColor);
 }
 
 static void m11_draw_dm1_front_mirror_backing(unsigned char* framebuffer,
@@ -22237,20 +22238,17 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             unsigned char* framebuffer,
                                             int fbW,
                                             int fbH) {
-    static const unsigned char kOrnD2Palette[16] = {
-        0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
-    };
-    M11_DM1ZoneBlit blit;
+    DM1_FrontMirrorRenderPlanPc34 plan;
+    M11_DM1ZoneBlit backingBlit;
     const M11_AssetSlot* slot;
     M11_ViewportCell mirrorCell;
-    int ornGlobalIdx = 43;
     int portraitOrdinal;
     if (!state || !frontCell) {
         return;
     }
     mirrorCell = *frontCell;
     portraitOrdinal = m11_front_cell_mirror_ordinal(state);
-    if (portraitOrdinal < 0) {
+    if (!dm1_v1_front_mirror_render_plan_pc34(portraitOrdinal, &plan)) {
         return;
     }
     mirrorCell.championPortraitOrdinal = portraitOrdinal;
@@ -22260,19 +22258,8 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
      * enforces the source wall/fake-wall square-aspect gate, so open Hall
      * corridor squares carrying unrelated or transplanted C127 data cannot
      * draw a floating C026 portrait. */
-    /* DUNVIEW.C:3913-3928 gates G0289 champion portraits through the
-     * champion mirror wall ornament, C346 (global wall ornament 43).
-     * Do not substitute the map's last wall-ornament id here; on the
-     * Hall of Champions that can pick a non-mirror coordinate set and
-     * leave Halk/Leif/Sonja/Mophus/Wuuf-class portraits over stone. */
-    if (!m11_dm1_wall_ornament_zone(m11_dm1_wall_ornament_coord_set_index(ornGlobalIdx),
-                                    12,
-                                    &blit)) {
-        return;
-    }
-    blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 + 1;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)blit.graphicIndex);
+                                (unsigned int)plan.ornament.graphicIndex);
     /* BUG-120 + BUG-121 fix: when the C040 candidate panel is open
      * (candidateMirrorPanelActive == 1), the wall-ornament graphic is
      * not drawn — only the champion portrait. The ornament graphic
@@ -22293,12 +22280,14 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     }
     if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
         m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
-                                               M11_VIEWPORT_X + blit.dstX,
-                                               M11_VIEWPORT_Y + blit.dstY,
-                                               blit.width, blit.height,
-                                               10,
-                                               kOrnD2Palette,
-                                               0);
+                                               M11_VIEWPORT_X + plan.ornament.dstX,
+                                               M11_VIEWPORT_Y + plan.ornament.dstY,
+                                               plan.ornament.width,
+                                               plan.ornament.height,
+                                               plan.ornament.transparentColor,
+                                               plan.ornament.paletteMapValid ?
+                                                   plan.ornament.paletteMap : NULL,
+                                               plan.ornament.flipHorizontal);
     } else {
         /* BUG-DNY-DM1-2026-06-16: when the wall-ornament graphic does
          * not load (e.g. user is on a Hall of Champions tile whose
@@ -22312,9 +22301,9 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
          * through.  Fall back to a solid dark-gray wall rect at the
          * same destination so the portrait always has a backdrop. */
         m11_fill_rect(framebuffer, fbW, fbH,
-                      M11_VIEWPORT_X + blit.dstX,
-                      M11_VIEWPORT_Y + blit.dstY,
-                      blit.width, blit.height,
+                      M11_VIEWPORT_X + plan.backingDstX,
+                      M11_VIEWPORT_Y + plan.backingDstY,
+                      plan.backingWidth, plan.backingHeight,
                       (unsigned char)M11_COLOR_DARK_GRAY);
     }
     /* ReDMCSB DUNVIEW.C:3913-3928 draws the C346 D1C wall ornament
@@ -22324,7 +22313,14 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
      * Make that source geometry an invariant for every C127 route: the
      * extracted C346 bitmap may still contribute source pixels above, but
      * the portrait must never sit directly on stone or appear to float. */
-    m11_draw_dm1_front_mirror_backing(framebuffer, fbW, fbH, &blit);
+    backingBlit.graphicIndex = plan.ornament.graphicIndex;
+    backingBlit.srcX = plan.ornament.srcX;
+    backingBlit.srcY = plan.ornament.srcY;
+    backingBlit.dstX = plan.backingDstX;
+    backingBlit.dstY = plan.backingDstY;
+    backingBlit.width = plan.backingWidth;
+    backingBlit.height = plan.backingHeight;
+    m11_draw_dm1_front_mirror_backing(framebuffer, fbW, fbH, &backingBlit);
     m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
 }
 

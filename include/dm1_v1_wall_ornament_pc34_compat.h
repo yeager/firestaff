@@ -87,6 +87,22 @@ typedef struct DM1_WallOrnamentRenderPlanPc34 {
     int isAlcove;
 } DM1_WallOrnamentRenderPlanPc34;
 
+typedef struct DM1_FrontMirrorRenderPlanPc34 {
+    DM1_WallOrnamentRenderPlanPc34 ornament;
+    int portraitGraphicIndex;
+    int portraitSrcX;
+    int portraitSrcY;
+    int portraitDstX;
+    int portraitDstY;
+    int portraitWidth;
+    int portraitHeight;
+    int portraitTransparentColor;
+    int backingDstX;
+    int backingDstY;
+    int backingWidth;
+    int backingHeight;
+} DM1_FrontMirrorRenderPlanPc34;
+
 void m11_wo_init(M11_WO_OrnamentState* state);
 void m11_wo_set_level_ornaments(M11_WO_OrnamentState* state,
                                  uint8_t wall_count, uint8_t floor_count,
@@ -111,6 +127,9 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     int viewWallIndex,
     int maxHeight,
     DM1_WallOrnamentRenderPlanPc34* outPlan);
+int dm1_v1_front_mirror_render_plan_pc34(
+    int portraitOrdinal,
+    DM1_FrontMirrorRenderPlanPc34* outPlan);
 
 #ifdef __cplusplus
 }

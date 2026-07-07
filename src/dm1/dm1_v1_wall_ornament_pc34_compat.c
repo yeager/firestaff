@@ -10,7 +10,15 @@
 
 enum {
     DM1_GFX_WALL_ORNAMENT_BASE_PC34 = 259,
-    DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34 = 10
+    DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34 = 10,
+    DM1_GFX_CHAMPION_PORTRAITS_PC34 = 26,
+    DM1_FRONT_MIRROR_GLOBAL_ORNAMENT_PC34 = 43,
+    DM1_FRONT_MIRROR_VIEW_WALL_INDEX_PC34 = 12,
+    DM1_PORTRAIT_WIDTH_PC34 = 32,
+    DM1_PORTRAIT_HEIGHT_PC34 = 29,
+    DM1_PORTRAIT_DST_X_PC34 = 96,
+    DM1_PORTRAIT_DST_Y_PC34 = 35,
+    DM1_PORTRAIT_TRANSPARENT_COLOR_PC34 = 1
 };
 
 static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
@@ -240,5 +248,39 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     }
     outPlan->isAlcove =
         dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
+    return 1;
+}
+
+int dm1_v1_front_mirror_render_plan_pc34(
+    int portraitOrdinal,
+    DM1_FrontMirrorRenderPlanPc34* outPlan) {
+    if (!outPlan || portraitOrdinal < 0) {
+        return 0;
+    }
+    if (!dm1_v1_wall_ornament_render_plan_pc34(
+            DM1_FRONT_MIRROR_GLOBAL_ORNAMENT_PC34,
+            DM1_FRONT_MIRROR_VIEW_WALL_INDEX_PC34,
+            0,
+            &outPlan->ornament)) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNGEON.C:2608-2612 stores C127 sensorData as G0289.
+     * DUNVIEW.C:3913-3928 then draws wall ornament C346 and the C026
+     * champion portrait at G0109_ac_Box_ChampionPortraitOnWall. */
+    outPlan->portraitGraphicIndex = DM1_GFX_CHAMPION_PORTRAITS_PC34;
+    outPlan->portraitSrcX =
+        (portraitOrdinal & 7) * DM1_PORTRAIT_WIDTH_PC34;
+    outPlan->portraitSrcY =
+        (portraitOrdinal >> 3) * DM1_PORTRAIT_HEIGHT_PC34;
+    outPlan->portraitDstX = DM1_PORTRAIT_DST_X_PC34;
+    outPlan->portraitDstY = DM1_PORTRAIT_DST_Y_PC34;
+    outPlan->portraitWidth = DM1_PORTRAIT_WIDTH_PC34;
+    outPlan->portraitHeight = DM1_PORTRAIT_HEIGHT_PC34;
+    outPlan->portraitTransparentColor = DM1_PORTRAIT_TRANSPARENT_COLOR_PC34;
+    outPlan->backingDstX = outPlan->ornament.dstX;
+    outPlan->backingDstY = outPlan->ornament.dstY;
+    outPlan->backingWidth = outPlan->ornament.width;
+    outPlan->backingHeight = outPlan->ornament.height;
     return 1;
 }
