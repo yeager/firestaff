@@ -87,69 +87,65 @@ typedef struct {
 
 static int test_projectile_sprite_drawer(
     void *user,
-    const struct ProjectileInstance_Compat *projectile,
-    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeProjectileSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     TestRuntimeSpritePlacementCapture *capture =
         (TestRuntimeSpritePlacementCapture *)user;
-    (void)projectile;
-    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (!blit || !screen_pixels || screen_stride <= 0) return 0;
     if (capture) {
         ++capture->calls;
-        capture->forward = placement->forward;
-        capture->view_cell = placement->view_cell;
-        capture->source_zone = placement->source_zone;
-        capture->source_zone_row = placement->source_zone_row;
-        capture->sprite_x = placement->sprite_x;
-        capture->sprite_y = placement->sprite_y;
-        capture->sprite_w = placement->sprite_w;
-        capture->sprite_h = placement->sprite_h;
-        capture->aspect_index = placement->sprite_aspect_index;
-        capture->relative_dir = placement->sprite_relative_dir;
-        capture->relative_cell = placement->sprite_relative_cell;
-        capture->graphic_index = placement->sprite_graphic_index;
-        capture->flip_flags = placement->sprite_flip_flags;
+        capture->forward = blit->forward;
+        capture->view_cell = blit->view_cell;
+        capture->source_zone = blit->source_zone;
+        capture->source_zone_row = blit->source_zone_row;
+        capture->sprite_x = blit->x;
+        capture->sprite_y = blit->y;
+        capture->sprite_w = blit->w;
+        capture->sprite_h = blit->h;
+        capture->aspect_index = blit->aspect_index;
+        capture->relative_dir = blit->relative_dir;
+        capture->relative_cell = blit->relative_cell;
+        capture->graphic_index = blit->graphic_index;
+        capture->flip_flags = blit->flip_flags;
     }
-    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + placement->viewport_y) *
+    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + blit->viewport_y) *
                       screen_stride +
-                  DM1_VIEWPORT_SCREEN_X + placement->viewport_x] = 0x05u;
+                  DM1_VIEWPORT_SCREEN_X + blit->viewport_x] = 0x05u;
     return 1;
 }
 
 static int test_explosion_sprite_drawer(
     void *user,
-    const struct ExplosionInstance_Compat *explosion,
-    const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeExplosionSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     TestRuntimeSpritePlacementCapture *capture =
         (TestRuntimeSpritePlacementCapture *)user;
-    (void)explosion;
-    if (!placement || !screen_pixels || screen_stride <= 0) return 0;
+    if (!blit || !screen_pixels || screen_stride <= 0) return 0;
     if (capture) {
         ++capture->calls;
-        capture->forward = placement->forward;
-        capture->view_cell = placement->view_cell;
-        capture->source_zone = placement->source_zone;
-        capture->source_zone_row = placement->source_zone_row;
-        capture->sprite_x = placement->sprite_x;
-        capture->sprite_y = placement->sprite_y;
-        capture->sprite_w = placement->sprite_w;
-        capture->sprite_h = placement->sprite_h;
-        capture->depth_index = placement->depth_index;
-        capture->aspect_index = placement->sprite_aspect_index;
-        capture->graphic_index = placement->sprite_graphic_index;
-        capture->is_smoke = placement->sprite_is_smoke;
-        capture->frame = placement->sprite_frame;
-        capture->max_frames = placement->sprite_max_frames;
-        capture->attack = placement->sprite_attack;
+        capture->forward = blit->forward;
+        capture->view_cell = blit->view_cell;
+        capture->source_zone = blit->source_zone;
+        capture->source_zone_row = blit->source_zone_row;
+        capture->sprite_x = blit->x;
+        capture->sprite_y = blit->y;
+        capture->sprite_w = blit->w;
+        capture->sprite_h = blit->h;
+        capture->depth_index = blit->depth_index;
+        capture->aspect_index = blit->aspect_index;
+        capture->graphic_index = blit->graphic_index;
+        capture->is_smoke = blit->is_smoke;
+        capture->frame = blit->frame;
+        capture->max_frames = blit->max_frames;
+        capture->attack = blit->attack;
     }
-    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + placement->viewport_y) *
+    screen_pixels[(DM1_VIEWPORT_SCREEN_Y + blit->viewport_y) *
                       screen_stride +
-                  DM1_VIEWPORT_SCREEN_X + placement->viewport_x] = 0x0Bu;
+                  DM1_VIEWPORT_SCREEN_X + blit->viewport_x] = 0x0Bu;
     return 1;
 }
 

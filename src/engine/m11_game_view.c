@@ -1036,21 +1036,15 @@ typedef struct {
 
 static int m11_csb_viewport_projectile_sprite_drawer(
     void *user,
-    const struct ProjectileInstance_Compat *projectile,
-    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeProjectileSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
-    CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
 
-    if (!ctx || !ctx->state || !ctx->profile || !projectile || !placement ||
+    if (!ctx || !ctx->state || !ctx->profile || !blit ||
         !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
-        return 0;
-    }
-    (void)projectile;
-    if (!csb_v1_viewport_runtime_projectile_sprite_blit(placement, &blit)) {
         return 0;
     }
     /* ReDMCSB DUNVIEW.C F0115 lines 5710-5722 picks the scale row from
@@ -1062,35 +1056,29 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
-        blit.x,
-        blit.y,
-        blit.w,
-        blit.h,
-        blit.graphic_index,
-        blit.forward,
-        blit.relative_dir,
-        blit.relative_cell,
-        blit.flip_flags,
-        blit.source_zone_row);
+        blit->x,
+        blit->y,
+        blit->w,
+        blit->h,
+        blit->graphic_index,
+        blit->forward,
+        blit->relative_dir,
+        blit->relative_cell,
+        blit->flip_flags,
+        blit->source_zone_row);
 }
 
 static int m11_csb_viewport_explosion_sprite_drawer(
     void *user,
-    const struct ExplosionInstance_Compat *explosion,
-    const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
+    const CSB_V1_ViewportRuntimeExplosionSpriteBlit *blit,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
-    CSB_V1_ViewportRuntimeExplosionSpriteBlit blit;
 
-    if (!ctx || !ctx->state || !explosion || !placement || !screen_pixels ||
+    if (!ctx || !ctx->state || !blit || !screen_pixels ||
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
-        return 0;
-    }
-    (void)explosion;
-    if (!csb_v1_viewport_runtime_explosion_sprite_blit(placement, &blit)) {
         return 0;
     }
     /* ReDMCSB DUNVIEW.C F0115 lines 5916-6200 draws explosions in a
@@ -1101,17 +1089,17 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         screen_pixels,
         screen_stride,
         ctx->framebuffer_height,
-        blit.x,
-        blit.y,
-        blit.w,
-        blit.h,
-        blit.aspect_index,
-        blit.graphic_index,
-        blit.is_smoke,
-        blit.frame,
-        blit.max_frames,
-        blit.attack,
-        blit.depth_index);
+        blit->x,
+        blit->y,
+        blit->w,
+        blit->h,
+        blit->aspect_index,
+        blit->graphic_index,
+        blit->is_smoke,
+        blit->frame,
+        blit->max_frames,
+        blit->attack,
+        blit->depth_index);
 }
 
 static void m11_csb_runtime_overlay_stats_reset(
@@ -25577,6 +25565,25 @@ static int m11_dm1_center_line_clear_before_depth(const M11_ViewportCell cells[3
     return 1;
 }
 
+static int m11_dm1_center_content_visible_depth_mask(const M11_ViewportCell cells[3][3]) {
+    int depth;
+    int mask = 0;
+    if (!cells) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        const M11_ViewportCell* cell = &cells[depth][1];
+        if (!cell->valid) {
+            break;
+        }
+        if (!m11_viewport_cell_is_open(cell)) {
+            break;
+        }
+        mask |= (1 << depth);
+    }
+    return mask;
+}
+
 static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                                        unsigned char* framebuffer,
                                        int framebufferWidth,
@@ -32092,6 +32099,25 @@ int M11_GameView_ProbeDm1NearestBlockingCenterDepth(const M11_GameViewState* sta
     return 1;
 }
 
+int M11_GameView_ProbeDm1CenterContentVisibleDepthMask(const M11_GameViewState* state,
+                                                       int* outDepthMask) {
+    M11_ViewportCell cells[3][3];
+    int depth;
+    int side;
+    if (!state || !state->active || !outDepthMask) {
+        return 0;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        for (side = 0; side < 3; ++side) {
+            memset(&cells[depth][side], 0, sizeof(cells[depth][side]));
+            (void)m11_sample_viewport_cell(state, depth + 1, side - 1,
+                                           &cells[depth][side]);
+        }
+    }
+    *outDepthMask = m11_dm1_center_content_visible_depth_mask(cells);
+    return 1;
+}
+
 int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
                                           int relSide,
                                           int* outGraphicIndex,
@@ -38010,17 +38036,19 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * center cells.  The old procedural wall geometry remains debug-only;
      * this call only draws floor ornaments/items/creatures/projectiles for
      * open cells and gives M612/M618 changes a visual gate. */
-    occluded = 0;
-    for (depth = 0; depth < 3; ++depth) {
-        if (!occluded) {
-            m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
-                                   &frames[depth + 1], &cells[depth][1], depth);
-            if (!m11_viewport_cell_is_open(&cells[depth][1])) {
-                occluded = 1;
+    {
+        int centerContentMask =
+            m11_dm1_center_content_visible_depth_mask(cells);
+        for (depth = 0; depth < 3; ++depth) {
+            if ((centerContentMask & (1 << depth)) != 0) {
+                m11_draw_wall_contents(framebuffer, framebufferWidth,
+                                       framebufferHeight,
+                                       &frames[depth + 1],
+                                       &cells[depth][1],
+                                       depth);
             }
         }
     }
-
     /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3922-3928: the C127
      * champion portrait belongs to the D1C front champion-mirror wall
      * ornament.  Firestaff's current V1 renderer still batches primitive
@@ -38059,14 +38087,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
 
-        occluded = 0;
-        for (depth = 0; depth < 3; ++depth) {
-            if (!occluded) {
+        {
+            int centerContentMask =
+                m11_dm1_center_content_visible_depth_mask(cells);
+            for (depth = 0; depth < 3; ++depth) {
+                if ((centerContentMask & (1 << depth)) == 0) {
+                    continue;
+                }
                 m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
                                        &frames[depth + 1], &cells[depth][1], depth);
-                if (!m11_viewport_cell_is_open(&cells[depth][1])) {
-                    occluded = 1;
-                }
             }
         }
     }
