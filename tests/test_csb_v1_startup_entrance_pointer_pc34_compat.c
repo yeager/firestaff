@@ -1319,6 +1319,76 @@ int main(void)
               strcmp(outcome.status, "BACK TO LAUNCHER") == 0,
           "startup input outcome reports quit-to-launcher result");
 
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.credits_active = 1;
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &command_plan) &&
+              csb_v1_startup_apply_pure_entrance_plan_pc34(
+                  &command_state,
+                  &command_plan,
+                  &outcome) ==
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34 &&
+              !command_state.credits_active &&
+              outcome.result ==
+                  CSB_V1_STARTUP_ENTRANCE_INPUT_REDRAW_PC34 &&
+              strcmp(outcome.status, "CSB ENTRANCE") == 0,
+          "startup pure command apply dismisses credits");
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34,
+              &command_plan) &&
+              csb_v1_startup_apply_pure_entrance_plan_pc34(
+                  &command_state,
+                  &command_plan,
+                  &outcome) ==
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34 &&
+              command_state.credits_active &&
+              command_state.credits_remaining_ticks ==
+                  csb_v1_startup_entrance_credits_ticks_pc34() &&
+              strcmp(outcome.status, "CSB CREDITS") == 0,
+          "startup pure command apply begins credits");
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34,
+              &command_plan) &&
+              csb_v1_startup_apply_pure_entrance_plan_pc34(
+                  &command_state,
+                  &command_plan,
+                  &outcome) ==
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_RETURN_TO_LAUNCHER_PC34 &&
+              !command_state.entrance_active &&
+              command_state.entrance_dismissed &&
+              strcmp(outcome.status, "BACK TO LAUNCHER") == 0,
+          "startup pure command apply quits to launcher");
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    check(csb_v1_startup_plan_for_entrance_command_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &command_plan) &&
+              csb_v1_startup_apply_pure_entrance_plan_pc34(
+                  &command_state,
+                  &command_plan,
+                  &outcome) ==
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34,
+          "startup pure command apply leaves runtime dungeon entry to M11");
+
     command_state.title_active = 1;
     command_state.title_frame = 7;
     command_state.title_source_step = 2;
