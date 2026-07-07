@@ -239,6 +239,17 @@ int dm1_viewport_3d_max_visible_forward_from_center_pc34(
     return nearest >= 0 ? nearest + 1 : 3;
 }
 
+int dm1_viewport_3d_use_flipped_walls_pc34(
+    int party_map_x,
+    int party_map_y,
+    int party_direction)
+{
+    /* ReDMCSB DUNVIEW.C F0128 line 8357 sets
+     * G0076_B_UseFlippedWallAndFootprintsBitmaps from the party tuple
+     * before dispatching the visible square draw order. */
+    return (party_map_x + party_map_y + party_direction) & 1;
+}
+
 int dm1_viewport_3d_side_lane_clear_for_rel_pc34(int rel_forward,
                                                  int rel_side,
                                                  unsigned int open_depth_mask)

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 viewport parity predicate ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 `(mapX + mapY + direction) & 1` wall/footprint parity predicate. M11 still supplies the party tuple but no longer carries the source rule locally. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` passed, `test_dm1_v1_stairs_render_pc34_compat` passed 111/111, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 stairs orientation ownership: `dm1_v1_stairs_render_pc34_compat` now owns the square-bit `0x08` north/south orientation test, party-direction front-facing decision, and square-aware stairs render-plan selection. M11 no longer carries a local `m11_dm1_stairs_front_facing()` rule. Verification: `test_dm1_v1_stairs_render_pc34_compat` passed 111/111, direct `test_dm1_v1_viewport_3d_pc34_compat` passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB startup entrance outcome ownership: `csb_v1_startup_sequence_pc34_compat` now owns entrance input outcomes for ignore/redraw/return-to-launcher plus resume unavailable/failed/loaded status text. M11 applies the CSB-owned outcome after required runtime side effects, and the CSB startup test target now links the DM1 title timing module required by `title_frontend_v1.c`. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 84/84, M11 syntax passed cleanly, and `git diff --check` passed.
