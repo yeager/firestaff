@@ -2635,6 +2635,10 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_place.icon_screen_x, 80);
     check_int("csb.runtime_object_overlay.d1c.pile0.icon_y",
               object_place.icon_screen_y, 129);
+    check_int("csb.runtime_object_overlay.d1c.pile0.icon_draw_x",
+              object_place.icon_draw_x, 72);
+    check_int("csb.runtime_object_overlay.d1c.pile0.icon_draw_y",
+              object_place.icon_draw_y, 121);
     {
         uint8_t screen[320 * 200];
         memset(screen, 0, sizeof(screen));
@@ -2685,6 +2689,12 @@ static void test_csb_runtime_overlay_placement_contracts(void)
     check_int("csb.runtime_object_overlay.d2c.pile1.icon_y",
               object_place.icon_screen_y,
               object_place.marker_screen_y);
+    check_int("csb.runtime_object_overlay.d2c.pile1.icon_draw_x",
+              object_place.icon_draw_x,
+              object_place.icon_screen_x - 8);
+    check_int("csb.runtime_object_overlay.d2c.pile1.icon_draw_y",
+              object_place.icon_draw_y,
+              object_place.icon_screen_y - 8);
 
     memset(&object_place, 0, sizeof(object_place));
     check_int("csb.runtime_object_overlay.bad_cell.hidden",

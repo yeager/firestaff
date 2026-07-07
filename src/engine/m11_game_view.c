@@ -1289,8 +1289,8 @@ static void m11_draw_csb_runtime_thing_overlays(
                     framebuffer_width,
                     framebuffer_height,
                     icon,
-                    placement->icon_screen_x - 8,
-                    placement->icon_screen_y - 8,
+                    placement->icon_draw_x,
+                    placement->icon_draw_y,
                     0)) {
                 m11_csb_runtime_overlay_stats_add_object_icon(state);
             } else if (csb_v1_viewport_draw_runtime_object_marker(

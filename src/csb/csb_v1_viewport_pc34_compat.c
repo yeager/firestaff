@@ -943,6 +943,11 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
     if (relative_cell >= 2) {
         placement.icon_screen_y += 3;
     }
+    /* The shared M11 icon blitter takes top-left coordinates, while the
+     * CSB F0115 object placement contract exposes the source cell center.
+     * Keep that 16x16 icon-origin conversion in the CSB viewport layer. */
+    placement.icon_draw_x = placement.icon_screen_x - 8;
+    placement.icon_draw_y = placement.icon_screen_y - 8;
     if (out_placement) *out_placement = placement;
     return placement.visible;
 }
