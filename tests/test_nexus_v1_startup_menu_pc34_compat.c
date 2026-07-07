@@ -389,6 +389,23 @@ int main(void)
                    action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR &&
                    champion_snapshot.cursor == 2,
                "Nexus champion snapshot owns cursor input");
+        {
+            Nexus_V1_StartupChampionSnapshot facts_snapshot;
+            memset(&facts_snapshot, 0, sizeof(facts_snapshot));
+            expect(nexus_v1_startup_champion_handle_firestaff_input_from_facts(
+                       &champions,
+                       &facts_snapshot,
+                       0x0fffu,
+                       99,
+                       -5,
+                       2,
+                       &action) &&
+                       facts_snapshot.slot_mask == 0x00ffu &&
+                       facts_snapshot.cursor == 2 &&
+                       facts_snapshot.frame == 0 &&
+                       action.kind == NEXUS_V1_STARTUP_ACTION_CHAMPION_CURSOR,
+                   "Nexus champion facts input helper owns M11 keyboard construction");
+        }
         snapshot_row_count =
             nexus_v1_startup_champion_snapshot_build_render_rows(
                 &champions,

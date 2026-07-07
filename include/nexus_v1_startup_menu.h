@@ -399,6 +399,14 @@ int nexus_v1_startup_champion_snapshot_handle_input(
     Nexus_V1_StartupChampionSnapshot *snapshot,
     Nexus_V1_StartupInput input,
     Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_champion_handle_firestaff_input_from_facts(
+    Nexus_V1_ChampionPool *pool,
+    Nexus_V1_StartupChampionSnapshot *snapshot,
+    unsigned int slot_mask,
+    int cursor,
+    int frame,
+    int firestaff_input,
+    Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_champion_snapshot_handle_hit(
     Nexus_V1_ChampionPool *pool,
     Nexus_V1_StartupChampionSnapshot *snapshot,
