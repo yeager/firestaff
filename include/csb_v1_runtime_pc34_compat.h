@@ -944,6 +944,12 @@ int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
 int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
                                        const char *path);
 int csb_v1_runtime_can_load_resume_path(const char *path);
+int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
+                                         const char *path,
+                                         int *out_count,
+                                         int *out_utility_state,
+                                         char *out_utility_prompt,
+                                         size_t out_utility_prompt_size);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

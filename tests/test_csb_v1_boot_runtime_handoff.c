@@ -1296,12 +1296,60 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
     csb_v1_boot_cleanup(&p);
 }
 
+static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
+{
+    CSB_V1_RuntimeProfile runtime;
+    CSB_V1_PartyState party;
+    uint8_t save_buf[1024];
+    const char *path = "/tmp/firestaff-csb-v1-runtime-dm1-import.sav";
+    FILE *f;
+    int imported_count = 0;
+    int utility_state = -1;
+    char utility_prompt[128];
+
+    CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
+          "runtime DM1 import builds a two-champion source save buffer");
+    f = fopen(path, "wb");
+    CHECK(f != NULL, "runtime DM1 import fixture opens for write");
+    if (f) {
+        CHECK(fwrite(save_buf, 1u, sizeof(save_buf), f) == sizeof(save_buf),
+              "runtime DM1 import fixture writes the full source buffer");
+        fclose(f);
+    }
+
+    csb_v1_runtime_init(&runtime, NULL);
+    utility_prompt[0] = '\0';
+    CHECK(csb_v1_runtime_import_dm1_party_path(&runtime,
+                                               path,
+                                               &imported_count,
+                                               &utility_state,
+                                               utility_prompt,
+                                               sizeof(utility_prompt)) == 1,
+          "runtime imports a DM1 party through the CSB utility handoff");
+    CHECK(imported_count == 2,
+          "runtime DM1 import reports imported champion count");
+    CHECK(utility_state == (int)CSB_V1_UTIL_FLOW_DONE,
+          "runtime DM1 import exposes completed utility state");
+    CHECK(strstr(utility_prompt, "READY") != NULL,
+          "runtime DM1 import exposes the final utility prompt");
+    memset(&party, 0, sizeof(party));
+    CHECK(csb_v1_runtime_get_party_state(&runtime, &party) == 2,
+          "runtime DM1 import commits party state to runtime");
+    CHECK(party.ImportedFromDM1 == 1 &&
+              party.ChampionCount == 2 &&
+              memcmp(party.Champions[1].Name, "BETA", 4u) == 0,
+          "runtime DM1 import preserves champion identity and provenance");
+    csb_v1_runtime_cleanup(&runtime);
+    remove(path);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
     test_enter_game_with_verified_profile_loads_dungeon();
     test_enter_game_loads_m564_object_names_from_graphics_dat();
     test_enter_game_preserves_imported_party_and_switches_leader();
+    test_runtime_import_dm1_party_path_owns_utility_handoff();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();

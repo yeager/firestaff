@@ -22,6 +22,7 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_utility_flow_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
@@ -1306,6 +1307,98 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
 
     memset(&party, 0, sizeof(party));
     return csb_v1_import_csb_save_file(&party, path) > 0;
+}
+
+int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
+                                         const char *path,
+                                         int *out_count,
+                                         int *out_utility_state,
+                                         char *out_utility_prompt,
+                                         size_t out_utility_prompt_size)
+{
+    CSB_V1_UtilFlowContext flow;
+    CSB_V1_PartyState party;
+    int count;
+
+    if (out_count) {
+        *out_count = 0;
+    }
+    if (out_utility_state) {
+        *out_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
+    }
+    if (out_utility_prompt && out_utility_prompt_size > 0u) {
+        out_utility_prompt[0] = '\0';
+    }
+    if (!profile || !path || path[0] == '\0') {
+        return 0;
+    }
+
+    /* ReDMCSB/CSBWin utility startup imports a DM1 party before the
+     * CSB dungeon starts.  Keep this as a runtime-party handoff rather
+     * than a Resume save: the entrance still owns the final Enter click.
+     * Drive the CSB utility setup state machine so the runtime handoff
+     * follows the same IMPORT -> CONFIRM_IMPORT -> NEW_GAME surface used
+     * by the launcher utility path. */
+    csb_v1_util_flow_init(&flow);
+    csb_v1_util_flow_set_dm1_path(&flow, path);
+    csb_v1_util_flow_mark_utility_disk_verified(&flow, 1);
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_INSERT_DISK) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_VERIFY_DISK) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_DISK_OK) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
+        return 0;
+    }
+    if (!csb_v1_util_flow_accept_import_action(&flow)) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_CONFIRM_IMPORT) {
+        return 0;
+    }
+    csb_v1_util_flow_confirm_import(&flow, 1);
+    if (csb_v1_util_flow_step(&flow) != 0 ||
+        flow.state != CSB_V1_UTIL_FLOW_NEW_GAME) {
+        return 0;
+    }
+    if (csb_v1_util_flow_step(&flow) != 1 ||
+        flow.state != CSB_V1_UTIL_FLOW_DONE) {
+        return 0;
+    }
+    if (out_utility_state) {
+        *out_utility_state = (int)flow.state;
+    }
+    if (out_utility_prompt && out_utility_prompt_size > 0u) {
+        snprintf(out_utility_prompt,
+                 out_utility_prompt_size,
+                 "%s",
+                 csb_v1_util_flow_prompt(&flow));
+    }
+    memset(&party, 0, sizeof(party));
+    count = csb_v1_util_flow_get_party(&flow, &party);
+    if (count <= 0 || !party.ImportedFromDM1) {
+        return 0;
+    }
+    if (csb_v1_runtime_set_party_state(profile, &party) != 0) {
+        return 0;
+    }
+    if (out_count) {
+        *out_count = count;
+    }
+    return 1;
 }
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
