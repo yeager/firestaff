@@ -439,6 +439,28 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
     int savedMapX;
     int savedMapY;
     int savedDirection;
+    int savedInventoryPanelActive;
+    int savedCandidateMirrorPanelActive;
+    int savedShowDebugHUD;
+    int savedSpellPanelOpen;
+    int savedDamageFlashTimer;
+    int savedAttackCueTimer;
+    int savedCreatureHitOverlayTimer;
+    int savedMapOverlayActive;
+    int savedDialogOverlayActive;
+    int savedReturnToMenuConfirmActive;
+    int savedQuitGuardActive;
+    int savedSessionTimerForcedPauseDialogActive;
+    int savedSessionTimerReminderOverlayActive;
+    int savedV1ObjectDescriptionPanelActive;
+    int savedV1ScrollPanelActive;
+    int savedV1ChampionStatsPanelActive;
+    int savedV1FoodWaterPanelActive;
+    int savedCameraOffsetX;
+    int savedCameraOffsetY;
+    int16_t savedCameraInterpolatedFacing;
+    DM1_V2_CameraController savedP5Camera;
+    M12_PresentationMode savedPresentationMode;
     int x;
     int y;
     if (!state || !state->active || !state->world.dungeon || !state->world.things ||
@@ -455,6 +477,56 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
     savedMapX = state->world.party.mapX;
     savedMapY = state->world.party.mapY;
     savedDirection = state->world.party.direction;
+    savedInventoryPanelActive = state->inventoryPanelActive;
+    savedCandidateMirrorPanelActive = state->candidateMirrorPanelActive;
+    savedShowDebugHUD = state->showDebugHUD;
+    savedSpellPanelOpen = state->spellPanelOpen;
+    savedDamageFlashTimer = state->damageFlashTimer;
+    savedAttackCueTimer = state->attackCueTimer;
+    savedCreatureHitOverlayTimer = state->creatureHitOverlayTimer;
+    savedMapOverlayActive = state->mapOverlayActive;
+    savedDialogOverlayActive = state->dialogOverlayActive;
+    savedReturnToMenuConfirmActive = state->returnToMenuConfirmActive;
+    savedQuitGuardActive = state->quitGuardActive;
+    savedSessionTimerForcedPauseDialogActive =
+        state->sessionTimerForcedPauseDialogActive;
+    savedSessionTimerReminderOverlayActive =
+        state->sessionTimerReminderOverlayActive;
+    savedV1ObjectDescriptionPanelActive = state->v1ObjectDescriptionPanelActive;
+    savedV1ScrollPanelActive = state->v1ScrollPanelActive;
+    savedV1ChampionStatsPanelActive = state->v1ChampionStatsPanelActive;
+    savedV1FoodWaterPanelActive = state->v1FoodWaterPanelActive;
+    savedCameraOffsetX = state->camera_offset_x;
+    savedCameraOffsetY = state->camera_offset_y;
+    savedCameraInterpolatedFacing = state->camera_interpolated_facing;
+    savedP5Camera = state->p5_camera;
+    savedPresentationMode = state->presentationMode;
+    /* Earlier mirror-candidate invariants deliberately leave C040/inventory
+     * overlays and combat/action timers active.  This gate measures the
+     * dungeon D1C wall route itself; transient overlays are restored below
+     * after the two source C127 front routes are sampled. */
+    state->inventoryPanelActive = 0;
+    state->candidateMirrorPanelActive = 0;
+    state->showDebugHUD = 0;
+    state->spellPanelOpen = 0;
+    state->damageFlashTimer = 0;
+    state->attackCueTimer = 0;
+    state->creatureHitOverlayTimer = 0;
+    state->mapOverlayActive = 0;
+    state->dialogOverlayActive = 0;
+    state->returnToMenuConfirmActive = 0;
+    state->quitGuardActive = 0;
+    state->sessionTimerForcedPauseDialogActive = 0;
+    state->sessionTimerReminderOverlayActive = 0;
+    state->v1ObjectDescriptionPanelActive = 0;
+    state->v1ScrollPanelActive = 0;
+    state->v1ChampionStatsPanelActive = 0;
+    state->v1FoodWaterPanelActive = 0;
+    state->camera_offset_x = 0;
+    state->camera_offset_y = 0;
+    state->camera_interpolated_facing = 0;
+    memset(&state->p5_camera, 0, sizeof(state->p5_camera));
+    state->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     portraits = M11_AssetLoader_Load(&state->assetLoader,
                                      (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
     assetsAvailable = portraits && portraits->loaded && portraits->pixels;
@@ -557,6 +629,30 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
     state->world.party.mapX = savedMapX;
     state->world.party.mapY = savedMapY;
     state->world.party.direction = savedDirection;
+    state->inventoryPanelActive = savedInventoryPanelActive;
+    state->candidateMirrorPanelActive = savedCandidateMirrorPanelActive;
+    state->showDebugHUD = savedShowDebugHUD;
+    state->spellPanelOpen = savedSpellPanelOpen;
+    state->damageFlashTimer = savedDamageFlashTimer;
+    state->attackCueTimer = savedAttackCueTimer;
+    state->creatureHitOverlayTimer = savedCreatureHitOverlayTimer;
+    state->mapOverlayActive = savedMapOverlayActive;
+    state->dialogOverlayActive = savedDialogOverlayActive;
+    state->returnToMenuConfirmActive = savedReturnToMenuConfirmActive;
+    state->quitGuardActive = savedQuitGuardActive;
+    state->sessionTimerForcedPauseDialogActive =
+        savedSessionTimerForcedPauseDialogActive;
+    state->sessionTimerReminderOverlayActive =
+        savedSessionTimerReminderOverlayActive;
+    state->v1ObjectDescriptionPanelActive = savedV1ObjectDescriptionPanelActive;
+    state->v1ScrollPanelActive = savedV1ScrollPanelActive;
+    state->v1ChampionStatsPanelActive = savedV1ChampionStatsPanelActive;
+    state->v1FoodWaterPanelActive = savedV1FoodWaterPanelActive;
+    state->camera_offset_x = savedCameraOffsetX;
+    state->camera_offset_y = savedCameraOffsetY;
+    state->camera_interpolated_facing = savedCameraInterpolatedFacing;
+    state->p5_camera = savedP5Camera;
+    state->presentationMode = savedPresentationMode;
 }
 
 
