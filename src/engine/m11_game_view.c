@@ -730,10 +730,21 @@ static int m11_dm2_startup_apply_session(M11_GameViewState *state,
         return 0;
     }
     m11_dm2_mirror_session_party(state, session);
-    state->dm2State.startup_menu_active = 0;
     m11_sync_dm2_state_from_runtime(state);
     m11_set_status(state, "STARTUP", status ? status : "DM2 STARTED");
     return 1;
+}
+
+static void m11_dm2_startup_apply_mode_update(
+    M11_GameViewState *state,
+    const DM2_V1_StartupModeUpdate *update)
+{
+    if (!state || !update) {
+        return;
+    }
+    if (update->set_startup_menu_active) {
+        state->dm2State.startup_menu_active = update->startup_menu_active;
+    }
 }
 
 static M11_GameInputResult m11_dm2_startup_apply_action(
@@ -746,6 +757,7 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_StartupExecution execution;
+    DM2_V1_StartupModeUpdate update;
 
     if (!state || !state->dm2State.startup_menu_active ||
         !state->dm2BootProfile || !action) {
@@ -755,6 +767,9 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
     if (!dm2_v1_startup_execute_action(action,
                                        profile->save_root,
                                        &execution)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!dm2_v1_startup_execution_mode_update(&execution, &update)) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW) {
@@ -768,11 +783,12 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
         return M11_GAME_INPUT_REDRAW;
     }
     if (execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
-        return m11_dm2_startup_apply_session(state,
-                                             &execution.session,
-                                             execution.status)
-                   ? M11_GAME_INPUT_REDRAW
-                   : M11_GAME_INPUT_REDRAW;
+        if (m11_dm2_startup_apply_session(state,
+                                          &execution.session,
+                                          execution.status)) {
+            m11_dm2_startup_apply_mode_update(state, &update);
+        }
+        return M11_GAME_INPUT_REDRAW;
     }
     if (execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER) {
         m11_set_status(state,
@@ -21304,14 +21320,6 @@ static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[
     return 3;
 }
 
-static int m11_dm1_primary_side_wall_max_forward(int centerMaxVisibleForward) {
-    (void)centerMaxVisibleForward;
-    /* ReDMCSB DUNVIEW.C F0128 draws D3/D2/D1 side squares before the
-     * same-depth center square, so the primary side-wall pass always walks
-     * the full three-step side-wall envelope. */
-    return 3;
-}
-
 static int m11_dm1_nearest_blocking_center_depth_index(const M11_ViewportCell cells[3][3]) {
     int depth;
     if (!cells) {
@@ -30613,7 +30621,7 @@ int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
 }
 
 int M11_GameView_ProbeDm1PrimarySideWallMaxForward(int centerMaxVisibleForward) {
-    return m11_dm1_primary_side_wall_max_forward(centerMaxVisibleForward);
+    return dm1_viewport_3d_primary_side_wall_max_forward_pc34(centerMaxVisibleForward);
 }
 
 int M11_GameView_ProbeDm1D1CThievesEyeMaskBlit(int doorState,
@@ -36448,7 +36456,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * replay pass below still uses a reduced max to repair near-side occlusion
      * after center doors/walls have been drawn. */
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                            m11_dm1_primary_side_wall_max_forward(maxVisibleForward),
+                            dm1_viewport_3d_primary_side_wall_max_forward_pc34(
+                                maxVisibleForward),
                             cells);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,

@@ -36,6 +36,15 @@ static void dm2_v1_startup_execution_clear(
     execution->kind = DM2_V1_STARTUP_EXEC_IGNORE;
 }
 
+static void dm2_v1_startup_mode_update_clear(
+    DM2_V1_StartupModeUpdate *update)
+{
+    if (!update) {
+        return;
+    }
+    memset(update, 0, sizeof(*update));
+}
+
 DM2_V1_StartupInput dm2_v1_startup_input_from_firestaff_menu_code(
     int menu_input)
 {
@@ -634,6 +643,22 @@ int dm2_v1_startup_execute_action(
         return 0;
     }
     return dm2_v1_startup_execute_plan(&plan, save_root, out_execution);
+}
+
+int dm2_v1_startup_execution_mode_update(
+    const DM2_V1_StartupExecution *execution,
+    DM2_V1_StartupModeUpdate *out_update)
+{
+    if (!execution || !out_update ||
+        execution->kind == DM2_V1_STARTUP_EXEC_IGNORE) {
+        return 0;
+    }
+    dm2_v1_startup_mode_update_clear(out_update);
+    if (execution->kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
+        out_update->set_startup_menu_active = 1;
+        out_update->startup_menu_active = 0;
+    }
+    return 1;
 }
 
 int dm2_v1_startup_execute_save_path(

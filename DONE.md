@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM2 startup mode-update ownership: `dm2_v1_startup_menu` now exposes `DM2_V1_StartupModeUpdate` plus `dm2_v1_startup_execution_mode_update()`, so `SESSION_READY` owns the startup-menu close transition. M11 applies the DM2-owned update only after successful runtime session handoff. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 42/42, DM2 startup syntax passed, M11 syntax passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Nexus title/save startup mode-update ownership: `nexus_v1_startup_menu` now also exposes `nexus_v1_startup_title_execution_mode_update()` and `nexus_v1_startup_save_execution_mode_update()`, so title-ready, save-select, load-slot, New Game, and Back-to-title startup mode transitions are Nexus-owned. M11 now applies the shared Nexus mode update contract for title, save-select, and champion-select startup actions. Verification: direct `test_nexus_v1_startup_menu_pc34_compat` build/run passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 title timing ownership: `dm1_v1_startup_sequence_pc34_compat` now owns the DM1 V1 title zoom count, source-event count, frame-bank cadence, PRESENTS hold, VBlank tick, post-zoom waits, and final guard timing. `title_frontend_v1` consumes that DM1 contract instead of carrying local timing literals. Verification: direct `test_dm1_v1_startup_intro_state_machine_gate`, `test_title_frontend_runtime_cadence_pc34_compat`, and M11 syntax checks passed, and `git diff --check` passed.
@@ -43,6 +45,8 @@
 - ✅ 2026-07-07 CSB startup text material ownership: `csb_v1_text_material_pc34_compat` now owns CSB startup/utility text material for small, title, and shadow rows: scale, palette index, and shadow offset/color. M11 consumes the CSB material contract instead of mapping CSB text-style ids to local text styles itself. Verification: direct `test_csb_v1_startup_entrance_pointer_pc34_compat` build/run passed 68/68, direct `test_csb_v1_utility_flow_action_contract` build/run passed 33/33, `cc -std=c11 -Wall -Wextra -I. -Iinclude -Isrc -Isrc/engine -Isrc/shared -Isrc/csb -fsyntax-only src/engine/m11_game_view.c` passed with existing unused-function warnings, and `git diff --check` passed.
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
+
+- ✅ 2026-07-07 DM1 primary side-wall envelope ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 primary side-wall max-forward contract, and M11 runtime/probe code consumes that DM1-owned API instead of carrying a private local rule. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, M11 syntax passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM2 startup input adapter ownership: `dm2_v1_startup_menu` now maps Firestaff menu input codes to DM2 startup input through `dm2_v1_startup_input_from_firestaff_menu_code()`. M11 consumes that adapter and only asserts the M12 enum code contract, so the DM2 startup layer owns the startup input translation. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 33/33, DM2 startup syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
