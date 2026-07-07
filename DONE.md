@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 title C001 blit-plan ownership: `title_frontend_v1` now owns the GRAPHICS.DAT C001 blit plan for PRESENTS, zoom, and MASTER/STRIKES BACK, including source/destination rectangles, transparency, and clear-before-blit behavior. M11 consumes the title frontend plan instead of carrying TITLE.C coordinates locally. Verification: `title_frontend_c001_fallback_gate_pc34_compat`, `title_frontend_runtime_cadence_source_lock`, and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 entrance fallback render ownership: `entrance_frontend_pc34_compat` now owns closed-door C002/C003 blit specs and the no-asset closed/opening door fallback panel renderer. M11 now loads/blits requested assets or delegates fallback drawing to the DM1 entrance compat layer. Verification: `test_entrance_door_opening_composite_pc34_compat`, `test_entrance_runtime_dispatch_source_lock`, and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 entrance runtime command ownership: `entrance_frontend_pc34_compat` now owns the DM1 entrance key-command policy, source-command path mapping, credits wait ticks, vblank delay, headless timeout policy, and resume save-path resolution. M11 now only adapts SDL input/events and uses the DM1 entrance compat contract. Verification: `test_entrance_runtime_dispatch_source_lock`, `test_m11_entrance_wait_policy`, `test_entrance_door_opening_composite_pc34_compat`, and `firestaff_m11_phase_a_probe` passed; `git diff --check` passed.

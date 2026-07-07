@@ -92,6 +92,27 @@ typedef struct V1_TitleFrontendRuntimeSourceDecision {
     const char* sourceLineEvidence;
 } V1_TitleFrontendRuntimeSourceDecision;
 
+typedef enum V1_TitleFrontendC001BlitKind {
+    V1_TITLE_FRONTEND_C001_BLIT_NONE = 0,
+    V1_TITLE_FRONTEND_C001_BLIT_REGION = 1,
+    V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION = 2
+} V1_TitleFrontendC001BlitKind;
+
+typedef struct V1_TitleFrontendC001BlitPlan {
+    V1_TitleFrontendC001BlitKind kind;
+    unsigned int srcX;
+    unsigned int srcY;
+    unsigned int srcW;
+    unsigned int srcH;
+    unsigned int dstX;
+    unsigned int dstY;
+    unsigned int dstW;
+    unsigned int dstH;
+    int transparentColor;
+    int clearBeforeBlit;
+    const char* sourceLineEvidence;
+} V1_TitleFrontendC001BlitPlan;
+
 /*
  * Map a finite TITLE presentation step onto the source-backed TITLE frame bank.
  * Steps 1..53 render source frames 1..53.  Later steps hold frame 53 and mark
@@ -139,6 +160,14 @@ V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
 unsigned int V1_TitleFrontend_GetSourceAnimationStepCount(void);
 int V1_TitleFrontend_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                                             V1_TitleFrontendSourceAnimationStep* outStep);
+
+/*
+ * Resolve the GRAPHICS.DAT C001 blit operation for a source animation step.
+ * M11 supplies the loaded asset and framebuffer; TITLE frontend owns the
+ * TITLE.C source/destination boxes, transparency, and clear-before-blit rule.
+ */
+int V1_TitleFrontend_GetC001BlitPlanForStep(const V1_TitleFrontendSourceAnimationStep* step,
+                                            V1_TitleFrontendC001BlitPlan* outPlan);
 
 /*
  * Deterministic implementation handoff for callers that want a finite

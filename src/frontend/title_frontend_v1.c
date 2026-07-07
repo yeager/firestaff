@@ -191,6 +191,61 @@ int V1_TitleFrontend_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
     return 1;
 }
 
+int V1_TitleFrontend_GetC001BlitPlanForStep(const V1_TitleFrontendSourceAnimationStep* step,
+                                            V1_TitleFrontendC001BlitPlan* outPlan) {
+    V1_TitleFrontendC001BlitPlan plan;
+    if (!outPlan || !step) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.kind = V1_TITLE_FRONTEND_C001_BLIT_NONE;
+    plan.transparentColor = -1;
+    plan.sourceLineEvidence = step->sourceLineEvidence;
+    switch (step->kind) {
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS:
+        plan.kind = V1_TITLE_FRONTEND_C001_BLIT_REGION;
+        plan.srcX = 0u;
+        plan.srcY = 137u;
+        plan.srcW = 320u;
+        plan.srcH = 16u;
+        plan.dstX = 0u;
+        plan.dstY = 90u;
+        plan.dstW = 320u;
+        plan.dstH = 16u;
+        plan.clearBeforeBlit = 1;
+        break;
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
+        plan.kind = V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION;
+        plan.srcX = step->x;
+        plan.srcY = step->y;
+        plan.srcW = step->width;
+        plan.srcH = step->height;
+        plan.dstX = 0u;
+        plan.dstY = 0u;
+        plan.dstW = 320u;
+        plan.dstH = 80u;
+        plan.clearBeforeBlit = 1;
+        break;
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:
+        plan.kind = V1_TITLE_FRONTEND_C001_BLIT_REGION;
+        plan.srcX = 0u;
+        plan.srcY = 80u;
+        plan.srcW = 320u;
+        plan.srcH = 57u;
+        plan.dstX = 0u;
+        plan.dstY = 118u;
+        plan.dstW = 320u;
+        plan.dstH = 57u;
+        plan.transparentColor = 0;
+        break;
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK:
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK:
+    case V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE:
+    default:
+        break;
+    }
+    *outPlan = plan;
+    return 1;
+}
+
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     V1_TitleFrontendSourceTiming timing;
     memset(&timing, 0, sizeof(timing));
