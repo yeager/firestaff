@@ -40,6 +40,8 @@
  */
 
 #include "dm1_v1_creature_render_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 
 #define DM1_NEXT_NON_ATTACK_ASPECT_UPDATE_TICKS(a) (((a) >> 4) & 0x000F)
 #define DM1_NEXT_ATTACK_ASPECT_UPDATE_TICKS(a)     (((a) >> 8) & 0x000F)
@@ -361,6 +363,141 @@ int dm1_creature_replacement_colors(int creatureType,
         *outReplDst10 = (setIdx10 > 0 && setIdx10 < 13)
                       ? (int)k_repl_color10[setIdx10] : 10;
     }
+    return 1;
+}
+
+static int dm1_creature_visible_duplicates(int creatureCount, int maxVisible) {
+    if (creatureCount > maxVisible) return maxVisible;
+    if (creatureCount < 1) return 1;
+    return creatureCount;
+}
+
+int dm1_creature_center_draw_placement(int creatureType,
+                                       int depthIndex,
+                                       int faceX,
+                                       int faceY,
+                                       int faceW,
+                                       int faceH,
+                                       int groupCount,
+                                       int groupIndex,
+                                       int creatureCount,
+                                       int duplicateIndex,
+                                       DM1_CreatureDrawPlacement *outPlacement) {
+    int visible;
+    int slotW;
+    int slotH;
+    int stepX;
+    int x;
+    int y;
+    int w;
+    int h;
+    int coordSet;
+    int zoneX = 0;
+    int zoneY = 0;
+
+    if (!outPlacement || creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT ||
+        faceW <= 0 || faceH <= 0 || groupCount < 1 || groupIndex < 0 ||
+        groupIndex >= groupCount) {
+        return 0;
+    }
+    visible = dm1_creature_visible_duplicates(creatureCount, 4);
+    if (duplicateIndex < 0 || duplicateIndex >= visible) return 0;
+    slotW = (groupCount > 1) ? (faceW - 8) * 2 / (groupCount + 1) : faceW - 8;
+    slotH = faceH - 10;
+    if (slotW < 4 || slotH < 4) return 0;
+    stepX = (groupCount > 1) ? ((faceW - 8) - slotW) / (groupCount - 1) : 0;
+    x = faceX + 4 + groupIndex * stepX;
+    y = faceY + 5;
+    w = slotW;
+    h = slotH;
+    if (visible > 1) {
+        w = slotW * 3 / 4;
+        h = slotH * 3 / 4;
+    }
+    coordSet = dm1_creature_coordinate_set(creatureType);
+    if (dm1_viewport_3d_c3200_creature_zone_point(coordSet,
+                                                  depthIndex < 3 ? depthIndex : 2,
+                                                  visible,
+                                                  duplicateIndex,
+                                                  &zoneX,
+                                                  &zoneY)) {
+        int localCenterX = (zoneX * faceW) / 224;
+        int localBottomY = (zoneY * faceH) / 136;
+        x = faceX + localCenterX - w / 2;
+        y = faceY + localBottomY - h;
+    }
+    if (x < faceX) x = faceX;
+    if (y < faceY) y = faceY;
+    if (x + w > faceX + faceW) x = faceX + faceW - w;
+    if (y + h > faceY + faceH) y = faceY + faceH - h;
+    outPlacement->x = x;
+    outPlacement->y = y;
+    outPlacement->w = w;
+    outPlacement->h = h;
+    outPlacement->side_hint = 0;
+    return 1;
+}
+
+int dm1_creature_side_draw_placement(int creatureType,
+                                     int depthIndex,
+                                     int side,
+                                     int paneX,
+                                     int paneY,
+                                     int paneW,
+                                     int paneH,
+                                     int groupCount,
+                                     int groupIndex,
+                                     int creatureCount,
+                                     int duplicateIndex,
+                                     DM1_CreatureDrawPlacement *outPlacement) {
+    int visible;
+    int slotH;
+    int stepY;
+    int x;
+    int y;
+    int w;
+    int h;
+    int coordSet;
+    int zoneX = 0;
+    int zoneY = 0;
+
+    if (!outPlacement || creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT ||
+        paneW <= 2 || paneH <= 2 || groupCount < 1 || groupIndex < 0 ||
+        groupIndex >= groupCount || (side != -1 && side != 1)) {
+        return 0;
+    }
+    visible = dm1_creature_visible_duplicates(creatureCount, 3);
+    if (duplicateIndex < 0 || duplicateIndex >= visible) return 0;
+    slotH = (groupCount > 1) ? (paneH - 2) * 2 / (groupCount + 1) : paneH - 2;
+    if (slotH < 4) return 0;
+    stepY = (groupCount > 1) ? ((paneH - 2) - slotH) / (groupCount - 1) : 0;
+    w = paneW - 2;
+    h = (visible == 1) ? slotH : slotH * 2 / 3;
+    x = paneX + 1;
+    y = paneY + 1 + groupIndex * stepY;
+    if (visible > 1) {
+        int ofsY = (slotH - h) / (visible > 1 ? visible - 1 : 1);
+        if (ofsY < 1) ofsY = 1;
+        y += duplicateIndex * ofsY;
+    }
+    coordSet = dm1_creature_coordinate_set(creatureType);
+    if (dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
+                                                       depthIndex < 3 ? depthIndex : 2,
+                                                       side,
+                                                       visible,
+                                                       duplicateIndex,
+                                                       &zoneX,
+                                                       &zoneY)) {
+        x = DM1_VIEWPORT_SCREEN_X + zoneX - w / 2;
+        y = DM1_VIEWPORT_SCREEN_Y + zoneY - h;
+        outPlacement->side_hint = 0;
+    } else {
+        outPlacement->side_hint = side;
+    }
+    outPlacement->x = x;
+    outPlacement->y = y;
+    outPlacement->w = w;
+    outPlacement->h = h;
     return 1;
 }
 

@@ -20175,104 +20175,52 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
          * Creature rendering is skipped when g_drawState reports map 0. */
         int gi;
         int groupCount = cell->creatureGroupCount;
-        int slotW = (groupCount > 1) ? (faceW - 8) * 2 / (groupCount + 1) : faceW - 8;
-        int slotH = faceH - 10;
-        int stepX = (groupCount > 1) ? ((faceW - 8) - slotW) / (groupCount - 1) : 0;
         for (gi = 0; gi < groupCount; ++gi) {
-            int cx = faceX + 4 + gi * stepX;
-            int cy = faceY + 5;
             int countInGroup = cell->creatureCountsPerGroup[gi];
-            int visibleDups, di;
+            int visibleDups = countInGroup;
+            int di;
+            DM1_CreatureDrawPlacement firstPlacement;
+            int haveFirstPlacement = 0;
             if (cell->creatureTypes[gi] < 0) continue;
-            visibleDups = countInGroup;
             if (visibleDups > 4) visibleDups = 4;
             if (visibleDups < 1) visibleDups = 1;
-            if (visibleDups == 1) {
-                int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
-                int zoneX = 0;
-                int zoneY = 0;
-                if (dm1_viewport_3d_c3200_creature_zone_point(coordSet,
-                                                  depthIndex < 3 ? depthIndex : 2,
-                                                  1, 0, &zoneX, &zoneY)) {
-                    cx = M11_VIEWPORT_X + zoneX - slotW / 2;
-                    cy = M11_VIEWPORT_Y + zoneY - slotH;
-                    if (cx < faceX) cx = faceX;
-                    if (cy < faceY) cy = faceY;
-                    if (cx + slotW > faceX + faceW) cx = faceX + faceW - slotW;
-                    if (cy + slotH > faceY + faceH) cy = faceY + faceH - slotH;
+            for (di = 0; di < visibleDups; ++di) {
+                DM1_CreatureDrawPlacement placement;
+                if (!dm1_creature_center_draw_placement(cell->creatureTypes[gi],
+                                                        depthIndex,
+                                                        faceX,
+                                                        faceY,
+                                                        faceW,
+                                                        faceH,
+                                                        groupCount,
+                                                        gi,
+                                                        countInGroup,
+                                                        di,
+                                                        &placement)) {
+                    continue;
+                }
+                if (!haveFirstPlacement) {
+                    firstPlacement = placement;
+                    haveFirstPlacement = 1;
                 }
                 if (!g_drawState ||
                     !m11_draw_creature_sprite(g_drawState, framebuffer,
                                               framebufferWidth, framebufferHeight,
-                                              cx, cy, slotW, slotH,
+                                              placement.x, placement.y,
+                                              placement.w, placement.h,
                                               cell->creatureTypes[gi], depthIndex,
                                               cell->creatureDirections[gi])) {
                     m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                          cx, cy, slotW, slotH, depthIndex);
-                }
-            } else {
-                int dupOffX[4], dupOffY[4];
-                int dupW = slotW * 3 / 4;
-                int dupH = slotH * 3 / 4;
-                int ofsX = (slotW - dupW) / 2;
-                int ofsY = (slotH - dupH) / 2;
-                if (ofsX < 1) ofsX = 1;
-                if (ofsY < 1) ofsY = 1;
-                /* DM1 creature front-cell positioning from layout-696
-                 * C3200 coordinates. The stored points are center X and
-                 * bottom Y in the 224x136 viewport, so convert them into the
-                 * local face rectangle and then anchor the duplicate sprite
-                 * by its bottom center. */
-                {
-                    int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
-                    int dIdx = depthIndex < 3 ? depthIndex : 2;
-                    if (coordSet >= 0 && coordSet <= 2) {
-                        for (di = 0; di < visibleDups && di < 4; ++di) {
-                            int origCenterX;
-                            int origBottomY;
-                            int localCenterX;
-                            int localBottomY;
-                            (void)dm1_viewport_3d_c3200_creature_zone_point(coordSet, dIdx,
-                                                                 visibleDups, di,
-                                                                 &origCenterX,
-                                                                 &origBottomY);
-                            localCenterX = (origCenterX * faceW) / 224;
-                            localBottomY = (origBottomY * faceH) / 136;
-                            dupOffX[di] = localCenterX - dupW / 2;
-                            dupOffY[di] = localBottomY - dupH;
-                            if (dupOffX[di] < 0) dupOffX[di] = 0;
-                            if (dupOffY[di] < 0) dupOffY[di] = 0;
-                            if (dupOffX[di] + dupW > slotW + ofsX * 2)
-                                dupOffX[di] = slotW + ofsX * 2 - dupW;
-                            if (dupOffY[di] + dupH > slotH + ofsY * 2)
-                                dupOffY[di] = slotH + ofsY * 2 - dupH;
-                        }
-                    } else {
-                        /* Fallback: grid layout */
-                        dupOffX[0] = 0;        dupOffY[0] = 0;
-                        dupOffX[1] = ofsX * 2; dupOffY[1] = 0;
-                        dupOffX[2] = 0;        dupOffY[2] = ofsY * 2;
-                        dupOffX[3] = ofsX * 2; dupOffY[3] = ofsY * 2;
-                    }
-                }
-                for (di = 0; di < visibleDups; ++di) {
-                    int dx = cx + dupOffX[di];
-                    int dy = cy + dupOffY[di];
-                    if (!g_drawState ||
-                        !m11_draw_creature_sprite(g_drawState, framebuffer,
-                                                  framebufferWidth, framebufferHeight,
-                                                  dx, dy, dupW, dupH,
-                                                  cell->creatureTypes[gi], depthIndex,
-                                                  cell->creatureDirections[gi])) {
-                        m11_draw_creature_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                              dx, dy, dupW, dupH, depthIndex);
-                    }
+                                          placement.x, placement.y,
+                                          placement.w, placement.h,
+                                          depthIndex);
                 }
             }
-            if (countInGroup > 1 && slotW >= 12 && slotH >= 12) {
+            if (countInGroup > 1 && haveFirstPlacement &&
+                firstPlacement.w >= 12 && firstPlacement.h >= 12) {
                 char countStr[4];
-                int badgeX = cx + slotW - 8;
-                int badgeY = cy + slotH - 8;
+                int badgeX = firstPlacement.x + firstPlacement.w - 8;
+                int badgeY = firstPlacement.y + firstPlacement.h - 8;
                 snprintf(countStr, sizeof(countStr), "%d", countInGroup);
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               badgeX - 1, badgeY - 1, 9, 9, M11_COLOR_BLACK);
@@ -24620,89 +24568,54 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
         if (cell->creatureGroupCount > 0) {
             int gi;
             int groupCount = cell->creatureGroupCount;
-            int slotH = (groupCount > 1)
-                ? (paneH - 2) * 2 / (groupCount + 1)
-                : paneH - 2;
-            int stepY = (groupCount > 1)
-                ? ((paneH - 2) - slotH) / (groupCount - 1)
-                : 0;
             for (gi = 0; gi < groupCount; ++gi) {
-                int cy = paneY + 1 + gi * stepY;
                 int countInGroup = cell->creatureCountsPerGroup[gi];
-                int visibleDups, di;
+                int visibleDups = countInGroup;
+                int di;
+                DM1_CreatureDrawPlacement firstPlacement;
+                int haveFirstPlacement = 0;
                 if (cell->creatureTypes[gi] < 0) continue;
-                visibleDups = countInGroup;
                 if (visibleDups > 3) visibleDups = 3;
                 if (visibleDups < 1) visibleDups = 1;
-                if (visibleDups == 1) {
-                    int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
-                    int zoneX = 0;
-                    int zoneY = 0;
-                    int drawPaneX = paneX + 1;
-                    int drawPaneY = cy;
-                    int drawPaneW = paneW - 2;
-                    int drawSideHint = side;
-                    if (dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
-                                                           depthIndex < 3 ? depthIndex : 2,
-                                                           side,
-                                                           1, 0,
-                                                           &zoneX, &zoneY)) {
-                        drawPaneX = M11_VIEWPORT_X + zoneX - drawPaneW / 2;
-                        drawPaneY = M11_VIEWPORT_Y + zoneY - slotH;
-                        drawSideHint = 0;
+                for (di = 0; di < visibleDups; ++di) {
+                    DM1_CreatureDrawPlacement placement;
+                    if (!dm1_creature_side_draw_placement(cell->creatureTypes[gi],
+                                                          depthIndex,
+                                                          side,
+                                                          paneX,
+                                                          paneY,
+                                                          paneW,
+                                                          paneH,
+                                                          groupCount,
+                                                          gi,
+                                                          countInGroup,
+                                                          di,
+                                                          &placement)) {
+                        continue;
+                    }
+                    if (!haveFirstPlacement) {
+                        firstPlacement = placement;
+                        haveFirstPlacement = 1;
                     }
                     if (!g_drawState ||
                         !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
                                                      framebufferWidth, framebufferHeight,
-                                                     drawPaneX, drawPaneY,
-                                                     drawPaneW, slotH,
+                                                     placement.x, placement.y,
+                                                     placement.w, placement.h,
                                                      cell->creatureTypes[gi], depthIndex,
-                                                     drawSideHint,
+                                                     placement.side_hint,
                                                      cell->creatureDirections[gi])) {
                         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                      paneX + paneW / 2 - 1, cy + slotH / 2 - 2,
+                                      paneX + paneW / 2 - 1,
+                                      placement.y + placement.h / 2 - 2,
                                       3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
                     }
-                } else {
-                    int dupH = slotH * 2 / 3;
-                    int ofsY = (slotH - dupH) / (visibleDups > 1 ? visibleDups - 1 : 1);
-                    if (ofsY < 1) ofsY = 1;
-                    for (di = 0; di < visibleDups; ++di) {
-                        int dy = cy + di * ofsY;
-                        int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
-                        int zoneX = 0;
-                        int zoneY = 0;
-                        int drawPaneX = paneX + 1;
-                        int drawPaneY = dy;
-                        int drawPaneW = paneW - 2;
-                        int drawSideHint = side;
-                        if (dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
-                                                               depthIndex < 3 ? depthIndex : 2,
-                                                               side,
-                                                               visibleDups, di,
-                                                               &zoneX, &zoneY)) {
-                            drawPaneX = M11_VIEWPORT_X + zoneX - drawPaneW / 2;
-                            drawPaneY = M11_VIEWPORT_Y + zoneY - dupH;
-                            drawSideHint = 0;
-                        }
-                        if (!g_drawState ||
-                            !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
-                                                         framebufferWidth, framebufferHeight,
-                                                         drawPaneX, drawPaneY,
-                                                         drawPaneW, dupH,
-                                                         cell->creatureTypes[gi], depthIndex,
-                                                         drawSideHint,
-                                                         cell->creatureDirections[gi])) {
-                            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                          paneX + paneW / 2 - 1, dy + dupH / 2 - 2,
-                                          3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
-                        }
-                    }
                 }
-                if (countInGroup > 1 && paneW >= 10 && slotH >= 10) {
+                if (countInGroup > 1 && haveFirstPlacement &&
+                    paneW >= 10 && firstPlacement.h >= 10) {
                     char countStr[4];
                     int badgeX = paneX + paneW - 9;
-                    int badgeY = cy + slotH - 8;
+                    int badgeY = firstPlacement.y + firstPlacement.h - 8;
                     snprintf(countStr, sizeof(countStr), "%d", countInGroup);
                     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                                   badgeX - 1, badgeY - 1, 9, 9, M11_COLOR_BLACK);
@@ -24888,14 +24801,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
             if (cell->creatureGroupCount > 0) {
                 int gi;
                 int groupCount = cell->creatureGroupCount;
-                int slotH = (groupCount > 1)
-                    ? (paneH - 2) * 2 / (groupCount + 1)
-                    : paneH - 2;
-                int stepY = (groupCount > 1)
-                    ? ((paneH - 2) - slotH) / (groupCount - 1)
-                    : 0;
                 for (gi = 0; gi < groupCount; ++gi) {
-                    int cy = paneY + 1 + gi * stepY;
                     int countInGroup = cell->creatureCountsPerGroup[gi];
                     int visibleDups = countInGroup;
                     int di;
@@ -24903,34 +24809,32 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                     if (visibleDups > 3) visibleDups = 3;
                     if (visibleDups < 1) visibleDups = 1;
                     for (di = 0; di < visibleDups; ++di) {
-                        int drawH = visibleDups == 1 ? slotH : slotH * 2 / 3;
-                        int drawYBase = visibleDups == 1 ? cy : cy + di * ((slotH - drawH) > 1 ? (slotH - drawH) : 1);
-                        int coordSet = dm1_creature_coordinate_set(cell->creatureTypes[gi]);
-                        int zoneX = 0;
-                        int zoneY = 0;
-                        int drawPaneX = paneX + 1;
-                        int drawPaneY = drawYBase;
-                        int drawPaneW = paneW - 2;
-                        int drawSideHint = side;
-                        if (dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
-                                                               depth < 3 ? depth : 2,
-                                                               side,
-                                                               visibleDups, di,
-                                                               &zoneX, &zoneY)) {
-                            drawPaneX = M11_VIEWPORT_X + zoneX - drawPaneW / 2;
-                            drawPaneY = M11_VIEWPORT_Y + zoneY - drawH;
-                            drawSideHint = 0;
+                        DM1_CreatureDrawPlacement placement;
+                        if (!dm1_creature_side_draw_placement(cell->creatureTypes[gi],
+                                                              depth,
+                                                              side,
+                                                              paneX,
+                                                              paneY,
+                                                              paneW,
+                                                              paneH,
+                                                              groupCount,
+                                                              gi,
+                                                              countInGroup,
+                                                              di,
+                                                              &placement)) {
+                            continue;
                         }
                         if (!g_drawState ||
                             !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
                                                          framebufferWidth, framebufferHeight,
-                                                         drawPaneX, drawPaneY,
-                                                         drawPaneW, drawH,
+                                                         placement.x, placement.y,
+                                                         placement.w, placement.h,
                                                          cell->creatureTypes[gi], depth,
-                                                         drawSideHint,
+                                                         placement.side_hint,
                                                          cell->creatureDirections[gi])) {
                             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                          paneX + paneW / 2 - 1, drawYBase + drawH / 2 - 2,
+                                          paneX + paneW / 2 - 1,
+                                          placement.y + placement.h / 2 - 2,
                                           3, 5, depth == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
                         }
                     }

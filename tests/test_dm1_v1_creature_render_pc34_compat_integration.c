@@ -357,7 +357,66 @@ static void test_m11_cross_check(void) {
               657, "Demon front = 657");
 }
 
-/* Test 11: Source-locked creature Aspect frame cycling.
+/* Test 11: M11 creature query delegation surface. */
+static void test_m11_query_surface(void) {
+    int mirror = -1;
+    int repl9 = 0;
+    int repl10 = 0;
+
+    ASSERT_EQ(dm1_creature_sprite_for_depth(0, 0), 584,
+              "query depth scorpion native front");
+    ASSERT_EQ(dm1_creature_sprite_for_depth(0, 1), 496,
+              "query depth scorpion derived D2 front");
+    ASSERT_EQ(dm1_creature_sprite_for_view(3, 0, 0, 0, 0, &mirror), 596,
+              "query view WizardEye back keeps M11 native offset");
+    ASSERT_EQ(mirror, 0, "query view back mirror off");
+    ASSERT_EQ(dm1_creature_sprite_for_view(14, 0, 1, 0, 0, &mirror), 628,
+              "query view Vexirk side native");
+    ASSERT_EQ(mirror, 1, "query view side mirror on");
+    ASSERT_EQ(dm1_creature_sprite_for_view(14, 0, 2, 0, 1, &mirror), 630,
+              "query view Vexirk attack native");
+
+    ASSERT_EQ(dm1_creature_graphic_info(14), 0x05B8,
+              "query graphic info Vexirk");
+    ASSERT_EQ(dm1_creature_native_bitmap_count(14), 4,
+              "query native bitmap count Vexirk");
+    ASSERT_EQ(dm1_creature_derived_bitmap_count(14), 8,
+              "query derived bitmap count Vexirk");
+    ASSERT_EQ(dm1_creature_has_side_bitmap(14), 1,
+              "query has side Vexirk");
+    ASSERT_EQ(dm1_creature_has_back_bitmap(14), 1,
+              "query has back Vexirk");
+    ASSERT_EQ(dm1_creature_has_attack_bitmap(14), 1,
+              "query has attack Vexirk");
+    ASSERT_EQ(dm1_creature_has_flip_during_attack(3), 1,
+              "query has flip attack WizardEye");
+    ASSERT_EQ(dm1_creature_replacement_colors(0, &repl9, &repl10), 1,
+              "query replacement colors scorpion");
+    ASSERT_EQ(repl9, 4, "query replacement color9 scorpion");
+    ASSERT_EQ(repl10, 10, "query replacement color10 scorpion fallback");
+    ASSERT_EQ(dm1_creature_replacement_colors(2, &repl9, &repl10), 0,
+              "query no replacement colors Giggler");
+}
+
+/* Test 12: Creature draw placement helper surface. */
+static void test_draw_placement_surface(void) {
+    DM1_CreatureDrawPlacement p;
+    ASSERT_EQ(dm1_creature_center_draw_placement(14, 0, 32, 42, 160, 90,
+              1, 0, 1, 0, &p), 1, "center placement returns row");
+    ASSERT_EQ(p.side_hint, 0, "center placement side hint");
+    ASSERT_EQ(p.w > 0, 1, "center placement width positive");
+    ASSERT_EQ(p.h > 0, 1, "center placement height positive");
+    ASSERT_EQ(p.x >= 32, 1, "center placement x in face");
+    ASSERT_EQ(p.y >= 42, 1, "center placement y in face");
+
+    ASSERT_EQ(dm1_creature_side_draw_placement(14, 1, -1, 4, 50, 48, 70,
+              1, 0, 2, 1, &p), 1, "side placement returns row");
+    ASSERT_EQ(p.side_hint, 0, "side placement binds source zone");
+    ASSERT_EQ(p.w > 0, 1, "side placement width positive");
+    ASSERT_EQ(p.h > 0, 1, "side placement height positive");
+}
+
+/* Test 13: Source-locked creature Aspect frame cycling.
  * ReDMCSB GROUP.C F0179 lines 222-305 stores frame state in the
  * active-group Aspect bits, and DUNVIEW.C F0115 lines 5331-5418 consumes
  * those bits to select attack/front flip state. */
@@ -411,6 +470,8 @@ int main(void) {
     test_type_names();
     test_legacy_api();
     test_m11_cross_check();
+    test_m11_query_surface();
+    test_draw_placement_surface();
     test_aspect_frame_cycling();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
