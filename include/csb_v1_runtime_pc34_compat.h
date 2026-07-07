@@ -950,6 +950,32 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                          int *out_utility_state,
                                          char *out_utility_prompt,
                                          size_t out_utility_prompt_size);
+enum {
+    CSB_V1_RUNTIME_STARTUP_PROMPT_CAP_PC34 = 192
+};
+typedef enum {
+    CSB_V1_RUNTIME_STARTUP_HANDOFF_NONE_PC34 = 0,
+    CSB_V1_RUNTIME_STARTUP_HANDOFF_RESUME_PC34 = 1,
+    CSB_V1_RUNTIME_STARTUP_HANDOFF_IMPORT_DM1_PC34 = 2
+} CSB_V1_RuntimeStartupHandoffKind_PC34;
+typedef struct {
+    CSB_V1_RuntimeStartupHandoffKind_PC34 kind;
+    int direct_resume_loaded;
+    int import_attempted;
+    int import_succeeded;
+    int import_champion_count;
+    int import_utility_state;
+    char import_utility_prompt[CSB_V1_RUNTIME_STARTUP_PROMPT_CAP_PC34];
+    const char *status_scope;
+    const char *status;
+} CSB_V1_RuntimeStartupHandoffReceipt_PC34;
+void csb_v1_runtime_startup_handoff_receipt_init_pc34(
+    CSB_V1_RuntimeStartupHandoffReceipt_PC34 *receipt);
+int csb_v1_runtime_apply_startup_handoff_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    CSB_V1_RuntimeStartupHandoffReceipt_PC34 *out_receipt);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);
