@@ -2633,6 +2633,137 @@ static void m11_execute_csb_startup_primitive_commands(
     }
 }
 
+static int m11_execute_csb_startup_asset_command(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const CSB_V1_StartupAssetCommand_PC34 *cmd)
+{
+    const M11_AssetSlot *asset;
+
+    if (!state || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0 || !cmd || !cmd->visible ||
+        !state->assetsAvailable || cmd->asset_id <= 0 ||
+        cmd->source_w <= 0 || cmd->source_h <= 0 ||
+        cmd->dest_w <= 0 || cmd->dest_h <= 0) {
+        return 0;
+    }
+    asset = M11_AssetLoader_Load(
+        (M11_AssetLoader *)&state->assetLoader,
+        (unsigned int)cmd->asset_id);
+    if (!asset ||
+        asset->width < (unsigned int)(cmd->source_x + cmd->source_w) ||
+        asset->height < (unsigned int)(cmd->source_y + cmd->source_h)) {
+        return 0;
+    }
+    switch (cmd->kind) {
+        case CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34:
+            if (asset->width != (unsigned int)cmd->source_w ||
+                asset->height != (unsigned int)cmd->source_h) {
+                return 0;
+            }
+            M11_AssetLoader_Blit(asset,
+                                 framebuffer,
+                                 framebufferWidth,
+                                 framebufferHeight,
+                                 cmd->dest_x,
+                                 cmd->dest_y,
+                                 cmd->transparent_color);
+            return 1;
+        case CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34:
+        case CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34:
+        case CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34:
+            M11_AssetLoader_BlitRegion(asset,
+                                       cmd->source_x,
+                                       cmd->source_y,
+                                       cmd->source_w,
+                                       cmd->source_h,
+                                       framebuffer,
+                                       framebufferWidth,
+                                       framebufferHeight,
+                                       cmd->dest_x,
+                                       cmd->dest_y,
+                                       cmd->transparent_color);
+            return 1;
+        case CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34:
+            M11_AssetLoader_BlitSubRectScaled(asset,
+                                              framebuffer,
+                                              framebufferWidth,
+                                              framebufferHeight,
+                                              cmd->source_x,
+                                              cmd->source_y,
+                                              cmd->source_w,
+                                              cmd->source_h,
+                                              cmd->dest_x,
+                                              cmd->dest_y,
+                                              cmd->dest_w,
+                                              cmd->dest_h,
+                                              cmd->transparent_color);
+            return 1;
+        case CSB_V1_STARTUP_ASSET_NONE_PC34:
+        default:
+            return 0;
+    }
+}
+
+static int m11_execute_csb_startup_asset_commands_kind(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupAssetCommandKind_PC34 kind)
+{
+    int i;
+    int drew = 0;
+
+    if (!plan) {
+        return 0;
+    }
+    for (i = 0; i < plan->asset_command_count &&
+                i < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34; ++i) {
+        const CSB_V1_StartupAssetCommand_PC34 *cmd =
+            &plan->asset_commands[i];
+        if (cmd->kind != kind) {
+            continue;
+        }
+        drew |= m11_execute_csb_startup_asset_command(state,
+                                                      framebuffer,
+                                                      framebufferWidth,
+                                                      framebufferHeight,
+                                                      cmd);
+    }
+    return drew ? 1 : 0;
+}
+
+static int m11_execute_csb_startup_closed_door_asset_commands(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int left;
+    int right;
+
+    left = m11_execute_csb_startup_asset_commands_kind(
+        state,
+        framebuffer,
+        framebufferWidth,
+        framebufferHeight,
+        plan,
+        CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34);
+    right = m11_execute_csb_startup_asset_commands_kind(
+        state,
+        framebuffer,
+        framebufferWidth,
+        framebufferHeight,
+        plan,
+        CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34);
+    return left && right;
+}
+
 static int m11_csb_startup_entrance_waiting_for_input(
     const M11_GameViewState *state);
 
@@ -2744,7 +2875,7 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                        int framebufferHeight,
                                        const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
-    const M11_AssetSlot *title = NULL;
+    int drew_title = 0;
 
     if (!state || !framebuffer || !plan || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -2754,61 +2885,40 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
                                                framebufferWidth,
                                                framebufferHeight,
                                                plan);
-    if (state->assetsAvailable) {
-        title = M11_AssetLoader_Load(
-            (M11_AssetLoader *)&state->assetLoader,
-            (unsigned int)plan->source_asset_id);
-    }
-    if (title && title->width == 320u && title->height >= 175u) {
-        /* ReDMCSB TITLE.C F0437 uses C001_GRAPHIC_TITLE: PRESENTS is
-         * blitted from source y=137 to screen y=90, then C425/C426 title
-         * strips are rendered before ENTRANCE.C F0806/F0441 takes over.
-         * CSB startup owns the blit command; M11 only executes it. */
-        if (plan->title_blit_kind ==
-            CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34) {
-            M11_AssetLoader_BlitRegion(title,
-                                       plan->title_source_x,
-                                       plan->title_source_y,
-                                       plan->title_source_w,
-                                       plan->title_source_h,
-                                       framebuffer,
-                                       framebufferWidth,
-                                       framebufferHeight,
-                                       plan->title_dest_x,
-                                       plan->title_dest_y,
-                                       plan->title_transparent_color);
-            if (plan->title_empty_fallback_text &&
-                m11_count_nonzero_pixels(framebuffer,
-                                         framebufferWidth,
-                                         framebufferHeight,
-                                         plan->title_dest_x,
-                                         plan->title_dest_y,
-                                         plan->title_dest_w,
-                                         plan->title_dest_h) == 0) {
-                m11_draw_csb_startup_plan_text(
-                    framebuffer,
-                    framebufferWidth,
-                    framebufferHeight,
-                    plan->title_empty_fallback_x,
-                    plan->title_empty_fallback_y,
-                    plan->title_empty_fallback_style,
-                    plan->title_empty_fallback_text);
-            }
-        } else if (plan->title_blit_kind ==
-                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34) {
-            M11_AssetLoader_BlitSubRectScaled(title,
-                                              framebuffer,
-                                              framebufferWidth,
-                                              framebufferHeight,
-                                              plan->title_source_x,
-                                              plan->title_source_y,
-                                              plan->title_source_w,
-                                              plan->title_source_h,
-                                              plan->title_dest_x,
-                                              plan->title_dest_y,
-                                              plan->title_dest_w,
-                                              plan->title_dest_h,
-                                              plan->title_transparent_color);
+    /* ReDMCSB TITLE.C F0437 uses C001_GRAPHIC_TITLE: PRESENTS is blitted
+     * from source y=137 to screen y=90, then C425/C426 title strips are
+     * rendered before ENTRANCE.C F0806/F0441 takes over. */
+    drew_title = m11_execute_csb_startup_asset_commands_kind(
+        state,
+        framebuffer,
+        framebufferWidth,
+        framebufferHeight,
+        plan,
+        CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34);
+    drew_title |= m11_execute_csb_startup_asset_commands_kind(
+        state,
+        framebuffer,
+        framebufferWidth,
+        framebufferHeight,
+        plan,
+        CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34);
+    if (drew_title) {
+        if (plan->title_empty_fallback_text &&
+            m11_count_nonzero_pixels(framebuffer,
+                                     framebufferWidth,
+                                     framebufferHeight,
+                                     plan->title_dest_x,
+                                     plan->title_dest_y,
+                                     plan->title_dest_w,
+                                     plan->title_dest_h) == 0) {
+            m11_draw_csb_startup_plan_text(
+                framebuffer,
+                framebufferWidth,
+                framebufferHeight,
+                plan->title_empty_fallback_x,
+                plan->title_empty_fallback_y,
+                plan->title_empty_fallback_style,
+                plan->title_empty_fallback_text);
         }
         return;
     }
@@ -2878,56 +2988,6 @@ static void m11_draw_csb_startup_fallback_text_rows(
                                        row->style,
                                        row->text);
     }
-}
-
-static int m11_draw_csb_entrance_closed_doors_asset(
-    const M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    const M11_AssetSlot *leftDoor;
-    const M11_AssetSlot *rightDoor;
-
-    if (!state || !framebuffer || framebufferWidth < 232 ||
-        framebufferHeight < 189 || !plan || !state->assetsAvailable ||
-        plan->closed_left_w <= 0 || plan->closed_left_h <= 0 ||
-        plan->closed_right_w <= 0 || plan->closed_right_h <= 0) {
-        return 0;
-    }
-    leftDoor = M11_AssetLoader_Load(
-        (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)plan->closed_left_asset_id);
-    rightDoor = M11_AssetLoader_Load(
-        (M11_AssetLoader *)&state->assetLoader,
-        (unsigned int)plan->closed_right_asset_id);
-    if (!leftDoor || !rightDoor ||
-        leftDoor->width < (unsigned int)(plan->closed_left_source_x + plan->closed_left_w) ||
-        leftDoor->height < (unsigned int)(plan->closed_left_source_y + plan->closed_left_h) ||
-        rightDoor->width < (unsigned int)(plan->closed_right_source_x + plan->closed_right_w) ||
-        rightDoor->height < (unsigned int)(plan->closed_right_source_y + plan->closed_right_h)) {
-        return 0;
-    }
-    M11_AssetLoader_BlitRegion(leftDoor,
-                               plan->closed_left_source_x,
-                               plan->closed_left_source_y,
-                               plan->closed_left_w,
-                               plan->closed_left_h,
-                               framebuffer, framebufferWidth, framebufferHeight,
-                               plan->closed_left_dest_x,
-                               plan->closed_left_dest_y,
-                               -1);
-    M11_AssetLoader_BlitRegion(rightDoor,
-                               plan->closed_right_source_x,
-                               plan->closed_right_source_y,
-                               plan->closed_right_w,
-                               plan->closed_right_h,
-                               framebuffer, framebufferWidth, framebufferHeight,
-                               plan->closed_right_dest_x,
-                               plan->closed_right_dest_y,
-                               -1);
-    return 1;
 }
 
 static int m11_draw_csb_entrance_opening_frame_asset(
@@ -3035,22 +3095,13 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                               M11_COLOR_BLACK);
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34: {
-                const M11_AssetSlot *surface = NULL;
-                if (state->assetsAvailable) {
-                    surface = M11_AssetLoader_Load(
-                        (M11_AssetLoader *)&state->assetLoader,
-                        (unsigned int)plan.source_asset_id);
-                }
-                if (surface &&
-                    surface->width == (unsigned int)plan.surface_w &&
-                    surface->height == (unsigned int)plan.surface_h) {
-                    M11_AssetLoader_Blit(surface,
-                                         framebuffer,
-                                         framebufferWidth,
-                                         framebufferHeight,
-                                         plan.surface_dest_x,
-                                         plan.surface_dest_y,
-                                         plan.surface_transparent_color);
+                if (m11_execute_csb_startup_asset_commands_kind(
+                        state,
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        &plan,
+                        CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34)) {
                     drew_asset = 1;
                 } else {
                     m11_draw_csb_startup_fallback_text_rows(
@@ -3062,22 +3113,13 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                 break;
             }
             case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34: {
-                const M11_AssetSlot *surface = NULL;
-                if (state->assetsAvailable) {
-                    surface = M11_AssetLoader_Load(
-                        (M11_AssetLoader *)&state->assetLoader,
-                        (unsigned int)plan.source_asset_id);
-                }
-                if (surface &&
-                    surface->width == (unsigned int)plan.surface_w &&
-                    surface->height == (unsigned int)plan.surface_h) {
-                    M11_AssetLoader_Blit(surface,
-                                         framebuffer,
-                                         framebufferWidth,
-                                         framebufferHeight,
-                                         plan.surface_dest_x,
-                                         plan.surface_dest_y,
-                                         plan.surface_transparent_color);
+                if (m11_execute_csb_startup_asset_commands_kind(
+                        state,
+                        framebuffer,
+                        framebufferWidth,
+                        framebufferHeight,
+                        &plan,
+                        CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34)) {
                     drew_asset = 1;
                 }
                 break;
@@ -3104,7 +3146,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34:
                 if (drew_asset) {
-                    (void)m11_draw_csb_entrance_closed_doors_asset(
+                    (void)m11_execute_csb_startup_closed_door_asset_commands(
                         state,
                         framebuffer,
                         framebufferWidth,

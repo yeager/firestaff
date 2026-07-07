@@ -108,7 +108,17 @@ typedef enum CSB_V1_StartupTitleBlitKind_PC34 {
 } CSB_V1_StartupTitleBlitKind_PC34;
 
 #define CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34 5
+#define CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34 4
 #define CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34 4
+
+typedef enum CSB_V1_StartupAssetCommandKind_PC34 {
+    CSB_V1_STARTUP_ASSET_NONE_PC34 = 0,
+    CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 = 1,
+    CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 = 2,
+    CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34 = 3,
+    CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 = 4,
+    CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34 = 5
+} CSB_V1_StartupAssetCommandKind_PC34;
 
 typedef enum CSB_V1_StartupPrimitiveCommandKind_PC34 {
     CSB_V1_STARTUP_PRIMITIVE_NONE_PC34 = 0,
@@ -124,6 +134,21 @@ typedef struct CSB_V1_StartupFallbackTextRow_PC34 {
     int visible;
     const char *text;
 } CSB_V1_StartupFallbackTextRow_PC34;
+
+typedef struct CSB_V1_StartupAssetCommand_PC34 {
+    CSB_V1_StartupAssetCommandKind_PC34 kind;
+    int asset_id;
+    int source_x;
+    int source_y;
+    int source_w;
+    int source_h;
+    int dest_x;
+    int dest_y;
+    int dest_w;
+    int dest_h;
+    int transparent_color;
+    int visible;
+} CSB_V1_StartupAssetCommand_PC34;
 
 typedef struct CSB_V1_StartupPrimitiveCommand_PC34 {
     CSB_V1_StartupPrimitiveCommandKind_PC34 kind;
@@ -268,6 +293,9 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int fallback_text_row_count;
     CSB_V1_StartupFallbackTextRow_PC34 fallback_text_rows[
         CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34];
+    int asset_command_count;
+    CSB_V1_StartupAssetCommand_PC34 asset_commands[
+        CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34];
     int primitive_command_count;
     CSB_V1_StartupPrimitiveCommand_PC34 primitive_commands[
         CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34];

@@ -259,6 +259,168 @@ static void csb_v1_startup_clear_primitive_commands_pc34(
     }
 }
 
+static void csb_v1_startup_clear_asset_commands_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    int i;
+    if (!plan) {
+        return;
+    }
+    plan->asset_command_count = 0;
+    for (i = 0; i < CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34; ++i) {
+        plan->asset_commands[i].kind = CSB_V1_STARTUP_ASSET_NONE_PC34;
+        plan->asset_commands[i].asset_id = 0;
+        plan->asset_commands[i].source_x = 0;
+        plan->asset_commands[i].source_y = 0;
+        plan->asset_commands[i].source_w = 0;
+        plan->asset_commands[i].source_h = 0;
+        plan->asset_commands[i].dest_x = 0;
+        plan->asset_commands[i].dest_y = 0;
+        plan->asset_commands[i].dest_w = 0;
+        plan->asset_commands[i].dest_h = 0;
+        plan->asset_commands[i].transparent_color = -1;
+        plan->asset_commands[i].visible = 0;
+    }
+}
+
+static void csb_v1_startup_add_asset_command_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupAssetCommandKind_PC34 kind,
+    int asset_id,
+    int source_x,
+    int source_y,
+    int source_w,
+    int source_h,
+    int dest_x,
+    int dest_y,
+    int dest_w,
+    int dest_h,
+    int transparent_color,
+    int visible)
+{
+    CSB_V1_StartupAssetCommand_PC34 *cmd;
+    if (!plan || kind == CSB_V1_STARTUP_ASSET_NONE_PC34 ||
+        asset_id <= 0 || source_w <= 0 || source_h <= 0 ||
+        dest_w <= 0 || dest_h <= 0 ||
+        plan->asset_command_count >=
+            CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34) {
+        return;
+    }
+    cmd = &plan->asset_commands[plan->asset_command_count++];
+    cmd->kind = kind;
+    cmd->asset_id = asset_id;
+    cmd->source_x = source_x;
+    cmd->source_y = source_y;
+    cmd->source_w = source_w;
+    cmd->source_h = source_h;
+    cmd->dest_x = dest_x;
+    cmd->dest_y = dest_y;
+    cmd->dest_w = dest_w;
+    cmd->dest_h = dest_h;
+    cmd->transparent_color = transparent_color;
+    cmd->visible = visible ? 1 : 0;
+}
+
+static void csb_v1_startup_rebuild_asset_commands_pc34(
+    CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    if (!plan) {
+        return;
+    }
+    csb_v1_startup_clear_asset_commands_pc34(plan);
+    if (plan->surface == CSB_V1_STARTUP_RENDER_NONE_PC34 ||
+        plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34) {
+        return;
+    }
+    if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+        if (plan->title_blit_kind ==
+            CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34) {
+            csb_v1_startup_add_asset_command_pc34(
+                plan,
+                CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34,
+                plan->source_asset_id,
+                plan->title_source_x,
+                plan->title_source_y,
+                plan->title_source_w,
+                plan->title_source_h,
+                plan->title_dest_x,
+                plan->title_dest_y,
+                plan->title_dest_w,
+                plan->title_dest_h,
+                plan->title_transparent_color,
+                1);
+        } else if (plan->title_blit_kind ==
+                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34) {
+            csb_v1_startup_add_asset_command_pc34(
+                plan,
+                CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34,
+                plan->source_asset_id,
+                plan->title_source_x,
+                plan->title_source_y,
+                plan->title_source_w,
+                plan->title_source_h,
+                plan->title_dest_x,
+                plan->title_dest_y,
+                plan->title_dest_w,
+                plan->title_dest_h,
+                plan->title_transparent_color,
+                1);
+        }
+        return;
+    }
+    if (plan->source_asset_id > 0 && plan->surface_w > 0 &&
+        plan->surface_h > 0) {
+        csb_v1_startup_add_asset_command_pc34(
+            plan,
+            CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34,
+            plan->source_asset_id,
+            0,
+            0,
+            plan->surface_w,
+            plan->surface_h,
+            plan->surface_dest_x,
+            plan->surface_dest_y,
+            plan->surface_w,
+            plan->surface_h,
+            plan->surface_transparent_color,
+            1);
+    }
+    if (plan->closed_left_asset_id > 0 && plan->closed_left_w > 0 &&
+        plan->closed_left_h > 0) {
+        csb_v1_startup_add_asset_command_pc34(
+            plan,
+            CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34,
+            plan->closed_left_asset_id,
+            plan->closed_left_source_x,
+            plan->closed_left_source_y,
+            plan->closed_left_w,
+            plan->closed_left_h,
+            plan->closed_left_dest_x,
+            plan->closed_left_dest_y,
+            plan->closed_left_w,
+            plan->closed_left_h,
+            -1,
+            1);
+    }
+    if (plan->closed_right_asset_id > 0 && plan->closed_right_w > 0 &&
+        plan->closed_right_h > 0) {
+        csb_v1_startup_add_asset_command_pc34(
+            plan,
+            CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34,
+            plan->closed_right_asset_id,
+            plan->closed_right_source_x,
+            plan->closed_right_source_y,
+            plan->closed_right_w,
+            plan->closed_right_h,
+            plan->closed_right_dest_x,
+            plan->closed_right_dest_y,
+            plan->closed_right_w,
+            plan->closed_right_h,
+            -1,
+            1);
+    }
+}
+
 static void csb_v1_startup_add_primitive_command_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupPrimitiveCommandKind_PC34 kind,
@@ -863,6 +1025,7 @@ int csb_v1_startup_build_render_plan_pc34(
     csb_v1_startup_clear_title_rect_pc34(&plan);
     csb_v1_startup_clear_door_rects_pc34(&plan);
     csb_v1_startup_clear_fallback_text_pc34(&plan);
+    csb_v1_startup_clear_asset_commands_pc34(&plan);
     csb_v1_startup_clear_primitive_commands_pc34(&plan);
     csb_v1_startup_clear_render_commands_pc34(&plan);
     plan.blink_prompt_visible = 0;
@@ -885,6 +1048,7 @@ int csb_v1_startup_build_render_plan_pc34(
             (int)csb_v1_startup_title_source_step_for_frame_pc34(
                 state->title_frame);
         csb_v1_startup_set_title_rect_pc34(&plan);
+        csb_v1_startup_rebuild_asset_commands_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         csb_v1_startup_rebuild_render_commands_pc34(&plan);
         *out_plan = plan;
@@ -896,6 +1060,7 @@ int csb_v1_startup_build_render_plan_pc34(
         csb_v1_startup_set_full_surface_blit_pc34(&plan);
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
         csb_v1_startup_set_credits_fallback_text_pc34(&plan);
+        csb_v1_startup_rebuild_asset_commands_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         csb_v1_startup_rebuild_render_commands_pc34(&plan);
         *out_plan = plan;
@@ -906,6 +1071,7 @@ int csb_v1_startup_build_render_plan_pc34(
          * before C004/C002/C003 are redrawn. */
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+        csb_v1_startup_rebuild_asset_commands_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         csb_v1_startup_rebuild_render_commands_pc34(&plan);
         *out_plan = plan;
@@ -924,6 +1090,7 @@ int csb_v1_startup_build_render_plan_pc34(
             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
             csb_v1_startup_set_opening_door_rects_pc34(&plan);
         }
+        csb_v1_startup_rebuild_asset_commands_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         csb_v1_startup_rebuild_render_commands_pc34(&plan);
         *out_plan = plan;
@@ -949,6 +1116,7 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.blink_prompt_visible =
         ((state->entrance_frame / 12) & 1) == 0;
     csb_v1_startup_rebuild_fallback_text_rows_pc34(&plan);
+    csb_v1_startup_rebuild_asset_commands_pc34(&plan);
     csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
     csb_v1_startup_rebuild_render_commands_pc34(&plan);
     *out_plan = plan;
