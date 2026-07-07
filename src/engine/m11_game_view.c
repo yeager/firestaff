@@ -719,19 +719,14 @@ _Static_assert(M12_MENU_INPUT_TURN_RIGHT == 8,
                "DM1 movement menu input code drift");
 
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
-                                         const DM2_V1_SessionState *session,
-                                         const char *status)
+                                         const DM2_V1_SessionState *session)
 {
     if (!state || !session ||
         dm2_v1_runtime_apply_session(session) != 0) {
-        if (state) {
-            m11_set_status(state, "STARTUP", "DM2 LOAD FAILED");
-        }
         return 0;
     }
     m11_dm2_mirror_session_party(state, session);
     m11_sync_dm2_state_from_runtime(state);
-    m11_set_status(state, "STARTUP", status ? status : "DM2 STARTED");
     return 1;
 }
 
@@ -758,6 +753,8 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
     DM2_V1_BootProfile *profile;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupModeUpdate update;
+    DM2_V1_StartupInputOutcome outcome;
+    int session_applied = 0;
 
     if (!state || !state->dm2State.startup_menu_active ||
         !state->dm2BootProfile || !action) {
@@ -772,29 +769,32 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
     if (!dm2_v1_startup_execution_mode_update(&execution, &update)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW) {
+    if (execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
+        session_applied = m11_dm2_startup_apply_session(
+            state,
+            &execution.session);
+        if (session_applied) {
+            m11_dm2_startup_apply_mode_update(state, &update);
+        }
+    }
+    if (!dm2_v1_startup_execution_input_outcome(&execution,
+                                                session_applied,
+                                                &outcome)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (outcome.status_scope || outcome.status) {
         m11_set_status(state,
-                       "STARTUP",
-                       execution.status ? execution.status
-                                        : "DM2 START SELECT");
-        if (execution.rescan_saves) {
+                       outcome.status_scope ? outcome.status_scope : "STARTUP",
+                       outcome.status ? outcome.status : "");
+    }
+    if (outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW) {
+        if (outcome.rescan_saves) {
             m11_dm2_startup_scan_saves(state, profile);
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
-        if (m11_dm2_startup_apply_session(state,
-                                          &execution.session,
-                                          execution.status)) {
-            m11_dm2_startup_apply_mode_update(state, &update);
-        }
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER) {
-        m11_set_status(state,
-                       "RETURN",
-                       execution.status ? execution.status
-                                        : "BACK TO LAUNCHER");
+    if (outcome.result ==
+        DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER) {
         return M11_GAME_INPUT_RETURN_TO_MENU;
     }
     return M11_GAME_INPUT_IGNORED;
@@ -22256,25 +22256,6 @@ static int m11_dm1_wall_graphic_index(DM1_WallSetIndex wall)
     return M11_GFX_WALLSET0_D0R + (int)wall;
 }
 
-static const DM1_ViewportWallDrawSpec* m11_dm1_side_wall_spec_for_rel(
-    int relForward,
-    int relSide)
-{
-    size_t i;
-    for (i = 0; i < dm1_viewport_3d_wall_draw_spec_count(); ++i) {
-        const DM1_ViewportWallDrawSpec* spec =
-            dm1_viewport_3d_get_wall_draw_spec(i);
-        if (!spec || spec->center_wall) {
-            continue;
-        }
-        if (spec->runtime_rel_forward == relForward &&
-            spec->runtime_rel_side == relSide) {
-            return spec;
-        }
-    }
-    return NULL;
-}
-
 static int m11_dm1_side_wall_blit_for_rel(int relForward,
                                           int relSide,
                                           M11_DM1WallFrontBlit* outBlit) {
@@ -22282,7 +22263,7 @@ static int m11_dm1_side_wall_blit_for_rel(int relForward,
     if (!outBlit) {
         return 0;
     }
-    spec = m11_dm1_side_wall_spec_for_rel(relForward, relSide);
+    spec = dm1_viewport_3d_get_side_wall_draw_spec_for_rel(relForward, relSide);
     if (!spec) {
         return 0;
     }
@@ -22438,28 +22419,28 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
             continue;
         }
         if (m11_viewport_cell_is_wall_like(&cell)) {
+            bool flipHoriz = false;
+            DM1_WallSetIndex selectedWall =
+                dm1_viewport_3d_select_wall_bitmap(spec,
+                                                   flipWalls ? true : false,
+                                                   &flipHoriz);
+            if (selectedWall < DM1_WALL_SET_COUNT) {
+                blit.graphicIndex = m11_dm1_wall_graphic_index(selectedWall);
+            }
             /* ReDMCSB I34E/P31J side-wall primitives use F0104/F0105 into
              * C702..C717, and those helpers call F0132_VIDEO_Blit with
              * C10_COLOR_FLESH as the transparent color.  Center walls use
              * F0792/F0765 without transparency; side panels must keep the
              * C10 key so clipped L/R panels do not overpaint the corridor. */
-            if (flipWalls) {
-                /* ReDMCSB F0116/F0117 (MEDIA709/720 path): when flipped,
-                 * left zones use the right-side graphic flipped horizontally
-                 * and vice versa. */
-                const DM1_ViewportWallDrawSpec* partnerSpec =
-                    m11_dm1_side_wall_spec_for_rel(blit.relForward,
-                                                   -blit.relSide);
-                M11_DM1WallFrontBlit swapped = blit;
-                if (partnerSpec) {
-                    swapped.graphicIndex =
-                        m11_dm1_wall_graphic_index(partnerSpec->native_wall);
-                }
+            if (flipHoriz) {
+                /* ReDMCSB F0116/F0117 (MEDIA709/720 path): DM1 viewport
+                 * metadata selects the parity bitmap and asks M11 to mirror
+                 * the source horizontally. */
                 (void)m11_draw_dm1_wall_blit_flipped(state,
                                                      framebuffer,
                                                      fbW,
                                                      fbH,
-                                                     &swapped,
+                                                     &blit,
                                                      10);
             } else {
                 (void)m11_draw_dm1_wall_blit_with_transparency(state,

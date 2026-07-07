@@ -74,6 +74,19 @@ typedef struct {
     int startup_menu_active;
 } DM2_V1_StartupModeUpdate;
 
+typedef enum {
+    DM2_V1_STARTUP_INPUT_RESULT_IGNORED = 0,
+    DM2_V1_STARTUP_INPUT_RESULT_REDRAW = 1,
+    DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER = 2
+} DM2_V1_StartupInputResult;
+
+typedef struct {
+    DM2_V1_StartupInputResult result;
+    int rescan_saves;
+    const char *status_scope;
+    const char *status;
+} DM2_V1_StartupInputOutcome;
+
 typedef struct {
     char save_root[512];
     int resume_available;
@@ -186,6 +199,10 @@ int dm2_v1_startup_execute_action(
 int dm2_v1_startup_execution_mode_update(
     const DM2_V1_StartupExecution *execution,
     DM2_V1_StartupModeUpdate *out_update);
+int dm2_v1_startup_execution_input_outcome(
+    const DM2_V1_StartupExecution *execution,
+    int session_applied,
+    DM2_V1_StartupInputOutcome *out_outcome);
 int dm2_v1_startup_execute_save_path(
     const char *save_path,
     char *out_save_root,

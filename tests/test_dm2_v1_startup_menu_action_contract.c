@@ -24,6 +24,7 @@ int main(void)
     DM2_V1_StartupActionPlan plan;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupModeUpdate mode_update;
+    DM2_V1_StartupInputOutcome outcome;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupMenuSnapshot snapshot;
     DM2_V1_StartupRowKind row_kind;
@@ -189,6 +190,12 @@ int main(void)
     check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
               !mode_update.set_startup_menu_active,
           "failed Continue redraw owns no-op startup mode update");
+    check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
+              outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
+              outcome.rescan_saves == 1 &&
+              strcmp(outcome.status_scope, "STARTUP") == 0 &&
+              strcmp(outcome.status, "DM2 CONTINUE FAILED") == 0,
+          "failed Continue execution owns redraw input outcome");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -263,6 +270,17 @@ int main(void)
               mode_update.set_startup_menu_active &&
               mode_update.startup_menu_active == 0,
           "session-ready execution owns startup-menu close update");
+    check(dm2_v1_startup_execution_input_outcome(&execution, 1, &outcome) &&
+              outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
+              outcome.rescan_saves == 0 &&
+              strcmp(outcome.status_scope, "STARTUP") == 0 &&
+              strcmp(outcome.status, "DM2 NEW GAME") == 0,
+          "session-ready execution owns successful redraw input outcome");
+    check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
+              outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
+              strcmp(outcome.status_scope, "STARTUP") == 0 &&
+              strcmp(outcome.status, "DM2 LOAD FAILED") == 0,
+          "session-ready execution owns failed apply input outcome");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
@@ -286,6 +304,13 @@ int main(void)
     check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
               !mode_update.set_startup_menu_active,
           "launcher-return execution owns no-op startup mode update");
+    check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
+              outcome.result ==
+                  DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER &&
+              outcome.rescan_saves == 0 &&
+              strcmp(outcome.status_scope, "RETURN") == 0 &&
+              strcmp(outcome.status, "BACK TO LAUNCHER") == 0,
+          "launcher-return execution owns return input outcome");
 
     hit.kind = DM2_V1_STARTUP_HIT_PANEL;
     hit.row = -1;
