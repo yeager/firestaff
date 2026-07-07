@@ -205,6 +205,25 @@ typedef struct {
     int panel_count;
 } DM2_V1_WallPanelRenderPlan;
 
+#define DM2_V1_DOOR_RENDER_MAX DM2_SQ_COUNT
+
+typedef struct {
+    int view_square;
+    int skproject_cell;
+    int panel_gdat_index;
+    int frame_gdat_index;
+    int button_gdat_index;
+    DM2_V1_ViewportRect panel_rect;
+    DM2_V1_ViewportRect frame_rect;
+    DM2_V1_ViewportRect button_rect;
+    uint8_t fallback_color;
+} DM2_V1_DoorRender;
+
+typedef struct {
+    DM2_V1_DoorRender doors[DM2_V1_DOOR_RENDER_MAX];
+    int door_count;
+} DM2_V1_DoorRenderPlan;
+
 typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
@@ -464,6 +483,9 @@ void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
 int dm2_v1_viewport_build_wall_panel_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_WallPanelRenderPlan *out_plan);
+int dm2_v1_viewport_build_door_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_DoorRenderPlan *out_plan);
 
 /* ── Lighting helpers ─────────────────────────────────────────── */
 /* dm2_v1_viewport_object_light_level — compute object light intensity
