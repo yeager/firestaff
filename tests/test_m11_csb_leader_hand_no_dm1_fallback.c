@@ -323,10 +323,10 @@ int main(void)
                       0,
                       0,
                       2,
-                      1,
+                      2,
                       &group_marker_count2_x,
                       &group_marker_count2_y),
-                  "CSB draw checks resolve second front-square group marker through C3200");
+                  "CSB draw checks resolve non-sequential second front-square group marker through C3200");
             group_marker_count2_y += sy;
             f0115_row = M11_GameView_GetF0115C2500C2900Row(3, 2);
             check(f0115_row >= 0 &&
@@ -437,7 +437,7 @@ int main(void)
                               object_marker_pile1_x] ==
                       (unsigned char)csb_v1_viewport_projectile_material_overlay_color(d3_bow_icon),
                   "CSB M11 draw applies source pile shift to the second floor object marker");
-            raw[101] = 0u;
+            raw[101] = 0x08u; /* creature 0 cell 0, creature 1 cell 2. */
             write_u16(raw + 110, (1u << 5));
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, 320, 200);
@@ -458,7 +458,7 @@ int main(void)
                   "CSB M11 draw stats prove a two-creature runtime group draws two markers");
             check(framebuffer[group_marker_count2_y * 320 +
                               group_marker_count2_x] == 0x0D,
-                  "CSB M11 draw marks the second runtime creature in a two-creature group");
+                  "CSB M11 draw marks the second runtime creature at its packed GROUP.Cells location");
             raw[101] = 0xFFu;
             write_u16(raw + 110, 0u);
             write_u16(raw + 0, THING_ENDOFLIST);
