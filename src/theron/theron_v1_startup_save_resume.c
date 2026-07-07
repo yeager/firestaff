@@ -720,6 +720,39 @@ int theron_v1_startup_continue_apply_receipt(
     return 1;
 }
 
+int theron_v1_startup_continue_state_receipt_from_result(
+    const Theron_V1StartupContinueResult *result,
+    Theron_StartupStateReceipt *out_receipt) {
+
+    Theron_StartupFlow flow;
+
+    if (!result || !out_receipt ||
+        result->source == THERON_V1_STARTUP_CONTINUE_SOURCE_NONE) {
+        return 0;
+    }
+    if (theron_v1_startup_show_stage_select(&flow,
+                                            result->selected_dungeon) !=
+        THERON_STARTUP_OK) {
+        return 0;
+    }
+    if (!theron_v1_startup_state_receipt_from_flow(&flow, out_receipt)) {
+        return 0;
+    }
+    out_receipt->set_level_loaded = 1;
+    out_receipt->level_loaded = result->level_loaded;
+    out_receipt->set_startup_cursor = 1;
+    out_receipt->startup_cursor = result->startup_cursor;
+    out_receipt->set_continue_focus = 1;
+    out_receipt->continue_focus = result->continue_focus;
+    out_receipt->set_party_pose = 1;
+    out_receipt->party_x = result->party_x;
+    out_receipt->party_y = result->party_y;
+    out_receipt->party_dir = result->party_dir;
+    out_receipt->set_tick_count = 1;
+    out_receipt->tick_count = result->tick_count;
+    return 1;
+}
+
 size_t theron_v1_startup_save_resume_format(
     const Theron_V1StartupSaveResume *snap,
     char *buf,

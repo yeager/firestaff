@@ -143,6 +143,16 @@ void theron_v1_startup_flow_snapshot_init(Theron_StartupFlowSnapshot *snapshot) 
     }
 }
 
+void theron_v1_startup_state_receipt_init(
+    Theron_StartupStateReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    theron_v1_startup_flow_snapshot_init(&receipt->flow);
+}
+
 void theron_v1_startup_flow_capture_snapshot(
     const Theron_StartupFlow *flow,
     Theron_StartupFlowSnapshot *snapshot) {
@@ -165,6 +175,19 @@ void theron_v1_startup_flow_capture_snapshot(
                 ? -1
                 : (int)flow->selected_mirror_order[i];
     }
+}
+
+int theron_v1_startup_state_receipt_from_flow(
+    const Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_receipt) {
+
+    if (!flow || !out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_state_receipt_init(out_receipt);
+    out_receipt->flow_changed = 1;
+    theron_v1_startup_flow_capture_snapshot(flow, &out_receipt->flow);
+    return 1;
 }
 
 Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(

@@ -66,6 +66,10 @@ int theron_v1_startup_runtime_entry_apply_receipt(
     const Theron_V1StartupRuntimeEntryResult *result,
     const char *runtime_receipt,
     Theron_V1StartupRuntimeEntryApplyReceipt *out_receipt);
+int theron_v1_startup_runtime_entry_state_receipt_from_result(
+    const Theron_StartupFlow *flow,
+    const Theron_V1StartupRuntimeEntryResult *result,
+    Theron_StartupStateReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

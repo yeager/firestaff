@@ -215,6 +215,9 @@ int theron_v1_startup_continue_apply_receipt(
     const char *continue_receipt,
     const char *chapter_marker_line,
     Theron_V1StartupContinueApplyReceipt *out_receipt);
+int theron_v1_startup_continue_state_receipt_from_result(
+    const Theron_V1StartupContinueResult *result,
+    Theron_StartupStateReceipt *out_receipt);
 
 /* Pretty-printer. Writes a multi-line diagnostic to `buf` up to
  * `buf_size` bytes (always NUL-terminated).  Returns bytes written

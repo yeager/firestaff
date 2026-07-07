@@ -11936,22 +11936,67 @@ static void m11_theron_capture_track02_startup_media(
     state->theronState.startup_roster_name_count = (int)i;
 }
 
+static void m11_theron_apply_startup_flow_snapshot(
+    M11_GameViewState *state,
+    const Theron_StartupFlowSnapshot *snapshot);
+
 static void m11_theron_sync_startup_state(M11_GameViewState* state,
                                           const Theron_StartupFlow* flow) {
-    int i;
     Theron_StartupFlowSnapshot snapshot;
     if (!state || !flow) {
         return;
     }
     theron_v1_startup_flow_capture_snapshot(flow, &snapshot);
-    state->theronState.selected_dungeon = (int)flow->selected_dungeon;
-    state->theronState.companion_count = (int)flow->companion_count;
-    state->theronState.startup_phase = (int)flow->phase;
+    m11_theron_apply_startup_flow_snapshot(state, &snapshot);
+}
+
+static void m11_theron_apply_startup_flow_snapshot(
+    M11_GameViewState *state,
+    const Theron_StartupFlowSnapshot *snapshot)
+{
+    int i;
+
+    if (!state || !snapshot) {
+        return;
+    }
+    state->theronState.selected_dungeon = (int)snapshot->selected_dungeon;
+    state->theronState.companion_count = (int)snapshot->companion_count;
+    state->theronState.startup_phase = (int)snapshot->phase;
     state->theronState.selected_mirrors_mask =
-        (int)flow->selected_mirrors_mask;
+        (int)snapshot->selected_mirrors_mask;
     for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
         state->theronState.selected_mirror_order[i] =
-            snapshot.selected_mirror_order[i];
+            snapshot->selected_mirror_order[i];
+    }
+}
+
+static void m11_theron_apply_startup_state_receipt(
+    M11_GameViewState *state,
+    const Theron_StartupStateReceipt *receipt)
+{
+    if (!state || !receipt) {
+        return;
+    }
+    if (receipt->flow_changed) {
+        m11_theron_apply_startup_flow_snapshot(state, &receipt->flow);
+    }
+    if (receipt->set_level_loaded) {
+        state->theronState.level_loaded = receipt->level_loaded;
+    }
+    if (receipt->set_startup_cursor) {
+        state->theronState.startup_cursor = receipt->startup_cursor;
+    }
+    if (receipt->set_continue_focus) {
+        state->theronState.save_resume_continue_focus =
+            receipt->continue_focus;
+    }
+    if (receipt->set_party_pose) {
+        state->theronState.party_x = receipt->party_x;
+        state->theronState.party_y = receipt->party_y;
+        state->theronState.party_dir = receipt->party_dir;
+    }
+    if (receipt->set_tick_count) {
+        state->theronState.tick_count = receipt->tick_count;
     }
 }
 
@@ -12014,6 +12059,7 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     const char* rosterNames[8];
     Theron_V1StartupRuntimeEntryRequest runtimeRequest;
     Theron_V1StartupRuntimeEntryResult runtimeResult;
+    Theron_StartupStateReceipt stateReceipt;
     char flowReceipt[128];
     int i;
 
@@ -12074,12 +12120,13 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     if (out_result) {
         *out_result = runtimeResult;
     }
-    state->theronState.level_loaded = runtimeResult.level_loaded;
-    state->theronState.party_x = runtimeResult.party_x;
-    state->theronState.party_y = runtimeResult.party_y;
-    state->theronState.party_dir = runtimeResult.party_dir;
-    state->theronState.tick_count = runtimeResult.tick_count;
-    m11_theron_sync_startup_state(state, &flow);
+    if (!theron_v1_startup_runtime_entry_state_receipt_from_result(
+            &flow,
+            &runtimeResult,
+            &stateReceipt)) {
+        return 0;
+    }
+    m11_theron_apply_startup_state_receipt(state, &stateReceipt);
     return 1;
 }
 
@@ -12091,7 +12138,7 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
     Theron_V1_BootProfile* profile;
     Theron_V1StartupContinueRequest request;
     Theron_V1StartupContinueResult result;
-    Theron_StartupFlow flow;
+    Theron_StartupStateReceipt stateReceipt;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -12122,17 +12169,12 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
         return 0;
     }
 
-    (void)theron_v1_startup_show_stage_select(
-        &flow,
-        result.selected_dungeon);
-    m11_theron_sync_startup_state(state, &flow);
-    state->theronState.level_loaded = result.level_loaded;
-    state->theronState.startup_cursor = result.startup_cursor;
-    state->theronState.save_resume_continue_focus = result.continue_focus;
-    state->theronState.party_x = result.party_x;
-    state->theronState.party_y = result.party_y;
-    state->theronState.party_dir = result.party_dir;
-    state->theronState.tick_count = result.tick_count;
+    if (!theron_v1_startup_continue_state_receipt_from_result(
+            &result,
+            &stateReceipt)) {
+        return 0;
+    }
+    m11_theron_apply_startup_state_receipt(state, &stateReceipt);
     if (out_result) {
         *out_result = result;
     }
