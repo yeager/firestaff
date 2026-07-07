@@ -248,6 +248,30 @@ int dm2_v1_startup_presentation_build_from_snapshot(
                                              max_commands);
 }
 
+int dm2_v1_startup_presentation_build_from_facts(
+    const char *save_root,
+    const char *fallback_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    DM2_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    DM2_V1_StartupMenuSnapshot snapshot;
+
+    if (!dm2_v1_startup_menu_snapshot_from_facts(&snapshot,
+                                                 save_root,
+                                                 fallback_save_root,
+                                                 resume_available,
+                                                 slot_mask,
+                                                 selected_row)) {
+        return 0;
+    }
+    return dm2_v1_startup_presentation_build_from_snapshot(&snapshot,
+                                                           out_commands,
+                                                           max_commands);
+}
+
 int dm2_v1_startup_execute_draw_commands(
     const DM2_V1_StartupDrawCommand *commands,
     int command_count,

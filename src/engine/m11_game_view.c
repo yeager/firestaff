@@ -572,25 +572,6 @@ static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
     m11_dm2_startup_snapshot_to_state(state, &snapshot);
 }
 
-static int m11_dm2_startup_snapshot_from_state(
-    const M11_GameViewState *state,
-    DM2_V1_StartupMenuSnapshot *snapshot)
-{
-    const DM2_V1_BootProfile *profile;
-
-    if (!state || !snapshot) {
-        return 0;
-    }
-    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
-    return dm2_v1_startup_menu_snapshot_from_facts(
-        snapshot,
-        state->dm2State.startup_save_root,
-        profile ? profile->save_root : NULL,
-        state->dm2State.startup_resume_available,
-        state->dm2State.startup_slot_mask,
-        state->dm2State.startup_menu_selected_row);
-}
-
 _Static_assert(M12_MENU_INPUT_NONE == 0,
                "DM2 startup menu input code drift");
 _Static_assert(M12_MENU_INPUT_UP == 1,
@@ -34907,7 +34888,7 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                       int framebufferWidth,
                                       int framebufferHeight)
 {
-    DM2_V1_StartupMenuSnapshot snapshot;
+    const DM2_V1_BootProfile *profile;
     DM2_V1_StartupDrawCommand commands[32];
     DM2_V1_StartupDrawExecutor executor;
     M11_DM2StartupDrawContext context;
@@ -34916,12 +34897,14 @@ static void m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     if (!state || !framebuffer || !state->dm2State.startup_menu_active) {
         return;
     }
-    if (!m11_dm2_startup_snapshot_from_state(state, &snapshot)) {
-        return;
-    }
+    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
     command_count =
-        dm2_v1_startup_presentation_build_from_snapshot(
-            &snapshot,
+        dm2_v1_startup_presentation_build_from_facts(
+            state->dm2State.startup_save_root,
+            profile ? profile->save_root : NULL,
+            state->dm2State.startup_resume_available,
+            state->dm2State.startup_slot_mask,
+            state->dm2State.startup_menu_selected_row,
             commands,
             (int)(sizeof(commands) / sizeof(commands[0])));
     if (command_count <= 0) {

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 startup render facts ownership: `dm2_v1_startup_presentation` now builds startup draw commands directly from raw save-root/resume/slot/selection facts. M11 no longer builds a DM2 startup snapshot before rendering the startup menu. Verification: DM2 M11 startup/profile gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus startup render facts ownership: `nexus_v1_startup_menu` now builds save-select and champion-select startup draw commands directly from raw facts. M11 no longer builds Nexus save/champion snapshots before startup rendering. Verification: Nexus startup menu test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Nexus champion input facts ownership: `nexus_v1_startup_menu` now handles champion-select Firestaff keyboard input directly from raw champion facts, including slot-mask, cursor, and frame normalization. M11 no longer builds a Nexus champion snapshot before keyboard/menu input. Verification: Nexus startup menu test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
