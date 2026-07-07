@@ -188,6 +188,23 @@ typedef struct {
     int h;
 } DM2_V1_ViewportRect;
 
+#define DM2_V1_WALL_PANEL_RENDER_MAX DM2_SQ_COUNT
+
+typedef struct {
+    int render_step;
+    int view_square;
+    int skproject_cell;
+    int gdat_index;
+    DM2_V1_ViewportRect src_rect;
+    DM2_V1_ViewportRect dst_rect;
+    uint8_t fallback_color;
+} DM2_V1_WallPanelRender;
+
+typedef struct {
+    DM2_V1_WallPanelRender panels[DM2_V1_WALL_PANEL_RENDER_MAX];
+    int panel_count;
+} DM2_V1_WallPanelRenderPlan;
+
 typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
@@ -444,6 +461,9 @@ void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                         DM2_V1_ViewportAssetFetch fetch,
                                         void *user);
+int dm2_v1_viewport_build_wall_panel_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_WallPanelRenderPlan *out_plan);
 
 /* ── Lighting helpers ─────────────────────────────────────────── */
 /* dm2_v1_viewport_object_light_level — compute object light intensity

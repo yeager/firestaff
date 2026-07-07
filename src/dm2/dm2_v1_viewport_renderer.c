@@ -429,6 +429,11 @@ static const int __attribute__((unused)) s_step_to_square [DM2_STEP_COUNT] = {
     DM2_SQ_D0L, DM2_SQ_D0R, DM2_SQ_D0C,
 };
 
+static uint8_t dm2_v1_wall_fallback_color_for_step(int render_step)
+{
+    return (uint8_t)(2 + (render_step / 3) * 2);
+}
+
 /* ── Helper: resolve blit clipping gate ─────────────────────────── */
 
 /* Clip gate for blit operations — prevents out-of-bounds writes.
@@ -720,6 +725,52 @@ int dm2_v1_viewport_wall_graphic_index_for_square(int view_square)
     int field = dm2_v1_viewport_wall_field_for_square(view_square);
     if (field < 0) return 0;
     return DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - field;
+}
+
+int dm2_v1_viewport_build_wall_panel_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_WallPanelRenderPlan *out_plan)
+{
+    (void)s;
+    if (!out_plan) {
+        return 0;
+    }
+    memset(out_plan, 0, sizeof(*out_plan));
+    /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/QUERY_TEMP_PICST routes each
+     * visible wall through the viewport-cell field before blitting.  Keep the
+     * Firestaff contract as explicit panel rows so the asset-backed renderer,
+     * local fallback, and future exact source clipping share one plan. */
+    for (int step = 0; step < DM2_STEP_COUNT; ++step) {
+        int square = s_step_to_square[step];
+        const DM2_WallFrame *frame = dm2_v1_get_wall_frame(square);
+        int gdat_index = dm2_v1_viewport_wall_graphic_index_for_square(square);
+        DM2_V1_WallPanelRender *row;
+
+        if (!frame || frame->byte_width == 0 || frame->height == 0 ||
+            gdat_index == 0 ||
+            out_plan->panel_count >= DM2_V1_WALL_PANEL_RENDER_MAX) {
+            continue;
+        }
+        row = &out_plan->panels[out_plan->panel_count++];
+        row->render_step = step;
+        row->view_square = square;
+        row->skproject_cell = dm2_v1_viewport_skproject_cell_for_square(square);
+        row->gdat_index = gdat_index;
+        row->src_rect = (DM2_V1_ViewportRect){
+            frame->blit_x,
+            frame->blit_y,
+            frame->byte_width,
+            frame->height
+        };
+        row->dst_rect = (DM2_V1_ViewportRect){
+            frame->left_x,
+            frame->top_y,
+            frame->right_x - frame->left_x + 1,
+            frame->bottom_y - frame->top_y + 1
+        };
+        row->fallback_color = dm2_v1_wall_fallback_color_for_step(step);
+    }
+    return 1;
 }
 
 int dm2_v1_viewport_door_frame_field_for_square(int view_square)
@@ -1704,6 +1755,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     int stride = s->fb_stride;
     int wall_asset_count = 0;
     int wall_fallback_count = 0;
+    DM2_V1_WallPanelRenderPlan plan;
 
     /* DM2 wall rendering: draw back-to-front (D3→D2→D1→D0).
      * For each depth level, draw side walls first (L,R), then center (C).
@@ -1724,53 +1776,19 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         return;
     }
 
-    /* DM2 wall zone Y positions (from g_dm2_wall_frames):
-     *   D3: top_y=25, height=51 (lines ~25-76)
-     *   D2: top_y=20, height=71 (lines ~20-91)
-     *   D1: top_y=9,  height=111 (lines ~9-120)
-     *   D0: top_y=0,  height=135 (lines ~0-135)
-     *
-     * The render loop walks D3→D0, drawing each zone's wall panels.
-     * Side walls (L,R) drawn at their respective X positions.
-     * Center wall (C) drawn last per depth to overlap sides if needed.
-     *
-     * Source: DUNVIEW.C F0096 (line 2225) wall set loading
-     *         DUNVIEW.C F0099 (line 3018) horizontal flip
-     *         DUNVIEW.C F0100 (line 3048) wall bitmap blit with transparency
-     */
+    if (!dm2_v1_viewport_build_wall_panel_render_plan(s, &plan)) {
+        return;
+    }
 
-/* DM2 wall zone Y positions (from g_dm2_wall_frames):
- *   D3: top_y=25, height=51 (lines ~25-76)
- *   D2: top_y=20, height=71 (lines ~20-91)
- *   D1: top_y=9,  height=111 (lines ~9-120)
- *   D0: top_y=0,  height=135 (lines ~0-135)
- *
- * The render loop walks D3→D0, drawing each zone's wall panels.
- * Side walls (L,R) drawn at their respective X positions.
- * Center wall (C) drawn last per depth to overlap sides if needed.
- *
- * Source: DUNVIEW.C F0096 (line 2225) wall set loading
- *         DUNVIEW.C F0099 (line 3018) horizontal flip
- *         DUNVIEW.C F0100 (line 3048) wall bitmap blit with transparency
- */
-
-    for (int step = 0; step < DM2_STEP_COUNT; ++step) {
-        int square = s_step_to_square[step];
-        const DM2_WallFrame *frame = dm2_v1_get_wall_frame(square);
+    for (int i = 0; i < plan.panel_count; ++i) {
+        const DM2_V1_WallPanelRender *panel = &plan.panels[i];
         const uint8_t *wall_pixels = NULL;
         int wall_w = 0;
         int wall_h = 0;
         int wall_stride = 0;
-        int gdat_index = dm2_v1_viewport_wall_graphic_index_for_square(square);
-        int dst_w;
-        int dst_h;
 
-        if (!frame || frame->byte_width == 0 || frame->height == 0 ||
-            gdat_index == 0) {
-            continue;
-        }
         if (dm2_v1_fetch_viewport_asset(s,
-                                        gdat_index,
+                                        panel->gdat_index,
                                         &wall_pixels,
                                         &wall_w,
                                         &wall_h,
@@ -1778,20 +1796,19 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             !wall_pixels || wall_w <= 0 || wall_h <= 0) {
             dm2_v1_draw_wall_fallback_rect(vp,
                                            stride,
-                                           frame,
-                                           (uint8_t)(2 + (step / 3) * 2));
+                                           dm2_v1_get_wall_frame(
+                                               panel->view_square),
+                                           panel->fallback_color);
             ++wall_fallback_count;
             continue;
         }
 
-        dst_w = (int)frame->right_x - (int)frame->left_x + 1;
-        dst_h = (int)frame->bottom_y - (int)frame->top_y + 1;
         dm2_v1_blit_scaled_bitmap(vp,
                                   stride,
-                                  frame->left_x,
-                                  frame->top_y,
-                                  dst_w,
-                                  dst_h,
+                                  panel->dst_rect.x,
+                                  panel->dst_rect.y,
+                                  panel->dst_rect.w,
+                                  panel->dst_rect.h,
                                   wall_pixels,
                                   wall_w,
                                   wall_h,
