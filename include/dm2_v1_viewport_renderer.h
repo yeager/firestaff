@@ -179,6 +179,24 @@ typedef struct {
     int h;
 } DM2_V1_ViewportRect;
 
+typedef struct {
+    int visible;
+    int depth;
+    int screen_x;
+    int screen_y;
+} DM2_V1_ViewportSpritePlacement;
+
+int dm2_v1_viewport_project_map_to_sprite(int map_x,
+                                          int map_y,
+                                          int party_dir,
+                                          int party_x,
+                                          int party_y,
+                                          DM2_V1_ViewportSpritePlacement *out);
+int dm2_v1_viewport_possession_slot_placement(
+    const DM2_V1_ViewportSpritePlacement *base,
+    int possession_slot,
+    DM2_V1_ViewportSpritePlacement *out);
+
 int dm2_v1_viewport_door_panel_rect_for_square(int view_square,
                                                DM2_V1_ViewportRect *out_rect);
 int dm2_v1_viewport_door_button_rect_for_square(int view_square,

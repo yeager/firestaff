@@ -644,51 +644,6 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
 static DM2_V1_DrainedProjectile g_dm2_projectile_drain[DM2_DRAIN_MAX_PROJECTILES];
 static int g_dm2_projectile_drain_count = 0;
 
-static int dm2_runtime_projectile_view_position(
-    const DM2_V1_DrainedProjectile *src,
-    int party_dir,
-    int party_x,
-    int party_y,
-    int *out_depth,
-    int *out_x,
-    int *out_y)
-{
-    static const int dx[4] = { 0, 1, 0, -1 };
-    static const int dy[4] = { -1, 0, 1, 0 };
-    static const int center_x = 112;
-    static const int y_by_depth[4] = { 98, 84, 72, 62 };
-    static const int lateral_step_by_depth[4] = { 48, 40, 30, 22 };
-    int dir;
-    int right;
-    int rel_x;
-    int rel_y;
-    int forward;
-    int lateral;
-    int depth;
-
-    if (!src || !out_depth || !out_x || !out_y) return 0;
-    dir = party_dir & 3;
-    right = (dir + 1) & 3;
-    rel_x = src->map_x - party_x;
-    rel_y = src->map_y - party_y;
-    forward = rel_x * dx[dir] + rel_y * dy[dir];
-    lateral = rel_x * dx[right] + rel_y * dy[right];
-
-    if (forward < 1 || forward > 4 || lateral < -2 || lateral > 2) {
-        return 0;
-    }
-
-    /* skproject/SKWIN renders missiles through the same visible cell order as
-     * dungeon map chips.  This bounded projection converts the drained world
-     * coordinate into the current first-person depth row before the sprite
-     * renderer applies its per-depth scale. */
-    depth = forward - 1;
-    *out_depth = depth;
-    *out_x = center_x + lateral * lateral_step_by_depth[depth];
-    *out_y = y_by_depth[depth];
-    return 1;
-}
-
 static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
                                              int party_dir,
                                              int party_x,
@@ -711,20 +666,13 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
         dst->screen_x = (int16_t)src->pixel_x;
         dst->screen_y = (int16_t)src->pixel_y;
         {
-            int projected_depth = 0;
-            int projected_x = 0;
-            int projected_y = 0;
-            if (dm2_runtime_projectile_view_position(
-                    src,
-                    party_dir,
-                    party_x,
-                    party_y,
-                    &projected_depth,
-                    &projected_x,
-                    &projected_y)) {
-                dst->depth = (int16_t)projected_depth;
-                dst->screen_x = (int16_t)projected_x;
-                dst->screen_y = (int16_t)projected_y;
+            DM2_V1_ViewportSpritePlacement placement;
+            if (dm2_v1_viewport_project_map_to_sprite(
+                    src->map_x, src->map_y, party_dir, party_x, party_y,
+                    &placement)) {
+                dst->depth = (int16_t)placement.depth;
+                dst->screen_x = (int16_t)placement.screen_x;
+                dst->screen_y = (int16_t)placement.screen_y;
             }
         }
         dst->render_kind =
@@ -753,25 +701,6 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
         }
         dst->palette_shift = (uint8_t)(src->frame & 7);
     }
-}
-
-static int dm2_runtime_view_position_from_map(
-    int map_x,
-    int map_y,
-    int party_dir,
-    int party_x,
-    int party_y,
-    int *out_depth,
-    int *out_x,
-    int *out_y)
-{
-    DM2_V1_DrainedProjectile point;
-
-    memset(&point, 0, sizeof(point));
-    point.map_x = map_x;
-    point.map_y = map_y;
-    return dm2_runtime_projectile_view_position(
-        &point, party_dir, party_x, party_y, out_depth, out_x, out_y);
 }
 
 static void dm2_runtime_append_creature_possession_item(
@@ -839,14 +768,12 @@ static void dm2_runtime_populate_creature_possession_items(
             int thing = dm2_v1_dungeon_get_first_thing(
                 dd, rt->dungeon_level, map_x, map_y);
             int guard = 0;
-            int depth = 0;
-            int screen_x = 0;
-            int screen_y = 0;
+            DM2_V1_ViewportSpritePlacement base_placement;
 
             if (thing < 0 || thing == 0xfffe) continue;
-            if (!dm2_runtime_view_position_from_map(
+            if (!dm2_v1_viewport_project_map_to_sprite(
                     map_x, map_y, party_dir, party_x, party_y,
-                    &depth, &screen_x, &screen_y)) {
+                    &base_placement)) {
                 continue;
             }
             while (thing >= 0 && thing != 0xfffe && guard++ < 64) {
@@ -872,15 +799,21 @@ static void dm2_runtime_populate_creature_possession_items(
                            viewport->creature_possession_item_count <
                                DM2_MAX_CREATURE_POSSESSION_ITEMS) {
                         int item_size = 0;
+                        DM2_V1_ViewportSpritePlacement slot_placement;
                         const uint8_t *item_record =
                             dm2_v1_dungeon_get_thing_record(
                                 dd, possession, NULL, NULL, &item_size);
                         if (!item_record || item_size < 2) break;
+                        if (!dm2_v1_viewport_possession_slot_placement(
+                                &base_placement, possession_slot,
+                                &slot_placement)) {
+                            break;
+                        }
                         dm2_runtime_append_creature_possession_item(
                             viewport, possession,
-                            screen_x + possession_slot * 6,
-                            screen_y + possession_slot * 4,
-                            depth, item_record, item_size);
+                            slot_placement.screen_x,
+                            slot_placement.screen_y,
+                            slot_placement.depth, item_record, item_size);
                         ++possession_slot;
                         next = dm2_v1_dungeon_get_next_thing(dd, possession);
                         if (next < 0 || next == (int)possession) break;
