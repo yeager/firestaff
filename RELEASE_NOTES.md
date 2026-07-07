@@ -1,6 +1,40 @@
 
 # Unreleased
 
+# Firestaff v3.0.55
+
+Firestaff v3.0.55 packages the current `main` after the latest CSB V1 render
+ownership work, Nexus and Theron startup render ownership work, and the release
+link fix found by the failed `v3.0.54` packaging run.
+
+## Highlights since v3.0.53
+
+- **CSB V1 projectile and overlay ownership**: M11 now consumes CSB-owned
+  source tables and runtime overlay plans for projectile, floor-object and
+  creature-group rendering paths.
+- **Nexus champion-select render ownership**: Nexus startup code now builds
+  champion row and footer render metadata that M11 consumes directly.
+- **Theron's Quest startup render ownership**: Theron startup code now owns its
+  startup labels and row/footer render metadata before M11 draws the startup
+  screen.
+- **DM1 V1 rebirth explosion namespace**: resurrection thing IDs remain
+  separate from C100/C101 explosion render type IDs.
+- **Release link fix**: the CSB viewport custom-background and CSBgraphics M11
+  runtime-plan test targets now include a data-free runtime overlay link stub
+  for the viewport code they compile.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.55`.
+
+## Verification
+
+- Local release verification covers version synchronization, the two CSB release
+  link targets that failed in `v3.0.54`, focused DM1 projectile/resurrection,
+  CSB viewport/render, Nexus startup, Theron startup, Phase A and
+  `git diff --check`.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.55` release run.
+
 # Firestaff v3.0.53
 
 Firestaff v3.0.53 packages the current `main` after the latest CSB V1

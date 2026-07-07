@@ -5,7 +5,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.53 LANGUAGES C)
+project(Firestaff VERSION 3.0.55 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -17678,6 +17678,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_viewport_custom_background_mask_pc34_compat
         tests/test_csb_v1_viewport_custom_background_mask_pc34_compat.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        tests/csb_v1_runtime_overlay_link_stub.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
@@ -17715,6 +17716,7 @@ if(BUILD_TESTING)
         tests/test_csb_v1_csbgraphics_m11_runtime_plan.c
         src/csb/csb_v1_csbgraphics_m11_runtime_plan.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        tests/csb_v1_runtime_overlay_link_stub.c
         src/csb/csb_v1_viewport_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c

@@ -84,6 +84,7 @@ void nexus_v1_startup_menu_init(Nexus_V1_StartupMenu *menu,
         nexus_v1_save_default_dir(menu->save_dir, sizeof(menu->save_dir));
     }
     menu->row_count = 1;
+    menu->selected_row = -1;
 }
 
 int nexus_v1_startup_menu_refresh(Nexus_V1_StartupMenu *menu,
@@ -98,7 +99,7 @@ int nexus_v1_startup_menu_refresh(Nexus_V1_StartupMenu *menu,
         menu->row_count = 1;
     }
     if (menu->selected_row < 0) {
-        menu->selected_row = 0;
+        menu->selected_row = menu->row_count - 1;
     }
     if (menu->selected_row >= menu->row_count) {
         menu->selected_row = menu->row_count - 1;
@@ -589,6 +590,56 @@ int nexus_v1_startup_menu_build_save_render_rows(
         ++count;
     }
     return count;
+}
+
+static void nexus_v1_startup_chrome_clear(
+    Nexus_V1_StartupChromeRender *chrome)
+{
+    if (!chrome) {
+        return;
+    }
+    memset(chrome, 0, sizeof(*chrome));
+    chrome->title_x = NEXUS_V1_STARTUP_TITLE_X;
+    chrome->title_y = NEXUS_V1_STARTUP_TITLE_Y;
+    chrome->subtitle_x = NEXUS_V1_STARTUP_TITLE_X;
+    chrome->subtitle_y = NEXUS_V1_STARTUP_SUBTITLE_Y;
+    chrome->footer_x = NEXUS_V1_STARTUP_FOOTER_X;
+    chrome->footer_y = NEXUS_V1_STARTUP_FOOTER_Y;
+}
+
+int nexus_v1_startup_menu_build_save_chrome_render(
+    Nexus_V1_StartupChromeRender *out_chrome)
+{
+    if (!out_chrome) {
+        return 0;
+    }
+    nexus_v1_startup_chrome_clear(out_chrome);
+    snprintf(out_chrome->title,
+             sizeof(out_chrome->title),
+             "DUNGEON MASTER NEXUS");
+    snprintf(out_chrome->subtitle,
+             sizeof(out_chrome->subtitle),
+             "LOAD GAME");
+    snprintf(out_chrome->footer,
+             sizeof(out_chrome->footer),
+             "ACCEPT LOADS  ACTION STARTS");
+    return 1;
+}
+
+int nexus_v1_startup_menu_build_champion_chrome_render(
+    Nexus_V1_StartupChromeRender *out_chrome)
+{
+    if (!out_chrome) {
+        return 0;
+    }
+    nexus_v1_startup_chrome_clear(out_chrome);
+    snprintf(out_chrome->title,
+             sizeof(out_chrome->title),
+             "DUNGEON MASTER NEXUS");
+    snprintf(out_chrome->subtitle,
+             sizeof(out_chrome->subtitle),
+             "SELECT CHAMPIONS");
+    return 1;
 }
 
 int nexus_v1_startup_menu_build_champion_render_rows(
