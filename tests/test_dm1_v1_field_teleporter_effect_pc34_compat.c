@@ -71,6 +71,14 @@ int main(void)
     expect_int("relative.d2r2.ok", dm1_v1_field_render_plan_for_relative_pc34(2, 2, &plan), 1);
     expect_int("relative.d2r2.x", plan.dstX, 216);
     expect_int("relative.d2r2.h", plan.dstH, 52);
+    {
+        int fieldGraphic = -1;
+        int maskGraphic = -2;
+        expect_int("assets.d2r2.ok", dm1_v1_field_asset_indices_pc34(
+                   &plan, &fieldGraphic, &maskGraphic), 1);
+        expect_int("assets.d2r2.field", fieldGraphic, 76);
+        expect_int("assets.d2r2.mask", maskGraphic, 72);
+    }
     expect_int("relative.bad.side", dm1_v1_field_render_plan_for_relative_pc34(3, -3, &plan), 0);
     expect_int("relative.bad.null", dm1_v1_field_render_plan_for_relative_pc34(3, -2, 0), 0);
     {
@@ -125,6 +133,23 @@ int main(void)
                    fieldPixels, 256, 128, 256,
                    NULL, 0, 0, 0, &pixel), 1);
         expect_int("pixel.d2r2.no_mask_value", pixel, 0x22);
+        expect_int("assets.d1c.lookup", dm1_v1_field_render_plan_for_relative_pc34(1, 0, &plan), 1);
+        {
+            int fieldGraphic = -1;
+            int maskGraphic = -2;
+            expect_int("assets.d1c.ok", dm1_v1_field_asset_indices_pc34(
+                       &plan, &fieldGraphic, &maskGraphic), 1);
+            expect_int("assets.d1c.field", fieldGraphic, 76);
+            expect_int("assets.d1c.no_mask", maskGraphic, -1);
+        }
+        {
+            DM1_FieldRenderPlanPc34 badPlan = plan;
+            int fieldGraphic = -1;
+            int maskGraphic = -2;
+            badPlan.maskIndexAndFlip = 0x06;
+            expect_int("assets.bad_mask", dm1_v1_field_asset_indices_pc34(
+                       &badPlan, &fieldGraphic, &maskGraphic), 0);
+        }
     }
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);

@@ -123,6 +123,11 @@ int dm1_v1_field_bitmap_pixel_pc34(
     int maskStride,
     uint8_t* outPixel);
 
+int dm1_v1_field_asset_indices_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    int* outFieldGraphicIndex,
+    int* outMaskGraphicIndex);
+
 int dm1_v1_field_square_is_visible_open_pc34(int square);
 
 #ifdef __cplusplus

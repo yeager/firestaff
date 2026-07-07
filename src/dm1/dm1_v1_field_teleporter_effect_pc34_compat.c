@@ -13,7 +13,9 @@
  * visible/open teleporter bits that gate this draw path. */
 enum {
     DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34 = 0x04,
-    DM1_FIELD_TELEPORTER_OPEN_MASK_PC34 = 0x08
+    DM1_FIELD_TELEPORTER_OPEN_MASK_PC34 = 0x08,
+    DM1_FIELD_MASK_GRAPHIC_BASE_PC34 = 70,
+    DM1_FIELD_TELEPORTER_GRAPHIC_PC34 = 76
 };
 
 static const DM1_FieldRenderPlanPc34 s_fieldRenderPlans[] = {
@@ -161,6 +163,29 @@ int dm1_v1_field_bitmap_pixel_pc34(
         return 0;
     }
     *outPixel = pixel;
+    return 1;
+}
+
+int dm1_v1_field_asset_indices_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    int* outFieldGraphicIndex,
+    int* outMaskGraphicIndex)
+{
+    int maskIndex;
+
+    if (!plan || !outFieldGraphicIndex || !outMaskGraphicIndex) {
+        return 0;
+    }
+
+    *outFieldGraphicIndex = DM1_FIELD_TELEPORTER_GRAPHIC_PC34;
+    *outMaskGraphicIndex = -1;
+    if (plan->maskIndexAndFlip != 0xff) {
+        maskIndex = plan->maskIndexAndFlip & 0x7f;
+        if (maskIndex < 0 || maskIndex > 5) {
+            return 0;
+        }
+        *outMaskGraphicIndex = DM1_FIELD_MASK_GRAPHIC_BASE_PC34 + maskIndex;
+    }
     return 1;
 }
 

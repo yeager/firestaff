@@ -21008,8 +21008,15 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
     int dstY;
     int dstW;
     int dstH;
+    int fieldGraphicIndex;
+    int maskGraphicIndex;
     if (!state || !state->assetsAvailable || !framebuffer || !plan ||
         plan->dstW <= 0 || plan->dstH <= 0) {
+        return 0;
+    }
+    if (!dm1_v1_field_asset_indices_pc34(plan,
+                                         &fieldGraphicIndex,
+                                         &maskGraphicIndex)) {
         return 0;
     }
     dstX = plan->dstX;
@@ -21017,14 +21024,13 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
     dstW = plan->dstW;
     dstH = plan->dstH;
     field = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                 M11_GFX_DM1_FIELD_TELEPORTER);
+                                 (unsigned int)fieldGraphicIndex);
     if (!field || !field->loaded || !field->pixels || field->width <= 0 || field->height <= 0) {
         return 0;
     }
-    if (plan->maskIndexAndFlip != 255) {
-        int maskIndex = plan->maskIndexAndFlip & 0x7f;
+    if (maskGraphicIndex >= 0) {
         mask = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    M11_GFX_DM1_FIELD_MASK_BASE + maskIndex);
+                                    (unsigned int)maskGraphicIndex);
         if (!mask || !mask->loaded || !mask->pixels || mask->width <= 0 || mask->height <= 0) {
             mask = NULL;
         }
