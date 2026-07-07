@@ -1133,6 +1133,207 @@ int theron_v1_startup_render_plan_build(
         "ENTER SELECTS MIRROR  ACTION ENTERS");
 }
 
+static void tqr_startup_exec_fill(
+    const Theron_StartupGraphicExecutor *executor,
+    int x,
+    int y,
+    int w,
+    int h,
+    int color)
+{
+    if (executor && executor->fill_rect) {
+        executor->fill_rect(executor->userdata, x, y, w, h, color);
+    }
+}
+
+static void tqr_startup_exec_rect(
+    const Theron_StartupGraphicExecutor *executor,
+    int x,
+    int y,
+    int w,
+    int h,
+    int color)
+{
+    if (executor && executor->draw_rect) {
+        executor->draw_rect(executor->userdata, x, y, w, h, color);
+    }
+}
+
+static void tqr_startup_exec_pixel(
+    const Theron_StartupGraphicExecutor *executor,
+    int x,
+    int y,
+    int color)
+{
+    if (executor && executor->plot_pixel) {
+        executor->plot_pixel(executor->userdata, x, y, color);
+    }
+}
+
+static void tqr_startup_exec_title_mark(
+    const Theron_StartupRenderGraphicCommand *command,
+    const Theron_StartupGraphicExecutor *executor)
+{
+    int cx;
+    int cy;
+    int i;
+
+    if (!command || !executor) {
+        return;
+    }
+    tqr_startup_exec_rect(executor,
+                          command->x,
+                          command->y,
+                          command->w,
+                          command->h,
+                          command->color);
+    tqr_startup_exec_rect(executor,
+                          command->x + 4,
+                          command->y + 4,
+                          command->w - 8,
+                          command->h - 8,
+                          command->color2);
+    cx = command->x + command->w / 2;
+    cy = command->y + command->h / 2;
+    for (i = -28; i <= 28; ++i) {
+        tqr_startup_exec_pixel(executor, cx + i, cy + i / 2, command->color);
+        tqr_startup_exec_pixel(executor, cx + i, cy - i / 2, command->color2);
+    }
+    tqr_startup_exec_fill(executor, cx - 18, cy - 5, 36, 10, command->color);
+}
+
+static void tqr_startup_exec_mirror_frame(
+    const Theron_StartupRenderGraphicCommand *command,
+    const Theron_StartupGraphicExecutor *executor)
+{
+    int portrait_color;
+    int inset_color;
+
+    if (!command || !executor) {
+        return;
+    }
+    portrait_color = 2 + ((command->ordinal > 0 ? command->ordinal : 1) % 12);
+    inset_color = command->selected ? 10 : portrait_color;
+    tqr_startup_exec_fill(executor,
+                          command->x,
+                          command->y,
+                          command->w,
+                          command->h,
+                          0);
+    tqr_startup_exec_rect(executor,
+                          command->x,
+                          command->y,
+                          command->w,
+                          command->h,
+                          command->cursor ? command->color2
+                                          : command->color);
+    tqr_startup_exec_fill(executor,
+                          command->x + 4,
+                          command->y + 4,
+                          18,
+                          command->h - 8,
+                          inset_color);
+    tqr_startup_exec_rect(executor,
+                          command->x + 26,
+                          command->y + 5,
+                          command->w - 32,
+                          command->h - 10,
+                          command->selected ? 10 : 8);
+}
+
+static void tqr_startup_exec_forcefield(
+    const Theron_StartupRenderGraphicCommand *command,
+    const Theron_StartupGraphicExecutor *executor)
+{
+    int i;
+    int cx;
+
+    if (!command || !executor) {
+        return;
+    }
+    tqr_startup_exec_rect(executor,
+                          command->x,
+                          command->y,
+                          command->w,
+                          command->h,
+                          command->color2);
+    cx = command->x + command->w / 2;
+    for (i = 0; i < command->w / 2; i += 6) {
+        int x = cx - i;
+        int w = i * 2;
+        if (w <= 0) {
+            continue;
+        }
+        tqr_startup_exec_rect(executor,
+                              x,
+                              command->y + 2 + (i % 12) / 2,
+                              w,
+                              command->h - 4 - (i % 12),
+                              command->color);
+    }
+}
+
+int theron_v1_startup_execute_graphics_plan(
+    const Theron_StartupRenderPlan *plan,
+    const Theron_StartupGraphicExecutor *executor)
+{
+    int i;
+
+    if (!plan || !executor || !executor->fill_rect ||
+        !executor->draw_rect || !executor->plot_pixel) {
+        return 0;
+    }
+    for (i = 0; i < plan->graphic_count; ++i) {
+        const Theron_StartupRenderGraphicCommand *command =
+            &plan->graphics[i];
+        switch (command->kind) {
+        case THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT:
+            tqr_startup_exec_fill(executor,
+                                  command->x,
+                                  command->y,
+                                  command->w,
+                                  command->h,
+                                  command->color);
+            break;
+        case THERON_STARTUP_RENDER_GRAPHIC_DRAW_RECT:
+            tqr_startup_exec_rect(executor,
+                                  command->x,
+                                  command->y,
+                                  command->w,
+                                  command->h,
+                                  command->color);
+            break;
+        case THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK:
+            tqr_startup_exec_title_mark(command, executor);
+            break;
+        case THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL:
+            tqr_startup_exec_fill(executor,
+                                  command->x,
+                                  command->y,
+                                  command->w,
+                                  command->h,
+                                  command->selected ? command->color : 0);
+            tqr_startup_exec_rect(executor,
+                                  command->x,
+                                  command->y,
+                                  command->w,
+                                  command->h,
+                                  command->cursor ? command->color2
+                                                  : command->color);
+            break;
+        case THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME:
+            tqr_startup_exec_mirror_frame(command, executor);
+            break;
+        case THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD:
+            tqr_startup_exec_forcefield(command, executor);
+            break;
+        default:
+            break;
+        }
+    }
+    return 1;
+}
+
 int theron_v1_startup_render_rows_build(
     const Theron_StartupLayoutState *state,
     const Theron_StartupLayoutElement *elements,
