@@ -6,6 +6,7 @@
 
 #include "theron_v1_save_load.h"
 #include "theron_v1_srm_classifier.h"
+#include "theron_v1_world.h"
 
 /* ══════════════════════════════════════════════════════════════════════
  * Theron V1 startup save/resume smoke gate
@@ -144,6 +145,22 @@ typedef struct {
 int theron_v1_startup_save_resume_evaluate(
     const char *boot_save_root,
     Theron_V1StartupSaveResume *out_snapshot);
+
+/* Apply an explicit startup Continue request into a Theron world.
+ * These helpers own the save/SRM decode and between-dungeon world reset;
+ * the caller still owns UI state, status text, and subsequent level load. */
+int theron_v1_startup_continue_tqsv_apply(
+    Theron_V1_World *world,
+    const char *save_root,
+    int slot_index,
+    char *receipt,
+    size_t receipt_cap);
+int theron_v1_startup_continue_srm_apply(
+    Theron_V1_World *world,
+    const char *srm_root,
+    int slot_index,
+    char *receipt,
+    size_t receipt_cap);
 
 /* Pretty-printer. Writes a multi-line diagnostic to `buf` up to
  * `buf_size` bytes (always NUL-terminated).  Returns bytes written

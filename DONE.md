@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron startup continue ownership: `theron_v1_startup_save_resume` now owns explicit Continue application for both Firestaff `.tqsv` slots and bounded SRM progression envelopes, including save decode, party restore, and between-dungeon world reset. M11 now only chooses the source, updates view-state fields, and shows status/inspect text. Verification: direct `firestaff_theron_v1_startup_save_resume_probe` build/run passed 66/66 with zlib, M11 syntax passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron startup flow snapshot ownership: `theron_v1_startup_flow` now owns capture/rebuild of startup phase, selected stage, selected mirror mask, and companion order from a bounded snapshot. M11 no longer replays mirror selection policy locally when entering the forcefield. Verification: direct `firestaff_theron_v1_startup_flow_probe` build/run passed 254/254, M11 syntax passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 optional boot asset scan candidates: the asset scanner now treats `TITLE`, `TITLE.DAT`, `SWOOSH`, and `SWOOSH.DAT` as original-file candidates, while keeping the DM1 launch gate on required `GRAPHICS.DAT` plus `DUNGEON.DAT`. Verification: direct `test_asset_status_scan_metrics` build/run passed, `firestaff_m11_phase_a_probe` passed 24/24, and `git diff --check` passed.
