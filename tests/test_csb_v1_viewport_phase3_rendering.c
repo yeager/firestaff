@@ -2685,6 +2685,7 @@ static void test_csb_runtime_overlay_placement_contracts(void)
     {
         uint8_t raw[8 * 8 * 2];
         CSB_V1_DungeonData dungeon;
+        uint8_t viewport_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE];
         CSB_V1_ViewportRuntimeOverlayCell cells[16];
         size_t cell_count;
         int forward;
@@ -2700,6 +2701,28 @@ static void test_csb_runtime_overlay_placement_contracts(void)
         dungeon.square_bytes = 2;
         dungeon.raw_data = raw;
         dungeon.raw_size = (int)sizeof(raw);
+        put_fixture_square16(raw, 8, 8, 1, 1, 7);
+        put_fixture_square16(raw, 8, 8, 7, 7, 3);
+        memset(viewport_grid, 0x55, sizeof(viewport_grid));
+        check_int("csb.viewport_grid.build.valid",
+                  csb_v1_viewport_build_dungeon_grid(
+                      &dungeon, 999, viewport_grid), 1);
+        check_int("csb.viewport_grid.build.origin_wall",
+                  viewport_grid[0], 0);
+        check_int("csb.viewport_grid.build.square_1_1",
+                  viewport_grid[1 * 32 + 1], 7);
+        check_int("csb.viewport_grid.build.square_7_7",
+                  viewport_grid[7 * 32 + 7], 3);
+        check_int("csb.viewport_grid.build.out_of_bounds_wall",
+                  viewport_grid[8 * 32 + 8], 0);
+        memset(viewport_grid, 0x55, sizeof(viewport_grid));
+        check_int("csb.viewport_grid.build.invalid",
+                  csb_v1_viewport_build_dungeon_grid(
+                      NULL, 0, viewport_grid), 0);
+        check_int("csb.viewport_grid.build.invalid_zeroed",
+                  viewport_grid[31 * 32 + 31], 0);
+
+        memset(raw, 0, sizeof(raw));
         for (forward = 3; forward >= 1; --forward) {
             int side_min = 0;
             int side_max = -1;

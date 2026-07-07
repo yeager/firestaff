@@ -731,6 +731,10 @@ int csb_v1_viewport_custom_background_apply_aligned_mask_pc34(
 void csb_v1_viewport_set_dungeon_grid(CSB_V1_ViewportConfig *cfg,
                                        const uint8_t *grid,
                                        int width, int height);
+int csb_v1_viewport_build_dungeon_grid(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    uint8_t out_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE]);
 
 /* Render one dungeon view frame using the DM1 viewport engine.
  * party_dir: facing direction (0=N, 1=E, 2=S, 3=W)

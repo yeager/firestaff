@@ -3003,6 +3003,55 @@ void csb_v1_viewport_set_dungeon_grid(CSB_V1_ViewportConfig *cfg,
     cfg->dungeon_height = height;
 }
 
+int csb_v1_viewport_build_dungeon_grid(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    uint8_t out_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE])
+{
+    int width;
+    int height;
+    int max_w;
+    int max_h;
+    int x;
+    int y;
+
+    if (!out_grid) {
+        return 0;
+    }
+    memset(out_grid, 0, CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE);
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) {
+        return 0;
+    }
+    if (level < 0 || level >= dungeon->level_count) {
+        level = 0;
+    }
+
+    width = dungeon->level_widths[level];
+    height = dungeon->level_heights[level];
+    if (width <= 0 || height <= 0) {
+        return 0;
+    }
+    max_w = width < CSB_V1_MAX_SQUARE_SIZE
+        ? width
+        : CSB_V1_MAX_SQUARE_SIZE;
+    max_h = height < CSB_V1_MAX_SQUARE_SIZE
+        ? height
+        : CSB_V1_MAX_SQUARE_SIZE;
+
+    /* ReDMCSB: DUNGEON.C F0151 stores CSB/DM1 squares column-major.
+     * Keep viewport grid materialization in CSB so callers do not inspect
+     * raw dungeon map descriptors before entering DUNVIEW.C F0128. */
+    for (y = 0; y < max_h; ++y) {
+        for (x = 0; x < max_w; ++x) {
+            const int square_type =
+                csb_v1_dungeon_get_square_type(dungeon, level, x, y);
+            out_grid[y * CSB_V1_MAX_SQUARE_SIZE + x] =
+                (square_type >= 0) ? (uint8_t)square_type : 0U;
+        }
+    }
+    return 1;
+}
+
 static uint32_t csb_v1_viewport_pack_4bpp_word(const uint8_t *row)
 {
     uint32_t word = 0u;
