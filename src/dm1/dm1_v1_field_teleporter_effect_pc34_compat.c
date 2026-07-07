@@ -72,6 +72,41 @@ int dm1_v1_field_render_plan_for_relative_pc34(
     return 0;
 }
 
+int dm1_v1_field_build_blit_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    uint32_t animTick,
+    DM1_FieldBlitPc34* outBlit)
+{
+    DM1_FieldBlitPc34 blit;
+    if (!plan || !outBlit || plan->dstW <= 0 || plan->dstH <= 0) {
+        return 0;
+    }
+    memset(&blit, 0, sizeof(blit));
+    blit.dstX = plan->dstX;
+    blit.dstY = plan->dstY;
+    blit.dstW = plan->dstW;
+    blit.dstH = plan->dstH;
+    /* ReDMCSB DUNVIEW.C F0113 calls F0133 with M005_RANDOM(2) added to the
+     * field base unit and M003_RANDOM(32) for the vertical phase. Firestaff's
+     * deterministic renderer derives the same bounded material inputs from
+     * the viewport animation tick before M11 performs the bitmap copy. */
+    blit.fieldStartUnit = plan->baseStartUnit + (int)((animTick >> 1) & 1u);
+    blit.fieldYPhase = (int)((animTick * 7u) & 31u);
+    blit.transparentColor = plan->transparentColor;
+    blit.transparentSkipColor = plan->transparentColor & 0x7f;
+    blit.transparentSkipEnabled = blit.transparentSkipColor != 0x7f;
+    blit.maskIndex = -1;
+    blit.maskFlip = 0;
+    if (plan->maskIndexAndFlip != 255) {
+        blit.usesMask = 1;
+        blit.maskIndex = plan->maskIndexAndFlip & 0x7f;
+        blit.maskFlip = (plan->maskIndexAndFlip & 0x80) ? 1 : 0;
+    }
+    blit.usesF0133FieldBlit = 1;
+    *outBlit = blit;
+    return 1;
+}
+
 int dm1_v1_field_square_is_visible_open_pc34(int square)
 {
     return (square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0 &&

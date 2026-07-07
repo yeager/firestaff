@@ -62,6 +62,22 @@ typedef struct DM1_FieldRenderPlanPc34 {
     int maskIndexAndFlip;
 } DM1_FieldRenderPlanPc34;
 
+typedef struct DM1_FieldBlitPc34 {
+    int dstX;
+    int dstY;
+    int dstW;
+    int dstH;
+    int fieldStartUnit;
+    int fieldYPhase;
+    int transparentColor;
+    int transparentSkipColor;
+    int transparentSkipEnabled;
+    int maskIndex;
+    int maskFlip;
+    int usesMask;
+    int usesF0133FieldBlit;
+} DM1_FieldBlitPc34;
+
 void m11_ft_init(M11_FT_EffectState* state);
 void m11_ft_start_teleport(M11_FT_EffectState* state,
                             int16_t sx, int16_t sy, int16_t sl,
@@ -86,6 +102,11 @@ int dm1_v1_field_render_plan_for_relative_pc34(
     int relForward,
     int relSide,
     DM1_FieldRenderPlanPc34* outPlan);
+
+int dm1_v1_field_build_blit_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    uint32_t animTick,
+    DM1_FieldBlitPc34* outBlit);
 
 int dm1_v1_field_square_is_visible_open_pc34(int square);
 

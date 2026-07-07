@@ -2,7 +2,7 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
-- 🔧 2026-07-07 DM1 V1 side-lane field follow-up: the legacy CSB/DM1 viewport side-lane teleporter fill now uses the shared ReDMCSB F0113 relative render-plan lookup for D3L2/D3R2 and D2L2/D2R2 instead of hard-coded wall-frame rectangles. Remaining work is exact source bitmap/material execution for the field swirl and broader packaged HoC/CSB capture proof for every side-lane teleporter orientation.
+- 🔧 2026-07-07 DM1 V1 side-lane field follow-up: the legacy CSB/DM1 viewport side-lane teleporter fill now uses the shared ReDMCSB F0113 relative render-plan lookup for D3L2/D3R2 and D2L2/D2R2 instead of hard-coded wall-frame rectangles. Field blit material inputs now live in the DM1 layer: deterministic F0133 start unit/phase, mask index/flip, and transparent skip color. Remaining work is broader packaged HoC/CSB capture proof for every side-lane teleporter orientation and source-pixel comparisons for the field swirl.
 
 - 🔧 2026-07-07 Nexus startup portrait follow-up: FACE.BIN startup portrait loading now detects the observed `FACE` header layout, treats the 32-byte header plus 24 compact 1878-byte records as source-backed startup portraits, and pads those compact records into the current 48x48 render surfaces instead of dropping rows 19-23 to warning placeholders. Remaining Nexus startup rendering work is decoding the compact record pixel subformat exactly, Saturn champion-menu layout/palette/timing, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
 

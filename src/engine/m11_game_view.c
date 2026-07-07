@@ -20854,21 +20854,12 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int fbW,
                                    int fbH,
-                                   int dstX,
-                                   int dstY,
-                                   int dstW,
-                                   int dstH,
-                                   int baseStartUnit,
-                                   int transparentColor,
-                                   int maskIndexAndFlip) {
+                                   const DM1_FieldBlitPc34* blit) {
     const M11_AssetSlot* field;
     const M11_AssetSlot* mask = NULL;
-    int maskFlip = 0;
     int y;
-    int fieldStartUnit;
-    int fieldYPhase;
     if (!state || !state->assetsAvailable || !framebuffer ||
-        dstW <= 0 || dstH <= 0) {
+        !blit || blit->dstW <= 0 || blit->dstH <= 0) {
         return 0;
     }
     field = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
@@ -20876,29 +20867,21 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
     if (!field || !field->loaded || !field->pixels || field->width <= 0 || field->height <= 0) {
         return 0;
     }
-    if (maskIndexAndFlip != 255) {
-        int maskIndex = maskIndexAndFlip & 0x7f;
-        maskFlip = (maskIndexAndFlip & 0x80) ? 1 : 0;
+    if (blit->usesMask && blit->maskIndex >= 0) {
         mask = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    M11_GFX_DM1_FIELD_MASK_BASE + maskIndex);
+                                    M11_GFX_DM1_FIELD_MASK_BASE + blit->maskIndex);
         if (!mask || !mask->loaded || !mask->pixels || mask->width <= 0 || mask->height <= 0) {
             mask = NULL;
         }
     }
-    /* ReDMCSB DUNVIEW.C F0113 calls F0133 with
-     * M005_RANDOM(2)+BaseStartUnit and M003_RANDOM(32).  Use animTick as a
-     * deterministic frame source so the field shimmers without inventing
-     * non-source geometry or particles. */
-    fieldStartUnit = baseStartUnit + (int)((state->animTick >> 1) & 1u);
-    fieldYPhase = (int)((state->animTick * 7u) & 31u);
-    for (y = 0; y < dstH; ++y) {
-        int fbY = M11_VIEWPORT_Y + dstY + y;
+    for (y = 0; y < blit->dstH; ++y) {
+        int fbY = M11_VIEWPORT_Y + blit->dstY + y;
         int x;
         if (fbY < 0 || fbY >= fbH) {
             continue;
         }
-        for (x = 0; x < dstW; ++x) {
-            int fbX = M11_VIEWPORT_X + dstX + x;
+        for (x = 0; x < blit->dstW; ++x) {
+            int fbX = M11_VIEWPORT_X + blit->dstX + x;
             int sx;
             int sy;
             unsigned char pixel;
@@ -20906,10 +20889,10 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
                 continue;
             }
             if (mask) {
-                int mx = x * (int)mask->width / dstW;
-                int my = y * (int)mask->height / dstH;
+                int mx = x * (int)mask->width / blit->dstW;
+                int my = y * (int)mask->height / blit->dstH;
                 unsigned char maskPixel;
-                if (maskFlip) {
+                if (blit->maskFlip) {
                     mx = (int)mask->width - 1 - mx;
                 }
                 maskPixel = mask->pixels[my * (int)mask->width + mx];
@@ -20917,10 +20900,11 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
                     continue;
                 }
             }
-            sx = (x + (fieldStartUnit * 16)) % (int)field->width;
-            sy = (y + fieldYPhase) % (int)field->height;
+            sx = (x + (blit->fieldStartUnit * 16)) % (int)field->width;
+            sy = (y + blit->fieldYPhase) % (int)field->height;
             pixel = field->pixels[sy * (int)field->width + sx];
-            if ((transparentColor & 0x7f) != 0x7f && pixel == (unsigned char)(transparentColor & 0x7f)) {
+            if (blit->transparentSkipEnabled &&
+                pixel == (unsigned char)blit->transparentSkipColor) {
                 continue;
             }
             framebuffer[fbY * fbW + fbX] = pixel;
@@ -22459,12 +22443,13 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
         if (!dm1_v1_field_square_is_visible_open_pc34(cell.square)) {
             continue;
         }
-        (void)m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH,
-                                      plan.dstX, plan.dstY,
-                                      plan.dstW, plan.dstH,
-                                      plan.baseStartUnit,
-                                      plan.transparentColor,
-                                      plan.maskIndexAndFlip);
+        {
+            DM1_FieldBlitPc34 blit;
+            if (dm1_v1_field_build_blit_pc34(&plan, state->animTick, &blit)) {
+                (void)m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH,
+                                              &blit);
+            }
+        }
     }
 }
 
