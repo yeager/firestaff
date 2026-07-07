@@ -133,6 +133,17 @@ typedef struct {
     const char *failure_status;
 } Theron_StartupActionPlan;
 
+typedef struct {
+    Theron_StartupResult result;
+    int handled;
+    int flow_changed;
+    int cursor_changed;
+    int cursor;
+    int continue_focus_changed;
+    int continue_focus;
+    int mirror_selected;
+} Theron_StartupExecution;
+
 typedef enum {
     THERON_STARTUP_HIT_NONE = 0,
     THERON_STARTUP_HIT_PANEL,
@@ -332,6 +343,12 @@ Theron_StartupResult theron_v1_startup_handle_hit_with_progression(
 int theron_v1_startup_plan_for_action(
     const Theron_StartupAction *action,
     Theron_StartupActionPlan *out_plan);
+void theron_v1_startup_execution_init(Theron_StartupExecution *execution);
+int theron_v1_startup_execute_flow_plan(
+    const Theron_StartupActionPlan *plan,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow,
+    Theron_StartupExecution *out_execution);
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,

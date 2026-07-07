@@ -606,6 +606,103 @@ int main(void) {
             check_int("plan ignore kind",
                       plan.kind,
                       THERON_STARTUP_PLAN_IGNORE);
+
+            {
+                Theron_StartupExecution execution;
+                Theron_StartupFlow exec_flow;
+
+                theron_v1_startup_action_init(&action);
+                action.kind = THERON_STARTUP_ACTION_SHOW_STAGE_SELECT;
+                action.selected_dungeon =
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+                action.cursor = 1;
+                check_int("exec stage-select plan rc",
+                          theron_v1_startup_plan_for_action(&action, &plan),
+                          1);
+                theron_v1_startup_flow_init(&exec_flow);
+                check_int("exec stage-select rc",
+                          theron_v1_startup_execute_flow_plan(
+                              &plan,
+                              &progression,
+                              &exec_flow,
+                              &execution),
+                          1);
+                check_int("exec stage-select result",
+                          execution.result,
+                          THERON_STARTUP_OK);
+                check_int("exec stage-select phase",
+                          exec_flow.phase,
+                          THERON_STARTUP_PHASE_STAGE_SELECT);
+                check_int("exec stage-select dungeon",
+                          exec_flow.selected_dungeon,
+                          THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                check_int("exec stage-select cursor",
+                          execution.cursor,
+                          1);
+
+                theron_v1_startup_action_init(&action);
+                action.kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
+                action.selected_dungeon =
+                    THERON_DUNGEON_1_HALL_OF_RECORDS;
+                check_int("exec choose-stage plan rc",
+                          theron_v1_startup_plan_for_action(&action, &plan),
+                          1);
+                check_int("exec choose-stage rc",
+                          theron_v1_startup_execute_flow_plan(
+                              &plan,
+                              &progression,
+                              &exec_flow,
+                              &execution),
+                          1);
+                check_int("exec choose-stage result",
+                          execution.result,
+                          THERON_STARTUP_OK);
+                check_int("exec choose-stage phase",
+                          exec_flow.phase,
+                          THERON_STARTUP_PHASE_SOUL_ROOM);
+                check_int("exec choose-stage cursor reset",
+                          execution.cursor,
+                          0);
+
+                theron_v1_startup_action_init(&action);
+                action.kind = THERON_STARTUP_ACTION_TOGGLE_MIRROR;
+                action.mirror_index = 2;
+                check_int("exec mirror plan rc",
+                          theron_v1_startup_plan_for_action(&action, &plan),
+                          1);
+                check_int("exec mirror select rc",
+                          theron_v1_startup_execute_flow_plan(
+                              &plan,
+                              &progression,
+                              &exec_flow,
+                              &execution),
+                          1);
+                check_int("exec mirror select result",
+                          execution.result,
+                          THERON_STARTUP_OK);
+                check_int("exec mirror selected flag",
+                          execution.mirror_selected,
+                          1);
+                check_int("exec mirror count",
+                          exec_flow.companion_count,
+                          1);
+                check_int("exec mirror deselect rc",
+                          theron_v1_startup_execute_flow_plan(
+                              &plan,
+                              &progression,
+                              &exec_flow,
+                              &execution),
+                          1);
+                check_int("exec mirror deselect result",
+                          execution.result,
+                          THERON_STARTUP_OK);
+                check_int("exec mirror deselected flag",
+                          execution.mirror_selected,
+                          0);
+                check_int("exec mirror count after deselect",
+                          exec_flow.companion_count,
+                          0);
+            }
         }
 
         theron_v1_startup_hit_init(&hit);

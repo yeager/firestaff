@@ -248,6 +248,15 @@ void theron_v1_startup_action_plan_init(Theron_StartupActionPlan *plan) {
     plan->mirror_index = -1;
 }
 
+void theron_v1_startup_execution_init(Theron_StartupExecution *execution) {
+    if (!execution) {
+        return;
+    }
+    memset(execution, 0, sizeof(*execution));
+    execution->result = THERON_STARTUP_OK;
+    execution->cursor = -1;
+}
+
 void theron_v1_startup_hit_init(Theron_StartupHit *hit) {
     if (!hit) {
         return;
@@ -1823,6 +1832,96 @@ int theron_v1_startup_plan_for_action(
         break;
     }
     return 0;
+}
+
+int theron_v1_startup_execute_flow_plan(
+    const Theron_StartupActionPlan *plan,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow,
+    Theron_StartupExecution *out_execution) {
+
+    Theron_StartupResult result = THERON_STARTUP_OK;
+    int selected = 0;
+
+    if (out_execution) {
+        theron_v1_startup_execution_init(out_execution);
+    }
+    if (!plan || !flow) {
+        if (out_execution) {
+            out_execution->result = THERON_STARTUP_ERR_NULL;
+        }
+        return 0;
+    }
+
+    switch (plan->kind) {
+    case THERON_STARTUP_PLAN_SHOW_STAGE_SELECT:
+        result = theron_v1_startup_show_stage_select(flow,
+                                                     plan->selected_dungeon);
+        if (out_execution) {
+            out_execution->handled = 1;
+            out_execution->flow_changed = result == THERON_STARTUP_OK;
+            out_execution->cursor_changed = 1;
+            out_execution->cursor = plan->cursor;
+            out_execution->continue_focus_changed = 1;
+            out_execution->continue_focus = plan->continue_focus;
+            out_execution->result = result;
+        }
+        return 1;
+    case THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR:
+        flow->selected_dungeon = plan->selected_dungeon;
+        if (out_execution) {
+            out_execution->handled = 1;
+            out_execution->flow_changed = 1;
+            out_execution->continue_focus_changed = 1;
+            out_execution->continue_focus = plan->continue_focus;
+            out_execution->result = THERON_STARTUP_OK;
+        }
+        return 1;
+    case THERON_STARTUP_PLAN_CHOOSE_STAGE:
+        result = theron_v1_startup_choose_stage(flow,
+                                                progression,
+                                                plan->selected_dungeon);
+        if (out_execution) {
+            out_execution->handled = 1;
+            out_execution->flow_changed = result == THERON_STARTUP_OK;
+            out_execution->cursor_changed = result == THERON_STARTUP_OK;
+            out_execution->cursor = 0;
+            out_execution->continue_focus_changed =
+                result == THERON_STARTUP_OK;
+            out_execution->continue_focus = 0;
+            out_execution->result = result;
+        }
+        return 1;
+    case THERON_STARTUP_PLAN_MOVE_SOUL_CURSOR:
+        if (out_execution) {
+            out_execution->handled = 1;
+            out_execution->cursor_changed = 1;
+            out_execution->cursor = plan->cursor;
+            out_execution->result = THERON_STARTUP_OK;
+        }
+        return 1;
+    case THERON_STARTUP_PLAN_TOGGLE_MIRROR:
+        result = theron_v1_startup_toggle_mirror(flow,
+                                                 plan->mirror_index,
+                                                 &selected);
+        if (out_execution) {
+            out_execution->handled = 1;
+            out_execution->flow_changed = result == THERON_STARTUP_OK;
+            out_execution->mirror_selected = selected;
+            out_execution->result = result;
+        }
+        return 1;
+    case THERON_STARTUP_PLAN_IGNORE:
+    case THERON_STARTUP_PLAN_RETURN_TO_LAUNCHER:
+    case THERON_STARTUP_PLAN_CONTINUE_SAVE:
+    case THERON_STARTUP_PLAN_ENTER_FORCEFIELD:
+    default:
+        if (out_execution) {
+            out_execution->handled = 0;
+            out_execution->result = THERON_STARTUP_OK;
+        }
+        return 0;
+    }
 }
 
 const char *theron_v1_startup_flow_source_evidence(void) {
