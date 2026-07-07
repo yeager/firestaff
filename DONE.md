@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup layout facts ownership: `theron_v1_startup_flow` now builds startup layout elements directly from raw phase/profile/world/roster/Continue facts. M11 no longer builds Theron layout state before public startup-layout inspection. Verification: Theron startup-flow probe passed 514/514, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements start-menu keyboard settings: modern settings navigation now moves only across visible rows, so keyboard/gamepad DOWN reaches the visible RetroAchievements block directly from Original Data and Enter toggles RA. Verification: settings hit-test passed 40/40, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup render-row facts ownership: `theron_v1_startup_flow` now builds startup render rows directly from raw phase/profile/world/roster/Continue facts. M11 no longer builds Theron layout elements before startup render-row inspection. Verification: Theron startup-flow probe passed 511/511, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
