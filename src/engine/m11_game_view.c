@@ -12562,10 +12562,6 @@ static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
                                             size_t receipt_cap) {
     Theron_V1_World* world;
     Theron_V1_BootProfile* profile;
-    Theron_SaveSlot slotInfo;
-    Theron_DungeonProgression loadedProgression;
-    unsigned char championData[
-        THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
     Theron_StartupFlow flow;
     int slot;
 
@@ -12596,49 +12592,17 @@ static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
         return 0;
     }
 
-    memset(&slotInfo, 0, sizeof(slotInfo));
-    memset(&loadedProgression, 0, sizeof(loadedProgression));
-    memset(championData, 0, sizeof(championData));
-    if (theron_v1_save_load_from_slot(profile->save_root,
-                                      slot,
-                                      championData,
-                                      sizeof(championData),
-                                      &loadedProgression,
-                                      sizeof(loadedProgression),
-                                      &slotInfo) != 0 ||
-        !slotInfo.valid) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "Continue slot %d failed", slot);
-        }
+    if (!theron_v1_startup_continue_tqsv_apply(world,
+                                               profile->save_root,
+                                               slot,
+                                               receipt,
+                                               receipt_cap)) {
         return 0;
     }
-
-    world->progression = loadedProgression;
-    world->current_dungeon = (int)loadedProgression.current_dungeon;
-    world->current_level = loadedProgression.current_level > 0
-        ? (int)loadedProgression.current_level - 1
-        : 0;
-    world->object_count = 0;
-    world->timer_count = 0;
-    world->transition_pending = 0;
-    world->quest_items_in_dungeon =
-        loadedProgression.quest_items_in_current_dungeon;
-    world->dungeon_complete = 0;
-    memset(world->level_loaded, 0, sizeof(world->level_loaded));
-    if (theron_v1_party_unpack(&world->party,
-                               championData,
-                               sizeof(championData)) != 0) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "Continue party decode failed");
-        }
-        return 0;
-    }
-    world->party.champion_count = 1;
-    world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
 
     theron_v1_startup_flow_init(&flow);
     flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-    flow.selected_dungeon = loadedProgression.current_dungeon;
+    flow.selected_dungeon = world->progression.current_dungeon;
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
     state->theronState.startup_cursor = 0;
@@ -12647,15 +12611,6 @@ static int m11_theron_continue_tqsv_startup(M11_GameViewState* state,
     state->theronState.party_y = world->party.leader_y;
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
-
-    if (receipt && receipt_cap > 0u) {
-        snprintf(receipt,
-                 receipt_cap,
-                 "continued slot=%d dungeon=%d label=%s",
-                 slot,
-                 (int)loadedProgression.current_dungeon,
-                 slotInfo.label[0] ? slotInfo.label : "TQSV");
-    }
     return 1;
 }
 
@@ -12712,11 +12667,6 @@ static int m11_theron_continue_srm_startup(M11_GameViewState* state,
                                            char* receipt,
                                            size_t receipt_cap) {
     Theron_V1_World* world;
-    char root[THERON_V1_SRM_PATH_MAX];
-    char path[THERON_V1_SRM_PATH_MAX];
-    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
-    Theron_V1SrmEnvelopeReceipt envelope;
-    Theron_V1SrmEnvelopeKind kind;
     Theron_StartupFlow flow;
     int slot;
 
@@ -12737,93 +12687,14 @@ static int m11_theron_continue_srm_startup(M11_GameViewState* state,
         return 0;
     }
     slot = state->theronState.save_resume_srm_active_slot;
-    if (state->theronState.save_resume_srm_root[0] != '\0') {
-        snprintf(root, sizeof(root), "%s",
-                 state->theronState.save_resume_srm_root);
-    } else if (!theron_v1_srm_default_root(root)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "SRM root failed");
-        }
+    if (!theron_v1_startup_continue_srm_apply(
+            world,
+            state->theronState.save_resume_srm_root,
+            slot,
+            receipt,
+            receipt_cap)) {
         return 0;
     }
-    if (!theron_v1_srm_slot_path(root, slot, path)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "SRM slot path failed");
-        }
-        return 0;
-    }
-
-    memset(scratch, 0, sizeof(scratch));
-    memset(&envelope, 0, sizeof(envelope));
-    kind = theron_v1_srm_decode_path(path,
-                                     slot,
-                                     scratch,
-                                     sizeof(scratch),
-                                     &envelope);
-    if (kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION &&
-        kind != THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "SRM decode unsupported: %s",
-                     theron_v1_srm_envelope_kind_name(kind));
-        }
-        return 0;
-    }
-    if (!envelope.progression.restored) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "SRM progression missing");
-        }
-        return 0;
-    }
-
-    theron_v1_dungeon_progression_init(&world->progression);
-    world->progression.current_dungeon = envelope.progression.current_dungeon;
-    world->progression.current_level = envelope.progression.current_level;
-    world->progression.quest_items_collected =
-        envelope.progression.quest_items_bitmask;
-    world->progression.dungeon_playtime_seconds =
-        envelope.progression.dungeon_playtime_seconds;
-    for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
-        world->progression.dungeon_seeds[i] =
-            envelope.progression.dungeon_seeds[i];
-    }
-    if (kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY &&
-        envelope.party.restored) {
-        /* The SRM decoder imports the bounded Firestaff readiness
-         * party body only.  Unknown real Save Disk bodies never reach
-         * this branch. */
-        Theron_DungeonProgression decodedProgression;
-        Theron_V1_Party decodedParty;
-        Theron_V1SrmPartyImportReceipt partyReceipt;
-        uint8_t *payload = scratch;
-        size_t payload_size = envelope.inflate_payload_size;
-        if (theron_v1_srm_decode_progression_party_payload(
-                payload,
-                payload_size,
-                &decodedProgression,
-                &decodedParty,
-                &partyReceipt) == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
-            world->progression = decodedProgression;
-            world->party = decodedParty;
-            world->party.champion_count = 1;
-            world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
-        }
-    } else {
-        world->party.champion_count = 1;
-        world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
-    }
-    world->current_dungeon = (int)world->progression.current_dungeon;
-    world->current_level = world->progression.current_level > 0
-        ? (int)world->progression.current_level - 1
-        : 0;
-    world->object_count = 0;
-    world->timer_count = 0;
-    world->transition_pending = 0;
-    world->quest_items_in_dungeon =
-        world->progression.quest_items_in_current_dungeon;
-    world->dungeon_complete = 0;
-    memset(world->level_loaded, 0, sizeof(world->level_loaded));
 
     theron_v1_startup_flow_init(&flow);
     flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
@@ -12836,15 +12707,6 @@ static int m11_theron_continue_srm_startup(M11_GameViewState* state,
     state->theronState.party_y = world->party.leader_y;
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
-
-    if (receipt && receipt_cap > 0u) {
-        snprintf(receipt,
-                 receipt_cap,
-                 "continued srm slot=%d kind=%s dungeon=%d",
-                 slot,
-                 theron_v1_srm_envelope_kind_name(kind),
-                 (int)world->progression.current_dungeon);
-    }
     return 1;
 }
 

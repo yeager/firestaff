@@ -299,6 +299,106 @@ static void probe_staged_srm_claims_resume(void) {
     }
 }
 
+static void probe_continue_apply_mutates_world(void) {
+    char tqsv_root[THERON_V1_SRM_PATH_MAX];
+    char srm_root[THERON_V1_SRM_PATH_MAX];
+    char slot_path[THERON_V1_SRM_PATH_MAX];
+    char receipt[192];
+    Theron_V1_World world;
+    Theron_V1_Party party;
+    Theron_DungeonProgression progression;
+    uint8_t champion_data[THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
+
+    if (!make_temp_dir(tqsv_root) || !make_temp_dir(srm_root)) {
+        printf("SKIP probe_continue_apply: mkdtemp failed\n");
+        return;
+    }
+
+    theron_v1_party_init(&party, THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+    party.leader_x = 7;
+    party.leader_y = 8;
+    party.leader_dir = 2;
+    memset(champion_data, 0, sizeof(champion_data));
+    check_int("continue apply pack party",
+              theron_v1_party_pack(&party,
+                                   champion_data,
+                                   sizeof(champion_data)) > 0 ? 1 : 0,
+              1);
+    theron_v1_dungeon_progression_init(&progression);
+    progression.current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    progression.current_level = 2;
+    progression.quest_items_collected = 1;
+    check_int("continue apply write tqsv",
+              theron_v1_save_to_slot(tqsv_root,
+                                     3,
+                                     champion_data,
+                                     sizeof(champion_data),
+                                     &progression,
+                                     "Apply TQSV"),
+              0);
+
+    theron_v1_world_init(&world);
+    world.object_count = 9;
+    world.timer_count = 4;
+    world.transition_pending = 1;
+    memset(receipt, 0, sizeof(receipt));
+    check_int("continue apply tqsv rc",
+              theron_v1_startup_continue_tqsv_apply(&world,
+                                                    tqsv_root,
+                                                    3,
+                                                    receipt,
+                                                    sizeof(receipt)),
+              1);
+    check_int("continue apply tqsv dungeon",
+              world.progression.current_dungeon,
+              THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+    check_int("continue apply tqsv level", world.current_level, 1);
+    check_int("continue apply tqsv object reset", world.object_count, 0);
+    check_int("continue apply tqsv timer reset", world.timer_count, 0);
+    check_int("continue apply tqsv transition reset", world.transition_pending, 0);
+    check_int("continue apply tqsv party count", world.party.champion_count, 1);
+    check_int("continue apply tqsv receipt",
+              strstr(receipt, "continued slot=3") != NULL &&
+              strstr(receipt, "Apply TQSV") != NULL,
+              1);
+
+    check_int("continue apply srm slot path",
+              theron_v1_srm_slot_path(srm_root, 0, slot_path),
+              1);
+    check_int("continue apply srm write",
+              write_bytes(slot_path, g_valid_gzip_srm, sizeof(g_valid_gzip_srm)),
+              1);
+    theron_v1_world_init(&world);
+    world.object_count = 5;
+    world.timer_count = 2;
+    world.transition_pending = 1;
+    memset(receipt, 0, sizeof(receipt));
+    check_int("continue apply srm rc",
+              theron_v1_startup_continue_srm_apply(&world,
+                                                   srm_root,
+                                                   0,
+                                                   receipt,
+                                                   sizeof(receipt)),
+              1);
+    check_int("continue apply srm dungeon",
+              world.progression.current_dungeon,
+              THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+    check_int("continue apply srm object reset", world.object_count, 0);
+    check_int("continue apply srm timer reset", world.timer_count, 0);
+    check_int("continue apply srm transition reset", world.transition_pending, 0);
+    check_int("continue apply srm receipt",
+              strstr(receipt, "continued srm slot=0") != NULL,
+              1);
+
+    for (int i = 0; i < THERON_SAVE_SLOT_COUNT; ++i) {
+        char path[THERON_V1_SRM_PATH_MAX];
+        theron_v1_save_slot_path(tqsv_root, i, path, sizeof(path));
+        probe_unlink(path);
+    }
+    probe_rmdir(tqsv_root);
+    cleanup_srm_root(srm_root);
+}
+
 static void probe_boot_profile_handoff(void) {
     /* Empty boot profile must fall back to the gate's default
      * resolver without erroring.  This is the production path the
@@ -431,6 +531,7 @@ int main(void) {
     probe_clean_host_is_skip_safe();
     probe_empty_root_is_skip_safe();
     probe_staged_srm_claims_resume();
+    probe_continue_apply_mutates_world();
     probe_boot_profile_handoff();
     probe_format_helper();
     probe_skip_safe_name_contract();
