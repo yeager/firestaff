@@ -426,6 +426,8 @@ typedef struct {
     int marker_screen_y;
     int icon_screen_x;
     int icon_screen_y;
+    int icon_draw_x;
+    int icon_draw_y;
 } CSB_V1_ViewportRuntimeObjectOverlayPlacement;
 
 typedef struct {
