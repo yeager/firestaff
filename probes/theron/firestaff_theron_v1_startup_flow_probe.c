@@ -46,6 +46,7 @@ int main(void) {
     Theron_DungeonProgression progression;
     Theron_StartupFlow flow;
     Theron_V1_Party party;
+    Theron_V1_World world;
     Theron_StartupResult result;
     char phase_label[64];
     int startup_active = -1;
@@ -974,6 +975,35 @@ int main(void) {
         check_contains("roster applies mirror 2 raw name",
                        party.champions[2].name,
                        "TIRAN-JP");
+        theron_v1_world_init(&world);
+        world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] = 1;
+        world.object_count = 7;
+        world.timer_count = 3;
+        result = theron_v1_startup_enter_world_from_forcefield(
+            &flow,
+            &world);
+        check_int("world entry after forcefield rc",
+                  result,
+                  THERON_STARTUP_OK);
+        check_int("world entry current dungeon",
+                  world.current_dungeon,
+                  THERON_DUNGEON_1_HALL_OF_RECORDS);
+        check_int("world entry current level", world.current_level, 0);
+        check_int("world entry progression level",
+                  world.progression.current_level,
+                  1);
+        check_int("world entry clears level-loaded row",
+                  world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                  0);
+        check_int("world entry clears objects", world.object_count, 0);
+        check_int("world entry clears timers", world.timer_count, 0);
+        theron_v1_startup_flow_init(&flow);
+        result = theron_v1_startup_enter_world_from_forcefield(
+            &flow,
+            &world);
+        check_int("world entry before forcefield rejected",
+                  result,
+                  THERON_STARTUP_ERR_NOT_READY);
     }
 
     check_contains("mirror 0 meta", theron_v1_startup_mirror_meta(0)->name, "Hakar");

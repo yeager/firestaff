@@ -653,6 +653,7 @@ add_executable(firestaff_theron_v1_startup_flow_probe
     src/theron/theron_v1_startup_flow.c
     src/theron/theron_v1_champions.c
     src/theron/theron_v1_dungeon_progression.c
+    src/theron/theron_v1_world.c
 )
 target_include_directories(firestaff_theron_v1_startup_flow_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include

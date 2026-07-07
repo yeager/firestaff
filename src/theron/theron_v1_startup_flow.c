@@ -1555,6 +1555,30 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
     return THERON_STARTUP_OK;
 }
 
+Theron_StartupResult theron_v1_startup_enter_world_from_forcefield(
+    Theron_StartupFlow *flow,
+    Theron_V1_World *world) {
+
+    if (!flow || !world) {
+        return THERON_STARTUP_ERR_NULL;
+    }
+    if (flow->selected_dungeon == THERON_DUNGEON_INVALID ||
+        flow->phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
+        !flow->forcefield_entered) {
+        return THERON_STARTUP_ERR_NOT_READY;
+    }
+    if (theron_v1_dungeon_enter(&world->progression,
+                                flow->selected_dungeon) != 0) {
+        return THERON_STARTUP_ERR_DUNGEON_ENTRY;
+    }
+
+    theron_v1_world_reset_for_dungeon(world, flow->selected_dungeon);
+    memset(world->level_loaded[flow->selected_dungeon - 1],
+           0,
+           sizeof(world->level_loaded[flow->selected_dungeon - 1]));
+    return THERON_STARTUP_OK;
+}
+
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     switch (phase) {
     case THERON_STARTUP_PHASE_TITLE: return "title";
@@ -1608,6 +1632,7 @@ const char *theron_v1_startup_result_name(Theron_StartupResult result) {
     case THERON_STARTUP_ERR_NO_STAGE: return "no-stage";
     case THERON_STARTUP_ERR_NOT_READY: return "not-ready";
     case THERON_STARTUP_ERR_MIRROR_NOT_SELECTED: return "mirror-not-selected";
+    case THERON_STARTUP_ERR_DUNGEON_ENTRY: return "dungeon-entry";
     default: return "unknown";
     }
 }

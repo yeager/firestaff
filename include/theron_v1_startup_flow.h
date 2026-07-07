@@ -3,6 +3,7 @@
 
 #include "theron_v1_champions.h"
 #include "theron_v1_dungeon_progression.h"
+#include "theron_v1_world.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -37,7 +38,8 @@ typedef enum {
     THERON_STARTUP_ERR_PARTY_FULL = -6,
     THERON_STARTUP_ERR_NO_STAGE = -7,
     THERON_STARTUP_ERR_NOT_READY = -8,
-    THERON_STARTUP_ERR_MIRROR_NOT_SELECTED = -9
+    THERON_STARTUP_ERR_MIRROR_NOT_SELECTED = -9,
+    THERON_STARTUP_ERR_DUNGEON_ENTRY = -10
 } Theron_StartupResult;
 
 typedef struct {
@@ -266,6 +268,9 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
     Theron_V1_Party *party,
     const char *const roster_names[],
     int roster_name_count);
+Theron_StartupResult theron_v1_startup_enter_world_from_forcefield(
+    Theron_StartupFlow *flow,
+    Theron_V1_World *world);
 int theron_v1_startup_stage_available(
     const Theron_DungeonProgression *progression,
     Theron_DungeonID dungeon_id);
