@@ -61,6 +61,79 @@ uint8_t dm2_v1_viewport_object_light_level(uint8_t base_light_level,
                      (int)source->light_radius);
 }
 
+int dm2_v1_viewport_project_map_to_sprite(
+    int map_x,
+    int map_y,
+    int party_dir,
+    int party_x,
+    int party_y,
+    DM2_V1_ViewportSpritePlacement *out)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    static const int y_by_depth[4] = { 98, 84, 72, 62 };
+    static const int lateral_step_by_depth[4] = { 48, 40, 30, 22 };
+    const int center_x = 112;
+    int dir;
+    int right;
+    int rel_x;
+    int rel_y;
+    int forward;
+    int lateral;
+    int depth;
+
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    dir = party_dir & 3;
+    right = (dir + 1) & 3;
+    rel_x = map_x - party_x;
+    rel_y = map_y - party_y;
+    forward = rel_x * dx[dir] + rel_y * dy[dir];
+    lateral = rel_x * dx[right] + rel_y * dy[right];
+
+    if (forward < 1 || forward > 4 || lateral < -2 || lateral > 2) {
+        return 0;
+    }
+
+    /* skproject/SKWIN renders missiles and creature-carried map chips through
+     * the visible cell order before DRAW_MAP_CHIP scales the selected sprite.
+     * This helper owns Firestaff's bounded first-person placement contract for
+     * those runtime-produced map-coordinate overlays. */
+    depth = forward - 1;
+    out->visible = 1;
+    out->depth = depth;
+    out->screen_x = center_x + lateral * lateral_step_by_depth[depth];
+    out->screen_y = y_by_depth[depth];
+    return 1;
+}
+
+int dm2_v1_viewport_possession_slot_placement(
+    const DM2_V1_ViewportSpritePlacement *base,
+    int possession_slot,
+    DM2_V1_ViewportSpritePlacement *out)
+{
+    int slot;
+
+    if (!base || !out || !base->visible) {
+        if (out) memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    slot = possession_slot;
+    if (slot < 0) {
+        slot = 0;
+    }
+    *out = *base;
+    /* skproject walks Creature::possession in chain order and draws each
+     * dbWeapon..dbMiscellaneous_item as a separate map-chip overlay.  The
+     * bounded Firestaff bridge keeps stable per-slot separation until the
+     * exact source placement table is fully decoded. */
+    out->screen_x = base->screen_x + slot * 6;
+    out->screen_y = base->screen_y + slot * 4;
+    return 1;
+}
+
 /* ── Transparency color (ReDMCSB DEFS.H C10_COLOR_FLESH = 10)
  * Used as skip color in wall blits. ── */
 #define DM2_COLOR_TRANSPARENT  10

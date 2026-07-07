@@ -495,6 +495,31 @@ static void test_sprite_asset_provider(void)
     CHECK("DM2 creature directional frame follows view-relative parity frames",
           dm2_v1_viewport_creature_frame_for_direction(2, 2, 0, 4) == 2 &&
               dm2_v1_viewport_creature_frame_for_direction(2, 1, 0, 4) == 3);
+    {
+        DM2_V1_ViewportSpritePlacement p;
+        DM2_V1_ViewportSpritePlacement slot;
+
+        CHECK("DM2 viewport projects forward map coordinate to depth row",
+              dm2_v1_viewport_project_map_to_sprite(10, 8, 0, 10, 10, &p) == 1 &&
+                  p.visible == 1 &&
+                  p.depth == 1 &&
+                  p.screen_x == 112 &&
+                  p.screen_y == 84);
+        CHECK("DM2 viewport projects side map coordinate with depth lateral step",
+              dm2_v1_viewport_project_map_to_sprite(11, 8, 0, 10, 10, &p) == 1 &&
+                  p.depth == 1 &&
+                  p.screen_x == 152 &&
+                  p.screen_y == 84);
+        CHECK("DM2 viewport rejects map coordinate outside visible lane",
+              dm2_v1_viewport_project_map_to_sprite(13, 8, 0, 10, 10, &p) == 0 &&
+                  p.visible == 0);
+        CHECK("DM2 viewport possession slot placement applies stable overlay offset",
+              dm2_v1_viewport_project_map_to_sprite(10, 8, 0, 10, 10, &p) == 1 &&
+                  dm2_v1_viewport_possession_slot_placement(&p, 2, &slot) == 1 &&
+                  slot.depth == p.depth &&
+                  slot.screen_x == p.screen_x + 12 &&
+                  slot.screen_y == p.screen_y + 8);
+    }
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
