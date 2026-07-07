@@ -2738,39 +2738,35 @@ static int m11_csb_startup_build_render_plan(
     const M11_GameViewState *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
+    CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupRenderState_PC34 render_state;
+    int runtime_start_valid = 0;
+    int runtime_start_x = 0;
+    int runtime_start_y = 0;
+    int runtime_start_dir = 0;
 
     if (!state) {
         return csb_v1_startup_build_render_plan_pc34(NULL, out_plan);
     }
-    memset(&render_state, 0, sizeof(render_state));
-    render_state.entrance_active =
-        state->csbState.startup_entrance_active;
-    render_state.entrance_frame =
-        state->csbState.startup_entrance_frame;
-    render_state.title_active =
-        state->csbState.startup_title_active;
-    render_state.title_frame =
-        state->csbState.startup_title_frame;
-    render_state.entrance_source_step =
-        state->csbState.startup_entrance_source_step;
-    render_state.credits_active =
-        state->csbState.startup_entrance_credits_active;
-    render_state.opening_active =
-        state->csbState.startup_entrance_opening_active;
-    render_state.opening_delay_ticks =
-        state->csbState.startup_entrance_opening_delay_ticks;
-    render_state.opening_step =
-        state->csbState.startup_entrance_opening_step;
-    render_state.utility_overlay_active =
-        state->csbState.startup_import_available;
     if (state->csbBootProfile) {
         const CSB_V1_BootProfile *profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
-        render_state.runtime_start_valid = 1;
-        render_state.runtime_start_x = profile->runtime.party_x;
-        render_state.runtime_start_y = profile->runtime.party_y;
-        render_state.runtime_start_dir = profile->runtime.party_dir;
+        runtime_start_valid = 1;
+        runtime_start_x = profile->runtime.party_x;
+        runtime_start_y = profile->runtime.party_y;
+        runtime_start_dir = profile->runtime.party_dir;
+    }
+    m11_csb_startup_command_state_from_m11(state, &command_state);
+    if (!csb_v1_startup_render_state_from_command_state_pc34(
+            &command_state,
+            state->csbState.startup_entrance_frame,
+            state->csbState.startup_import_available,
+            runtime_start_valid,
+            runtime_start_x,
+            runtime_start_y,
+            runtime_start_dir,
+            &render_state)) {
+        return 0;
     }
     return csb_v1_startup_build_render_plan_pc34(&render_state, out_plan);
 }

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 CSB startup render-state ownership: `csb_v1_startup_sequence_pc34_compat` now derives render state from the CSB command-state plus runtime-start facts before building title/entrance render plans. M11 no longer fills the CSB render-state field-by-field. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 116/116, `test_csb_v1_boot_runtime_handoff` passed 256/256, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM2 startup draw executor ownership: `dm2_v1_startup_presentation` now executes its startup draw commands through GDAT/fill/outline/text callbacks. M11 now only adapts those callbacks to boot-profile asset fetch, palette colors, text styles, and the 8-bit framebuffer. Verification: `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract` passed 52/52, Phase A passed 24/24, DM2 boot-probe passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron startup graphic executor ownership: `theron_v1_startup_flow` now executes its own startup graphic render plan through fill/rect/pixel callbacks. M11 now only adapts those callbacks to the 8-bit framebuffer, and the startup-flow probe proves title, stage-select, Soul Room mirror, and forcefield command execution. Verification: `firestaff_theron_v1_startup_flow_probe` passed 412/412, `test_theron_v1_m11_launcher_handoff_boundary` passed 26/26, Phase A passed 24/24, Theron boot-probe passed, and `git diff --check` passed.

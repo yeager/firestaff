@@ -1028,6 +1028,27 @@ int main(void)
               !command_state.opening_active &&
               command_state.pending_command == 0,
           "startup command state initializes new-game title");
+    check(csb_v1_startup_render_state_from_command_state_pc34(
+              &command_state,
+              37,
+              1,
+              1,
+              12,
+              22,
+              3,
+              &render_state) &&
+              render_state.entrance_active == command_state.entrance_active &&
+              render_state.entrance_frame == 37 &&
+              render_state.title_active == command_state.title_active &&
+              render_state.title_frame == command_state.title_frame &&
+              render_state.entrance_source_step ==
+                  command_state.entrance_source_step &&
+              render_state.utility_overlay_active == 1 &&
+              render_state.runtime_start_valid == 1 &&
+              render_state.runtime_start_x == 12 &&
+              render_state.runtime_start_y == 22 &&
+              render_state.runtime_start_dir == 3,
+          "startup render state is derived from command state by CSB module");
 
     memset(&command_state, 0xff, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 1) &&

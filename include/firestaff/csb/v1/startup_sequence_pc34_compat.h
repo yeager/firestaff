@@ -490,6 +490,15 @@ int csb_v1_startup_advance_tick_pc34(
 int csb_v1_startup_build_render_plan_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
+int csb_v1_startup_render_state_from_command_state_pc34(
+    const CSB_V1_StartupCommandState_PC34 *command_state,
+    int entrance_frame,
+    int utility_overlay_active,
+    int runtime_start_valid,
+    int runtime_start_x,
+    int runtime_start_y,
+    int runtime_start_dir,
+    CSB_V1_StartupRenderState_PC34 *out_state);
 int csb_v1_startup_execute_primitive_commands_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     unsigned char *framebuffer,
