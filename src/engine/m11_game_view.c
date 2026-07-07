@@ -14456,14 +14456,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             Nexus_V1_ChampionPool* pool = &state->nexusEngine->champions;
             Nexus_V1_StartupChampionSnapshot snapshot;
             Nexus_V1_StartupAction action;
-            if (!m11_nexus_champion_snapshot_from_state(state, &snapshot)) {
-                return M11_GAME_INPUT_IGNORED;
-            }
-            if (!nexus_v1_startup_champion_snapshot_handle_input(
+            if (!nexus_v1_startup_champion_handle_firestaff_input_from_facts(
                     pool,
                     &snapshot,
-                    nexus_v1_startup_input_from_firestaff_menu_code(
-                        (int)input),
+                    state->nexusState.startup_save_slot_mask,
+                    state->nexusState.champion_cursor,
+                    state->nexusState.champion_select_frame,
+                    (int)input,
                     &action)) {
                 return M11_GAME_INPUT_IGNORED;
             }
