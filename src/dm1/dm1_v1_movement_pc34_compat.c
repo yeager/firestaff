@@ -90,6 +90,39 @@ void dm1v1_command_queue_init(DM1_V1_CommandQueue *queue)
     queue->locked      = 1;                          /* G0435 = C1_TRUE */
 }
 
+int DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(int menu_input)
+{
+    enum {
+        FIRESTAFF_MENU_INPUT_UP = 1,
+        FIRESTAFF_MENU_INPUT_DOWN = 2,
+        FIRESTAFF_MENU_INPUT_LEFT = 3,
+        FIRESTAFF_MENU_INPUT_RIGHT = 4,
+        FIRESTAFF_MENU_INPUT_STRAFE_LEFT = 5,
+        FIRESTAFF_MENU_INPUT_STRAFE_RIGHT = 6,
+        FIRESTAFF_MENU_INPUT_TURN_LEFT = 7,
+        FIRESTAFF_MENU_INPUT_TURN_RIGHT = 8
+    };
+
+    switch (menu_input) {
+        case FIRESTAFF_MENU_INPUT_LEFT:
+        case FIRESTAFF_MENU_INPUT_TURN_LEFT:
+            return DM1_V1_COMMAND_TURN_LEFT;
+        case FIRESTAFF_MENU_INPUT_RIGHT:
+        case FIRESTAFF_MENU_INPUT_TURN_RIGHT:
+            return DM1_V1_COMMAND_TURN_RIGHT;
+        case FIRESTAFF_MENU_INPUT_UP:
+            return DM1_V1_COMMAND_MOVE_FORWARD;
+        case FIRESTAFF_MENU_INPUT_STRAFE_RIGHT:
+            return DM1_V1_COMMAND_MOVE_RIGHT;
+        case FIRESTAFF_MENU_INPUT_DOWN:
+            return DM1_V1_COMMAND_MOVE_BACKWARD;
+        case FIRESTAFF_MENU_INPUT_STRAFE_LEFT:
+            return DM1_V1_COMMAND_MOVE_LEFT;
+        default:
+            return DM1_V1_COMMAND_NONE;
+    }
+}
+
 
 /*
  * dm1v1_movement_poll_input — Enqueue a single command code.

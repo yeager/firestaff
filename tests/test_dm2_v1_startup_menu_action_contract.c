@@ -159,6 +159,12 @@ int main(void)
               execution.rescan_saves == 1 &&
               strcmp(execution.status, "DM2 CONTINUE FAILED") == 0,
           "Continue plan execution reports failed load and rescan");
+    check(dm2_v1_startup_execute_action(
+              &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+              execution.rescan_saves == 1 &&
+              strcmp(execution.status, "DM2 CONTINUE FAILED") == 0,
+          "Continue action executes through DM2-owned startup wrapper");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -188,6 +194,12 @@ int main(void)
               execution.rescan_saves == 1 &&
               strcmp(execution.status, "DM2 SLOT LOAD FAILED") == 0,
           "Load Slot plan execution reports failed load and rescan");
+    check(dm2_v1_startup_execute_action(
+              &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+              execution.rescan_saves == 1 &&
+              strcmp(execution.status, "DM2 SLOT LOAD FAILED") == 0,
+          "Load Slot action executes through DM2-owned startup wrapper");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE &&
@@ -214,6 +226,15 @@ int main(void)
               execution.session.party_y == 15 &&
               strcmp(execution.status, "DM2 NEW GAME") == 0,
           "New Game plan execution creates a DM2 startup session");
+    check(dm2_v1_startup_execute_action(
+              &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY &&
+              execution.rescan_saves == 0 &&
+              execution.session.champion_count == 4 &&
+              execution.session.party_x == 15 &&
+              execution.session.party_y == 15 &&
+              strcmp(execution.status, "DM2 NEW GAME") == 0,
+          "New Game action executes through DM2-owned startup wrapper");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
@@ -229,6 +250,11 @@ int main(void)
               execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER &&
               strcmp(execution.status, "BACK TO LAUNCHER") == 0,
           "Back plan execution returns launcher command");
+    check(dm2_v1_startup_execute_action(
+              &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
+              execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER &&
+              strcmp(execution.status, "BACK TO LAUNCHER") == 0,
+          "Back action executes through DM2-owned startup wrapper");
 
     hit.kind = DM2_V1_STARTUP_HIT_PANEL;
     hit.row = -1;

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "dm1_v1_movement_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 
 /*
@@ -207,6 +208,34 @@ int main(void)
 
     printf("probe=dm1_v1_movement_core_pc34_compat\n");
     printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288,291-318,317-328; DUNGEON.C:1371-1391; MOVESENS.C:272-310,438-443,493-518; PROJEXPL.C:459\n");
+
+    ok &= expect_int("Firestaff input up maps to DM1 forward",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(1),
+        DM1_V1_COMMAND_MOVE_FORWARD);
+    ok &= expect_int("Firestaff input down maps to DM1 backward",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(2),
+        DM1_V1_COMMAND_MOVE_BACKWARD);
+    ok &= expect_int("Firestaff left legacy maps to DM1 turn left",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(3),
+        DM1_V1_COMMAND_TURN_LEFT);
+    ok &= expect_int("Firestaff right legacy maps to DM1 turn right",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(4),
+        DM1_V1_COMMAND_TURN_RIGHT);
+    ok &= expect_int("Firestaff strafe-left maps to DM1 move left",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(5),
+        DM1_V1_COMMAND_MOVE_LEFT);
+    ok &= expect_int("Firestaff strafe-right maps to DM1 move right",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(6),
+        DM1_V1_COMMAND_MOVE_RIGHT);
+    ok &= expect_int("Firestaff turn-left maps to DM1 turn left",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(7),
+        DM1_V1_COMMAND_TURN_LEFT);
+    ok &= expect_int("Firestaff turn-right maps to DM1 turn right",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(8),
+        DM1_V1_COMMAND_TURN_RIGHT);
+    ok &= expect_int("unknown Firestaff input maps to DM1 none",
+        DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat(999),
+        DM1_V1_COMMAND_NONE);
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));

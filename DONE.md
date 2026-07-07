@@ -1,10 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 V1 movement input adapter ownership: `dm1_v1_movement_pc34_compat` now maps Firestaff menu input codes to source movement commands through `DM1_V1_Movement_CommandForFirestaffMenuCodePc34Compat()`. M11 consumes that adapter for DM1 V1 pipeline ticks and only asserts the M12 enum code contract. Verification: direct `test_dm1_v1_movement_core_pc34_compat` build/run passed, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 CSB entrance input adapter ownership: `csb_v1_startup_sequence_pc34_compat` now maps Firestaff menu input codes to CSB startup entrance inputs through `csb_v1_startup_input_from_firestaff_menu_code_pc34()`. M11 consumes that adapter for entrance keyboard handling and only asserts the M12 enum code contract. Verification: direct `test_csb_v1_startup_entrance_pointer_pc34_compat` build/run passed 79/79, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB utility input adapter ownership: `csb_v1_utility_flow_pc34` now maps Firestaff menu input codes to CSB utility inputs through `csb_v1_util_input_from_firestaff_menu_code()`. M11 consumes that adapter for utility keyboard input and only asserts the M12 enum code contract. Verification: direct `test_csb_v1_utility_flow_action_contract` build/run passed 35/35, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB startup input-code adapter ownership: `csb_v1_startup_sequence_pc34_compat` now maps Firestaff menu input codes to CSB startup entrance inputs through `csb_v1_startup_input_from_firestaff_menu_code_pc34()`. M11 consumes that adapter instead of keeping a local CSB startup input switch. Verification: `cmake --build /tmp/firestaff-build-active --target test_csb_v1_startup_entrance_pointer_pc34_compat --parallel 4` passed; `/tmp/firestaff-build-active/test_csb_v1_startup_entrance_pointer_pc34_compat` passed 79/79; M11 syntax check passed; `git diff --check` passed.
+
+- ✅ 2026-07-07 DM2 startup action execution ownership: `dm2_v1_startup_menu` now exposes `dm2_v1_startup_execute_action()`, combining action planning and save-root execution inside the DM2 startup layer. M11 consumes only the returned startup execution and no longer runs the plan step itself. Verification: direct `test_dm2_v1_startup_menu_action_contract` build/run passed 37/37, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Nexus startup input adapter ownership: `nexus_v1_startup_menu` now maps Firestaff menu input codes to Nexus startup inputs through `nexus_v1_startup_input_from_firestaff_menu_code()`. M11 consumes that adapter for title, save-select, and champion-select startup input and only asserts the M12 enum code contract. Verification: direct `test_nexus_v1_startup_menu_pc34_compat` build/run passed, Nexus startup syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
