@@ -11,7 +11,6 @@
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_world.h"
 #include "theron_v1_boot.h"
-#include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_startup_runtime_entry.h"
@@ -12156,49 +12155,23 @@ static int m11_theron_continue_availability(
 
 static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
                                            const char* prefix) {
-    Theron_V1_BootProfile* profile;
-    Theron_V1_World* world;
-    Theron_ChapterMarker marker;
-    char markerLine[192];
-    char detail[320];
+    Theron_StartupChapterInspectRequest request;
+    Theron_StartupChapterInspectReceipt receipt;
 
     if (!state) {
         return;
     }
-    profile = (Theron_V1_BootProfile*)state->theronBootProfile;
-    world = (Theron_V1_World*)state->theronWorld;
-    theron_v1_chapter_marker_compute(profile,
-                                      world ? &world->progression : NULL,
-                                      NULL,
-                                      &marker);
-    markerLine[0] = '\0';
-    theron_v1_chapter_marker_format(&marker,
-                                     markerLine,
-                                     sizeof(markerLine));
-    if (prefix && prefix[0]) {
-        snprintf(detail, sizeof(detail), "%s; %s", prefix, markerLine);
-    } else {
-        snprintf(detail, sizeof(detail), "%s", markerLine);
-    }
-    m11_set_inspect_readout(state, "STARTUP", detail);
-}
-
-static void m11_theron_compute_chapter_marker(
-    const M11_GameViewState* state,
-    Theron_ChapterMarker* marker) {
-
-    Theron_V1_BootProfile* profile;
-    Theron_V1_World* world;
-
-    if (!marker) {
+    memset(&request, 0, sizeof(request));
+    request.boot_profile = state->theronBootProfile;
+    request.world = (const Theron_V1_World*)state->theronWorld;
+    request.prefix = prefix;
+    if (!theron_v1_startup_chapter_inspect_receipt_from_request(&request,
+                                                                &receipt)) {
         return;
     }
-    profile = state ? (Theron_V1_BootProfile*)state->theronBootProfile : NULL;
-    world = state ? (Theron_V1_World*)state->theronWorld : NULL;
-    theron_v1_chapter_marker_compute(profile,
-                                      world ? &world->progression : NULL,
-                                      NULL,
-                                      marker);
+    m11_set_inspect_readout(state,
+                            receipt.inspect_scope,
+                            receipt.inspect_detail);
 }
 
 static M11_GameInputResult m11_theron_startup_apply_action(
@@ -12289,8 +12262,8 @@ static M11_GameInputResult m11_theron_startup_apply_action(
 
     case THERON_STARTUP_PLAN_CONTINUE_SAVE: {
         char receipt[96];
-        Theron_ChapterMarker marker;
-        char markerLine[192];
+        Theron_StartupChapterInspectRequest inspectRequest;
+        Theron_StartupChapterInspectReceipt inspectReceipt;
         Theron_V1StartupContinueResult continueResult;
         Theron_V1StartupContinueApplyReceipt applyReceipt;
         int continued = m11_theron_continue_startup(state,
@@ -12306,18 +12279,21 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                                 : "CONTINUE FAILED"));
             return M11_GAME_INPUT_REDRAW;
         }
-        m11_theron_compute_chapter_marker(state, &marker);
-        markerLine[0] = '\0';
-        theron_v1_chapter_marker_format(&marker,
-                                        markerLine,
-                                        sizeof(markerLine));
+        memset(&inspectRequest, 0, sizeof(inspectRequest));
+        inspectRequest.boot_profile = state->theronBootProfile;
+        inspectRequest.world = (const Theron_V1_World*)state->theronWorld;
+        inspectRequest.prefix = receipt;
+        theron_v1_startup_chapter_inspect_receipt_init(&inspectReceipt);
+        (void)theron_v1_startup_chapter_inspect_receipt_from_request(
+            &inspectRequest,
+            &inspectReceipt);
         if (applyReceipt.input_result == THERON_STARTUP_INPUT_RESULT_REDRAW) {
-            if (markerLine[0] != '\0') {
+            if (inspectReceipt.marker_line[0] != '\0') {
                 (void)theron_v1_startup_continue_apply_receipt(
                     &plan,
                     &continueResult,
                     receipt,
-                    markerLine,
+                    inspectReceipt.marker_line,
                     &applyReceipt);
             }
             m11_set_status(state,
@@ -38609,6 +38585,10 @@ static int m11_theron_startup_build_layout_state(
     Theron_StartupLayoutState* layout_state) {
 
     Theron_StartupLayoutStateRequest request;
+    const char* roster_names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY];
+    const char* roster_titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY];
+    int roster_count;
+    int i;
 
     if (!state || !layout_state) {
         return 0;
@@ -38634,12 +38614,20 @@ static int m11_theron_startup_build_layout_state(
         }
     }
     request.startup_text_prompt = state->theronState.startup_text_prompt;
-    request.startup_roster_names =
-        (const char *const*)state->theronState.startup_roster_names;
-    request.startup_roster_titles =
-        (const char *const*)state->theronState.startup_roster_titles;
-    request.startup_roster_name_count =
-        state->theronState.startup_roster_name_count;
+    roster_count = state->theronState.startup_roster_name_count;
+    if (roster_count < 0) {
+        roster_count = 0;
+    }
+    if (roster_count > THERON_STARTUP_LAYOUT_ROSTER_CAPACITY) {
+        roster_count = THERON_STARTUP_LAYOUT_ROSTER_CAPACITY;
+    }
+    for (i = 0; i < roster_count; ++i) {
+        roster_names[i] = state->theronState.startup_roster_names[i];
+        roster_titles[i] = state->theronState.startup_roster_titles[i];
+    }
+    request.startup_roster_names = roster_names;
+    request.startup_roster_titles = roster_titles;
+    request.startup_roster_name_count = roster_count;
     request.selected_mirrors_mask =
         state->theronState.selected_mirrors_mask;
     request.selected_mirror_order =

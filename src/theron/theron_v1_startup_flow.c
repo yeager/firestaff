@@ -358,6 +358,57 @@ void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state) {
     state->srm_slot = -1;
 }
 
+void theron_v1_startup_chapter_inspect_receipt_init(
+    Theron_StartupChapterInspectReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    snprintf(receipt->inspect_scope,
+             sizeof(receipt->inspect_scope),
+             "%s",
+             "STARTUP");
+}
+
+int theron_v1_startup_chapter_inspect_receipt_from_request(
+    const Theron_StartupChapterInspectRequest *request,
+    Theron_StartupChapterInspectReceipt *out_receipt) {
+
+    const Theron_V1_World *world;
+    const Theron_DungeonProgression *progression;
+    Theron_ChapterMarker marker;
+
+    if (!request || !out_receipt) {
+        return 0;
+    }
+
+    theron_v1_startup_chapter_inspect_receipt_init(out_receipt);
+    world = request->world;
+    progression = world ? &world->progression : NULL;
+    theron_v1_chapter_marker_compute(
+        (const Theron_V1_BootProfile*)request->boot_profile,
+        progression,
+        NULL,
+        &marker);
+    theron_v1_chapter_marker_format(&marker,
+                                     out_receipt->marker_line,
+                                     sizeof(out_receipt->marker_line));
+    if (request->prefix && request->prefix[0]) {
+        snprintf(out_receipt->inspect_detail,
+                 sizeof(out_receipt->inspect_detail),
+                 "%s; %s",
+                 request->prefix,
+                 out_receipt->marker_line);
+    } else {
+        snprintf(out_receipt->inspect_detail,
+                 sizeof(out_receipt->inspect_detail),
+                 "%s",
+                 out_receipt->marker_line);
+    }
+    return 1;
+}
+
 int theron_v1_startup_layout_state_from_request(
     const Theron_StartupLayoutStateRequest *request,
     Theron_StartupLayoutState *out_state) {

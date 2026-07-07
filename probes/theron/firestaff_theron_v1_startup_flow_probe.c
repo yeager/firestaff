@@ -347,6 +347,8 @@ int main(void) {
 
         {
             Theron_StartupLayoutStateRequest request;
+            Theron_StartupChapterInspectRequest inspect_request;
+            Theron_StartupChapterInspectReceipt inspect_receipt;
             Theron_V1_BootProfile profile;
             Theron_V1_World world;
             const char *names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
@@ -404,6 +406,28 @@ int main(void) {
             check_str("layout state request prompt",
                       layout_state.startup_text_prompt,
                       "READY");
+
+            memset(&inspect_request, 0, sizeof(inspect_request));
+            inspect_request.boot_profile = &profile;
+            inspect_request.world = &world;
+            inspect_request.prefix = "continued slot=3";
+            check_int("chapter inspect receipt builds",
+                      theron_v1_startup_chapter_inspect_receipt_from_request(
+                          &inspect_request,
+                          &inspect_receipt),
+                      1);
+            check_str("chapter inspect receipt scope",
+                      inspect_receipt.inspect_scope,
+                      "STARTUP");
+            check_contains("chapter inspect receipt marker",
+                           inspect_receipt.marker_line,
+                           "Chapter 2");
+            check_contains("chapter inspect receipt detail prefix",
+                           inspect_receipt.inspect_detail,
+                           "continued slot=3");
+            check_contains("chapter inspect receipt detail marker",
+                           inspect_receipt.inspect_detail,
+                           "Chapter 2");
         }
 
         theron_v1_startup_layout_state_init(&layout_state);

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron startup chapter inspect ownership: `theron_v1_startup_flow` now returns chapter-marker inspect receipts from boot profile + world progression, and M11 applies the returned scope/detail instead of formatting chapter strings locally. M11's Theron startup roster adapter now builds real pointer lists for `char[8][N]` roster rows instead of invalid pointer casts. Verification: startup-flow probe passed 458/458, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 CSB startup entrance-command receipt ownership: `csb_v1_startup_sequence_pc34_compat` now owns the receipt that classifies entrance commands as pure UI results or runtime handoff plans. M11 consumes the CSB receipt and only executes CSB runtime startup plans when requested. Verification: startup entrance pointer contract passed 120/120, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 CSB startup command-state request ownership: `csb_v1_startup_sequence_pc34_compat` now builds startup command state from a CSB-owned request contract. M11 supplies raw title/entrance/credits/opening facts and no longer normalizes the CSB command-state fields locally. Verification: startup entrance pointer contract passed 118/118, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
