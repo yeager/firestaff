@@ -495,10 +495,6 @@ static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
     return M11_GAME_INPUT_REDRAW;
 }
 
-static int m11_theron_startup_build_layout_state(
-    const M11_GameViewState* state,
-    Theron_StartupLayoutState* layout_state);
-
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
                                          DM2_V1_BootProfile *profile,
                                          const char *save_path)
@@ -38309,46 +38305,6 @@ static void m11_theron_startup_layout_set_rect(
     element->h = h;
 }
 
-static int m11_theron_startup_build_layout_state(
-    const M11_GameViewState* state,
-    Theron_StartupLayoutState* layout_state) {
-
-    Theron_V1StartupContinueAvailability continue_availability;
-    int has_tqsv_continue = 0;
-    int tqsv_slot = -1;
-    int has_srm_continue = 0;
-    int srm_slot = -1;
-
-    if (!state || !layout_state) {
-        return 0;
-    }
-    if (m11_theron_continue_availability(state, &continue_availability)) {
-        has_tqsv_continue = continue_availability.has_tqsv_continue;
-        tqsv_slot = continue_availability.tqsv_slot;
-        has_srm_continue = continue_availability.has_srm_continue;
-        srm_slot = continue_availability.srm_slot;
-    }
-    return theron_v1_startup_layout_state_from_facts(
-        (Theron_StartupPhase)state->theronState.startup_phase,
-        state->theronState.selected_dungeon,
-        (const Theron_V1_BootProfile*)state->theronBootProfile,
-        (const Theron_V1_World*)state->theronWorld,
-        state->theronState.startup_cursor,
-        state->theronState.save_resume_continue_focus,
-        has_tqsv_continue,
-        tqsv_slot,
-        has_srm_continue,
-        srm_slot,
-        state->theronState.startup_text_prompt,
-        state->theronState.startup_roster_names,
-        state->theronState.startup_roster_titles,
-        state->theronState.startup_roster_name_count,
-        state->theronState.selected_mirrors_mask,
-        state->theronState.selected_mirror_order,
-        THERON_STARTUP_MAX_COMPANIONS,
-        layout_state);
-}
-
 static M11_TheronStartupElementKind m11_theron_startup_element_kind_from_layout(
     Theron_StartupLayoutElementKind kind) {
 
@@ -38374,8 +38330,12 @@ int M11_GameView_GetTheronStartupLayout(
     const M11_GameViewState* state,
     M11_TheronStartupElement* elements,
     int maxElements) {
-    Theron_StartupLayoutState layout_state;
+    Theron_V1StartupContinueAvailability continue_availability;
     Theron_StartupLayoutElement theron_elements[16];
+    int has_tqsv_continue = 0;
+    int tqsv_slot = -1;
+    int has_srm_continue = 0;
+    int srm_slot = -1;
     int count;
     int i;
 
@@ -38390,11 +38350,32 @@ int M11_GameView_GetTheronStartupLayout(
         elements[i].portraitIndex = -1;
         elements[i].primaryClass = -1;
     }
-    if (!m11_theron_startup_build_layout_state(state, &layout_state)) {
-        return 0;
+
+    if (m11_theron_continue_availability(state, &continue_availability)) {
+        has_tqsv_continue = continue_availability.has_tqsv_continue;
+        tqsv_slot = continue_availability.tqsv_slot;
+        has_srm_continue = continue_availability.has_srm_continue;
+        srm_slot = continue_availability.srm_slot;
     }
-    count = theron_v1_startup_layout_build(
-        &layout_state,
+
+    count = theron_v1_startup_layout_build_from_facts(
+        (Theron_StartupPhase)state->theronState.startup_phase,
+        state->theronState.selected_dungeon,
+        (const Theron_V1_BootProfile*)state->theronBootProfile,
+        (const Theron_V1_World*)state->theronWorld,
+        state->theronState.startup_cursor,
+        state->theronState.save_resume_continue_focus,
+        has_tqsv_continue,
+        tqsv_slot,
+        has_srm_continue,
+        srm_slot,
+        state->theronState.startup_text_prompt,
+        state->theronState.startup_roster_names,
+        state->theronState.startup_roster_titles,
+        state->theronState.startup_roster_name_count,
+        state->theronState.selected_mirrors_mask,
+        state->theronState.selected_mirror_order,
+        THERON_STARTUP_MAX_COMPANIONS,
         theron_elements,
         (int)(sizeof(theron_elements) / sizeof(theron_elements[0])));
     if (count > maxElements) {

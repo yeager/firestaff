@@ -383,10 +383,12 @@ int main(void) {
             char fact_titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1]
                             [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
             char fact_rows[16][THERON_STARTUP_RENDER_ROW_CAPACITY];
+            Theron_StartupLayoutElement fact_elements[16];
             const char *names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
             const char *titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
             int order[THERON_STARTUP_MAX_COMPANIONS + 1] = { 6, 2, 1, 0 };
             int found_continue_row = 0;
+            int fact_element_count;
             int handled;
             int row_index;
             int row_count;
@@ -477,6 +479,35 @@ int main(void) {
             check_int("layout state facts helper order cap",
                       layout_state.selected_mirror_order_count,
                       THERON_STARTUP_MAX_COMPANIONS);
+            fact_element_count = theron_v1_startup_layout_build_from_facts(
+                THERON_STARTUP_PHASE_STAGE_SELECT,
+                THERON_DUNGEON_COUNT + 99,
+                &profile,
+                &world,
+                7,
+                1,
+                1,
+                3,
+                0,
+                -1,
+                "READY",
+                fact_names,
+                fact_titles,
+                THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1,
+                0x45,
+                order,
+                THERON_STARTUP_MAX_COMPANIONS + 1,
+                fact_elements,
+                (int)(sizeof(fact_elements) / sizeof(fact_elements[0])));
+            check_int("layout elements facts helper builds",
+                      fact_element_count > 0,
+                      1);
+            check_int("layout elements facts helper continue kind",
+                      fact_elements[2].kind,
+                      THERON_STARTUP_LAYOUT_ELEMENT_CONTINUE);
+            check_int("layout elements facts helper continue slot",
+                      fact_elements[2].save_slot,
+                      3);
             check_int("render plan facts helper builds",
                       theron_v1_startup_render_plan_build_from_facts(
                           THERON_STARTUP_PHASE_STAGE_SELECT,
