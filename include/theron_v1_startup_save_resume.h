@@ -6,6 +6,7 @@
 
 #include "theron_v1_save_load.h"
 #include "theron_v1_srm_classifier.h"
+#include "theron_v1_startup_flow.h"
 #include "theron_v1_world.h"
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -159,6 +160,14 @@ typedef struct {
     int tick_count;
 } Theron_V1StartupContinueResult;
 
+typedef struct {
+    Theron_StartupInputResult input_result;
+    const char *status_scope;
+    const char *status;
+    const char *inspect_scope;
+    char inspect_detail[320];
+} Theron_V1StartupContinueApplyReceipt;
+
 /* Resolve both save roots deterministically:
  *   tqsv_root: profile->save_root when non-empty, otherwise
  *              theron_v1_save_default_root() result.
@@ -192,12 +201,20 @@ void theron_v1_startup_continue_request_init(
     Theron_V1StartupContinueRequest *request);
 void theron_v1_startup_continue_result_init(
     Theron_V1StartupContinueResult *result);
+void theron_v1_startup_continue_apply_receipt_init(
+    Theron_V1StartupContinueApplyReceipt *receipt);
 int theron_v1_startup_continue_apply_request(
     Theron_V1_World *world,
     const Theron_V1StartupContinueRequest *request,
     Theron_V1StartupContinueResult *out_result,
     char *receipt,
     size_t receipt_cap);
+int theron_v1_startup_continue_apply_receipt(
+    const Theron_StartupActionPlan *plan,
+    const Theron_V1StartupContinueResult *result,
+    const char *continue_receipt,
+    const char *chapter_marker_line,
+    Theron_V1StartupContinueApplyReceipt *out_receipt);
 
 /* Pretty-printer. Writes a multi-line diagnostic to `buf` up to
  * `buf_size` bytes (always NUL-terminated).  Returns bytes written

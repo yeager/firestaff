@@ -38,10 +38,22 @@ typedef struct {
     int tick_count;
 } Theron_V1StartupRuntimeEntryResult;
 
+typedef struct {
+    Theron_StartupInputResult input_result;
+    const char *status_scope;
+    const char *status;
+    const char *inspect_scope;
+    char inspect_detail[320];
+    const char *log_first_line;
+    int log_receipt;
+} Theron_V1StartupRuntimeEntryApplyReceipt;
+
 void theron_v1_startup_runtime_entry_request_init(
     Theron_V1StartupRuntimeEntryRequest *request);
 void theron_v1_startup_runtime_entry_result_init(
     Theron_V1StartupRuntimeEntryResult *result);
+void theron_v1_startup_runtime_entry_apply_receipt_init(
+    Theron_V1StartupRuntimeEntryApplyReceipt *receipt);
 int theron_v1_startup_runtime_enter_from_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_World *world,
@@ -49,6 +61,11 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     Theron_V1StartupRuntimeEntryResult *out_result,
     char *receipt,
     size_t receipt_cap);
+int theron_v1_startup_runtime_entry_apply_receipt(
+    const Theron_StartupActionPlan *plan,
+    const Theron_V1StartupRuntimeEntryResult *result,
+    const char *runtime_receipt,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

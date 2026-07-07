@@ -12074,6 +12074,7 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
 }
 
 static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
+                                               Theron_V1StartupRuntimeEntryResult* out_result,
                                                char* receipt,
                                                size_t receipt_cap) {
     Theron_V1_World* world;
@@ -12140,6 +12141,9 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
+    if (out_result) {
+        *out_result = runtimeResult;
+    }
     state->theronState.level_loaded = runtimeResult.level_loaded;
     state->theronState.party_x = runtimeResult.party_x;
     state->theronState.party_y = runtimeResult.party_y;
@@ -12150,6 +12154,7 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
 }
 
 static int m11_theron_continue_startup(M11_GameViewState* state,
+                                       Theron_V1StartupContinueResult* out_result,
                                        char* receipt,
                                        size_t receipt_cap) {
     Theron_V1_World* world;
@@ -12198,6 +12203,9 @@ static int m11_theron_continue_startup(M11_GameViewState* state,
     state->theronState.party_y = result.party_y;
     state->theronState.party_dir = result.party_dir;
     state->theronState.tick_count = result.tick_count;
+    if (out_result) {
+        *out_result = result;
+    }
     return 1;
 }
 
@@ -12248,6 +12256,24 @@ static void m11_theron_set_chapter_inspect(M11_GameViewState* state,
         snprintf(detail, sizeof(detail), "%s", markerLine);
     }
     m11_set_inspect_readout(state, "STARTUP", detail);
+}
+
+static void m11_theron_compute_chapter_marker(
+    const M11_GameViewState* state,
+    Theron_ChapterMarker* marker) {
+
+    Theron_V1_BootProfile* profile;
+    Theron_V1_World* world;
+
+    if (!marker) {
+        return;
+    }
+    profile = state ? (Theron_V1_BootProfile*)state->theronBootProfile : NULL;
+    world = state ? (Theron_V1_World*)state->theronWorld : NULL;
+    theron_v1_chapter_marker_compute(profile,
+                                      world ? &world->progression : NULL,
+                                      NULL,
+                                      marker);
 }
 
 static M11_GameInputResult m11_theron_startup_apply_action(
@@ -12340,7 +12366,12 @@ static M11_GameInputResult m11_theron_startup_apply_action(
 
     case THERON_STARTUP_PLAN_CONTINUE_SAVE: {
         char receipt[96];
+        Theron_ChapterMarker marker;
+        char markerLine[192];
+        Theron_V1StartupContinueResult continueResult;
+        Theron_V1StartupContinueApplyReceipt applyReceipt;
         int continued = m11_theron_continue_startup(state,
+                                                    &continueResult,
                                                     receipt,
                                                     sizeof(receipt));
         if (!continued) {
@@ -12350,16 +12381,42 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                                 : "CONTINUE FAILED"));
             return M11_GAME_INPUT_REDRAW;
         }
-        m11_set_status(state,
-                       plan.status_scope ? plan.status_scope : "STARTUP",
-                       plan.status ? plan.status : "CONTINUE LOADED");
-        m11_theron_set_chapter_inspect(state, receipt);
+        m11_theron_compute_chapter_marker(state, &marker);
+        markerLine[0] = '\0';
+        theron_v1_chapter_marker_format(&marker,
+                                        markerLine,
+                                        sizeof(markerLine));
+        if (theron_v1_startup_continue_apply_receipt(
+                &plan,
+                &continueResult,
+                receipt,
+                markerLine,
+                &applyReceipt)) {
+            m11_set_status(state,
+                           applyReceipt.status_scope
+                               ? applyReceipt.status_scope
+                               : "STARTUP",
+                           applyReceipt.status ? applyReceipt.status : "");
+            if (applyReceipt.inspect_scope) {
+                m11_set_inspect_readout(state,
+                                        applyReceipt.inspect_scope,
+                                        applyReceipt.inspect_detail);
+            }
+        } else {
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "STARTUP",
+                           plan.status ? plan.status : "CONTINUE LOADED");
+            m11_theron_set_chapter_inspect(state, receipt);
+        }
         return M11_GAME_INPUT_REDRAW;
     }
 
     case THERON_STARTUP_PLAN_ENTER_FORCEFIELD: {
         char receipt[256];
+        Theron_V1StartupRuntimeEntryResult runtimeResult;
+        Theron_V1StartupRuntimeEntryApplyReceipt applyReceipt;
         if (!m11_theron_enter_startup_forcefield(state,
+                                                 &runtimeResult,
                                                  receipt,
                                                  sizeof(receipt))) {
             m11_set_status(state, "STARTUP",
@@ -12368,12 +12425,36 @@ static M11_GameInputResult m11_theron_startup_apply_action(
                                                 : "FORCEFIELD FAILED"));
             return M11_GAME_INPUT_REDRAW;
         }
+        if (!theron_v1_startup_runtime_entry_apply_receipt(
+                &plan,
+                &runtimeResult,
+                receipt,
+                &applyReceipt)) {
+            m11_set_status(state,
+                           plan.status_scope ? plan.status_scope : "BOOT",
+                           plan.status ? plan.status : "THERON READY");
+            m11_set_inspect_readout(state, "READY", receipt);
+            m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON LOADED");
+            if (receipt[0] != '\0') {
+                m11_log_event(state, M11_COLOR_YELLOW, receipt);
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
         m11_set_status(state,
-                       plan.status_scope ? plan.status_scope : "BOOT",
-                       plan.status ? plan.status : "THERON READY");
-        m11_set_inspect_readout(state, "READY", receipt);
-        m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON LOADED");
-        if (receipt[0] != '\0') {
+                       applyReceipt.status_scope
+                           ? applyReceipt.status_scope
+                           : "BOOT",
+                       applyReceipt.status ? applyReceipt.status : "");
+        if (applyReceipt.inspect_scope) {
+            m11_set_inspect_readout(state,
+                                    applyReceipt.inspect_scope,
+                                    applyReceipt.inspect_detail);
+        }
+        if (applyReceipt.log_first_line) {
+            m11_log_event(state, M11_COLOR_YELLOW,
+                          applyReceipt.log_first_line);
+        }
+        if (applyReceipt.log_receipt && receipt[0] != '\0') {
             m11_log_event(state, M11_COLOR_YELLOW, receipt);
         }
         return M11_GAME_INPUT_REDRAW;

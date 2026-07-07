@@ -543,6 +543,37 @@ int main(void) {
             check_str("plan continue failure",
                       plan.failure_status,
                       "CONTINUE FAILED");
+            {
+                Theron_V1StartupContinueResult continue_result;
+                Theron_V1StartupContinueApplyReceipt continue_receipt;
+
+                theron_v1_startup_continue_result_init(&continue_result);
+                continue_result.source =
+                    THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV;
+                check_int("continue receipt rc",
+                          theron_v1_startup_continue_apply_receipt(
+                              &plan,
+                              &continue_result,
+                              "continued slot=2 dungeon=1 label=TQSV",
+                              "chapter=1 level=0",
+                              &continue_receipt),
+                          1);
+                check_int("continue receipt redraw",
+                          continue_receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_str("continue receipt status",
+                          continue_receipt.status,
+                          "CONTINUE LOADED");
+                check_str("continue receipt inspect",
+                          continue_receipt.inspect_scope,
+                          "STARTUP");
+                check_contains("continue receipt detail",
+                               continue_receipt.inspect_detail,
+                               "continued slot=2");
+                check_contains("continue receipt marker",
+                               continue_receipt.inspect_detail,
+                               "chapter=1");
+            }
 
             theron_v1_startup_action_init(&action);
             action.kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
@@ -599,6 +630,35 @@ int main(void) {
                       THERON_STARTUP_PLAN_ENTER_FORCEFIELD);
             check_str("plan forcefield scope", plan.status_scope, "BOOT");
             check_str("plan forcefield status", plan.status, "THERON READY");
+            {
+                Theron_V1StartupRuntimeEntryResult runtime_result;
+                Theron_V1StartupRuntimeEntryApplyReceipt runtime_receipt;
+
+                theron_v1_startup_runtime_entry_result_init(&runtime_result);
+                runtime_result.level_loaded = 1;
+                check_int("runtime receipt rc",
+                          theron_v1_startup_runtime_entry_apply_receipt(
+                              &plan,
+                              &runtime_result,
+                              "Track 02 initial level bind=OK",
+                              &runtime_receipt),
+                          1);
+                check_int("runtime receipt redraw",
+                          runtime_receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_str("runtime receipt status",
+                          runtime_receipt.status,
+                          "THERON READY");
+                check_str("runtime receipt inspect",
+                          runtime_receipt.inspect_scope,
+                          "READY");
+                check_str("runtime receipt log",
+                          runtime_receipt.log_first_line,
+                          "T0: THERON LOADED");
+                check_int("runtime receipt logs receipt",
+                          runtime_receipt.log_receipt,
+                          1);
+            }
 
             theron_v1_startup_action_init(&action);
             check_int("plan ignore rc",

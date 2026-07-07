@@ -575,6 +575,16 @@ void theron_v1_startup_continue_result_init(
     result->continue_focus = 0;
 }
 
+void theron_v1_startup_continue_apply_receipt_init(
+    Theron_V1StartupContinueApplyReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
+}
+
 static void theron_v1_startup_continue_capture_result(
     const Theron_V1_World *world,
     Theron_V1StartupContinueSource source,
@@ -664,6 +674,50 @@ int theron_v1_startup_continue_apply_request(
                      : "Continue requires decoded SRM progress");
     }
     return 0;
+}
+
+int theron_v1_startup_continue_apply_receipt(
+    const Theron_StartupActionPlan *plan,
+    const Theron_V1StartupContinueResult *result,
+    const char *continue_receipt,
+    const char *chapter_marker_line,
+    Theron_V1StartupContinueApplyReceipt *out_receipt) {
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_continue_apply_receipt_init(out_receipt);
+    if (!plan || !result ||
+        result->source == THERON_V1_STARTUP_CONTINUE_SOURCE_NONE) {
+        return 0;
+    }
+
+    out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+    out_receipt->status_scope = plan->status_scope
+        ? plan->status_scope
+        : "STARTUP";
+    out_receipt->status = plan->status ? plan->status : "CONTINUE LOADED";
+    out_receipt->inspect_scope = "STARTUP";
+
+    if (continue_receipt && continue_receipt[0] &&
+        chapter_marker_line && chapter_marker_line[0]) {
+        snprintf(out_receipt->inspect_detail,
+                 sizeof(out_receipt->inspect_detail),
+                 "%s; %s",
+                 continue_receipt,
+                 chapter_marker_line);
+    } else if (continue_receipt && continue_receipt[0]) {
+        snprintf(out_receipt->inspect_detail,
+                 sizeof(out_receipt->inspect_detail),
+                 "%s",
+                 continue_receipt);
+    } else {
+        snprintf(out_receipt->inspect_detail,
+                 sizeof(out_receipt->inspect_detail),
+                 "%s",
+                 chapter_marker_line ? chapter_marker_line : "");
+    }
+    return 1;
 }
 
 size_t theron_v1_startup_save_resume_format(
