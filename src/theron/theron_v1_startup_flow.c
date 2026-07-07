@@ -234,6 +234,37 @@ int theron_v1_startup_state_receipt_from_flow(
     return 1;
 }
 
+int theron_v1_startup_initial_title_state_receipt(
+    const Theron_V1_World *world,
+    Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_receipt) {
+    if (!world || !flow || !out_receipt) {
+        if (out_receipt) {
+            theron_v1_startup_state_receipt_init(out_receipt);
+        }
+        return 0;
+    }
+
+    theron_v1_startup_flow_init(flow);
+    flow->selected_dungeon = world->progression.current_dungeon;
+    if (!theron_v1_startup_state_receipt_from_flow(flow, out_receipt)) {
+        return 0;
+    }
+    out_receipt->set_level_loaded = 1;
+    out_receipt->level_loaded = 0;
+    out_receipt->set_startup_cursor = 1;
+    out_receipt->startup_cursor = 0;
+    out_receipt->set_continue_focus = 1;
+    out_receipt->continue_focus = 0;
+    out_receipt->set_party_pose = 1;
+    out_receipt->party_x = world->party.leader_x;
+    out_receipt->party_y = world->party.leader_y;
+    out_receipt->party_dir = world->party.leader_dir;
+    out_receipt->set_tick_count = 1;
+    out_receipt->tick_count = (int)world->world_tick;
+    return 1;
+}
+
 Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
     const Theron_StartupFlowSnapshot *snapshot,
     const Theron_DungeonProgression *progression,

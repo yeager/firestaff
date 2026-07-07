@@ -12128,6 +12128,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     int savedDebugHUD;
     TrAssetResult assetResult;
     Theron_StartupFlow startupFlow;
+    Theron_StartupStateReceipt startupStateReceipt;
     Theron_V1StartupSaveResume saveResume;
     int saveResumeReady = 0;
     int requestedSaveSlot = -1;
@@ -12317,19 +12318,18 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     state->theronWorld = world;
     state->theronViewport = viewport;
     state->theronAssets = assets;
-    state->theronState.level_loaded = 0;
-    state->theronState.party_x = world->party.leader_x;
-    state->theronState.party_y = world->party.leader_y;
-    state->theronState.party_dir = world->party.leader_dir;
-    state->theronState.tick_count = (int)world->world_tick;
-    theron_v1_startup_flow_init(&startupFlow);
     /* THQUEST.ASM T400 startup handoff: a fresh Track 02 boot stops at the
-     * title gate. M11 seeds the selected chapter for the title/chapter label;
-     * Accept then advances to the visible stage-select screen, and only the
-     * next explicit input opens the Soul Room. */
-    startupFlow.selected_dungeon = world->progression.current_dungeon;
-    m11_theron_sync_startup_state(state, &startupFlow);
-    state->theronState.startup_cursor = 0;
+     * title gate. The startup-flow module seeds the selected chapter for the
+     * title/chapter label; Accept then advances to the visible stage-select
+     * screen, and only the next explicit input opens the Soul Room. */
+    if (!theron_v1_startup_initial_title_state_receipt(
+            world,
+            &startupFlow,
+            &startupStateReceipt)) {
+        m11_set_status(state, "BOOT", "THERON STARTUP STATE FAILED");
+        goto fail;
+    }
+    m11_theron_apply_startup_state_receipt(state, &startupStateReceipt);
     state->theronState.save_resume_verdict =
         saveResumeReady ? (int)saveResume.verdict : -1;
     state->theronState.save_resume_claim =

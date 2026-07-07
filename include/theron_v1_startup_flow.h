@@ -395,6 +395,10 @@ void theron_v1_startup_flow_capture_snapshot(
 int theron_v1_startup_state_receipt_from_flow(
     const Theron_StartupFlow *flow,
     Theron_StartupStateReceipt *out_receipt);
+int theron_v1_startup_initial_title_state_receipt(
+    const Theron_V1_World *world,
+    Theron_StartupFlow *flow,
+    Theron_StartupStateReceipt *out_receipt);
 Theron_StartupResult theron_v1_startup_flow_rebuild_from_snapshot(
     const Theron_StartupFlowSnapshot *snapshot,
     const Theron_DungeonProgression *progression,

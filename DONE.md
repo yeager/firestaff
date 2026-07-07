@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron initial startup receipt ownership: `theron_v1_startup_flow` now builds the initial title-state receipt for fresh Track 02 boot, including selected dungeon, level-loaded flag, cursor, Continue focus, party pose, and tick count. M11 applies that receipt during StartTheron instead of seeding those fields manually. Verification: Theron startup-flow probe passed 534/534, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron dungeon-exit startup receipt ownership: `theron_v1_startup_flow` now returns the full state receipt for the return-to-stage-select path after dungeon exit. M11 applies that receipt instead of manually resetting startup phase, cursor, Continue focus, level-loaded flag, party pose, and tick count. Verification: Theron startup-flow probe passed 524/524, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 RetroAchievements start-menu settings hardening: modern RA username/token edit rendering now uses the public settings-row constants instead of private row numbers, and the settings hit-test gate covers token commit exit, long-paste capacity clamping, and cancel without overwriting the saved token. Verification: settings hit-test passed 49/49, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

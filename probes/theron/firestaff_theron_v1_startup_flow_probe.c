@@ -947,6 +947,63 @@ int main(void) {
     }
 
     {
+        Theron_StartupFlow initial_flow;
+        Theron_StartupStateReceipt initial_receipt;
+        Theron_V1_World initial_world;
+
+        theron_v1_world_init(&initial_world);
+        initial_world.progression.current_dungeon =
+            THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+        initial_world.party.leader_x = 11;
+        initial_world.party.leader_y = 12;
+        initial_world.party.leader_dir = 2;
+        initial_world.world_tick = 456;
+        check_int("initial title receipt builds",
+                  theron_v1_startup_initial_title_state_receipt(
+                      &initial_world,
+                      &initial_flow,
+                      &initial_receipt),
+                  1);
+        check_int("initial title flow phase",
+                  initial_flow.phase,
+                  THERON_STARTUP_PHASE_TITLE);
+        check_int("initial title flow dungeon",
+                  initial_flow.selected_dungeon,
+                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+        check_int("initial title receipt flow changed",
+                  initial_receipt.flow_changed,
+                  1);
+        check_int("initial title receipt cursor reset",
+                  initial_receipt.set_startup_cursor &&
+                      initial_receipt.startup_cursor == 0,
+                  1);
+        check_int("initial title receipt continue focus reset",
+                  initial_receipt.set_continue_focus &&
+                      initial_receipt.continue_focus == 0,
+                  1);
+        check_int("initial title receipt level loaded",
+                  initial_receipt.set_level_loaded &&
+                      initial_receipt.level_loaded == 0,
+                  1);
+        check_int("initial title receipt party pose",
+                  initial_receipt.set_party_pose &&
+                      initial_receipt.party_x == 11 &&
+                      initial_receipt.party_y == 12 &&
+                      initial_receipt.party_dir == 2,
+                  1);
+        check_int("initial title receipt tick",
+                  initial_receipt.set_tick_count &&
+                      initial_receipt.tick_count == 456,
+                  1);
+        check_int("initial title receipt null world rejects",
+                  theron_v1_startup_initial_title_state_receipt(
+                      NULL,
+                      &initial_flow,
+                      &initial_receipt),
+                  0);
+    }
+
+    {
         Theron_StartupAction action;
         Theron_StartupHit hit;
         result = theron_v1_startup_handle_input(
