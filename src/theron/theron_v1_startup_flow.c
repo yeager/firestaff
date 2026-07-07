@@ -513,6 +513,71 @@ int theron_v1_startup_layout_state_from_request(
     return 1;
 }
 
+int theron_v1_startup_layout_state_from_facts(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int has_tqsv_continue,
+    int tqsv_slot,
+    int has_srm_continue,
+    int srm_slot,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    Theron_StartupLayoutState *out_state) {
+
+    Theron_StartupLayoutStateRequest request;
+    const char *names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY];
+    const char *titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY];
+    int roster_count;
+    int i;
+
+    if (!out_state) {
+        return 0;
+    }
+    memset(&request, 0, sizeof(request));
+    memset(names, 0, sizeof(names));
+    memset(titles, 0, sizeof(titles));
+
+    roster_count = startup_roster_name_count;
+    if (roster_count < 0) {
+        roster_count = 0;
+    }
+    if (roster_count > THERON_STARTUP_LAYOUT_ROSTER_CAPACITY) {
+        roster_count = THERON_STARTUP_LAYOUT_ROSTER_CAPACITY;
+    }
+    for (i = 0; i < roster_count; ++i) {
+        names[i] = startup_roster_names ? startup_roster_names[i] : NULL;
+        titles[i] = startup_roster_titles ? startup_roster_titles[i] : NULL;
+    }
+
+    request.phase = phase;
+    request.selected_dungeon = selected_dungeon;
+    request.boot_profile = boot_profile;
+    request.world = world;
+    request.soul_cursor = soul_cursor;
+    request.continue_focus = continue_focus;
+    request.has_tqsv_continue = has_tqsv_continue;
+    request.tqsv_slot = tqsv_slot;
+    request.has_srm_continue = has_srm_continue;
+    request.srm_slot = srm_slot;
+    request.startup_text_prompt = startup_text_prompt;
+    request.startup_roster_names = names;
+    request.startup_roster_titles = titles;
+    request.startup_roster_name_count = roster_count;
+    request.selected_mirrors_mask = selected_mirrors_mask;
+    request.selected_mirror_order = selected_mirror_order;
+    request.selected_mirror_order_count = selected_mirror_order_count;
+    return theron_v1_startup_layout_state_from_request(&request, out_state);
+}
+
 static Theron_DungeonID tqr_startup_clamp_stage(Theron_DungeonID dungeon_id) {
     if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
         dungeon_id > THERON_DUNGEON_COUNT) {

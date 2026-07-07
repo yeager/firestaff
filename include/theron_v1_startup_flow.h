@@ -3,6 +3,7 @@
 
 #include "theron_v1_champions.h"
 #include "theron_v1_dungeon_progression.h"
+#include "theron_v1_track02.h"
 #include "theron_v1_world.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -408,6 +409,25 @@ void theron_v1_startup_hit_init(Theron_StartupHit *hit);
 void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state);
 int theron_v1_startup_layout_state_from_request(
     const Theron_StartupLayoutStateRequest *request,
+    Theron_StartupLayoutState *out_state);
+int theron_v1_startup_layout_state_from_facts(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int has_tqsv_continue,
+    int tqsv_slot,
+    int has_srm_continue,
+    int srm_slot,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
     Theron_StartupLayoutState *out_state);
 void theron_v1_startup_chapter_inspect_receipt_init(
     Theron_StartupChapterInspectReceipt *receipt);

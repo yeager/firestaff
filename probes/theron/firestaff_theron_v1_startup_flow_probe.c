@@ -376,12 +376,18 @@ int main(void) {
             Theron_StartupChapterInspectReceipt inspect_receipt;
             Theron_V1_BootProfile profile;
             Theron_V1_World world;
+            char fact_names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1]
+                           [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
+            char fact_titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1]
+                            [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
             const char *names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
             const char *titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
             int order[THERON_STARTUP_MAX_COMPANIONS + 1] = { 6, 2, 1, 0 };
 
             memset(&request, 0, sizeof(request));
             memset(&profile, 0, sizeof(profile));
+            memset(fact_names, 0, sizeof(fact_names));
+            memset(fact_titles, 0, sizeof(fact_titles));
             memset(names, 0, sizeof(names));
             memset(titles, 0, sizeof(titles));
             theron_v1_world_init(&world);
@@ -431,6 +437,38 @@ int main(void) {
             check_str("layout state request prompt",
                       layout_state.startup_text_prompt,
                       "READY");
+            snprintf(fact_names[1], sizeof(fact_names[1]), "%s", "HAKAR");
+            snprintf(fact_titles[1], sizeof(fact_titles[1]), "%s", "FIGHTER");
+            check_int("layout state facts helper builds",
+                      theron_v1_startup_layout_state_from_facts(
+                          THERON_STARTUP_PHASE_READY,
+                          THERON_DUNGEON_COUNT + 99,
+                          &profile,
+                          &world,
+                          7,
+                          1,
+                          1,
+                          3,
+                          0,
+                          -1,
+                          "READY",
+                          fact_names,
+                          fact_titles,
+                          THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1,
+                          0x45,
+                          order,
+                          THERON_STARTUP_MAX_COMPANIONS + 1,
+                          &layout_state),
+                      1);
+            check_int("layout state facts helper roster cap",
+                      layout_state.startup_roster_name_count,
+                      THERON_STARTUP_LAYOUT_ROSTER_CAPACITY);
+            check_str("layout state facts helper roster name",
+                      layout_state.startup_roster_names[1],
+                      "HAKAR");
+            check_int("layout state facts helper order cap",
+                      layout_state.selected_mirror_order_count,
+                      THERON_STARTUP_MAX_COMPANIONS);
 
             memset(&inspect_request, 0, sizeof(inspect_request));
             inspect_request.boot_profile = &profile;
