@@ -420,6 +420,19 @@ struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement {
     int material_icon_index;
 };
 
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+    int graphic_index;
+    int forward;
+    int relative_dir;
+    int relative_cell;
+    int flip_flags;
+    int source_zone_row;
+} CSB_V1_ViewportRuntimeProjectileSpriteBlit;
+
 struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
     int visible;
     int forward;
@@ -537,6 +550,20 @@ struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int sprite_max_frames;
     int sprite_attack;
 };
+
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+    int aspect_index;
+    int graphic_index;
+    int is_smoke;
+    int frame;
+    int max_frames;
+    int attack;
+    int depth_index;
+} CSB_V1_ViewportRuntimeExplosionSpriteBlit;
 
 typedef struct {
     int view_square;
@@ -794,6 +821,9 @@ int csb_v1_viewport_runtime_bind_projectile_material(
     const CSB_V1_RuntimeProfile *runtime,
     const struct ProjectileInstance_Compat *projectile,
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement);
+int csb_v1_viewport_runtime_projectile_sprite_blit(
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeProjectileSpriteBlit *out_blit);
 int csb_v1_viewport_runtime_projectile_sprite_rect(
     int source_zone,
     int viewport_x,
@@ -883,6 +913,9 @@ int csb_v1_viewport_runtime_explosion_overlay_placement(
 int csb_v1_viewport_runtime_bind_explosion_sprite(
     const struct ExplosionInstance_Compat *explosion,
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement);
+int csb_v1_viewport_runtime_explosion_sprite_blit(
+    const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeExplosionSpriteBlit *out_blit);
 int csb_v1_viewport_runtime_explosion_sprite_rect(
     int forward,
     int source_zone,

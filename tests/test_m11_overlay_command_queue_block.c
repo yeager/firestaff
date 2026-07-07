@@ -1209,6 +1209,89 @@ static void test_m11_runtime_draws_far_side_wall_with_center_blocker(void)
     }
 }
 
+static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squareData[49];
+    struct {
+        int wallForward;
+        int wallMapX;
+        int wallMapY;
+        int expectedDepth;
+        const char* label;
+    } cases[] = {
+        {1, 3, 3, 0, "D1C wall blocks D2C/D3C corridor"},
+        {2, 3, 2, 1, "D2C wall blocks D3C corridor"},
+        {3, 3, 1, 2, "D3C wall blocks far center"}
+    };
+    size_t i;
+
+    seed_active_view(&state);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(squareData, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+           sizeof(squareData));
+
+    map.width = 7;
+    map.height = 7;
+    tiles.squareData = squareData;
+    tiles.squareCount = (int)sizeof(squareData);
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 3;
+    state.world.party.mapY = 4;
+    state.world.party.direction = 0;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        int depth = -2;
+        int relForward = -2;
+        int mapX = -2;
+        int mapY = -2;
+        int element = -2;
+
+        memset(squareData, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+               sizeof(squareData));
+        squareData[cases[i].wallMapX * (int)map.height + cases[i].wallMapY] =
+            DUNGEON_SQUARE_MASK_THING_LIST;
+
+        ASSERT_EQ(M11_GameView_ProbeDm1NearestBlockingCenterDepth(
+                      &state, &depth, &relForward, &mapX, &mapY, &element),
+                  1, cases[i].label);
+        ASSERT_EQ(depth, cases[i].expectedDepth, cases[i].label);
+        ASSERT_EQ(relForward, cases[i].wallForward, cases[i].label);
+        ASSERT_EQ(mapX, cases[i].wallMapX, cases[i].label);
+        ASSERT_EQ(mapY, cases[i].wallMapY, cases[i].label);
+        ASSERT_EQ(element, DUNGEON_ELEMENT_WALL, cases[i].label);
+    }
+
+    memset(squareData, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+           sizeof(squareData));
+    {
+        int depth = -2;
+        int relForward = -2;
+        int mapX = -2;
+        int mapY = -2;
+        int element = -2;
+        ASSERT_EQ(M11_GameView_ProbeDm1NearestBlockingCenterDepth(
+                      &state, &depth, &relForward, &mapX, &mapY, &element),
+                  1, "open center corridor resolves");
+        ASSERT_EQ(depth, -1, "open center corridor has no center blocker");
+        ASSERT_EQ(relForward, -1, "open center corridor has no blocker rel forward");
+        ASSERT_EQ(mapX, -1, "open center corridor has no blocker x");
+        ASSERT_EQ(mapY, -1, "open center corridor has no blocker y");
+        ASSERT_EQ(element, -1, "open center corridor has no blocker element");
+    }
+}
+
 int main(void)
 {
     printf("=== M11 Overlay Command Queue Block Regression ===\n");
@@ -1238,6 +1321,7 @@ int main(void)
     test_m11_runtime_samples_d2_d3_side_walls();
     test_m11_runtime_draws_far_side_wall_with_near_side_blocker();
     test_m11_runtime_draws_far_side_wall_with_center_blocker();
+    test_m11_runtime_center_wall_blocks_deeper_corridor();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

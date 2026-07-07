@@ -1430,6 +1430,41 @@ int csb_v1_viewport_runtime_bind_projectile_material(
     return placement->material_icon_index >= 0;
 }
 
+int csb_v1_viewport_runtime_projectile_sprite_blit(
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeProjectileSpriteBlit *out_blit)
+{
+    CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
+
+    memset(&blit, 0, sizeof(blit));
+    blit.graphic_index = -1;
+    blit.relative_dir = -1;
+    blit.relative_cell = -1;
+    blit.source_zone_row = -1;
+    if (!placement || !out_blit || !placement->visible ||
+        placement->sprite_graphic_index < 0) {
+        if (out_blit) *out_blit = blit;
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115 projectile path binds the C2900/F0791
+     * source row, view-relative direction/cell, flip flags, and target
+     * rectangle before the bitmap copy. Keep that draw contract in the
+     * CSB viewport layer so M11 only blits the resolved asset. */
+    blit.x = placement->sprite_x;
+    blit.y = placement->sprite_y;
+    blit.w = placement->sprite_w;
+    blit.h = placement->sprite_h;
+    blit.graphic_index = placement->sprite_graphic_index;
+    blit.forward = placement->forward;
+    blit.relative_dir = placement->sprite_relative_dir;
+    blit.relative_cell = placement->sprite_relative_cell;
+    blit.flip_flags = placement->sprite_flip_flags;
+    blit.source_zone_row = placement->source_zone_row;
+    *out_blit = blit;
+    return 1;
+}
+
 int csb_v1_viewport_runtime_explosion_sprite_rect(
     int forward,
     int source_zone,
@@ -1491,6 +1526,44 @@ int csb_v1_viewport_runtime_bind_explosion_sprite(
     placement->sprite_max_frames = explosion->maxFrames;
     placement->sprite_attack = explosion->attack;
     return placement->sprite_graphic_index >= 0;
+}
+
+int csb_v1_viewport_runtime_explosion_sprite_blit(
+    const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeExplosionSpriteBlit *out_blit)
+{
+    CSB_V1_ViewportRuntimeExplosionSpriteBlit blit;
+
+    memset(&blit, 0, sizeof(blit));
+    blit.aspect_index = -1;
+    blit.graphic_index = -1;
+    blit.frame = -1;
+    blit.max_frames = -1;
+    blit.attack = -1;
+    if (!placement || !out_blit || !placement->visible ||
+        placement->sprite_graphic_index < 0 ||
+        placement->sprite_aspect_index < 0) {
+        if (out_blit) *out_blit = blit;
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115 final explosion pass resolves the explosion
+     * aspect, GRAPHICS.DAT bitmap, animation frame, attack strength, and
+     * source-zone rectangle before the F0114/F0675 draw. M11 consumes this
+     * CSB-owned blit record without reinterpreting placement fields. */
+    blit.x = placement->sprite_x;
+    blit.y = placement->sprite_y;
+    blit.w = placement->sprite_w;
+    blit.h = placement->sprite_h;
+    blit.aspect_index = placement->sprite_aspect_index;
+    blit.graphic_index = placement->sprite_graphic_index;
+    blit.is_smoke = placement->sprite_is_smoke;
+    blit.frame = placement->sprite_frame;
+    blit.max_frames = placement->sprite_max_frames;
+    blit.attack = placement->sprite_attack;
+    blit.depth_index = placement->depth_index;
+    *out_blit = blit;
+    return 1;
 }
 
 int csb_v1_viewport_runtime_explosion_overlay_placement(
