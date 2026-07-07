@@ -3674,6 +3674,22 @@ static void test_primary_side_wall_max_forward_contract(void)
               dm1_viewport_3d_primary_side_wall_max_forward_pc34(0), 3);
 }
 
+static void test_side_lane_clear_contract(void)
+{
+    check_int("F0128.side_lane.center_always_clear",
+              dm1_viewport_3d_side_lane_clear_for_rel_pc34(3, 0, 0u), 1);
+    check_int("F0128.side_lane.near_always_clear",
+              dm1_viewport_3d_side_lane_clear_for_rel_pc34(1, -1, 0u), 1);
+    check_int("F0128.side_lane.d2_requires_d1_open",
+              dm1_viewport_3d_side_lane_clear_for_rel_pc34(2, -1, 0x1u), 1);
+    check_int("F0128.side_lane.d2_blocks_on_d1_wall",
+              dm1_viewport_3d_side_lane_clear_for_rel_pc34(2, -1, 0x0u), 0);
+    check_int("F0128.side_lane.d3_requires_d1_d2_open",
+              dm1_viewport_3d_side_lane_clear_for_rel_pc34(3, 1, 0x3u), 1);
+    check_int("F0128.side_lane.d3_blocks_on_d2_door",
+              dm1_viewport_3d_side_lane_clear_for_rel_pc34(3, 1, 0x1u), 0);
+}
+
 int main(void)
 {
     test_redmcsb_g0163_wall_frames();
@@ -3711,6 +3727,7 @@ int main(void)
     test_projectile_wall_zone_movement_visibility_gate();
     test_f0115_object_zone_contract();
     test_primary_side_wall_max_forward_contract();
+    test_side_lane_clear_contract();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();
