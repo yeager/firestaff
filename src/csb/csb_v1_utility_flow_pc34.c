@@ -391,13 +391,13 @@ int csb_v1_util_flow_plan_for_action(CSB_V1_UtilFlowAction action,
         out_plan->preview_active = 0;
         return 1;
     case CSB_V1_UTIL_ACTION_IMPORT:
-        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY;
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_STATUS_REDRAW;
         out_plan->preview_active = 0;
         out_plan->status_scope = "BOOT";
         out_plan->status = "CSB IMPORT READY";
         return 1;
     case CSB_V1_UTIL_ACTION_VIEW:
-        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_VIEW_READY;
+        out_plan->kind = CSB_V1_UTIL_ACTION_PLAN_STATUS_REDRAW;
         out_plan->preview_active = 1;
         out_plan->status_scope = "BOOT";
         out_plan->status = "CSB PARTY READY";

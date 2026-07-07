@@ -3401,19 +3401,12 @@ static M11_GameInputResult m11_csb_startup_activate_utility_action(
             return m11_csb_startup_handle_entrance_command(
                 state,
                 plan.entrance_command);
-        case CSB_V1_UTIL_ACTION_PLAN_IMPORT_READY:
+        case CSB_V1_UTIL_ACTION_PLAN_STATUS_REDRAW:
             state->csbState.startup_import_preview_active =
                 plan.preview_active;
             m11_set_status(state,
                            plan.status_scope ? plan.status_scope : "BOOT",
-                           plan.status ? plan.status : "CSB IMPORT READY");
-            return M11_GAME_INPUT_REDRAW;
-        case CSB_V1_UTIL_ACTION_PLAN_VIEW_READY:
-            state->csbState.startup_import_preview_active =
-                plan.preview_active;
-            m11_set_status(state,
-                           plan.status_scope ? plan.status_scope : "BOOT",
-                           plan.status ? plan.status : "CSB PARTY READY");
+                           plan.status ? plan.status : "CSB UTILITY");
             return M11_GAME_INPUT_REDRAW;
         case CSB_V1_UTIL_ACTION_PLAN_IGNORE:
         default:
