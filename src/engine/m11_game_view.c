@@ -1175,47 +1175,6 @@ static int m11_csb_viewport_explosion_sprite_drawer(
         depth_index);
 }
 
-static int m11_csb_runtime_object_subtype_from_record(
-    int thing_type,
-    const uint8_t *record,
-    int size)
-{
-    unsigned int word;
-    int subtype;
-
-    if (!record || size < 4) {
-        return -1;
-    }
-    if (thing_type == THING_TYPE_SCROLL) {
-        return 0;
-    }
-    if (thing_type == THING_TYPE_CONTAINER) {
-        if (size < 8) return -1;
-        /* ReDMCSB DEFS.H CONTAINER: Next +0, Slot +2, Type +4.
-         * Match the CSB runtime ObjectInfo decode so a non-empty chest
-         * cannot change its visible subtype through the contained Slot. */
-        word = (unsigned int)record[4] | ((unsigned int)record[5] << 8);
-        subtype = (int)((word >> 1) & 0x03u);
-        return subtype > 0 ? 0 : subtype;
-    }
-    word = (unsigned int)record[2] | ((unsigned int)record[3] << 8);
-    if (thing_type == THING_TYPE_POTION) {
-        subtype = (int)((word >> 8) & 0x7Fu);
-        return subtype <= 20 ? subtype : -1;
-    }
-    subtype = (int)(word & 0x7Fu);
-    if (thing_type == THING_TYPE_WEAPON) {
-        return subtype <= 45 ? subtype : -1;
-    }
-    if (thing_type == THING_TYPE_ARMOUR) {
-        return subtype <= 57 ? subtype : -1;
-    }
-    if (thing_type == THING_TYPE_JUNK) {
-        return subtype <= 52 ? subtype : -1;
-    }
-    return -1;
-}
-
 static void m11_csb_runtime_overlay_stats_reset(
     const M11_GameViewState *state)
 {
@@ -1299,125 +1258,114 @@ static void m11_draw_csb_runtime_floor_object_overlays(
         cell_count = sizeof(cells) / sizeof(cells[0]);
     }
     for (cell_index = 0; cell_index < cell_count; ++cell_index) {
-            int forward = cells[cell_index].forward;
-            int side = cells[cell_index].side;
-            unsigned short thing;
-            int object_pile_index = 0;
-            int safety = 0;
+        int forward = cells[cell_index].forward;
+        int side = cells[cell_index].side;
+        unsigned short thing;
+        int object_pile_index = 0;
+        int safety = 0;
 
-            thing = (unsigned short)cells[cell_index].first_thing;
-            while (thing != THING_ENDOFLIST && thing != THING_NONE &&
-                   safety++ < 64) {
-                int type = (int)THING_GET_TYPE(thing);
-                if (csb_v1_runtime_thing_type_is_floor_object(type)) {
-                    int record_type = -1;
-                    int record_size = 0;
-                    const uint8_t *record =
-                        csb_v1_dungeon_get_thing_record(dungeon,
-                                                        thing,
-                                                        &record_type,
-                                                        NULL,
-                                                        &record_size);
-                    int icon = csb_v1_runtime_object_icon_index(runtime, thing);
-                    int rel_cell = ((int)THING_GET_CELL(thing) -
-                                    runtime->party_dir) & 3;
-                    CSB_V1_ViewportRuntimeObjectOverlayPlacement placement;
-                    int x = 0;
-                    int y = 0;
-                    int row;
-                    int subtype =
-                        m11_csb_runtime_object_subtype_from_record(type,
-                                                                   record,
-                                                                   record_size);
-                    int marker_x = x;
-                    int marker_y = y;
-                    int pile_index = object_pile_index;
-                    int scale_index;
-                    int shift_set;
-                    int shift_x_index = 0;
-                    int shift_y_index = 0;
-                    int pile_shift_x = 0;
-                    int pile_shift_y = 0;
-                    if (!csb_v1_viewport_runtime_object_overlay_placement(
-                            forward,
-                            side,
-                            rel_cell,
-                            &placement)) {
-                        thing = csb_v1_runtime_next_thing(dungeon, thing);
-                        continue;
-                    }
-                    object_pile_index++;
-                    x = placement.screen_x;
-                    y = placement.screen_y;
-                    row = placement.object_row;
-                    marker_x = x;
-                    marker_y = y;
-                    /* ReDMCSB DUNVIEW.C F0115/G0217/G0223: every floor
-                     * object in a square receives the next source pile
-                     * shift before drawing.  CSB runtime overlays can carry
-                     * several floor objects in the same thing chain, so keep
-                     * the same per-square object order here instead of
-                     * reusing pile index 0 for all of them. */
-                    scale_index = m11_object_source_scale_index(forward - 1,
-                                                                rel_cell);
-                    shift_set = (scale_index + 1) >> 1;
-                    if (shift_set > 2) shift_set = 2;
-                    m11_object_source_pile_shift_indices(pile_index,
-                                                         &shift_x_index,
-                                                         &shift_y_index);
-                    pile_shift_x = m11_object_source_shift_value(shift_set,
-                                                                 shift_x_index);
-                    pile_shift_y = m11_object_source_shift_value(shift_set,
-                                                                 shift_y_index);
-                    marker_x += pile_shift_x;
-                    marker_y += pile_shift_y;
-                    if (rel_cell == 0 || rel_cell == 2) x -= 5;
-                    if (rel_cell == 1 || rel_cell == 3) x += 5;
-                    if (rel_cell >= 2) y += 3;
-                    x += pile_shift_x;
-                    y += pile_shift_y;
-                    if (record_type == type &&
-                        subtype >= 0 &&
-                        m11_draw_item_sprite(state,
-                                             framebuffer,
-                                             framebuffer_width,
-                                             framebuffer_height,
-                                             0,
-                                             33,
-                                             224,
-                                             136,
-                                             type,
-                                             subtype,
-                                             rel_cell,
-                                             pile_index,
-                                             forward - 1,
-                                             row)) {
-                        m11_csb_runtime_overlay_stats_add_object_sprite(state);
-                    } else if (icon >= 0 &&
-                        m11_draw_dm_object_icon_index(
-                            state,
-                            framebuffer,
-                            framebuffer_width,
-                            framebuffer_height,
-                            icon,
-                            x - 8,
-                            y - 8,
-                            0)) {
-                        m11_csb_runtime_overlay_stats_add_object_icon(state);
-                    } else if (marker_x >= 1 && marker_x + 1 < framebuffer_width &&
-                               marker_y >= 1 && marker_y + 1 < framebuffer_height) {
-                        unsigned char color =
-                            (unsigned char)csb_v1_viewport_projectile_material_overlay_color(icon);
-                        framebuffer[marker_y * framebuffer_width + marker_x] = color;
-                        framebuffer[marker_y * framebuffer_width + marker_x - 1] = color;
-                        framebuffer[marker_y * framebuffer_width + marker_x + 1] = color;
-                        framebuffer[(marker_y - 1) * framebuffer_width + marker_x] = color;
-                        framebuffer[(marker_y + 1) * framebuffer_width + marker_x] = color;
-                        m11_csb_runtime_overlay_stats_add_object_marker(state);
-                    }
+        thing = (unsigned short)cells[cell_index].first_thing;
+        while (thing != THING_ENDOFLIST && thing != THING_NONE &&
+               safety++ < 64) {
+            int type = (int)THING_GET_TYPE(thing);
+            if (csb_v1_runtime_thing_type_is_floor_object(type)) {
+                int icon = csb_v1_runtime_object_icon_index(runtime, thing);
+                int rel_cell = ((int)THING_GET_CELL(thing) -
+                                runtime->party_dir) & 3;
+                CSB_V1_ViewportRuntimeObjectOverlayPlacement placement;
+                int x = 0;
+                int y = 0;
+                int row;
+                int subtype =
+                    csb_v1_runtime_object_subtype_index(runtime, thing);
+                int marker_x = x;
+                int marker_y = y;
+                int pile_index = object_pile_index;
+                int scale_index;
+                int shift_set;
+                int shift_x_index = 0;
+                int shift_y_index = 0;
+                int pile_shift_x = 0;
+                int pile_shift_y = 0;
+                if (!csb_v1_viewport_runtime_object_overlay_placement(
+                        forward,
+                        side,
+                        rel_cell,
+                        &placement)) {
+                    thing = csb_v1_runtime_next_thing(dungeon, thing);
+                    continue;
                 }
-                thing = csb_v1_runtime_next_thing(dungeon, thing);
+                object_pile_index++;
+                x = placement.screen_x;
+                y = placement.screen_y;
+                row = placement.object_row;
+                marker_x = x;
+                marker_y = y;
+                /* ReDMCSB DUNVIEW.C F0115/G0217/G0223: every floor
+                 * object in a square receives the next source pile
+                 * shift before drawing.  CSB runtime overlays can carry
+                 * several floor objects in the same thing chain, so keep
+                 * the same per-square object order here instead of
+                 * reusing pile index 0 for all of them. */
+                scale_index = m11_object_source_scale_index(forward - 1,
+                                                            rel_cell);
+                shift_set = (scale_index + 1) >> 1;
+                if (shift_set > 2) shift_set = 2;
+                m11_object_source_pile_shift_indices(pile_index,
+                                                     &shift_x_index,
+                                                     &shift_y_index);
+                pile_shift_x = m11_object_source_shift_value(shift_set,
+                                                             shift_x_index);
+                pile_shift_y = m11_object_source_shift_value(shift_set,
+                                                             shift_y_index);
+                marker_x += pile_shift_x;
+                marker_y += pile_shift_y;
+                if (rel_cell == 0 || rel_cell == 2) x -= 5;
+                if (rel_cell == 1 || rel_cell == 3) x += 5;
+                if (rel_cell >= 2) y += 3;
+                x += pile_shift_x;
+                y += pile_shift_y;
+                if (subtype >= 0 &&
+                    m11_draw_item_sprite(state,
+                                         framebuffer,
+                                         framebuffer_width,
+                                         framebuffer_height,
+                                         0,
+                                         33,
+                                         224,
+                                         136,
+                                         type,
+                                         subtype,
+                                         rel_cell,
+                                         pile_index,
+                                         forward - 1,
+                                         row)) {
+                    m11_csb_runtime_overlay_stats_add_object_sprite(state);
+                } else if (icon >= 0 &&
+                    m11_draw_dm_object_icon_index(
+                        state,
+                        framebuffer,
+                        framebuffer_width,
+                        framebuffer_height,
+                        icon,
+                        x - 8,
+                        y - 8,
+                        0)) {
+                    m11_csb_runtime_overlay_stats_add_object_icon(state);
+                } else if (marker_x >= 1 && marker_x + 1 < framebuffer_width &&
+                           marker_y >= 1 && marker_y + 1 < framebuffer_height) {
+                    unsigned char color =
+                        (unsigned char)csb_v1_viewport_projectile_material_overlay_color(icon);
+                    framebuffer[marker_y * framebuffer_width + marker_x] = color;
+                    framebuffer[marker_y * framebuffer_width + marker_x - 1] = color;
+                    framebuffer[marker_y * framebuffer_width + marker_x + 1] = color;
+                    framebuffer[(marker_y - 1) * framebuffer_width + marker_x] = color;
+                    framebuffer[(marker_y + 1) * framebuffer_width + marker_x] = color;
+                    m11_csb_runtime_overlay_stats_add_object_marker(state);
+                }
             }
+            thing = csb_v1_runtime_next_thing(dungeon, thing);
+        }
     }
 }
 

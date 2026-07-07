@@ -8839,6 +8839,61 @@ int csb_v1_runtime_object_icon_index(
     return icon_index;
 }
 
+int csb_v1_runtime_object_subtype_index(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t thing)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t word;
+    int thing_type;
+    int record_size;
+    int subtype;
+
+    if (!profile || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return -1;
+    }
+    dungeon = profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon,
+        thing,
+        &thing_type,
+        NULL,
+        &record_size);
+    if (!record || record_size < 4) {
+        return -1;
+    }
+    if (thing_type == THING_TYPE_SCROLL) {
+        return 0;
+    }
+    if (thing_type == THING_TYPE_CONTAINER) {
+        if (record_size < 8) return -1;
+        /* ReDMCSB DEFS.H CONTAINER: Next +0, Slot +2, Type +4.
+         * Keep render subtype tied to Type, not first contained thing. */
+        word = csb_v1_runtime_read_u16(record + 4);
+        subtype = (int)((word >> 1) & 0x03u);
+        return subtype > 0 ? 0 : subtype;
+    }
+    word = csb_v1_runtime_read_u16(record + 2);
+    if (thing_type == THING_TYPE_POTION) {
+        subtype = (int)((word >> 8) & 0x7Fu);
+        return subtype <= 20 ? subtype : -1;
+    }
+    subtype = (int)(word & 0x7Fu);
+    if (thing_type == THING_TYPE_WEAPON) {
+        return subtype <= 45 ? subtype : -1;
+    }
+    if (thing_type == THING_TYPE_ARMOUR) {
+        return subtype <= 57 ? subtype : -1;
+    }
+    if (thing_type == THING_TYPE_JUNK) {
+        return subtype <= 52 ? subtype : -1;
+    }
+    return -1;
+}
+
 int csb_v1_runtime_object_action_set_index(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing)
