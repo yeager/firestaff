@@ -10429,21 +10429,17 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
 {
     Nexus_V1_StartupMenuSnapshot snapshot;
     Nexus_V1_StartupAction action;
-    Nexus_V1_StartupInput startup_input;
 
     if (!state || !state->nexusState.startup_save_select_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    startup_input =
-        nexus_v1_startup_input_from_firestaff_menu_code((int)input);
-    if (!m11_nexus_startup_snapshot_from_state(state, &snapshot)) {
-        return input == M12_MENU_INPUT_NONE
-                   ? M11_GAME_INPUT_IGNORED
-                   : M11_GAME_INPUT_REDRAW;
-    }
-    if (!nexus_v1_startup_menu_snapshot_handle_input(&snapshot,
-                                                     startup_input,
-                                                     &action)) {
+    if (!nexus_v1_startup_menu_handle_firestaff_input_from_facts(
+            &snapshot,
+            state->nexusState.startup_save_dir,
+            state->nexusState.startup_save_slot_mask,
+            state->nexusState.startup_save_selected_row,
+            (int)input,
+            &action)) {
         return input == M12_MENU_INPUT_NONE
                    ? M11_GAME_INPUT_IGNORED
                    : M11_GAME_INPUT_REDRAW;

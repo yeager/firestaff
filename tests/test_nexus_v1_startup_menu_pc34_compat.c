@@ -1002,6 +1002,18 @@ int main(void)
                    snapshot.selected_row == 1 &&
                    action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
                "startup snapshot input owns save navigation");
+        expect(nexus_v1_startup_menu_handle_firestaff_input_from_facts(
+                   &snapshot,
+                   save_dir,
+                   menu.slot_mask,
+                   0,
+                   2,
+                   &action) &&
+                   strcmp(snapshot.save_dir, save_dir) == 0 &&
+                   snapshot.row_count == 2 &&
+                   snapshot.selected_row == 1 &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
+               "startup snapshot facts input owns M11 save input construction");
         snapshot_row_count =
             nexus_v1_startup_menu_snapshot_build_save_render_rows(
                 &snapshot,
