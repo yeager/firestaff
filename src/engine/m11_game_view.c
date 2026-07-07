@@ -2443,26 +2443,26 @@ static void m11_csb_startup_build_utility_flow(
     const M11_GameViewState *state,
     CSB_V1_UtilFlowContext *flow)
 {
-    CSB_V1_UtilRuntimeSnapshot snapshot;
+    CSB_V1_PartyState imported_party;
+    int imported_party_available = 0;
 
     if (!flow) {
         return;
     }
-    memset(&snapshot, 0, sizeof(snapshot));
-    snapshot.selected_action_index = state
-        ? state->csbState.startup_import_selected_action_index
-        : 0;
-    snapshot.imported_champion_count = state
-        ? state->csbState.startup_import_champion_count
-        : 0;
+    memset(&imported_party, 0, sizeof(imported_party));
     if (state && state->csbBootProfile) {
         if (csb_v1_runtime_get_party_state(
                 &((CSB_V1_BootProfile *)state->csbBootProfile)->runtime,
-                &snapshot.imported_party) >= 0) {
-            snapshot.imported_party_available = 1;
+                &imported_party) >= 0) {
+            imported_party_available = 1;
         }
     }
-    (void)csb_v1_util_flow_build_from_runtime_snapshot(&snapshot, flow);
+    (void)csb_v1_util_flow_build_from_runtime_facts(
+        state ? state->csbState.startup_import_selected_action_index : 0,
+        state ? state->csbState.startup_import_champion_count : 0,
+        &imported_party,
+        imported_party_available,
+        flow);
 }
 
 static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
