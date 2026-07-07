@@ -495,6 +495,19 @@ int dm1_viewport_3d_c2500_object_raw_zone_point(int row_index,
                                                 int relative_cell,
                                                 int *out_x,
                                                 int *out_y);
+int dm1_viewport_3d_c3200_creature_zone_point(int coord_set,
+                                              int depth_index,
+                                              int visible_count,
+                                              int slot_index,
+                                              int *out_x,
+                                              int *out_y);
+int dm1_viewport_3d_c3200_creature_side_zone_point(int coord_set,
+                                                   int depth_index,
+                                                   int side_hint,
+                                                   int visible_count,
+                                                   int slot_index,
+                                                   int *out_x,
+                                                   int *out_y);
 
 /* Source-locked no-write coverage for a read-only view square.  The allowed
  * list records the other F0128 view-square callbacks that remain eligible to

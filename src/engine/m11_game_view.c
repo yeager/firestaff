@@ -232,19 +232,6 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int sourceZoneRow);
 static int m11_creature_coordinate_set(int creatureType);
 static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
-static int m11_c3200_creature_zone_point(int coordSet,
-                                         int depthIndex,
-                                         int visibleCount,
-                                         int slotIndex,
-                                         int* outX,
-                                         int* outY);
-static int m11_c3200_creature_side_zone_point(int coordSet,
-                                              int depthIndex,
-                                              int sideHint,
-                                              int visibleCount,
-                                              int slotIndex,
-                                              int* outX,
-                                              int* outY);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -5704,109 +5691,6 @@ void M11_GameView_GetCreatureFrontSlotPoint(int coordSet,
 
     if (outCenterX) *outCenterX = (int)s_creatureFrontCoordSets[depthIndex][coordSet][pointIndex][0];
     if (outBottomY) *outBottomY = (int)s_creatureFrontCoordSets[depthIndex][coordSet][pointIndex][1];
-}
-
-static int m11_creature_front_point_index(int coordSet,
-                                          int visibleCount,
-                                          int slotIndex) {
-    int pointIndex = 4;
-    if (slotIndex < 0) slotIndex = 0;
-    if (slotIndex > 3) slotIndex = 3;
-    if (coordSet == 1) {
-        if (visibleCount > 1) {
-            pointIndex = slotIndex < 2 ? slotIndex : 4;
-        }
-    } else if (visibleCount > 1) {
-        pointIndex = slotIndex;
-        if (pointIndex > 3) pointIndex = 3;
-    }
-    return pointIndex;
-}
-
-static int m11_c3200_creature_zone_point(int coordSet,
-                                         int depthIndex,
-                                         int visibleCount,
-                                         int slotIndex,
-                                         int* outX,
-                                         int* outY) {
-    /* Layout-696 C3200_ZONE_ source points for center-lane creature
-     * placement.  We bind the three coordinate sets used by DM1 creature
-     * aspects and the D1/D2/D3 center groups.  Values are viewport-local
-     * center-X / bottom-Y, matching F0115's creature blit anchor. */
-    static const short kC3200Center[3][3][5][2] = {
-        {
-            {{ 83,106}, {141,106}, {148,119}, { 76,119}, {112,111}},
-            {{ 92, 83}, {131, 83}, {132, 90}, { 91, 90}, {112, 85}},
-            {{ 97, 67}, {125, 67}, {129, 72}, { 95, 72}, {112, 72}}
-        },
-        {
-            {{ 81,119}, {142,119}, {112,105}, {112,111}, {112,119}},
-            {{ 91, 90}, {132, 90}, {112, 83}, {112, 85}, {112, 89}},
-            {{ 94, 73}, {128, 73}, {112, 70}, {112, 70}, {112, 73}}
-        },
-        {
-            {{ 83, 79}, {141, 79}, {148, 85}, { 76, 85}, {112, 81}},
-            {{ 92, 65}, {131, 65}, {132, 67}, { 91, 67}, {112, 66}},
-            {{ 95, 59}, {127, 59}, {129, 61}, { 93, 61}, {112, 60}}
-        }
-    };
-    int pointIndex;
-    if (coordSet < 0 || coordSet > 2) return 0;
-    if (depthIndex < 0) depthIndex = 0;
-    if (depthIndex > 2) depthIndex = 2;
-    pointIndex = m11_creature_front_point_index(coordSet, visibleCount, slotIndex);
-    if (outX) *outX = (int)kC3200Center[coordSet][depthIndex][pointIndex][0];
-    if (outY) *outY = (int)kC3200Center[coordSet][depthIndex][pointIndex][1];
-    return 1;
-}
-
-static int m11_c3200_creature_side_zone_point(int coordSet,
-                                              int depthIndex,
-                                              int sideHint,
-                                              int visibleCount,
-                                              int slotIndex,
-                                              int* outX,
-                                              int* outY) {
-    /* ReDMCSB DUNVIEW.C G0224 lines 1836-1870: layout-696 creature
-     * coordinate sets are stored as D3C/D3L/D3R, D2C/D2L/D2R,
-     * D1C/D1L/D1R, D0L/D0R rows.  Keep side-cell lookup in that source
-     * order so D1 side creatures do not use the D0/offscreen coordinates. */
-    static const short kC3200Side[3][3][2][5][2] = {
-        {
-            {{{ 46,103}, {118,103}, {101,119}, {  0,  0}, { 79,111}},
-             {{107,103}, {177,103}, {  0,  0}, {123,119}, {144,111}}},
-            {{{ 99, 81}, {146, 81}, {135, 90}, { 80, 90}, {120, 85}},
-             {{ 77, 81}, {124, 81}, {143, 90}, { 89, 90}, {105, 85}}},
-            {{{131, 70}, {163, 70}, {158, 75}, {120, 75}, {145, 72}},
-             {{ 59, 70}, { 91, 70}, {107, 75}, { 66, 75}, { 79, 72}}}
-        },
-        {
-            {{{  0,  0}, {101,119}, { 84,105}, { 70,111}, { 77,119}},
-             {{123,119}, {  0,  0}, {139,105}, {153,111}, {146,119}}},
-            {{{ 80, 90}, {135, 90}, {125, 83}, {120, 85}, {125, 90}},
-             {{ 89, 90}, {143, 90}, { 99, 83}, {105, 85}, { 98, 90}}},
-            {{{120, 75}, {158, 75}, {149, 70}, {145, 72}, {150, 75}},
-             {{ 66, 75}, {104, 75}, { 75, 70}, { 79, 72}, { 73, 75}}}
-        },
-        {
-            {{{ 46, 79}, {118, 79}, {101, 85}, {  0,  0}, { 79, 81}},
-             {{107, 79}, {177, 79}, {  0,  0}, {123, 85}, {144, 81}}},
-            {{{ 99, 65}, {146, 65}, {135, 67}, { 80, 67}, {120, 66}},
-             {{ 77, 65}, {124, 65}, {143, 67}, { 89, 67}, {105, 66}}},
-            {{{131, 59}, {163, 59}, {158, 61}, {120, 61}, {145, 60}},
-             {{ 59, 59}, { 91, 59}, {107, 61}, { 66, 61}, { 79, 60}}}
-        }
-    };
-    int sideIndex;
-    int pointIndex;
-    if (coordSet < 0 || coordSet > 2) return 0;
-    if (depthIndex < 0) depthIndex = 0;
-    if (depthIndex > 2) depthIndex = 2;
-    sideIndex = sideHint < 0 ? 0 : 1;
-    pointIndex = m11_creature_front_point_index(coordSet, visibleCount, slotIndex);
-    if (outX) *outX = (int)kC3200Side[coordSet][depthIndex][sideIndex][pointIndex][0];
-    if (outY) *outY = (int)kC3200Side[coordSet][depthIndex][sideIndex][pointIndex][1];
-    return 1;
 }
 
 /* Query the creature aspect's coordinate set index (0-10) for a type. */
@@ -20575,7 +20459,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                 int coordSet = m11_creature_coordinate_set(cell->creatureTypes[gi]);
                 int zoneX = 0;
                 int zoneY = 0;
-                if (m11_c3200_creature_zone_point(coordSet,
+                if (dm1_viewport_3d_c3200_creature_zone_point(coordSet,
                                                   depthIndex < 3 ? depthIndex : 2,
                                                   1, 0, &zoneX, &zoneY)) {
                     cx = M11_VIEWPORT_X + zoneX - slotW / 2;
@@ -20616,7 +20500,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                             int origBottomY;
                             int localCenterX;
                             int localBottomY;
-                            (void)m11_c3200_creature_zone_point(coordSet, dIdx,
+                            (void)dm1_viewport_3d_c3200_creature_zone_point(coordSet, dIdx,
                                                                  visibleDups, di,
                                                                  &origCenterX,
                                                                  &origBottomY);
@@ -25246,7 +25130,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                     int drawPaneY = cy;
                     int drawPaneW = paneW - 2;
                     int drawSideHint = side;
-                    if (m11_c3200_creature_side_zone_point(coordSet,
+                    if (dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
                                                            depthIndex < 3 ? depthIndex : 2,
                                                            side,
                                                            1, 0,
@@ -25280,7 +25164,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                         int drawPaneY = dy;
                         int drawPaneW = paneW - 2;
                         int drawSideHint = side;
-                        if (m11_c3200_creature_side_zone_point(coordSet,
+                        if (dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
                                                                depthIndex < 3 ? depthIndex : 2,
                                                                side,
                                                                visibleDups, di,
@@ -25516,7 +25400,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                         int drawPaneY = drawYBase;
                         int drawPaneW = paneW - 2;
                         int drawSideHint = side;
-                        if (m11_c3200_creature_side_zone_point(coordSet,
+                        if (dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
                                                                depth < 3 ? depth : 2,
                                                                side,
                                                                visibleDups, di,
@@ -32283,7 +32167,7 @@ int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
                                            int slotIndex,
                                            int* outX,
                                            int* outY) {
-    return m11_c3200_creature_zone_point(coordSet, depthIndex,
+    return dm1_viewport_3d_c3200_creature_zone_point(coordSet, depthIndex,
                                          visibleCount, slotIndex,
                                          outX, outY);
 }
@@ -32295,7 +32179,7 @@ int M11_GameView_GetC3200CreatureSideZonePoint(int coordSet,
                                                int slotIndex,
                                                int* outX,
                                                int* outY) {
-    return m11_c3200_creature_side_zone_point(coordSet, depthIndex,
+    return dm1_viewport_3d_c3200_creature_side_zone_point(coordSet, depthIndex,
                                               sideHint, visibleCount,
                                               slotIndex, outX, outY);
 }

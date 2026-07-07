@@ -334,6 +334,116 @@ int dm1_viewport_3d_c2500_object_raw_zone_point(int row_index,
     return 1;
 }
 
+static int dm1_viewport_3d_creature_front_point_index(int coord_set,
+                                                      int visible_count,
+                                                      int slot_index)
+{
+    int point_index = 4;
+    if (slot_index < 0) slot_index = 0;
+    if (slot_index > 3) slot_index = 3;
+    if (coord_set == 1) {
+        if (visible_count > 1) {
+            point_index = slot_index < 2 ? slot_index : 4;
+        }
+    } else if (visible_count > 1) {
+        point_index = slot_index;
+        if (point_index > 3) point_index = 3;
+    }
+    return point_index;
+}
+
+int dm1_viewport_3d_c3200_creature_zone_point(int coord_set,
+                                              int depth_index,
+                                              int visible_count,
+                                              int slot_index,
+                                              int *out_x,
+                                              int *out_y)
+{
+    /* ReDMCSB DUNVIEW.C F0115 lines 5201-5214 and 5615-5617 bind
+     * creature placement through C3200_ZONE_ plus coordinate set, view
+     * depth, and view cell.  These layout-696 points are viewport-local
+     * center-X / bottom-Y anchors for the center lane. */
+    static const short k_c3200_center[3][3][5][2] = {
+        {
+            {{ 83, 106 }, { 141, 106 }, { 148, 119 }, {  76, 119 }, { 112, 111 }},
+            {{ 92,  83 }, { 131,  83 }, { 132,  90 }, {  91,  90 }, { 112,  85 }},
+            {{ 97,  67 }, { 125,  67 }, { 129,  72 }, {  95,  72 }, { 112,  72 }}
+        },
+        {
+            {{ 81, 119 }, { 142, 119 }, { 112, 105 }, { 112, 111 }, { 112, 119 }},
+            {{ 91,  90 }, { 132,  90 }, { 112,  83 }, { 112,  85 }, { 112,  89 }},
+            {{ 94,  73 }, { 128,  73 }, { 112,  70 }, { 112,  70 }, { 112,  73 }}
+        },
+        {
+            {{ 83,  79 }, { 141,  79 }, { 148,  85 }, {  76,  85 }, { 112,  81 }},
+            {{ 92,  65 }, { 131,  65 }, { 132,  67 }, {  91,  67 }, { 112,  66 }},
+            {{ 95,  59 }, { 127,  59 }, { 129,  61 }, {  93,  61 }, { 112,  60 }}
+        }
+    };
+    int point_index;
+    if (coord_set < 0 || coord_set > 2) return 0;
+    if (depth_index < 0) depth_index = 0;
+    if (depth_index > 2) depth_index = 2;
+    point_index = dm1_viewport_3d_creature_front_point_index(coord_set,
+                                                             visible_count,
+                                                             slot_index);
+    if (out_x) *out_x = (int)k_c3200_center[coord_set][depth_index][point_index][0];
+    if (out_y) *out_y = (int)k_c3200_center[coord_set][depth_index][point_index][1];
+    return 1;
+}
+
+int dm1_viewport_3d_c3200_creature_side_zone_point(int coord_set,
+                                                   int depth_index,
+                                                   int side_hint,
+                                                   int visible_count,
+                                                   int slot_index,
+                                                   int *out_x,
+                                                   int *out_y)
+{
+    /* ReDMCSB DUNVIEW.C G0224 lines 1836-1870 stores layout-696 creature
+     * coordinate rows in D3C/D3L/D3R, D2C/D2L/D2R, D1C/D1L/D1R,
+     * D0L/D0R order.  Side lookup keeps that order so side-lane creatures
+     * do not fall through to D0/offscreen coordinates. */
+    static const short k_c3200_side[3][3][2][5][2] = {
+        {
+            {{{  46, 103 }, { 118, 103 }, { 101, 119 }, {   0,   0 }, {  79, 111 }},
+             {{ 107, 103 }, { 177, 103 }, {   0,   0 }, { 123, 119 }, { 144, 111 }}},
+            {{{  99,  81 }, { 146,  81 }, { 135,  90 }, {  80,  90 }, { 120,  85 }},
+             {{  77,  81 }, { 124,  81 }, { 143,  90 }, {  89,  90 }, { 105,  85 }}},
+            {{{ 131,  70 }, { 163,  70 }, { 158,  75 }, { 120,  75 }, { 145,  72 }},
+             {{  59,  70 }, {  91,  70 }, { 107,  75 }, {  66,  75 }, {  79,  72 }}}
+        },
+        {
+            {{{   0,   0 }, { 101, 119 }, {  84, 105 }, {  70, 111 }, {  77, 119 }},
+             {{ 123, 119 }, {   0,   0 }, { 139, 105 }, { 153, 111 }, { 146, 119 }}},
+            {{{  80,  90 }, { 135,  90 }, { 125,  83 }, { 120,  85 }, { 125,  90 }},
+             {{  89,  90 }, { 143,  90 }, {  99,  83 }, { 105,  85 }, {  98,  90 }}},
+            {{{ 120,  75 }, { 158,  75 }, { 149,  70 }, { 145,  72 }, { 150,  75 }},
+             {{  66,  75 }, { 104,  75 }, {  75,  70 }, {  79,  72 }, {  73,  75 }}}
+        },
+        {
+            {{{  46,  79 }, { 118,  79 }, { 101,  85 }, {   0,   0 }, {  79,  81 }},
+             {{ 107,  79 }, { 177,  79 }, {   0,   0 }, { 123,  85 }, { 144,  81 }}},
+            {{{  99,  65 }, { 146,  65 }, { 135,  67 }, {  80,  67 }, { 120,  66 }},
+             {{  77,  65 }, { 124,  65 }, { 143,  67 }, {  89,  67 }, { 105,  66 }}},
+            {{{ 131,  59 }, { 163,  59 }, { 158,  61 }, { 120,  61 }, { 145,  60 }},
+             {{  59,  59 }, {  91,  59 }, { 107,  61 }, {  66,  61 }, {  79,  60 }}}
+        }
+    };
+    int side_index;
+    int point_index;
+    if (coord_set < 0 || coord_set > 2) return 0;
+    if (depth_index < 0) depth_index = 0;
+    if (depth_index > 2) depth_index = 2;
+    side_index = side_hint < 0 ? 0 : 1;
+    point_index = dm1_viewport_3d_creature_front_point_index(coord_set,
+                                                             visible_count,
+                                                             slot_index);
+    if (out_x) *out_x = (int)k_c3200_side[coord_set][depth_index][side_index][point_index][0];
+    if (out_y) *out_y = (int)k_c3200_side[coord_set][depth_index][side_index][point_index][1];
+    return 1;
+}
+
 /* ReDMCSB DUNVIEW.C F0128 lines 8488-8499 dispatch D3L, D3R, then D3C
  * after resolving their map cells through DUNGEON.C F0150 lines 1371-1421.
  * F0116 lines 6406-6437 prove D3L wall/alcove handling returns before the

@@ -205,6 +205,150 @@ static void test_redmcsb_f0115_object_c2500_geometry(void)
     check_int("F0115.object.c2500.raw.empty_cell",
               dm1_viewport_3d_c2500_object_raw_zone_point(11, 2, NULL, NULL),
               0);
+
+    {
+        int x0 = 0, y0 = 0, x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        check_int("F0115.creature.c3200.center.d1.ok",
+                  dm1_viewport_3d_c3200_creature_zone_point(
+                      0, 0, 1, 0, &x0, &y0), 1);
+        check_int("F0115.creature.c3200.center.d1.x", x0, 112);
+        check_int("F0115.creature.c3200.center.d1.y", y0, 111);
+        check_int("F0115.creature.c3200.center.d2.pair.ok",
+                  dm1_viewport_3d_c3200_creature_zone_point(
+                      1, 1, 2, 1, &x1, &y1), 1);
+        check_int("F0115.creature.c3200.center.d2.pair.x", x1, 132);
+        check_int("F0115.creature.c3200.center.d2.pair.y", y1, 90);
+        check_int("F0115.creature.c3200.center.d3.ok",
+                  dm1_viewport_3d_c3200_creature_zone_point(
+                      2, 2, 1, 0, &x2, &y2), 1);
+        check_int("F0115.creature.c3200.center.d3.x", x2, 112);
+        check_int("F0115.creature.c3200.center.d3.y", y2, 60);
+    }
+
+    {
+        int lx = 0, ly = 0, rx = 0, ry = 0, sx = 0, sy = 0;
+        check_int("F0115.creature.c3200.side.left.ok",
+                  dm1_viewport_3d_c3200_creature_side_zone_point(
+                      0, 0, -1, 1, 0, &lx, &ly), 1);
+        check_int("F0115.creature.c3200.side.left.x", lx, 79);
+        check_int("F0115.creature.c3200.side.left.y", ly, 111);
+        check_int("F0115.creature.c3200.side.right.ok",
+                  dm1_viewport_3d_c3200_creature_side_zone_point(
+                      0, 0, 1, 1, 0, &rx, &ry), 1);
+        check_int("F0115.creature.c3200.side.right.x", rx, 144);
+        check_int("F0115.creature.c3200.side.right.y", ry, 111);
+        check_int("F0115.creature.c3200.side.d2.pair.ok",
+                  dm1_viewport_3d_c3200_creature_side_zone_point(
+                      1, 1, -1, 2, 1, &sx, &sy), 1);
+        check_int("F0115.creature.c3200.side.d2.pair.x", sx, 135);
+        check_int("F0115.creature.c3200.side.d2.pair.y", sy, 90);
+    }
+}
+
+static void test_redmcsb_f0115_creature_c3200_geometry(void)
+{
+    static const struct {
+        int coord_set;
+        int depth;
+        int visible_count;
+        int slot;
+        int x;
+        int y;
+        const char *id;
+    } center_samples[] = {
+        { 0, 0, 1, 0, 112, 111, "set0.d1.single" },
+        { 0, 0, 4, 2, 148, 119, "set0.d1.slot2" },
+        { 0, 2, 4, 3,  95,  72, "set0.d3.slot3" },
+        { 1, 0, 1, 3, 112, 119, "set1.d1.single" },
+        { 1, 1, 4, 0,  91,  90, "set1.d2.slot0" },
+        { 1, 1, 4, 2, 112,  89, "set1.d2.slot2_clamped" },
+        { 2, 2, 1, 1, 112,  60, "set2.d3.single" },
+        { 2, 2, 4, 2, 129,  61, "set2.d3.slot2" }
+    };
+    static const struct {
+        int coord_set;
+        int depth;
+        int side_hint;
+        int visible_count;
+        int slot;
+        int x;
+        int y;
+        const char *id;
+    } side_samples[] = {
+        { 0, 0, -1, 1, 0,  79, 111, "set0.d1.left_single" },
+        { 0, 0,  1, 1, 0, 144, 111, "set0.d1.right_single" },
+        { 0, 1, -1, 4, 2, 135,  90, "set0.d2.left_slot2" },
+        { 0, 2,  1, 4, 3,  66,  75, "set0.d3.right_slot3" },
+        { 1, 0, -1, 1, 3,  77, 119, "set1.d1.left_single" },
+        { 1, 0,  1, 4, 1,   0,   0, "set1.d1.right_slot1_empty" },
+        { 1, 2, -1, 4, 2, 150,  75, "set1.d3.left_slot2_clamped" },
+        { 2, 1,  1, 4, 0,  77,  65, "set2.d2.right_slot0" }
+    };
+
+    for (size_t i = 0; i < sizeof(center_samples) / sizeof(center_samples[0]); ++i) {
+        int x = -999;
+        int y = -999;
+        char id[128];
+        int present = dm1_viewport_3d_c3200_creature_zone_point(
+            center_samples[i].coord_set,
+            center_samples[i].depth,
+            center_samples[i].visible_count,
+            center_samples[i].slot,
+            &x,
+            &y);
+        snprintf(id, sizeof(id), "F0115.creature.c3200.center.%s.present",
+                 center_samples[i].id);
+        check_int(id, present, 1);
+        snprintf(id, sizeof(id), "F0115.creature.c3200.center.%s.x",
+                 center_samples[i].id);
+        check_int(id, x, center_samples[i].x);
+        snprintf(id, sizeof(id), "F0115.creature.c3200.center.%s.y",
+                 center_samples[i].id);
+        check_int(id, y, center_samples[i].y);
+    }
+
+    for (size_t i = 0; i < sizeof(side_samples) / sizeof(side_samples[0]); ++i) {
+        int x = -999;
+        int y = -999;
+        char id[128];
+        int present = dm1_viewport_3d_c3200_creature_side_zone_point(
+            side_samples[i].coord_set,
+            side_samples[i].depth,
+            side_samples[i].side_hint,
+            side_samples[i].visible_count,
+            side_samples[i].slot,
+            &x,
+            &y);
+        snprintf(id, sizeof(id), "F0115.creature.c3200.side.%s.present",
+                 side_samples[i].id);
+        check_int(id, present, 1);
+        snprintf(id, sizeof(id), "F0115.creature.c3200.side.%s.x",
+                 side_samples[i].id);
+        check_int(id, x, side_samples[i].x);
+        snprintf(id, sizeof(id), "F0115.creature.c3200.side.%s.y",
+                 side_samples[i].id);
+        check_int(id, y, side_samples[i].y);
+    }
+
+    {
+        int x = -999;
+        int y = -999;
+        check_int("F0115.creature.c3200.center.invalid_coord",
+                  dm1_viewport_3d_c3200_creature_zone_point(3, 0, 1, 0,
+                                                            &x, &y),
+                  0);
+        check_int("F0115.creature.c3200.center.depth_clamp",
+                  dm1_viewport_3d_c3200_creature_zone_point(0, 99, 1, 0,
+                                                            &x, &y),
+                  1);
+        check_int("F0115.creature.c3200.center.depth_clamp.x", x, 112);
+        check_int("F0115.creature.c3200.center.depth_clamp.y", y, 72);
+        check_int("F0115.creature.c3200.side.invalid_coord",
+                  dm1_viewport_3d_c3200_creature_side_zone_point(-1, 0, -1,
+                                                                 1, 0,
+                                                                 &x, &y),
+                  0);
+    }
 }
 
 
@@ -3379,6 +3523,7 @@ int main(void)
 {
     test_redmcsb_g0163_wall_frames();
     test_redmcsb_f0115_object_c2500_geometry();
+    test_redmcsb_f0115_creature_c3200_geometry();
     test_redmcsb_g0163_wall_frames_resolve_clip_gate();
     test_redmcsb_f0128_draw_order();
     test_f0128_d4_far_object_pass_order();
