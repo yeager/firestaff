@@ -114,6 +114,17 @@ int main(void)
               flow.imported_champion_count == 3 &&
               flow.imported_party.Champions[0].CurrentHealth == 17,
           "utility flow snapshot imports party preview state");
+    check(csb_v1_util_flow_build_from_runtime_facts(
+              -2,
+              1,
+              &snapshot.imported_party,
+              1,
+              &flow) &&
+              flow.selected_action_index == 2 &&
+              flow.action == CSB_V1_UTIL_ACTION_NEW &&
+              flow.imported_champion_count == 3 &&
+              flow.imported_party.Champions[0].CurrentHealth == 17,
+          "utility flow builds from runtime facts without M11 snapshot assembly");
     flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
     flow.selected_action_index = 2;
     flow.action = CSB_V1_UTIL_ACTION_NEW;

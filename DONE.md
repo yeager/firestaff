@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 CSB utility runtime-facts ownership: `csb_v1_utility_flow_pc34` now builds startup utility contexts directly from runtime facts, including selected action, imported count, and optional imported party preview. M11 no longer assembles `CSB_V1_UtilRuntimeSnapshot` before drawing/routing the startup utility panel. Verification: `test_csb_v1_utility_flow_action_contract` passed 45/45, `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 116/116, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 CSB startup render-state ownership: `csb_v1_startup_sequence_pc34_compat` now derives render state from the CSB command-state plus runtime-start facts before building title/entrance render plans. M11 no longer fills the CSB render-state field-by-field. Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` passed 116/116, `test_csb_v1_boot_runtime_handoff` passed 256/256, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM2 startup draw executor ownership: `dm2_v1_startup_presentation` now executes its startup draw commands through GDAT/fill/outline/text callbacks. M11 now only adapts those callbacks to boot-profile asset fetch, palette colors, text styles, and the 8-bit framebuffer. Verification: `test_dm2_v1_m11_startup_profile_gate`, `test_dm2_v1_startup_menu_action_contract` passed 52/52, Phase A passed 24/24, DM2 boot-probe passed, and `git diff --check` passed.

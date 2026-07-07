@@ -167,6 +167,25 @@ int csb_v1_util_flow_build_from_runtime_snapshot(
     return 1;
 }
 
+int csb_v1_util_flow_build_from_runtime_facts(
+    int selected_action_index,
+    int imported_champion_count,
+    const CSB_V1_PartyState *imported_party,
+    int imported_party_available,
+    CSB_V1_UtilFlowContext *out_ctx)
+{
+    CSB_V1_UtilRuntimeSnapshot snapshot;
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    snapshot.selected_action_index = selected_action_index;
+    snapshot.imported_champion_count = imported_champion_count;
+    if (imported_party && imported_party_available) {
+        snapshot.imported_party_available = 1;
+        snapshot.imported_party = *imported_party;
+    }
+    return csb_v1_util_flow_build_from_runtime_snapshot(&snapshot, out_ctx);
+}
+
 /* ── State name for UI ───────────────────────────────────────────────── */
 const char *csb_v1_util_flow_state_name(CSB_V1_UtilFlowState state)
 {
