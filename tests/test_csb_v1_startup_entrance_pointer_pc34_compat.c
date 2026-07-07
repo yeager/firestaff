@@ -338,6 +338,27 @@ int main(void)
               command_state.pending_command ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
           "startup command state request owns M11 raw field normalization");
+    memset(&command_state, 0, sizeof(command_state));
+    check(csb_v1_startup_command_state_from_facts_pc34(
+              2,
+              37,
+              CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+              1,
+              CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
+              0,
+              1,
+              444,
+              3,
+              12,
+              4,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              &command_state) &&
+              command_state.title_active == 1 &&
+              command_state.opening_active == 1 &&
+              command_state.credits_remaining_ticks == 444 &&
+              command_state.pending_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+          "startup command state facts helper owns M11 field adapter");
 
     expect_action("enter route becomes CSB startup Enter",
                   244, 45,
@@ -1118,6 +1139,31 @@ int main(void)
                   CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
               plan.waiting_for_input == 0,
           "startup render plan request owns M11 fact adapter");
+    memset(&plan, 0, sizeof(plan));
+    check(csb_v1_startup_build_render_plan_from_facts_pc34(
+              command_state.title_active,
+              command_state.title_frame,
+              command_state.title_source_step,
+              command_state.entrance_active,
+              command_state.entrance_source_step,
+              command_state.entrance_dismissed,
+              command_state.credits_active,
+              command_state.credits_remaining_ticks,
+              command_state.opening_active,
+              command_state.opening_delay_ticks,
+              command_state.opening_step,
+              command_state.pending_command,
+              37,
+              1,
+              1,
+              12,
+              22,
+              3,
+              &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
+              plan.waiting_for_input == 0,
+          "startup render plan facts helper owns M11 field adapter");
 
     memset(&command_state, 0xff, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 1) &&
