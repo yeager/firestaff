@@ -2,7 +2,7 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
-- 🔧 2026-07-07 RetroAchievements follow-up: Firestaff now has a shared RetroAchievements runtime/config/event adapter and CLI activation flags. Remaining work is the real `rcheevos rc_client` backend, HTTP request bridge, login UI/settings persistence, badge/overlay rendering, and per-game achievement memory/event mapping.
+- 🔧 2026-07-07 RetroAchievements follow-up: Firestaff now has a shared RetroAchievements runtime/config/event adapter, CLI activation flags, and persisted launcher settings for enable + hardcore mode. Remaining work is the real `rcheevos rc_client` backend, HTTP request bridge, account/login UI, badge/overlay rendering, and per-game achievement memory/event mapping.
 
 - 🔧 2026-07-07 release follow-up: v3.0.65 packages the DM1 title/entrance and CSB startup ownership work after v3.0.64. Remaining release work is GitHub Actions packaging completion and asset publication proof.
 

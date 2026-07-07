@@ -3677,15 +3677,22 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int runRc = 0;
     M11_ApplyStartupMenuRuntime(&menuState);
     firestaff_ra_runtime_init(&raRuntime);
-    if (o->retroAchievementsEnabled) {
+    if (o->retroAchievementsEnabled ||
+        menuState.settings.retroAchievementsEnabled) {
         Firestaff_RA_Config raConfig;
         char redactedToken[16];
         firestaff_ra_config_init(&raConfig);
         raConfig.enabled = 1;
-        raConfig.hardcore = o->retroAchievementsHardcore ? 1 : 0;
+        raConfig.hardcore = o->retroAchievementsEnabled
+                                ? (o->retroAchievementsHardcore ? 1 : 0)
+                                : (menuState.settings.retroAchievementsHardcore ? 1 : 0);
         firestaff_ra_set_credentials(&raConfig,
-                                     o->retroAchievementsUser,
-                                     o->retroAchievementsToken);
+                                     o->retroAchievementsUser
+                                         ? o->retroAchievementsUser
+                                         : getenv("FIRESTAFF_RA_USER"),
+                                     o->retroAchievementsToken
+                                         ? o->retroAchievementsToken
+                                         : getenv("FIRESTAFF_RA_TOKEN"));
         raRuntime.backend_available = 1;
         firestaff_ra_runtime_apply_config(&raRuntime, &raConfig);
         firestaff_ra_redact_token(raConfig.api_token,

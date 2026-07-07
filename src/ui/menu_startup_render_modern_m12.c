@@ -1561,12 +1561,14 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 15);
     draw_setting_row(c, rowX, rowY + 350, rowW, "ORIGINAL DATA", M12_StartupMenu_GetDataStatusValue(state),
                      state->settingsSelectedIndex == 16);
-    draw_setting_row(c, rowX, rowY + 420, rowW, "SESSION TIMER", sessionTimer,
+    draw_setting_row(c, rowX, rowY + 420, rowW, "RETROACHIEVEMENTS",
+                     state->settings.retroAchievementsEnabled ? "ON" : "OFF",
                      state->settingsSelectedIndex == 30);
-    draw_setting_row(c, rowX, rowY + 490, rowW, "EXPORT SAVE MANIFEST", "WRITE...",
-                     state->settingsSelectedIndex == 42);
-    draw_setting_row(c, rowX, rowY + 560, rowW, "IMPORT SAVE MANIFEST", "READ...",
-                     state->settingsSelectedIndex == 43);
+    draw_setting_row(c, rowX, rowY + 490, rowW, "RA HARDCORE",
+                     state->settings.retroAchievementsHardcore ? "ON" : "OFF",
+                     state->settingsSelectedIndex == 31);
+    draw_setting_row(c, rowX, rowY + 560, rowW, "SESSION TIMER", sessionTimer,
+                     state->settingsSelectedIndex == 33);
     if (state->languagePopupOpen) {
         draw_language_popup(c, state, rowX + rowW - 632, rowY + 56);
     }

@@ -150,6 +150,8 @@ typedef struct {
     int ambientVolume;
     int uiScale;
     int streamerMode;
+    int retroAchievementsEnabled;
+    int retroAchievementsHardcore;
     int sessionTimerIndex;
     int windowWidth;
     int windowHeight;

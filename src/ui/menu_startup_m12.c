@@ -110,6 +110,8 @@ enum {
     M12_SETTINGS_ROW_THEME,
     M12_SETTINGS_ROW_BACKGROUND,
     M12_SETTINGS_ROW_QUICK_RESUME,
+    M12_SETTINGS_ROW_RETROACHIEVEMENTS,
+    M12_SETTINGS_ROW_RA_HARDCORE,
     M12_SETTINGS_ROW_SAVE_BROWSER,
     M12_SETTINGS_ROW_SESSION_TIMER,
     M12_SETTINGS_ROW_MINIMAP,
@@ -219,7 +221,7 @@ static M12_ExtSettingsRow m12_ext_settings[] = {
     {"Screenshot Key",      "F12",          0, M12_SETTINGS_TAB_ACCESSIBILITY},  /* V2.2 */
     {"Message Log",         "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Tooltip",             "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
-    {"Achievements",        "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
+    {"RetroAchievements",   "Off",       1, M12_SETTINGS_TAB_GAME},
     {"Stat Tracker",        "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Pathfinding Overlay", "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
     {"Inventory Sort",      "Off",       0, M12_SETTINGS_TAB_GAME},   /* V2.2 */
@@ -2643,6 +2645,10 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.themeIndex = state->settings.themeIndex;
     config.bgAnimationPreset = state->settings.bgAnimationPreset;
     config.quickResumeEnabled = state->settings.quickResumeEnabled;
+    config.retroAchievementsEnabled =
+        state->settings.retroAchievementsEnabled ? 1 : 0;
+    config.retroAchievementsHardcore =
+        state->settings.retroAchievementsHardcore ? 1 : 0;
     config.sessionTimerIndex = state->settings.sessionTimerIndex;
     config.minimapEnabled = state->settings.minimapEnabled;
     config.minimapSize = state->settings.minimapSize;
@@ -2862,6 +2868,10 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     state->settings.bgAnimationPreset = m12_clamp_index(config.bgAnimationPreset,
                                                         (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
     state->settings.quickResumeEnabled = config.quickResumeEnabled ? 1 : 0;
+    state->settings.retroAchievementsEnabled =
+        config.retroAchievementsEnabled ? 1 : 0;
+    state->settings.retroAchievementsHardcore =
+        config.retroAchievementsHardcore ? 1 : 0;
     state->settings.sessionTimerIndex = m12_clamp_index(config.sessionTimerIndex, 5);
     state->settings.minimapEnabled = config.minimapEnabled ? 1 : 0;
     state->settings.minimapSize = config.minimapSize;
@@ -3416,6 +3426,8 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_THEME: return m12_tr(state, "THEME");
         case M12_SETTINGS_ROW_BACKGROUND: return m12_tr(state, "BACKGROUND");
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_tr(state, "QUICK RESUME");
+        case M12_SETTINGS_ROW_RETROACHIEVEMENTS: return m12_tr(state, "RETROACHIEVEMENTS");
+        case M12_SETTINGS_ROW_RA_HARDCORE: return m12_tr(state, "RA HARDCORE");
         case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "SAVE BROWSER");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_tr(state, "SESSION TIMER");
         case M12_SETTINGS_ROW_MINIMAP: return m12_tr(state, "MINIMAP");
@@ -3472,6 +3484,10 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_THEME: return m12_settings_value_theme(state);
         case M12_SETTINGS_ROW_BACKGROUND: return m12_settings_value_background(state);
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_settings_value_quick_resume(state);
+        case M12_SETTINGS_ROW_RETROACHIEVEMENTS:
+            return m12_tr(state, g_toggleModes[state && state->settings.retroAchievementsEnabled ? 1 : 0]);
+        case M12_SETTINGS_ROW_RA_HARDCORE:
+            return m12_tr(state, g_toggleModes[state && state->settings.retroAchievementsHardcore ? 1 : 0]);
         case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "OPEN...");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_settings_value_session_timer(state);
         case M12_SETTINGS_ROW_MINIMAP: return m12_settings_value_minimap(state);
@@ -3524,6 +3540,9 @@ static const char* m12_settings_group_label(const M12_StartupMenuState* state, i
     if (row <= M12_SETTINGS_ROW_AUTO_PAUSE) {
         return m12_tr(state, "ACCESSIBILITY");
     }
+    if (row <= M12_SETTINGS_ROW_RA_HARDCORE) {
+        return m12_tr(state, "ONLINE");
+    }
     return m12_tr(state, "APPEARANCE");
 }
 
@@ -3536,7 +3555,8 @@ static int m12_settings_group_starts(int row) {
            row == M12_SETTINGS_ROW_DEBUG_OVERLAY ||
            row == M12_SETTINGS_ROW_AUDIO_MASTER ||
            row == M12_SETTINGS_ROW_FONT_SCALE ||
-           row == M12_SETTINGS_ROW_THEME;
+           row == M12_SETTINGS_ROW_THEME ||
+           row == M12_SETTINGS_ROW_RETROACHIEVEMENTS;
 }
 
 static int m12_game_slot_from_id(const char* gameId) {
@@ -3676,6 +3696,10 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
     state->settings.bgAnimationPreset = m12_clamp_index(state->settings.bgAnimationPreset,
                                                         (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
     state->settings.quickResumeEnabled = state->settings.quickResumeEnabled ? 1 : 0;
+    state->settings.retroAchievementsEnabled =
+        state->settings.retroAchievementsEnabled ? 1 : 0;
+    state->settings.retroAchievementsHardcore =
+        state->settings.retroAchievementsHardcore ? 1 : 0;
     state->settings.sessionTimerIndex = m12_clamp_index(state->settings.sessionTimerIndex, 5);
     state->settings.minimapEnabled = state->settings.minimapEnabled ? 1 : 0;
     state->settings.autoMapEnabled = state->settings.autoMapEnabled ? 1 : 0;
@@ -4033,6 +4057,18 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->quickResumeAvailable = 0;
                 state->quickResumeLaunchRequested = 0;
             }
+            break;
+        case M12_SETTINGS_ROW_RETROACHIEVEMENTS:
+            state->settings.retroAchievementsEnabled = m12_cycle_index(
+                state->settings.retroAchievementsEnabled,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_RA_HARDCORE:
+            state->settings.retroAchievementsHardcore = m12_cycle_index(
+                state->settings.retroAchievementsHardcore,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
         case M12_SETTINGS_ROW_SAVE_BROWSER:
             (void)M12_StartupMenu_OpenSaveBrowser(state);
@@ -6564,7 +6600,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                 else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
                 else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
                 else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
-                else if (row > M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_THEME;
+                else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_HARDCORE) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
+                else if (row > M12_SETTINGS_ROW_RA_HARDCORE) groupId = M12_SETTINGS_ROW_THEME;
                 if (groupId != lastGroup) {
                     m12_draw_text(framebuffer,
                                   framebufferWidth,
@@ -7924,7 +7961,8 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
             else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
             else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
             else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
-            else if (row > M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_THEME;
+            else if (row > M12_SETTINGS_ROW_AUTO_PAUSE && row <= M12_SETTINGS_ROW_RA_HARDCORE) groupId = M12_SETTINGS_ROW_RETROACHIEVEMENTS;
+            else if (row > M12_SETTINGS_ROW_RA_HARDCORE) groupId = M12_SETTINGS_ROW_THEME;
             if (groupId != lastGroup) {
                 m12_draw_text(framebuffer,
                               framebufferWidth,
