@@ -673,6 +673,19 @@ _Static_assert(M12_MENU_INPUT_BACK == 10,
 _Static_assert(M12_MENU_INPUT_ACTION == 11,
                "Theron startup menu input code drift");
 
+_Static_assert(M12_MENU_INPUT_NONE == 0,
+               "CSB utility menu input code drift");
+_Static_assert(M12_MENU_INPUT_UP == 1,
+               "CSB utility menu input code drift");
+_Static_assert(M12_MENU_INPUT_DOWN == 2,
+               "CSB utility menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACCEPT == 9,
+               "CSB utility menu input code drift");
+_Static_assert(M12_MENU_INPUT_BACK == 10,
+               "CSB utility menu input code drift");
+_Static_assert(M12_MENU_INPUT_ACTION == 11,
+               "CSB utility menu input code drift");
+
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session,
                                          const char *status)
@@ -3395,25 +3408,6 @@ static M11_GameInputResult m11_csb_startup_activate_utility_action(
     }
 }
 
-static CSB_V1_UtilInput m11_csb_utility_input_from_m12(M12_MenuInput input)
-{
-    switch (input) {
-        case M12_MENU_INPUT_UP:
-            return CSB_V1_UTIL_INPUT_UP;
-        case M12_MENU_INPUT_DOWN:
-            return CSB_V1_UTIL_INPUT_DOWN;
-        case M12_MENU_INPUT_ACCEPT:
-            return CSB_V1_UTIL_INPUT_ACCEPT;
-        case M12_MENU_INPUT_ACTION:
-            return CSB_V1_UTIL_INPUT_ACTION;
-        case M12_MENU_INPUT_BACK:
-            return CSB_V1_UTIL_INPUT_BACK;
-        case M12_MENU_INPUT_NONE:
-        default:
-            return CSB_V1_UTIL_INPUT_NONE;
-    }
-}
-
 static M11_GameInputResult m11_csb_startup_handle_utility_pointer(
     M11_GameViewState *state,
     int x,
@@ -3468,7 +3462,7 @@ static M11_GameInputResult m11_csb_startup_handle_utility_keyboard(
     m11_csb_startup_build_utility_flow(state, &flow);
     if (!csb_v1_util_flow_handle_input(
             &flow,
-            m11_csb_utility_input_from_m12(input),
+            csb_v1_util_input_from_firestaff_menu_code((int)input),
             state->csbState.startup_import_preview_active,
             &result)) {
         return M11_GAME_INPUT_IGNORED;

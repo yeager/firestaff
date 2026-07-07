@@ -56,6 +56,8 @@ typedef enum {
     CSB_V1_UTIL_INPUT_BACK = 5
 } CSB_V1_UtilInput;
 
+CSB_V1_UtilInput csb_v1_util_input_from_firestaff_menu_code(int menu_input);
+
 typedef enum {
     CSB_V1_UTIL_INPUT_RESULT_NONE = 0,
     CSB_V1_UTIL_INPUT_RESULT_CURSOR_MOVED = 1,
