@@ -145,6 +145,23 @@ typedef struct {
 } Theron_StartupExecution;
 
 typedef enum {
+    THERON_STARTUP_INPUT_RESULT_IGNORED = 0,
+    THERON_STARTUP_INPUT_RESULT_REDRAW = 1,
+    THERON_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER = 2
+} Theron_StartupInputResult;
+
+typedef struct {
+    Theron_StartupInputResult input_result;
+    const char *status_scope;
+    const char *status;
+    int flow_changed;
+    int cursor_changed;
+    int cursor;
+    int continue_focus_changed;
+    int continue_focus;
+} Theron_StartupApplyReceipt;
+
+typedef enum {
     THERON_STARTUP_HIT_NONE = 0,
     THERON_STARTUP_HIT_PANEL,
     THERON_STARTUP_HIT_TITLE,
@@ -344,11 +361,17 @@ int theron_v1_startup_plan_for_action(
     const Theron_StartupAction *action,
     Theron_StartupActionPlan *out_plan);
 void theron_v1_startup_execution_init(Theron_StartupExecution *execution);
+void theron_v1_startup_apply_receipt_init(
+    Theron_StartupApplyReceipt *receipt);
 int theron_v1_startup_execute_flow_plan(
     const Theron_StartupActionPlan *plan,
     const Theron_DungeonProgression *progression,
     Theron_StartupFlow *flow,
     Theron_StartupExecution *out_execution);
+int theron_v1_startup_apply_receipt_from_flow_execution(
+    const Theron_StartupActionPlan *plan,
+    const Theron_StartupExecution *execution,
+    Theron_StartupApplyReceipt *out_receipt);
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,

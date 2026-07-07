@@ -257,6 +257,17 @@ void theron_v1_startup_execution_init(Theron_StartupExecution *execution) {
     execution->cursor = -1;
 }
 
+void theron_v1_startup_apply_receipt_init(
+    Theron_StartupApplyReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
+    receipt->cursor = -1;
+}
+
 void theron_v1_startup_hit_init(Theron_StartupHit *hit) {
     if (!hit) {
         return;
@@ -686,6 +697,50 @@ static const char *tqr_startup_selected_status(
     case 3: return "RESURRECTED #3";
     default: return "RESURRECTED";
     }
+}
+
+int theron_v1_startup_apply_receipt_from_flow_execution(
+    const Theron_StartupActionPlan *plan,
+    const Theron_StartupExecution *execution,
+    Theron_StartupApplyReceipt *out_receipt) {
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_apply_receipt_init(out_receipt);
+    if (!plan || !execution) {
+        return 0;
+    }
+    if (execution->result != THERON_STARTUP_OK) {
+        out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = theron_v1_startup_result_name(
+            execution->result);
+        return 1;
+    }
+    if (!execution->handled) {
+        return 1;
+    }
+
+    out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+    out_receipt->status_scope = plan->status_scope
+        ? plan->status_scope
+        : "STARTUP";
+    out_receipt->status = plan->status ? plan->status : "STARTUP";
+    if (plan->kind == THERON_STARTUP_PLAN_TOGGLE_MIRROR) {
+        out_receipt->status = execution->mirror_selected
+            ? (plan->status ? plan->status : "HERO RESURRECTED")
+            : (plan->alternate_status
+                   ? plan->alternate_status
+                   : "HERO RELEASED");
+    }
+    out_receipt->flow_changed = execution->flow_changed;
+    out_receipt->cursor_changed = execution->cursor_changed;
+    out_receipt->cursor = execution->cursor;
+    out_receipt->continue_focus_changed =
+        execution->continue_focus_changed;
+    out_receipt->continue_focus = execution->continue_focus;
+    return 1;
 }
 
 static void tqr_startup_render_plan_reset(Theron_StartupRenderPlan *plan)
