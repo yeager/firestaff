@@ -3009,14 +3009,167 @@ static int m11_execute_csb_entrance_opening_composite(
         &context);
 }
 
+typedef struct M11_CSBStartupRenderExecutorContext {
+    const M11_GameViewState *state;
+    unsigned char *framebuffer;
+    int framebufferWidth;
+    int framebufferHeight;
+} M11_CSBStartupRenderExecutorContext;
+
+static int m11_csb_startup_executor_draw_title(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupRenderExecutorContext *context =
+        (M11_CSBStartupRenderExecutorContext *)user;
+    if (!context) {
+        return 0;
+    }
+    m11_draw_csb_startup_title(context->state,
+                               context->framebuffer,
+                               context->framebufferWidth,
+                               context->framebufferHeight,
+                               plan);
+    return 1;
+}
+
+static void m11_csb_startup_executor_clear_black(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupRenderExecutorContext *context =
+        (M11_CSBStartupRenderExecutorContext *)user;
+    (void)plan;
+    if (!context) {
+        return;
+    }
+    m11_fill_rect(context->framebuffer,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  0,
+                  0,
+                  context->framebufferWidth,
+                  context->framebufferHeight,
+                  M11_COLOR_BLACK);
+}
+
+static int m11_csb_startup_executor_draw_full_surface(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupRenderExecutorContext *context =
+        (M11_CSBStartupRenderExecutorContext *)user;
+    if (!context) {
+        return 0;
+    }
+    return m11_execute_csb_startup_asset_commands_kind(
+        context->state,
+        context->framebuffer,
+        context->framebufferWidth,
+        context->framebufferHeight,
+        plan,
+        CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34);
+}
+
+static int m11_csb_startup_executor_draw_opening_frame(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupRenderExecutorContext *context =
+        (M11_CSBStartupRenderExecutorContext *)user;
+    if (!context || context->framebufferWidth != 320 ||
+        context->framebufferHeight != 200 || !plan ||
+        !plan->opening_door_valid) {
+        return 0;
+    }
+    {
+        unsigned char dungeonFrame[320 * 200];
+        memset(dungeonFrame, 0, sizeof(dungeonFrame));
+        return m11_render_csb_boot_viewport(context->state,
+                                            dungeonFrame,
+                                            320,
+                                            200) &&
+               m11_execute_csb_entrance_opening_composite(
+                   context->state,
+                   context->framebuffer,
+                   context->framebufferWidth,
+                   context->framebufferHeight,
+                   dungeonFrame,
+                   plan);
+    }
+}
+
+static void m11_csb_startup_executor_draw_closed_doors(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupRenderExecutorContext *context =
+        (M11_CSBStartupRenderExecutorContext *)user;
+    if (!context) {
+        return;
+    }
+    (void)m11_execute_csb_startup_closed_door_asset_commands(
+        context->state,
+        context->framebuffer,
+        context->framebufferWidth,
+        context->framebufferHeight,
+        plan);
+}
+
+static void m11_csb_startup_executor_draw_door_fallback(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupRenderExecutorContext *context =
+        (M11_CSBStartupRenderExecutorContext *)user;
+    if (!context) {
+        return;
+    }
+    m11_execute_csb_startup_primitive_commands(context->framebuffer,
+                                               context->framebufferWidth,
+                                               context->framebufferHeight,
+                                               plan);
+}
+
+static void m11_csb_startup_executor_draw_fallback_text(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupRenderExecutorContext *context =
+        (M11_CSBStartupRenderExecutorContext *)user;
+    if (!context) {
+        return;
+    }
+    m11_draw_csb_startup_fallback_text_rows(context->framebuffer,
+                                            context->framebufferWidth,
+                                            context->framebufferHeight,
+                                            plan);
+}
+
+static void m11_csb_startup_executor_draw_utility_panel(
+    void *user,
+    const CSB_V1_StartupRenderPlan_PC34 *plan)
+{
+    M11_CSBStartupRenderExecutorContext *context =
+        (M11_CSBStartupRenderExecutorContext *)user;
+    (void)plan;
+    if (!context) {
+        return;
+    }
+    m11_draw_csb_startup_utility_panel(context->state,
+                                       context->framebuffer,
+                                       context->framebufferWidth,
+                                       context->framebufferHeight);
+}
+
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           unsigned char *framebuffer,
                                           int framebufferWidth,
                                           int framebufferHeight)
 {
     CSB_V1_StartupRenderPlan_PC34 plan;
-    int drew_asset = 0;
-    int i;
+    M11_CSBStartupRenderExecutorContext context;
+    CSB_V1_StartupRenderExecutor_PC34 executor;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -3026,124 +3179,24 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         return;
     }
 
-    for (i = 0; i < plan.render_command_count &&
-                i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
-        const CSB_V1_StartupRenderCommand_PC34 *command =
-            &plan.render_commands[i];
-        switch (command->kind) {
-            case CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34:
-                m11_draw_csb_startup_title(state,
-                                           framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight,
-                                           &plan);
-                return;
-            case CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34:
-                m11_fill_rect(framebuffer,
-                              framebufferWidth,
-                              framebufferHeight,
-                              0,
-                              0,
-                              framebufferWidth,
-                              framebufferHeight,
-                              M11_COLOR_BLACK);
-                break;
-            case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34: {
-                if (m11_execute_csb_startup_asset_commands_kind(
-                        state,
-                        framebuffer,
-                        framebufferWidth,
-                        framebufferHeight,
-                        &plan,
-                        CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34)) {
-                    drew_asset = 1;
-                } else {
-                    m11_draw_csb_startup_fallback_text_rows(
-                        framebuffer,
-                        framebufferWidth,
-                        framebufferHeight,
-                        &plan);
-                }
-                break;
-            }
-            case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34: {
-                if (m11_execute_csb_startup_asset_commands_kind(
-                        state,
-                        framebuffer,
-                        framebufferWidth,
-                        framebufferHeight,
-                        &plan,
-                        CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34)) {
-                    drew_asset = 1;
-                }
-                break;
-            }
-            case CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34:
-                if (drew_asset && framebufferWidth == 320 &&
-                    framebufferHeight == 200 && plan.opening_door_valid) {
-                    unsigned char dungeonFrame[320 * 200];
-                    memset(dungeonFrame, 0, sizeof(dungeonFrame));
-                    if (m11_render_csb_boot_viewport(state,
-                                                     dungeonFrame,
-                                                     320,
-                                                     200) &&
-                        m11_execute_csb_entrance_opening_composite(
-                            state,
-                            framebuffer,
-                            framebufferWidth,
-                            framebufferHeight,
-                            dungeonFrame,
-                            &plan)) {
-                        return;
-                    }
-                }
-                break;
-            case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34:
-                if (drew_asset) {
-                    (void)m11_execute_csb_startup_closed_door_asset_commands(
-                        state,
-                        framebuffer,
-                        framebufferWidth,
-                        framebufferHeight,
-                        &plan);
-                } else {
-                    m11_execute_csb_startup_primitive_commands(
-                        framebuffer,
-                        framebufferWidth,
-                        framebufferHeight,
-                        &plan);
-                }
-                break;
-            case CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34:
-                /* ReDMCSB ENTRANCE.C F0806 lines 409-441 selects the CSB
-                 * entrance palette/screen. The CSB plan owns the no-asset
-                 * fallback composition; M11 only draws the requested rows. */
-                if (!drew_asset) {
-                    m11_execute_csb_startup_primitive_commands(
-                        framebuffer,
-                        framebufferWidth,
-                        framebufferHeight,
-                        &plan);
-                    m11_draw_csb_startup_fallback_text_rows(
-                        framebuffer,
-                        framebufferWidth,
-                        framebufferHeight,
-                        &plan);
-                }
-                break;
-            case CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34:
-                if (plan.waiting_for_input) {
-                    m11_draw_csb_startup_utility_panel(state,
-                                                       framebuffer,
-                                                       framebufferWidth,
-                                                       framebufferHeight);
-                }
-                break;
-            case CSB_V1_STARTUP_RENDER_COMMAND_NONE_PC34:
-            default:
-                break;
-        }
-    }
+    context.state = state;
+    context.framebuffer = framebuffer;
+    context.framebufferWidth = framebufferWidth;
+    context.framebufferHeight = framebufferHeight;
+    memset(&executor, 0, sizeof(executor));
+    executor.user = &context;
+    executor.draw_title = m11_csb_startup_executor_draw_title;
+    executor.clear_black = m11_csb_startup_executor_clear_black;
+    executor.draw_full_surface = m11_csb_startup_executor_draw_full_surface;
+    executor.draw_opening_frame =
+        m11_csb_startup_executor_draw_opening_frame;
+    executor.draw_closed_doors = m11_csb_startup_executor_draw_closed_doors;
+    executor.draw_door_fallback = m11_csb_startup_executor_draw_door_fallback;
+    executor.draw_fallback_text =
+        m11_csb_startup_executor_draw_fallback_text;
+    executor.draw_utility_panel =
+        m11_csb_startup_executor_draw_utility_panel;
+    (void)csb_v1_startup_execute_render_plan_pc34(&plan, &executor);
 }
 
 static int m11_csb_startup_entrance_waiting_for_input(

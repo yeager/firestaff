@@ -758,6 +758,77 @@ int csb_v1_startup_execute_opening_composite_pc34(
     return executor(user, &composite) ? 1 : 0;
 }
 
+int csb_v1_startup_execute_render_plan_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_StartupRenderExecutor_PC34 *executor)
+{
+    int i;
+    int drew_asset = 0;
+    if (!plan || !executor) {
+        return 0;
+    }
+    for (i = 0; i < plan->render_command_count &&
+                i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
+        const CSB_V1_StartupRenderCommand_PC34 *command =
+            &plan->render_commands[i];
+        switch (command->kind) {
+            case CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34:
+                if (executor->draw_title) {
+                    (void)executor->draw_title(executor->user, plan);
+                }
+                return 1;
+            case CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34:
+                if (executor->clear_black) {
+                    executor->clear_black(executor->user, plan);
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34:
+                if (executor->draw_full_surface &&
+                    executor->draw_full_surface(executor->user, plan)) {
+                    drew_asset = 1;
+                } else if (executor->draw_fallback_text) {
+                    executor->draw_fallback_text(executor->user, plan);
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34:
+                if (executor->draw_full_surface &&
+                    executor->draw_full_surface(executor->user, plan)) {
+                    drew_asset = 1;
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34:
+                if (drew_asset && executor->draw_opening_frame &&
+                    executor->draw_opening_frame(executor->user, plan)) {
+                    return 1;
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34:
+                if (drew_asset) {
+                    if (executor->draw_closed_doors) {
+                        executor->draw_closed_doors(executor->user, plan);
+                    }
+                } else if (executor->draw_door_fallback) {
+                    executor->draw_door_fallback(executor->user, plan);
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34:
+                if (!drew_asset && executor->draw_fallback_text) {
+                    executor->draw_fallback_text(executor->user, plan);
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34:
+                if (plan->waiting_for_input && executor->draw_utility_panel) {
+                    executor->draw_utility_panel(executor->user, plan);
+                }
+                break;
+            case CSB_V1_STARTUP_RENDER_COMMAND_NONE_PC34:
+            default:
+                break;
+        }
+    }
+    return 1;
+}
+
 static void csb_v1_startup_rebuild_primitive_commands_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
