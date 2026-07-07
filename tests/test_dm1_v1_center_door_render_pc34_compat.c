@@ -81,12 +81,27 @@ int main(void)
     expect_blit("d3c.horizontal.left", 2, 1, 0, 0, 18, 0, 88, 28, 6, 40);
     expect_blit("d3c.horizontal.right", 2, 1, 0, 1, 24, 0, 130, 28, 6, 40);
 
+    expect_int("doorSet0.d1.graphic",
+               dm1_v1_door_panel_graphic_for_set_depth_pc34(0, 0), 248);
+    expect_int("doorSet0.d2.graphic",
+               dm1_v1_door_panel_graphic_for_set_depth_pc34(0, 1), 247);
+    expect_int("doorSet0.d3.graphic",
+               dm1_v1_door_panel_graphic_for_set_depth_pc34(0, 2), 246);
+    expect_int("doorSet2.d1.graphic",
+               dm1_v1_door_panel_graphic_for_set_depth_pc34(2, 0), 254);
+    expect_int("doorSet2.d3.graphic",
+               dm1_v1_door_panel_graphic_for_set_depth_pc34(2, 2), 252);
+
     expect_int("bad.depth", dm1_v1_center_door_render_plan_for_depth_pc34(3, &plan), 0);
     expect_int("bad.index", dm1_v1_center_door_render_plan_at_pc34(-1, &plan), 0);
     expect_int("bad.null", dm1_v1_center_door_render_plan_for_depth_pc34(0, 0), 0);
     expect_int("open.panel", dm1_v1_center_door_panel_blits_for_cell_pc34(0, 0, 1, blits), 0);
     expect_int("bad.panel.depth", dm1_v1_center_door_panel_blits_for_cell_pc34(-1, 4, 1, blits), 0);
     expect_int("bad.panel.null", dm1_v1_center_door_panel_blits_for_cell_pc34(0, 4, 1, 0), 0);
+    expect_int("bad.graphic.depth",
+               dm1_v1_door_panel_graphic_for_set_depth_pc34(0, 3), -1);
+    expect_int("bad.graphic.set",
+               dm1_v1_door_panel_graphic_for_set_depth_pc34(-1, 0), -1);
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed == 0 ? 0 : 1;

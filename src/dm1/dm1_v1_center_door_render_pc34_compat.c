@@ -182,3 +182,19 @@ int dm1_v1_center_door_panel_blits_for_cell_pc34(
     outBlits[0] = plan.closedPanel;
     return 1;
 }
+
+int dm1_v1_door_panel_graphic_for_set_depth_pc34(
+    int doorSet,
+    int depthIndex)
+{
+    int depthOffset;
+    if (doorSet < 0 || depthIndex < 0 || depthIndex > 2) {
+        return -1;
+    }
+    /* ReDMCSB F0095_DUNGEONVIEW_LoadDoorSet:
+     * D3 = M633 + doorSet * 3 + 0
+     * D2 = M633 + doorSet * 3 + 1
+     * D1 = M633 + doorSet * 3 + 2. */
+    depthOffset = 2 - depthIndex;
+    return DM1_GFX_DOOR_SET0_D3_PC34 + doorSet * 3 + depthOffset;
+}

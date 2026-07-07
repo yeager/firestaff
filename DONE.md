@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 door panel graphic ownership: `dm1_v1_center_door_render_pc34_compat` now owns the F0095 doorSet/depth panel graphic selection, and M11 consumes that DM1 API for center and side door panel drawing. Verification: direct `test_dm1_v1_center_door_render_pc34_compat` passed 62/62, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 viewport parity predicate ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 `(mapX + mapY + direction) & 1` wall/footprint parity predicate. M11 still supplies the party tuple but no longer carries the source rule locally. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` passed, `test_dm1_v1_stairs_render_pc34_compat` passed 111/111, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 stairs orientation ownership: `dm1_v1_stairs_render_pc34_compat` now owns the square-bit `0x08` north/south orientation test, party-direction front-facing decision, and square-aware stairs render-plan selection. M11 no longer carries a local `m11_dm1_stairs_front_facing()` rule. Verification: `test_dm1_v1_stairs_render_pc34_compat` passed 111/111, direct `test_dm1_v1_viewport_3d_pc34_compat` passed, M11 syntax passed cleanly, and `git diff --check` passed.
