@@ -85,6 +85,7 @@
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_floor_pit_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "dm1_v1_stairs_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
@@ -22597,67 +22598,50 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
                                 int fbH,
                                 int maxVisibleForward,
                                 const M11_ViewportCell cells[3][3]) {
-    typedef struct M11_DM1StairSpec {
-        int relForward;
-        int relSide;
-        int frontOnly;
-        int sideOnly;
-        int upGfx;
-        int downGfx;
-        M11_DM1ZoneBlit upBlit;
-        M11_DM1ZoneBlit downBlit;
-    } M11_DM1StairSpec;
-    static const M11_DM1StairSpec kStairs[] = {
-        {3,-2,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   0,0,0,   25,63,45}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   0,0,0,   25,75,41}},
-        {3, 2,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   0,0,161, 25,63,45}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   0,0,149, 25,75,41}},
-        {3,-1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   0,0,14,  26,63,45}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   0,0,13,  28,75,41}},
-        {3, 0,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3C,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3C,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3C,   0,0,78,  25,68,46}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3C,   0,0,75,  25,74,49}},
-        {3, 1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D3L,   0,0,147, 26,63,45}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D3L,   0,0,133, 28,75,41}},
-        {2,-1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D2L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D2L,   1,0,0,   24,59,62}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L,   0,0,0,   20,61,62}},
-        {2, 0,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D2C,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D2C,   {M11_GFX_DM1_STAIRS_UP_FRONT_D2C,   0,0,62,  20,100,63},{M11_GFX_DM1_STAIRS_DOWN_FRONT_D2C,   0,0,63,  24,98,61}},
-        {2, 1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D2L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D2L,   0,0,165, 20,59,62}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D2L,   0,0,164, 24,60,62}},
-        {1,-1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D1L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D1L,   0,0,0,   9, 32,100},{M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L,   0,0,0,   17,32,91}},
-        {1, 0,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D1C,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D1C,   {M11_GFX_DM1_STAIRS_UP_FRONT_D1C,   0,0,32,  9, 160,100},{M11_GFX_DM1_STAIRS_DOWN_FRONT_D1C,   0,0,35,  17,152,92}},
-        {1, 1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D1L,   M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L,   {M11_GFX_DM1_STAIRS_UP_FRONT_D1L,   0,0,192, 9, 32,100},{M11_GFX_DM1_STAIRS_DOWN_FRONT_D1L,   0,0,192, 18,32,91}},
-        {0,-1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L, M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L, {M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L, 0,0,0,   58,30,44}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L, 0,0,0,   76,30,60}},
-        {0, 1,1,0,M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L, M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L, {M11_GFX_DM1_STAIRS_UP_FRONT_D0C_L, 0,0,194, 58,30,44}, {M11_GFX_DM1_STAIRS_DOWN_FRONT_D0C_L, 0,0,194, 76,30,60}},
-        {2,-1,0,1,M11_GFX_DM1_STAIRS_SIDE_D2L,       M11_GFX_DM1_STAIRS_SIDE_D2L,         {M11_GFX_DM1_STAIRS_SIDE_D2L,       0,0,60,  55,8, 5},  {M11_GFX_DM1_STAIRS_SIDE_D2L,       0,0,60,  55,8, 5}},
-        {2, 1,0,1,M11_GFX_DM1_STAIRS_SIDE_D2L,       M11_GFX_DM1_STAIRS_SIDE_D2L,         {M11_GFX_DM1_STAIRS_SIDE_D2L,       0,0,156, 56,8, 5},  {M11_GFX_DM1_STAIRS_SIDE_D2L,       0,0,156, 56,8, 5}},
-        {1,-1,0,1,M11_GFX_DM1_STAIRS_UP_SIDE_D1L,    M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L,    {M11_GFX_DM1_STAIRS_UP_SIDE_D1L,    0,0,32,  58,20,43}, {M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L,  0,0,32,  62,20,39}},
-        {1, 1,0,1,M11_GFX_DM1_STAIRS_UP_SIDE_D1L,    M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L,    {M11_GFX_DM1_STAIRS_UP_SIDE_D1L,    0,0,172, 57,20,43}, {M11_GFX_DM1_STAIRS_DOWN_SIDE_D1L,  0,0,172, 62,20,39}},
-        {0,-1,0,1,M11_GFX_DM1_STAIRS_SIDE_D0L,       M11_GFX_DM1_STAIRS_SIDE_D0L,         {M11_GFX_DM1_STAIRS_SIDE_D0L,       0,0,0,   73,16,13}, {M11_GFX_DM1_STAIRS_SIDE_D0L,       0,0,0,   73,16,13}},
-        {0, 1,0,1,M11_GFX_DM1_STAIRS_SIDE_D0L,       M11_GFX_DM1_STAIRS_SIDE_D0L,         {M11_GFX_DM1_STAIRS_SIDE_D0L,       0,0,208, 73,16,13}, {M11_GFX_DM1_STAIRS_SIDE_D0L,       0,0,208, 73,16,13}}
-    };
-    size_t i;
+    int i;
+    int planCount;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (i = 0; i < sizeof(kStairs) / sizeof(kStairs[0]); ++i) {
+    planCount = dm1_v1_stairs_render_plan_count_pc34();
+    for (i = 0; i < planCount; ++i) {
         M11_ViewportCell cell;
         int frontFacing;
         int stairUp;
-        if (kStairs[i].relForward > maxVisibleForward) {
+        M11_DM1ZoneBlit blit;
+        const DM1_StairsBlitPc34* stairBlit;
+        DM1_StairsRenderPlanPc34 plan;
+        if (!dm1_v1_stairs_render_plan_at_pc34(i, &plan)) {
+            continue;
+        }
+        if (plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             kStairs[i].relForward,
-                                             kStairs[i].relSide)) {
+                                             plan.relForward,
+                                             plan.relSide)) {
             continue;
         }
-        if (!m11_sample_viewport_cell(state, kStairs[i].relForward, kStairs[i].relSide, &cell)) {
+        if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
         if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_STAIRS) {
             continue;
         }
         frontFacing = m11_dm1_stairs_front_facing(state, &cell);
-        if ((kStairs[i].frontOnly && !frontFacing) || (kStairs[i].sideOnly && frontFacing)) {
+        if ((plan.frontOnly && !frontFacing) || (plan.sideOnly && frontFacing)) {
             continue;
         }
-        stairUp = (cell.square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP */
-        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                     stairUp ? &kStairs[i].upBlit : &kStairs[i].downBlit,
-                                     0);
+        stairUp = dm1_v1_stairs_square_is_up_pc34(cell.square);
+        stairBlit = stairUp ? &plan.upBlit : &plan.downBlit;
+        blit.graphicIndex = stairBlit->graphicIndex;
+        blit.srcX = stairBlit->srcX;
+        blit.srcY = stairBlit->srcY;
+        blit.dstX = stairBlit->dstX;
+        blit.dstY = stairBlit->dstY;
+        blit.width = stairBlit->width;
+        blit.height = stairBlit->height;
+        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &blit, 0);
     }
 }
 
