@@ -246,6 +246,57 @@ static int d1c_fire_effect_pixel_count(const unsigned char* fb) {
     return count;
 }
 
+static void d1c_hot_region_color_histogram(const unsigned char* fb,
+                                           int counts[16]) {
+    int x;
+    int y;
+    if (!counts) {
+        return;
+    }
+    memset(counts, 0, sizeof(int) * 16U);
+    if (!fb) {
+        return;
+    }
+    for (y = 0; y < D1C_HOT_BLOB_H; ++y) {
+        for (x = 0; x < D1C_HOT_BLOB_W; ++x) {
+            unsigned char px = fb[(D1C_HOT_BLOB_Y + y) * FB_W +
+                                  (D1C_HOT_BLOB_X + x)];
+            if (px < 16U) {
+                ++counts[px];
+            }
+        }
+    }
+}
+
+static int visible_source_detail_count(const M11_GameViewState* state) {
+    int relForward;
+    int count = 0;
+    for (relForward = 1; relForward <= 3; ++relForward) {
+        int relSide;
+        for (relSide = -1; relSide <= 1; ++relSide) {
+            int elementType = -1;
+            int wallOrnament = -1;
+            int championPortrait = -1;
+            int inscription = -1;
+            int floorOrnament = 0;
+            if (!M11_GameView_ProbeViewportRenderMetadata(
+                    state, relForward, relSide,
+                    NULL, NULL, &elementType,
+                    &wallOrnament, &championPortrait,
+                    &inscription, &floorOrnament)) {
+                continue;
+            }
+            if (wallOrnament >= 0 ||
+                championPortrait >= 0 ||
+                inscription >= 0 ||
+                floorOrnament > 0) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 int main(int argc, char** argv) {
     const char* root = argc > 1 ? argv[1] : getenv("FIRESTAFF_DATA");
     const char* dataDir;
@@ -339,6 +390,7 @@ int main(int argc, char** argv) {
                     int d1cFirstExplosionType = -1;
                     int d1cFloorItems = -1;
                     int d1cSummaryItems = -1;
+                    int visibleSourceDetails = 0;
                     if (M11_GameView_ProbeViewportArtifactCounts(
                             &state, 1, 0,
                             &d1cMapX, &d1cMapY, &d1cElementType,
@@ -353,10 +405,18 @@ int main(int argc, char** argv) {
                         d1cFirstProjectileGfx < 0 && d1cFirstExplosionType < 0 &&
                         d1cFloorItems == 0 && d1cSummaryItems == 0) {
                         int hotPixels = d1c_fire_effect_pixel_count(framebuffer);
-                        ++normalHudFireBlobSamples;
-                        if (hotPixels >= D1C_HOT_BLOB_FAIL_PIXELS) {
+                        visibleSourceDetails = visible_source_detail_count(&state);
+                        if (visibleSourceDetails == 0) {
+                            ++normalHudFireBlobSamples;
+                        }
+                        if (visibleSourceDetails == 0 &&
+                            hotPixels >= D1C_HOT_BLOB_FAIL_PIXELS) {
+                            int hist[16];
+                            d1c_hot_region_color_histogram(framebuffer, hist);
                             printf("LEAK party=(%d,%d,%d) d1c=(%d,%d) hotFirePixels=%d\n",
                                    px, py, dir, d1cMapX, d1cMapY, hotPixels);
+                            printf("      hotHistogram c8=%d c9=%d c10=%d c11=%d\n",
+                                   hist[8], hist[9], hist[10], hist[11]);
                             ++normalHudFireBlobLeaks;
                         }
                     }

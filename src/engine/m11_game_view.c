@@ -31882,6 +31882,39 @@ int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
     return 1;
 }
 
+int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             int* outElementType,
+                                             int* outWallOrnamentOrdinal,
+                                             int* outChampionPortraitOrdinal,
+                                             int* outInscriptionTextIndex,
+                                             int* outFloorOrnamentOrdinal) {
+    M11_ViewportCell cell;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outWallOrnamentOrdinal) {
+        *outWallOrnamentOrdinal = cell.wallOrnamentOrdinal;
+    }
+    if (outChampionPortraitOrdinal) {
+        *outChampionPortraitOrdinal = cell.championPortraitOrdinal;
+    }
+    if (outInscriptionTextIndex) {
+        *outInscriptionTextIndex = cell.inscriptionTextIndex;
+    }
+    if (outFloorOrnamentOrdinal) {
+        *outFloorOrnamentOrdinal = cell.floorOrnamentOrdinal;
+    }
+    return 1;
+}
+
 int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     const M11_GameViewState* state,
     int* outObjectSpriteCount,
