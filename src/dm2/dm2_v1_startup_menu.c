@@ -430,6 +430,31 @@ int dm2_v1_startup_menu_snapshot_handle_firestaff_input(
         out_action);
 }
 
+int dm2_v1_startup_menu_handle_firestaff_input_from_facts(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root,
+    const char *fallback_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    int menu_input,
+    DM2_V1_StartupAction *out_action)
+{
+    if (!dm2_v1_startup_menu_snapshot_from_facts(snapshot,
+                                                save_root,
+                                                fallback_save_root,
+                                                resume_available,
+                                                slot_mask,
+                                                selected_row)) {
+        dm2_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    return dm2_v1_startup_menu_snapshot_handle_firestaff_input(
+        snapshot,
+        menu_input,
+        out_action);
+}
+
 int dm2_v1_startup_menu_snapshot_handle_hit(
     DM2_V1_StartupMenuSnapshot *snapshot,
     const DM2_V1_StartupHit *hit,
