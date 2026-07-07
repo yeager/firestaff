@@ -686,6 +686,48 @@ int main(void)
                &action) &&
                menu.selected_row == 1,
            "startup menu Down clamps at last row");
+    {
+        Nexus_V1_StartupMenuSnapshot snapshot;
+        Nexus_V1_StartupSaveRenderRow snapshot_rows[4];
+        int snapshot_row_count;
+
+        memset(&snapshot, 0, sizeof(snapshot));
+        snprintf(snapshot.save_dir, sizeof(snapshot.save_dir), "%s", save_dir);
+        snapshot.slot_mask = menu.slot_mask;
+        snapshot.row_count = menu.row_count;
+        snapshot.selected_row = 0;
+        expect(nexus_v1_startup_menu_snapshot_handle_input(
+                   &snapshot,
+                   NEXUS_V1_STARTUP_INPUT_DOWN,
+                   &action) &&
+                   snapshot.selected_row == 1 &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_NONE,
+               "startup snapshot input owns save navigation");
+        snapshot_row_count =
+            nexus_v1_startup_menu_snapshot_build_save_render_rows(
+                &snapshot,
+                snapshot_rows,
+                (int)(sizeof(snapshot_rows) / sizeof(snapshot_rows[0])));
+        expect(snapshot_row_count == 2 &&
+                   snapshot_rows[0].kind == NEXUS_V1_STARTUP_ROW_SLOT &&
+                   snapshot_rows[0].slot == 3 &&
+                   snapshot_rows[0].selected == 0 &&
+                   snapshot_rows[1].kind == NEXUS_V1_STARTUP_ROW_NEW_GAME &&
+                   snapshot_rows[1].selected == 1,
+               "startup snapshot render rows preserve slot and selection");
+        memset(&hit, 0, sizeof(hit));
+        hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_ROW;
+        hit.row = 0;
+        expect(nexus_v1_startup_menu_snapshot_handle_hit(
+                   &snapshot,
+                   &hit,
+                   &action) &&
+                   snapshot.selected_row == 0 &&
+                   action.kind == NEXUS_V1_STARTUP_ACTION_LOAD_SLOT &&
+                   action.slot == 3 &&
+                   strstr(action.path, "nexus_save_03.dat") != NULL,
+               "startup snapshot pointer hit owns save activation");
+    }
     memset(&hit, 0, sizeof(hit));
     hit.kind = NEXUS_V1_STARTUP_HIT_SAVE_PANEL;
     hit.row = -1;

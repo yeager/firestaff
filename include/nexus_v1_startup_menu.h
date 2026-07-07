@@ -106,6 +106,13 @@ typedef struct {
     Nexus_V1_SaveSlot slots[NEXUS_SAVE_MAX_SLOTS];
 } Nexus_V1_StartupMenu;
 
+typedef struct {
+    char save_dir[512];
+    unsigned int slot_mask;
+    int row_count;
+    int selected_row;
+} Nexus_V1_StartupMenuSnapshot;
+
 enum {
     NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96,
     NEXUS_V1_STARTUP_CHROME_LABEL_CAPACITY = 96,
@@ -200,6 +207,21 @@ int nexus_v1_startup_menu_handle_input(Nexus_V1_StartupMenu *menu,
 int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
                                      const Nexus_V1_StartupHit *hit,
                                      Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_menu_snapshot_refresh(
+    Nexus_V1_StartupMenuSnapshot *snapshot);
+int nexus_v1_startup_menu_snapshot_row_at(
+    const Nexus_V1_StartupMenuSnapshot *snapshot,
+    int row,
+    Nexus_V1_StartupRowKind *out_kind,
+    int *out_slot);
+int nexus_v1_startup_menu_snapshot_handle_input(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    Nexus_V1_StartupInput input,
+    Nexus_V1_StartupAction *out_action);
+int nexus_v1_startup_menu_snapshot_handle_hit(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const Nexus_V1_StartupHit *hit,
+    Nexus_V1_StartupAction *out_action);
 int nexus_v1_startup_execute_title_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupTitleExecution *out_execution);
@@ -211,6 +233,10 @@ int nexus_v1_startup_execute_champion_action(
     Nexus_V1_StartupChampionExecution *out_execution);
 int nexus_v1_startup_menu_build_save_render_rows(
     const Nexus_V1_StartupMenu *menu,
+    Nexus_V1_StartupSaveRenderRow *rows,
+    int max_rows);
+int nexus_v1_startup_menu_snapshot_build_save_render_rows(
+    const Nexus_V1_StartupMenuSnapshot *snapshot,
     Nexus_V1_StartupSaveRenderRow *rows,
     int max_rows);
 int nexus_v1_startup_menu_build_save_chrome_render(

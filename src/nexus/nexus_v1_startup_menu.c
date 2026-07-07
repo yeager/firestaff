@@ -40,6 +40,37 @@ static void nexus_v1_startup_action_clear(Nexus_V1_StartupAction *action)
     action->slot = -1;
 }
 
+static void nexus_v1_startup_menu_from_snapshot(
+    const Nexus_V1_StartupMenuSnapshot *snapshot,
+    Nexus_V1_StartupMenu *menu)
+{
+    if (!snapshot || !menu) {
+        return;
+    }
+    nexus_v1_startup_menu_init(menu,
+                               snapshot->save_dir[0]
+                                   ? snapshot->save_dir
+                                   : NULL);
+    menu->selected_row = snapshot->selected_row;
+    (void)nexus_v1_startup_menu_refresh(menu, snapshot->slot_mask);
+}
+
+static void nexus_v1_startup_menu_to_snapshot(
+    const Nexus_V1_StartupMenu *menu,
+    Nexus_V1_StartupMenuSnapshot *snapshot)
+{
+    if (!menu || !snapshot) {
+        return;
+    }
+    snprintf(snapshot->save_dir,
+             sizeof(snapshot->save_dir),
+             "%s",
+             menu->save_dir);
+    snapshot->slot_mask = menu->slot_mask;
+    snapshot->row_count = menu->row_count;
+    snapshot->selected_row = menu->selected_row;
+}
+
 static void nexus_v1_startup_save_execution_clear(
     Nexus_V1_StartupSaveExecution *execution)
 {
@@ -395,6 +426,70 @@ int nexus_v1_startup_menu_handle_hit(Nexus_V1_StartupMenu *menu,
     return nexus_v1_startup_menu_activate_selected(menu, out_action);
 }
 
+int nexus_v1_startup_menu_snapshot_refresh(
+    Nexus_V1_StartupMenuSnapshot *snapshot)
+{
+    Nexus_V1_StartupMenu menu;
+
+    if (!snapshot) {
+        return 0;
+    }
+    nexus_v1_startup_menu_from_snapshot(snapshot, &menu);
+    nexus_v1_startup_menu_to_snapshot(&menu, snapshot);
+    return 1;
+}
+
+int nexus_v1_startup_menu_snapshot_row_at(
+    const Nexus_V1_StartupMenuSnapshot *snapshot,
+    int row,
+    Nexus_V1_StartupRowKind *out_kind,
+    int *out_slot)
+{
+    Nexus_V1_StartupMenu menu;
+
+    if (!snapshot) {
+        return 0;
+    }
+    nexus_v1_startup_menu_from_snapshot(snapshot, &menu);
+    return nexus_v1_startup_menu_row_at(&menu, row, out_kind, out_slot);
+}
+
+int nexus_v1_startup_menu_snapshot_handle_input(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    Nexus_V1_StartupInput input,
+    Nexus_V1_StartupAction *out_action)
+{
+    Nexus_V1_StartupMenu menu;
+    int handled;
+
+    if (!snapshot) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    nexus_v1_startup_menu_from_snapshot(snapshot, &menu);
+    handled = nexus_v1_startup_menu_handle_input(&menu, input, out_action);
+    nexus_v1_startup_menu_to_snapshot(&menu, snapshot);
+    return handled;
+}
+
+int nexus_v1_startup_menu_snapshot_handle_hit(
+    Nexus_V1_StartupMenuSnapshot *snapshot,
+    const Nexus_V1_StartupHit *hit,
+    Nexus_V1_StartupAction *out_action)
+{
+    Nexus_V1_StartupMenu menu;
+    int handled;
+
+    if (!snapshot) {
+        nexus_v1_startup_action_clear(out_action);
+        return 0;
+    }
+    nexus_v1_startup_menu_from_snapshot(snapshot, &menu);
+    handled = nexus_v1_startup_menu_handle_hit(&menu, hit, out_action);
+    nexus_v1_startup_menu_to_snapshot(&menu, snapshot);
+    return handled;
+}
+
 int nexus_v1_startup_execute_save_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupSaveExecution *out_execution)
@@ -590,6 +685,22 @@ int nexus_v1_startup_menu_build_save_render_rows(
         ++count;
     }
     return count;
+}
+
+int nexus_v1_startup_menu_snapshot_build_save_render_rows(
+    const Nexus_V1_StartupMenuSnapshot *snapshot,
+    Nexus_V1_StartupSaveRenderRow *rows,
+    int max_rows)
+{
+    Nexus_V1_StartupMenu menu;
+
+    if (!snapshot) {
+        return 0;
+    }
+    nexus_v1_startup_menu_from_snapshot(snapshot, &menu);
+    return nexus_v1_startup_menu_build_save_render_rows(&menu,
+                                                        rows,
+                                                        max_rows);
 }
 
 static void nexus_v1_startup_chrome_clear(
