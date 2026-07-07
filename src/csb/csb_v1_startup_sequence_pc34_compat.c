@@ -1503,6 +1503,7 @@ int csb_v1_startup_build_render_plan_from_request_pc34(
     const CSB_V1_StartupRenderPlanRequest_PC34 *request,
     CSB_V1_StartupRenderPlan_PC34 *out_plan)
 {
+    CSB_V1_StartupCommandStateRequest_PC34 command_request;
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupRenderState_PC34 render_state;
 
@@ -1513,19 +1514,23 @@ int csb_v1_startup_build_render_plan_from_request_pc34(
         return csb_v1_startup_build_render_plan_pc34(NULL, out_plan);
     }
 
-    memset(&command_state, 0, sizeof(command_state));
-    command_state.title_active = request->title_active;
-    command_state.title_frame = request->title_frame;
-    command_state.title_source_step = request->title_source_step;
-    command_state.entrance_active = request->entrance_active;
-    command_state.entrance_source_step = request->entrance_source_step;
-    command_state.entrance_dismissed = request->entrance_dismissed;
-    command_state.credits_active = request->credits_active;
-    command_state.credits_remaining_ticks = request->credits_remaining_ticks;
-    command_state.opening_active = request->opening_active;
-    command_state.opening_delay_ticks = request->opening_delay_ticks;
-    command_state.opening_step = request->opening_step;
-    command_state.pending_command = request->pending_command;
+    memset(&command_request, 0, sizeof(command_request));
+    command_request.title_active = request->title_active;
+    command_request.title_frame = request->title_frame;
+    command_request.title_source_step = request->title_source_step;
+    command_request.entrance_active = request->entrance_active;
+    command_request.entrance_source_step = request->entrance_source_step;
+    command_request.entrance_dismissed = request->entrance_dismissed;
+    command_request.credits_active = request->credits_active;
+    command_request.credits_remaining_ticks = request->credits_remaining_ticks;
+    command_request.opening_active = request->opening_active;
+    command_request.opening_delay_ticks = request->opening_delay_ticks;
+    command_request.opening_step = request->opening_step;
+    command_request.pending_command = request->pending_command;
+    if (!csb_v1_startup_command_state_from_request_pc34(&command_request,
+                                                        &command_state)) {
+        return 0;
+    }
 
     if (!csb_v1_startup_render_state_from_command_state_pc34(
             &command_state,
@@ -1539,6 +1544,32 @@ int csb_v1_startup_build_render_plan_from_request_pc34(
         return 0;
     }
     return csb_v1_startup_build_render_plan_pc34(&render_state, out_plan);
+}
+
+int csb_v1_startup_command_state_from_request_pc34(
+    const CSB_V1_StartupCommandStateRequest_PC34 *request,
+    CSB_V1_StartupCommandState_PC34 *out_state)
+{
+    if (!out_state) {
+        return 0;
+    }
+    memset(out_state, 0, sizeof(*out_state));
+    if (!request) {
+        return 1;
+    }
+    out_state->title_active = request->title_active ? 1 : 0;
+    out_state->title_frame = request->title_frame;
+    out_state->title_source_step = request->title_source_step;
+    out_state->entrance_active = request->entrance_active ? 1 : 0;
+    out_state->entrance_source_step = request->entrance_source_step;
+    out_state->entrance_dismissed = request->entrance_dismissed ? 1 : 0;
+    out_state->credits_active = request->credits_active ? 1 : 0;
+    out_state->credits_remaining_ticks = request->credits_remaining_ticks;
+    out_state->opening_active = request->opening_active ? 1 : 0;
+    out_state->opening_delay_ticks = request->opening_delay_ticks;
+    out_state->opening_step = request->opening_step;
+    out_state->pending_command = request->pending_command;
+    return 1;
 }
 
 int csb_v1_startup_build_render_plan_pc34(

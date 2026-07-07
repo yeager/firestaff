@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 CSB startup command-state request ownership: `csb_v1_startup_sequence_pc34_compat` now builds startup command state from a CSB-owned request contract. M11 supplies raw title/entrance/credits/opening facts and no longer normalizes the CSB command-state fields locally. Verification: startup entrance pointer contract passed 118/118, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 RetroAchievements start-menu hit-test fix: the modern settings panel now routes visible `RETROACHIEVEMENTS`, `RA HARDCORE`, and `SESSION TIMER` rows to the correct persisted settings instead of export/import rows. Verification: settings hit-test passed 25/25, RetroAchievements unit test passed, targeted build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron startup snapshot request ownership: `theron_v1_startup_flow` now builds `Theron_StartupFlowSnapshot` from a Theron-owned request contract. M11 supplies raw phase/dungeon/mirror facts and no longer clamps companion count or copies mirror order locally before flow rebuild. Verification: startup-flow probe passed 453/453, save-resume probe passed 66/66, M11 launcher handoff passed 26/26, Phase A passed 24/24, and targeted build passed.
