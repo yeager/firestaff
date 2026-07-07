@@ -131,6 +131,239 @@ int dm1_creature_transparent_color(int creatureType) {
     return s_aspects[creatureType].coordinateSet_transparentColor & 0x0F;
 }
 
+static int dm1_creature_repl_color9_index(const DM1_CreatureAspect *aspect) {
+    return aspect ? (int)(aspect->replacementColorSetIndices & 0x0F) : 0;
+}
+
+static int dm1_creature_repl_color10_index(const DM1_CreatureAspect *aspect) {
+    return aspect ? (int)((aspect->replacementColorSetIndices >> 4) & 0x0F) : 0;
+}
+
+static int dm1_creature_native_bitmap_count_from_gi(unsigned int gi) {
+    int count = 1;
+    int additional = (int)(gi & DM1_GI_MASK_ADDITIONAL);
+    int hasSpecialD2 = ((gi & DM1_GI_MASK_SPECIAL_D2_FRONT) != 0) &&
+                       ((gi & DM1_GI_MASK_D2_FRONT_IS_FLIPPED) == 0);
+    if (gi & DM1_GI_MASK_SIDE) count += 1;
+    if (gi & DM1_GI_MASK_BACK) count += 1;
+    if (hasSpecialD2) count += 1;
+    if (gi & DM1_GI_MASK_ATTACK) count += 1;
+    if (additional && !(gi & DM1_GI_MASK_FLIP_NON_ATTACK)) {
+        count += additional;
+    }
+    return count;
+}
+
+static int dm1_creature_derived_bitmap_count_from_gi(unsigned int gi) {
+    int count = 2;
+    int additional = (int)(gi & DM1_GI_MASK_ADDITIONAL);
+    if (gi & DM1_GI_MASK_SIDE) count += 2;
+    if (gi & DM1_GI_MASK_BACK) count += 2;
+    if (gi & DM1_GI_MASK_ATTACK) count += 2;
+    count += additional * 3;
+    return count;
+}
+
+unsigned int dm1_creature_sprite_for_depth(int creatureType, int depthIndex) {
+    if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
+    if (depthIndex <= 0) {
+        return dm1_creature_native_bitmap_index(creatureType,
+                                                DM1_CREATURE_POSE_FRONT);
+    }
+    return (unsigned int)s_aspects[creatureType].firstDerivedBitmapIndex +
+           (depthIndex >= 2 ? 0u : 1u);
+}
+
+static int dm1_creature_m11_relative_facing(int creatureDir, int partyDir) {
+    if (creatureDir < 0 || partyDir < 0) return 2;
+    return (creatureDir - partyDir) & 3;
+}
+
+static int dm1_creature_m11_pose_for_view(int relFacing, int attacking) {
+    if (attacking && relFacing == 2) return DM1_CREATURE_POSE_ATTACK;
+    switch (relFacing & 3) {
+        case 0: return DM1_CREATURE_POSE_BACK;
+        case 1:
+        case 3: return DM1_CREATURE_POSE_SIDE;
+        default: return DM1_CREATURE_POSE_FRONT;
+    }
+}
+
+static int dm1_creature_m11_pose_mirror_with_info(int creatureType,
+                                                  int relFacing,
+                                                  int pose,
+                                                  int attacking) {
+    unsigned int gi;
+    if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) {
+        return pose == DM1_CREATURE_POSE_SIDE && ((relFacing & 3) == 1);
+    }
+    gi = (unsigned int)s_aspects[creatureType].graphicInfo;
+    if (pose == DM1_CREATURE_POSE_SIDE) {
+        if (gi & DM1_GI_MASK_SIDE) return (relFacing & 3) == 1;
+        if (gi & DM1_GI_MASK_FLIP_NON_ATTACK) return (relFacing & 3) == 1;
+        return 0;
+    }
+    if (pose == DM1_CREATURE_POSE_BACK) return 0;
+    if (pose == DM1_CREATURE_POSE_ATTACK) {
+        if (gi & DM1_GI_MASK_ATTACK) {
+            if ((gi & DM1_GI_MASK_FLIP_ATTACK) &&
+                !(gi & DM1_GI_MASK_FLIP_DURING_ATTACK)) {
+                return (relFacing & 3) == 1;
+            }
+            return 0;
+        }
+        if (attacking && (gi & DM1_GI_MASK_FLIP_ATTACK)) {
+            return (relFacing & 3) == 1;
+        }
+    }
+    return 0;
+}
+
+static unsigned int dm1_creature_sprite_for_pose(int creatureType,
+                                                 int depthIndex,
+                                                 int pose) {
+    static const unsigned char k_native_pose_offset[4] = {0, 1, 2, 3};
+    static const unsigned char k_derived_pose_offset[4][2] = {
+        {0, 1}, {2, 3}, {4, 5}, {6, 7}
+    };
+    const DM1_CreatureAspect *aspect;
+    unsigned int gi;
+    int dIdx;
+
+    if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
+    if (pose < DM1_CREATURE_POSE_FRONT || pose > DM1_CREATURE_POSE_ATTACK) {
+        pose = DM1_CREATURE_POSE_FRONT;
+    }
+    aspect = &s_aspects[creatureType];
+    gi = (unsigned int)aspect->graphicInfo;
+    if (pose == DM1_CREATURE_POSE_SIDE && !(gi & DM1_GI_MASK_SIDE)) {
+        pose = DM1_CREATURE_POSE_FRONT;
+    } else if (pose == DM1_CREATURE_POSE_BACK && !(gi & DM1_GI_MASK_BACK)) {
+        pose = DM1_CREATURE_POSE_FRONT;
+    } else if (pose == DM1_CREATURE_POSE_ATTACK && !(gi & DM1_GI_MASK_ATTACK)) {
+        pose = DM1_CREATURE_POSE_FRONT;
+    }
+    if (depthIndex <= 0) {
+        return (unsigned int)(DM1_GRAPHIC_FIRST_CREATURE +
+                              aspect->firstNativeBitmapRelativeIndex +
+                              k_native_pose_offset[pose]);
+    }
+    dIdx = depthIndex >= 2 ? 0 : 1;
+    return (unsigned int)aspect->firstDerivedBitmapIndex +
+           (unsigned int)k_derived_pose_offset[pose][dIdx];
+}
+
+unsigned int dm1_creature_sprite_for_view(int creatureType,
+                                          int depthIndex,
+                                          int creatureDir,
+                                          int partyDir,
+                                          int attacking,
+                                          int *outMirror) {
+    int relFacing = dm1_creature_m11_relative_facing(creatureDir, partyDir);
+    int pose = dm1_creature_m11_pose_for_view(relFacing, attacking);
+    if (outMirror) {
+        *outMirror = dm1_creature_m11_pose_mirror_with_info(creatureType,
+                                                            relFacing,
+                                                            pose,
+                                                            attacking);
+    }
+    return dm1_creature_sprite_for_pose(creatureType, depthIndex, pose);
+}
+
+unsigned int dm1_creature_graphic_info(int creatureType) {
+    if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0u;
+    return (unsigned int)s_aspects[creatureType].graphicInfo;
+}
+
+int dm1_creature_additional(int creatureType) {
+    return (int)(dm1_creature_graphic_info(creatureType) & DM1_GI_MASK_ADDITIONAL);
+}
+
+int dm1_creature_has_special_d2_front(int creatureType) {
+    return (dm1_creature_graphic_info(creatureType) &
+            DM1_GI_MASK_SPECIAL_D2_FRONT) ? 1 : 0;
+}
+
+int dm1_creature_has_d2_front_is_flipped_front(int creatureType) {
+    return (dm1_creature_graphic_info(creatureType) &
+            DM1_GI_MASK_D2_FRONT_IS_FLIPPED) ? 1 : 0;
+}
+
+int dm1_creature_has_flip_during_attack(int creatureType) {
+    return (dm1_creature_graphic_info(creatureType) &
+            DM1_GI_MASK_FLIP_DURING_ATTACK) ? 1 : 0;
+}
+
+int dm1_creature_native_bitmap_count(int creatureType) {
+    if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
+    return dm1_creature_native_bitmap_count_from_gi(
+        (unsigned int)s_aspects[creatureType].graphicInfo);
+}
+
+int dm1_creature_derived_bitmap_count(int creatureType) {
+    if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
+    return dm1_creature_derived_bitmap_count_from_gi(
+        (unsigned int)s_aspects[creatureType].graphicInfo);
+}
+
+int dm1_creature_max_horizontal_offset_for_type(int creatureType) {
+    return dm1_creature_max_horizontal_offset(
+        (uint16_t)dm1_creature_graphic_info(creatureType));
+}
+
+int dm1_creature_max_vertical_offset_for_type(int creatureType) {
+    return dm1_creature_max_vertical_offset(
+        (uint16_t)dm1_creature_graphic_info(creatureType));
+}
+
+int dm1_creature_has_side_bitmap(int creatureType) {
+    return (dm1_creature_graphic_info(creatureType) & DM1_GI_MASK_SIDE) ? 1 : 0;
+}
+
+int dm1_creature_has_back_bitmap(int creatureType) {
+    return (dm1_creature_graphic_info(creatureType) & DM1_GI_MASK_BACK) ? 1 : 0;
+}
+
+int dm1_creature_has_attack_bitmap(int creatureType) {
+    return (dm1_creature_graphic_info(creatureType) & DM1_GI_MASK_ATTACK) ? 1 : 0;
+}
+
+int dm1_creature_has_flip_non_attack(int creatureType) {
+    return (dm1_creature_graphic_info(creatureType) &
+            DM1_GI_MASK_FLIP_NON_ATTACK) ? 1 : 0;
+}
+
+int dm1_creature_has_flip_attack(int creatureType) {
+    return (dm1_creature_graphic_info(creatureType) &
+            DM1_GI_MASK_FLIP_ATTACK) ? 1 : 0;
+}
+
+int dm1_creature_replacement_colors(int creatureType,
+                                    int *outReplDst9,
+                                    int *outReplDst10) {
+    static const unsigned char k_repl_color9[13] = {
+        0, 4, 2, 1, 4, 5, 3, 6, 5, 6, 4, 1, 12
+    };
+    static const unsigned char k_repl_color10[13] = {
+        0, 14, 14, 12, 14, 15, 9, 14, 13, 14, 12, 13, 14
+    };
+    int setIdx9;
+    int setIdx10;
+    if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
+    setIdx9 = dm1_creature_repl_color9_index(&s_aspects[creatureType]);
+    setIdx10 = dm1_creature_repl_color10_index(&s_aspects[creatureType]);
+    if (setIdx9 == 0 && setIdx10 == 0) return 0;
+    if (outReplDst9) {
+        *outReplDst9 = (setIdx9 > 0 && setIdx9 < 13)
+                     ? (int)k_repl_color9[setIdx9] : 9;
+    }
+    if (outReplDst10) {
+        *outReplDst10 = (setIdx10 > 0 && setIdx10 < 13)
+                      ? (int)k_repl_color10[setIdx10] : 10;
+    }
+    return 1;
+}
+
 /*
  * Aspect frame cycling — ReDMCSB GROUP.C F0179 lines 222-305.
  *
@@ -633,4 +866,3 @@ const char* m11_creature_type_name(int creatureType) {
  *   ANIM.C:927 F9017_C
  *   ANIM.C:1304 F9073_D
  * ══════════════════════════════════════════════════════════════════════ */
-
