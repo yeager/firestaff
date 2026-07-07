@@ -17285,117 +17285,50 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                       int flipFlags,
                                       int sourceZoneRow) {
     const M11_AssetSlot* slot;
-    int drawW, drawH, drawX, drawY;
-    int scale;
+    DM1_ProjectileSpriteBlitPlan plan;
     if (!state || !state->assetsAvailable || gfxIndex < 454 ||
         gfxIndex >= 486) return 0;
     (void)relativeDir;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
-    scale = dm1_v1_projectile_scale_units(depthIndex, relativeCell);
-    drawW = (int)slot->width * scale / 32;
-    drawH = (int)slot->height * scale / 32;
-    if (drawW < 3) drawW = 3;
-    if (drawH < 3) drawH = 3;
-    if (drawW > w) drawW = w;
-    if (drawH > h) drawH = h;
-    /* DM1 sub-cell projectile positioning.
-     * In the original, each projectile is drawn at a specific quadrant
-     * of the viewport cell face.  The relative cell (0-3) maps to:
-     *   0 = back-left:   upper-left quadrant
-     *   1 = back-right:  upper-right quadrant
-     *   2 = front-left:  lower-left quadrant
-     *   3 = front-right: lower-right quadrant
-     * We offset the sprite center toward the appropriate quadrant.
-     * At greater depth the offset is reduced proportionally. */
-    if (relativeCell >= 0 && relativeCell <= 3) {
-        int zoneX = 0;
-        int zoneY = 0;
-        int scaleIndex = dm1_viewport_3d_object_source_scale_index(depthIndex,
-                                                                   relativeCell);
-        int qx = w / 4;  /* quarter-width offset */
-        int qy = h / 4;  /* quarter-height offset */
-        if (x >= M11_VIEWPORT_X && y >= M11_VIEWPORT_Y &&
-            ((sourceZoneRow >= 0 &&
-              dm1_viewport_3d_c2900_projectile_raw_zone_point(sourceZoneRow, relativeCell, &zoneX, &zoneY)) ||
-             (sourceZoneRow < 0 &&
-              dm1_viewport_3d_c2900_projectile_zone_point(scaleIndex, relativeCell, &zoneX, &zoneY)))) {
-            drawX = M11_VIEWPORT_X + zoneX - drawW / 2;
-            drawY = M11_VIEWPORT_Y + zoneY - drawH / 2;
-        } else {
-            /* Reduce offset at depth to match perspective convergence */
-            if (depthIndex >= 1) { qx = qx * 2 / 3; qy = qy * 2 / 3; }
-            if (depthIndex >= 2) { qx = qx / 2;     qy = qy / 2; }
-            switch (relativeCell) {
-                case 0: /* back-left: upper-left */
-                    drawX = x + (w / 2 - qx) - drawW / 2;
-                    drawY = y + (h / 2 - qy) - drawH / 2;
-                    break;
-                case 1: /* back-right: upper-right */
-                    drawX = x + (w / 2 + qx) - drawW / 2;
-                    drawY = y + (h / 2 - qy) - drawH / 2;
-                    break;
-                case 2: /* front-left: lower-left */
-                    drawX = x + (w / 2 - qx) - drawW / 2;
-                    drawY = y + (h / 2 + qy) - drawH / 2;
-                    break;
-                default: /* front-right: lower-right */
-                    drawX = x + (w / 2 + qx) - drawW / 2;
-                    drawY = y + (h / 2 + qy) - drawH / 2;
-                    break;
-            }
-        }
-        /* Preserve source-row viewport placement when C2900 is available. */
-        if (sourceZoneRow >= 0) {
-            /* ReDMCSB F0115 restores the view square/cell before the
-             * projectile pass, then draws projectiles from the source
-             * coordinate set into G0296_puc_Bitmap_Viewport.  It does not
-             * clamp D1/D2/D3 side-lane projectiles back into Firestaff's
-             * synthetic pane rectangles.  Preserve C2900 row placement here
-             * and only keep a tiny visible overlap with the real viewport so
-             * off-edge source coordinates can clip naturally.
-             * Source audit: DUNVIEW.C:4828-4835 chooses the view cell,
-             * DUNVIEW.C:5635-5656 restores the projectile view cell, and
-             * DUNVIEW.C:5176-5193 is the same viewport blit path used after
-             * T0115015_DrawProjectileAsObject. */
-            int minX = M11_VIEWPORT_X - drawW + 1;
-            int minY = M11_VIEWPORT_Y - drawH + 1;
-            int maxX = M11_VIEWPORT_X + M11_VIEWPORT_W - 1;
-            int maxY = M11_VIEWPORT_Y + M11_VIEWPORT_H - 1;
-            if (drawX < minX) drawX = minX;
-            if (drawY < minY) drawY = minY;
-            if (drawX > maxX) drawX = maxX;
-            if (drawY > maxY) drawY = maxY;
-        } else {
-            if (drawX < x) drawX = x;
-            if (drawY < y) drawY = y;
-            if (drawX + drawW > x + w) drawX = x + w - drawW;
-            if (drawY + drawH > y + h) drawY = y + h - drawH;
-        }
-    } else {
-        drawX = x + (w - drawW) / 2;
-        drawY = y + (h - drawH) / 2;
+    if (!dm1_v1_projectile_sprite_blit_plan(
+            &plan,
+            gfxIndex,
+            depthIndex,
+            relativeCell,
+            flipFlags,
+            sourceZoneRow,
+            M11_VIEWPORT_X,
+            M11_VIEWPORT_Y,
+            M11_VIEWPORT_W,
+            M11_VIEWPORT_H,
+            x,
+            y,
+            w,
+            h,
+            (int)slot->width,
+            (int)slot->height)) {
+        return 0;
     }
-    /* DM1 draws object/projectile bitmaps through F0791 with
-     * C10_COLOR_FLESH as the transparent key. Fireball native graphics
-     * have palette index 10 in their border, so keying on black leaves a
-     * visible square backing. */
-    if (flipFlags & 0x02) {
+    if (plan.flip_flags & 0x02) {
         m11_blit_scaled_flip(slot, framebuffer, framebufferWidth, framebufferHeight,
-                             drawX, drawY, drawW, drawH,
-                             M11_COLOR_MAGENTA,
-                             (flipFlags & 0x01) ? 1 : 0,
+                             plan.draw_x, plan.draw_y,
+                             plan.draw_w, plan.draw_h,
+                             plan.transparent_color,
+                             (plan.flip_flags & 0x01) ? 1 : 0,
                              1);
-    } else if (flipFlags & 0x01) {
+    } else if (plan.flip_flags & 0x01) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, framebufferWidth,
                                          framebufferHeight,
-                                         drawX, drawY, drawW, drawH,
-                                         M11_COLOR_MAGENTA);
+                                         plan.draw_x, plan.draw_y,
+                                         plan.draw_w, plan.draw_h,
+                                         plan.transparent_color);
     } else {
         M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
                                    framebufferHeight,
-                                   drawX, drawY, drawW, drawH,
-                                   M11_COLOR_MAGENTA);
+                                   plan.draw_x, plan.draw_y,
+                                   plan.draw_w, plan.draw_h,
+                                   plan.transparent_color);
     }
     return 1;
 }
