@@ -65,9 +65,11 @@
 #define M12_HIT_SETTINGS_ROW_DATA_STATUS        16
 #define M12_HIT_SETTINGS_ROW_RETROACHIEVEMENTS  30
 #define M12_HIT_SETTINGS_ROW_RA_HARDCORE        31
-#define M12_HIT_SETTINGS_ROW_SESSION_TIMER      33
-#define M12_HIT_SETTINGS_ROW_EXPORT             42
-#define M12_HIT_SETTINGS_ROW_IMPORT             43
+#define M12_HIT_SETTINGS_ROW_RA_USERNAME        32
+#define M12_HIT_SETTINGS_ROW_RA_TOKEN           33
+#define M12_HIT_SETTINGS_ROW_SESSION_TIMER      35
+#define M12_HIT_SETTINGS_ROW_EXPORT             44
+#define M12_HIT_SETTINGS_ROW_IMPORT             45
 
 static const int m12_hit_visible_settings_rows[] = {
     M12_HIT_SETTINGS_ROW_LANGUAGE,
@@ -78,6 +80,8 @@ static const int m12_hit_visible_settings_rows[] = {
     M12_HIT_SETTINGS_ROW_DATA_STATUS,
     M12_HIT_SETTINGS_ROW_RETROACHIEVEMENTS,
     M12_HIT_SETTINGS_ROW_RA_HARDCORE,
+    M12_HIT_SETTINGS_ROW_RA_USERNAME,
+    M12_HIT_SETTINGS_ROW_RA_TOKEN,
     M12_HIT_SETTINGS_ROW_SESSION_TIMER
 };
 #define M12_HIT_SETTINGS_VISIBLE_ROW_COUNT \
@@ -161,9 +165,12 @@ static int m12_hit_main_card_rect(int index, int count, int* rx, int* ry, int* r
 }
 
 static int m12_hit_settings_row_rect(int visibleRow, int* rx, int* ry, int* rw, int* rh) {
+    static const int yOffsets[] = {
+        0, 70, 140, 210, 280, 350, 392, 448, 504, 560, 616
+    };
     if (visibleRow < 0 || visibleRow >= M12_HIT_SETTINGS_VISIBLE_ROW_COUNT) return 0;
     *rx = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT;
-    *ry = M12_HIT_SETTINGS_ROW_Y0 + visibleRow * M12_HIT_SETTINGS_ROW_STEP;
+    *ry = M12_HIT_SETTINGS_ROW_Y0 + yOffsets[visibleRow];
     *rw = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
     *rh = M12_HIT_ROW_HEIGHT;
     return 1;

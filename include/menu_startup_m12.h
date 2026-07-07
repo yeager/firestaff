@@ -152,6 +152,8 @@ typedef struct {
     int streamerMode;
     int retroAchievementsEnabled;
     int retroAchievementsHardcore;
+    char retroAchievementsUsername[64];
+    char retroAchievementsToken[128];
     int sessionTimerIndex;
     int windowWidth;
     int windowHeight;

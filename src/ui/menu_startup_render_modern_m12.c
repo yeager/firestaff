@@ -1521,7 +1521,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int panelX = 96;
     int panelY = 260;
     int panelW = c->w - 2 * panelX;
-    int panelH = 640;
+    int panelH = 720;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
@@ -1561,14 +1561,20 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 15);
     draw_setting_row(c, rowX, rowY + 350, rowW, "ORIGINAL DATA", M12_StartupMenu_GetDataStatusValue(state),
                      state->settingsSelectedIndex == 16);
-    draw_setting_row(c, rowX, rowY + 420, rowW, "RETROACHIEVEMENTS",
+    draw_setting_row(c, rowX, rowY + 392, rowW, "RETROACHIEVEMENTS",
                      state->settings.retroAchievementsEnabled ? "ON" : "OFF",
                      state->settingsSelectedIndex == 30);
-    draw_setting_row(c, rowX, rowY + 490, rowW, "RA HARDCORE",
+    draw_setting_row(c, rowX, rowY + 448, rowW, "RA HARDCORE",
                      state->settings.retroAchievementsHardcore ? "ON" : "OFF",
                      state->settingsSelectedIndex == 31);
-    draw_setting_row(c, rowX, rowY + 560, rowW, "SESSION TIMER", sessionTimer,
+    draw_setting_row(c, rowX, rowY + 504, rowW, "RA USER",
+                     state->settings.retroAchievementsUsername[0] ? state->settings.retroAchievementsUsername : "NOT SET",
+                     state->settingsSelectedIndex == 32);
+    draw_setting_row(c, rowX, rowY + 560, rowW, "RA API TOKEN",
+                     state->settings.retroAchievementsToken[0] ? "SET" : "NOT SET",
                      state->settingsSelectedIndex == 33);
+    draw_setting_row(c, rowX, rowY + 616, rowW, "SESSION TIMER", sessionTimer,
+                     state->settingsSelectedIndex == 35);
     if (state->languagePopupOpen) {
         draw_language_popup(c, state, rowX + rowW - 632, rowY + 56);
     }

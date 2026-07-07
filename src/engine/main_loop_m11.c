@@ -3689,10 +3689,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         firestaff_ra_set_credentials(&raConfig,
                                      o->retroAchievementsUser
                                          ? o->retroAchievementsUser
-                                         : getenv("FIRESTAFF_RA_USER"),
+                                         : (menuState.settings.retroAchievementsUsername[0]
+                                                ? menuState.settings.retroAchievementsUsername
+                                                : getenv("FIRESTAFF_RA_USER")),
                                      o->retroAchievementsToken
                                          ? o->retroAchievementsToken
-                                         : getenv("FIRESTAFF_RA_TOKEN"));
+                                         : (menuState.settings.retroAchievementsToken[0]
+                                                ? menuState.settings.retroAchievementsToken
+                                                : getenv("FIRESTAFF_RA_TOKEN")));
         raRuntime.backend_available = 1;
         firestaff_ra_runtime_apply_config(&raRuntime, &raConfig);
         firestaff_ra_redact_token(raConfig.api_token,

@@ -367,6 +367,8 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->quickResumeEnabled = 1;
     config->retroAchievementsEnabled = 0;
     config->retroAchievementsHardcore = 1;
+    config->retroAchievementsUsername[0] = '\0';
+    config->retroAchievementsToken[0] = '\0';
     config->sessionTimerIndex = 0;
     config->customDungeonPath[0] = '\0';
     config->screenshotPath[0] = '\0';
@@ -844,6 +846,20 @@ static void m12_parse_line(M12_Config* config, char* line) {
             m12_parse_int(value, config->retroAchievementsHardcore) ? 1 : 0;
         return;
     }
+    if (m12_string_equals(key, "retroachievements_username") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->retroAchievementsUsername,
+                        sizeof(config->retroAchievementsUsername),
+                        quoted);
+        return;
+    }
+    if (m12_string_equals(key, "retroachievements_token") &&
+        m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+        m12_copy_string(config->retroAchievementsToken,
+                        sizeof(config->retroAchievementsToken),
+                        quoted);
+        return;
+    }
     if (m12_string_equals(key, "session_timer_index")) {
         int val = m12_parse_int(value, config->sessionTimerIndex);
         if (val < 0) val = 0;
@@ -1004,6 +1020,12 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "quick_resume_enabled = %d\n", config->quickResumeEnabled ? 1 : 0);
     fprintf(fp, "retroachievements_enabled = %d\n", config->retroAchievementsEnabled ? 1 : 0);
     fprintf(fp, "retroachievements_hardcore = %d\n", config->retroAchievementsHardcore ? 1 : 0);
+    fputs("retroachievements_username = ", fp);
+    m12_escape_and_write(fp, config->retroAchievementsUsername);
+    fputc('\n', fp);
+    fputs("retroachievements_token = ", fp);
+    m12_escape_and_write(fp, config->retroAchievementsToken);
+    fputc('\n', fp);
     fprintf(fp, "session_timer_index = %d\n", config->sessionTimerIndex);
     fputs("custom_dungeon_path = ", fp); m12_escape_and_write(fp, config->customDungeonPath); fputc('\n', fp);
     fputs("screenshot_path = ", fp); m12_escape_and_write(fp, config->screenshotPath); fputc('\n', fp);
@@ -1280,6 +1302,12 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, "  \"quick_resume_enabled\": %d,\n", config->quickResumeEnabled ? 1 : 0);
     fprintf(fp, "  \"retroachievements_enabled\": %d,\n", config->retroAchievementsEnabled ? 1 : 0);
     fprintf(fp, "  \"retroachievements_hardcore\": %d,\n", config->retroAchievementsHardcore ? 1 : 0);
+    fprintf(fp, "  \"retroachievements_username\": ");
+    m12_json_write_string(fp, config->retroAchievementsUsername);
+    fprintf(fp, ",\n");
+    fprintf(fp, "  \"retroachievements_token\": ");
+    m12_json_write_string(fp, config->retroAchievementsToken);
+    fprintf(fp, ",\n");
     fprintf(fp, "  \"session_timer_index\": %d,\n", config->sessionTimerIndex);
     fprintf(fp, "  \"streamer_mode\": %d,\n", config->streamerMode ? 1 : 0);
     fprintf(fp, "  \"cloud_sync_enabled\": %d,\n", config->cloudSyncEnabled ? 1 : 0);
@@ -1599,6 +1627,8 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_BOOL("quick_resume_enabled", quickResumeEnabled)
         SET_BOOL("retroachievements_enabled", retroAchievementsEnabled)
         SET_BOOL("retroachievements_hardcore", retroAchievementsHardcore)
+        SET_STRING("retroachievements_username", retroAchievementsUsername, sizeof(config->retroAchievementsUsername))
+        SET_STRING("retroachievements_token", retroAchievementsToken, sizeof(config->retroAchievementsToken))
         SET_INT("session_timer_index", sessionTimerIndex)
         SET_BOOL("streamer_mode", streamerMode)
         SET_BOOL("cloud_sync_enabled", cloudSyncEnabled)
