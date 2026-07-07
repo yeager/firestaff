@@ -37,6 +37,23 @@ int main(void)
     int startup_active;
     int row_count;
 
+    check(dm2_v1_startup_input_from_firestaff_menu_code(0) ==
+              DM2_V1_STARTUP_INPUT_NONE &&
+              dm2_v1_startup_input_from_firestaff_menu_code(1) ==
+                  DM2_V1_STARTUP_INPUT_UP &&
+              dm2_v1_startup_input_from_firestaff_menu_code(2) ==
+                  DM2_V1_STARTUP_INPUT_DOWN &&
+              dm2_v1_startup_input_from_firestaff_menu_code(9) ==
+                  DM2_V1_STARTUP_INPUT_ACCEPT &&
+              dm2_v1_startup_input_from_firestaff_menu_code(10) ==
+                  DM2_V1_STARTUP_INPUT_BACK &&
+              dm2_v1_startup_input_from_firestaff_menu_code(11) ==
+                  DM2_V1_STARTUP_INPUT_ACTION,
+          "Firestaff menu input codes map through DM2 startup input adapter");
+    check(dm2_v1_startup_input_from_firestaff_menu_code(999) ==
+              DM2_V1_STARTUP_INPUT_NONE,
+          "unknown Firestaff menu input maps to DM2 startup idle input");
+
     save_path_result = dm2_v1_startup_load_session_from_save_path(
         "/tmp/firestaff-dm2-startup-missing/Other.dat",
         save_root,

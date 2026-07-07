@@ -36,6 +36,35 @@ static void dm2_v1_startup_execution_clear(
     execution->kind = DM2_V1_STARTUP_EXEC_IGNORE;
 }
 
+DM2_V1_StartupInput dm2_v1_startup_input_from_firestaff_menu_code(
+    int menu_input)
+{
+    enum {
+        FIRESTAFF_MENU_INPUT_NONE = 0,
+        FIRESTAFF_MENU_INPUT_UP = 1,
+        FIRESTAFF_MENU_INPUT_DOWN = 2,
+        FIRESTAFF_MENU_INPUT_ACCEPT = 9,
+        FIRESTAFF_MENU_INPUT_BACK = 10,
+        FIRESTAFF_MENU_INPUT_ACTION = 11
+    };
+
+    switch (menu_input) {
+        case FIRESTAFF_MENU_INPUT_UP:
+            return DM2_V1_STARTUP_INPUT_UP;
+        case FIRESTAFF_MENU_INPUT_DOWN:
+            return DM2_V1_STARTUP_INPUT_DOWN;
+        case FIRESTAFF_MENU_INPUT_ACCEPT:
+            return DM2_V1_STARTUP_INPUT_ACCEPT;
+        case FIRESTAFF_MENU_INPUT_ACTION:
+            return DM2_V1_STARTUP_INPUT_ACTION;
+        case FIRESTAFF_MENU_INPUT_BACK:
+            return DM2_V1_STARTUP_INPUT_BACK;
+        case FIRESTAFF_MENU_INPUT_NONE:
+        default:
+            return DM2_V1_STARTUP_INPUT_NONE;
+    }
+}
+
 int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
                                           char *out_root,
                                           int out_root_cap,

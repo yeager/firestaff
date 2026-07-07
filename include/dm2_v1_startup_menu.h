@@ -30,6 +30,9 @@ typedef enum {
     DM2_V1_STARTUP_INPUT_BACK = 5
 } DM2_V1_StartupInput;
 
+DM2_V1_StartupInput dm2_v1_startup_input_from_firestaff_menu_code(
+    int menu_input);
+
 typedef struct {
     DM2_V1_StartupActionKind kind;
     int row;

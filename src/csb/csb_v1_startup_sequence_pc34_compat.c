@@ -1208,6 +1208,16 @@ int csb_v1_startup_entrance_command_for_action_pc34(
     }
 }
 
+int csb_v1_startup_entrance_command_for_input_pc34(
+    int credits_active,
+    CSB_V1_StartupInput_PC34 input)
+{
+    return csb_v1_startup_entrance_command_for_action_pc34(
+        (CSB_V1_StartupEntranceAction_PC34)
+            csb_v1_startup_entrance_action_for_input_pc34(credits_active,
+                                                          input));
+}
+
 int csb_v1_startup_advance_tick_pc34(
     CSB_V1_StartupTickState_PC34 *state,
     CSB_V1_StartupTickResult_PC34 *out_result)
