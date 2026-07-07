@@ -10830,7 +10830,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         char resolvedDataDir[FSP_PATH_MAX];
         char scanDir[512];
         CSB_V1_BootProfile *profile = NULL;
-        CSB_V1_StartupSessionOptionsInput_PC34 session_input;
         CSB_V1_StartupSessionOptions_PC34 session_options;
         CSB_V1_RuntimeStartupHandoffReceipt_PC34 startup_handoff;
         int savedDebugHUD = state->showDebugHUD;
@@ -10932,40 +10931,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbState.startup_entrance_last_command =
             M11_ENTRANCE_RUNTIME_COMMAND_NONE;
         state->csbState.startup_entrance_bonus_requested = 0;
-        memset(&session_input, 0, sizeof(session_input));
-        session_input.direct_resume_loaded =
-            startup_handoff.direct_resume_loaded;
-        session_input.import_dm1_save_path = spec->csbImportDm1SavePath;
-        session_input.import_utility_state =
-            startup_handoff.import_utility_state;
-        session_input.import_utility_prompt =
-            startup_handoff.import_utility_prompt;
-        if (!session_input.direct_resume_loaded &&
-            startup_handoff.import_succeeded) {
-            CSB_V1_PartyState imported_party;
-            memset(&imported_party, 0, sizeof(imported_party));
-            if (csb_v1_runtime_get_party_state(&profile->runtime,
-                                               &imported_party) >= 0 &&
-                imported_party.ImportedFromDM1 &&
-                imported_party.ChampionCount > 0) {
-                session_input.import_party_loaded = 1;
-                session_input.import_champion_count =
-                    startup_handoff.import_champion_count > 0
-                        ? startup_handoff.import_champion_count
-                        : imported_party.ChampionCount;
-            }
-        }
-        if (!session_input.direct_resume_loaded &&
-            spec->entranceResumeSavePath &&
-            spec->entranceResumeSavePath[0] != '\0') {
-            session_input.entrance_resume_save_path =
-                spec->entranceResumeSavePath;
-            session_input.entrance_resume_can_load =
-                csb_v1_runtime_can_load_resume_path(
-                    spec->entranceResumeSavePath);
-        }
-        (void)csb_v1_startup_build_session_options_pc34(
-            &session_input,
+        (void)csb_v1_runtime_build_startup_session_options_pc34(
+            &profile->runtime,
+            &startup_handoff,
+            spec->csbImportDm1SavePath,
+            spec->entranceResumeSavePath,
             &session_options);
         state->csbState.startup_entrance_resume_available =
             session_options.entrance_resume_available;

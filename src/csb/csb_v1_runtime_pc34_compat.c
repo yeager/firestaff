@@ -1466,6 +1466,78 @@ int csb_v1_runtime_apply_startup_handoff_pc34(
     return 1;
 }
 
+static int csb_v1_runtime_copy_startup_string_pc34(char *dst,
+                                                   size_t dst_size,
+                                                   const char *src)
+{
+    int rc;
+    if (!dst || dst_size == 0u) {
+        return 0;
+    }
+    dst[0] = '\0';
+    if (!src || src[0] == '\0') {
+        return 0;
+    }
+    rc = snprintf(dst, dst_size, "%s", src);
+    if (rc <= 0 || (size_t)rc >= dst_size) {
+        dst[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
+int csb_v1_runtime_build_startup_session_options_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeStartupHandoffReceipt_PC34 *handoff,
+    const char *import_dm1_save_path,
+    const char *entrance_resume_save_path,
+    CSB_V1_StartupSessionOptions_PC34 *out_options)
+{
+    if (!out_options) {
+        return 0;
+    }
+    memset(out_options, 0, sizeof(*out_options));
+    out_options->import_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
+    if (handoff) {
+        out_options->import_utility_state = handoff->import_utility_state;
+        if (handoff->direct_resume_loaded) {
+            return 1;
+        }
+        if (handoff->import_succeeded && profile) {
+            CSB_V1_PartyState imported_party;
+            memset(&imported_party, 0, sizeof(imported_party));
+            if (csb_v1_runtime_get_party_state(profile, &imported_party) >= 0 &&
+                imported_party.ImportedFromDM1 &&
+                imported_party.ChampionCount > 0 &&
+                csb_v1_runtime_copy_startup_string_pc34(
+                    out_options->import_dm1_save_path,
+                    sizeof(out_options->import_dm1_save_path),
+                    import_dm1_save_path)) {
+                out_options->import_available = 1;
+                out_options->import_champion_count =
+                    handoff->import_champion_count > 0
+                        ? handoff->import_champion_count
+                        : imported_party.ChampionCount;
+                out_options->import_selected_action_index = 0;
+                out_options->import_preview_active = 0;
+                (void)csb_v1_runtime_copy_startup_string_pc34(
+                    out_options->import_utility_prompt,
+                    sizeof(out_options->import_utility_prompt),
+                    handoff->import_utility_prompt);
+            }
+        }
+    }
+    if (entrance_resume_save_path && entrance_resume_save_path[0] != '\0' &&
+        csb_v1_runtime_can_load_resume_path(entrance_resume_save_path) &&
+        csb_v1_runtime_copy_startup_string_pc34(
+            out_options->entrance_resume_path,
+            sizeof(out_options->entrance_resume_path),
+            entrance_resume_save_path)) {
+        out_options->entrance_resume_available = 1;
+    }
+    return 1;
+}
+
 void csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *receipt)
 {
