@@ -81,6 +81,30 @@ int main(void)
     }
     expect_int("relative.bad.side", dm1_v1_field_render_plan_for_relative_pc34(3, -3, &plan), 0);
     expect_int("relative.bad.null", dm1_v1_field_render_plan_for_relative_pc34(3, -2, 0), 0);
+    expect_int("asset.field.index", dm1_v1_field_graphic_index_pc34(), 76);
+    expect_int("asset.mask.0", dm1_v1_field_mask_graphic_index_pc34(0), 70);
+    expect_int("asset.mask.5", dm1_v1_field_mask_graphic_index_pc34(5), 75);
+    expect_int("asset.mask.bad.low", dm1_v1_field_mask_graphic_index_pc34(-1), -1);
+    expect_int("asset.mask.bad.high", dm1_v1_field_mask_graphic_index_pc34(6), -1);
+    {
+        DM1_FieldAssetBindingPc34 binding;
+        expect_int("asset.binding.d3c.lookup", dm1_v1_field_render_plan_for_relative_pc34(3, 0, &plan), 1);
+        expect_int("asset.binding.d3c.ok", dm1_v1_field_asset_binding_pc34(&plan, &binding), 1);
+        expect_int("asset.binding.d3c.field", binding.fieldGraphicIndex, 76);
+        expect_int("asset.binding.d3c.mask_required", binding.maskRequired, 0);
+        expect_int("asset.binding.d3c.mask_graphic", binding.maskGraphicIndex, -1);
+        expect_int("asset.binding.d3c.transparent", binding.transparentColor, 0x8a);
+        expect_int("asset.binding.d2r2.lookup", dm1_v1_field_render_plan_for_relative_pc34(2, 2, &plan), 1);
+        expect_int("asset.binding.d2r2.ok", dm1_v1_field_asset_binding_pc34(&plan, &binding), 1);
+        expect_int("asset.binding.d2r2.field", binding.fieldGraphicIndex, 76);
+        expect_int("asset.binding.d2r2.mask_required", binding.maskRequired, 1);
+        expect_int("asset.binding.d2r2.mask_index", binding.maskIndex, 2);
+        expect_int("asset.binding.d2r2.mask_flip", binding.maskFlip, 1);
+        expect_int("asset.binding.d2r2.mask_graphic", binding.maskGraphicIndex, 72);
+        expect_int("asset.binding.d2r2.transparent", binding.transparentColor, 0x0a);
+        expect_int("asset.binding.bad.plan", dm1_v1_field_asset_binding_pc34(0, &binding), 0);
+        expect_int("asset.binding.bad.out", dm1_v1_field_asset_binding_pc34(&plan, 0), 0);
+    }
     {
         DM1_FieldBitmapSamplePc34 sample;
         uint8_t fieldPixels[256 * 128];
