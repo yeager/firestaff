@@ -64,6 +64,16 @@ int main(void)
     ok &= expect_int("redmcsb D3C x1", redmcsb_frame ? redmcsb_frame->left_x : -1, 136);
     redmcsb_frame = dm1_v1_viewport_get_door_button_frame_pc34(1, DM1_VIEW_DOOR_BUTTON_D2C);
     ok &= expect_int("redmcsb D2C x1", redmcsb_frame ? redmcsb_frame->left_x : -1, 144);
+    ok &= expect_int("D3R palette maps color 2 to 12",
+        dm1_v1_viewport_get_door_button_palette_remap_pc34(DM1_VIEW_DOOR_BUTTON_D3R)[2], 12);
+    ok &= expect_int("D3C palette maps color 13 to 1",
+        dm1_v1_viewport_get_door_button_palette_remap_pc34(DM1_VIEW_DOOR_BUTTON_D3C)[13], 1);
+    ok &= expect_int("D2C palette maps color 1 to 12",
+        dm1_v1_viewport_get_door_button_palette_remap_pc34(DM1_VIEW_DOOR_BUTTON_D2C)[1], 12);
+    ok &= expect_int("D1C palette is native",
+        dm1_v1_viewport_get_door_button_palette_remap_pc34(DM1_VIEW_DOOR_BUTTON_D1C) == NULL, 1);
+    ok &= expect_int("bad palette is null",
+        dm1_v1_viewport_get_door_button_palette_remap_pc34((DM1_ViewDoorButtonIndex)99) == NULL, 1);
 
     clear_src(d3r, (int)sizeof(d3r));
     clear_src(d3c, (int)sizeof(d3c));

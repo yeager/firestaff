@@ -97,6 +97,14 @@ static const DM1_WallFrame s_door_button_frames[DM1_VIEW_DOOR_BUTTON_COUNT] = {
     /* D1C */ { 160, 175, 44, 52, 8, 9, 0, 0 },
 };
 
+static const uint8_t s_door_button_d3_palette_remap[16] = {
+    0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
+};
+
+static const uint8_t s_door_button_d2_palette_remap[16] = {
+    0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
+};
+
 /* View square → wall frame table index mapping.
  * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
 static int view_square_to_frame_index(DM1_ViewSquareIndex sq)
@@ -1250,6 +1258,22 @@ const DM1_WallFrame *dm1_v1_viewport_get_door_button_frame_pc34(int door_button_
     if (door_button_ordinal != 1) return NULL;
     if (view_index < 0 || view_index >= DM1_VIEW_DOOR_BUTTON_COUNT) return NULL;
     return &s_door_button_frames[view_index];
+}
+
+const uint8_t *dm1_v1_viewport_get_door_button_palette_remap_pc34(
+    DM1_ViewDoorButtonIndex view_index)
+{
+    switch (view_index) {
+        case DM1_VIEW_DOOR_BUTTON_D3R:
+        case DM1_VIEW_DOOR_BUTTON_D3C:
+            return s_door_button_d3_palette_remap;
+        case DM1_VIEW_DOOR_BUTTON_D2C:
+            return s_door_button_d2_palette_remap;
+        case DM1_VIEW_DOOR_BUTTON_D1C:
+            return NULL;
+        default:
+            return NULL;
+    }
 }
 
 /* ────────────────────────────────────────────────────────────────────────────

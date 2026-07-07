@@ -852,6 +852,14 @@ const DM1_WallFrame *dm1_v1_viewport_get_door_button_frame_pc34(int door_button_
                                                                  DM1_ViewDoorButtonIndex view_index);
 
 /*
+ * Return the PC34 derived-bitmap palette remap used for scaled door-button
+ * views. D1C is native and returns NULL; D2C uses the D2 remap; D3C/D3R use
+ * the D3 remap.
+ */
+const uint8_t *dm1_v1_viewport_get_door_button_palette_remap_pc34(
+    DM1_ViewDoorButtonIndex view_index);
+
+/*
  * Execute one full frame of 3D viewport wall rendering.
  * This is the main entry point — calls all DrawSquare functions in
  * depth-order: D3L→D3R→D3C → D2L→D2R→D2C → D1L→D1R→D1C → D0L→D0R→D0C.
