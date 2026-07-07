@@ -754,8 +754,7 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_StartupExecution execution;
-    DM2_V1_StartupModeUpdate update;
-    DM2_V1_StartupInputOutcome outcome;
+    DM2_V1_StartupApplyReceipt receipt;
     int session_applied = 0;
 
     if (!state || !state->dm2State.startup_menu_active ||
@@ -768,34 +767,31 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
                                        &execution)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!dm2_v1_startup_execution_mode_update(&execution, &update)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
     if (execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
         session_applied = m11_dm2_startup_apply_session(
             state,
             &execution.session);
-        if (session_applied) {
-            m11_dm2_startup_apply_mode_update(state, &update);
-        }
     }
-    if (!dm2_v1_startup_execution_input_outcome(&execution,
-                                                session_applied,
-                                                &outcome)) {
+    if (!dm2_v1_startup_apply_receipt_from_execution(&execution,
+                                                     session_applied,
+                                                     &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (outcome.status_scope || outcome.status) {
+    m11_dm2_startup_apply_mode_update(state, &receipt.mode_update);
+    if (receipt.outcome.status_scope || receipt.outcome.status) {
         m11_set_status(state,
-                       outcome.status_scope ? outcome.status_scope : "STARTUP",
-                       outcome.status ? outcome.status : "");
+                       receipt.outcome.status_scope
+                           ? receipt.outcome.status_scope
+                           : "STARTUP",
+                       receipt.outcome.status ? receipt.outcome.status : "");
     }
-    if (outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW) {
-        if (outcome.rescan_saves) {
+    if (receipt.outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW) {
+        if (receipt.outcome.rescan_saves) {
             m11_dm2_startup_scan_saves(state, profile);
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (outcome.result ==
+    if (receipt.outcome.result ==
         DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER) {
         return M11_GAME_INPUT_RETURN_TO_MENU;
     }

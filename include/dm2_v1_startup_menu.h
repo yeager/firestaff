@@ -88,6 +88,13 @@ typedef struct {
 } DM2_V1_StartupInputOutcome;
 
 typedef struct {
+    DM2_V1_StartupModeUpdate mode_update;
+    DM2_V1_StartupInputOutcome outcome;
+    int session_should_apply;
+    int session_applied;
+} DM2_V1_StartupApplyReceipt;
+
+typedef struct {
     char save_root[512];
     int resume_available;
     unsigned int slot_mask;
@@ -213,6 +220,10 @@ int dm2_v1_startup_execution_input_outcome(
     const DM2_V1_StartupExecution *execution,
     int session_applied,
     DM2_V1_StartupInputOutcome *out_outcome);
+int dm2_v1_startup_apply_receipt_from_execution(
+    const DM2_V1_StartupExecution *execution,
+    int session_applied,
+    DM2_V1_StartupApplyReceipt *out_receipt);
 int dm2_v1_startup_execute_save_path(
     const char *save_path,
     char *out_save_root,

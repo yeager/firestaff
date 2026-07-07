@@ -55,6 +55,16 @@ static void dm2_v1_startup_input_outcome_clear(
     outcome->result = DM2_V1_STARTUP_INPUT_RESULT_IGNORED;
 }
 
+static void dm2_v1_startup_apply_receipt_clear(
+    DM2_V1_StartupApplyReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->outcome.result = DM2_V1_STARTUP_INPUT_RESULT_IGNORED;
+}
+
 DM2_V1_StartupInput dm2_v1_startup_input_from_firestaff_menu_code(
     int menu_input)
 {
@@ -740,6 +750,39 @@ int dm2_v1_startup_execution_input_outcome(
         return 1;
     }
     return 0;
+}
+
+int dm2_v1_startup_apply_receipt_from_execution(
+    const DM2_V1_StartupExecution *execution,
+    int session_applied,
+    DM2_V1_StartupApplyReceipt *out_receipt)
+{
+    DM2_V1_StartupModeUpdate mode_update;
+    DM2_V1_StartupInputOutcome outcome;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    dm2_v1_startup_apply_receipt_clear(out_receipt);
+    if (!execution || execution->kind == DM2_V1_STARTUP_EXEC_IGNORE) {
+        return 0;
+    }
+    if (!dm2_v1_startup_execution_mode_update(execution, &mode_update) ||
+        !dm2_v1_startup_execution_input_outcome(
+            execution,
+            session_applied,
+            &outcome)) {
+        return 0;
+    }
+    out_receipt->session_should_apply =
+        execution->kind == DM2_V1_STARTUP_EXEC_SESSION_READY ? 1 : 0;
+    out_receipt->session_applied = session_applied ? 1 : 0;
+    if (out_receipt->session_should_apply && !out_receipt->session_applied) {
+        memset(&mode_update, 0, sizeof(mode_update));
+    }
+    out_receipt->mode_update = mode_update;
+    out_receipt->outcome = outcome;
+    return 1;
 }
 
 int dm2_v1_startup_execute_save_path(
