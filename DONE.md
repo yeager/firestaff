@@ -3,6 +3,7 @@
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
 - ✅ 2026-07-07 CSB runtime projectile/explosion F0791 material gate: M11 now honors `uses_f0791_blit` from CSB-owned projectile and explosion blit records before applying the CSB C10 transparent color. CSB F0115 sprite paths keep their explicit F0791/C10 material, while DM1 wrapper paths and any non-F0791 call keep the DM1 projectile/explosion plan's native transparent key. Verification: `cc -std=c11 -fsyntax-only -I. -Iinclude -Isrc -Isrc/engine -Isrc/shared -Isrc/dm1 -Isrc/csb src/engine/m11_game_view.c` passed, `cmake --build build --target test_csb_v1_viewport_phase3_rendering --parallel 4 && ./build/test_csb_v1_viewport_phase3_rendering` passed 2611/0, and `cmake --build build --target firestaff --parallel 4` passed with existing unrelated warnings.
+- ✅ 2026-07-07 DM2 V1 weather overlay command ownership: `dm2_v1_viewport_renderer` now turns the weather render plan into explicit rain-streak, fog-blend, and lightning-fill commands before touching pixels. The weather pass consumes those DM2-owned commands instead of branching directly on weather kind while drawing the viewport overlay.
 
 - ✅ 2026-07-07 CSB utility prompt render ownership: `csb_v1_utility_flow` now returns the startup utility prompt as a render row with CSB-owned position, text style, and copied text. M11 consumes that row instead of drawing the stored prompt through local panel coordinates.
 

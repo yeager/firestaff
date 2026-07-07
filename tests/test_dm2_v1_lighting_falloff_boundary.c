@@ -366,6 +366,7 @@ static void test_weather_overlay_render_plan(void)
     uint8_t framebuffer[320 * 200];
     DM2_V1_ViewportState viewport;
     DM2_V1_WeatherOverlayRenderPlan plan;
+    DM2_V1_WeatherOverlayCommandPlan commands;
 
     memset(framebuffer, 7, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -389,6 +390,16 @@ static void test_weather_overlay_render_plan(void)
               plan.scroll == 4 &&
               plan.streak_step == 3 &&
               plan.rain_color == 15);
+    CHECK("DM2 rain weather command owns streak material",
+          dm2_v1_viewport_build_weather_overlay_commands(
+              &plan, &commands) == 1 &&
+              commands.command_count == 1 &&
+              commands.commands[0].kind ==
+                  DM2_V1_WEATHER_COMMAND_RAIN_STREAKS &&
+              commands.commands[0].density == 7 &&
+              commands.commands[0].scroll == 4 &&
+              commands.commands[0].streak_step == 3 &&
+              commands.commands[0].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
     CHECK("DM2 rain overlay applies planned diagonal streak color",
           framebuffer[1] == 7 &&
@@ -405,6 +416,14 @@ static void test_weather_overlay_render_plan(void)
               plan.kind == DM2_V1_WEATHER_OVERLAY_FOG &&
               plan.alpha == 4 &&
               plan.fog_target_color == 0);
+    CHECK("DM2 fog weather command owns blend material",
+          dm2_v1_viewport_build_weather_overlay_commands(
+              &plan, &commands) == 1 &&
+              commands.command_count == 1 &&
+              commands.commands[0].kind ==
+                  DM2_V1_WEATHER_COMMAND_FOG_BLEND &&
+              commands.commands[0].alpha == 4 &&
+              commands.commands[0].target_color == 0);
     dm2_v1_render_weather_overlay(&viewport);
     CHECK("DM2 fog overlay applies planned alpha over framebuffer",
           framebuffer[0] == 6);
@@ -421,6 +440,15 @@ static void test_weather_overlay_render_plan(void)
               plan.density == 7 &&
               plan.scroll == 1 &&
               plan.lightning_flash == 1);
+    CHECK("DM2 storm weather commands preserve pass order",
+          dm2_v1_viewport_build_weather_overlay_commands(
+              &plan, &commands) == 1 &&
+              commands.command_count == 2 &&
+              commands.commands[0].kind ==
+                  DM2_V1_WEATHER_COMMAND_RAIN_STREAKS &&
+              commands.commands[1].kind ==
+                  DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL &&
+              commands.commands[1].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
     CHECK("DM2 storm lightning applies planned full-screen flash",
           framebuffer[0] == 15 &&
@@ -431,6 +459,13 @@ static void test_weather_overlay_render_plan(void)
           dm2_v1_viewport_build_weather_overlay_render_plan(
               NULL, &plan) == 1 &&
               plan.kind == DM2_V1_WEATHER_OVERLAY_NONE);
+    CHECK("DM2 weather command plan is null-plan safe",
+          dm2_v1_viewport_build_weather_overlay_commands(
+              NULL, &commands) == 1 &&
+              commands.command_count == 0);
+    CHECK("DM2 weather command plan rejects null output",
+          dm2_v1_viewport_build_weather_overlay_commands(
+              &plan, NULL) == 0);
 }
 
 static void test_floor_ceiling_asset_provider(void)
