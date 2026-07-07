@@ -260,6 +260,58 @@ int dm1_viewport_3d_side_lane_clear_for_rel_pc34(int rel_forward,
     return 1;
 }
 
+unsigned int dm1_viewport_3d_open_depth_mask_from_cells_pc34(
+    const int open_by_depth[3])
+{
+    int depth;
+    unsigned int mask = 0u;
+    if (!open_by_depth) {
+        return 0u;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        if (open_by_depth[depth]) {
+            mask |= 1u << (unsigned int)depth;
+        }
+    }
+    return mask;
+}
+
+DM1_ViewportCenterLaneMasksPc34 dm1_viewport_3d_center_lane_masks_from_cells_pc34(
+    const int valid_by_depth[3],
+    const int open_by_depth[3],
+    const int door_by_depth[3])
+{
+    int depth;
+    DM1_ViewportCenterLaneMasksPc34 masks;
+    masks.valid_depth_mask = 0u;
+    masks.open_depth_mask = 0u;
+    masks.blocking_depth_mask = 0u;
+    masks.blocking_door_depth_mask = 0u;
+    if (!valid_by_depth || !open_by_depth || !door_by_depth) {
+        return masks;
+    }
+    /* ReDMCSB DUNVIEW.C F0128/F0124/F0121/F0118: center-lane depth
+     * visibility is derived from the valid D1..D3 center squares; non-open
+     * center squares block farther center content, and only closed center
+     * doors enter the door-ornament/button path. */
+    for (depth = 0; depth < 3; ++depth) {
+        unsigned int bit = 1u << (unsigned int)depth;
+        if (!valid_by_depth[depth]) {
+            continue;
+        }
+        masks.valid_depth_mask |= bit;
+        if (open_by_depth[depth]) {
+            masks.open_depth_mask |= bit;
+        } else {
+            masks.blocking_depth_mask |= bit;
+            if (door_by_depth[depth]) {
+                masks.blocking_door_depth_mask |= bit;
+            }
+        }
+    }
+    return masks;
+}
+
 int dm1_viewport_3d_center_line_clear_before_depth_pc34(
     int depth_index,
     unsigned int open_depth_mask)

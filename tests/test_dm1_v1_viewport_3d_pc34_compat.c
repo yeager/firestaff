@@ -3688,6 +3688,35 @@ static void test_primary_side_wall_max_forward_contract(void)
 
 static void test_center_lane_blocking_contract(void)
 {
+    {
+        const int valid[3] = {1, 1, 1};
+        const int open[3] = {0, 1, 0};
+        const int door[3] = {1, 1, 0};
+        DM1_ViewportCenterLaneMasksPc34 masks =
+            dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid, open, door);
+        check_int("F0128.center_masks.valid", (int)masks.valid_depth_mask, 0x7);
+        check_int("F0128.center_masks.open", (int)masks.open_depth_mask, 0x2);
+        check_int("F0128.center_masks.blocking", (int)masks.blocking_depth_mask, 0x5);
+        check_int("F0128.center_masks.blocking_doors", (int)masks.blocking_door_depth_mask, 0x1);
+    }
+    {
+        const int valid[3] = {1, 0, 1};
+        const int open[3] = {1, 1, 0};
+        const int door[3] = {0, 1, 1};
+        DM1_ViewportCenterLaneMasksPc34 masks =
+            dm1_viewport_3d_center_lane_masks_from_cells_pc34(valid, open, door);
+        check_int("F0128.center_masks.invalid_skipped.valid",
+                  (int)masks.valid_depth_mask, 0x5);
+        check_int("F0128.center_masks.invalid_skipped.open",
+                  (int)masks.open_depth_mask, 0x1);
+        check_int("F0128.center_masks.invalid_skipped.blocking",
+                  (int)masks.blocking_depth_mask, 0x4);
+        check_int("F0128.center_masks.invalid_skipped.blocking_doors",
+                  (int)masks.blocking_door_depth_mask, 0x4);
+    }
+    check_int("F0128.center_masks.null.valid",
+              (int)dm1_viewport_3d_center_lane_masks_from_cells_pc34(NULL, NULL, NULL).valid_depth_mask,
+              0);
     check_int("F0128.center_block.none.nearest",
               dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(0u), -1);
     check_int("F0128.center_block.none.max_visible",
@@ -3722,6 +3751,15 @@ static void test_center_lane_blocking_contract(void)
 
 static void test_side_lane_clear_contract(void)
 {
+    {
+        const int open[3] = {1, 0, 1};
+        check_int("F0128.side_lane.open_mask",
+                  (int)dm1_viewport_3d_open_depth_mask_from_cells_pc34(open),
+                  0x5);
+    }
+    check_int("F0128.side_lane.open_mask.null",
+              (int)dm1_viewport_3d_open_depth_mask_from_cells_pc34(NULL),
+              0);
     check_int("F0128.side_lane.center_always_clear",
               dm1_viewport_3d_side_lane_clear_for_rel_pc34(3, 0, 0u), 1);
     check_int("F0128.side_lane.near_always_clear",
