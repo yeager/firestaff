@@ -229,6 +229,31 @@ int main(void)
         profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] =
             120;
 
+        {
+            unsigned short group_thing =
+                (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+            CSB_V1_RuntimeGroupOverlayInfo group_info;
+            check(csb_v1_runtime_group_overlay_info(&dungeon,
+                                                    group_thing,
+                                                    &group_info) == 1,
+                  "CSB runtime builds GROUP overlay info from thing records");
+            check(group_info.creature_type == 6,
+                  "CSB runtime GROUP overlay info carries creature type");
+            check(group_info.direction == 0,
+                  "CSB runtime GROUP overlay info carries direction");
+            check(group_info.visible_count == 1,
+                  "CSB runtime GROUP overlay info carries visible count");
+            check(group_info.cells[0] == 0,
+                  "CSB runtime GROUP overlay info carries packed cell");
+            check(csb_v1_runtime_group_overlay_info(&dungeon,
+                                                    dagger,
+                                                    &group_info) == 0,
+                  "CSB runtime rejects non-GROUP overlay info requests");
+            check(csb_v1_runtime_group_overlay_info(NULL,
+                                                    group_thing,
+                                                    &group_info) == 0,
+                  "CSB runtime rejects missing dungeon for GROUP overlay info");
+        }
         check(csb_v1_runtime_next_thing(&dungeon, dagger) == THING_ENDOFLIST,
               "CSB runtime next-thing helper reads compact object records");
         check(csb_v1_runtime_thing_type_is_floor_object(THING_TYPE_WEAPON),
