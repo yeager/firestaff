@@ -323,6 +323,30 @@ Theron_StartupResult theron_v1_startup_flow_rebuild_from_request(
                                                         flow);
 }
 
+Theron_StartupResult theron_v1_startup_flow_rebuild_from_facts(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    int selected_mirrors_mask,
+    int companion_count,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    const Theron_DungeonProgression *progression,
+    Theron_StartupFlow *flow) {
+
+    Theron_StartupFlowSnapshotRequest request;
+
+    memset(&request, 0, sizeof(request));
+    request.phase = phase;
+    request.selected_dungeon = selected_dungeon;
+    request.selected_mirrors_mask = selected_mirrors_mask;
+    request.companion_count = companion_count;
+    request.selected_mirror_order = selected_mirror_order;
+    request.selected_mirror_order_count = selected_mirror_order_count;
+    return theron_v1_startup_flow_rebuild_from_request(&request,
+                                                       progression,
+                                                       flow);
+}
+
 void theron_v1_startup_action_init(Theron_StartupAction *action) {
     if (!action) {
         return;

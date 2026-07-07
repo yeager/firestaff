@@ -11755,7 +11755,6 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
                                            char* receipt,
                                            size_t receipt_cap) {
     Theron_StartupResult result;
-    Theron_StartupFlowSnapshotRequest request;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -11764,19 +11763,15 @@ static int m11_theron_rebuild_startup_flow(const M11_GameViewState* state,
         return 0;
     }
 
-    memset(&request, 0, sizeof(request));
-    request.phase = (Theron_StartupPhase)state->theronState.startup_phase;
-    request.selected_dungeon = state->theronState.selected_dungeon;
-    request.selected_mirrors_mask =
-        state->theronState.selected_mirrors_mask;
-    request.companion_count = state->theronState.companion_count;
-    request.selected_mirror_order =
-        state->theronState.selected_mirror_order;
-    request.selected_mirror_order_count =
-        THERON_STARTUP_MAX_COMPANIONS;
-    result = theron_v1_startup_flow_rebuild_from_request(&request,
-                                                         progression,
-                                                         flow);
+    result = theron_v1_startup_flow_rebuild_from_facts(
+        (Theron_StartupPhase)state->theronState.startup_phase,
+        state->theronState.selected_dungeon,
+        state->theronState.selected_mirrors_mask,
+        state->theronState.companion_count,
+        state->theronState.selected_mirror_order,
+        THERON_STARTUP_MAX_COMPANIONS,
+        progression,
+        flow);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
