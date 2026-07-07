@@ -530,33 +530,33 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
     return 1;
 }
 
-static void m11_dm2_startup_snapshot_to_state(
+static void m11_dm2_startup_state_receipt_to_m11(
     M11_GameViewState *state,
-    const DM2_V1_StartupMenuSnapshot *snapshot)
+    const DM2_V1_StartupMenuStateReceipt *receipt)
 {
-    if (!state || !snapshot) {
+    if (!state || !receipt) {
         return;
     }
     snprintf(state->dm2State.startup_save_root,
              sizeof(state->dm2State.startup_save_root),
              "%s",
-             snapshot->save_root);
-    state->dm2State.startup_resume_available = snapshot->resume_available;
-    state->dm2State.startup_slot_mask = snapshot->slot_mask;
-    state->dm2State.startup_menu_row_count = snapshot->row_count;
-    state->dm2State.startup_menu_selected_row = snapshot->selected_row;
+             receipt->save_root);
+    state->dm2State.startup_resume_available = receipt->resume_available;
+    state->dm2State.startup_slot_mask = receipt->slot_mask;
+    state->dm2State.startup_menu_row_count = receipt->row_count;
+    state->dm2State.startup_menu_selected_row = receipt->selected_row;
 }
 
 static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
                                        DM2_V1_BootProfile *profile)
 {
-    DM2_V1_StartupMenuSnapshot snapshot;
+    DM2_V1_StartupMenuStateReceipt receipt;
 
     if (!state || !profile) {
         return;
     }
-    if (!dm2_v1_startup_menu_snapshot_scan_saves_from_facts(
-            &snapshot,
+    if (!dm2_v1_startup_menu_state_receipt_scan_saves_from_facts(
+            &receipt,
             state->dm2State.startup_save_root,
             profile->save_root,
             state->dm2State.startup_resume_available,
@@ -565,7 +565,7 @@ static void m11_dm2_startup_scan_saves(M11_GameViewState *state,
             profile->save_root)) {
         return;
     }
-    m11_dm2_startup_snapshot_to_state(state, &snapshot);
+    m11_dm2_startup_state_receipt_to_m11(state, &receipt);
 }
 
 _Static_assert(M12_MENU_INPUT_NONE == 0,
@@ -740,15 +740,15 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     M12_MenuInput input)
 {
     const DM2_V1_BootProfile *profile;
-    DM2_V1_StartupMenuSnapshot snapshot;
+    DM2_V1_StartupMenuStateReceipt receipt;
     DM2_V1_StartupAction action;
 
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (!dm2_v1_startup_menu_handle_firestaff_input_from_facts(
-            &snapshot,
+    if (!dm2_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
+            &receipt,
             state->dm2State.startup_save_root,
             profile ? profile->save_root : NULL,
             state->dm2State.startup_resume_available,
@@ -760,7 +760,7 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
                    ? M11_GAME_INPUT_IGNORED
                    : M11_GAME_INPUT_REDRAW;
     }
-    m11_dm2_startup_snapshot_to_state(state, &snapshot);
+    m11_dm2_startup_state_receipt_to_m11(state, &receipt);
     return m11_dm2_startup_apply_action(state, &action);
 }
 
@@ -15158,7 +15158,7 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     int x,
     int y)
 {
-    DM2_V1_StartupMenuSnapshot snapshot;
+    DM2_V1_StartupMenuStateReceipt receipt;
     DM2_V1_StartupAction action;
 
     if (!state ||
@@ -15166,8 +15166,8 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!dm2_v1_startup_menu_handle_pointer_from_facts(
-            &snapshot,
+    if (!dm2_v1_startup_menu_handle_pointer_from_facts_with_receipt(
+            &receipt,
             state->dm2State.startup_save_root,
             ((const DM2_V1_BootProfile *)state->dm2BootProfile)
                 ? ((const DM2_V1_BootProfile *)state->dm2BootProfile)->save_root
@@ -15180,7 +15180,7 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
             &action)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_startup_snapshot_to_state(state, &snapshot);
+    m11_dm2_startup_state_receipt_to_m11(state, &receipt);
     return m11_dm2_startup_apply_action(state, &action);
 }
 

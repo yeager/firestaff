@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM2 startup state receipt ownership: `dm2_v1_startup_menu` now emits M11-ready startup state receipts for save scans, keyboard/menu input, and pointer input. M11 applies those receipts instead of copying `DM2_V1_StartupMenuSnapshot` fields directly. Verification: DM2 startup action contract passed 63/63, Phase A passed 24/24, targeted `firestaff` build passed, and `firestaff --version` passed.
+
 - ✅ 2026-07-08 CSB startup tick receipt ownership: `csb_v1_startup_sequence_pc34_compat` now advances startup title/entrance/credits/door-opening ticks from raw M11 facts and returns an M11-ready tick receipt with entrance frame, tick result, and command-state receipt. M11 applies that receipt instead of building/unpacking `CSB_V1_StartupTickState_PC34` manually each entrance animation frame. Verification: CSB startup entrance pointer test passed 135/135, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron initial startup receipt ownership: `theron_v1_startup_flow` now builds the initial title-state receipt for fresh Track 02 boot, including selected dungeon, level-loaded flag, cursor, Continue focus, party pose, and tick count. M11 applies that receipt during StartTheron instead of seeding those fields manually. Verification: Theron startup-flow probe passed 534/534, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

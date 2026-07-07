@@ -40,6 +40,7 @@ int main(void)
     DM2_V1_StartupModeUpdate mode_update;
     DM2_V1_StartupInputOutcome outcome;
     DM2_V1_StartupApplyReceipt receipt;
+    DM2_V1_StartupMenuStateReceipt state_receipt;
     DM2_V1_StartupHit hit;
     DM2_V1_StartupRect panel_rect;
     DM2_V1_StartupMenuSnapshot snapshot;
@@ -179,6 +180,41 @@ int main(void)
               snapshot.row_count == 1 &&
               snapshot.selected_row == 0,
           "snapshot facts scan helper owns save scan normalization");
+    check(dm2_v1_startup_menu_state_receipt_from_snapshot(
+              &snapshot,
+              &state_receipt) &&
+              strcmp(state_receipt.save_root, "/tmp/firestaff-dm2-startup") == 0 &&
+              state_receipt.resume_available == 0 &&
+              state_receipt.slot_mask == 0u &&
+              state_receipt.row_count == 1 &&
+              state_receipt.selected_row == 0,
+          "state receipt mirrors normalized startup snapshot for M11");
+    check(dm2_v1_startup_menu_state_receipt_from_facts(
+              &state_receipt,
+              "",
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              99) &&
+              strcmp(state_receipt.save_root, "/tmp/firestaff-dm2-startup") == 0 &&
+              state_receipt.resume_available == 1 &&
+              state_receipt.slot_mask == (1u << 2) &&
+              state_receipt.row_count == 3 &&
+              state_receipt.selected_row == 2,
+          "state receipt facts helper owns M11 selected-row clamp");
+    check(dm2_v1_startup_menu_state_receipt_scan_saves_from_facts(
+              &state_receipt,
+              "",
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              1,
+              "/tmp/firestaff-dm2-startup") &&
+              state_receipt.resume_available == 0 &&
+              state_receipt.slot_mask == 0u &&
+              state_receipt.row_count == 1 &&
+              state_receipt.selected_row == 0,
+          "state receipt scan helper owns M11 save scan copy contract");
     row_count = dm2_v1_startup_menu_build_render_rows(
         &menu,
         rows,
@@ -270,6 +306,20 @@ int main(void)
               snapshot.row_count == 3 &&
               snapshot.selected_row == 1,
           "snapshot facts input helper owns M11 input snapshot construction");
+    check(dm2_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
+              &state_receipt,
+              "",
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              0,
+              2,
+              &action) &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE &&
+              strcmp(state_receipt.save_root, "/tmp/firestaff-dm2-startup") == 0 &&
+              state_receipt.row_count == 3 &&
+              state_receipt.selected_row == 1,
+          "state receipt input helper owns M11 input state copy contract");
     check(dm2_v1_startup_plan_for_action(&action, &plan) &&
               plan.kind == DM2_V1_STARTUP_PLAN_IGNORE &&
               plan.slot == -1 &&
@@ -477,6 +527,21 @@ int main(void)
               snapshot.selected_row == 0 &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
           "snapshot facts pointer helper owns M11 pointer snapshot construction");
+    check(dm2_v1_startup_menu_handle_pointer_from_facts_with_receipt(
+              &state_receipt,
+              "",
+              "/tmp/firestaff-dm2-startup",
+              1,
+              (1u << 2),
+              0,
+              panel_rect.x + 8,
+              panel_rect.y + 8,
+              &action) &&
+              strcmp(state_receipt.save_root, "/tmp/firestaff-dm2-startup") == 0 &&
+              state_receipt.row_count == 3 &&
+              state_receipt.selected_row == 0 &&
+              action.kind == DM2_V1_STARTUP_ACTION_NONE,
+          "state receipt pointer helper owns M11 pointer state copy contract");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");
