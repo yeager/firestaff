@@ -1575,6 +1575,64 @@ int theron_v1_startup_render_plan_build(
         "ENTER SELECTS MIRROR  ACTION ENTERS");
 }
 
+int theron_v1_startup_render_plan_build_from_facts(
+    Theron_StartupPhase phase,
+    int selected_dungeon,
+    const void *boot_profile,
+    const Theron_V1_World *world,
+    int soul_cursor,
+    int continue_focus,
+    int has_tqsv_continue,
+    int tqsv_slot,
+    int has_srm_continue,
+    int srm_slot,
+    const char *startup_text_prompt,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    const char startup_roster_titles[][THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY],
+    int startup_roster_name_count,
+    int selected_mirrors_mask,
+    const int *selected_mirror_order,
+    int selected_mirror_order_count,
+    Theron_StartupRenderPlan *out_plan)
+{
+    Theron_StartupLayoutState layout_state;
+    Theron_StartupLayoutElement elements[16];
+    int element_count;
+
+    if (!out_plan) {
+        return 0;
+    }
+    if (!theron_v1_startup_layout_state_from_facts(
+            phase,
+            selected_dungeon,
+            boot_profile,
+            world,
+            soul_cursor,
+            continue_focus,
+            has_tqsv_continue,
+            tqsv_slot,
+            has_srm_continue,
+            srm_slot,
+            startup_text_prompt,
+            startup_roster_names,
+            startup_roster_titles,
+            startup_roster_name_count,
+            selected_mirrors_mask,
+            selected_mirror_order,
+            selected_mirror_order_count,
+            &layout_state)) {
+        return 0;
+    }
+    element_count = theron_v1_startup_layout_build(
+        &layout_state,
+        elements,
+        (int)(sizeof(elements) / sizeof(elements[0])));
+    return theron_v1_startup_render_plan_build(&layout_state,
+                                               elements,
+                                               element_count,
+                                               out_plan);
+}
+
 static void tqr_startup_exec_fill(
     const Theron_StartupGraphicExecutor *executor,
     int x,

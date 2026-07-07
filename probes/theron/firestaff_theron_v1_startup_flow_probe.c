@@ -469,6 +469,31 @@ int main(void) {
             check_int("layout state facts helper order cap",
                       layout_state.selected_mirror_order_count,
                       THERON_STARTUP_MAX_COMPANIONS);
+            check_int("render plan facts helper builds",
+                      theron_v1_startup_render_plan_build_from_facts(
+                          THERON_STARTUP_PHASE_STAGE_SELECT,
+                          THERON_DUNGEON_COUNT + 99,
+                          &profile,
+                          &world,
+                          7,
+                          1,
+                          1,
+                          3,
+                          0,
+                          -1,
+                          "READY",
+                          fact_names,
+                          fact_titles,
+                          THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1,
+                          0x45,
+                          order,
+                          THERON_STARTUP_MAX_COMPANIONS + 1,
+                          &render_plan),
+                      1);
+            check_render_plan_graphic(
+                "render plan facts helper owns stage-panel graphics",
+                &render_plan,
+                THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL);
 
             memset(&inspect_request, 0, sizeof(inspect_request));
             inspect_request.boot_profile = &profile;
