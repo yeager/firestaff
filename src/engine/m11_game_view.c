@@ -10328,26 +10328,30 @@ static M11_GameInputResult m11_nexus_apply_startup_receipt(
     return M11_GAME_INPUT_IGNORED;
 }
 
+static int m11_nexus_startup_load_save_callback(
+    void *userdata,
+    const char *save_path)
+{
+    return m11_nexus_resume_from_save_path(
+        (M11_GameViewState *)userdata,
+        save_path);
+}
+
 static M11_GameInputResult m11_nexus_startup_apply_save_action(
     M11_GameViewState *state,
     const Nexus_V1_StartupAction *action)
 {
     Nexus_V1_StartupSaveExecution execution;
     Nexus_V1_StartupApplyReceipt receipt;
-    int load_success = 1;
 
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_execute_save_action(action, &execution)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (execution.kind == NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT) {
-        load_success = m11_nexus_resume_from_save_path(state, execution.path);
-    }
-    if (!nexus_v1_startup_apply_receipt_from_save_execution(
+    if (!nexus_v1_startup_execute_save_action_with_receipt(
+            action,
+            m11_nexus_startup_load_save_callback,
+            state,
             &execution,
-            load_success,
             &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -10364,11 +10368,9 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_execute_title_action(action, &execution)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!nexus_v1_startup_apply_receipt_from_title_execution(&execution,
-                                                             &receipt)) {
+    if (!nexus_v1_startup_execute_title_action_with_receipt(action,
+                                                            &execution,
+                                                            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     return m11_nexus_apply_startup_receipt(state, &receipt);
@@ -10409,12 +10411,10 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
     if (!state || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!nexus_v1_startup_execute_champion_action(action, &execution)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (!nexus_v1_startup_apply_receipt_from_champion_execution(
-            &execution,
+    if (!nexus_v1_startup_execute_champion_action_with_receipt(
+            action,
             state->nexusState.startup_save_row_count,
+            &execution,
             &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }

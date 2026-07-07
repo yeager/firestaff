@@ -1025,6 +1025,41 @@ int nexus_v1_startup_apply_receipt_from_save_execution(
     return 1;
 }
 
+int nexus_v1_startup_execute_save_action_with_receipt(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupApplyReceipt *out_receipt)
+{
+    Nexus_V1_StartupSaveExecution local_execution;
+    Nexus_V1_StartupSaveExecution *execution;
+    int load_success = 1;
+
+    if (out_execution) {
+        memset(out_execution, 0, sizeof(*out_execution));
+    }
+    if (out_receipt) {
+        nexus_v1_startup_apply_receipt_clear(out_receipt);
+    }
+    if (!action || !out_receipt) {
+        return 0;
+    }
+    execution = out_execution ? out_execution : &local_execution;
+    if (!nexus_v1_startup_execute_save_action(action, execution)) {
+        return 0;
+    }
+    if (execution->kind == NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT) {
+        load_success = load_save
+            ? load_save(load_userdata, execution->path)
+            : 0;
+    }
+    return nexus_v1_startup_apply_receipt_from_save_execution(
+        execution,
+        load_success,
+        out_receipt);
+}
+
 int nexus_v1_startup_apply_receipt_from_title_execution(
     const Nexus_V1_StartupTitleExecution *execution,
     Nexus_V1_StartupApplyReceipt *out_receipt)
@@ -1050,6 +1085,32 @@ int nexus_v1_startup_apply_receipt_from_title_execution(
             ? NEXUS_V1_STARTUP_APPLY_RESULT_RETURN_TO_LAUNCHER
             : NEXUS_V1_STARTUP_APPLY_RESULT_REDRAW;
     return 1;
+}
+
+int nexus_v1_startup_execute_title_action_with_receipt(
+    const Nexus_V1_StartupAction *action,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupApplyReceipt *out_receipt)
+{
+    Nexus_V1_StartupTitleExecution local_execution;
+    Nexus_V1_StartupTitleExecution *execution;
+
+    if (out_execution) {
+        memset(out_execution, 0, sizeof(*out_execution));
+    }
+    if (out_receipt) {
+        nexus_v1_startup_apply_receipt_clear(out_receipt);
+    }
+    if (!action || !out_receipt) {
+        return 0;
+    }
+    execution = out_execution ? out_execution : &local_execution;
+    if (!nexus_v1_startup_execute_title_action(action, execution)) {
+        return 0;
+    }
+    return nexus_v1_startup_apply_receipt_from_title_execution(
+        execution,
+        out_receipt);
 }
 
 int nexus_v1_startup_champion_execution_mode_update(
@@ -1129,6 +1190,34 @@ int nexus_v1_startup_apply_receipt_from_champion_execution(
     out_receipt->status = execution->status ? execution->status
                                             : "NEXUS CHAMPIONS";
     return 1;
+}
+
+int nexus_v1_startup_execute_champion_action_with_receipt(
+    const Nexus_V1_StartupAction *action,
+    int save_row_count,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupApplyReceipt *out_receipt)
+{
+    Nexus_V1_StartupChampionExecution local_execution;
+    Nexus_V1_StartupChampionExecution *execution;
+
+    if (out_execution) {
+        memset(out_execution, 0, sizeof(*out_execution));
+    }
+    if (out_receipt) {
+        nexus_v1_startup_apply_receipt_clear(out_receipt);
+    }
+    if (!action || !out_receipt) {
+        return 0;
+    }
+    execution = out_execution ? out_execution : &local_execution;
+    if (!nexus_v1_startup_execute_champion_action(action, execution)) {
+        return 0;
+    }
+    return nexus_v1_startup_apply_receipt_from_champion_execution(
+        execution,
+        save_row_count,
+        out_receipt);
 }
 
 int nexus_v1_startup_menu_build_save_render_rows(
