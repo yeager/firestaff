@@ -24,6 +24,7 @@
 #include "csb_v1_csbgraphics_m11_runtime_plan.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
@@ -1201,6 +1202,11 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
     placement.view_cell = projectile_cell;
     placement.source_zone = -1;
     placement.source_zone_row = -1;
+    placement.sprite_aspect_index = -1;
+    placement.sprite_relative_dir = -1;
+    placement.sprite_relative_cell = -1;
+    placement.sprite_graphic_index = -1;
+    placement.sprite_flip_flags = 0;
     placement.viewport_x = 0;
     placement.viewport_y = 0;
     csb_v1_viewport_runtime_relative_position(
@@ -1276,6 +1282,45 @@ int csb_v1_viewport_runtime_projectile_overlay_placement(
         &placement.sprite_h);
     if (out_placement) *out_placement = placement;
     return 1;
+}
+
+int csb_v1_viewport_runtime_bind_projectile_sprite(
+    int party_dir,
+    const struct ProjectileInstance_Compat *projectile,
+    CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement)
+{
+    int aspect;
+    int relative_dir;
+    int relative_cell;
+
+    if (!projectile || !placement) {
+        return 0;
+    }
+    aspect = dm1_v1_projectile_subtype_to_aspect(
+        projectile->projectileSubtype);
+    if (aspect < 0) {
+        placement->sprite_aspect_index = -1;
+        placement->sprite_relative_dir = -1;
+        placement->sprite_relative_cell = -1;
+        placement->sprite_graphic_index = -1;
+        placement->sprite_flip_flags = 0;
+        return 0;
+    }
+
+    relative_dir = (projectile->direction - party_dir) & 3;
+    relative_cell = (placement->view_cell - party_dir) & 3;
+    placement->sprite_aspect_index = aspect;
+    placement->sprite_relative_dir = relative_dir;
+    placement->sprite_relative_cell = relative_cell;
+    placement->sprite_graphic_index =
+        dm1_v1_projectile_graphic_index(aspect, relative_dir);
+    placement->sprite_flip_flags =
+        dm1_v1_projectile_flip_flags(aspect,
+                                     relative_dir,
+                                     relative_cell,
+                                     projectile->mapX,
+                                     projectile->mapY);
+    return placement->sprite_graphic_index >= 0;
 }
 
 int csb_v1_viewport_runtime_explosion_sprite_rect(
@@ -1451,6 +1496,10 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
                 &placement)) {
             continue;
         }
+        (void)csb_v1_viewport_runtime_bind_projectile_sprite(
+            party_dir,
+            projectile,
+            &placement);
         /* ReDMCSB DUNVIEW.C F0115 lines 5668-5683 map projectiles through
          * G2028 and C2900_ZONE_ + row*4 + ViewCell.  The bitmap binding is
          * still bounded, but D3L2/D3R2 runtime markers now use the same

@@ -1,5 +1,6 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 
 #include <stdio.h>
@@ -61,6 +62,11 @@ typedef struct {
     int sprite_w;
     int sprite_h;
     int depth_index;
+    int aspect_index;
+    int relative_dir;
+    int relative_cell;
+    int graphic_index;
+    int flip_flags;
 } TestRuntimeSpritePlacementCapture;
 
 static int test_projectile_material_resolver(
@@ -94,6 +100,11 @@ static int test_projectile_sprite_drawer(
         capture->sprite_y = placement->sprite_y;
         capture->sprite_w = placement->sprite_w;
         capture->sprite_h = placement->sprite_h;
+        capture->aspect_index = placement->sprite_aspect_index;
+        capture->relative_dir = placement->sprite_relative_dir;
+        capture->relative_cell = placement->sprite_relative_cell;
+        capture->graphic_index = placement->sprite_graphic_index;
+        capture->flip_flags = placement->sprite_flip_flags;
     }
     screen_pixels[(DM1_VIEWPORT_SCREEN_Y + placement->viewport_y) *
                       screen_stride +
@@ -288,6 +299,17 @@ static void test_runtime_projectile_and_explosion_overlays(void)
                   sprite_capture.sprite_w, 32);
         check_int("runtime.projectile_sprite.rect_h",
                   sprite_capture.sprite_h, 32);
+        check_int("runtime.projectile_sprite.aspect",
+                  sprite_capture.aspect_index, 0);
+        check_int("runtime.projectile_sprite.relative_dir",
+                  sprite_capture.relative_dir, 0);
+        check_int("runtime.projectile_sprite.relative_cell",
+                  sprite_capture.relative_cell, 2);
+        check_int("runtime.projectile_sprite.graphic_index",
+                  sprite_capture.graphic_index,
+                  dm1_v1_projectile_graphic_index(0, 0));
+        check_int("runtime.projectile_sprite.flip_flags",
+                  sprite_capture.flip_flags, 0);
         check_int("runtime.projectile_sprite.drawn_count",
                   cfg.runtime_projectile_sprite_drawn_count, 1);
         check_int("runtime.projectile_sprite.skips_material_count",
@@ -1825,6 +1847,42 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                   placement.sprite_w, 224);
         check_int("csb.projectile_overlay.d3l2_cell2.sprite_h",
                   placement.sprite_h, 136);
+        check_int("csb.projectile_overlay.d3l2_cell2.aspect_default",
+                  placement.sprite_aspect_index, -1);
+        check_int("csb.projectile_overlay.d3l2_cell2.relative_dir_default",
+                  placement.sprite_relative_dir, -1);
+        check_int("csb.projectile_overlay.d3l2_cell2.relative_cell_default",
+                  placement.sprite_relative_cell, -1);
+        check_int("csb.projectile_overlay.d3l2_cell2.gfx_default",
+                  placement.sprite_graphic_index, -1);
+        check_int("csb.projectile_overlay.d3l2_cell2.flip_default",
+                  placement.sprite_flip_flags, 0);
+        {
+            struct ProjectileInstance_Compat projectile;
+            memset(&projectile, 0, sizeof(projectile));
+            projectile.projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+            projectile.direction = 1;
+            projectile.mapX = 8;
+            projectile.mapY = 7;
+            check_int("csb.projectile_overlay.d3l2_cell2.bind_sprite",
+                      csb_v1_viewport_runtime_bind_projectile_sprite(
+                          0, &projectile, &placement), 1);
+            check_int("csb.projectile_overlay.d3l2_cell2.bind_aspect",
+                      placement.sprite_aspect_index,
+                      DM1_PROJ_ASPECT_LIGHTNING_BOLT);
+            check_int("csb.projectile_overlay.d3l2_cell2.bind_rel_dir",
+                      placement.sprite_relative_dir, 1);
+            check_int("csb.projectile_overlay.d3l2_cell2.bind_rel_cell",
+                      placement.sprite_relative_cell, 2);
+            check_int("csb.projectile_overlay.d3l2_cell2.bind_gfx",
+                      placement.sprite_graphic_index,
+                      dm1_v1_projectile_graphic_index(
+                          DM1_PROJ_ASPECT_LIGHTNING_BOLT, 1));
+            check_int("csb.projectile_overlay.d3l2_cell2.bind_flip",
+                      placement.sprite_flip_flags,
+                      dm1_v1_projectile_flip_flags(
+                          DM1_PROJ_ASPECT_LIGHTNING_BOLT, 1, 2, 8, 7));
+        }
 
         memset(&placement, 0, sizeof(placement));
         check_int("csb.projectile_overlay.d3l2_cell3.visible",

@@ -1055,32 +1055,15 @@ static int m11_csb_viewport_projectile_sprite_drawer(
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
-    const CSB_V1_RuntimeProfile *runtime;
-    int aspect;
-    int relative_dir;
-    int relative_cell;
-    int gfx_index;
-    int flip_flags;
 
     if (!ctx || !ctx->state || !ctx->profile || !projectile || !placement ||
         !screen_pixels || screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    runtime = &ctx->profile->runtime;
-    aspect = dm1_v1_projectile_subtype_to_aspect(
-        projectile->projectileSubtype);
-    if (aspect < 0) {
+    (void)projectile;
+    if (placement->sprite_graphic_index < 0) {
         return 0;
     }
-    relative_dir = (projectile->direction - runtime->party_dir) & 3;
-    relative_cell = (placement->view_cell - runtime->party_dir) & 3;
-    gfx_index = dm1_v1_projectile_graphic_index(aspect, relative_dir);
-    flip_flags = dm1_v1_projectile_flip_flags(
-        aspect,
-        relative_dir,
-        relative_cell,
-        projectile->mapX,
-        projectile->mapY);
     /* ReDMCSB DUNVIEW.C F0115 lines 5710-5722 picks the scale row from
      * view depth/cell before the F0791 C10 projectile blit.  Reuse the
      * M11 DM1 sprite path here; CSB PC34 shares the projectile bitmap
@@ -1094,11 +1077,11 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         placement->sprite_y,
         placement->sprite_w,
         placement->sprite_h,
-        gfx_index,
+        placement->sprite_graphic_index,
         placement->forward,
-        relative_dir,
-        relative_cell,
-        flip_flags,
+        placement->sprite_relative_dir,
+        placement->sprite_relative_cell,
+        placement->sprite_flip_flags,
         placement->source_zone_row);
 }
 
