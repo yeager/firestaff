@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus startup render facts ownership: `nexus_v1_startup_menu` now builds save-select and champion-select startup draw commands directly from raw facts. M11 no longer builds Nexus save/champion snapshots before startup rendering. Verification: Nexus startup menu test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus champion input facts ownership: `nexus_v1_startup_menu` now handles champion-select Firestaff keyboard input directly from raw champion facts, including slot-mask, cursor, and frame normalization. M11 no longer builds a Nexus champion snapshot before keyboard/menu input. Verification: Nexus startup menu test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB init/phase facts receipts: `csb_v1_startup_sequence_pc34_compat` now returns startup init receipts and receipt phase data directly from raw facts. M11 no longer constructs CSB command-state for selected-entry init or boot receipt reporting. Verification: CSB startup entrance pointer contract passed 133/133, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
