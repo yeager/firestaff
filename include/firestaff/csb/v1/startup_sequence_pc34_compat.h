@@ -464,6 +464,12 @@ typedef struct CSB_V1_StartupCommandStateReceipt_PC34 {
     int pending_command;
 } CSB_V1_StartupCommandStateReceipt_PC34;
 
+typedef struct CSB_V1_StartupTickReceipt_PC34 {
+    int entrance_frame;
+    CSB_V1_StartupTickResult_PC34 tick_result;
+    CSB_V1_StartupCommandStateReceipt_PC34 state;
+} CSB_V1_StartupTickReceipt_PC34;
+
 typedef struct CSB_V1_StartupEntranceCommandReceipt_PC34 {
     int command_id;
     int handled;
@@ -547,6 +553,22 @@ int csb_v1_startup_entrance_command_for_action_pc34(
 int csb_v1_startup_advance_tick_pc34(
     CSB_V1_StartupTickState_PC34 *state,
     CSB_V1_StartupTickResult_PC34 *out_result);
+void csb_v1_startup_tick_receipt_init_pc34(
+    CSB_V1_StartupTickReceipt_PC34 *receipt);
+int csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
+    int entrance_frame,
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_source_step,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int door_step_count,
+    CSB_V1_StartupTickReceipt_PC34 *out_receipt);
 int csb_v1_startup_build_render_plan_pc34(
     const CSB_V1_StartupRenderState_PC34 *state,
     CSB_V1_StartupRenderPlan_PC34 *out_plan);

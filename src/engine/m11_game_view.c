@@ -12881,61 +12881,32 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (state->csbState.startup_entrance_active) {
-            CSB_V1_StartupTickState_PC34 startup_tick;
-            CSB_V1_StartupTickResult_PC34 startup_result;
-            memset(&startup_tick, 0, sizeof(startup_tick));
-            memset(&startup_result, 0, sizeof(startup_result));
-            startup_tick.entrance_frame =
-                state->csbState.startup_entrance_frame;
-            startup_tick.title_active =
-                state->csbState.startup_title_active;
-            startup_tick.title_frame =
-                state->csbState.startup_title_frame;
-            startup_tick.title_source_step =
-                state->csbState.startup_title_source_step;
-            startup_tick.entrance_source_step =
-                state->csbState.startup_entrance_source_step;
-            startup_tick.credits_active =
-                state->csbState.startup_entrance_credits_active;
-            startup_tick.credits_remaining_ticks =
-                state->csbState.startup_entrance_credits_remaining_ticks;
-            startup_tick.opening_active =
-                state->csbState.startup_entrance_opening_active;
-            startup_tick.opening_delay_ticks =
-                state->csbState.startup_entrance_opening_delay_ticks;
-            startup_tick.opening_step =
-                state->csbState.startup_entrance_opening_step;
-            startup_tick.door_step_count =
-                (int)ENTRANCE_Compat_GetDoorAnimationStepCount();
-            (void)csb_v1_startup_advance_tick_pc34(
-                &startup_tick,
-                &startup_result);
+            CSB_V1_StartupTickReceipt_PC34 startup_receipt;
+            (void)csb_v1_startup_advance_tick_from_facts_with_receipt_pc34(
+                state->csbState.startup_entrance_frame,
+                state->csbState.startup_title_active,
+                state->csbState.startup_title_frame,
+                state->csbState.startup_title_source_step,
+                state->csbState.startup_entrance_source_step,
+                state->csbState.startup_entrance_credits_active,
+                state->csbState.startup_entrance_credits_remaining_ticks,
+                state->csbState.startup_entrance_opening_active,
+                state->csbState.startup_entrance_opening_delay_ticks,
+                state->csbState.startup_entrance_opening_step,
+                state->csbState.startup_entrance_pending_command,
+                (int)ENTRANCE_Compat_GetDoorAnimationStepCount(),
+                &startup_receipt);
             state->csbState.startup_entrance_frame =
-                startup_tick.entrance_frame;
-            state->csbState.startup_title_active =
-                startup_tick.title_active;
-            state->csbState.startup_title_frame =
-                startup_tick.title_frame;
-            state->csbState.startup_title_source_step =
-                startup_tick.title_source_step;
-            state->csbState.startup_entrance_source_step =
-                startup_tick.entrance_source_step;
-            state->csbState.startup_entrance_credits_active =
-                startup_tick.credits_active;
-            state->csbState.startup_entrance_credits_remaining_ticks =
-                startup_tick.credits_remaining_ticks;
-            state->csbState.startup_entrance_opening_active =
-                startup_tick.opening_active;
-            state->csbState.startup_entrance_opening_delay_ticks =
-                startup_tick.opening_delay_ticks;
-            state->csbState.startup_entrance_opening_step =
-                startup_tick.opening_step;
-            if (startup_result.title_finished ||
-                startup_result.reached_entrance_wait ||
-                startup_result.credits_finished) {
+                startup_receipt.entrance_frame;
+            m11_csb_startup_command_state_receipt_to_m11(
+                state,
+                &startup_receipt.state);
+            if (startup_receipt.tick_result.title_finished ||
+                startup_receipt.tick_result.reached_entrance_wait ||
+                startup_receipt.tick_result.credits_finished) {
                 m11_set_status(state, "BOOT", "CSB ENTRANCE");
             }
-            if (startup_result.door_opening_finished) {
+            if (startup_receipt.tick_result.door_opening_finished) {
                 int pending =
                     state->csbState.startup_entrance_pending_command;
                 m11_csb_startup_finish_door_opening(state);
