@@ -551,6 +551,7 @@ typedef struct {
         int title_frame;
         int champion_select_active;
         int champion_cursor;
+        int champion_select_frame;
         int startup_save_select_active;
         int startup_save_selected_row;
         int startup_save_row_count;

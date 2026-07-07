@@ -10523,6 +10523,7 @@ static void m11_nexus_release_title(M11_GameViewState* state) {
     state->nexusState.title_frame = 0;
     state->nexusState.champion_select_active = 0;
     state->nexusState.champion_cursor = 0;
+    state->nexusState.champion_select_frame = 0;
 }
 
 static void m11_nexus_startup_scan_saves(M11_GameViewState *state)
@@ -10758,6 +10759,7 @@ static M11_GameInputResult m11_nexus_startup_apply_save_action(
         state->nexusState.startup_save_select_active = 0;
         state->nexusState.champion_select_active = 1;
         state->nexusState.champion_cursor = 0;
+        state->nexusState.champion_select_frame = 0;
         m11_set_status(state,
                        execution.status_scope ? execution.status_scope
                                               : "STARTUP",
@@ -10825,6 +10827,7 @@ static M11_GameInputResult m11_nexus_startup_apply_title_action(
         NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_CHAMPIONS) {
         state->nexusState.champion_select_active = 1;
         state->nexusState.champion_cursor = 0;
+        state->nexusState.champion_select_frame = 0;
         m11_set_status(state,
                        execution.status_scope ? execution.status_scope
                                               : "STARTUP",
@@ -10877,9 +10880,11 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
     } else if (execution.kind ==
                NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON) {
         state->nexusState.champion_select_active = 0;
+        state->nexusState.champion_select_frame = 0;
     } else if (execution.kind ==
                NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_SAVE_SELECT) {
         state->nexusState.champion_select_active = 0;
+        state->nexusState.champion_select_frame = 0;
         state->nexusState.startup_save_select_active = 1;
         if (execution.select_last_save_row &&
             state->nexusState.startup_save_row_count > 0) {
@@ -10889,6 +10894,7 @@ static M11_GameInputResult m11_nexus_startup_apply_champion_action(
     } else if (execution.kind ==
                NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE) {
         state->nexusState.champion_select_active = 0;
+        state->nexusState.champion_select_frame = 0;
         state->nexusState.title_active = 1;
         state->nexusState.title_frame = 0;
     }
@@ -14029,7 +14035,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (state->nexusState.champion_select_active) {
-            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            ++state->nexusState.champion_select_frame;
+            return M11_GAME_INPUT_REDRAW;
         }
         nexus_v1_tick(state->nexusEngine);
         if (state->nexusEngine->mechanics) {
@@ -39586,9 +39593,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                               chrome.subtitle,
                               &g_text_shadow);
             }
-            row_count = nexus_v1_startup_menu_build_champion_render_rows(
+            row_count = nexus_v1_startup_menu_build_champion_render_rows_for_frame(
                 pool,
                 state->nexusState.champion_cursor,
+                state->nexusState.champion_select_frame,
                 rows,
                 (int)(sizeof(rows) / sizeof(rows[0])),
                 &footer);
@@ -39596,6 +39604,22 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 const Nexus_V1_StartupChampionRenderRow *render_row =
                     &rows[row];
                 int portraitIndex = render_row->portrait_index;
+                M11_TextStyle row_style = g_text_small;
+                row_style.color = (unsigned char)render_row->text_color;
+                row_style.shadowColor =
+                    (unsigned char)render_row->shadow_color;
+                row_style.shadowDx = render_row->selected ? 1 : 0;
+                row_style.shadowDy = render_row->selected ? 1 : 0;
+                if (render_row->highlight_visible) {
+                    m11_draw_rect(framebuffer,
+                                  framebufferWidth,
+                                  framebufferHeight,
+                                  render_row->highlight_rect.x,
+                                  render_row->highlight_rect.y,
+                                  render_row->highlight_rect.w,
+                                  render_row->highlight_rect.h,
+                                  (unsigned char)render_row->text_color);
+                }
                 if (state->nexusEngine->ui_faces_loaded > 0 &&
                     portraitIndex >= 0 && portraitIndex < 24) {
                     const Nexus_UI_Surface* face =
@@ -39610,12 +39634,22 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                    render_row->portrait_w,
                                                    render_row->portrait_h);
                 }
+                if (render_row->portrait_border_color > 0) {
+                    m11_draw_rect(framebuffer,
+                                  framebufferWidth,
+                                  framebufferHeight,
+                                  render_row->portrait_x - 1,
+                                  render_row->portrait_y - 1,
+                                  render_row->portrait_w + 2,
+                                  render_row->portrait_h + 2,
+                                  (unsigned char)
+                                      render_row->portrait_border_color);
+                }
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               render_row->text_x,
                               render_row->text_y,
                               render_row->label,
-                              render_row->selected
-                                  ? &g_text_shadow : &g_text_small);
+                              &row_style);
             }
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           footer.text_x,

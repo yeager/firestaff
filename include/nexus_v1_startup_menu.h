@@ -143,10 +143,16 @@ typedef struct {
     int in_party;
     int portrait_index;
     Nexus_V1_StartupRect rect;
+    Nexus_V1_StartupRect highlight_rect;
     int portrait_x;
     int portrait_y;
     int portrait_w;
     int portrait_h;
+    int highlight_visible;
+    int text_color;
+    int shadow_color;
+    int portrait_border_color;
+    int party_marker_color;
     int text_x;
     int text_y;
     char label[NEXUS_V1_STARTUP_CHAMPION_ROW_LABEL_CAPACITY];
@@ -212,6 +218,13 @@ int nexus_v1_startup_menu_build_save_chrome_render(
 int nexus_v1_startup_menu_build_champion_render_rows(
     const Nexus_V1_ChampionPool *pool,
     int cursor,
+    Nexus_V1_StartupChampionRenderRow *rows,
+    int max_rows,
+    Nexus_V1_StartupChampionFooterRender *out_footer);
+int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
+    const Nexus_V1_ChampionPool *pool,
+    int cursor,
+    int frame,
     Nexus_V1_StartupChampionRenderRow *rows,
     int max_rows,
     Nexus_V1_StartupChampionFooterRender *out_footer);
