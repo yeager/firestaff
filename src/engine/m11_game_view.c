@@ -10488,30 +10488,6 @@ int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
     return 0;
 }
 
-static int m11_nexus_startup_row_at(const M11_GameViewState *state,
-                                    int row,
-                                    Nexus_V1_StartupRowKind *out_kind,
-                                    int *out_slot)
-{
-    Nexus_V1_StartupMenuSnapshot snapshot;
-
-    if (!state) {
-        return 0;
-    }
-    memset(&snapshot, 0, sizeof(snapshot));
-    snprintf(snapshot.save_dir,
-             sizeof(snapshot.save_dir),
-             "%s",
-             state->nexusState.startup_save_dir);
-    snapshot.slot_mask = state->nexusState.startup_save_slot_mask;
-    snapshot.row_count = state->nexusState.startup_save_row_count;
-    snapshot.selected_row = state->nexusState.startup_save_selected_row;
-    return nexus_v1_startup_menu_snapshot_row_at(&snapshot,
-                                                 row,
-                                                 out_kind,
-                                                 out_slot);
-}
-
 static void m11_nexus_startup_snapshot_from_state(
     const M11_GameViewState *state,
     Nexus_V1_StartupMenuSnapshot *snapshot)
