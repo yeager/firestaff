@@ -1225,8 +1225,11 @@ static void test_enter_game_rejects_partial_or_misrouted_profiles(void)
 static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
 {
     CSB_V1_BootProfile p;
+    CSB_V1_RuntimeStartupRuntimePlan_PC34 runtime_plan;
+    CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 runtime_receipt;
     char dungeon_path[ASSET_PATH_MAX];
     char bonus_dungeon_path[ASSET_PATH_MAX];
+    char runtime_save_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v2-profile-fallback-guard";
 
     (void)TEST_MKDIR(tmp_dir);
@@ -1292,6 +1295,66 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
     CHECK(csb_v1_runtime_set_load_bonus_dungeon(&p.runtime, 0) == 1 &&
               csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 0,
           "runtime can clear the bonus-dungeon load request for normal enter");
+
+    memset(&runtime_plan, 0, sizeof(runtime_plan));
+    runtime_plan.kind = CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_DUNGEON_PC34;
+    runtime_plan.set_bonus_dungeon = 1;
+    runtime_plan.bonus_dungeon = 0;
+    CHECK(csb_v1_runtime_apply_startup_runtime_plan_pc34(
+              &p.runtime,
+              &runtime_plan,
+              NULL,
+              &runtime_receipt) == 1 &&
+              runtime_receipt.bonus_requested_changed &&
+              runtime_receipt.bonus_requested == 0 &&
+              csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 0,
+          "runtime startup plan execution owns normal dungeon request");
+
+    memset(&runtime_plan, 0, sizeof(runtime_plan));
+    runtime_plan.kind =
+        CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_BONUS_DUNGEON_PC34;
+    runtime_plan.set_bonus_dungeon = 1;
+    runtime_plan.bonus_dungeon = 1;
+    CHECK(csb_v1_runtime_apply_startup_runtime_plan_pc34(
+              &p.runtime,
+              &runtime_plan,
+              NULL,
+              &runtime_receipt) == 1 &&
+              runtime_receipt.bonus_requested_changed &&
+              runtime_receipt.bonus_requested == 1 &&
+              runtime_receipt.bonus_dungeon_loaded &&
+              runtime_receipt.sync_profile_state,
+          "runtime startup plan execution owns bonus dungeon load");
+
+    snprintf(runtime_save_path,
+             sizeof(runtime_save_path),
+             "%s/runtime-plan-resume.fsav",
+             tmp_dir);
+    p.runtime.party_x = 12;
+    p.runtime.party_y = 13;
+    p.runtime.party_dir = 2;
+    CHECK(csb_v1_runtime_save_game_to_path(&p.runtime,
+                                           runtime_save_path) == 0,
+          "runtime startup plan fixture writes a resumable CSB save");
+    p.runtime.party_x = 1;
+    p.runtime.party_y = 1;
+    p.runtime.party_dir = 0;
+    memset(&runtime_plan, 0, sizeof(runtime_plan));
+    runtime_plan.kind = CSB_V1_RUNTIME_STARTUP_PLAN_RESUME_PC34;
+    runtime_plan.requires_resume_load = 1;
+    CHECK(csb_v1_runtime_apply_startup_runtime_plan_pc34(
+              &p.runtime,
+              &runtime_plan,
+              runtime_save_path,
+              &runtime_receipt) == 1 &&
+              runtime_receipt.resume_available &&
+              runtime_receipt.resume_loaded &&
+              runtime_receipt.sync_profile_state &&
+              runtime_receipt.sync_leader_hand &&
+              p.runtime.party_x == 12 &&
+              p.runtime.party_y == 13 &&
+              p.runtime.party_dir == 2,
+          "runtime startup plan execution owns entrance resume load");
 
     csb_v1_boot_cleanup(&p);
 }
