@@ -956,6 +956,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
     {
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
+        DM2_V1_DoorRender direct_door;
+        DM2_V1_DoorAssetBlit direct_door_blit;
         DM2_V1_CreatureRender direct_creature;
         DM2_V1_CreatureAssetBlit direct_creature_blit;
         DM2_V1_ItemRender direct_item;
@@ -968,12 +970,71 @@ static void test_first_tick_after_boot_profile_handoff(void)
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
         memset(s_projectile_pixels, 13, sizeof(s_projectile_pixels));
         memset(framebuffer, 0, sizeof(framebuffer));
+        memset(&direct_door, 0, sizeof(direct_door));
+        memset(&direct_door_blit, 0, sizeof(direct_door_blit));
         memset(&direct_creature, 0, sizeof(direct_creature));
         memset(&direct_creature_blit, 0, sizeof(direct_creature_blit));
         memset(&direct_item, 0, sizeof(direct_item));
         memset(&direct_item_blit, 0, sizeof(direct_item_blit));
         memset(&direct_projectile, 0, sizeof(direct_projectile));
         memset(&direct_blit, 0, sizeof(direct_blit));
+        direct_door.panel_gdat_index =
+            dm2_v1_viewport_door_panel_graphic_index_for_square(DM2_SQ_D0C);
+        direct_door.frame_gdat_index =
+            dm2_v1_viewport_door_frame_graphic_index_for_square(DM2_SQ_D1C);
+        direct_door.button_gdat_index =
+            dm2_v1_viewport_door_button_graphic_index_for_state(1);
+        direct_door.panel_rect =
+            (DM2_V1_ViewportRect){ 80, 0, 160, 135 };
+        direct_door.panel_visible_rect =
+            (DM2_V1_ViewportRect){ 80, 33, 160, 102 };
+        direct_door.frame_rect =
+            (DM2_V1_ViewportRect){ 60, 9, 104, 110 };
+        direct_door.button_rect =
+            (DM2_V1_ViewportRect){ 142, 57, 12, 14 };
+        CHECK(dm2_v1_viewport_door_panel_asset_blit(&direct_door,
+                                                    64,
+                                                    64,
+                                                    80,
+                                                    &direct_door_blit) == 1,
+              "door panel asset blit contract builds");
+        CHECK(direct_door_blit.src_rect.x == 0 &&
+              direct_door_blit.src_rect.y == 15 &&
+              direct_door_blit.src_rect.w == 64 &&
+              direct_door_blit.src_rect.h == 49 &&
+              direct_door_blit.dst_rect.y == 33 &&
+              direct_door_blit.dst_rect.h == 102,
+              "door panel asset blit owns open-percent source clipping");
+        CHECK(direct_door_blit.src_stride == 80 &&
+              direct_door_blit.transparent_color == 10,
+              "door panel asset blit owns material and stride");
+        CHECK(dm2_v1_viewport_door_frame_asset_blit(&direct_door,
+                                                    40,
+                                                    48,
+                                                    0,
+                                                    &direct_door_blit) == 1,
+              "door frame asset blit contract builds");
+        CHECK(direct_door_blit.src_rect.w == 40 &&
+              direct_door_blit.src_rect.h == 48 &&
+              direct_door_blit.dst_rect.x == 60 &&
+              direct_door_blit.dst_rect.y == 9 &&
+              direct_door_blit.dst_rect.w == 104 &&
+              direct_door_blit.dst_rect.h == 110 &&
+              direct_door_blit.src_stride == 40,
+              "door frame asset blit owns full-source destination");
+        CHECK(dm2_v1_viewport_door_button_asset_blit(&direct_door,
+                                                     11,
+                                                     13,
+                                                     0,
+                                                     &direct_door_blit) == 1,
+              "door button asset blit contract builds");
+        CHECK(direct_door_blit.src_rect.w == 11 &&
+              direct_door_blit.src_rect.h == 13 &&
+              direct_door_blit.dst_rect.x == 142 &&
+              direct_door_blit.dst_rect.y == 57 &&
+              direct_door_blit.dst_rect.w == 12 &&
+              direct_door_blit.dst_rect.h == 14,
+              "door button asset blit owns full-source destination");
         direct_creature.gdat_index = dm2_v1_viewport_creature_graphic_index(
             0x12, 0);
         direct_creature.frame_index = 1;
