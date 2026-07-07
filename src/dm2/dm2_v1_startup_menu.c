@@ -636,6 +636,40 @@ int dm2_v1_startup_execute_action(
     return dm2_v1_startup_execute_plan(&plan, save_root, out_execution);
 }
 
+int dm2_v1_startup_execute_save_path(
+    const char *save_path,
+    char *out_save_root,
+    int out_save_root_cap,
+    DM2_V1_StartupExecution *out_execution)
+{
+    DM2_V1_StartupSavePathResult result;
+
+    if (!out_execution) {
+        return 0;
+    }
+    dm2_v1_startup_execution_clear(out_execution);
+    result = dm2_v1_startup_load_session_from_save_path(
+        save_path,
+        out_save_root,
+        out_save_root_cap,
+        &out_execution->session,
+        NULL,
+        NULL);
+    if (result == DM2_V1_STARTUP_SAVE_PATH_INVALID) {
+        out_execution->kind = DM2_V1_STARTUP_EXEC_STATUS_REDRAW;
+        out_execution->status = "DM2 RESUME PATH INVALID";
+        return 1;
+    }
+    if (result != DM2_V1_STARTUP_SAVE_PATH_LOADED) {
+        out_execution->kind = DM2_V1_STARTUP_EXEC_STATUS_REDRAW;
+        out_execution->status = "DM2 RESUME FAILED";
+        return 1;
+    }
+    out_execution->kind = DM2_V1_STARTUP_EXEC_SESSION_READY;
+    out_execution->status = "DM2 RESUMED";
+    return 1;
+}
+
 int dm2_v1_startup_menu_build_render_rows(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupRenderRow *rows,
