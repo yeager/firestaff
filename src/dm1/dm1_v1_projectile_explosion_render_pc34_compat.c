@@ -178,6 +178,28 @@ int dm1_v1_projectile_subtype_to_aspect(int subtype) {
     }
 }
 
+int dm1_v1_projectile_d4_far_box(int relSide,
+                                 int *outX,
+                                 int *outY,
+                                 int *outW,
+                                 int *outH) {
+    int x;
+    if (relSide < -1 || relSide > 1) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0128 lines 8466-8477 calls F0115 for D4L,
+     * D4R, then D4C before D3 walls overpaint it. PC34 does not expose
+     * a C2900 source-zone row for D4, so Firestaff binds a tiny far box
+     * behind D3 while preserving that draw order and occlusion model. */
+    x = (relSide < 0) ? 78 : ((relSide > 0) ? 138 : 108);
+    if (outX) *outX = x;
+    if (outY) *outY = 42;
+    if (outW) *outW = 10;
+    if (outH) *outH = 8;
+    return 1;
+}
+
 
 /* ── Explosion rendering queries ─────────────────────────────────── */
 
