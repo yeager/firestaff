@@ -92,6 +92,7 @@
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
@@ -33134,18 +33135,19 @@ unsigned short M11_GameView_GetV1OpenChestThing(const M11_GameViewState* state) 
 }
 
 int M11_GameView_GetV1ActionAreaZoneId(void) {
-    return 11;
+    return DM1_V1_ACTION_AREA_ZONE_ID_PC34;
 }
 
 int M11_GameView_GetV1ActionAreaZone(int* outX,
                                         int* outY,
                                         int* outW,
                                         int* outH) {
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_area_rect_pc34();
     if (!M11_GameView_GetV1ActionAreaZoneId()) return 0;
-    if (outX) *outX = M11_DM_ACTION_AREA_X;
-    if (outY) *outY = M11_DM_ACTION_AREA_Y;
-    if (outW) *outW = M11_DM_ACTION_AREA_W;
-    if (outH) *outH = M11_DM_ACTION_AREA_H;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -33177,13 +33179,11 @@ static int m11_get_v1_spell_area_click_zone(int* outX,
 }
 
 int M11_GameView_GetV1ActionAreaGraphicId(void) {
-    return M11_GFX_ACTION_AREA;
+    return DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34;
 }
 
 int M11_GameView_GetV1ActionMenuGraphicZoneId(int actionRowCount) {
-    if (actionRowCount <= 1) return 79;
-    if (actionRowCount == 2) return 77;
-    return 11;
+    return dm1_v1_action_menu_graphic_zone_id_pc34(actionRowCount);
 }
 
 int M11_GameView_GetV1ActionMenuGraphicZone(int actionRowCount,
@@ -33191,21 +33191,21 @@ int M11_GameView_GetV1ActionMenuGraphicZone(int actionRowCount,
                                             int* outY,
                                             int* outW,
                                             int* outH) {
-    int zoneId = M11_GameView_GetV1ActionMenuGraphicZoneId(actionRowCount);
-    int actionX, actionY;
-    if (!zoneId || !M11_GameView_GetV1ActionAreaZone(&actionX, &actionY, NULL, NULL)) {
+    DM1_V1_ActionAreaRectPc34 rect;
+    if (!M11_GameView_GetV1ActionMenuGraphicZoneId(actionRowCount)) {
         return 0;
     }
-    if (outX) *outX = actionX;
-    if (outY) *outY = actionY;
-    if (outW) *outW = M11_DM_ACTION_AREA_W;
-    if (outH) *outH = (zoneId == 79) ? 21 : ((zoneId == 77) ? 33 : 45);
+    rect = dm1_v1_action_menu_graphic_rect_pc34(actionRowCount);
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ActionAreaClearColor(void) {
     /* F0387 clears the action area to black before drawing menu/icon state. */
-    return M11_COLOR_BLACK;
+    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
 }
 
 int M11_GameView_GetV1ActionResultZoneId(void) {
@@ -35001,36 +35001,37 @@ int M11_GameView_GetV1FoodWaterPanelZone(int* outX,
 
 int M11_GameView_GetV1ActionMenuHeaderZoneId(void) {
     /* F0387 prints the acting champion name through zone 80. */
-    return 80;
+    return DM1_V1_ACTION_MENU_HEADER_ZONE_ID_PC34;
 }
 
 int M11_GameView_GetV1ActionMenuHeaderZone(int* outX,
                                                int* outY,
                                                int* outW,
                                                int* outH) {
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_menu_header_rect_pc34();
     (void)M11_GameView_GetV1ActionMenuHeaderZoneId();
-    if (outX) *outX = M11_DM_ACTION_AREA_X;
-    if (outY) *outY = M11_DM_ACTION_MENU_HEADER_Y;
-    if (outW) *outW = M11_DM_ACTION_AREA_W;
-    if (outH) *outH = M11_DM_ACTION_MENU_HEADER_H;
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ActionMenuRowCount(void) {
     /* F0387 prints exactly three action rows for the selected ActionSet. */
-    return 3;
+    return DM1_V1_ACTION_MENU_ROW_COUNT_PC34;
 }
 
 int M11_GameView_GetV1ActionMenuRowBaseZoneId(int rowIndex) {
     if (rowIndex < 0 || rowIndex >= M11_GameView_GetV1ActionMenuRowCount()) return 0;
     /* Source action-row parent zones are C082, C083, and C084. */
-    return 82 + rowIndex;
+    return DM1_V1_ACTION_MENU_ROW_BASE_ZONE_ID_PC34 + rowIndex;
 }
 
 int M11_GameView_GetV1ActionMenuRowZoneId(int rowIndex) {
     if (!M11_GameView_GetV1ActionMenuRowBaseZoneId(rowIndex)) return 0;
     /* F0387 prints action names through zones 85, 86, and 87. */
-    return 85 + rowIndex;
+    return DM1_V1_ACTION_MENU_ROW_ZONE_ID_BASE_PC34 + rowIndex;
 }
 
 int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
@@ -35038,13 +35039,13 @@ int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
                                             int* outY,
                                             int* outW,
                                             int* outH) {
-    int zoneId = M11_GameView_GetV1ActionMenuRowZoneId(rowIndex);
-    if (zoneId == 0) return 0;
-    if (outX) *outX = M11_DM_ACTION_MENU_ROW_X;
-    if (outY) *outY = M11_DM_ACTION_MENU_ROW_Y0 +
-                      (zoneId - 85) * M11_DM_ACTION_MENU_ROW_STEP;
-    if (outW) *outW = M11_DM_ACTION_MENU_ROW_W;
-    if (outH) *outH = M11_DM_ACTION_MENU_ROW_H;
+    DM1_V1_ActionAreaRectPc34 rect;
+    if (M11_GameView_GetV1ActionMenuRowZoneId(rowIndex) == 0) return 0;
+    rect = dm1_v1_action_menu_row_rect_pc34(rowIndex);
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
@@ -35058,44 +35059,40 @@ int M11_GameView_GetV1ActionMenuTextInset(int* outX,
 int M11_GameView_GetV1ActionMenuTextOrigin(int rowIndex,
                                                int* outX,
                                                int* outY) {
-    int zoneX, zoneY;
+    DM1_V1_ActionAreaTextOriginPc34 origin;
     int insetX, insetY;
     (void)M11_GameView_GetV1ActionMenuTextInset(&insetX, &insetY);
     if (rowIndex < 0) {
-        if (!M11_GameView_GetV1ActionMenuHeaderZone(&zoneX, &zoneY,
-                                                    NULL, NULL)) return 0;
-        (void)zoneX;
-        (void)zoneY;
-        if (outX) *outX = M11_DM_ACTION_MENU_HEADER_TEXT_X;
-        if (outY) *outY = M11_DM_ACTION_MENU_HEADER_TEXT_Y;
+        if (!M11_GameView_GetV1ActionMenuHeaderZone(NULL, NULL, NULL, NULL)) return 0;
+        origin = dm1_v1_action_menu_header_text_origin_pc34();
+        if (outX) *outX = origin.x;
+        if (outY) *outY = origin.y;
         return 1;
     }
-    if (!M11_GameView_GetV1ActionMenuRowZone(rowIndex, &zoneX, &zoneY,
+    if (!M11_GameView_GetV1ActionMenuRowZone(rowIndex, NULL, NULL,
                                              NULL, NULL)) return 0;
-    (void)zoneX;
-    (void)zoneY;
     (void)insetX;
     (void)insetY;
-    if (outX) *outX = M11_DM_ACTION_MENU_ROW_TEXT_X;
-    if (outY) *outY = M11_DM_ACTION_MENU_ROW_TEXT_Y0 +
-                      rowIndex * M11_DM_ACTION_MENU_ROW_STEP;
+    origin = dm1_v1_action_menu_row_text_origin_pc34(rowIndex);
+    if (outX) *outX = origin.x;
+    if (outY) *outY = origin.y;
     return 1;
 }
 
 int M11_GameView_GetV1ActionMenuHeaderFillColor(void) {
-    return M11_COLOR_CYAN;
+    return DM1_V1_ACTION_AREA_CYAN_PC34;
 }
 
 int M11_GameView_GetV1ActionMenuHeaderTextColor(void) {
-    return M11_COLOR_BLACK;
+    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
 }
 
 int M11_GameView_GetV1ActionMenuRowFillColor(void) {
-    return M11_COLOR_BLACK;
+    return DM1_V1_ACTION_AREA_CLEAR_COLOR_PC34;
 }
 
 int M11_GameView_GetV1ActionMenuRowTextColor(void) {
-    return M11_COLOR_CYAN;
+    return DM1_V1_ACTION_AREA_CYAN_PC34;
 }
 
 static int m11_draw_dm_action_menu(const M11_GameViewState* state,
@@ -35107,6 +35104,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     int gotActions;
     int visibleRows = 3;
     int row;
+    DM1_V1_ActionMenuRenderPlanPc34 renderPlan;
     char nameBuf[16];
     const struct ChampionState_Compat* champ;
     if (!state) return 0;
@@ -35122,6 +35120,9 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
         visibleRows = m11_count_source_action_menu_rows(actions);
         if (visibleRows <= 0) return 0;
     }
+    if (!dm1_v1_action_menu_build_render_plan_pc34(visibleRows, &renderPlan)) {
+        return 0;
+    }
 
     /* F0387 always fills the full action area with black before
      * blitting the source menu sub-graphic selected by the number
@@ -35132,40 +35133,44 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
      * from a clean action-mode surface regardless of any prior
      * icon-cell overpaint from an earlier frame. */
     {
-        int actionX, actionY, actionW, actionH;
-        (void)M11_GameView_GetV1ActionAreaZone(
-            &actionX, &actionY, &actionW, &actionH);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      actionX, actionY, actionW, actionH,
-                      (unsigned char)M11_GameView_GetV1ActionAreaClearColor());
-        int menuX, menuY, menuW, menuH;
-        if (M11_GameView_GetV1ActionMenuGraphicZone(
-                visibleRows, &menuX, &menuY, &menuW, &menuH)) {
+                      renderPlan.clear_rect.x,
+                      renderPlan.clear_rect.y,
+                      renderPlan.clear_rect.w,
+                      renderPlan.clear_rect.h,
+                      (unsigned char)renderPlan.clear_color);
+        {
             const M11_AssetSlot* slot = NULL;
             if (state->assetsAvailable) {
                 slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                            (unsigned int)M11_GameView_GetV1ActionAreaGraphicId());
+                                            (unsigned int)renderPlan.graphic_id);
             }
             if (slot && slot->loaded && slot->pixels &&
-                (int)slot->width == actionW && (int)slot->height == actionH) {
-                M11_AssetLoader_BlitRegion(slot, 0, 0, menuW, menuH,
+                (int)slot->width == renderPlan.clear_rect.w &&
+                (int)slot->height == renderPlan.clear_rect.h) {
+                M11_AssetLoader_BlitRegion(slot, 0, 0,
+                                           renderPlan.graphic_rect.w,
+                                           renderPlan.graphic_rect.h,
                                            framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,
-                                           menuX, menuY, -1);
+                                           renderPlan.graphic_rect.x,
+                                           renderPlan.graphic_rect.y,
+                                           -1);
             } else {
                 (void)m11_blit_panel_asset_native(state,
                     framebuffer, framebufferWidth, framebufferHeight,
-                    M11_GameView_GetV1ActionAreaGraphicId(),
-                    actionW, actionH, actionX, actionY);
+                    renderPlan.graphic_id,
+                    renderPlan.clear_rect.w,
+                    renderPlan.clear_rect.h,
+                    renderPlan.clear_rect.x,
+                    renderPlan.clear_rect.y);
             }
         }
     }
 
     m11_format_champion_name(champ->name, nameBuf, sizeof(nameBuf));
     {
-        int textX, textY;
-        (void)M11_GameView_GetV1ActionMenuTextOrigin(-1, &textX, &textY);
         /* ReDMCSB ACTIDRAW.C F0387:361 uses
          * F0041_TEXT_PrintWithTrailingSpaces at (235,83) with
          * C007_CHAMPION_NAME_MAXIMUM_LENGTH.  That path uses
@@ -35173,30 +35178,30 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
          * inscription/font advance. */
         m11_draw_dm1_ui_text_trailing_spaces(
             framebuffer, framebufferWidth, framebufferHeight,
-            textX, textY, nameBuf, 7,
-            (unsigned char)M11_GameView_GetV1ActionMenuHeaderTextColor(),
-            (unsigned char)M11_GameView_GetV1ActionMenuHeaderFillColor());
+            renderPlan.header_text.x,
+            renderPlan.header_text.y,
+            nameBuf, 7,
+            (unsigned char)renderPlan.header_text_color,
+            (unsigned char)renderPlan.header_fill_color);
     }
 
     /* Action rows: pull the 3-tuple from the champion's action-hand
      * ActionSet.  F0387 prints every row through
      * F0041_TEXT_PrintWithTrailingSpaces with C012 length; NONE
      * therefore becomes a 12-character black trailing-space field. */
-    for (row = 0; row < M11_GameView_GetV1ActionMenuRowCount(); ++row) {
+    for (row = 0; row < renderPlan.row_count; ++row) {
         const char* name;
-        int textX, textY;
-        if (!M11_GameView_GetV1ActionMenuTextOrigin(row, &textX, &textY)) {
-            continue;
-        }
         name = (gotActions && row < visibleRows)
                    ? M11_GameView_GetActionName(actions[row])
                    : "";
         {
             m11_draw_dm1_ui_text_trailing_spaces(
                 framebuffer, framebufferWidth, framebufferHeight,
-                textX, textY, name ? name : "", 12,
-                (unsigned char)M11_GameView_GetV1ActionMenuRowTextColor(),
-                (unsigned char)M11_GameView_GetV1ActionMenuRowFillColor());
+                renderPlan.row_text[row].x,
+                renderPlan.row_text[row].y,
+                name ? name : "", 12,
+                (unsigned char)renderPlan.row_text_color,
+                (unsigned char)renderPlan.row_fill_color);
         }
     }
     return 1;
@@ -35561,14 +35566,14 @@ int M11_GameView_GetV1StatusNameTextZone(int championSlot,
 
 int M11_GameView_GetV1ActionIconParentZoneId(void) {
     /* Source action-hand icon template/root zone is C088 under C011. */
-    return 88;
+    return DM1_V1_ACTION_ICON_PARENT_ZONE_ID_PC34;
 }
 
 int M11_GameView_GetV1ActionIconCellZoneId(int championSlot) {
     if (!M11_GameView_GetV1ActionIconParentZoneId() ||
         championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
     /* Source action-hand icon cell parent zones are C089..C092. */
-    return 89 + championSlot;
+    return dm1_v1_action_icon_cell_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1ActionIconCellZone(int championSlot,
@@ -35576,20 +35581,20 @@ int M11_GameView_GetV1ActionIconCellZone(int championSlot,
                                              int* outY,
                                              int* outW,
                                              int* outH) {
-    int zoneId = M11_GameView_GetV1ActionIconCellZoneId(championSlot);
-    if (zoneId == 0) return 0;
-    if (outX) *outX = M11_DM_ACTION_ICON_CELL_X0 +
-                      (zoneId - 89) * M11_DM_ACTION_ICON_CELL_STEP;
-    if (outY) *outY = M11_DM_ACTION_ICON_CELL_Y;
-    if (outW) *outW = M11_DM_ACTION_ICON_CELL_W;
-    if (outH) *outH = M11_DM_ACTION_ICON_CELL_H;
+    DM1_V1_ActionAreaRectPc34 rect;
+    if (M11_GameView_GetV1ActionIconCellZoneId(championSlot) == 0) return 0;
+    rect = dm1_v1_action_icon_cell_rect_pc34(championSlot);
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
 int M11_GameView_GetV1ActionIconInnerZoneId(int championSlot) {
     if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
     /* Source inner icon zones are C093..C096. */
-    return 93 + championSlot;
+    return dm1_v1_action_icon_inner_zone_id_pc34(championSlot);
 }
 
 int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
@@ -35597,16 +35602,17 @@ int M11_GameView_GetV1ActionIconInnerZone(int championSlot,
                                               int* outY,
                                               int* outW,
                                               int* outH) {
-    int cellX;
+    DM1_V1_ActionAreaRectPc34 rect;
     if (!M11_GameView_GetV1ActionIconInnerZoneId(championSlot) ||
         !M11_GameView_GetV1ActionIconCellZone(championSlot,
-                                              &cellX, NULL, NULL, NULL)) {
+                                              NULL, NULL, NULL, NULL)) {
         return 0;
     }
-    if (outX) *outX = cellX + M11_DM_ACTION_ICON_INNER_X_OFF;
-    if (outY) *outY = M11_DM_ACTION_ICON_INNER_Y;
-    if (outW) *outW = M11_DM_ACTION_ICON_INNER_W;
-    if (outH) *outH = M11_DM_ACTION_ICON_INNER_H;
+    rect = dm1_v1_action_icon_inner_rect_pc34(championSlot);
+    if (outX) *outX = rect.x;
+    if (outY) *outY = rect.y;
+    if (outW) *outW = rect.w;
+    if (outH) *outH = rect.h;
     return 1;
 }
 
