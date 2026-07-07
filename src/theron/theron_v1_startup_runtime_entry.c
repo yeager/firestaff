@@ -344,6 +344,16 @@ void theron_v1_startup_runtime_entry_result_init(
     result->result = THERON_STARTUP_OK;
 }
 
+void theron_v1_startup_runtime_entry_apply_receipt_init(
+    Theron_V1StartupRuntimeEntryApplyReceipt *receipt) {
+
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
+}
+
 static void theron_v1_startup_runtime_entry_capture_result(
     const Theron_V1_World *world,
     Theron_V1StartupRuntimeEntryResult *out_result) {
@@ -426,5 +436,37 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     }
 
     theron_v1_startup_runtime_entry_capture_result(world, out_result);
+    return 1;
+}
+
+int theron_v1_startup_runtime_entry_apply_receipt(
+    const Theron_StartupActionPlan *plan,
+    const Theron_V1StartupRuntimeEntryResult *result,
+    const char *runtime_receipt,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_receipt) {
+
+    if (!out_receipt) {
+        return 0;
+    }
+    theron_v1_startup_runtime_entry_apply_receipt_init(out_receipt);
+    if (!plan || !result || result->result != THERON_STARTUP_OK ||
+        !result->level_loaded) {
+        return 0;
+    }
+
+    out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+    out_receipt->status_scope = plan->status_scope
+        ? plan->status_scope
+        : "BOOT";
+    out_receipt->status = plan->status ? plan->status : "THERON READY";
+    out_receipt->inspect_scope = "READY";
+    if (runtime_receipt && runtime_receipt[0]) {
+        snprintf(out_receipt->inspect_detail,
+                 sizeof(out_receipt->inspect_detail),
+                 "%s",
+                 runtime_receipt);
+        out_receipt->log_receipt = 1;
+    }
+    out_receipt->log_first_line = "T0: THERON LOADED";
     return 1;
 }
