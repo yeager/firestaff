@@ -418,6 +418,10 @@ int csb_v1_startup_entrance_action_for_input_pc34(
 int csb_v1_startup_entrance_command_for_input_pc34(
     int credits_active,
     CSB_V1_StartupInput_PC34 input);
+int csb_v1_startup_entrance_command_for_firestaff_input_pc34(
+    int credits_active,
+    int menu_input,
+    int *out_command);
 int csb_v1_startup_entrance_command_for_action_pc34(
     CSB_V1_StartupEntranceAction_PC34 action);
 int csb_v1_startup_advance_tick_pc34(

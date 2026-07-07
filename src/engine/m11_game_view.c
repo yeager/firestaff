@@ -15325,17 +15325,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return utilityInput;
         }
         {
-            CSB_V1_StartupInput_PC34 csbInput =
-                csb_v1_startup_input_from_firestaff_menu_code_pc34(
-                    (int)input);
-            int action = csb_v1_startup_entrance_action_for_input_pc34(
+            int command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+            if (csb_v1_startup_entrance_command_for_firestaff_input_pc34(
                 state->csbState.startup_entrance_credits_active,
-                csbInput);
-            int command = csb_v1_startup_entrance_command_for_input_pc34(
-                state->csbState.startup_entrance_credits_active,
-                csbInput);
-            if (action != CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34 ||
-                state->csbState.startup_entrance_credits_active) {
+                (int)input,
+                &command)) {
                 return m11_csb_startup_handle_entrance_command(state, command);
             }
         }
