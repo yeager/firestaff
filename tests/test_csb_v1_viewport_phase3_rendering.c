@@ -2603,6 +2603,16 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                    1, 0, 0, &object_place) == 1);
     check_int("csb.runtime_object_overlay.d1c.row",
               object_place.object_row, 8);
+    check_int("csb.runtime_object_overlay.d1c.sprite_vp_x",
+              object_place.sprite_viewport_x, 0);
+    check_int("csb.runtime_object_overlay.d1c.sprite_vp_y",
+              object_place.sprite_viewport_y, DM1_VIEWPORT_SCREEN_Y);
+    check_int("csb.runtime_object_overlay.d1c.sprite_vp_w",
+              object_place.sprite_viewport_w, DM1_VIEWPORT_WIDTH);
+    check_int("csb.runtime_object_overlay.d1c.sprite_vp_h",
+              object_place.sprite_viewport_h, DM1_VIEWPORT_HEIGHT);
+    check_int("csb.runtime_object_overlay.d1c.sprite_depth",
+              object_place.sprite_depth_index, 0);
     check_int("csb.runtime_object_overlay.d1c.view_square",
               object_place.view_square, 3);
     check_int("csb.runtime_object_overlay.d1c.screen_x",
@@ -2651,6 +2661,8 @@ static void test_csb_runtime_overlay_placement_contracts(void)
                    2, 0, 0, 1, &object_place) == 1);
     check_int("csb.runtime_object_overlay.d2c.pile1.scale",
               object_place.object_scale_index, 2);
+    check_int("csb.runtime_object_overlay.d2c.pile1.sprite_depth",
+              object_place.sprite_depth_index, 1);
     check_int("csb.runtime_object_overlay.d2c.pile1.shift_set",
               object_place.shift_set, 1);
     check_int("csb.runtime_object_overlay.d2c.pile1.shift_x_index",

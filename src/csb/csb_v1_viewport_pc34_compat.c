@@ -875,6 +875,18 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
     placement.object_row =
         csb_v1_viewport_f0115_c2500_c2900_row(forward, side);
     placement.source_zone = -1;
+    /* ReDMCSB DUNVIEW.C F0115/F0128 draws runtime floor-object sprites
+     * inside the 224x136 viewport pane, with row/depth selected by the
+     * CSB F0115 view-square route.  Keep the full M11 sprite call contract
+     * here so the shared renderer does not own CSB-specific geometry. */
+    placement.sprite_viewport_x = 0;
+    placement.sprite_viewport_y = DM1_VIEWPORT_SCREEN_Y;
+    placement.sprite_viewport_w = DM1_VIEWPORT_WIDTH;
+    placement.sprite_viewport_h = DM1_VIEWPORT_HEIGHT;
+    placement.sprite_depth_index = forward - 1;
+    if (placement.sprite_depth_index < 0) {
+        placement.sprite_depth_index = 0;
+    }
     placement.pile_index = pile_index < 0 ? 0 : pile_index;
     placement.object_scale_index =
         csb_v1_viewport_object_source_scale_index(forward - 1,
