@@ -676,23 +676,29 @@ static void test_pc34_wall_bitmap_selection(void)
         int zone;
         int wall_return;
         int front_alcove;
+        int rel_forward;
+        int rel_side;
+        int dst_x;
+        int dst_y;
+        int width;
+        int height;
         const char *occlusion_needle;
     } expected[] = {
-        { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, 0, DM1_PC34_ZONE_WALL_D3L2, 1, 0, "6264" },
-        { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, 0, DM1_PC34_ZONE_WALL_D3R2, 1, 0, "6331" },
-        { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  0, DM1_PC34_ZONE_WALL_D3L,  1, 1, "6437" },
-        { DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  0, DM1_PC34_ZONE_WALL_D3R,  1, 1, "6573" },
-        { DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C,  1, DM1_PC34_ZONE_WALL_D3C,  1, 1, "6720" },
-        { DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, 0, DM1_PC34_ZONE_WALL_D2L2, 1, 0, "6862" },
-        { DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, 0, DM1_PC34_ZONE_WALL_D2R2, 1, 0, "6893" },
-        { DM1_VIEW_SQUARE_D2L,  DM1_WALL_D2L,  DM1_WALL_D2R,  0, DM1_PC34_ZONE_WALL_D2L,  1, 1, "6973" },
-        { DM1_VIEW_SQUARE_D2R,  DM1_WALL_D2R,  DM1_WALL_D2L,  0, DM1_PC34_ZONE_WALL_D2R,  1, 1, "7166" },
-        { DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  1, DM1_PC34_ZONE_WALL_D2C,  1, 1, "7312" },
-        { DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  0, DM1_PC34_ZONE_WALL_D1L,  1, 0, "7460" },
-        { DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  0, DM1_PC34_ZONE_WALL_D1R,  1, 0, "7628" },
-        { DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C,  1, DM1_PC34_ZONE_WALL_D1C,  0, 1, "7843" },
-        { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0, "8038" },
-        { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0, "8144" },
+        { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, 0, DM1_PC34_ZONE_WALL_D3L2, 1, 0, 3, -2, 0,   25, 44,  49,  "6264" },
+        { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, 0, DM1_PC34_ZONE_WALL_D3R2, 1, 0, 3,  2, 180, 25, 44,  49,  "6331" },
+        { DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  0, DM1_PC34_ZONE_WALL_D3L,  1, 1, 3, -1, 7,   25, 83,  49,  "6437" },
+        { DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  0, DM1_PC34_ZONE_WALL_D3R,  1, 1, 3,  1, 134, 25, 83,  49,  "6573" },
+        { DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C,  1, DM1_PC34_ZONE_WALL_D3C,  1, 1, 3,  0, 77,  25, 70,  49,  "6720" },
+        { DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, 0, DM1_PC34_ZONE_WALL_D2L2, 1, 0, 2, -2, 0,   24, 8,   52,  "6862" },
+        { DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, 0, DM1_PC34_ZONE_WALL_D2R2, 1, 0, 2,  2, 216, 24, 8,   52,  "6893" },
+        { DM1_VIEW_SQUARE_D2L,  DM1_WALL_D2L,  DM1_WALL_D2R,  0, DM1_PC34_ZONE_WALL_D2L,  1, 1, 2, -1, 0,   20, 75,  71,  "6973" },
+        { DM1_VIEW_SQUARE_D2R,  DM1_WALL_D2R,  DM1_WALL_D2L,  0, DM1_PC34_ZONE_WALL_D2R,  1, 1, 2,  1, 149, 20, 75,  71,  "7166" },
+        { DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C,  1, DM1_PC34_ZONE_WALL_D2C,  1, 1, 2,  0, 59,  19, 106, 74,  "7312" },
+        { DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,  0, DM1_PC34_ZONE_WALL_D1L,  1, 0, 1, -1, 0,   9,  60,  111, "7460" },
+        { DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L,  0, DM1_PC34_ZONE_WALL_D1R,  1, 0, 1,  1, 164, 9,  60,  111, "7628" },
+        { DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C,  1, DM1_PC34_ZONE_WALL_D1C,  0, 1, 1,  0, 32,  9,  160, 111, "7843" },
+        { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0, 0, -1, 0,   0,  33,  136, "8038" },
+        { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0, 0,  1, 191, 0,  33,  136, "8144" },
     };
 
     check_int("PC34.wall_draw_spec.count", (int)dm1_viewport_3d_wall_draw_spec_count(), (int)(sizeof(expected) / sizeof(expected[0])));
@@ -714,6 +720,18 @@ static void test_pc34_wall_bitmap_selection(void)
         check_int(id, spec->wall_case_returns ? 1 : 0, expected[i].wall_return);
         snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.front_alcove", i);
         check_int(id, spec->front_alcove_reveals_contents ? 1 : 0, expected[i].front_alcove);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.runtime_rel_forward", i);
+        check_int(id, spec->runtime_rel_forward, expected[i].rel_forward);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.runtime_rel_side", i);
+        check_int(id, spec->runtime_rel_side, expected[i].rel_side);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.runtime_dst_x", i);
+        check_int(id, spec->runtime_dst_x, expected[i].dst_x);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.runtime_dst_y", i);
+        check_int(id, spec->runtime_dst_y, expected[i].dst_y);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.runtime_width", i);
+        check_int(id, spec->runtime_width, expected[i].width);
+        snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.runtime_height", i);
+        check_int(id, spec->runtime_height, expected[i].height);
         snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.occlusion_source", i);
         check_nonnull(id, spec->occlusion_source_lines);
         snprintf(id, sizeof(id), "PC34.wall_spec.%02zu.occlusion_line", i);

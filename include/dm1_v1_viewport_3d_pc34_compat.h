@@ -551,6 +551,12 @@ typedef struct {
     uint16_t pc34_zone;
     bool wall_case_returns;
     bool front_alcove_reveals_contents;
+    int runtime_rel_forward;
+    int runtime_rel_side;
+    int runtime_dst_x;
+    int runtime_dst_y;
+    int runtime_width;
+    int runtime_height;
     const char *redmcsb_function;
     const char *source_lines;
     const char *occlusion_source_lines;
