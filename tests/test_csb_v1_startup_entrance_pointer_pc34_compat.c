@@ -277,6 +277,7 @@ int main(void)
     char phase[64];
     int startup_active;
     int startup_frame;
+    int command;
     int i;
     unsigned char fb[320 * 200];
 
@@ -1122,9 +1123,31 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 &&
               csb_v1_startup_entrance_command_for_input_pc34(
                   1,
-                  CSB_V1_STARTUP_INPUT_ACCEPT_PC34) ==
+              CSB_V1_STARTUP_INPUT_ACCEPT_PC34) ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
           "startup entrance inputs resolve source command ids");
+    command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
+    check(csb_v1_startup_entrance_command_for_firestaff_input_pc34(
+              0,
+              9,
+              &command) &&
+              command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+          "startup Firestaff keyboard dispatch resolves Enter command");
+    command = CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34;
+    check(!csb_v1_startup_entrance_command_for_firestaff_input_pc34(
+              0,
+              999,
+              &command) &&
+              command == CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+          "startup Firestaff keyboard dispatch ignores idle input");
+    command = CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34;
+    check(csb_v1_startup_entrance_command_for_firestaff_input_pc34(
+              1,
+              999,
+              &command) &&
+              command == CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34,
+          "startup Firestaff keyboard dispatch owns credits dismiss");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
