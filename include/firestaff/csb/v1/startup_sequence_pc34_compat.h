@@ -449,6 +449,15 @@ typedef struct CSB_V1_StartupCommandStateRequest_PC34 {
     int pending_command;
 } CSB_V1_StartupCommandStateRequest_PC34;
 
+typedef struct CSB_V1_StartupEntranceCommandReceipt_PC34 {
+    int command_id;
+    int handled;
+    int requires_runtime_plan;
+    CSB_V1_StartupEntranceApplyResult_PC34 pure_apply_result;
+    CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
+    CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
+} CSB_V1_StartupEntranceCommandReceipt_PC34;
+
 typedef struct CSB_V1_StartupRenderPlanRequest_PC34 {
     int title_active;
     int title_frame;
@@ -587,6 +596,10 @@ int csb_v1_startup_plan_for_entrance_command_pc34(
     const CSB_V1_StartupCommandState_PC34 *state,
     int command_id,
     CSB_V1_StartupEntranceCommandPlan_PC34 *out_plan);
+int csb_v1_startup_apply_entrance_command_with_receipt_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    int command_id,
+    CSB_V1_StartupEntranceCommandReceipt_PC34 *out_receipt);
 int csb_v1_startup_entrance_input_outcome_pc34(
     const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
     int resume_available,

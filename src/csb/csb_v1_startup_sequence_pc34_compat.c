@@ -1931,6 +1931,54 @@ int csb_v1_startup_plan_for_entrance_command_pc34(
     }
 }
 
+int csb_v1_startup_apply_entrance_command_with_receipt_pc34(
+    CSB_V1_StartupCommandState_PC34 *state,
+    int command_id,
+    CSB_V1_StartupEntranceCommandReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupEntranceCommandPlan_PC34 plan;
+    CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
+    CSB_V1_StartupEntranceApplyResult_PC34 pure_result;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->command_id = command_id;
+        out_receipt->pure_apply_result =
+            CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34;
+        csb_v1_startup_runtime_plan_init_pc34(&out_receipt->runtime_plan);
+    }
+    if (!state || !out_receipt) {
+        return 0;
+    }
+    if (!csb_v1_startup_plan_for_entrance_command_pc34(
+            state,
+            command_id,
+            &plan)) {
+        return 0;
+    }
+
+    out_receipt->handled = 1;
+    pure_result = csb_v1_startup_apply_pure_entrance_plan_pc34(
+        state,
+        &plan,
+        &out_receipt->outcome);
+    out_receipt->pure_apply_result = pure_result;
+    if (pure_result !=
+        CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34) {
+        return 1;
+    }
+
+    if (!csb_v1_startup_runtime_plan_for_entrance_plan_pc34(
+            &plan,
+            &runtime_plan)) {
+        out_receipt->handled = 0;
+        return 0;
+    }
+    out_receipt->requires_runtime_plan = 1;
+    out_receipt->runtime_plan = runtime_plan;
+    return 1;
+}
+
 int csb_v1_startup_entrance_input_outcome_pc34(
     const CSB_V1_StartupEntranceCommandPlan_PC34 *plan,
     int resume_available,
