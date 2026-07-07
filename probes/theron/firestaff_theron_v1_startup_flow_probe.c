@@ -1,4 +1,5 @@
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_boot.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_startup_save_resume.h"
@@ -344,6 +345,72 @@ int main(void) {
             &render_plan,
             1);
 
+        {
+            Theron_StartupLayoutStateRequest request;
+            Theron_V1_BootProfile profile;
+            Theron_V1_World world;
+            const char *names[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
+            const char *titles[THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1];
+            int order[THERON_STARTUP_MAX_COMPANIONS + 1] = { 6, 2, 1, 0 };
+
+            memset(&request, 0, sizeof(request));
+            memset(&profile, 0, sizeof(profile));
+            memset(names, 0, sizeof(names));
+            memset(titles, 0, sizeof(titles));
+            theron_v1_world_init(&world);
+            world.progression.current_dungeon =
+                THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+            names[0] = "THERON";
+            titles[0] = "APPRENTICE";
+            names[1] = "HAKAR";
+            titles[1] = "FIGHTER";
+            request.phase = THERON_STARTUP_PHASE_READY;
+            request.selected_dungeon = THERON_DUNGEON_COUNT + 99;
+            request.boot_profile = &profile;
+            request.world = &world;
+            request.soul_cursor = 7;
+            request.continue_focus = 1;
+            request.has_tqsv_continue = 1;
+            request.tqsv_slot = 3;
+            request.startup_text_prompt = "READY";
+            request.startup_roster_names = names;
+            request.startup_roster_titles = titles;
+            request.startup_roster_name_count =
+                THERON_STARTUP_LAYOUT_ROSTER_CAPACITY + 1;
+            request.selected_mirrors_mask = 0x45;
+            request.selected_mirror_order = order;
+            request.selected_mirror_order_count =
+                THERON_STARTUP_MAX_COMPANIONS + 1;
+
+            check_int("layout state request builds",
+                      theron_v1_startup_layout_state_from_request(
+                          &request, &layout_state),
+                      1);
+            check_int("layout state request clamps dungeon",
+                      layout_state.selected_dungeon,
+                      THERON_DUNGEON_1_HALL_OF_RECORDS);
+            check_contains("layout state request chapter",
+                           layout_state.chapter_label,
+                           "Chapter 2");
+            check_int("layout state request roster cap",
+                      layout_state.startup_roster_name_count,
+                      THERON_STARTUP_LAYOUT_ROSTER_CAPACITY);
+            check_int("layout state request order cap",
+                      layout_state.selected_mirror_order_count,
+                      THERON_STARTUP_MAX_COMPANIONS);
+            check_str("layout state request roster name",
+                      layout_state.startup_roster_names[1],
+                      "HAKAR");
+            check_str("layout state request prompt",
+                      layout_state.startup_text_prompt,
+                      "READY");
+        }
+
+        theron_v1_startup_layout_state_init(&layout_state);
+        layout_state.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        snprintf(layout_state.chapter_label,
+                 sizeof(layout_state.chapter_label),
+                 "Chapter 1: Hall of Records");
         layout_state.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
         layout_state.progression = &progression;
         element_count = theron_v1_startup_layout_build(

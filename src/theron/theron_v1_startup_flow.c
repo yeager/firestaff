@@ -1,4 +1,5 @@
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_chapter_marker.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -312,6 +313,78 @@ void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state) {
     state->continue_focus = 0;
     state->tqsv_slot = -1;
     state->srm_slot = -1;
+}
+
+int theron_v1_startup_layout_state_from_request(
+    const Theron_StartupLayoutStateRequest *request,
+    Theron_StartupLayoutState *out_state) {
+
+    const Theron_V1_World *world;
+    const Theron_DungeonProgression *progression;
+    Theron_ChapterMarker marker;
+    int roster_count;
+    int order_count;
+    int i;
+
+    if (!request || !out_state) {
+        return 0;
+    }
+
+    theron_v1_startup_layout_state_init(out_state);
+    world = request->world;
+    progression = world ? &world->progression : NULL;
+
+    out_state->phase = request->phase;
+    out_state->selected_dungeon =
+        tqr_startup_clamp_stage((Theron_DungeonID)request->selected_dungeon);
+    out_state->progression = progression;
+    out_state->soul_cursor = request->soul_cursor;
+    out_state->continue_focus = request->continue_focus;
+    out_state->has_tqsv_continue = request->has_tqsv_continue ? 1 : 0;
+    out_state->tqsv_slot = request->tqsv_slot;
+    out_state->has_srm_continue = request->has_srm_continue ? 1 : 0;
+    out_state->srm_slot = request->srm_slot;
+
+    theron_v1_chapter_marker_compute(
+        (const Theron_V1_BootProfile*)request->boot_profile,
+        progression,
+        NULL,
+        &marker);
+    snprintf(out_state->chapter_label,
+             sizeof(out_state->chapter_label),
+             "%s",
+             marker.chapter_label[0] ? marker.chapter_label : "Chapter ?");
+    snprintf(out_state->startup_text_prompt,
+             sizeof(out_state->startup_text_prompt),
+             "%s",
+             request->startup_text_prompt ? request->startup_text_prompt : "");
+
+    roster_count = request->startup_roster_name_count;
+    if (roster_count < 0) {
+        roster_count = 0;
+    }
+    if (roster_count > THERON_STARTUP_LAYOUT_ROSTER_CAPACITY) {
+        roster_count = THERON_STARTUP_LAYOUT_ROSTER_CAPACITY;
+    }
+    out_state->startup_roster_name_count = roster_count;
+    for (i = 0; i < roster_count; ++i) {
+        out_state->startup_roster_names[i] =
+            request->startup_roster_names ? request->startup_roster_names[i] : NULL;
+        out_state->startup_roster_titles[i] =
+            request->startup_roster_titles ? request->startup_roster_titles[i] : NULL;
+    }
+
+    order_count = request->selected_mirror_order_count;
+    if (order_count < 0) {
+        order_count = 0;
+    }
+    if (order_count > THERON_STARTUP_MAX_COMPANIONS) {
+        order_count = THERON_STARTUP_MAX_COMPANIONS;
+    }
+    out_state->selected_mirrors_mask = request->selected_mirrors_mask;
+    out_state->selected_mirror_order = request->selected_mirror_order;
+    out_state->selected_mirror_order_count = order_count;
+    return 1;
 }
 
 static Theron_DungeonID tqr_startup_clamp_stage(Theron_DungeonID dungeon_id) {
