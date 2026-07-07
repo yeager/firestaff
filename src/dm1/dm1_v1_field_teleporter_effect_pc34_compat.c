@@ -74,6 +74,46 @@ int dm1_v1_field_render_plan_for_relative_pc34(
     return 0;
 }
 
+int dm1_v1_field_graphic_index_pc34(void)
+{
+    /* ReDMCSB: DEFS.H C076_GRAPHIC_FIELD_TELEPORTER. */
+    return DM1_FIELD_TELEPORTER_GRAPHIC_PC34;
+}
+
+int dm1_v1_field_mask_graphic_index_pc34(int maskIndex)
+{
+    if (maskIndex < 0 || maskIndex > 5) {
+        return -1;
+    }
+    /* ReDMCSB: DEFS.H C070..C075 field mask graphics consumed by F0113. */
+    return DM1_FIELD_MASK_GRAPHIC_BASE_PC34 + maskIndex;
+}
+
+int dm1_v1_field_asset_binding_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    DM1_FieldAssetBindingPc34* outBinding)
+{
+    if (!plan || !outBinding) {
+        return 0;
+    }
+    memset(outBinding, 0, sizeof(*outBinding));
+    outBinding->fieldGraphicIndex = dm1_v1_field_graphic_index_pc34();
+    outBinding->maskGraphicIndex = -1;
+    outBinding->maskIndex = -1;
+    outBinding->transparentColor = plan->transparentColor;
+    if (plan->maskIndexAndFlip != 0xff) {
+        outBinding->maskRequired = 1;
+        outBinding->maskIndex = plan->maskIndexAndFlip & 0x7f;
+        outBinding->maskFlip = (plan->maskIndexAndFlip & 0x80) ? 1 : 0;
+        outBinding->maskGraphicIndex =
+            dm1_v1_field_mask_graphic_index_pc34(outBinding->maskIndex);
+        if (outBinding->maskGraphicIndex < 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int dm1_v1_field_bitmap_sample_pc34(
     const DM1_FieldRenderPlanPc34* plan,
     uint32_t animTick,
@@ -171,21 +211,16 @@ int dm1_v1_field_asset_indices_pc34(
     int* outFieldGraphicIndex,
     int* outMaskGraphicIndex)
 {
-    int maskIndex;
+    DM1_FieldAssetBindingPc34 binding;
 
     if (!plan || !outFieldGraphicIndex || !outMaskGraphicIndex) {
         return 0;
     }
-
-    *outFieldGraphicIndex = DM1_FIELD_TELEPORTER_GRAPHIC_PC34;
-    *outMaskGraphicIndex = -1;
-    if (plan->maskIndexAndFlip != 0xff) {
-        maskIndex = plan->maskIndexAndFlip & 0x7f;
-        if (maskIndex < 0 || maskIndex > 5) {
-            return 0;
-        }
-        *outMaskGraphicIndex = DM1_FIELD_MASK_GRAPHIC_BASE_PC34 + maskIndex;
+    if (!dm1_v1_field_asset_binding_pc34(plan, &binding)) {
+        return 0;
     }
+    *outFieldGraphicIndex = binding.fieldGraphicIndex;
+    *outMaskGraphicIndex = binding.maskGraphicIndex;
     return 1;
 }
 

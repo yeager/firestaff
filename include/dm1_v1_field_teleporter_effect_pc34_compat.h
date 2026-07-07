@@ -72,6 +72,15 @@ typedef struct DM1_FieldBitmapSamplePc34 {
     int transparentColor;
 } DM1_FieldBitmapSamplePc34;
 
+typedef struct DM1_FieldAssetBindingPc34 {
+    int fieldGraphicIndex;
+    int maskGraphicIndex;
+    int maskRequired;
+    int maskIndex;
+    int maskFlip;
+    int transparentColor;
+} DM1_FieldAssetBindingPc34;
+
 void m11_ft_init(M11_FT_EffectState* state);
 void m11_ft_start_teleport(M11_FT_EffectState* state,
                             int16_t sx, int16_t sy, int16_t sl,
@@ -96,6 +105,14 @@ int dm1_v1_field_render_plan_for_relative_pc34(
     int relForward,
     int relSide,
     DM1_FieldRenderPlanPc34* outPlan);
+
+int dm1_v1_field_graphic_index_pc34(void);
+
+int dm1_v1_field_mask_graphic_index_pc34(int maskIndex);
+
+int dm1_v1_field_asset_binding_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    DM1_FieldAssetBindingPc34* outBinding);
 
 int dm1_v1_field_bitmap_sample_pc34(
     const DM1_FieldRenderPlanPc34* plan,
