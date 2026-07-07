@@ -357,6 +357,7 @@ int main(void)
               plan.fallback_status_y == 84 &&
               plan.fallback_status_style == 1 &&
               strcmp(plan.fallback_status_text, "CSB RUNTIME READY") == 0 &&
+              plan.fallback_status_visible &&
               plan.fallback_frame_valid &&
               plan.fallback_frame_x == 18 &&
               plan.fallback_frame_y == 18 &&
@@ -367,6 +368,7 @@ int main(void)
               plan.fallback_detail_y == 96 &&
               plan.fallback_detail_style == 1 &&
               strcmp(plan.fallback_detail_text, "START") == 0 &&
+              plan.fallback_detail_visible &&
               plan.fallback_runtime_detail_visible &&
               strcmp(plan.fallback_runtime_detail_text, "START 5,7 DIR 2") == 0 &&
               plan.fallback_prompt_x == 38 &&
@@ -375,6 +377,14 @@ int main(void)
               strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0,
           "startup render plan owns closed entrance prompt, fallback text, and door boxes");
 
+    render_state.utility_overlay_active = 1;
+    check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
+              !plan.fallback_status_visible &&
+              !plan.fallback_detail_visible &&
+              plan.fallback_runtime_detail_visible,
+          "startup render plan suppresses fallback status rows behind utility overlay");
+
+    render_state.utility_overlay_active = 0;
     render_state.entrance_frame = 12;
     check(csb_v1_startup_build_render_plan_pc34(&render_state, &plan) &&
               !plan.blink_prompt_visible,

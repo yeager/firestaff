@@ -208,6 +208,7 @@ static void csb_v1_startup_clear_fallback_text_pc34(
     plan->fallback_status_y = 0;
     plan->fallback_status_style = 0;
     plan->fallback_status_text = NULL;
+    plan->fallback_status_visible = 0;
     plan->fallback_frame_valid = 0;
     plan->fallback_frame_x = 0;
     plan->fallback_frame_y = 0;
@@ -218,6 +219,7 @@ static void csb_v1_startup_clear_fallback_text_pc34(
     plan->fallback_detail_y = 0;
     plan->fallback_detail_style = 0;
     plan->fallback_detail_text = NULL;
+    plan->fallback_detail_visible = 0;
     plan->fallback_runtime_detail_visible = 0;
     plan->fallback_runtime_detail_text[0] = '\0';
     plan->fallback_prompt_x = 0;
@@ -652,7 +654,9 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
     csb_v1_startup_set_entrance_fallback_text_pc34(&plan);
+    plan.fallback_status_visible = !state->utility_overlay_active;
     if (state->runtime_start_valid) {
+        plan.fallback_detail_visible = !state->utility_overlay_active;
         plan.fallback_runtime_detail_visible = 1;
         snprintf(plan.fallback_runtime_detail_text,
                  sizeof(plan.fallback_runtime_detail_text),
