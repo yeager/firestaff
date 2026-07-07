@@ -50,6 +50,18 @@ typedef struct {
     uint8_t particle_count;
 } M11_FT_EffectState;
 
+typedef struct DM1_FieldRenderPlanPc34 {
+    int relForward;
+    int relSide;
+    int dstX;
+    int dstY;
+    int dstW;
+    int dstH;
+    int baseStartUnit;
+    int transparentColor;
+    int maskIndexAndFlip;
+} DM1_FieldRenderPlanPc34;
+
 void m11_ft_init(M11_FT_EffectState* state);
 void m11_ft_start_teleport(M11_FT_EffectState* state,
                             int16_t sx, int16_t sy, int16_t sl,
@@ -63,6 +75,14 @@ bool m11_ft_tick(M11_FT_EffectState* state);
 bool m11_ft_is_active(const M11_FT_EffectState* state);
 uint8_t m11_ft_get_flash_intensity(const M11_FT_EffectState* state);
 uint8_t m11_ft_get_particle_count(const M11_FT_EffectState* state);
+
+int dm1_v1_field_render_plan_count_pc34(void);
+
+int dm1_v1_field_render_plan_at_pc34(
+    int planIndex,
+    DM1_FieldRenderPlanPc34* outPlan);
+
+int dm1_v1_field_square_is_visible_open_pc34(int square);
 
 #ifdef __cplusplus
 }

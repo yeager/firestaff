@@ -15857,6 +15857,12 @@ firestaff_add_dm1_v1_viewport_contract_test(
     dm1_v1_stairs_render_pc34_compat
 )
 firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_field_teleporter_effect_pc34_compat
+    tests/test_dm1_v1_field_teleporter_effect_pc34_compat.c
+    src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
+    dm1_v1_field_teleporter_effect_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_wall_ornament_pc34_compat
     tests/test_dm1_v1_wall_ornament_pc34_compat.c
     src/dm1/dm1_v1_wall_ornament_pc34_compat.c
