@@ -108,6 +108,21 @@ int dm1_v1_field_bitmap_sample_pc34(
     int maskHeight,
     DM1_FieldBitmapSamplePc34* outSample);
 
+int dm1_v1_field_bitmap_pixel_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    uint32_t animTick,
+    int localX,
+    int localY,
+    const uint8_t* fieldPixels,
+    int fieldWidth,
+    int fieldHeight,
+    int fieldStride,
+    const uint8_t* maskPixels,
+    int maskWidth,
+    int maskHeight,
+    int maskStride,
+    uint8_t* outPixel);
+
 int dm1_v1_field_square_is_visible_open_pc34(int square);
 
 #ifdef __cplusplus

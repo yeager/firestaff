@@ -21039,25 +21039,17 @@ static int m11_draw_dm1_field_zone(const M11_GameViewState* state,
             int fbX = M11_VIEWPORT_X + dstX + x;
             int maskWidth = mask ? (int)mask->width : 0;
             int maskHeight = mask ? (int)mask->height : 0;
-            DM1_FieldBitmapSamplePc34 sample;
             unsigned char pixel;
             if (fbX < 0 || fbX >= fbW) {
                 continue;
             }
-            if (!dm1_v1_field_bitmap_sample_pc34(plan, state->animTick, x, y,
-                                                 (int)field->width, (int)field->height,
-                                                 maskWidth, maskHeight, &sample)) {
-                continue;
-            }
-            if (sample.maskPresent && mask) {
-                unsigned char maskPixel = mask->pixels[sample.maskY * (int)mask->width + sample.maskX];
-                if (maskPixel == 0) {
-                    continue;
-                }
-            }
-            pixel = field->pixels[sample.fieldY * (int)field->width + sample.fieldX];
-            if ((sample.transparentColor & 0x7f) != 0x7f &&
-                pixel == (unsigned char)(sample.transparentColor & 0x7f)) {
+            if (!dm1_v1_field_bitmap_pixel_pc34(
+                    plan, state->animTick, x, y,
+                    field->pixels, (int)field->width, (int)field->height,
+                    (int)field->width,
+                    mask ? mask->pixels : NULL,
+                    maskWidth, maskHeight, maskWidth,
+                    &pixel)) {
                 continue;
             }
             framebuffer[fbY * fbW + fbX] = pixel;
