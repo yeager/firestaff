@@ -615,6 +615,47 @@ int nexus_v1_startup_execute_title_action(
     return 0;
 }
 
+int nexus_v1_startup_title_execution_mode_update(
+    const Nexus_V1_StartupTitleExecution *execution,
+    Nexus_V1_StartupModeUpdate *out_update)
+{
+    if (!execution || !out_update ||
+        execution->kind == NEXUS_V1_STARTUP_TITLE_EXEC_IGNORE) {
+        return 0;
+    }
+    nexus_v1_startup_mode_update_clear(out_update);
+    switch (execution->kind) {
+        case NEXUS_V1_STARTUP_TITLE_EXEC_RETURN_TO_LAUNCHER:
+        case NEXUS_V1_STARTUP_TITLE_EXEC_HOLD_TITLE:
+            return 1;
+        case NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_SAVE_SELECT:
+            out_update->set_title_active = 1;
+            out_update->title_active = 0;
+            out_update->set_title_frame = 1;
+            out_update->title_frame = 0;
+            out_update->set_save_select_active = 1;
+            out_update->save_select_active = 1;
+            out_update->set_save_selected_row = 1;
+            out_update->save_selected_row = 0;
+            return 1;
+        case NEXUS_V1_STARTUP_TITLE_EXEC_SHOW_CHAMPIONS:
+            out_update->set_title_active = 1;
+            out_update->title_active = 0;
+            out_update->set_title_frame = 1;
+            out_update->title_frame = 0;
+            out_update->set_champion_select_active = 1;
+            out_update->champion_select_active = 1;
+            out_update->set_champion_cursor = 1;
+            out_update->champion_cursor = 0;
+            out_update->set_champion_frame = 1;
+            out_update->champion_frame = 0;
+            return 1;
+        default:
+            break;
+    }
+    return 0;
+}
+
 int nexus_v1_startup_execute_champion_action(
     const Nexus_V1_StartupAction *action,
     Nexus_V1_StartupChampionExecution *out_execution)
@@ -672,6 +713,46 @@ int nexus_v1_startup_execute_champion_action(
             out_execution->kind =
                 NEXUS_V1_STARTUP_CHAMPION_EXEC_SHOW_TITLE;
             out_execution->status = "NEXUS TITLE";
+            return 1;
+        default:
+            break;
+    }
+    return 0;
+}
+
+int nexus_v1_startup_save_execution_mode_update(
+    const Nexus_V1_StartupSaveExecution *execution,
+    Nexus_V1_StartupModeUpdate *out_update)
+{
+    if (!execution || !out_update ||
+        execution->kind == NEXUS_V1_STARTUP_SAVE_EXEC_IGNORE) {
+        return 0;
+    }
+    nexus_v1_startup_mode_update_clear(out_update);
+    switch (execution->kind) {
+        case NEXUS_V1_STARTUP_SAVE_EXEC_STATUS_REDRAW:
+            return 1;
+        case NEXUS_V1_STARTUP_SAVE_EXEC_LOAD_SLOT:
+            out_update->set_save_select_active = 1;
+            out_update->save_select_active = 0;
+            return 1;
+        case NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_CHAMPIONS:
+            out_update->set_save_select_active = 1;
+            out_update->save_select_active = 0;
+            out_update->set_champion_select_active = 1;
+            out_update->champion_select_active = 1;
+            out_update->set_champion_cursor = 1;
+            out_update->champion_cursor = 0;
+            out_update->set_champion_frame = 1;
+            out_update->champion_frame = 0;
+            return 1;
+        case NEXUS_V1_STARTUP_SAVE_EXEC_SHOW_TITLE:
+            out_update->set_save_select_active = 1;
+            out_update->save_select_active = 0;
+            out_update->set_title_active = 1;
+            out_update->title_active = 1;
+            out_update->set_title_frame = 1;
+            out_update->title_frame = 0;
             return 1;
         default:
             break;
