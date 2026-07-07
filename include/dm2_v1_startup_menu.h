@@ -162,6 +162,21 @@ void dm2_v1_startup_menu_snapshot_init(
 int dm2_v1_startup_menu_snapshot_scan_saves(
     DM2_V1_StartupMenuSnapshot *snapshot,
     const char *save_root);
+int dm2_v1_startup_menu_snapshot_from_facts(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root,
+    const char *fallback_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row);
+int dm2_v1_startup_menu_snapshot_scan_saves_from_facts(
+    DM2_V1_StartupMenuSnapshot *snapshot,
+    const char *save_root,
+    const char *fallback_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    const char *scan_save_root);
 int dm2_v1_startup_menu_from_snapshot(
     const DM2_V1_StartupMenuSnapshot *snapshot,
     DM2_V1_StartupMenu *out_menu);
