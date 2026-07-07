@@ -139,6 +139,15 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 static void m11_nexus_release_title(M11_GameViewState* state);
 static int m11_path_has_extension(const char* path, const char* ext);
 static int m11_path_tail_equals_ascii(const char* path, const char* tail);
+int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir);
+int dm1_v1_projectile_flip_flags(int aspectIndex,
+                                 int relativeDir,
+                                 int relativeCell,
+                                 int mapX,
+                                 int mapY);
+int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir);
+int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);
+int dm1_v1_projectile_subtype_to_aspect(int subtype);
 static int m11_csb_runtime_load_resume_path(CSB_V1_RuntimeProfile *profile,
                                             const char *path);
 static int m11_csb_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
@@ -1068,15 +1077,15 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         return 0;
     }
     runtime = &ctx->profile->runtime;
-    aspect = m11_projectile_subtype_to_aspect_index(
+    aspect = dm1_v1_projectile_subtype_to_aspect(
         projectile->projectileSubtype);
     if (aspect < 0) {
         return 0;
     }
     relative_dir = (projectile->direction - runtime->party_dir) & 3;
     relative_cell = (view_cell - runtime->party_dir) & 3;
-    gfx_index = m11_projectile_aspect_to_graphic_index(aspect, relative_dir);
-    flip_flags = m11_projectile_aspect_flip_flags(
+    gfx_index = dm1_v1_projectile_graphic_index(aspect, relative_dir);
+    flip_flags = dm1_v1_projectile_flip_flags(
         aspect,
         relative_dir,
         relative_cell,
@@ -17791,29 +17800,11 @@ static int m11_projectile_aspect_flip_flags(int aspectIndex,
                                             int relativeCell,
                                             int mapX,
                                             int mapY) {
-    unsigned int info = m11_projectile_aspect_graphic_info(aspectIndex);
-    int aspectType = (int)(info & 0x0003u);
-    int flags = 0;
-    if (relativeDir < 0) relativeDir = 0;
-    relativeDir &= 3;
-    if (aspectType == 3) return 0;
-
-    if (aspectType == 0) {
-        int parityVertical = ((mapX + mapY) & 1) ? 1 : 0;
-        if (relativeDir == 1 || relativeDir == 3) {
-            if (relativeCell == 0 || relativeCell == 2) flags |= 0x01;
-            if (parityVertical) flags |= 0x02;
-            else flags ^= 0x01;
-        } else {
-            if (parityVertical && relativeCell < 2) flags |= 0x02;
-        }
-    } else if (relativeDir == 1) {
-        flags |= 0x01;
-    }
-    if ((info & 0x0010u) && relativeDir == 3) {
-        flags |= 0x01;
-    }
-    return flags;
+    return dm1_v1_projectile_flip_flags(aspectIndex,
+                                        relativeDir,
+                                        relativeCell,
+                                        mapX,
+                                        mapY);
 }
 
 static int m11_c2900_projectile_zone_point(int scaleIndex,
@@ -17899,7 +17890,7 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
     (void)relativeDir;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
-    scale = m11_projectile_source_scale_units(depthIndex, relativeCell);
+    scale = dm1_v1_projectile_scale_units(depthIndex, relativeCell);
     drawW = (int)slot->width * scale / 32;
     drawH = (int)slot->height * scale / 32;
     if (drawW < 3) drawW = 3;
@@ -18752,17 +18743,7 @@ static int m11_projectile_subtype_to_graphic_index(int subtype) {
 }
 
 static int m11_projectile_subtype_to_aspect_index(int subtype) {
-    switch (subtype) {
-        case PROJECTILE_SUBTYPE_FIREBALL: return 10;
-        case PROJECTILE_SUBTYPE_SLIME: return 12;
-        case PROJECTILE_SUBTYPE_LIGHTNING_BOLT: return 3;
-        case PROJECTILE_SUBTYPE_POISON_BOLT:
-        case PROJECTILE_SUBTYPE_POISON_CLOUD: return 13;
-        case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
-        case PROJECTILE_SUBTYPE_OPEN_DOOR: return 11;
-        case PROJECTILE_SUBTYPE_KINETIC_ARROW:
-        default: return 0;
-    }
+    return dm1_v1_projectile_subtype_to_aspect(subtype);
 }
 
 static int m11_projectile_aspect_first_native(int aspectIndex) {
@@ -18783,23 +18764,11 @@ static unsigned int m11_projectile_aspect_graphic_info(int aspectIndex) {
 }
 
 static int m11_projectile_aspect_bitmap_delta(int aspectIndex, int relativeDir) {
-    unsigned int info = m11_projectile_aspect_graphic_info(aspectIndex);
-    int aspectType = (int)(info & 0x0003u);
-    if (relativeDir < 0) relativeDir = 0;
-    relativeDir &= 3;
-    if (aspectType == 3) return 0;
-    if (relativeDir == 1 || relativeDir == 3) {
-        return aspectType == 2 ? 1 : 2;
-    }
-    if (aspectType >= 2) return 0;
-    if (aspectType == 1 && relativeDir != 0) return 0;
-    return 1;
+    return dm1_v1_projectile_bitmap_delta(aspectIndex, relativeDir);
 }
 
 static int m11_projectile_aspect_to_graphic_index(int aspectIndex, int relativeDir) {
-    int first = m11_projectile_aspect_first_native(aspectIndex);
-    if (first < 0) return -1;
-    return 454 + first + m11_projectile_aspect_bitmap_delta(aspectIndex, relativeDir);
+    return dm1_v1_projectile_graphic_index(aspectIndex, relativeDir);
 }
 
 static int m11_sample_viewport_cell(const M11_GameViewState* state,
