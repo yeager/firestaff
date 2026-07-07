@@ -491,7 +491,32 @@ int main(void) {
 
     {
         Theron_StartupFlow rebuilt;
+        Theron_StartupFlowSnapshotRequest snapshot_request;
         Theron_StartupFlowSnapshot snapshot;
+        int request_order[THERON_STARTUP_MAX_COMPANIONS + 1] = {6, 2, 0, 4};
+
+        memset(&snapshot_request, 0, sizeof(snapshot_request));
+        snapshot_request.phase = THERON_STARTUP_PHASE_READY;
+        snapshot_request.selected_dungeon = THERON_DUNGEON_COUNT + 4;
+        snapshot_request.selected_mirrors_mask = (1 << 6) | (1 << 2) | 1;
+        snapshot_request.companion_count = THERON_STARTUP_MAX_COMPANIONS + 2;
+        snapshot_request.selected_mirror_order = request_order;
+        snapshot_request.selected_mirror_order_count =
+            THERON_STARTUP_MAX_COMPANIONS + 1;
+        check_int("snapshot request builds",
+                  theron_v1_startup_flow_snapshot_from_request(
+                      &snapshot_request, &snapshot),
+                  1);
+        check_int("snapshot request phase",
+                  snapshot.phase,
+                  THERON_STARTUP_PHASE_READY);
+        check_int("snapshot request companion cap",
+                  snapshot.companion_count,
+                  THERON_STARTUP_MAX_COMPANIONS);
+        check_int("snapshot request order cap value",
+                  snapshot.selected_mirror_order[2],
+                  0);
+
         theron_v1_startup_flow_init(&flow);
         result = theron_v1_startup_choose_stage(
             &flow,
