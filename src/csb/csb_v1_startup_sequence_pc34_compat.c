@@ -467,6 +467,151 @@ static void csb_v1_startup_add_primitive_command_pc34(
     cmd->visible = visible ? 1 : 0;
 }
 
+static void csb_v1_startup_fill_rect_pc34(
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int x,
+    int y,
+    int w,
+    int h,
+    unsigned char color)
+{
+    int yy;
+    if (!framebuffer || framebuffer_width <= 0 || framebuffer_height <= 0 ||
+        w <= 0 || h <= 0) {
+        return;
+    }
+    if (x < 0) {
+        w += x;
+        x = 0;
+    }
+    if (y < 0) {
+        h += y;
+        y = 0;
+    }
+    if (x + w > framebuffer_width) {
+        w = framebuffer_width - x;
+    }
+    if (y + h > framebuffer_height) {
+        h = framebuffer_height - y;
+    }
+    if (w <= 0 || h <= 0) {
+        return;
+    }
+    for (yy = y; yy < y + h; ++yy) {
+        unsigned char *row = framebuffer + yy * framebuffer_width;
+        int xx;
+        for (xx = x; xx < x + w; ++xx) {
+            row[xx] = color;
+        }
+    }
+}
+
+static void csb_v1_startup_draw_rect_pc34(
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    int x,
+    int y,
+    int w,
+    int h,
+    unsigned char color)
+{
+    if (!framebuffer || framebuffer_width <= 0 || framebuffer_height <= 0 ||
+        w <= 0 || h <= 0) {
+        return;
+    }
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height, x, y, w, 1, color);
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height, x, y + h - 1, w, 1,
+                                  color);
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height, x, y, 1, h, color);
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height, x + w - 1, y, 1, h,
+                                  color);
+}
+
+static void csb_v1_startup_draw_door_panel_pc34(
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    const CSB_V1_StartupPrimitiveCommand_PC34 *cmd)
+{
+    if (!cmd) {
+        return;
+    }
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height, cmd->x, cmd->y,
+                                  cmd->w, cmd->h,
+                                  (unsigned char)cmd->color);
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height, cmd->x, cmd->y,
+                                  cmd->w, 1,
+                                  (unsigned char)cmd->light_edge_color);
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height, cmd->x,
+                                  cmd->y + cmd->h - 1, cmd->w, 1,
+                                  (unsigned char)cmd->dark_edge_color);
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height, cmd->x, cmd->y,
+                                  1, cmd->h,
+                                  (unsigned char)cmd->light_edge_color);
+    csb_v1_startup_fill_rect_pc34(framebuffer, framebuffer_width,
+                                  framebuffer_height,
+                                  cmd->x + cmd->w - 1, cmd->y, 1, cmd->h,
+                                  (unsigned char)cmd->dark_edge_color);
+}
+
+int csb_v1_startup_execute_primitive_commands_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height)
+{
+    int i;
+    int executed = 0;
+    if (!plan || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0) {
+        return 0;
+    }
+    for (i = 0; i < plan->primitive_command_count &&
+                i < CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34; ++i) {
+        const CSB_V1_StartupPrimitiveCommand_PC34 *cmd =
+            &plan->primitive_commands[i];
+        if (!cmd->visible || cmd->w <= 0 || cmd->h <= 0) {
+            continue;
+        }
+        switch (cmd->kind) {
+            case CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34:
+                csb_v1_startup_fill_rect_pc34(
+                    framebuffer, framebuffer_width, framebuffer_height,
+                    cmd->x, cmd->y, cmd->w, cmd->h,
+                    (unsigned char)cmd->color);
+                ++executed;
+                break;
+            case CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34:
+                csb_v1_startup_draw_rect_pc34(
+                    framebuffer, framebuffer_width, framebuffer_height,
+                    cmd->x, cmd->y, cmd->w, cmd->h,
+                    (unsigned char)cmd->color);
+                ++executed;
+                break;
+            case CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34:
+                csb_v1_startup_draw_door_panel_pc34(
+                    framebuffer, framebuffer_width, framebuffer_height, cmd);
+                ++executed;
+                break;
+            case CSB_V1_STARTUP_PRIMITIVE_NONE_PC34:
+            default:
+                break;
+        }
+    }
+    return executed;
+}
+
 static void csb_v1_startup_rebuild_primitive_commands_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
