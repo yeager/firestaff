@@ -207,6 +207,92 @@ int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h
     return count;
 }
 
+static int nexus_ui_read_be32(const uint8_t *p) {
+    if (!p) return 0;
+    return ((int)p[0] << 24) |
+           ((int)p[1] << 16) |
+           ((int)p[2] << 8) |
+           (int)p[3];
+}
+
+int nexus_ui_face_layout_detect(const uint8_t *data,
+    int data_size,
+    Nexus_UI_FaceLayout *out_layout)
+{
+    Nexus_UI_FaceLayout layout;
+    int declared_size;
+    int payload_size;
+    memset(&layout, 0, sizeof(layout));
+    layout.portrait_w = 48;
+    layout.portrait_h = 48;
+    if (!data || data_size <= 0) {
+        if (out_layout) *out_layout = layout;
+        return 0;
+    }
+    if (data_size >= 32 && memcmp(data, "FACE", 4) == 0) {
+        declared_size = nexus_ui_read_be32(data + 4);
+        payload_size = data_size - 32;
+        if (declared_size == data_size &&
+            payload_size > 0 &&
+            (payload_size % 24) == 0) {
+            layout.valid = 1;
+            layout.header_size = 32;
+            layout.entry_count = 24;
+            layout.entry_size = payload_size / 24;
+            if (out_layout) *out_layout = layout;
+            return 1;
+        }
+    }
+    layout.valid = 1;
+    layout.header_size = 0;
+    layout.entry_count = nexus_ui_face_full_entry_count(data_size, 48, 48);
+    layout.entry_size = 48 * 48;
+    if (out_layout) *out_layout = layout;
+    return layout.entry_count > 0;
+}
+
+int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
+    const uint8_t *record_data,
+    int record_size,
+    int face_index,
+    int portrait_w,
+    int portrait_h,
+    const uint32_t *palette)
+{
+    int entry_size;
+    int copy_size;
+    Nexus_UI_Surface *surf;
+    (void)palette;
+    if (!mgr) return -1;
+    if (face_index < 0 || face_index >= 24) return -1;
+    if (portrait_w <= 0 || portrait_h <= 0) {
+        portrait_w = 48; portrait_h = 48;
+    }
+    entry_size = portrait_w * portrait_h;
+    if (entry_size <= 0 || !record_data || record_size <= 0) {
+        return nexus_ui_load_face_placeholder(mgr, face_index,
+                                              portrait_w, portrait_h);
+    }
+    surf = &mgr->surfaces[NEXUS_SURFACE_FACE0 + face_index];
+    if (surf->owns_data && surf->data) {
+        free(surf->data);
+    }
+    memset(surf, 0, sizeof(*surf));
+    surf->w = portrait_w;
+    surf->h = portrait_h;
+    surf->pal_start = 192;
+    surf->pal_count = 16;
+    surf->source = "FACE.BIN";
+    surf->data = (uint8_t *)calloc(entry_size, 1);
+    if (!surf->data) {
+        return -1;
+    }
+    surf->owns_data = 1;
+    copy_size = record_size < entry_size ? record_size : entry_size;
+    memcpy(surf->data, record_data, (size_t)copy_size);
+    return 1;
+}
+
 int nexus_ui_load_face_placeholder(Nexus_UI_Manager *mgr,
     int face_index, int portrait_w, int portrait_h)
 {
