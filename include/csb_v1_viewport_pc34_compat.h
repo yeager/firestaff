@@ -405,6 +405,10 @@ typedef struct {
     int view_cell;
     int object_row;
     int source_zone;
+    int sprite_thing_type;
+    int sprite_subtype_index;
+    int sprite_relative_cell;
+    int sprite_pile_index;
     int sprite_viewport_x;
     int sprite_viewport_y;
     int sprite_viewport_w;
@@ -424,6 +428,7 @@ typedef struct {
     int pile_shift_y;
     int marker_screen_x;
     int marker_screen_y;
+    int icon_index;
     int icon_screen_x;
     int icon_screen_y;
     int icon_draw_x;
