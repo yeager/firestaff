@@ -1571,6 +1571,93 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
     }
 }
 
+static void csb_v1_viewport_draw_runtime_thing_overlays(
+    CSB_V1_ViewportConfig *cfg)
+{
+    CSB_V1_ViewportRuntimeThingOverlay overlays[80];
+    size_t overlay_count;
+    size_t overlay_index;
+    const int screen_height = 200;
+
+    if (!cfg || !cfg->runtime_profile || !cfg->viewport_pixels) {
+        return;
+    }
+
+    cfg->runtime_object_sprite_drawn_count = 0;
+    cfg->runtime_object_icon_drawn_count = 0;
+    cfg->runtime_object_marker_drawn_count = 0;
+    cfg->runtime_group_sprite_drawn_count = 0;
+    cfg->runtime_group_marker_drawn_count = 0;
+
+    overlay_count = csb_v1_viewport_runtime_collect_thing_overlays(
+        cfg->runtime_profile,
+        overlays,
+        sizeof(overlays) / sizeof(overlays[0]));
+    if (overlay_count > sizeof(overlays) / sizeof(overlays[0])) {
+        overlay_count = sizeof(overlays) / sizeof(overlays[0]);
+    }
+
+    /* ReDMCSB: DUNVIEW.C F0115 lines 5170-5656 draws floor objects and
+     * creature groups before projectiles.  CSB viewport owns the ordered
+     * thing-list pass; callers may only provide asset-backed blitters. */
+    for (overlay_index = 0; overlay_index < overlay_count; ++overlay_index) {
+        const CSB_V1_ViewportRuntimeThingOverlay *overlay =
+            &overlays[overlay_index];
+
+        if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_OBJECT) {
+            const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement =
+                &overlay->object_placement;
+            const int icon = placement->icon_index;
+
+            if (placement->sprite_subtype_index >= 0 &&
+                cfg->object_sprite_drawer &&
+                cfg->object_sprite_drawer(
+                    cfg->object_sprite_user,
+                    placement,
+                    cfg->viewport_pixels,
+                    cfg->viewport_stride)) {
+                ++cfg->runtime_object_sprite_drawn_count;
+            } else if (icon >= 0 &&
+                       cfg->object_icon_drawer &&
+                       cfg->object_icon_drawer(
+                           cfg->object_icon_user,
+                           placement,
+                           cfg->viewport_pixels,
+                           cfg->viewport_stride)) {
+                ++cfg->runtime_object_icon_drawn_count;
+            } else if (csb_v1_viewport_draw_runtime_object_marker(
+                           cfg->viewport_pixels,
+                           cfg->viewport_stride,
+                           screen_height,
+                           placement,
+                           icon)) {
+                ++cfg->runtime_object_marker_drawn_count;
+            }
+        } else if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP) {
+            const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement =
+                &overlay->group_placement;
+            const int creature_type = placement->sprite_creature_type;
+
+            if (creature_type >= 0 &&
+                cfg->group_sprite_drawer &&
+                cfg->group_sprite_drawer(
+                    cfg->group_sprite_user,
+                    placement,
+                    cfg->viewport_pixels,
+                    cfg->viewport_stride)) {
+                ++cfg->runtime_group_sprite_drawn_count;
+            } else if (csb_v1_viewport_draw_runtime_group_marker(
+                           cfg->viewport_pixels,
+                           cfg->viewport_stride,
+                           screen_height,
+                           placement,
+                           creature_type)) {
+                ++cfg->runtime_group_marker_drawn_count;
+            }
+        }
+    }
+}
+
 static void csb_v1_viewport_draw_runtime_explosion_overlays(
     CSB_V1_ViewportConfig *cfg,
     int party_dir,
@@ -3034,11 +3121,10 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     dm1_viewport_3d_draw_frame(&vp, party_dir, party_x, party_y);
     (void)csb_v1_viewport_apply_configured_custom_backgrounds(
         cfg, party_dir, party_x, party_y, 1);
-    if (cfg->runtime_thing_pass_drawer) {
-        /* ReDMCSB DUNVIEW.C F0115 draws ordinary objects and creature
-         * groups before projectile and explosion passes.  M11 owns the
-         * current runtime thing-list decode, but CSB viewport owns the
-         * draw-order slot where that bridge is allowed to run. */
+    if (cfg->runtime_profile) {
+        csb_v1_viewport_draw_runtime_thing_overlays(cfg);
+    } else if (cfg->runtime_thing_pass_drawer) {
+        /* Legacy synthetic hook for data-free ordering tests. */
         cfg->runtime_thing_pass_drawer(
             cfg->runtime_thing_pass_user,
             cfg->viewport_pixels,

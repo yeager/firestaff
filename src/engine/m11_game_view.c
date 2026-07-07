@@ -1157,153 +1157,83 @@ static void m11_csb_runtime_overlay_stats_reset(
     mutable_state->csbState.runtime_explosion_marker_drawn_count = 0;
 }
 
-static void m11_csb_runtime_overlay_stats_add_object_sprite(
-    const M11_GameViewState *state)
-{
-    ((M11_GameViewState *)state)->csbState.runtime_object_sprite_drawn_count++;
-}
-
-static void m11_csb_runtime_overlay_stats_add_object_icon(
-    const M11_GameViewState *state)
-{
-    ((M11_GameViewState *)state)->csbState.runtime_object_icon_drawn_count++;
-}
-
-static void m11_csb_runtime_overlay_stats_add_object_marker(
-    const M11_GameViewState *state)
-{
-    ((M11_GameViewState *)state)->csbState.runtime_object_marker_drawn_count++;
-}
-
-static void m11_csb_runtime_overlay_stats_add_group_sprite(
-    const M11_GameViewState *state)
-{
-    ((M11_GameViewState *)state)->csbState.runtime_group_sprite_drawn_count++;
-}
-
-static void m11_csb_runtime_overlay_stats_add_group_marker(
-    const M11_GameViewState *state)
-{
-    ((M11_GameViewState *)state)->csbState.runtime_group_marker_drawn_count++;
-}
-
-static void m11_draw_csb_runtime_thing_overlays(
-    const M11_GameViewState *state,
-    const CSB_V1_BootProfile *profile,
-    unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height)
-{
-    const CSB_V1_RuntimeProfile *runtime;
-    CSB_V1_ViewportRuntimeThingOverlay overlays[80];
-    size_t overlay_count;
-    size_t overlay_index;
-
-    if (!state || !profile || !framebuffer ||
-        framebuffer_width <= 0 || framebuffer_height <= 0) {
-        return;
-    }
-    runtime = &profile->runtime;
-    overlay_count = csb_v1_viewport_runtime_collect_thing_overlays(
-        runtime,
-        overlays,
-        sizeof(overlays) / sizeof(overlays[0]));
-    if (overlay_count > sizeof(overlays) / sizeof(overlays[0])) {
-        overlay_count = sizeof(overlays) / sizeof(overlays[0]);
-    }
-    for (overlay_index = 0; overlay_index < overlay_count; ++overlay_index) {
-        const CSB_V1_ViewportRuntimeThingOverlay *overlay =
-            &overlays[overlay_index];
-        if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_OBJECT) {
-            const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement =
-                &overlay->object_placement;
-            int icon = placement->icon_index;
-            int subtype = placement->sprite_subtype_index;
-
-            if (subtype >= 0 &&
-                m11_draw_item_sprite(state,
-                                     framebuffer,
-                                     framebuffer_width,
-                                     framebuffer_height,
-                                     placement->sprite_viewport_x,
-                                     placement->sprite_viewport_y,
-                                     placement->sprite_viewport_w,
-                                     placement->sprite_viewport_h,
-                                     placement->sprite_thing_type,
-                                     subtype,
-                                     placement->sprite_relative_cell,
-                                     placement->sprite_pile_index,
-                                     placement->sprite_depth_index,
-                                     placement->object_row)) {
-                m11_csb_runtime_overlay_stats_add_object_sprite(state);
-            } else if (icon >= 0 &&
-                m11_draw_dm_object_icon_index(
-                    state,
-                    framebuffer,
-                    framebuffer_width,
-                    framebuffer_height,
-                    icon,
-                    placement->icon_draw_x,
-                    placement->icon_draw_y,
-                    0)) {
-                m11_csb_runtime_overlay_stats_add_object_icon(state);
-            } else if (csb_v1_viewport_draw_runtime_object_marker(
-                           framebuffer,
-                           framebuffer_width,
-                           framebuffer_height,
-                           placement,
-                           icon)) {
-                m11_csb_runtime_overlay_stats_add_object_marker(state);
-            }
-        } else if (overlay->kind == CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP) {
-            const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement =
-                &overlay->group_placement;
-            int creature_type = placement->sprite_creature_type;
-
-            if (creature_type >= 0 &&
-                m11_draw_creature_sprite_ex(state,
-                                            framebuffer,
-                                            framebuffer_width,
-                                            framebuffer_height,
-                                            placement->sprite_x,
-                                            placement->sprite_y,
-                                            placement->sprite_w,
-                                            placement->sprite_h,
-                                            creature_type,
-                                            placement->depth_index,
-                                            placement->sprite_relative_side,
-                                            placement->sprite_direction)) {
-                m11_csb_runtime_overlay_stats_add_group_sprite(state);
-            } else if (csb_v1_viewport_draw_runtime_group_marker(
-                           framebuffer,
-                           framebuffer_width,
-                           framebuffer_height,
-                           placement,
-                           creature_type)) {
-                m11_csb_runtime_overlay_stats_add_group_marker(state);
-            }
-        }
-    }
-}
-
-static void m11_csb_viewport_runtime_thing_pass_drawer(
+static int m11_csb_viewport_object_sprite_drawer(
     void *user,
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
     uint8_t *screen_pixels,
     int screen_stride)
 {
     const M11_CSB_RuntimeSpriteContext *ctx =
         (const M11_CSB_RuntimeSpriteContext *)user;
 
-    if (!ctx || !ctx->state || !ctx->profile || !screen_pixels ||
-        screen_stride <= 0) {
-        return;
+    if (!ctx || !ctx->state || !placement || !screen_pixels ||
+        screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
     }
-    m11_draw_csb_runtime_thing_overlays(
-        ctx->state,
-        ctx->profile,
+    return m11_draw_item_sprite(ctx->state,
+                                screen_pixels,
+                                screen_stride,
+                                ctx->framebuffer_height,
+                                placement->sprite_viewport_x,
+                                placement->sprite_viewport_y,
+                                placement->sprite_viewport_w,
+                                placement->sprite_viewport_h,
+                                placement->sprite_thing_type,
+                                placement->sprite_subtype_index,
+                                placement->sprite_relative_cell,
+                                placement->sprite_pile_index,
+                                placement->sprite_depth_index,
+                                placement->object_row);
+}
+
+static int m11_csb_viewport_object_icon_drawer(
+    void *user,
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    const M11_CSB_RuntimeSpriteContext *ctx =
+        (const M11_CSB_RuntimeSpriteContext *)user;
+
+    if (!ctx || !ctx->state || !placement || !screen_pixels ||
+        screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
+    }
+    return m11_draw_dm_object_icon_index(ctx->state,
+                                         screen_pixels,
+                                         screen_stride,
+                                         ctx->framebuffer_height,
+                                         placement->icon_index,
+                                         placement->icon_draw_x,
+                                         placement->icon_draw_y,
+                                         0);
+}
+
+static int m11_csb_viewport_group_sprite_drawer(
+    void *user,
+    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    const M11_CSB_RuntimeSpriteContext *ctx =
+        (const M11_CSB_RuntimeSpriteContext *)user;
+
+    if (!ctx || !ctx->state || !placement || !screen_pixels ||
+        screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
+    }
+    return m11_draw_creature_sprite_ex(ctx->state,
         screen_pixels,
         screen_stride,
-        ctx->framebuffer_height);
+        ctx->framebuffer_height,
+        placement->sprite_x,
+        placement->sprite_y,
+        placement->sprite_w,
+        placement->sprite_h,
+        placement->sprite_creature_type,
+        placement->depth_index,
+        placement->sprite_relative_side,
+        placement->sprite_direction);
 }
 
 static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
@@ -1341,6 +1271,7 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     cfg.dungeon_width = 32;
     cfg.dungeon_height = 32;
     cfg.wall_set_index = 0;
+    cfg.runtime_profile = &profile->runtime;
     cfg.runtime_projectiles = &profile->runtime.projectiles;
     cfg.runtime_explosions = &profile->runtime.explosions;
     cfg.projectile_material_resolver =
@@ -1356,9 +1287,15 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     cfg.explosion_sprite_drawer =
         m11_csb_viewport_explosion_sprite_drawer;
     cfg.explosion_sprite_user = &runtime_sprite_context;
-    cfg.runtime_thing_pass_drawer =
-        m11_csb_viewport_runtime_thing_pass_drawer;
-    cfg.runtime_thing_pass_user = &runtime_sprite_context;
+    cfg.object_sprite_drawer =
+        m11_csb_viewport_object_sprite_drawer;
+    cfg.object_sprite_user = &runtime_sprite_context;
+    cfg.object_icon_drawer =
+        m11_csb_viewport_object_icon_drawer;
+    cfg.object_icon_user = &runtime_sprite_context;
+    cfg.group_sprite_drawer =
+        m11_csb_viewport_group_sprite_drawer;
+    cfg.group_sprite_user = &runtime_sprite_context;
     plan = csb_v1_boot_csbgraphics_m11_plan(profile);
     cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.csbgraphics_plan = plan;
@@ -1396,6 +1333,16 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
         cfg.runtime_explosion_sprite_drawn_count;
     ((M11_GameViewState *)state)->csbState.runtime_explosion_marker_drawn_count =
         cfg.runtime_explosion_marker_drawn_count;
+    ((M11_GameViewState *)state)->csbState.runtime_object_sprite_drawn_count =
+        cfg.runtime_object_sprite_drawn_count;
+    ((M11_GameViewState *)state)->csbState.runtime_object_icon_drawn_count =
+        cfg.runtime_object_icon_drawn_count;
+    ((M11_GameViewState *)state)->csbState.runtime_object_marker_drawn_count =
+        cfg.runtime_object_marker_drawn_count;
+    ((M11_GameViewState *)state)->csbState.runtime_group_sprite_drawn_count =
+        cfg.runtime_group_sprite_drawn_count;
+    ((M11_GameViewState *)state)->csbState.runtime_group_marker_drawn_count =
+        cfg.runtime_group_marker_drawn_count;
     if (plan && plan->ready && cache && cache->loaded) {
         for (i = 0u; i < plan->planned_count; ++i) {
             CSB_V1_CSBGraphicsM11Binding binding;

@@ -12,6 +12,8 @@ typedef struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement;
 typedef struct CSB_V1_ViewportRuntimeObjectOverlayPlacement
     CSB_V1_ViewportRuntimeObjectOverlayPlacement;
+typedef struct CSB_V1_ViewportRuntimeGroupOverlayPlacement
+    CSB_V1_ViewportRuntimeGroupOverlayPlacement;
 typedef struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
 
@@ -30,6 +32,24 @@ typedef int (*CSB_V1_ViewportExplosionSpriteDrawer)(
     void *user,
     const struct ExplosionInstance_Compat *explosion,
     const CSB_V1_ViewportRuntimeExplosionOverlayPlacement *placement,
+    uint8_t *screen_pixels,
+    int screen_stride);
+
+typedef int (*CSB_V1_ViewportObjectSpriteDrawer)(
+    void *user,
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    uint8_t *screen_pixels,
+    int screen_stride);
+
+typedef int (*CSB_V1_ViewportObjectIconDrawer)(
+    void *user,
+    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
+    uint8_t *screen_pixels,
+    int screen_stride);
+
+typedef int (*CSB_V1_ViewportGroupSpriteDrawer)(
+    void *user,
+    const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement,
     uint8_t *screen_pixels,
     int screen_stride);
 
@@ -83,8 +103,20 @@ typedef struct {
 
     /* Optional live runtime overlays.  CSB V1 runtime owns these lists;
      * the viewport treats NULL as "no live projectile/explosion overlay". */
+    const CSB_V1_RuntimeProfile *runtime_profile;
     const struct ProjectileList_Compat *runtime_projectiles;
     const struct ExplosionList_Compat *runtime_explosions;
+    CSB_V1_ViewportObjectSpriteDrawer object_sprite_drawer;
+    void *object_sprite_user;
+    int runtime_object_sprite_drawn_count;
+    CSB_V1_ViewportObjectIconDrawer object_icon_drawer;
+    void *object_icon_user;
+    int runtime_object_icon_drawn_count;
+    int runtime_object_marker_drawn_count;
+    CSB_V1_ViewportGroupSpriteDrawer group_sprite_drawer;
+    void *group_sprite_user;
+    int runtime_group_sprite_drawn_count;
+    int runtime_group_marker_drawn_count;
     CSB_V1_ViewportProjectileMaterialResolver projectile_material_resolver;
     void *projectile_material_user;
     int runtime_projectile_material_resolved_count;
@@ -437,7 +469,7 @@ struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
     int icon_draw_y;
 };
 
-typedef struct {
+struct CSB_V1_ViewportRuntimeGroupOverlayPlacement {
     int visible;
     int forward;
     int side;
@@ -460,7 +492,7 @@ typedef struct {
     int sprite_h;
     int marker_screen_x;
     int marker_screen_y;
-} CSB_V1_ViewportRuntimeGroupOverlayPlacement;
+};
 
 struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {
     int visible;
