@@ -42,6 +42,8 @@ int main(void) {
     unsigned char leftDoor[DOOR_W * DOOR_H];
     unsigned char rightDoor[DOOR_W * DOOR_H];
     EntranceCompatDoorStep door;
+    EntranceCompatClosedDoorBlit closedLeft;
+    EntranceCompatClosedDoorBlit closedRight;
     EntranceCompatCompositePixels pixels;
     int ok = 1;
 
@@ -53,6 +55,20 @@ int main(void) {
     fill_door(rightDoor, 64);
 
     ok &= ENTRANCE_Compat_GetDoorAnimationStep(16u, &door);
+    ok &= ENTRANCE_Compat_GetClosedDoorBlit(1u, &closedLeft);
+    ok &= ENTRANCE_Compat_GetClosedDoorBlit(2u, &closedRight);
+    if (closedLeft.assetId != 2u || closedLeft.width != 105u ||
+        closedLeft.height != 161u || closedLeft.dstX != 0u ||
+        closedLeft.dstY != 28u || closedLeft.transparentColor != -1) {
+        fprintf(stderr, "closed left blit mismatch\n");
+        ok = 0;
+    }
+    if (closedRight.assetId != 3u || closedRight.width != 127u ||
+        closedRight.height != 161u || closedRight.dstX != 105u ||
+        closedRight.dstY != 28u || closedRight.transparentColor != -1) {
+        fprintf(stderr, "closed right blit mismatch\n");
+        ok = 0;
+    }
     memset(&pixels, 0, sizeof(pixels));
     pixels.entranceScreen = entrance;
     pixels.entranceWidth = FB_W;
@@ -91,6 +107,32 @@ int main(void) {
     if (pixel_at(framebuffer, FB_W, 180u, 50u) !=
         pixel_at(rightDoor, DOOR_W, door.rightSourceX + (180u - door.rightBoxX), 22u)) {
         fprintf(stderr, "right door strip mismatch\n");
+        ok = 0;
+    }
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    ok &= ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer, FB_W, FB_H);
+    if (pixel_at(framebuffer, FB_W, 0u, 28u) != 13u ||
+        pixel_at(framebuffer, FB_W, 100u, 188u) != 0u ||
+        pixel_at(framebuffer, FB_W, 110u, 29u) != 5u ||
+        pixel_at(framebuffer, FB_W, 231u, 188u) != 0u) {
+        fprintf(stderr, "fallback closed-door pixels mismatch\n");
+        ok = 0;
+    }
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    ok &= ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(framebuffer,
+                                                       FB_W,
+                                                       FB_H,
+                                                       &door);
+    if (door.leftBoxW > 0u &&
+        pixel_at(framebuffer, FB_W, door.leftBoxX, 28u + door.leftBoxY) != 13u) {
+        fprintf(stderr, "fallback opening left edge mismatch\n");
+        ok = 0;
+    }
+    if (door.rightBoxW > 0u &&
+        pixel_at(framebuffer, FB_W, door.rightBoxX, 28u + door.rightBoxY) != 13u) {
+        fprintf(stderr, "fallback opening right edge mismatch\n");
         ok = 0;
     }
 

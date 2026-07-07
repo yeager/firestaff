@@ -84,9 +84,23 @@ typedef struct EntranceCompatCompositePixels {
     unsigned int rightDoorHeight;
 } EntranceCompatCompositePixels;
 
+typedef struct EntranceCompatClosedDoorBlit {
+    unsigned int assetId;
+    unsigned int srcX;
+    unsigned int srcY;
+    unsigned int width;
+    unsigned int height;
+    unsigned int dstX;
+    unsigned int dstY;
+    int transparentColor;
+    const char* sourceLineEvidence;
+} EntranceCompatClosedDoorBlit;
+
 unsigned int ENTRANCE_Compat_GetDoorAnimationStepCount(void);
 int ENTRANCE_Compat_GetDoorAnimationStep(unsigned int animationStep,
                                          EntranceCompatDoorStep* outStep);
+int ENTRANCE_Compat_GetClosedDoorBlit(unsigned int ordinal,
+                                      EntranceCompatClosedDoorBlit* outBlit);
 unsigned int ENTRANCE_Compat_GetSourceAnimationStepCount(void);
 int ENTRANCE_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                                            EntranceCompatSourceAnimationStep* outStep);
@@ -111,5 +125,12 @@ int ENTRANCE_Compat_CompositeDoorOpeningFrame(unsigned char* framebuffer,
                                               unsigned int framebufferHeight,
                                               const EntranceCompatCompositePixels* pixels,
                                               const EntranceCompatDoorStep* door);
+int ENTRANCE_Compat_DrawFallbackClosedDoors(unsigned char* framebuffer,
+                                            unsigned int framebufferWidth,
+                                            unsigned int framebufferHeight);
+int ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(unsigned char* framebuffer,
+                                                 unsigned int framebufferWidth,
+                                                 unsigned int framebufferHeight,
+                                                 const EntranceCompatDoorStep* door);
 
 #endif
