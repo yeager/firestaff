@@ -137,6 +137,23 @@ static void test_projectile_subtype_mapping(void) {
               DM1_PROJ_ASPECT_DEFAULT, "harm->11");
     ASSERT_EQ(dm1_v1_projectile_subtype_to_aspect(PROJECTILE_SUBTYPE_KINETIC_ARROW),
               0, "kinetic->0");
+
+    ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_FIREBALL),
+              DM1_GFX_FIRST_PROJECTILE + 28, "fireball subtype gfx");
+    ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_SLIME),
+              DM1_GFX_FIRST_PROJECTILE + 30, "slime subtype gfx");
+    ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_LIGHTNING_BOLT),
+              DM1_GFX_FIRST_PROJECTILE + 9, "lightning subtype gfx");
+    ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_POISON_BOLT),
+              DM1_GFX_FIRST_PROJECTILE + 31, "poison bolt subtype gfx");
+    ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_POISON_CLOUD),
+              DM1_GFX_FIRST_PROJECTILE + 31, "poison cloud subtype gfx");
+    ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_HARM_NON_MATERIAL),
+              DM1_GFX_FIRST_PROJECTILE + 29, "harm subtype gfx");
+    ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_OPEN_DOOR),
+              DM1_GFX_FIRST_PROJECTILE + 29, "open-door subtype gfx");
+    ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_KINETIC_ARROW),
+              DM1_GFX_FIRST_PROJECTILE, "kinetic subtype gfx");
 }
 
 
@@ -340,12 +357,20 @@ static void test_aspect_data_cross_check(void) {
     for (i = 0; i < DM1_PROJECTILE_ASPECT_COUNT; ++i) {
         char label[64];
         snprintf(label, sizeof(label), "firstNative[%d]", i);
+        ASSERT_EQ(dm1_v1_projectile_aspect_first_native(i),
+                  (int)kExpectedFirstNative[i], label);
         ASSERT_EQ((int)DM1_ProjectileAspects[i].firstNativeBitmapRelativeIndex,
                   (int)kExpectedFirstNative[i], label);
         snprintf(label, sizeof(label), "graphicInfo[%d]", i);
+        ASSERT_EQ((int)dm1_v1_projectile_aspect_graphic_info(i),
+                  (int)kExpectedGraphicInfo[i], label);
         ASSERT_EQ((int)DM1_ProjectileAspects[i].graphicInfo,
                   (int)kExpectedGraphicInfo[i], label);
     }
+    ASSERT_EQ(dm1_v1_projectile_aspect_first_native(-1), -1, "firstNative[-1]");
+    ASSERT_EQ(dm1_v1_projectile_aspect_first_native(14), -1, "firstNative[14]");
+    ASSERT_EQ((int)dm1_v1_projectile_aspect_graphic_info(-1), 0, "graphicInfo[-1]");
+    ASSERT_EQ((int)dm1_v1_projectile_aspect_graphic_info(14), 0, "graphicInfo[14]");
 }
 
 

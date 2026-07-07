@@ -149,7 +149,10 @@ extern const unsigned char DM1_ExplosionBaseScales[4];
 /* ── Projectile rendering queries ────────────────────────────────── */
 
 int dm1_v1_projectile_aspect_type(int aspectIndex);
+int dm1_v1_projectile_aspect_first_native(int aspectIndex);
+unsigned int dm1_v1_projectile_aspect_graphic_info(int aspectIndex);
 int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir);
+int dm1_v1_projectile_subtype_graphic_index(int subtype);
 int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir);
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY);
