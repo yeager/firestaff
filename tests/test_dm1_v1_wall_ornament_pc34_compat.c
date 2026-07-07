@@ -42,6 +42,8 @@ static void expect_zone(const char *name,
 int main(void)
 {
     DM1_WallOrnamentZoneBlitPc34 blit;
+    DM1_WallOrnamentViewSpecPc34 spec;
+    DM1_WallOrnamentRenderPlanPc34 plan;
 
     /* ReDMCSB DUNVIEW.C G0194: wall ornament global index to G0205
      * coordinate-set index. */
@@ -96,6 +98,74 @@ int main(void)
                dm1_v1_wall_ornament_is_alcove_global_pc34(3), 1);
     expect_int("alcove.4",
                dm1_v1_wall_ornament_is_alcove_global_pc34(4), 0);
+
+    /* DM1-owned F0107 projection list. */
+    expect_int("view_spec.count",
+               dm1_v1_wall_ornament_view_spec_count_pc34(), 15);
+    expect_int("view_spec.null",
+               dm1_v1_wall_ornament_view_spec_pc34(0, NULL), 0);
+    expect_int("view_spec.bad_low",
+               dm1_v1_wall_ornament_view_spec_pc34(-1, &spec), 0);
+    expect_int("view_spec.bad_high",
+               dm1_v1_wall_ornament_view_spec_pc34(15, &spec), 0);
+    expect_int("view_spec.0.ok",
+               dm1_v1_wall_ornament_view_spec_pc34(0, &spec), 1);
+    expect_int("view_spec.0.forward", spec.relForward, 3);
+    expect_int("view_spec.0.side", spec.relSide, -2);
+    expect_int("view_spec.0.view", spec.viewWallIndex, 0);
+    expect_int("view_spec.0.compact", spec.unreadableInscriptionCompactBox, 1);
+    expect_int("view_spec.14.ok",
+               dm1_v1_wall_ornament_view_spec_pc34(14, &spec), 1);
+    expect_int("view_spec.14.forward", spec.relForward, 1);
+    expect_int("view_spec.14.side", spec.relSide, 0);
+    expect_int("view_spec.14.view", spec.viewWallIndex, 12);
+
+    /* Render plans own native graphic binding, palette, transparency,
+     * flip, and optional unreadable-inscription height clamp. */
+    expect_int("plan.null",
+               dm1_v1_wall_ornament_render_plan_pc34(0, 12, 0, NULL), 0);
+    expect_int("plan.bad_global",
+               dm1_v1_wall_ornament_render_plan_pc34(-1, 12, 0, &plan), 0);
+    expect_int("plan.bad_view",
+               dm1_v1_wall_ornament_render_plan_pc34(0, 13, 0, &plan), 0);
+
+    expect_int("plan.inscription.d1c.ok",
+               dm1_v1_wall_ornament_render_plan_pc34(0, 12, 0, &plan), 1);
+    expect_int("plan.inscription.d1c.graphic", plan.graphicIndex, 260);
+    expect_int("plan.inscription.d1c.dstX", plan.dstX, 64);
+    expect_int("plan.inscription.d1c.dstY", plan.dstY, 36);
+    expect_int("plan.inscription.d1c.width", plan.width, 96);
+    expect_int("plan.inscription.d1c.height", plan.height, 56);
+    expect_int("plan.inscription.d1c.transparent", plan.transparentColor, 10);
+    expect_int("plan.inscription.d1c.flip", plan.flipHorizontal, 0);
+    expect_int("plan.inscription.d1c.palette", plan.paletteMapValid, 1);
+    expect_int("plan.inscription.d1c.palette1", plan.paletteMap[1], 12);
+    expect_int("plan.inscription.d1c.palette14", plan.paletteMap[14], 14);
+
+    expect_int("plan.inscription.clamp.ok",
+               dm1_v1_wall_ornament_render_plan_pc34(0, 12, 9, &plan), 1);
+    expect_int("plan.inscription.clamp.height", plan.height, 9);
+
+    expect_int("plan.mirror.d1c.ok",
+               dm1_v1_wall_ornament_render_plan_pc34(43, 12, 0, &plan), 1);
+    expect_int("plan.mirror.d1c.graphic", plan.graphicIndex, 346);
+    expect_int("plan.mirror.d1c.dstX", plan.dstX, 80);
+    expect_int("plan.mirror.d1c.dstY", plan.dstY, 29);
+    expect_int("plan.mirror.d1c.width", plan.width, 64);
+    expect_int("plan.mirror.d1c.height", plan.height, 43);
+
+    expect_int("plan.d3r_left.ok",
+               dm1_v1_wall_ornament_render_plan_pc34(1, 1, 0, &plan), 1);
+    expect_int("plan.d3r_left.graphic", plan.graphicIndex, 261);
+    expect_int("plan.d3r_left.flip", plan.flipHorizontal, 1);
+    expect_int("plan.d3r_left.palette2", plan.paletteMap[2], 12);
+    expect_int("plan.d3r_left.alcove", plan.isAlcove, 1);
+
+    expect_int("plan.d2r_left.ok",
+               dm1_v1_wall_ornament_render_plan_pc34(1, 6, 0, &plan), 1);
+    expect_int("plan.d2r_left.graphic", plan.graphicIndex, 261);
+    expect_int("plan.d2r_left.flip", plan.flipHorizontal, 1);
+    expect_int("plan.d2r_left.palette1", plan.paletteMap[1], 12);
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed == 0 ? 0 : 1;
