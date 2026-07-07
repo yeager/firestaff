@@ -487,6 +487,10 @@ void dm1_viewport_3d_object_pile_shift_indices(int pile_index,
                                                int *out_y_index);
 int dm1_viewport_3d_object_source_shift_value(int shift_set,
                                               int shift_index);
+int dm1_viewport_3d_f0115_view_square_index(int rel_forward,
+                                            int rel_side);
+int dm1_viewport_3d_f0115_c2500_c2900_row(int rel_forward,
+                                          int rel_side);
 int dm1_viewport_3d_c2500_object_zone_point(int scale_index,
                                             int relative_cell,
                                             int *out_x,

@@ -58,6 +58,9 @@ extern "C" {
 /* Floor set constants from ReDMCSB I34E DEFS.H */
 #define DM1_GRAPHIC_FIRST_FLOOR_SET     78
 #define DM1_FLOOR_SET_GRAPHIC_COUNT     2
+#define DM1_GRAPHIC_FIRST_OBJECT        498
+#define DM1_GRAPHIC_FIRST_CREATURE      584
+#define DM1_GRAPHIC_ITEM_SCROLL         500
 
 /* Compute floor panel GRAPHICS.DAT index for a given floor set.
  * ReDMCSB DUNVIEW.C F0094_DUNGEONVIEW_LoadFloorSet. */
@@ -108,6 +111,11 @@ extern const unsigned char DM1_FloorOrnPalette_D2[16];
 static inline int dm1_is_alcove_ornament(int globalIndex) {
     return globalIndex == 1 || globalIndex == 2 || globalIndex == 3;
 }
+
+int dm1_item_aspect_index(int thingType, int subtype);
+unsigned int dm1_item_sprite_index(int thingType, int subtype);
+unsigned int dm1_object_aspect_graphic_info(int aspectIndex);
+int dm1_object_aspect_coordinate_set(int aspectIndex);
 
 #ifdef __cplusplus
 }

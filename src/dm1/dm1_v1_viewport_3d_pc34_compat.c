@@ -266,6 +266,41 @@ int dm1_viewport_3d_object_source_shift_value(int shift_set,
     return (int)k_shift_sets[shift_set][shift_index];
 }
 
+int dm1_viewport_3d_f0115_view_square_index(int rel_forward,
+                                            int rel_side)
+{
+    /* ReDMCSB DUNVIEW.C / DEFS.H MEDIA720 visible-square order:
+     * D1C/L/R = 3/4/5, D2C/L/R = 6/7/8, D3C/L/R = 11/12/13.
+     * D3L2/D3R2 = 14/15. DUNVIEW.C F0115 uses this square id with
+     * G2028_ac_ViewSquareIndexTo for object/projectile source rows. */
+    static const signed char k_view_square[3][3] = {
+        { 4,  3,  5 },
+        { 7,  6,  8 },
+        {12, 11, 13 }
+    };
+    if (rel_forward < 1 || rel_forward > 3) return -1;
+    if (rel_side == -2 && rel_forward == 3) return 14;
+    if (rel_side == 2 && rel_forward == 3) return 15;
+    if (rel_side < -1 || rel_side > 1) return -1;
+    return (int)k_view_square[rel_forward - 1][rel_side + 1];
+}
+
+int dm1_viewport_3d_f0115_c2500_c2900_row(int rel_forward,
+                                          int rel_side)
+{
+    /* ReDMCSB DUNVIEW.C F0115 lines 4923/5075/5668-5683:
+     * C2500/C2900 rows are selected as G2028[viewSquare] before
+     * AL0126_i_ViewCell chooses the per-cell source zone. */
+    static const signed char k_g2028_view_square_to_row[23] = {
+        11, -1, -1,  8,  9, 10,  5,  6,  7, -1, -1,
+         0,  1,  2,  3,  4, -1, -1, -1, -1, -1, -1, -1
+    };
+    int view_square = dm1_viewport_3d_f0115_view_square_index(rel_forward,
+                                                              rel_side);
+    if (view_square < 0 || view_square >= 23) return -1;
+    return (int)k_g2028_view_square_to_row[view_square];
+}
+
 int dm1_viewport_3d_c2500_object_zone_point(int scale_index,
                                             int relative_cell,
                                             int *out_x,

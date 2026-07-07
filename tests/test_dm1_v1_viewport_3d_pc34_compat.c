@@ -107,6 +107,19 @@ static void test_redmcsb_f0115_object_c2500_geometry(void)
         { 12, 1,  46,  61 },
         { 16, 3, 218,  74 }
     };
+    static const int expected_square_rows[][4] = {
+        { 1, -1,  4,  9 },
+        { 1,  0,  3,  8 },
+        { 1,  1,  5, 10 },
+        { 2, -1,  7,  6 },
+        { 2,  0,  6,  5 },
+        { 2,  1,  8,  7 },
+        { 3, -2, 14,  3 },
+        { 3, -1, 12,  1 },
+        { 3,  0, 11,  0 },
+        { 3,  1, 13,  2 },
+        { 3,  2, 15,  4 }
+    };
 
     for (int i = 0; i < 5; ++i) {
         char id[96];
@@ -131,6 +144,37 @@ static void test_redmcsb_f0115_object_c2500_geometry(void)
     }
     check_int("F0115.object.scale_index.native",
               dm1_viewport_3d_object_source_scale_index(0, 3), 0);
+
+    for (size_t i = 0; i < sizeof(expected_square_rows) /
+                            sizeof(expected_square_rows[0]); ++i) {
+        char id[96];
+        snprintf(id, sizeof(id), "F0115.object.view_square.%zu", i);
+        check_int(id,
+                  dm1_viewport_3d_f0115_view_square_index(
+                      expected_square_rows[i][0], expected_square_rows[i][1]),
+                  expected_square_rows[i][2]);
+        snprintf(id, sizeof(id), "F0115.object.g2028_row.%zu", i);
+        check_int(id,
+                  dm1_viewport_3d_f0115_c2500_c2900_row(
+                      expected_square_rows[i][0], expected_square_rows[i][1]),
+                  expected_square_rows[i][3]);
+    }
+    check_int("F0115.object.view_square.invalid_depth_low",
+              dm1_viewport_3d_f0115_view_square_index(0, 0), -1);
+    check_int("F0115.object.view_square.invalid_depth_high",
+              dm1_viewport_3d_f0115_view_square_index(4, 0), -1);
+    check_int("F0115.object.view_square.invalid_d2_far_left",
+              dm1_viewport_3d_f0115_view_square_index(2, -2), -1);
+    check_int("F0115.object.view_square.invalid_d2_far_right",
+              dm1_viewport_3d_f0115_view_square_index(2, 2), -1);
+    check_int("F0115.object.g2028_row.invalid_depth_low",
+              dm1_viewport_3d_f0115_c2500_c2900_row(0, 0), -1);
+    check_int("F0115.object.g2028_row.invalid_depth_high",
+              dm1_viewport_3d_f0115_c2500_c2900_row(4, 0), -1);
+    check_int("F0115.object.g2028_row.invalid_d2_far_left",
+              dm1_viewport_3d_f0115_c2500_c2900_row(2, -2), -1);
+    check_int("F0115.object.g2028_row.invalid_d2_far_right",
+              dm1_viewport_3d_f0115_c2500_c2900_row(2, 2), -1);
 
     for (int i = 0; i < 16; ++i) {
         int x = -1;
