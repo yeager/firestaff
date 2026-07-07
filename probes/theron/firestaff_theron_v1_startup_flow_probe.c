@@ -1,6 +1,7 @@
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_startup_runtime_entry.h"
+#include "theron_v1_startup_save_resume.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -702,6 +703,55 @@ int main(void) {
                 check_int("exec mirror count after deselect",
                           exec_flow.companion_count,
                           0);
+            }
+            {
+                Theron_V1StartupContinueRequest continue_request;
+                Theron_V1StartupContinueResult continue_result;
+                char continue_receipt[128];
+
+                theron_v1_startup_continue_request_init(&continue_request);
+                theron_v1_startup_continue_result_init(&continue_result);
+                check_int("continue request init claim",
+                          continue_request.resume_claim,
+                          THERON_V1_STARTUP_RESUME_NONE);
+                check_int("continue request init tqsv slot",
+                          continue_request.tqsv_slot_index,
+                          -1);
+                check_int("continue result init source",
+                          continue_result.source,
+                          THERON_V1_STARTUP_CONTINUE_SOURCE_NONE);
+
+                continue_receipt[0] = '\0';
+                theron_v1_world_init(&world);
+                check_int("continue apply no source rc",
+                          theron_v1_startup_continue_apply_request(
+                              &world,
+                              &continue_request,
+                              &continue_result,
+                              continue_receipt,
+                              sizeof(continue_receipt)),
+                          0);
+                check_contains("continue apply no source receipt",
+                               continue_receipt,
+                               "Continue requires");
+                check_int("continue apply no source result",
+                          continue_result.source,
+                          THERON_V1_STARTUP_CONTINUE_SOURCE_NONE);
+
+                continue_request.resume_claim = THERON_V1_STARTUP_RESUME_TQSV;
+                continue_request.tqsv_slot_index = THERON_SAVE_SLOT_COUNT;
+                continue_receipt[0] = '\0';
+                check_int("continue apply bad tqsv slot rc",
+                          theron_v1_startup_continue_apply_request(
+                              &world,
+                              &continue_request,
+                              &continue_result,
+                              continue_receipt,
+                              sizeof(continue_receipt)),
+                          0);
+                check_contains("continue apply bad tqsv slot receipt",
+                               continue_receipt,
+                               "Continue requires");
             }
         }
 
