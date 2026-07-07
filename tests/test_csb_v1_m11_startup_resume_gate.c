@@ -1244,6 +1244,18 @@ int main(void) {
                     view.csbState.startup_title_source_step == 1 &&
                     view.csbState.startup_entrance_source_step == 0,
                 "M11 CSB new-game start begins at source title prelude");
+    {
+        M11_BootProbeReceipt receipt;
+        expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1,
+                    "M11 CSB startup exports a boot receipt");
+        expect_true(strcmp(receipt.startupAnimation, "csb-title") == 0 &&
+                        receipt.startupAnimationActive == 1 &&
+                        receipt.startupTitleFrame == 0 &&
+                        receipt.startupTitleFrameMax ==
+                            csb_v1_startup_title_total_ticks_pc34() &&
+                        receipt.startupTitleReady == 0,
+                    "M11 CSB receipt exposes active title prelude boundary");
+    }
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
                     VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS,
                 "M11 CSB PRESENTS title reports source special palette");
@@ -1279,6 +1291,18 @@ int main(void) {
                         view.csbState.startup_title_source_step == 2 &&
                         view.csbState.startup_entrance_source_step == 0,
                     "M11 CSB title prelude reaches CHAOS zoom before entrance");
+        {
+            M11_BootProbeReceipt receipt;
+            expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1,
+                        "M11 CSB startup exports a boot receipt after PRESENTS");
+            expect_true(strcmp(receipt.startupAnimation, "csb-title") == 0 &&
+                            receipt.startupAnimationActive == 1 &&
+                            receipt.startupTitleFrame > 0 &&
+                            receipt.startupTitleFrameMax ==
+                                csb_v1_startup_title_total_ticks_pc34() &&
+                            receipt.startupTitleReady == 0,
+                        "M11 CSB receipt keeps title boundary through CHAOS zoom");
+        }
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
                         VGA_PALETTE_PC34_SPECIAL_TITLE,
                     "M11 CSB CHAOS zoom reports source title palette");
