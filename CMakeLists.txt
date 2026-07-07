@@ -312,6 +312,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_portrait_panel_pc34_compat.c
     src/dm1/dm1_v1_floor_ornament_pc34_compat.c
     src/dm1/dm1_v1_floor_pit_pc34_compat.c
+    src/dm1/dm1_v1_stairs_render_pc34_compat.c
     src/dm1/dm1_v1_wall_ornament_pc34_compat.c
     src/dm1/dm1_v1_dungeon_decompressor_pc34_compat.c
     src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
@@ -15848,6 +15849,12 @@ firestaff_add_dm1_v1_viewport_contract_test(
     tests/test_dm1_v1_floor_pit_pc34_compat.c
     src/dm1/dm1_v1_floor_pit_pc34_compat.c
     dm1_v1_floor_pit_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_stairs_render_pc34_compat
+    tests/test_dm1_v1_stairs_render_pc34_compat.c
+    src/dm1/dm1_v1_stairs_render_pc34_compat.c
+    dm1_v1_stairs_render_pc34_compat
 )
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_wall_ornament_pc34_compat
