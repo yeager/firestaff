@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.59  (2026-07-07)",
+    "  - Packages CSB runtime object draw binding ownership now on main.",
+    "  - CSB runtime object overlay placements now carry sprite and icon binding data for M11 drawing.",
+    "",
     "V3.0.58  (2026-07-07)",
     "  - Packages the latest DM1 V1 wall-inscription compact digit escape fix now on main.",
     "  - DM1 V1 compact inscription decoding now keeps digit escape glyphs on the original PC34 inscription font path.",
@@ -484,5 +488,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.58";
+    return "3.0.59";
 }
