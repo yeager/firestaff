@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 CSB utility input apply ownership: `csb_v1_utility_flow_pc34` now returns `CSB_V1_UtilApplyReceipt` directly from active Firestaff keyboard and pointer utility input. M11 no longer converts utility input results to receipts in duplicate pointer/keyboard branches. Verification: utility-flow action contract passed 49/49, startup entrance pointer contract passed 116/116, Phase A passed 24/24, CSB boot-probe passed, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Nexus full startup graphics ownership: Nexus startup presentation now owns the boot title draw command for WARNING.BIN/TITLE.CG frames, so M11 uses the same Nexus draw-command executor for warning/title, save select, and champion select startup graphics. Verification: `test_nexus_v1_startup_menu_pc34_compat`, `test_m11_nexus_startup_gate`, `test_nexus_v1_m11_launcher_handoff_boundary`, Phase A, Nexus boot-probe, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron flow state receipt ownership: `theron_v1_startup_flow` now converts flow apply receipts into state receipts for flow snapshot, startup cursor, and Continue focus. M11 applies the Theron-owned receipt instead of copying those fields locally. Verification: startup-flow probe passed 417/417, save-resume probe passed 66/66, M11 launcher handoff passed 26/26, Phase A passed 24/24, Theron boot-probe passed, and `git diff --check` passed.
