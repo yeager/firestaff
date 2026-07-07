@@ -12483,17 +12483,17 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
-    if (theron_v1_dungeon_enter(&world->progression, flow.selected_dungeon) != 0) {
+    result = theron_v1_startup_enter_world_from_forcefield(&flow, world);
+    if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "startup-flow dungeon enter failed");
+            snprintf(receipt,
+                     receipt_cap,
+                     "startup-flow dungeon enter failed: %s",
+                     theron_v1_startup_result_name(result));
         }
         return 0;
     }
 
-    theron_v1_world_reset_for_dungeon(world, flow.selected_dungeon);
-    memset(world->level_loaded[flow.selected_dungeon - 1],
-           0,
-           sizeof(world->level_loaded[flow.selected_dungeon - 1]));
     if (!m11_theron_load_initial_level(world,
                                        assets,
                                        profile->graphics_md5,

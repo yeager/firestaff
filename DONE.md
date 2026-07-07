@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 Theron post-forcefield world-entry ownership: `theron_v1_startup_flow` now owns dungeon-entry/world-reset handoff after the forcefield succeeds, including progression entry, per-dungeon world reset, and selected-level loaded-row clearing. M11 now only loads Track 02 level data after the Theron-owned entry contract succeeds. Verification: direct `firestaff_theron_v1_startup_flow_probe` build/run passed 280/280, M11 syntax passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Theron forcefield roster ownership: `theron_v1_startup_flow` now owns forcefield party construction with optional Track 02 roster-name overrides and persisted-Theron preservation. M11 no longer carries local mirror-to-roster party-name logic. Verification: direct `firestaff_theron_v1_startup_flow_probe` build/run passed 272/272, M11 syntax passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron startup state ownership: `theron_v1_startup_flow` now owns stage-select flow reset and Soul Room mirror toggle selection/deselection policy through dedicated helpers. M11 consumes those helpers for title advance, continue resume, dungeon exit, and mirror toggles instead of rebuilding those startup states locally. Verification: direct `firestaff_theron_v1_startup_flow_probe` build/run passed 265/265, M11 syntax passed, Phase A passed 24/24, and `git diff --check` passed.
