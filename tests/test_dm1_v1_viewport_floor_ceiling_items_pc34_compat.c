@@ -182,6 +182,47 @@ static void test_item_pile_zone_flip_and_transparency_contract(void)
                "DUNVIEW.C:8430 PC34 ceiling uses F0792/C700, not F0100");
 }
 
+static void test_item_sprite_metadata_ownership(void)
+{
+    expect_int("item.graphic.first_object", DM1_GRAPHIC_FIRST_OBJECT, 498,
+               "DEFS.H:2386 M612_GRAPHIC_FIRST_OBJECT");
+    expect_int("item.graphic.first_creature", DM1_GRAPHIC_FIRST_CREATURE, 584,
+               "DEFS.H:2392 M618_GRAPHIC_FIRST_CREATURE");
+    expect_int("item.graphic.scroll", DM1_GRAPHIC_ITEM_SCROLL, 500,
+               "G0209/G0208 scroll object aspect native slot");
+
+    expect_int("item.aspect.scroll", dm1_item_aspect_index(7, 0), 1,
+               "DUNVIEW.C G0208 object-info -> G0209 aspect");
+    expect_int("item.sprite.scroll", (int)dm1_item_sprite_index(7, 0), 500,
+               "M612 + G0209 FirstNativeBitmapRelativeIndex");
+    expect_int("item.aspect.weapon0", dm1_item_aspect_index(5, 0), 38,
+               "DUNVIEW.C G0208 weapon object-info offset");
+    expect_int("item.sprite.weapon0", (int)dm1_item_sprite_index(5, 0), 537,
+               "M612 + G0209 FirstNativeBitmapRelativeIndex");
+    expect_int("item.aspect.potion0", dm1_item_aspect_index(8, 0), 67,
+               "DUNVIEW.C G0208 potion object-info offset");
+    expect_int("item.sprite.potion0", (int)dm1_item_sprite_index(8, 0), 567,
+               "M612 + G0209 FirstNativeBitmapRelativeIndex");
+    expect_int("item.aspect.container0", dm1_item_aspect_index(9, 0), 0,
+               "DUNVIEW.C G0208 container object-info offset");
+    expect_int("item.sprite.container0", (int)dm1_item_sprite_index(9, 0), 498,
+               "M612 + G0209 FirstNativeBitmapRelativeIndex");
+
+    expect_int("item.aspect.invalid", dm1_item_aspect_index(1, 0), -1,
+               "non-object THING type has no F0115 item sprite");
+    expect_int("item.sprite.invalid", (int)dm1_item_sprite_index(1, 0), 0,
+               "non-object THING type has no F0115 item sprite");
+
+    expect_int("object.aspect.info.0", (int)dm1_object_aspect_graphic_info(0), 0x11,
+               "DUNVIEW.C G0209 object aspect GraphicInfo");
+    expect_int("object.aspect.info.63", (int)dm1_object_aspect_graphic_info(63), 0x01,
+               "DUNVIEW.C G0209 mirror-on-right flag");
+    expect_int("object.aspect.coord.0", dm1_object_aspect_coordinate_set(0), 0,
+               "DUNVIEW.C G0209 object aspect CoordinateSet");
+    expect_int("object.aspect.coord.14", dm1_object_aspect_coordinate_set(14), 2,
+               "DUNVIEW.C G0209 object aspect CoordinateSet");
+}
+
 static void test_source_evidence_mentions_required_anchors(void)
 {
     const char *e =
@@ -229,6 +270,7 @@ int main(void)
     test_floor_set_and_floor_ceiling_ownership();
     test_floor_ornament_variants_and_palettes();
     test_item_pile_zone_flip_and_transparency_contract();
+    test_item_sprite_metadata_ownership();
     test_source_evidence_mentions_required_anchors();
 
     if (g_failures) {

@@ -71,6 +71,7 @@
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
@@ -231,7 +232,6 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
-static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -19931,7 +19931,6 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int relativeCell, int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
-static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide);
 static int m11_draw_wall_ornament(const M11_GameViewState* state,
                                   unsigned char* framebuffer,
                                   int fbW, int fbH,
@@ -20111,8 +20110,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         return;
     }
 
-    sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward,
-                                                  cell->relSide);
+    sourceZoneRow = dm1_viewport_3d_f0115_c2500_c2900_row(cell->relForward,
+                                                          cell->relSide);
 
     /* ── DM1-faithful Z-order: floor ornaments → floor items → creatures → projectiles ──
      * ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF
@@ -22425,7 +22424,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                 if (m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx)) {
                     m11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,
                                                    &cell, &blit,
-                                                   m11_dm1_f0115_c2500_c2900_row(
+                                                   dm1_viewport_3d_f0115_c2500_c2900_row(
                                                        kWallOrnaments[i].relForward,
                                                        kWallOrnaments[i].relSide));
                 }
@@ -23491,171 +23490,6 @@ static int m11_draw_door_side_asset(const M11_GameViewState* state,
     return 1;
 }
 
-/* Map an item thing type + subtype to a GRAPHICS.DAT graphic index.
- * Returns the graphic index, or 0 if no mapping exists. */
-static unsigned int m11_item_sprite_index(int thingType, int subtype) {
-    static const unsigned char kObjectInfoAspect[180] = {
-        1,0,67,67,67,67,67,67,2,2,2,2,2,2,2,2,2,2,68,68,
-        68,68,80,38,38,35,37,11,12,12,39,17,12,12,12,12,12,12,12,42,
-        12,13,13,21,21,33,43,44,14,45,16,46,11,47,48,49,50,11,31,31,
-        11,11,11,51,32,30,65,45,82,23,23,23,55,8,24,24,24,24,69,24,
-        24,69,7,7,57,23,23,29,69,69,24,24,53,53,9,9,9,54,54,10,
-        54,19,19,19,19,9,19,52,20,22,56,10,52,20,22,56,10,52,20,22,
-        56,10,52,19,22,81,84,34,6,15,15,40,41,4,83,4,18,18,18,18,
-        18,18,18,18,62,62,62,62,62,62,62,62,76,3,60,61,27,28,25,26,
-        71,70,5,66,15,15,58,59,59,79,63,64,72,73,74,75,77,78,74,41
-    };
-    static const unsigned char kObjectAspectFirstNative[85] = {
-         0,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
-        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-        33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
-        49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
-        65, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 82,
-        84, 85, 86, 87, 88
-    };
-    int objectInfoIndex;
-    int aspectIndex;
-    if (subtype < 0) subtype = 0;
-    switch (thingType) {
-        case THING_TYPE_WEAPON:
-            if (subtype > 45) subtype = 0;
-            objectInfoIndex = 23 + subtype;
-            break;
-        case THING_TYPE_ARMOUR:
-            if (subtype > 57) subtype = 0;
-            objectInfoIndex = 69 + subtype;
-            break;
-        case THING_TYPE_SCROLL:
-            objectInfoIndex = 0;
-            break;
-        case THING_TYPE_POTION:
-            if (subtype > 20) subtype = 0;
-            objectInfoIndex = 2 + subtype;
-            break;
-        case THING_TYPE_CONTAINER:
-            if (subtype > 0) subtype = 0;
-            objectInfoIndex = 1 + subtype;
-            break;
-        case THING_TYPE_JUNK:
-            if (subtype > 52) subtype = 0;
-            objectInfoIndex = 127 + subtype;
-            break;
-        default:
-            return 0;
-    }
-    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return 0;
-    aspectIndex = kObjectInfoAspect[objectInfoIndex];
-    if (aspectIndex < 0 || aspectIndex >= 85) return 0;
-    /* G0209_as_Graphic558_ObjectAspects[].FirstNativeBitmapRelativeIndex
-     * has gaps for aspects with alcove/right-facing alternates; do not
-     * synthesize it as aspectIndex+1. */
-    return M11_GFX_ITEM_SPRITE_BASE + (unsigned int)kObjectAspectFirstNative[aspectIndex];
-}
-
-static int m11_item_aspect_index(int thingType, int subtype) {
-    static const unsigned char kObjectInfoAspect[180] = {
-        1,0,67,67,67,67,67,67,2,2,2,2,2,2,2,2,2,2,68,68,
-        68,68,80,38,38,35,37,11,12,12,39,17,12,12,12,12,12,12,12,42,
-        12,13,13,21,21,33,43,44,14,45,16,46,11,47,48,49,50,11,31,31,
-        11,11,11,51,32,30,65,45,82,23,23,23,55,8,24,24,24,24,69,24,
-        24,69,7,7,57,23,23,29,69,69,24,24,53,53,9,9,9,54,54,10,
-        54,19,19,19,19,9,19,52,20,22,56,10,52,20,22,56,10,52,20,22,
-        56,10,52,19,22,81,84,34,6,15,15,40,41,4,83,4,18,18,18,18,
-        18,18,18,18,62,62,62,62,62,62,62,62,76,3,60,61,27,28,25,26,
-        71,70,5,66,15,15,58,59,59,79,63,64,72,73,74,75,77,78,74,41
-    };
-    int objectInfoIndex;
-    if (subtype < 0) subtype = 0;
-    switch (thingType) {
-        case THING_TYPE_WEAPON:
-            if (subtype > 45) subtype = 0;
-            objectInfoIndex = 23 + subtype;
-            break;
-        case THING_TYPE_ARMOUR:
-            if (subtype > 57) subtype = 0;
-            objectInfoIndex = 69 + subtype;
-            break;
-        case THING_TYPE_SCROLL:
-            objectInfoIndex = 0;
-            break;
-        case THING_TYPE_POTION:
-            if (subtype > 20) subtype = 0;
-            objectInfoIndex = 2 + subtype;
-            break;
-        case THING_TYPE_CONTAINER:
-            if (subtype > 0) subtype = 0;
-            objectInfoIndex = 1 + subtype;
-            break;
-        case THING_TYPE_JUNK:
-            if (subtype > 52) subtype = 0;
-            objectInfoIndex = 127 + subtype;
-            break;
-        default:
-            return -1;
-    }
-    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return -1;
-    return (int)kObjectInfoAspect[objectInfoIndex];
-}
-
-
-static int m11_dm1_f0115_view_square_index(int relForward, int relSide) {
-    /* ReDMCSB DUNVIEW.C / DEFS.H MEDIA720 visible-square order:
-     * D1C/L/R = 3/4/5, D2C/L/R = 6/7/8, D3C/L/R = 11/12/13.
-     * D3L2/D3R2 = 14/15.  Firestaff samples relForward 1..3 from the
-     * party and also uses the ReDMCSB F0128 extra side slots at
-     * relSide -2/+2 for D3L2/D3R2 and D2L2/D2R2.  Only D3L2/D3R2 have
-     * an F0115 thing pass in this PC34 source; D2L2/D2R2 are wall/field
-     * helpers only. */
-    static const signed char kViewSquare[3][3] = {
-        { 4,  3,  5},
-        { 7,  6,  8},
-        {12, 11, 13}
-    };
-    if (relForward < 1 || relForward > 3) return -1;
-    if (relSide == -2 && relForward == 3) return 14;
-    if (relSide == 2 && relForward == 3) return 15;
-    if (relSide < -1 || relSide > 1) return -1;
-    return (int)kViewSquare[relForward - 1][relSide + 1];
-}
-
-static int m11_dm1_f0115_c2500_c2900_row(int relForward, int relSide) {
-    /* DUNVIEW.C G2028_ac_ViewSquareIndexTo.  F0115 indexes
-     * C2500/C2900 as base + (G2028[viewSquare] * 4) + viewCell. */
-    static const signed char kG2028[23] = { 11, -1, -1,  8,  9, 10,  5,  6,  7, -1, -1,
-                                             0,  1,  2,  3,  4, -1, -1, -1, -1, -1, -1, -1 };
-    int viewSquare = m11_dm1_f0115_view_square_index(relForward, relSide);
-    if (viewSquare < 0 || viewSquare >= 23) return -1;
-    return (int)kG2028[viewSquare];
-}
-
-static unsigned int m11_object_aspect_graphic_info(int aspectIndex) {
-    /* DUNVIEW.C G0209_as_Graphic558_ObjectAspects[].GraphicInfo. */
-    static const unsigned char kGraphicInfo[85] = {
-        0x11,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,
-        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,
-        0x00,0x00,0x00,0x00,0x00
-    };
-    if (aspectIndex < 0 || aspectIndex >= 85) return 0u;
-    return (unsigned int)kGraphicInfo[aspectIndex];
-}
-
-static int m11_object_aspect_coordinate_set(int aspectIndex) {
-    /* DUNVIEW.C G0209_as_Graphic558_ObjectAspects[].CoordinateSet. */
-    static const unsigned char kCoordinateSet[85] = {
-        0,1,1,1,1,1,0,0,0,1,0,1,1,0,2,1,
-        1,0,1,2,2,1,2,0,0,1,1,1,1,0,1,1,
-        1,0,1,1,0,0,1,1,0,0,1,1,0,2,1,1,
-        1,1,1,0,0,1,0,0,0,0,1,1,1,1,1,1,
-        1,0,1,1,1,0,0,0,0,1,1,1,0,1,1,1,
-        1,0,1,1,0
-    };
-    if (aspectIndex < 0 || aspectIndex >= 85) return 0;
-    return (int)kCoordinateSet[aspectIndex];
-}
-
 static int m11_creature_source_palette_change(int depthPaletteIndex,
                                               int paletteIndex) {
     /* DUNVIEW.C G0221/G0222 creature palette-change tables for D3/D2
@@ -23675,7 +23509,7 @@ static int m11_creature_source_palette_change(int depthPaletteIndex,
 /* Resolve an inventory thingId to a GRAPHICS.DAT item sprite index.
  * Returns the graphic index suitable for M11_AssetLoader_Load, or 0
  * if the thing type/subtype cannot be mapped.  This is the inventory
- * counterpart of the viewport floor-item m11_item_sprite_index(). */
+ * counterpart of the viewport floor-item dm1_item_sprite_index(). */
 static unsigned int m11_inventory_thing_sprite_index(
     const struct DungeonThings_Compat* things,
     unsigned short thingId) {
@@ -23710,7 +23544,7 @@ static unsigned int m11_inventory_thing_sprite_index(
         default:
             return 0;
     }
-    return m11_item_sprite_index(thingType, subtype);
+    return dm1_item_sprite_index(thingType, subtype);
 }
 
 /* Draw an item sprite from GRAPHICS.DAT at the given viewport position.
@@ -23742,11 +23576,11 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
     int useMirror;
 
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
-    gfxIdx = m11_item_sprite_index(thingType, subtype);
+    gfxIdx = dm1_item_sprite_index(thingType, subtype);
     if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
-    aspectIndex = m11_item_aspect_index(thingType, subtype);
+    aspectIndex = dm1_item_aspect_index(thingType, subtype);
     useMirror = (aspectIndex >= 0 &&
-                 (m11_object_aspect_graphic_info(aspectIndex) & 0x0001u) &&
+                 (dm1_object_aspect_graphic_info(aspectIndex) & 0x0001u) &&
                  (relativeCell == 1 || relativeCell == 3)) ? 1 : 0;
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
@@ -24453,8 +24287,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     if (paneW <= 4) {
         return;
     }
-    sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward,
-                                                  cell->relSide);
+    sourceZoneRow = dm1_viewport_3d_f0115_c2500_c2900_row(cell->relForward,
+                                                          cell->relSide);
 
     accent = m11_feature_accent_color(cell);
     if (m11_viewport_cell_is_open(cell)) {
@@ -24737,7 +24571,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
             int side = sideSlot == 0 ? -1 : 1;
             int sideIndex = side < 0 ? 0 : 2;
             const M11_ViewportCell* cell = &cells[depth][sideIndex];
-            int sourceZoneRow = m11_dm1_f0115_c2500_c2900_row(cell->relForward, cell->relSide);
+            int sourceZoneRow = dm1_viewport_3d_f0115_c2500_c2900_row(cell->relForward, cell->relSide);
             int paneX;
             int paneW;
             if (!cell->valid || !m11_viewport_cell_is_open(cell)) {
@@ -31398,7 +31232,7 @@ int M11_GameView_GetProjectileAspectFlipFlags(int aspectIndex,
 }
 
 unsigned int M11_GameView_GetObjectSpriteIndex(int thingType, int subtype) {
-    return m11_item_sprite_index(thingType, subtype);
+    return dm1_item_sprite_index(thingType, subtype);
 }
 
 int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex) {
@@ -31406,11 +31240,11 @@ int M11_GameView_GetObjectSourceScaleUnits(int scaleIndex) {
 }
 
 int M11_GameView_GetF0115ViewSquareIndex(int relForward, int relSide) {
-    return m11_dm1_f0115_view_square_index(relForward, relSide);
+    return dm1_viewport_3d_f0115_view_square_index(relForward, relSide);
 }
 
 int M11_GameView_GetF0115C2500C2900Row(int relForward, int relSide) {
-    return m11_dm1_f0115_c2500_c2900_row(relForward, relSide);
+    return dm1_viewport_3d_f0115_c2500_c2900_row(relForward, relSide);
 }
 
 int M11_GameView_GetDm1D4FarProjectileBox(int relSide,
@@ -31490,7 +31324,7 @@ int M11_GameView_GetProjectileRawZonePointForRel(int relForward,
                                                  int relativeCell,
                                                  int* outX,
                                                  int* outY) {
-    int rowIndex = m11_dm1_f0115_c2500_c2900_row(relForward, relSide);
+    int rowIndex = dm1_viewport_3d_f0115_c2500_c2900_row(relForward, relSide);
     if (rowIndex < 0) {
         return 0;
     }
@@ -31613,18 +31447,18 @@ int M11_GameView_GetObjectShiftValue(int shiftSet, int shiftIndex) {
 }
 
 unsigned int M11_GameView_GetObjectAspectGraphicInfo(int aspectIndex) {
-    return m11_object_aspect_graphic_info(aspectIndex);
+    return dm1_object_aspect_graphic_info(aspectIndex);
 }
 
 int M11_GameView_GetObjectAspectCoordinateSet(int aspectIndex) {
-    return m11_object_aspect_coordinate_set(aspectIndex);
+    return dm1_object_aspect_coordinate_set(aspectIndex);
 }
 
 int M11_GameView_ObjectUsesFlipOnRight(int thingType, int subtype,
                                        int relativeCell) {
-    int aspectIndex = m11_item_aspect_index(thingType, subtype);
+    int aspectIndex = dm1_item_aspect_index(thingType, subtype);
     if (aspectIndex < 0) return 0;
-    return ((m11_object_aspect_graphic_info(aspectIndex) & 0x0001u) &&
+    return ((dm1_object_aspect_graphic_info(aspectIndex) & 0x0001u) &&
             (relativeCell == 1 || relativeCell == 3)) ? 1 : 0;
 }
 
