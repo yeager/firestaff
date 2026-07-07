@@ -1,6 +1,29 @@
 
 # Unreleased
 
+# Firestaff v3.0.60
+
+Firestaff v3.0.60 packages the current `main` after the CSB viewport runtime
+thing-overlay ownership pass.
+
+## Highlights since v3.0.59
+
+- **CSB runtime thing overlay ownership**: CSB V1 viewport rendering now owns
+  live floor-object and creature-group overlay collection, draw order and
+  fallback marker accounting. M11 now supplies asset-backed sprite/icon blitter
+  callbacks instead of owning the CSB runtime thing pass.
+- **Release metadata**: In-app version strings, CMake metadata and release
+  notes are synchronized to `v3.0.60`.
+
+## Verification
+
+- Local release verification covers version synchronization, the focused CSB V1
+  viewport/rendering gate, the M11 CSB fallback guard, the Phase A probe and
+  `git diff --check` before GitHub Actions packaging.
+- The GitHub release workflow builds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64 and Steam Deck x86_64 artifacts
+  from the `v3.0.60` release run.
+
 # Firestaff v3.0.59
 
 Firestaff v3.0.59 packages the current `main` after the CSB runtime object
