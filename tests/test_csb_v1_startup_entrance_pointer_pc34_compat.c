@@ -389,6 +389,25 @@ int main(void)
               command_state_receipt.pending_command ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
           "startup command state receipt facts helper owns M11 copy contract");
+    memset(&command_state_receipt, 0, sizeof(command_state_receipt));
+    check(csb_v1_startup_init_command_state_receipt_pc34(
+              0,
+              &command_state_receipt) &&
+              command_state_receipt.title_active &&
+              command_state_receipt.entrance_active &&
+              !command_state_receipt.entrance_dismissed &&
+              command_state_receipt.title_source_step ==
+                  CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
+          "startup init receipt owns new-game title state");
+    memset(&command_state_receipt, 0, sizeof(command_state_receipt));
+    check(csb_v1_startup_init_command_state_receipt_pc34(
+              1,
+              &command_state_receipt) &&
+              !command_state_receipt.title_active &&
+              !command_state_receipt.entrance_active &&
+              command_state_receipt.entrance_dismissed &&
+              command_state_receipt.entrance_source_step == 0,
+          "startup init receipt owns skip-startup runtime state");
 
     expect_action("enter route becomes CSB startup Enter",
                   244, 45,
@@ -2041,6 +2060,28 @@ int main(void)
               startup_active == 1 &&
               startup_frame == 7,
           "startup receipt phase reports title source step");
+    check(csb_v1_startup_receipt_phase_from_facts_pc34(
+              1,
+              7,
+              2,
+              1,
+              CSB_V1_STARTUP_STAGE_ENTRANCE_WAIT_PC34,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              44,
+              phase,
+              sizeof(phase),
+              &startup_active,
+              &startup_frame) &&
+              strcmp(phase, "csb-title-2") == 0 &&
+              startup_active == 1 &&
+              startup_frame == 7,
+          "startup receipt phase facts helper owns title phase");
 
     command_state.title_active = 0;
     command_state.opening_active = 1;
@@ -2052,6 +2093,28 @@ int main(void)
               startup_active == 1 &&
               startup_frame == 44,
           "startup receipt phase reports door opening");
+    check(csb_v1_startup_receipt_phase_from_facts_pc34(
+              0,
+              0,
+              0,
+              1,
+              CSB_V1_STARTUP_STAGE_ENTRANCE_PRE_OPEN_DELAY_PC34,
+              0,
+              0,
+              0,
+              1,
+              0,
+              5,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+              44,
+              phase,
+              sizeof(phase),
+              &startup_active,
+              &startup_frame) &&
+              strcmp(phase, "csb-entrance-opening-5") == 0 &&
+              startup_active == 1 &&
+              startup_frame == 44,
+          "startup receipt phase facts helper owns opening phase");
 
     command_state.opening_active = 0;
     command_state.credits_active = 1;

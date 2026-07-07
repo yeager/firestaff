@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB init/phase facts receipts: `csb_v1_startup_sequence_pc34_compat` now returns startup init receipts and receipt phase data directly from raw facts. M11 no longer constructs CSB command-state for selected-entry init or boot receipt reporting. Verification: CSB startup entrance pointer contract passed 133/133, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 RetroAchievements start-menu settings contract: M12 now exposes public settings-row IDs for RetroAchievements enable, hardcore, username, and API token. Modern hit-testing and tests use that contract, keeping visible RA settings tied to persisted menu behavior. Verification: settings hit-test passed 38/38, RetroAchievements unit test passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB entrance command facts receipts: `csb_v1_startup_sequence_pc34_compat` now applies entrance commands and runtime plans directly from raw startup facts and returns command-state receipts. M11 no longer constructs CSB command-state for entrance command routing. Verification: CSB startup entrance pointer contract passed 129/129, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

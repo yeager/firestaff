@@ -1725,6 +1725,23 @@ int csb_v1_startup_command_state_receipt_from_facts_pc34(
         out_receipt);
 }
 
+int csb_v1_startup_init_command_state_receipt_pc34(
+    int skip_startup,
+    CSB_V1_StartupCommandStateReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupCommandState_PC34 state;
+
+    if (out_receipt) {
+        csb_v1_startup_command_state_receipt_init_pc34(out_receipt);
+    }
+    if (!csb_v1_startup_init_command_state_pc34(&state, skip_startup)) {
+        return 0;
+    }
+    return csb_v1_startup_command_state_receipt_from_state_pc34(
+        &state,
+        out_receipt);
+}
+
 int csb_v1_startup_entrance_accepts_input_from_facts_pc34(
     int title_active,
     int title_frame,
@@ -2756,6 +2773,52 @@ int csb_v1_startup_receipt_phase_pc34(
         *out_startup_frame = startup_frame;
     }
     return 1;
+}
+
+int csb_v1_startup_receipt_phase_from_facts_pc34(
+    int title_active,
+    int title_frame,
+    int title_source_step,
+    int entrance_active,
+    int entrance_source_step,
+    int entrance_dismissed,
+    int credits_active,
+    int credits_remaining_ticks,
+    int opening_active,
+    int opening_delay_ticks,
+    int opening_step,
+    int pending_command,
+    int entrance_frame,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame)
+{
+    CSB_V1_StartupCommandState_PC34 state;
+
+    if (!csb_v1_startup_command_state_from_facts_pc34(
+            title_active,
+            title_frame,
+            title_source_step,
+            entrance_active,
+            entrance_source_step,
+            entrance_dismissed,
+            credits_active,
+            credits_remaining_ticks,
+            opening_active,
+            opening_delay_ticks,
+            opening_step,
+            pending_command,
+            &state)) {
+        return 0;
+    }
+    return csb_v1_startup_receipt_phase_pc34(
+        &state,
+        entrance_frame,
+        out_phase,
+        out_phase_size,
+        out_startup_active,
+        out_startup_frame);
 }
 
 int csb_v1_startup_sequence_source_order_valid_pc34(void)
