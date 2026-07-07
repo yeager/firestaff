@@ -9,6 +9,10 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.58  (2026-07-07)",
+    "  - Packages the latest DM1 V1 wall-inscription compact digit escape fix now on main.",
+    "  - DM1 V1 compact inscription decoding now keeps digit escape glyphs on the original PC34 inscription font path.",
+    "",
     "V3.0.57  (2026-07-07)",
     "  - Packages the current main after DM2 V1 HUD champion-state and portrait-ordinal handoff work landed after v3.0.56.",
     "  - DM2 V1 HUD rendering now consumes session-backed champion status and portrait ordinal metadata through the viewport-owned HUD party state.",
@@ -480,5 +484,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.57";
+    return "3.0.58";
 }
