@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 floor-item payload ownership: `dm1_v1_viewport_floor_ceiling_items_pc34_compat` now owns F0115 floor-item type classification and the HoC map-0 mirror payload control predicate. M11 consumes those DM1 APIs while scanning square thing chains, keeping mirror candidate inventory payloads out of floor loot rendering. Verification: direct `test_dm1_v1_viewport_floor_ceiling_items_pc34_compat` passed 171/171, floor/item syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 door panel graphic ownership: `dm1_v1_center_door_render_pc34_compat` now owns the F0095 doorSet/depth panel graphic selection, and M11 consumes that DM1 API for center and side door panel drawing. Verification: direct `test_dm1_v1_center_door_render_pc34_compat` passed 62/62, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 viewport parity predicate ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 `(mapX + mapY + direction) & 1` wall/footprint parity predicate. M11 still supplies the party tuple but no longer carries the source rule locally. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` passed, `test_dm1_v1_stairs_render_pc34_compat` passed 111/111, M11 syntax passed cleanly, and `git diff --check` passed.

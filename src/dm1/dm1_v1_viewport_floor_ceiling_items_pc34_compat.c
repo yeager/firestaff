@@ -122,6 +122,41 @@ int dm1_object_aspect_coordinate_set(int aspectIndex) {
     return (int)kCoordinateSet[aspectIndex];
 }
 
+int dm1_v1_thing_type_is_floor_item_pc34(int thingType)
+{
+    switch (thingType) {
+        case THING_TYPE_WEAPON:
+        case THING_TYPE_ARMOUR:
+        case THING_TYPE_SCROLL:
+        case THING_TYPE_POTION:
+        case THING_TYPE_CONTAINER:
+        case THING_TYPE_JUNK:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+int dm1_v1_hall_candidate_payload_control_thing_pc34(
+    int mapIndex,
+    int thingType,
+    int mirrorTextStringOrdinal)
+{
+    if (mapIndex != 0) {
+        return 0;
+    }
+    if (thingType == THING_TYPE_SENSOR) {
+        /* ReDMCSB REVIVE.C F0280 lines 297-349 consumes objects from
+         * the front Hall mirror square into candidate champion inventory.
+         * Map-0 C02/C03 controls before an object mark that source payload. */
+        return 1;
+    }
+    if (thingType == THING_TYPE_TEXTSTRING && mirrorTextStringOrdinal >= 0) {
+        return 1;
+    }
+    return 0;
+}
+
 int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
                               int thingType,
                               int subtype,
