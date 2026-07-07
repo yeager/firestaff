@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup rebuild receipt ownership: `theron_v1_startup_flow` now rebuilds startup flow and emits the matching state receipt from one raw-facts helper. M11 uses that helper for startup flow refresh instead of owning the rebuild-to-receipt split. Verification: Theron startup-flow probe passed 517/517, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Nexus startup action receipt ownership: `nexus_v1_startup_menu` now owns combined title/save/champion action execution plus apply-receipt construction, including save-load callback routing. M11 no longer builds Nexus apply receipts after startup action execution. Verification: Nexus startup menu test passed, Nexus M11 launcher handoff passed 151/151, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron startup layout facts ownership: `theron_v1_startup_flow` now builds startup layout elements directly from raw phase/profile/world/roster/Continue facts. M11 no longer builds Theron layout state before public startup-layout inspection. Verification: Theron startup-flow probe passed 514/514, Theron M11 direct-launch passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

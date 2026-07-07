@@ -823,6 +823,7 @@ int main(void) {
         Theron_StartupFlow rebuilt;
         Theron_StartupFlowSnapshotRequest snapshot_request;
         Theron_StartupFlowSnapshot snapshot;
+        Theron_StartupStateReceipt state_receipt;
         int request_order[THERON_STARTUP_MAX_COMPANIONS + 1] = {6, 2, 0, 4};
 
         memset(&snapshot_request, 0, sizeof(snapshot_request));
@@ -926,6 +927,23 @@ int main(void) {
         check_int("facts rebuild order 2",
                   rebuilt.selected_mirror_order[2],
                   0);
+        result = theron_v1_startup_flow_rebuild_from_facts_with_receipt(
+            THERON_STARTUP_PHASE_READY,
+            THERON_DUNGEON_COUNT + 4,
+            (1 << 6) | (1 << 2) | 1,
+            THERON_STARTUP_MAX_COMPANIONS + 2,
+            request_order,
+            THERON_STARTUP_MAX_COMPANIONS + 1,
+            &progression,
+            &rebuilt,
+            &state_receipt);
+        check_int("facts rebuild receipt rc", result, THERON_STARTUP_OK);
+        check_int("facts rebuild receipt flow changed",
+                  state_receipt.flow_changed,
+                  1);
+        check_int("facts rebuild receipt companion count",
+                  state_receipt.flow.companion_count,
+                  3);
     }
 
     {
