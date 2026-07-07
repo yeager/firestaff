@@ -20711,9 +20711,10 @@ static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState*
                                                         unsigned int wallSet0GraphicIndex);
 static int m11_dm1_use_flipped_walls(const M11_GameViewState* state) {
     if (!state) return 0;
-    return (state->world.party.mapX +
-            state->world.party.mapY +
-            state->world.party.direction) & 1;
+    return dm1_viewport_3d_use_flipped_walls_pc34(
+        state->world.party.mapX,
+        state->world.party.mapY,
+        state->world.party.direction);
 }
 
 /* Blit a wall-front graphic with horizontal flip (no transparency).

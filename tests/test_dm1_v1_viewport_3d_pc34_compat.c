@@ -3686,6 +3686,22 @@ static void test_primary_side_wall_max_forward_contract(void)
               dm1_viewport_3d_primary_side_wall_max_forward_pc34(0), 3);
 }
 
+static void test_f0128_parity_predicate_contract(void)
+{
+    check_int("F0128.parity_predicate.origin_north",
+              dm1_viewport_3d_use_flipped_walls_pc34(0, 0, 0), 0);
+    check_int("F0128.parity_predicate.x",
+              dm1_viewport_3d_use_flipped_walls_pc34(1, 0, 0), 1);
+    check_int("F0128.parity_predicate.y",
+              dm1_viewport_3d_use_flipped_walls_pc34(0, 1, 0), 1);
+    check_int("F0128.parity_predicate.direction",
+              dm1_viewport_3d_use_flipped_walls_pc34(0, 0, 1), 1);
+    check_int("F0128.parity_predicate.even_sum",
+              dm1_viewport_3d_use_flipped_walls_pc34(5, 6, 3), 0);
+    check_int("F0128.parity_predicate.negative_wrap",
+              dm1_viewport_3d_use_flipped_walls_pc34(-1, 0, 0), 1);
+}
+
 static void test_center_lane_blocking_contract(void)
 {
     {
@@ -3831,6 +3847,7 @@ int main(void)
     test_projectile_wall_zone_movement_visibility_gate();
     test_f0115_object_zone_contract();
     test_primary_side_wall_max_forward_contract();
+    test_f0128_parity_predicate_contract();
     test_center_lane_blocking_contract();
     test_side_lane_clear_contract();
     test_center_line_clear_contract();
