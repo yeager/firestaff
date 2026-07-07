@@ -21321,6 +21321,23 @@ static unsigned int m11_dm1_center_blocking_depth_mask(const M11_ViewportCell ce
     return mask;
 }
 
+static unsigned int m11_dm1_center_blocking_door_depth_mask(const M11_ViewportCell cells[3][3]) {
+    int depth;
+    unsigned int mask = 0u;
+    if (!cells) {
+        return 0u;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        const M11_ViewportCell* cell = &cells[depth][1];
+        if (cell->valid &&
+            cell->elementType == DUNGEON_ELEMENT_DOOR &&
+            !m11_viewport_cell_is_open(cell)) {
+            mask |= (1u << (unsigned int)depth);
+        }
+    }
+    return mask;
+}
+
 static int m11_dm1_max_visible_forward_from_center(const M11_ViewportCell cells[3][3]) {
     return dm1_viewport_3d_max_visible_forward_from_center_pc34(
         m11_dm1_center_blocking_depth_mask(cells));
@@ -21332,21 +21349,9 @@ static int m11_dm1_nearest_blocking_center_depth_index(const M11_ViewportCell ce
 }
 
 static int m11_dm1_nearest_blocking_center_door_depth(const M11_ViewportCell cells[3][3]) {
-    int depth = m11_dm1_nearest_blocking_center_depth_index(cells);
-    if (depth < 0) {
-        return -1;
-    }
-    /* ReDMCSB DUNVIEW.C F0124/F0121/F0118 draw a complete center
-     * square and stop seeing deeper center squares once that square is
-     * wall-like/non-open.  Door ornaments, destroyed masks, and buttons are
-     * attributes of that same nearest blocking center door; do not let a
-     * farther D2/D3 door decorate over a nearer D1 wall/closed door. */
-    if (!cells[depth][1].valid ||
-        cells[depth][1].elementType != DUNGEON_ELEMENT_DOOR ||
-        m11_viewport_cell_is_open(&cells[depth][1])) {
-        return -1;
-    }
-    return depth;
+    return dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(
+        m11_dm1_center_blocking_depth_mask(cells),
+        m11_dm1_center_blocking_door_depth_mask(cells));
 }
 
 static void m11_draw_dm1_front_walls(const M11_GameViewState* state,

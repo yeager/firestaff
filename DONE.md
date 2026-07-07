@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM1 center-door blocker ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the F0128 nearest blocking center-door decision from center blocking and door-depth masks. M11 now supplies masks and consumes the DM1-owned result for center door ornaments, destroyed masks, buttons, and Thieves Eye mask routing. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, DM1 viewport syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 center-line viewport ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 center-line clear and center visible-depth mask contracts used by M11 side-content, center-content, and deferred explosion passes. M11 now supplies valid/open depth masks and consumes DM1-owned decisions. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, DM1 viewport syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 side-wall envelope ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 primary side-wall max-forward contract and the side-lane clear/occlusion decision. M11 runtime/probe code now passes only an open-depth mask and consumes the DM1-owned APIs instead of carrying private local F0128 side-lane rules. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, M11 syntax passed cleanly, and `git diff --check` passed.

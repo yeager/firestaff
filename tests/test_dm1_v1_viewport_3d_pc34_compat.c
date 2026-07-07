@@ -3696,6 +3696,16 @@ static void test_center_lane_blocking_contract(void)
               dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(0x6u), 1);
     check_int("F0128.center_block.ignores_far_bits",
               dm1_viewport_3d_max_visible_forward_from_center_pc34(0x8u), 3);
+    check_int("F0128.center_door.none",
+              dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(0u, 0u), -1);
+    check_int("F0128.center_door.nearest_door",
+              dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(0x2u, 0x2u), 1);
+    check_int("F0128.center_door.nearest_wall_blocks_far_door",
+              dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(0x3u, 0x2u), -1);
+    check_int("F0128.center_door.nearest_door_wins_over_far_door",
+              dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(0x5u, 0x5u), 0);
+    check_int("F0128.center_door.door_mask_without_block",
+              dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(0x0u, 0x1u), -1);
 }
 
 static void test_side_lane_clear_contract(void)
