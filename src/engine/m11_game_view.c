@@ -12540,8 +12540,8 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
                                                         char* receipt,
                                                         size_t receipt_cap) {
     Theron_V1_World* world;
-    Theron_DungeonID next;
     Theron_StartupFlow flow;
+    Theron_StartupResult result;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -12554,27 +12554,23 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
         return 0;
     }
 
-    next = theron_v1_dungeon_exit(&world->progression);
-    if (next == THERON_DUNGEON_INVALID &&
-        !theron_v1_quest_complete(&world->progression)) {
+    result = theron_v1_startup_return_to_stage_select_after_exit(
+        world,
+        &flow,
+        receipt,
+        receipt_cap);
+    if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap, "dungeon exit rejected");
+            if (receipt[0] == '\0') {
+                snprintf(receipt,
+                         receipt_cap,
+                         "dungeon exit failed: %s",
+                         theron_v1_startup_result_name(result));
+            }
         }
         return 0;
     }
 
-    theron_v1_party_dungeon_exit(&world->party);
-    world->party.champion_count = 1;
-    world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
-    world->current_dungeon = world->progression.current_dungeon;
-    world->current_level = 0;
-    world->dungeon_complete = 0;
-    world->quest_items_in_dungeon = 0;
-    memset(world->level_loaded, 0, sizeof(world->level_loaded));
-
-    (void)theron_v1_startup_show_stage_select(
-        &flow,
-        world->progression.current_dungeon);
     m11_theron_sync_startup_state(state, &flow);
     state->theronState.level_loaded = 0;
     state->theronState.startup_cursor = 0;
@@ -12583,15 +12579,6 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
     state->theronState.party_y = world->party.leader_y;
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
-
-    if (receipt && receipt_cap > 0u) {
-        snprintf(receipt,
-                 receipt_cap,
-                 theron_v1_quest_complete(&world->progression)
-                    ? "quest complete"
-                    : "dungeon complete; next stage=%d",
-                 (int)world->progression.current_dungeon);
-    }
     return 1;
 }
 
