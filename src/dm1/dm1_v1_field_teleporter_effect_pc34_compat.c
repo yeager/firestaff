@@ -112,6 +112,58 @@ int dm1_v1_field_bitmap_sample_pc34(
     return 1;
 }
 
+int dm1_v1_field_bitmap_pixel_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    uint32_t animTick,
+    int localX,
+    int localY,
+    const uint8_t* fieldPixels,
+    int fieldWidth,
+    int fieldHeight,
+    int fieldStride,
+    const uint8_t* maskPixels,
+    int maskWidth,
+    int maskHeight,
+    int maskStride,
+    uint8_t* outPixel)
+{
+    DM1_FieldBitmapSamplePc34 sample;
+    uint8_t pixel;
+
+    if (!fieldPixels || !outPixel ||
+        fieldWidth <= 0 || fieldHeight <= 0 ||
+        fieldStride < fieldWidth) {
+        return 0;
+    }
+    if (!dm1_v1_field_bitmap_sample_pc34(plan, animTick, localX, localY,
+                                         fieldWidth, fieldHeight,
+                                         maskPixels ? maskWidth : 0,
+                                         maskPixels ? maskHeight : 0,
+                                         &sample)) {
+        return 0;
+    }
+
+    if (sample.maskPresent &&
+        maskPixels &&
+        maskWidth > 0 &&
+        maskHeight > 0 &&
+        maskStride >= maskWidth) {
+        uint8_t maskPixel =
+            maskPixels[sample.maskY * maskStride + sample.maskX];
+        if (maskPixel == 0) {
+            return 0;
+        }
+    }
+
+    pixel = fieldPixels[sample.fieldY * fieldStride + sample.fieldX];
+    if ((sample.transparentColor & 0x7f) != 0x7f &&
+        pixel == (uint8_t)(sample.transparentColor & 0x7f)) {
+        return 0;
+    }
+    *outPixel = pixel;
+    return 1;
+}
+
 int dm1_v1_field_square_is_visible_open_pc34(int square)
 {
     return (square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0 &&
