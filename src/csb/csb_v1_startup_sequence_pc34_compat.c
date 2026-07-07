@@ -20,6 +20,7 @@ enum {
     CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34 = 2,
     CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34 = 3,
     CSB_V1_FALLBACK_BLACK_PC34 = 0,
+    CSB_V1_FALLBACK_YELLOW_PC34 = 14,
     CSB_V1_FALLBACK_LIGHT_GRAY_PC34 = 2,
     CSB_V1_FALLBACK_DARK_GRAY_PC34 = 12
 };
@@ -207,10 +208,18 @@ static void csb_v1_startup_clear_fallback_text_pc34(
     plan->fallback_status_y = 0;
     plan->fallback_status_style = 0;
     plan->fallback_status_text = NULL;
+    plan->fallback_frame_valid = 0;
+    plan->fallback_frame_x = 0;
+    plan->fallback_frame_y = 0;
+    plan->fallback_frame_w = 0;
+    plan->fallback_frame_h = 0;
+    plan->fallback_frame_color = 0;
     plan->fallback_detail_x = 0;
     plan->fallback_detail_y = 0;
     plan->fallback_detail_style = 0;
     plan->fallback_detail_text = NULL;
+    plan->fallback_runtime_detail_visible = 0;
+    plan->fallback_runtime_detail_text[0] = '\0';
     plan->fallback_prompt_x = 0;
     plan->fallback_prompt_y = 0;
     plan->fallback_prompt_style = 0;
@@ -261,6 +270,12 @@ static void csb_v1_startup_set_entrance_fallback_text_pc34(
     plan->fallback_status_y = 84;
     plan->fallback_status_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
     plan->fallback_status_text = "CSB RUNTIME READY";
+    plan->fallback_frame_valid = 1;
+    plan->fallback_frame_x = 18;
+    plan->fallback_frame_y = 18;
+    plan->fallback_frame_w = 284;
+    plan->fallback_frame_h = 164;
+    plan->fallback_frame_color = CSB_V1_FALLBACK_YELLOW_PC34;
     plan->fallback_detail_x = 38;
     plan->fallback_detail_y = 96;
     plan->fallback_detail_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
@@ -637,6 +652,15 @@ int csb_v1_startup_build_render_plan_pc34(
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
     csb_v1_startup_set_entrance_fallback_text_pc34(&plan);
+    if (state->runtime_start_valid) {
+        plan.fallback_runtime_detail_visible = 1;
+        snprintf(plan.fallback_runtime_detail_text,
+                 sizeof(plan.fallback_runtime_detail_text),
+                 "START %d,%d DIR %d",
+                 state->runtime_start_x,
+                 state->runtime_start_y,
+                 state->runtime_start_dir);
+    }
     plan.blink_prompt_visible =
         ((state->entrance_frame / 12) & 1) == 0;
     *out_plan = plan;
