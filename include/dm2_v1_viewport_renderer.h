@@ -410,6 +410,7 @@ typedef struct {
     int center_x;
     int center_y;
     int gdat_index;
+    int flip_mirror;
     int fallback_radius;
     uint8_t fallback_color;
 } DM2_V1_ItemRender;
@@ -418,6 +419,16 @@ typedef struct {
     DM2_V1_ItemRender items[DM2_MAX_ITEMS_PER_SQ];
     int item_count;
 } DM2_V1_ItemRenderPlan;
+
+typedef struct {
+    DM2_V1_ItemRender item;
+    int item_present;
+} DM2_V1_CarriedItemRenderPlan;
+
+typedef struct {
+    DM2_V1_ItemRender items[DM2_MAX_CREATURE_POSSESSION_ITEMS];
+    int item_count;
+} DM2_V1_CreaturePossessionItemRenderPlan;
 
 typedef struct {
     uint8_t  projectile_category; /* GDAT category, 0 = spell-missile fallback */
@@ -560,6 +571,12 @@ int dm2_v1_viewport_build_creature_render_plan(
 int dm2_v1_viewport_build_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ItemRenderPlan *out_plan);
+int dm2_v1_viewport_build_carried_item_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_CarriedItemRenderPlan *out_plan);
+int dm2_v1_viewport_build_creature_possession_item_render_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_CreaturePossessionItemRenderPlan *out_plan);
 int dm2_v1_viewport_build_projectile_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ProjectileRenderPlan *out_plan);

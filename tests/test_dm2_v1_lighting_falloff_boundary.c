@@ -654,6 +654,8 @@ static void test_sprite_asset_provider(void)
     DM2_V1_ViewportState viewport;
     DM2_V1_CreatureRenderPlan creature_plan;
     DM2_V1_ItemRenderPlan item_plan;
+    DM2_V1_CarriedItemRenderPlan carried_item_plan;
+    DM2_V1_CreaturePossessionItemRenderPlan possession_plan;
     DM2_V1_ProjectileRenderPlan projectile_plan;
 
     CHECK("DM2 creature asset index packs type and frame",
@@ -1034,6 +1036,23 @@ static void test_sprite_asset_provider(void)
     viewport.creature_possession_items[0].frame_index = 0x04;
     viewport.creature_possession_items[0].screen_x = 100;
     viewport.creature_possession_items[0].screen_y = 80;
+    memset(&possession_plan, 0, sizeof(possession_plan));
+    CHECK("DM2 creature possession render plan owns map-chip identity",
+          dm2_v1_viewport_build_creature_possession_item_render_plan(
+              &viewport,
+              &possession_plan) == 1 &&
+              possession_plan.item_count == 1 &&
+              possession_plan.items[0].item_index == 0 &&
+              possession_plan.items[0].item_category == 0x10 &&
+              possession_plan.items[0].item_type == 0x22 &&
+              possession_plan.items[0].frame_index == 0 &&
+              possession_plan.items[0].center_x == 100 &&
+              possession_plan.items[0].center_y == 80 &&
+              possession_plan.items[0].gdat_index ==
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0) &&
+              possession_plan.items[0].fallback_radius == 3 &&
+              possession_plan.items[0].fallback_color ==
+                  (uint8_t)(9 + (0x22 & 5)));
     dm2_v1_render_creature_possession_items(&viewport);
     CHECK("creature possession item fallback draws when no asset provider is installed",
           viewport.asset_creature_possession_item_drawn_count == 0 &&
@@ -1049,6 +1068,14 @@ static void test_sprite_asset_provider(void)
     viewport.creature_possession_items[0].direction = 1;
     viewport.creature_possession_items[0].screen_x = 100;
     viewport.creature_possession_items[0].screen_y = 80;
+    memset(&possession_plan, 0, sizeof(possession_plan));
+    CHECK("DM2 creature possession render plan owns object flip",
+          dm2_v1_viewport_build_creature_possession_item_render_plan(
+              &viewport,
+              &possession_plan) == 1 &&
+              possession_plan.item_count == 1 &&
+              possession_plan.items[0].flip_mirror ==
+                  dm2_v1_viewport_map_chip_flip_for_object_direction(1, 0));
     s_item_flip_fixture = 1;
     s_asset_fetch_calls = 0;
     s_last_asset_index = 0;
@@ -1075,6 +1102,21 @@ static void test_sprite_asset_provider(void)
     viewport.carried_item.frame_index = 0x04;
     viewport.carried_item.screen_x = 120;
     viewport.carried_item.screen_y = 70;
+    memset(&carried_item_plan, 0, sizeof(carried_item_plan));
+    CHECK("DM2 carried item render plan owns leader-hand map-chip identity",
+          dm2_v1_viewport_build_carried_item_render_plan(
+              &viewport,
+              &carried_item_plan) == 1 &&
+              carried_item_plan.item_present == 1 &&
+              carried_item_plan.item.item_category == 0x15 &&
+              carried_item_plan.item.item_type == 0x22 &&
+              carried_item_plan.item.gdat_index ==
+                  dm2_v1_viewport_item_graphic_index(0x15, 0x22, 0x04) &&
+              carried_item_plan.item.center_x == 120 &&
+              carried_item_plan.item.center_y == 70 &&
+              carried_item_plan.item.fallback_radius == 5 &&
+              carried_item_plan.item.fallback_color ==
+                  (uint8_t)(12 + (0x22 & 3)));
     s_asset_fetch_calls = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,
                                        test_dm2_asset_fetch,
@@ -1085,6 +1127,19 @@ static void test_sprite_asset_provider(void)
               viewport.asset_carried_item_drawn_count == 1 &&
               viewport.fallback_carried_item_drawn_count == 0 &&
               framebuffer[(70 * 320) + 120] == 6);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.carried_item_present = 1;
+    viewport.carried_item.item_type = 0x22;
+    viewport.carried_item.screen_x = 320;
+    viewport.carried_item.screen_y = 70;
+    memset(&carried_item_plan, 0, sizeof(carried_item_plan));
+    CHECK("DM2 carried item render plan filters offscreen leader-hand overlays",
+          dm2_v1_viewport_build_carried_item_render_plan(
+              &viewport,
+              &carried_item_plan) == 1 &&
+              carried_item_plan.item_present == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
