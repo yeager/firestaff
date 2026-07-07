@@ -643,11 +643,22 @@ int dm2_v1_viewport_projectile_frame_for_map_chip(int requested_frame,
 int dm2_v1_viewport_projectile_flip_for_direction(int projectile_direction,
                                                   int party_direction)
 {
-    static const uint8_t s_skproject_missile_flip[4] = { 0, 1, 3, 2 };
-    int rel = ((projectile_direction & 3) - (party_direction & 3)) & 3;
     /* skproject SKWIN/SkGlobal.cpp `_4976_3fa4 = {0,1,3,2}`; DRAW_MAP_CHIP
      * lines 10720-10725 passes it to DRAW_CHIP_OF_MAGIC_MAP for dbMissile. */
-    return s_skproject_missile_flip[rel];
+    return dm2_v1_viewport_map_chip_flip_for_object_direction(
+        projectile_direction, party_direction);
+}
+
+int dm2_v1_viewport_map_chip_flip_for_object_direction(int object_direction,
+                                                       int party_direction)
+{
+    static const uint8_t s_skproject_object_flip[4] = { 0, 1, 3, 2 };
+    int rel = ((object_direction & 3) - (party_direction & 3)) & 3;
+    /* skproject SKWIN/SkGlobal.cpp `_4976_3fa4 = {0,1,3,2}` is also used
+     * for creature possession overlays in SkWinCore.cpp DRAW_MAP_CHIP
+     * lines 10798-10815, where `(si.Dir() - viewDir) & 3` selects the
+     * mirror passed to DRAW_CHIP_OF_MAGIC_MAP. */
+    return s_skproject_object_flip[rel];
 }
 
 int dm2_v1_viewport_cloud_frame_for_tick(int tick_count,
@@ -1883,6 +1894,101 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
     }
 }
 
+void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
+{
+    int i;
+    uint8_t *vp;
+    int stride;
+
+    if (!s || !s->framebuffer) return;
+    vp = s->framebuffer;
+    stride = s->fb_stride;
+
+    /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP lines 10782-10817:
+     * after drawing a creature, source-visible carried/embedded weapon..misc
+     * records are rendered with QUERY_DUNGEON_MAP_CHIP_PICT and
+     * DRAW_CHIP_OF_MAGIC_MAP(frame=0, flip=_4976_3fa4[(Dir-viewDir)&3]).
+     * Runtime possession-chain extraction is a separate bridge; this pass is
+     * the renderer-owned hook that keeps those overlays in source order. */
+    for (i = 0;
+         i < s->creature_possession_item_count &&
+             i < DM2_MAX_CREATURE_POSSESSION_ITEMS;
+         ++i) {
+        DM2_ItemSprite *it = &s->creature_possession_items[i];
+        int ix = it->screen_x;
+        int iy = it->screen_y;
+        int drawn_asset = 0;
+        if (ix < 0 || ix >= DM2_VP_WIDTH || iy < 0 || iy >= DM2_VP_HEIGHT) {
+            continue;
+        }
+
+        {
+            const uint8_t *pixels = NULL;
+            int src_w = 0;
+            int src_h = 0;
+            int src_stride = 0;
+            int category = it->item_category ? it->item_category : 0x15;
+            int gdat_index = dm2_v1_viewport_item_graphic_index(
+                category, it->item_type, 0);
+            if (gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels,
+                                            &src_w, &src_h, &src_stride) == 0 &&
+                pixels && src_w > 0 && src_h > 0) {
+                int frame_x = 0;
+                int frame_w = src_w;
+                int flip_mirror =
+                    dm2_v1_viewport_map_chip_flip_for_object_direction(
+                        it->direction, s->party_dir);
+                if (!dm2_v1_prepare_map_chip_frame(src_w, src_h, 0,
+                                                   &frame_x, &frame_w)) {
+                    frame_x = 0;
+                    frame_w = src_w;
+                }
+                {
+                    int dst_w = dm2_v1_viewport_scaled_sprite_extent(
+                        frame_w, it->depth, 4, 32);
+                    int dst_h = dm2_v1_viewport_scaled_sprite_extent(
+                        src_h, it->depth, 4, 32);
+                    dm2_v1_blit_scaled_bitmap_region_ex(
+                        vp,
+                        stride,
+                        ix - (dst_w / 2),
+                        iy - (dst_h / 2),
+                        dst_w,
+                        dst_h,
+                        pixels,
+                        frame_x,
+                        0,
+                        frame_w,
+                        src_h,
+                        src_stride > 0 ? src_stride : src_w,
+                        DM2_COLOR_TRANSPARENT,
+                        flip_mirror);
+                }
+                ++s->asset_creature_possession_item_drawn_count;
+                drawn_asset = 1;
+            }
+        }
+
+        if (!drawn_asset) {
+            int sz = 3;
+            uint8_t color = (uint8_t)(9 + (it->item_type & 5));
+            for (int dy = -sz; dy <= sz; ++dy) {
+                int sy = iy + dy;
+                if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
+                for (int dx = -sz; dx <= sz; ++dx) {
+                    int sx = ix + dx;
+                    if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
+                    if (abs(dx) + abs(dy) <= sz) {
+                        vp[sy * stride + sx] = color;
+                    }
+                }
+            }
+            ++s->fallback_creature_possession_item_drawn_count;
+        }
+    }
+}
+
 void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
 {
     DM2_ItemSprite *it;
@@ -2334,6 +2440,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->fallback_creature_drawn_count = 0;
     s->asset_item_drawn_count = 0;
     s->fallback_item_drawn_count = 0;
+    s->asset_creature_possession_item_drawn_count = 0;
+    s->fallback_creature_possession_item_drawn_count = 0;
     s->asset_carried_item_drawn_count = 0;
     s->fallback_carried_item_drawn_count = 0;
     s->asset_projectile_drawn_count = 0;
@@ -2412,17 +2520,20 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         /* 6. Creatures */
         dm2_v1_render_creatures(s);
 
-        /* 7. Projectiles */
+        /* 7. Creature possession/item overlays */
+        dm2_v1_render_creature_possession_items(s);
+
+        /* 8. Projectiles */
         dm2_v1_render_projectiles(s);
     }
 
-    /* 8. Carried leader-hand item overlay */
+    /* 9. Carried leader-hand item overlay */
     dm2_v1_render_carried_item(s);
 
-    /* 9. Weather overlay (applies to both indoor and outdoor) */
+    /* 10. Weather overlay (applies to both indoor and outdoor) */
     dm2_v1_render_weather_overlay(s);
 
-    /* 10. UI chrome (always on top) */
+    /* 11. UI chrome (always on top) */
     dm2_v1_render_ui_chrome(s);
 
     s->dirty = 0;
@@ -2487,6 +2598,7 @@ const char *dm2_v1_viewport_source_evidence(void)
         "Source: ReDMCSB DUNVIEW.C:361        — G0103_as_CurrentMapDoorOrnamentsInfo[17]\n"
         "Source: ReDMCSB DUNVIEW.C:8466-8542 — draw order (D4L→D4R→D4C→D3L→...→D0C)\n"
         "Source: skproject/SKWIN/SkWinCore.cpp:1001-1037 — DRAW_CHIP_OF_MAGIC_MAP frame atlas offset\n"
+        "Source: skproject/SKWIN/SkWinCore.cpp:10782-10817 — DRAW_MAP_CHIP creature possession item overlays\n"
         "Source: SKULLWIN/SKWIN/c_gui_vp.cpp  — viewport blit order (reference)\n"
         "Source: docs/dm2_graphics.md         — drawing pipeline audit\n"
         "Source: docs/dm2_walls.md            — wall/door/floor rendering specifics\n"

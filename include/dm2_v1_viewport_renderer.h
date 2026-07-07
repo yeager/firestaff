@@ -162,6 +162,8 @@ int dm2_v1_viewport_projectile_frame_for_map_chip(int requested_frame,
                                                   int frame_class);
 int dm2_v1_viewport_projectile_flip_for_direction(int projectile_direction,
                                                   int party_direction);
+int dm2_v1_viewport_map_chip_flip_for_object_direction(int object_direction,
+                                                       int party_direction);
 int dm2_v1_viewport_cloud_frame_for_tick(int tick_count,
                                          int frame_count);
 int dm2_v1_viewport_cloud_flip_for_seed(uint32_t *seed);
@@ -207,6 +209,7 @@ typedef struct {
 
 #define DM2_MAX_CREATURES_PER_SQ  4
 #define DM2_MAX_ITEMS_PER_SQ      8
+#define DM2_MAX_CREATURE_POSSESSION_ITEMS 8
 #define DM2_MAX_PROJECTILES       16
 
 #define DM2_V1_PROJECTILE_RENDER_MISSILE 0
@@ -238,6 +241,7 @@ typedef struct {
     int16_t  depth;           /* depth sort key */
     int16_t  screen_x;        /* viewport X position */
     int16_t  screen_y;        /* viewport Y position */
+    uint8_t  direction;       /* source ObjectID::Dir(), for carried overlays */
 } DM2_ItemSprite;
 
 typedef struct {
@@ -284,6 +288,8 @@ typedef struct {
     int creature_count;
     DM2_ItemSprite items[DM2_MAX_ITEMS_PER_SQ];
     int item_count;
+    DM2_ItemSprite creature_possession_items[DM2_MAX_CREATURE_POSSESSION_ITEMS];
+    int creature_possession_item_count;
     DM2_ItemSprite carried_item;
     int carried_item_present;
     DM2_Projectile projectiles[DM2_MAX_PROJECTILES];
@@ -316,6 +322,8 @@ typedef struct {
     int fallback_creature_drawn_count;
     int asset_item_drawn_count;
     int fallback_item_drawn_count;
+    int asset_creature_possession_item_drawn_count;
+    int fallback_creature_possession_item_drawn_count;
     int asset_carried_item_drawn_count;
     int fallback_carried_item_drawn_count;
     int asset_projectile_drawn_count;
@@ -354,6 +362,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s);
 void dm2_v1_render_doors(DM2_V1_ViewportState *s);
 void dm2_v1_render_creatures(DM2_V1_ViewportState *s);
 void dm2_v1_render_items(DM2_V1_ViewportState *s);
+void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s);
 void dm2_v1_render_carried_item(DM2_V1_ViewportState *s);
 void dm2_v1_render_projectiles(DM2_V1_ViewportState *s);
 void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s);

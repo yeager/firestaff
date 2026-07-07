@@ -20,6 +20,7 @@ static int s_last_asset_index = 0;
 static int s_projectile_seven_frame_fixture = 0;
 static int s_projectile_flip_fixture = 0;
 static int s_creature_directional_frame_fixture = 0;
+static int s_item_flip_fixture = 0;
 
 #define CHECK(name_, cond_) do { \
     printf("  %s...\n", name_); \
@@ -69,6 +70,8 @@ static int test_dm2_asset_fetch(void *user,
         2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8,
         2,2,2,2,2,2,2, 6,6,6,6,6,6,6, 8,8,8,8,8,8,8
     };
+    static uint8_t item_flip_atlas[21 * 7];
+    static int item_flip_atlas_init = 0;
     static const uint8_t projectile_atlas[21 * 7] = {
         5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
         5,5,5,5,5,5,5, 13,13,13,13,13,13,13, 15,15,15,15,15,15,15,
@@ -101,6 +104,17 @@ static int test_dm2_asset_fetch(void *user,
         }
         projectile_flip_atlas_init = 1;
     }
+    if (!item_flip_atlas_init) {
+        for (int y = 0; y < 7; ++y) {
+            for (int frame = 0; frame < 3; ++frame) {
+                for (int x = 0; x < 7; ++x) {
+                    item_flip_atlas[y * 21 + frame * 7 + x] =
+                        (uint8_t)((frame == 0) ? 30 + x : 2 + frame);
+                }
+            }
+        }
+        item_flip_atlas_init = 1;
+    }
     ++s_asset_fetch_calls;
     s_last_asset_index = gdat_index;
     if (gdat_index == -2) {
@@ -132,7 +146,8 @@ static int test_dm2_asset_fetch(void *user,
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) >= 0x10 &&
                (((DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff) <= 0x15) {
-        if (out_pixels) *out_pixels = item_atlas;
+        if (out_pixels) *out_pixels = s_item_flip_fixture
+            ? item_flip_atlas : item_atlas;
         if (out_w) *out_w = 21;
         if (out_h) *out_h = 7;
         if (out_stride) *out_stride = 21;
@@ -461,6 +476,11 @@ static void test_sprite_asset_provider(void)
               dm2_v1_viewport_projectile_flip_for_direction(1, 0) == 1 &&
               dm2_v1_viewport_projectile_flip_for_direction(2, 0) == 3 &&
               dm2_v1_viewport_projectile_flip_for_direction(3, 0) == 2);
+    CHECK("DM2 object map-chip flip shares skproject possession flip table",
+          dm2_v1_viewport_map_chip_flip_for_object_direction(0, 0) == 0 &&
+              dm2_v1_viewport_map_chip_flip_for_object_direction(1, 0) == 1 &&
+              dm2_v1_viewport_map_chip_flip_for_object_direction(2, 0) == 3 &&
+              dm2_v1_viewport_map_chip_flip_for_object_direction(3, 0) == 2);
     CHECK("DM2 cloud frame follows skproject tick alternation",
           dm2_v1_viewport_cloud_frame_for_tick(0, 7) == 1 &&
               dm2_v1_viewport_cloud_frame_for_tick(1, 7) == 2);
@@ -573,6 +593,47 @@ static void test_sprite_asset_provider(void)
     CHECK("item map-chip atlas draws only the selected frame",
           framebuffer[((90 - 3) * 320) + (80 - 3)] == 6 &&
               framebuffer[(90 * 320) + 80] == 6);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.creature_possession_item_count = 1;
+    viewport.creature_possession_items[0].item_category = 0x10;
+    viewport.creature_possession_items[0].item_type = 0x22;
+    viewport.creature_possession_items[0].frame_index = 0x04;
+    viewport.creature_possession_items[0].screen_x = 100;
+    viewport.creature_possession_items[0].screen_y = 80;
+    dm2_v1_render_creature_possession_items(&viewport);
+    CHECK("creature possession item fallback draws when no asset provider is installed",
+          viewport.asset_creature_possession_item_drawn_count == 0 &&
+              viewport.fallback_creature_possession_item_drawn_count == 1 &&
+              framebuffer[(80 * 320) + 100] == (uint8_t)(9 + (0x22 & 5)));
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.creature_possession_item_count = 1;
+    viewport.creature_possession_items[0].item_category = 0x10;
+    viewport.creature_possession_items[0].item_type = 0x22;
+    viewport.creature_possession_items[0].frame_index = 0x04;
+    viewport.creature_possession_items[0].direction = 1;
+    viewport.creature_possession_items[0].screen_x = 100;
+    viewport.creature_possession_items[0].screen_y = 80;
+    s_item_flip_fixture = 1;
+    s_asset_fetch_calls = 0;
+    s_last_asset_index = 0;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_creature_possession_items(&viewport);
+    s_item_flip_fixture = 0;
+    CHECK("creature possession overlay uses item map-chip asset path",
+          s_asset_fetch_calls == 1 &&
+              s_last_asset_index ==
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0) &&
+              viewport.asset_creature_possession_item_drawn_count == 1 &&
+              viewport.fallback_creature_possession_item_drawn_count == 0);
+    CHECK("creature possession overlay applies skproject object flip mirror",
+          framebuffer[((80 - 3) * 320) + (100 - 3)] == 36 &&
+              framebuffer[((80 - 3) * 320) + (100 + 3)] == 30);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -783,6 +844,8 @@ int main(void)
         const char *e = dm2_v1_viewport_source_evidence();
         CHECK("source evidence cites DUNVIEW object draw path",
               e != NULL && strstr(e, "DUNVIEW.C:4960-5039") != NULL);
+        CHECK("source evidence cites skproject creature possession overlays",
+              e != NULL && strstr(e, "creature possession item overlays") != NULL);
         CHECK("source evidence cites DM2 palette documentation",
               e != NULL && strstr(e, "docs/dm2_palette.md") != NULL);
     }
