@@ -2491,6 +2491,14 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_place.pile_shift_x, 2);
     check_int("csb.runtime_object_overlay.d1c.pile0.shift_y",
               object_place.pile_shift_y, -3);
+    check_int("csb.runtime_object_overlay.d1c.pile0.marker_x",
+              object_place.marker_screen_x, 85);
+    check_int("csb.runtime_object_overlay.d1c.pile0.marker_y",
+              object_place.marker_screen_y, 129);
+    check_int("csb.runtime_object_overlay.d1c.pile0.icon_x",
+              object_place.icon_screen_x, 80);
+    check_int("csb.runtime_object_overlay.d1c.pile0.icon_y",
+              object_place.icon_screen_y, 129);
 
     memset(&object_place, 0, sizeof(object_place));
     check_true("csb.runtime_object_overlay.d2c.pile1.visible",
@@ -2508,6 +2516,18 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               object_place.pile_shift_x, 0);
     check_int("csb.runtime_object_overlay.d2c.pile1.shift_y",
               object_place.pile_shift_y, -1);
+    check_int("csb.runtime_object_overlay.d2c.pile1.marker_x",
+              object_place.marker_screen_x,
+              object_place.screen_x + object_place.pile_shift_x);
+    check_int("csb.runtime_object_overlay.d2c.pile1.marker_y",
+              object_place.marker_screen_y,
+              object_place.screen_y + object_place.pile_shift_y);
+    check_int("csb.runtime_object_overlay.d2c.pile1.icon_x",
+              object_place.icon_screen_x,
+              object_place.marker_screen_x - 5);
+    check_int("csb.runtime_object_overlay.d2c.pile1.icon_y",
+              object_place.icon_screen_y,
+              object_place.marker_screen_y);
 
     memset(&object_place, 0, sizeof(object_place));
     check_int("csb.runtime_object_overlay.bad_cell.hidden",
@@ -2535,6 +2555,20 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.screen_y, 144);
     check_int("csb.runtime_group_overlay.d1c.source_zone",
               group_place.used_source_zone, 1);
+    check_int("csb.runtime_group_overlay.d1c.depth",
+              group_place.depth_index, 0);
+    check_int("csb.runtime_group_overlay.d1c.sprite_w",
+              group_place.sprite_w, 54);
+    check_int("csb.runtime_group_overlay.d1c.sprite_h",
+              group_place.sprite_h, 70);
+    check_int("csb.runtime_group_overlay.d1c.sprite_x",
+              group_place.sprite_x, 85);
+    check_int("csb.runtime_group_overlay.d1c.sprite_y",
+              group_place.sprite_y, 74);
+    check_int("csb.runtime_group_overlay.d1c.marker_x",
+              group_place.marker_screen_x, 112);
+    check_int("csb.runtime_group_overlay.d1c.marker_y",
+              group_place.marker_screen_y, 144);
 
     memset(&group_place, 0, sizeof(group_place));
     check_true("csb.runtime_group_overlay.d1c.cell2.visible",
@@ -2546,6 +2580,14 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.screen_x, 148);
     check_int("csb.runtime_group_overlay.d1c.cell2.screen_y",
               group_place.screen_y, 152);
+    check_int("csb.runtime_group_overlay.d1c.cell2.sprite_x",
+              group_place.sprite_x, 121);
+    check_int("csb.runtime_group_overlay.d1c.cell2.sprite_y",
+              group_place.sprite_y, 82);
+    check_int("csb.runtime_group_overlay.d1c.cell2.marker_x",
+              group_place.marker_screen_x, 148);
+    check_int("csb.runtime_group_overlay.d1c.cell2.marker_y",
+              group_place.marker_screen_y, 152);
 
     memset(&group_place, 0, sizeof(group_place));
     check_int("csb.runtime_group_overlay.bad_coord.hidden",

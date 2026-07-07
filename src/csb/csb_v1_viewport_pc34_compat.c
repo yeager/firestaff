@@ -685,6 +685,19 @@ int csb_v1_viewport_runtime_object_overlay_pile_placement(
         placement.screen_x = DM1_VIEWPORT_SCREEN_X + placement.viewport_x;
         placement.screen_y = DM1_VIEWPORT_SCREEN_Y + placement.viewport_y;
     }
+    placement.marker_screen_x = placement.screen_x + placement.pile_shift_x;
+    placement.marker_screen_y = placement.screen_y + placement.pile_shift_y;
+    placement.icon_screen_x = placement.marker_screen_x;
+    placement.icon_screen_y = placement.marker_screen_y;
+    if (relative_cell == 0 || relative_cell == 2) {
+        placement.icon_screen_x -= 5;
+    }
+    if (relative_cell == 1 || relative_cell == 3) {
+        placement.icon_screen_x += 5;
+    }
+    if (relative_cell >= 2) {
+        placement.icon_screen_y += 3;
+    }
     if (out_placement) *out_placement = placement;
     return placement.visible;
 }
@@ -717,6 +730,7 @@ int csb_v1_viewport_runtime_group_overlay_slot_placement(
     placement.side = side;
     placement.view_cell = slot_index;
     placement.coordinate_set = coordinate_set;
+    placement.depth_index = forward - 1;
     placement.view_square =
         csb_v1_viewport_f0115_view_square_index(forward, side);
     placement.source_zone = -1;
@@ -753,6 +767,14 @@ int csb_v1_viewport_runtime_group_overlay_slot_placement(
         placement.screen_x = DM1_VIEWPORT_SCREEN_X + placement.viewport_x;
         placement.screen_y = DM1_VIEWPORT_SCREEN_Y + placement.viewport_y;
     }
+    placement.sprite_w = 54 - placement.depth_index * 12;
+    placement.sprite_h = 70 - placement.depth_index * 14;
+    if (placement.sprite_w < 20) placement.sprite_w = 20;
+    if (placement.sprite_h < 28) placement.sprite_h = 28;
+    placement.sprite_x = placement.screen_x - placement.sprite_w / 2;
+    placement.sprite_y = placement.screen_y - placement.sprite_h;
+    placement.marker_screen_x = placement.screen_x;
+    placement.marker_screen_y = placement.screen_y;
     if (out_placement) *out_placement = placement;
     return placement.visible;
 }

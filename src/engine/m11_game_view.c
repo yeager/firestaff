@@ -1275,12 +1275,8 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                 int icon = object_info.icon_index;
                 int rel_cell = object_info.relative_cell;
                 CSB_V1_ViewportRuntimeObjectOverlayPlacement placement;
-                int x = 0;
-                int y = 0;
                 int row;
                 int subtype = object_info.subtype_index;
-                int marker_x = x;
-                int marker_y = y;
                 int pile_index = object_pile_index;
                 if (!csb_v1_viewport_runtime_object_overlay_pile_placement(
                         forward,
@@ -1292,20 +1288,9 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                     continue;
                 }
                 object_pile_index++;
-                x = placement.screen_x;
-                y = placement.screen_y;
                 row = placement.object_row;
-                marker_x = x;
-                marker_y = y;
                 /* CSB viewport owns ReDMCSB DUNVIEW.C F0115/G0217/G0223
-                 * pile shifts; M11 only applies the returned draw offsets. */
-                marker_x += placement.pile_shift_x;
-                marker_y += placement.pile_shift_y;
-                if (rel_cell == 0 || rel_cell == 2) x -= 5;
-                if (rel_cell == 1 || rel_cell == 3) x += 5;
-                if (rel_cell >= 2) y += 3;
-                x += placement.pile_shift_x;
-                y += placement.pile_shift_y;
+                 * pile shifts and relative-cell overlay offsets. */
                 if (subtype >= 0 &&
                     m11_draw_item_sprite(state,
                                          framebuffer,
@@ -1329,19 +1314,26 @@ static void m11_draw_csb_runtime_floor_object_overlays(
                         framebuffer_width,
                         framebuffer_height,
                         icon,
-                        x - 8,
-                        y - 8,
+                        placement.icon_screen_x - 8,
+                        placement.icon_screen_y - 8,
                         0)) {
                     m11_csb_runtime_overlay_stats_add_object_icon(state);
-                } else if (marker_x >= 1 && marker_x + 1 < framebuffer_width &&
-                           marker_y >= 1 && marker_y + 1 < framebuffer_height) {
+                } else if (placement.marker_screen_x >= 1 &&
+                           placement.marker_screen_x + 1 < framebuffer_width &&
+                           placement.marker_screen_y >= 1 &&
+                           placement.marker_screen_y + 1 < framebuffer_height) {
                     unsigned char color =
                         (unsigned char)csb_v1_viewport_projectile_material_overlay_color(icon);
-                    framebuffer[marker_y * framebuffer_width + marker_x] = color;
-                    framebuffer[marker_y * framebuffer_width + marker_x - 1] = color;
-                    framebuffer[marker_y * framebuffer_width + marker_x + 1] = color;
-                    framebuffer[(marker_y - 1) * framebuffer_width + marker_x] = color;
-                    framebuffer[(marker_y + 1) * framebuffer_width + marker_x] = color;
+                    framebuffer[placement.marker_screen_y * framebuffer_width +
+                                placement.marker_screen_x] = color;
+                    framebuffer[placement.marker_screen_y * framebuffer_width +
+                                placement.marker_screen_x - 1] = color;
+                    framebuffer[placement.marker_screen_y * framebuffer_width +
+                                placement.marker_screen_x + 1] = color;
+                    framebuffer[(placement.marker_screen_y - 1) * framebuffer_width +
+                                placement.marker_screen_x] = color;
+                    framebuffer[(placement.marker_screen_y + 1) * framebuffer_width +
+                                placement.marker_screen_x] = color;
                     m11_csb_runtime_overlay_stats_add_object_marker(state);
                 }
             }
@@ -1421,18 +1413,11 @@ static void m11_draw_csb_runtime_group_overlays(
                 int visible_count = group_info.visible_count;
                 int coord_set =
                     m11_creature_coordinate_set(creature_type);
-                int depth_index = forward - 1;
-                int sprite_w = 54 - depth_index * 12;
-                int sprite_h = 70 - depth_index * 14;
                 int slot;
 
-                if (sprite_w < 20) sprite_w = 20;
-                if (sprite_h < 28) sprite_h = 28;
                 for (slot = 0; slot < visible_count; ++slot) {
                     CSB_V1_ViewportRuntimeGroupOverlayPlacement placement;
                     int group_cell = group_info.cells[slot];
-                    int x = 0;
-                    int y = 0;
                     if (!csb_v1_viewport_runtime_group_overlay_slot_placement(
                             forward,
                             side,
@@ -1442,19 +1427,17 @@ static void m11_draw_csb_runtime_group_overlays(
                             &placement)) {
                         continue;
                     }
-                    x = placement.screen_x;
-                    y = placement.screen_y;
                     if (creature_type >= 0 &&
                         m11_draw_creature_sprite_ex(state,
                                                     framebuffer,
                                                     framebuffer_width,
                                                     framebuffer_height,
-                                                    x - sprite_w / 2,
-                                                    y - sprite_h,
-                                                    sprite_w,
-                                                    sprite_h,
+                                                    placement.sprite_x,
+                                                    placement.sprite_y,
+                                                    placement.sprite_w,
+                                                    placement.sprite_h,
                                                     creature_type,
-                                                    depth_index,
+                                                    placement.depth_index,
                                                     side,
                                                     creature_dir)) {
                         m11_csb_runtime_overlay_stats_add_group_sprite(state);
@@ -1462,8 +1445,8 @@ static void m11_draw_csb_runtime_group_overlays(
                         m11_csb_mark_runtime_group(framebuffer,
                                                    framebuffer_width,
                                                    framebuffer_height,
-                                                   x,
-                                                   y);
+                                                   placement.marker_screen_x,
+                                                   placement.marker_screen_y);
                         m11_csb_runtime_overlay_stats_add_group_marker(state);
                     }
                 }
