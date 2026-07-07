@@ -191,10 +191,59 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
         data, data_size, 320, 200, 0, 16, "STABG.BIN");
 }
 
-/* FACE.BIN (44 KB) — champion portraits, 24 entries.
- * Each portrait is 48×48 (or nearest power of 2: 64×64).
- * Layout in file: horizontal strip of 24 columns.
- * face_index: 0-23 → offset = (face_index * portrait_area) into data.  */
+int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h) {
+    int entry_size;
+    int count;
+    if (portrait_w <= 0 || portrait_h <= 0 || data_size <= 0) {
+        return 0;
+    }
+    entry_size = portrait_w * portrait_h;
+    if (entry_size <= 0) {
+        return 0;
+    }
+    count = data_size / entry_size;
+    if (count < 0) return 0;
+    if (count > 24) return 24;
+    return count;
+}
+
+int nexus_ui_load_face_placeholder(Nexus_UI_Manager *mgr,
+    int face_index, int portrait_w, int portrait_h)
+{
+    int entry_size;
+    Nexus_UI_Surface *surf;
+    if (!mgr) return -1;
+    if (face_index < 0 || face_index >= 24) return -1;
+    if (portrait_w <= 0 || portrait_h <= 0) {
+        portrait_w = 48; portrait_h = 48;
+    }
+    entry_size = portrait_w * portrait_h;
+    if (entry_size <= 0) return -1;
+
+    surf = &mgr->surfaces[NEXUS_SURFACE_FACE0 + face_index];
+    if (surf->owns_data && surf->data) {
+        free(surf->data);
+    }
+    memset(surf, 0, sizeof(*surf));
+    surf->w = portrait_w;
+    surf->h = portrait_h;
+    surf->pal_start = 192;
+    surf->pal_count = 16;
+    surf->source = "FACE.BIN";
+    surf->data = (uint8_t *)calloc(entry_size, 1);
+    if (!surf->data) {
+        return -1;
+    }
+    surf->owns_data = 1;
+    surface_clear_gray(surf);
+    return 0;
+}
+
+/* FACE.BIN (44 KB class) — champion portraits.  Some observed Saturn
+ * dumps expose fewer than 24 complete raw 48x48 entries, with file
+ * headers/trailing data handled by the higher-level asset classifier.
+ * The engine keeps all 24 roster rows visible and uses placeholders
+ * for rows not backed by a complete source entry. */
 int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_of_face,
     int data_size, int face_index,
@@ -215,6 +264,7 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
 
     surf = &mgr->surfaces[NEXUS_SURFACE_FACE0 + face_index];
     if (surf->owns_data && surf->data) free(surf->data);
+    memset(surf, 0, sizeof(*surf));
 
     surf->w = portrait_w;
     surf->h = portrait_h;
@@ -231,7 +281,7 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
         } else {
             surf->data = (uint8_t *)calloc(entry_size, 1);
         }
-    } else {
+    } else if (data && data_of_face < data_size) {
         /* Partial/short: load what is available */
         int available = data_size > data_of_face ? data_size - data_of_face : 0;
         printf("Nexus UI: WARNING FACE.BIN data short for portrait %d "
@@ -242,6 +292,9 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
             memcpy(surf->data, data + data_of_face,
                    available < entry_size ? (size_t)available : (size_t)entry_size);
         }
+        if (surf->data) surface_clear_gray(surf);
+    } else {
+        surf->data = (uint8_t *)calloc(entry_size, 1);
         if (surf->data) surface_clear_gray(surf);
     }
     /* Face surfaces are stored individually in the manager */

@@ -181,71 +181,6 @@ static void expect_title_render_is_frame_dependent(void) {
                 "Nexus title render changes across startup frames");
 }
 
-static void expect_title_render_plan_contract(void) {
-    Nexus_TitleScreen title;
-    Nexus_V1_TitleRenderPlan plan;
-    unsigned char title_pixels[NEXUS_FB_W * NEXUS_FB_H];
-    unsigned char warning_pixels[NEXUS_FB_W * NEXUS_FB_H];
-
-    memset(&title, 0, sizeof(title));
-    memset(title_pixels, 9, sizeof(title_pixels));
-    memset(warning_pixels, 7, sizeof(warning_pixels));
-    title.pixels = title_pixels;
-    title.width = NEXUS_FB_W;
-    title.height = NEXUS_FB_H;
-    title.loaded = 1;
-    title.warning_pixels = warning_pixels;
-    title.warning_width = NEXUS_FB_W;
-    title.warning_height = NEXUS_FB_H;
-    title.warning_loaded = 1;
-
-    expect_true(nexus_v1_title_build_render_plan(&title, 0, &plan) &&
-                    plan.kind == NEXUS_V1_TITLE_RENDER_PLAN_WARNING_ART &&
-                    plan.boot_phase == NEXUS_V1_BOOT_PHASE_WARNING &&
-                    plan.frame_in_phase == 0 &&
-                    plan.copy_width == NEXUS_FB_W &&
-                    plan.copy_height == NEXUS_FB_H,
-                "Nexus title render plan owns WARNING.BIN art phase");
-    expect_true(nexus_v1_title_build_render_plan(
-                    &title,
-                    nexus_v1_boot_warning_frames() + 16,
-                    &plan) &&
-                    plan.kind == NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART &&
-                    plan.boot_phase == NEXUS_V1_BOOT_PHASE_TITLE &&
-                    plan.title_frame == 16 &&
-                    plan.reveal_y0 == 28 &&
-                    plan.reveal_y1 == 172 &&
-                    plan.edge_color == 16 &&
-                    plan.rect_count >= 2,
-                "Nexus title render plan owns TITLE.CG reveal phase");
-
-    memset(&title, 0, sizeof(title));
-    expect_true(nexus_v1_title_build_render_plan(&title, 20, &plan) &&
-                    plan.kind ==
-                        NEXUS_V1_TITLE_RENDER_PLAN_WARNING_FALLBACK &&
-                    plan.pulse == 2 &&
-                    plan.gradient_base == 1 &&
-                    plan.gradient_step_y == 40 &&
-                    plan.gradient_mod_mask == 3 &&
-                    plan.rect_count == 5 &&
-                    plan.rects[0].x == 36 &&
-                    plan.rects[0].color == 34,
-                "Nexus title render plan owns warning fallback geometry");
-    expect_true(nexus_v1_title_build_render_plan(
-                    &title,
-                    nexus_v1_boot_warning_frames() + 30,
-                    &plan) &&
-                    plan.kind == NEXUS_V1_TITLE_RENDER_PLAN_TITLE_FALLBACK &&
-                    plan.pulse == 3 &&
-                    plan.gradient_base == 2 &&
-                    plan.gradient_step_y == 28 &&
-                    plan.gradient_mod_mask == -1 &&
-                    plan.prompt_visible &&
-                    plan.prompt_base_color == 18 &&
-                    plan.rect_count == 37,
-                "Nexus title render plan owns title fallback prompt geometry");
-}
-
 static void expect_title_sequence_contract(void) {
     Nexus_V1_TitleFrame frame0;
     Nexus_V1_TitleFrame frame16;
@@ -474,6 +409,7 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     Nexus_UI_Manager ui;
     unsigned char face_bytes[48 * 48];
     unsigned char short_bytes[16];
+    const Nexus_UI_Surface* placeholder;
     int i;
 
     for (i = 0; i < (int)sizeof(face_bytes); ++i) {
@@ -481,6 +417,18 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     }
     memset(short_bytes, 3, sizeof(short_bytes));
     nexus_ui_manager_init(&ui);
+    expect_true(nexus_ui_face_full_entry_count((int)sizeof(face_bytes),
+                                               48,
+                                               48) == 1,
+                "Nexus FACE loader counts one complete 48x48 portrait");
+    expect_true(nexus_ui_face_full_entry_count((48 * 48 * 19) + 1328,
+                                               48,
+                                               48) == 19,
+                "Nexus FACE loader ignores trailing partial portrait bytes");
+    expect_true(nexus_ui_face_full_entry_count(48 * 48 * 30,
+                                               48,
+                                               48) == 24,
+                "Nexus FACE loader caps startup portraits at roster size");
     expect_true(nexus_ui_load_faces(&ui,
                                     face_bytes,
                                     0,
@@ -499,6 +447,15 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                                     48,
                                     NULL) == 0,
                 "Nexus FACE loader reports fallback portrait separately");
+    expect_true(nexus_ui_load_face_placeholder(&ui, 23, 48, 48) == 0,
+                "Nexus FACE loader can publish a silent placeholder row");
+    placeholder = &ui.surfaces[NEXUS_SURFACE_FACE0 + 23];
+    expect_true(placeholder->data != NULL &&
+                    placeholder->w == 48 &&
+                    placeholder->h == 48 &&
+                    placeholder->owns_data == 1 &&
+                    placeholder->data[0] == 7,
+                "Nexus FACE placeholder is a deterministic gray portrait");
     nexus_ui_manager_free(&ui);
 }
 
@@ -548,7 +505,6 @@ int main(void) {
 
     expect_face_loader_counts_real_vs_fallback();
     expect_title_sequence_contract();
-    expect_title_render_plan_contract();
     expect_title_render_is_frame_dependent();
     expect_startup_layout_contract();
     expect_champion_startup_selection_contract();

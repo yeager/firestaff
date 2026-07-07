@@ -106,6 +106,10 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
     int portrait_w, int portrait_h,
     const uint32_t *palette);
 
+int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h);
+int nexus_ui_load_face_placeholder(Nexus_UI_Manager *mgr,
+    int face_index, int portrait_w, int portrait_h);
+
 /* Free a specific surface */
 void nexus_ui_surface_free(Nexus_UI_Manager *mgr, Nexus_UISurfaceType which);
 
