@@ -82,6 +82,7 @@
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -20626,47 +20627,6 @@ static int m11_dm1_wall_ornament_zone(int coordSet,
                                       int viewWallIndex,
                                       M11_DM1ZoneBlit* outBlit);
 
-typedef struct M11_DM1FloorOrnSpec {
-    int relForward;
-    int relSide;
-    int increment;
-    int flipHorizontal;
-    M11_DM1ZoneBlit blit;
-} M11_DM1FloorOrnSpec;
-
-/* ReDMCSB DUNVIEW.C G0206 floor-ornament coordinate set 0 is the only
- * floor-ornament coordinate set used by DM1/PC 3.4
- * (G0195_auc_Graphic558_FloorOrnamentCoordinateSetIndices is all 0).
- * The entries below are the source X/Y/size zones for F0108, converted from
- * inclusive X1/X2/Y1/Y2 to dstX/dstY/width/height. */
-static const M11_DM1FloorOrnSpec kM11_DM1FloorOrnamentSourceSpecs[] = {
-    {3,-1,0,0,{0,0,0,32,  66,48, 6}}, /* D3L */
-    {3, 0,1,0,{0,0,0,96,  66,32, 6}}, /* D3C */
-    {3, 1,0,1,{0,0,0,144, 66,48, 6}}, /* D3R */
-    {2,-1,2,0,{0,0,0,0,   77,64,11}}, /* D2L */
-    {2, 0,3,0,{0,0,0,80,  77,64,11}}, /* D2C */
-    {2, 1,2,1,{0,0,0,160, 77,64,11}}, /* D2R */
-    {1,-1,4,0,{0,0,0,0,   92,32,25}}, /* D1L */
-    {1, 0,5,0,{0,0,0,80,  92,64,25}}, /* D1C */
-    {1, 1,4,1,{0,0,0,192, 92,32,25}}  /* D1R */
-};
-
-/* Firestaff's GRAPHICS.DAT extraction stores the native floor ornament
- * variants as their drawable bitmap extents.  Center those extents inside
- * the source G0206 destination zones above so every slot remains visible
- * without inventing the old far-side D3 sliver positions. */
-static const M11_DM1FloorOrnSpec kM11_DM1FloorOrnamentRenderSpecs[] = {
-    {3,-1,0,0,{0,0,0,36,  66,40, 6}}, /* D3L in G0206 x32..79 */
-    {3, 0,1,0,{0,0,0,99,  66,26, 6}}, /* D3C in G0206 x96..127 */
-    {3, 1,0,1,{0,0,0,148, 66,40, 6}}, /* D3R in G0206 x144..191 */
-    {2,-1,2,0,{0,0,0,2,   77,60,11}}, /* D2L in G0206 x0..63 */
-    {2, 0,3,0,{0,0,0,91,  77,42,11}}, /* D2C in G0206 x80..143 */
-    {2, 1,2,1,{0,0,0,162, 77,60,11}}, /* D2R in G0206 x160..223 */
-    {1,-1,4,0,{0,0,0,3,   94,25,21}}, /* D1L in G0206 x0..31/y92..116 */
-    {1, 0,5,0,{0,0,0,81,  93,62,23}}, /* D1C in G0206 x80..143/y92..116 */
-    {1, 1,4,1,{0,0,0,195, 94,25,21}}  /* D1R in G0206 x192..223/y92..116 */
-};
-
 /* ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set
  * when (mapX + mapY + direction) & 1.  When true, the wall-set swap tables
  * (G3048_WallSetFlipped / G3071_WallSetNotFlipped) exchange the L/R bitmap
@@ -21534,28 +21494,31 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          int fbH,
                                          int maxVisibleForward,
                                          const M11_ViewportCell cells[3][3]) {
-    const M11_DM1FloorOrnSpec* kOrnaments = kM11_DM1FloorOrnamentRenderSpecs;
-    const size_t ornamentCount = sizeof(kM11_DM1FloorOrnamentRenderSpecs) /
-        sizeof(kM11_DM1FloorOrnamentRenderSpecs[0]);
-    size_t i;
+    int i;
+    int ornamentCount;
     if (!state || !state->assetsAvailable) {
         return;
     }
+    ornamentCount = dm1_v1_floor_ornament_plan_count_pc34();
     for (i = 0; i < ornamentCount; ++i) {
         M11_ViewportCell cell;
         M11_DM1ZoneBlit blit;
+        DM1_FloorOrnamentRenderPlanPc34 plan;
         int localIdx;
         int mapIdx;
         int ornGlobalIdx = -1;
-        if (kOrnaments[i].relForward > maxVisibleForward) {
+        if (!dm1_v1_floor_ornament_render_plan_at_pc34(i, 0, &plan)) {
+            continue;
+        }
+        if (plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             kOrnaments[i].relForward,
-                                             kOrnaments[i].relSide)) {
+                                             plan.relForward,
+                                             plan.relSide)) {
             continue;
         }
-        if (!m11_sample_viewport_cell(state, kOrnaments[i].relForward, kOrnaments[i].relSide, &cell)) {
+        if (!m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)) {
             continue;
         }
         if (!cell.valid || cell.floorOrnamentOrdinal <= 0) {
@@ -21574,16 +21537,19 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         if (ornGlobalIdx < 0) {
             continue;
         }
-        blit = kOrnaments[i].blit;
-        blit.graphicIndex =
-            (ornGlobalIdx == M11_FLOOR_ORNAMENT_FOOTPRINTS_INDEX
-                 ? M11_GFX_FLOOR_ORNAMENT_FOOTPRINTS_BASE
-                 : M11_GFX_FLOOR_ORNAMENT_BASE +
-                       ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS) +
-            kOrnaments[i].increment;
+        if (!dm1_v1_floor_ornament_render_plan_at_pc34(i, ornGlobalIdx, &plan)) {
+            continue;
+        }
+        blit.graphicIndex = plan.blit.graphicIndex;
+        blit.srcX = plan.blit.srcX;
+        blit.srcY = plan.blit.srcY;
+        blit.dstX = plan.blit.dstX;
+        blit.dstY = plan.blit.dstY;
+        blit.width = plan.blit.width;
+        blit.height = plan.blit.height;
         (void)m11_draw_dm1_zone_blit_maybe_flip(state, framebuffer, fbW, fbH,
                                                 &blit, 10,
-                                                kOrnaments[i].flipHorizontal);
+                                                plan.flipHorizontal);
     }
 }
 
@@ -23691,11 +23657,14 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
         variant = (sideHint == 0) ? 5 : 4;
     }
 
-    gfxIdx = (unsigned int)((ornGlobalIdx == M11_FLOOR_ORNAMENT_FOOTPRINTS_INDEX
-                                ? M11_GFX_FLOOR_ORNAMENT_FOOTPRINTS_BASE
-                                : M11_GFX_FLOOR_ORNAMENT_BASE +
-                                      ornGlobalIdx * M11_GFX_FLOOR_ORNAMENT_VARIANTS) +
-                            variant);
+    {
+        int helperGfxIdx = dm1_v1_floor_ornament_graphic_index_pc34(
+            ornGlobalIdx, variant);
+        if (helperGfxIdx < 0) {
+            return 0;
+        }
+        gfxIdx = (unsigned int)helperGfxIdx;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
 
@@ -31072,21 +31041,18 @@ int M11_GameView_GetDM1FloorOrnamentSourceZone(int relForward,
                                                int* outY,
                                                int* outW,
                                                int* outH) {
-    size_t i;
-    for (i = 0; i < sizeof(kM11_DM1FloorOrnamentSourceSpecs) /
-                    sizeof(kM11_DM1FloorOrnamentSourceSpecs[0]); ++i) {
-        const M11_DM1FloorOrnSpec* spec = &kM11_DM1FloorOrnamentSourceSpecs[i];
-        if (spec->relForward == relForward && spec->relSide == relSide) {
-            if (outIncrement) *outIncrement = spec->increment;
-            if (outFlipHorizontal) *outFlipHorizontal = spec->flipHorizontal;
-            if (outX) *outX = spec->blit.dstX;
-            if (outY) *outY = spec->blit.dstY;
-            if (outW) *outW = spec->blit.width;
-            if (outH) *outH = spec->blit.height;
-            return 1;
-        }
+    DM1_FloorOrnamentRenderPlanPc34 plan;
+    if (!dm1_v1_floor_ornament_source_zone_pc34(
+            relForward, relSide, &plan)) {
+        return 0;
     }
-    return 0;
+    if (outIncrement) *outIncrement = plan.increment;
+    if (outFlipHorizontal) *outFlipHorizontal = plan.flipHorizontal;
+    if (outX) *outX = plan.blit.dstX;
+    if (outY) *outY = plan.blit.dstY;
+    if (outW) *outW = plan.blit.width;
+    if (outH) *outH = plan.blit.height;
+    return 1;
 }
 
 int M11_GameView_GetObjectSourceScaleIndex(int depthIndex, int relativeCell) {
