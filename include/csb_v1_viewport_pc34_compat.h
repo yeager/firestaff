@@ -563,6 +563,11 @@ struct CSB_V1_ViewportRuntimeGroupOverlayPlacement {
     int sprite_h;
     int marker_screen_x;
     int marker_screen_y;
+    int sprite_coordinate_set;
+    int sprite_source_zone;
+    int sprite_shift_mask;
+    int sprite_transparent_color;
+    int sprite_uses_f0791_blit;
 };
 
 struct CSB_V1_ViewportRuntimeGroupSpriteBlit {
@@ -574,6 +579,11 @@ struct CSB_V1_ViewportRuntimeGroupSpriteBlit {
     int w;
     int h;
     int depth_index;
+    int coordinate_set;
+    int source_zone;
+    int shift_mask;
+    int transparent_color;
+    int uses_f0791_blit;
 };
 
 struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement {

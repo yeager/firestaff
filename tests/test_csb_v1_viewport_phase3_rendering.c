@@ -3170,6 +3170,16 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.marker_screen_x, 112);
     check_int("csb.runtime_group_overlay.d1c.marker_y",
               group_place.marker_screen_y, 144);
+    check_int("csb.runtime_group_overlay.d1c.material_coord",
+              group_place.sprite_coordinate_set, 0);
+    check_int("csb.runtime_group_overlay.d1c.material_zone",
+              group_place.sprite_source_zone, -1);
+    check_int("csb.runtime_group_overlay.d1c.material_shift",
+              group_place.sprite_shift_mask, 0x8000);
+    check_int("csb.runtime_group_overlay.d1c.material_transparent",
+              group_place.sprite_transparent_color, 10);
+    check_int("csb.runtime_group_overlay.d1c.material_f0791",
+              group_place.sprite_uses_f0791_blit, 1);
     group_place.sprite_creature_type = 6;
     group_place.sprite_direction = 2;
     check_int("csb.runtime_group_overlay.d1c.sprite_blit",
@@ -3187,6 +3197,38 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_sprite_blit.y, 74);
     check_int("csb.runtime_group_overlay.d1c.sprite_blit.depth",
               group_sprite_blit.depth_index, 0);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.coord",
+              group_sprite_blit.coordinate_set, 0);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.zone",
+              group_sprite_blit.source_zone, -1);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.shift",
+              group_sprite_blit.shift_mask, 0x8000);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.transparent",
+              group_sprite_blit.transparent_color, 10);
+    check_int("csb.runtime_group_overlay.d1c.sprite_blit.f0791",
+              group_sprite_blit.uses_f0791_blit, 1);
+    memset(&group_place, 0, sizeof(group_place));
+    check_true("csb.runtime_group_overlay.d3l2.material_visible",
+               csb_v1_viewport_runtime_group_overlay_placement(
+                   3, -2, 0, &group_place) == 1);
+    check_int("csb.runtime_group_overlay.d3l2.material_square",
+              group_place.view_square, 14);
+    check_int("csb.runtime_group_overlay.d3l2.material_zone",
+              group_place.sprite_source_zone, 3215);
+    check_int("csb.runtime_group_overlay.d3l2.material_shift",
+              group_place.sprite_shift_mask, 0x8000);
+    group_place.sprite_creature_type = 6;
+    check_int("csb.runtime_group_overlay.d3l2.sprite_blit",
+              csb_v1_viewport_runtime_group_sprite_blit(
+                  &group_place, &group_sprite_blit), 1);
+    check_int("csb.runtime_group_overlay.d3l2.sprite_blit.zone",
+              group_sprite_blit.source_zone, 3215);
+    check_int("csb.runtime_group_overlay.d3l2.sprite_blit.coord",
+              group_sprite_blit.coordinate_set, 0);
+    check_int("csb.runtime_group_overlay.d3l2.sprite_blit.transparent",
+              group_sprite_blit.transparent_color, 10);
+    check_int("csb.runtime_group_overlay.d3l2.sprite_blit.f0791",
+              group_sprite_blit.uses_f0791_blit, 1);
     check_int("csb.runtime_group_overlay.coord.giant_scorpion",
               csb_v1_viewport_runtime_creature_coordinate_set(0), 1);
     check_int("csb.runtime_group_overlay.coord.swamp_slime",
