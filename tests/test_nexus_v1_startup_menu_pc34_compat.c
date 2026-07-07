@@ -77,6 +77,8 @@ int main(void)
     Nexus_V1_StartupTitleExecution title_execution;
     Nexus_V1_StartupChampionExecution champion_execution;
     Nexus_V1_StartupHit hit;
+    Nexus_V1_StartupChampionRenderRow champion_rows[12];
+    Nexus_V1_StartupChampionFooterRender champion_footer;
     Nexus_V1_StartupRowKind kind;
     Nexus_V1_TitleFrame title_frame;
     Nexus_V1_BootFrame boot_frame;
@@ -121,6 +123,32 @@ int main(void)
     expect(champions.champion_count == NEXUS_MAX_CHAMPIONS,
            "Nexus startup champion roster exposes all 24 mirror rows");
     cursor = 0;
+    memset(champion_rows, 0, sizeof(champion_rows));
+    memset(&champion_footer, 0, sizeof(champion_footer));
+    expect(nexus_v1_startup_menu_build_champion_render_rows(
+               &champions,
+               cursor,
+               champion_rows,
+               (int)(sizeof(champion_rows) / sizeof(champion_rows[0])),
+               &champion_footer) == 12,
+           "Nexus champion startup render plan exposes bounded visible rows");
+    expect(champion_rows[0].row == 0 &&
+               champion_rows[0].selected == 1 &&
+               champion_rows[0].in_party == 0 &&
+               champion_rows[0].portrait_index ==
+                   champions.champions[0].portrait_index &&
+               champion_rows[0].portrait_x ==
+                   NEXUS_V1_STARTUP_CHAMPION_PORTRAIT_X &&
+               champion_rows[0].text_x ==
+                   NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X &&
+               strstr(champion_rows[0].label,
+                      champions.champions[0].name_ascii) != NULL,
+           "Nexus champion startup render row carries selection, portrait, text and label");
+    expect(strstr(champion_footer.label, "PARTY 0/4") != NULL &&
+               champion_footer.text_x == NEXUS_V1_STARTUP_FOOTER_X &&
+               champion_footer.text_y == NEXUS_V1_STARTUP_FOOTER_Y,
+           "Nexus champion startup footer render metadata is Nexus-owned");
+    cursor = 0;
     memset(&action, 0, sizeof(action));
     expect(nexus_v1_startup_champion_handle_input(
                &champions,
@@ -149,6 +177,19 @@ int main(void)
                cursor == 1 &&
                champions.party_count == 1,
            "Nexus champion startup Accept recruits and advances cursor");
+    memset(champion_rows, 0, sizeof(champion_rows));
+    memset(&champion_footer, 0, sizeof(champion_footer));
+    expect(nexus_v1_startup_menu_build_champion_render_rows(
+               &champions,
+               cursor,
+               champion_rows,
+               (int)(sizeof(champion_rows) / sizeof(champion_rows[0])),
+               &champion_footer) == 12 &&
+               champion_rows[0].in_party == 1 &&
+               champion_rows[1].selected == 1 &&
+               strstr(champion_rows[0].label, "*") != NULL &&
+               strstr(champion_footer.label, "PARTY 1/4") != NULL,
+           "Nexus champion startup render plan tracks recruited party and advanced cursor");
     expect(nexus_v1_startup_execute_champion_action(&action,
                                                     &champion_execution) &&
                champion_execution.kind ==

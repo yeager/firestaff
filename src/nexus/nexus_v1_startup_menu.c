@@ -591,6 +591,71 @@ int nexus_v1_startup_menu_build_save_render_rows(
     return count;
 }
 
+int nexus_v1_startup_menu_build_champion_render_rows(
+    const Nexus_V1_ChampionPool *pool,
+    int cursor,
+    Nexus_V1_StartupChampionRenderRow *rows,
+    int max_rows,
+    Nexus_V1_StartupChampionFooterRender *out_footer)
+{
+    int row;
+    int count = 0;
+
+    if (!pool || !rows || max_rows <= 0) {
+        return 0;
+    }
+    memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
+    if (out_footer) {
+        Nexus_V1_StartupRect footer_rect;
+        memset(out_footer, 0, sizeof(*out_footer));
+        if (nexus_v1_startup_champion_footer_rect(&footer_rect)) {
+            out_footer->rect = footer_rect;
+        }
+        out_footer->text_x = NEXUS_V1_STARTUP_FOOTER_X;
+        out_footer->text_y = NEXUS_V1_STARTUP_FOOTER_Y;
+        snprintf(out_footer->label,
+                 sizeof(out_footer->label),
+                 "PARTY %d/%d  ACCEPT ADD  ACTION START",
+                 pool->party_count,
+                 NEXUS_MAX_PARTY);
+    }
+    for (row = 0; row < pool->champion_count && count < max_rows; ++row) {
+        Nexus_V1_StartupChampionRenderRow *out = &rows[count];
+        int in_party = 0;
+        int party_index;
+
+        if (!nexus_v1_startup_champion_row_rect(row, &out->rect)) {
+            continue;
+        }
+        for (party_index = 0; party_index < pool->party_count; ++party_index) {
+            if (pool->party[party_index] == row) {
+                in_party = 1;
+                break;
+            }
+        }
+        out->row = row;
+        out->selected = (row == cursor) ? 1 : 0;
+        out->in_party = in_party;
+        out->portrait_index = pool->champions[row].portrait_index;
+        out->portrait_x = NEXUS_V1_STARTUP_CHAMPION_PORTRAIT_X;
+        out->portrait_y = out->rect.y + 1;
+        out->portrait_w = 10;
+        out->portrait_h = 10;
+        out->text_x = NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X;
+        out->text_y = out->rect.y + 1;
+        snprintf(out->label,
+                 sizeof(out->label),
+                 "%c %s %s HP %d MP %d",
+                 out->selected ? '>' : ' ',
+                 out->in_party ? "*" : " ",
+                 pool->champions[row].name_ascii,
+                 pool->champions[row].max_health,
+                 pool->champions[row].max_mana);
+        ++count;
+    }
+    return count;
+}
+
 int nexus_v1_startup_champion_handle_input(Nexus_V1_ChampionPool *pool,
                                            int *cursor,
                                            unsigned int slot_mask,
