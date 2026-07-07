@@ -105,7 +105,7 @@ int main(void) {
                                  settingsRowY0 + settingsRowYOffset[6] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "RetroAchievements visible row -> cycle hit");
-    CHECK(hit.index == 30,
+    CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
           "RetroAchievements visible row maps to M12_SETTINGS_ROW_RETROACHIEVEMENTS");
     (void)M12_ModernMenu_ApplyHit(&state, hit);
     CHECK(state.settings.retroAchievementsEnabled == 1,
@@ -116,7 +116,7 @@ int main(void) {
                                  settingsRowY0 + settingsRowYOffset[7] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "RA Hardcore visible row -> cycle hit");
-    CHECK(hit.index == 31,
+    CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RA_HARDCORE,
           "RA Hardcore visible row maps to M12_SETTINGS_ROW_RA_HARDCORE");
     state.settings.retroAchievementsHardcore = 0;
     (void)M12_ModernMenu_ApplyHit(&state, hit);
@@ -128,7 +128,7 @@ int main(void) {
                                  settingsRowY0 + settingsRowYOffset[8] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "RA Username visible row -> cycle hit");
-    CHECK(hit.index == 32,
+    CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RA_USERNAME,
           "RA Username visible row maps to M12_SETTINGS_ROW_RA_USERNAME");
     (void)M12_ModernMenu_ApplyHit(&state, hit);
     CHECK(M12_StartupMenu_TextEditActive(&state),
@@ -145,7 +145,7 @@ int main(void) {
                                  settingsRowY0 + settingsRowYOffset[9] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "RA Token visible row -> cycle hit");
-    CHECK(hit.index == 33,
+    CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_RA_TOKEN,
           "RA Token visible row maps to M12_SETTINGS_ROW_RA_TOKEN");
     (void)M12_ModernMenu_ApplyHit(&state, hit);
     CHECK(M12_StartupMenu_TextEditActive(&state),
@@ -164,7 +164,7 @@ int main(void) {
                                  settingsRowY0 + settingsRowYOffset[10] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "Session Timer visible row -> cycle hit");
-    CHECK(hit.index == 35,
+    CHECK(hit.index == M12_STARTUP_SETTINGS_ROW_SESSION_TIMER,
           "Session Timer visible row maps to M12_SETTINGS_ROW_SESSION_TIMER");
     (void)M12_ModernMenu_ApplyHit(&state, hit);
     CHECK(state.settings.sessionTimerIndex == 1,

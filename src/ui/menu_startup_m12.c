@@ -134,6 +134,33 @@ enum {
     M12_SETTINGS_ROW_COUNT
 };
 
+_Static_assert(M12_STARTUP_SETTINGS_ROW_LANGUAGE == M12_SETTINGS_ROW_LANGUAGE,
+               "settings row contract: language");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_GRAPHICS == M12_SETTINGS_ROW_GRAPHICS,
+               "settings row contract: graphics");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_WINDOW_MODE == M12_SETTINGS_ROW_WINDOW_MODE,
+               "settings row contract: window mode");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_SMOOTH_TURN_PAN == M12_SETTINGS_ROW_SMOOTH_TURN_PAN,
+               "settings row contract: smooth turn pan");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_DATA_DIR == M12_SETTINGS_ROW_DATA_DIR,
+               "settings row contract: data dir");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_DATA_STATUS == M12_SETTINGS_ROW_DATA_STATUS,
+               "settings row contract: data status");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS == M12_SETTINGS_ROW_RETROACHIEVEMENTS,
+               "settings row contract: retroachievements");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_RA_HARDCORE == M12_SETTINGS_ROW_RA_HARDCORE,
+               "settings row contract: RA hardcore");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_RA_USERNAME == M12_SETTINGS_ROW_RA_USERNAME,
+               "settings row contract: RA username");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_RA_TOKEN == M12_SETTINGS_ROW_RA_TOKEN,
+               "settings row contract: RA token");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_SESSION_TIMER == M12_SETTINGS_ROW_SESSION_TIMER,
+               "settings row contract: session timer");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_EXPORT == M12_SETTINGS_ROW_EXPORT,
+               "settings row contract: export");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_IMPORT == M12_SETTINGS_ROW_IMPORT,
+               "settings row contract: import");
+
 enum {
     M12_MUSEUM_CATEGORY_DM1 = 0,
     M12_MUSEUM_CATEGORY_CSB,
