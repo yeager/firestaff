@@ -7,12 +7,9 @@
  * For each EXTRACTED + VERIFIED data path that --scan-data marks
  * READY, this probe runs the firestaff launcher with --game <id>
  * --data-dir <path> --boot-probe under SDL_VIDEODRIVER=dummy and
- * asserts the per-game runtime receipt. Runtime phases are validated by
- * main_loop_m11.c as active=1, startupActive=0, and levelLoaded=1.
- * The receipt must also expose the expected per-game startup/title
- * animation contract after runtime handoff.
+ * asserts per-game startup and runtime receipts.
  *
- * Pass: all present in-scope paths reach their runtime receipt.
+ * Pass: all present in-scope paths reach their startup/runtime receipts.
  *
  * Run:
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_tier1_strict_boot_probe
@@ -45,6 +42,9 @@ typedef struct {
     const char* script;
     int boot_frames;
     const char* label;
+    int expect_startup_active;
+    int expect_level_loaded;
+    int expect_runtime_tick_max;
     const char* expect_animation;
     int expect_animation_active;
     int expect_title_frame_min;
@@ -53,11 +53,11 @@ typedef struct {
     int expect_title_ready;
 } Tier1PathSpec;
 
-#define EXPECT_DM1_RUNTIME   "dm1-title", 0, 53, 53, 53, 1
-#define EXPECT_CSB_RUNTIME   "csb-runtime", 0, 53, 53, 53, 1
-#define EXPECT_DM2_RUNTIME   "dm2-runtime", 0, 0, 0, 0, 1
-#define EXPECT_NEXUS_RUNTIME "nexus-runtime", 0, -1, -1, 54, 1
-#define EXPECT_THERON_RUNTIME "theron-runtime", 0, 0, 0, 0, 1
+#define EXPECT_DM1_RUNTIME   0, 1, -1, "dm1-title", 0, 53, 53, 53, 1
+#define EXPECT_CSB_RUNTIME   0, 1, -1, "csb-runtime", 0, 53, 53, 53, 1
+#define EXPECT_DM2_RUNTIME   0, 1, -1, "dm2-runtime", 0, 0, 0, 0, 1
+#define EXPECT_NEXUS_RUNTIME 0, 1, -1, "nexus-runtime", 0, -1, -1, 54, 1
+#define EXPECT_THERON_RUNTIME 0, 1, -1, "theron-runtime", 0, 0, 0, 0, 1
 
 static const Tier1PathSpec kPaths[] = {
     { "dm1",   "dm1",
@@ -116,7 +116,7 @@ static const Tier1PathSpec kPaths[] = {
       "Theron US extras (Track 02.bin, first-matched-version fallback)",
       EXPECT_THERON_RUNTIME },
     /* Sentinel. */
-    { NULL, NULL, NULL, NULL, 0, NULL, NULL, -1, -1, -1, -1, -1 }
+    { NULL, NULL, NULL, NULL, 0, NULL, -1, -1, -1, NULL, -1, -1, -1, -1, -1 }
 };
 
 static int g_pass = 0;
@@ -215,6 +215,99 @@ static int output_has_runtime_title_contract(const Tier1PathSpec *spec,
     return 1;
 }
 
+static int boot_probe_receipt_passed(const Tier1PathSpec *spec,
+                                     const char *buf,
+                                     int wait_status) {
+    if (!spec || !buf) {
+        return 0;
+    }
+    return wait_status == 0 &&
+           strstr(buf, "FIRESTAFF BOOT PROBE READY") != NULL &&
+           strstr(buf, spec->expect_phase) != NULL &&
+           output_has_int_field(buf,
+                                "startupActive",
+                                spec->expect_startup_active) &&
+           output_has_int_field(buf,
+                                "levelLoaded",
+                                spec->expect_level_loaded) &&
+           output_has_int_field(buf,
+                                "runtimeTick",
+                                spec->expect_runtime_tick_max) &&
+           output_has_runtime_title_contract(spec, buf);
+}
+
+static int make_startup_spec(const Tier1PathSpec *runtime_spec,
+                             Tier1PathSpec *startup_spec,
+                             char *label,
+                             size_t label_size) {
+    int rc;
+    if (!runtime_spec || !startup_spec || !label || label_size == 0U) {
+        return 0;
+    }
+    if (strcmp(runtime_spec->game, "dm1") == 0) {
+        return 0;
+    }
+    *startup_spec = *runtime_spec;
+    startup_spec->script = NULL;
+    startup_spec->boot_frames = 2;
+    if (strcmp(runtime_spec->game, "csb") == 0) {
+        startup_spec->expect_phase = "csb-title-1";
+        startup_spec->expect_startup_active = 1;
+        startup_spec->expect_level_loaded = 1;
+        startup_spec->expect_runtime_tick_max = 0;
+        startup_spec->expect_animation = "csb-title";
+        startup_spec->expect_animation_active = 1;
+        startup_spec->expect_title_frame_min = 1;
+        startup_spec->expect_title_frame_max = -1;
+        startup_spec->expect_title_frame_boundary = 53;
+        startup_spec->expect_title_ready = 0;
+    } else if (strcmp(runtime_spec->game, "dm2") == 0) {
+        startup_spec->expect_phase = "dm2-startup-menu";
+        startup_spec->expect_startup_active = 1;
+        startup_spec->expect_level_loaded = 1;
+        startup_spec->expect_runtime_tick_max = 0;
+        startup_spec->expect_animation = "dm2-startup-menu";
+        startup_spec->expect_animation_active = 1;
+        startup_spec->expect_title_frame_min = 0;
+        startup_spec->expect_title_frame_max = 0;
+        startup_spec->expect_title_frame_boundary = 0;
+        startup_spec->expect_title_ready = 0;
+    } else if (strcmp(runtime_spec->game, "nexus") == 0) {
+        startup_spec->expect_phase = "nexus-title";
+        startup_spec->expect_startup_active = 1;
+        startup_spec->expect_level_loaded = 1;
+        startup_spec->expect_runtime_tick_max = 0;
+        startup_spec->expect_animation = "nexus-title";
+        startup_spec->expect_animation_active = 1;
+        startup_spec->expect_title_frame_min = 1;
+        startup_spec->expect_title_frame_max = -1;
+        startup_spec->expect_title_frame_boundary = 54;
+        startup_spec->expect_title_ready = 0;
+    } else if (strcmp(runtime_spec->game, "theron") == 0) {
+        startup_spec->expect_phase = "theron-startup-0";
+        startup_spec->expect_startup_active = 1;
+        startup_spec->expect_level_loaded = 0;
+        startup_spec->expect_runtime_tick_max = 0;
+        startup_spec->expect_animation = "theron-title";
+        startup_spec->expect_animation_active = 1;
+        startup_spec->expect_title_frame_min = 0;
+        startup_spec->expect_title_frame_max = 0;
+        startup_spec->expect_title_frame_boundary = 0;
+        startup_spec->expect_title_ready = 0;
+    } else {
+        return 0;
+    }
+    rc = snprintf(label,
+                  label_size,
+                  "%s startup",
+                  runtime_spec->label ? runtime_spec->label : runtime_spec->game);
+    if (rc <= 0 || (size_t)rc >= label_size) {
+        return 0;
+    }
+    startup_spec->label = label;
+    return 1;
+}
+
 static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
                                     const char *path,
                                     char *buf,
@@ -222,6 +315,9 @@ static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
     int pipefd[2];
     pid_t pid;
     char frames[32];
+    char expect_startup_active[16];
+    char expect_level_loaded[16];
+    char expect_runtime_tick_max[16];
     char expect_animation_active[16];
     char expect_title_frame_min[16];
     char expect_title_frame_max[16];
@@ -254,6 +350,30 @@ static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
     }
     argv[argc++] = "--boot-probe-expect-phase";
     argv[argc++] = spec->expect_phase;
+    if (spec->expect_startup_active >= 0) {
+        snprintf(expect_startup_active,
+                 sizeof(expect_startup_active),
+                 "%d",
+                 spec->expect_startup_active);
+        argv[argc++] = "--boot-probe-expect-startup-active";
+        argv[argc++] = expect_startup_active;
+    }
+    if (spec->expect_level_loaded >= 0) {
+        snprintf(expect_level_loaded,
+                 sizeof(expect_level_loaded),
+                 "%d",
+                 spec->expect_level_loaded);
+        argv[argc++] = "--boot-probe-expect-level-loaded";
+        argv[argc++] = expect_level_loaded;
+    }
+    if (spec->expect_runtime_tick_max >= 0) {
+        snprintf(expect_runtime_tick_max,
+                 sizeof(expect_runtime_tick_max),
+                 "%d",
+                 spec->expect_runtime_tick_max);
+        argv[argc++] = "--boot-probe-expect-runtime-tick-max";
+        argv[argc++] = expect_runtime_tick_max;
+    }
     if (spec->expect_animation && spec->expect_animation[0] != '\0') {
         argv[argc++] = "--boot-probe-expect-startup-animation";
         argv[argc++] = spec->expect_animation;
@@ -387,6 +507,8 @@ static int run_firestaff_boot_probe(const Tier1PathSpec *spec,
 static void run_path(const Tier1PathSpec* spec, const char *root) {
     char path[1024];
     char buf[8192];
+    char startup_label[1100];
+    Tier1PathSpec startup_spec;
     int wait_status;
 
     if (!spec->game) return;
@@ -403,14 +525,37 @@ static void run_path(const Tier1PathSpec* spec, const char *root) {
         return;
     }
 
+    if (make_startup_spec(spec,
+                          &startup_spec,
+                          startup_label,
+                          sizeof(startup_label))) {
+        wait_status = run_firestaff_boot_probe(&startup_spec,
+                                               path,
+                                               buf,
+                                               sizeof(buf));
+        if (boot_probe_receipt_passed(&startup_spec, buf, wait_status)) {
+            printf("  PASS: %s (exit=%d, phase=%s, animation=%s)\n",
+                   startup_spec.label,
+                   wait_status,
+                   startup_spec.expect_phase,
+                   startup_spec.expect_animation);
+            ++g_pass;
+        } else {
+            printf("  FAIL: %s — startup boot receipt %s not proven (exit=%d)\n",
+                   startup_spec.label,
+                   startup_spec.expect_phase,
+                   wait_status);
+            printf("    captured: %.200s%s\n",
+                   buf,
+                   strlen(buf) > 200 ? "..." : "");
+            ++g_fail;
+            return;
+        }
+    }
+
     wait_status = run_firestaff_boot_probe(spec, path, buf, sizeof(buf));
 
-    if (wait_status == 0 &&
-        strstr(buf, "FIRESTAFF BOOT PROBE READY") != NULL &&
-        strstr(buf, spec->expect_phase) != NULL &&
-        strstr(buf, "startupActive=0") != NULL &&
-        strstr(buf, "levelLoaded=1") != NULL &&
-        output_has_runtime_title_contract(spec, buf)) {
+    if (boot_probe_receipt_passed(spec, buf, wait_status)) {
         printf("  PASS: %s (exit=%d, phase=%s, animation=%s)\n",
                spec->label,
                wait_status,
