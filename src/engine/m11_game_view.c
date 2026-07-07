@@ -14691,16 +14691,19 @@ int M11_GameView_CsbF0282ChampionPanelGateActive(
 int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
                                        int* outX, int* outY,
                                        int* outW, int* outH) {
+    DM1_WallOrnamentZoneBlitPc34 blit;
     /* DUNVIEW.C G0205 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets
      * coordSet 5 / index 12 is the C346 D1C champion-mirror frame
      * route (DUNVIEW.C:3913-3928).  The C026 champion portrait is a
      * smaller cutout inside this wall-ornament box at (96,35)-(127,63). */
-    static const int kD1CDest[4] = { 80, 29, 64, 43 };
     if (!state) return 0;
-    if (outX) *outX = kD1CDest[0];
-    if (outY) *outY = kD1CDest[1];
-    if (outW) *outW = kD1CDest[2];
-    if (outH) *outH = kD1CDest[3];
+    if (!dm1_v1_wall_ornament_zone_pc34(5, 12, &blit)) {
+        return 0;
+    }
+    if (outX) *outX = blit.dstX;
+    if (outY) *outY = blit.dstY;
+    if (outW) *outW = blit.width;
+    if (outH) *outH = blit.height;
     return 1;
 }
 
@@ -21585,21 +21588,11 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
 }
 
 static int m11_dm1_wall_ornament_is_alcove_global(int globalIndex) {
-    /* ReDMCSB DUNVIEW.C G0192_auc_Graphic558_AlcoveOrnamentIndices
-     * and DUNGEON.C F0149_DUNGEON_IsWallOrnamentAnAlcove: only the
-     * current map global wall ornament indices 1, 2, and 3 are
-     * treated as alcoves for wall-cell object visibility. */
-    return globalIndex == 1 || globalIndex == 2 || globalIndex == 3;
+    return dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
 }
 
 static int m11_dm1_wall_ornament_flip_horizontal_pc34(int viewWallIndex) {
-    /* ReDMCSB DUNVIEW.C F0107: for PC34/I34E the wall-ornament bitmap is
-     * flipped only for right-side left-wall projections:
-     * M576_VIEW_WALL_D3R_LEFT (also C01_VIEW_WALL_D3R2_LEFT in the
-     * PC34 13-row table), M581_VIEW_WALL_D2R_LEFT, and
-     * M586_VIEW_WALL_D1R_LEFT.  Front-facing D3R/D2R ornaments are not
-     * flipped; they use the front derived bitmap/palette route instead. */
-    return viewWallIndex == 1 || viewWallIndex == 6 || viewWallIndex == 11;
+    return dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
 }
 
 static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,

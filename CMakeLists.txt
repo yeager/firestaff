@@ -15834,6 +15834,14 @@ function(firestaff_add_dm1_v1_viewport_contract_test target test_src impl_src ct
 endfunction()
 
 firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_wall_ornament_pc34_compat
+    tests/test_dm1_v1_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+    dm1_v1_wall_ornament_pc34_compat
+    src/dm1/dm1_v1_g0194_pc34_compat.c
+    src/dm1/dm1_v1_g0205_pc34_compat.c
+)
+firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat
     tests/test_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
     src/dm1/dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
