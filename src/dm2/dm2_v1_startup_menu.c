@@ -785,6 +785,42 @@ int dm2_v1_startup_apply_receipt_from_execution(
     return 1;
 }
 
+int dm2_v1_startup_execute_action_with_receipt(
+    const DM2_V1_StartupAction *action,
+    const char *save_root,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupApplyReceipt *out_receipt)
+{
+    DM2_V1_StartupExecution local_execution;
+    DM2_V1_StartupExecution *execution;
+    int session_applied = 0;
+
+    if (out_execution) {
+        dm2_v1_startup_execution_clear(out_execution);
+    }
+    if (out_receipt) {
+        dm2_v1_startup_apply_receipt_clear(out_receipt);
+    }
+    if (!action || !out_receipt) {
+        return 0;
+    }
+
+    execution = out_execution ? out_execution : &local_execution;
+    if (!dm2_v1_startup_execute_action(action, save_root, execution)) {
+        return 0;
+    }
+    if (execution->kind == DM2_V1_STARTUP_EXEC_SESSION_READY &&
+        apply_session) {
+        session_applied = apply_session(apply_userdata,
+                                        &execution->session);
+    }
+    return dm2_v1_startup_apply_receipt_from_execution(execution,
+                                                       session_applied,
+                                                       out_receipt);
+}
+
 int dm2_v1_startup_execute_save_path(
     const char *save_path,
     char *out_save_root,

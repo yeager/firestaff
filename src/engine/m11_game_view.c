@@ -732,6 +732,14 @@ static int m11_dm2_startup_apply_session(M11_GameViewState *state,
     return 1;
 }
 
+static int m11_dm2_startup_apply_session_callback(
+    void *userdata,
+    const DM2_V1_SessionState *session)
+{
+    return m11_dm2_startup_apply_session((M11_GameViewState *)userdata,
+                                         session);
+}
+
 static void m11_dm2_startup_apply_mode_update(
     M11_GameViewState *state,
     const DM2_V1_StartupModeUpdate *update)
@@ -755,26 +763,19 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
     DM2_V1_BootProfile *profile;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupApplyReceipt receipt;
-    int session_applied = 0;
 
     if (!state || !state->dm2State.startup_menu_active ||
         !state->dm2BootProfile || !action) {
         return M11_GAME_INPUT_IGNORED;
     }
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (!dm2_v1_startup_execute_action(action,
-                                       profile->save_root,
-                                       &execution)) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    if (execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
-        session_applied = m11_dm2_startup_apply_session(
+    if (!dm2_v1_startup_execute_action_with_receipt(
+            action,
+            profile->save_root,
+            m11_dm2_startup_apply_session_callback,
             state,
-            &execution.session);
-    }
-    if (!dm2_v1_startup_apply_receipt_from_execution(&execution,
-                                                     session_applied,
-                                                     &receipt)) {
+            &execution,
+            &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     m11_dm2_startup_apply_mode_update(state, &receipt.mode_update);

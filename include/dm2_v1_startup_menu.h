@@ -94,6 +94,10 @@ typedef struct {
     int session_applied;
 } DM2_V1_StartupApplyReceipt;
 
+typedef int (*DM2_V1_StartupSessionApplyFn)(
+    void *userdata,
+    const DM2_V1_SessionState *session);
+
 typedef struct {
     char save_root[512];
     int resume_available;
@@ -223,6 +227,13 @@ int dm2_v1_startup_execution_input_outcome(
 int dm2_v1_startup_apply_receipt_from_execution(
     const DM2_V1_StartupExecution *execution,
     int session_applied,
+    DM2_V1_StartupApplyReceipt *out_receipt);
+int dm2_v1_startup_execute_action_with_receipt(
+    const DM2_V1_StartupAction *action,
+    const char *save_root,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
     DM2_V1_StartupApplyReceipt *out_receipt);
 int dm2_v1_startup_execute_save_path(
     const char *save_path,

@@ -5,6 +5,9 @@
 
 static int g_passed;
 static int g_failed;
+static int g_apply_calls;
+static int g_apply_result;
+static DM2_V1_SessionState g_applied_session;
 
 static void check(int condition, const char *message)
 {
@@ -15,6 +18,17 @@ static void check(int condition, const char *message)
         ++g_failed;
         printf("FAIL %s\n", message);
     }
+}
+
+static int test_apply_session(void *userdata,
+                              const DM2_V1_SessionState *session)
+{
+    (void)userdata;
+    ++g_apply_calls;
+    if (session) {
+        g_applied_session = *session;
+    }
+    return g_apply_result;
 }
 
 int main(void)
@@ -300,6 +314,24 @@ int main(void)
               receipt.outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               strcmp(receipt.outcome.status, "DM2 NEW GAME") == 0,
           "session-ready receipt closes startup after applied session");
+    g_apply_calls = 0;
+    g_apply_result = 1;
+    memset(&g_applied_session, 0, sizeof(g_applied_session));
+    check(dm2_v1_startup_execute_action_with_receipt(
+              &action,
+              "/tmp/firestaff-dm2-startup-missing",
+              test_apply_session,
+              NULL,
+              &execution,
+              &receipt) &&
+              g_apply_calls == 1 &&
+              g_applied_session.champion_count == 4 &&
+              receipt.session_should_apply &&
+              receipt.session_applied &&
+              receipt.mode_update.set_startup_menu_active &&
+              receipt.mode_update.startup_menu_active == 0 &&
+              strcmp(receipt.outcome.status, "DM2 NEW GAME") == 0,
+          "combined action execution applies session and returns close receipt");
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               strcmp(outcome.status_scope, "STARTUP") == 0 &&
@@ -312,6 +344,22 @@ int main(void)
               !receipt.mode_update.set_startup_menu_active &&
               strcmp(receipt.outcome.status, "DM2 LOAD FAILED") == 0,
           "session-ready receipt keeps startup open after failed apply");
+    g_apply_calls = 0;
+    g_apply_result = 0;
+    memset(&g_applied_session, 0, sizeof(g_applied_session));
+    check(dm2_v1_startup_execute_action_with_receipt(
+              &action,
+              "/tmp/firestaff-dm2-startup-missing",
+              test_apply_session,
+              NULL,
+              NULL,
+              &receipt) &&
+              g_apply_calls == 1 &&
+              receipt.session_should_apply &&
+              !receipt.session_applied &&
+              !receipt.mode_update.set_startup_menu_active &&
+              strcmp(receipt.outcome.status, "DM2 LOAD FAILED") == 0,
+          "combined action execution keeps startup open when session apply fails");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&

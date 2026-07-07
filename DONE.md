@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 DM2 startup combined receipt ownership: `dm2_v1_startup_menu` now owns action execution through optional runtime session-apply callback and final apply receipt construction. M11 supplies only the DM2 runtime apply callback and applies the returned receipt. Verification: DM2 startup action contract passed 54/54, M11 startup/profile gate passed, DM2 boot-probe passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-07 Nexus full-start graphics fix: M11 now renders loaded `WARNING.BIN` through the Nexus title renderplan, passes `TITLE.CG` reveal with the full WARNING+TITLE boot-frame timeline, and reports the full 102-frame Nexus title-ready boundary. Verification: Nexus startup menu, M11 startup gate, launcher handoff 138/138, Nexus boot-probe, Tier1 strict boot-probe 36/36, Phase A 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-07 Theron flow execution receipt ownership: `theron_v1_startup_flow` now owns a combined flow-plan execution/apply/state-receipt helper for stage select, stage cursor, stage choice, Soul Room cursor, and mirror toggle paths. M11 rebuilds the flow and applies returned Theron receipts instead of duplicating the execution→apply→state chain. Verification: startup-flow probe passed 431/431, save-resume probe passed 66/66, M11 launcher handoff passed 26/26, Phase A passed 24/24, Theron boot-probe passed, and `git diff --check` passed.
