@@ -82,6 +82,7 @@
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_floor_pit_pc34_compat.h"
@@ -96,14 +97,11 @@
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
-#include "firestaff/dm1/v1/G0180_pc34_compat.h"
 #include "firestaff/dm1/v1/G0179_pc34_compat.h"
 #include "firestaff/dm1/v1/G0181_pc34_compat.h"
 #include "firestaff/dm1/v1/G0182_pc34_compat.h"
-#include "firestaff/dm1/v1/G0183_pc34_compat.h"
 #include "firestaff/dm1/v1/G0184_pc34_compat.h"
 #include "firestaff/dm1/v1/G0185_pc34_compat.h"
-#include "firestaff/dm1/v1/G0186_pc34_compat.h"
 #include "firestaff/dm1/v1/G0187_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
 #include "firestaff_po_loader.h"
@@ -22781,107 +22779,45 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
     }
 }
 
-static int m11_dm1_center_door_panel_blit_for_state(int depth,
-                                                    int doorState,
-                                                    M11_DM1ZoneBlit* outBlit) {
-    static const M11_DM1ZoneBlit kDoorPanels[3][4] = {
-        {
-            {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86},
-            {M11_GFX_DOOR_SET0_D1, 0, 65, 64, 15, 96, 23},
-            {M11_GFX_DOOR_SET0_D1, 0, 43, 64, 15, 96, 45},
-            {M11_GFX_DOOR_SET0_D1, 0, 21, 64, 15, 96, 67}
-        },
-        {
-            {M11_GFX_DOOR_SET0_D2, 0, 0, 80, 24, 64, 59},
-            {M11_GFX_DOOR_SET0_D2, 0, 44, 80, 24, 64, 17},
-            {M11_GFX_DOOR_SET0_D2, 0, 29, 80, 24, 64, 32},
-            {M11_GFX_DOOR_SET0_D2, 0, 14, 80, 24, 64, 47}
-        },
-        {
-            {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38},
-            {M11_GFX_DOOR_SET0_D3, 0, 27, 90, 29, 44, 11},
-            {M11_GFX_DOOR_SET0_D3, 0, 17, 90, 29, 44, 21},
-            {M11_GFX_DOOR_SET0_D3, 0, 7,  90, 29, 44, 31}
-        }
-    };
-    int panelState;
-    if (!outBlit || depth < 0 || depth >= 3 || doorState == 0) {
-        return 0;
+static M11_DM1ZoneBlit m11_dm1_center_door_blit_from_plan(
+    const DM1_CenterDoorBlitPc34* planBlit)
+{
+    M11_DM1ZoneBlit blit;
+    memset(&blit, 0, sizeof(blit));
+    if (!planBlit) {
+        return blit;
     }
-    panelState = (doorState >= 1 && doorState <= 3) ? doorState : 0;
-    *outBlit = kDoorPanels[depth][panelState];
-    return 1;
-}
-
-static int m11_dm1_center_door_frame_get_pc34(int depth,
-                                              int frameIndex,
-                                              int valueIndex) {
-    switch (depth) {
-        case 0:
-            return dm1_v1_g0186_get_pc34(frameIndex, valueIndex);
-        case 1:
-            return dm1_v1_g0183_get_pc34(frameIndex, valueIndex);
-        case 2:
-            return dm1_v1_g0180_get_pc34(frameIndex, valueIndex);
-        default:
-            return -1;
-    }
-}
-
-static int m11_dm1_center_door_horizontal_blits_for_state(int depth,
-                                                         int doorState,
-                                                         M11_DM1ZoneBlit outBlits[2]) {
-    int stateIndex;
-    int frameBase;
-    int frame;
-    if (!outBlits || depth < 0 || depth >= 3 ||
-        doorState < 1 || doorState > 3) {
-        return 0;
-    }
-    stateIndex = doorState - 1;
-    frameBase = 4 + stateIndex; /* DOOR_FRAMES: LeftHorizontal[0..2]. */
-    for (frame = 0; frame < 2; ++frame) {
-        int frameIndex = frameBase + (frame ? 3 : 0);
-        int x1 = m11_dm1_center_door_frame_get_pc34(depth, frameIndex, 0);
-        int x2 = m11_dm1_center_door_frame_get_pc34(depth, frameIndex, 1);
-        int y1 = m11_dm1_center_door_frame_get_pc34(depth, frameIndex, 2);
-        int y2 = m11_dm1_center_door_frame_get_pc34(depth, frameIndex, 3);
-        int srcX = m11_dm1_center_door_frame_get_pc34(depth, frameIndex, 6);
-        int srcY = m11_dm1_center_door_frame_get_pc34(depth, frameIndex, 7);
-        int graphic = depth == 0 ? M11_GFX_DOOR_SET0_D1 :
-            (depth == 1 ? M11_GFX_DOOR_SET0_D2 : M11_GFX_DOOR_SET0_D3);
-        if (x1 < 0 || x2 < x1 || y1 < 0 || y2 < y1 ||
-            srcX < 0 || srcY < 0) {
-            return 0;
-        }
-        outBlits[frame].graphicIndex = graphic;
-        outBlits[frame].srcX = srcX;
-        outBlits[frame].srcY = srcY;
-        outBlits[frame].dstX = x1;
-        outBlits[frame].dstY = y1;
-        outBlits[frame].width = x2 - x1 + 1;
-        outBlits[frame].height = y2 - y1 + 1;
-    }
-    return 2;
+    blit.graphicIndex = planBlit->graphicIndex;
+    blit.srcX = planBlit->srcX;
+    blit.srcY = planBlit->srcY;
+    blit.dstX = planBlit->dstX;
+    blit.dstY = planBlit->dstY;
+    blit.width = planBlit->width;
+    blit.height = planBlit->height;
+    return blit;
 }
 
 static int m11_dm1_center_door_panel_blits_for_cell(int depth,
                                                     const M11_ViewportCell* cell,
                                                     M11_DM1ZoneBlit outBlits[2]) {
+    DM1_CenterDoorBlitPc34 planBlits[2];
+    int count;
+    int i;
     if (!cell || !outBlits || cell->doorState == 0) {
         return 0;
     }
-    if (!cell->doorVertical && cell->doorState >= 1 && cell->doorState <= 3) {
-        /* ReDMCSB DUNVIEW.C F0111 lines 4308-4334: horizontal partly
-         * open doors use LeftHorizontal/RightHorizontal frames, with a
-         * first-half C6 zone blit and a shifted second-half C10 blit. */
-        return m11_dm1_center_door_horizontal_blits_for_state(depth,
-                                                              cell->doorState,
-                                                              outBlits);
+    /* ReDMCSB DUNVIEW.C F0111 lines 4308-4334: horizontal partly-open
+     * doors use LeftHorizontal/RightHorizontal frames. The source-owned
+     * G0186/G0183/G0180 selection now lives in dm1_v1_center_door_render. */
+    count = dm1_v1_center_door_panel_blits_for_cell_pc34(
+        depth,
+        cell->doorState,
+        cell->doorVertical,
+        planBlits);
+    for (i = 0; i < count && i < 2; ++i) {
+        outBlits[i] = m11_dm1_center_door_blit_from_plan(&planBlits[i]);
     }
-    return m11_dm1_center_door_panel_blit_for_state(depth,
-                                                    cell->doorState,
-                                                    &outBlits[0]) ? 1 : 0;
+    return count;
 }
 
 static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
@@ -22889,33 +22825,18 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
                                       int fbW,
                                       int fbH,
                                       const M11_ViewportCell cells[3][3]) {
-    static const M11_DM1ZoneBlit kD1C[] = {
-        {M11_GFX_DOOR_FRAME_TOP_D1, 0, 0, 61, 12, 102, 4},
-        {M11_GFX_DOOR_SIDE_D1,     0, 0, 44, 13, 25, 94},
-        {M11_GFX_DOOR_SIDE_D1,     0, 0, 155, 13, 25, 94}
-    };
-    static const M11_DM1ZoneBlit kD2C[] = {
-        {M11_GFX_DOOR_FRAME_TOP_D2, 0, 0, 77, 21, 70, 3},
-        {M11_GFX_DOOR_SIDE_D2,     0, 0, 65, 21, 18, 65},
-        {M11_GFX_DOOR_SIDE_D2,     0, 0, 141, 21, 18, 65}
-    };
-    static const M11_DM1ZoneBlit kD3C[] = {
-        {M11_GFX_DOOR_SIDE_D3, 0, 0, 82, 27, 10, 42},
-        {M11_GFX_DOOR_SIDE_D3, 0, 0, 132, 27, 10, 42}
-    };
-    static const struct { const M11_DM1ZoneBlit* blits; size_t count; } kByDepth[3] = {
-        {kD1C, sizeof(kD1C) / sizeof(kD1C[0])},
-        {kD2C, sizeof(kD2C) / sizeof(kD2C[0])},
-        {kD3C, sizeof(kD3C) / sizeof(kD3C[0])}
-    };
     int depth;
     if (!state || !state->assetsAvailable) {
         return;
     }
     for (depth = 0; depth < 3; ++depth) {
-        size_t i;
+        int i;
+        DM1_CenterDoorRenderPlanPc34 plan;
         const M11_ViewportCell* cell = &cells[depth][1];
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR) {
+            continue;
+        }
+        if (!dm1_v1_center_door_render_plan_for_depth_pc34(depth, &plan)) {
             continue;
         }
         /* ReDMCSB DUNVIEW.C F0111/F0128: the door FRAME (top lintel,
@@ -22924,9 +22845,13 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
          * when the door is fully open.  Previous code skipped the
          * entire rendering for open doors, causing the frame to
          * disappear when portcullis gates opened. */
-        for (i = 0; i < kByDepth[depth].count; ++i) {
+        for (i = 0; i < plan.frameCount; ++i) {
+            M11_DM1ZoneBlit frame;
+            const DM1_CenterDoorBlitPc34* framePlan =
+                i == 0 ? &plan.frameA : (i == 1 ? &plan.frameB : &plan.frameC);
+            frame = m11_dm1_center_door_blit_from_plan(framePlan);
             (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                         &kByDepth[depth].blits[i], 10);
+                                         &frame, 10);
         }
         if (!m11_viewport_cell_is_open(cell)) {
             M11_DM1ZoneBlit panels[2];
@@ -23043,13 +22968,10 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
                                                     int fbW,
                                                     int fbH,
                                                     const M11_ViewportCell cells[3][3]) {
-    static const M11_DM1ZoneBlit kDoorPanels[3] = {
-        {M11_GFX_DOOR_SET0_D1, 0, 0, 64, 16, 96, 86},
-        {M11_GFX_DOOR_SET0_D2, 0, 0, 80, 24, 64, 59},
-        {M11_GFX_DOOR_SET0_D3, 0, 0, 90, 30, 44, 38}
-    };
     int depth;
     const M11_ViewportCell* cell;
+    DM1_CenterDoorRenderPlanPc34 plan;
+    M11_DM1ZoneBlit panel;
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -23061,8 +22983,12 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
     if (cell->doorState != 5) {
         return;
     }
+    if (!dm1_v1_center_door_render_plan_for_depth_pc34(depth, &plan)) {
+        return;
+    }
+    panel = m11_dm1_center_door_blit_from_plan(&plan.closedPanel);
     m11_draw_dm1_destroyed_door_mask_on_panel(state, framebuffer, fbW, fbH,
-                                              &kDoorPanels[depth]);
+                                              &panel);
 }
 
 static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
