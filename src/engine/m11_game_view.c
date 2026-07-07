@@ -16352,7 +16352,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         state->csbState.startup_entrance_active &&
         (buttonMask & (M11_DM1_MOUSE_MASK_LEFT |
                        ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT))) {
-        CSB_V1_StartupEntrancePointerAction_PC34 action;
+        int command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
         if (!m11_csb_startup_entrance_waiting_for_input(state)) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -16363,17 +16363,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 return utilityResult;
             }
         }
-        if (!csb_v1_startup_entrance_pointer_action_pc34(
+        if (!csb_v1_startup_entrance_command_for_pointer_pc34(
                 state->csbState.startup_entrance_credits_active,
                 x,
                 y,
                 (unsigned int)buttonMask,
-                &action)) {
+                &command)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        return m11_csb_startup_handle_entrance_command(
-            state,
-            csb_v1_startup_entrance_command_for_pointer_action_pc34(action));
+        return m11_csb_startup_handle_entrance_command(state, command);
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&

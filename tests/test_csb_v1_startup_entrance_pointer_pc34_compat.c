@@ -326,11 +326,38 @@ int main(void)
               0, 1, 1, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT, &action) &&
               action == CSB_V1_STARTUP_ENTRANCE_POINTER_ACTION_NONE_PC34,
           "outside route is ignored");
+    command = 0;
+    check(csb_v1_startup_entrance_command_for_pointer_pc34(
+              0,
+              244,
+              45,
+              ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
+              &command) &&
+              command == 200,
+          "pointer dispatch resolves source entrance command");
+    command = 216;
+    check(!csb_v1_startup_entrance_command_for_pointer_pc34(
+              0,
+              1,
+              1,
+              ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
+              &command) &&
+              command == 0,
+          "pointer dispatch ignores outside route");
     action = CSB_V1_STARTUP_ENTRANCE_POINTER_ACTION_QUIT_PC34;
     check(csb_v1_startup_entrance_pointer_action_pc34(
               1, 244, 45, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT, &action) &&
               action == CSB_V1_STARTUP_ENTRANCE_POINTER_ACTION_NONE_PC34,
           "credits-active click is consumed as dismiss");
+    command = 216;
+    check(csb_v1_startup_entrance_command_for_pointer_pc34(
+              1,
+              244,
+              45,
+              ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
+              &command) &&
+              command == 0,
+          "pointer dispatch owns credits dismiss");
     check(csb_v1_startup_entrance_pointer_action_pc34(
               0, 244, 45, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT, NULL) == 0,
           "NULL output action is rejected");

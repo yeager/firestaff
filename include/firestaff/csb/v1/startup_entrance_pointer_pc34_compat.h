@@ -26,6 +26,13 @@ int csb_v1_startup_entrance_pointer_action_pc34(
 int csb_v1_startup_entrance_command_for_pointer_action_pc34(
     CSB_V1_StartupEntrancePointerAction_PC34 action);
 
+int csb_v1_startup_entrance_command_for_pointer_pc34(
+    int credits_active,
+    int x,
+    int y,
+    unsigned int button_mask,
+    int *out_command);
+
 const char *csb_v1_startup_entrance_pointer_source_evidence_pc34(void);
 
 #ifdef __cplusplus
