@@ -12080,6 +12080,7 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
                                                         size_t receipt_cap) {
     Theron_V1_World* world;
     Theron_StartupFlow flow;
+    Theron_StartupStateReceipt stateReceipt;
     Theron_StartupResult result;
 
     if (receipt && receipt_cap > 0u) {
@@ -12093,9 +12094,10 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
         return 0;
     }
 
-    result = theron_v1_startup_return_to_stage_select_after_exit(
+    result = theron_v1_startup_return_to_stage_select_after_exit_with_receipt(
         world,
         &flow,
+        &stateReceipt,
         receipt,
         receipt_cap);
     if (result != THERON_STARTUP_OK) {
@@ -12110,14 +12112,7 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
         return 0;
     }
 
-    m11_theron_sync_startup_state(state, &flow);
-    state->theronState.level_loaded = 0;
-    state->theronState.startup_cursor = 0;
-    state->theronState.save_resume_continue_focus = 0;
-    state->theronState.party_x = world->party.leader_x;
-    state->theronState.party_y = world->party.leader_y;
-    state->theronState.party_dir = world->party.leader_dir;
-    state->theronState.tick_count = (int)world->world_tick;
+    m11_theron_apply_startup_state_receipt(state, &stateReceipt);
     return 1;
 }
 
