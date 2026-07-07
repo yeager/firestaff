@@ -269,6 +269,7 @@ int main(void)
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
+    CSB_V1_StartupEntranceCommandReceipt_PC34 command_receipt;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_receipt;
     CSB_V1_StartupSessionOptionsInput_PC34 session_input;
@@ -1513,6 +1514,41 @@ int main(void)
                   &command_plan,
                   &runtime_plan),
           "startup runtime plan rejects pure credits command");
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.credits_active = 1;
+    check(csb_v1_startup_apply_entrance_command_with_receipt_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_DRAW_CREDITS_PC34,
+              &command_receipt) &&
+              command_receipt.handled &&
+              !command_receipt.requires_runtime_plan &&
+              command_receipt.pure_apply_result ==
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_REDRAW_PC34 &&
+              !command_state.credits_active &&
+              command_receipt.outcome.status &&
+              strcmp(command_receipt.outcome.status, "CSB ENTRANCE") == 0,
+          "startup entrance command receipt owns pure credits dismissal");
+
+    memset(&command_state, 0, sizeof(command_state));
+    command_state.entrance_active = 1;
+    command_state.entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
+    check(csb_v1_startup_apply_entrance_command_with_receipt_pc34(
+              &command_state,
+              CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_BONUS_DUNGEON_PC34,
+              &command_receipt) &&
+              command_receipt.handled &&
+              command_receipt.requires_runtime_plan &&
+              command_receipt.pure_apply_result ==
+                  CSB_V1_STARTUP_ENTRANCE_APPLY_NOT_HANDLED_PC34 &&
+              command_receipt.runtime_plan.kind ==
+                  CSB_V1_STARTUP_RUNTIME_PLAN_ENTER_BONUS_DUNGEON_PC34 &&
+              command_receipt.runtime_plan.set_bonus_dungeon &&
+              command_receipt.runtime_plan.bonus_dungeon &&
+              command_receipt.runtime_plan.begin_door_opening,
+          "startup entrance command receipt owns runtime handoff plan");
 
     check(csb_v1_startup_plan_for_entrance_command_pc34(
               &command_state,
