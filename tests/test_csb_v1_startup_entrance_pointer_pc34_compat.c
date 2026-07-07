@@ -268,6 +268,8 @@ int main(void)
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
+    CSB_V1_StartupSessionOptionsInput_PC34 session_input;
+    CSB_V1_StartupSessionOptions_PC34 session_options;
     CSB_V1_StartupEntranceInputOutcome_PC34 outcome;
     CSB_V1_StartupEntranceDecision_PC34 decision;
     CSB_V1_TextMaterial_PC34 material;
@@ -1038,6 +1040,66 @@ int main(void)
               !command_state.opening_active &&
               command_state.pending_command == 0,
           "startup command state initializes resume runtime");
+
+    csb_v1_startup_session_options_init_pc34(&session_options);
+    check(session_options.import_utility_state == (int)CSB_V1_UTIL_FLOW_INIT &&
+              !session_options.import_available &&
+              !session_options.entrance_resume_available,
+          "startup session options initialize to clean utility state");
+    memset(&session_input, 0, sizeof(session_input));
+    session_input.direct_resume_loaded = 1;
+    session_input.import_dm1_save_path = "/tmp/DM1SAVE.DAT";
+    session_input.import_party_loaded = 1;
+    session_input.import_champion_count = 2;
+    session_input.import_utility_state = (int)CSB_V1_UTIL_FLOW_DONE;
+    session_input.import_utility_prompt = "CHAOS STRIKES BACK READY";
+    session_input.entrance_resume_save_path = "/tmp/CSBSAVE.DAT";
+    session_input.entrance_resume_can_load = 1;
+    check(csb_v1_startup_build_session_options_pc34(
+              &session_input,
+              &session_options) &&
+              !session_options.import_available &&
+              !session_options.entrance_resume_available &&
+              session_options.import_dm1_save_path[0] == '\0' &&
+              session_options.entrance_resume_path[0] == '\0',
+          "startup session options suppress entrance choices after direct resume");
+    memset(&session_input, 0, sizeof(session_input));
+    session_input.import_dm1_save_path = "/tmp/DM1SAVE.DAT";
+    session_input.import_party_loaded = 1;
+    session_input.import_champion_count = 2;
+    session_input.import_utility_state = (int)CSB_V1_UTIL_FLOW_DONE;
+    session_input.import_utility_prompt = "CHAOS STRIKES BACK READY";
+    session_input.entrance_resume_save_path = "/tmp/CSBSAVE.DAT";
+    session_input.entrance_resume_can_load = 1;
+    check(csb_v1_startup_build_session_options_pc34(
+              &session_input,
+              &session_options) &&
+              session_options.import_available &&
+              session_options.import_champion_count == 2 &&
+              session_options.import_selected_action_index == 0 &&
+              !session_options.import_preview_active &&
+              session_options.import_utility_state ==
+                  (int)CSB_V1_UTIL_FLOW_DONE &&
+              strcmp(session_options.import_dm1_save_path,
+                     "/tmp/DM1SAVE.DAT") == 0 &&
+              strcmp(session_options.import_utility_prompt,
+                     "CHAOS STRIKES BACK READY") == 0 &&
+              session_options.entrance_resume_available &&
+              strcmp(session_options.entrance_resume_path,
+                     "/tmp/CSBSAVE.DAT") == 0,
+          "startup session options publish import and validated resume choices");
+    memset(&session_input, 0, sizeof(session_input));
+    session_input.import_dm1_save_path = "/tmp/DM1SAVE.DAT";
+    session_input.import_party_loaded = 1;
+    session_input.import_champion_count = 0;
+    session_input.entrance_resume_save_path = "/tmp/BAD.DAT";
+    session_input.entrance_resume_can_load = 0;
+    check(csb_v1_startup_build_session_options_pc34(
+              &session_input,
+              &session_options) &&
+              !session_options.import_available &&
+              !session_options.entrance_resume_available,
+          "startup session options reject empty import and invalid resume");
 
     memset(&command_state, 0, sizeof(command_state));
     command_state.entrance_active = 1;
