@@ -3,6 +3,7 @@
 
 #include "theron_v1_dungeon_progression.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_media.h"
 #include "theron_v1_world.h"
 
 #include <stddef.h>
@@ -74,6 +75,20 @@ int theron_v1_startup_runtime_enter_from_forcefield_with_receipts(
     Theron_StartupFlow *flow,
     Theron_V1_World *world,
     const Theron_V1StartupRuntimeEntryRequest *request,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap);
+int theron_v1_startup_runtime_enter_from_forcefield_facts_with_receipts(
+    Theron_StartupFlow *flow,
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    const char startup_roster_names[][THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY],
+    int startup_roster_name_count,
     const Theron_StartupActionPlan *plan,
     Theron_V1StartupRuntimeEntryResult *out_result,
     Theron_V1StartupRuntimeEntryApplyReceipt *out_apply_receipt,

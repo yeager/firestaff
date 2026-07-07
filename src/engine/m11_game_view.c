@@ -11794,13 +11794,10 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
     Theron_V1_BootProfile* profile;
     TrAssetBundle* assets;
     Theron_StartupFlow flow;
-    const char* rosterNames[8];
-    Theron_V1StartupRuntimeEntryRequest runtimeRequest;
     Theron_V1StartupRuntimeEntryResult runtimeResult;
     Theron_V1StartupRuntimeEntryApplyReceipt applyReceipt;
     Theron_StartupStateReceipt stateReceipt;
     char flowReceipt[128];
-    int i;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -11827,20 +11824,14 @@ static int m11_theron_enter_startup_forcefield(M11_GameViewState* state,
         return 0;
     }
 
-    for (i = 0; i < (int)(sizeof(rosterNames) / sizeof(rosterNames[0])); ++i) {
-        rosterNames[i] = state->theronState.startup_roster_names[i];
-    }
-    theron_v1_startup_runtime_entry_request_init(&runtimeRequest);
-    runtimeRequest.hucard_rom = assets ? assets->hucard_rom : NULL;
-    runtimeRequest.hucard_rom_size = assets ? assets->hucard_rom_size : 0u;
-    runtimeRequest.md5_hex = profile ? profile->graphics_md5 : NULL;
-    runtimeRequest.roster_names = rosterNames;
-    runtimeRequest.roster_name_count =
-        state->theronState.startup_roster_name_count;
-    if (!theron_v1_startup_runtime_enter_from_forcefield_with_receipts(
+    if (!theron_v1_startup_runtime_enter_from_forcefield_facts_with_receipts(
         &flow,
         world,
-        &runtimeRequest,
+        assets ? assets->hucard_rom : NULL,
+        assets ? assets->hucard_rom_size : 0u,
+        profile ? profile->graphics_md5 : NULL,
+        state->theronState.startup_roster_names,
+        state->theronState.startup_roster_name_count,
         plan,
         &runtimeResult,
         &applyReceipt,
