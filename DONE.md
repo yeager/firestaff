@@ -2,6 +2,8 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+- ✅ 2026-07-07 CSB runtime creature material consumption: M11 now consumes the CSB-owned `transparent_color` from `CSB_V1_ViewportRuntimeGroupSpriteBlit` when drawing runtime creature-group sprites, instead of always resolving the key color through the DM1 creature table inside the renderer. The DM1 creature draw path keeps the existing wrapper default, while the CSB callback uses the explicit material variant. Verification: `cc -std=c11 -Wall -Wextra -I/tmp/firestaff-remote-main-finalcheck -I/tmp/firestaff-remote-main-finalcheck/include -I/tmp/firestaff-remote-main-finalcheck/src -fsyntax-only src/engine/m11_game_view.c` passed with only existing unused-function warnings.
+
 - ✅ 2026-07-07 CSB runtime object sprite source-zone contract: `CSB_V1_ViewportRuntimeObjectSpriteBlit` now carries the full F0115/C2500 source-zone value alongside source row, transparency, and F0791 usage. D3L2/D3R2 object spec lookup accepts both DM1 alias squares and ReDMCSB view-square indices, preserving the object/creature shift mask in the blit contract.
 
 - ✅ 2026-07-07 Nexus startup champion palette/timing contract: `nexus_v1_startup_menu` now exposes frame-aware champion render rows with cursor highlight blink, selected text palette, shadow palette, portrait-border palette, and party-marker palette. M11 now advances a champion-select startup frame and consumes those Nexus-owned palette/timing fields while drawing the FACE roster.
