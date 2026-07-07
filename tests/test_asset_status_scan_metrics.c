@@ -309,6 +309,30 @@ static int file_matches_payload(const char* path, const char* payload) {
     return n == expected && memcmp(buf, payload, expected) == 0;
 }
 
+static void check_dm1_optional_boot_files_are_original_candidates(const char* root) {
+    char dm1Dir[512];
+    char titlePath[512];
+    char swooshPath[512];
+    M12_AssetStatus status;
+
+    snprintf(dm1Dir, sizeof(dm1Dir), "%s/dm1-optional-boot", root);
+    snprintf(titlePath, sizeof(titlePath), "%s/TITLE.DAT", dm1Dir);
+    snprintf(swooshPath, sizeof(swooshPath), "%s/SWOOSH", dm1Dir);
+    check_int(make_dir_if_needed(dm1Dir),
+              "synthetic DM1 optional boot fixture directory should be created");
+    check_int(write_plain_file(titlePath, "synthetic title fixture\n"),
+              "synthetic DM1 TITLE.DAT fixture should be written");
+    check_int(write_plain_file(swooshPath, "synthetic swoosh fixture\n"),
+              "synthetic DM1 SWOOSH fixture should be written");
+
+    M12_AssetStatus_TestResetScanMetrics();
+    M12_AssetStatus_Scan(&status, dm1Dir);
+    check_int(M12_AssetStatus_HasOriginalFileCandidate(&status) == 1,
+              "DM1 TITLE.DAT/SWOOSH should count as original file candidates");
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm1") == 0,
+              "DM1 optional boot files must not satisfy the required launch gate");
+}
+
 static void check_dm2_virtual_required_files_materialize(const char* root) {
 #ifdef FIRESTAFF_HAS_ZLIB
     static const char graphicsPayload[] =
@@ -490,6 +514,7 @@ int main(void) {
     check_int(!M12_AssetStatus_HasOriginalFileCandidate(&status),
               "empty fixture should not report original asset candidates");
 
+    check_dm1_optional_boot_files_are_original_candidates(requestRoot);
     check_dm2_virtual_required_files_materialize(requestRoot);
     check_direct_theron_file_scan_avoids_root_rescan(requestRoot);
 

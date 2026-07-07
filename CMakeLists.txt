@@ -20620,6 +20620,39 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
+# ── Asset-status scan metrics gate ──────────────────────────────────
+# Source-lock: src/shared/asset_status_m12.c scan-root fan-out,
+# original-file candidate detection, direct Theron request short-circuit,
+# and archive-backed required-file cache materialization.
+if(BUILD_TESTING)
+    add_executable(test_asset_status_scan_metrics
+        tests/test_asset_status_scan_metrics.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
+    )
+    target_link_libraries(test_asset_status_scan_metrics PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_asset_status_scan_metrics PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_asset_status_scan_metrics PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1)
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_asset_status_scan_metrics PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_scan_metrics PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_scan_metrics
+        COMMAND test_asset_status_scan_metrics
+    )
+endif()
+
 # ── Data-dir change cache invalidation gate ──────────────────────────
 # Source-lock: src/shared/asset_status_m12.c M12_AssetStatus_Scan +
 #   m12_scan_direct_theron_request / m12_scan_explicit_file_request /
