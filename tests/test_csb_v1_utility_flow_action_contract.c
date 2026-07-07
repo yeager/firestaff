@@ -1,5 +1,6 @@
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
+#include "csb_v1_runtime_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,6 +33,7 @@ int main(void)
     CSB_V1_UtilRenderTextRow preview_rows[CSB_V1_UTIL_PREVIEW_MAX_RENDER_ROWS];
     CSB_V1_UtilRenderPlan render_plan;
     CSB_V1_TextMaterial_PC34 material;
+    CSB_V1_RuntimeProfile runtime_profile;
     int row_count;
 
     check(csb_v1_util_input_from_firestaff_menu_code(0) ==
@@ -125,6 +127,22 @@ int main(void)
               flow.imported_champion_count == 3 &&
               flow.imported_party.Champions[0].CurrentHealth == 17,
           "utility flow builds from runtime facts without M11 snapshot assembly");
+    csb_v1_runtime_init(&runtime_profile, NULL);
+    check(csb_v1_runtime_set_party_state(
+              &runtime_profile,
+              &snapshot.imported_party) == 0,
+          "runtime profile accepts utility party fixture");
+    check(csb_v1_util_flow_build_from_runtime_profile_facts(
+              4,
+              1,
+              &runtime_profile,
+              &flow) &&
+              flow.selected_action_index == 0 &&
+              flow.action == CSB_V1_UTIL_ACTION_IMPORT &&
+              flow.imported_champion_count == 3 &&
+              flow.imported_party.Champions[0].CurrentHealth == 17,
+          "utility flow builds from runtime profile facts without M11 party copy");
+    csb_v1_runtime_cleanup(&runtime_profile);
     flow.state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
     flow.selected_action_index = 2;
     flow.action = CSB_V1_UTIL_ACTION_NEW;
