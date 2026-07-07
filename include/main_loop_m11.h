@@ -65,6 +65,10 @@ typedef struct {
     int bootProbeExpectTitleFrameMax; /* Require startupTitleFrame <= value. */
     int bootProbeExpectTitleFrameBoundary; /* Exact startupTitleFrameMax. */
     int bootProbeExpectTitleReady; /* -1 ignore, otherwise exact 0/1. */
+    int retroAchievementsEnabled;
+    int retroAchievementsHardcore;
+    const char* retroAchievementsUser;
+    const char* retroAchievementsToken;
 } M11_PhaseA_Options;
 
 void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);

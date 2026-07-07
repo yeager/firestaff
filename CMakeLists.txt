@@ -127,6 +127,17 @@ function(firestaff_link_zlib target visibility)
     endif()
 endfunction()
 
+# ── RetroAchievements adapter ────────────────────────────────────────
+add_library(firestaff_retroachievements STATIC
+    src/shared/firestaff_retroachievements.c
+)
+target_include_directories(firestaff_retroachievements PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_retroachievements PRIVATE -Wall -Wextra -O2)
+endif()
+
 # ── M10 static library (frozen Turbo-C compat sources) ──────────────
 file(GLOB_RECURSE M10_SOURCES CONFIGURE_DEPENDS "src/*_pc34_compat.c")
 
@@ -351,7 +362,7 @@ set(M11_SOURCES
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron SDL3::SDL3 m)
+target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron firestaff_retroachievements SDL3::SDL3 m)
 # main_loop_m11.c + m11_game_view.c reference M12_* startup-menu and
 # config helpers that live in firestaff_m12.a. Expose that link
 # requirement through firestaff_m11's PUBLIC interface so every
@@ -450,7 +461,7 @@ set(M12_SOURCES
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2)
+target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
 # Enable test-only M12 helpers (TestResetScanMetrics, TestSetTheronSyntheticHash, ...)
 # so the launcher scan-reuse and other Theron direct-launch tests can use them.
@@ -8164,6 +8175,20 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_mapfile_unit
         COMMAND test_firestaff_mapfile
+    )
+
+    add_executable(test_firestaff_retroachievements
+        tests/test_firestaff_retroachievements.c
+    )
+    target_link_libraries(test_firestaff_retroachievements PRIVATE
+        firestaff_retroachievements
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_retroachievements PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_retroachievements_unit
+        COMMAND test_firestaff_retroachievements
     )
 
     # ── Accessibility manifest writer unit test ────────────────────
