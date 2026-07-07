@@ -794,6 +794,34 @@ int main(void) {
                 check_int("continue state receipt tick",
                           state_receipt.tick_count,
                           77);
+                {
+                    Theron_V1StartupContinueRequest continue_request;
+                    char continue_receipt_text[96];
+                    theron_v1_startup_continue_request_init(
+                        &continue_request);
+                    continue_receipt_text[0] = '\0';
+                    check_int("continue combined no-source rc",
+                              theron_v1_startup_continue_apply_request_with_receipts(
+                                  &world,
+                                  &continue_request,
+                                  &plan,
+                                  "chapter=1 level=0",
+                                  &continue_result,
+                                  &continue_receipt,
+                                  &state_receipt,
+                                  continue_receipt_text,
+                                  sizeof(continue_receipt_text)),
+                              0);
+                    check_int("continue combined no-source result",
+                              continue_result.source,
+                              THERON_V1_STARTUP_CONTINUE_SOURCE_NONE);
+                    check_int("continue combined no-source receipt",
+                              continue_receipt.input_result,
+                              THERON_STARTUP_INPUT_RESULT_IGNORED);
+                    check_contains("continue combined no-source text",
+                                   continue_receipt_text,
+                                   "Continue requires");
+                }
             }
 
             theron_v1_startup_action_init(&action);
@@ -1795,6 +1823,9 @@ int main(void) {
                            runtime_receipt,
                            "fallback room stage=1");
             {
+                Theron_StartupAction forcefield_action;
+                Theron_StartupActionPlan forcefield_plan;
+                Theron_V1StartupRuntimeEntryApplyReceipt runtime_apply_receipt;
                 Theron_StartupStateReceipt state_receipt;
                 check_int("runtime wrapper state receipt rc",
                           theron_v1_startup_runtime_entry_state_receipt_from_result(
@@ -1812,6 +1843,48 @@ int main(void) {
                           state_receipt.party_x,
                           runtime_result.party_x);
                 check_int("runtime wrapper state receipt level loaded",
+                          state_receipt.level_loaded,
+                          1);
+
+                theron_v1_startup_action_init(&forcefield_action);
+                forcefield_action.kind =
+                    THERON_STARTUP_ACTION_ENTER_FORCEFIELD;
+                check_int("runtime combined plan rc",
+                          theron_v1_startup_plan_for_action(
+                              &forcefield_action,
+                              &forcefield_plan),
+                          1);
+                theron_v1_startup_flow_init(&flow);
+                theron_v1_world_init(&world);
+                runtime_receipt[0] = '\0';
+                check_int("runtime combined choose rc",
+                          theron_v1_startup_choose_stage(
+                              &flow,
+                              &progression,
+                              THERON_DUNGEON_1_HALL_OF_RECORDS),
+                          THERON_STARTUP_OK);
+                check_int("runtime combined mirror rc",
+                          theron_v1_startup_select_mirror(&flow, 0),
+                          THERON_STARTUP_OK);
+                check_int("runtime combined enter rc",
+                          theron_v1_startup_runtime_enter_from_forcefield_with_receipts(
+                              &flow,
+                              &world,
+                              &runtime_request,
+                              &forcefield_plan,
+                              &runtime_result,
+                              &runtime_apply_receipt,
+                              &state_receipt,
+                              runtime_receipt,
+                              sizeof(runtime_receipt)),
+                          1);
+                check_int("runtime combined apply redraw",
+                          runtime_apply_receipt.input_result,
+                          THERON_STARTUP_INPUT_RESULT_REDRAW);
+                check_int("runtime combined state phase",
+                          state_receipt.flow.phase,
+                          THERON_STARTUP_PHASE_IN_DUNGEON);
+                check_int("runtime combined state loaded",
                           state_receipt.level_loaded,
                           1);
             }
