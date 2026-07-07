@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-07 all-game title/startup gate: Tier 1 strict boot-probe now includes DM1 in the explicit startup/title receipt pass instead of skipping DM1 there. DM1 now proves the launcher handoff reached the source-ordered `dm1-title` contract, title frame boundary 53, title-ready state, and runtime-loaded state before the normal DM1 runtime receipt. Verification: strict boot-probe syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
+
 - ✅ 2026-07-07 DM1 center-door blocker ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the F0128 nearest blocking center-door decision from center blocking and door-depth masks. M11 now supplies masks and consumes the DM1-owned result for center door ornaments, destroyed masks, buttons, and Thieves Eye mask routing. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, DM1 viewport syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
 
 - ✅ 2026-07-07 DM1 center-line viewport ownership: `dm1_v1_viewport_3d_pc34_compat` now owns the ReDMCSB F0128 center-line clear and center visible-depth mask contracts used by M11 side-content, center-content, and deferred explosion passes. M11 now supplies valid/open depth masks and consumes DM1-owned decisions. Verification: direct `test_dm1_v1_viewport_3d_pc34_compat` build/run passed, DM1 viewport syntax passed, M11 syntax passed cleanly, and `git diff --check` passed.
