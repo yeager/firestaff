@@ -24,8 +24,13 @@ int main(void)
     Nexus_V1_StartupMenu menu;
     Nexus_V1_StartupSaveRenderRow rows[4];
     char phase[64];
+    char animation[64];
     int startup_active;
     int startup_frame;
+    int animation_active;
+    int title_frame;
+    int title_frame_max;
+    int title_ready;
     int ready_frame = nexus_v1_title_start_ready_frames();
     int count;
 
@@ -91,6 +96,59 @@ int main(void)
               strcmp(phase, "nexus-runtime") == 0 &&
               startup_active == 0,
           "receipt phase reports Nexus runtime");
+    check(nexus_v1_startup_presentation_receipt(
+              1, 0, 0, 42,
+              phase, sizeof(phase),
+              &startup_active,
+              &startup_frame,
+              animation, sizeof(animation),
+              &animation_active,
+              &title_frame,
+              &title_frame_max,
+              &title_ready) &&
+              strcmp(phase, "nexus-title") == 0 &&
+              strcmp(animation, "nexus-title") == 0 &&
+              startup_active == 1 &&
+              startup_frame == 42 &&
+              animation_active == 1 &&
+              title_frame == 42 &&
+              title_frame_max == nexus_v1_boot_start_ready_frames() &&
+              title_ready == 0,
+          "presentation receipt reports active Nexus title");
+    check(nexus_v1_startup_presentation_receipt(
+              0, 0, 1, 42,
+              phase, sizeof(phase),
+              &startup_active,
+              &startup_frame,
+              animation, sizeof(animation),
+              &animation_active,
+              &title_frame,
+              &title_frame_max,
+              &title_ready) &&
+              strcmp(phase, "nexus-champion-select") == 0 &&
+              strcmp(animation, "nexus-champion-select") == 0 &&
+              startup_active == 1 &&
+              animation_active == 0 &&
+              title_frame == -1 &&
+              title_ready == 1,
+          "presentation receipt reports Nexus champion select");
+    check(nexus_v1_startup_presentation_receipt(
+              0, 0, 0, 42,
+              phase, sizeof(phase),
+              &startup_active,
+              &startup_frame,
+              animation, sizeof(animation),
+              &animation_active,
+              &title_frame,
+              &title_frame_max,
+              &title_ready) &&
+              strcmp(phase, "nexus-runtime") == 0 &&
+              strcmp(animation, "nexus-runtime") == 0 &&
+              startup_active == 0 &&
+              animation_active == 0 &&
+              title_frame == -1 &&
+              title_ready == 1,
+          "presentation receipt reports Nexus runtime");
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed ? 1 : 0;

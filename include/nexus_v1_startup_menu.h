@@ -642,6 +642,20 @@ int nexus_v1_startup_receipt_phase(int title_active,
                                    int out_phase_size,
                                    int *out_startup_active,
                                    int *out_startup_frame);
+int nexus_v1_startup_presentation_receipt(int title_active,
+                                          int save_select_active,
+                                          int champion_select_active,
+                                          int title_frame,
+                                          char *out_phase,
+                                          int out_phase_size,
+                                          int *out_startup_active,
+                                          int *out_startup_frame,
+                                          char *out_animation,
+                                          int out_animation_size,
+                                          int *out_animation_active,
+                                          int *out_title_frame,
+                                          int *out_title_frame_max,
+                                          int *out_title_ready);
 
 #ifdef __cplusplus
 }

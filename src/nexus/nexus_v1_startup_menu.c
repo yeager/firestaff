@@ -2573,3 +2573,57 @@ int nexus_v1_startup_receipt_phase(int title_active,
     }
     return 1;
 }
+
+int nexus_v1_startup_presentation_receipt(int title_active,
+                                          int save_select_active,
+                                          int champion_select_active,
+                                          int title_frame,
+                                          char *out_phase,
+                                          int out_phase_size,
+                                          int *out_startup_active,
+                                          int *out_startup_frame,
+                                          char *out_animation,
+                                          int out_animation_size,
+                                          int *out_animation_active,
+                                          int *out_title_frame,
+                                          int *out_title_frame_max,
+                                          int *out_title_ready)
+{
+    const int active_title = title_active ? 1 : 0;
+    const int ready_frames = nexus_v1_boot_start_ready_frames();
+    const char *animation = "nexus-runtime";
+
+    if (active_title) {
+        animation = "nexus-title";
+    } else if (champion_select_active) {
+        animation = "nexus-champion-select";
+    }
+
+    if (!nexus_v1_startup_receipt_phase(title_active,
+                                        save_select_active,
+                                        champion_select_active,
+                                        title_frame,
+                                        out_phase,
+                                        out_phase_size,
+                                        out_startup_active,
+                                        out_startup_frame)) {
+        return 0;
+    }
+    if (!out_animation || out_animation_size <= 0) {
+        return 0;
+    }
+    snprintf(out_animation, (size_t)out_animation_size, "%s", animation);
+    if (out_animation_active) {
+        *out_animation_active = active_title;
+    }
+    if (out_title_frame) {
+        *out_title_frame = active_title ? title_frame : -1;
+    }
+    if (out_title_frame_max) {
+        *out_title_frame_max = ready_frames;
+    }
+    if (out_title_ready) {
+        *out_title_ready = !active_title || title_frame >= ready_frames;
+    }
+    return 1;
+}
