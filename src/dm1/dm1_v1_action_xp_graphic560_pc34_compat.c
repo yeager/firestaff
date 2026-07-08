@@ -13,6 +13,7 @@
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
+#include "firestaff/dm1/v1/G0495_pc34_compat.h"
 
 #define DM1_THING_TYPE_WEAPON 5
 #define DM1_THING_TYPE_ARMOUR 6
@@ -205,6 +206,72 @@ int dm1_v1_action_adjust_f0407_tail_pc34(
     out->valid = 1;
     out->actionExperienceGain = xp;
     out->disabledTicks = ticks;
+    return 1;
+}
+
+int dm1_v1_action_defense_apply_plan_f0407_pc34(
+    const DM1_ActionDefenseInputPc34* in,
+    DM1_ActionDefensePlanPc34* out) {
+    int defense;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->defenseDelta = 0;
+    out->resultingActionIndex = 0xFF;
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+    /* ReDMCSB: MENU.C F0407 lines 1268-1275 starts the action frame by
+     * applying the G0495 action defense value and setting Champion.ActionIndex. */
+    defense = dm1_v1_graphic560_action_defense_get_pc34(in->actionIndex);
+    if (defense < -128) return 0;
+    out->valid = 1;
+    out->defenseDelta = defense;
+    out->resultingActionIndex = in->actionIndex;
+    return 1;
+}
+
+int dm1_v1_action_defense_remove_plan_f0407_pc34(
+    const DM1_ActionDefenseInputPc34* in,
+    DM1_ActionDefensePlanPc34* out) {
+    int ok;
+    if (!out) return 0;
+    ok = dm1_v1_action_defense_apply_plan_f0407_pc34(in, out);
+    if (ok && out->valid) {
+        /* ReDMCSB: TIMELINE.C enable-action removes the G0495 defense bonus
+         * when the F0407 action disable expires, then clears ActionIndex. */
+        out->defenseDelta = -out->defenseDelta;
+        out->resultingActionIndex = 0xFF;
+    }
+    return ok;
+}
+
+int dm1_v1_action_disable_plan_f0407_pc34(
+    const DM1_ActionDisableInputPc34* in,
+    DM1_ActionDisablePlanPc34* out) {
+    int ticks;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->disabledTicks = 0;
+    out->actionDisabledIndex = 0xFF;
+    out->actionEnableSlotOrdinal = 0xFF;
+    out->shouldRefillReadyHandNow = 0;
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+    ticks = in->disabledTicks;
+    if (ticks < 0) ticks = 0;
+    if (ticks > 255) ticks = 255;
+    /* ReDMCSB: MENU.C F0407 line 1620 disables actions only when the final
+     * tick count is nonzero; Firestaff's SHOOT refill adapter must run
+     * immediately when no enable-action event will arrive. */
+    out->valid = 1;
+    out->disabledTicks = ticks;
+    out->actionDisabledIndex = ticks > 0 ? in->actionIndex : 0xFF;
+    out->actionEnableSlotOrdinal = 0xFF;
+    out->shouldRefillReadyHandNow =
+        ticks == 0 && in->pendingShootReadyHandRefill;
     return 1;
 }
 
