@@ -363,7 +363,9 @@ static int is_external_archive_path(const char *path) {
            has_case_suffix(path, ".7z") || has_case_suffix(path, ".rar") ||
            has_case_suffix(path, ".arj") || has_case_suffix(path, ".arc") ||
            has_case_suffix(path, ".cab") || has_case_suffix(path, ".zoo") ||
-           has_case_suffix(path, ".ace") || has_case_suffix(path, ".sit") ||
+           has_case_suffix(path, ".ace") || has_case_suffix(path, ".ha") ||
+           has_case_suffix(path, ".uc2") || has_case_suffix(path, ".zpaq") ||
+           has_case_suffix(path, ".pak") || has_case_suffix(path, ".sit") ||
            has_case_suffix(path, ".sitx") || has_case_suffix(path, ".dmg") ||
            has_case_suffix(path, ".hqx") || has_case_suffix(path, ".sea") ||
            has_case_suffix(path, ".dms") || has_case_suffix(path, ".lzx") ||
@@ -381,7 +383,13 @@ static int is_external_archive_path(const char *path) {
            has_case_suffix(path, ".hfe") || has_case_suffix(path, ".hdm") ||
            has_case_suffix(path, ".dsk") || has_case_suffix(path, ".ima") ||
            has_case_suffix(path, ".nrg") || has_case_suffix(path, ".cdi") ||
-           has_case_suffix(path, ".ccd") || has_case_suffix(path, ".sub");
+           has_case_suffix(path, ".ccd") || has_case_suffix(path, ".sub") ||
+           has_case_suffix(path, ".cso") || has_case_suffix(path, ".isz") ||
+           has_case_suffix(path, ".ecm") || has_case_suffix(path, ".mds") ||
+           has_case_suffix(path, ".mdx") || has_case_suffix(path, ".b5t") ||
+           has_case_suffix(path, ".b6t") || has_case_suffix(path, ".bwt") ||
+           has_case_suffix(path, ".pdi") || has_case_suffix(path, ".gdi") ||
+           has_case_suffix(path, ".toc");
 }
 
 static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
@@ -429,6 +437,13 @@ static AssetContainerKind asset_container_kind_from_magic(const char *path) {
          header[2] == 0x2f && header[3] == 0xfd) ||
         (got >= 4U && memcmp(header, "LZIP", 4U) == 0) ||
         (got >= 4U && memcmp(header, "LRZI", 4U) == 0) ||
+        (got >= 4U && memcmp(header, "RZIP", 4U) == 0) ||
+        (got >= 4U && memcmp(header, "xar!", 4U) == 0) ||
+        (got >= 4U && memcmp(header, "MSCF", 4U) == 0) ||
+        (got >= 4U && memcmp(header, "CISO", 4U) == 0) ||
+        (got >= 4U && memcmp(header, "ECM\0", 4U) == 0) ||
+        (got >= 4U && memcmp(header, "ZPAQ", 4U) == 0) ||
+        (got >= 2U && header[0] == 0x60 && header[1] == 0xea) ||
         (got >= 2U && header[0] == 0x1f &&
          (header[1] == 0x9d || header[1] == 0xa0)) ||
         (got >= 8U && memcmp(header, "!<arch>\n", 8U) == 0) ||
@@ -471,8 +486,10 @@ static AssetContainerKind asset_container_kind_from_magic(const char *path) {
 
 static AssetContainerKind asset_container_kind_for_path(const char *path) {
     AssetContainerKind kind = asset_container_kind_from_suffix(path);
-    if (kind != ASSET_CONTAINER_NONE) return kind;
-    return asset_container_kind_from_magic(path);
+    AssetContainerKind magicKind = asset_container_kind_from_magic(path);
+    if (kind == ASSET_CONTAINER_TGZ || kind == ASSET_CONTAINER_CUE) return kind;
+    if (magicKind != ASSET_CONTAINER_NONE) return magicKind;
+    return kind;
 }
 
 static int is_supported_container_path(const char *path) {
