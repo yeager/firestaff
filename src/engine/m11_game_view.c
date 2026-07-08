@@ -11233,18 +11233,50 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->championCount = state->world.party.championCount;
     out->runtimeTick = (int)state->world.gameTick;
     if (strcmp(state->sourceId, "dm1") == 0) {
-        (void)dm1_v1_startup_boot_probe_receipt_pc34(
-            out->levelLoaded,
-            out->dm1StartupIntroBypassed,
-            out->startupPhase,
-            (int)sizeof(out->startupPhase),
-            &out->startupActive,
-            out->startupAnimation,
-            (int)sizeof(out->startupAnimation),
-            &out->startupAnimationActive,
-            &out->startupTitleFrame,
-            &out->startupTitleFrameMax,
-            &out->startupTitleReady);
+        DM1_V1_StartupBootProbeFacts_PC34 facts;
+        DM1_V1_StartupBootProbeReceipt_PC34 receipt;
+        memset(&facts, 0, sizeof(facts));
+        memset(&receipt, 0, sizeof(receipt));
+        facts.source_id = state->sourceId;
+        facts.level_loaded = out->levelLoaded;
+        facts.intro_bypassed = state->dm1StartupIntroBypassed;
+        facts.map_index = out->mapIndex;
+        facts.party_x = out->partyX;
+        facts.party_y = out->partyY;
+        facts.party_dir = out->partyDir;
+        facts.champion_count = out->championCount;
+        facts.runtime_tick = out->runtimeTick;
+        facts.world_tick = state->world.gameTick;
+        if (dm1_v1_startup_boot_probe_receipt_from_facts_pc34(&facts,
+                                                              &receipt) &&
+            receipt.handled) {
+            snprintf(out->sourceId, sizeof(out->sourceId), "%s",
+                     receipt.source_id);
+            out->dm1StartupIntroBypassed =
+                receipt.dm1_startup_intro_bypassed;
+            snprintf(out->startupPhase,
+                     sizeof(out->startupPhase),
+                     "%s",
+                     receipt.startup_phase);
+            out->startupActive = receipt.startup_active;
+            out->startupFrame = receipt.startup_frame;
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation),
+                     "%s",
+                     receipt.startup_animation);
+            out->startupAnimationActive = receipt.startup_animation_active;
+            out->startupTitleFrame = receipt.startup_title_frame;
+            out->startupTitleFrameMax = receipt.startup_title_frame_max;
+            out->startupTitleReady = receipt.startup_title_ready;
+            out->levelLoaded = receipt.level_loaded;
+            out->mapIndex = receipt.map_index;
+            out->partyX = receipt.party_x;
+            out->partyY = receipt.party_y;
+            out->partyDir = receipt.party_dir;
+            out->championCount = receipt.champion_count;
+            out->runtimeTick = receipt.runtime_tick;
+            out->dm1WorldTick = receipt.world_tick;
+        }
     } else {
         snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
                  out->levelLoaded ? "runtime" : "loading");

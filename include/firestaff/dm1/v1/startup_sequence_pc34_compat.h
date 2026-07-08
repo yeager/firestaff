@@ -111,6 +111,47 @@ typedef struct DM1_V1_StartupSelectedLaunchResult_PC34 {
     DM1_V1_StartupHostApplyResult_PC34 host_apply_result;
 } DM1_V1_StartupSelectedLaunchResult_PC34;
 
+enum {
+    DM1_V1_STARTUP_BOOT_PROBE_SOURCE_ID_CAPACITY_PC34 = 32,
+    DM1_V1_STARTUP_BOOT_PROBE_PHASE_CAPACITY_PC34 = 48,
+    DM1_V1_STARTUP_BOOT_PROBE_ANIMATION_CAPACITY_PC34 = 48
+};
+
+typedef struct DM1_V1_StartupBootProbeFacts_PC34 {
+    const char* source_id;
+    int level_loaded;
+    int intro_bypassed;
+    int map_index;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int champion_count;
+    int runtime_tick;
+    unsigned int world_tick;
+} DM1_V1_StartupBootProbeFacts_PC34;
+
+typedef struct DM1_V1_StartupBootProbeReceipt_PC34 {
+    int handled;
+    char source_id[DM1_V1_STARTUP_BOOT_PROBE_SOURCE_ID_CAPACITY_PC34];
+    int dm1_startup_intro_bypassed;
+    char startup_phase[DM1_V1_STARTUP_BOOT_PROBE_PHASE_CAPACITY_PC34];
+    int startup_active;
+    int startup_frame;
+    char startup_animation[DM1_V1_STARTUP_BOOT_PROBE_ANIMATION_CAPACITY_PC34];
+    int startup_animation_active;
+    int startup_title_frame;
+    int startup_title_frame_max;
+    int startup_title_ready;
+    int level_loaded;
+    int map_index;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int champion_count;
+    int runtime_tick;
+    unsigned int world_tick;
+} DM1_V1_StartupBootProbeReceipt_PC34;
+
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage);
 int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
                                     DM1_V1_StartupStage_PC34 earlier);
@@ -172,6 +213,9 @@ int dm1_v1_startup_boot_probe_receipt_pc34(int level_loaded,
                                            int* out_title_frame,
                                            int* out_title_frame_max,
                                            int* out_title_ready);
+int dm1_v1_startup_boot_probe_receipt_from_facts_pc34(
+    const DM1_V1_StartupBootProbeFacts_PC34* facts,
+    DM1_V1_StartupBootProbeReceipt_PC34* out_receipt);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);

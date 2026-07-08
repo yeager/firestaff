@@ -448,6 +448,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     int title_frame = -1;
     int title_frame_max = -1;
     int title_ready = -1;
+    DM1_V1_StartupBootProbeFacts_PC34 boot_facts;
+    DM1_V1_StartupBootProbeReceipt_PC34 boot_receipt;
 
     expect_i("launcher launch path does not bypass intro",
              dm1_v1_startup_launch_path_bypasses_intro_pc34(
@@ -1006,6 +1008,61 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  &title_frame,
                  &title_frame_max,
                  &title_ready),
+             0);
+
+    memset(&boot_facts, 0, sizeof(boot_facts));
+    memset(&boot_receipt, 0, sizeof(boot_receipt));
+    boot_facts.source_id = "dm1";
+    boot_facts.level_loaded = 1;
+    boot_facts.intro_bypassed = 0;
+    boot_facts.map_index = 2;
+    boot_facts.party_x = 3;
+    boot_facts.party_y = 4;
+    boot_facts.party_dir = 1;
+    boot_facts.champion_count = 4;
+    boot_facts.runtime_tick = 55;
+    boot_facts.world_tick = 77u;
+    expect_i("DM1 boot probe facts receipt succeeds",
+             dm1_v1_startup_boot_probe_receipt_from_facts_pc34(
+                 &boot_facts,
+                 &boot_receipt),
+             1);
+    expect_i("DM1 boot probe facts receipt handled",
+             boot_receipt.handled,
+             1);
+    expect_i("DM1 boot probe facts receipt phase",
+             strcmp(boot_receipt.startup_phase, "dm1-runtime"),
+             0);
+    expect_i("DM1 boot probe facts receipt animation",
+             strcmp(boot_receipt.startup_animation, "dm1-title"),
+             0);
+    expect_i("DM1 boot probe facts receipt keeps party x",
+             boot_receipt.party_x,
+             3);
+    expect_i("DM1 boot probe facts receipt keeps world tick",
+             (int)boot_receipt.world_tick,
+             77);
+
+    boot_facts.intro_bypassed = 1;
+    expect_i("DM1 boot probe facts receipt direct phase",
+             dm1_v1_startup_boot_probe_receipt_from_facts_pc34(
+                 &boot_facts,
+                 &boot_receipt) &&
+                 strcmp(boot_receipt.startup_phase,
+                        "dm1-runtime-direct") == 0 &&
+                 boot_receipt.dm1_startup_intro_bypassed == 1,
+             1);
+    boot_facts.source_id = "csb";
+    expect_i("non-DM1 boot probe facts receipt no-op",
+             dm1_v1_startup_boot_probe_receipt_from_facts_pc34(
+                 &boot_facts,
+                 &boot_receipt) &&
+                 boot_receipt.handled == 0,
+             1);
+    expect_i("NULL DM1 boot probe facts receipt rejects",
+             dm1_v1_startup_boot_probe_receipt_from_facts_pc34(
+                 NULL,
+                 &boot_receipt),
              0);
 }
 
