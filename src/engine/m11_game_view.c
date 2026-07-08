@@ -10664,18 +10664,21 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->csbBootProfile = profile;
         m11_sync_csb_state_from_profile(state, profile);
         {
-            CSB_V1_StartupCommandStateReceipt_PC34 receipt;
-            if (csb_v1_startup_init_command_state_receipt_pc34(
+            CSB_V1_StartupInitStateReceipt_PC34 receipt;
+            if (csb_v1_startup_init_state_receipt_pc34(
                     spec->savePath && spec->savePath[0] != '\0',
                     &receipt)) {
-                m11_csb_startup_command_state_receipt_to_m11(state,
-                                                             &receipt);
+                m11_csb_startup_command_state_receipt_to_m11(
+                    state,
+                    &receipt.command_state);
+                state->csbState.startup_entrance_frame =
+                    receipt.entrance_frame;
+                state->csbState.startup_entrance_last_command =
+                    receipt.entrance_last_command;
+                state->csbState.startup_entrance_bonus_requested =
+                    receipt.entrance_bonus_requested;
             }
         }
-        state->csbState.startup_entrance_frame = 0;
-        state->csbState.startup_entrance_last_command =
-            M11_ENTRANCE_RUNTIME_COMMAND_NONE;
-        state->csbState.startup_entrance_bonus_requested = 0;
         (void)csb_v1_runtime_build_startup_session_state_receipt_pc34(
             &profile->runtime,
             &startup_handoff,

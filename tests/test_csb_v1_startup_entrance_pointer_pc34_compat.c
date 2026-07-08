@@ -269,6 +269,7 @@ int main(void)
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupCommandState_PC34 command_state;
     CSB_V1_StartupCommandStateReceipt_PC34 command_state_receipt;
+    CSB_V1_StartupInitStateReceipt_PC34 init_state_receipt;
     CSB_V1_StartupEntranceCommandPlan_PC34 command_plan;
     CSB_V1_StartupEntranceCommandReceipt_PC34 command_receipt;
     CSB_V1_StartupRuntimePlan_PC34 runtime_plan;
@@ -1761,6 +1762,26 @@ int main(void)
               command_receipt.runtime_plan.bonus_dungeon &&
               command_state_receipt.entrance_active,
           "startup entrance command facts helper owns runtime handoff receipt");
+
+    memset(&init_state_receipt, 0xff, sizeof(init_state_receipt));
+    check(csb_v1_startup_init_state_receipt_pc34(
+              0,
+              &init_state_receipt) &&
+              init_state_receipt.command_state.title_active &&
+              init_state_receipt.command_state.entrance_active &&
+              init_state_receipt.entrance_frame == 0 &&
+              init_state_receipt.entrance_last_command == 0 &&
+              init_state_receipt.entrance_bonus_requested == 0,
+          "startup init state receipt owns neutral M11 entrance fields");
+    check(csb_v1_startup_init_state_receipt_pc34(
+              1,
+              &init_state_receipt) &&
+              !init_state_receipt.command_state.title_active &&
+              init_state_receipt.command_state.entrance_dismissed &&
+              init_state_receipt.entrance_frame == 0 &&
+              init_state_receipt.entrance_last_command == 0 &&
+              init_state_receipt.entrance_bonus_requested == 0,
+          "startup init state receipt owns direct-resume neutral fields");
 
     check(csb_v1_startup_plan_for_entrance_command_pc34(
               &command_state,

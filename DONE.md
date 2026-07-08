@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 RetroAchievements start-menu settings consistency: generic and legacy/tabbed start-menu settings now use the shared RA runtime status and masked-token value paths, matching the modern settings panel instead of showing stale `ON`/`SET` text. Verification: settings hit-test passed, Phase A passed, targeted `firestaff` build passed, and `git diff --check` passed.
+
+- ✅ 2026-07-08 CSB startup init-state receipt ownership: `csb_v1_startup_sequence_pc34_compat` now emits a StartCSB init-state receipt for command state plus neutral entrance frame, last-command, and bonus-requested fields. M11 consumes that receipt instead of seeding those fields manually. Verification: startup entrance pointer contract passed 137/137, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `firestaff --version` passed.
+
 - ✅ 2026-07-08 CSB startup session state receipt ownership: `csb_v1_runtime_pc34_compat` now emits M11-ready startup session state receipts from startup handoff/session options, including resume availability/path and DM1 import utility state. M11 applies that runtime-owned receipt during StartCSB instead of copying raw session-option fields. Verification: CSB boot runtime handoff passed 272/272, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `firestaff --version` passed.
 
 - ✅ 2026-07-08 CSB utility state receipt ownership: `csb_v1_utility_flow_pc34` now emits selected-action/preview state receipts alongside keyboard and pointer apply receipts. M11 applies the CSB-owned state receipt instead of reading mutable utility fields from the generic apply receipt. Verification: utility-flow action contract passed 57/57, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `firestaff --version` passed.

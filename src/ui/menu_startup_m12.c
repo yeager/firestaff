@@ -2,6 +2,7 @@
 #include "firestaff_l10n.h"
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
+#include "firestaff_retroachievements.h"
 #include "menu_startup_a11y_m12.h"
 
 #define FIRESTAFF_VERSION_STRING "v3.0.65"
@@ -3507,6 +3508,56 @@ static const char* m12_settings_value_quick_resume(const M12_StartupMenuState* s
     return m12_tr(state, g_toggleModes[state && state->settings.quickResumeEnabled ? 1 : 0]);
 }
 
+static const char* m12_settings_value_ra_status(const M12_StartupMenuState* state) {
+    Firestaff_RA_Config config;
+    Firestaff_RA_Runtime runtime;
+
+    firestaff_ra_config_init(&config);
+    if (state) {
+        config.enabled = state->settings.retroAchievementsEnabled ? 1 : 0;
+        config.hardcore = state->settings.retroAchievementsHardcore ? 1 : 0;
+        snprintf(config.username,
+                 sizeof(config.username),
+                 "%s",
+                 state->settings.retroAchievementsUsername);
+        snprintf(config.api_token,
+                 sizeof(config.api_token),
+                 "%s",
+                 state->settings.retroAchievementsToken);
+    }
+
+    firestaff_ra_runtime_init(&runtime);
+    firestaff_ra_runtime_apply_config(&runtime, &config);
+    switch (firestaff_ra_status(&runtime)) {
+        case FIRESTAFF_RA_STATUS_NEEDS_CREDENTIALS:
+            return m12_tr(state, "NEEDS LOGIN");
+        case FIRESTAFF_RA_STATUS_READY:
+            return m12_tr(state, "READY");
+        case FIRESTAFF_RA_STATUS_BACKEND_UNAVAILABLE:
+            return m12_tr(state, "BACKEND PENDING");
+        case FIRESTAFF_RA_STATUS_DISABLED:
+        default:
+            return m12_tr(state, "OFF");
+    }
+}
+
+static const char* m12_settings_value_ra_token(const M12_StartupMenuState* state) {
+    static char redacted[32];
+
+    if (state && state->textEditActive &&
+        state->textEditRow == M12_SETTINGS_ROW_RA_TOKEN) {
+        return m12_tr(state, "EDITING");
+    }
+    if (!state || state->settings.retroAchievementsToken[0] == '\0') {
+        return m12_tr(state, "NOT SET");
+    }
+
+    firestaff_ra_redact_token(state->settings.retroAchievementsToken,
+                              redacted,
+                              sizeof(redacted));
+    return redacted[0] ? redacted : m12_tr(state, "SET");
+}
+
 static const char* m12_settings_value_session_timer(const M12_StartupMenuState* state) {
     return m12_tr(state, m12_session_timer_label_for_index(state ? state->settings.sessionTimerIndex : 0));
 }
@@ -3662,7 +3713,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_BACKGROUND: return m12_settings_value_background(state);
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_settings_value_quick_resume(state);
         case M12_SETTINGS_ROW_RETROACHIEVEMENTS:
-            return m12_tr(state, g_toggleModes[state && state->settings.retroAchievementsEnabled ? 1 : 0]);
+            return m12_settings_value_ra_status(state);
         case M12_SETTINGS_ROW_RA_HARDCORE:
             return m12_tr(state, g_toggleModes[state && state->settings.retroAchievementsHardcore ? 1 : 0]);
         case M12_SETTINGS_ROW_RA_USERNAME:
@@ -3674,13 +3725,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
                        ? state->settings.retroAchievementsUsername
                        : m12_tr(state, "NOT SET");
         case M12_SETTINGS_ROW_RA_TOKEN:
-            if (state && state->textEditActive &&
-                state->textEditRow == M12_SETTINGS_ROW_RA_TOKEN) {
-                return m12_tr(state, "EDITING");
-            }
-            return (state && state->settings.retroAchievementsToken[0])
-                       ? m12_tr(state, "SET")
-                       : m12_tr(state, "NOT SET");
+            return m12_settings_value_ra_token(state);
         case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "OPEN...");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_settings_value_session_timer(state);
         case M12_SETTINGS_ROW_MINIMAP: return m12_settings_value_minimap(state);
@@ -6625,6 +6670,28 @@ static void __attribute__((unused)) m12_draw_extras_menu (const M12_StartupMenuS
         m12_tr(state, "Escape Back  |  Up/Down Navigate  |  Enter Open"), &g_textSmallMuted);
 }
 
+static const char* m12_ext_settings_value_for_row(
+    const M12_StartupMenuState *state,
+    const M12_ExtSettingsRow *row)
+{
+    if (!row || !row->label) {
+        return "";
+    }
+    if (strcmp(row->label, "RetroAchievements") == 0) {
+        return m12_settings_value(state, M12_SETTINGS_ROW_RETROACHIEVEMENTS);
+    }
+    if (strcmp(row->label, "RA Hardcore") == 0) {
+        return m12_settings_value(state, M12_SETTINGS_ROW_RA_HARDCORE);
+    }
+    if (strcmp(row->label, "RA Username") == 0) {
+        return m12_settings_value(state, M12_SETTINGS_ROW_RA_USERNAME);
+    }
+    if (strcmp(row->label, "RA API Token") == 0) {
+        return m12_settings_value(state, M12_SETTINGS_ROW_RA_TOKEN);
+    }
+    return m12_tr(state, row->value);
+}
+
 static void __attribute__((unused)) m12_draw_tabbed_settings_view (const M12_StartupMenuState *state,
     unsigned char *framebuffer, int fw, int fh)
 {
@@ -6710,7 +6777,8 @@ static void __attribute__((unused)) m12_draw_tabbed_settings_view (const M12_Sta
             M12_TextStyle style = g_textSmall;
             style.color = valueColor;
             m12_draw_text(framebuffer, fw, fh,
-                fw - margin - 120, rowY + 2, m12_tr(state, r->value), &style);
+                fw - margin - 120, rowY + 2,
+                m12_ext_settings_value_for_row(state, r), &style);
         }
 
         /* Gray out indicator */
