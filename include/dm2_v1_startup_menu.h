@@ -94,6 +94,20 @@ typedef struct {
     int session_applied;
 } DM2_V1_StartupApplyReceipt;
 
+typedef enum {
+    DM2_V1_STARTUP_HOST_INPUT_IGNORED = 0,
+    DM2_V1_STARTUP_HOST_INPUT_REDRAW = 1,
+    DM2_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER = 2
+} DM2_V1_StartupHostInputResult;
+
+typedef struct {
+    DM2_V1_StartupModeUpdate mode_update;
+    DM2_V1_StartupHostInputResult input_result;
+    int rescan_saves;
+    const char *status_scope;
+    const char *status;
+} DM2_V1_StartupHostReceipt;
+
 typedef int (*DM2_V1_StartupSessionApplyFn)(
     void *userdata,
     const DM2_V1_SessionState *session);
@@ -316,6 +330,11 @@ int dm2_v1_startup_execute_action_with_receipt(
     void *apply_userdata,
     DM2_V1_StartupExecution *out_execution,
     DM2_V1_StartupApplyReceipt *out_receipt);
+void dm2_v1_startup_host_receipt_clear(
+    DM2_V1_StartupHostReceipt *receipt);
+int dm2_v1_startup_host_receipt_from_apply_receipt(
+    const DM2_V1_StartupApplyReceipt *apply_receipt,
+    DM2_V1_StartupHostReceipt *out_receipt);
 int dm2_v1_startup_execute_save_path(
     const char *save_path,
     char *out_save_root,

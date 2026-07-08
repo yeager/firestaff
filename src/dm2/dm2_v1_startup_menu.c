@@ -1062,6 +1062,47 @@ int dm2_v1_startup_execute_action_with_receipt(
                                                        out_receipt);
 }
 
+void dm2_v1_startup_host_receipt_clear(
+    DM2_V1_StartupHostReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->input_result = DM2_V1_STARTUP_HOST_INPUT_IGNORED;
+}
+
+int dm2_v1_startup_host_receipt_from_apply_receipt(
+    const DM2_V1_StartupApplyReceipt *apply_receipt,
+    DM2_V1_StartupHostReceipt *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    dm2_v1_startup_host_receipt_clear(out_receipt);
+    if (!apply_receipt) {
+        return 0;
+    }
+
+    out_receipt->mode_update = apply_receipt->mode_update;
+    out_receipt->rescan_saves = apply_receipt->outcome.rescan_saves;
+    out_receipt->status_scope = apply_receipt->outcome.status_scope;
+    out_receipt->status = apply_receipt->outcome.status;
+    switch (apply_receipt->outcome.result) {
+    case DM2_V1_STARTUP_INPUT_RESULT_REDRAW:
+        out_receipt->input_result = DM2_V1_STARTUP_HOST_INPUT_REDRAW;
+        return 1;
+    case DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER:
+        out_receipt->input_result =
+            DM2_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER;
+        return 1;
+    case DM2_V1_STARTUP_INPUT_RESULT_IGNORED:
+    default:
+        out_receipt->input_result = DM2_V1_STARTUP_HOST_INPUT_IGNORED;
+        return 1;
+    }
+}
+
 int dm2_v1_startup_execute_save_path(
     const char *save_path,
     char *out_save_root,

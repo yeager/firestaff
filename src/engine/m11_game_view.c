@@ -699,6 +699,7 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
     DM2_V1_BootProfile *profile;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupApplyReceipt receipt;
+    DM2_V1_StartupHostReceipt host_receipt;
 
     if (!state || !state->dm2State.startup_menu_active ||
         !state->dm2BootProfile || !action) {
@@ -714,22 +715,27 @@ static M11_GameInputResult m11_dm2_startup_apply_action(
             &receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    m11_dm2_startup_apply_mode_update(state, &receipt.mode_update);
-    if (receipt.outcome.status_scope || receipt.outcome.status) {
-        m11_set_status(state,
-                       receipt.outcome.status_scope
-                           ? receipt.outcome.status_scope
-                           : "STARTUP",
-                       receipt.outcome.status ? receipt.outcome.status : "");
+    if (!dm2_v1_startup_host_receipt_from_apply_receipt(
+            &receipt,
+            &host_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
     }
-    if (receipt.outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW) {
-        if (receipt.outcome.rescan_saves) {
+    m11_dm2_startup_apply_mode_update(state, &host_receipt.mode_update);
+    if (host_receipt.status_scope || host_receipt.status) {
+        m11_set_status(state,
+                       host_receipt.status_scope
+                           ? host_receipt.status_scope
+                           : "STARTUP",
+                       host_receipt.status ? host_receipt.status : "");
+    }
+    if (host_receipt.input_result == DM2_V1_STARTUP_HOST_INPUT_REDRAW) {
+        if (host_receipt.rescan_saves) {
             m11_dm2_startup_scan_saves(state, profile);
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (receipt.outcome.result ==
-        DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER) {
+    if (host_receipt.input_result ==
+        DM2_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER) {
         return M11_GAME_INPUT_RETURN_TO_MENU;
     }
     return M11_GAME_INPUT_IGNORED;
