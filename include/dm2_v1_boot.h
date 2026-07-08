@@ -272,6 +272,10 @@ int dm2_v1_boot_startup_presentation_receipt_from_runtime_state(
     int *out_title_frame,
     int *out_title_frame_max,
     int *out_title_ready);
+int dm2_v1_boot_startup_execute_draw_commands(
+    const struct DM2_V1_StartupDrawCommand *commands,
+    int command_count,
+    const void *executor);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */

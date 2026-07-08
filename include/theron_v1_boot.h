@@ -418,6 +418,9 @@ int theron_v1_boot_startup_presentation_receipt_from_runtime_state(
     int *out_title_frame_max,
     int *out_title_ready,
     int startup_phase);
+int theron_v1_boot_startup_execute_graphics_plan(
+    const Theron_StartupRenderPlan *plan,
+    const Theron_StartupGraphicExecutor *executor);
 int theron_v1_boot_startup_return_to_stage_select_after_exit_host_receipt(
     Theron_StartupActionHostReceipt *out_receipt,
     Theron_V1_World *world);

@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 CSB/Theron/DM2 boot render-executor wrappers: CSB boot now owns startup render-plan execution, Theron boot owns startup graphics-plan execution, and DM2 boot owns startup draw-command execution. M11 no longer calls those startup render executors directly. Verification: strict compiles for `csb_v1_boot.c`, `theron_v1_boot.c`, `dm2_v1_boot.c`, and `m11_game_view.c`; direct Theron M11 launch test passed; Phase A passed 24/24; `git diff --check` passed. Note: local build tree did not contain CSB/DM2 boot test binaries.
+
 - ✅ 2026-07-08 Theron/DM2 boot presentation wrappers: Theron boot now owns M11-facing startup presentation receipts and dungeon-exit return-to-stage-select host receipts; DM2 boot now owns M11-facing startup presentation receipts. M11 no longer calls those Theron/DM2 startup helpers directly. Verification: strict compiles for `theron_v1_boot.c`, `dm2_v1_boot.c`, and `m11_game_view.c`; direct Theron M11 launch test passed; Phase A passed 24/24; `git diff --check` passed. Note: no DM2 boot test binary was present in the local build tree.
 
 - ✅ 2026-07-08 Linux manual page refresh: Expanded `docs/linux/firestaff.1` into a full user manual with primary CLI options, RetroAchievements flags, hash-scanned game-data behavior, archives/disc images, saves/config paths, controls, boot-probe options, environment variables, examples, and exit codes. Verification: `mandoc -Tlint`, rendered man output, and `git diff --check` passed.
