@@ -18499,14 +18499,12 @@ enum {
     M11_CHAMPION_ICON_W    = 19,
     M11_CHAMPION_ICON_H    = 14,
 
-    /* Spell area background (graphic 9 in original CSB/DM).
-     * Drawn as the grid backdrop behind the 6 rune symbol buttons.
-     * 87×25 in GRAPHICS.DAT.
-     * Ref: DEFS.H line 2216 C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND.
-     * Graphic 11 (C011_GRAPHIC_MENU_SPELL_AREA_LINES, 14×39) holds
-     * the rune symbol line overlays drawn on top of this background. */
+    /* DM1 PC34 spell area graphic.
+     * ReDMCSB CASTER.C F0394 / DEFS.H 3.x use graphic 9 as
+     * C009_GRAPHIC_MENU_SPELL_AREA_LINES, drawn into C013_ZONE_SPELL_AREA
+     * at 233,42 with native 87x33 dimensions. */
     M11_GFX_SPELL_AREA_BG = 9,
-    M11_GFX_SPELL_AREA_LINES = 11,
+    M11_GFX_SPELL_AREA_LINES = 9,
 
     /* Action area background (graphic 10 in original CSB/DM).
      * 87×45 in GRAPHICS.DAT. Ref: C010_GRAPHIC_MENU_ACTION_AREA. */
@@ -23156,8 +23154,8 @@ void M11_GameView_UpdateTorchFuel(M11_GameViewState* state) {
 /* Classic-DM right column geometry (320x200 screen).
  *
  *   C013_ZONE_SPELL_AREA click/input box is at x=233..319, y=42..73
- *     in ReDMCSB COMMAND.C; GRAPHICS.DAT graphic 9 is the 87x25
- *     spell-area background that starts at the same source x/y.
+ *     in ReDMCSB COMMAND.C; GRAPHICS.DAT graphic 9 is the 87x33
+ *     PC34 spell-area lines graphic that starts at the same source x/y.
  *   C011 action-area screen zone is x=233..319, y=77..121
  *     (87x45), matching the current PC right-column stack.  The
  *     older G0499_ai_Graphic560_Box_ActionArea* byte boxes in MENU.C
@@ -34178,7 +34176,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
 
     /* V1 mode: replace the procedural utility-panel backdrop with the
      * original GRAPHICS.DAT action area (graphic 10, 87x45) and the
-     * spell area backdrop (graphic 9, 87x25) blitted at their
+     * spell area lines graphic (graphic 9, 87x33) blitted at their
      * classic-DM screen coordinates.  This gives the right column the
      * authentic carved frame and avoids the flat-fill + hairline rect
      * that read as procedural.  Debug HUD keeps the procedural panel
