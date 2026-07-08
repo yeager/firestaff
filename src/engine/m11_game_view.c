@@ -11461,9 +11461,9 @@ static void m11_theron_startup_session_facts(
     if (!state) {
         return;
     }
-    theron_v1_startup_session_facts_from_runtime(
+    (void)theron_v1_boot_startup_session_facts_from_runtime_state(
         session,
-        (Theron_StartupPhase)state->theronState.startup_phase,
+        state->theronState.startup_phase,
         state->theronState.selected_dungeon,
         state->theronBootProfile,
         (const Theron_V1_World*)state->theronWorld,
