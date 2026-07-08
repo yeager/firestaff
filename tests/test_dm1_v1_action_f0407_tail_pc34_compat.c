@@ -500,6 +500,66 @@ static void test_climb_down_plan(void) {
     CHECK_EQ(out.cancelActionDisable, 1, "climb failed move cancels disable");
 }
 
+static void test_flip_and_direction_plans(void) {
+    DM1_ActionFlipInputPc34 flipIn;
+    DM1_ActionFlipPlanPc34 flipOut;
+    DM1_ActionDirectionInputPc34 dirIn;
+    DM1_ActionDirectionPlanPc34 dirOut;
+
+    memset(&flipIn, 0, sizeof(flipIn));
+    flipIn.randomDraw = 0;
+    CHECK_EQ(dm1_v1_action_flip_plan_f0407_pc34(&flipIn, &flipOut), 1,
+             "flip tails plan builds");
+    CHECK_EQ(flipOut.performed, 1, "flip tails performed");
+    CHECK_EQ(flipOut.comesUpHeads, 0, "flip random zero tails");
+
+    flipIn.randomDraw = 1;
+    CHECK_EQ(dm1_v1_action_flip_plan_f0407_pc34(&flipIn, &flipOut), 1,
+             "flip heads plan builds");
+    CHECK_EQ(flipOut.comesUpHeads, 1, "flip random one heads");
+
+    memset(&dirIn, 0, sizeof(dirIn));
+    dirIn.actionIndex = DM1_ACTION_FLUXCAGE;
+    dirIn.partyMapX = 10;
+    dirIn.partyMapY = 20;
+    dirIn.partyDirection = 0;
+    dirIn.championDirection = 1;
+    CHECK_EQ(dm1_v1_action_direction_plan_f0407_pc34(&dirIn, &dirOut), 1,
+             "fluxcage direction plan builds");
+    CHECK_EQ(dirOut.setChampionDirectionToParty, 1,
+             "fluxcage syncs champion direction");
+    CHECK_EQ(dirOut.targetMapX, 11, "fluxcage uses champion dir x");
+    CHECK_EQ(dirOut.targetMapY, 20, "fluxcage uses champion dir y");
+
+    memset(&dirIn, 0, sizeof(dirIn));
+    dirIn.actionIndex = DM1_ACTION_FUSE;
+    dirIn.partyMapX = 10;
+    dirIn.partyMapY = 20;
+    dirIn.partyDirection = 0;
+    dirIn.championDirection = 1;
+    CHECK_EQ(dm1_v1_action_direction_plan_f0407_pc34(&dirIn, &dirOut), 1,
+             "fuse direction plan builds");
+    CHECK_EQ(dirOut.targetMapX, 10, "fuse uses party dir x");
+    CHECK_EQ(dirOut.targetMapY, 19, "fuse uses party dir y");
+
+    memset(&dirIn, 0, sizeof(dirIn));
+    dirIn.actionIndex = DM1_ACTION_THROW;
+    dirIn.partyMapX = 3;
+    dirIn.partyMapY = 4;
+    dirIn.partyDirection = 0;
+    dirIn.championCell = 1;
+    CHECK_EQ(dm1_v1_action_direction_plan_f0407_pc34(&dirIn, &dirOut), 1,
+             "throw side plan builds");
+    CHECK_EQ(dirOut.setChampionDirectionToParty, 1,
+             "throw syncs champion direction");
+    CHECK_EQ(dirOut.throwSide, 1, "throw side for next cell");
+
+    dirIn.championCell = 3;
+    CHECK_EQ(dm1_v1_action_direction_plan_f0407_pc34(&dirIn, &dirOut), 1,
+             "throw non-side plan builds");
+    CHECK_EQ(dirOut.throwSide, 0, "throw no side for left cell");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -524,6 +584,7 @@ int main(void) {
     test_fright_plan();
     test_projectile_spell_plan();
     test_climb_down_plan();
+    test_flip_and_direction_plans();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

@@ -24863,15 +24863,6 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
     }
 }
 
-static int m11_dm1_f0328_throw_side(const M11_GameViewState* state,
-                                    const struct ChampionState_Compat* champ) {
-    if (!state || !champ) return 0;
-    /* ReDMCSB MENU.C F0407 lines 1613-1615 passes side=TRUE when the
-     * champion cell is NEXT(partyDir) or OPPOSITE(partyDir). */
-    return dm1_v1_throw_side_pc34((int)champ->cell,
-                                  state->world.party.direction);
-}
-
 static int m11_dm1_f0312_action_hand_strength_for_throw(
         M11_GameViewState* state,
         int championIndex,
@@ -26174,9 +26165,11 @@ static void m11_apply_fuse_final_endgame_params_f0446(M11_GameViewState* state) 
     }
 }
 
-static int m11_perform_fuse_action(M11_GameViewState* state,
-                                   const char* champName) {
-    int mapIndex, mapX, mapY;
+static int m11_perform_fuse_action_at(M11_GameViewState* state,
+                                      const char* champName,
+                                      int mapIndex,
+                                      int mapX,
+                                      int mapY) {
     const struct DungeonMapDesc_Compat* map;
     int flux[4] = {0, 0, 0, 0};
     int creatureType;
@@ -26185,7 +26178,6 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     int escapeY = -1;
     unsigned short chaosThing;
     DM1EndgameFuseActionResult result;
-    if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
     if (!state || !state->world.dungeon ||
         mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
         return 0;
@@ -26312,6 +26304,13 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
                   (unsigned int)state->world.gameTick, champName);
     m11_set_status(state, "ENDGAME", "FUSE COMPLETE");
     return 1;
+}
+
+static int m11_perform_fuse_action(M11_GameViewState* state,
+                                   const char* champName) {
+    int mapIndex, mapX, mapY;
+    if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
+    return m11_perform_fuse_action_at(state, champName, mapIndex, mapX, mapY);
 }
 
 static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
@@ -28983,12 +28982,20 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * Pure player-facing cue.  We draw the bit from the
              * world RNG so the outcome is deterministic for a
              * given game seed, matching the original's RNG use. */
-            int roll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2);
+            DM1_ActionFlipInputPc34 flipIn;
+            DM1_ActionFlipPlanPc34 flipPlan;
+            memset(&flipIn, 0, sizeof(flipIn));
+            flipIn.randomDraw =
+                F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2);
+            if (!dm1_v1_action_flip_plan_f0407_pc34(&flipIn, &flipPlan) ||
+                !flipPlan.valid) {
+                return 0;
+            }
             m11_log_event(state, M11_COLOR_LIGHT_CYAN,
                           "T%u: IT COMES UP %s.",
                           (unsigned int)state->world.gameTick,
-                          roll ? "HEADS" : "TAILS");
-            return 1;
+                          flipPlan.comesUpHeads ? "HEADS" : "TAILS");
+            return flipPlan.performed;
         }
         case 36: {
             /* HEAL (F0407 C036_ACTION_HEAL): transfer mana into
@@ -29461,22 +29468,52 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         }
         case 35: /* FLUXCAGE */
         {
-            int mapIndex, mapX, mapY;
+            DM1_ActionDirectionInputPc34 dirIn;
+            DM1_ActionDirectionPlanPc34 dirPlan;
             /* ReDMCSB MENU.C F0407 lines 1262-1266 computes L1251/L1252
              * from Champion.Direction before case C035 calls F0406 at
              * lines 1494-1497; unlike FUSE, it does not recompute the target
              * from G0308_i_PartyDirection after F0406. */
-            if (!m11_party_front_square_for_direction(
-                    state, champ->direction, &mapIndex, &mapX, &mapY)) {
+            memset(&dirIn, 0, sizeof(dirIn));
+            dirIn.actionIndex = chosen;
+            dirIn.partyMapX = state->world.party.mapX;
+            dirIn.partyMapY = state->world.party.mapY;
+            dirIn.partyDirection = state->world.party.direction;
+            dirIn.championDirection = champ->direction;
+            dirIn.championCell = champ->cell;
+            if (!dm1_v1_action_direction_plan_f0407_pc34(
+                    &dirIn, &dirPlan) || !dirPlan.valid) {
                 return 0;
             }
-            m11_set_champion_direction_to_party_f0406(state, champ);
+            if (dirPlan.setChampionDirectionToParty) {
+                m11_set_champion_direction_to_party_f0406(state, champ);
+            }
             return m11_perform_fluxcage_action(
-                state, champName, mapIndex, mapX, mapY);
+                state, champName, state->world.party.mapIndex,
+                dirPlan.targetMapX, dirPlan.targetMapY);
         }
         case 43: /* FUSE */
-            m11_set_champion_direction_to_party_f0406(state, champ);
-            return m11_perform_fuse_action(state, champName);
+        {
+            DM1_ActionDirectionInputPc34 dirIn;
+            DM1_ActionDirectionPlanPc34 dirPlan;
+            memset(&dirIn, 0, sizeof(dirIn));
+            dirIn.actionIndex = chosen;
+            dirIn.partyMapX = state->world.party.mapX;
+            dirIn.partyMapY = state->world.party.mapY;
+            dirIn.partyDirection = state->world.party.direction;
+            dirIn.championDirection = champ->direction;
+            dirIn.championCell = champ->cell;
+            if (!dm1_v1_action_direction_plan_f0407_pc34(
+                    &dirIn, &dirPlan) || !dirPlan.valid) {
+                return 0;
+            }
+            if (dirPlan.setChampionDirectionToParty) {
+                m11_set_champion_direction_to_party_f0406(state, champ);
+            }
+            return m11_perform_fuse_action_at(
+                state, champName, state->world.party.mapIndex,
+                dirPlan.targetMapX, dirPlan.targetMapY);
+        }
         case 27: { /* INVOKE */
             /* F0407 case C027_ACTION_INVOKE: kineticEnergy =
              * RANDOM(128)+100 and the explosion type is chosen
@@ -29571,11 +29608,26 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             unsigned short handThing = m11_get_action_hand_thing(champ);
             int throwSide;
             int spawned;
+            DM1_ActionDirectionInputPc34 dirIn;
+            DM1_ActionDirectionPlanPc34 dirPlan;
             if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
                 return m11_perform_csb_throw_action(
                     state, championIndex, champ, champName);
             }
-            m11_set_champion_direction_to_party_f0406(state, champ);
+            memset(&dirIn, 0, sizeof(dirIn));
+            dirIn.actionIndex = chosen;
+            dirIn.partyMapX = state->world.party.mapX;
+            dirIn.partyMapY = state->world.party.mapY;
+            dirIn.partyDirection = state->world.party.direction;
+            dirIn.championDirection = champ->direction;
+            dirIn.championCell = champ->cell;
+            if (!dm1_v1_action_direction_plan_f0407_pc34(
+                    &dirIn, &dirPlan) || !dirPlan.valid) {
+                return 0;
+            }
+            if (dirPlan.setChampionDirectionToParty) {
+                m11_set_champion_direction_to_party_f0406(state, champ);
+            }
             if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s HAS NOTHING TO THROW",
@@ -29583,7 +29635,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                               champName);
                 return 0;
             }
-            throwSide = m11_dm1_f0328_throw_side(state, champ);
+            throwSide = dirPlan.throwSide;
             spawned = m11_dm1_f0328_spawn_thrown_thing(
                 state, championIndex, champ, handThing, throwSide);
             if (spawned) {
