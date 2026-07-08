@@ -24604,41 +24604,21 @@ static int m11_count_source_action_menu_rows(const unsigned char actions[3]) {
  * Source anchors: ReDMCSB MENU.C G0492 lines 202-245 and F0407 lines
  * 1308-1342. */
 static int m11_action_is_melee_contact(unsigned char actionIndex) {
-    int damageFactor;
-    if (actionIndex == DM1_ACTION_BLOCK) return 0;
-    damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
-        (int)actionIndex);
-    return damageFactor > 0;
+    return dm1_v1_action_is_melee_contact_f0407_pc34((int)actionIndex);
 }
 
 static int m11_action_is_party_shield(unsigned char actionIndex) {
-    return actionIndex == DM1_ACTION_SPELLSHIELD ||
-           actionIndex == DM1_ACTION_FIRESHIELD;
+    return dm1_v1_action_is_party_shield_f0407_pc34((int)actionIndex);
 }
 
 static int m11_action_uses_f0327_failure_xp_halving(unsigned char actionIndex) {
-    /* ReDMCSB MENU.C F0407 lines 1280-1305 route FIREBALL, DISPELL,
-     * LIGHTNING, and SPIT through F0327 and halve G0497 XP when it returns
-     * false.  INVOKE joins the same T0407014 path from lines 1480-1493. */
-    switch (actionIndex) {
-        case DM1_ACTION_FIREBALL:
-        case DM1_ACTION_DISPELL:
-        case DM1_ACTION_LIGHTNING:
-        case DM1_ACTION_INVOKE:
-        case DM1_ACTION_SPIT:
-            return 1;
-        default:
-            return 0;
-    }
+    return dm1_v1_action_halves_xp_on_f0327_failure_pc34((int)actionIndex);
 }
 
 static int m11_action_stamina_base_f0407(unsigned char actionIndex) {
-    /* ReDMCSB MENU.C G0494 lines 292-337.  F0407 adds M005_RANDOM(2)
-     * before its common F0325 stamina tail; M11 preserves the source table
-     * through the shared PC34 accessor and keeps its deterministic jitter
-     * model below. */
-    int base = dm1_v1_graphic560_action_stamina_get_pc34(actionIndex);
-    return base < 0 ? 0 : base;
+    DM1_ActionF0407TailPc34 tail;
+    if (!dm1_v1_action_f0407_tail_pc34((int)actionIndex, &tail)) return 0;
+    return tail.staminaBase;
 }
 
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
@@ -24687,8 +24667,8 @@ static int m11_apply_action_stamina_cost(M11_GameViewState* state,
 
     base = m11_action_stamina_base_f0407(actionIndex);
     if (base < 0) return 0;
-    cost = base + (int)((state->world.gameTick + (uint32_t)championIndex +
-                         (uint32_t)actionIndex) & 1u);
+    cost = dm1_v1_action_stamina_cost_f0407_pc34(
+        (int)actionIndex, championIndex, state->world.gameTick);
     if (cost <= 0) return 0;
     return m11_apply_champion_stamina_cost_f0325(state, championIndex, cost);
 }
