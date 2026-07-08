@@ -33406,35 +33406,14 @@ static int m11_collect_v1_status_shield_border_graphics(
     const M11_GameViewState* state,
     int championSlot,
     int outGraphics[3]) {
-    int appended[3];
-    int appendCount = 0;
-    int drawCount = 0;
-    int i;
-
     (void)championSlot;
     if (!state) return 0;
 
-    /* CHAMDRAW.C F0292 appends active borders in fire, spell,
-     * party/champion-shield order, then draws them with
-     * while (BorderCount--) — so the visible draw stack is the
-     * reverse order: party shield first, spell shield, fire shield
-     * last/topmost. */
-    if (state->world.magic.fireShieldDefense > 0) {
-        appended[appendCount++] = M11_GameView_GetV1FireShieldBorderGraphicId();
-    }
-    if (state->world.magic.spellShieldDefense > 0) {
-        appended[appendCount++] = M11_GameView_GetV1SpellShieldBorderGraphicId();
-    }
-    if (state->world.magic.partyShieldDefense > 0) {
-        appended[appendCount++] = M11_GameView_GetV1PartyShieldBorderGraphicId();
-    }
-
-    if (outGraphics) {
-        for (i = appendCount - 1; i >= 0; --i) {
-            outGraphics[drawCount++] = appended[i];
-        }
-    }
-    return appendCount;
+    return CHAMPION_Compat_StatusShieldBorderGraphics(
+        (int)state->world.magic.fireShieldDefense,
+        (int)state->world.magic.spellShieldDefense,
+        (int)state->world.magic.partyShieldDefense,
+        outGraphics);
 }
 
 int M11_GameView_GetV1StatusShieldBorderGraphicCountForChampion(

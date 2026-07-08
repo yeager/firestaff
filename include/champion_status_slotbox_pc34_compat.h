@@ -85,7 +85,10 @@ enum {
     CHAMPION_STATUS_COMPAT_BAR_CONTAINER_H = 25,
     CHAMPION_STATUS_COMPAT_BAR_HP_CX = 5,
     CHAMPION_STATUS_COMPAT_BAR_STAMINA_CX = 12,
-    CHAMPION_STATUS_COMPAT_BAR_MANA_CX = 19
+    CHAMPION_STATUS_COMPAT_BAR_MANA_CX = 19,
+    CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SHIELD = 37,
+    CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_FIRESHIELD = 38,
+    CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SPELLSHIELD = 39
 };
 
 static inline int CHAMPION_Compat_StatusBoxZoneId(int championSlot) {
@@ -356,6 +359,38 @@ static inline int CHAMPION_Compat_DamageNumberOriginPc34(
     out->w = 0;
     out->h = 0;
     return 1;
+}
+
+static inline int CHAMPION_Compat_StatusShieldBorderGraphics(
+    int fireShieldDefense,
+    int spellShieldDefense,
+    int partyShieldDefense,
+    int outGraphics[3]) {
+    int appended[3];
+    int appendCount = 0;
+    int drawCount = 0;
+    int i;
+
+    /* ReDMCSB CHAMDRAW.C F0292 lines 792-804 appends fire, spell,
+     * party and then decrements BorderCount while drawing. */
+    if (fireShieldDefense > 0) {
+        appended[appendCount++] =
+            CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_FIRESHIELD;
+    }
+    if (spellShieldDefense > 0) {
+        appended[appendCount++] =
+            CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SPELLSHIELD;
+    }
+    if (partyShieldDefense > 0) {
+        appended[appendCount++] =
+            CHAMPION_STATUS_COMPAT_GFX_BORDER_PARTY_SHIELD;
+    }
+    if (outGraphics) {
+        for (i = appendCount - 1; i >= 0; --i) {
+            outGraphics[drawCount++] = appended[i];
+        }
+    }
+    return appendCount;
 }
 
 unsigned int CHAMPION_Compat_GetStatusSlotBoxCount(void);

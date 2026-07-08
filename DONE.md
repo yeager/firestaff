@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 champion-status shield-border ownership: `champion_status_slotbox_pc34_compat` now owns the ReDMCSB `CHAMDRAW.C F0292` fire/spell/party shield append-and-reverse draw order. M11 consumes the helper instead of carrying its own shield-border loop. Verification: `test_champion_status_slotbox_pc34_compat_integration` passed; `test_m11_v1_action_area_geometry_pc34_compat` passed; Phase A passed 24/24.
+
 - ✅ 2026-07-08 DM1 champion-status damage/route facade: status hand route, bar-graph region route, damage indicator, inventory damage indicator, and damage-number origins now use `champion_status_slotbox_pc34_compat` instead of M11-local math. Verification: `test_champion_status_slotbox_pc34_compat_integration` passed; `test_m11_v1_action_area_geometry_pc34_compat` passed 128/128; Phase A passed 24/24.
 
 - ✅ 2026-07-08 DM1 champion-status zone facade: status box, bar graph, hand slot/icon/slot-box, and name clear/text zones now come from `champion_status_slotbox_pc34_compat` instead of M11-local math. Verification: `test_champion_status_slotbox_pc34_compat_integration` passed; `test_m11_v1_action_area_geometry_pc34_compat` passed 114/114; Phase A passed 24/24.
