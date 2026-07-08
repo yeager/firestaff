@@ -1579,6 +1579,27 @@ static int m11_apply_dm1_startup_runtime_start_receipt(
     return 1;
 }
 
+static int m11_apply_dm1_save_resume_receipt(
+    M11_GameViewState* state,
+    const struct DM1SaveResumeReceipt* receipt) {
+    if (!state || !receipt || !receipt->allowed || !receipt->loadSucceeded) {
+        return 0;
+    }
+    state->loadGameTick = receipt->loadGameTick;
+    state->lastSaveTick = receipt->lastSaveTick;
+    (void)M11_GameView_SetMusicEnabled(state, receipt->musicOn);
+    m11_set_status(state, receipt->statusTitle, receipt->statusDetail);
+    snprintf(state->inspectTitle,
+             sizeof(state->inspectTitle),
+             "%s",
+             receipt->inspectTitle);
+    snprintf(state->inspectDetail,
+             sizeof(state->inspectDetail),
+             "%s",
+             receipt->inspectDetail);
+    return 1;
+}
+
 static int m11_seed_dm1_v2_visible_effects_from_viewport(
     const M11_GameViewState* state,
     int seedDynamicLights);
@@ -4757,6 +4778,8 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
 {
     struct GameWorld_Compat loadedWorld;
     struct DM1SaveHeader saveHeader;
+    struct DM1SaveResumeRequest resumeRequest;
+    struct DM1SaveResumeReceipt resumeReceipt;
     int usedBackup = 0;
     int rc;
 
@@ -4766,7 +4789,7 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     if (!state || !state->active || !path || path[0] == '\0') {
         return 0;
     }
-    if (state->sourceId[0] != '\0' && strcmp(state->sourceId, "dm1") != 0) {
+    if (!DM1_SaveResumeSourceAllowed(state->sourceId)) {
         return 0;
     }
 
@@ -4784,16 +4807,18 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
     m11_mark_explored(state);
-    state->loadGameTick = (uint32_t)state->world.gameTick;
-    state->lastSaveTick = (uint32_t)state->world.gameTick;
-    (void)M11_GameView_SetMusicEnabled(state, saveHeader.musicOn);
-    m11_set_status(state, "LOAD", usedBackup ? "DM1 SAVE BACKUP RESTORED"
-                                             : "DM1 SAVE RESTORED");
-    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTORED");
-    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-             "TICK %u DM1 SAVE RELOADED FROM %s",
-             (unsigned int)state->world.gameTick,
-             path);
+    memset(&resumeRequest, 0, sizeof(resumeRequest));
+    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
+    resumeRequest.sourceId = state->sourceId;
+    resumeRequest.path = path;
+    resumeRequest.gameTick = (uint32_t)state->world.gameTick;
+    resumeRequest.worldHash = state->lastWorldHash;
+    resumeRequest.musicOn = saveHeader.musicOn;
+    resumeRequest.usedBackup = usedBackup;
+    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
+        !m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
+        return 0;
+    }
     if (outUsedBackup) {
         *outUsedBackup = usedBackup;
     }

@@ -634,6 +634,57 @@ int DM1_GetBackupSavePath(const char* savePath,
     return (rc > 0 && rc < outSize) ? 1 : 0;
 }
 
+int DM1_SaveResumeSourceAllowed(const char* sourceId) {
+    return (!sourceId || sourceId[0] == '\0' || strcmp(sourceId, "dm1") == 0)
+               ? 1
+               : 0;
+}
+
+int DM1_BuildSaveResumeReceipt(const struct DM1SaveResumeRequest* request,
+                               struct DM1SaveResumeReceipt* outReceipt) {
+    struct DM1SaveResumeReceipt receipt;
+
+    if (!request || !outReceipt || !request->path || request->path[0] == '\0') {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.allowed = DM1_SaveResumeSourceAllowed(request->sourceId);
+    if (!receipt.allowed) {
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 lines ~2721-2724: after a successful load,
+     * G0319_ul_LoadGameTime and G2018_ul_LastSaveTime are both anchored to
+     * the restored game time. Firestaff keeps that host-facing policy here
+     * so M11 only applies the receipt after replacing the live world. */
+    receipt.loadSucceeded = 1;
+    receipt.usedBackup = request->usedBackup ? 1 : 0;
+    receipt.loadGameTick = request->gameTick;
+    receipt.lastSaveTick = request->gameTick;
+    receipt.musicOn = request->musicOn ? 1 : 0;
+    snprintf(receipt.statusTitle,
+             sizeof(receipt.statusTitle),
+             "%s",
+             "LOAD");
+    snprintf(receipt.statusDetail,
+             sizeof(receipt.statusDetail),
+             "%s",
+             receipt.usedBackup ? "DM1 SAVE BACKUP RESTORED"
+                                : "DM1 SAVE RESTORED");
+    snprintf(receipt.inspectTitle,
+             sizeof(receipt.inspectTitle),
+             "%s",
+             "RESTORED");
+    snprintf(receipt.inspectDetail,
+             sizeof(receipt.inspectDetail),
+             "TICK %u DM1 SAVE RELOADED FROM %s",
+             (unsigned int)request->gameTick,
+             request->path);
+    *outReceipt = receipt;
+    return 1;
+}
+
 /* ── Error string ─────────────────────────────────────────────── */
 
 const char* DM1_SaveLoadErrorString(int code) {
