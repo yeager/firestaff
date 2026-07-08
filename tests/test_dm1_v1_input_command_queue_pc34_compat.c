@@ -14,8 +14,10 @@ static int expect_int(const char* label, int got, int want)
 int main(void)
 {
     struct Dm1V1InputCommandQueuePc34Compat queue;
+    struct Dm1V1PendingMotionQueuePc34Compat pending;
     struct Dm1V1InputQueueProcessResultPc34Compat result;
     struct Dm1V1QueuedCommandPc34Compat peek;
+    int pendingInput = M12_MENU_INPUT_NONE;
     int ok = 1;
 
     printf("probe=dm1_v1_input_command_queue_pc34_compat\n");
@@ -39,6 +41,50 @@ int main(void)
         DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(M12_MENU_INPUT_RIGHT), 1);
     ok &= expect_int("forward token is not immediate turn",
         DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat(M12_MENU_INPUT_UP), 0);
+
+    DM1_V1_PendingMotionQueue_InitPc34Compat(&pending);
+    ok &= expect_int("pending queue starts empty",
+        (int)DM1_V1_PendingMotionQueue_CountPc34Compat(&pending), 0);
+    ok &= expect_int("pending pop empty rejected",
+        DM1_V1_PendingMotionQueue_PopPc34Compat(&pending, &pendingInput), 0);
+    ok &= expect_int("pending push forward",
+        DM1_V1_PendingMotionQueue_PushPc34Compat(&pending, M12_MENU_INPUT_UP), 1);
+    ok &= expect_int("pending push strafe-left",
+        DM1_V1_PendingMotionQueue_PushPc34Compat(&pending, M12_MENU_INPUT_STRAFE_LEFT), 1);
+    ok &= expect_int("pending count two",
+        (int)DM1_V1_PendingMotionQueue_CountPc34Compat(&pending), 2);
+    ok &= expect_int("pending pop forward",
+        DM1_V1_PendingMotionQueue_PopPc34Compat(&pending, &pendingInput), 1);
+    ok &= expect_int("pending pop forward value", pendingInput, M12_MENU_INPUT_UP);
+    ok &= expect_int("pending pop strafe-left",
+        DM1_V1_PendingMotionQueue_PopPc34Compat(&pending, &pendingInput), 1);
+    ok &= expect_int("pending pop strafe-left value", pendingInput, M12_MENU_INPUT_STRAFE_LEFT);
+    ok &= expect_int("pending empty resets head",
+        (int)pending.head, 0);
+    {
+        int i;
+        for (i = 0; i < DM1_V1_PENDING_MOTION_QUEUE_CAPACITY_PC34_COMPAT; ++i) {
+            ok &= expect_int("pending capacity fill",
+                DM1_V1_PendingMotionQueue_PushPc34Compat(&pending,
+                    M12_MENU_INPUT_DOWN + i), 1);
+        }
+    }
+    ok &= expect_int("pending capacity count",
+        (int)DM1_V1_PendingMotionQueue_CountPc34Compat(&pending),
+        DM1_V1_PENDING_MOTION_QUEUE_CAPACITY_PC34_COMPAT);
+    ok &= expect_int("pending overflow rejected",
+        DM1_V1_PendingMotionQueue_PushPc34Compat(&pending, M12_MENU_INPUT_LEFT), 0);
+    ok &= expect_int("pending overflow counted", (int)pending.droppedFullCount, 1);
+    ok &= expect_int("pending wrap pop first",
+        DM1_V1_PendingMotionQueue_PopPc34Compat(&pending, &pendingInput), 1);
+    ok &= expect_int("pending wrap first value", pendingInput, M12_MENU_INPUT_DOWN);
+    ok &= expect_int("pending push after wrap",
+        DM1_V1_PendingMotionQueue_PushPc34Compat(&pending, M12_MENU_INPUT_RIGHT), 1);
+    DM1_V1_PendingMotionQueue_ClearPc34Compat(&pending);
+    ok &= expect_int("pending clear count",
+        (int)DM1_V1_PendingMotionQueue_CountPc34Compat(&pending), 0);
+    ok &= expect_int("pending clear preserves dropped count",
+        (int)pending.droppedFullCount, 1);
 
     /* Source lock: ReDMCSB COMMAND.C:579-610 is the active I34E/I34M
      * primary interface keyboard table. F0361 searches it before the
