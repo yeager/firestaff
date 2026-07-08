@@ -11407,7 +11407,7 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 }
 
 int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
-    Nexus_V1_LauncherBootReceipt boot_receipt;
+    Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
     Nexus_TitleScreen* title;
     if (!state || !dataDir) return 0;
     /* Preserve debug HUD flag across shutdown/reinit */
@@ -11421,14 +11421,16 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     snprintf(state->sourceId, sizeof(state->sourceId), "nexus");
 
     title = (Nexus_TitleScreen*)calloc(1u, sizeof(Nexus_TitleScreen));
-    if (!nexus_v1_launcher_boot_level0_startup(dataDir, title, &boot_receipt)) {
+    if (!nexus_v1_launcher_boot_level0_runtime_startup(dataDir,
+                                                       title,
+                                                       &runtime_receipt)) {
         (void)m11_nexus_apply_startup_launch_receipt(state,
-                                                     &boot_receipt.startup_receipt);
+                                                     &runtime_receipt.startup_receipt);
         m11_log_event(state,
                       M11_COLOR_RED,
                       "T0: %s",
-                      boot_receipt.startup_receipt.host_receipt.status
-                          ? boot_receipt.startup_receipt.host_receipt.status
+                      runtime_receipt.startup_receipt.host_receipt.status
+                          ? runtime_receipt.startup_receipt.host_receipt.status
                           : "NEXUS STARTUP FAILED");
         if (title) {
             nexus_title_free(title);
@@ -11440,40 +11442,37 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
         return 0;
     }
 
-    state->nexusEngine = boot_receipt.engine;
+    state->nexusEngine = runtime_receipt.engine;
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
+    snprintf(state->title, sizeof(state->title), "%s",
+             runtime_receipt.title);
+    snprintf(state->sourceId, sizeof(state->sourceId), "%s",
+             runtime_receipt.source_id);
     snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
-             boot_receipt.dungeon_path);
+             runtime_receipt.dungeon_path);
     nexus_v1_light_runtime_init(&state->nexusLightRuntime, /*guard_rejects=*/0);
     state->nexusLightRuntimeReady = 1;
-    state->nexusState.level_loaded = boot_receipt.level_loaded;
-    state->nexusState.party_x = boot_receipt.party_x;
-    state->nexusState.party_y = boot_receipt.party_y;
-    state->nexusState.party_dir = boot_receipt.party_dir;
-    state->nexusState.tick_count = boot_receipt.tick_count;
-    state->nexusState.title_loaded = boot_receipt.title_loaded;
-    state->nexusTitleScreen = title;
-    if (!state->nexusState.title_loaded && title) {
+    state->nexusState.level_loaded = runtime_receipt.level_loaded;
+    state->nexusState.party_x = runtime_receipt.party_x;
+    state->nexusState.party_y = runtime_receipt.party_y;
+    state->nexusState.party_dir = runtime_receipt.party_dir;
+    state->nexusState.tick_count = runtime_receipt.tick_count;
+    state->nexusState.title_loaded = runtime_receipt.title_loaded;
+    state->nexusTitleScreen = runtime_receipt.title_screen;
+    if (!runtime_receipt.title_screen_keep && title) {
         nexus_title_free(title);
         free(title);
         state->nexusTitleScreen = NULL;
     }
     (void)m11_nexus_apply_startup_launch_receipt(state,
-                                                 &boot_receipt.startup_receipt);
-    {
-        Nexus_V1_StartupHostReceipt receipt;
-        (void)nexus_v1_launcher_startup_boot_status_host_receipt(
-            state->nexusState.title_loaded
-                ? NEXUS_V1_STARTUP_BOOT_STATUS_TITLE
-                : NEXUS_V1_STARTUP_BOOT_STATUS_TITLE_FALLBACK,
-            &receipt);
-        (void)m11_nexus_apply_startup_receipt(state, &receipt);
-        m11_log_event(state, M11_COLOR_YELLOW,
-                      state->nexusState.title_loaded
-                          ? "T0: NEXUS TITLE LOADED"
-                          : "T0: NEXUS TITLE FALLBACK");
+                                                 &runtime_receipt.startup_receipt);
+    (void)m11_nexus_apply_startup_receipt(
+        state,
+        &runtime_receipt.boot_status_receipt);
+    if (runtime_receipt.boot_log_line) {
+        m11_log_event(state, M11_COLOR_YELLOW, runtime_receipt.boot_log_line);
     }
     fprintf(stderr, "NEXUS READY: gameId=nexus dataDir=%s\n", dataDir);
     return 1;

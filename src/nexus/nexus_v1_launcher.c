@@ -86,6 +86,17 @@ void nexus_v1_launcher_boot_receipt_clear(
     nexus_v1_startup_launch_receipt_clear(&receipt->startup_receipt);
 }
 
+void nexus_v1_launcher_runtime_receipt_clear(
+    Nexus_V1_LauncherRuntimeReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    nexus_v1_startup_launch_receipt_clear(&receipt->startup_receipt);
+    nexus_v1_startup_host_receipt_clear(&receipt->boot_status_receipt);
+}
+
 void nexus_v1_launcher_startup_runtime_state_clear(
     Nexus_V1_StartupRuntimeState *state)
 {
@@ -635,6 +646,60 @@ int nexus_v1_launcher_boot_level0_startup(
                                         engine,
                                         title_loaded,
                                         out_receipt);
+    return 1;
+}
+
+int nexus_v1_launcher_boot_level0_runtime_startup(
+    const char *data_dir,
+    Nexus_TitleScreen *title,
+    Nexus_V1_LauncherRuntimeReceipt *out_receipt)
+{
+    Nexus_V1_LauncherBootReceipt boot_receipt;
+    Nexus_V1_StartupBootStatus boot_status;
+
+    nexus_v1_launcher_runtime_receipt_clear(out_receipt);
+    nexus_v1_launcher_boot_receipt_clear(&boot_receipt);
+    if (!out_receipt) {
+        return 0;
+    }
+    snprintf(out_receipt->title,
+             sizeof(out_receipt->title),
+             "%s",
+             NEXUS_V1_GAME_LABEL);
+    snprintf(out_receipt->source_id,
+             sizeof(out_receipt->source_id),
+             "%s",
+             NEXUS_V1_GAME_ID);
+    if (!nexus_v1_launcher_boot_level0_startup(data_dir,
+                                               title,
+                                               &boot_receipt)) {
+        out_receipt->startup_receipt = boot_receipt.startup_receipt;
+        return 0;
+    }
+
+    out_receipt->engine = boot_receipt.engine;
+    out_receipt->title_screen = title;
+    out_receipt->title_screen_keep = boot_receipt.title_loaded ? 1 : 0;
+    out_receipt->level_loaded = boot_receipt.level_loaded;
+    out_receipt->party_x = boot_receipt.party_x;
+    out_receipt->party_y = boot_receipt.party_y;
+    out_receipt->party_dir = boot_receipt.party_dir;
+    out_receipt->tick_count = boot_receipt.tick_count;
+    out_receipt->title_loaded = boot_receipt.title_loaded;
+    snprintf(out_receipt->dungeon_path,
+             sizeof(out_receipt->dungeon_path),
+             "%s",
+             boot_receipt.dungeon_path);
+    out_receipt->startup_receipt = boot_receipt.startup_receipt;
+    boot_status = boot_receipt.title_loaded
+        ? NEXUS_V1_STARTUP_BOOT_STATUS_TITLE
+        : NEXUS_V1_STARTUP_BOOT_STATUS_TITLE_FALLBACK;
+    (void)nexus_v1_launcher_startup_boot_status_host_receipt(
+        boot_status,
+        &out_receipt->boot_status_receipt);
+    out_receipt->boot_log_line = boot_receipt.title_loaded
+        ? "T0: NEXUS TITLE LOADED"
+        : "T0: NEXUS TITLE FALLBACK";
     return 1;
 }
 

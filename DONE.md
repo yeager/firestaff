@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus level-0 runtime receipt: Nexus launcher now emits an M11-ready runtime receipt for title/source identity, engine pointer, title-screen keep/free policy, dungeon path, party pose, title fallback status, boot log, and startup launch receipt. M11 consumes that receipt instead of reading raw boot receipt fields. Verification: `test_nexus_v1_startup_menu_pc34_compat` passed; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup action facade: CSB boot now owns combined utility/entrance keyboard and pointer routing through `CSB_V1_BootStartupActionReceipt_PC34`. M11 builds one startup snapshot and applies the returned receipt instead of selecting utility vs entrance locally. Verification: `/tmp/firestaff-csb-action-build/test_csb_v1_boot_runtime_handoff` passed 304/304; `/tmp/firestaff-csb-action-build` built `firestaff_m11`; `git diff --check` passed.
 
 - ✅ 2026-07-08 RetroAchievements overlay/runtime slice: added login/session fields, backend kind, richer RA events, pending-unlock/offline/reconnect events, a DuckStation-style notification queue, render-command builder, M11 in-game overlay rendering, and main-loop event/tick handoff. Verification: `test_firestaff_retroachievements` passed by direct compile and CMake build; `/tmp/firestaff-ra-build` built `firestaff_m11`; `git diff --check` passed.
