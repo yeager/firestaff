@@ -2210,6 +2210,9 @@ static void m11_draw_csb_startup_fallback_text_rows(
     int framebufferWidth,
     int framebufferHeight,
     const CSB_V1_StartupRenderPlan_PC34 *plan);
+static void m11_csb_startup_host_facts(
+    const M11_GameViewState *state,
+    CSB_V1_StartupHostFacts_PC34 *facts);
 
 static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                                unsigned char *framebuffer,
@@ -2217,18 +2220,16 @@ static void m11_draw_csb_startup_utility_panel(const M11_GameViewState *state,
                                                int framebufferHeight)
 {
     CSB_V1_UtilRenderPlan plan;
+    CSB_V1_StartupHostFacts_PC34 facts;
     int i;
 
     if (!state || !state->csbState.startup_import_available) {
         return;
     }
 
-    if (!csb_v1_runtime_util_render_plan_from_boot_profile_facts_pc34(
-            state->csbState.startup_import_selected_action_index,
-            state->csbState.startup_import_champion_count,
-            state->csbBootProfile,
-            state->csbState.startup_import_utility_prompt,
-            state->csbState.startup_import_preview_active,
+    m11_csb_startup_host_facts(state, &facts);
+    if (!csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
+            &facts,
             &plan)) {
         return;
     }
@@ -2519,6 +2520,7 @@ static void m11_csb_startup_host_facts(
         state->csbState.startup_import_champion_count;
     facts->utility_preview_active =
         state->csbState.startup_import_preview_active;
+    facts->utility_prompt = state->csbState.startup_import_utility_prompt;
     facts->door_step_count =
         (int)ENTRANCE_Compat_GetDoorAnimationStepCount();
     facts->resume_available =

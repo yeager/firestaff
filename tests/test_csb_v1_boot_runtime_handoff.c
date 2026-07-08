@@ -1663,6 +1663,7 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
 {
     CSB_V1_BootProfile boot;
     CSB_V1_StartupHostFacts_PC34 facts;
+    CSB_V1_UtilRenderPlan plan;
     CSB_V1_UtilApplyReceipt receipt;
     CSB_V1_UtilStateReceipt state_receipt;
 
@@ -1673,6 +1674,16 @@ static void test_runtime_utility_startup_host_facts_wrappers(void)
     facts.utility_selected_action_index = 0;
     facts.utility_imported_champion_count = 2;
     facts.utility_preview_active = 0;
+    facts.utility_prompt = "CHAOS STRIKES BACK READY";
+
+    CHECK(csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
+              &facts,
+              &plan) == 1,
+          "runtime utility render wrapper accepts startup host facts");
+    CHECK(plan.menu_row_count == CSB_V1_UTIL_MENU_ROW_COUNT &&
+              strstr(plan.prompt_row.text,
+                     "CHAOS STRIKES BACK READY") != NULL,
+          "runtime utility render wrapper owns M11 utility facts");
 
     CHECK(csb_v1_runtime_util_apply_firestaff_input_from_startup_host_facts_pc34(
               &facts,

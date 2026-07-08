@@ -227,6 +227,22 @@ int csb_v1_runtime_util_render_plan_from_boot_profile_facts_pc34(
         out_plan);
 }
 
+int csb_v1_runtime_util_render_plan_from_startup_host_facts_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts,
+    CSB_V1_UtilRenderPlan *out_plan)
+{
+    if (!facts) {
+        return 0;
+    }
+    return csb_v1_runtime_util_render_plan_from_boot_profile_facts_pc34(
+        facts->utility_selected_action_index,
+        facts->utility_imported_champion_count,
+        facts->boot_profile,
+        facts->utility_prompt,
+        facts->utility_preview_active,
+        out_plan);
+}
+
 int csb_v1_runtime_util_apply_point_with_state_from_boot_profile_facts_pc34(
     int selected_action_index,
     int imported_champion_count,
