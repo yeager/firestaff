@@ -10082,23 +10082,6 @@ static void m11_nexus_startup_host_facts(
     facts->champion_frame = state->nexusState.champion_select_frame;
 }
 
-static void m11_nexus_startup_scan_saves(M11_GameViewState *state)
-{
-    Nexus_V1_StartupHostFacts facts;
-    Nexus_V1_StartupMenuStateReceipt receipt;
-
-    if (!state) {
-        return;
-    }
-    m11_nexus_startup_host_facts(state, &facts);
-    if (!nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_host_facts(
-            &receipt,
-            &facts)) {
-        return;
-    }
-    m11_nexus_startup_snapshot_to_state(state, &receipt);
-}
-
 static int m11_path_has_extension(const char* path, const char* ext) {
     size_t pathLen;
     size_t extLen;
@@ -10303,6 +10286,21 @@ static M11_GameInputResult m11_nexus_apply_startup_action_receipt(
         m11_nexus_champion_snapshot_to_state(
             state,
             &receipt->champion_state_receipt);
+    }
+    return m11_nexus_apply_startup_receipt(state, &receipt->host_receipt);
+}
+
+static M11_GameInputResult m11_nexus_apply_startup_launch_receipt(
+    M11_GameViewState *state,
+    const Nexus_V1_StartupLaunchReceipt *receipt)
+{
+    if (!state || !receipt) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (receipt->save_state_receipt_valid) {
+        m11_nexus_startup_snapshot_to_state(
+            state,
+            &receipt->save_state_receipt);
     }
     return m11_nexus_apply_startup_receipt(state, &receipt->host_receipt);
 }
@@ -11377,8 +11375,6 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
         state->nexusState.party_y = state->nexusEngine->game.party_y;
         state->nexusState.party_dir = state->nexusEngine->game.party_dir;
         state->nexusState.tick_count = state->nexusEngine->game.tick_count;
-        state->nexusState.title_active = 1;
-        state->nexusState.title_frame = 0;
         if (title) {
             state->nexusState.title_loaded =
                 nexus_title_load(title, state->nexusEngine) == 0 &&
@@ -11387,7 +11383,25 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
         } else {
             state->nexusState.title_loaded = 0;
         }
-        m11_nexus_startup_scan_saves(state);
+        {
+            Nexus_V1_StartupHostFacts facts;
+            Nexus_V1_StartupLaunchReceipt receipt;
+            m11_nexus_startup_host_facts(state, &facts);
+            if (!nexus_v1_startup_launch_from_host_facts_with_receipt(
+                    &facts,
+                    &receipt)) {
+                m11_set_status(state, "BOOT", "NEXUS STARTUP FAILED");
+                m11_log_event(state,
+                              M11_COLOR_RED,
+                              "T0: NEXUS STARTUP FAILED");
+                nexus_v1_launcher_shutdown();
+                state->active = 0;
+                state->startedFromLauncher = 0;
+                state->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+                return 0;
+            }
+            (void)m11_nexus_apply_startup_launch_receipt(state, &receipt);
+        }
     }
     m11_set_status(state, "BOOT", "NEXUS TITLE");
     m11_log_event(state, M11_COLOR_YELLOW,

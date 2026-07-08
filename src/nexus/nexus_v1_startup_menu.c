@@ -157,6 +157,44 @@ void nexus_v1_startup_idle_receipt_clear(
     nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
 }
 
+void nexus_v1_startup_launch_receipt_clear(
+    Nexus_V1_StartupLaunchReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    nexus_v1_startup_menu_state_receipt_init(
+        &receipt->save_state_receipt);
+    nexus_v1_startup_host_receipt_clear(&receipt->host_receipt);
+}
+
+int nexus_v1_startup_launch_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    Nexus_V1_StartupLaunchReceipt *out_receipt)
+{
+    if (out_receipt) {
+        nexus_v1_startup_launch_receipt_clear(out_receipt);
+    }
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    if (nexus_v1_startup_menu_state_receipt_scan_or_new_game_from_host_facts(
+            &out_receipt->save_state_receipt,
+            facts)) {
+        out_receipt->save_state_receipt_valid = 1;
+    }
+    out_receipt->host_receipt.mode_update.set_title_active = 1;
+    out_receipt->host_receipt.mode_update.title_active = 1;
+    out_receipt->host_receipt.mode_update.set_title_frame = 1;
+    out_receipt->host_receipt.mode_update.title_frame = 0;
+    out_receipt->host_receipt.input_result =
+        NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
+    out_receipt->host_receipt.status_scope = "BOOT";
+    out_receipt->host_receipt.status = "NEXUS TITLE";
+    return 1;
+}
+
 int nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
     const Nexus_V1_StartupHostFacts *facts,
     Nexus_V1_StartupIdleReceipt *out_receipt)

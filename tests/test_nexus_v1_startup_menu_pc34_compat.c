@@ -1425,6 +1425,27 @@ int main(void)
                    state_receipt.row_count == 2 &&
                    state_receipt.selected_row == 1,
                "Nexus save state receipt host facts scan helper owns M11 save scan");
+        {
+            Nexus_V1_StartupLaunchReceipt launch_receipt;
+            expect(nexus_v1_startup_launch_from_host_facts_with_receipt(
+                       &host_facts,
+                       &launch_receipt) &&
+                       launch_receipt.save_state_receipt_valid &&
+                       strcmp(launch_receipt.save_state_receipt.save_dir,
+                              save_dir) == 0 &&
+                       launch_receipt.save_state_receipt.row_count == 2 &&
+                       launch_receipt.host_receipt.mode_update.
+                           set_title_active &&
+                       launch_receipt.host_receipt.mode_update.title_active &&
+                       launch_receipt.host_receipt.mode_update.
+                           set_title_frame &&
+                       launch_receipt.host_receipt.mode_update.title_frame == 0 &&
+                       launch_receipt.host_receipt.input_result ==
+                           NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
+                       strcmp(launch_receipt.host_receipt.status,
+                              "NEXUS TITLE") == 0,
+                   "Nexus launch receipt owns initial title and save scan state");
+        }
         expect(nexus_v1_startup_menu_handle_firestaff_input_from_facts_with_receipt(
                    &state_receipt,
                    save_dir,

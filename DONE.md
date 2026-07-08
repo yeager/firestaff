@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Nexus startup launch receipt: Nexus startup menu now owns initial launch title activation/frame reset, boot status, and save-menu scan receipt. M11 applies one launch receipt instead of running a separate Nexus save scan helper during `StartNexus`. Verification: Nexus launch-receipt unit passed, M11 syntax compile passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 Theron startup media launch receipt: Theron boot launch now owns Track 02 startup media capture for roster names/titles and prompt text. M11 applies the boot-owned media receipt instead of reading Track 02 asset bytes directly during `StartTheron`. Verification: Theron boot/M11/media compile checks passed, Phase A passed 24/24, and `git diff --check` passed.
 
 - ✅ 2026-07-08 DM2 startup launch receipt: DM2 startup menu now owns initial launch session creation, save scan, active-menu mode update, and boot status receipt. M11 consumes one launch receipt instead of creating the startup session and scanning saves inline. Verification: DM2 startup action contract passed 75/75 by direct compile/run, M11 syntax compile passed, Phase A passed 24/24, and `git diff --check` passed.
