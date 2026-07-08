@@ -12718,34 +12718,36 @@ static int m11_last_attack_tick_emitted_damage(const M11_GameViewState* state) {
 static int m11_last_attack_tick_performed_closed_door_f0407(
     const M11_GameViewState* state,
     unsigned char actionIndex,
-    int firstTimelineIndex)
+    int firstTimelineIndex,
+    unsigned char* outDisabledTicksOverride)
 {
+    DM1_ActionClosedDoorMeleeInputPc34 in;
+    DM1_ActionClosedDoorMeleePlanPc34 plan;
     int i;
     if (!state) return 0;
-    switch (actionIndex) {
-        case DM1_ACTION_CHOP:
-        case DM1_ACTION_KICK:
-        case DM1_ACTION_SWING:
-        case DM1_ACTION_HACK:
-        case DM1_ACTION_BERZERK:
-        case DM1_ACTION_BASH:
-            break;
-        default:
-            return 0;
-    }
+    if (outDisabledTicksOverride) *outDisabledTicksOverride = 0u;
+    memset(&in, 0, sizeof(in));
+    in.actionIndex = (int)actionIndex;
     if (firstTimelineIndex < 0) firstTimelineIndex = 0;
     for (i = firstTimelineIndex; i < state->world.timeline.count; ++i) {
         const struct TimelineEvent_Compat* event =
             &state->world.timeline.events[i];
         if (event->kind == TIMELINE_EVENT_DOOR_DESTRUCTION) {
-            return 1;
+            in.observedDoorDestructionEvent = 1;
         }
         if (event->kind == TIMELINE_EVENT_PLAY_SOUND &&
             event->aux0 == DM1_SND_WOODEN_THUD) {
-            return 1;
+            in.observedWoodenThudSound = 1;
         }
     }
-    return 0;
+    if (!dm1_v1_action_closed_door_melee_plan_f0407_pc34(&in, &plan) ||
+        !plan.valid || !plan.performed) {
+        return 0;
+    }
+    if (outDisabledTicksOverride && plan.disabledTicksOverride > 0) {
+        *outDisabledTicksOverride = (unsigned char)plan.disabledTicksOverride;
+    }
+    return 1;
 }
 
 static void m11_set_candidate_attack_marker_for_tick(M11_GameViewState* state,
@@ -29855,6 +29857,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     }
     if (m11_action_is_melee_contact(chosen)) {
         unsigned char disabledTicks = m11_action_disabled_ticks_f0407(chosen);
+        unsigned char closedDoorDisabledTicks = 0u;
         int timelineCountBeforeAttack = state->world.timeline.count;
         if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
             performed = m11_perform_csb_melee_action(
@@ -29879,7 +29882,11 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
              * F0402.  F0232 may schedule only door state/sound work, so no
              * EMIT_DAMAGE_DEALT is expected on this route. */
             performed = m11_last_attack_tick_performed_closed_door_f0407(
-                state, chosen, timelineCountBeforeAttack);
+                state, chosen, timelineCountBeforeAttack,
+                &closedDoorDisabledTicks);
+            if (performed && closedDoorDisabledTicks > 0u) {
+                disabledTicks = closedDoorDisabledTicks;
+            }
         }
         if (!performed) {
             m11_adjust_action_tail_f0407(
