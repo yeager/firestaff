@@ -1188,6 +1188,16 @@ void dm2_v1_startup_launch_receipt_clear(
     dm2_v1_startup_menu_state_receipt_init(&receipt->menu_state_receipt);
 }
 
+void dm2_v1_startup_direct_resume_receipt_clear(
+    DM2_V1_StartupDirectResumeReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    dm2_v1_startup_host_receipt_clear(&receipt->host_receipt);
+}
+
 int dm2_v1_startup_launch_from_host_facts_with_receipt(
     const DM2_V1_StartupHostFacts *facts,
     DM2_V1_StartupLaunchReceipt *out_receipt)
@@ -1472,6 +1482,70 @@ int dm2_v1_startup_execute_save_path(
     }
     out_execution->kind = DM2_V1_STARTUP_EXEC_SESSION_READY;
     out_execution->status = "DM2 RESUMED";
+    return 1;
+}
+
+int dm2_v1_startup_execute_save_path_with_host_receipt(
+    const char *save_path,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupDirectResumeReceipt *out_receipt)
+{
+    char save_root[512];
+    DM2_V1_StartupExecution local_execution;
+    DM2_V1_StartupExecution *execution;
+    DM2_V1_StartupResumeStatus status;
+    int session_applied = 0;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    dm2_v1_startup_direct_resume_receipt_clear(out_receipt);
+    execution = out_execution ? out_execution : &local_execution;
+    memset(save_root, 0, sizeof(save_root));
+    if (!dm2_v1_startup_execute_save_path(save_path,
+                                          save_root,
+                                          (int)sizeof(save_root),
+                                          execution)) {
+        (void)dm2_v1_startup_resume_status_host_receipt(
+            DM2_V1_STARTUP_RESUME_STATUS_FAILED,
+            &out_receipt->host_receipt);
+        return 0;
+    }
+    if (save_root[0] != '\0') {
+        snprintf(out_receipt->save_root,
+                 sizeof(out_receipt->save_root),
+                 "%s",
+                 save_root);
+        out_receipt->save_root_valid = 1;
+    }
+    if (execution->kind != DM2_V1_STARTUP_EXEC_SESSION_READY) {
+        status = execution->kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+                         execution->status &&
+                         strcmp(execution->status,
+                                "DM2 RESUME PATH INVALID") == 0
+                     ? DM2_V1_STARTUP_RESUME_STATUS_PATH_INVALID
+                     : DM2_V1_STARTUP_RESUME_STATUS_FAILED;
+        (void)dm2_v1_startup_resume_status_host_receipt(
+            status,
+            &out_receipt->host_receipt);
+        return 1;
+    }
+    out_receipt->session_ready = 1;
+    if (apply_session) {
+        session_applied = apply_session(apply_userdata, &execution->session);
+    }
+    if (!session_applied) {
+        (void)dm2_v1_startup_resume_status_host_receipt(
+            DM2_V1_STARTUP_RESUME_STATUS_FAILED,
+            &out_receipt->host_receipt);
+        return 1;
+    }
+    out_receipt->session_applied = 1;
+    (void)dm2_v1_startup_resume_status_host_receipt(
+        DM2_V1_STARTUP_RESUME_STATUS_RESUMED,
+        &out_receipt->host_receipt);
     return 1;
 }
 

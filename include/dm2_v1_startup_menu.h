@@ -173,6 +173,14 @@ typedef struct {
     DM2_V1_SessionState session;
 } DM2_V1_StartupLaunchReceipt;
 
+typedef struct {
+    DM2_V1_StartupHostReceipt host_receipt;
+    int save_root_valid;
+    char save_root[512];
+    int session_ready;
+    int session_applied;
+} DM2_V1_StartupDirectResumeReceipt;
+
 enum {
     DM2_V1_STARTUP_ROW_LABEL_CAPACITY = 48
 };
@@ -394,6 +402,8 @@ void dm2_v1_startup_idle_receipt_clear(
     DM2_V1_StartupIdleReceipt *receipt);
 void dm2_v1_startup_launch_receipt_clear(
     DM2_V1_StartupLaunchReceipt *receipt);
+void dm2_v1_startup_direct_resume_receipt_clear(
+    DM2_V1_StartupDirectResumeReceipt *receipt);
 int dm2_v1_startup_launch_from_host_facts_with_receipt(
     const DM2_V1_StartupHostFacts *facts,
     DM2_V1_StartupLaunchReceipt *out_receipt);
@@ -436,6 +446,12 @@ int dm2_v1_startup_execute_save_path(
     char *out_save_root,
     int out_save_root_cap,
     DM2_V1_StartupExecution *out_execution);
+int dm2_v1_startup_execute_save_path_with_host_receipt(
+    const char *save_path,
+    DM2_V1_StartupSessionApplyFn apply_session,
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupDirectResumeReceipt *out_receipt);
 int dm2_v1_startup_menu_build_render_rows(
     const DM2_V1_StartupMenu *menu,
     DM2_V1_StartupRenderRow *rows,
