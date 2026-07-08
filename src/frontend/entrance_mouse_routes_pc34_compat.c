@@ -61,6 +61,16 @@ int ENTRANCE_Compat_HitTestMouseRoute(int screenX,
     return 0;
 }
 
+int ENTRANCE_Compat_DispatchMouseRouteCommand(int screenX,
+                                              int screenY,
+                                              unsigned int buttonMask) {
+    EntranceMouseRouteCompat route;
+    if (!ENTRANCE_Compat_HitTestMouseRoute(screenX, screenY, buttonMask, &route)) {
+        return 0;
+    }
+    return (int)route.commandId;
+}
+
 const char* ENTRANCE_Compat_GetMouseRouteEvidence(void) {
     return "ReDMCSB COMMAND.C:340-353 G0445 entrance mouse table; DEFS.H:375-384 I34E/I34M command IDs; DEFS.H:3824-3826,3845 entrance zones; COMMAND.C:1379-1449 F0358 source-order hit-test and zone expansion; COMMAND.C:1641-1660 F0359 primary/secondary command queue routing; COORD.C:1903-1920 zone expansion/inclusive point test; COORD.C:2490-2495 F0638_GetZone; ENTRANCE.C:739-747 installs entrance input and ENTRANCE.C:850-883 waits for a fresh entrance command.";
 }

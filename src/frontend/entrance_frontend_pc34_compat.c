@@ -1,4 +1,5 @@
 #include "entrance_frontend_pc34_compat.h"
+#include "entrance_mouse_routes_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -282,6 +283,37 @@ EntranceCompatCommandPath ENTRANCE_Compat_CommandPathFromSourceCommand(int comma
     default:
         return ENTRANCE_COMPAT_COMMAND_PATH_NONE;
     }
+}
+
+EntranceCompatCommandPath ENTRANCE_Compat_CommandPathFromPointerCommand(int framebufferX,
+                                                                        int framebufferY,
+                                                                        unsigned int buttonMask) {
+    return ENTRANCE_Compat_CommandPathFromSourceCommand(
+        ENTRANCE_Compat_DispatchMouseRouteCommand(framebufferX, framebufferY, buttonMask));
+}
+
+int ENTRANCE_Compat_NormalizedTouchToWindowPoint(int windowWidth,
+                                                 int windowHeight,
+                                                 float normalizedX,
+                                                 float normalizedY,
+                                                 int* outWindowX,
+                                                 int* outWindowY) {
+    int windowX;
+    int windowY;
+    if (windowWidth <= 0 || windowHeight <= 0 || !outWindowX || !outWindowY) {
+        return 0;
+    }
+    if (normalizedX < 0.0f || normalizedX > 1.0f ||
+        normalizedY < 0.0f || normalizedY > 1.0f) {
+        return 0;
+    }
+    windowX = (int)(normalizedX * (float)windowWidth);
+    windowY = (int)(normalizedY * (float)windowHeight);
+    if (windowX >= windowWidth) windowX = windowWidth - 1;
+    if (windowY >= windowHeight) windowY = windowHeight - 1;
+    *outWindowX = windowX;
+    *outWindowY = windowY;
+    return 1;
 }
 
 int ENTRANCE_Compat_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,

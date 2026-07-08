@@ -109,6 +109,15 @@ unsigned int ENTRANCE_Compat_GetVblankDelayMs(void);
 unsigned int ENTRANCE_Compat_GetCreditsWaitTicks(void);
 int ENTRANCE_Compat_DispatchKeyCommand(EntranceCompatKey key);
 EntranceCompatCommandPath ENTRANCE_Compat_CommandPathFromSourceCommand(int commandId);
+EntranceCompatCommandPath ENTRANCE_Compat_CommandPathFromPointerCommand(int framebufferX,
+                                                                        int framebufferY,
+                                                                        unsigned int buttonMask);
+int ENTRANCE_Compat_NormalizedTouchToWindowPoint(int windowWidth,
+                                                 int windowHeight,
+                                                 float normalizedX,
+                                                 float normalizedY,
+                                                 int* outWindowX,
+                                                 int* outWindowY);
 int ENTRANCE_Compat_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
                                               int autoEnterAfterMs,
                                               unsigned long long elapsedMs);

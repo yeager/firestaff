@@ -120,6 +120,26 @@ int main(void) {
                          M11_ENTRANCE_RUNTIME_COMMAND_NONE);
     ok &= expect_command("zero_mask_miss", 244, 45, 0u,
                          M11_ENTRANCE_RUNTIME_COMMAND_NONE);
+    ok &= ENTRANCE_Compat_DispatchMouseRouteCommand(
+              244, 45, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT) ==
+          ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON;
+    ok &= ENTRANCE_Compat_CommandPathFromPointerCommand(
+              248, 186, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT) ==
+          ENTRANCE_COMPAT_COMMAND_PATH_CREDITS;
+    ok &= ENTRANCE_Compat_CommandPathFromPointerCommand(
+              0, 1, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT) ==
+          ENTRANCE_COMPAT_COMMAND_PATH_NONE;
+    {
+        int wx = -1;
+        int wy = -1;
+        ok &= ENTRANCE_Compat_NormalizedTouchToWindowPoint(
+                  1280, 720, 1.0f, 1.0f, &wx, &wy) == 1;
+        ok &= wx == 1279 && wy == 719;
+        ok &= ENTRANCE_Compat_NormalizedTouchToWindowPoint(
+                  1280, 720, -0.01f, 0.5f, &wx, &wy) == 0;
+        ok &= ENTRANCE_Compat_NormalizedTouchToWindowPoint(
+                  0, 720, 0.5f, 0.5f, &wx, &wy) == 0;
+    }
 
     ok &= expect_key("return_enter", SDLK_RETURN,
                      M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON);
