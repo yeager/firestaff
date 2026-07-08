@@ -27606,30 +27606,15 @@ static void m11_projectile_apply_impact(
         return;
     }
 
-    /* Explosion spawn — magical hits on fireball / lightning /
-     * harm-non-material / poison-* subtypes.  F0820 populated
-     * r->outExplosion for us; push it into world.explosions via
-     * F0821_EXPLOSION_Create_Compat so the viewport's
-     * type-specific burst colour renders on the impact cell. */
-    if (r->emittedExplosion) {
+    {
         struct ExplosionCreateInput_Compat eIn;
-        struct TimelineEvent_Compat eFirst;
-        int eSlot = -1;
-        memset(&eIn, 0, sizeof(eIn));
-        eIn.explosionType         = r->outExplosion.explosionType;
-        eIn.attack                = r->outExplosion.attack;
-        eIn.mapIndex              = r->outExplosion.mapIndex;
-        eIn.mapX                  = r->outExplosion.mapX;
-        eIn.mapY                  = r->outExplosion.mapY;
-        eIn.cell                  = r->outExplosion.cell;
-        eIn.centered              = r->outExplosion.centered;
-        eIn.poisonAttack          = r->outExplosion.poisonAttack;
-        eIn.currentTick           = (int)state->world.gameTick;
-        eIn.ownerKind             = r->outExplosion.ownerKind;
-        eIn.ownerIndex            = r->outExplosion.ownerIndex;
-        eIn.creatorProjectileSlot = r->outExplosion.creatorProjectileSlot;
-        (void)F0821_EXPLOSION_Create_Compat(&eIn, &state->world.explosions,
-                                            &eSlot, &eFirst);
+        if (dm1_v1_projectile_explosion_create_input_pc34(
+                r, (int)state->world.gameTick, &eIn)) {
+            struct TimelineEvent_Compat eFirst;
+            int eSlot = -1;
+            (void)F0821_EXPLOSION_Create_Compat(
+                &eIn, &state->world.explosions, &eSlot, &eFirst);
+        }
     }
 
     /* Apply damage on HIT_CREATURE to the DungeonGroup at the impact
@@ -27817,39 +27802,45 @@ static void m11_projectile_apply_impact(
         return;
     }
 
-    switch (r->resultKind) {
-        case PROJECTILE_RESULT_HIT_WALL:
-            m11_log_event(state, M11_COLOR_YELLOW,
-                          "T%u: %s HITS WALL",
-                          (unsigned int)state->world.gameTick, name);
-            break;
-        case PROJECTILE_RESULT_HIT_DOOR:
-            m11_log_event(state, M11_COLOR_YELLOW,
-                          "T%u: %s HITS DOOR",
-                          (unsigned int)state->world.gameTick, name);
-            break;
-        case PROJECTILE_RESULT_HIT_FLUXCAGE:
-            m11_log_event(state, M11_COLOR_MAGENTA,
-                          "T%u: %s ABSORBED BY FLUXCAGE",
-                          (unsigned int)state->world.gameTick, name);
-            break;
-        case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
-            m11_log_event(state, M11_COLOR_LIGHT_CYAN,
-                          "T%u: %s COLLIDES IN FLIGHT",
-                          (unsigned int)state->world.gameTick, name);
-            break;
-        case PROJECTILE_RESULT_DESPAWN_ENERGY:
-            m11_log_event(state, M11_COLOR_DARK_GRAY,
-                          "T%u: %s FADES",
-                          (unsigned int)state->world.gameTick, name);
-            break;
-        case PROJECTILE_RESULT_DESPAWN_BOUNDS:
-            m11_log_event(state, M11_COLOR_DARK_GRAY,
-                          "T%u: %s OUT OF BOUNDS",
-                          (unsigned int)state->world.gameTick, name);
-            break;
-        default:
-            break;
+    {
+        DM1_ProjectileImpactLogPlanPc34 logPlan;
+        if (dm1_v1_projectile_impact_log_plan_pc34(r, &logPlan) &&
+            logPlan.handled) {
+            switch (logPlan.logKind) {
+                case DM1_PROJECTILE_IMPACT_LOG_HIT_WALL_PC34:
+                    m11_log_event(state, M11_COLOR_YELLOW,
+                                  "T%u: %s HITS WALL",
+                                  (unsigned int)state->world.gameTick, name);
+                    break;
+                case DM1_PROJECTILE_IMPACT_LOG_HIT_DOOR_PC34:
+                    m11_log_event(state, M11_COLOR_YELLOW,
+                                  "T%u: %s HITS DOOR",
+                                  (unsigned int)state->world.gameTick, name);
+                    break;
+                case DM1_PROJECTILE_IMPACT_LOG_HIT_FLUXCAGE_PC34:
+                    m11_log_event(state, M11_COLOR_MAGENTA,
+                                  "T%u: %s ABSORBED BY FLUXCAGE",
+                                  (unsigned int)state->world.gameTick, name);
+                    break;
+                case DM1_PROJECTILE_IMPACT_LOG_HIT_OTHER_PROJECTILE_PC34:
+                    m11_log_event(state, M11_COLOR_LIGHT_CYAN,
+                                  "T%u: %s COLLIDES IN FLIGHT",
+                                  (unsigned int)state->world.gameTick, name);
+                    break;
+                case DM1_PROJECTILE_IMPACT_LOG_DESPAWN_ENERGY_PC34:
+                    m11_log_event(state, M11_COLOR_DARK_GRAY,
+                                  "T%u: %s FADES",
+                                  (unsigned int)state->world.gameTick, name);
+                    break;
+                case DM1_PROJECTILE_IMPACT_LOG_DESPAWN_BOUNDS_PC34:
+                    m11_log_event(state, M11_COLOR_DARK_GRAY,
+                                  "T%u: %s OUT OF BOUNDS",
+                                  (unsigned int)state->world.gameTick, name);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
     (void)m11_materialize_projectile_associated_thing(state, p, r, 0);
 }

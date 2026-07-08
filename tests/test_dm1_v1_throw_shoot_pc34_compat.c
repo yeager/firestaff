@@ -166,8 +166,12 @@ static void test_projectile_create_input_model(void) {
 static void test_projectile_impact_model(void) {
     struct ProjectileInstance_Compat p;
     struct ProjectileTickResult_Compat r;
+    struct ExplosionCreateInput_Compat e;
+    DM1_ProjectileImpactLogPlanPc34 logPlan;
     memset(&p, 0, sizeof(p));
     memset(&r, 0, sizeof(r));
+    memset(&e, 0, sizeof(e));
+    memset(&logPlan, 0, sizeof(logPlan));
     ASSERT_EQ(dm1_v1_projectile_subtype_name_pc34(PROJECTILE_SUBTYPE_FIREBALL)[0],
               'F', "fireball name");
     ASSERT_EQ(dm1_v1_projectile_subtype_name_pc34(12345)[0],
@@ -204,6 +208,72 @@ static void test_projectile_impact_model(void) {
     r.outExplosion.explosionType = C040_EXPLOSION_SMOKE;
     ASSERT_EQ(dm1_v1_projectile_impact_source_sound_index_pc34(&p, &r), -1,
               "smoke explosion silent");
+
+    r.outExplosion.explosionType = C002_EXPLOSION_LIGHTNING_BOLT;
+    r.outExplosion.attack = 37;
+    r.outExplosion.mapIndex = 4;
+    r.outExplosion.mapX = 12;
+    r.outExplosion.mapY = 13;
+    r.outExplosion.cell = 2;
+    r.outExplosion.centered = 1;
+    r.outExplosion.poisonAttack = 17;
+    r.outExplosion.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    r.outExplosion.ownerIndex = 3;
+    r.outExplosion.creatorProjectileSlot = 9;
+    ASSERT_EQ(dm1_v1_projectile_explosion_create_input_pc34(&r, 456, &e), 1,
+              "explosion input builds");
+    ASSERT_EQ(e.explosionType, C002_EXPLOSION_LIGHTNING_BOLT,
+              "explosion type copied");
+    ASSERT_EQ(e.attack, 37, "explosion attack copied");
+    ASSERT_EQ(e.mapIndex, 4, "explosion map copied");
+    ASSERT_EQ(e.mapX, 12, "explosion x copied");
+    ASSERT_EQ(e.mapY, 13, "explosion y copied");
+    ASSERT_EQ(e.cell, 2, "explosion cell copied");
+    ASSERT_EQ(e.centered, 1, "explosion centered copied");
+    ASSERT_EQ(e.poisonAttack, 17, "explosion poison copied");
+    ASSERT_EQ(e.currentTick, 456, "explosion tick supplied");
+    ASSERT_EQ(e.ownerKind, PROJECTILE_OWNER_CHAMPION,
+              "explosion owner kind copied");
+    ASSERT_EQ(e.ownerIndex, 3, "explosion owner index copied");
+    ASSERT_EQ(e.creatorProjectileSlot, 9,
+              "explosion creator slot copied");
+    r.emittedExplosion = 0;
+    ASSERT_EQ(dm1_v1_projectile_explosion_create_input_pc34(&r, 456, &e), 0,
+              "no explosion input without emission");
+
+    r.resultKind = PROJECTILE_RESULT_HIT_WALL;
+    ASSERT_EQ(dm1_v1_projectile_impact_log_plan_pc34(&r, &logPlan), 1,
+              "wall log plan builds");
+    ASSERT_EQ(logPlan.handled, 1, "wall log handled");
+    ASSERT_EQ(logPlan.logKind, DM1_PROJECTILE_IMPACT_LOG_HIT_WALL_PC34,
+              "wall log kind");
+    r.resultKind = PROJECTILE_RESULT_HIT_DOOR;
+    (void)dm1_v1_projectile_impact_log_plan_pc34(&r, &logPlan);
+    ASSERT_EQ(logPlan.logKind, DM1_PROJECTILE_IMPACT_LOG_HIT_DOOR_PC34,
+              "door log kind");
+    r.resultKind = PROJECTILE_RESULT_HIT_FLUXCAGE;
+    (void)dm1_v1_projectile_impact_log_plan_pc34(&r, &logPlan);
+    ASSERT_EQ(logPlan.logKind, DM1_PROJECTILE_IMPACT_LOG_HIT_FLUXCAGE_PC34,
+              "fluxcage log kind");
+    r.resultKind = PROJECTILE_RESULT_HIT_OTHER_PROJECTILE;
+    (void)dm1_v1_projectile_impact_log_plan_pc34(&r, &logPlan);
+    ASSERT_EQ(logPlan.logKind,
+              DM1_PROJECTILE_IMPACT_LOG_HIT_OTHER_PROJECTILE_PC34,
+              "other projectile log kind");
+    r.resultKind = PROJECTILE_RESULT_DESPAWN_ENERGY;
+    (void)dm1_v1_projectile_impact_log_plan_pc34(&r, &logPlan);
+    ASSERT_EQ(logPlan.logKind, DM1_PROJECTILE_IMPACT_LOG_DESPAWN_ENERGY_PC34,
+              "energy despawn log kind");
+    r.resultKind = PROJECTILE_RESULT_DESPAWN_BOUNDS;
+    (void)dm1_v1_projectile_impact_log_plan_pc34(&r, &logPlan);
+    ASSERT_EQ(logPlan.logKind, DM1_PROJECTILE_IMPACT_LOG_DESPAWN_BOUNDS_PC34,
+              "bounds despawn log kind");
+    r.resultKind = PROJECTILE_RESULT_FLEW;
+    (void)dm1_v1_projectile_impact_log_plan_pc34(&r, &logPlan);
+    ASSERT_EQ(logPlan.handled, 0, "flew log not handled");
+    ASSERT_EQ(logPlan.logKind, DM1_PROJECTILE_IMPACT_LOG_NONE_PC34,
+              "flew log none");
+
     ASSERT_EQ(dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(8), 1,
               "dagger kept");
     ASSERT_EQ(dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(32), 1,
