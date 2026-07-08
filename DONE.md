@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-09 DM1 F0328 accepted-throw launch ownership: DM1 throw/shoot compat now owns accepted-throw launch direction, projectile movement-disable receipt, and thrown-potion subtype/power transport. M11 no longer has a separate thrown-potion projectile-shape helper. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-09 DM1 F0328 accepted-throw projectile-plan ownership: DM1 throw/shoot compat now owns the accepted THROW plan for F0305 stamina, Throw XP, F0312 action-hand strength, F0328 kinetic energy/attack/step energy, combat sound, and internal 4-tick action disable. M11 supplies live object facts/RNG and applies one DM1 receipt. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-09 DM1 F0407 begin-action ownership: DM1 action-XP compat now owns the combined begin-action receipt for G0495 defense/action-index, G0496/G0497/G0491/G0494 prelude, and F0325 stamina application. M11 action-row/direct entry paths now apply one DM1 receipt instead of chaining those decisions inline. Verification: `test_dm1_v1_action_f0407_tail_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

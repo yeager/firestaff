@@ -80,6 +80,10 @@ static void test_throw_runtime_math(void) {
     throwIn.rngStrength16 = 5;
     throwIn.rngKinetic16 = 5;
     throwIn.rngAttack32 = 31;
+    throwIn.thrownThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    throwIn.thingType = THING_TYPE_WEAPON;
+    throwIn.partyDirection = 2;
+    throwIn.throwSide = 1;
     ASSERT_EQ(dm1_v1_throw_projectile_plan_f0328_pc34(
                   &throwIn, &throwOut), 1,
               "F0328 throw projectile plan builds");
@@ -92,6 +96,13 @@ static void test_throw_runtime_math(void) {
     ASSERT_EQ(throwOut.stepEnergy, 8, "F0328 step energy");
     ASSERT_EQ(throwOut.actionDisableTicks, 4, "F0328 disable ticks");
     ASSERT_EQ(throwOut.combatSoundIndex, 13, "F0328 combat sound");
+    ASSERT_EQ(throwOut.projectileSubtype, PROJECTILE_SUBTYPE_KINETIC_ARROW,
+              "F0328 weapon projectile subtype");
+    ASSERT_EQ(throwOut.launchDirection, 3, "F0328 launch side direction");
+    ASSERT_EQ(throwOut.projectileDisabledMovementTicks, 4,
+              "F0328 projectile movement disable");
+    ASSERT_EQ(throwOut.lastProjectileDisabledMovementDirection, 2,
+              "F0328 last projectile direction");
 
     throwIn.championCurrentStamina = 20;
     throwIn.actionHandWounded = 1;
@@ -102,6 +113,22 @@ static void test_throw_runtime_math(void) {
               "F0312 low stamina and wound reduce strength");
     ASSERT_EQ(throwOut.kineticEnergy, 51,
               "F0328 kinetic uses reduced strength");
+
+    throwIn.actionHandWounded = 0;
+    throwIn.championCurrentStamina = 100;
+    throwIn.isWeapon = 0;
+    throwIn.hasWeaponInfo = 0;
+    throwIn.thingType = THING_TYPE_POTION;
+    throwIn.potionType = DM1_POTION_FUL_BOMB_PC34;
+    throwIn.potionPower = 44;
+    ASSERT_EQ(dm1_v1_throw_projectile_plan_f0328_pc34(
+                  &throwIn, &throwOut), 1,
+              "F0328 potion throw projectile plan builds");
+    ASSERT_EQ(throwOut.throwExperience, 8, "F0328 potion throw xp");
+    ASSERT_EQ(throwOut.projectileSubtype, PROJECTILE_SUBTYPE_FIREBALL,
+              "F0328 ful bomb projectile subtype");
+    ASSERT_EQ(throwOut.projectilePotionPower, 44,
+              "F0328 potion power transported");
 }
 
 static void test_projectile_shapes_and_launch(void) {
