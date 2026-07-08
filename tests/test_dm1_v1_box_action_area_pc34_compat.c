@@ -113,6 +113,9 @@ static void test_action_area_render_contract(void)
     CHECK(rect.y == 77);
     CHECK(rect.w == 96);
     CHECK(rect.h == 45);
+    CHECK(dm1_v1_action_area_zone_id_pc34() == 11);
+    CHECK(dm1_v1_action_area_graphic_id_pc34() == 10);
+    CHECK(dm1_v1_action_area_clear_color_pc34() == 0);
 
     CHECK(dm1_v1_action_menu_build_render_plan_pc34(3, &plan) == 1);
     CHECK(plan.graphic_id == DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34);
@@ -131,6 +134,20 @@ static void test_action_area_render_contract(void)
     CHECK(plan.header_fill_color == 4);
     CHECK(plan.row_text_color == 4);
     CHECK(plan.row_fill_color == 0);
+    CHECK(dm1_v1_action_menu_header_zone_id_pc34() == 80);
+    CHECK(dm1_v1_action_menu_row_count_pc34() == 3);
+    CHECK(dm1_v1_action_menu_row_base_zone_id_pc34(0) == 82);
+    CHECK(dm1_v1_action_menu_row_base_zone_id_pc34(2) == 84);
+    CHECK(dm1_v1_action_menu_row_base_zone_id_pc34(3) == 0);
+    CHECK(dm1_v1_action_menu_row_zone_id_pc34(0) == 85);
+    CHECK(dm1_v1_action_menu_row_zone_id_pc34(2) == 87);
+    CHECK(dm1_v1_action_menu_row_zone_id_pc34(-1) == 0);
+    CHECK(dm1_v1_action_menu_text_inset_pc34().x == 2);
+    CHECK(dm1_v1_action_menu_text_inset_pc34().y == 6);
+    CHECK(dm1_v1_action_menu_header_fill_color_pc34() == 4);
+    CHECK(dm1_v1_action_menu_header_text_color_pc34() == 0);
+    CHECK(dm1_v1_action_menu_row_fill_color_pc34() == 0);
+    CHECK(dm1_v1_action_menu_row_text_color_pc34() == 4);
 
     CHECK(dm1_v1_action_menu_build_render_plan_pc34(2, &plan) == 1);
     CHECK(plan.graphic_zone_id == 77);
@@ -139,7 +156,18 @@ static void test_action_area_render_contract(void)
     CHECK(plan.graphic_zone_id == 79);
     CHECK(plan.graphic_rect.h == 21);
     CHECK(dm1_v1_action_menu_build_render_plan_pc34(0, &plan) == 0);
+    CHECK(dm1_v1_action_result_zone_id_pc34() == 75);
+    CHECK(dm1_v1_action_result_rect_pc34().x == 224);
+    CHECK(dm1_v1_action_result_rect_pc34().y == 77);
+    CHECK(dm1_v1_action_result_rect_pc34().w == 96);
+    CHECK(dm1_v1_action_result_rect_pc34().h == 45);
+    CHECK(dm1_v1_action_pass_zone_id_pc34() == 98);
+    CHECK(dm1_v1_action_pass_rect_pc34().x == 285);
+    CHECK(dm1_v1_action_pass_rect_pc34().y == 77);
+    CHECK(dm1_v1_action_pass_rect_pc34().w == 34);
+    CHECK(dm1_v1_action_pass_rect_pc34().h == 7);
 
+    CHECK(dm1_v1_action_icon_parent_zone_id_pc34() == 88);
     CHECK(dm1_v1_action_icon_cell_zone_id_pc34(0) == 89);
     CHECK(dm1_v1_action_icon_cell_zone_id_pc34(3) == 92);
     CHECK(dm1_v1_action_icon_inner_zone_id_pc34(0) == 93);
