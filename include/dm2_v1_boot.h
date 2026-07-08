@@ -112,7 +112,8 @@ typedef enum {
     DM2_V1_BOOT_STARTUP_PREPARE_OOM,
     DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED,
     DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS,
-    DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED
+    DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED,
+    DM2_V1_BOOT_STARTUP_PREPARE_RUNTIME_BIND_FAILED
 } DM2_V1_BootStartupPrepareResult;
 
 typedef struct {
@@ -120,6 +121,7 @@ typedef struct {
     DM2_V1_BootStartupPrepareResult prepare_result;
     const char *failure_status_scope;
     const char *failure_status;
+    int runtime_bound;
 } DM2_V1_BootStartupLaunch;
 
 typedef struct {
