@@ -169,6 +169,10 @@ typedef struct {
 } Nexus_V1_StartupChampionSnapshot;
 
 typedef struct {
+    int title_active;
+    int title_frame;
+    int save_select_active;
+    int champion_select_active;
     const char *save_dir;
     unsigned int slot_mask;
     int save_selected_row;
@@ -198,6 +202,10 @@ typedef struct {
     Nexus_V1_StartupChampionStateReceipt champion_state_receipt;
     Nexus_V1_StartupHostReceipt host_receipt;
 } Nexus_V1_StartupHostActionReceipt;
+
+typedef struct {
+    Nexus_V1_StartupHostReceipt host_receipt;
+} Nexus_V1_StartupIdleReceipt;
 
 enum {
     NEXUS_V1_STARTUP_SAVE_ROW_LABEL_CAPACITY = 96,
@@ -455,6 +463,11 @@ int nexus_v1_startup_execute_save_action_with_host_receipt(
     Nexus_V1_StartupHostReceipt *out_host_receipt);
 void nexus_v1_startup_host_action_receipt_clear(
     Nexus_V1_StartupHostActionReceipt *receipt);
+void nexus_v1_startup_idle_receipt_clear(
+    Nexus_V1_StartupIdleReceipt *receipt);
+int nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
+    const Nexus_V1_StartupHostFacts *facts,
+    Nexus_V1_StartupIdleReceipt *out_receipt);
 int nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
     const Nexus_V1_StartupHostFacts *facts,
     int menu_input,
