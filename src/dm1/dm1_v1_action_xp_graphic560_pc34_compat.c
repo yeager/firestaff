@@ -10,6 +10,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "firestaff/dm1/v1/G0496_pc34_compat.h"
 #include "firestaff/dm1/v1/G0497_pc34_compat.h"
+#include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
 
@@ -95,14 +96,75 @@ int dm1_v1_action_stamina_cost_f0407_pc34(int actionIndex,
                          (unsigned int)actionIndex) & 1u);
 }
 
+int dm1_v1_action_disabled_ticks_f0407_pc34(int actionIndex) {
+    int ticks;
+    if (actionIndex < 0 || actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) return 0;
+    /* ReDMCSB: MENU.C G0491 lines 157-201 supplies F0407's common
+     * action-disable tick budget before per-action failure tails adjust it. */
+    ticks = dm1_v1_graphic560_action_disabled_ticks_get_pc34(actionIndex);
+    return ticks < 0 ? 0 : ticks;
+}
+
+int dm1_v1_action_adjust_f0407_tail_pc34(
+    const DM1_ActionF0407TailAdjustInputPc34* in,
+    DM1_ActionF0407TailAdjustPc34* out) {
+    int xp;
+    int ticks;
+    int actionIndex;
+    if (!in || !out) return 0;
+    actionIndex = in->actionIndex;
+    out->valid = 0;
+    out->actionExperienceGain = 0;
+    out->disabledTicks = 0;
+    if (actionIndex < 0 || actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+    xp = in->actionExperienceGain;
+    ticks = in->disabledTicks;
+    if (xp < 0) xp = 0;
+    if (ticks < 0) ticks = 0;
+    /* ReDMCSB: MENU.C F0407 lines 1331-1337 halve XP/ticks when the
+     * F0402/F0231 melee route returns FALSE. */
+    if (in->meleeFailureTail && !in->performed) {
+        xp >>= 1;
+        ticks >>= 1;
+    } else if (dm1_v1_action_is_party_shield_f0407_pc34(actionIndex) &&
+               !in->performed) {
+        /* ReDMCSB: MENU.C F0407 lines 1456-1461 quarters G0497 XP and halves
+         * disabled ticks when F0403 rejects SPELLSHIELD/FIRESHIELD. */
+        xp >>= 2;
+        ticks >>= 1;
+    } else if (dm1_v1_action_halves_xp_on_f0327_failure_pc34(actionIndex) &&
+               !in->performed) {
+        /* ReDMCSB: MENU.C F0407 lines 1300-1303 halves projectile-action XP
+         * when F0327_CHAMPION_IsProjectileSpellCast returns FALSE. */
+        xp >>= 1;
+    } else if (actionIndex == DM1_ACTION_SHOOT && !in->performed) {
+        /* ReDMCSB: MENU.C F0407 lines 1363-1387 clears G0497 XP for SHOOT's
+         * no-ammunition route but preserves the common disabled-tick budget. */
+        xp = 0;
+    } else if (actionIndex == DM1_ACTION_CLIMB_DOWN &&
+               in->cancelActionDisable) {
+        /* ReDMCSB: MENU.C F0407 lines 1548-1565 clears ActionDisabledTicks
+         * on failed rope CLIMB DOWN while preserving stamina and G0497 XP. */
+        ticks = 0;
+    }
+    out->valid = 1;
+    out->actionExperienceGain = xp;
+    out->disabledTicks = ticks;
+    return 1;
+}
+
 int dm1_v1_action_f0407_tail_pc34(int actionIndex,
                                   DM1_ActionF0407TailPc34* out) {
     int damageFactor;
     int staminaBase;
+    int disabledTicks;
     if (!out) return 0;
     out->valid = 0;
     out->damageFactor = 0;
     out->staminaBase = 0;
+    out->disabledTicks = 0;
     out->isMeleeContact = 0;
     out->isPartyShield = 0;
     out->halvesXpOnF0327Failure = 0;
@@ -111,10 +173,12 @@ int dm1_v1_action_f0407_tail_pc34(int actionIndex,
     }
     damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(actionIndex);
     staminaBase = dm1_v1_graphic560_action_stamina_get_pc34(actionIndex);
+    disabledTicks = dm1_v1_action_disabled_ticks_f0407_pc34(actionIndex);
     if (damageFactor < 0 || staminaBase < 0) return 0;
     out->valid = 1;
     out->damageFactor = damageFactor;
     out->staminaBase = staminaBase;
+    out->disabledTicks = disabledTicks;
     out->isMeleeContact = dm1_v1_action_is_melee_contact_f0407_pc34(actionIndex);
     out->isPartyShield = dm1_v1_action_is_party_shield_f0407_pc34(actionIndex);
     out->halvesXpOnF0327Failure =
