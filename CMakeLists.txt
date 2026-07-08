@@ -15791,6 +15791,7 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
         tests/test_dm1_v1_action_f0407_tail_pc34_compat.c
         src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
         src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
+        src/dm1/dm1_v1_champion_needs_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
         src/dm1/dm1_v1_g0497_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c

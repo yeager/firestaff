@@ -125,6 +125,30 @@ typedef struct {
     struct WeaponProfile_Compat weaponProfile;
 } DM1_MeleeWeaponProfilePlanPc34;
 
+typedef struct {
+    int championIndex;
+    int actionSkillIndex;
+    int damageApplied;
+    int creatureProperties;
+    int currentStamina;
+    int maximumStamina;
+    int currentHealth;
+    int staminaRandomValue;
+} DM1_MeleeF0231SideEffectInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldAwardXp;
+    int skillIndex;
+    int experienceGain;
+    int staminaRandomModulus;
+    int staminaBaseCost;
+    int staminaCost;
+    int currentStaminaAfter;
+    int currentHealthAfter;
+    int pendingHealthDamage;
+} DM1_MeleeF0231SideEffectPlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -146,6 +170,9 @@ int dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(
 int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
     const DM1_MeleeWeaponProfileInputPc34* in,
     DM1_MeleeWeaponProfilePlanPc34* out);
+int dm1_v1_melee_side_effect_plan_f0231_pc34(
+    const DM1_MeleeF0231SideEffectInputPc34* in,
+    DM1_MeleeF0231SideEffectPlanPc34* out);
 
 #ifdef __cplusplus
 }

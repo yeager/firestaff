@@ -52,6 +52,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DM1 throw/shoot compat now also owns accepted-throw launch direction, projectile movement-disable receipt, and thrown-potion subtype/power transport. Remaining runtime coding work is lower-level throw object-chain ownership plus deeper F0231 combat result receipts.
   - 2026-07-09 update: DM1 F0402 melee compat now owns the pre-F0231 reach and DISRUPT/material gates used by M10. Remaining runtime coding work is deeper F0231 damage math ownership and reducing remaining mutation adapters.
   - 2026-07-09 update: DM1 F0402/F0231 melee compat now owns weapon-profile construction from G0492/G0493, including Vorpal/DISRUPT non-material hit flagging. Remaining runtime coding work is deeper F0231 side-effect ownership and reducing remaining M10 mutation adapters.
+  - 2026-07-09 update: DM1 F0231 melee compat now owns hit/miss side-effect planning for damage XP, stamina random ranges, stamina cost, and stamina-underflow HP damage. Remaining runtime coding work is deeper F0231 damage/group aftermath ownership and reducing remaining M10 mutation adapters.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
