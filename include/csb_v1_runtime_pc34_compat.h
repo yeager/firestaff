@@ -1010,6 +1010,11 @@ typedef struct {
     struct PartyState_Compat party;
 } CSB_V1_RuntimePartyMirrorReceipt_PC34;
 typedef struct {
+    int valid;
+    CSB_V1_RuntimeViewStateReceipt_PC34 view;
+    CSB_V1_RuntimePartyMirrorReceipt_PC34 party;
+} CSB_V1_RuntimeM11MirrorReceipt_PC34;
+typedef struct {
     int entrance_resume_available;
     char entrance_resume_path[CSB_V1_STARTUP_PATH_CAP_PC34];
     int import_available;
@@ -1086,6 +1091,11 @@ void csb_v1_runtime_party_mirror_receipt_init_pc34(
 int csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_RuntimePartyMirrorReceipt_PC34 *out_receipt);
+void csb_v1_runtime_m11_mirror_receipt_init_pc34(
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 *receipt);
+int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt);
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

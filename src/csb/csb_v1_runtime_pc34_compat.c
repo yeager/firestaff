@@ -1985,6 +1985,44 @@ int csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
     return 1;
 }
 
+void csb_v1_runtime_m11_mirror_receipt_init_pc34(
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    csb_v1_runtime_view_state_receipt_init_pc34(&receipt->view);
+    csb_v1_runtime_party_mirror_receipt_init_pc34(&receipt->party);
+}
+
+int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_runtime_m11_mirror_receipt_init_pc34(out_receipt);
+    if (!profile) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0806 and CSBWin runtime handoff both publish
+     * one live party pose/profile boundary before the host mirrors UI state. */
+    if (!csb_v1_runtime_view_state_receipt_from_profile_pc34(
+            profile,
+            &out_receipt->view)) {
+        return 0;
+    }
+    if (!csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
+            profile,
+            &out_receipt->party)) {
+        return 0;
+    }
+    out_receipt->valid = out_receipt->party.valid ? 1 : 0;
+    return 1;
+}
+
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
 
