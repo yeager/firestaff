@@ -86,6 +86,224 @@ void nexus_v1_launcher_boot_receipt_clear(
     nexus_v1_startup_launch_receipt_clear(&receipt->startup_receipt);
 }
 
+void nexus_v1_launcher_startup_runtime_state_clear(
+    Nexus_V1_StartupRuntimeState *state)
+{
+    if (!state) {
+        return;
+    }
+    memset(state, 0, sizeof(*state));
+}
+
+int nexus_v1_launcher_startup_host_facts_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupHostFacts *out_facts)
+{
+    if (!out_facts) {
+        return 0;
+    }
+    memset(out_facts, 0, sizeof(*out_facts));
+    if (!state) {
+        return 0;
+    }
+    out_facts->title_active = state->title_active;
+    out_facts->title_frame = state->title_frame;
+    out_facts->save_select_active = state->save_select_active;
+    out_facts->champion_select_active = state->champion_select_active;
+    out_facts->save_dir = state->save_dir;
+    out_facts->slot_mask = state->slot_mask;
+    out_facts->save_selected_row = state->save_selected_row;
+    out_facts->save_row_count = state->save_row_count;
+    out_facts->champion_pool = state->engine ? &state->engine->champions : NULL;
+    out_facts->champion_cursor = state->champion_cursor;
+    out_facts->champion_frame = state->champion_frame;
+    return 1;
+}
+
+int nexus_v1_launcher_startup_advance_idle_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupIdleReceipt *out_receipt)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_advance_idle_from_host_facts_with_receipt(
+        &facts,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_execute_save_firestaff_input_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_execute_save_firestaff_input_from_host_facts_with_receipt(
+        &facts,
+        menu_input,
+        load_save,
+        load_userdata,
+        out_execution,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_execute_save_pointer_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int x,
+    int y,
+    Nexus_V1_StartupLoadSaveFn load_save,
+    void *load_userdata,
+    Nexus_V1_StartupSaveExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_execute_save_pointer_from_host_facts_with_receipt(
+        &facts,
+        x,
+        y,
+        load_save,
+        load_userdata,
+        out_execution,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_execute_title_firestaff_input_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_execute_title_firestaff_input_from_host_facts_with_receipt(
+        &facts,
+        menu_input,
+        out_execution,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_execute_title_pointer_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupTitleExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_execute_title_pointer_from_host_facts_with_receipt(
+        &facts,
+        out_execution,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_execute_champion_firestaff_input_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int menu_input,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_execute_champion_firestaff_input_from_host_facts_with_receipt(
+        &facts,
+        menu_input,
+        out_execution,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_execute_champion_pointer_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    int x,
+    int y,
+    Nexus_V1_StartupChampionExecution *out_execution,
+    Nexus_V1_StartupHostActionReceipt *out_receipt)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_execute_champion_pointer_from_host_facts_with_receipt(
+        &facts,
+        x,
+        y,
+        out_execution,
+        out_receipt);
+}
+
+int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_presentation_build_save_from_host_facts(
+        &facts,
+        out_commands,
+        max_commands);
+}
+
+int nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
+    const Nexus_V1_StartupRuntimeState *state,
+    Nexus_V1_StartupDrawCommand *out_commands,
+    int max_commands)
+{
+    Nexus_V1_StartupHostFacts facts;
+    if (!nexus_v1_launcher_startup_host_facts_from_runtime_state(
+            state,
+            &facts)) {
+        return 0;
+    }
+    return nexus_v1_startup_presentation_build_champion_from_host_facts(
+        &facts,
+        out_commands,
+        max_commands);
+}
+
+int nexus_v1_launcher_startup_presentation_execute(
+    const Nexus_V1_StartupDrawCommand *commands,
+    int command_count,
+    const Nexus_V1_StartupDrawExecutor *executor)
+{
+    return nexus_v1_startup_presentation_execute(
+        commands,
+        command_count,
+        executor);
+}
+
 static void nexus_v1_launcher_fill_boot_receipt(
     const char *data_dir,
     Nexus_V1_Engine *engine,
