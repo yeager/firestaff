@@ -1580,6 +1580,29 @@ static int m11_apply_dm1_startup_runtime_start_receipt(
     return 1;
 }
 
+static int m11_apply_dm1_startup_graphics_bind_receipt(
+    M11_GameViewState* state,
+    const DM1_V1_StartupGraphicsBindReceipt_PC34* receipt) {
+    if (!state || !receipt || !receipt->handled) {
+        return 0;
+    }
+    if (!receipt->bind_graphics_dat) {
+        return 1;
+    }
+    if (M11_AssetLoader_Init(&state->assetLoader,
+                             receipt->graphics_dat_path)) {
+        state->assetsAvailable = 1;
+        M11_Font_Init(&state->originalFont);
+        if (M11_Font_LoadFromGraphicsDat(
+                &state->originalFont,
+                state->assetLoader.fileState,
+                state->assetLoader.runtimeState)) {
+            state->originalFontAvailable = 1;
+        }
+    }
+    return 1;
+}
+
 static int m11_apply_dm1_save_resume_receipt(
     M11_GameViewState* state,
     const struct DM1SaveResumeReceipt* receipt) {
@@ -10980,23 +11003,30 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->mirrorCatalogAvailable = 1;
     }
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
-        DM1_V1_StartupRuntimeStartFacts_PC34 facts;
-        DM1_V1_StartupRuntimeStartReceipt_PC34 receipt;
+        DM1_V1_StartupRuntimeReadyFacts_PC34 facts;
+        DM1_V1_StartupRuntimeReadyReceipt_PC34 receipt;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
-        facts.game_id = spec->gameId;
-        facts.source_id = spec->sourceId;
-        facts.title = spec->title;
-        facts.verified_asset_md5 = spec->verifiedAssetMd5;
-        facts.dungeon_path = dungeonPath;
-        facts.source_kind = (int)spec->sourceKind;
-        facts.presentation_mode = spec->presentationMode;
-        facts.presentation_width = spec->presentationWidth;
-        facts.presentation_height = spec->presentationHeight;
-        facts.font_scale = spec->fontScale;
-        facts.launch_path = DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34;
-        if (!dm1_v1_startup_runtime_start_receipt_pc34(&facts, &receipt) ||
-            !m11_apply_dm1_startup_runtime_start_receipt(state, &receipt)) {
+        facts.runtime_start.game_id = spec->gameId;
+        facts.runtime_start.source_id = spec->sourceId;
+        facts.runtime_start.title = spec->title;
+        facts.runtime_start.verified_asset_md5 = spec->verifiedAssetMd5;
+        facts.runtime_start.dungeon_path = dungeonPath;
+        facts.runtime_start.source_kind = (int)spec->sourceKind;
+        facts.runtime_start.presentation_mode = spec->presentationMode;
+        facts.runtime_start.presentation_width = spec->presentationWidth;
+        facts.runtime_start.presentation_height = spec->presentationHeight;
+        facts.runtime_start.font_scale = spec->fontScale;
+        facts.runtime_start.launch_path =
+            DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34;
+        facts.load_succeeded = 1;
+        if (!dm1_v1_startup_runtime_ready_receipt_pc34(&facts, &receipt) ||
+            !m11_apply_dm1_startup_runtime_start_receipt(
+                state,
+                &receipt.runtime_start_receipt) ||
+            !m11_apply_dm1_startup_graphics_bind_receipt(
+                state,
+                &receipt.graphics_bind_receipt)) {
             return 0;
         }
     } else {
@@ -11030,23 +11060,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     {
         char graphicsDatPath[M11_GAME_VIEW_PATH_CAPACITY];
         int bindGraphicsDat = 0;
-        if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
-            DM1_V1_StartupGraphicsBindFacts_PC34 facts;
-            DM1_V1_StartupGraphicsBindReceipt_PC34 receipt;
-            memset(&facts, 0, sizeof(facts));
-            memset(&receipt, 0, sizeof(receipt));
-            facts.game_id = spec->gameId;
-            facts.dungeon_path = dungeonPath;
-            if (dm1_v1_startup_graphics_bind_receipt_pc34(&facts, &receipt) &&
-                receipt.handled &&
-                receipt.bind_graphics_dat) {
-                snprintf(graphicsDatPath,
-                         sizeof(graphicsDatPath),
-                         "%s",
-                         receipt.graphics_dat_path);
-                bindGraphicsDat = 1;
-            }
-        } else {
+        if (!spec->gameId || strcmp(spec->gameId, "dm1") != 0) {
             size_t dungeonLen = strlen(dungeonPath);
             size_t slashPos = dungeonLen;
             while (slashPos > 0 && dungeonPath[slashPos - 1] != '/' && dungeonPath[slashPos - 1] != '\\') {

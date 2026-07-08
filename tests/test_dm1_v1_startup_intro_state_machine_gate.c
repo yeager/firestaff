@@ -448,6 +448,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupGraphicsBindReceipt_PC34 graphics_receipt;
     DM1_V1_StartupDungeonLoadFacts_PC34 load_facts;
     DM1_V1_StartupDungeonLoadReceipt_PC34 load_receipt;
+    DM1_V1_StartupRuntimeReadyFacts_PC34 ready_facts;
+    DM1_V1_StartupRuntimeReadyReceipt_PC34 ready_receipt;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
     DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
@@ -739,6 +741,52 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("NULL dungeon-load facts rejected",
              dm1_v1_startup_dungeon_load_receipt_pc34(NULL,
                                                       &load_receipt),
+             0);
+
+    memset(&ready_facts, 0, sizeof(ready_facts));
+    memset(&ready_receipt, 0, sizeof(ready_receipt));
+    ready_facts.runtime_start.game_id = "dm1";
+    ready_facts.runtime_start.source_id = "dm1";
+    ready_facts.runtime_start.title = "Dungeon Master";
+    ready_facts.runtime_start.verified_asset_md5 =
+        "0123456789abcdef0123456789abcdef";
+    ready_facts.runtime_start.dungeon_path =
+        "/tmp/firestaff/DATA/DUNGEON.DAT";
+    ready_facts.runtime_start.source_kind = 2;
+    ready_facts.runtime_start.presentation_mode = 1;
+    ready_facts.runtime_start.presentation_width = 320;
+    ready_facts.runtime_start.presentation_height = 200;
+    ready_facts.runtime_start.font_scale = 2;
+    ready_facts.runtime_start.launch_path =
+        DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34;
+    ready_facts.load_succeeded = 1;
+    expect_i("DM1 runtime-ready receipt builds",
+             dm1_v1_startup_runtime_ready_receipt_pc34(&ready_facts,
+                                                       &ready_receipt),
+             1);
+    expect_i("DM1 runtime-ready receipt combines load runtime graphics",
+             ready_receipt.handled == 1 &&
+                 ready_receipt.load_receipt.load_succeeded == 1 &&
+                 ready_receipt.runtime_start_receipt.active == 1 &&
+                 ready_receipt.graphics_bind_receipt.bind_graphics_dat == 1 &&
+                 strcmp(ready_receipt.graphics_bind_receipt.graphics_dat_path,
+                        "/tmp/firestaff/DATA/GRAPHICS.DAT") == 0,
+             1);
+    ready_facts.load_succeeded = 0;
+    expect_i("DM1 runtime-ready rejects failed dungeon load",
+             dm1_v1_startup_runtime_ready_receipt_pc34(&ready_facts,
+                                                       &ready_receipt),
+             0);
+    ready_facts.load_succeeded = 1;
+    ready_facts.runtime_start.game_id = "csb";
+    expect_i("non-DM1 runtime-ready receipt no-op",
+             dm1_v1_startup_runtime_ready_receipt_pc34(&ready_facts,
+                                                       &ready_receipt) &&
+                 ready_receipt.handled == 0,
+             1);
+    expect_i("NULL runtime-ready facts rejected",
+             dm1_v1_startup_runtime_ready_receipt_pc34(NULL,
+                                                       &ready_receipt),
              0);
     expect_i("DM1 handoff prelude plan builds",
              dm1_v1_startup_handoff_prelude_plan_pc34("dm1", &prelude),
