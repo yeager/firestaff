@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 Theron startup media receipt: Theron startup-media now emits an M11-ready state receipt for Track 02 roster names/titles and prompt text. M11 applies that receipt instead of copying media-capture fields inline during boot. Verification: Theron M11 direct-launch passed, Phase A passed 24/24, and `git diff --check` passed.
+
 - ✅ 2026-07-08 CSB startup tick receipt application: M11 now applies CSB startup tick receipts through one helper instead of setting the entrance frame and command-state receipt separately during idle startup animation ticks. Verification: CSB startup entrance pointer contract passed 140/140, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.
 
 - ✅ 2026-07-08 CSB startup init/host receipt application: M11 now applies CSB startup init receipts and host receipts through shared helpers, removing duplicated StartCSB init field copies and entrance-result switch blocks. Verification: CSB startup entrance pointer contract passed 140/140, CSB M11 startup/resume gate passed, Phase A passed 24/24, targeted `firestaff` build passed, and `git diff --check` passed.

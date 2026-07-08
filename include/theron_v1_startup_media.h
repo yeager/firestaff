@@ -25,13 +25,33 @@ typedef struct {
     char startup_text_prompt[THERON_STARTUP_MEDIA_PROMPT_CAPACITY];
 } Theron_StartupMedia;
 
+typedef struct {
+    int startup_roster_name_status;
+    int startup_roster_name_count;
+    char startup_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
+                              [THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
+    char startup_roster_titles[THERON_STARTUP_MEDIA_ROSTER_CAPACITY]
+                               [THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
+    int startup_text_prompt_status;
+    int startup_text_prompt_count;
+    char startup_text_prompt[THERON_STARTUP_MEDIA_PROMPT_CAPACITY];
+} Theron_StartupMediaStateReceipt;
+
 void theron_v1_startup_media_init(Theron_StartupMedia *media);
+void theron_v1_startup_media_state_receipt_init(
+    Theron_StartupMediaStateReceipt *receipt);
 
 void theron_v1_startup_media_capture_track02(
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
     const char *md5_hex,
     Theron_StartupMedia *out_media);
+
+void theron_v1_startup_media_capture_track02_state_receipt(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_StartupMediaStateReceipt *out_receipt);
 
 #ifdef __cplusplus
 }
