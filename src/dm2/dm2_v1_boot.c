@@ -869,6 +869,35 @@ int dm2_v1_boot_startup_host_facts_from_runtime_state(
     return 1;
 }
 
+int dm2_v1_boot_startup_launch_from_runtime_state(
+    const DM2_V1_BootProfile *profile,
+    int startup_menu_active,
+    const char *startup_save_root,
+    int resume_available,
+    unsigned int slot_mask,
+    int selected_row,
+    DM2_V1_StartupLaunchReceipt *out_receipt)
+{
+    DM2_V1_StartupHostFacts facts;
+    if (!out_receipt) {
+        return 0;
+    }
+    dm2_v1_startup_launch_receipt_clear(out_receipt);
+    if (!dm2_v1_boot_startup_host_facts_from_runtime_state(
+            profile,
+            startup_menu_active,
+            startup_save_root,
+            resume_available,
+            slot_mask,
+            selected_row,
+            &facts)) {
+        return 0;
+    }
+    return dm2_v1_startup_launch_from_host_facts_with_receipt(
+        &facts,
+        out_receipt);
+}
+
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
@@ -974,6 +1003,17 @@ int dm2_v1_boot_startup_launch_detach_runtime(
              launch->profile->dungeon_path[0]
                  ? launch->profile->dungeon_path
                  : "DUNGEON.DAT");
+    snprintf(out_receipt->title,
+             sizeof(out_receipt->title),
+             "%s",
+             "DUNGEON MASTER II: SKULLKEEP");
+    snprintf(out_receipt->source_id,
+             sizeof(out_receipt->source_id),
+             "%s",
+             "dm2");
+    out_receipt->initialize_v2_runtime = 1;
+    out_receipt->initialize_hud_runtime = 1;
+    out_receipt->initialize_touch_runtime = 1;
     launch->profile = NULL;
     return 1;
 }
