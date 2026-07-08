@@ -284,3 +284,87 @@ int csb_v1_runtime_tick_from_boot_profile_pc34(
     }
     return result;
 }
+
+int csb_v1_runtime_object_icon_index_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short thing)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_object_icon_index(&profile->runtime, thing)
+                   : -1;
+}
+
+int csb_v1_runtime_object_action_set_index_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short thing)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    return profile
+               ? csb_v1_runtime_object_action_set_index(&profile->runtime,
+                                                        thing)
+               : 0;
+}
+
+uint16_t csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short thing)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_object_allowed_slots(&profile->runtime,
+                                                         thing)
+                   : 0u;
+}
+
+int csb_v1_runtime_object_name_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short thing,
+    char *out,
+    size_t out_size)
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    if (!profile) {
+        if (out && out_size > 0u) {
+            out[0] = '\0';
+        }
+        return 0;
+    }
+    return csb_v1_runtime_object_name(&profile->runtime,
+                                      thing,
+                                      out,
+                                      out_size);
+}
+
+int csb_v1_runtime_read_container_slots_from_boot_profile_pc34(
+    const void *boot_profile,
+    unsigned short container_thing,
+    unsigned short out_slots[8])
+{
+    const CSB_V1_BootProfile *profile =
+        (const CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_read_container_slots(&profile->runtime,
+                                                         container_thing,
+                                                         out_slots)
+                   : -1;
+}
+
+int csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short container_thing,
+    const unsigned short slots[8])
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_write_container_slots(&profile->runtime,
+                                                          container_thing,
+                                                          slots)
+                   : 0;
+}

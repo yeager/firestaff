@@ -6223,6 +6223,8 @@ if(BUILD_TESTING)
 
     add_executable(test_csb_v1_object_icon_resolver_pc34_compat
         tests/test_csb_v1_object_icon_resolver_pc34_compat.c
+        src/frontend/title_frontend_v1.c
+        src/frontend/title_dat_loader_v1.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_csb_v1_object_icon_resolver_pc34_compat PRIVATE
