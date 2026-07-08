@@ -387,6 +387,75 @@ static void test_projectile_creature_impact_plan(void) {
     ASSERT_EQ(plan.shouldApplyDamage, 1, "harm non-material damages");
 }
 
+static void test_projectile_champion_impact_plan(void) {
+    struct ProjectileInstance_Compat p;
+    struct ProjectileTickResult_Compat r;
+    DM1_ProjectileChampionImpactPlanPc34 impact;
+    DM1_ProjectileChampionPoisonPlanPc34 poison;
+    memset(&p, 0, sizeof(p));
+    memset(&r, 0, sizeof(r));
+    memset(&impact, 0, sizeof(impact));
+    memset(&poison, 0, sizeof(poison));
+
+    p.projectileSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+    p.poisonAttack = 130;
+    r.resultKind = PROJECTILE_RESULT_HIT_CHAMPION;
+    r.emittedCombatAction = 1;
+    r.newMapIndex = 2;
+    r.newMapX = 7;
+    r.newMapY = 8;
+    r.newCell = 3;
+    r.outAction.defenderSlotOrCreatureIndex = 1;
+    r.outAction.attackTypeCode = COMBAT_ATTACK_MAGIC;
+    r.outAction.rawAttackValue = 55;
+    r.outAction.allowedWounds = COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO;
+
+    ASSERT_EQ(dm1_v1_projectile_champion_impact_plan_pc34(
+                  &p, &r, 1, &impact), 1,
+              "champion impact plan builds");
+    ASSERT_EQ(impact.handled, 1, "champion impact handled");
+    ASSERT_EQ(impact.championPresent, 1, "champion present");
+    ASSERT_EQ(impact.championIndex, 1, "champion index");
+    ASSERT_EQ(impact.impactMapIndex, 2, "champion impact map");
+    ASSERT_EQ(impact.impactMapX, 7, "champion impact x");
+    ASSERT_EQ(impact.impactMapY, 8, "champion impact y");
+    ASSERT_EQ(impact.impactCell, 3, "champion impact cell");
+    ASSERT_EQ(impact.attackTypeCode, COMBAT_ATTACK_MAGIC,
+              "champion attack type");
+    ASSERT_EQ(impact.rawAttackValue, 55, "champion raw attack");
+    ASSERT_EQ(impact.allowedWounds,
+              COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO,
+              "champion allowed wounds");
+
+    ASSERT_EQ(dm1_v1_projectile_champion_poison_plan_pc34(
+                  &impact, &p, 12, 30, 65000, 1, &poison), 1,
+              "champion poison plan builds");
+    ASSERT_EQ(poison.shouldApply, 1, "champion poison applies");
+    ASSERT_EQ(poison.championIndex, 1, "champion poison index");
+    ASSERT_EQ(poison.poisonDamage, 2, "champion poison damage");
+    ASSERT_EQ(poison.newPoisonDose, 65130, "champion poison dose");
+    ASSERT_EQ(poison.nextAttack, 129, "champion poison next attack");
+    ASSERT_EQ(poison.scheduleDelayTicks, 36, "champion poison delay");
+
+    ASSERT_EQ(dm1_v1_projectile_champion_poison_plan_pc34(
+                  &impact, &p, 12, 1, 65530, 1, &poison), 1,
+              "champion poison cap plan builds");
+    ASSERT_EQ(poison.poisonDamage, 1, "champion poison damage caps to hp");
+    ASSERT_EQ(poison.newPoisonDose, 65535, "champion poison dose caps");
+
+    ASSERT_EQ(dm1_v1_projectile_champion_poison_plan_pc34(
+                  &impact, &p, 12, 30, 0, 0, &poison), 1,
+              "champion poison random fail builds");
+    ASSERT_EQ(poison.shouldApply, 0, "champion poison random gate blocks");
+
+    ASSERT_EQ(dm1_v1_projectile_champion_party_death_check_pc34(0, 1), 0,
+              "living champion no party death check");
+    ASSERT_EQ(dm1_v1_projectile_champion_party_death_check_pc34(0, 0), 1,
+              "zero hp party death check");
+    ASSERT_EQ(dm1_v1_projectile_champion_party_death_check_pc34(1, 9), 1,
+              "killed flag party death check");
+}
+
 int main(void) {
     test_throw_weight_and_stamina();
     test_throw_runtime_math();
@@ -397,6 +466,7 @@ int main(void) {
     test_projectile_associated_thing_disposition();
     test_black_flame_heal_and_group_cell();
     test_projectile_creature_impact_plan();
+    test_projectile_champion_impact_plan();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_throw_shoot_pc34_compat: %d failures\n",
                 g_failures);

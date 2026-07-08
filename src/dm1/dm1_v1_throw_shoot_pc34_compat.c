@@ -512,3 +512,85 @@ int dm1_v1_projectile_creature_impact_aftermath_pc34(
     }
     return 1;
 }
+
+int dm1_v1_projectile_champion_impact_plan_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    int championPresent,
+    DM1_ProjectileChampionImpactPlanPc34* outPlan) {
+    (void)projectile;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->championIndex = -1;
+    outPlan->impactCell = -1;
+    if (!result) return 0;
+    if (result->resultKind != PROJECTILE_RESULT_HIT_CHAMPION ||
+        !result->emittedCombatAction) {
+        return 0;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 510-558 resolves the champion in
+     * P0456_i_Cell, computes F0216 impact attack, calls F0321, then
+     * optionally calls F0322 poison. */
+    outPlan->handled = 1;
+    outPlan->championIndex = result->outAction.defenderSlotOrCreatureIndex;
+    outPlan->championPresent = championPresent ? 1 : 0;
+    outPlan->impactMapIndex = result->newMapIndex;
+    outPlan->impactMapX = result->newMapX;
+    outPlan->impactMapY = result->newMapY;
+    outPlan->impactCell = result->newCell;
+    outPlan->attackTypeCode = result->outAction.attackTypeCode;
+    outPlan->rawAttackValue = result->outAction.rawAttackValue;
+    outPlan->allowedWounds = result->outAction.allowedWounds;
+    return 1;
+}
+
+int dm1_v1_projectile_champion_poison_plan_pc34(
+    const DM1_ProjectileChampionImpactPlanPc34* impactPlan,
+    const struct ProjectileInstance_Compat* projectile,
+    int appliedDamage,
+    int championCurrentHealth,
+    int championPoisonDose,
+    int rng2,
+    DM1_ProjectileChampionPoisonPlanPc34* outPlan) {
+    int poisonDamage;
+    int dose;
+    if (!outPlan) return 0;
+    memset(outPlan, 0, sizeof(*outPlan));
+    outPlan->championIndex = -1;
+    if (!impactPlan || !projectile || !impactPlan->handled ||
+        !impactPlan->championPresent) {
+        return 0;
+    }
+    outPlan->championIndex = impactPlan->championIndex;
+    if (appliedDamage <= 0 || projectile->poisonAttack <= 0 ||
+        championCurrentHealth <= 0 || (rng2 & 1) == 0) {
+        return 1;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0217 lines 557-558 gates poison after applied
+     * damage and RANDOM(2). CHAMPION.C F0322 lines 1949-1960 applies
+     * max(1, attack >> 6) damage and schedules attack-1 after 36 ticks. */
+    poisonDamage = projectile->poisonAttack >> 6;
+    if (poisonDamage < 1) poisonDamage = 1;
+    if (poisonDamage > championCurrentHealth) {
+        poisonDamage = championCurrentHealth;
+    }
+    dose = championPoisonDose + projectile->poisonAttack;
+    if (dose > 0xFFFF) dose = 0xFFFF;
+
+    outPlan->shouldApply = 1;
+    outPlan->poisonDamage = poisonDamage;
+    outPlan->newPoisonDose = dose;
+    outPlan->nextAttack = projectile->poisonAttack - 1;
+    outPlan->scheduleDelayTicks = outPlan->nextAttack > 0 ? 36 : 0;
+    return 1;
+}
+
+int dm1_v1_projectile_champion_party_death_check_pc34(
+    int combatKilledFlag,
+    int championCurrentHealth) {
+    /* ReDMCSB: CHAMPION.C lines 1659-1667 marks the party dead when the
+     * last live champion reaches zero HP. M11 owns the party-wide scan. */
+    return combatKilledFlag || championCurrentHealth <= 0;
+}

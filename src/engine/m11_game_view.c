@@ -27602,46 +27602,37 @@ static int m11_maybe_apply_projectile_poison_to_champion(
     M11_GameViewState* state,
     int championIndex,
     struct ChampionState_Compat* champion,
+    const DM1_ProjectileChampionImpactPlanPc34* impactPlan,
     const struct ProjectileInstance_Compat* projectile,
     int appliedDamage) {
-    unsigned int dose;
-    int poisonDamage;
-    int nextAttack;
+    DM1_ProjectileChampionPoisonPlanPc34 poisonPlan;
+    int rng2;
     struct TimelineEvent_Compat poisonEvent;
-    if (!state || !champion || !projectile) return 0;
+    if (!state || !champion || !impactPlan || !projectile) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
-    if (appliedDamage <= 0 || projectile->poisonAttack <= 0) return 0;
-    if (champion->hp.current == 0) return 0;
-    /* ReDMCSB PROJEXPL.C F0217 lines 557-558 gates projectile poison
-     * through F0322 only when the champion-damage call applied damage,
-     * the projectile carries poison, and RANDOM(2) passes.  CHAMPION.C
-     * F0322 lines 1949-1960 applies immediate max(1, attack >> 6)
-     * damage, then schedules C75 with attack-1 after 36 ticks. */
-    if (F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2) == 0) {
+    rng2 = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2);
+    if (!dm1_v1_projectile_champion_poison_plan_pc34(
+            impactPlan, projectile, appliedDamage,
+            (int)champion->hp.current, (int)champion->poisonDose,
+            rng2, &poisonPlan) ||
+        !poisonPlan.shouldApply) {
         return 0;
     }
-    poisonDamage = projectile->poisonAttack >> 6;
-    if (poisonDamage < 1) poisonDamage = 1;
-    if (poisonDamage > (int)champion->hp.current) {
-        poisonDamage = (int)champion->hp.current;
-    }
-    champion->hp.current = (unsigned short)((int)champion->hp.current - poisonDamage);
 
-    dose = (unsigned int)champion->poisonDose +
-           (unsigned int)projectile->poisonAttack;
-    if (dose > 0xFFFFu) dose = 0xFFFFu;
-    champion->poisonDose = (unsigned short)dose;
+    champion->hp.current = (unsigned short)(
+        (int)champion->hp.current - poisonPlan.poisonDamage);
+    champion->poisonDose = (unsigned short)poisonPlan.newPoisonDose;
 
-    nextAttack = projectile->poisonAttack - 1;
-    if (nextAttack > 0) {
+    if (poisonPlan.nextAttack > 0) {
         memset(&poisonEvent, 0, sizeof(poisonEvent));
         poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
-        poisonEvent.fireAtTick = state->world.gameTick + 36u;
+        poisonEvent.fireAtTick =
+            state->world.gameTick + (uint32_t)poisonPlan.scheduleDelayTicks;
         poisonEvent.mapIndex = state->world.partyMapIndex;
         poisonEvent.mapX = state->world.party.mapX;
         poisonEvent.mapY = state->world.party.mapY;
         poisonEvent.aux0 = LIFECYCLE_STATUS_POISON;
-        poisonEvent.aux1 = nextAttack;
+        poisonEvent.aux1 = poisonPlan.nextAttack;
         poisonEvent.aux4 = championIndex;
         (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline,
                                              &poisonEvent);
@@ -27808,19 +27799,27 @@ static void m11_projectile_apply_impact(
 
     if (r->resultKind == PROJECTILE_RESULT_HIT_CHAMPION
             && r->emittedCombatAction) {
+        DM1_ProjectileChampionImpactPlanPc34 impactPlan;
         struct ProjectileInstance_Compat impactProjectile = *p;
         int ci = r->outAction.defenderSlotOrCreatureIndex;
-        impactProjectile.mapIndex = r->newMapIndex;
-        impactProjectile.mapX = r->newMapX;
-        impactProjectile.mapY = r->newMapY;
-        impactProjectile.cell = r->newCell;
-        if (ci >= 0 && ci < CHAMPION_MAX_PARTY
-                && state->world.party.champions[ci].present) {
+        int championPresent = (ci >= 0 && ci < CHAMPION_MAX_PARTY &&
+                               state->world.party.champions[ci].present);
+        memset(&impactPlan, 0, sizeof(impactPlan));
+        (void)dm1_v1_projectile_champion_impact_plan_pc34(
+            p, r, championPresent, &impactPlan);
+        impactProjectile.mapIndex = impactPlan.impactMapIndex;
+        impactProjectile.mapX = impactPlan.impactMapX;
+        impactProjectile.mapY = impactPlan.impactMapY;
+        impactProjectile.cell = impactPlan.impactCell;
+        if (impactPlan.handled && impactPlan.championPresent &&
+            impactPlan.championIndex >= 0 &&
+            impactPlan.championIndex < CHAMPION_MAX_PARTY) {
             struct CombatantChampionSnapshot_Compat defender;
             struct CombatResult_Compat damage;
             int scaledAttack = 0;
             int selectedWounds = 0;
             int killed = 0;
+            ci = impactPlan.championIndex;
 
             memset(&damage, 0, sizeof(damage));
             /* ReDMCSB PROJEXPL.C F0217 lines 513-558 routes champion
@@ -27829,12 +27828,12 @@ static void m11_projectile_apply_impact(
              * changed; CHAMPION.C F0321 lines 1842-1900 contains the
              * scaling path. */
             if (m11_build_projectile_defender_champion_snapshot(
-                    &state->world, ci, r->outAction.attackTypeCode,
+                    &state->world, ci, impactPlan.attackTypeCode,
                     &defender)) {
                 (void)F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
-                    r->outAction.attackTypeCode,
-                    r->outAction.rawAttackValue,
-                    r->outAction.allowedWounds,
+                    impactPlan.attackTypeCode,
+                    impactPlan.rawAttackValue,
+                    impactPlan.allowedWounds,
                     &defender,
                     &state->world.masterRng,
                     &scaledAttack,
@@ -27842,7 +27841,7 @@ static void m11_projectile_apply_impact(
                 if (scaledAttack > 0) {
                     if (!F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
                             scaledAttack,
-                            r->outAction.allowedWounds,
+                            impactPlan.allowedWounds,
                             &defender,
                             &state->world.masterRng,
                             &selectedWounds,
@@ -27861,11 +27860,13 @@ static void m11_projectile_apply_impact(
              * after F0321 returns applied damage and the source random gate
              * passes. */
             (void)m11_maybe_apply_projectile_poison_to_champion(
-                state, ci, &state->world.party.champions[ci], p, scaledAttack);
+                state, ci, &state->world.party.champions[ci],
+                &impactPlan, p, scaledAttack);
             /* CHAMPION.C lines 1659-1667 sets G0303_B_PartyDead when the
              * final party champion reaches zero HP; mirror that M11 gate
              * for direct F0811 projectile advances that bypass F0884. */
-            if (killed || state->world.party.champions[ci].hp.current == 0) {
+            if (dm1_v1_projectile_champion_party_death_check_pc34(
+                    killed, (int)state->world.party.champions[ci].hp.current)) {
                 m11_check_party_death(state);
             }
             m11_log_event(state, M11_COLOR_LIGHT_RED,
