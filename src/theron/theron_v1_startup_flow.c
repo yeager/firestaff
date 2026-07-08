@@ -4007,6 +4007,46 @@ Theron_StartupResult theron_v1_startup_return_to_stage_select_after_exit_with_re
     return THERON_STARTUP_OK;
 }
 
+int theron_v1_startup_return_to_stage_select_after_exit_state_receipt(
+    Theron_V1_World *world,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+
+    Theron_StartupFlow flow;
+    Theron_StartupResult result;
+
+    if (out_state_receipt) {
+        theron_v1_startup_state_receipt_init(out_state_receipt);
+    }
+    if (receipt && receipt_cap > 0u) {
+        receipt[0] = '\0';
+    }
+    if (!world || !out_state_receipt) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap, "dungeon exit failed: NULL");
+        }
+        return 0;
+    }
+
+    result = theron_v1_startup_return_to_stage_select_after_exit_with_receipt(
+        world,
+        &flow,
+        out_state_receipt,
+        receipt,
+        receipt_cap);
+    if (result != THERON_STARTUP_OK) {
+        if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
+            snprintf(receipt,
+                     receipt_cap,
+                     "dungeon exit failed: %s",
+                     theron_v1_startup_result_name(result));
+        }
+        return 0;
+    }
+    return 1;
+}
+
 const char *theron_v1_startup_phase_name(Theron_StartupPhase phase) {
     switch (phase) {
     case THERON_STARTUP_PHASE_TITLE: return "title";

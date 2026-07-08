@@ -11706,9 +11706,7 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
                                                         char* receipt,
                                                         size_t receipt_cap) {
     Theron_V1_World* world;
-    Theron_StartupFlow flow;
     Theron_StartupStateReceipt stateReceipt;
-    Theron_StartupResult result;
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -11721,21 +11719,11 @@ static int m11_theron_return_to_stage_select_after_exit(M11_GameViewState* state
         return 0;
     }
 
-    result = theron_v1_startup_return_to_stage_select_after_exit_with_receipt(
+    if (!theron_v1_startup_return_to_stage_select_after_exit_state_receipt(
         world,
-        &flow,
         &stateReceipt,
         receipt,
-        receipt_cap);
-    if (result != THERON_STARTUP_OK) {
-        if (receipt && receipt_cap > 0u) {
-            if (receipt[0] == '\0') {
-                snprintf(receipt,
-                         receipt_cap,
-                         "dungeon exit failed: %s",
-                         theron_v1_startup_result_name(result));
-            }
-        }
+        receipt_cap)) {
         return 0;
     }
 
