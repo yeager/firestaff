@@ -850,6 +850,8 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CHECK(party_receipt.party.champions[0].portraitBitmapValid == 1 &&
               party_receipt.party.champions[0].portraitBitmap[0] == 0xabu,
           "party mirror receipt carries compatible imported portrait bytes");
+    /* CSBWin stores transient object-in-hand separately from champion ready-hand slots. */
+    p.runtime.party_state.LeaderHandThing = 0x1234u;
     CHECK(csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
               &p.runtime,
               &mirror_receipt) == 1 && mirror_receipt.valid,
@@ -858,8 +860,10 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
               mirror_receipt.view.party_x == p.runtime.party_x &&
               mirror_receipt.view.party_y == p.runtime.party_y &&
               mirror_receipt.party.party.championCount == 2 &&
-              mirror_receipt.party.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1234u,
-          "combined M11 mirror receipt carries view state plus party mirror");
+              mirror_receipt.party.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1234u &&
+              mirror_receipt.leader_hand_present &&
+              mirror_receipt.leader_hand_thing == 0x1234u,
+          "combined M11 mirror receipt carries view state, party mirror and leader hand");
 
     CHECK(csb_v1_runtime_set_leader(&p.runtime, 1) == 0,
           "runtime leader switch to second imported champion succeeds");

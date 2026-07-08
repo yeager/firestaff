@@ -2000,6 +2000,7 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_RuntimeM11MirrorReceipt_PC34 *out_receipt)
 {
+    uint16_t leader_hand;
     if (!out_receipt) {
         return 0;
     }
@@ -2018,6 +2019,23 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
             profile,
             &out_receipt->party)) {
         return 0;
+    }
+    leader_hand = csb_v1_runtime_export_leader_hand_thing(profile);
+    if (leader_hand == THING_NONE || leader_hand == THING_ENDOFLIST) {
+        out_receipt->leader_hand_present = 0;
+        out_receipt->leader_hand_thing = THING_NONE;
+        out_receipt->leader_hand_icon_index = -1;
+        out_receipt->leader_hand_object_name[0] = '\0';
+    } else {
+        out_receipt->leader_hand_present = 1;
+        out_receipt->leader_hand_thing = leader_hand;
+        out_receipt->leader_hand_icon_index =
+            csb_v1_runtime_object_icon_index(profile, leader_hand);
+        (void)csb_v1_runtime_object_name(
+            profile,
+            leader_hand,
+            out_receipt->leader_hand_object_name,
+            sizeof(out_receipt->leader_hand_object_name));
     }
     out_receipt->valid = out_receipt->party.valid ? 1 : 0;
     return 1;
