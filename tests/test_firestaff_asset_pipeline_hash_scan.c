@@ -44,6 +44,28 @@ static int write_payload(const char* path, const char* payload) {
     return fclose(fp) == 0;
 }
 
+static int copy_file_bytes(const char* src, const char* dst) {
+    unsigned char buf[8192];
+    FILE* in = fopen(src, "rb");
+    FILE* out;
+    size_t n;
+    if (!in) return 0;
+    out = fopen(dst, "wb");
+    if (!out) {
+        fclose(in);
+        return 0;
+    }
+    while ((n = fread(buf, 1U, sizeof(buf), in)) > 0U) {
+        if (fwrite(buf, 1U, n, out) != n) {
+            fclose(in);
+            fclose(out);
+            return 0;
+        }
+    }
+    fclose(in);
+    return fclose(out) == 0;
+}
+
 static int make_root(char* out, size_t outBytes) {
     int rc = snprintf(out,
                       outBytes,
@@ -100,6 +122,64 @@ static void check_loaded_game(const char* root,
     fs_assets_free(&bundle);
 }
 
+static void check_optional_real_multilang_renamed_hash(const char* root,
+                                                       const char* originalHome) {
+    char graphicsSrc[FSP_PATH_MAX];
+    char dungeonSrc[FSP_PATH_MAX];
+    char dataDir[FSP_PATH_MAX];
+    char nested[FSP_PATH_MAX];
+    char graphicsDst[FSP_PATH_MAX];
+    char dungeonDst[FSP_PATH_MAX];
+    FS_AssetBundle bundle;
+
+    if (!originalHome || originalHome[0] == '\0') {
+        printf("skip: original HOME unavailable for optional multilingual hash test\n");
+        return;
+    }
+    if (!FSP_JoinPath(graphicsSrc,
+                      sizeof(graphicsSrc),
+                      originalHome,
+                      ".firestaff/data/dm1-multilingual/GRAPHICS.DAT") ||
+        !FSP_JoinPath(dungeonSrc,
+                      sizeof(dungeonSrc),
+                      originalHome,
+                      ".firestaff/data/dm1-multilingual/DUNGEONF.DAT")) {
+        return;
+    }
+    {
+        FILE* g = fopen(graphicsSrc, "rb");
+        FILE* d = fopen(dungeonSrc, "rb");
+        if (!g || !d) {
+            if (g) fclose(g);
+            if (d) fclose(d);
+            printf("skip: optional real DM1 multilingual files not present\n");
+            return;
+        }
+        fclose(g);
+        fclose(d);
+    }
+
+    check_int(FSP_JoinPath(dataDir, sizeof(dataDir), root, "dm1-ml-any-layout") &&
+              FSP_JoinPath(nested, sizeof(nested), dataDir, "renamed") &&
+              FSP_CreateDirectoryRecursive(nested) &&
+              FSP_JoinPath(graphicsDst, sizeof(graphicsDst), nested, "art.fr.payload") &&
+              FSP_JoinPath(dungeonDst, sizeof(dungeonDst), nested, "map.fr.payload"),
+              "optional multilingual renamed paths built");
+    check_int(copy_file_bytes(graphicsSrc, graphicsDst),
+              "optional multilingual graphics copied under arbitrary name");
+    check_int(copy_file_bytes(dungeonSrc, dungeonDst),
+              "optional multilingual French dungeon copied under arbitrary name");
+
+    memset(&bundle, 0, sizeof(bundle));
+    check_int(fs_assets_load_dm1_multilang(&bundle, dataDir, FS_ASSET_LANG_FR) == 0,
+              "DM1 multilingual loader accepts renamed French files by hash");
+    check_int(bundle.loaded == 1 &&
+              bundle.graphics_size > 300000 &&
+              bundle.dungeon_size > 30000,
+              "DM1 multilingual renamed hash files are loaded");
+    fs_assets_free(&bundle);
+}
+
 int main(void) {
     char root[FSP_PATH_MAX];
     char dm1GraphicsMd5[M12_ASSET_MD5_CAPACITY];
@@ -108,6 +188,7 @@ int main(void) {
     char csbDungeonMd5[M12_ASSET_MD5_CAPACITY];
     char dm2GraphicsMd5[M12_ASSET_MD5_CAPACITY];
     char dm2DungeonMd5[M12_ASSET_MD5_CAPACITY];
+    const char* originalHome = getenv("HOME");
 
     check_int(make_root(root, sizeof(root)), "temp root created");
     check_int(test_setenv("HOME", root), "isolated HOME set");
@@ -152,6 +233,8 @@ int main(void) {
     M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetDm2SyntheticHashes(dm2GraphicsMd5, dm2DungeonMd5);
     check_loaded_game(root, "dm2", "dm2 graphics bytes", "dm2 dungeon bytes");
+
+    check_optional_real_multilang_renamed_hash(root, originalHome);
 
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);

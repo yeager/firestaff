@@ -4534,48 +4534,9 @@ static int m11_resolve_builtin_dungeon_path(char* out,
     if (!out || !dataDir || !gameId) {
         return 0;
     }
-    /* Try dataDir/gameSubdir/DUNGEON.DAT first, then dataDir/DUNGEON.DAT */
-    {
-        fprintf(stderr, "DUNGEON RESOLVE: dataDir=[%s] gameId=[%s]\n", dataDir, gameId);
-        char subpath[1024];
-        const char *subdir = NULL;
-        const char *filename = "DUNGEON.DAT";
-        if (strcmp(gameId, "dm1") == 0) subdir = "dm1";
-        else if (strcmp(gameId, "csb") == 0) { subdir = "csb"; }
-        else if (strcmp(gameId, "dm2") == 0) { subdir = "dm2"; }
-        else if (strcmp(gameId, "nexus") == 0) { subdir = "nexus"; filename = "DM.BIN"; }
-
-        if (subdir) {
-            snprintf(subpath, sizeof(subpath), "%s/%s", subdir, filename);
-            if (FSP_JoinPath(out, outSize, dataDir, subpath)) {
-                FILE *test = fopen(out, "rb");
-                fprintf(stderr, "  TRY: [%s] %s\n", out, test ? "FOUND" : "MISS");
-                if (test) { fclose(test); return 1; }
-            }
-        }
-        /* Fallback: dataDir/DUNGEON.DAT */
-        if (FSP_JoinPath(out, outSize, dataDir, filename)) {
-            FILE *test = fopen(out, "rb");
-            fprintf(stderr, "  FALLBACK: [%s] %s\n", out, test ? "FOUND" : "MISS");
-            if (test) { fclose(test); return 1; }
-        }
-    }
-    /* Final fallback (2026-06-20, hardened 2026-06-21): recursive MD5-hash search.
-     * Mirrors the scanner's behaviour so runtime can find files that
-     * live in subdirs the original path-resolver doesn't enumerate
-     * (e.g. dm1-extras/pc-3.4-en-3.5in/DATA/, Meynaf FR hard-disk
-     * layout, theron-extras/{japan,usa}/, nexus ISO containers).
-     * Each game lists one or more candidate MD5s in priority order.
-     * The first match wins.
-     *
-     * Hashes:
-     *   dm1  DUNGEON.DAT PC 3.4 = 766450c940651fc021c92fe5d0d0b3a6
-     *   csb  DUNGEON.DAT (canonical Amiga) = 6695d2acebce49f95db1d8f3a5c733de
-     *   dm2  DUNGEON.DAT (canonical PC EN) = 6caccd7875009e82fe2e28e7f6d6adc0
-     *   nexus DM.BIN (extracted Saturn JP) = e88d60859f65f08fa622e1992b02280f
-     *   theron Track 02.bin (PCE JP)     = b7afb338ad31be1025b53f9aff12d73a
-     *   theron Track 02.bin (TG16 US)    = f23601102138f87c33025877767ebf76
-     */
+    /* ReDMCSB DUNGEON.C F0237 / LOADSAVE.C F0435 open the verified game
+     * data, not a user-facing filename contract.  Prefer recursive MD5
+     * search so renamed files and arbitrary user layouts boot first. */
     {
         static const struct { const char *game; const char *md5; } kExpectedHashes[] = {
             { "dm1",  "766450c940651fc021c92fe5d0d0b3a6" },
@@ -4598,19 +4559,36 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                     char resolved[ASSET_PATH_MAX];
                     if (asset_find_by_md5(dataDir, expectedMd5, resolved,
                                           (int)sizeof(resolved), 32)) {
-                        fprintf(stderr, "  HASH-FALLBACK: [%s] FOUND\n", resolved);
-                        /* resolved already includes the filename; copy verbatim
-                         * (FSP_JoinPath with empty tail would append a trailing
-                         * slash and break the dungeonPath string used by the
-                         * GRAPHICS.DAT slashPos reconstruction at line 10132). */
                         strncpy(out, resolved, outSize - 1);
                         out[outSize - 1] = '\0';
                         return 1;
                     }
-                    fprintf(stderr, "  HASH-FALLBACK: no match for %s hash %s (try next)\n",
-                            gameId, expectedMd5);
                 }
             }
+        }
+    }
+    /* Legacy fallback for synthetic/custom development folders not in the
+     * hash catalog. Normal shipped game data must be found by hash above. */
+    {
+        char subpath[1024];
+        const char *subdir = NULL;
+        const char *filename = "DUNGEON.DAT";
+        if (strcmp(gameId, "dm1") == 0) subdir = "dm1";
+        else if (strcmp(gameId, "csb") == 0) subdir = "csb";
+        else if (strcmp(gameId, "dm2") == 0) subdir = "dm2";
+        else if (strcmp(gameId, "nexus") == 0) { subdir = "nexus"; filename = "DM.BIN"; }
+
+        if (subdir) {
+            FILE *test;
+            snprintf(subpath, sizeof(subpath), "%s/%s", subdir, filename);
+            if (FSP_JoinPath(out, outSize, dataDir, subpath)) {
+                test = fopen(out, "rb");
+                if (test) { fclose(test); return 1; }
+            }
+        }
+        if (FSP_JoinPath(out, outSize, dataDir, filename)) {
+            FILE *test = fopen(out, "rb");
+            if (test) { fclose(test); return 1; }
         }
     }
     return 0;
@@ -16192,35 +16170,16 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         return;
     }
 
-    /* Reconstruct the DUNGEON.DAT path from the GRAPHICS.DAT path
-     * stored in the asset loader (same directory). */
+    /* Use the verified dungeon path from launch. Older builds reconstructed
+     * DUNGEON.DAT beside GRAPHICS.DAT, which broke renamed/hash-resolved data. */
     {
         char datPath[512];
-        const char* gfxPath = state->assetLoader.graphicsDatPath;
-        const char* lastSlash;
-        int dirLen;
-        if (!state->assetsAvailable || gfxPath[0] == '\0') {
+        if (state->dungeonPath[0] == '\0') {
             state->ornamentCacheLoaded[mapIndex] = 1;
             return;
         }
-        /* Find directory portion of GRAPHICS.DAT path */
-        lastSlash = strrchr(gfxPath, '/');
-        if (!lastSlash) lastSlash = strrchr(gfxPath, '\\');
-        if (lastSlash) {
-            dirLen = (int)(lastSlash - gfxPath);
-        } else {
-            dirLen = 0;
-        }
-        if (dirLen > 0) {
-            snprintf(datPath, sizeof(datPath), "%.*s/DUNGEON.DAT", dirLen, gfxPath);
-        } else {
-            snprintf(datPath, sizeof(datPath), "DUNGEON.DAT");
-        }
+        snprintf(datPath, sizeof(datPath), "%s", state->dungeonPath);
         fp = fopen(datPath, "rb");
-        if (!fp && dirLen > 0) {
-            snprintf(datPath, sizeof(datPath), "%.*s/dungeon.dat", dirLen, gfxPath);
-            fp = fopen(datPath, "rb");
-        }
         if (!fp) {
             state->ornamentCacheLoaded[mapIndex] = 1;
             return;
