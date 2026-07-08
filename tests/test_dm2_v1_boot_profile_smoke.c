@@ -37,6 +37,30 @@ static int write_file(const char *path, const char *bytes)
     return 1;
 }
 
+static int copy_file_bytes(const char *src, const char *dst)
+{
+    unsigned char buf[8192];
+    FILE *in = fopen(src, "rb");
+    FILE *out;
+    size_t n;
+    if (!in) return 0;
+    out = fopen(dst, "wb");
+    if (!out) {
+        fclose(in);
+        return 0;
+    }
+    while ((n = fread(buf, 1, sizeof(buf), in)) > 0U) {
+        if (fwrite(buf, 1, n, out) != n) {
+            fclose(in);
+            fclose(out);
+            return 0;
+        }
+    }
+    fclose(in);
+    fclose(out);
+    return 1;
+}
+
 static void test_defaults(void)
 {
     DM2_V1_BootProfile p;
@@ -123,6 +147,70 @@ static void test_scan_nested_data_dir(void)
     (void)TEST_RMDIR(root);
 }
 
+static void test_scan_real_assets_by_hash_when_renamed(void)
+{
+    DM2_V1_BootProfile p;
+    char root[256];
+    char graphics_src[512];
+    char dungeon_src[512];
+    char graphics_dst[340];
+    char dungeon_dst[340];
+    const char *tmp = getenv("TMPDIR");
+    const char *home = getenv("HOME");
+
+    if (!tmp || !tmp[0]) tmp = getenv("TEMP");
+    if (!tmp || !tmp[0]) tmp = ".";
+    if (!home || !home[0]) {
+        printf("  SKIP: HOME not set for optional real DM2 hash scan\n");
+        return;
+    }
+
+    snprintf(graphics_src, sizeof(graphics_src), "%s/.firestaff/data/dm2/GRAPHICS.DAT", home);
+    snprintf(dungeon_src, sizeof(dungeon_src), "%s/.firestaff/data/dm2/DUNGEON.DAT", home);
+    {
+        FILE *g = fopen(graphics_src, "rb");
+        FILE *d = fopen(dungeon_src, "rb");
+        if (!g || !d) {
+            if (g) fclose(g);
+            if (d) fclose(d);
+            printf("  SKIP: optional real DM2 files not present\n");
+            return;
+        }
+        fclose(g);
+        fclose(d);
+    }
+
+    snprintf(root, sizeof(root), "%s%sfirestaff-dm2-hash-rename-%ld",
+             tmp, TEST_PATH_SEP, (long)TEST_GETPID());
+    snprintf(graphics_dst, sizeof(graphics_dst), "%s%snot-a-dm2-name.gfx", root, TEST_PATH_SEP);
+    snprintf(dungeon_dst, sizeof(dungeon_dst), "%s%snot-a-dm2-name.map", root, TEST_PATH_SEP);
+
+    (void)remove(graphics_dst);
+    (void)remove(dungeon_dst);
+    (void)TEST_RMDIR(root);
+    CHECK(TEST_MKDIR(root) == 0, "temp root for renamed real DM2 files created");
+    CHECK(copy_file_bytes(graphics_src, graphics_dst) == 1,
+          "real DM2 graphics copied under arbitrary name");
+    CHECK(copy_file_bytes(dungeon_src, dungeon_dst) == 1,
+          "real DM2 dungeon copied under arbitrary name");
+
+    dm2_v1_boot_profile_init(&p);
+    CHECK(dm2_v1_boot_scan_assets(&p, root) == 0,
+          "scan_assets accepts renamed real DM2 files by hash");
+    CHECK(p.assets_verified == 1,
+          "renamed real DM2 files are verified by hash");
+    CHECK(strstr(p.graphics_path, "not-a-dm2-name.gfx") != NULL,
+          "graphics_path is the arbitrary renamed file");
+    CHECK(strstr(p.dungeon_path, "not-a-dm2-name.map") != NULL,
+          "dungeon_path is the arbitrary renamed file");
+    CHECK(dm2_v1_boot_probe_available(root) == 1,
+          "probe_available accepts renamed real DM2 files by hash");
+
+    remove(graphics_dst);
+    remove(dungeon_dst);
+    (void)TEST_RMDIR(root);
+}
+
 static void test_save_root_default(void)
 {
     DM2_V1_BootProfile p;
@@ -173,6 +261,9 @@ int main(void)
 /* ── extracted DOS data/ layout --─ */
     printf("\n--- test_scan_nested_data_dir ---\n");
     test_scan_nested_data_dir();
+/* ── hash-first renamed real assets --─ */
+    printf("\n--- test_scan_real_assets_by_hash_when_renamed ---\n");
+    test_scan_real_assets_by_hash_when_renamed();
 /* ── save root --─ */
     printf("\n--- test_save_root_default ---\n");
     test_save_root_default();

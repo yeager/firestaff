@@ -79,10 +79,10 @@ typedef struct {
     char             version_id[16];    /* e.g. "pc-en", "pc-fr" */
 
     /* ── Asset paths ─────────────────────────────────────── */
-    char    asset_root[512];   /* base data dir, e.g. ~/.firestaff/data/dm2/ */
-    char    graphics_path[512]; /* resolved path to GRAPHICS.DAT / DM2GRAPHICS.DAT */
-    char    dungeon_path[512]; /* resolved path to DUNGEON.DAT / DM2DUNGEON.DAT */
-    int     use_dm2_filenames;  /* 1 if using DM2GRAPHICS.DAT/DM2DUNGEON.DAT */
+    char    asset_root[512];   /* parent dir of resolved dungeon/graphics data */
+    char    graphics_path[512]; /* resolved by known MD5 hash, filename fallback */
+    char    dungeon_path[512]; /* resolved by known MD5 hash, filename fallback */
+    int     use_dm2_filenames;  /* 1 if legacy DM2* filenames were used */
     int     assets_verified;    /* 1 if MD5 hash matched a known version */
 
     /* ── Save namespace ───────────────────────────────────── */
@@ -109,7 +109,7 @@ typedef struct {
  * Does not touch the filesystem — only sets struct fields. */
 void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile);
 
-/* Scan and verify DM2 assets in data_dir.
+/* Scan and verify DM2 assets in data_dir by known hashes first.
  * Sets asset_root, graphics_path, dungeon_path, assets_verified.
  * Returns 0 on success, -1 if no valid DM2 assets found. */
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
