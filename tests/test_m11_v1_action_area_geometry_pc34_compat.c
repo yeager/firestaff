@@ -201,6 +201,9 @@ static void test_status_boxes_stay_source_locked(void)
     state.actingChampionOrdinal = 0;
     check_int("status action wounded graphic",
               M11_GameView_GetV1StatusHandSlotGraphic(&state, 3, 1), 34);
+    check_int("food label graphic", M11_GameView_GetV1FoodLabelGraphicId(), 30);
+    check_int("water label graphic", M11_GameView_GetV1WaterLabelGraphicId(), 31);
+    check_int("poison label graphic", M11_GameView_GetV1PoisonLabelGraphicId(), 32);
 
     check_int("name clear champ3", M11_GameView_GetV1StatusNameClearZoneId(3), 162);
     check_int("name text champ3", M11_GameView_GetV1StatusNameTextZoneId(3), 166);
