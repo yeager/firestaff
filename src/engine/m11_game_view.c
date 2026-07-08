@@ -2309,7 +2309,7 @@ static void m11_execute_csb_startup_primitive_commands(
     int framebufferHeight,
     const CSB_V1_StartupRenderPlan_PC34 *plan)
 {
-    (void)csb_v1_startup_execute_primitive_commands_pc34(
+    csb_v1_boot_startup_execute_primitive_commands_pc34(
         plan,
         framebuffer,
         framebufferWidth,
@@ -2444,7 +2444,7 @@ static int m11_execute_csb_startup_asset_commands_kind(
                                        framebuffer,
                                        framebufferWidth,
                                        framebufferHeight);
-    return csb_v1_startup_execute_asset_commands_kind_pc34(
+    return csb_v1_boot_startup_execute_asset_commands_kind_pc34(
                plan,
                kind,
                m11_execute_csb_startup_asset_command,
@@ -2465,7 +2465,7 @@ static int m11_execute_csb_startup_closed_door_asset_commands(
                                        framebuffer,
                                        framebufferWidth,
                                        framebufferHeight);
-    return csb_v1_startup_execute_closed_door_asset_commands_pc34(
+    return csb_v1_boot_startup_execute_closed_door_asset_commands_pc34(
         plan,
         m11_execute_csb_startup_asset_command,
         &context);
@@ -2733,7 +2733,7 @@ static void m11_draw_csb_startup_title(const M11_GameViewState *state,
         plan,
         CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34);
     if (drew_title) {
-        if (csb_v1_startup_title_empty_fallback_needed_pc34(
+        if (csb_v1_boot_startup_title_empty_fallback_needed_pc34(
                 plan,
                 framebuffer,
                 framebufferWidth,
@@ -2911,7 +2911,7 @@ static int m11_execute_csb_entrance_opening_composite(
                                        framebufferWidth,
                                        framebufferHeight);
     context.dungeonFrame = dungeonFrame;
-    return csb_v1_startup_execute_opening_composite_pc34(
+    return csb_v1_boot_startup_execute_opening_composite_pc34(
         plan,
         m11_draw_csb_entrance_opening_frame_asset,
         &context);

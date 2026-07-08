@@ -1409,6 +1409,67 @@ int csb_v1_boot_startup_execute_render_plan_pc34(
     return csb_v1_startup_execute_render_plan_pc34(plan, executor);
 }
 
+void csb_v1_boot_startup_execute_primitive_commands_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height)
+{
+    (void)csb_v1_startup_execute_primitive_commands_pc34(
+        plan,
+        framebuffer,
+        framebuffer_width,
+        framebuffer_height);
+}
+
+int csb_v1_boot_startup_execute_asset_commands_kind_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupAssetCommandKind_PC34 kind,
+    CSB_V1_StartupAssetExecutor_PC34 executor,
+    void *user)
+{
+    return csb_v1_startup_execute_asset_commands_kind_pc34(
+        plan,
+        kind,
+        executor,
+        user);
+}
+
+int csb_v1_boot_startup_execute_closed_door_asset_commands_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupAssetExecutor_PC34 executor,
+    void *user)
+{
+    return csb_v1_startup_execute_closed_door_asset_commands_pc34(
+        plan,
+        executor,
+        user);
+}
+
+int csb_v1_boot_startup_title_empty_fallback_needed_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height)
+{
+    return csb_v1_startup_title_empty_fallback_needed_pc34(
+        plan,
+        framebuffer,
+        framebuffer_width,
+        framebuffer_height);
+}
+
+int csb_v1_boot_startup_execute_opening_composite_pc34(
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupOpeningCompositeExecutor_PC34 executor,
+    void *user)
+{
+    return csb_v1_startup_execute_opening_composite_pc34(
+        plan,
+        executor,
+        user);
+}
+
 int csb_v1_boot_runtime_util_apply_pointer_from_runtime_state_pc34(
     CSB_V1_RuntimeUtilStartupHostActionReceipt_PC34 *out_receipt,
     int title_active,
