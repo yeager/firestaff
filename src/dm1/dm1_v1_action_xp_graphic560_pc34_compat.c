@@ -22,6 +22,7 @@
 #define DM1_STATUS_THIEVES_EYE 73
 #define DM1_STATUS_SPELL_SHIELD 77
 #define DM1_STATUS_FIRE_SHIELD 78
+#define DM1_IMMUNE_TO_FEAR_PC34 15
 
 /* ReDMCSB CHAMPION.C F0304 line ~874: base skill = (sub - 4) >> 2.
  * For base skills (0..3) the mapping is identity. */
@@ -29,6 +30,31 @@ static int sub_skill_base_index(int skillIndex) {
     if (skillIndex < 0 || skillIndex >= 20) return 0;
     if (skillIndex < 4) return skillIndex;
     return (skillIndex - 4) >> 2;
+}
+
+static int f0401_fright_base_for_action(int actionIndex, int* outExperience) {
+    if (outExperience) *outExperience = 0;
+    /* ReDMCSB: MENU.C F0401 lines 946-966 maps action to base fright amount
+     * and C14_SKILL_INFLUENCE XP before adding F0303(INFLUENCE). */
+    switch (actionIndex) {
+        case DM1_ACTION_WAR_CRY:
+            if (outExperience) *outExperience = 12;
+            return 3;
+        case DM1_ACTION_CALM:
+            if (outExperience) *outExperience = 35;
+            return 7;
+        case DM1_ACTION_BRANDISH:
+            if (outExperience) *outExperience = 30;
+            return 6;
+        case DM1_ACTION_BLOW_HORN:
+            if (outExperience) *outExperience = 20;
+            return 6;
+        case DM1_ACTION_CONFUSE:
+            if (outExperience) *outExperience = 45;
+            return 12;
+        default:
+            return 0;
+    }
 }
 
 int dm1_v1_action_xp_route(int actionIndex, DM1_ActionXpRoute* out) {
@@ -375,6 +401,65 @@ int dm1_v1_action_shield_plan_f0403_pc34(
     out->eventDelayTicks = ticks;
     out->defenseDelta = defense;
     out->newShieldDefense = currentDefense + defense;
+    return 1;
+}
+
+int dm1_v1_action_fright_random_range_f0401_pc34(int actionIndex,
+                                                 int influenceSkillLevel) {
+    int experience = 0;
+    int base = f0401_fright_base_for_action(actionIndex, &experience);
+    if (base <= 0 || experience <= 0) return 0;
+    if (influenceSkillLevel < 0) influenceSkillLevel = 0;
+    return base + influenceSkillLevel;
+}
+
+int dm1_v1_action_fright_plan_f0401_pc34(
+    const DM1_ActionFrightInputPc34* in,
+    DM1_ActionFrightPlanPc34* out) {
+    int experience = 0;
+    int base;
+    int total;
+    int draw;
+    int fearResistance;
+    int movementTicks;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->baseFrightAmount = 0;
+    out->totalFrightAmount = 0;
+    out->randomRange = 0;
+    out->influenceExperience = 0;
+    out->resisted = 0;
+    out->frightened = 0;
+    out->fleeDelayTicks = 0;
+    base = f0401_fright_base_for_action(in->actionIndex, &experience);
+    if (base <= 0 || experience <= 0) return 0;
+    total = base + (in->influenceSkillLevel < 0 ? 0 : in->influenceSkillLevel);
+    if (total <= 0) total = 1;
+    draw = in->randomDraw;
+    if (draw < 0) draw = 0;
+    if (draw >= total) draw %= total;
+    fearResistance = in->fearResistance;
+    if (fearResistance < 0) fearResistance = 0;
+    movementTicks = in->movementTicks;
+    if (movementTicks <= 0) movementTicks = 1;
+    out->valid = 1;
+    out->baseFrightAmount = base;
+    out->totalFrightAmount = total;
+    out->randomRange = total;
+    out->influenceExperience = experience;
+    /* ReDMCSB: MENU.C F0401 lines 975-987 halves influence XP when
+     * FearResistance beats RANDOM(FrightAmount) or equals C15 immune; otherwise
+     * the group enters C5_BEHAVIOR_FLEE and DelayFleeingFromTarget is derived
+     * from resistance and MovementTicks. */
+    if (fearResistance == DM1_IMMUNE_TO_FEAR_PC34 ||
+        fearResistance > draw) {
+        out->resisted = 1;
+        out->influenceExperience >>= 1;
+        return 1;
+    }
+    out->frightened = 1;
+    out->fleeDelayTicks =
+        ((16 - fearResistance) << 2) / movementTicks;
     return 1;
 }
 
