@@ -1662,6 +1662,76 @@ int csb_v1_runtime_build_startup_session_options_pc34(
     return 1;
 }
 
+void csb_v1_runtime_startup_session_state_receipt_init_pc34(
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->import_utility_state = (int)CSB_V1_UTIL_FLOW_INIT;
+}
+
+int csb_v1_runtime_startup_session_state_receipt_from_options_pc34(
+    const CSB_V1_StartupSessionOptions_PC34 *options,
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *out_receipt)
+{
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_runtime_startup_session_state_receipt_init_pc34(out_receipt);
+    if (!options) {
+        return 0;
+    }
+    out_receipt->entrance_resume_available =
+        options->entrance_resume_available ? 1 : 0;
+    (void)csb_v1_runtime_copy_startup_string_pc34(
+        out_receipt->entrance_resume_path,
+        sizeof(out_receipt->entrance_resume_path),
+        options->entrance_resume_path);
+    out_receipt->import_available = options->import_available ? 1 : 0;
+    out_receipt->import_champion_count = options->import_champion_count;
+    out_receipt->import_selected_action_index =
+        options->import_selected_action_index;
+    out_receipt->import_preview_active =
+        options->import_preview_active ? 1 : 0;
+    out_receipt->import_utility_state = options->import_utility_state;
+    (void)csb_v1_runtime_copy_startup_string_pc34(
+        out_receipt->import_dm1_save_path,
+        sizeof(out_receipt->import_dm1_save_path),
+        options->import_dm1_save_path);
+    (void)csb_v1_runtime_copy_startup_string_pc34(
+        out_receipt->import_utility_prompt,
+        sizeof(out_receipt->import_utility_prompt),
+        options->import_utility_prompt);
+    return 1;
+}
+
+int csb_v1_runtime_build_startup_session_state_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeStartupHandoffReceipt_PC34 *handoff,
+    const char *import_dm1_save_path,
+    const char *entrance_resume_save_path,
+    CSB_V1_RuntimeStartupSessionStateReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionOptions_PC34 options;
+    if (!out_receipt) {
+        return 0;
+    }
+    csb_v1_runtime_startup_session_state_receipt_init_pc34(out_receipt);
+    if (!csb_v1_runtime_build_startup_session_options_pc34(
+            profile,
+            handoff,
+            import_dm1_save_path,
+            entrance_resume_save_path,
+            &options)) {
+        return 0;
+    }
+    return csb_v1_runtime_startup_session_state_receipt_from_options_pc34(
+        &options,
+        out_receipt);
+}
+
 void csb_v1_runtime_startup_runtime_plan_receipt_init_pc34(
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *receipt)
 {

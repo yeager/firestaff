@@ -1487,6 +1487,7 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
           "runtime startup handoff receipt carries utility state");
     {
         CSB_V1_StartupSessionOptions_PC34 options;
+        CSB_V1_RuntimeStartupSessionStateReceipt_PC34 state_receipt;
         CHECK(csb_v1_runtime_build_startup_session_options_pc34(
                   &runtime,
                   &receipt,
@@ -1498,9 +1499,24 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                   options.import_champion_count == 2 &&
                   options.import_utility_state ==
                       (int)CSB_V1_UTIL_FLOW_DONE &&
-                  strcmp(options.import_dm1_save_path, path) == 0 &&
-                  strstr(options.import_utility_prompt, "READY") != NULL,
-              "runtime session options publish imported DM1 party");
+	                  strcmp(options.import_dm1_save_path, path) == 0 &&
+	                  strstr(options.import_utility_prompt, "READY") != NULL,
+	              "runtime session options publish imported DM1 party");
+	        CHECK(csb_v1_runtime_build_startup_session_state_receipt_pc34(
+	                  &runtime,
+	                  &receipt,
+	                  path,
+	                  NULL,
+	                  &state_receipt) == 1 &&
+	                  state_receipt.import_available &&
+	                  state_receipt.import_champion_count == 2 &&
+	                  state_receipt.import_selected_action_index == 0 &&
+	                  state_receipt.import_preview_active == 0 &&
+	                  state_receipt.import_utility_state ==
+	                      (int)CSB_V1_UTIL_FLOW_DONE &&
+	                  strcmp(state_receipt.import_dm1_save_path, path) == 0 &&
+	                  strstr(state_receipt.import_utility_prompt, "READY") != NULL,
+	              "runtime session state receipt mirrors M11 startup import fields");
         receipt.direct_resume_loaded = 1;
         CHECK(csb_v1_runtime_build_startup_session_options_pc34(
                   &runtime,
