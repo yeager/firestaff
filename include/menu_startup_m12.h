@@ -516,6 +516,8 @@ const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuS
 int M12_StartupMenu_RendererBackendAvailable(int rendererBackend);
 const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state);
+const char* M12_StartupMenu_GetRetroAchievementsStatusValue(const M12_StartupMenuState* state);
+const char* M12_StartupMenu_GetRetroAchievementsTokenValue(const M12_StartupMenuState* state);
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir);
 int M12_StartupMenu_ExportQuickResumeDM1PC34(M12_StartupMenuState* state,

@@ -31,7 +31,6 @@
 #include "changelog_m12.h"
 #include "creature_art_m12.h"
 #include "firestaff_l10n.h"
-#include "firestaff_retroachievements.h"
 #include "menu_unicode_glyphs_m12.h"
 
 #include <ctype.h>
@@ -1512,41 +1511,6 @@ static void format_settings_path_value(const M12_StartupMenuState* state,
     }
 }
 
-static const char* format_ra_status_value(const M12_StartupMenuState* state,
-                                          char* out,
-                                          size_t outSize) {
-    Firestaff_RA_Config config;
-    Firestaff_RA_Runtime runtime;
-    const char* label;
-
-    if (!out || outSize == 0U) {
-        return "";
-    }
-
-    firestaff_ra_config_init(&config);
-    if (state) {
-        config.enabled = state->settings.retroAchievementsEnabled ? 1 : 0;
-        config.hardcore = state->settings.retroAchievementsHardcore ? 1 : 0;
-        snprintf(config.username, sizeof(config.username), "%s",
-                 state->settings.retroAchievementsUsername);
-        snprintf(config.api_token, sizeof(config.api_token), "%s",
-                 state->settings.retroAchievementsToken);
-    }
-
-    firestaff_ra_runtime_init(&runtime);
-    firestaff_ra_runtime_apply_config(&runtime, &config);
-    label = firestaff_ra_status_label(firestaff_ra_status(&runtime));
-    if (strcmp(label, "needs-credentials") == 0) {
-        snprintf(out, outSize, "%s", "NEEDS LOGIN");
-    } else if (strcmp(label, "backend-unavailable") == 0) {
-        snprintf(out, outSize, "%s", "BACKEND PENDING");
-    } else {
-        snprintf(out, outSize, "%s",
-                 state && state->settings.retroAchievementsEnabled ? "READY" : "OFF");
-    }
-    return out;
-}
-
 static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
@@ -1565,8 +1529,6 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
     char dataDir[96];
     char sessionTimer[24];
-    char raTokenMasked[24];
-    char raStatus[32];
     char raEnabledValue[56];
     int li = state->settings.languageIndex;
     int gi = state->settings.graphicsIndex;
@@ -1575,9 +1537,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     const char* raUserValue = state->settings.retroAchievementsUsername[0]
                                   ? state->settings.retroAchievementsUsername
                                   : "NOT SET";
-    const char* raTokenValue = state->settings.retroAchievementsToken[0]
-                                   ? raTokenMasked
-                                   : "NOT SET";
+    const char* raTokenValue = M12_StartupMenu_GetRetroAchievementsTokenValue(state);
     if (li < 0) li = 0;
     if (li >= M12_StartupMenu_GetLanguageCount()) li = 0;
     if (gi < 0) gi = 0;
@@ -1585,15 +1545,11 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     if (wi < 0) wi = 0;
     if (wi > 2) wi = 2;
     format_settings_path_value(state, dataDir, sizeof(dataDir));
-    firestaff_ra_redact_token(state->settings.retroAchievementsToken,
-                              raTokenMasked,
-                              sizeof(raTokenMasked));
-    if (raTokenMasked[0] == '\0') {
-        snprintf(raTokenMasked, sizeof(raTokenMasked), "%s", "SET");
-    }
-    (void)format_ra_status_value(state, raStatus, sizeof(raStatus));
     if (state->settings.retroAchievementsEnabled) {
-        snprintf(raEnabledValue, sizeof(raEnabledValue), "ON / %s", raStatus);
+        snprintf(raEnabledValue,
+                 sizeof(raEnabledValue),
+                 "ON / %s",
+                 M12_StartupMenu_GetRetroAchievementsStatusValue(state));
     } else {
         snprintf(raEnabledValue, sizeof(raEnabledValue), "%s", "OFF");
     }
