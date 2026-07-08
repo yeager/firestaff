@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 F0412 spell-family runtime gate: `test_dm1_v1_g0487_pc34_compat` now proves every DM1 G0487 row reaches the correct M10 effect producer family: 10 potion rows through F0758, 6 projectile rows through F0756, and 9 other-effect rows through F0757. Verification: manual strict compile/run passed 1500/1500 assertions; Phase A passed 24/24. Note: local CMake target builds still hang in `cmake_check_build_system`, so this slice used direct compilation.
+
 - ✅ 2026-07-08 Theron runtime release boot facade: Theron boot now owns runtime ownership release for profile/world/viewport/assets via `theron_v1_boot_runtime_release()`. M11 shutdown no longer frees Track 02 runtime objects directly. Verification: `test_theron_v1_startup_save_resume_pc34` passed 129/129; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 Theron runtime render boot facade: Theron boot now owns the Track 02 runtime dungeon/UI/V2-HUD/present sequence through `theron_v1_boot_runtime_render_frame()`. M11 no longer calls `theron_vp_render_dungeon`, `theron_vp_render_ui`, V2 HUD render, or `theron_vp_present` directly for Theron runtime rendering. Verification: `test_theron_v1_startup_save_resume_pc34` passed 125/125; Phase A passed 24/24; `git diff --check` passed.
