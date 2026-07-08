@@ -1420,19 +1420,83 @@ static int m11_dm1_handoff_play_entrance(void* user,
     return 1;
 }
 
+static int m11_dm1_host_set_game_active(void* user, int active) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !ctx->gameView) {
+        return 0;
+    }
+    ctx->gameView->active = active;
+    return 1;
+}
+
+static int m11_dm1_host_resolve_resume_save_path(void* user,
+                                                 const char* source_id,
+                                                 char* out_path,
+                                                 int out_path_size) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !ctx->menuState) {
+        return 0;
+    }
+    return M11_Entrance_ResolveDm1ResumeSavePath(
+        source_id,
+        ctx->menuState->quickResumeAvailable,
+        ctx->menuState->quickResumeGameId,
+        ctx->menuState->quickResumeSavePath,
+        out_path,
+        (size_t)out_path_size);
+}
+
+static int m11_dm1_host_load_resume_save_path(void* user,
+                                              const char* save_path,
+                                              int* out_used_backup) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !ctx->gameView) {
+        return 0;
+    }
+    return M11_GameView_LoadDm1SavePath(ctx->gameView,
+                                        save_path,
+                                        out_used_backup);
+}
+
+static int m11_dm1_host_log_resume_loaded(void* user,
+                                          const char* save_path,
+                                          int used_backup) {
+    (void)user;
+    fprintf(stderr, "RESUME: loaded save from %s%s\n", save_path,
+            used_backup ? " backup" : "");
+    return 1;
+}
+
+static int m11_dm1_host_log_resume_missing(void* user, const char* save_path) {
+    (void)user;
+    fprintf(stderr, "RESUME: no save found at %s, starting new game\n",
+            save_path ? save_path : "(unresolved)");
+    return 1;
+}
+
+static int m11_dm1_host_log_entrance_skipped(void* user) {
+    (void)user;
+    fprintf(stderr, "entrance transition skipped (non-fatal)\n");
+    return 1;
+}
+
 static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
                                      const char* dataDir) {
     DM1_V1_StartupHandoffOutcome_PC34 dm1HandoffOutcome;
+    DM1_V1_StartupHostApplyResult_PC34 dm1HostApplyResult;
     M11_DM1StartupHandoffContext dm1HandoffContext;
     DM1_V1_StartupHandoffCallbacks_PC34 dm1HandoffCallbacks;
+    DM1_V1_StartupHostCallbacks_PC34 dm1HostCallbacks;
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
     }
     memset(&dm1HandoffOutcome, 0, sizeof(dm1HandoffOutcome));
+    memset(&dm1HostApplyResult, 0, sizeof(dm1HostApplyResult));
     memset(&dm1HandoffContext, 0, sizeof(dm1HandoffContext));
     memset(&dm1HandoffCallbacks, 0, sizeof(dm1HandoffCallbacks));
+    memset(&dm1HostCallbacks, 0, sizeof(dm1HostCallbacks));
     dm1HandoffContext.menuState = menuState;
     dm1HandoffContext.gameView = gameView;
     dm1HandoffContext.dataDir = dataDir;
@@ -1445,6 +1509,15 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         m11_dm1_handoff_discard_presentation_texture;
     dm1HandoffCallbacks.play_title = m11_dm1_handoff_play_title;
     dm1HandoffCallbacks.play_entrance = m11_dm1_handoff_play_entrance;
+    dm1HostCallbacks.user = &dm1HandoffContext;
+    dm1HostCallbacks.set_game_active = m11_dm1_host_set_game_active;
+    dm1HostCallbacks.resolve_resume_save_path =
+        m11_dm1_host_resolve_resume_save_path;
+    dm1HostCallbacks.load_resume_save_path =
+        m11_dm1_host_load_resume_save_path;
+    dm1HostCallbacks.log_resume_loaded = m11_dm1_host_log_resume_loaded;
+    dm1HostCallbacks.log_resume_missing = m11_dm1_host_log_resume_missing;
+    dm1HostCallbacks.log_entrance_skipped = m11_dm1_host_log_entrance_skipped;
     {
         /* ReDMCSB startup source-lock: MAIN/STARTEND enters F0437_STARTEND_DrawTitle() before
          * F0441_STARTEND_ProcessEntrance().  Firestaff has a modern launcher front door, so
@@ -1491,43 +1564,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             gameView->sourceId,
             &dm1HandoffCallbacks,
             &dm1HandoffOutcome);
-        if (dm1HandoffOutcome.action !=
-            DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34) {
-            if (dm1HandoffOutcome.action ==
-                DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34) {
-                gameView->active = 0;
-                return 1;
-            }
-            if (dm1HandoffOutcome.action ==
-                DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34) {
-                /* ReDMCSB COMMAND.C M566: RESUME loads the saved game.
-                 * Prefer the launcher's already validated DM1 quick-resume
-                 * path, then fall back to Firestaff's historical source-id
-                 * save filename. */
-                char savePath[512];
-                int usedBackup = 0;
-                if (M11_Entrance_ResolveDm1ResumeSavePath(
-                        gameView->sourceId,
-                        menuState->quickResumeAvailable,
-                        menuState->quickResumeGameId,
-                        menuState->quickResumeSavePath,
-                        savePath,
-                        sizeof(savePath)) &&
-                    M11_GameView_LoadDm1SavePath(gameView, savePath, &usedBackup)) {
-                    gameView->active = 1;
-                    fprintf(stderr, "RESUME: loaded save from %s%s\n", savePath,
-                            usedBackup ? " backup" : "");
-                } else {
-                    fprintf(stderr, "RESUME: no save found at %s, starting new game\n",
-                            savePath[0] ? savePath : "(unresolved)");
-                }
-            } else if (dm1HandoffOutcome.action ==
-                       DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34) {
-                /* Non-fatal: skip entrance animation but continue to game.
-                 * Previously this aborted back to menu, causing the black
-                 * viewport bug when TITLE.DAT decode failed. */
-                fprintf(stderr, "entrance transition skipped (non-fatal)\n");
-            }
+        (void)dm1_v1_startup_apply_handoff_outcome_pc34(
+            &dm1HandoffOutcome,
+            gameView->sourceId,
+            &dm1HostCallbacks,
+            &dm1HostApplyResult);
+        if (dm1HostApplyResult.quit_requested) {
+            return 1;
         }
         M11_GameView_Draw(gameView,
                           M11_Render_GetFramebuffer(),

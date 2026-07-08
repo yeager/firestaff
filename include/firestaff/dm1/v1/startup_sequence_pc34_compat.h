@@ -52,6 +52,15 @@ typedef struct DM1_V1_StartupHandoffOutcome_PC34 {
     const char* status;
 } DM1_V1_StartupHandoffOutcome_PC34;
 
+typedef struct DM1_V1_StartupHostApplyResult_PC34 {
+    int handled;
+    int quit_requested;
+    int resume_requested;
+    int resume_loaded;
+    int resume_used_backup;
+    char resume_path[512];
+} DM1_V1_StartupHostApplyResult_PC34;
+
 typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
     void* user;
     int (*report_source_order_failure)(void* user, const char* evidence);
@@ -64,6 +73,23 @@ typedef struct DM1_V1_StartupHandoffCallbacks_PC34 {
                          int auto_enter_after_ms,
                          int* out_entrance_command);
 } DM1_V1_StartupHandoffCallbacks_PC34;
+
+typedef struct DM1_V1_StartupHostCallbacks_PC34 {
+    void* user;
+    int (*set_game_active)(void* user, int active);
+    int (*resolve_resume_save_path)(void* user,
+                                    const char* source_id,
+                                    char* out_path,
+                                    int out_path_size);
+    int (*load_resume_save_path)(void* user,
+                                 const char* save_path,
+                                 int* out_used_backup);
+    int (*log_resume_loaded)(void* user,
+                             const char* save_path,
+                             int used_backup);
+    int (*log_resume_missing)(void* user, const char* save_path);
+    int (*log_entrance_skipped)(void* user);
+} DM1_V1_StartupHostCallbacks_PC34;
 
 const char* dm1_v1_startup_stage_name_pc34(DM1_V1_StartupStage_PC34 stage);
 int dm1_v1_startup_stage_after_pc34(DM1_V1_StartupStage_PC34 later,
@@ -96,6 +122,11 @@ int dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
     const char* source_id,
     const DM1_V1_StartupHandoffCallbacks_PC34* callbacks,
     DM1_V1_StartupHandoffOutcome_PC34* out_outcome);
+int dm1_v1_startup_apply_handoff_outcome_pc34(
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    const char* source_id,
+    const DM1_V1_StartupHostCallbacks_PC34* callbacks,
+    DM1_V1_StartupHostApplyResult_PC34* out_result);
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,

@@ -54,6 +54,14 @@ typedef struct FakeDm1StartupCallbacks {
     int title_played;
     int entrance_command;
     int entrance_timeout_ms;
+    int active;
+    int resolve_ok;
+    int load_ok;
+    int used_backup;
+    int log_loaded;
+    int log_missing;
+    int log_skipped;
+    char resolved_path[512];
 } FakeDm1StartupCallbacks;
 
 static void fake_append(FakeDm1StartupCallbacks* fake, char token) {
@@ -127,6 +135,76 @@ static DM1_V1_StartupHandoffCallbacks_PC34 fake_callbacks(
     callbacks.discard_presentation_texture = fake_discard_presentation;
     callbacks.play_title = fake_play_title;
     callbacks.play_entrance = fake_play_entrance;
+    return callbacks;
+}
+
+static int fake_set_game_active(void* user, int active) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    fake->active = active;
+    return 1;
+}
+
+static int fake_resolve_resume(void* user,
+                               const char* source_id,
+                               char* out_path,
+                               int out_path_size) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    (void)source_id;
+    if (!fake->resolve_ok || !out_path || out_path_size <= 0) {
+        return 0;
+    }
+    snprintf(out_path, (size_t)out_path_size, "%s", fake->resolved_path);
+    return 1;
+}
+
+static int fake_load_resume(void* user,
+                            const char* save_path,
+                            int* out_used_backup) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    (void)save_path;
+    if (!fake->load_ok) {
+        return 0;
+    }
+    if (out_used_backup) {
+        *out_used_backup = fake->used_backup;
+    }
+    return 1;
+}
+
+static int fake_log_resume_loaded(void* user,
+                                  const char* save_path,
+                                  int used_backup) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    (void)save_path;
+    (void)used_backup;
+    fake->log_loaded = 1;
+    return 1;
+}
+
+static int fake_log_resume_missing(void* user, const char* save_path) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    (void)save_path;
+    fake->log_missing = 1;
+    return 1;
+}
+
+static int fake_log_entrance_skipped(void* user) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    fake->log_skipped = 1;
+    return 1;
+}
+
+static DM1_V1_StartupHostCallbacks_PC34 fake_host_callbacks(
+    FakeDm1StartupCallbacks* fake) {
+    DM1_V1_StartupHostCallbacks_PC34 callbacks;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.user = fake;
+    callbacks.set_game_active = fake_set_game_active;
+    callbacks.resolve_resume_save_path = fake_resolve_resume;
+    callbacks.load_resume_save_path = fake_load_resume;
+    callbacks.log_resume_loaded = fake_log_resume_loaded;
+    callbacks.log_resume_missing = fake_log_resume_missing;
+    callbacks.log_entrance_skipped = fake_log_entrance_skipped;
     return callbacks;
 }
 
@@ -298,8 +376,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHandoffPreludePlan_PC34 prelude;
     DM1_V1_StartupHandoffPostLaunchPlan_PC34 post;
     DM1_V1_StartupHandoffOutcome_PC34 outcome;
+    DM1_V1_StartupHostApplyResult_PC34 apply_result;
     FakeDm1StartupCallbacks fake;
     DM1_V1_StartupHandoffCallbacks_PC34 callbacks;
+    DM1_V1_StartupHostCallbacks_PC34 host_callbacks;
     int title_played = 0;
     int entrance_command = 0;
     int startup_active = -1;
@@ -518,6 +598,106 @@ static void check_dm1_launch_path_bypass_contract(void) {
              1);
     expect_i("NULL outcome rejects missing output",
              dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(1, NULL),
+             0);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.resolve_ok = 1;
+    fake.load_ok = 1;
+    fake.used_backup = 1;
+    snprintf(fake.resolved_path, sizeof(fake.resolved_path), "%s", "/tmp/dm1.sav");
+    host_callbacks = fake_host_callbacks(&fake);
+    (void)dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(2, &outcome);
+    expect_i("DM1 host apply resume succeeds",
+             dm1_v1_startup_apply_handoff_outcome_pc34(&outcome,
+                                                       "dm1",
+                                                       &host_callbacks,
+                                                       &apply_result),
+             1);
+    expect_i("DM1 host apply resume handled",
+             apply_result.handled,
+             1);
+    expect_i("DM1 host apply resume loaded",
+             apply_result.resume_loaded,
+             1);
+    expect_i("DM1 host apply resume keeps backup flag",
+             apply_result.resume_used_backup,
+             1);
+    expect_i("DM1 host apply resume activates game",
+             fake.active,
+             1);
+    expect_i("DM1 host apply resume logs loaded",
+             fake.log_loaded,
+             1);
+    expect_i("DM1 host apply resume path copied",
+             strcmp(apply_result.resume_path, "/tmp/dm1.sav"),
+             0);
+
+    memset(&fake, 0, sizeof(fake));
+    fake.resolve_ok = 1;
+    fake.load_ok = 0;
+    snprintf(fake.resolved_path, sizeof(fake.resolved_path), "%s", "/tmp/missing.sav");
+    host_callbacks = fake_host_callbacks(&fake);
+    expect_i("DM1 host apply missing resume remains nonfatal",
+             dm1_v1_startup_apply_handoff_outcome_pc34(&outcome,
+                                                       "dm1",
+                                                       &host_callbacks,
+                                                       &apply_result),
+             1);
+    expect_i("DM1 host apply missing resume logs missing",
+             fake.log_missing,
+             1);
+    expect_i("DM1 host apply missing resume not loaded",
+             apply_result.resume_loaded,
+             0);
+
+    memset(&fake, 0, sizeof(fake));
+    host_callbacks = fake_host_callbacks(&fake);
+    (void)dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(-1, &outcome);
+    expect_i("DM1 host apply quit succeeds",
+             dm1_v1_startup_apply_handoff_outcome_pc34(&outcome,
+                                                       "dm1",
+                                                       &host_callbacks,
+                                                       &apply_result),
+             1);
+    expect_i("DM1 host apply quit deactivates game",
+             fake.active,
+             0);
+    expect_i("DM1 host apply quit requested",
+             apply_result.quit_requested,
+             1);
+
+    memset(&fake, 0, sizeof(fake));
+    host_callbacks = fake_host_callbacks(&fake);
+    (void)dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(0, &outcome);
+    expect_i("DM1 host apply skipped entrance succeeds",
+             dm1_v1_startup_apply_handoff_outcome_pc34(&outcome,
+                                                       "dm1",
+                                                       &host_callbacks,
+                                                       &apply_result),
+             1);
+    expect_i("DM1 host apply skipped entrance logs",
+             fake.log_skipped,
+             1);
+    expect_i("DM1 host apply enter/no-op succeeds",
+             dm1_v1_startup_handoff_outcome_from_entrance_command_pc34(1,
+                                                                       &outcome) &&
+                 dm1_v1_startup_apply_handoff_outcome_pc34(&outcome,
+                                                           "dm1",
+                                                           &host_callbacks,
+                                                           &apply_result) &&
+                 apply_result.handled == 0,
+             1);
+    expect_i("NULL host apply rejects missing outcome",
+             dm1_v1_startup_apply_handoff_outcome_pc34(NULL,
+                                                       "dm1",
+                                                       &host_callbacks,
+                                                       &apply_result),
+             0);
+    expect_i("NULL host apply rejects missing result",
+             dm1_v1_startup_apply_handoff_outcome_pc34(&outcome,
+                                                       "dm1",
+                                                       &host_callbacks,
+                                                       NULL),
              0);
 
     expect_i("receipt unloaded rc",

@@ -280,6 +280,85 @@ int dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
     return 1;
 }
 
+int dm1_v1_startup_apply_handoff_outcome_pc34(
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    const char* source_id,
+    const DM1_V1_StartupHostCallbacks_PC34* callbacks,
+    DM1_V1_StartupHostApplyResult_PC34* out_result) {
+    DM1_V1_StartupHostApplyResult_PC34 result;
+    int used_backup = 0;
+
+    if (!outcome || !out_result) {
+        return 0;
+    }
+    memset(&result, 0, sizeof(result));
+    if (outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34 ||
+        outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34) {
+        *out_result = result;
+        return 1;
+    }
+    if (!callbacks) {
+        return 0;
+    }
+    result.handled = 1;
+    switch (outcome->action) {
+        case DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34:
+            result.quit_requested = 1;
+            if (!callbacks->set_game_active ||
+                !callbacks->set_game_active(callbacks->user, 0)) {
+                return 0;
+            }
+            break;
+        case DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34:
+            result.resume_requested = 1;
+            /* ReDMCSB COMMAND.C M566: RESUME loads the saved game.  Firestaff
+             * keeps host path resolution/load I/O behind callbacks, while DM1
+             * owns the decision that RESUME should attempt this path. */
+            if (!callbacks->resolve_resume_save_path ||
+                !callbacks->load_resume_save_path) {
+                return 0;
+            }
+            if (callbacks->resolve_resume_save_path(callbacks->user,
+                                                    source_id,
+                                                    result.resume_path,
+                                                    (int)sizeof(result.resume_path)) &&
+                callbacks->load_resume_save_path(callbacks->user,
+                                                 result.resume_path,
+                                                 &used_backup)) {
+                result.resume_loaded = 1;
+                result.resume_used_backup = used_backup;
+                if (callbacks->set_game_active &&
+                    !callbacks->set_game_active(callbacks->user, 1)) {
+                    return 0;
+                }
+                if (callbacks->log_resume_loaded &&
+                    !callbacks->log_resume_loaded(callbacks->user,
+                                                  result.resume_path,
+                                                  used_backup)) {
+                    return 0;
+                }
+            } else if (callbacks->log_resume_missing &&
+                       !callbacks->log_resume_missing(
+                           callbacks->user,
+                           result.resume_path[0] ? result.resume_path
+                                                 : "(unresolved)")) {
+                return 0;
+            }
+            break;
+        case DM1_V1_STARTUP_HANDOFF_ACTION_SKIPPED_NONFATAL_PC34:
+            if (callbacks->log_entrance_skipped &&
+                !callbacks->log_entrance_skipped(callbacks->user)) {
+                return 0;
+            }
+            break;
+        default:
+            result.handled = 0;
+            break;
+    }
+    *out_result = result;
+    return 1;
+}
+
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,
