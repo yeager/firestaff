@@ -438,6 +438,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupHostApplyResult_PC34 apply_result;
     DM1_V1_StartupSelectedLaunchCallbacks_PC34 launch_callbacks;
     DM1_V1_StartupSelectedLaunchResult_PC34 launch_result;
+    DM1_V1_StartupSelectedLaunchRouteFacts_PC34 route_facts;
+    DM1_V1_StartupSelectedLaunchRouteReceipt_PC34 route_receipt;
     DM1_V1_StartupLaunchPathFacts_PC34 launch_facts;
     DM1_V1_StartupLaunchPathReceipt_PC34 launch_receipt;
     DM1_V1_StartupRuntimeStartFacts_PC34 runtime_facts;
@@ -510,6 +512,39 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("CSB selected-entry receipt ignores DM1 intro bypass policy",
              dm1_v1_startup_selected_entry_receipt_valid_pc34("csb", 1),
              1);
+
+    memset(&route_facts, 0, sizeof(route_facts));
+    memset(&route_receipt, 0, sizeof(route_receipt));
+    route_facts.selected_game_id = "dm1";
+    expect_i("DM1 selected launch route receipt builds",
+             dm1_v1_startup_selected_launch_route_receipt_pc34(&route_facts,
+                                                               &route_receipt),
+             1);
+    expect_i("DM1 selected launch route uses DM1 transaction",
+             route_receipt.handled == 1 &&
+                 route_receipt.use_dm1_transaction == 1 &&
+                 route_receipt.use_generic_launch == 0 &&
+                 route_receipt.requires_source_visible_intro == 1,
+             1);
+    route_facts.selected_game_id = "csb";
+    expect_i("CSB selected launch route stays generic",
+             dm1_v1_startup_selected_launch_route_receipt_pc34(&route_facts,
+                                                               &route_receipt) &&
+                 route_receipt.handled == 1 &&
+                 route_receipt.use_dm1_transaction == 0 &&
+                 route_receipt.use_generic_launch == 1,
+             1);
+    route_facts.selected_game_id = NULL;
+    expect_i("NULL selected launch route stays generic",
+             dm1_v1_startup_selected_launch_route_receipt_pc34(&route_facts,
+                                                               &route_receipt) &&
+                 route_receipt.use_dm1_transaction == 0 &&
+                 route_receipt.use_generic_launch == 1,
+             1);
+    expect_i("NULL selected launch route facts rejected",
+             dm1_v1_startup_selected_launch_route_receipt_pc34(NULL,
+                                                               &route_receipt),
+             0);
 
     memset(&launch_facts, 0, sizeof(launch_facts));
     memset(&launch_receipt, 0, sizeof(launch_receipt));

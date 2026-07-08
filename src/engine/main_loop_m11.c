@@ -1543,6 +1543,8 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     DM1_V1_StartupHostCallbacks_PC34 dm1HostCallbacks;
     DM1_V1_StartupSelectedLaunchCallbacks_PC34 dm1SelectedLaunchCallbacks;
     DM1_V1_StartupSelectedLaunchResult_PC34 dm1SelectedLaunchResult;
+    DM1_V1_StartupSelectedLaunchRouteFacts_PC34 dm1RouteFacts;
+    DM1_V1_StartupSelectedLaunchRouteReceipt_PC34 dm1RouteReceipt;
     const M12_MenuEntry* launchEntry;
     if (!gameView || !menuState || !menuState->launchRequested) {
         return 0;
@@ -1552,6 +1554,8 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     memset(&dm1HostCallbacks, 0, sizeof(dm1HostCallbacks));
     memset(&dm1SelectedLaunchCallbacks, 0, sizeof(dm1SelectedLaunchCallbacks));
     memset(&dm1SelectedLaunchResult, 0, sizeof(dm1SelectedLaunchResult));
+    memset(&dm1RouteFacts, 0, sizeof(dm1RouteFacts));
+    memset(&dm1RouteReceipt, 0, sizeof(dm1RouteReceipt));
     dm1HandoffContext.menuState = menuState;
     dm1HandoffContext.gameView = gameView;
     dm1HandoffContext.dataDir = dataDir;
@@ -1583,9 +1587,15 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     dm1SelectedLaunchCallbacks.mark_launch_failed =
         m11_dm1_selected_launch_mark_failed;
     launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
-    if (launchEntry && launchEntry->gameId &&
-        dm1_v1_startup_source_visible_handoff_required_pc34(
-            launchEntry->gameId)) {
+    dm1RouteFacts.selected_game_id =
+        (launchEntry && launchEntry->gameId) ? launchEntry->gameId : NULL;
+    if (!dm1_v1_startup_selected_launch_route_receipt_pc34(
+            &dm1RouteFacts,
+            &dm1RouteReceipt)) {
+        m11_set_launch_failed_message(menuState);
+        return 0;
+    }
+    if (dm1RouteReceipt.use_dm1_transaction) {
         if (!dm1_v1_startup_execute_selected_launch_transaction_pc34(
                 launchEntry->gameId,
                 &dm1SelectedLaunchCallbacks,

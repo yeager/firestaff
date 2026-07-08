@@ -111,6 +111,17 @@ typedef struct DM1_V1_StartupSelectedLaunchResult_PC34 {
     DM1_V1_StartupHostApplyResult_PC34 host_apply_result;
 } DM1_V1_StartupSelectedLaunchResult_PC34;
 
+typedef struct DM1_V1_StartupSelectedLaunchRouteFacts_PC34 {
+    const char* selected_game_id;
+} DM1_V1_StartupSelectedLaunchRouteFacts_PC34;
+
+typedef struct DM1_V1_StartupSelectedLaunchRouteReceipt_PC34 {
+    int handled;
+    int use_dm1_transaction;
+    int use_generic_launch;
+    int requires_source_visible_intro;
+} DM1_V1_StartupSelectedLaunchRouteReceipt_PC34;
+
 typedef struct DM1_V1_StartupLaunchPathFacts_PC34 {
     const char* source_id;
     DM1_V1_StartupLaunchPath_PC34 launch_path;
@@ -327,6 +338,9 @@ int dm1_v1_startup_execute_selected_launch_transaction_pc34(
     const char* selected_game_id,
     const DM1_V1_StartupSelectedLaunchCallbacks_PC34* callbacks,
     DM1_V1_StartupSelectedLaunchResult_PC34* out_result);
+int dm1_v1_startup_selected_launch_route_receipt_pc34(
+    const DM1_V1_StartupSelectedLaunchRouteFacts_PC34* facts,
+    DM1_V1_StartupSelectedLaunchRouteReceipt_PC34* out_receipt);
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,

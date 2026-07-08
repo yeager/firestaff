@@ -732,6 +732,27 @@ int dm1_v1_startup_execute_selected_launch_transaction_pc34(
     return 1;
 }
 
+int dm1_v1_startup_selected_launch_route_receipt_pc34(
+    const DM1_V1_StartupSelectedLaunchRouteFacts_PC34* facts,
+    DM1_V1_StartupSelectedLaunchRouteReceipt_PC34* out_receipt) {
+    DM1_V1_StartupSelectedLaunchRouteReceipt_PC34 receipt;
+
+    if (!facts || !out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.handled = 1;
+    receipt.requires_source_visible_intro =
+        dm1_v1_startup_source_visible_handoff_required_pc34(
+            facts->selected_game_id);
+    receipt.use_dm1_transaction =
+        receipt.requires_source_visible_intro ? 1 : 0;
+    receipt.use_generic_launch =
+        receipt.requires_source_visible_intro ? 0 : 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
                                       int intro_bypassed,
                                       char* out_phase,
