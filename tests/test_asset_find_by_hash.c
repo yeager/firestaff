@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef FIRESTAFF_HAS_ZLIB
+#include <zlib.h>
+#endif
+
 #ifdef _WIN32
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
@@ -150,6 +154,88 @@ static int write_stored_zip_duplicate_hash_fixture(const char* path) {
     return fclose(fp) == 0;
 }
 
+static void write_tar_octal(unsigned char* field, size_t fieldSize, unsigned int value) {
+    char tmp[32];
+    snprintf(tmp, sizeof(tmp), "%0*o", (int)fieldSize - 1, value);
+    memcpy(field, tmp, fieldSize - 1U);
+    field[fieldSize - 1U] = '\0';
+}
+
+static int build_tar_fixture(unsigned char* out, size_t outSize, size_t* outUsed) {
+    static const char payload[] = "Firestaff hash identity fixture v1\n";
+    static const char name[] = "dm1/weird-name.payload";
+    unsigned char* hdr;
+    unsigned int checksum = 0U;
+    size_t payloadSize = sizeof(payload) - 1U;
+    size_t total = 512U + ((payloadSize + 511U) / 512U) * 512U + 1024U;
+    size_t i;
+    if (!out || !outUsed || outSize < total) return 0;
+    memset(out, 0, total);
+    hdr = out;
+    memcpy(hdr, name, sizeof(name) - 1U);
+    write_tar_octal(hdr + 100, 8U, 0644U);
+    write_tar_octal(hdr + 108, 8U, 0U);
+    write_tar_octal(hdr + 116, 8U, 0U);
+    write_tar_octal(hdr + 124, 12U, (unsigned int)payloadSize);
+    write_tar_octal(hdr + 136, 12U, 0U);
+    memset(hdr + 148, ' ', 8U);
+    hdr[156] = '0';
+    memcpy(hdr + 257, "ustar", 5U);
+    memcpy(hdr + 263, "00", 2U);
+    for (i = 0U; i < 512U; ++i) checksum += hdr[i];
+    write_tar_octal(hdr + 148, 8U, checksum);
+    memcpy(out + 512U, payload, payloadSize);
+    *outUsed = total;
+    return 1;
+}
+
+static int write_tar_fixture(const char* path) {
+    unsigned char tarBytes[4096];
+    size_t tarSize = 0U;
+    FILE* fp;
+    if (!build_tar_fixture(tarBytes, sizeof(tarBytes), &tarSize)) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(tarBytes, 1U, tarSize, fp) != tarSize) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+#ifdef FIRESTAFF_HAS_ZLIB
+static int write_tgz_fixture(const char* path) {
+    unsigned char tarBytes[4096];
+    unsigned char outBytes[4096];
+    size_t tarSize = 0U;
+    z_stream zs;
+    FILE* fp;
+    size_t produced;
+    int ret;
+    if (!build_tar_fixture(tarBytes, sizeof(tarBytes), &tarSize)) return 0;
+    memset(&zs, 0, sizeof(zs));
+    if (deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+                     16 + MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+        return 0;
+    }
+    zs.next_in = tarBytes;
+    zs.avail_in = (uInt)tarSize;
+    zs.next_out = outBytes;
+    zs.avail_out = (uInt)sizeof(outBytes);
+    ret = deflate(&zs, Z_FINISH);
+    produced = sizeof(outBytes) - zs.avail_out;
+    deflateEnd(&zs);
+    if (ret != Z_STREAM_END) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(outBytes, 1U, produced, fp) != produced) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+#endif
+
 static int write_iso_record(unsigned char* dir, int offset, unsigned int lba,
                             unsigned int size, int isDir,
                             const unsigned char* name, int nameLen) {
@@ -267,6 +353,8 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/nested/renamed.asset");
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.zip");
+    remove("asset_find_by_hash_test_tmp/archive.tar");
+    remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/disc.iso");
     remove("asset_find_by_hash_test_tmp/cue_a.payload");
     remove("asset_find_by_hash_test_tmp/cue_b.payload");
@@ -435,6 +523,64 @@ int main(void) {
     }
 
     remove("asset_find_by_hash_test_tmp/archive.zip");
+    if (!write_tar_fixture("asset_find_by_hash_test_tmp/archive.tar")) {
+        cleanup_fixture();
+        fprintf(stderr, "TAR fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "archive.tar", "dm1/weird-name.payload")) {
+        cleanup_fixture();
+        fprintf(stderr, "TAR entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual TAR extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/archive.tar");
+
+#ifdef FIRESTAFF_HAS_ZLIB
+    if (!write_tgz_fixture("asset_find_by_hash_test_tmp/archive.tgz")) {
+        cleanup_fixture();
+        fprintf(stderr, "TGZ fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "archive.tgz", "dm1/weird-name.payload")) {
+        cleanup_fixture();
+        fprintf(stderr, "TGZ entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] ||
+        !matched[1] ||
+        !path_has_virtual_entry(outPaths[1], "archive.tgz", "dm1/weird-name.payload")) {
+        cleanup_fixture();
+        fprintf(stderr, "TGZ all-list lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "virtual TGZ extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    remove("asset_find_by_hash_test_tmp/archive.tgz");
+#endif
+
     if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.iso")) {
         cleanup_fixture();
         fprintf(stderr, "ISO fixture setup failed\n");

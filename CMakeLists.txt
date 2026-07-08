@@ -17043,6 +17043,7 @@ if(BUILD_TESTING)
         tests/test_swsh_intro_pathfinder_m11.c
         src/engine/swsh_intro_pathfinder_m11.c
         src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
     )
     target_compile_definitions(test_swsh_intro_pathfinder_m11 PRIVATE

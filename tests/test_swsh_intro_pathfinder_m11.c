@@ -101,6 +101,41 @@ static int write_swsh(const char *path)
     return 1;
 }
 
+static int copy_file(const char *src, const char *dst)
+{
+    unsigned char buf[4096];
+    FILE *in;
+    FILE *out;
+    size_t n;
+    if (!src || !dst) {
+        return 0;
+    }
+    in = fopen(src, "rb");
+    if (!in) {
+        return 0;
+    }
+    out = fopen(dst, "wb");
+    if (!out) {
+        fclose(in);
+        return 0;
+    }
+    while ((n = fread(buf, 1, sizeof(buf), in)) > 0U) {
+        if (fwrite(buf, 1, n, out) != n) {
+            fclose(out);
+            fclose(in);
+            return 0;
+        }
+    }
+    if (ferror(in)) {
+        fclose(out);
+        fclose(in);
+        return 0;
+    }
+    fclose(out);
+    fclose(in);
+    return 1;
+}
+
 int main(void)
 {
     char root[512];
@@ -111,11 +146,16 @@ int main(void)
     char extras_legacy_pc34_dir[512];
     char scan_root[512];
     char scan_nested_dir[512];
+    char real_hash_dir[512];
     char dm1_swsh[512];
     char csb_swsh[512];
     char extras_swsh[512];
     char arbitrary_swsh[512];
+    char renamed_real_swsh[512];
     char found[512];
+    const char *real_swsh =
+        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/"
+        "ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH";
 
     snprintf(root,
              sizeof(root),
@@ -142,6 +182,12 @@ int main(void)
              "%s%srenamed-files",
              scan_root,
              TEST_SEP);
+    snprintf(real_hash_dir,
+             sizeof(real_hash_dir),
+             "%s%sfirestaff_swsh_real_hash_%ld",
+             getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp",
+             TEST_SEP,
+             (long)TEST_GETPID());
     snprintf(dm1_swsh, sizeof(dm1_swsh), "%s%sSWOOSH", dm1_dir, TEST_SEP);
     snprintf(csb_swsh, sizeof(csb_swsh), "%s%sSWOOSH", csb_dir, TEST_SEP);
     snprintf(extras_swsh,
@@ -154,6 +200,11 @@ int main(void)
              "%s%sftl-logo.payload",
              scan_nested_dir,
              TEST_SEP);
+    snprintf(renamed_real_swsh,
+             sizeof(renamed_real_swsh),
+             "%s%snot-called-swoosh.bin",
+             real_hash_dir,
+             TEST_SEP);
 
     expect_true(TEST_MKDIR(root) == 0, "temp root created");
     expect_true(TEST_MKDIR(dm1_dir) == 0, "dm1 dir created");
@@ -165,6 +216,7 @@ int main(void)
                 "dm1-extras PC34 dir created");
     expect_true(TEST_MKDIR(scan_root) == 0, "scan root created");
     expect_true(TEST_MKDIR(scan_nested_dir) == 0, "scan nested dir created");
+    expect_true(TEST_MKDIR(real_hash_dir) == 0, "real hash dir created");
     expect_true(write_swsh(dm1_swsh), "dm1 SWOOSH written");
     expect_true(write_swsh(csb_swsh), "csb SWOOSH written");
     expect_true(write_swsh(extras_swsh), "dm1-extras SWOOSH written");
@@ -202,6 +254,20 @@ int main(void)
                 "csb SWSH scan finds payload without filename dependency");
     expect_true(strcmp(found, arbitrary_swsh) == 0,
                 "csb SWSH scan resolves arbitrary named payload by bytes");
+
+    if (copy_file(real_swsh, renamed_real_swsh)) {
+        memset(found, 0, sizeof(found));
+        expect_true(M11_SWSH_Intro_FindLogoPathForGame(NULL,
+                                                       real_hash_dir,
+                                                       "csb",
+                                                       found,
+                                                       sizeof(found)) == 1,
+                    "csb SWSH hash scan finds renamed original SWOOSH");
+        expect_true(strcmp(found, renamed_real_swsh) == 0,
+                    "csb SWSH hash scan resolves renamed original by MD5");
+    } else {
+        printf("skip: local ReDMCSB I34E/SWOOSH fixture not available\n");
+    }
 
     memset(found, 0, sizeof(found));
     expect_true(M11_SWSH_Intro_FindLogoPath(NULL,
