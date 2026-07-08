@@ -751,8 +751,12 @@ static void test_boot_prepare_startup_profile_missing_track02(void) {
                     launch.profile == NULL &&
                     launch.world == NULL &&
                     launch.viewport == NULL &&
-                    launch.assets == NULL,
-                "boot startup launch allocation reports missing Track 02 and cleans owned pointers");
+                    launch.assets == NULL &&
+                    launch.startup_media_state_receipt.
+                        startup_roster_name_status == 0 &&
+                    launch.startup_media_state_receipt.
+                        startup_text_prompt_status == 0,
+                "boot startup launch allocation reports missing Track 02 and cleans owned pointers/receipts");
     theron_v1_boot_startup_launch_cleanup(&launch);
     cleanup_srm_root(TST_BAD_ROOT);
 }

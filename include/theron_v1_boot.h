@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "asset_status_m12.h"
+#include "theron_v1_startup_media.h"
 #include "theron_v1_startup_save_resume.h"
 #include "theron/theron_v1_asset_loader.h"
 #include "theron_v1_viewport.h"
@@ -225,6 +226,7 @@ typedef struct Theron_V1_BootStartupLaunch {
     Theron_StartupFlow startup_flow;
     Theron_StartupStateReceipt initial_state_receipt;
     Theron_StartupStateReceipt save_resume_state_receipt;
+    Theron_StartupMediaStateReceipt startup_media_state_receipt;
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
 

@@ -11444,20 +11444,6 @@ static void m11_theron_apply_startup_media_state_receipt(
     state->theronState.startup_roster_name_count = (int)i;
 }
 
-static void m11_theron_capture_track02_startup_media(
-    M11_GameViewState* state,
-    const TrAssetBundle* assets,
-    const char* md5_hex) {
-    Theron_StartupMediaStateReceipt receipt;
-
-    theron_v1_startup_media_capture_track02_state_receipt(
-        assets ? assets->hucard_rom : NULL,
-        assets ? assets->hucard_rom_size : 0u,
-        md5_hex,
-        &receipt);
-    m11_theron_apply_startup_media_state_receipt(state, &receipt);
-}
-
 static void m11_theron_apply_startup_flow_snapshot(
     M11_GameViewState *state,
     const Theron_StartupFlowSnapshot *snapshot);
@@ -11738,9 +11724,9 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     m11_theron_apply_startup_state_receipt(
         state,
         &launch.save_resume_state_receipt);
-    m11_theron_capture_track02_startup_media(state,
-                                             launch.assets,
-                                             launch.profile->graphics_md5);
+    m11_theron_apply_startup_media_state_receipt(
+        state,
+        &launch.startup_media_state_receipt);
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_THERON_TRACK02;

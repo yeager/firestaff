@@ -796,6 +796,11 @@ int theron_v1_boot_startup_launch_alloc(
             THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
         return 0;
     }
+    theron_v1_startup_media_capture_track02_state_receipt(
+        out_launch->assets ? out_launch->assets->hucard_rom : NULL,
+        out_launch->assets ? out_launch->assets->hucard_rom_size : 0u,
+        out_launch->profile->graphics_md5,
+        &out_launch->startup_media_state_receipt);
     return 1;
 }
 
