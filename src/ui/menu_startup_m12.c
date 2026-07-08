@@ -3653,9 +3653,9 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_BACKGROUND: return m12_tr(state, "BACKGROUND");
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_tr(state, "QUICK RESUME");
         case M12_SETTINGS_ROW_RETROACHIEVEMENTS: return m12_tr(state, "RETROACHIEVEMENTS");
-        case M12_SETTINGS_ROW_RA_HARDCORE: return m12_tr(state, "RA HARDCORE");
-        case M12_SETTINGS_ROW_RA_USERNAME: return m12_tr(state, "RA USER");
-        case M12_SETTINGS_ROW_RA_TOKEN: return m12_tr(state, "RA API TOKEN");
+        case M12_SETTINGS_ROW_RA_HARDCORE: return m12_tr(state, "RETROACHIEVEMENTS HARDCORE");
+        case M12_SETTINGS_ROW_RA_USERNAME: return m12_tr(state, "RETROACHIEVEMENTS USER");
+        case M12_SETTINGS_ROW_RA_TOKEN: return m12_tr(state, "RETROACHIEVEMENTS API TOKEN");
         case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "SAVE BROWSER");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_tr(state, "SESSION TIMER");
         case M12_SETTINGS_ROW_MINIMAP: return m12_tr(state, "MINIMAP");
