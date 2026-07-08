@@ -689,6 +689,8 @@ const char *theron_v1_boot_startup_prepare_result_name(
             return "MISSING_TRACK02";
         case THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED:
             return "ASSET_LOAD_FAILED";
+        case THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED:
+            return "STATE_FAILED";
         default:
             return "UNKNOWN";
     }
@@ -770,6 +772,28 @@ int theron_v1_boot_startup_launch_alloc(
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
         theron_v1_boot_startup_launch_cleanup(out_launch);
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        return 0;
+    }
+    if (!theron_v1_startup_initial_title_state_receipt(
+            out_launch->world,
+            &out_launch->startup_flow,
+            &out_launch->initial_state_receipt)) {
+        out_launch->prepare_result =
+            THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
+        theron_v1_boot_startup_launch_cleanup(out_launch);
+        out_launch->prepare_result =
+            THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
+        return 0;
+    }
+    if (!theron_v1_startup_save_resume_state_receipt(
+            &out_launch->save_resume,
+            out_launch->save_resume_ready,
+            &out_launch->save_resume_state_receipt)) {
+        out_launch->prepare_result =
+            THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
+        theron_v1_boot_startup_launch_cleanup(out_launch);
+        out_launch->prepare_result =
+            THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
         return 0;
     }
     return 1;
