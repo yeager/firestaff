@@ -464,6 +464,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     int title_ready = -1;
     DM1_V1_StartupBootProbeFacts_PC34 boot_facts;
     DM1_V1_StartupBootProbeReceipt_PC34 boot_receipt;
+    DM1_V1_StartupSelectedBootProbeFacts_PC34 selected_boot_facts;
+    DM1_V1_StartupSelectedBootProbeReceipt_PC34 selected_boot_receipt;
 
     expect_i("launcher launch path does not bypass intro",
              dm1_v1_startup_launch_path_bypasses_intro_pc34(
@@ -544,6 +546,45 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("NULL selected launch route facts rejected",
              dm1_v1_startup_selected_launch_route_receipt_pc34(NULL,
                                                                &route_receipt),
+             0);
+
+    memset(&selected_boot_facts, 0, sizeof(selected_boot_facts));
+    memset(&selected_boot_receipt, 0, sizeof(selected_boot_receipt));
+    selected_boot_facts.expected_game_id = "dm1";
+    selected_boot_facts.actual_source_id = "dm1";
+    selected_boot_facts.active = 1;
+    selected_boot_facts.started_from_launcher = 1;
+    selected_boot_facts.intro_bypassed = 0;
+    expect_i("DM1 selected boot-probe receipt builds",
+             dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                 &selected_boot_facts,
+                 &selected_boot_receipt),
+             1);
+    expect_i("DM1 selected boot-probe receipt accepts source-visible launch",
+             selected_boot_receipt.valid == 1 &&
+                 selected_boot_receipt.source_matches == 1 &&
+                 selected_boot_receipt.selected_entry_receipt_valid == 1,
+             1);
+    selected_boot_facts.intro_bypassed = 1;
+    expect_i("DM1 selected boot-probe receipt rejects bypassed intro",
+             dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                 &selected_boot_facts,
+                 &selected_boot_receipt) &&
+                 selected_boot_receipt.valid == 0 &&
+                 selected_boot_receipt.selected_entry_receipt_valid == 0,
+             1);
+    selected_boot_facts.expected_game_id = "csb";
+    selected_boot_facts.actual_source_id = "csb";
+    expect_i("CSB selected boot-probe receipt stays generic-valid",
+             dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                 &selected_boot_facts,
+                 &selected_boot_receipt) &&
+                 selected_boot_receipt.selected_entry_receipt_valid == 1,
+             1);
+    expect_i("NULL selected boot-probe facts rejected",
+             dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                 NULL,
+                 &selected_boot_receipt),
              0);
 
     memset(&launch_facts, 0, sizeof(launch_facts));

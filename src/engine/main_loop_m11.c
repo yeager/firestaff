@@ -3895,6 +3895,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             int scriptInputs;
             int scriptFrames = 0;
             M11_BootProbeReceipt receipt;
+            DM1_V1_StartupSelectedBootProbeFacts_PC34 selectedFacts;
+            DM1_V1_StartupSelectedBootProbeReceipt_PC34 selectedReceipt;
             M11_GameSourceKind expectedSourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
             m11_phase_a_advance_boot_probe_frames(&gameView, frames);
             scriptInputs = m11_phase_a_apply_boot_probe_script(&gameView,
@@ -3908,13 +3910,20 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                  scriptInputs,
                                                  scriptFrames);
             memset(&receipt, 0, sizeof(receipt));
+            memset(&selectedFacts, 0, sizeof(selectedFacts));
+            memset(&selectedReceipt, 0, sizeof(selectedReceipt));
             if (!M11_GameView_GetBootProbeReceipt(&gameView, &receipt) ||
-                !receipt.active ||
-                strcmp(receipt.sourceId, o->gameId) != 0 ||
-                !receipt.startedFromLauncher ||
-                !dm1_v1_startup_selected_entry_receipt_valid_pc34(
-                    o->gameId,
-                    receipt.dm1StartupIntroBypassed) ||
+                (selectedFacts.expected_game_id = o->gameId,
+                 selectedFacts.actual_source_id = receipt.sourceId,
+                 selectedFacts.active = receipt.active,
+                 selectedFacts.started_from_launcher =
+                     receipt.startedFromLauncher,
+                 selectedFacts.intro_bypassed =
+                     receipt.dm1StartupIntroBypassed,
+                 !dm1_v1_startup_selected_boot_probe_receipt_pc34(
+                     &selectedFacts,
+                     &selectedReceipt)) ||
+                !selectedReceipt.valid ||
                 !m11_boot_probe_expected_source_kind(o->gameId, &expectedSourceKind) ||
                 receipt.sourceKind != expectedSourceKind) {
                 fprintf(stderr,
