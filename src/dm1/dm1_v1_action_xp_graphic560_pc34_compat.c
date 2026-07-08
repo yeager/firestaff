@@ -19,6 +19,7 @@
 #define DM1_THING_TYPE_JUNK 10
 #define DM1_JUNK_MAGICAL_BOX_BLUE 42
 #define DM1_JUNK_MAGICAL_BOX_GREEN 43
+#define DM1_STATUS_THIEVES_EYE 73
 
 /* ReDMCSB CHAMPION.C F0304 line ~874: base skill = (sub - 4) >> 2.
  * For base skills (0..3) the mapping is identity. */
@@ -269,6 +270,52 @@ int dm1_v1_action_heal_plan_f0407_pc34(
     if (healed > 0) {
         out->actionExperienceGain = 2 + (cycles * 2);
     }
+    return 1;
+}
+
+int dm1_v1_action_light_plan_f0407_pc34(DM1_ActionLightPlanPc34* out) {
+    if (!out) return 0;
+    out->valid = 1;
+    /* ReDMCSB: MENU.C F0407 C038_ACTION_LIGHT adds
+     * G0039_ai_Graphic562_LightPowerToLightAmount[2] then calls
+     * F0404_MENUS_CreateEvent70_Light(-2, 2500) and F0405. */
+    out->magicalLightAmountDelta = 12;
+    out->eventLightPower = -2;
+    out->eventDelayTicks = 2500;
+    out->decrementsActionHandCharges = 1;
+    return 1;
+}
+
+int dm1_v1_action_window_random_range_f0407_pc34(int earthSkillLevel) {
+    if (earthSkillLevel < 0) earthSkillLevel = 0;
+    /* ReDMCSB: MENU.C F0407 C039_ACTION_WINDOW uses
+     * RANDOM(F0303(action skill) + 8) + 5. */
+    return earthSkillLevel + 8;
+}
+
+int dm1_v1_action_window_plan_f0407_pc34(
+    const DM1_ActionWindowInputPc34* in,
+    DM1_ActionWindowPlanPc34* out) {
+    int range;
+    int draw;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->randomRange = 0;
+    out->durationTicks = 0;
+    out->statusEventType = 0;
+    out->incrementsThievesEyeCount = 0;
+    out->decrementsActionHandCharges = 0;
+    range = dm1_v1_action_window_random_range_f0407_pc34(in->earthSkillLevel);
+    draw = in->randomDraw;
+    if (draw < 0) draw = 0;
+    if (range <= 0) range = 1;
+    if (draw >= range) draw %= range;
+    out->valid = 1;
+    out->randomRange = range;
+    out->durationTicks = draw + 5;
+    out->statusEventType = DM1_STATUS_THIEVES_EYE;
+    out->incrementsThievesEyeCount = 1;
+    out->decrementsActionHandCharges = 1;
     return 1;
 }
 

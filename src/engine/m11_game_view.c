@@ -29114,6 +29114,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         }
         case 38: {
             struct TimelineEvent_Compat lightEvent;
+            DM1_ActionLightPlanPc34 lightPlan;
             /* LIGHT (F0407 C038_ACTION_LIGHT):
              *     MagicalLightAmount += LightPowerToLightAmount[2]
              *     F0404_MENUS_CreateEvent70_Light(-2, 2500)
@@ -29122,18 +29123,26 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * TIMELINE_EVENT_MAGIC_LIGHT_DECAY is the existing M10
              * F0257/C70 light-decay handler: aux0 carries the signed
              * light power and schedules weaker steps at +4 ticks. */
-            state->world.magic.magicalLightAmount += 12;
+            if (!dm1_v1_action_light_plan_f0407_pc34(&lightPlan) ||
+                !lightPlan.valid) {
+                return 0;
+            }
+            state->world.magic.magicalLightAmount +=
+                lightPlan.magicalLightAmountDelta;
             memset(&lightEvent, 0, sizeof(lightEvent));
             lightEvent.kind = TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
-            lightEvent.fireAtTick = state->world.gameTick + 2500U;
+            lightEvent.fireAtTick =
+                state->world.gameTick + (uint32_t)lightPlan.eventDelayTicks;
             lightEvent.mapIndex = state->world.party.mapIndex;
             lightEvent.mapX = state->world.party.mapX;
             lightEvent.mapY = state->world.party.mapY;
             lightEvent.cell = -1;
-            lightEvent.aux0 = -2;
+            lightEvent.aux0 = lightPlan.eventLightPower;
             (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline,
                                                   &lightEvent);
-            m11_decrement_action_hand_charges_f0405(state, championIndex);
+            if (lightPlan.decrementsActionHandCharges) {
+                m11_decrement_action_hand_charges_f0405(state, championIndex);
+            }
             m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                           "T%u: %s CREATES MAGICAL LIGHT",
                           (unsigned int)state->world.gameTick,
@@ -29142,8 +29151,10 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         }
         case 39: {
             struct TimelineEvent_Compat thievesEyeEvent;
+            DM1_ActionWindowInputPc34 windowIn;
+            DM1_ActionWindowPlanPc34 windowPlan;
             int skillLevel;
-            int duration;
+            int randomRange;
             /* WINDOW (ReDMCSB MENU.C F0407 C039_ACTION_WINDOW lines
              * ~1518-1526): duration is random(skill + 8) + 5, then a
              * C73 Thieves Eye timeout is scheduled and the party C73
@@ -29151,22 +29162,34 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
                                                     DM1_SKILL_IDX_EARTH);
             if (skillLevel < 0) skillLevel = 0;
-            duration = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng,
-                                                     skillLevel + 8) + 5;
+            randomRange =
+                dm1_v1_action_window_random_range_f0407_pc34(skillLevel);
+            memset(&windowIn, 0, sizeof(windowIn));
+            windowIn.earthSkillLevel = skillLevel;
+            windowIn.randomDraw = F0732_COMBAT_RngRandom_Compat(
+                &state->world.masterRng, randomRange);
+            if (!dm1_v1_action_window_plan_f0407_pc34(
+                    &windowIn, &windowPlan) || !windowPlan.valid) {
+                return 0;
+            }
             memset(&thievesEyeEvent, 0, sizeof(thievesEyeEvent));
             thievesEyeEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
             thievesEyeEvent.fireAtTick =
-                state->world.gameTick + (uint32_t)duration;
+                state->world.gameTick + (uint32_t)windowPlan.durationTicks;
             thievesEyeEvent.mapIndex = state->world.party.mapIndex;
             thievesEyeEvent.mapX = state->world.party.mapX;
             thievesEyeEvent.mapY = state->world.party.mapY;
             thievesEyeEvent.cell = -1;
-            thievesEyeEvent.aux0 = LIFECYCLE_STATUS_THIEVES_EYE;
+            thievesEyeEvent.aux0 = windowPlan.statusEventType;
             thievesEyeEvent.aux1 = 0;
             (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline,
                                                   &thievesEyeEvent);
-            state->world.lifecycle.status.thievesEyeCount++;
-            m11_decrement_action_hand_charges_f0405(state, championIndex);
+            if (windowPlan.incrementsThievesEyeCount) {
+                state->world.lifecycle.status.thievesEyeCount++;
+            }
+            if (windowPlan.decrementsActionHandCharges) {
+                m11_decrement_action_hand_charges_f0405(state, championIndex);
+            }
             m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                           "T%u: %s OPENS A MAGIC WINDOW",
                           (unsigned int)state->world.gameTick,

@@ -236,6 +236,45 @@ static void test_heal_plan(void) {
     CHECK_EQ(out.actionExperienceGain, 4, "minimum skill xp");
 }
 
+static void test_light_and_window_plans(void) {
+    DM1_ActionLightPlanPc34 light;
+    DM1_ActionWindowInputPc34 in;
+    DM1_ActionWindowPlanPc34 out;
+
+    CHECK_EQ(dm1_v1_action_light_plan_f0407_pc34(&light), 1,
+             "light plan builds");
+    CHECK_EQ(light.magicalLightAmountDelta, 12, "light amount delta");
+    CHECK_EQ(light.eventLightPower, -2, "light event power");
+    CHECK_EQ(light.eventDelayTicks, 2500, "light event delay");
+    CHECK_EQ(light.decrementsActionHandCharges, 1,
+             "light decrements charges");
+
+    CHECK_EQ(dm1_v1_action_window_random_range_f0407_pc34(5), 13,
+             "window random range");
+    CHECK_EQ(dm1_v1_action_window_random_range_f0407_pc34(-4), 8,
+             "window negative skill range clamp");
+
+    memset(&in, 0, sizeof(in));
+    in.earthSkillLevel = 5;
+    in.randomDraw = 12;
+    CHECK_EQ(dm1_v1_action_window_plan_f0407_pc34(&in, &out), 1,
+             "window plan builds");
+    CHECK_EQ(out.randomRange, 13, "window plan range");
+    CHECK_EQ(out.durationTicks, 17, "window duration");
+    CHECK_EQ(out.statusEventType, 73, "window event type");
+    CHECK_EQ(out.incrementsThievesEyeCount, 1, "window increments count");
+    CHECK_EQ(out.decrementsActionHandCharges, 1,
+             "window decrements charges");
+
+    memset(&in, 0, sizeof(in));
+    in.earthSkillLevel = 1;
+    in.randomDraw = 100;
+    CHECK_EQ(dm1_v1_action_window_plan_f0407_pc34(&in, &out), 1,
+             "window plan clamps draw");
+    CHECK_EQ(out.randomRange, 9, "window clamp range");
+    CHECK_EQ(out.durationTicks, 6, "window clamped duration");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -255,6 +294,7 @@ int main(void) {
     test_f0405_charge_plan();
     test_freeze_life_plan();
     test_heal_plan();
+    test_light_and_window_plans();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",
