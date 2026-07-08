@@ -1,4 +1,5 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include "title_frontend_v1.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -73,6 +74,47 @@ int dm1_v1_startup_receipt_phase_pc34(int level_loaded,
             : "dm1-runtime";
     }
     snprintf(out_phase, (size_t)out_phase_size, "%s", phase);
+    return 1;
+}
+
+int dm1_v1_startup_boot_probe_receipt_pc34(int level_loaded,
+                                           int intro_bypassed,
+                                           char* out_phase,
+                                           int out_phase_size,
+                                           int* out_startup_active,
+                                           char* out_animation,
+                                           int out_animation_size,
+                                           int* out_animation_active,
+                                           int* out_title_frame,
+                                           int* out_title_frame_max,
+                                           int* out_title_ready) {
+    const char* animation;
+
+    if (!out_phase || out_phase_size <= 0 ||
+        !out_startup_active ||
+        !out_animation || out_animation_size <= 0 ||
+        !out_animation_active ||
+        !out_title_frame ||
+        !out_title_frame_max ||
+        !out_title_ready) {
+        return 0;
+    }
+    if (!dm1_v1_startup_receipt_phase_pc34(level_loaded,
+                                           intro_bypassed,
+                                           out_phase,
+                                           out_phase_size)) {
+        return 0;
+    }
+    /* ReDMCSB: SWSH.C -> STARTUP1.C -> TITLE.C F0437 -> ENTRANCE.C.
+     * M11 reaches this receipt after the source-visible launcher/title
+     * path has completed or through the explicit direct-view bypass. */
+    animation = intro_bypassed ? "dm1-title-bypassed" : "dm1-title";
+    snprintf(out_animation, (size_t)out_animation_size, "%s", animation);
+    *out_startup_active = 0;
+    *out_animation_active = 0;
+    *out_title_frame = V1_TITLE_DAT_FRAME_MAX;
+    *out_title_frame_max = V1_TITLE_DAT_FRAME_MAX;
+    *out_title_ready = 1;
     return 1;
 }
 

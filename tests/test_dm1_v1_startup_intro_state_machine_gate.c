@@ -212,6 +212,12 @@ static void check_menu_to_entrance_wait_boundary(void) {
 
 static void check_dm1_launch_path_bypass_contract(void) {
     char phase[64];
+    char animation[64];
+    int startup_active = -1;
+    int animation_active = -1;
+    int title_frame = -1;
+    int title_frame_max = -1;
+    int title_ready = -1;
 
     expect_i("launcher launch path does not bypass intro",
              dm1_v1_startup_launch_path_bypasses_intro_pc34(
@@ -263,6 +269,65 @@ static void check_dm1_launch_path_bypass_contract(void) {
              0);
     expect_i("receipt null phase rejected",
              dm1_v1_startup_receipt_phase_pc34(1, 0, NULL, 0),
+             0);
+
+    expect_i("boot probe receipt launcher rc",
+             dm1_v1_startup_boot_probe_receipt_pc34(
+                 1, 0, phase, sizeof(phase),
+                 &startup_active,
+                 animation, sizeof(animation),
+                 &animation_active,
+                 &title_frame,
+                 &title_frame_max,
+                 &title_ready),
+             1);
+    expect_i("boot probe receipt launcher phase",
+             strcmp(phase, "dm1-runtime"),
+             0);
+    expect_i("boot probe receipt launcher animation",
+             strcmp(animation, "dm1-title"),
+             0);
+    expect_i("boot probe receipt launcher startup inactive",
+             startup_active,
+             0);
+    expect_i("boot probe receipt launcher animation inactive",
+             animation_active,
+             0);
+    expect_i("boot probe receipt launcher title frame",
+             title_frame,
+             (int)V1_TITLE_DAT_FRAME_MAX);
+    expect_i("boot probe receipt launcher title frame max",
+             title_frame_max,
+             (int)V1_TITLE_DAT_FRAME_MAX);
+    expect_i("boot probe receipt launcher title ready",
+             title_ready,
+             1);
+
+    expect_i("boot probe receipt direct rc",
+             dm1_v1_startup_boot_probe_receipt_pc34(
+                 1, 1, phase, sizeof(phase),
+                 &startup_active,
+                 animation, sizeof(animation),
+                 &animation_active,
+                 &title_frame,
+                 &title_frame_max,
+                 &title_ready),
+             1);
+    expect_i("boot probe receipt direct phase",
+             strcmp(phase, "dm1-runtime-direct"),
+             0);
+    expect_i("boot probe receipt direct animation",
+             strcmp(animation, "dm1-title-bypassed"),
+             0);
+    expect_i("boot probe receipt rejects incomplete output",
+             dm1_v1_startup_boot_probe_receipt_pc34(
+                 1, 0, phase, sizeof(phase),
+                 NULL,
+                 animation, sizeof(animation),
+                 &animation_active,
+                 &title_frame,
+                 &title_frame_max,
+                 &title_ready),
              0);
 }
 
