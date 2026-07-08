@@ -106,6 +106,25 @@ typedef struct {
     int combatOutcome;
 } DM1_MeleeDisruptMaterialGatePlanPc34;
 
+typedef struct {
+    int weaponType;
+    int weaponClass;
+    int weaponStrength;
+    int kineticEnergy;
+    int weaponAttributes;
+    int actionIndex;
+    int actionSkillIndex;
+} DM1_MeleeWeaponProfileInputPc34;
+
+typedef struct {
+    int valid;
+    int normalizedActionIndex;
+    int hitProbability;
+    int damageFactor;
+    int hitNonMaterialFlagSet;
+    struct WeaponProfile_Compat weaponProfile;
+} DM1_MeleeWeaponProfilePlanPc34;
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out);
@@ -124,6 +143,9 @@ int dm1_v1_melee_reach_gate_plan_f0402_pc34(
 int dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(
     const DM1_MeleeDisruptMaterialGateInputPc34* in,
     DM1_MeleeDisruptMaterialGatePlanPc34* out);
+int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
+    const DM1_MeleeWeaponProfileInputPc34* in,
+    DM1_MeleeWeaponProfilePlanPc34* out);
 
 #ifdef __cplusplus
 }

@@ -2243,39 +2243,32 @@ static int orch_build_defender_champion_snapshot_compat(
     return 1;
 }
 
-static void orch_build_cmd_attack_weapon_profile_compat(
+static int orch_build_cmd_attack_weapon_profile_compat(
     const DM1_WeaponInfo* weaponInfo,
     int weaponType,
     int actionIndex,
     int actionSkillIndex,
     struct WeaponProfile_Compat* outWeapon)
 {
-    int hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
-        actionIndex);
-    int damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
-        actionIndex);
-
-    if (hitProbability < 0 || damageFactor < 0) {
-        actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
-        hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
-            actionIndex);
-        damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
-            actionIndex);
+    DM1_MeleeWeaponProfileInputPc34 in;
+    DM1_MeleeWeaponProfilePlanPc34 plan;
+    if (!weaponInfo || !outWeapon) return 0;
+    memset(&in, 0, sizeof(in));
+    memset(&plan, 0, sizeof(plan));
+    in.weaponType = weaponType;
+    in.weaponClass = weaponInfo->weaponClass;
+    in.weaponStrength = weaponInfo->strength;
+    in.kineticEnergy = weaponInfo->kineticEnergy;
+    in.weaponAttributes = weaponInfo->attributes;
+    in.actionIndex = actionIndex;
+    in.actionSkillIndex = actionSkillIndex;
+    if (!dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(&in, &plan) ||
+        !plan.valid) {
+        memset(outWeapon, 0, sizeof(*outWeapon));
+        return 0;
     }
-
-    memset(outWeapon, 0, sizeof(*outWeapon));
-    outWeapon->weaponType = weaponType;
-    outWeapon->weaponClass = weaponInfo->weaponClass;
-    outWeapon->weaponStrength = weaponInfo->strength;
-    outWeapon->kineticEnergy = weaponInfo->kineticEnergy;
-    outWeapon->hitProbability = hitProbability;
-    if (weaponType == COMBAT_ICON_VORPAL_BLADE ||
-        actionIndex == DM1_ACTION_DISRUPT) {
-        outWeapon->hitProbability |= 0x8000;
-    }
-    outWeapon->damageFactor = damageFactor;
-    outWeapon->skillIndex = actionSkillIndex;
-    outWeapon->attributes = weaponInfo->attributes;
+    *outWeapon = plan.weaponProfile;
+    return 1;
 }
 
 static int orch_cmd_attack_action_index_compat(const struct TickInput_Compat* input)
@@ -6723,10 +6716,10 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 return 1;
             }
             if (targetResolved && championSnapshotReady && creatureSnapshotReady) {
-                orch_build_cmd_attack_weapon_profile_compat(
-                    &weaponInfo, weaponType, actionIndex, actionSkillIndex,
-                    &weaponProfile);
-                if (F0735_COMBAT_ResolveChampionMelee_Compat(
+                if (orch_build_cmd_attack_weapon_profile_compat(
+                        &weaponInfo, weaponType, actionIndex, actionSkillIndex,
+                        &weaponProfile) &&
+                    F0735_COMBAT_ResolveChampionMelee_Compat(
                         &championSnapshot, &weaponProfile, &creatureSnapshot,
                         &world->masterRng, &combatResult)) {
                     if (combatResult.outcome == COMBAT_OUTCOME_NO_ACTION) {
