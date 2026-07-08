@@ -29053,20 +29053,23 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         case 36: {
             /* HEAL (F0407 C036_ACTION_HEAL): transfer mana into
              * HP up to the healing cap derived from the champion's
-             * HEAL skill level.  The original loop is:
-             *     healCap = min(10, skillLevel)
-             *     while (mana > 0 && missing > 0) {
-             *         amount = min(missing, healCap)
-             *         hp += amount; mana -= 2; missing -= amount;
-             *     }
-             * We mirror that arithmetic against the V1 champion
-             * stat model.  Ref: F0407 case C036_ACTION_HEAL. */
-            int missing;
-            int healCap;
+             * HEAL skill level.  DM1 owns the PC34/I34E healing arithmetic;
+             * M11 applies the returned HP/mana/XP plan. */
+            DM1_ActionHealInputPc34 healIn;
+            DM1_ActionHealPlanPc34 healPlan;
             int skillLevel;
-            int healedTotal = 0;
-            int cycleCount = 0;
-            if (champ->hp.current >= champ->hp.maximum) {
+            memset(&healIn, 0, sizeof(healIn));
+            healIn.currentHealth = (int)champ->hp.current;
+            healIn.maximumHealth = (int)champ->hp.maximum;
+            healIn.currentMana = (int)champ->mana.current;
+            skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
+                                                    DM1_SKILL_IDX_HEAL);
+            healIn.healSkillLevel = skillLevel < 0 ? 0 : skillLevel;
+            if (!dm1_v1_action_heal_plan_f0407_pc34(&healIn, &healPlan) ||
+                !healPlan.valid) {
+                return 0;
+            }
+            if (healPlan.alreadyFullHealth) {
                 /* ReDMCSB MENU.C F0407 lines 1275 and 1524-1539 leaves
                  * ActionPerformed TRUE when HEAL has no missing health; the
                  * PC34 EN/I34E G0497 HEAL entry remains active, so the common
@@ -29078,7 +29081,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                               champName);
                 return 1;
             }
-            if (champ->mana.current == 0) {
+            if (healPlan.noMana) {
                 /* Same F0407 no-effect branch as full health: HEAL remains a
                  * performed action but does not enter the healing loop, so the
                  * common G0497 tail supplies the action XP. */
@@ -29088,40 +29091,23 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                               champName);
                 return 1;
             }
-            /* ReDMCSB MENU.C F0407 C036_ACTION_HEAL lines 1502-1517
-             * queries CHAMPION.C F0303 with C13_SKILL_HEAL, not the
-             * base Priest skill. */
-            skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
-                                                    DM1_SKILL_IDX_HEAL);
-            if (skillLevel < 0) skillLevel = 0;
-            healCap = skillLevel;
-            if (healCap > 10) healCap = 10;
-            if (healCap < 1) healCap = 1;
-            missing = (int)champ->hp.maximum - (int)champ->hp.current;
-            while (champ->mana.current > 0 && missing > 0) {
-                int amount = (missing < healCap) ? missing : healCap;
-                champ->hp.current = (unsigned short)(champ->hp.current + amount);
-                healedTotal += amount;
-                cycleCount++;
-                missing -= amount;
-                if (champ->mana.current >= 2) {
-                    champ->mana.current = (unsigned short)(champ->mana.current - 2);
-                } else {
-                    champ->mana.current = 0;
-                    break;
-                }
-            }
-            if (healedTotal > 0) {
+            if (healPlan.healedAmount > 0) {
                 /* ReDMCSB MENU.C F0407 lines 1524-1531 overrides the G0497
                  * table value for HEAL with 2 + 2 per healing cycle, then the
                  * common F0304 tail awards it to C13_SKILL_HEAL. */
+                int hp = (int)champ->hp.current + healPlan.healedAmount;
+                int mana = (int)champ->mana.current - healPlan.manaCost;
+                if (hp > (int)champ->hp.maximum) hp = champ->hp.maximum;
+                if (mana < 0) mana = 0;
+                champ->hp.current = (unsigned short)hp;
+                champ->mana.current = (unsigned short)mana;
                 if (outActionExperienceGain) {
-                    *outActionExperienceGain = 2 + (cycleCount * 2);
+                    *outActionExperienceGain = healPlan.actionExperienceGain;
                 }
                 m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                               "T%u: %s HEALED %d HP",
                               (unsigned int)state->world.gameTick,
-                              champName, healedTotal);
+                              champName, healPlan.healedAmount);
                 return 1;
             }
             return 0;

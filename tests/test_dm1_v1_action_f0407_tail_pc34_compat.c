@@ -186,6 +186,56 @@ static void test_freeze_life_plan(void) {
              "ordinary freeze decrements action charges");
 }
 
+static void test_heal_plan(void) {
+    DM1_ActionHealInputPc34 in;
+    DM1_ActionHealPlanPc34 out;
+
+    memset(&in, 0, sizeof(in));
+    in.currentHealth = 100;
+    in.maximumHealth = 100;
+    in.currentMana = 8;
+    in.healSkillLevel = 4;
+    CHECK_EQ(dm1_v1_action_heal_plan_f0407_pc34(&in, &out), 1,
+             "full health heal plan builds");
+    CHECK_EQ(out.performed, 1, "full health heal performed");
+    CHECK_EQ(out.alreadyFullHealth, 1, "full health flag");
+    CHECK_EQ(out.healedAmount, 0, "full health heals zero");
+
+    memset(&in, 0, sizeof(in));
+    in.currentHealth = 80;
+    in.maximumHealth = 100;
+    in.currentMana = 0;
+    in.healSkillLevel = 5;
+    CHECK_EQ(dm1_v1_action_heal_plan_f0407_pc34(&in, &out), 1,
+             "no mana heal plan builds");
+    CHECK_EQ(out.performed, 1, "no mana heal performed");
+    CHECK_EQ(out.noMana, 1, "no mana flag");
+    CHECK_EQ(out.healedAmount, 0, "no mana heals zero");
+
+    memset(&in, 0, sizeof(in));
+    in.currentHealth = 80;
+    in.maximumHealth = 100;
+    in.currentMana = 5;
+    in.healSkillLevel = 6;
+    CHECK_EQ(dm1_v1_action_heal_plan_f0407_pc34(&in, &out), 1,
+             "normal heal plan builds");
+    CHECK_EQ(out.performed, 1, "normal heal performed");
+    CHECK_EQ(out.healedAmount, 18, "normal heal amount");
+    CHECK_EQ(out.manaCost, 5, "normal heal mana cost clamps");
+    CHECK_EQ(out.actionExperienceGain, 8, "normal heal xp");
+
+    memset(&in, 0, sizeof(in));
+    in.currentHealth = 99;
+    in.maximumHealth = 100;
+    in.currentMana = 10;
+    in.healSkillLevel = 0;
+    CHECK_EQ(dm1_v1_action_heal_plan_f0407_pc34(&in, &out), 1,
+             "minimum skill heal plan builds");
+    CHECK_EQ(out.healedAmount, 1, "minimum skill heals at least one");
+    CHECK_EQ(out.manaCost, 2, "minimum skill costs one cycle");
+    CHECK_EQ(out.actionExperienceGain, 4, "minimum skill xp");
+}
+
 static void test_invalid_action(void) {
     DM1_ActionF0407TailPc34 tail;
     CHECK_EQ(dm1_v1_action_f0407_tail_pc34(-1, &tail), 0,
@@ -204,6 +254,7 @@ int main(void) {
     test_tail_adjustments();
     test_f0405_charge_plan();
     test_freeze_life_plan();
+    test_heal_plan();
     test_invalid_action();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_action_f0407_tail_pc34_compat: %d failures\n",

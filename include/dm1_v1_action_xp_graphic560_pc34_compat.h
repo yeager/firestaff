@@ -147,6 +147,23 @@ typedef struct {
     int decrementsActionHandCharges;
 } DM1_ActionFreezeLifePlanPc34;
 
+typedef struct {
+    int currentHealth;
+    int maximumHealth;
+    int currentMana;
+    int healSkillLevel;
+} DM1_ActionHealInputPc34;
+
+typedef struct {
+    int valid;
+    int performed;
+    int alreadyFullHealth;
+    int noMana;
+    int healedAmount;
+    int manaCost;
+    int actionExperienceGain;
+} DM1_ActionHealPlanPc34;
+
 /* ── Query API ─────────────────────────────────────────────────────── */
 
 /**
@@ -173,6 +190,9 @@ int dm1_v1_action_f0405_charge_plan_pc34(
 int dm1_v1_action_freeze_life_plan_f0407_pc34(
     const DM1_ActionFreezeLifeInputPc34* in,
     DM1_ActionFreezeLifePlanPc34* out);
+int dm1_v1_action_heal_plan_f0407_pc34(
+    const DM1_ActionHealInputPc34* in,
+    DM1_ActionHealPlanPc34* out);
 int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex);
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex);
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex);

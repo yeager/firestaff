@@ -216,6 +216,62 @@ int dm1_v1_action_freeze_life_plan_f0407_pc34(
     return 1;
 }
 
+int dm1_v1_action_heal_plan_f0407_pc34(
+    const DM1_ActionHealInputPc34* in,
+    DM1_ActionHealPlanPc34* out) {
+    int missing;
+    int healCap;
+    int mana;
+    int cycles = 0;
+    int healed = 0;
+    if (!in || !out) return 0;
+    out->valid = 0;
+    out->performed = 0;
+    out->alreadyFullHealth = 0;
+    out->noMana = 0;
+    out->healedAmount = 0;
+    out->manaCost = 0;
+    out->actionExperienceGain = 0;
+    if (in->maximumHealth <= 0) return 0;
+    if (in->currentHealth >= in->maximumHealth) {
+        out->valid = 1;
+        out->performed = 1;
+        out->alreadyFullHealth = 1;
+        return 1;
+    }
+    if (in->currentMana <= 0) {
+        out->valid = 1;
+        out->performed = 1;
+        out->noMana = 1;
+        return 1;
+    }
+    /* ReDMCSB: MENU.C F0407 C036_ACTION_HEAL lines 1502-1531 in the PC34/I34E
+     * branch: healCap=min(10,F0303(HEAL)); while missing health and mana
+     * remain, heal min(missing, healCap), spend 2 mana, and set XP to
+     * 2 + 2 per healing cycle. */
+    healCap = in->healSkillLevel;
+    if (healCap > 10) healCap = 10;
+    if (healCap < 1) healCap = 1;
+    missing = in->maximumHealth - in->currentHealth;
+    mana = in->currentMana;
+    while (mana > 0 && missing > 0) {
+        int amount = missing < healCap ? missing : healCap;
+        healed += amount;
+        cycles++;
+        missing -= amount;
+        mana -= 2;
+        if (mana < 0) mana = 0;
+    }
+    out->valid = 1;
+    out->performed = healed > 0;
+    out->healedAmount = healed;
+    out->manaCost = in->currentMana - mana;
+    if (healed > 0) {
+        out->actionExperienceGain = 2 + (cycles * 2);
+    }
+    return 1;
+}
+
 int dm1_v1_action_f0407_tail_pc34(int actionIndex,
                                   DM1_ActionF0407TailPc34* out) {
     int damageFactor;

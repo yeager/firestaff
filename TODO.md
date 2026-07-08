@@ -25,6 +25,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: DM1 action-XP compat now owns F0407 action-tail receipts for G0492 contact gating, G0494 stamina base/cost, party-shield action classification, and F0327 failure XP-halving. Remaining runtime coding work is broader action/combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns F0407 common-tail adjustment for G0491 disabled ticks plus melee failure, shield failure, projectile failure, no-ammunition SHOOT, and failed CLIMB DOWN routes. Remaining runtime coding work is broader action/combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-08 update: DM1 action-XP compat now also owns F0405 action-hand charge-decrement plans and F0407 FREEZE LIFE magical-box/freeze-tick plans. Remaining runtime coding work is broader action effect receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+  - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 HEAL HP/mana/XP plan for PC34/I34E cycle healing. Remaining runtime coding work is broader action effect receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
 
