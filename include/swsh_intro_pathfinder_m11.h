@@ -63,6 +63,14 @@ int M11_SWSH_Intro_FindLogoPath(const M12_StartupMenuState* menuState,
                                 char* outPath,
                                 size_t outPathBytes);
 
+/* Same lookup, but scoped to a specific game id. Use "dm1" for the
+ * original Dungeon Master path and "csb" for Chaos Strikes Back. */
+int M11_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
+                                       const char* dataDir,
+                                       const char* gameId,
+                                       char* outPath,
+                                       size_t outPathBytes);
+
 #ifdef __cplusplus
 }
 #endif
