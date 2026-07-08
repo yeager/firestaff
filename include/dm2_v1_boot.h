@@ -115,6 +115,8 @@ typedef enum {
 typedef struct {
     DM2_V1_BootProfile *profile;
     DM2_V1_BootStartupPrepareResult prepare_result;
+    const char *failure_status_scope;
+    const char *failure_status;
 } DM2_V1_BootStartupLaunch;
 
 /* ── Boot API ──────────────────────────────────────────────────────── */

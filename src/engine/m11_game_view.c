@@ -10583,11 +10583,23 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
         if (!dm2_v1_boot_startup_launch_alloc(dd, &launch)) {
-            const char *reason = dm2_v1_boot_startup_prepare_result_name(
-                launch.prepare_result);
-            m11_set_status(state, "BOOT", reason);
+            DM2_V1_StartupHostReceipt failureReceipt;
+            memset(&failureReceipt, 0, sizeof(failureReceipt));
+            failureReceipt.input_result = DM2_V1_STARTUP_HOST_INPUT_IGNORED;
+            failureReceipt.status_scope =
+                launch.failure_status_scope ? launch.failure_status_scope
+                                            : "BOOT";
+            failureReceipt.status =
+                launch.failure_status
+                    ? launch.failure_status
+                    : dm2_v1_boot_startup_prepare_result_name(
+                          launch.prepare_result);
+            (void)m11_dm2_startup_apply_host_receipt(
+                state,
+                &failureReceipt);
             m11_log_event(state, M11_COLOR_RED,
-                          "T0: DM2 BOOT PREPARE FAILED: %s", reason);
+                          "T0: DM2 BOOT PREPARE FAILED: %s",
+                          failureReceipt.status);
             return 0;
         }
         profile = launch.profile;

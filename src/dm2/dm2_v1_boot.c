@@ -845,6 +845,36 @@ const char *dm2_v1_boot_startup_prepare_result_name(
     }
 }
 
+static const char *dm2_v1_boot_startup_prepare_host_status(
+    DM2_V1_BootStartupPrepareResult result)
+{
+    switch (result) {
+    case DM2_V1_BOOT_STARTUP_PREPARE_BAD_INPUT:
+        return "DM2 BAD INPUT";
+    case DM2_V1_BOOT_STARTUP_PREPARE_OOM:
+        return "DM2 OOM";
+    case DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED:
+        return "DM2 ASSETS MISSING";
+    case DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS:
+        return "DM2 ASSETS UNVERIFIED";
+    case DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED:
+        return "DM2 ENTER GAME FAILED";
+    default:
+        return dm2_v1_boot_startup_prepare_result_name(result);
+    }
+}
+
+static void dm2_v1_boot_startup_set_failure_status(
+    DM2_V1_BootStartupPrepareResult result,
+    DM2_V1_BootStartupLaunch *launch)
+{
+    if (!launch) {
+        return;
+    }
+    launch->failure_status_scope = "BOOT";
+    launch->failure_status = dm2_v1_boot_startup_prepare_host_status(result);
+}
+
 int dm2_v1_boot_startup_launch_alloc(
     const char *data_dir,
     DM2_V1_BootStartupLaunch *out_launch) {
@@ -853,22 +883,30 @@ int dm2_v1_boot_startup_launch_alloc(
     memset(out_launch, 0, sizeof(*out_launch));
     if (!data_dir || data_dir[0] == '\0') {
         out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
         return 0;
     }
     profile = (DM2_V1_BootProfile *)calloc(1, sizeof(*profile));
     if (!profile) {
         out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OOM;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
         return 0;
     }
     dm2_v1_boot_profile_init(profile);
     if (dm2_v1_boot_scan_assets(profile, data_dir) != 0) {
         out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
         free(profile);
         return 0;
     }
     if (!profile->assets_verified) {
         out_launch->prepare_result =
             DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
         dm2_v1_boot_cleanup(profile);
         free(profile);
         return 0;
@@ -878,6 +916,8 @@ int dm2_v1_boot_startup_launch_alloc(
     if (dm2_v1_boot_enter_game(profile) != 0) {
         out_launch->prepare_result =
             DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
         dm2_v1_boot_cleanup(profile);
         free(profile);
         return 0;
