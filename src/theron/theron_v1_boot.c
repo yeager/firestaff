@@ -734,6 +734,39 @@ static void theron_v1_boot_startup_launch_host_receipt_init(
     receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
 }
 
+static const char *theron_v1_boot_startup_prepare_host_status(
+    Theron_V1BootStartupPrepareResult result) {
+    switch (result) {
+        case THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED:
+            return "THERON TRACK 02 VERIFY FAILED";
+        case THERON_V1_BOOT_STARTUP_PREPARE_MISSING_TRACK02:
+            return "THERON TRACK 02 MISSING";
+        case THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED:
+            return "THERON ASSET LOAD FAILED";
+        case THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED:
+            return "THERON STARTUP STATE FAILED";
+        default:
+            return theron_v1_boot_startup_prepare_result_name(result);
+    }
+}
+
+static void theron_v1_boot_startup_launch_build_failure_host_receipt(
+    Theron_V1BootStartupPrepareResult result,
+    Theron_StartupHostReceipt *receipt) {
+    if (!receipt) {
+        return;
+    }
+    theron_v1_boot_startup_launch_host_receipt_init(receipt);
+    receipt->input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
+    receipt->status_scope = "BOOT";
+    receipt->status = theron_v1_boot_startup_prepare_host_status(result);
+    receipt->inspect_scope = "THERON STARTUP";
+    snprintf(receipt->inspect_detail,
+             sizeof(receipt->inspect_detail),
+             "%s",
+             receipt->status ? receipt->status : "THERON STARTUP FAILED");
+}
+
 static void theron_v1_boot_startup_launch_build_host_receipt(
     Theron_V1_BootStartupLaunch *launch) {
     Theron_StartupHostReceipt *receipt;
@@ -822,6 +855,9 @@ int theron_v1_boot_startup_launch_alloc(
     }
     memset(out_launch, 0, sizeof(*out_launch));
     out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+    theron_v1_boot_startup_launch_build_failure_host_receipt(
+        out_launch->prepare_result,
+        &out_launch->launch_host_receipt);
     if (!data_dir || data_dir[0] == '\0') {
         return 0;
     }
@@ -836,9 +872,14 @@ int theron_v1_boot_startup_launch_alloc(
         (TrAssetBundle*)calloc(1, sizeof(*out_launch->assets));
     if (!out_launch->profile || !out_launch->world ||
         !out_launch->viewport || !out_launch->assets) {
+        Theron_StartupHostReceipt receipt;
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        theron_v1_boot_startup_launch_build_failure_host_receipt(
+            out_launch->prepare_result,
+            &receipt);
         theron_v1_boot_startup_launch_cleanup(out_launch);
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        out_launch->launch_host_receipt = receipt;
         return 0;
     }
 
@@ -853,38 +894,58 @@ int theron_v1_boot_startup_launch_alloc(
             &out_launch->save_resume_ready,
             &out_launch->prepare_result)) {
         Theron_V1BootStartupPrepareResult result = out_launch->prepare_result;
+        Theron_StartupHostReceipt receipt;
+        theron_v1_boot_startup_launch_build_failure_host_receipt(
+            result,
+            &receipt);
         theron_v1_boot_startup_launch_cleanup(out_launch);
         out_launch->prepare_result = result;
+        out_launch->launch_host_receipt = receipt;
         return 0;
     }
 
     theron_v1_world_init(out_launch->world);
     if (!theron_vp_init(out_launch->viewport)) {
+        Theron_StartupHostReceipt receipt;
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        theron_v1_boot_startup_launch_build_failure_host_receipt(
+            out_launch->prepare_result,
+            &receipt);
         theron_v1_boot_startup_launch_cleanup(out_launch);
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+        out_launch->launch_host_receipt = receipt;
         return 0;
     }
     if (!theron_v1_startup_initial_title_state_receipt(
             out_launch->world,
             &out_launch->startup_flow,
             &out_launch->initial_state_receipt)) {
+        Theron_StartupHostReceipt receipt;
         out_launch->prepare_result =
             THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
+        theron_v1_boot_startup_launch_build_failure_host_receipt(
+            out_launch->prepare_result,
+            &receipt);
         theron_v1_boot_startup_launch_cleanup(out_launch);
         out_launch->prepare_result =
             THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
+        out_launch->launch_host_receipt = receipt;
         return 0;
     }
     if (!theron_v1_startup_save_resume_state_receipt(
             &out_launch->save_resume,
             out_launch->save_resume_ready,
             &out_launch->save_resume_state_receipt)) {
+        Theron_StartupHostReceipt receipt;
         out_launch->prepare_result =
             THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
+        theron_v1_boot_startup_launch_build_failure_host_receipt(
+            out_launch->prepare_result,
+            &receipt);
         theron_v1_boot_startup_launch_cleanup(out_launch);
         out_launch->prepare_result =
             THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
+        out_launch->launch_host_receipt = receipt;
         return 0;
     }
     theron_v1_startup_media_capture_track02_state_receipt(

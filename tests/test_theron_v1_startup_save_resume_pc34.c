@@ -752,13 +752,19 @@ static void test_boot_prepare_startup_profile_missing_track02(void) {
                     launch.world == NULL &&
                     launch.viewport == NULL &&
                     launch.assets == NULL &&
-                    launch.launch_host_receipt.status_scope == NULL &&
-                    launch.launch_host_receipt.inspect_detail[0] == '\0' &&
+                    launch.launch_host_receipt.status_scope &&
+                    strcmp(launch.launch_host_receipt.status_scope,
+                           "BOOT") == 0 &&
+                    launch.launch_host_receipt.status &&
+                    strcmp(launch.launch_host_receipt.status,
+                           "THERON TRACK 02 MISSING") == 0 &&
+                    strcmp(launch.launch_host_receipt.inspect_detail,
+                           "THERON TRACK 02 MISSING") == 0 &&
                     launch.startup_media_state_receipt.
                         startup_roster_name_status == 0 &&
                     launch.startup_media_state_receipt.
                         startup_text_prompt_status == 0,
-                "boot startup launch allocation reports missing Track 02 and cleans owned pointers/receipts");
+                "boot startup launch allocation reports missing Track 02 and owns host failure receipt");
     theron_v1_boot_startup_launch_cleanup(&launch);
     cleanup_srm_root(TST_BAD_ROOT);
 }
