@@ -220,6 +220,9 @@ int csb_v1_boot_startup_build_render_plan_from_runtime_state_pc34(
     int resume_available,
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile);
+int csb_v1_boot_startup_build_render_plan_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_StartupRenderPlan_PC34 *out_plan);
 int csb_v1_boot_startup_build_default_render_plan_pc34(
     CSB_V1_StartupRenderPlan_PC34 *out_plan);
 int csb_v1_boot_startup_advance_idle_from_runtime_state_pc34(
@@ -245,6 +248,9 @@ int csb_v1_boot_startup_advance_idle_from_runtime_state_pc34(
     int resume_available,
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile);
+int csb_v1_boot_startup_advance_idle_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    CSB_V1_StartupIdleReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_entrance_accepts_input_from_runtime_state_pc34(
     int title_active,
     int title_frame,
@@ -301,6 +307,18 @@ int csb_v1_boot_startup_presentation_receipt_from_runtime_state_pc34(
     int resume_available,
     const char *resume_path,
     const CSB_V1_BootProfile *boot_profile);
+int csb_v1_boot_startup_presentation_receipt_from_snapshot_pc34(
+    const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    char *out_phase,
+    int out_phase_size,
+    int *out_startup_active,
+    int *out_startup_frame,
+    char *out_animation,
+    int out_animation_size,
+    int *out_animation_active,
+    int *out_title_frame,
+    int *out_title_frame_max,
+    int *out_title_ready);
 int csb_v1_boot_runtime_util_render_plan_from_runtime_state_pc34(
     CSB_V1_UtilRenderPlan *out_plan,
     int title_active,
