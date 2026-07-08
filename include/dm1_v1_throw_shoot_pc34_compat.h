@@ -42,6 +42,13 @@ typedef struct {
     int potionPower;
 } DM1_ProjectileCreateRequestPc34;
 
+typedef struct {
+    int shouldConsumePotion;
+    int shouldMaterialize;
+    unsigned short associatedThing;
+    unsigned short droppedThing;
+} DM1_ProjectileAssociatedThingDispositionPc34;
+
 int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType);
 int dm1_v1_throw_junk_base_weight_f0140_pc34(int junkType);
@@ -75,6 +82,12 @@ int dm1_v1_projectile_impact_source_sound_index_pc34(
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result);
 int dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(int weaponType);
+int dm1_v1_projectile_associated_thing_disposition_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    int associatedThingMovedToGroup,
+    int potionCount,
+    DM1_ProjectileAssociatedThingDispositionPc34* outDisposition);
 
 #ifdef __cplusplus
 }

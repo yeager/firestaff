@@ -27047,29 +27047,23 @@ static int m11_maybe_consume_thrown_potion_on_impact(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
     const struct ProjectileTickResult_Compat* result) {
-    unsigned short associatedThing;
-    int potionIndex;
+    DM1_ProjectileAssociatedThingDispositionPc34 disposition;
+    int potionCount;
     if (!state || !projectile || !result || !state->world.things) return 0;
-    if (!result->despawn) return 0;
-    if ((projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) == 0) {
-        return 0;
-    }
-    associatedThing = (unsigned short)projectile->reserved1;
-    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) {
-        return 0;
-    }
-    if (THING_GET_TYPE(associatedThing) != THING_TYPE_POTION) return 0;
-    potionIndex = THING_GET_INDEX(associatedThing);
-    if (!state->world.things->potions ||
-        potionIndex < 0 ||
-        potionIndex >= state->world.things->potionCount) {
+    potionCount = state->world.things->potions
+                      ? state->world.things->potionCount
+                      : 0;
+    if (!dm1_v1_projectile_associated_thing_disposition_pc34(
+            projectile, result, 0, potionCount, &disposition) ||
+        !disposition.shouldConsumePotion) {
         return 0;
     }
     /* ReDMCSB PROJEXPL.C F0217 lines 444-455 records thrown Ven/Ful
      * potions as RemovePotion impacts.  The impact deletes the projectile
      * thing, so the associated potion object must leave any live object
      * chain instead of remaining recoverable after the explosion. */
-    m11_set_object_drop_next(state->world.things, associatedThing, THING_NONE);
+    m11_set_object_drop_next(state->world.things,
+                             disposition.associatedThing, THING_NONE);
     return 1;
 }
 
@@ -27137,18 +27131,16 @@ static int m11_materialize_projectile_associated_thing(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
     int associatedThingMovedToGroup) {
-    unsigned short associatedThing;
-    unsigned short droppedThing;
+    DM1_ProjectileAssociatedThingDispositionPc34 disposition;
     if (!state || !projectile || associatedThingMovedToGroup) return 1;
     if (!state->world.things || !state->world.dungeon) return 1;
-    if ((projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0) {
-        return 1;
+    if (!dm1_v1_projectile_associated_thing_disposition_pc34(
+            projectile, NULL, associatedThingMovedToGroup,
+            state->world.things->potions ? state->world.things->potionCount : 0,
+            &disposition)) {
+        return 0;
     }
-    associatedThing = (unsigned short)projectile->reserved1;
-    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) {
-        return 1;
-    }
-    if (THING_GET_TYPE(associatedThing) == THING_TYPE_EXPLOSION) {
+    if (!disposition.shouldMaterialize) {
         return 1;
     }
 
@@ -27157,17 +27149,15 @@ static int m11_materialize_projectile_associated_thing(
      * delete a potion or pass GROUP.Slot for kept sharp weapons.  F0219
      * lines 717-725 resolves wall/door blockers before committing the
      * destination move, so use the projectile source square and cell. */
-    droppedThing = m11_thing_with_cell((int)THING_GET_TYPE(associatedThing),
-                                       (int)THING_GET_INDEX(associatedThing),
-                                       projectile->cell & 3);
     if (!m11_link_projectile_thing_to_square_tail(
             &state->world, projectile->mapIndex, projectile->mapX,
-            projectile->mapY, droppedThing)) {
+            projectile->mapY, disposition.droppedThing)) {
         return 0;
     }
-    m11_set_object_drop_next(state->world.things, associatedThing,
+    m11_set_object_drop_next(state->world.things, disposition.associatedThing,
                              THING_ENDOFLIST);
-    m11_set_next_thing(state->world.things, associatedThing, THING_ENDOFLIST);
+    m11_set_next_thing(state->world.things, disposition.associatedThing,
+                       THING_ENDOFLIST);
     return 1;
 }
 

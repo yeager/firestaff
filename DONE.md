@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 projectile associated-thing disposition ownership: DM1 V1 throw/shoot compat now owns the pure disposition model for projectile-associated things: thrown potion consumption, no-op transfer-to-group, no-op explosion/empty payloads, and Projectile.Slot materialisation with source cell bits. M11 keeps only object-chain mutation. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
+
 - ✅ 2026-07-08 DM1 projectile impact decision ownership: DM1 V1 throw/shoot compat now owns pure projectile-impact decisions for DM1 log names, source sound selection, silent spent lightning/poison bolts, explosion sound routing, and sharp thrown weapon types kept by creatures. M11 consumes those helpers while keeping scheduling/logging/state mutation local. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.
 
 - ✅ 2026-07-08 DM1 action-projectile create-input ownership: DM1 V1 throw/shoot compat now builds the source-shaped F0212/F0810 projectile create input for M11 action projectiles, covering launch direction/cell fallback, owner, party location, attack/kinetic fields, poison potion handling, associated thing, step clamp, and first-move grace flag. Verification: `test_dm1_v1_throw_shoot_pc34_compat` passed; Phase A passed 24/24; `git diff --check` passed.

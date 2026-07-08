@@ -321,3 +321,51 @@ int dm1_v1_thrown_sharp_weapon_type_kept_by_creature_pc34(int weaponType) {
            weaponType == 31  ||  /* C31_WEAPON_POISON_DART */
            weaponType == 32;     /* C32_WEAPON_THROWING_STAR */
 }
+
+int dm1_v1_projectile_associated_thing_disposition_pc34(
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result,
+    int associatedThingMovedToGroup,
+    int potionCount,
+    DM1_ProjectileAssociatedThingDispositionPc34* outDisposition) {
+    unsigned short associatedThing;
+    int associatedType;
+    int associatedIndex;
+    if (!outDisposition) return 0;
+    memset(outDisposition, 0, sizeof(*outDisposition));
+    outDisposition->associatedThing = THING_NONE;
+    outDisposition->droppedThing = THING_NONE;
+    if (!projectile) return 0;
+
+    associatedThing = (unsigned short)projectile->reserved1;
+    outDisposition->associatedThing = associatedThing;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) {
+        return 1;
+    }
+    associatedType = (int)THING_GET_TYPE(associatedThing);
+    associatedIndex = (int)THING_GET_INDEX(associatedThing);
+
+    if (result && result->despawn &&
+        (projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0 &&
+        associatedType == THING_TYPE_POTION &&
+        associatedIndex >= 0 && associatedIndex < potionCount) {
+        /* ReDMCSB: PROJEXPL.C F0217 lines 444-455 RemovePotion path. */
+        outDisposition->shouldConsumePotion = 1;
+        return 1;
+    }
+
+    if (associatedThingMovedToGroup) return 1;
+    if ((projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0) {
+        return 1;
+    }
+    if (associatedType == THING_TYPE_EXPLOSION) return 1;
+
+    /* ReDMCSB: PROJEXPL.C F0215 lines 248-259 materializes Projectile.Slot
+     * on the projectile's stored square if the delete tail did not consume
+     * or transfer it. */
+    outDisposition->shouldMaterialize = 1;
+    outDisposition->droppedThing =
+        (unsigned short)((associatedThing & 0x3FFFu) |
+                         (unsigned short)((projectile->cell & 0x03) << 14));
+    return 1;
+}

@@ -211,6 +211,51 @@ static void test_projectile_impact_model(void) {
               "ordinary weapon not kept");
 }
 
+static void test_projectile_associated_thing_disposition(void) {
+    struct ProjectileInstance_Compat p;
+    struct ProjectileTickResult_Compat r;
+    DM1_ProjectileAssociatedThingDispositionPc34 d;
+    unsigned short potionThing =
+        (unsigned short)((THING_TYPE_POTION << 10) | 2);
+    unsigned short weaponThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 7);
+    memset(&p, 0, sizeof(p));
+    memset(&r, 0, sizeof(r));
+    p.reserved1 = potionThing;
+    p.flags = PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT;
+    p.cell = 3;
+    r.despawn = 1;
+    ASSERT_EQ(dm1_v1_projectile_associated_thing_disposition_pc34(
+                  &p, &r, 0, 4, &d), 1,
+              "potion disposition builds");
+    ASSERT_EQ(d.shouldConsumePotion, 1, "potion consumed");
+    ASSERT_EQ(d.shouldMaterialize, 0, "consumed potion not materialized");
+    ASSERT_EQ(d.associatedThing, potionThing, "consumed associated thing");
+
+    p.reserved1 = weaponThing;
+    p.flags = 0;
+    p.cell = 2;
+    ASSERT_EQ(dm1_v1_projectile_associated_thing_disposition_pc34(
+                  &p, NULL, 0, 0, &d), 1,
+              "weapon disposition builds");
+    ASSERT_EQ(d.shouldConsumePotion, 0, "weapon not consumed");
+    ASSERT_EQ(d.shouldMaterialize, 1, "weapon materialized");
+    ASSERT_EQ(d.droppedThing,
+              (unsigned short)(weaponThing | (unsigned short)(2u << 14)),
+              "weapon dropped with projectile cell");
+
+    ASSERT_EQ(dm1_v1_projectile_associated_thing_disposition_pc34(
+                  &p, NULL, 1, 0, &d), 1,
+              "moved-to-group disposition builds");
+    ASSERT_EQ(d.shouldMaterialize, 0, "moved-to-group not materialized");
+
+    p.reserved1 = THING_NONE;
+    ASSERT_EQ(dm1_v1_projectile_associated_thing_disposition_pc34(
+                  &p, NULL, 0, 0, &d), 1,
+              "empty disposition builds");
+    ASSERT_EQ(d.shouldMaterialize, 0, "empty not materialized");
+}
+
 int main(void) {
     test_throw_weight_and_stamina();
     test_throw_runtime_math();
@@ -218,6 +263,7 @@ int main(void) {
     test_shoot_runtime_math();
     test_projectile_create_input_model();
     test_projectile_impact_model();
+    test_projectile_associated_thing_disposition();
     if (g_failures) {
         fprintf(stderr, "test_dm1_v1_throw_shoot_pc34_compat: %d failures\n",
                 g_failures);
