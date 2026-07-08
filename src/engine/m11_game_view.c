@@ -151,8 +151,6 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 static void m11_nexus_release_title(M11_GameViewState* state);
 static int m11_path_has_extension(const char* path, const char* ext);
 static int m11_path_tail_equals_ascii(const char* path, const char* tail);
-static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
-                                            const CSB_V1_RuntimeProfile *profile);
 static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
@@ -1137,6 +1135,20 @@ static void m11_apply_csb_runtime_m11_mirror_receipt(
     state->csbState.tick_count = receipt->view.tick_count;
     if (receipt->party.valid) {
         state->world.party = receipt->party.party;
+    }
+    if (receipt->leader_hand_present) {
+        state->leaderHandObjectPresent = 1;
+        state->leaderHandThing = receipt->leader_hand_thing;
+        state->leaderHandIconIndex = receipt->leader_hand_icon_index;
+        snprintf(state->leaderHandObjectName,
+                 sizeof(state->leaderHandObjectName),
+                 "%s",
+                 receipt->leader_hand_object_name);
+    } else {
+        state->leaderHandObjectPresent = 0;
+        state->leaderHandThing = THING_NONE;
+        state->leaderHandIconIndex = -1;
+        state->leaderHandObjectName[0] = '\0';
     }
 }
 
@@ -3131,9 +3143,6 @@ static M11_GameInputResult m11_csb_startup_handle_entrance_command(
         CSB_V1_BootProfile *profile =
             (CSB_V1_BootProfile *)state->csbBootProfile;
         m11_sync_csb_state_from_profile(state, profile);
-        if (runtime_exec_receipt.sync_leader_hand) {
-            m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
-        }
     }
     m11_csb_startup_command_state_receipt_to_m11(state, &state_receipt);
     if (!csb_v1_startup_host_receipt_from_runtime_apply_pc34(
@@ -4419,40 +4428,6 @@ static uint32_t m11_read_u32_le(const unsigned char* src) {
            ((uint32_t)src[1] << 8) |
            ((uint32_t)src[2] << 16) |
            ((uint32_t)src[3] << 24);
-}
-
-static void m11_csb_sync_csbwin_leader_hand(M11_GameViewState *state,
-                                            const CSB_V1_RuntimeProfile *profile)
-{
-    uint16_t thing;
-    if (!state || !profile ||
-        (!profile->party_state_valid &&
-         !profile->csbwin_gameblock2_summary_valid)) {
-        return;
-    }
-    thing = profile->party_state_valid
-        ? profile->party_state.LeaderHandThing
-        : profile->csbwin_object_in_hand;
-    if (thing == THING_NONE || thing == THING_ENDOFLIST) {
-        state->leaderHandObjectPresent = 0;
-        state->leaderHandThing = THING_NONE;
-        state->leaderHandIconIndex = -1;
-        state->leaderHandObjectName[0] = '\0';
-        return;
-    }
-    /* CSBWin SaveGame.cpp GAMEBLOCK2 stores the transient cursor/
-     * leader-hand object separately from champion slots.  Resolve the icon
-     * only through the CSB runtime's own dungeon records; never through M11's
-     * DM1 world thing tables. */
-    state->leaderHandObjectPresent = 1;
-    state->leaderHandThing = thing;
-    state->leaderHandIconIndex =
-        csb_v1_runtime_object_icon_index(profile, thing);
-    (void)csb_v1_runtime_object_name(
-        profile,
-        thing,
-        state->leaderHandObjectName,
-        sizeof(state->leaderHandObjectName));
 }
 
 static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
@@ -10746,7 +10721,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                  sizeof(state->csbState.startup_import_utility_prompt),
                  "%s",
                  session_receipt.import_utility_prompt);
-        m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
+        m11_sync_csb_state_from_profile(state, profile);
         m11_set_status(state, "BOOT",
                        (spec->savePath && spec->savePath[0] != '\0')
                            ? "CSB RESUMED"
@@ -12632,7 +12607,6 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
             return 0;
         }
         m11_sync_csb_state_from_profile(state, profile);
-        m11_csb_sync_csbwin_leader_hand(state, &profile->runtime);
         state->loadGameTick = profile->runtime.game_time;
         state->lastSaveTick = profile->runtime.game_time;
         m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");

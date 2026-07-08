@@ -1013,6 +1013,10 @@ typedef struct {
     int valid;
     CSB_V1_RuntimeViewStateReceipt_PC34 view;
     CSB_V1_RuntimePartyMirrorReceipt_PC34 party;
+    int leader_hand_present;
+    uint16_t leader_hand_thing;
+    int leader_hand_icon_index;
+    char leader_hand_object_name[32];
 } CSB_V1_RuntimeM11MirrorReceipt_PC34;
 typedef struct {
     int entrance_resume_available;
