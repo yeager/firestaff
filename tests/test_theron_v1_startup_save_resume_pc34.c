@@ -840,6 +840,24 @@ static void test_startup_session_facts_wrappers(void) {
                     action_receipt.state_receipt.flow.selected_dungeon ==
                         THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
                 "session facts action wrapper executes startup flow action");
+    expect_true(theron_v1_startup_execute_input_from_session_with_host_receipt(
+                    &session,
+                    THERON_STARTUP_INPUT_BACK,
+                    &action_receipt) &&
+                    action_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER &&
+                    strcmp(action_receipt.host_receipt.status_scope,
+                           "RETURN") == 0,
+                "session facts input wrapper routes through action host receipt");
+    expect_true(theron_v1_startup_execute_pointer_from_session_with_host_receipt(
+                    &session,
+                    35,
+                    23,
+                    &action_receipt) &&
+                    action_receipt.host_receipt.input_result ==
+                        THERON_STARTUP_INPUT_RESULT_REDRAW &&
+                    !action_receipt.state_receipt_valid,
+                "session facts pointer wrapper preserves panel-consumed redraw");
 
     world.progression.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
     world.progression.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
