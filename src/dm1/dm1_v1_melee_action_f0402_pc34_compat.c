@@ -2,6 +2,10 @@
 
 #include <string.h>
 
+enum {
+    DM1_MELEE_CREATURE_ATTR_NON_MATERIAL_PC34 = 0x0040
+};
+
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out) {
@@ -134,5 +138,86 @@ int dm1_v1_melee_kill_notify_plan_f0231_pc34(
     out->shouldAwardKillXp = 1;
     out->championIndex = in->activeChampionIndex;
     out->xpBonus = xp;
+    return 1;
+}
+
+int dm1_v1_melee_reach_gate_plan_f0402_pc34(
+    const DM1_MeleeReachGateInputPc34* in,
+    DM1_MeleeReachGatePlanPc34* out) {
+    int i;
+    int relativeCell;
+    int blockingCell = -1;
+    int count;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->blockingChampionIndex = -1;
+    out->blockingCell = -1;
+    out->combatOutcome = COMBAT_OUTCOME_INVALID;
+    if (!in) return 0;
+    if (in->championIndex < 0 || in->championIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+
+    out->valid = 1;
+    if (!in->championPresent || in->championCurrentHealth <= 0) {
+        return 1;
+    }
+
+    relativeCell = ((in->championCell & 3) + 4 - (in->targetDirection & 3)) & 3;
+    out->relativeCell = relativeCell;
+    if (relativeCell == 2) {
+        blockingCell = ((in->championCell & 3) + 3) & 3;
+    } else if (relativeCell == 3) {
+        blockingCell = ((in->championCell & 3) + 1) & 3;
+    } else {
+        return 1;
+    }
+    out->blockingCell = blockingCell;
+
+    /* ReDMCSB: MENU.C F0402 lines 1029-1041 rejects back-row melee when
+     * another living champion stands in the front cell, sets G0513 to
+     * CM1_DAMAGE_CANT_REACH, then returns false before F0231. */
+    count = in->partyChampionCount;
+    if (count < 0 || count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
+    for (i = 0; i < count; ++i) {
+        if (i == in->championIndex) continue;
+        if (in->otherChampionPresent[i] &&
+            in->otherChampionCurrentHealth[i] > 0 &&
+            ((in->otherChampionCell[i] & 3) == blockingCell)) {
+            out->blocked = 1;
+            out->blockingChampionIndex = i;
+            out->damage = 0;
+            out->combatOutcome = COMBAT_OUTCOME_INVALID;
+            return 1;
+        }
+    }
+    return 1;
+}
+
+int dm1_v1_melee_disrupt_material_gate_plan_f0402_pc34(
+    const DM1_MeleeDisruptMaterialGateInputPc34* in,
+    DM1_MeleeDisruptMaterialGatePlanPc34* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->combatOutcome = COMBAT_OUTCOME_INVALID;
+    if (!in) return 0;
+    if (in->actionIndex < 0 ||
+        in->actionIndex >= DM1_GRAPHIC560_ACTION_COUNT) {
+        return 0;
+    }
+
+    out->valid = 1;
+    if (in->actionIndex != DM1_ACTION_DISRUPT) {
+        return 1;
+    }
+
+    /* ReDMCSB: MENU.C F0402 lines 1042-1043 rejects DISRUPT before F0231
+     * unless F0144 reports MASK0x0040_NON_MATERIAL for the target group. */
+    if ((in->targetCreatureAttributes &
+         DM1_MELEE_CREATURE_ATTR_NON_MATERIAL_PC34) == 0) {
+        out->blocked = 1;
+        out->damage = 0;
+        out->combatOutcome = COMBAT_OUTCOME_INVALID;
+    }
     return 1;
 }
