@@ -919,6 +919,24 @@ int dm2_v1_boot_startup_launch_from_snapshot(
         out_receipt);
 }
 
+int dm2_v1_boot_startup_launch_from_launch_snapshot(
+    const DM2_V1_BootStartupLaunch *launch,
+    const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
+    DM2_V1_StartupLaunchReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot boot_snapshot;
+    if (!launch || !launch->profile || !snapshot) {
+        if (out_receipt) {
+            dm2_v1_startup_launch_receipt_clear(out_receipt);
+        }
+        return 0;
+    }
+    boot_snapshot = *snapshot;
+    boot_snapshot.profile = launch->profile;
+    return dm2_v1_boot_startup_launch_from_snapshot(&boot_snapshot,
+                                                    out_receipt);
+}
+
 int dm2_v1_boot_startup_advance_idle_from_runtime_state(
     const DM2_V1_BootProfile *profile,
     int startup_menu_active,
@@ -1223,6 +1241,34 @@ int dm2_v1_boot_startup_execute_save_path_with_host_receipt(
         (DM2_V1_StartupDirectResumeReceipt *)out_direct_resume_receipt);
 }
 
+int dm2_v1_boot_startup_execute_launch_save_path_with_host_receipt(
+    DM2_V1_BootStartupLaunch *launch,
+    const char *save_path,
+    int (*apply_session)(void *userdata,
+                         const DM2_V1_SessionState *session),
+    void *apply_userdata,
+    DM2_V1_StartupExecution *out_execution,
+    void *out_direct_resume_receipt)
+{
+    DM2_V1_StartupDirectResumeReceipt *receipt =
+        (DM2_V1_StartupDirectResumeReceipt *)out_direct_resume_receipt;
+    if (!launch || !launch->profile || !receipt) {
+        return 0;
+    }
+    if (!dm2_v1_boot_startup_execute_save_path_with_host_receipt(
+            save_path,
+            apply_session,
+            apply_userdata,
+            out_execution,
+            receipt)) {
+        return 0;
+    }
+    if (receipt->save_root_valid) {
+        dm2_v1_boot_set_save_root(launch->profile, receipt->save_root);
+    }
+    return 1;
+}
+
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
@@ -1253,6 +1299,32 @@ static void dm2_v1_boot_startup_set_failure_status(
     }
     launch->failure_status_scope = "BOOT";
     launch->failure_status = dm2_v1_boot_startup_prepare_host_status(result);
+}
+
+int dm2_v1_boot_startup_prepare_failure_host_receipt(
+    const DM2_V1_BootStartupLaunch *launch,
+    DM2_V1_StartupHostReceipt *out_receipt)
+{
+    DM2_V1_BootStartupPrepareResult result =
+        DM2_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->input_result = DM2_V1_STARTUP_HOST_INPUT_IGNORED;
+    out_receipt->status_scope = "BOOT";
+    out_receipt->status = dm2_v1_boot_startup_prepare_host_status(result);
+    if (launch) {
+        result = launch->prepare_result;
+        out_receipt->status_scope =
+            launch->failure_status_scope ? launch->failure_status_scope
+                                         : "BOOT";
+        out_receipt->status =
+            launch->failure_status
+                ? launch->failure_status
+                : dm2_v1_boot_startup_prepare_host_status(result);
+    }
+    return 1;
 }
 
 int dm2_v1_boot_startup_launch_alloc(

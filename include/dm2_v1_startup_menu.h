@@ -100,7 +100,7 @@ typedef enum {
     DM2_V1_STARTUP_HOST_INPUT_RETURN_TO_LAUNCHER = 2
 } DM2_V1_StartupHostInputResult;
 
-typedef struct {
+typedef struct DM2_V1_StartupHostReceipt {
     DM2_V1_StartupModeUpdate mode_update;
     DM2_V1_StartupHostInputResult input_result;
     int rescan_saves;

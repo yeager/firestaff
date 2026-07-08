@@ -501,7 +501,7 @@ static M11_GameInputResult m11_handle_dm2_shop_input(M11_GameViewState *state,
 }
 
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
-                                         DM2_V1_BootProfile *profile,
+                                         DM2_V1_BootStartupLaunch *launch,
                                          const char *save_path);
 static M11_GameInputResult m11_dm2_startup_apply_host_receipt(
     M11_GameViewState *state,
@@ -511,25 +511,23 @@ static int m11_dm2_startup_apply_session_callback(
     const DM2_V1_SessionState *session);
 
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
-                                         DM2_V1_BootProfile *profile,
+                                         DM2_V1_BootStartupLaunch *launch,
                                          const char *save_path)
 {
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupDirectResumeReceipt receipt;
 
-    if (!state || !profile || !save_path || !save_path[0]) {
+    if (!state || !launch || !save_path || !save_path[0]) {
         return 0;
     }
-    if (!dm2_v1_boot_startup_execute_save_path_with_host_receipt(
+    if (!dm2_v1_boot_startup_execute_launch_save_path_with_host_receipt(
+            launch,
             save_path,
             m11_dm2_startup_apply_session_callback,
             state,
             &execution,
             &receipt)) {
         return 0;
-    }
-    if (receipt.save_root_valid) {
-        dm2_v1_boot_set_save_root(profile, receipt.save_root);
     }
     (void)m11_dm2_startup_apply_host_receipt(state, &receipt.host_receipt);
     return receipt.session_applied;
@@ -10716,7 +10714,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         char resolvedDataDir[FSP_PATH_MAX];
         DM2_V1_BootStartupLaunch launch;
         DM2_V1_BootStartupRuntimeReceipt runtime_receipt;
-        DM2_V1_BootProfile *profile = NULL;
         int savedDebugHUD = state->showDebugHUD;
         if (!dd || !dd[0]) {
             if (FSP_ResolveDataDir(resolvedDataDir,
@@ -10736,16 +10733,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->showDebugHUD = savedDebugHUD;
         if (!dm2_v1_boot_startup_launch_alloc(dd, &launch)) {
             DM2_V1_StartupHostReceipt failureReceipt;
-            memset(&failureReceipt, 0, sizeof(failureReceipt));
-            failureReceipt.input_result = DM2_V1_STARTUP_HOST_INPUT_IGNORED;
-            failureReceipt.status_scope =
-                launch.failure_status_scope ? launch.failure_status_scope
-                                            : "BOOT";
-            failureReceipt.status =
-                launch.failure_status
-                    ? launch.failure_status
-                    : dm2_v1_boot_startup_prepare_result_name(
-                          launch.prepare_result);
+            (void)dm2_v1_boot_startup_prepare_failure_host_receipt(
+                &launch,
+                &failureReceipt);
             (void)m11_dm2_startup_apply_host_receipt(
                 state,
                 &failureReceipt);
@@ -10754,9 +10744,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                           failureReceipt.status);
             return 0;
         }
-        profile = launch.profile;
         if (spec->savePath && spec->savePath[0] != '\0') {
-            if (!m11_dm2_resume_from_save_path(state, profile, spec->savePath)) {
+            if (!m11_dm2_resume_from_save_path(state, &launch, spec->savePath)) {
                 m11_log_event(state, M11_COLOR_RED,
                               "T0: DM2 RESUME FAILED: %s",
                               spec->savePath);
@@ -10767,8 +10756,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             DM2_V1_BootRuntimeStartupSnapshot snapshot;
             DM2_V1_StartupLaunchReceipt receipt;
             m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-            snapshot.profile = profile;
-            if (!dm2_v1_boot_startup_launch_from_snapshot(
+            if (!dm2_v1_boot_startup_launch_from_launch_snapshot(
+                    &launch,
                     &snapshot,
                     &receipt)) {
                 (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
@@ -10789,7 +10778,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             dm2_v1_boot_startup_launch_cleanup(&launch);
             return 0;
         }
-        profile = runtime_receipt.profile;
         /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         if (runtime_receipt.initialize_v2_runtime) {
             dm2_v2_runtime_init(2);
