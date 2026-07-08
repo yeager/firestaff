@@ -91,6 +91,60 @@ static void test_screen_contract_helpers(void)
     CHECK(dm1_v1_spell_champion_symbol_zone_id_pc34(4) == 0);
 }
 
+static void test_rune_contract_helpers(void)
+{
+    DM1_V1_SpellLabelSourceZonePc34 available =
+        dm1_v1_spell_label_source_zone_pc34(0);
+    DM1_V1_SpellLabelSourceZonePc34 selected =
+        dm1_v1_spell_label_source_zone_pc34(1);
+    char abbrev[3];
+
+    CHECK(DM1_V1_SPELL_RUNE_ROW_COUNT_PC34 == 4);
+    CHECK(DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34 == 6);
+    CHECK(DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34 == 4);
+    CHECK(DM1_V1_SPELL_RUNE_VALUE_BASE_PC34 == 0x60);
+
+    CHECK(dm1_v1_spell_rune_value_pc34(0, 0) == 0x60);
+    CHECK(dm1_v1_spell_rune_value_pc34(0, 5) == 0x65);
+    CHECK(dm1_v1_spell_rune_value_pc34(1, 0) == 0x66);
+    CHECK(dm1_v1_spell_rune_value_pc34(2, 3) == 0x6f);
+    CHECK(dm1_v1_spell_rune_value_pc34(3, 5) == 0x77);
+    CHECK(dm1_v1_spell_rune_value_pc34(-1, 0) == -1);
+    CHECK(dm1_v1_spell_rune_value_pc34(4, 0) == -1);
+    CHECK(dm1_v1_spell_rune_value_pc34(0, -1) == -1);
+    CHECK(dm1_v1_spell_rune_value_pc34(0, 6) == -1);
+
+    CHECK(strcmp(dm1_v1_spell_rune_name_pc34(0, 0), "LO") == 0);
+    CHECK(strcmp(dm1_v1_spell_rune_name_pc34(1, 3), "FUL") == 0);
+    CHECK(strcmp(dm1_v1_spell_rune_name_pc34(2, 3), "IR") == 0);
+    CHECK(strcmp(dm1_v1_spell_rune_name_pc34(3, 4), "RA") == 0);
+    CHECK(dm1_v1_spell_rune_name_pc34(4, 0) == 0);
+    CHECK(dm1_v1_spell_rune_name_pc34(0, 6) == 0);
+
+    CHECK(dm1_v1_spell_rune_abbrev_pc34(2, 2, abbrev) == 1);
+    CHECK(abbrev[0] == 'K');
+    CHECK(abbrev[1] == 'A');
+    CHECK(abbrev[2] == '\0');
+    CHECK(dm1_v1_spell_rune_abbrev_pc34(4, 0, abbrev) == 0);
+    CHECK(abbrev[0] == '?');
+    CHECK(abbrev[1] == '?');
+    CHECK(abbrev[2] == '\0');
+    CHECK(dm1_v1_spell_rune_abbrev_pc34(0, 0, 0) == 0);
+
+    CHECK(DM1_V1_SPELL_LABEL_CELL_W_PC34 == 14);
+    CHECK(DM1_V1_SPELL_LABEL_CELL_H_PC34 == 13);
+    CHECK(DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 == 13);
+    CHECK(DM1_V1_SPELL_LABEL_SELECTED_Y_PC34 == 26);
+    CHECK(available.x == 0);
+    CHECK(available.y == 13);
+    CHECK(available.w == 14);
+    CHECK(available.h == 13);
+    CHECK(selected.x == 0);
+    CHECK(selected.y == 26);
+    CHECK(selected.w == 14);
+    CHECK(selected.h == 13);
+}
+
 static void test_get_function(void)
 {
     int v;
@@ -160,6 +214,7 @@ int main(void)
     test_table_values();
     test_accessor_functions();
     test_screen_contract_helpers();
+    test_rune_contract_helpers();
     test_get_function();
     test_components_non_negative();
     test_run_accepted();

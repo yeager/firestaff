@@ -7826,45 +7826,19 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
  * Spell casting UI
  * ================================================================ */
 
-/* DM1 rune names per row. Row 0 = power runes, rows 1-3 = element/form/class. */
-static const char* const g_rune_names[4][6] = {
-    { "LO",  "UM",  "ON",  "EE",  "PAL", "MON" },
-    { "YA",  "VI",  "OH",  "FUL", "DES", "ZO"  },
-    { "VEN", "EW",  "KATH","IR",  "BRO", "GOR" },
-    { "KU",  "ROS", "DAIN","NETA","RA",  "SAR" }
-};
-
 /* Encode a rune symbol from (row, column) into the DM1 byte value.
  * Per SYMBOL.C:F0399: runeValue = 0x60 + 6*row + column. */
 static int m11_encode_rune(int row, int col) {
-    if (row < 0 || row > 3 || col < 0 || col > 5) return -1;
-    return 0x60 + 6 * row + col;
+    return dm1_v1_spell_rune_value_pc34(row, col);
 }
 
 enum {
-    M11_SPELL_LABEL_CELL_W = 14,
-    M11_SPELL_LABEL_CELL_H = 13,
-    M11_SPELL_LABEL_AVAILABLE_Y = 13,
-    M11_SPELL_LABEL_SELECTED_Y = 26
+    M11_SPELL_LABEL_CELL_W = DM1_V1_SPELL_LABEL_CELL_W_PC34,
+    M11_SPELL_LABEL_CELL_H = DM1_V1_SPELL_LABEL_CELL_H_PC34
 };
 
 static void m11_get_rune_abbrev(int row, int col, char out[3]) {
-    const char* src;
-    if (!out) {
-        return;
-    }
-    out[0] = '?';
-    out[1] = '?';
-    out[2] = '\0';
-    if (row < 0 || row >= 4 || col < 0 || col >= 6) {
-        return;
-    }
-    src = g_rune_names[row][col];
-    if (!src || src[0] == '\0') {
-        return;
-    }
-    out[0] = src[0];
-    out[1] = src[1] ? src[1] : ' ';
+    (void)dm1_v1_spell_rune_abbrev_pc34(row, col, out);
 }
 
 int M11_GameView_GetV1SpellAreaLinesGraphicId(void) {
@@ -7898,11 +7872,12 @@ int M11_GameView_GetV1SpellLabelCellSourceZone(int selectedLine,
                                                 int* outY,
                                                 int* outW,
                                                 int* outH) {
-    if (outX) *outX = 0;
-    if (outY) *outY = selectedLine ? M11_SPELL_LABEL_SELECTED_Y
-                                   : M11_SPELL_LABEL_AVAILABLE_Y;
-    if (outW) *outW = M11_SPELL_LABEL_CELL_W;
-    if (outH) *outH = M11_SPELL_LABEL_CELL_H;
+    DM1_V1_SpellLabelSourceZonePc34 zone =
+        dm1_v1_spell_label_source_zone_pc34(selectedLine);
+    if (outX) *outX = zone.x;
+    if (outY) *outY = zone.y;
+    if (outW) *outW = zone.w;
+    if (outH) *outH = zone.h;
     return 1;
 }
 
@@ -8076,13 +8051,15 @@ int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
 
     m11_log_event(state, M11_COLOR_WHITE, "T%u: RUNE %s (%d)",
                   (unsigned int)state->world.gameTick,
-                  g_rune_names[state->spellRuneRow - 1][symbolIndex],
+                  dm1_v1_spell_rune_name_pc34(
+                      state->spellRuneRow - 1, symbolIndex),
                   runeValue);
 
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RUNE ENTERED");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
              "%s — %d OF 4 SYMBOLS",
-             g_rune_names[state->spellRuneRow - 1][symbolIndex],
+             dm1_v1_spell_rune_name_pc34(
+                 state->spellRuneRow - 1, symbolIndex),
              state->spellBuffer.runeCount);
 
     /* Auto-close panel after 4 runes (full sequence) */

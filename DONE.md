@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-08 DM1 spell-menu rune ownership: rune value encoding, rune names/abbreviations, and C011 label-cell source zones now live in the DM1 V1 spell-area compat layer instead of M11-local tables. M11 consumes those DM1 helpers for spell input and V1 spell-panel rendering. Verification: `test_dm1_v1_box_spell_area_pc34_compat` passed 133/133; Phase A passed 24/24.
+
 - ✅ 2026-07-08 DM1 F0412 spell-family runtime gate: `test_dm1_v1_g0487_pc34_compat` now proves every DM1 G0487 row reaches the correct M10 effect producer family: 10 potion rows through F0758, 6 projectile rows through F0756, and 9 other-effect rows through F0757. Verification: manual strict compile/run passed 1500/1500 assertions; Phase A passed 24/24. Note: local CMake target builds still hang in `cmake_check_build_system`, so this slice used direct compilation.
 
 - ✅ 2026-07-08 Theron runtime release boot facade: Theron boot now owns runtime ownership release for profile/world/viewport/assets via `theron_v1_boot_runtime_release()`. M11 shutdown no longer frees Track 02 runtime objects directly. Verification: `test_theron_v1_startup_save_resume_pc34` passed 129/129; Phase A passed 24/24; `git diff --check` passed.
